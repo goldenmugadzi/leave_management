@@ -1,0 +1,1158 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <link href="invoice.css" media="print" rel="stylesheet" />
+    <title>Flight Planning</title>
+    <meta name="description" content="Invoice demo sample" />
+
+    <style>
+      @font-face {
+        font-family: Pacifico;
+        src: url(pacifico.ttf);
+      }
+      @font-face {
+        font-family: Source Sans Pro;
+        font-weight: 400;
+        src: url(sourcesanspro-regular.otf);
+      }
+      @font-face {
+        font-family: Source Sans Pro;
+        font-weight: 700;
+        src: url(sourcesanspro-bold.otf);
+      }
+
+      @page {
+        font-family: Pacifico;
+        margin: 1cm;
+        @bottom-left {
+          color: #3575B8;
+          content: "Business Excellence";
+        }
+        @bottom-right {
+          color: #a9a;
+          content: "info@zetdc.co.zw | zetdc.co.zw";
+          font-size: 9pt;
+        }
+      }
+
+      html {
+        color: #14213d;
+        font-family: Source Sans Pro;
+        font-size: 10pt;
+        line-height: 1.5;
+      }
+      body {
+        margin: 0;
+      }
+
+      h1 {
+        color: #3575B8;
+        font-family: Pacifico;
+        font-size: 12pt;
+      }
+
+      table {
+        border: 1px solid black;
+        border-collapse: collapse;
+        width: 100%;
+      }
+      td {
+        padding: 2mm;
+        border: 1px solid black;
+      }
+
+      .labels {
+        background-color: #848482;
+      }
+
+    </style>
+  </head>
+
+  <body>
+    <h1>Flight Authorization Form</h1>
+
+    <table>
+      <tbody>
+        <tr style="background-color: #3575B8;">
+          <td colspan="3">Task</td>
+        </tr>
+        <tr>
+            <td class="labels">Date</td>
+            <td class="labels">Location</td>
+            <td class="labels">RPAS System</td>
+        </tr>
+        <tr>
+            <td>{{ task['flightAuth']['date'] }}</td>
+            <td>{{ task['flightAuth']['_doc']['location'] }}</td>
+            <td>{{ task['flightAuth']['_doc']['rpaSystem'] }}</td>
+        </tr>
+        <tr>
+            <td class="labels">Task Description</td>
+            <td colspan="2">{{ task['flightAuth']['_doc']['taskName'] }}</td>
+        </tr>
+        <tr>
+            <td class="labels">PIC</td>
+            <td class="labels">Second RP</td>
+            <td class="labels">Observer/Crew</td>
+        </tr>
+        <tr>
+            <td>{{ task['flightAuth']['faPicUser'] }}</td>
+            <td>{{ task['flightAuth']['faSecondRpUser'] }}</td>
+            <td>{{ task['flightAuth']['chiefPilot'] }}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <table style="margin-top: 10mm">
+        <tbody>
+          <tr style="background-color: #3575B8;">
+            <td colspan="3">Operation Details</td>
+          </tr>
+          <tr>
+              <td class="labels">Local Area Frequency</td>
+              <td class="labels">Emergency Numbers</td>
+              <td class="labels"></td>
+          </tr>
+          <tr>
+              <td>{{ task['flightAuth']['_doc']['localAreaFrequencies'] }}</td>
+              <td>{{ task['flightAuth']['_doc']['emergencyNumbers'] }}</td>
+              <td></td>
+          </tr>
+          <tr>
+              <td class="labels">Notes (special operation procedures, permissions, etc.)</td>
+              <td colspan="2">{{ task['flightAuth']['_doc']['faNotes'] }}</td>
+          </tr>
+        </tbody>
+    </table>
+
+    <table style="margin-top: 10mm">
+        <tbody>
+          <tr style="background-color: #3575B8;">
+            <td colspan="3">Flight Authorization</td>
+          </tr>
+          <tr>
+              <td class="labels">Chief Remote Pilot</td>
+              <td>{{ task['flightAuth']['chiefPilot'] }}</td>
+              {% if task['flightAuth']['_doc']['chiefPilotSignature'] == True %}
+                <td>APPROVED</td>
+              {% endif %}
+              {% if task['flightAuth']['_doc']['chiefPilotSignature'] == False %}
+                <td>PENDING</td>
+              {% endif %}
+          </tr>
+          <tr>
+              <td class="labels">PIC</td>
+              <td>{{ task['flightAuth']['faPicUser'] }}</td>
+              {% if task['flightAuth']['_doc']['faPicSignature'] == True %}
+                <td>APPROVED</td>
+              {% endif %}
+              {% if task['flightAuth']['_doc']['faPicSignature'] == False %}
+                <td>PENDING</td>
+              {% endif %}
+          </tr>
+        </tbody>
+    </table>
+
+    <h1 style="page-break-before: always;">Job Safety Form</h1>
+
+    <table>
+      <tbody>
+        <tr>
+            <td class="labels">ZESA HOLDINGS PVT LTD</td>
+            <td class="labels"></td>
+            <td class="labels">Date</td>
+            <td>{{ task['flightAuth']['_doc']['date'] }}</td>
+        </tr>
+        <tr>
+            <td class="labels">Task</td>
+            <td>{{ task['flightAuth']['_doc']['taskName'] }}</td>
+            <td class="labels">Location</td>
+            <td>{{ task['flightAuth']['_doc']['location'] }}</td>
+        </tr>
+        <tr>
+            <td class="labels" colspan="4">Check the following and address as needed</td>
+        </tr>
+        <tr>
+            <td rowspan="17" colspan="2">Sketch of an area (if necessary)</td>
+            <td class="labels">Maps and charts available and checked</td>
+            {% if task['jobSafety']['_doc']['mapsnCharts'] == True %}
+            <td>PASS</td>
+            {% endif %}
+            {% if task['jobSafety']['_doc']['mapsnCharts'] == False %}
+              <td>--</td>
+            {% endif %}
+          </tr>
+        <tr>
+            <td class="labels">Weather, within limits for RPA and operation</td>
+            {% if task['jobSafety']['_doc']['weather'] == True %}
+            <td>PASS</td>
+            {% endif %}
+            {% if task['jobSafety']['_doc']['weather'] == False %}
+              <td>--</td>
+            {% endif %}
+        </tr>
+        <tr>
+            <td class="labels">Airspace Classification and requirements</td>
+            {% if task['jobSafety']['_doc']['airspaceClassification'] == True %}
+            <td>PASS</td>
+            {% endif %}
+            {% if task['jobSafety']['_doc']['airspaceClassification'] == False %}
+              <td>--</td>
+            {% endif %}
+        </tr>
+        <tr>
+            <td class="labels">NOTAMs</td>
+            {% if task['jobSafety']['_doc']['notams'] == True %}
+            <td>PASS</td>
+            {% endif %}
+            {% if task['jobSafety']['_doc']['notams'] == False %}
+              <td>--</td>
+            {% endif %}
+        </tr>
+        <tr>
+            <td class="labels">Possibility of public moving into area</td>
+            {% if task['jobSafety']['_doc']['publicAreas'] == True %}
+            <td>PASS</td>
+            {% endif %}
+            {% if task['jobSafety']['_doc']['publicAreas'] == False %}
+              <td>--</td>
+            {% endif %}
+        </tr>
+        <tr>
+            <td class="labels">Footpath/right of way</td>
+            {% if task['jobSafety']['_doc']['airspaceClassification'] == True %}
+            <td>PASS</td>
+            {% endif %}
+            {% if task['jobSafety']['_doc']['airspaceClassification'] == False %}
+              <td>--</td>
+            {% endif %}
+        </tr>
+        <tr>
+            <td class="labels">Landing area including alternate</td>
+            {% if task['jobSafety']['_doc']['landingArea'] == True %}
+            <td>PASS</td>
+            {% endif %}
+            {% if task['jobSafety']['_doc']['landingArea'] == False %}
+              <td>--</td>
+            {% endif %}
+        </tr>
+        <tr>
+            <td class="labels">Ability to maintain 30m from public</td>
+            {% if task['jobSafety']['_doc']['airspaceClassification'] == True %}
+            <td>PASS</td>
+            {% endif %}
+            {% if task['jobSafety']['_doc']['airspaceClassification'] == False %}
+              <td>--</td>
+            {% endif %}
+        </tr>
+        <tr>
+            <td class="labels">Obstruction (buildings, trees) ('Return to Home', height settings)</td>
+            {% if task['jobSafety']['_doc']['returnToHome'] == True %}
+            <td>PASS</td>
+            {% endif %}
+            {% if task['jobSafety']['_doc']['returnToHome'] == False %}
+              <td>--</td>
+            {% endif %}
+        </tr>
+        <tr>
+            <td class="labels">Possible inteference (Powerlines/antennas)</td>
+            {% if task['jobSafety']['_doc']['inteference'] == True %}
+            <td>PASS</td>
+            {% endif %}
+            {% if task['jobSafety']['_doc']['inteference'] == False %}
+              <td>--</td>
+            {% endif %}
+        </tr>
+        <tr>
+            <td class="labels">Ability to maintain visual line of sight</td>
+            {% if task['jobSafety']['_doc']['visualLineOfSight'] == True %}
+            <td>PASS</td>
+            {% endif %}
+            {% if task['jobSafety']['_doc']['visualLineOfSight'] == False %}
+              <td>--</td>
+            {% endif %}
+        </tr>
+        <tr>
+            <td class="labels">Remote Pilot's ability matches location/task</td>
+            {% if task['jobSafety']['_doc']['remotePilotAbility'] == True %}
+            <td>PASS</td>
+            {% endif %}
+            {% if task['jobSafety']['_doc']['remotePilotAbility'] == False %}
+              <td>--</td>
+            {% endif %}
+        </tr>
+        <tr>
+            <td class="labels">Permission of any landowners</td>
+            {% if task['jobSafety']['_doc']['landownerPermission'] == True %}
+            <td>PASS</td>
+            {% endif %}
+            {% if task['jobSafety']['_doc']['landownerPermission'] == False %}
+              <td>--</td>
+            {% endif %}
+        </tr>
+        <tr>
+            <td class="labels">Signage Placement</td>
+            {% if task['jobSafety']['_doc']['signagePlacement'] == True %}
+            <td>PASS</td>
+            {% endif %}
+            {% if task['jobSafety']['_doc']['signagePlacement'] == False %}
+              <td>--</td>
+            {% endif %}
+        </tr>
+        <tr>
+            <td class="labels">Permission from local authority</td>
+            {% if task['jobSafety']['_doc']['localAuthPermission'] == True %}
+            <td>PASS</td>
+            {% endif %}
+            {% if task['jobSafety']['_doc']['localAuthPermission'] == False %}
+              <td>--</td>
+            {% endif %}
+        </tr>
+        <tr>
+            <td></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td class="labels">RP</td>
+            <td>{{ task['jobSafety']['jsaRpUser'] }}</td>
+            <td class="labels">Signature</td>
+            {% if task['jobSafety']['_doc']['remotePilotSignature'] == True %}
+            <td>PASS</td>
+            {% endif %}
+            {% if task['jobSafety']['_doc']['remotePilotSignature'] == False %}
+              <td>--</td>
+            {% endif %}
+        </tr>
+        <tr>
+            <td class="labels">Crew</td>
+            <td colspan="3"></td>
+        </tr>
+        <tr>
+            <td class="labels">Comments</td>
+            <td colspan="3"></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h1 style="page-break-before: always;">Pre-Flight Checklist Form</h1>
+
+    <table>
+      <tbody>
+        <tr>
+          <td class="labels" >Date</td>
+          <td colspan="3">{{ task['flightAuth']['_doc']['date'] }}</td>
+        </tr>
+        <tr>
+          <td class="labels">PIC</td>
+          <td>{{ task['flightAuth']['faPicUser'] }}</td>
+          <td class="labels">Signature</td>
+          {% if task['jobSafety']['pcPicSignature'] == True %}
+          <td>APPROVED</td>
+          {% endif %}
+          {% if task['jobSafety']['pcPicSignature'] == False %}
+            <td>PENDING</td>
+          {% endif %}
+        </tr>
+        <tr>
+          <td colspan="3"></td>
+          <td></td>
+        </tr>
+
+        <tr>
+          <td class="labels"></td>
+          <td class="labels" colspan="2"><strong>ITEM</strong></td>
+          <td class="labels"><strong>CHECK</strong></td>
+        </tr>
+        <tr>
+          <td class="labels">1</td>
+          <td class="labels" colspan="2">Fuselage/Frame is not damaged</td>
+          {% if task['preFlightChecklist']['fuselage'] == True %}
+          <td>PASS</td>
+          {% endif %}
+          {% if task['preFlightChecklist']['fuselage'] == False %}
+            <td>--</td>
+          {% endif %}
+        </tr>
+        <tr>
+          <td class="labels">2</td>
+          <td class="labels" colspan="2">Propellers are good</td>
+          {% if task['preFlightChecklist']['propellers'] == True %}
+          <td>PASS</td>
+          {% endif %}
+          {% if task['preFlightChecklist']['propellers'] == False %}
+            <td>--</td>
+          {% endif %}
+        </tr>
+        <tr>
+          <td class="labels">3</td>
+          <td class="labels" colspan="2">Gimbal is good and can move freely</td>
+          {% if task['preFlightChecklist']['gimbal'] == True %}
+          <td>PASS</td>
+          {% endif %}
+          {% if task['preFlightChecklist']['gimbal'] == False %}
+            <td>--</td>
+          {% endif %}
+        </tr>
+        <tr>
+          <td class="labels">4</td>
+          <td class="labels" colspan="2">Motors are not damaged and can turm freely</td>
+          {% if task['preFlightChecklist']['motors'] == True %}
+          <td>PASS</td>
+          {% endif %}
+          {% if task['preFlightChecklist']['motors'] == False %}
+            <td>--</td>
+          {% endif %}
+        </tr>
+        <tr>
+          <td class="labels">5</td>
+          <td class="labels" colspan="2">
+            Obstacle Sensors are clean and free of obstructions
+          </td>
+          {% if task['preFlightChecklist']['obstacles'] == True %}
+          <td>PASS</td>
+          {% endif %}
+          {% if task['preFlightChecklist']['obstacles'] == False %}
+            <td>--</td>
+          {% endif %}
+        </tr>
+        <tr>
+          <td class="labels">6</td>
+          <td class="labels" colspan="2">Batteries are fully charged</td>
+          {% if task['preFlightChecklist']['battery'] == True %}
+          <td>PASS</td>
+          {% endif %}
+          {% if task['preFlightChecklist']['battery'] == False %}
+            <td>--</td>
+          {% endif %}
+        </tr>
+        <tr>
+          <td class="labels">7</td>
+          <td class="labels" colspan="2">Micro SD card is inserted</td>
+          {% if task['preFlightChecklist']['sdCard'] == True %}
+          <td>PASS</td>
+          {% endif %}
+          {% if task['preFlightChecklist']['sdCard'] == False %}
+            <td>--</td>
+          {% endif %}
+        </tr>
+        <tr>
+          <td class="labels">8</td>
+          <td class="labels" colspan="2">Remote Control Battery is fully charged</td>
+          {% if task['preFlightChecklist']['remoteControlBattery'] == True %}
+          <td>PASS</td>
+          {% endif %}
+          {% if task['preFlightChecklist']['remoteControlBattery'] == False %}
+            <td>--</td>
+          {% endif %}
+        </tr>
+        <tr>
+          <td class="labels">9</td>
+          <td class="labels" colspan="2">Remote Control is not damaged</td>
+          {% if task['preFlightChecklist']['remoteControl'] == True %}
+          <td>PASS</td>
+          {% endif %}
+          {% if task['preFlightChecklist']['remoteControl'] == False %}
+            <td>--</td>
+          {% endif %}
+        </tr>
+        <tr>
+          <td class="labels">10</td>
+          <td class="labels" colspan="2">Joysticks are fastened tightly</td>
+          {% if task['preFlightChecklist']['joysticks'] == True %}
+          <td>PASS</td>
+          {% endif %}
+          {% if task['preFlightChecklist']['joysticks'] == False %}
+            <td>--</td>
+          {% endif %}
+        </tr>
+        <tr>
+          <td class="labels">11</td>
+          <td class="labels" colspan="2">
+            Application is connected and showing status of the aircraft
+          </td>
+          {% if task['preFlightChecklist']['application'] == True %}
+          <td>PASS</td>
+          {% endif %}
+          {% if task['preFlightChecklist']['application'] == False %}
+            <td>--</td>
+          {% endif %}
+        </tr>
+        <tr>
+          <td class="labels">12</td>
+          <td class="labels" colspan="2">
+            All necessary aircraft calibrations have been done
+          </td>
+          {% if task['preFlightChecklist']['aircraftCalibration'] == True %}
+          <td>PASS</td>
+          {% endif %}
+          {% if task['preFlightChecklist']['aircraftCalibration'] == False %}
+            <td>--</td>
+          {% endif %}
+        </tr>
+        <tr>
+          <td class="labels">13</td>
+          <td class="labels" colspan="2">Radios are functioning properly</td>
+          {% if task['preFlightChecklist']['radios'] == True %}
+          <td>PASS</td>
+          {% endif %}
+          {% if task['preFlightChecklist']['radios'] == False %}
+            <td>--</td>
+          {% endif %}
+        </tr>
+        <tr>
+          <td class="labels">14</td>
+          <td class="labels" colspan="2">Accessories (if any) are functioning properly</td>
+          {% if task['preFlightChecklist']['accessories'] == True %}
+          <td>PASS</td>
+          {% endif %}
+          {% if task['preFlightChecklist']['accessories'] == False %}
+            <td>--</td>
+          {% endif %}
+        </tr>
+        <tr>
+          <td class="labels">15</td>
+          <td class="labels" colspan="2">Home Point and RTH Height have been set</td>
+          {% if task['preFlightChecklist']['rth'] == True %}
+          <td>PASS</td>
+          {% endif %}
+          {% if task['preFlightChecklist']['rth'] == False %}
+            <td>--</td>
+          {% endif %}
+        </tr>
+        <tr>
+          <td class="labels">16</td>
+          <td class="labels" colspan="2">
+            Flight Conditions are safe (Check UAV Forecast Application)
+          </td>
+          {% if task['preFlightChecklist']['flightConditions'] == True %}
+          <td>PASS</td>
+          {% endif %}
+          {% if task['preFlightChecklist']['flightConditions'] == False %}
+            <td>--</td>
+          {% endif %}
+        </tr>
+        <tr>
+          <td class="labels">17</td>
+          <td class="labels" colspan="2">Identify landing site</td>
+          {% if task['preFlightChecklist']['landingSite'] == True %}
+          <td>PASS</td>
+          {% endif %}
+          {% if task['preFlightChecklist']['landingSite'] == False %}
+            <td>--</td>
+          {% endif %}
+        </tr>
+        <tr>
+          <td class="labels">18</td>
+          <td class="labels" colspan="2">Identify alternative landing site</td>
+          {% if task['preFlightChecklist']['alternativeLanding'] == True %}
+          <td>PASS</td>
+          {% endif %}
+          {% if task['preFlightChecklist']['alternativeLanding'] == False %}
+            <td>--</td>
+          {% endif %}
+        </tr>
+        <tr>
+          <td class="labels">19</td>
+          <td class="labels" colspan="2">Has the Job Safety Assessment been validated</td>
+          {% if task['preFlightChecklist']['jobAssessment'] == True %}
+          <td>PASS</td>
+          {% endif %}
+          {% if task['preFlightChecklist']['jobAssessment'] == False %}
+            <td>--</td>
+          {% endif %}
+        </tr>
+        <tr>
+          <td class="labels">20</td>
+          <td class="labels" colspan="2">Check for other Aircraft, hazards and obstacles</td>
+          {% if task['preFlightChecklist']['hazards'] == True %}
+          <td>PASS</td>
+          {% endif %}
+          {% if task['preFlightChecklist']['hazards'] == False %}
+            <td>--</td>
+          {% endif %}
+        </tr>
+        <tr>
+          <td></td>
+          <td colspan="2"></td>
+          <td></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td colspan="2"></td>
+          <td></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td colspan="2"></td>
+          <td></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td colspan="2"></td>
+          <td></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h1 style="page-break-before: always;">Arrival Checklist Form</h1>
+
+    <table>
+      <tbody>
+        <tr>
+            <td class="labels">Date</td>
+            <td colspan="5">{{ task['flightAuth']['_doc']['date'] }}</td>
+        </tr>
+        <tr>
+            <td class="labels">PIC</td>
+            <td colspan="2">{{ task['flightAuth']['faPicUser'] }}</td>
+            <td class="labels">Signature</td>
+            {% if task['arrivalChecklist']['acPicSignature'] == True %}
+            <td>APPROVED</td>
+            {% endif %}
+            {% if task['arrivalChecklist']['acPicSignature'] == False %}
+              <td>PENDING</td>
+            {% endif %}
+        </tr>
+        <tr>
+            <td colspan="5"><td>
+        </tr>
+        <tr>
+            <td class="labels"></td>
+            <td class="labels" colspan="2"><strong>ITEM</strong></td>
+            <td class="labels"><strong>QTY</strong></td>
+            <td class="labels"><strong>CONDITION OUT</strong></td>
+            <td class="labels"><strong>CONDITION IN</strong></td>
+        </tr>
+        <tr>
+            <td class="labels">1</td>
+            <td class="labels" colspan="2">Full RPA with all components</td>
+            <td>{{ task['arrivalChecklist']['qtyfullRPA'] }}</td>
+            <td>{{ task['arrivalChecklist']['arrFullRPA'] }}</td>
+            <td>{{ task['arrivalChecklist']['dpFullRPA'] }}</td>
+        </tr>
+        <tr>
+            <td class="labels">2</td>
+            <td class="labels" colspan="2">Spare propellers</td>
+            <td>{{ task['arrivalChecklist']['qtysparePropellers'] }}</td>
+            <td>{{ task['arrivalChecklist']['arrSparePropellers'] }}</td>
+            <td>{{ task['arrivalChecklist']['dpSparePropellers'] }}</td>
+        </tr>
+        <tr>
+            <td class="labels">3</td>
+            <td class="labels" colspan="2">Gimbal Cover</td>
+            <td>{{ task['arrivalChecklist']['qtygimbalCover'] }}</td>
+            <td>{{ task['arrivalChecklist']['arrGimbalCover'] }}</td>
+            <td>{{ task['arrivalChecklist']['dpGimbalCover'] }}</td>
+        </tr>
+        <tr>
+            <td class="labels">4</td>
+            <td class="labels" colspan="2">Remote Control</td>
+            <td>{{ task['arrivalChecklist']['qtyremoteControl'] }}</td>
+            <td>{{ task['arrivalChecklist']['arrRemoteControl'] }}</td>
+            <td>{{ task['arrivalChecklist']['dpRemoteControl'] }}</td>
+        </tr>
+        <tr>
+            <td class="labels">5</td>
+            <td class="labels" colspan="2">Joysticks</td>
+            <td>{{ task['arrivalChecklist']['qtyjoySticks'] }}</td>
+            <td>{{ task['arrivalChecklist']['arrJoySticks'] }}</td>
+            <td>{{ task['arrivalChecklist']['dpJoySticks'] }}</td>
+        </tr>
+        <tr>
+            <td class="labels">6</td>
+            <td class="labels" colspan="2">USB Cable C-type</td>
+            <td>{{ task['arrivalChecklist']['qtyusbCable'] }}</td>
+            <td>{{ task['arrivalChecklist']['arrUsbCable'] }}</td>
+            <td>{{ task['arrivalChecklist']['dpUsbCable'] }}</td>
+        </tr>
+        <tr>
+            <td class="labels">7</td>
+            <td class="labels" colspan="2">Connector cables</td>
+            <td>{{ task['arrivalChecklist']['qtyconnectorCables'] }}</td>
+            <td>{{ task['arrivalChecklist']['arrConnectorCables'] }}</td>
+            <td>{{ task['arrivalChecklist']['dpConnectorCables'] }}</td>
+        </tr>
+        <tr>
+            <td class="labels">8</td>
+            <td class="labels" colspan="2">Rugged case</td>
+            <td>{{ task['arrivalChecklist']['qtyruggedCase'] }}</td>
+            <td>{{ task['arrivalChecklist']['arrRuggedCase'] }}</td>
+            <td>{{ task['arrivalChecklist']['dpRuggedCase'] }}</td>
+        </tr>
+        <tr>
+            <td class="labels">9</td>
+            <td class="labels" colspan="2">Batteries</td>
+            <td>{{ task['arrivalChecklist']['qtybatteries'] }}</td>
+            <td>{{ task['arrivalChecklist']['arrBatteries'] }}</td>
+            <td>{{ task['arrivalChecklist']['dpBatteries'] }}</td>
+        </tr>
+        <tr>
+            <td class="labels">10</td>
+            <td class="labels" colspan="2">Battery charger</td>
+            <td>{{ task['arrivalChecklist']['qtybatteryCharger'] }}</td>
+            <td>{{ task['arrivalChecklist']['arrBatteryCharger'] }}</td>
+            <td>{{ task['arrivalChecklist']['dpBatteryCharger'] }}</td>
+        </tr>
+        <tr>
+            <td class="labels">11</td>
+            <td class="labels" colspan="2">Car battery charger</td>
+            <td>{{ task['arrivalChecklist']['qtycarBattery'] }}</td>
+            <td>{{ task['arrivalChecklist']['arrCarBattery'] }}</td>
+            <td>{{ task['arrivalChecklist']['dpCarBattery'] }}</td>
+        </tr>
+        <tr>
+            <td class="labels">12</td>
+            <td class="labels" colspan="2">Explosive Proof Battery Bag</td>
+            <td>{{ task['arrivalChecklist']['qtyePBatteryBag'] }}</td>
+            <td>{{ task['arrivalChecklist']['arrEpBatteryBag'] }}</td>
+            <td>{{ task['arrivalChecklist']['dpEpBatteryBag'] }}</td>
+        </tr>
+        <tr>
+            <td class="labels">13</td>
+            <td class="labels" colspan="2">Two-way radios</td>
+            <td>{{ task['arrivalChecklist']['qtytwoWayRadio'] }}</td>
+            <td>{{ task['arrivalChecklist']['arrTwoWayRadio'] }}</td>
+            <td>{{ task['arrivalChecklist']['dpTwoWayRadio'] }}</td>
+        </tr>
+        <tr>
+            <td class="labels">14</td>
+            <td class="labels" colspan="2">Loudspeaker</td>
+            <td>{{ task['arrivalChecklist']['qtyloudSpeaker'] }}</td>
+            <td>{{ task['arrivalChecklist']['arrLoudSpeaker'] }}</td>
+            <td>{{ task['arrivalChecklist']['dpLoudSpeaker'] }}</td>
+        </tr>
+        <tr>
+            <td class="labels">15</td>
+            <td class="labels" colspan="2">Light Beacon</td>
+            <td>{{ task['arrivalChecklist']['qtylightBeacon'] }}</td>
+            <td>{{ task['arrivalChecklist']['arrLightBeacon'] }}</td>
+            <td>{{ task['arrivalChecklist']['dpLightBeacon'] }}</td>
+        </tr>
+        <tr>
+            <td class="labels">16</td>
+            <td class="labels" colspan="2">Flashlight</td>
+            <td>{{ task['arrivalChecklist']['qtyflashlight'] }}</td>
+            <td>{{ task['arrivalChecklist']['arrFlashlight'] }}</td>
+            <td>{{ task['arrivalChecklist']['dpFlashlight'] }}</td>
+        </tr>
+        <tr>
+            <td class="labels">17</td>
+            <td class="labels" colspan="2">Landing pad</td>
+            <td>{{ task['arrivalChecklist']['qtylandingPad'] }}</td>
+            <td>{{ task['arrivalChecklist']['arrLandingPad'] }}</td>
+            <td>{{ task['arrivalChecklist']['dpLandingPad'] }}</td>
+        </tr>
+        <tr>
+            <td class="labels">18</td>
+            <td class="labels" colspan="2">Cones</td>
+            <td>{{ task['arrivalChecklist']['qtycones'] }}</td>
+            <td>{{ task['arrivalChecklist']['arrCones'] }}</td>
+            <td>{{ task['arrivalChecklist']['dpCones'] }}</td>
+        </tr>
+        <tr>
+            <td class="labels">19</td>
+            <td class="labels" colspan="2">Cordoning Tape</td>
+            <td>{{ task['arrivalChecklist']['qtycordoningTape'] }}</td>
+            <td>{{ task['arrivalChecklist']['arrCordoningTape'] }}</td>
+            <td>{{ task['arrivalChecklist']['dpCordoningTape'] }}</td>
+        </tr>
+        <tr>
+            <td class="labels">20</td>
+            <td class="labels" colspan="2">Chairs</td>
+            <td>{{ task['arrivalChecklist']['qtychairs'] }}</td>
+            <td>{{ task['arrivalChecklist']['arrChairs'] }}</td>
+            <td>{{ task['arrivalChecklist']['dpChairs'] }}</td>
+        </tr>
+        <tr>
+            <td class="labels">21</td>
+            <td class="labels" colspan="2">Tables</td>
+            <td>{{ task['arrivalChecklist']['qtytables'] }}</td>
+            <td>{{ task['arrivalChecklist']['arrTables'] }}</td>
+            <td>{{ task['arrivalChecklist']['dpTables'] }}</td>
+        </tr>
+        <tr>
+            <td class="labels">22</td>
+            <td class="labels" colspan="2">Tent</td>
+            <td>{{ task['arrivalChecklist']['qtyfullRPA'] }}</td>
+            <td>{{ task['arrivalChecklist']['arrFullRPA'] }}</td>
+            <td>{{ task['arrivalChecklist']['dpFullRPA'] }}</td>
+        </tr>
+        <tr>
+            <td class="labels">23</td>
+            <td class="labels" colspan="2">Fire Extinguisher</td>
+            <td>{{ task['arrivalChecklist']['qtyfullRPA'] }}</td>
+            <td>{{ task['arrivalChecklist']['arrFullRPA'] }}</td>
+            <td>{{ task['arrivalChecklist']['dpFullRPA'] }}</td>
+        </tr>
+        <tr>
+            <td></td>
+            <td colspan="2"></td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h1 style="page-break-before: always;">Departure Checklist Form</h1>
+
+    <table>
+      <tbody>
+        <tr>
+          <td class="labels">Date</td>
+          <td colspan="5">{{ task['flightAuth']['_doc']['date'] }}</td>
+        </tr>
+        <tr>
+          <td class="labels">Dispatched By</td>
+          <td colspan="2">{{ task['departureChecklist']['dispatchedByUser'] }}</td>
+          <td class="labels">Signature</td>
+          {% if task['departureChecklist']['_doc']['dispatchedBySignature'] == True %}
+          <td>APPROVED</td>
+          {% endif %}
+          {% if task['departureChecklist']['_doc']['dispatchedBySignature'] == False %}
+            <td>PENDING</td>
+          {% endif %}
+        </tr>
+        <tr>
+          <td class="labels">Dispatched To</td>
+          <td colspan="2">{{ task['departureChecklist']['dispatchedToUser'] }}</td>
+          <td class="labels">Signature</td>
+          {% if task['departureChecklist']['_doc']['dispatchedToSignature'] == True %}
+          <td>APPROVED</td>
+          {% endif %}
+          {% if task['departureChecklist']['_doc']['dispatchedToSignature'] == False %}
+            <td>PENDING</td>
+          {% endif %}
+        </tr>
+        <tr>
+          <td class="labels">Destination</td>
+          <td colspan="5">{{ task['departureChecklist']['_doc']['destination'] }}</td>
+        </tr>
+        <tr>
+          <td colspan="5"></td>
+          <td></td>
+        </tr>
+
+        <tr>
+          <td class="labels"></td>
+          <td class="labels" colspan="2"><strong>ITEM</strong></td>
+          <td class="labels"><strong>QTY</strong></td>
+          <td class="labels"><strong>CONDITION IN</strong></td>
+          <td class="labels"><strong>CONDITION OUT</strong></td>
+        </tr>
+        <tr>
+          <td class="labels">1</td>
+          <td class="labels" colspan="2">Full RPA with all components</td>
+            <td>{{ task['departureChecklist']['_doc']['dcqtyfullRPA'] }}</td>
+            <td>{{ task['departureChecklist']['_doc']['ciFullRPA'] }}</td>
+            <td>{{ task['departureChecklist']['_doc']['coFullRPA'] }}</td>
+        </tr>
+        <tr>
+          <td class="labels">2</td>
+          <td class="labels" colspan="2">Spare propellers</td>
+            <td>{{ task['departureChecklist']['_doc']['dcqtysparePropellers'] }}</td>
+            <td>{{ task['departureChecklist']['_doc']['ciSparePropellers'] }}</td>
+            <td>{{ task['departureChecklist']['_doc']['coSparePropellers'] }}</td>
+        </tr>
+        <tr>
+          <td class="labels">3</td>
+          <td class="labels" colspan="2">Gimbal Cover</td>
+            <td>{{ task['departureChecklist']['_doc']['dcqtygimbalCover'] }}</td>
+            <td>{{ task['departureChecklist']['_doc']['ciGimbalCover'] }}</td>
+            <td>{{ task['departureChecklist']['_doc']['coGimbalCover'] }}</td>
+        </tr>
+        <tr>
+          <td class="labels">4</td>
+          <td class="labels" colspan="2">Remote Control</td>
+            <td>{{ task['departureChecklist']['_doc']['dcqtyremoteControl'] }}</td>
+            <td>{{ task['departureChecklist']['_doc']['ciRemoteControl'] }}</td>
+            <td>{{ task['departureChecklist']['_doc']['coRemoteControl'] }}</td>
+        </tr>
+        <tr>
+          <td class="labels">5</td>
+          <td class="labels" colspan="2">Joysticks</td>
+            <td>{{ task['departureChecklist']['_doc']['dcqtyjoySticks'] }}</td>
+            <td>{{ task['departureChecklist']['_doc']['ciJoySticks'] }}</td>
+            <td>{{ task['departureChecklist']['_doc']['coJoySticks'] }}</td>
+        </tr>
+        <tr>
+          <td class="labels">6</td>
+          <td class="labels" colspan="2">USB Cable C-type</td>
+            <td>{{ task['departureChecklist']['_doc']['dcqtyusbCable'] }}</td>
+            <td>{{ task['departureChecklist']['_doc']['ciUsbCable'] }}</td>
+            <td>{{ task['departureChecklist']['_doc']['coUsbCable'] }}</td>
+        </tr>
+        <tr>
+          <td class="labels">7</td>
+          <td class="labels" colspan="2">Connector cables</td>
+            <td>{{ task['departureChecklist']['_doc']['dcqtyconnectorCables'] }}</td>
+            <td>{{ task['departureChecklist']['_doc']['ciConnectorCables'] }}</td>
+            <td>{{ task['departureChecklist']['_doc']['coConnectorCables'] }}</td>
+        </tr>
+        <tr>
+          <td class="labels">8</td>
+          <td class="labels" colspan="2">Rugged case</td>
+            <td>{{ task['departureChecklist']['_doc']['dcqtyruggedCase'] }}</td>
+            <td>{{ task['departureChecklist']['_doc']['ciRuggedCase'] }}</td>
+            <td>{{ task['departureChecklist']['_doc']['coRuggedCase'] }}</td>
+        </tr>
+        <tr>
+          <td class="labels">9</td>
+          <td class="labels" colspan="2">Batteries</td>
+            <td>{{ task['departureChecklist']['_doc']['dcqtybatteries'] }}</td>
+            <td>{{ task['departureChecklist']['_doc']['ciBatteries'] }}</td>
+            <td>{{ task['departureChecklist']['_doc']['coBatteries'] }}</td>
+        </tr>
+        <tr>
+          <td class="labels">10</td>
+          <td class="labels" colspan="2">Battery charger</td>
+            <td>{{ task['departureChecklist']['_doc']['dcqtybatteryCharger'] }}</td>
+            <td>{{ task['departureChecklist']['_doc']['ciBatteryCharger'] }}</td>
+            <td>{{ task['departureChecklist']['_doc']['coBatteryCharger'] }}</td>
+        </tr>
+        <tr>
+          <td class="labels">11</td>
+          <td class="labels" colspan="2">Car battery charger</td>
+            <td>{{ task['departureChecklist']['_doc']['dcqtycarBattery'] }}</td>
+            <td>{{ task['departureChecklist']['_doc']['ciCarBattery'] }}</td>
+            <td>{{ task['departureChecklist']['_doc']['coCarBattery'] }}</td>
+        </tr>
+        <tr>
+          <td class="labels">12</td>
+          <td class="labels" colspan="2">Explosive Proof Battery Bag</td>
+            <td>{{ task['departureChecklist']['_doc']['dcqtyePBatteryBag'] }}</td>
+            <td>{{ task['departureChecklist']['_doc']['ciEpBatteryBag'] }}</td>
+            <td>{{ task['departureChecklist']['_doc']['coEpBatteryBag'] }}</td>
+        </tr>
+        <tr>
+          <td class="labels">13</td>
+          <td class="labels" colspan="2">Two-way radios</td>
+            <td>{{ task['departureChecklist']['_doc']['dcqtytwoWayRadio'] }}</td>
+            <td>{{ task['departureChecklist']['_doc']['ciTwoWayRadio'] }}</td>
+            <td>{{ task['departureChecklist']['_doc']['coTwoWayRadio'] }}</td>
+        </tr>
+        <tr>
+          <td class="labels">14</td>
+          <td class="labels" colspan="2">Loudspeaker</td>
+            <td>{{ task['departureChecklist']['_doc']['dcqtyloudSpeaker'] }}</td>
+            <td>{{ task['departureChecklist']['_doc']['ciLoudSpeaker'] }}</td>
+            <td>{{ task['departureChecklist']['_doc']['coLoudSpeaker'] }}</td>
+        </tr>
+        <tr>
+          <td class="labels">15</td>
+          <td class="labels" colspan="2">Light Beacon</td>
+            <td>{{ task['departureChecklist']['_doc']['dcqtylightBeacon'] }}</td>
+            <td>{{ task['departureChecklist']['_doc']['ciLightBeacon'] }}</td>
+            <td>{{ task['departureChecklist']['_doc']['coLightBeacon'] }}</td>
+        </tr>
+        <tr>
+          <td class="labels">16</td>
+          <td class="labels" colspan="2">Flashlight</td>
+            <td>{{ task['departureChecklist']['_doc']['dcqtyflashlight'] }}</td>
+            <td>{{ task['departureChecklist']['_doc']['ciFlashlight'] }}</td>
+            <td>{{ task['departureChecklist']['_doc']['coFlashlight'] }}</td>
+        </tr>
+        <tr>
+          <td class="labels">17</td>
+          <td class="labels" colspan="2">Landing pad</td>
+            <td>{{ task['departureChecklist']['_doc']['dcqtylandingPad'] }}</td>
+            <td>{{ task['departureChecklist']['_doc']['ciLandingPad'] }}</td>
+            <td>{{ task['departureChecklist']['_doc']['coLandingPad'] }}</td>
+        </tr>
+        <tr>
+          <td class="labels">18</td>
+          <td class="labels" colspan="2">Cones</td>
+            <td>{{ task['departureChecklist']['_doc']['dcqtycones'] }}</td>
+            <td>{{ task['departureChecklist']['_doc']['ciCones'] }}</td>
+            <td>{{ task['departureChecklist']['_doc']['coCones'] }}</td>
+        </tr>
+        <tr>
+          <td class="labels">19</td>
+          <td class="labels" colspan="2">Cordoning Tape</td>
+            <td>{{ task['departureChecklist']['_doc']['dcqtycordoningTape'] }}</td>
+            <td>{{ task['departureChecklist']['_doc']['ciCordoningTape'] }}</td>
+            <td>{{ task['departureChecklist']['_doc']['coCordoningTape'] }}</td>
+        </tr>
+        <tr>
+          <td class="labels">20</td>
+          <td class="labels" colspan="2">Chairs</td>
+            <td>{{ task['departureChecklist']['_doc']['dcqtychairs'] }}</td>
+            <td>{{ task['departureChecklist']['_doc']['ciChairs'] }}</td>
+            <td>{{ task['departureChecklist']['_doc']['coChairs'] }}</td>
+        </tr>
+        <tr>
+          <td class="labels">21</td>
+          <td class="labels" colspan="2">Tables</td>
+            <td>{{ task['departureChecklist']['_doc']['dcqtytables'] }}</td>
+            <td>{{ task['departureChecklist']['_doc']['ciTables'] }}</td>
+            <td>{{ task['departureChecklist']['_doc']['coTables'] }}</td>
+        </tr>
+        <tr>
+          <td class="labels">22</td>
+          <td class="labels" colspan="2">Tent</td>
+            <td>{{ task['departureChecklist']['_doc']['qtyfullRPA'] }}</td>
+            <td>{{ task['departureChecklist']['_doc']['arrFullRPA'] }}</td>
+            <td>{{ task['departureChecklist']['_doc']['dpFullRPA'] }}</td>
+        </tr>
+        <tr>
+          <td class="labels">23</td>
+          <td class="labels" colspan="2">Fire Extinguisher</td>
+            <td>{{ task['departureChecklist']['_doc']['qtyfullRPA'] }}</td>
+            <td>{{ task['departureChecklist']['_doc']['arrFullRPA'] }}</td>
+            <td>{{ task['departureChecklist']['_doc']['dpFullRPA'] }}</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td colspan="2"></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr rowspan="2">
+          <td class="labels">Notes</td>
+          <td colspan="5">{{ task['departureChecklist']['_doc']['dcNotes'] }}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h1 style="page-break-before: always;">Post-Flight Checklist Form</h1>
+
+    <table>
+      <tbody>
+        <tr>
+            <td class="labels">Date</td>
+            <td colspan="3">{{ task['flightAuth']['_doc']['date'] }}</td>
+        </tr>
+        <tr>
+            <td class="labels">PIC</td>
+            <td>{{ task['flightAuth']['faPicUser'] }}</td>
+            <td class="labels">Signature</td>
+            {% if task['postFlightChecklist']['postPicSignature'] == True %}
+              <td>APPROVED</td>
+            {% endif %}
+            {% if task['postFlightChecklist']['postPicSignature'] == False %}
+              <td>PENDING</td>
+            {% endif %}
+        </tr>
+        <tr>
+            <td colspan="3"><td>
+        </tr>
+        <tr>
+            <td class="labels"></td>
+            <td class="labels" colspan="2"><strong>ITEM</strong></td>
+            <td class="labels"><strong>CHECK</strong></td>
+        </tr>
+        <tr>
+            <td class="labels">1</td>
+            <td colspan="2">Fuselage/Frame is not damaged</td>
+            {% if task['postFlightChecklist']['postFuselage'] == True %}
+            <td>PASS</td>
+            {% endif %}
+            {% if task['postFlightChecklist']['postFuselage'] == False %}
+              <td>--</td>
+            {% endif %}
+        </tr>
+        <tr>
+            <td class="labels">2</td>
+            <td colspan="2">Propellers are good</td>
+            {% if task['postFlightChecklist']['postPropellers'] == True %}
+            <td>PASS</td>
+            {% endif %}
+            {% if task['postFlightChecklist']['postPropellers'] == False %}
+              <td>--</td>
+            {% endif %}
+        </tr>
+        <tr>
+            <td class="labels">3</td>
+            <td colspan="2">Gimbal is good and can move freely</td>
+            {% if task['postFlightChecklist']['postGimbal'] == True %}
+            <td>PASS</td>
+            {% endif %}
+            {% if task['postFlightChecklist']['postGimbal'] == False %}
+              <td>--</td>
+            {% endif %}
+        </tr>
+        <tr>
+            <td class="labels">4</td>
+            <td colspan="2">Motors are not damaged and can turm freely</td>
+            {% if task['postFlightChecklist']['postMotors'] == True %}
+            <td>PASS</td>
+            {% endif %}
+            {% if task['postFlightChecklist']['postMotors'] == False %}
+              <td>--</td>
+            {% endif %}
+        </tr>
+        <tr>
+            <td class="labels">5</td>
+            <td colspan="2">Obstacle Sensors are clean and free of obstructions</td>
+            {% if task['postFlightChecklist']['postObstacles'] == True %}
+            <td>PASS</td>
+            {% endif %}
+            {% if task['postFlightChecklist']['postObstacles'] == False %}
+              <td>--</td>
+            {% endif %}
+        </tr>
+        <tr>
+            <td class="labels">6</td>
+            <td colspan="2">Remote Control is not damaged</td>
+            {% if task['postFlightChecklist']['mapsnCharts'] == True %}
+            <td>PASS</td>
+            {% endif %}
+            {% if task['postFlightChecklist']['mapsnCharts'] == False %}
+              <td>--</td>
+            {% endif %}
+        </tr>
+        <tr>
+            <td class="labels">7</td>
+            <td colspan="2">Radios are functioning properly</td>
+            {% if task['postFlightChecklist']['postRadios'] == True %}
+            <td>PASS</td>
+            {% endif %}
+            {% if task['postFlightChecklist']['postRadios'] == False %}
+              <td>--</td>
+            {% endif %}
+        </tr>
+        <tr>
+            <td class="labels">8</td>
+            <td colspan="2">Accessories (if any) are functioning properly</td>
+            {% if task['postFlightChecklist']['postAccessories'] == True %}
+            <td>PASS</td>
+            {% endif %}
+            {% if task['postFlightChecklist']['postAccessories'] == False %}
+              <td>--</td>
+            {% endif %}
+        </tr>
+        <tr>
+            <td class="labels">9</td>
+            <td colspan="2">Captured data is satisfactory</td>
+            {% if task['postFlightChecklist']['postDataSatisfactory'] == True %}
+            <td>PASS</td>
+            {% endif %}
+            {% if task['postFlightChecklist']['postDataSatisfactory'] == False %}
+              <td>--</td>
+            {% endif %}
+        </tr>
+        <tr>
+            <td></td>
+            <td colspan="2"></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td></td>
+            <td colspan="2"></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td></td>
+            <td colspan="2"></td>
+            <td></td>
+        </tr>
+      </tbody>
+    </table>
+
+  </body>
+</html>

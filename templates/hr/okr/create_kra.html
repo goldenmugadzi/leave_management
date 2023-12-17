@@ -1,0 +1,194 @@
+{% extends "admin_layout.html" %} {% block content %}
+<div class="content-wrapper">
+  <div class="page-header">
+    <h3 class="page-title">
+      <span class="page-title-icon bg-primary text-white me-2">
+        <i class="menu-icon">
+            <span class="material-symbols-outlined mt-1">
+                straighten
+            </span>
+          </i>
+      </span>
+      Key Results Area
+    </h3>
+    <nav aria-label="breadcrumb">
+      <ul class="breadcrumb">
+        <li class="breadcrumb-item active" aria-current="page">
+        <a href="/hr/okr/okr-index" class="text-decoration-none">
+          <span></span>Back
+          <i
+            class="icon-sm text-primary align-middle"
+          >
+          <span class="material-symbols-outlined">
+            arrow_back
+          </span>
+        </i>
+    </a>
+        </li>
+      </ul>
+    </nav>
+</div>
+<div class="col-12 grid-margin stretch-card">
+    <div class="card">
+      <div class="card-body">
+        <h4 class="card-title">Create New KRA</h4>
+        <p class="card-description">Fill all required fields</p>
+        <form
+          method="post"
+          action="/hr/okr/keyresults/create"
+          enctype="multipart/form-data"
+          role="form text-left"
+        >
+          {% csrf_token %}
+          <input type="hidden" name="objective_id" value="{{objective_id}}" />
+          <div class="mb-3">
+            <label for="description" class="form-label">Description</label>
+            <input
+              type="text"
+              name="description"
+              class="form-control"
+              placeholder="Description"
+              aria-label="Description"
+            />
+          </div>
+          <div class="mb-3">
+            <label for="unit" class="form-label">Unit</label>
+            <input
+              type="text"
+              name="unit"
+              class="form-control"
+              placeholder="unit"
+              aria-label="unit"
+            />
+          </div>
+          <div class="mb-3">
+            <label for="actual_value" class="form-label">Actual Value</label>
+            <input
+              type="text"
+              name="actual_value"
+              class="form-control"
+              placeholder="Actual Value"
+              aria-label="Actual Value"
+            />
+          </div>
+          <div class="mb-3">
+            <label for="target" class="form-label">Target</label>
+            <input
+              type="text"
+              name="target"
+              class="form-control"
+              placeholder="target"
+              aria-label="target"
+            />
+          </div>
+          <div class="mb-3">
+            <label for="variance" class="form-label">Variance</label>
+            <input
+              type="text"
+              name="variance"
+              class="form-control"
+              placeholder="variance"
+              aria-label="variance"
+            />
+          </div>
+          <div class="mb-3">
+            <label for="beginning_date" class="form-label">Start Date</label>
+            <input
+              type="date"
+              name="beginning_date"
+              class="form-control"
+              placeholder="Start Date"
+              aria-label="Start Date"
+            />
+          </div>
+          <div class="mb-3">
+            <label for="end_date" class="form-label">End Date</label>
+            <input
+              type="date"
+              name="end_date"
+              class="form-control"
+              placeholder="End Date"
+              aria-label="End Date"
+            />
+          </div>
+          <div class="mb-3">
+            <label for="remarks" class="form-label">Remarks</label>
+            <input
+              type="text"
+              name="remarks"
+              class="form-control"
+              placeholder="Remarks"
+              aria-label="Remarks"
+            />
+          </div>
+
+          <div class="text-center">
+            <div class="row">
+              <div class="col-6">
+                <a type="button" href="/hr/okr/keyresults/all-keyresults?i={{objective_id}}" class="btn btn-secondary w-100 my-4 mb-2">
+                  Cancel
+                </a>
+              </div>
+              <div class="col-6">
+                <button type="submit" class="btn btn-info w-100 my-4 mb-2">
+                  Submit
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </form>
+      </div>
+    </div>
+  
+  </div>
+<div class="modal" id="responseModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        {% if success == "true" %}
+        <h5 class="modal-title">SUCCESS</h5>
+        {% else %}
+        <h5 class="modal-title">FAILED</h5>
+        {% endif %}
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        {% if success == "true" %}
+        <div class="alert alert-success" role="alert">
+          Record created successfully
+        </div>
+        {% else %}
+        <div class="alert alert-danger" role="alert">
+          Failed to create record
+        </div>
+        {% endif %}
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-info" data-bs-dismiss="modal">OK</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock content %} 
+{% block js %}
+<script>
+  $(document).ready(function () {
+    var success = "{{success|safe}}"
+    console.log("response state: ", success);
+    if(success !== ""){
+      newClassModalOpen()
+    }
+
+    function newClassModalOpen() {
+      let myModal = new bootstrap.Modal(
+        document.getElementById("responseModal"),
+        {}
+      );
+      myModal.show();
+    };
+  
+  })
+</script>
+{% endblock js %}

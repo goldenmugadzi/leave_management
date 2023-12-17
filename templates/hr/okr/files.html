@@ -1,0 +1,141 @@
+{% extends "admin_layout.html" %} 
+
+{% block styles %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.2.0/css/bootstrap.min.css" />
+<link rel="stylesheet" href="https://cdn.datatables.net/1.12.1/css/dataTables.bootstrap5.min.css" />
+{% endblock styles %}
+
+{% block content %}
+<div class="content-wrapper">
+  <div class="page-header">
+    <h3 class="page-title">
+      <span class="page-title-icon bg-primary text-white me-2">
+        <i class="menu-icon">
+            <span class="material-symbols-outlined mt-1">
+                straighten
+            </span>
+          </i>
+      </span>
+      All Connections
+    </h3>
+    <nav aria-label="breadcrumb">
+      <ul class="breadcrumb">
+        <li class="breadcrumb-item active" aria-current="page">
+            <a href="/commercials/connections/connection/create" class="text-decoration-none">
+                <span></span>Create New Connection
+                <i
+                  class="icon-sm text-primary align-middle"
+                >
+                <span class="material-symbols-outlined">
+                  add
+                  </span>
+              </i>
+            </a>
+        </li>
+      </ul>
+    </nav>
+  </div>
+  <div class="col-12 grid-margin stretch-card">
+    <div class="card">
+      <div class="card-body">
+        <h4 class="card-title">All Connections</h4>
+        <p class="card-description">All Connections</p>
+        <table id="connections" class="table table-striped" style="width:100%">
+            <thead>
+              <tr>
+                <th>Account No.</th>
+                <th>Client</th>
+                <th>Depot</th>
+                <th>District</th>
+                <th>Date</th>
+                <th></th>
+                <th></th>
+              </tr>
+            </thead>
+            <tfoot>
+              <tr>
+                <th>Account No.</th>
+                <th>Client</th>
+                <th>Depot</th>
+                <th>District</th>
+                <th>Date</th>
+                <th></th>
+                <th></th>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock content %} {% block scripts %}
+<script src="https://code.jquery.com/jquery-3.5.1.js"></script>
+<script src="https://cdn.datatables.net/1.12.1/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.12.1/js/dataTables.bootstrap5.min.js"></script>
+<script>
+  console.log("incoming ... ")
+  var objs = JSON.parse("{{context|escapejs}}");
+  
+  var isCreator = "{{is_creator|escapejs}}";
+  console.log("is creator: ", isCreator);
+  let list = [];
+  objs.forEach((element, index) => {
+    let o = {
+      enquiry_no: element.fields.enquiry_number,
+      name: element.fields.name,
+      depot: element.fields.depot,
+      district: element.fields.district,
+      e21: element.fields.e21,
+      e22: element.fields.e22,
+      e25: element.fields.e25,
+      ex: element.fields.ex,
+      date: element.fields.created_at,
+    };
+
+    list.push(o);
+  });
+
+  $(document).ready(function () {
+    $("#connections").DataTable({
+      scrollX: true,
+      data: list,
+      columns: [
+        {
+          data: "enquiry_no",
+        },
+        {
+          data: "name",
+          width: 200,
+        },
+        {
+          data: "depot",
+        },
+        {
+          data: "district",
+        },
+        {
+          data: "date",
+        },
+        {
+          data: null,
+          render: function (data, type, row, meta) {
+            return `<a class="btn btn-link btn-fw" href="/commercials/connections/connection/forms/download?i=${row.enquiry_no}">Attachments</a>`;
+          },
+        },
+        {
+          data: null,
+          render: function (data, type, row, meta) {
+            return isCreator == "True"? `
+                <a type="button" class="btn btn-outline-secondary" href='/commercials/connections/connection/edit?i=${row.enquiry_no}' >
+                  <div class="d-flex justify-content-center"><i class="mdi mdi-table-edit"></i></div>
+                </a>
+                <a type="button" class="btn btn-outline-danger" href='/commercials/connections/connection/delete?i=${row.enquiry_no}' >
+                  <i class="mdi mdi-delete"></i>
+                </a>`: "";
+          },
+        },
+      ],
+    });
+  });
+</script>
+{% endblock scripts %}

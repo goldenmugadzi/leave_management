@@ -1,0 +1,134 @@
+<!--users/templates/users/add_user.html-->
+{% extends 'admin_layout.html' %}
+{% block styles %}
+
+{% endblock styles %}
+{% block content %}
+<div class="content-wrapper">
+  <div class="page-header">
+    <h3 class="page-title">
+      <span class="page-title-icon bg-primary text-white me-2">
+        <i class="menu-icon">
+            <span class="material-symbols-outlined mt-1">
+                straighten
+            </span>
+          </i>
+      </span>
+      Reticulations
+    </h3>
+    <nav aria-label="breadcrumb">
+      <ul class="breadcrumb">
+        <li class="breadcrumb-item active" aria-current="page">
+        <a href="/network-development/reticulations" class="text-decoration-none">
+          <span></span>Back
+          <i
+            class="icon-sm text-primary align-middle"
+          >
+          <span class="material-symbols-outlined">
+            arrow_back
+          </span>
+        </i>
+    </a>
+        </li>
+      </ul>
+    </nav>
+</div>
+<div class="col-12 grid-margin stretch-card">
+
+  <div class="card">
+    <div class="card-body">
+      <h4 class="card-title">Create Planning Design Record</h4>
+      <p class="card-description">Fill all required fields</p>
+      <form action="/network-development/reticulations/principal_technician/create" method="post" enctype="multipart/form-data" class="forms-sample">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="item">Design Item</label>
+            <select name="item" class="form-control" id="item">
+              <option>Select Design Item</option>
+              {% for item in items %}
+                <option value="{{ item.pk }}">{{ item.design_details }}</option>
+              {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+          <label for="paper_size">Paper Size</label>
+          <input
+            type="text"
+            class="form-control"
+            id="paper_size"
+            name="paper_size"
+            placeholder="Paper Size"
+          />
+        </div>
+        <div class="form-group">
+          <label for="design_comments">Comments</label>
+          <input
+            type="text"
+            class="form-control"
+            id="design_comments"
+            name="design_comments"
+            placeholder="Comments"
+          />
+        </div>
+        <div class="form-group">
+            <label for="design_assigned_to">Draughts Person</label>
+            <select name="design_assigned_to" class="form-control" id="design_assigned_to">
+              <option>Select Draughts Person</option>
+              {% for technician in technicians %}
+                <option value="{{ technician.pk }}">{{ technician.username }}</option>
+              {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="design_scheduled_start_date">Scheduled Start</label>
+            <input
+              type="date"
+              class="form-control"
+              id="design_scheduled_start_date"
+              name="design_scheduled_start_date"
+            />
+        </div>
+        <div class="form-group">
+            <label for="design_scheduled_completion_date">Scheduled Completion</label>
+            <input
+              type="date"
+              class="form-control"
+              id="design_scheduled_completion_date"
+              name="design_scheduled_completion_date"
+            />
+        </div>
+          <div class="row">
+            {% if item.design_status == "COMPLETE"  and item.stage == 5 %}
+            <div class="col-4">
+              <a href="/network-development/reticulations" class="btn btn-light w-100">Cancel</a>
+            </div>
+            <div class="col-4">
+                <button name="reject" value="reject" type="submit" class="btn btn-danger me-2 w-100">
+                    REJECT
+                </button>
+            </div>
+            <div class="col-4">
+              <button name="approve" value="approve" type="submit" class="btn btn-info me-2 w-100">
+                  APPROVE
+              </button>
+          </div>
+            {% else %}
+            <div class="col-6">
+                <a href="/network-development/reticulations" class="btn btn-light w-100">Cancel</a>
+            </div>
+            <div class="col-6">
+                <button type="submit" class="btn btn-info me-2 w-100">
+                    Submit
+                </button>
+            </div>
+            {% endif %}
+          </div>
+      </form>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %} 
+{% endblock scripts %}

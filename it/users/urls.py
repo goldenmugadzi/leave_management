@@ -1,0 +1,12 @@
+from django.urls import path
+
+from . import views
+
+urlpatterns = [
+    path('users-index', views.get_user_records, name='index_user'),
+    path('user/create', views.add_user, name='user_create'),
+    path('user/update', views.update_user, name='user_update'),
+    path('user/groups', views.get_user_all_groups, name='get_user_all_groups'),
+    path('user/delete', views.delete_user, name='user_delete'),
+    path('user/reset', views.change_user_password, name='user_reset'),
+]

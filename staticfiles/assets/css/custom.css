@@ -1,0 +1,17 @@
+.navbar .navbar-brand-wrapper .navbar-brand img {
+    width: auto;
+    height: auto;
+}
+
+.sidebar .nav .nav-item.active > .nav-link i {
+    color: #1434C4;
+}
+
+.sidebar .nav .nav-item.active > .nav-link .menu-title {
+    color: #1434C4;
+}
+
+.btn-primary:not(.btn-light):focus, .btn-primary:not(.btn-light):active {
+    background: #4F7297 !important;
+    border-color: #4F7297 !important;
+}

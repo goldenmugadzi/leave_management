@@ -1,0 +1,147 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <link href="invoice.css" media="print" rel="stylesheet" />
+    <title>Flight Authorization</title>
+    <meta name="description" content="Invoice demo sample" />
+
+    <style>
+      @font-face {
+        font-family: Pacifico;
+        src: url(pacifico.ttf);
+      }
+      @font-face {
+        font-family: Source Sans Pro;
+        font-weight: 400;
+        src: url(sourcesanspro-regular.otf);
+      }
+      @font-face {
+        font-family: Source Sans Pro;
+        font-weight: 700;
+        src: url(sourcesanspro-bold.otf);
+      }
+
+      @page {
+        font-family: Pacifico;
+        margin: 1.5cm;
+        @bottom-left {
+          color: #3575B8;
+          content: "Business Excellence";
+        }
+        @bottom-right {
+          color: #a9a;
+          content: "info@zetdc.co.zw | zetdc.co.zw";
+          font-size: 9pt;
+        }
+      }
+
+      html {
+        color: #14213d;
+        font-family: Source Sans Pro;
+        font-size: 11pt;
+        line-height: 1.5;
+      }
+      body {
+        margin: 0;
+      }
+
+      h1 {
+        color: #3575B8;
+        font-family: Pacifico;
+        font-size: 14pt;
+      }
+
+      table {
+        border: 1px solid black;
+        border-collapse: collapse;
+        width: 100%;
+      }
+      td {
+        padding: 4mm;
+        border: 1px solid black;
+      }
+
+      .labels {
+        background-color: #848482;
+      }
+
+    </style>
+  </head>
+
+  <body>
+    <h1>Flight Authorization Form</h1>
+
+    <table>
+      <tbody>
+        <tr style="background-color: #3575B8;">
+          <td colspan="3">Task</td>
+        </tr>
+        <tr>
+            <td>Date</td>
+            <td>Location</td>
+            <td>RPAS System</td>
+        </tr>
+        <tr>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>Task Description</td>
+            <td colspan="2"></td>
+        </tr>
+        <tr>
+            <td>PIC</td>
+            <td>Second RP</td>
+            <td>Observer/Crew</td>
+        </tr>
+        <tr>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <table style="margin-top: 10mm">
+        <tbody>
+          <tr style="background-color: #3575B8;">
+            <td colspan="3">Operation Details</td>
+          </tr>
+          <tr>
+              <td>Local Area Frequency</td>
+              <td>Emergency Numbers</td>
+              <td></td>
+          </tr>
+          <tr>
+              <td></td>
+              <td></td>
+              <td></td>
+          </tr>
+          <tr>
+              <td>Notes (special operation procedures, permissions, etc.)</td>
+              <td colspan="2"></td>
+          </tr>
+        </tbody>
+    </table>
+
+    <table style="margin-top: 10mm">
+        <tbody>
+          <tr style="background-color: #3575B8;">
+            <td colspan="3">Flight Authorization</td>
+          </tr>
+          <tr>
+              <td>Chief Remote Pilot</td>
+              <td></td>
+              <td></td>
+          </tr>
+          <tr>
+              <td>PIC</td>
+              <td></td>
+              <td></td>
+          </tr>
+        </tbody>
+    </table>
+
+  </body>
+</html>

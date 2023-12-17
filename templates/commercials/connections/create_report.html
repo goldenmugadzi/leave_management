@@ -1,0 +1,110 @@
+{% extends "admin_layout.html" %} {% block content %}
+<div class="content-wrapper">
+  <div class="page-header">
+    <h3 class="page-title">
+      <span class="page-title-icon bg-primary text-white me-2">
+        <i class="menu-icon">
+            <span class="material-symbols-outlined mt-1">
+                straighten
+            </span>
+          </i>
+      </span>
+      Select Report Period
+    </h3>
+    <nav aria-label="breadcrumb">
+      <ul class="breadcrumb">
+        <li class="breadcrumb-item active" aria-current="page">
+        <a href="/commercials/connections" class="text-decoration-none">
+          <span></span>Back
+          <i
+            class="icon-sm text-primary align-middle"
+          >
+          <span class="material-symbols-outlined">
+            arrow_back
+          </span>
+        </i>
+    </a>
+        </li>
+      </ul>
+    </nav>
+</div>
+<div class="col-12 grid-margin stretch-card">
+    <div class="card">
+      <div class="card-body">
+        <form
+          method="post"
+          action="/commercials/connections/reports/create"
+          enctype="multipart/form-data"
+          role="form text-left"
+        >
+          {% csrf_token %}
+          {% comment %} <div class="mb-3" id="region">
+            <label for="region" class="form-label">Filter By Region</label>
+            <select id="region" class="form-select" name="region" aria-label="">
+              <option selected>Select Region</option>
+              <option value="1">Harare Region</option>
+              <option value="2">East Region</option>
+              <option value="3">South Region</option>
+              <option value="4">West Region</option>
+            </select>
+          </div>
+          <div class="mb-3" id="district">
+            <label for="district" class="form-label">Filter By District</label>
+            <select id="district" class="form-select" name="district" aria-label="">
+              <option selected>Select District</option>
+              <option value="524501">North</option>
+              <option value="524701">East</option>
+              <option value="524601">South</option>
+              <option value="524401">Chitungwiza</option>
+            </select>
+          </div>
+          <div class="mb-3" id="depot">
+            <label for="depot" class="form-label">Filter By Depot</label>
+            <select id="depot" class="form-select" name="depot" aria-label="">
+              <option selected>Select Depot</option>
+              <option value="524402">Makoni Depot</option>
+              <option value="524403">Zengeza Depot</option>
+              <option value="524502">Kuwadzana Depot</option>
+              <option value="524503">Mabelreign Depot</option>
+              <option value="524504">Warren Park Depot</option>
+              <option value="524602">Glen View Depot</option>
+              <option value="524603">Waterfalls Depot</option>
+              <option value="524604">Southerton Depot</option>
+              <option value="524702">CBD Depot</option>
+              <option value="524703">Borrowdale Depot</option>
+              <option value="524704">Mabvuku Depot</option>
+              <option value="524705">Ruwa Depot</option>
+              <option value="000000">Seke Depot</option>
+            </select>
+          </div> {% endcomment %}
+          <div class="mb-3" id="start_date">
+            <label for="start_date" class="form-label">Start Date</label>
+            <input id="start_date" name="start_date" class="form-control" type="date" />
+          </div>
+          <div class="mb-3" id="end_date">
+            <label for="end_date" class="form-label">End Date</label>
+            <input id="end_date" name="end_date" class="form-control" type="date" />
+          </div>
+
+          <div class="text-center">
+            <div class="row">
+              <div class="col-6">
+                <a type="button" href="/commercials/connections/all-connections" class="btn btn-secondary w-100 my-4 mb-2">
+                  Cancel
+                </a>
+              </div>
+              <div class="col-6">
+                <button type="submit" class="btn btn-info w-100 my-4 mb-2">
+                  Submit
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </form>
+      </div>
+    </div>
+  
+  </div>
+  {% endblock content %}
+

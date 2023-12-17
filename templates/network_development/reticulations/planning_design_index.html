@@ -1,0 +1,237 @@
+<!--users/templates/quotations/index.html-->
+{% extends 'admin_layout.html' %}
+{% block styles %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.2.0/css/bootstrap.min.css" />
+<link rel="stylesheet" href="https://cdn.datatables.net/1.12.1/css/dataTables.bootstrap5.min.css" />
+{% endblock styles %}
+{% block content %}
+<div class="content-wrapper">
+  <div class="page-header">
+    <h3 class="page-title">
+      <span class="page-title-icon bg-primary text-white me-2">
+        <i class="menu-icon">
+            <span class="material-symbols-outlined mt-1">
+                straighten
+            </span>
+          </i>
+      </span>
+      Reticulations
+    </h3>
+    <nav aria-label="breadcrumb">
+      <ul class="breadcrumb">
+        <li class="breadcrumb-item active" aria-current="page">
+        </li>
+      </ul>
+    </nav>
+  </div>
+  <div class="col-12 grid-margin stretch-card">
+    <div class="card">
+      <div class="card-body">
+        <h4 class="card-title">Reticulations</h4>
+        <p class="card-description">All Reticulations</p>
+        <table id="planning_design" class="table table-striped" style="width:100%">
+            <thead>
+                <tr>
+                    <th>Approved Layout Plan</th>
+                    <th>Development Permit</th>
+                    <th>Proof Of Land Title</th>
+                    <th>Draft Design</th>
+                    <th>Design Details</th>
+                    <th>Feeding Substation</th>
+                    <th>Scheduled Start</th>
+                    <th>Actual Start</th>
+                    <th>Scheduled Completion</th>
+                    <th>Actual Completion</th>
+                    <th>Duration</th>
+                    <th>Planning Technician</th>
+                    <th>Comments</th>
+                    <th>STATUS</th>
+                    <th>STAGE</th>
+                    <th>APPROVAL</th>
+                    <th>ACTION</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+            <tfoot>
+                <tr>
+                    <th>Approved Layout Plan</th>
+                    <th>Development Permit</th>
+                    <th>Proof Of Land Title</th>
+                    <th>Draft Design</th>
+                    <th>Design Details</th>
+                    <th>Feeding Substation</th>
+                    <th>Scheduled Start</th>
+                    <th>Actual Start</th>
+                    <th>Scheduled Completion</th>
+                    <th>Actual Completion</th>
+                    <th>Duration</th>
+                    <th>Principal Technician</th>
+                    <th>Comments</th>
+                    <th>STATUS</th>
+                    <th>STAGE</th>
+                    <th>APPROVAL</th>
+                    <th>ACTION</th>
+                </tr>
+            </tfoot>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %} 
+<script src="https://code.jquery.com/jquery-3.5.1.js"></script>
+<script src="https://cdn.datatables.net/1.12.1/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.12.1/js/dataTables.bootstrap5.min.js"></script>
+<script>
+    var objs = JSON.parse("{{context|escapejs}}");
+    console.log(objs)
+    //var isCreator = "{{is_creator|escapejs}}";
+    //console.log("is creator: ", isCreator);
+    {% comment %} let list = [];
+    objs.forEach((element, index) => {
+      let o = {
+        id: element.pk,
+        layout_plan_doc: element.fields.layout_plan_doc,
+        dev_permit_doc: element.fields.dev_permit_doc,
+        land_title: element.fields.land_title,
+        design_draft_plan_path: element.fields.design_draft_plan_path,
+        design_details: element.fields.design_details,
+        feeding_substation: element.fields.feeding_substation,
+        design_draft_scheduled_start_date: element.fields.design_draft_scheduled_start_date,
+        design_draft_actual_start_date: element.fields.design_draft_actual_start_date || "",
+        design_draft_scheduled_completion_date: element.fields.design_draft_scheduled_completion_date,
+        design_draft_actual_completion_date: element.fields.design_draft_actual_completion_date || "",
+        design_draft_duration_days: element.fields.design_draft_duration_days,
+        design_draft_assigned_to: element.fields.design_draft_assigned_to,
+        design_draft_comments: element.fields.design_draft_comments,
+        design_draft_status: element.fields.design_draft_status,
+        design_stage: element.fields.design_stage,
+        design_planning_design_approval: element.fields.design_planning_design_approval,
+      };
+  
+      list.push(o);
+    }); {% endcomment %}
+  
+    $(document).ready(function () {
+        $('#planning_design').DataTable(
+          {
+            scrollX: true,
+            data: objs,
+            columns: [
+              {
+                data: "layout_plan_doc",
+                render: function (data, type, row, meta) {
+                  let component;
+                  if(data){
+                    component = `
+                    <a class="btn btn-link" href='/network-development/reticulations/download?f=${data}' >
+                      Download Layout
+                    </a>`
+                  } else {
+                    component = 'None'
+                  }
+                  return component;
+                },
+              },
+              {
+                data: "dev_permit_doc",
+                render: function (data, type, row, meta) {
+                  let component;
+                  if(data){
+                    component = `
+                    <a class="btn btn-link" href='/network-development/reticulations/download?f=${data}' >
+                      Download Permit
+                    </a>`
+                  } else {
+                    component = 'None'
+                  }
+                  return component;
+                },
+              },
+              {
+                data: "land_title",
+                render: function (data, type, row, meta) {
+                  let component;
+                  if(data){
+                    component = `
+                    <a class="btn btn-link" href='/network-development/reticulations/download?f=${data}' >
+                      Download Title
+                    </a>`
+                  } else {
+                    component = 'None'
+                  }
+                  return component;
+                },
+              },
+              {
+                data: "design_draft_plan_path",
+                render: function (data, type, row, meta) {
+                  let component;
+                  if(data){
+                    component = `
+                    <a class="btn btn-link" href='/network-development/reticulations/download?f=${data}' >
+                      Download Draft
+                    </a>`
+                  } else {
+                    component = 'None'
+                  }
+                  return component;
+                },
+              },
+              {
+                data: "design_details",
+              },
+              {
+                data: "feeding_substation",
+              },
+              {
+                data: "design_draft_scheduled_start_date",
+              },
+              {
+                data: "design_draft_actual_start_date",
+              },
+              {
+                data: "design_draft_scheduled_completion_date",
+              },
+              {
+                data: "design_draft_actual_completion_date",
+              },
+              {
+                data: "design_draft_duration_days",
+              },
+              {
+                data: "design_draft_assigned_to",
+              },
+              {
+                data: "design_draft_comments",
+              },
+              {
+                data: "design_draft_status",
+              },
+              {
+                data: "design_stage",
+              },
+              {
+                data: "design_planning_design_approval",
+              },
+              {
+                data: null,
+                render: function (data, type, row, meta) {
+                  return `
+                      <a type="button" class="btn btn-info" href='/network-development/reticulations/planning_design/update?i=${row.id}' >
+                        <span class="material-symbols-outlined">
+                            chevron_right
+                        </span>
+                      </a>`;
+                },
+              },
+            ],
+          }
+        );
+    });
+  </script>
+{% endblock scripts %}
