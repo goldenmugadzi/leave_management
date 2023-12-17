@@ -111,6 +111,7 @@ INSTALLED_APPS = [
     
     'it.beii_auth.apps.BeiiAuthConfig',
     'it.users.apps.UsersConfig',
+    'finance.Ace.apps.AceConfig',
     
     # 'finance.tenders.apps.TendersConfig',
     # 'engineering.reticulations.apps.ReticulationsConfig',
@@ -119,7 +120,7 @@ INSTALLED_APPS = [
     # 'hr.okr.apps.OkrConfig',
     # 'reports.beii_reports.apps.BeiiReportsConfig',
     # 'api.ops_maintenance.safety_operations.apps.SafetyOperationsConfig',
-    # 'Ace.apps.AceConfig',
+
     # 'miscellaneous.knowledge_center.apps.KnowledgeCenterConfig'
 ]
 
