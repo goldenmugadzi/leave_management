@@ -112,7 +112,7 @@ def create_Ace(request):
         "designation": user_designation,
     }
     user_title = request.user.get_full_name()
-    section_budget = Budget.objects.filter(section = section_used).all()
+    section_budget = Budget.objects.filter(section_code = section_used).all()
     print(section_budget)
     # l = request.user.groups.values_list('name', flat=True)
     # # QuerySet Object
@@ -557,7 +557,7 @@ def create_budget(request):
         # print(objectify)
         objectify.save()
 
-        return redirect('/Ace/budgets')
+        return redirect('/ace/budgets')
 
     else:
         user_title = request.user.get_full_name()
@@ -567,5 +567,88 @@ def create_budget(request):
                                                           "section_budget": section_budget})
 
 
-def list_budgets():
-    return None
+@login_required(login_url='/accounts/login/')
+def list_budgets(request):
+    user_id = request.user.id
+    user = User.objects.filter(id=user_id).first()
+    user_profile = UserProfile.objects.filter(user_id=user.pk).first()
+
+    user_groups = user.groups.values_list('name', flat=True)
+
+    custom_user_roles = {
+        "non_conformity": {},
+        "remittance_advice": {},
+        "pettycash": {},
+        "adjudication": {},
+        "tokens": {},
+        "tenders": {},
+        "ace": {},
+        "users": {},
+    }
+
+    user_group_ids = user_profile.roles
+    user_group_ids = user_group_ids.split(",") if user_group_ids else []
+    for id in user_group_ids:
+
+        role = Roles.objects.filter(id=id).first()
+
+        if role.application == "users":
+            custom_user_roles["users"] = role
+
+        if role.application == "non_conformity":
+            custom_user_roles["non_conformity"] = role
+
+        if role.application == "remittance_advice":
+            custom_user_roles["remittance_advice"] = role
+
+        if role.application == "pettycash":
+            custom_user_roles["pettycash"] = role
+
+        if role.application == "adjudication":
+            custom_user_roles["adjudication"] = role
+
+        if role.application == "tokens":
+            custom_user_roles["tokens"] = role
+
+        if role.application == "tenders":
+            custom_user_roles["tenders"] = role
+
+        if role.application == "ace":
+            custom_user_roles["ace"] = role
+
+    region = Regions.objects.filter(id=user_profile.region).first()
+    district = Districts.objects.filter(code=user_profile.district).first()
+    depot = Depots.objects.filter(code=user_profile.depot).first()
+    section_used = Sections.objects.filter(code=user_profile.section).first()
+    user_designation = Designations.objects.filter(id=user_profile.designation).first() if user_profile.designation else None
+
+    new_user = {
+        "id": user.pk,
+        "username": user.username,
+        "firstname": user.first_name,
+        "lastname": user.last_name,
+        "email": user.email,
+        "section": section_used,
+        "depot": depot,
+        "district": district,
+        "region": region,
+        "roles": custom_user_roles,
+        "designation": user_designation,
+    }
+    user_title = request.user.get_full_name()
+    print(section_used)
+    section_budget = Budget.objects.filter(section_code = section_used).all()
+    # print(section_budget)
+    user_title = request.user.get_full_name()
+    l = request.user.groups.values_list('name', flat=True)
+
+    # QuerySet Object
+    context = serializers.serialize('json', section_budget)
+
+    user_page = 'Ace/budgets_index.html'
+    print(context)
+
+    return render(request, user_page, {"title": "All Records",
+                                       "context": context,
+                                       "user_title": user_title,
+                                       "user_groups": user_groups})
