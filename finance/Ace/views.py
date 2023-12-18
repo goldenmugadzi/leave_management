@@ -529,8 +529,8 @@ def create_budget(request):
     user_designation = Designations.objects.filter(id=user_profile.designation).first() if user_profile.designation else None
 
     if request.method == "POST":
-        section_code =  section_used
-        section = request.POST["section"]
+        section_code =  request.POST["section_code"]
+        section = section_used
         budget_name = request.POST["budget_name"]
         allocated = request.POST["allocated"]
         period = request.POST["Period"]
