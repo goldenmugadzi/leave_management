@@ -113,7 +113,7 @@ def create_Ace(request):
     }
     user_title = request.user.get_full_name()
     section_budgets = Budget.objects.filter(section_code = section_used).all()
-    print(section_budgets)
+    # print(section_budgets)
     # l = request.user.groups.values_list('name', flat=True)
     # # QuerySet Object
     # user_groups = list(l)
@@ -124,11 +124,11 @@ def create_Ace(request):
 
     if request.method == "POST":
         department = request.POST['department']
-        location = request.POST['location']
+        location = district
         section = request.POST['section']
         # section = secction
         Details_of_Expenditure = request.POST['details_of_Expenditure']
-        Designation = request.POST['designation']
+        # Designation = request.POST['designation']
         amount = request.POST['amount']
         payment_mode = request.POST['payment_mode']
         # region = request.POST['region']
@@ -139,6 +139,15 @@ def create_Ace(request):
         payment_mode = request.POST['payment_mode']
         requested_by = request.user.username
         budget_id = request.POST['budget']
+        classification = request.POST['classification1']
+        present_tariff = request.POST['present_tariff']
+        present_fmc = request.POST['present_fmc']
+        capital_contribution = request.POST['capital_contribution']
+        materials = request.POST['materials']
+        connection_fee = request.POST['connection_fee']
+        labour = request.POST['labour']
+        transport = request.POST['transport']
+        total_connection_fee = present_tariff + materials + connection_fee + labour + transport
 
         # last_petty = Ace.objects.last()
         rand = randrange(1, 99)
@@ -149,6 +158,8 @@ def create_Ace(request):
         date = date.strftime("%Y%m%d")
 
         ace_id = "ACE" + date + rand2
+
+
 
         objectify = Ace(
             Department=department,
@@ -168,6 +179,15 @@ def create_Ace(request):
             budget_id =budget_id,
             designation = user_designation,
             region=region,
+            classification=classification,
+            present_tariff=present_tariff,
+            present_fmc=present_fmc,
+            capital_contribution=capital_contribution,
+            materials=materials,
+            connection_fee=connection_fee,
+            labour=labour,
+            transport=transport,
+            total_connection_fee=total_connection_fee,
         )
 
         objectify.save()
