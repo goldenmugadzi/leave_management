@@ -112,8 +112,8 @@ def create_Ace(request):
         "designation": user_designation,
     }
     user_title = request.user.get_full_name()
-    section_budget = Budget.objects.filter(section_code = section_used).all()
-    print(section_budget)
+    section_budgets = Budget.objects.filter(section_code = section_used).all()
+    print(section_budgets)
     # l = request.user.groups.values_list('name', flat=True)
     # # QuerySet Object
     # user_groups = list(l)
@@ -123,41 +123,51 @@ def create_Ace(request):
     # secction = user.section
 
     if request.method == "POST":
-        Department = request.POST['department']
+        department = request.POST['department']
         location = request.POST['location']
+        section = request.POST['section']
         # section = secction
-        allocation_code_of_expenditure = request.POST['allocation_code_of_expenditure']
-        details_of_expenditure = request.POST['details_of_expenditure']
+        Details_of_Expenditure = request.POST['details_of_Expenditure']
+        Designation = request.POST['designation']
         amount = request.POST['amount']
+        payment_mode = request.POST['payment_mode']
+        # region = request.POST['region']
         # form = UploadFileForm(request.POST, request.FILES)
         quotation1 = request.FILES['quotation1']
         quotation2 = request.FILES['quotation2']
         quotation3 = request.FILES['quotation3']
         payment_mode = request.POST['payment_mode']
         requested_by = request.user.username
+        budget_id = request.POST['budget']
 
         # last_petty = Ace.objects.last()
         rand = randrange(1, 99)
         rand2 = str(rand)
 
         date = datetime.now()
+        date_created = date
         date = date.strftime("%Y%m%d")
 
-        petty_id = "PC" + date + rand2
+        ace_id = "ACE" + date + rand2
 
         objectify = Ace(
-            Department=Department,
+            Department=department,
             location=location,
             section=section_used,
-            allocation_code_of_expenditure=allocation_code_of_expenditure,
-            details_of_expenditure=details_of_expenditure,
+            allocation_code_of_expenditure=section,
+            details_of_expenditure=Details_of_Expenditure,
             amount=amount,
             quotation1=quotation1,
             quotation2=quotation2,
             quotation3=quotation3,
             payment_mode=payment_mode,
             requested_by=requested_by,
-            petty_id=petty_id,
+            Ace_id2=ace_id,
+            date_created=date_created,
+            approval_status="created by " + requested_by,
+            budget_id =budget_id,
+            designation = user_designation,
+            region=region,
         )
 
         objectify.save()
@@ -166,7 +176,7 @@ def create_Ace(request):
 
     return render(request, 'Ace/Ace_create.html', {"title": "Create",
                                                    "user_title": user_title,
-                                                   "section_budget": section_budget})
+                                                   "section_budget": section_budgets})
 
 
 @login_required(login_url='/accounts/login/')
@@ -536,7 +546,7 @@ def create_budget(request):
         period = request.POST["Period"]
         region = request.POST["region"]
         created_date = datetime.now()
-        balance = allocated
+        balance = request.POST["balance"]
         withdrawn = 0
         budget_note = request.FILES["budget_note"]
         period=period.strip().split("-")[0]

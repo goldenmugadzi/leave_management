@@ -1,174 +1,3 @@
-{#<!--users/templates/users/add_user.html-->#}
-{#{% extends 'admin_layout.html' %}#}
-{#{% block styles %}#}
-{##}
-{#{% endblock styles %}#}
-{#{% block content %}#}
-{#    <div class="content-wrapper">#}
-{##}
-{#    <div class="space-y-12 px-5 py-5">#}
-{#    <h3 class="page-title">#}
-{#      <span class="page-title-icon bg-primary text-white me-2">#}
-{#        <i class="menu-icon">#}
-{#            <span class="material-symbols-outlined mt-1">#}
-{#                straighten#}
-{#            </span>#}
-{#          </i>#}
-{#      </span>#}
-{#      Ace#}
-{#    </h3>#}
-{#    <nav aria-label="breadcrumb">#}
-{#      <ul class="breadcrumb">#}
-{#        <li class="breadcrumb-item active" aria-current="page">#}
-{#        <a href="/ace/create" class="text-decoration-none">#}
-{#          <span></span>Back#}
-{#          <i#}
-{#            class="icon-sm text-primary align-middle"#}
-{#          >#}
-{#          <span class="material-symbols-outlined">#}
-{#            arrow_back#}
-{#          </span>#}
-{#        </i>#}
-{#    </a>#}
-{#        </li>#}
-{#      </ul>#}
-{#    </nav>#}
-{#</div>#}
-{#<div class="col-12 grid-margin stretch-card">#}
-{##}
-{#  <div class="card">#}
-{#      <div class="mt-10 border-b border-gray-900/10 pb-12">#}
-{#      <h4 class="card-title">Create New Ace</h4>#}
-{#      <p class="card-description">Fill all required fields</p>#}
-{#      <form action="/ace/create" method="post" enctype="multipart/form-data" class="forms-sample">#}
-{#        {% csrf_token %}#}
-{#        <div class="form-group">#}
-{#          <label for="department">Department</label>#}
-{#            <select name="department" class="form-control" id="department">#}
-{#                <option>Select Department</option>#}
-{#                <option value="GM Office">GM Office</option>#}
-{#                <option value="Finance">Finance</option>#}
-{#                <option value="Stores">Stores</option>#}
-{#                <option value="Procurement">Procurement</option>#}
-{#                <option value="Human Resources">Human Resource</option>#}
-{#                <option value="Engineering">Engineering</option>#}
-{#                <option value="Network Development">Network Development</option>#}
-{#                <option value="Transport">Transport</option>#}
-{#                <option value="Operations and Maintenance">Operations and Maintenance</option>#}
-{#                <option value="Commercial">Commercial</option>#}
-{#                <option value="Risk Management">Risk Management</option>#}
-{#                <option value="Information Technology">Information Technology</option>#}
-{#            </select>#}
-{#        </div>#}
-{#        <div class="form-group">#}
-{#          <label for="location">Location</label>#}
-{#            <select name="location" class="form-control" id="location">#}
-{#                <option>Select Location</option>#}
-{#                <option value="524402">Makoni Depot</option>#}
-{#                <option value="524403">Zengeza Depot</option>#}
-{#                <option value="524502">Kuwadzana Depot</option>#}
-{#                <option value="524503">Mabelreign Depot</option>#}
-{#                <option value="524504">Warren Park Depot</option>#}
-{#                <option value="524602">Glen View Depot</option>#}
-{#                <option value="524603">Waterfalls Depot</option>#}
-{#                <option value="524604">Southerton Depot</option>#}
-{#                <option value="524702">CBD Depot</option>#}
-{#                <option value="524703">Borrowdale Depot</option>#}
-{#                <option value="524704">Mabvuku Depot</option>#}
-{#                <option value="524705">Ruwa Depot</option>#}
-{#                <option value="000000">Seke Depot</option>#}
-{#            </select>#}
-{#        </div>#}
-{#        <div class="form-group">#}
-{#            <label for="section">Section</label>#}
-{#            <input#}
-{#              type="text"#}
-{#              class="form-control"#}
-{#              id="section"#}
-{#              name="section"#}
-{#              placeholder="Section"#}
-{#            />#}
-{#          </div>#}
-{#          <div class="form-group">#}
-{#              <label for="details_of_expenditure">Details</label>#}
-{#              <input#}
-{#                      type="text"#}
-{#                      class="form-control"#}
-{#                      id="details_of_expenditure"#}
-{#                      name="details_of_expenditure"#}
-{#                      placeholder="Details"#}
-{#              />#}
-{#          </div>#}
-{#          <div class="form-group">#}
-{#              <label for="amount">Amount</label>#}
-{#              <input#}
-{#                      type="number"#}
-{#                      class="form-control"#}
-{#                      id="amount"#}
-{#                      name="amount"#}
-{#                      placeholder="amount"#}
-{#              />#}
-{#          </div>#}
-{##}
-{#          <div class="form-group">#}
-{#              <label for="payment_mode">Payment Mode</label>#}
-{#              <select name="department" class="form-control" id="department">#}
-{#              <option>Select Payment Mode</option>#}
-{#              <option value="cash">Cash</option>#}
-{#              <option value="swpe">Swipe/Ecocash</option>#}
-{#          </select>#}
-{#          </div>#}
-{##}
-{#          <div class="form-group">#}
-{#              <label for="allocation_code_of_expenditure">allocation code of expenditure</label>#}
-{#              <select name="allocation_code_of_expenditure" class="form-control" id="allocation_code_of_expenditure">#}
-{#                  <option>Select Allocation Code</option>#}
-{#                  <option value="521001">GM Office</option>#}
-{#                  <option value="522001">Finance</option>#}
-{#                  <option value="522102">Stores</option>#}
-{#                  <option value="522301">Procurement</option>#}
-{#                  <option value="523001">Human Resource</option>#}
-{#                  <option value="524001">Engineering</option>#}
-{#                  <option value="524101">Network Development</option>#}
-{#                  <option value="524202">Transport</option>#}
-{#                  <option value="524301">Operations and Maintenance</option>#}
-{#                  <option value="525000">Commercial</option>#}
-{#                  <option value="526001">Risk Management</option>#}
-{#                  <option value="527001">Information Technology</option>#}
-{#              </select>#}
-{#          </div>#}
-{#        <div class="mb-3">#}
-{#            <label for="quotation1" class="form-label">Quotation 1</label>#}
-{#            <input name="quotation1" class="form-control" type="file" id="quotation1">#}
-{#        </div>#}
-{#        <div class="mb-3">#}
-{#            <label for="quotation2" class="form-label">Quotation 2</label>#}
-{#            <input name="quotation2" class="form-control" type="file" id="quotation2">#}
-{#        </div>#}
-{#        <div class="mb-3">#}
-{#            <label for="quotation3" class="form-label">Quotation 3</label>#}
-{#            <input name="quotation3" class="form-control" type="file" id="quotation3">#}
-{#        </div>#}
-{#          <div class="row">#}
-{#            <div class="col-6">#}
-{#                <a href="/pettycash" class="btn btn-light w-100">Cancel</a>#}
-{#            </div>#}
-{#            <div class="col-6">#}
-{#                <button type="submit" class="btn btn-info me-2 w-100">#}
-{#                    Submit#}
-{#                </button>#}
-{#            </div>#}
-{#          </div>#}
-{#      </form>#}
-{#    </div>#}
-{#  </div>#}
-{##}
-{#</div>#}
-{#{% endblock %}#}
-{##}
-{#{% block scripts %}#}
-{#{% endblock scripts %}#}
-<!--users/templates/users/add_user.html-->
 
 {% extends 'admin_layout.html' %} {% block content %}
     <div class="content-wrapper">
@@ -300,7 +129,7 @@
 
                             <div>
                                 <label
-                                        for="email"
+                                        for="details_of_exp"
                                         class="block text-sm font-medium leading-6 text-gray-900"
                                 >Details of Expenditure</label
                                 >
@@ -315,23 +144,76 @@
                                 </div>
                             </div>
 
+                            <div>
+                                <label
+                                        for="quotation1"
+                                        class="block text-sm font-medium leading-6 text-gray-900"
+                                >Quote 1</label
+                                >
+                                <div class="mt-2">
+                                    <input
+                                            id="quotation1"
+                                            name="quotation1"
+                                            type="text"
+                                            autocomplete="quotation1"
+                                            class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                                    />
+                                </div>
+                            </div>
 
                             <div>
                                 <label
-                                        for="designation"
+                                        for="quotation2"
                                         class="block text-sm font-medium leading-6 text-gray-900"
-                                >Designations</label
+                                >Quote 2</label
+                                >
+                                <div class="mt-2">
+                                    <input
+                                            id="quotation2"
+                                            name="quotation2"
+                                            type="text"
+                                            autocomplete="quotation2"
+                                            class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                                    />
+                                </div>
+                            </div>
+
+
+                            <div>
+                                <label
+                                        for="quotation3"
+                                        class="block text-sm font-medium leading-6 text-gray-900"
+                                >Quote 3</label
+                                >
+                                <div class="mt-2">
+                                    <input
+                                            id="quotation3"
+                                            name="quotation3"
+                                            type="text"
+                                            autocomplete="quotation3"
+                                            class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                                    />
+                                </div>
+                            </div>
+
+
+
+                            <div>
+                                <label
+                                        for="budget"
+                                        class="block text-sm font-medium leading-6 text-gray-900"
+                                >Budget</label
                                 >
                                 <div class="mt-2">
                                     <select
-                                            id="designation"
-                                            name="designation"
-                                            autocomplete="designation"
+                                            id="budget"
+                                            name="budget"
+                                            autocomplete="budget"
                                             class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
                                     >
-                                        <option>Select Designation</option>
-                                        {% for design in user_designations %}
-                                            <option value="{{design.id}}">{{design.description}}</option>
+                                        <option>Select Budget</option>
+                                        {% for budget in section_budgets %}
+                                            <option value="{{budget.id}}">{{design.description}}</option>
                                         {% endfor %}
                                     </select>
                                 </div>
@@ -347,90 +229,90 @@
                                     <input
                                             id="amount"
                                             name="amount"
-                                            type="amount"
+                                            type="number"
                                             autocomplete="amount"
                                             class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                                     />
                                 </div>
                             </div>
 
-                            <div>
-                                <label
-                                        for="payment_mode"
-                                        class="block text-sm font-medium leading-6 text-gray-900"
-                                >Payment mode</label
-                                >
-                                <div class="mt-2">
-                                    <select
-                                            id="payment_mode"
-                                            name="payment_mode"
-                                            autocomplete="payment_mode"
-                                            class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
-                                    >
-                                        <option>Select Payment mode</option>
-                                        <option value="cash">GM Office</option>
-                                        <option value="card">GM Office</option>
-                                    </select>
-                                </div>
-                            </div>
+{#                            <div>#}
+{#                                <label#}
+{#                                        for="payment_mode"#}
+{#                                        class="block text-sm font-medium leading-6 text-gray-900"#}
+{#                                >Payment mode</label#}
+{#                                >#}
+{#                                <div class="mt-2">#}
+{#                                    <select#}
+{#                                            id="payment_mode"#}
+{#                                            name="payment_mode"#}
+{#                                            autocomplete="payment_mode"#}
+{#                                            class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"#}
+{#                                    >#}
+{#                                        <option>Select Payment mode</option>#}
+{#                                        <option value="cash">GM Office</option>#}
+{#                                        <option value="card">GM Office</option>#}
+{#                                    </select>#}
+{#                                </div>#}
+{#                            </div>#}
 
-                            <div>
-                                <label
-                                        for="region"
-                                        class="block text-sm font-medium leading-6 text-gray-900"
-                                >Region</label
-                                >
-                                <div class="mt-2">
-                                    <select
-                                            id="region"
-                                            name="region"
-                                            autocomplete="region"
-                                            class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
-                                    >
-                                        <option>Select Region</option>
-                                        <option value="1">Harare Region</option>
-                                        <option value="2">East Region</option>
-                                        <option value="3">South Region</option>
-                                        <option value="4">West Region</option>
-                                    </select>
-                                </div>
-                            </div>
+{#                            <div>#}
+{#                                <label#}
+{#                                        for="region"#}
+{#                                        class="block text-sm font-medium leading-6 text-gray-900"#}
+{#                                >Region</label#}
+{#                                >#}
+{#                                <div class="mt-2">#}
+{#                                    <select#}
+{#                                            id="region"#}
+{#                                            name="region"#}
+{#                                            autocomplete="region"#}
+{#                                            class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"#}
+{#                                    >#}
+{#                                        <option>Select Region</option>#}
+{#                                        <option value="1">Harare Region</option>#}
+{#                                        <option value="2">East Region</option>#}
+{#                                        <option value="3">South Region</option>#}
+{#                                        <option value="4">West Region</option>#}
+{#                                    </select>#}
+{#                                </div>#}
+{#                            </div>#}
 
-                            <div>
-                                <label
-                                        for="password1"
-                                        class="block text-sm font-medium leading-6 text-gray-900"
-                                >Password</label
-                                >
-                                <div class="mt-2">
-                                    <input
-                                            type="password"
-                                            name="password1"
-                                            id="password1"
-                                            autocomplete="family-name"
-                                            class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                                    />
-                                </div>
-                            </div>
+{#                            <div>#}
+{#                                <label#}
+{#                                        for="password1"#}
+{#                                        class="block text-sm font-medium leading-6 text-gray-900"#}
+{#                                >Password</label#}
+{#                                >#}
+{#                                <div class="mt-2">#}
+{#                                    <input#}
+{#                                            type="password"#}
+{#                                            name="password1"#}
+{#                                            id="password1"#}
+{#                                            autocomplete="family-name"#}
+{#                                            class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"#}
+{#                                    />#}
+{#                                </div>#}
+{#                            </div>#}
 
-                            <div>
-                                <label
-                                        for="password2"
-                                        class="block text-sm font-medium leading-6 text-gray-900"
-                                >Confirm Password</label
-                                >
-                                <div class="mt-2">
-                                    <input
-                                            type="password"
-                                            name="password2"
-                                            id="password2"
-                                            autocomplete="password"
-                                            class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                                    />
-                                </div>
-                            </div>
-
-                        </div>
+{#                            <div>#}
+{#                                <label#}
+{#                                        for="password2"#}
+{#                                        class="block text-sm font-medium leading-6 text-gray-900"#}
+{#                                >Confirm Password</label#}
+{#                                >#}
+{#                                <div class="mt-2">#}
+{#                                    <input#}
+{#                                            type="password"#}
+{#                                            name="password2"#}
+{#                                            id="password2"#}
+{#                                            autocomplete="password"#}
+{#                                            class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"#}
+{#                                    />#}
+{#                                </div>#}
+{#                            </div>#}
+{##}
+{#                        </div>#}
                     </div>
 
 {#                    <div class="mt-10 border-b border-gray-900/10 pb-12">#}

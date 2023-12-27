@@ -38,13 +38,13 @@ class Budget(models.Model):
         return self.budget_id
 
 class Ace(models.Model):
-    ace_type = models.CharField(max_length=15, blank=True, null=True)
+    # ace_type = models.CharField(max_length=15, blank=True, null=True)
     Department = models.CharField(max_length=100, blank=True, null=True)
     location = models.CharField(max_length=100, blank=True, null=True)
     section = models.CharField(max_length=100, blank=True, null=True)
     allocation_code_of_expenditure = models.CharField(max_length=100, blank=True, null=True)
     details_of_expenditure = models.CharField(max_length=100, blank=True, null=True)
-    # amount = models.FloatField(blank=True, null=True)
+    amount = models.FloatField(blank=True, null=True)
     quotation1 = models.FileField(upload_to='uploads/ace')
     quotation2 = models.FileField(upload_to='uploads/ace')
     quotation3 = models.FileField(upload_to='uploads/ace')
@@ -74,6 +74,7 @@ class Ace(models.Model):
     capital_estimated = models.FloatField( blank=True, null=True)
     capital_sanctioned = models.FloatField( blank=True, null=True)
     budget_id = models.ForeignKey(Budget, on_delete=models.CASCADE ,default=1)
+    region = models.CharField(max_length=40, blank=True,null=True)
     # budget_name = models.ForeignKey(Budget, on_delete=models.CASCADE)
     # project items
     classification = models.CharField(max_length=200, blank=True, null=True)
@@ -85,6 +86,7 @@ class Ace(models.Model):
     labour = models.FloatField( blank=True, null=True)
     transport = models.FloatField( blank=True, null=True)
     total_connection_fee = models.FloatField( blank=True, null=True)
+    designation = models.CharField(null = True, max_length=70)
 
 
     def __str__(self):
