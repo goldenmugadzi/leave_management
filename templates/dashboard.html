@@ -2,722 +2,483 @@
 {% load static %}
 {% block content %}
 
-<div class="mx-auto px-4 py-6 sm:px-6 lg:px-8">
+<div class="mx-auto py-6">
     
-    <div class="grid grid-cols-3 gap-4">
-        <div class="w-auto bg-gray-200 shadow shadow-nepal-300 text-gray-700 rounded px-2 py-2">
+    <div class="grid grid-cols-5 gap-4">
+        <div class="w-auto bg-gulf-blue-200 shadow shadow-gulf-blue-300 text-gulf-blue-900 rounded px-2 py-2">
             <div class="sm:flex lg:items-center lg:justify-between">
                 <div class="min-w-0 flex-1">
-                    <div class="text-lg font-bold text-nepal-950 sm:truncate sm:tracking-tight">
-                        ACE
+                    <div class="text-center text-lg font-bold text-gulf-blue-950 sm:truncate sm:tracking-tight">
+                        REVENUE ASSURANCE
                     </div>
-                    {% if user.roles.adjudication|stringformat:'s' == "create" %}
-                        <div class="mt-2">
-                            <a href="../../ace/user/pending_sectionhead.php?source=home">
-                                <div class="flex flex-row border border-nepal-200 hover:bg-nepal-600 rounded-lg px-3 py-1 justify-between items-center sm:mt-0 sm:flex-row sm:flex-wrap">
-                                    <div class="text-sm">PENDING APPROVAL</div>
-                                    <div class="text-sm">
-                                        <span class="inline-flex items-center rounded-md bg-nepal-100 px-2 py-1 text-xs font-medium text-scarlet-red-700 ring-1 ring-inset ring-blue-700/10">
-                                            <?php echo $ace_count; ?>
-                                            
-                                        </span>
+                    <div class="mt-2">
+                        <a href="../../ace/user/pending_sectionhead.php?source=home">
+                            <div class="border border-gulf-blue-200 hover:bg-gulf-blue-400 rounded-lg px-3 py-1 justify-between items-center sm:mt-0 sm:flex-row sm:flex-wrap">
+                                <div class="col-xl col-sm text-center mb-xl-0 mb-4">
+                                    <div class="card">
+                                      <div class="card-body p-2">
+                                        <div class="row">
+                                          <div class="col-8">
+                                            <div class="numbers">
+                                              <p class="text-xs mb-0 text-capitalize font-weight-bold">
+                                                Points Visited
+                                              </p>
+                                              <h6 class="font-weight-bolder mb-0">100</h6>
+                                            </div>
+ 
+                                            <div class="overflow-hidden bg-blue-50 h-1.5 rounded-full w-full">
+                                                <span
+                                                  class="h-full bg-gulf-blue-900 w-full block rounded-full"
+                                                  style="width: 62%"
+                                                ></span>
+                                              </div>
+                                            <p class="text-xs text-muted mt-2 mb-0">Monthly Target:1000</p>
+                                          </div>
+                                        </div>
+                                      </div>
                                     </div>
-                                </div>
-                            </a>
-                        </div>
-                    {% elif user.roles.adjudication|stringformat:'s' == 'authorise' %}
-                        <div class="mt-2">
-                            <a href="../../ace/section/pending_sectionhead.php?source=home">
-                                <div class="flex flex-row border border-nepal-200 hover:bg-nepal-600 rounded-lg px-3 py-1 justify-between items-center sm:mt-0 sm:flex-row sm:flex-wrap">
-                                    <div class="text-sm">AWAITING PASS</div>
-                                    <div class="text-sm">
-                                        <span class="inline-flex items-center rounded-md bg-nepal-100 px-2 py-1 text-xs font-medium text-scarlet-red-700 ring-1 ring-inset ring-blue-700/10">
-
-
-                                            <?php echo $ace_count; ?>
-
-                                        </span>
-                                    </div>
-                                </div>
-                            </a>
-                        </div>
-                        <div class="mt-2">
-                            <a href="../ace/gm/pending_gm.php?source=home">
-                                <div class="flex flex-row border border-nepal-200 hover:bg-nepal-600 rounded-lg px-3 py-1 justify-between items-center sm:mt-0 sm:flex-row sm:flex-wrap">
-                                    <div class="text-sm">AWAITING APPROVAL</div>
-                                    <div class="text-sm">
-                                        <span class="inline-flex items-center rounded-md bg-nepal-100 px-2 py-1 text-xs font-medium text-scarlet-red-700 ring-1 ring-inset ring-blue-700/10">
-
-
-                                            <?php echo $gm_ace_count; ?>
-
-                                        </span>
-                                    </div>
-                                </div>
-                            </a>
-                        </div>
-                        <div class="mt-2">
-                            <a href="../ace/gm/pending_virament.php?source=home">
-                                <div class="flex flex-row border border-nepal-200 hover:bg-nepal-600 rounded-lg px-3 py-1 justify-between items-center sm:mt-0 sm:flex-row sm:flex-wrap">
-                                    <div class="text-sm">PENDING VIREMENT</div>
-                                    <div class="text-sm">
-                                        <span class="inline-flex items-center rounded-md bg-nepal-100 px-2 py-1 text-xs font-medium text-scarlet-red-700 ring-1 ring-inset ring-blue-700/10">
-
-
-                                            <?php echo $pending_virement_count; ?>
-
-                                        </span>
-                                    </div>
-                                </div>
-                            </a>
-                        </div>
-                        {% elif user.roles.adjudication|stringformat:'s' == 'approve' %}
-                        <div class="mt-2">
-                            <a href="../ace/section/pending_sectionhead.php?source=home">
-                                <div class="flex flex-row border border-nepal-200 hover:bg-nepal-600 rounded-lg px-3 py-1 justify-between items-center sm:mt-0 sm:flex-row sm:flex-wrap">
-                                    <div class="text-sm">PENDING APPROVAL</div>
-                                    <div class="text-sm">
-                                        <span class="inline-flex items-center rounded-md bg-nepal-100 px-2 py-1 text-xs font-medium text-scarlet-red-700 ring-1 ring-inset ring-blue-700/10">
-
-
-                                            <?php echo $ace_count; ?>
-
-                                        </span>
-                                    </div>
-                                </div>
-                            </a>
-                        </div>
-                        <div class="mt-2">
-                            <a href="../../ace/accounting/rejected_by_accounts.php?source=home">
-                                <div class="flex flex-row border border-nepal-200 hover:bg-nepal-600 rounded-lg px-3 py-1 justify-between items-center sm:mt-0 sm:flex-row sm:flex-wrap">
-                                    <div class="text-sm">REJECTED</div>
-                                    <div class="text-sm">
-                                        <span class="inline-flex items-center rounded-md bg-nepal-100 px-2 py-1 text-xs font-medium text-scarlet-red-700 ring-1 ring-inset ring-blue-700/10">
-
-
-                                            <?php echo $rejected_ace_count; ?>
-
-                                        </span>
-                                    </div>
-                                </div>
-                            </a>
-                        </div>
-                        {% elif user.roles.adjudication|stringformat:'s' == 'process' %}
-                        <div class="mt-2">
-                            <a href="../ace/procurement/pending_order.php?source=home">
-                                <div class="flex flex-row border border-nepal-200 hover:bg-nepal-600 rounded-lg px-3 py-1 justify-between items-center sm:mt-0 sm:flex-row sm:flex-wrap">
-                                    <div class="text-sm">PENDING APPROVAL</div>
-                                    <div class="text-sm">
-                                        <span class="inline-flex items-center rounded-md bg-nepal-100 px-2 py-1 text-xs font-medium text-scarlet-red-700 ring-1 ring-inset ring-blue-700/10">
-
-
-                                            <?php echo $pending_order_count; ?>
-
-                                        </span>
-                                    </div>
-                                </div>
-                            </a>
-                        </div>
-                        {% elif user.roles.adjudication|stringformat:'s' == 'confirm' %}
-                        <div class="mt-2">
-                            <a href="../ace/section/pending_sectionhead.php?source=home">
-                                <div class="flex flex-row border border-nepal-200 hover:bg-nepal-600 rounded-lg px-3 py-1 justify-between items-center sm:mt-0 sm:flex-row sm:flex-wrap">
-                                    <div class="text-sm">AWAITING PASS</div>
-                                    <div class="text-sm">
-                                        <span class="inline-flex items-center rounded-md bg-nepal-100 px-2 py-1 text-xs font-medium text-scarlet-red-700 ring-1 ring-inset ring-blue-700/10">
-
-
-                                            <?php echo $ace_count; ?>
-
-                                        </span>
-                                    </div>
-                                </div>
-                            </a>
-                        </div>
-                        <div class="mt-2">
-                            <a href="../ace/finance/pending_finance.php?source=home">
-                                <div class="flex flex-row border border-nepal-200 hover:bg-nepal-600 rounded-lg px-3 py-1 justify-between items-center sm:mt-0 sm:flex-row sm:flex-wrap">
-                                    <div class="text-sm">AWAITING SANCTION</div>
-                                    <div class="text-sm">
-                                        <span class="inline-flex items-center rounded-md bg-nepal-100 px-2 py-1 text-xs font-medium text-scarlet-red-700 ring-1 ring-inset ring-blue-700/10">
-
-
-                                            <?php echo $pending_fm_count; ?>
-
-                                        </span>
-                                    </div>
-                                </div>
-                            </a>
-                        </div>
-                        <div class="mt-2">
-                            <a href="../ace/finance/pending_virament.php?source=home">
-                                <div class="flex flex-row border border-nepal-200 hover:bg-nepal-600 rounded-lg px-3 py-1 justify-between items-center sm:mt-0 sm:flex-row sm:flex-wrap">
-                                    <div class="text-sm">PENDING VIREMENT</div>
-                                    <div class="text-sm">
-                                        <span class="inline-flex items-center rounded-md bg-nepal-100 px-2 py-1 text-xs font-medium text-scarlet-red-700 ring-1 ring-inset ring-blue-700/10">
-
-
-                                            <?php echo $pending_virement_count; ?>
-
-                                        </span>
-                                    </div>
-                                </div>
-                            </a>
-                        </div>
-                        {% endif %}
+                                  </div>
+                            </div>
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
-        <div class="w-auto bg-gray-200  shadow shadow-nepal-300 text-gray-700 rounded px-2 py-2">
+        <div class="w-auto bg-jade-200 shadow shadow-jade-300 text-jade-900 rounded px-2 py-2">
             <div class="sm:flex lg:items-center lg:justify-between">
                 <div class="min-w-0 flex-1">
-                    <div class="text-lg font-bold text-nepal-950 sm:truncate sm:tracking-tight">
-                        PURCHASES BELOW LIMIT
+                    <div class="text-center text-lg font-bold text-jade-900 sm:truncate sm:tracking-tight">
+                        GROWTH
                     </div>
-                    {% if user.roles.adjudication|stringformat:'s' == 'create' %}
-                        <div class="mt-2">
-                            <a href="user/pending_sectionhead.php?source=home">
-                                <div class="flex flex-row border border-nepal-200 hover:bg-nepal-600 rounded-lg px-3 py-1 justify-between items-center sm:mt-0 sm:flex-row sm:flex-wrap">
-                                    <div class="text-sm">PENDING APPROVAL</div>
-                                    <div class="text-sm">
-                                        <span class="inline-flex items-center rounded-md bg-nepal-100 px-2 py-1 text-xs font-medium text-scarlet-red-700 ring-1 ring-inset ring-blue-700/10">
-
-                                            <?php echo  $adjudication_count; ?>
-                                        </span>
+                    <div class="mt-2">
+                        <a href="../../ace/user/pending_sectionhead.php?source=home">
+                            <div class="border border-jade-200 hover:bg-jade-400 rounded-lg px-3 py-1 justify-between items-center sm:mt-0 sm:flex-row sm:flex-wrap">
+                                <div class="col-xl col-sm text-center mb-xl-0 mb-4">
+                                    <div class="card">
+                                      <div class="card-body p-2">
+                                        <div class="row">
+                                          <div class="col-8">
+                                            <div class="numbers">
+                                              <p class="text-xs mb-0 text-capitalize font-weight-bold">
+                                                Connected
+                                              </p>
+                                              <h6 class="font-weight-bolder mb-0">100</h6>
+                                            </div>
+ 
+                                            <div class="overflow-hidden bg-jade-50 h-1.5 rounded-full w-full">
+                                                <span
+                                                  class="h-full bg-jade-900 w-full block rounded-full"
+                                                  style="width: 78%"
+                                                ></span>
+                                              </div>
+                                            <p class="text-xs text-muted mt-2 mb-0">YTD Target:1000</p>
+                                          </div>
+                                        </div>
+                                      </div>
                                     </div>
-                                </div>
-                            </a>
-                        </div>
-                        {% elif user.roles.adjudication|stringformat:'s' == 'authorise' %}
-                        <div class="mt-2">
-                            <a href="gm/pending_gm.php?source=home">
-                                <div class="flex flex-row border border-nepal-200 hover:bg-nepal-600 rounded-lg px-3 py-1 justify-between items-center sm:mt-0 sm:flex-row sm:flex-wrap">
-                                    <div class="text-sm">PENDING APPROVAL</div>
-                                    <div class="text-sm">
-                                        <span class="inline-flex items-center rounded-md bg-nepal-100 px-2 py-1 text-xs font-medium text-scarlet-red-700 ring-1 ring-inset ring-blue-700/10">
-
-                                            <?php echo  $pending_gm_below_count; ?>
-                                        </span>
-                                    </div>
-                                </div>
-                            </a>
-                        </div>
-                        <div class="mt-2">
-                            <a href="../section_head/pending_sectionhead.php?source=home">
-                                <div class="flex flex-row border border-nepal-200 hover:bg-nepal-600 rounded-lg px-3 py-1 justify-between items-center sm:mt-0 sm:flex-row sm:flex-wrap">
-                                    <div class="text-sm">PENDING AUTHORISATION</div>
-                                    <div class="text-sm">
-                                        <span class="inline-flex items-center rounded-md bg-nepal-100 px-2 py-1 text-xs font-medium text-scarlet-red-700 ring-1 ring-inset ring-blue-700/10">
-
-                                            <?php echo  $sectionhead_below_count; ?>
-                                        </span>
-                                    </div>
-                                </div>
-                            </a>
-                        </div>
-                        {% elif user.roles.adjudication|stringformat:'s' == 'approve' %}
-                        <div class="mt-2">
-                            <a href="section_head/pending_sectionhead.php?source=home">
-                                <div class="flex flex-row border border-nepal-200 hover:bg-nepal-600 rounded-lg px-3 py-1 justify-between items-center sm:mt-0 sm:flex-row sm:flex-wrap">
-                                    <div class="text-sm">PENDING APPROVAL</div>
-                                    <div class="text-sm">
-                                        <span class="inline-flex items-center rounded-md bg-nepal-100 px-2 py-1 text-xs font-medium text-scarlet-red-700 ring-1 ring-inset ring-blue-700/10">
-
-
-                                            <?php echo $adjudication_count; ?>
-
-                                        </span>
-                                    </div>
-                                </div>
-                            </a>
-                        </div>
-                        <div class="mt-2">
-                            <a href="../procurement/rejected_by_procurement.php?source=home">
-                                <div class="flex flex-row border border-nepal-200 hover:bg-nepal-600 rounded-lg px-3 py-1 justify-between items-center sm:mt-0 sm:flex-row sm:flex-wrap">
-                                    <div class="text-sm">REJECTED</div>
-                                    <div class="text-sm">
-                                        <span class="inline-flex items-center rounded-md bg-nepal-100 px-2 py-1 text-xs font-medium text-scarlet-red-700 ring-1 ring-inset ring-blue-700/10">
-
-
-                                            <?php echo $count; ?>
-
-                                        </span>
-                                    </div>
-                                </div>
-                            </a>
-                        </div>
-                        {% endif %}
-                        {% if user.roles.adjudication|stringformat:'s' == 'process' %}
-                        <div class="mt-2">
-                            <a href="../procurement/pending_procurement.php?source=home">
-                                <div class="flex flex-row border border-nepal-200 hover:bg-nepal-600 rounded-lg px-3 py-1 justify-between items-center sm:mt-0 sm:flex-row sm:flex-wrap sm:space-x-6">
-                                    <div class="text-sm">PENDING CHECKING</div>
-                                    <div class="text-sm">
-                                        <span class="inline-flex items-center rounded-md bg-nepal-100 px-2 py-1 text-xs font-medium text-scarlet-red-700 ring-1 ring-inset ring-blue-700/10">
-
-
-                                            <?php echo $pending_checking_count; ?>
-                                        </span>
-                                    </div>
-                                </div>
-                            </a>
-                        </div>
-                        <div class="mt-2">
-                            <a href="../procurement/pending_order.php?source=home">
-                                <div class="flex flex-row border border-nepal-200 hover:bg-nepal-600 rounded-lg px-3 py-1 justify-between items-center sm:mt-0 sm:flex-row sm:flex-wrap sm:space-x-6">
-                                    <div class="text-sm">PENDING ORDER</div>
-                                    <div class="text-sm">
-                                        <span class="inline-flex items-center rounded-md bg-nepal-100 px-2 py-1 text-xs font-medium text-scarlet-red-700 ring-1 ring-inset ring-blue-700/10">
-
-
-                                            <?php echo $order_count; ?>
-
-                                    </div>
-                                </div>
-                            </a>
-                        </div>
-                        {% endif %}
-                        {% if user.roles.adjudication|stringformat:'s' == 'confirm' %}
-                        <div class="mt-2">
-                            <a href="finance/pending_finance.php?source=home">
-                                <div class="flex flex-row border border-nepal-200 hover:bg-nepal-600 rounded-lg px-3 py-1 justify-between items-center sm:mt-0 sm:flex-row sm:flex-wrap sm:space-x-6">
-                                    <div class="text-sm">PENDING CONFIRMATION</div>
-                                    <div class="text-sm">
-                                        <span class="inline-flex items-center rounded-md bg-nepal-100 px-2 py-1 text-xs font-medium text-scarlet-red-700 ring-1 ring-inset ring-blue-700/10">
-
-
-                                            <?php echo $pending_finance_below_count; ?>
-
-                                    </div>
-                                </div>
-                            </a>
-                        </div>
-                        {% endif %}
+                                  </div>
+                            </div>
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
-        <div class="w-auto bg-gray-200  shadow shadow-nepal-300 text-gray-700 rounded px-2 py-2">
+        <div class="w-auto bg-royal-heath-200 shadow shadow-royal-heath-300 text-royal-heath-900 rounded px-2 py-2">
             <div class="sm:flex lg:items-center lg:justify-between">
                 <div class="min-w-0 flex-1">
-                    <div class="text-lg font-bold text-nepal-950 sm:truncate sm:tracking-tight">
-                        PURCHASES ABOVE LIMIT
+                    <div class="text-center text-lg font-bold text-royal-heath-950 sm:truncate sm:tracking-tight">
+                        INSPECTIONS
                     </div>
-                    {% if user.roles.adjudication|stringformat:'s' == 'create' %}
-                        <div class="mt-2">
-                            <a href="../ace/user/pending_rfq.php?source=home">
-                                <div class="flex flex-row border border-nepal-200 hover:bg-nepal-600 rounded-lg px-3 py-1 justify-between items-center sm:mt-0 sm:flex-row sm:flex-wrap sm:space-x-6">
-                                    <div class="text-sm">AWAITING RFQ</div>
-                                    <div class="text-sm">
-                                        <span class="inline-flex items-center rounded-md bg-nepal-100 px-2 py-1 text-xs font-medium text-scarlet-red-700 ring-1 ring-inset ring-blue-700/10">
-                                            <?php echo $pending_rfq_count; ?>
-                                        </span>
+                    <div class="mt-2">
+                        <a href="../../ace/user/pending_sectionhead.php?source=home">
+                            <div class="border border-royal-heath-200 hover:bg-royal-heath-400 rounded-lg px-3 py-1 justify-between items-center sm:mt-0 sm:flex-row sm:flex-wrap">
+                                <div class="col-xl col-sm text-center mb-xl-0 mb-4">
+                                    <div class="card">
+                                      <div class="card-body p-2">
+                                        <div class="row">
+                                          <div class="col-8">
+                                            <div class="numbers">
+                                              <p class="text-xs mb-0 text-capitalize font-weight-bold">
+                                                Inspected
+                                              </p>
+                                              <h6 class="font-weight-bolder mb-0">100</h6>
+                                            </div>
+ 
+                                            <div class="overflow-hidden bg-royal-heath-50 h-1.5 rounded-full w-full">
+                                                <span
+                                                  class="h-full bg-royal-heath-900 w-full block rounded-full"
+                                                  style="width: 80%"
+                                                ></span>
+                                              </div>
+                                            <p class="text-xs text-muted mt-2 mb-0">YTD Target:1000</p>
+                                          </div>
+                                        </div>
+                                      </div>
                                     </div>
-                                </div>
-                            </a>
-                        </div>
-                        <div class="mt-2">
-                            <a href="../tender/committee/pending_committee.php?source=home">
-                                <div class="flex flex-row border border-nepal-200 hover:bg-nepal-600 rounded-lg px-3 py-1 justify-between items-center sm:mt-0 sm:flex-row sm:flex-wrap sm:space-x-6">
-                                    <div class="text-sm">PENDING COMMITTEE</div>
-                                    <div class="text-sm">
-                                        <span class="inline-flex items-center rounded-md bg-nepal-100 px-2 py-1 text-xs font-medium text-scarlet-red-700 ring-1 ring-inset ring-blue-700/10">
-                                            <?php echo $pending_committee_count; ?>
-                                        </span>
-                                    </div>
-                                </div>
-                            </a>
-                        </div>
-                        {% endif %}
-                        {% if user.roles.adjudication|stringformat:'s' == 'process' %}
-                        <div class="mt-2">
-                            <a href="../../tender/rfq/datatables/production/awaiting_procurement.php?source=home">
-                                <div class="flex flex-row border border-nepal-200 hover:bg-nepal-600 rounded-lg px-3 py-1 justify-between items-center sm:mt-0 sm:flex-row sm:flex-wrap sm:space-x-6">
-                                    <div class="text-sm">PENDING PROCUREMENT</div>
-                                    <div class="text-sm">
-                                        <span class="inline-flex items-center rounded-md bg-nepal-100 px-2 py-1 text-xs font-medium text-scarlet-red-700 ring-1 ring-inset ring-blue-700/10">
-
-
-                                            <?php echo $rfq_awaiting_procurement_count; ?>
-
-                                        </span>
-                                    </div>
-                                </div>
-                            </a>
-                        </div>
-                        <div class="mt-2">
-                            <a href="../../tender/pending_approval.php?source=home">
-                                <div class="flex flex-row border border-nepal-200 hover:bg-nepal-600 rounded-lg px-3 py-1 justify-between items-center sm:mt-0 sm:flex-row sm:flex-wrap sm:space-x-6">
-                                    <div class="text-sm">PENDING APPROVAL</div>
-                                    <div class="text-sm">
-                                        <span class="inline-flex items-center rounded-md bg-nepal-100 px-2 py-1 text-xs font-medium text-scarlet-red-700 ring-1 ring-inset ring-blue-700/10">
-                                            <?php //echo $pending_approval_count;
-                                            ?>
-                                        </span>
-                                    </div>
-                                </div>
-                            </a>
-                        </div>
-                        {% endif %}
-                        {% if user.roles.adjudication|stringformat:'s' == 'approve' %}
-                        <div class="mt-2">
-                            <a href="../tender/pending_approval.php?source=home">
-                                <div class="flex flex-row border border-nepal-200 hover:bg-nepal-600 rounded-lg px-3 py-1 justify-between items-center sm:mt-0 sm:flex-row sm:flex-wrap sm:space-x-6">
-                                    <div class="text-sm">PENDING APPROVAL</div>
-                                    <div class="text-sm">
-                                        <span class="inline-flex items-center rounded-md bg-nepal-100 px-2 py-1 text-xs font-medium text-scarlet-red-700 ring-1 ring-inset ring-blue-700/10">
-                                            <?php echo $pending_approval_count; ?>
-                                        </span>
-                                    </div>
-                                </div>
-                            </a>
-                        </div>
-                        <div class="mt-2">
-                            <a href="../../tender/committee/rejected_by_committee.php?source=home">
-                                <div class="flex flex-row border border-nepal-200 hover:bg-nepal-600 rounded-lg px-3 py-1 justify-between items-center sm:mt-0 sm:flex-row sm:flex-wrap sm:space-x-6">
-                                    <div class="text-sm">REJECTED</div>
-                                    <div class="text-sm">
-                                        <span class="inline-flex items-center rounded-md bg-nepal-100 px-2 py-1 text-xs font-medium text-scarlet-red-700 ring-1 ring-inset ring-blue-700/10">
-
-
-                                            <?php echo  $rejected_by_committee_count; ?>
-
-                                        </span>
-                                    </div>
-                                </div>
-                            </a>
-                        </div>
-                        <div class="mt-2">
-                            <a href="../../tender/committee/pending_committee.php?source=home">
-                                <div class="flex flex-row border border-nepal-200 hover:bg-nepal-600 rounded-lg px-3 py-1 justify-between items-center sm:mt-0 sm:flex-row sm:flex-wrap sm:space-x-6">
-                                    <div class="text-sm">PENDING COMMITTEE</div>
-                                    <div class="text-sm">
-                                        <span class="inline-flex items-center rounded-md bg-nepal-100 px-2 py-1 text-xs font-medium text-scarlet-red-700 ring-1 ring-inset ring-blue-700/10">
-
-                                            <?php echo $pending_committee_count; ?>
-
-                                        </span>
-                                    </div>
-                                </div>
-                            </a>
-                        </div>
-                        {% endif %}
-                        {% if user.roles.adjudication|stringformat:'s' == 'confirm' %}
-                        <div class="mt-2">
-                            <a href="../tender/finance/pending_finance.php?source=home">
-                                <div class="flex flex-row border border-nepal-200 hover:bg-nepal-600 rounded-lg px-3 py-1 justify-between items-center sm:mt-0 sm:flex-row sm:flex-wrap sm:space-x-6">
-                                    <div class="text-sm">PENDING CHECKING</div>
-                                    <div class="text-sm">
-                                        <span class="inline-flex items-center rounded-md bg-nepal-100 px-2 py-1 text-xs font-medium text-scarlet-red-700 ring-1 ring-inset ring-blue-700/10">
-                                            <?php echo $tender_finance_count; ?>
-                                        </span>
-                                    </div>
-                                </div>
-                            </a>
-                        </div>
-                        <div class="mt-2">
-                            <a href="../tender/committee/pending_committee.php?source=home">
-                                <div class="flex flex-row border border-nepal-200 hover:bg-nepal-600 rounded-lg px-3 py-1 justify-between items-center sm:mt-0 sm:flex-row sm:flex-wrap sm:space-x-6">
-                                    <div class="text-sm">PENDING COMMITTEE</div>
-                                    <div class="text-sm">
-                                        <span class="inline-flex items-center rounded-md bg-nepal-100 px-2 py-1 text-xs font-medium text-scarlet-red-700 ring-1 ring-inset ring-blue-700/10">
-                                            <?php echo $pending_committee_count; ?>
-                                        </span>
-                                    </div>
-                                </div>
-                            </a>
-                        </div>
-                        <div class="mt-2">
-                            <a href="../tender/rfq/datatables/production/awaiting_authorisation.php?source=home">
-                                <div class="flex flex-row border border-nepal-200 hover:bg-nepal-600 rounded-lg px-3 py-1 justify-between items-center sm:mt-0 sm:flex-row sm:flex-wrap sm:space-x-6">
-                                    <div class="text-sm">RFQ `s - PENDING AUTHORISATION</div>
-                                    <div class="text-sm">
-                                        <span class="inline-flex items-center rounded-md bg-nepal-100 px-2 py-1 text-xs font-medium text-scarlet-red-700 ring-1 ring-inset ring-blue-700/10">
-                                            <?php echo $awaiting_authorisation_count; ?>
-                                        </span>
-                                    </div>
-                                </div>
-                            </a>
-                        </div>
-                        {% endif %}
-                        {% if user.roles.adjudication|stringformat:'s' == 'authorise' %}
-                        <div class="mt-2">
-                            <a href="../../tender/rfq/datatables/production/awaiting_authorisation.php?source=home">
-                                <div class="flex flex-row border border-nepal-200 hover:bg-nepal-600 rounded-lg px-3 py-1 justify-between items-center sm:mt-0 sm:flex-row sm:flex-wrap sm:space-x-6">
-                                    <div class="text-sm">PENDING AUTHORISATION</div>
-                                    <div class="text-sm">
-                                        <span class="inline-flex items-center rounded-md bg-nepal-100 px-2 py-1 text-xs font-medium text-scarlet-red-700 ring-1 ring-inset ring-blue-700/10">
-
-
-                                            <?php echo $awaiting_authorisation_count; ?>
-
-                                        </span>
-                                    </div>
-                                </div>
-                            </a>
-                        </div>
-                        {% endif %}
+                                  </div>
+                            </div>
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
-        <div class="w-auto bg-gray-200  shadow shadow-nepal-300 text-gray-700 rounded px-2 py-2">
+        <div class="w-auto bg-gulf-blue-200 shadow shadow-gulf-blue-300 text-gulf-blue-900 rounded px-2 py-2">
             <div class="sm:flex lg:items-center lg:justify-between">
                 <div class="min-w-0 flex-1">
-                    <div class="text-lg font-bold text-nepal-950 sm:truncate sm:tracking-tight">
-                        PETTY CASH
+                    <div class="text-center text-lg font-bold text-gulf-blue-950 sm:truncate sm:tracking-tight">
+                        FAULTS
                     </div>
-                        {% if user.roles.adjudication|stringformat:'s' == 'create' %}
-                        <div class="mt-2">
-                            <a href="../../pettycash/user/pending_sectionhead.php?source=home">
-                                <div class="flex flex-row border border-nepal-200 hover:bg-nepal-600 rounded-lg px-3 py-1 justify-between items-center sm:mt-0 sm:flex-row sm:flex-wrap sm:space-x-6">
-                                    <div class="text-sm">PENDING APPROVAL</div>
-                                    <div class="text-sm">
-                                        <span class="inline-flex items-center rounded-md bg-nepal-100 px-2 py-1 text-xs font-medium text-scarlet-red-700 ring-1 ring-inset ring-blue-700/10">
-                                            <?php echo $petty_cash_count; ?>
-                                        </span>
+                    <div class="mt-2">
+                        <a href="../../ace/user/pending_sectionhead.php?source=home">
+                            <div class="border border-gulf-blue-200 hover:bg-gulf-blue-400 rounded-lg px-3 py-1 justify-between items-center sm:mt-0 sm:flex-row sm:flex-wrap">
+                                <div class="col-xl col-sm text-center mb-xl-0 mb-4">
+                                    <div class="card">
+                                      <div class="card-body p-2">
+                                        <div class="row">
+                                          <div class="col-8">
+                                            <div class="numbers">
+                                              <p class="text-xs mb-0 text-capitalize font-weight-bold">
+                                                Unresolved
+                                              </p>
+                                              <h6 class="font-weight-bolder mb-0">100</h6>
+                                            </div>
+ 
+                                            <div class="overflow-hidden bg-gulf-blue-50 h-1.5 rounded-full w-full">
+                                                <span
+                                                  class="h-full bg-gulf-blue-900 w-full block rounded-full"
+                                                  style="width: 30%"
+                                                ></span>
+                                              </div>
+                                            <p class="text-xs text-muted mt-2 mb-0">YTD Target:1000</p>
+                                          </div>
+                                        </div>
+                                      </div>
                                     </div>
-                                </div>
-                            </a>
-                        </div>
-                        {% endif %}
-                        {% if user.roles.adjudication|stringformat:'s' == 'approve' %}
-                        <div class="mt-2">
-                            <a href="../../pettycash/user/pending_sectionhead.php?source=home">
-                                <div class="flex flex-row border border-nepal-200 hover:bg-nepal-600 rounded-lg px-3 py-1 justify-between items-center sm:mt-0 sm:flex-row sm:flex-wrap sm:space-x-6">
-                                    <div class="text-sm">PENDING APPROVAL</div>
-                                    <div class="text-sm">
-                                        <span class="inline-flex items-center rounded-md bg-nepal-100 px-2 py-1 text-xs font-medium text-scarlet-red-700 ring-1 ring-inset ring-blue-700/10">
-                                            <?php echo $petty_cash_count; ?>
-                                        </span>
-                                    </div>
-                                </div>
-                            </a>
-                        </div>
-                        <div class="mt-2">
-                            <a href="../../pettycash/accounts/rejected_by_accounts.php?source=home">
-                                <div class="flex flex-row border border-nepal-200 hover:bg-nepal-600 rounded-lg px-3 py-1 justify-between items-center sm:mt-0 sm:flex-row sm:flex-wrap sm:space-x-6">
-                                    <div class="text-sm">REJECTED</div>
-                                    <div class="text-sm">
-                                        <span class="inline-flex items-center rounded-md bg-nepal-100 px-2 py-1 text-xs font-medium text-scarlet-red-700 ring-1 ring-inset ring-blue-700/10">
-
-
-                                            <?php echo $rejected_pettycash_count; ?>
-
-                                        </span>
-                                    </div>
-                                </div>
-                            </a>
-                        </div>
-                        {% endif %}
-                        {% if user.roles.adjudication|stringformat:'s' == 'approve' %}
-                        <div class="mt-2">
-                            <a href="../pettycash/section/pending_sectionhead.php?source=home">
-                                <div class="flex flex-row border border-nepal-200 hover:bg-nepal-600 rounded-lg px-3 py-1 justify-between items-center sm:mt-0 sm:flex-row sm:flex-wrap sm:space-x-6">
-                                    <div class="text-sm">PENDING APPROVAL</div>
-                                    <div class="text-sm">
-                                        <span class="inline-flex items-center rounded-md bg-nepal-100 px-2 py-1 text-xs font-medium text-scarlet-red-700 ring-1 ring-inset ring-blue-700/10">
-                                            <?php echo $petty_cash_count; ?>
-                                        </span>
-                                    </div>
-                                </div>
-                            </a>
-                        </div>
-                        <div class="mt-2">
-                            <a href="../../pettycash/accounts/rejected_by_accounts.php?source=home">
-                                <div class="flex flex-row border border-nepal-200 hover:bg-nepal-600 rounded-lg px-3 py-1 justify-between items-center sm:mt-0 sm:flex-row sm:flex-wrap sm:space-x-6">
-                                    <div class="text-sm">REJECTED</div>
-                                    <div class="text-sm">
-                                        <span class="inline-flex items-center rounded-md bg-nepal-100 px-2 py-1 text-xs font-medium text-scarlet-red-700 ring-1 ring-inset ring-blue-700/10">
-
-
-                                            <?php echo $rejected_pettycash_count; ?>
-
-                                        </span>
-                                    </div>
-                                </div>
-                            </a>
-                        </div>
-                        {% endif %}
-                        {% if user.roles.adjudication|stringformat:'s' == 'confirm' %}
-                        <div class="mt-2">
-                            <a href="../../pettycash/user/pending_sectionhead.php?source=home">
-                                <div class="flex flex-row border border-nepal-200 hover:bg-nepal-600 rounded-lg px-3 py-1 justify-between items-center sm:mt-0 sm:flex-row sm:flex-wrap sm:space-x-6">
-                                    <div class="text-sm">PENDING APPROVAL</div>
-                                    <div class="text-sm">
-                                        <span class="inline-flex items-center rounded-md bg-nepal-100 px-2 py-1 text-xs font-medium text-scarlet-red-700 ring-1 ring-inset ring-blue-700/10">
-                                            <?php echo $petty_cash_count; ?>
-                                        </span>
-                                    </div>
-                                </div>
-                            </a>
-                        </div>
-                        {% endif %}
-                        {% if user.roles.adjudication|stringformat:'s' == 'authorise' %}
-                        <div class="mt-2">
-                            <a href="../../pettycash/user/pending_sectionhead.php?source=home">
-                                <div class="flex flex-row border border-nepal-200 hover:bg-nepal-600 rounded-lg px-3 py-1 justify-between items-center sm:mt-0 sm:flex-row sm:flex-wrap sm:space-x-6">
-                                    <div class="text-sm">PENDING APPROVAL</div>
-                                    <div class="text-sm">
-                                        <span class="inline-flex items-center rounded-md bg-nepal-100 px-2 py-1 text-xs font-medium text-scarlet-red-700 ring-1 ring-inset ring-blue-700/10">
-                                            <?php echo $petty_cash_count; ?>
-                                        </span>
-                                    </div>
-                                </div>
-                            </a>
-                        </div>
-                        {% endif %}
+                                  </div>
+                            </div>
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
-        <div class="w-auto bg-gray-200  shadow shadow-nepal-300 text-gray-700 rounded px-2 py-2">
+        <div class="w-auto bg-jade-200 shadow shadow-jade-300 text-jade-900 rounded px-2 py-2">
             <div class="sm:flex lg:items-center lg:justify-between">
                 <div class="min-w-0 flex-1">
-                    <div class="text-lg font-bold text-nepal-950 sm:truncate sm:tracking-tight">
-                        DIRECT PURCHASES
+                    <div class="text-center text-lg font-bold text-jade-950 sm:truncate sm:tracking-tight">
+                        MAINTENANCE
                     </div>
-                    {% if user.roles.adjudication|stringformat:'s' == 'create' %}
-                        <div class="mt-2">
-                            <a href="../direct_purchases/user/pending_sectionhead.php?source=home">
-                                <div class="flex flex-row border border-nepal-200 hover:bg-nepal-600 rounded-lg px-3 py-1 justify-between items-center sm:mt-0 sm:flex-row sm:flex-wrap sm:space-x-6">
-                                    <div class="text-sm">PENDING APPROVAL</div>
-                                    <div class="text-sm">
-                                        <span class="inline-flex items-center rounded-md bg-nepal-100 px-2 py-1 text-xs font-medium text-scarlet-red-700 ring-1 ring-inset ring-blue-700/10">
-                                            <?php echo $direct_purchases_count; ?>
-                                        </span>
+                    <div class="mt-2">
+                        <a href="../../ace/user/pending_sectionhead.php?source=home">
+                            <div class="border border-jade-200 hover:bg-jade-400 rounded-lg px-3 py-1 justify-between items-center sm:mt-0 sm:flex-row sm:flex-wrap">
+                                <div class="col-xl col-sm text-center mb-xl-0 mb-4">
+                                    <div class="card">
+                                      <div class="card-body p-2">
+                                        <div class="row">
+                                          <div class="col-8">
+                                            <div class="numbers">
+                                              <p class="text-xs mb-0 text-capitalize font-weight-bold">
+                                                Maintained
+                                              </p>
+                                              <h6 class="font-weight-bolder mb-0">100</h6>
+                                            </div>
+ 
+                                            <div class="overflow-hidden bg-jade-50 h-1.5 rounded-full w-full">
+                                                <span
+                                                  class="h-full bg-jade-900 w-full block rounded-full"
+                                                  style="width: 50%"
+                                                ></span>
+                                              </div>
+                                            <p class="text-xs text-muted mt-2 mb-0">YTD Target:1000</p>
+                                          </div>
+                                        </div>
+                                      </div>
                                     </div>
-                                </div>
-                            </a>
-                        </div>
-                        {% endif %}
-                        {% if user.roles.adjudication|stringformat:'s' == 'approve' %}
-                        <div class="mt-2">
-                            <a href="../direct_purchases/section_head/pending_sectionhead.php?source=home">
-                                <div class="flex flex-row border border-nepal-200 hover:bg-nepal-600 rounded-lg px-3 py-1 justify-between items-center sm:mt-0 sm:flex-row sm:flex-wrap sm:space-x-6">
-                                    <div class="text-sm">PENDING APPROVAL</div>
-                                    <div class="text-sm">
-                                        <span class="inline-flex items-center rounded-md bg-nepal-100 px-2 py-1 text-xs font-medium text-scarlet-red-700 ring-1 ring-inset ring-blue-700/10">
-                                            <?php echo $direct_purchases_count; ?>
-                                        </span>
-                                    </div>
-                                </div>
-                            </a>
-                        </div>
-                        <div class="mt-2">
-                            <a href="../direct_purchases/procurement/rejected_by_procurement.php?source=home">
-                                <div class="flex flex-row border border-nepal-200 hover:bg-nepal-600 rounded-lg px-3 py-1 justify-between items-center sm:mt-0 sm:flex-row sm:flex-wrap sm:space-x-6">
-                                    <div class="text-sm">REJECTED</div>
-                                    <div class="text-sm">
-                                        <span class="inline-flex items-center rounded-md bg-nepal-100 px-2 py-1 text-xs font-medium text-scarlet-red-700 ring-1 ring-inset ring-blue-700/10">
-                                            <?php echo $rejected_direct_purchases_count; ?>
-                                        </span>
-                                    </div>
-                                </div>
-                            </a>
-                        </div>
-                        {% endif %}
-                        {% if user.roles.adjudication|stringformat:'s' == 'process' %}
-                        <div class="mt-2">
-                            <a href="../../direct_purchases/procurement/pending_procurement.php?source=home">
-                                <div class="flex flex-row border border-nepal-200 hover:bg-nepal-600 rounded-lg px-3 py-1 justify-between items-center sm:mt-0 sm:flex-row sm:flex-wrap sm:space-x-6">
-                                    <div class="text-sm">PENDING CHECKING</div>
-                                    <div class="text-sm">
-                                        <span class="inline-flex items-center rounded-md bg-nepal-100 px-2 py-1 text-xs font-medium text-scarlet-red-700 ring-1 ring-inset ring-blue-700/10">
-
-
-                                            <?php echo  $pending_procurement_count; ?>
-
-                                        </span>
-                                    </div>
-                                </div>
-                            </a>
-                        </div>
-                        <div class="mt-2">
-                            <a href="../../direct_purchases/procurement/pending_order.php?source=home">
-                                <div class="flex flex-row border border-nepal-200 hover:bg-nepal-600 rounded-lg px-3 py-1 justify-between items-center sm:mt-0 sm:flex-row sm:flex-wrap sm:space-x-6">
-                                    <div class="text-sm">PENDING ORDER</div>
-                                    <div class="text-sm">
-                                        <span class="inline-flex items-center rounded-md bg-nepal-100 px-2 py-1 text-xs font-medium text-scarlet-red-700 ring-1 ring-inset ring-blue-700/10">
-
-
-                                            <?php echo $pending_order_count; ?>
-
-                                        </span>
-                                    </div>
-                                </div>
-                            </a>
-                        </div>
-                        {% endif %}
-                        {% if user.roles.adjudication|stringformat:'s' == 'confirm' %}
-                        <div class="mt-2">
-                            <a href="../direct_purchases/finance/pending_finance.php?source=home">
-                                <div class="flex flex-row border border-nepal-200 hover:bg-nepal-600 rounded-lg px-3 py-1 justify-between items-center sm:mt-0 sm:flex-row sm:flex-wrap sm:space-x-6">
-                                    <div class="text-sm">PENDING CONFIRMATION</div>
-                                    <div class="text-sm">
-                                        <span class="inline-flex items-center rounded-md bg-nepal-100 px-2 py-1 text-xs font-medium text-scarlet-red-700 ring-1 ring-inset ring-blue-700/10">
-
-
-                                            <?php echo $pending_finance_count; ?>
-
-                                        </span>
-                                    </div>
-                                </div>
-                            </a>
-                        </div>
-                        {% endif %}
-                        {% if user.roles.adjudication|stringformat:'s' == 'authorise' %}
-                        <div class="mt-2">
-                            <a href="../direct_purchases/gm/pending_gm.php?source=home">
-                                <div class="flex flex-row border border-nepal-200 hover:bg-nepal-600 rounded-lg px-3 py-1 justify-between items-center sm:mt-0 sm:flex-row sm:flex-wrap sm:space-x-6">
-                                    <div class="text-sm">PENDING APPROVAL</div>
-                                    <div class="text-sm">
-                                        <span class="inline-flex items-center rounded-md bg-nepal-100 px-2 py-1 text-xs font-medium text-scarlet-red-700 ring-1 ring-inset ring-blue-700/10">
-
-
-                                            <?php echo $pending_gm_count; ?>
-
-                                        </span>
-                                    </div>
-                                </div>
-                            </a>
-                        </div>
-                        <div class="mt-2">
-                            <a href="../direct_purchases/section_head/pending_sectionhead.php?source=home">
-                                <div class="flex flex-row border border-nepal-200 hover:bg-nepal-600 rounded-lg px-3 py-1 justify-between items-center sm:mt-0 sm:flex-row sm:flex-wrap sm:space-x-6">
-                                    <div class="text-sm">PENDING AUTHORISATION</div>
-                                    <div class="text-sm">
-                                        <span class="inline-flex items-center rounded-md bg-nepal-100 px-2 py-1 text-xs font-medium text-scarlet-red-700 ring-1 ring-inset ring-blue-700/10">
-                                            <?php echo $pending_sectionhead_count; ?>
-                                        </span>
-                                    </div>
-                                </div>
-                            </a>
-                        </div>
-                        {% endif %}
+                                  </div>
+                            </div>
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
-        <div class="w-auto bg-gray-200  shadow shadow-nepal-300 text-gray-700 rounded px-2 py-2">
+    </div>
+    <div class="grid grid-cols-5 gap-4 mt-10">
+        <div class="w-auto bg-gulf-blue-200 shadow shadow-gulf-blue-300 text-gulf-blue-900 rounded px-2 py-2">
             <div class="sm:flex lg:items-center lg:justify-between">
                 <div class="min-w-0 flex-1">
-                    <div class="text-lg font-bold text-nepal-950 sm:truncate sm:tracking-tight">
-                        REMITTANCE ADVICE
+                    <div class="text-center text-lg font-bold text-gulf-blue-950 sm:truncate sm:tracking-tight">
+                        Top PBNC Customers
                     </div>
-                    {% if user.roles.adjudication|stringformat:'s' == 'confirm' %}
-                        <div class="mt-2">
-                            <a href="../remittance/datatables/production/authoriser/pending_authorisation.php?source=home">
-                                <div class="flex flex-row border border-nepal-200 hover:bg-nepal-600 rounded-lg px-3 py-1 justify-between items-center sm:mt-0 sm:flex-row sm:flex-wrap sm:space-x-6">
-                                    <div class="text-sm">PENDING AUTHORISATION</div>
-                                    <div class="text-sm">
-                                        <span class="inline-flex items-center rounded-md bg-nepal-100 px-2 py-1 text-xs font-medium text-scarlet-red-700 ring-1 ring-inset ring-blue-700/10">
-
-
-                                            <?php echo $remittance_advice_result_count; ?>
-
-                                        </span>
-                                    </div>
-                                </div>
-                            </a>
-                        </div>
-                        {% endif %}
+                    <div style="height: 14rem;" class="mt-2 h-20 overflow-auto">
+                        <a href="../../ace/user/pending_sectionhead.php?source=home">
+                            <table class="table-auto">
+                                <thead>
+                                  <tr>
+                                    <th></th>
+                                    <th></th>
+                                    <th></th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  <tr>
+                                    <td>1</td>
+                                    <td>Malcolm Lockyer</td>
+                                    <td>$10000</td>
+                                  </tr>
+                                  <tr>
+                                    <td>2</td>
+                                    <td>The Eagles</td>
+                                    <td>$10000</td>
+                                  </tr>
+                                  <tr>
+                                    <td>3</td>
+                                    <td>Earth, Wind, and Fire</td>
+                                    <td>$10000</td>
+                                  </tr>
+                                  <tr>
+                                    <td>4</td>
+                                    <td>Malcolm Lockyer</td>
+                                    <td>$10000</td>
+                                  </tr>
+                                  <tr>
+                                    <td>5</td>
+                                    <td>The Eagles</td>
+                                    <td>$10000</td>
+                                  </tr>
+                                  <tr>
+                                    <td>6</td>
+                                    <td>Earth, Wind, and Fire</td>
+                                    <td>$10000</td>
+                                  </tr>
+                                  <tr>
+                                    <td>1</td>
+                                    <td>Malcolm Lockyer</td>
+                                    <td>$10000</td>
+                                  </tr>
+                                  <tr>
+                                    <td>2</td>
+                                    <td>The Eagles</td>
+                                    <td>$10000</td>
+                                  </tr>
+                                  <tr>
+                                    <td>3</td>
+                                    <td>Earth, Wind, and Fire</td>
+                                    <td>$10000</td>
+                                  </tr>
+                                  <tr>
+                                    <td>4</td>
+                                    <td>Malcolm Lockyer</td>
+                                    <td>$10000</td>
+                                  </tr>
+                                  <tr>
+                                    <td>5</td>
+                                    <td>The Eagles</td>
+                                    <td>$10000</td>
+                                  </tr>
+                                  <tr>
+                                    <td>6</td>
+                                    <td>Earth, Wind, and Fire</td>
+                                    <td>$10000</td>
+                                  </tr>
+                                </tbody>
+                              </table>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="w-auto bg-gulf-blue-200 shadow shadow-gulf-blue-300 text-gulf-blue-900 rounded px-2 py-2">
+            <div class="sm:flex lg:items-center lg:justify-between">
+                <div class="min-w-0 flex-1">
+                    <div class="text-center text-lg font-bold text-gulf-blue-950 sm:truncate sm:tracking-tight">
+                        Top PBNC Customers
+                    </div>
+                    <div style="height: 14rem;" class="mt-2 h-20 overflow-auto">
+                        <a href="../../ace/user/pending_sectionhead.php?source=home">
+                            <table class="table-auto">
+                                <thead>
+                                  <tr>
+                                    <th></th>
+                                    <th></th>
+                                    <th></th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  <tr>
+                                    <td>1</td>
+                                    <td>Malcolm Lockyer</td>
+                                    <td>$10000</td>
+                                  </tr>
+                                  <tr>
+                                    <td>2</td>
+                                    <td>The Eagles</td>
+                                    <td>$10000</td>
+                                  </tr>
+                                  <tr>
+                                    <td>3</td>
+                                    <td>Earth, Wind, and Fire</td>
+                                    <td>$10000</td>
+                                  </tr>
+                                  <tr>
+                                    <td>4</td>
+                                    <td>Malcolm Lockyer</td>
+                                    <td>$10000</td>
+                                  </tr>
+                                  <tr>
+                                    <td>5</td>
+                                    <td>The Eagles</td>
+                                    <td>$10000</td>
+                                  </tr>
+                                  <tr>
+                                    <td>6</td>
+                                    <td>Earth, Wind, and Fire</td>
+                                    <td>$10000</td>
+                                  </tr>
+                                  <tr>
+                                    <td>1</td>
+                                    <td>Malcolm Lockyer</td>
+                                    <td>$10000</td>
+                                  </tr>
+                                  <tr>
+                                    <td>2</td>
+                                    <td>The Eagles</td>
+                                    <td>$10000</td>
+                                  </tr>
+                                  <tr>
+                                    <td>3</td>
+                                    <td>Earth, Wind, and Fire</td>
+                                    <td>$10000</td>
+                                  </tr>
+                                  <tr>
+                                    <td>4</td>
+                                    <td>Malcolm Lockyer</td>
+                                    <td>$10000</td>
+                                  </tr>
+                                  <tr>
+                                    <td>5</td>
+                                    <td>The Eagles</td>
+                                    <td>$10000</td>
+                                  </tr>
+                                  <tr>
+                                    <td>6</td>
+                                    <td>Earth, Wind, and Fire</td>
+                                    <td>$10000</td>
+                                  </tr>
+                                </tbody>
+                              </table>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="w-auto bg-gulf-blue-200 shadow shadow-gulf-blue-300 text-gulf-blue-900 rounded px-2 py-2">
+            <div class="sm:flex lg:items-center lg:justify-between">
+                <div class="min-w-0 flex-1">
+                    <div class="text-center text-lg font-bold text-gulf-blue-950 sm:truncate sm:tracking-tight">
+                        Top PBNC Customers
+                    </div>
+                    <div style="height: 14rem;" class="mt-2 h-20 overflow-auto">
+                        <a href="../../ace/user/pending_sectionhead.php?source=home">
+                            <canvas id="Inspection"></canvas>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="w-auto bg-gulf-blue-200 shadow shadow-gulf-blue-300 text-gulf-blue-900 rounded px-2 py-2">
+            <div class="sm:flex lg:items-center lg:justify-between">
+                <div class="min-w-0 flex-1">
+                    <div class="text-center text-lg font-bold text-gulf-blue-950 sm:truncate sm:tracking-tight">
+                        Top PBNC Customers
+                    </div>
+                    <div style="height: 14rem;" class="mt-2 h-20 overflow-auto">
+                        <a href="../../ace/user/pending_sectionhead.php?source=home">
+                            <table class="table-auto">
+                                <thead>
+                                  <tr>
+                                    <th></th>
+                                    <th></th>
+                                    <th></th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  <tr>
+                                    <td>1</td>
+                                    <td>Malcolm Lockyer</td>
+                                    <td>$10000</td>
+                                  </tr>
+                                  <tr>
+                                    <td>2</td>
+                                    <td>The Eagles</td>
+                                    <td>$10000</td>
+                                  </tr>
+                                  <tr>
+                                    <td>3</td>
+                                    <td>Earth, Wind, and Fire</td>
+                                    <td>$10000</td>
+                                  </tr>
+                                  <tr>
+                                    <td>4</td>
+                                    <td>Malcolm Lockyer</td>
+                                    <td>$10000</td>
+                                  </tr>
+                                  <tr>
+                                    <td>5</td>
+                                    <td>The Eagles</td>
+                                    <td>$10000</td>
+                                  </tr>
+                                  <tr>
+                                    <td>6</td>
+                                    <td>Earth, Wind, and Fire</td>
+                                    <td>$10000</td>
+                                  </tr>
+                                  <tr>
+                                    <td>1</td>
+                                    <td>Malcolm Lockyer</td>
+                                    <td>$10000</td>
+                                  </tr>
+                                  <tr>
+                                    <td>2</td>
+                                    <td>The Eagles</td>
+                                    <td>$10000</td>
+                                  </tr>
+                                  <tr>
+                                    <td>3</td>
+                                    <td>Earth, Wind, and Fire</td>
+                                    <td>$10000</td>
+                                  </tr>
+                                  <tr>
+                                    <td>4</td>
+                                    <td>Malcolm Lockyer</td>
+                                    <td>$10000</td>
+                                  </tr>
+                                  <tr>
+                                    <td>5</td>
+                                    <td>The Eagles</td>
+                                    <td>$10000</td>
+                                  </tr>
+                                  <tr>
+                                    <td>6</td>
+                                    <td>Earth, Wind, and Fire</td>
+                                    <td>$10000</td>
+                                  </tr>
+                                </tbody>
+                              </table>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="w-auto bg-gulf-blue-200 shadow shadow-gulf-blue-300 text-gulf-blue-900 rounded px-2 py-2">
+            <div class="sm:flex lg:items-center lg:justify-between">
+                <div class="min-w-0 flex-1">
+                    <div class="text-center text-lg font-bold text-gulf-blue-950 sm:truncate sm:tracking-tight">
+                        Top PBNC Customers
+                    </div>
+                    <div style="height: 14rem;" class="mt-2 h-20 overflow-auto">
+                        <a href="../../ace/user/pending_sectionhead.php?source=home">
+                            <canvas id="Maintanance"></canvas>
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -726,7 +487,7 @@
         <div class="w-auto bg-gray-200 shadow shadow-nepal-300 text-gray-700 rounded px-2 py-2">
             <div class="sm:flex lg:items-center lg:justify-between">
                 <div class="min-w-0 flex-1">
-                    <div class="text-lg font-bold text-nepal-950 sm:truncate sm:tracking-tight">
+                    <div class="text-center text-lg font-bold text-nepal-950 sm:truncate sm:tracking-tight">
                         ACE MONTHLY CHART
                     </div>
                     <div>
@@ -738,7 +499,7 @@
         <div class="w-auto bg-gray-200 shadow shadow-nepal-300 text-gray-700 rounded px-2 py-2">
             <div class="sm:flex lg:items-center lg:justify-between">
                 <div class="min-w-0 flex-1">
-                    <div class="text-lg font-bold text-nepal-950 sm:truncate sm:tracking-tight">
+                    <div class="text-center text-lg font-bold text-nepal-950 sm:truncate sm:tracking-tight">
                         TENDER MONTHLY CHART
                     </div>
                     <div>
