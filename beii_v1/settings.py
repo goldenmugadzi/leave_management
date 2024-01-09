@@ -111,7 +111,9 @@ INSTALLED_APPS = [
     
     'it.beii_auth.apps.BeiiAuthConfig',
     'it.users.apps.UsersConfig',
-    
+    'commecial.tempertockens',
+    'competence_building.apps.CompetenceBuildingConfig'
+
     # 'finance.tenders.apps.TendersConfig',
     # 'engineering.reticulations.apps.ReticulationsConfig',
     # 'commercials.connections.apps.ConnectionsConfig',

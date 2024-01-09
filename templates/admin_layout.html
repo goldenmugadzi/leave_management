@@ -8,8 +8,8 @@
     <link rel="shortcut icon" href="{% static 'assets/images/website-logo.png' %}" />
     <link href="{% static 'assets/css/tailwind.css' %}" rel="stylesheet">
     <link href="{% static 'assets/css/be.css' %}" rel="stylesheet">
-
-    {% block styles %}{% endblock styles %}
+    <link href="{% static 'assets/css/be.css' %}" rel="stylesheet">
+    <link href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css" rel="stylesheet">  {% block styles %}  {% endblock styles %}
 </head>
 
 <body>
@@ -138,6 +138,12 @@
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
                                         </svg>
                                         <span class="ml-2 text-sm font-medium">Processes and Procedures</span>
+                                    </a>
+                                    <a class="flex items-center w-full h-12 px-3 mt-2 rounded hover:bg-blue-550" href="/competence/competence">
+                                        <svg class="w-6 h-6 stroke-current" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"></path>
+                                        </svg>
+                                        <span class="ml-2 text-sm font-medium">Competence Building</span>
                                     </a>
                                 </div>
                                 {% comment %} <div style="display: flex; flex-direction: column;" class="text-gray-50 w-full mt-2 border-t border-gray-700">

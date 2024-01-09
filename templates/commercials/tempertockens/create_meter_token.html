@@ -1,0 +1,34 @@
+{% extends 'commercials/tempertockens/base.html' %}
+
+{% load static %}
+
+{% block content %}
+  <div class="flex-column ">
+    <form class="row rounded py-4 border  " method="POST" action=""  enctype="multipart/form-data">
+<h2>Create Meter Token</h2>
+{% csrf_token %}
+      <div class="container bg-primary">
+        {% for field in form %}
+          <div class="row">
+            <div class="col-6">
+              {{ field.label_tag }}
+              {% if field.help_text %}
+                <sup>{{ field.help_text }}</sup>
+                <hr />
+              {% endif %}
+              {{ field.errors }}
+            </div>
+            <div class="col-6">{{ field }}</div>
+          </div>
+          <br />
+        {% endfor %}
+      </div>
+      <br />
+      <div class="d-flex justify-content-center">
+        <!-- <a class="btn btn-danger" href="/dashboard">Back</a> -->
+        <input class="btn btn-success" type="submit" value="Submit" />
+      </div>
+    </form>
+  </div>
+{% endblock %}
+
