@@ -69,4 +69,4 @@ class Designations(models.Model):
     chk = models.CharField(max_length=100, blank=True)
     
     def __str__(self):
-        return self.role
+        return self.description

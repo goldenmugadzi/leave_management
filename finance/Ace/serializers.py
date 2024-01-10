@@ -1,44 +1,11 @@
-from django.core.validators import MaxValueValidator, MinValueValidator
-from django.db import models
+from dataclasses import field
+from django.contrib.auth.models import User, Group
+from rest_framework import serializers
 
+from .models import *
 
-# Create your models here.
-
-# budget models
-class YearField(models.Field):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.validators.append(models.MinValueValidator(1))
-        self.validators.append(models.MaxValueValidator(9999))
-
-    def deconstruct(self):
-        return (YearField,)
-
-    def get_internal_value(self, value):
-        return value.year
-
-    def set_internal_value(self, value, data=None):
-        return value
-
-class Budget(models.Model):
-    budget_id = models.AutoField(primary_key=True)
-    section_code = models.CharField(max_length=36, blank=True, null=True)
-    section = models.CharField(max_length=36, blank=True, null=True)
-    budget_name = models.CharField(max_length=36, blank=True, null=True)
-    allocated = models.FloatField( blank=True, null=True)
-    withdrawn = models.FloatField(blank=True, null=True,default=0)
-    to_be_withdrawn = models.FloatField(blank=True, null=True,default=0)
-    balance = models.FloatField( blank=True, null=True,default=0)
-    withdrawal_date = models.DateField(blank=True, null=True)
-    period = models.PositiveIntegerField(validators=[MinValueValidator(1), MaxValueValidator(9999)])
-    region = models.CharField(max_length=36, blank=True, null=True)
-    created_date = models.DateField(blank=True, null=True)
-    budget_note = models.FileField(upload_to='uploads/budget')
-
-    def __str__(self):
-        return str(self.budget_name)
-
-class Ace(models.Model):
+class AceSerializer(serializers.Serializer):
+    token = serializers.CharField(max_length=300)
     # ace_type = models.CharField(max_length=15, blank=True, null=True)
     Department = models.CharField(max_length=100, blank=True, null=True)
     location = models.CharField(max_length=100, blank=True, null=True)
@@ -89,24 +56,6 @@ class Ace(models.Model):
     total_connection_fee = models.FloatField( blank=True, null=True)
     designation = models.CharField(null = True, max_length=70)
 
-
-    def __str__(self):
-        return self.Ace_id2
-
-
-class Transactions(models.Model):
-    Ace_id2=models.ForeignKey(Ace, on_delete=models.CASCADE)
-    details_of_expenditure = models.CharField(blank=True,null=True,max_length=120)
-    approval_status =models.CharField(blank=True,null=True,max_length=120)
-    transaction_id = models.AutoField(primary_key=True)
-    region = models.CharField(blank=True,null=True,max_length=120)
-    amount = models.FloatField(blank=True,null=True,max_length=120)
-    ace = models.CharField(blank=True,null=True,max_length=120)
-    budget = models.ForeignKey(Budget, on_delete=models.CASCADE)
-
-    # quotation = models.ForeignKey(Ace, on_delete=models.CASCADE)
-
-
-    def __str__(self):
-        return self.transaction_id
+    def create(self, validated_data):
+        return Ace(**validated_data)
 

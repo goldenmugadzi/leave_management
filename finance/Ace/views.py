@@ -1,4 +1,5 @@
 import os
+import sweetify
 from datetime import datetime
 from random import randrange
 
@@ -7,6 +8,9 @@ from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.http import FileResponse
 from django.shortcuts import render, redirect
+from django.contrib import messages
+
+# from numpy.distutils.fcompiler import none
 
 UserProfile = apps.get_model(app_label="users", model_name="UserProfile")
 from .models import *
@@ -97,6 +101,7 @@ def create_Ace(request):
     depot = Depots.objects.filter(code=user_profile.depot).first()
     section_used = Sections.objects.filter(code=user_profile.section).first()
     user_designation = Designations.objects.filter(id=user_profile.designation).first() if user_profile.designation else None
+    # print(user_designation)
 
     new_user = {
         "id": user.pk,
@@ -113,6 +118,11 @@ def create_Ace(request):
     }
     user_title = request.user.get_full_name()
     section_budgets = Budget.objects.filter(section_code = section_used).all()
+
+    section_budgets=list(section_budgets)
+    print(section_budgets)
+
+
     # print(section_budgets)
     # l = request.user.groups.values_list('name', flat=True)
     # # QuerySet Object
@@ -124,75 +134,127 @@ def create_Ace(request):
 
     if request.method == "POST":
         department = request.POST['department']
+        print("now in post brackets")
         location = district
         section = request.POST['section']
         # section = secction
-        Details_of_Expenditure = request.POST['details_of_Expenditure']
+        Details_of_Expenditure = request.POST['details_of_exp']
         # Designation = request.POST['designation']
         amount = request.POST['amount']
-        payment_mode = request.POST['payment_mode']
+        # payment_mode = request.POST['payment_mode']
         # region = request.POST['region']
         # form = UploadFileForm(request.POST, request.FILES)
-        quotation1 = request.FILES['quotation1']
-        quotation2 = request.FILES['quotation2']
-        quotation3 = request.FILES['quotation3']
-        payment_mode = request.POST['payment_mode']
+        quotation1 = request.FILES['quotation1'] or ""
+        quotation2 = request.FILES['quotation2'] or ""
+        quotation3 = request.FILES['quotation3'] or ""
+
         requested_by = request.user.username
+        classification= request.POST['classification1']
         budget_id = request.POST['budget']
-        classification = request.POST['classification1']
-        present_tariff = request.POST['present_tariff']
-        present_fmc = request.POST['present_fmc']
-        capital_contribution = request.POST['capital_contribution']
-        materials = request.POST['materials']
-        connection_fee = request.POST['connection_fee']
-        labour = request.POST['labour']
-        transport = request.POST['transport']
-        total_connection_fee = present_tariff + materials + connection_fee + labour + transport
+        print(budget_id + "  budget id")
+        budget_id = Budget.objects.filter(budget_id=budget_id).first()
+        if budget_id.to_be_withdrawn>=budget_id.balance or amount>=budget_id.balance:
+            if classification=="project":
 
-        # last_petty = Ace.objects.last()
-        rand = randrange(1, 99)
-        rand2 = str(rand)
+                present_tariff = request.POST['present_tariff']
+                present_fmc = request.POST['present_fmc']
+                capital_contribution = request.POST['capital_contribution']
+                materials = request.POST['materials']
+                connection_fee = request.POST['connection_fee']
+                labour = request.POST['labour']
+                transport = request.POST['transport']
+                total_connection_fee = present_tariff + materials + connection_fee + labour + transport
 
-        date = datetime.now()
-        date_created = date
-        date = date.strftime("%Y%m%d")
+            elif classification=="internal":
 
-        ace_id = "ACE" + date + rand2
+                present_tariff = ""
+                present_fmc = ""
+                capital_contribution = ""
+                materials = ""
+                connection_fee = ""
+                labour = ""
+                transport = ""
+                total_connection_fee = ""
+
+            # last_petty = Ace.objects.last()
+            rand = randrange(1, 99)
+            rand2 = str(rand)
+
+            date = datetime.now()
+            date_created = date
+            date = date.strftime("%Y%m%d")
+            print(budget_id)
+
+            ace_id = "ACE" + date + rand2
+
+            objectify = Ace(
+                Department=department,
+                location=location,
+                section=section_used,
+                allocation_code_of_expenditure=section,
+                details_of_expenditure=Details_of_Expenditure,
+                amount=amount,
+                quotation1=quotation1 or None,
+                quotation2=quotation2 or None,
+                quotation3=quotation3 or None,
+                # payment_mode=payment_mode,
+                requested_by=requested_by,
+                Ace_id2=ace_id,
+                date_created=date_created,
+                approval_status="created by " + requested_by,
+                budget_id =budget_id,
+                designation = user_designation,
+                region=region,
+                classification=classification,
+                present_tariff=present_tariff or None,
+                present_fmc=present_fmc or None,
+                capital_contribution=capital_contribution or None,
+                materials=materials or None,
+                connection_fee=connection_fee or None,
+                labour=labour or None,
+                transport=transport or None,
+                total_connection_fee=total_connection_fee or None,
+            )
+            objectify.save()
+            # ace instance
+            ace = ace_id
+            ace_id=Ace.objects.filter(Ace_id2=ace_id).first()
+            # transacctions
+            objectify2 = Transactions(
+                Ace_id2=ace_id,
+                details_of_expenditure=Details_of_Expenditure,
+                approval_status="created",
+                region=region,
+                amount=amount,
+                ace= ace,
+                budget=budget_id,
+            )
+            objectify2.save()
+
+            # budgets calculations
+            budget_id.to_be_withdrawn=budget_id.to_be_withdrawn+amount
+            budget_id.withdrawal_date=date_created
+
+            budget_id.save()
+
+        elif budget_id.to_be_withdrawn>=budget_id.balance:
+            messages.error(request, 'The pending aces ave drawn more than the budget can handle!')
+            return redirect('/ace/create')
+
+        elif amount>=budget_id.balance:
+            messages.error(request, 'The pending aces ave drawn more than the budget can handle!')
+            return redirect('/ace/create')
+
+        else:
+            messages.error(request, 'please redo the ace')
+            return redirect('/ace/create')
 
 
 
-        objectify = Ace(
-            Department=department,
-            location=location,
-            section=section_used,
-            allocation_code_of_expenditure=section,
-            details_of_expenditure=Details_of_Expenditure,
-            amount=amount,
-            quotation1=quotation1,
-            quotation2=quotation2,
-            quotation3=quotation3,
-            payment_mode=payment_mode,
-            requested_by=requested_by,
-            Ace_id2=ace_id,
-            date_created=date_created,
-            approval_status="created by " + requested_by,
-            budget_id =budget_id,
-            designation = user_designation,
-            region=region,
-            classification=classification,
-            present_tariff=present_tariff,
-            present_fmc=present_fmc,
-            capital_contribution=capital_contribution,
-            materials=materials,
-            connection_fee=connection_fee,
-            labour=labour,
-            transport=transport,
-            total_connection_fee=total_connection_fee,
-        )
+        # new_transaction = new_transaction-amount
 
-        objectify.save()
-
-        return redirect('/Ace')
+        messages.error(request, 'ace succesfully created',ace_id)
+        return redirect('/ace')
 
     return render(request, 'Ace/Ace_create.html', {"title": "Create",
                                                    "user_title": user_title,
@@ -201,15 +263,26 @@ def create_Ace(request):
 
 @login_required(login_url='/accounts/login/')
 def get_Ace_records_section_head(request):
+    user_id = request.user.id
+    user = UserProfile.objects.filter(user_id=user_id).first()
+    user_profile = UserProfile.objects.filter(user_id=user.pk).first()
+    region = Regions.objects.filter(id=user_profile.region).first()
+    district = Districts.objects.filter(code=user_profile.district).first()
+    depot = Depots.objects.filter(code=user_profile.depot).first()
+    section_used = Sections.objects.filter(code=user_profile.section).first()
+    user_designation = Designations.objects.filter(id=user_profile.designation).first() if user_profile.designation else None
+    # print(user_designation)
+
     user_title = request.user.get_full_name()
     l = request.user.groups.values_list('name', flat=True)
 
     # QuerySet Object
     user_groups = list(l)
-    user_id = request.user.id
-    user = UserProfile.objects.filter(user_id=user_id).first()
-    secction = user.section
-    records = Ace.objects.filter(section=secction).all()
+
+    # secction = user.section
+    print(section_used)
+
+    records = Ace.objects.filter(section=section_used).all()
     context = serializers.serialize('json', records)
 
     user_page = 'Ace/index.html'
@@ -223,15 +296,26 @@ def get_Ace_records_section_head(request):
 
 @login_required(login_url='/accounts/login/')
 def get_Ace_records_requester(request):
-    user_title = request.user.get_full_name()
-    l = request.user.groups.values_list('name', flat=True)
-
-    # QuerySet Object
-    user_groups = list(l)
     user_id = request.user.id
     user = UserProfile.objects.filter(user_id=user_id).first()
+    user_profile = UserProfile.objects.filter(user_id=user.pk).first()
+    region = Regions.objects.filter(id=user_profile.region).first()
+    district = Districts.objects.filter(code=user_profile.district).first()
+    depot = Depots.objects.filter(code=user_profile.depot).first()
+    section_used = Sections.objects.filter(code=user_profile.section).first()
+    user_designation = Designations.objects.filter(id=user_profile.designation).first() if user_profile.designation else None
+    # print(user_designation)
+
+    user_title = request.user.get_full_name()
+    l = request.user.groups.values_list('name', flat=True)
+    requested_by = request.user.username
+
+# QuerySet Object
+    user_groups = list(l)
+    # user_id = request.user.id
+    # user = UserProfile.objects.filter(user_id=user_id).first()
     secction = user.section
-    records = Ace.objects.filter(section=secction).all()
+    records = Ace.objects.filter(requested_by=requested_by).all()
     context = serializers.serialize('json', records)
 
     user_page = 'Ace/index_requester.html'
@@ -271,12 +355,16 @@ def get_to_approve_Ace(request):
     l = request.user.groups.values_list('name', flat=True)
 
     if request.method == "GET":
-        Ace_id = request.GET['f']
+        Ace_id = request.GET['i']
+        print(Ace_id)
         Ace_id = str(Ace_id)
-        pettyc = Ace.objects.filter(petty_id=Ace_id).first()
-        pettyc1 = Ace.objects.filter(petty_id=Ace_id).first()
-        pettyc.save()
+        pettyc = Ace.objects.filter(Ace_id2=Ace_id).first()
+        # pettyc1 = Ace.objects.filter(petty_id=Ace_id).first()
         # print(pettyc)
+        context = pettyc
+        print(context)
+        print(context.quotation1)
+        print("after context")
 
         user_title = request.user.get_full_name()
         l = request.user.groups.values_list('name', flat=True)
@@ -292,7 +380,7 @@ def get_to_approve_Ace(request):
     user_page = 'Ace/Ace_approve.html'
 
     return render(request, user_page, {"title": "All Records",
-                                       "context": pettyc1,
+                                       "context": context,
                                        "user_title": user_title,
                                        "user_groups": user_groups})
 
@@ -557,16 +645,17 @@ def create_budget(request):
     depot = Depots.objects.filter(code=user_profile.depot).first()
     section_used = Sections.objects.filter(code=user_profile.section).first()
     user_designation = Designations.objects.filter(id=user_profile.designation).first() if user_profile.designation else None
+    sections = Sections.objects.filter(code=user_profile.section).first()
 
     if request.method == "POST":
-        section_code =  request.POST["section_code"]
-        section = section_used
+        section =  request.POST["section"]
+        section_code = section
         budget_name = request.POST["budget_name"]
         allocated = request.POST["allocated"]
         period = request.POST["Period"]
         region = request.POST["region"]
         created_date = datetime.now()
-        balance = request.POST["balance"]
+        balance = allocated
         withdrawn = 0
         budget_note = request.FILES["budget_note"]
         period=period.strip().split("-")[0]
@@ -594,7 +683,8 @@ def create_budget(request):
         section_budget = Budget.objects.filter(section = section_used).all()
         return render(request, 'Ace/budget_create.html', {"title": "Create budget",
                                                           "user_title": user_title,
-                                                          "section_budget": section_budget})
+                                                          "section_budget": section_budget,
+                                                          "sections":sections})
 
 
 @login_required(login_url='/accounts/login/')
@@ -667,7 +757,7 @@ def list_budgets(request):
     }
     user_title = request.user.get_full_name()
     print(section_used)
-    section_budget = Budget.objects.filter(section_code = section_used).all()
+    section_budget = Budget.objects.all()
     # print(section_budget)
     user_title = request.user.get_full_name()
     l = request.user.groups.values_list('name', flat=True)

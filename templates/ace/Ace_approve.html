@@ -2,25 +2,6 @@
 {% extends 'admin_layout.html' %} {% block content %}
     <form enctype="multipart/form-data" method="post" action="/ace/create">
     <div class="content-wrapper">
-        {% if messages %}
-
-
-            <ul
-
-                    class="messages">
-
-
-                {% for message in messages %}
-                    <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
-
-
-                {% endfor %}
-
-
-            </ul>
-
-        {% endif %}
-
 
         <div class="bg-gray-200 shadow shadow-nepal-300 text-gray-700 rounded px-2 py-2">
     {% csrf_token %}
@@ -29,10 +10,10 @@
 
         <div class="mt-10 border-b border-gray-900/10 pb-12">
             <h2 class="text-base font-semibold leading-7 text-gray-900">
-                Create Ace
+                Approve Ace
             </h2>
             <p class="mt-1 text-sm leading-6 text-gray-600">
-                Fill all required fields.
+                Fill all required fields for {{ context.Ace_id2 }}.
             </p>
 
             <div class="mt-10 grid grid-cols-3 gap-4">
@@ -43,39 +24,14 @@
                             class="block text-sm font-medium leading-6 text-gray-900"
                     >Department</label
                     >
-                    <select
+                    <input
+                            readonly
                             id="department"
                             name="department"
                             autocomplete="department"
+                            value="{{ context.Department }}"
                             class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
-                    >
-                        <option>Select Department</option>
-                        <option value="521001">GM Office</option>
-                        <option value="522001">Finance</option>
-                        <option value="522102">Stores</option>
-                        <option value="522301">Procurement</option>
-                        <option value="523001">Human Resource</option>
-                        <option value="524001">Engineering</option>
-                        <option value="524101">Network Development</option>
-                        <option value="524202">Transport</option>
-                        <option value="524301">Operations and Maintenance</option>
-                        <option value="525000">Commercial</option>
-                        <option value="526001">Risk Management</option>
-                        <option value="527001">Information Technology</option>
-                        <option value="524402">Makoni Depot</option>
-                        <option value="524403">Zengeza Depot</option>
-                        <option value="524502">Kuwadzana Depot</option>
-                        <option value="524503">Mabelreign Depot</option>
-                        <option value="524504">Warren Park Depot</option>
-                        <option value="524602">Glen View Depot</option>
-                        <option value="524603">Waterfalls Depot</option>
-                        <option value="524604">Southerton Depot</option>
-                        <option value="524702">CBD Depot</option>
-                        <option value="524703">Borrowdale Depot</option>
-                        <option value="524704">Mabvuku Depot</option>
-                        <option value="524705">Ruwa Depot</option>
-                        <option value="000000">Seke Depot</option>
-                    </select>
+                    />
                 </div>
 
 
@@ -87,39 +43,15 @@
                     >Section</label
                     >
                     <div class="mt-2">
-                        <select
+                        <input
+                                readonly
+                                value="{{ context.section }}"
                                 id="section"
                                 name="section"
                                 autocomplete="section"
                                 class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
-                        >
-                            <option>Select Section</option>
-                            <option value="521001">GM Office</option>
-                            <option value="522001">Finance</option>
-                            <option value="522102">Stores</option>
-                            <option value="522301">Procurement</option>
-                            <option value="523001">Human Resource</option>
-                            <option value="524001">Engineering</option>
-                            <option value="524101">Network Development</option>
-                            <option value="524202">Transport</option>
-                            <option value="524301">Operations and Maintenance</option>
-                            <option value="525000">Commercial</option>
-                            <option value="526001">Risk Management</option>
-                            <option value="527001">Information Technology</option>
-                            <option value="524402">Makoni Depot</option>
-                            <option value="524403">Zengeza Depot</option>
-                            <option value="524502">Kuwadzana Depot</option>
-                            <option value="524503">Mabelreign Depot</option>
-                            <option value="524504">Warren Park Depot</option>
-                            <option value="524602">Glen View Depot</option>
-                            <option value="524603">Waterfalls Depot</option>
-                            <option value="524604">Southerton Depot</option>
-                            <option value="524702">CBD Depot</option>
-                            <option value="524703">Borrowdale Depot</option>
-                            <option value="524704">Mabvuku Depot</option>
-                            <option value="524705">Ruwa Depot</option>
-                            <option value="000000">Seke Depot</option>
-                        </select>
+
+                    />
                     </div>
                 </div>
 
@@ -131,9 +63,11 @@
                     >
                     <div class="mt-2">
                         <input
+                                readonly
                                 id="details_of_exp"
                                 name="details_of_exp"
                                 type="text"
+                                value="{{ context.details_of_expenditure}}"
                                 autocomplete="details_of_exp"
                                 class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                         />
@@ -148,9 +82,11 @@
                     >
                     <div class="mt-2">
                         <input
+                                readonly
                                 id="quotation1"
                                 name="quotation1"
                                 type="file"
+                                value="{{ context.quotation1 }}"
                                 autocomplete="quotation1"
                                 class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                         />
@@ -165,6 +101,8 @@
                     >
                     <div class="mt-2">
                         <input
+                                readonly
+                                value="{{ context.quotation2 }}"
                                 id="quotation2"
                                 name="quotation2"
                                 type="file"
@@ -183,6 +121,8 @@
                     >
                     <div class="mt-2">
                         <input
+                                readonly
+                                value="context.quotation3"
                                 id="quotation3"
                                 name="quotation3"
                                 type="file"
@@ -201,18 +141,14 @@
                     >Budget</label
                     >
                     <div class="mt-2">
-                        <select
+                        <input
+                                readonly
+                                value="{{ context.budget_id }}"
                                 id="budget"
                                 name="budget"
                                 autocomplete="budget"
                                 class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
-                        >
-                            <option>Select Budget</option>
-                            {% for budget in section_budget %}
-                                <option value="{{ budget.budget_id }}">{{ budget.budget_name }} Balance= {{ budget.balance }}</option>
-
-                            {% endfor %}
-                        </select>
+                        />
                     </div>
                 </div>
 

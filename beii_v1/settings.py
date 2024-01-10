@@ -112,6 +112,7 @@ INSTALLED_APPS = [
     'it.beii_auth.apps.BeiiAuthConfig',
     'it.users.apps.UsersConfig',
     'finance.Ace.apps.AceConfig',
+    'sweetify',
     
     # 'finance.tenders.apps.TendersConfig',
     # 'engineering.reticulations.apps.ReticulationsConfig',
