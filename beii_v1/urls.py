@@ -24,6 +24,7 @@ from rest_framework_simplejwt.views import (
 urlpatterns = [
     path('', include('beii_auth.urls')),
     path('users/', include('users.urls')),
+    path('dashboards/', include('exec_dashboards.urls')),
     path('admin/', admin.site.urls),
     path('accounts/', include('django.contrib.auth.urls')),
     

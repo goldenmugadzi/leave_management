@@ -1,0 +1,101 @@
+description,depot,district,region,created_at
+Voltage fluctuation,CBD Depot,East District,West,2023-12-30
+Ground fault,Makoni Depot,North District,East,2023-12-17
+Equipment failure,Borrowdale Depot,South District,South,2023-12-06
+Voltage fluctuation,Mabelreign Depot,East District,West,2023-12-05
+Ground fault,Kuwadzana Depot,South District,West,2023-12-21
+Power outage,Kuwadzana Depot,Chitungwiza District,South,2023-12-25
+Short circuit,CBD Depot,North District,West,2023-12-05
+Power outage,Makoni Depot,North District,Harare,2023-12-24
+Circuit overload,Seke,North District,East,2023-12-11
+Circuit overload,Makoni Depot,South District,Harare,2023-12-25
+Power outage,Southerton Depot,East District,East,2023-12-29
+Equipment failure,Glen View Depot,South District,West,2023-12-13
+Short circuit,Ruwa Depot,East District,South,2023-12-31
+Power outage,Mabelreign Depot,South District,East,2024-01-04
+Power outage,Ruwa Depot,North District,Harare,2023-12-29
+Short circuit,Ruwa Depot,North District,West,2023-12-17
+Power outage,Ruwa Depot,South District,East,2024-01-04
+Short circuit,Kuwadzana Depot,South District,East,2023-12-15
+Circuit overload,Kuwadzana Depot,North District,South,2023-12-20
+Equipment failure,Kuwadzana Depot,North District,West,2024-01-08
+Equipment failure,CBD Depot,South District,East,2023-12-16
+Short circuit,Borrowdale Depot,East District,Harare,2023-12-18
+Short circuit,Warren Park Depot,North District,Harare,2023-12-20
+Short circuit,Makoni Depot,East District,South,2023-12-21
+Voltage fluctuation,Makoni Depot,North District,West,2024-01-07
+Voltage fluctuation,Borrowdale Depot,East District,Harare,2023-12-08
+Equipment failure,Ruwa Depot,East District,South,2023-12-13
+Power outage,Southerton Depot,North District,West,2024-01-04
+Power outage,Mabelreign Depot,Chitungwiza District,East,2023-12-19
+Ground fault,Borrowdale Depot,East District,West,2023-12-09
+Short circuit,Seke,North District,Harare,2024-01-06
+Voltage fluctuation,Ruwa Depot,East District,South,2023-12-14
+Short circuit,Seke,North District,West,2024-01-06
+Power outage,Kuwadzana Depot,North District,South,2023-12-29
+Short circuit,Southerton Depot,North District,Harare,2023-12-29
+Ground fault,CBD Depot,Chitungwiza District,South,2023-12-08
+Voltage fluctuation,Mabelreign Depot,East District,East,2023-12-12
+Power outage,Kuwadzana Depot,East District,East,2023-12-31
+Power outage,Glen View Depot,Chitungwiza District,East,2023-12-21
+Equipment failure,Mabelreign Depot,North District,West,2023-12-06
+Power outage,Seke,North District,East,2023-12-21
+Equipment failure,Mabvuku Depot,Chitungwiza District,East,2023-12-11
+Equipment failure,Glen View Depot,East District,West,2023-12-14
+Ground fault,Warren Park Depot,North District,Harare,2023-12-27
+Voltage fluctuation,Warren Park Depot,East District,East,2023-12-09
+Voltage fluctuation,Mabelreign Depot,Chitungwiza District,West,2023-12-06
+Voltage fluctuation,Zengeza Depot,North District,East,2023-12-28
+Power outage,Southerton Depot,East District,West,2023-12-04
+Circuit overload,Kuwadzana Depot,North District,Harare,2023-12-01
+Circuit overload,Waterfalls Depot,South District,Harare,2023-12-23
+Voltage fluctuation,Glen View Depot,South District,West,2023-12-11
+Ground fault,Mabelreign Depot,East District,East,2024-01-08
+Short circuit,Kuwadzana Depot,South District,Harare,2023-12-14
+Equipment failure,Ruwa Depot,South District,West,2023-12-22
+Voltage fluctuation,Ruwa Depot,South District,East,2023-12-09
+Circuit overload,Makoni Depot,North District,South,2023-12-23
+Equipment failure,Southerton Depot,South District,South,2024-01-03
+Voltage fluctuation,Southerton Depot,South District,South,2024-01-09
+Ground fault,Ruwa Depot,South District,West,2023-12-14
+Ground fault,Warren Park Depot,Chitungwiza District,West,2024-01-02
+Voltage fluctuation,Mabvuku Depot,Chitungwiza District,West,2023-12-19
+Voltage fluctuation,Waterfalls Depot,South District,West,2023-12-29
+Power outage,Kuwadzana Depot,Chitungwiza District,Harare,2024-01-03
+Ground fault,Makoni Depot,East District,East,2024-01-04
+Power outage,Makoni Depot,East District,West,2023-12-25
+Circuit overload,Kuwadzana Depot,East District,West,2024-01-06
+Power outage,Mabvuku Depot,North District,East,2023-12-19
+Short circuit,Glen View Depot,South District,South,2024-01-01
+Ground fault,Borrowdale Depot,Chitungwiza District,South,2023-12-31
+Power outage,CBD Depot,South District,East,2023-12-08
+Equipment failure,CBD Depot,East District,South,2023-12-07
+Equipment failure,Kuwadzana Depot,East District,East,2023-12-30
+Circuit overload,Warren Park Depot,South District,East,2023-12-30
+Short circuit,Mabelreign Depot,South District,West,2023-12-13
+Voltage fluctuation,Borrowdale Depot,East District,West,2023-12-19
+Short circuit,Makoni Depot,South District,Harare,2024-01-01
+Voltage fluctuation,Waterfalls Depot,Chitungwiza District,East,2023-12-16
+Power outage,Zengeza Depot,North District,West,2023-12-08
+Circuit overload,Waterfalls Depot,East District,West,2024-01-04
+Voltage fluctuation,Mabvuku Depot,Chitungwiza District,East,2024-01-05
+Equipment failure,Southerton Depot,North District,South,2023-12-01
+Short circuit,Glen View Depot,East District,West,2024-01-02
+Voltage fluctuation,Waterfalls Depot,Chitungwiza District,South,2023-12-22
+Voltage fluctuation,Waterfalls Depot,North District,South,2023-12-18
+Voltage fluctuation,Ruwa Depot,Chitungwiza District,West,2024-01-02
+Equipment failure,Glen View Depot,North District,West,2023-12-10
+Voltage fluctuation,Mabelreign Depot,East District,South,2024-01-04
+Power outage,Mabvuku Depot,East District,Harare,2023-12-23
+Voltage fluctuation,Seke,South District,West,2023-12-03
+Circuit overload,Borrowdale Depot,East District,West,2023-12-11
+Equipment failure,Seke,East District,West,2023-12-19
+Ground fault,Makoni Depot,South District,Harare,2023-12-12
+Equipment failure,Makoni Depot,South District,West,2023-12-03
+Circuit overload,Waterfalls Depot,North District,Harare,2024-01-01
+Equipment failure,Southerton Depot,North District,West,2023-12-02
+Equipment failure,Zengeza Depot,Chitungwiza District,Harare,2023-12-21
+Ground fault,Borrowdale Depot,North District,Harare,2023-12-22
+Circuit overload,Glen View Depot,East District,South,2023-12-12
+Circuit overload,Waterfalls Depot,South District,South,2023-12-05
+Power outage,Makoni Depot,Chitungwiza District,West,2024-01-07

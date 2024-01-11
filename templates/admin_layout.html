@@ -16,14 +16,21 @@
   </head>
 
   <body class="bg-gulf-blue-50">
-    <main
-      style="display: flex"
-      class="flex justify-between p-4"
-    >
+    <main style="display: flex" class="flex justify-between p-4">
       <aside
         id="sidebar"
-        style="width: 15%; border-radius: 0.75rem; position: fixed;"
-        class="bg-gradient-to-r from-gulf-blue-600 to-gulf-blue-800 rounded-xl"
+        style="
+          width: 15%;
+          border-radius: 0.75rem;
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 16rem;
+          height: 100vh;
+          overflow-y: scroll;
+          padding-bottom: 3rem;
+        "
+        class="bg-gradient-to-r from-gulf-blue-600 to-gulf-blue-800 rounded-xl mt-3 ml-3 mb-3"
       >
         <!-- Component Start -->
         <div
@@ -163,7 +170,43 @@
                   >Processes and Procedures</span
                 >
               </a>
+              <div x-data="{ expanded: false }">
+                <div
+                  class="flex items-center w-full h-12 px-3 mt-2 rounded hover:bg-gulf-blue-500"
+                >
+                <svg
+                  class="w-6 h-6 stroke-current"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"
+                  />
+                </svg>
+                  <button 
+                  @click="expanded = ! expanded"
+                  class="ml-2 text-sm font-medium"
+                  >Engineering</button>
+                </div>
+                <div style="flex-direction: column; padding-left: 1.5rem;" class="flex justify-center w-full">
+                  <div 
+                  class="flex justify-start items-center h-12 px-3 mt-2 rounded hover:bg-gulf-blue-400" 
+                  x-show="expanded" x-collapse.duration.1000ms
+                  ><span class="mr-2">P </span> <span class="ml-2">Petty Cash</span></div>
+                  <div
+                  class="flex justify-start items-center h-12 px-3 mt-2 rounded hover:bg-gulf-blue-400"
+                  x-show="expanded" x-collapse.duration.1000ms>
+                  <span class="mr-2">A </span> <span class="ml-2">ACE</span>
+                </div>
+                </div>
+              </div>
             </div>
+
             {% comment %}
             <div
               style="display: flex; flex-direction: column"
@@ -264,15 +307,117 @@
             </div>
             {% endcomment %}
           </div>
+          <a
+          style="margin-top: 3rem"
+          class="flex items-center w-full px-3"
+          href="#"
+        >
+          <svg
+            class="w-8 h-8 fill-current"
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <path
+              d="M11 17a1 1 0 001.447.894l4-2A1 1 0 0017 15V9.236a1 1 0 00-1.447-.894l-4 2a1 1 0 00-.553.894V17zM15.211 6.276a1 1 0 000-1.788l-4.764-2.382a1 1 0 00-.894 0L4.789 4.488a1 1 0 000 1.788l4.764 2.382a1 1 0 00.894 0l4.764-2.382zM4.447 8.342A1 1 0 003 9.236V15a1 1 0 00.553.894l4 2A1 1 0 009 17v-5.764a1 1 0 00-.553-.894l-4-2z"
+            />
+          </svg>
+          <span class="item-center ml-2 text-sm font-bold"
+            >BUSINESS APPLICATIONS</span
+          >
+        </a>
+        <div class="w-full px-2">
+          <div
+            style="display: flex; flex-direction: column"
+            class="text-gulf-blue-50 w-full mt-3 border-t border-gulf-blue-700"
+          >
+            <div x-data="{ expanded: false }">
+              <div
+                class="flex items-center w-full h-12 px-3 mt-2 rounded hover:bg-gulf-blue-500"
+              >
+              <svg
+                class="w-6 h-6 stroke-current"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"
+                />
+              </svg>
+                <button 
+                @click="expanded = ! expanded"
+                class="ml-2 text-sm font-medium"
+                >FINANCE</button>
+              </div>
+              <div style="flex-direction: column; padding-left: 1.5rem;" class="flex justify-center w-full">
+                <div 
+                class="flex justify-start items-center h-12 px-3 mt-2 rounded hover:bg-gulf-blue-400" 
+                x-show="expanded" x-collapse.duration.1000ms
+                ><span class="mr-2 font-medium">P </span> <span class="ml-2">Petty Cash</span></div>
+                <div
+                class="flex justify-start items-center h-12 px-3 mt-2 rounded hover:bg-gulf-blue-400"
+                x-show="expanded" x-collapse.duration.1000ms>
+                <span class="mr-2 font-medium">A </span> <span class="ml-2">ACE</span>
+              </div>
+              </div>
+            </div>
+          </div>
+          <div
+            style="display: flex; flex-direction: column"
+            class="text-gulf-blue-50 w-full mt-3 border-t border-gulf-blue-700"
+          >
+            <div x-data="{ expanded: false }">
+              <div
+                class="flex items-center w-full h-12 px-3 mt-2 rounded hover:bg-gulf-blue-500"
+              >
+              <svg
+                class="w-6 h-6 stroke-current"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"
+                />
+              </svg>
+                <button 
+                @click="expanded = ! expanded"
+                class="ml-2 text-sm font-medium"
+                >RISK</button>
+              </div>
+              <div style="flex-direction: column; padding-left: 1.5rem;" class="flex justify-center w-full">
+                <div 
+                class="flex justify-start items-center h-12 px-3 mt-2 rounded hover:bg-gulf-blue-400" 
+                x-show="expanded" x-collapse.duration.1000ms
+                ><span class="mr-2 font-medium">N </span> <span class="ml-2">Nonconformity</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
         </div>
         <!-- Component End  -->
       </aside>
-      <div id="content" style="width: 83%">
+      <div id="content" style="width: 83%; margin-left: 17rem">
         <div
-          style="border-radius: 0.75rem; position: fixed;"
-          class="rounded-xl p-4 border border-gulf-blue-400"
+          style="
+            border-radius: 0.75rem;
+            position: fixed;
+            top: 0;
+            width: 84%;
+            height: 6.5rem;
+          "
+          class="rounded-xl p-4 border bg-gulf-blue-50 border-gulf-blue-400 z-10 mt-3"
         >
-          <nav class="">
+          <nav>
             <div class="mx-auto px-2 sm:px-6 md:px-2 lg:px-2 xl:px-2">
               <div class="relative flex h-16 items-center justify-between">
                 <div
@@ -467,13 +612,12 @@
           </nav>
         </div>
         <div
-          style="margin-bottom: 10rem"
+          style="margin-bottom: 10rem; margin-top: 6.5rem"
           class="mx-auto px-4 py-6 sm:px-6 lg:px-8"
         >
-        
           <div class="mx-auto px-6 py-6 sm:px-6 md:px-6 lg:px-8 xl:px-4">
             <h1 class="text-2xl font-bold tracking-tight text-gulf-blue-950">
-              BUSINESS APPLICATIONS
+              DASHBOARD
             </h1>
           </div>
           {% if messages %}
@@ -507,6 +651,7 @@
         </div>
       </div>
     </main>
+
     <script
       defer
       src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"
@@ -515,6 +660,10 @@
       src="https://code.jquery.com/jquery-3.7.1.min.js"
       integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo="
       crossorigin="anonymous"
+    ></script>
+    <script
+      defer
+      src="https://unpkg.com/@alpinejs/collapse@3.x.x/dist/cdn.min.js"
     ></script>
     {% block scripts %}{% endblock scripts %}
   </body>
