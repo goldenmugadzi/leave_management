@@ -113,6 +113,8 @@ INSTALLED_APPS = [
     'it.beii_auth.apps.BeiiAuthConfig',
     'it.users.apps.UsersConfig',
     'executive.exec_dashboards.apps.ExecDashboardsConfig',
+    'knowledge_center',
+    'processes.apps.ProcessesConfig',
     
     # 'finance.tenders.apps.TendersConfig',
     # 'engineering.reticulations.apps.ReticulationsConfig',

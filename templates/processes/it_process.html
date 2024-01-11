@@ -1,0 +1,33 @@
+{% extends 'admin_layout.html' %}
+{%load static%}
+
+{%block content%}
+<div class="flex flex-row ...">
+
+    <button type="button"><a tabindex="-1" class="rounded-xl bg-blue-300 py-4 px-2 m-3"
+            href="{% static 'documents/it/ZETDC HRE IT 01_001 INCIDENT MANAGEMENT.pdf' %}">Incident
+            Management</a></button>
+    <button type="button" class="rounded-xl bg-gray-300 py-4 px-2 m-3"><a tabindex="-1"
+            href="{% static 'documents/it/ZETDC HRE IT 01_002 PROBLEM MANAGEMENT.pdf' %}">Problem
+            Management</a></button>
+    <button type="button" class="rounded-xl bg-red-300 py-4 px-2 m-3"><a tabindex="-1"
+            href="{% static 'documents/it/ZETDC HRE IT 01_003 EVENT MANAGEMENT.pdf' %}">Event Management</a></button>
+    <button type="button" class="rounded-xl bg-yellow-300 py-4 px-2 m-3"><a tabindex="-1"
+            href="{% static 'documents/it/ZETDC HRE IT 01_004 REQUEST FULFILMENT.pdf' %}">Request
+            Fulfilment</a></button>
+    <button type="button" class="rounded-xl bg-green-300 py-4 px-2 m-3"><a tabindex="-1"
+            href="{% static 'documents/it/ZETDC HRE IT 01_005 CHANGE MANAGEMENT.pdf' %}">Change Management</a></button>
+</div>
+
+<div class="flex flex-row ...">
+    <button type="button" class="rounded-xl bg-gray-300 py-4 px-2 m-3"><a tabindex="-1"
+            href="{% static 'documents/it/ZETDC HRE IT 01_006 ACCESS MANAGEMENT.pdf' %}">Access Management</a></button>
+    <button type="button" class="rounded-xl bg-yellow-300 py-4 px-2 m-3"><a tabindex="-1"
+            href="{% static 'documents/it/ZETDC HRE IT 01_007 RELEASE AND DEPLOYMENT.pdf' %}">Release and
+            Deployment</a></button>
+</div>
+<div class=" flex justify-start "><a href="{%url 'file_search'%}"><button type="button"
+            class="bg-green-600 mt-20 w-40 rounded-full px-3 py-2 text-white text-4xl">Back</button></a></div>
+
+
+{%endblock %}

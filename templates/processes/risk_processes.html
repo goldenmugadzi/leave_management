@@ -1,0 +1,37 @@
+{% extends 'admin_layout.html' %}
+{%load static%}
+
+{%block content%}
+
+<div class="grid grid-cols-3 gap-4">
+    <div class="mt-10"><button type="button"><a class="rounded-xl bg-red-300 py-4 px-2 m-3 col-span-3  " tabindex="-1"
+                href="{% static 'documents\Risk\001 PUBLIC LIABILTY CLAIMS PROCESS PDF.pdf' %}">Public liability
+                claim</a></button></div>
+    <div class="mt-10"><button type="button"><a class="rounded-xl bg-blue-300 py-4 px-2 m-3 col-span-3 " tabindex="-1"
+                href="{% static 'documents\Risk\002 CRIME INVESTIGATION PROCESS 2.pdf' %}">Crime investigation
+            </a></button></div>
+    <div class="mt-10"><button type="button"><a class="rounded-xl bg-yellow-300 py-4 px-2 m-3 col-span-3" tabindex="-1"
+                href="{% static  'documents\Risk\003 FIRE ACCIDENT HANDLING PROCESS PDF.pdf' %}">Fire accident
+                handling</a></button>
+    </div>
+    <div class="mt-10"><button type="button"><a class="rounded-xl bg-red-300 py-4 px-2 m-3  " tabindex="-1"
+                href="{% static 'documents\Risk\004 CASH IN TRANSIT PROCESS PDF.pdf' %}">Cash in transit
+            </a></button>
+    </div>
+    <div class="mt-10"> <button type="button" class=""><a class="rounded-xl bg-blue-300 py-4 px-2 m-3  " tabindex="-1"
+                href="{% static 'documents\Risk\005 RECORDS PROCESS.pdf' %}">Records process</a></button></div>
+    <div class="mt-10"> <button type="button"><a class="rounded-xl bg-yellow-300 py-4 px-2 m-3 " tabindex="-1"
+                href="{% static 'documents\Risk\006 ROAD TRAFFIC ACCIDENT CLAIMS PROCESS.pdf' %}">Road traffic accident
+                claim</a></button>
+    </div>
+    <div class="mt-10"><button type="button"><a class="rounded-xl bg-red-300 py-4 px-2 m-3 " tabindex="-1"
+                href="{% static 'documents\Risk\007 PROPERTY DAMAGE RECOVERIES PROCESS.pdf' %}">Property damage
+                recoveries</a></button></div>
+    <div class="mt-10"><button type="button"><a class="rounded-xl bg-blue-300 py-4 px-2 m-3 " tabindex="-1"
+                href="{% static 'documents\Risk\009 RISK REGISTER PROCESS.pdf' %}">Risk register</a></button>
+    </div>
+
+</div>
+    <div class=" flex justify-start "><a href="{%url 'file_search'%}"><button type="button"
+                class="bg-green-600 mt-20 w-40 rounded-full px-3 py-2 text-white text-4xl">Back</button></a></div>
+    {%endblock %}

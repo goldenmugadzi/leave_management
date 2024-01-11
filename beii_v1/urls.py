@@ -25,6 +25,8 @@ urlpatterns = [
     path('', include('beii_auth.urls')),
     path('users/', include('users.urls')),
     path('dashboards/', include('exec_dashboards.urls')),
+    path('knowledge-center/', include('knowledge_center.urls')),
+    path('processes/',include('processes.urls'), name='processes'),
     path('admin/', admin.site.urls),
     path('accounts/', include('django.contrib.auth.urls')),
     

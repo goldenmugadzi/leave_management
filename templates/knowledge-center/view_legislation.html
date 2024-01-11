@@ -1,0 +1,34 @@
+{% extends 'admin_layout.html' %} {% load static %} {% block content %}
+
+<div style="margin-bottom: 25px;" class="content-wrapper flex flex-wrap p-2 m-px">
+    <div>  
+    <a href="/knowledge-center/view_legislation/ea" class="w-full text-left px-3 flex items-center outline-none focus:outline-none ">   
+    <button  style="width: 16rem;height: 10rem;background-color: #a21caf;margin-right: 20px;margin-bottom: 25px" class=" w-28 bg-blue-800 hover:bg-blue-900 outline-none focus:outline-none border px-3 py-1 rounded flex items-center">
+        <span class="pr-1 font-semibold flex-1 text-blue-50">Electricity Acts</span>
+       
+    </button>
+    
+    </a>
+    </div>
+    <a href="/knowledge-center/view_legislation/gl">
+    <button  style="width: 16rem;height: 10rem;background-color: #65a30d;margin-right: 20px;" class=" w-28 bg-blue-800 hover:bg-blue-900 outline-none focus:outline-none border px-3 py-1 rounded flex items-center">
+        <span class="pr-1 font-semibold flex-1 text-blue-50">General Legislation</span>
+        
+    </button>
+    </a>
+    <a href="/knowledge-center/view_legislation/si">
+    <button  style="width: 16rem;height: 10rem;background-color: #1e1b4b;margin-right: 20px;" class=" w-28 bg-blue-800 hover:bg-blue-900 outline-none focus:outline-none border px-3 py-1 rounded flex items-center">
+        <span class="pr-1 font-semibold flex-1 text-blue-50">Statutory Instrument</span>
+       
+    </button>
+    </a>
+    
+</div>
+<div style="display: flex;justify-content: center;">
+    <a href="javascript:history.back()">
+    <button  style="width: 6rem;height: 3rem;background-color: #020617;margin-right: 20px;border-radius: 1.5rem;" class=" w-28 bg-blue-800 hover:bg-blue-900 outline-none focus:outline-none border px-3 py-1 rounded flex items-center">
+        <span class="pr-1 font-semibold flex-1 text-blue-50">Back</span>
+       
+    </button> </a>
+</div>
+{% endblock %}

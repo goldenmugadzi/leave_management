@@ -1,0 +1,58 @@
+{% extends 'admin_layout.html' %}
+{%load static%}
+
+{%block content%}
+
+<div class="grid grid-cols-4 gap-4 row-span-4">
+  <div class="mt-10"><button type="button"><a class="rounded-xl bg-blue-300 py-4 px-2 m-3" tabindex="-1"
+        href="{% static 'documents\Engineering\processes\ZEDTC HRE MAINS LINE INSPECTION.pdf' %}">Line
+        Inspection</a></button></div>
+  <div class="mt-10"><button type="button"><a class="rounded-xl bg-gray-300 py-4 px-2 m-3 " tabindex="-1"
+        href="{% static 'documents\Engineering\processes\SUBSTATION INSPECTION.pdf' %}">Substation
+        Inspection</a></button></div>
+  <div class="mt-10"><button type="button"><a class="rounded-xl bg-green-300 py-4 px-2 m-3 " tabindex="-1"
+        href="{% static 'documents\Engineering\processes\SUBSTATION INSPECTION.pdf' %}">Fault meter
+        replacement</a></button></div>
+  <div class="mt-10"><button type="button"><a class="rounded-xl bg-yellow-300 py-4 px-2 m-3  " tabindex="-1"
+        href="{% static 'documents\Engineering\processes\SUBSTATION INSPECTION.pdf' %}">Installation
+        Inspection</a></button></div>
+  <div class="mt-10"> <button type="button" class=""><a class="rounded-xl bg-blue-300 py-4 px-2 m-3  " tabindex="-1"
+        href="{% static 'documents\Engineering\processes\SUBSTATION INSPECTION.pdf' %}">Installation
+        Inspection</a></button></div>
+  <div class="mt-10"> <button type="button"><a class="rounded-xl bg-gray-300 py-4 px-2 m-3 " tabindex="-1"
+        href="{% static 'documents\Engineering\processes\POLE REPLACEMENT PROCESS.pdf' %}">Pole replacement</a></button>
+  </div>
+  <div class="mt-10"><button type="button"><a class="rounded-xl bg-green-300 py-4 px-2 m-3 " tabindex="-1"
+        href="{% static 'documents\Engineering\processes\SUBSTATION INSPECTION.pdf' %}">Material Storage</a></button>
+  </div>
+  <div class="mt-10"><button type="button"><a class="rounded-xl bg-yellow-300 py-4 px-2 m-3 " tabindex="-1"
+        href="{% static 'documents\Engineering\processes\SUBSTATION INSPECTION.pdf' %}">Calibration</a></button></div>
+  <div class="mt-10"><button type="button"><a class="rounded-xl bg-blue-300 py-4 px-2 m-3 " tabindex="-1"
+        href="{% static 'documents\Engineering\processes\SUBSTATION INSPECTION.pdf' %}">Goods/Services
+        receiving</a></button></div>
+  <div class="mt-10">
+    <td><button type="button"><a class="rounded-xl bg-gray-300 py-4 px-2 m-3" tabindex="-1"
+          href="{% static 'documents\Engineering\processes\SUBSTATION INSPECTION.pdf' %}">Maintenance
+          Planning</a></button>
+  </div>
+  <div class="mt-10"><button type="button"><a class="rounded-xl bg-green-300 py-4 px-2 m-3 " tabindex="-1"
+        href="{% static 'documents\Engineering\processes\SUBSTATION INSPECTION.pdf' %}"> Plant Maintenance </a></button>
+  </div>
+  <div class="mt-10"><button type="button"><a class="rounded-xl bg-yellow-300 py-4 px-2 m-3 " tabindex="-1"
+        href="{% static 'documents\Engineering\processes\SUBSTATION INSPECTION.pdf' %}">Vehicle hiring</a></button>
+  </div>
+  <div class="mt-10"><button type="button"><a class="rounded-xl bg-blue-300 py-4 px-2 m-3 " tabindex="-1"
+        href="{% static 'documents\Engineering\processes\SUBSTATION INSPECTION.pdf' %}">Hv Switching
+        Authorisation</a></button></div>
+  <div class="mt-10"><button type="button"><a class="rounded-xl bg-gray-300 py-4 px-2 m-3 " tabindex="-1"
+        href="{% static 'documents\Engineering\processes\SUBSTATION INSPECTION.pdf' %}">Change management</a></button>
+  </div>
+  <div class="mt-10"> <button type="button"><a class="rounded-xl bg-green-300 py-4 px-2 m-3" tabindex="-1"
+        href="{% static 'documents\Engineering\processes\SUBSTATION INSPECTION.pdf' %}">Construction</a></button> </div>
+  <div class="mt-10"> <button type="button"><a class="rounded-xl bg-yellow-300 py-4 px-2 m-3" tabindex="-1"
+        href="{% static 'documents\Engineering\processes\ZEDTC HRE MAINS WAYLEAVE.pdf' %}">Mains wayleave</a></button>
+  </div>
+</div>
+<div class=" flex justify-start "><a href="{%url 'Engineeringlist-processes'%}"><button type="button"
+      class="bg-green-500 mt-20 w-40 rounded-full px-3 py-2 text-white text-4xl">Back</button></a></div>
+{%endblock %}

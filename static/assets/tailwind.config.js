@@ -191,9 +191,13 @@ module.exports = {
       primary_bg: "#CCCC99",
       white: colors.white,
       black: colors.black,
+      green: colors.green,
+      yellow: colors.yellow,
       gray: colors.gray,
       orange: colors.orange,
       cyan: colors.cyan,
+      red: colors.red,
+      purple: colors.purple,
     },
   },
   plugins: [

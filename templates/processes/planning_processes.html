@@ -1,0 +1,65 @@
+{% extends 'admin_layout.html' %}
+{%load static%}
+
+{%block content%}
+
+<div class="grid grid-cols-3 gap-4">
+
+      <div class="mt-10"><button type="button"><a class="rounded-xl bg-green-300 py-4 px-2 m-3 " tabindex="-1"
+                        href="{% static 'documents\Engineering\planning\Distribution losses analysis.pdf' %}">Distribution
+                        losses analysis</a></button>
+      </div>
+      <div class="mt-10"><button type="button"><a class="rounded-xl bg-blue-300 py-4 px-2 m-3 " tabindex="-1"
+                        href="{% static 'documents\Engineering\planning\DRAWING OFFICE  DRAUGHTING PROCESS.pdf' %}">Draughting
+                        process</a></button></div>
+      <div class="mt-10"><button type="button"><a class="rounded-xl bg-gray-300 py-4 px-2 m-3 " tabindex="-1"
+                        href="{% static 'documents\Engineering\planning\DRAWING OFFICE  WAYLEAVES PROCESSING PROCESS.pdf' %}">Wayleave
+                        processing</a></button>
+      </div>
+      <div class="mt-10"> <button type="button"><a class="rounded-xl bg-green-300 py-4 px-2 m-3" tabindex="-1"
+                        href="{% static 'documents\Engineering\planning\DRAWING OFFICE BUILDING PLANS PROCESSING.pdf' %}">Building
+                        plans processing</a></button> </div>
+
+      <div class="mt-10"><button type="button"><a class="rounded-xl bg-blue-300 py-4 px-2 m-3 " tabindex="-1"
+                        href="{% static 'documents\Engineering\planning\DRAWING OFFICE MAINS CLEARANCE ISSUING PROCESS.pdf' %}">Mains
+                        clearance issuing</a></button></div>
+      <div class="mt-10"><button type="button"><a class="rounded-xl bg-gray-300 py-4 px-2 m-3 " tabindex="-1"
+                        href="{% static 'documents\Engineering\planning\DRAWING OFFICE SUBDIVISIONS PROCESSING PROCESS.pdf' %}">Subdivisions
+                        processing</a></button>
+      </div>
+
+      <div class="mt-10"> <button type="button"><a class="rounded-xl bg-green-300 py-4 px-2 m-3" tabindex="-1"
+                        href="{% static 'documents\Engineering\planning\Fault Analysis Process.pdf' %}">Fault
+                        analysis</a></button> </div>
+
+      <div class="mt-10"><button type="button"><a class="rounded-xl bg-blue-300 py-4 px-2 m-3 " tabindex="-1"
+                        href="{% static 'documents\Engineering\planning\GIS asset construction process.pdf' %}">GIS
+                        asset construction</a></button></div>
+      <div class="mt-10"><button type="button"><a class="rounded-xl bg-gray-300 py-4 px-2 m-3 " tabindex="-1"
+                        href="{% static 'documents\Engineering\planning\Grid Impact Assessment for connection of Independent Power Producers-signed.pdf' %}">Grid
+                        Impact Assessment</a></button>
+      </div>
+      <div class="mt-10"> <button type="button"><a class="rounded-xl bg-green-300 py-4 px-2 m-3" tabindex="-1"
+                        href="{% static 'documents\Engineering\planning\Monthly Engineering Report Consolidation Process.pdf' %}">Engineering
+                        Report Consolidation</a></button> </div>
+
+      <div class="mt-10"><button type="button"><a class="rounded-xl bg-blue-300 py-4 px-2 m-3 " tabindex="-1"
+                        href="{% static 'documents\Engineering\planning\New Development Reticulation Design Process-signed.pdf' %}">Reticulation
+                        Design</a></button></div>
+
+      <div class="mt-10"><button type="button"><a class="rounded-xl bg-gray-300 py-4 px-2 m-3 " tabindex="-1"
+                        href="{% static 'documents\Engineering\planning\PSIP Budgeting Process.pdf' %}">PSIP
+                        Budgeting</a></button></div>
+
+
+</div>
+      <div class="mt-20"><button type="button"><a class="rounded-xl bg-green-300 py-4 px-2 m-3 " tabindex="-1"
+                        href="{% static 'documents\Engineering\planning\Newpoint of supply and uprates quotation process-signed.pdf' %}">Newpoint
+                        of supply and uprates quotation</a></button>
+      </div>
+
+
+      <div class=" flex justify-start "><a href="{%url 'Engineeringlist-processes'%}"><button type="button"
+                        class="bg-green-600 mt-20 w-40 rounded-full px-3 py-2 text-white text-4xl">Back</button></a>
+      </div>
+      {%endblock %}

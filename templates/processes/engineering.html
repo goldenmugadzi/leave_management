@@ -1,0 +1,21 @@
+{% extends 'admin_layout.html' %}
+{%load static%}
+
+{%block content%}
+
+<div class="grid grid-cols-2 gap-4 row-span-2">
+   <div class="flex justify-center">
+    <a href="{%url 'maintenance-processes'%}" class="  w-full text-3xl rounded-xl bg-blue-300 m-3  py-3 px-5"><strong>Maintenance Processes</strong></a>
+   </div> 
+   <div class="flex justify-center">
+    <a href="{%url 'planning-processes'%}" class="  w-full text-3xl rounded-xl bg-green-300  m-3 py-3 px-5"><strong>Planning Processes</strong></a>
+   </div>   
+  </div>
+
+  <div class="flex justify-center">
+    <a href="{%url 'project-processes'%}" class=" w-1/2 text-3xl rounded-xl bg-yellow-300 mt-4 py-3 px-5"><strong>Project Processes</strong></a>
+   </div>
+
+   <div class=" flex justify-start "><a href="{%url 'file_search'%}"><button type="button"
+    class="bg-green-600 mt-20 w-40 rounded-full px-3 py-2 text-white text-4xl">Back</button></a></div>s
+  {%endblock%}
