@@ -116,6 +116,9 @@ INSTALLED_APPS = [
     'knowledge_center',
     'processes.apps.ProcessesConfig',
     
+    'commecial.tempertockens',
+    'competence_building.apps.CompetenceBuildingConfig'
+
     # 'finance.tenders.apps.TendersConfig',
     # 'engineering.reticulations.apps.ReticulationsConfig',
     # 'commercials.connections.apps.ConnectionsConfig',
