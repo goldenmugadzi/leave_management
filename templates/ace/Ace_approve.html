@@ -1,6 +1,6 @@
 
 {% extends 'admin_layout.html' %} {% block content %}
-    <form enctype="multipart/form-data" method="post" action="/ace/create">
+    <form enctype="multipart/form-data" method="post" action="/ace/approve">
     <div class="content-wrapper">
 
         <div class="bg-gray-200 shadow shadow-nepal-300 text-gray-700 rounded px-2 py-2">
@@ -32,6 +32,7 @@
                             value="{{ context.Department }}"
                             class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
                     />
+                    <input readonly hidden="hidden" value="{{ context.Ace_id2 }}" name="Ace_id2"/>
                 </div>
 
 
@@ -85,7 +86,6 @@
                                 readonly
                                 id="quotation1"
                                 name="quotation1"
-                                type="file"
                                 value="{{ context.quotation1 }}"
                                 autocomplete="quotation1"
                                 class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
@@ -105,7 +105,6 @@
                                 value="{{ context.quotation2 }}"
                                 id="quotation2"
                                 name="quotation2"
-                                type="file"
                                 autocomplete="quotation2"
                                 class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                         />
@@ -122,10 +121,9 @@
                     <div class="mt-2">
                         <input
                                 readonly
-                                value="context.quotation3"
+                                value="{{ context.quotation3 }}"
                                 id="quotation3"
                                 name="quotation3"
-                                type="file"
                                 autocomplete="quotation3"
                                 class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                         />
@@ -177,6 +175,8 @@
                     >
                     <div class="mt-2">
                         <input
+                                readonly
+                                value="{{ context.amount }}"
                                 id="amount"
                                 name="amount"
                                 type="number"
@@ -190,17 +190,13 @@
 
             <div>
                 <label
-                        for="classification1"
+                        for="classification"
                         class="block text-sm font-medium leading-6 text-gray-900"
                 >Classification</label>
                 <div class="mt-2">
-                    <select name="classification1" onChange="java_script_:classifications(this.options[this.selectedIndex].value);" style="width:1200px" required="required">
-                        <i>
-                            <option value="">Select ACE Type</option>
-                        </i>
-                        <option value="internal">Internal</option>
-                        <option value="project">Project</option>
-                    </select>
+                    <input name="classification" onformdata="java_script_:classifications(this.options[this.selectedIndex].value);" onload="java_script_:classifications(this.options[this.selectedIndex].value);" style="width:1200px"
+                           required="required" readonly value="{{ context.classification }}"
+                    />
                 </div>
             </div>
             <div id="internal">
@@ -212,6 +208,8 @@
                     >
                     <div class="mt-2">
                         <input
+                                readonly
+                                value="{{ context.amount }}"
                                 id="capital_estimated"
                                 name="capital_estimated"
                                 type="number"
@@ -224,22 +222,22 @@
 
 
             <div id="project">
-                <div>
-                    <label
-                            for="capital_estimated"
-                            class="block text-sm font-medium leading-6 text-gray-900"
-                    >Amount($)</label
-                    >
-                    <div class="mt-2">
-                        <input
-                                id="capital_estimated"
-                                name="capital_estimated"
-                                type="number"
-                                autocomplete="capital_estimated"
-                                class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                        />
-                    </div>
-                </div>
+{#                <div>#}
+{#                    <label#}
+{#                            for="capital_estimated"#}
+{#                            class="block text-sm font-medium leading-6 text-gray-900"#}
+{#                    >Amount($)</label#}
+{#                    >#}
+{#                    <div class="mt-2">#}
+{#                        <input#}
+{#                                id="capital_estimated"#}
+{#                                name="capital_estimated"#}
+{#                                type="number"#}
+{#                                autocomplete="capital_estimated"#}
+{#                                class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"#}
+{#                        />#}
+{#                    </div>#}
+{#                </div>#}
 
                 <div>
                     <label
@@ -249,6 +247,8 @@
                     >
                     <div class="mt-2">
                         <input
+                                readonly
+                                value="{{ context.present_tariff }}"
                                 id="present_tariff"
                                 name="present_tariff"
                                 type="number"
@@ -266,6 +266,8 @@
                     >
                     <div class="mt-2">
                         <input
+                                readonly
+                                value="{{ context.present_fmc }}"
                                 id="present_fmc"
                                 name="present_fmc"
                                 type="text"
@@ -283,6 +285,8 @@
                     >
                     <div class="mt-2">
                         <input
+                                readonly
+                                value="{{ context.capital_contribution }}"
                                 id="capital_contribution"
                                 name="capital_contribution"
                                 type="number"
@@ -300,6 +304,8 @@
                     >
                     <div class="mt-2">
                         <input
+                                readonly
+                                value="{{ context.materials }}"
                                 id="materials"
                                 name="materials"
                                 type="number"
@@ -317,6 +323,8 @@
                     >
                     <div class="mt-2">
                         <input
+                                readonly
+                                value="{{ context.connection_fee }}"
                                 id="connection_fee"
                                 name="connection_fee"
                                 type="number"
@@ -334,6 +342,8 @@
                     >
                     <div class="mt-2">
                         <input
+                                readonly
+                                value="{{ context.labour }}"
                                 id="labour"
                                 name="labour"
                                 type="number"
@@ -351,6 +361,8 @@
                     >
                     <div class="mt-2">
                         <input
+                                readonly
+                                value="{{ context.transport }}"
                                 id="transport"
                                 name="transport"
                                 type="text"
@@ -373,7 +385,7 @@
                             type="submit"
                             class="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
                     >
-                        Create Ace
+                        Approve Ace
                     </button>
                 </div>
             </div>
@@ -409,6 +421,7 @@
     </script>
 
     <script>
+
         function classifications(aval) {
             if (aval === "internal") {
                 internal.style.display = 'inline-block';
@@ -442,6 +455,7 @@
                 {#document.getElementById("ace_amt").value = '';#}
             }
         }
+        window.onload = classifications()
 
 
         function calculategrossBalance() {

@@ -171,7 +171,7 @@ DATABASES = {
     # Localhost
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'beii',
+        'NAME': 'dd',
         'USER': 'root',
         'PASSWORD': '',
         'HOST': 'localhost'

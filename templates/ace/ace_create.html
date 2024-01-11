@@ -459,17 +459,17 @@
 
 
 
-        function sum() {
-            var x = document.getElementById("materials1").value;
-            var y = document.getElementById("labour").value;
-            var z = document.getElementById("transport").value;
-            var sum = (parseFloat(x) + parseFloat(y) + parseFloat(z)).toFixed(2);
-
-            if (!isNaN(sum)) {
-                document.getElementById("s_total").value = sum;
-            }
-            return sum;
-        }
+        {#function sum() {#}
+        {#    var x = document.getElementById("materials1").value;#}
+        {#    var y = document.getElementById("labour").value;#}
+        {#    var z = document.getElementById("transport").value;#}
+        {#    var sum = (parseFloat(x) + parseFloat(y) + parseFloat(z)).toFixed(2);#}
+        {##}
+        {#    if (!isNaN(sum)) {#}
+        {#        document.getElementById("s_total").value = sum;#}
+        {#    }#}
+        {#    return sum;#}
+        {#}#}
     </script>
 
     <script>
@@ -508,18 +508,18 @@
         }
 
 
-        function calculategrossBalance() {
-            var allocated = document.getElementById("est_capital").value;
-            var cumulative_withdrawal = document.getElementById("cap_sanctioned").value;
-            var current = document.getElementById("cap_required").value;
-            var awaiting_sanctioning = document.getElementById("other_ace").value;
-            var balance = document.getElementById("temp_bal").value;
-            var balance = (parseFloat(balance)).toFixed(2);
-            var balField = document.getElementById("gross_balance");
-            balField.value = balance;
-            if (balance < 0) {
-                //balField.style.backgroundColor='red';
-            } else {}
-        }
+        {#function calculategrossBalance() {#}
+        {#    var allocated = document.getElementById("est_capital").value;#}
+        {#    var cumulative_withdrawal = document.getElementById("cap_sanctioned").value;#}
+        {#    var current = document.getElementById("cap_required").value;#}
+        {#    var awaiting_sanctioning = document.getElementById("other_ace").value;#}
+        {#    var balance = document.getElementById("temp_bal").value;#}
+        {#    var balance = (parseFloat(balance)).toFixed(2);#}
+        {#    var balField = document.getElementById("gross_balance");#}
+        {#    balField.value = balance;#}
+        {#    if (balance < 0) {#}
+        {#        //balField.style.backgroundColor='red';#}
+        {#    } else {}#}
+        {#}#}
     </script>
 {% endblock %}

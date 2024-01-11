@@ -54,7 +54,7 @@ class Ace(models.Model):
     date_created = models.DateField(auto_now_add=True, blank=True, null=True)
     Ace_id2 = models.CharField(max_length=60)
     Ace_id = models.AutoField(primary_key=True)
-    approval_status = models.CharField(max_length=16, blank=True, null=True)
+    approval_status = models.CharField(max_length=120, blank=True, null=True)
     approved_by = models.CharField(max_length=26, blank=True, null=True)
     rejected_by = models.CharField(max_length=26, blank=True, null=True)
     date_approved = models.DateField(null=True, blank=True)
@@ -88,7 +88,7 @@ class Ace(models.Model):
     transport = models.FloatField( blank=True, null=True)
     total_connection_fee = models.FloatField( blank=True, null=True)
     designation = models.CharField(null = True, max_length=70)
-
+    approval_code = models.IntegerField(null=True,max_length=5)
 
     def __str__(self):
         return self.Ace_id2
@@ -101,7 +101,7 @@ class Transactions(models.Model):
     transaction_id = models.AutoField(primary_key=True)
     region = models.CharField(blank=True,null=True,max_length=120)
     amount = models.FloatField(blank=True,null=True,max_length=120)
-    ace = models.CharField(blank=True,null=True,max_length=120)
+    ace2 = models.CharField(blank=True,null=True,max_length=120)
     budget = models.ForeignKey(Budget, on_delete=models.CASCADE)
 
     # quotation = models.ForeignKey(Ace, on_delete=models.CASCADE)
