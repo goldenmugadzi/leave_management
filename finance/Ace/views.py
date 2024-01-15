@@ -434,51 +434,62 @@ def get_to_approve_Ace(request):
     Ace_role=str(custom_user_roles["ace"])
     print(Ace_role,"ace role")
     if request.method=="POST":
-        if Ace_role=="check":
-            ace_id=request.POST["Ace_id2"]
-            ace=Ace.objects.filter(Ace_id2=ace_id).first()
-            ace.approval_status="approved by foreperson"
-            ace.date_approved=date.today()
-            ace.save()
-            messages.error(request, 'you have approved ace',ace_id)
-            sweetify.success(request,'you have approved ace'+ ace_id)
-            return redirect("/ace")
-        if Ace_role=="pass":
-            ace_id=request.POST["Ace_id2"]
-            ace=Ace.objects.filter(Ace_id2=ace_id).first()
+        ace_id=request.POST["Ace_id2"]
+        asset_number=request.POST["asset_number"]
+        ace=Ace.objects.filter(Ace_id2=ace_id).first()
+
+        # if Ace_role=="check" and str(ace.approval_status)!="approved by foreperson":
+        #
+        #     ace.approval_status="approved by foreperson"
+        #     ace.date_approved=date.today()
+        #     ace.save()
+        #     messages.error(request, 'you have approved ace',ace_id)
+        #     sweetify.success(request,'you have approved ace'+ ace_id)
+        #     return redirect("/ace")
+        if Ace_role=="pass" and str(ace.approval_status)!="approved by section head":
+
             ace.approval_status="approved by section head"
             ace.date_approved=date.today()
+            ace.section_head_approval_status="approved by section head"
+            ace.accounting_officer_approval_date=date.today()
             ace.save()
             messages.error(request, 'you have approved ace',ace_id)
             sweetify.success(request,'you have approved ace'+ ace_id)
             return redirect("/ace")
-        if Ace_role=="process":
-            ace_id=request.POST["Ace_id2"]
-            ace=Ace.objects.filter(Ace_id2=ace_id).first()
+        if Ace_role=="process" and str(ace.approval_status)!="approved by Accounting officer":
+
             ace.approval_status="approved by Accounting officer"
             ace.date_approved=date.today()
+            ace.accounting_officer_approval_date=date.today()
+            ace.accounting_officer_approval_status="approved by accounting officer"
+            ace.asset_number=asset_number
             ace.save()
             messages.error(request, 'you have approved ace',ace_id)
             sweetify.success(request,'you have approved ace'+ ace_id)
             return redirect("/ace")
-        if Ace_role=="sanction":
-            ace_id=request.POST["Ace_id2"]
-            ace=Ace.objects.filter(Ace_id2=ace_id).first()
+        if Ace_role=="sanction" and str(ace.approval_status)!="approved by Finance Manager":
+
             ace.approval_status="approved by Finance Manager"
             ace.date_approved=date.today()
+            ace.fm_approval_status="approved by Finance Manager"
+            ace.fm_date_approved=date.today()
             ace.save()
             messages.error(request, 'you have approved ace',ace_id)
             sweetify.success(request,'you have approved ace'+ ace_id)
             return redirect("/ace")
-        if Ace_role=="approve":
-            ace_id=request.POST["Ace_id2"]
-            ace=Ace.objects.filter(Ace_id2=ace_id).first()
+        if Ace_role=="approve" and str(ace.approval_status)!="approved by Finance Manager":
+
             ace.approval_status="approved by General Manager"
             ace.date_approved=date.today()
+            ace.gm_approval_status="approved by General Manager"
+            ace.gm_date_approved=date.today()
             ace.save()
             messages.error(request, 'you have approved ace',ace_id)
             sweetify.success(request,'you have approved ace'+ ace_id)
             return redirect("/ace")
+        if str(ace.approval_status)=="approved by General Manager":
+            messages.error(request, 'The approval process for ace is complete',ace_id)
+            sweetify.success(request,'The approval process for ace is complete'+ ace_id)
 
         else:
             messages.error(request, 'you have no rights to approve aces')
