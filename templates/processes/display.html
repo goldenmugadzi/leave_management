@@ -1,0 +1,15 @@
+{% extends 'admin_layout.html' %}
+{%load static%}
+
+{%block content%}
+<hr>
+<h1 class="text-4xl text-blue-600 mb-3"><strong>Click Process Map Diagram to Find process Maps</strong></h1>
+
+    <figure class="relative h-auto max-w-full mx-auto ">
+        <a href="{%url 'file_search'%}"><img class=" rounded-xl"
+                src="{% static 'assets/images/display.png' %}" alt="image description"></a>
+        <!-- <img src="{% static '../images/display.jpg' %}" alt="My Image"> -->
+
+    </figure>
+
+{%endblock%}

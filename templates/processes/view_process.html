@@ -1,0 +1,83 @@
+{% extends 'admin_layout.html' %}
+{%load static%}
+
+{%block content%}
+
+
+<!-- <button class="rounded-full text-xl" type="button"><a tabindex="-1" href="{% static 'documents/Vacancy.pdf' %}">Download My Document</a></button>
+
+-->
+
+<div class="">
+  <div class="flex justify-end relative items-center focus-within: text-gray-700" id="serch">
+    <form method="get">
+
+      <i class="fa fa-search absolute ml-2 mt-3 h-5 w-5 text-gray-400  text-xl"></i><input
+        class="pl-10 pr-3 rounded-xl w-full ring-1  hover:bg-gulf-blue-100 text-xl " type="text" name="keyword"
+        placeholder="Search process maps" value="{{ request.GET.keyword }}">
+      <input class=" bg-gray-300" type="submit" value="">
+    </form>
+  </div>
+  <div class="card m-2">
+    <ul id="hi">
+      {% for result in results %}
+      <li>
+        <a class="text-blue-600 rounded-xl no-underline font-semibold decoration-sky-600 " tabindex="-1"
+          href="{% static result.path  %} ">
+          {{ result.name }}
+        </a>
+      </li>
+      {% empty %}
+      <li>No results found.</li>
+      {% endfor %}
+    </ul>
+  </div>
+
+</div>
+
+
+<div class="card">
+  <div class="grid grid-cols-2 gap-4 row-span-2">
+    <div class="bg-gulf-blue-400 px-10 py-10 rounded-md shadow-md">
+      <div class="flex justify-center"><a href="{%url 'Engineeringlist-processes'%}"
+          class="text-3xl text-center text-white"><strong>Engineering</strong></a></div>
+    </div>
+    <div class="bg-apple-600 px-10 py-10 rounded-md shadow-md">
+      <div class="flex justify-center"><a href="{%url 'commercial-process'%}"
+          class="text-3xl text-center text-white"><strong>Commercial</strong></a></div>
+    </div>
+  </div>
+  <h1 class="text-center mt-2 mb-2 text-4xl">Management processes</h1>
+  <div class="flex justify-center">
+    <a class="w-2/3 p-2 mt-2 rounded-xl bg-jade-300 text-center text-2xl" href="{%url 'it-process'%}">Information
+      Technology</a>
+  </div>
+
+  <div class="flex justify-center">
+    <a class="w-2/3 p-2 mt-2 rounded-xl bg-gulf-blue-300 text-center text-2xl" href="{%url 'finance-processes'%}">Finance</a>
+  </div>
+
+  <div class="flex justify-center">
+    <a class="w-2/3 p-2 mt-2 rounded-xl bg-gray-300 text-center text-2xl" href="{%url 'HR-processes'%}">Human
+      Resources</a>
+  </div>
+
+  <div class="flex justify-center">
+    <a class="w-2/3 p-2 mt-2 rounded-xl bg-royal-heath-300 text-center text-2xl" href="{%url 'risk-processes'%}">Risk
+      Management</a>
+  </div>
+
+  <div class="flex justify-center">
+    <a class="w-2/3 p-2 mt-2 rounded-xl bg-apple-300 text-center text-2xl"
+      href="{%url 'procurement-processes'%}">Procurement</a>
+  </div>
+
+  <div class="flex justify-center">
+    <a class="w-2/3 p-2 mt-2 rounded-xl bg-gulf-blue-300 text-center text-2xl" href="#">Stakeholder Relations</a>
+  </div>
+
+  <div class="flex justify-center">
+    <a class="w-2/3 p-2 mt-2 rounded-xl bg-citron-400 text-center text-2xl" href="#">Legal Services</a>
+  </div>
+</div>
+{%endblock %}

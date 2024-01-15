@@ -98,6 +98,7 @@ sys.path.insert(4, os.path.join(BASE_DIR, 'reports'))
 sys.path.insert(5, os.path.join(BASE_DIR, 'api/ops_maintenance'))
 sys.path.insert(6, os.path.join(BASE_DIR, 'finance'))
 sys.path.insert(7, os.path.join(BASE_DIR, 'miscellaneous'))
+sys.path.insert(8, os.path.join(BASE_DIR, 'executive'))
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -111,7 +112,13 @@ INSTALLED_APPS = [
     
     'it.beii_auth.apps.BeiiAuthConfig',
     'it.users.apps.UsersConfig',
+    'executive.exec_dashboards.apps.ExecDashboardsConfig',
+    'knowledge_center',
+    'processes.apps.ProcessesConfig',
     
+    'commecial.tempertockens',
+    'competence_building.apps.CompetenceBuildingConfig'
+
     # 'finance.tenders.apps.TendersConfig',
     # 'engineering.reticulations.apps.ReticulationsConfig',
     # 'commercials.connections.apps.ConnectionsConfig',
@@ -219,4 +226,4 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-LOGIN_REDIRECT_URL = '/'
+LOGIN_REDIRECT_URL = '/dashboards/dashboard'

@@ -1,0 +1,11 @@
+{% extends 'commercials/tempertockens/base.html' %}
+
+
+{% block MeterTokens %}
+<h2>Delete Meter Token</h2>
+<p>Are you sure you want to delete token "{{ token }}"?</p>
+<form method="post">
+  {% csrf_token %}
+  <button type="submit">Delete</button>
+</form>
+{% endblock %}

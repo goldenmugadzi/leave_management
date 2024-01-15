@@ -1,0 +1,876 @@
+{% extends "admin_layout.html" %} {% load static %} {% block content %}
+
+<div class="mx-auto py-6">
+  <div class="grid grid-cols-1 gap-4">
+    <div class="w-auto drop-shadow-md shadow shadow-gulf-blue-300 text-gulf-blue-950 rounded px-4 py-4">
+      <div class="flex justify-around">
+        <div style="flex: 0.2;" class="flex justify-center items-center">
+          Filter Data:
+        </div>
+        <div style="flex: 0.25;" class="flex justify-center">
+          <select
+          class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+        >
+          <option>Select Depot</option>
+          <option value="524402">Makoni Depot</option>
+          <option value="524403">Zengeza Depot</option>
+          <option value="524502">Kuwadzana Depot</option>
+          <option value="524503">Mabelreign Depot</option>
+          <option value="524504">Warren Park Depot</option>
+          <option value="524602">Glen View Depot</option>
+          <option value="524603">Waterfalls Depot</option>
+          <option value="524604">Southerton Depot</option>
+          <option value="524702">CBD Depot</option>
+          <option value="524703">Borrowdale Depot</option>
+          <option value="524704">Mabvuku Depot</option>
+          <option value="524705">Ruwa Depot</option>
+          <option value="000000">Seke Depot</option>
+        </select>
+        </div>
+        <div style="flex: 0.25;" class="flex justify-center">
+          <form id="submitDistrictForm" action="/dashboards/dashboard/filter/district" method="post">
+          {% csrf_token %}
+          <select
+          id="selectDistrict"
+          name="selectedDistrict"
+          class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+        >
+          <option>Select District</option>
+          <option value="1">South District</option>
+          <option value="2">North District</option>
+          <option value="3">East District</option>
+          <option value="4">Chitungwiza</option>
+          <option value="4">Regional Office</option>
+        </select>
+      </form>
+        </div>
+        <div style="flex: 0.25;" class="flex justify-center">
+          <form id="submitRegionForm" action="/dashboards/dashboard/filter/region" method="post">
+            {% csrf_token %}
+          <select
+          id="selectRegion"
+          name="selectedRegion"
+          class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+        >
+          <option>Select Region</option>
+          <option value="1">Harare Region</option>
+          <option value="2">East Region</option>
+          <option value="3">South Region</option>
+          <option value="4">West Region</option>
+        </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-5 gap-4 mt-5">
+    <div
+      class="w-auto bg-gradient-to-r from-gulf-blue-100 to-gulf-blue-300 drop-shadow-md shadow shadow-gulf-blue-300 text-gulf-blue-900 rounded px-2 py-2"
+    >
+      <div class="sm:flex lg:items-center lg:justify-between">
+        <div class="min-w-0 flex-1">
+          <div
+            class="text-center text-lg font-bold text-gulf-blue-950 sm:truncate sm:tracking-tight"
+          >
+            REVENUE ASSURANCE
+          </div>
+          <div class="mt-2">
+            <a href="../../ace/user/pending_sectionhead.php?source=home">
+              <div
+                class="border border-gulf-blue-200 hover:bg-gulf-blue-400 rounded-lg px-3 py-1 justify-between items-center sm:mt-0 sm:flex-row sm:flex-wrap"
+              >
+                <div class="col-xl col-sm text-center mb-xl-0 mb-4">
+                  <div class="card">
+                    <div class="card-body p-2">
+                      <div class="row">
+                        <div class="col-8">
+                          <div class="numbers">
+                            <p
+                              class="text-xs mb-0 text-capitalize font-weight-bold"
+                            >
+                              Points Visited
+                            </p>
+                            <h6 class="font-weight-bolder mb-0">100</h6>
+                          </div>
+
+                          <div
+                            class="overflow-hidden bg-blue-50 h-1.5 rounded-full w-full"
+                          >
+                            <span
+                              class="h-full bg-gulf-blue-900 w-full block rounded-full"
+                              style="width: 62%"
+                            ></span>
+                          </div>
+                          <p class="text-xs text-muted mt-2 mb-0">
+                            Monthly Target:1000
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div
+      class="w-auto bg-gradient-to-r from-jade-100 to-jade-300 drop-shadow-md shadow shadow-jade-300 text-jade-900 rounded px-2 py-2"
+    >
+      <div class="sm:flex lg:items-center lg:justify-between">
+        <div class="min-w-0 flex-1">
+          <div
+            class="text-center text-lg font-bold text-jade-900 sm:truncate sm:tracking-tight"
+          >
+            GROWTH
+          </div>
+          <div class="mt-2">
+            <a href="../../ace/user/pending_sectionhead.php?source=home">
+              <div
+                class="border border-jade-200 hover:bg-jade-400 rounded-lg px-3 py-1 justify-between items-center sm:mt-0 sm:flex-row sm:flex-wrap"
+              >
+                <div class="col-xl col-sm text-center mb-xl-0 mb-4">
+                  <div class="card">
+                    <div class="card-body p-2">
+                      <div class="row">
+                        <div class="col-8">
+                          <div class="numbers">
+                            <p
+                              class="text-xs mb-0 text-capitalize font-weight-bold"
+                            >
+                              Connected
+                            </p>
+                            <h6 class="font-weight-bolder mb-0">100</h6>
+                          </div>
+
+                          <div
+                            class="overflow-hidden bg-jade-50 h-1.5 rounded-full w-full"
+                          >
+                            <span
+                              class="h-full bg-jade-900 w-full block rounded-full"
+                              style="width: 78%"
+                            ></span>
+                          </div>
+                          <p class="text-xs text-muted mt-2 mb-0">
+                            YTD Target:1000
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div
+      class="w-auto bg-gradient-to-r from-royal-heath-100 to-royal-heath-300 drop-shadow-md shadow shadow-royal-heath-300 text-royal-heath-900 rounded px-2 py-2"
+    >
+      <div class="sm:flex lg:items-center lg:justify-between">
+        <div class="min-w-0 flex-1">
+          <div
+            class="text-center text-lg font-bold text-royal-heath-950 sm:truncate sm:tracking-tight"
+          >
+            INSPECTIONS
+          </div>
+          <div class="mt-2">
+            <a href="../../ace/user/pending_sectionhead.php?source=home">
+              <div
+                class="border border-royal-heath-200 hover:bg-royal-heath-400 rounded-lg px-3 py-1 justify-between items-center sm:mt-0 sm:flex-row sm:flex-wrap"
+              >
+                <div class="col-xl col-sm text-center mb-xl-0 mb-4">
+                  <div class="card">
+                    <div class="card-body p-2">
+                      <div class="row">
+                        <div class="col-8">
+                          <div class="numbers">
+                            <p
+                              class="text-xs mb-0 text-capitalize font-weight-bold"
+                            >
+                              Inspected
+                            </p>
+                            <h6 class="font-weight-bolder mb-0">100</h6>
+                          </div>
+
+                          <div
+                            class="overflow-hidden bg-royal-heath-50 h-1.5 rounded-full w-full"
+                          >
+                            <span
+                              class="h-full bg-royal-heath-900 w-full block rounded-full"
+                              style="width: 80%"
+                            ></span>
+                          </div>
+                          <p class="text-xs text-muted mt-2 mb-0">
+                            YTD Target:1000
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div
+      class="w-auto bg-gradient-to-r from-gulf-blue-100 to-gulf-blue-300 drop-shadow-md shadow shadow-gulf-blue-300 text-gulf-blue-900 rounded px-2 py-2"
+    >
+      <div class="sm:flex lg:items-center lg:justify-between">
+        <div class="min-w-0 flex-1">
+          <div
+            class="text-center text-lg font-bold text-gulf-blue-950 sm:truncate sm:tracking-tight"
+          >
+            FAULTS
+          </div>
+          <div class="mt-2">
+            <a href="../../ace/user/pending_sectionhead.php?source=home">
+              <div
+                class="border border-gulf-blue-200 hover:bg-gulf-blue-400 rounded-lg px-3 py-1 justify-between items-center sm:mt-0 sm:flex-row sm:flex-wrap"
+              >
+                <div class="col-xl col-sm text-center mb-xl-0 mb-4">
+                  <div class="card">
+                    <div class="card-body p-2">
+                      <div class="row">
+                        <div class="col-8">
+                          <div class="numbers">
+                            <p
+                              class="text-xs mb-0 text-capitalize font-weight-bold"
+                            >
+                              Unresolved
+                            </p>
+                            <h6 class="font-weight-bolder mb-0">100</h6>
+                          </div>
+
+                          <div
+                            class="overflow-hidden bg-gulf-blue-50 h-1.5 rounded-full w-full"
+                          >
+                            <span
+                              class="h-full bg-gulf-blue-900 w-full block rounded-full"
+                              style="width: 30%"
+                            ></span>
+                          </div>
+                          <p class="text-xs text-muted mt-2 mb-0">
+                            YTD Target:1000
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div
+      class="w-auto bg-gradient-to-r from-jade-100 to-jade-300 drop-shadow-md shadow shadow-jade-300 text-jade-900 rounded px-2 py-2"
+    >
+      <div class="sm:flex lg:items-center lg:justify-between">
+        <div class="min-w-0 flex-1">
+          <div
+            class="text-center text-lg font-bold text-jade-950 sm:truncate sm:tracking-tight"
+          >
+            MAINTENANCE
+          </div>
+          <div class="mt-2">
+            <a href="../../ace/user/pending_sectionhead.php?source=home">
+              <div
+                class="border border-jade-200 hover:bg-jade-400 rounded-lg px-3 py-1 justify-between items-center sm:mt-0 sm:flex-row sm:flex-wrap"
+              >
+                <div class="col-xl col-sm text-center mb-xl-0 mb-4">
+                  <div class="card">
+                    <div class="card-body p-2">
+                      <div class="row">
+                        <div class="col-8">
+                          <div class="numbers">
+                            <p
+                              class="text-xs mb-0 text-capitalize font-weight-bold"
+                            >
+                              Maintained
+                            </p>
+                            <h6 class="font-weight-bolder mb-0">100</h6>
+                          </div>
+
+                          <div
+                            class="overflow-hidden bg-jade-50 h-1.5 rounded-full w-full"
+                          >
+                            <span
+                              class="h-full bg-jade-900 w-full block rounded-full"
+                              style="width: 50%"
+                            ></span>
+                          </div>
+                          <p class="text-xs text-muted mt-2 mb-0">
+                            YTD Target:1000
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="grid grid-cols-5 gap-4 mt-10">
+    <div
+      class="w-auto bg-gulf-blue-200 drop-shadow-md shadow shadow-gulf-blue-300 text-gray-900 rounded px-2 py-2"
+    >
+      <div class="sm:flex lg:items-center lg:justify-between">
+        <div class="min-w-0 flex-1">
+          <div
+            class="text-center text-lg font-bold sm:truncate sm:tracking-tight"
+          >
+            Top PBNC Customers
+          </div>
+          <div style="height: 14rem" class="mt-2 h-20 overflow-auto">
+            <a href="../../ace/user/pending_sectionhead.php?source=home">
+              <table class="table-auto">
+                <thead>
+                  <tr>
+                    <th></th>
+                    <th></th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for pbnc in pbncs %}
+                  <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{pbnc.name}}</td>
+                    <td>{{pbnc.amount}}</td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div
+      class="w-auto bg-royal-heath-200 drop-shadow-md shadow shadow-royal-heath-300 text-gray-900 rounded px-2 py-2"
+    >
+      <div class="sm:flex lg:items-center lg:justify-between">
+        <div class="min-w-0 flex-1">
+          <div
+            class="text-center text-lg font-bold sm:truncate sm:tracking-tight"
+          >
+            Unresolved Power Outages
+          </div>
+          <div style="height: 14rem" class="mt-2 h-20 overflow-auto">
+            <a href="../../ace/user/pending_sectionhead.php?source=home">
+              <table class="table-auto">
+                <thead>
+                  <tr>
+                    <th></th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for upo in upos %}
+                  <tr>
+                    <td>{{forloop.counter}}</td>
+                    <td>{{upo.description}}</td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div
+      class="w-auto bg-citron-200 drop-shadow-md shadow shadow-citron-300 text-gray-900 rounded px-2 py-2"
+    >
+      <div class="sm:flex lg:items-center lg:justify-between">
+        <div class="min-w-0 flex-1">
+          <div
+            class="text-center text-lg font-bold text-gulf-blue-950 sm:truncate sm:tracking-tight"
+          >
+            Inspection breakdown
+          </div>
+          <div style="height: 14rem" class="mt-2 h-20 overflow-auto">
+            <a href="../../ace/user/pending_sectionhead.php?source=home">
+              <canvas id="Inspection"></canvas>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div
+      class="w-auto bg-gulf-blue-200 drop-shadow-md shadow shadow-gulf-blue-300 text-gulf-blue-900 rounded px-2 py-2"
+    >
+      <div class="sm:flex lg:items-center lg:justify-between">
+        <div class="min-w-0 flex-1">
+          <div
+            class="text-center text-lg font-bold text-gulf-blue-950 sm:truncate sm:tracking-tight"
+          >
+            Top Debtors
+          </div>
+          <div style="height: 14rem" class="mt-2 h-20 overflow-auto">
+            <a href="../../ace/user/pending_sectionhead.php?source=home">
+              <table class="table-auto">
+                <thead>
+                  <tr>
+                    <th></th>
+                    <th></th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for td in tds %}
+                  <tr>
+                    <td>{{forloop.counter}}</td>
+                    <td>{{td.name}}</td>
+                    <td>{{td.amount}}</td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div
+      class="w-auto bg-citron-200 drop-shadow-md shadow shadow-citron-300 text-gray-900 rounded px-2 py-2"
+    >
+      <div class="sm:flex lg:items-center lg:justify-between">
+        <div class="min-w-0 flex-1">
+          <div
+            class="text-center text-lg font-bold text-gulf-blue-950 sm:truncate sm:tracking-tight"
+          >
+            Maintanance breakdown
+          </div>
+          <div style="height: 14rem" class="mt-2 h-20 overflow-auto">
+            <a href="../../ace/user/pending_sectionhead.php?source=home">
+              <canvas id="Maintenance"></canvas>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="grid grid-cols-2 mt-4 gap-4">
+    <div
+      class="w-auto bg-gulf-blue-200 shadow shadow-gulf-blue-300 text-gulf-blue-700 rounded px-2 py-2"
+    >
+      <div class="sm:flex lg:items-center lg:justify-between">
+        <div class="min-w-0 flex-1">
+          <div
+            class="text-center text-lg font-bold text-gulf-blue-950 sm:truncate sm:tracking-tight"
+          >
+            Maintanance
+          </div>
+          <div class="flex justify-center">
+            <select
+              id="filterMaintenanceButton"
+              class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+            >
+              <option>Current</option>
+              <option value="1">January</option>
+              <option value="12">December</option>
+            </select>
+          </div>
+          <div>
+            <canvas
+              id="maintenanceBarChart"
+              class="chart-canvas"
+              width="400"
+              height="300"
+            ></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div
+      class="w-auto bg-gulf-blue-200 shadow shadow-gulf-blue-300 text-gulf-blue-700 rounded px-2 py-2"
+    >
+      <div class="sm:flex lg:items-center lg:justify-between">
+        <div class="min-w-0 flex-1">
+          <div
+            class="text-center text-lg font-bold text-gulf-blue-950 sm:truncate sm:tracking-tight"
+          >
+            Inspections
+          </div>
+          <div class="flex justify-center">
+            <select
+              id="filterInspectionsButton"
+              class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+            >
+              <option>Current</option>
+              <option value="1">January</option>
+              <option value="12">December</option>
+            </select>
+          </div>
+          <div>
+            <canvas
+              id="inspectionBarChart"
+              class="chart-canvas"
+              width="400"
+              height="300"
+            ></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock content %} {% block scripts %}
+<script src="
+https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js
+"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    var inspection_locations = JSON.parse("{{inspection_locations|escapejs}}");
+    var inspections_count = JSON.parse("{{inspections_count|escapejs}}");
+    var inspections_ = JSON.parse("{{inspections_|escapejs}}");
+
+    console.log(
+      "inspection_locations: ",
+      inspection_locations,
+      "inspections_count: ",
+      inspections_count
+    );
+
+    var maintenance_locations = JSON.parse("{{maintenance_locations|escapejs}}");
+    var maintenance_count = JSON.parse("{{maintenance_count|escapejs}}");
+    var maintenances_ = JSON.parse("{{maintenance_|escapejs}}");
+
+    console.log(
+      "maintenance_locations: ",
+      maintenance_locations,
+      "maintenance_count: ",
+      maintenance_count
+    );
+
+    // Get the canvas element
+    var inspectionCtx = document.getElementById("Inspection").getContext("2d");
+
+    //"inspection_locations": keys_list, "inspections_count": values_list
+
+    // Define the data for the pie chart (replace with your own data)
+    var inspectionData = {
+      labels: inspection_locations,
+      datasets: [
+        {
+          data: inspections_count,
+          backgroundColor: ["green", "blue", "purple", "pink", "red"],
+          hoverBackgroundColor: ["green", "blue", "purple", "pink", "red"],
+        },
+      ],
+    };
+
+    // Create the pie chart
+    var inspectionChart = new Chart(inspectionCtx, {
+      type: "pie",
+      data: inspectionData,
+      options: {
+        plugins: {
+          legend: {
+            position: "left", // or 'bottom', 'left', 'right'
+          },
+        },
+      },
+    });
+
+    var inspectionBarCtx = document
+      .getElementById("inspectionBarChart")
+      .getContext("2d");
+
+    var inspectionBarData = {
+      labels: inspection_locations,
+      datasets: [
+        {
+          data: inspections_count,
+          backgroundColor: ["green", "blue", "purple", "pink", "red"],
+          hoverBackgroundColor: ["green", "blue", "purple", "pink", "red"],
+        },
+      ],
+    };
+
+    var iChart = new Chart(inspectionBarCtx, {
+      type: "bar",
+      data: inspectionBarData,
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: false,
+          },
+        },
+        scales: {
+          y: {
+            grid: {
+              drawBorder: false,
+              display: true,
+              drawOnChartArea: true,
+              drawTicks: false,
+            },
+            ticks: {
+              suggestedMin: 0,
+              suggestedMax: 40,
+              beginAtZero: true,
+              padding: 15,
+              font: {
+                size: 14,
+                family: "Open Sans",
+                style: "normal",
+                lineHeight: 2,
+              },
+              color: "#282a87",
+            },
+          },
+          x: {
+            grid: {
+              drawBorder: false,
+              display: false,
+              drawOnChartArea: false,
+              drawTicks: false,
+            },
+            ticks: {
+              suggestedMin: 0,
+              suggestedMax: 40,
+              beginAtZero: true,
+              padding: 15,
+              font: {
+                size: 14,
+                family: "Open Sans",
+                style: "normal",
+                lineHeight: 2,
+              },
+              color: "#282a87",
+            },
+          },
+        },
+      },
+    });
+
+    // Get the canvas element
+    var maintenanceCtx = document
+      .getElementById("Maintenance")
+      .getContext("2d");
+
+    // Define the data for the pie chart (replace with your own data)
+    var maintenanceData = {
+      labels: maintenance_locations,
+      datasets: [
+        {
+          data: maintenance_count,
+          backgroundColor: ["green", "blue", "purple", "pink", "red"],
+          hoverBackgroundColor: ["green", "blue", "purple", "pink", "red"],
+        },
+      ],
+    };
+
+    // Create the pie chart
+    var maintenanceChart = new Chart(maintenanceCtx, {
+      type: "pie",
+      data: maintenanceData,
+      options: {
+        plugins: {
+          legend: {
+            position: "left", // or 'bottom', 'left', 'right'
+          },
+        },
+      },
+    });
+
+    var maintenanceBarCtx = document
+      .getElementById("maintenanceBarChart")
+      .getContext("2d");
+
+    var maintenanceBarData = {
+      labels: maintenance_locations, // ['January', 'December']
+      datasets: [
+        {
+          label: "OneAndOnly",
+          data: maintenance_count, // [1,2,3,4]
+          backgroundColor: ["green", "blue", "purple", "pink", "red"],
+          hoverBackgroundColor: ["green", "blue", "purple", "pink", "red"],
+        },
+      ],
+    };
+
+    var mChart = new Chart(maintenanceBarCtx, {
+      type: "bar",
+      data: maintenanceBarData,
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: false,
+          },
+        },
+        scales: {
+          y: {
+            grid: {
+              drawBorder: false,
+              display: true,
+              drawOnChartArea: true,
+              drawTicks: false,
+              borderDash: [5, 5],
+            },
+            ticks: {
+              display: true,
+              padding: 10,
+              color: "#282a87",
+              font: {
+                size: 14,
+                family: "Open Sans",
+                style: "normal",
+                lineHeight: 2,
+              },
+            },
+          },
+          x: {
+            grid: {
+              drawBorder: false,
+              display: false,
+              drawOnChartArea: false,
+              drawTicks: false,
+              borderDash: [5, 5],
+            },
+            ticks: {
+              display: true,
+              color: "#282a87",
+              padding: 20,
+              font: {
+                size: 14,
+                family: "Open Sans",
+                style: "normal",
+                lineHeight: 2,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    document
+      .getElementById("filterMaintenanceButton")
+      .addEventListener("change", (event) => {
+        const newValue = event.target.value;
+        console.log("newValue: ", newValue);
+        // Do something with the new value
+
+        var filteredData = maintenances_.filter((dataPoint) => {
+          var date = new Date(dataPoint.fields.created_at);
+          let month = parseInt(date.getMonth()) + 1;
+          return month == newValue;
+        });
+
+        let cleanedMaintenanceData = cleanMaintenanceData(filteredData);
+        console.log("cleanedMaintenanceData: ", cleanedMaintenanceData);
+        mChart.data.datasets[0].data = cleanedMaintenanceData.values_; // Update chart data
+        mChart.data.labels = cleanedMaintenanceData.keys_;
+        mChart.update(); // Render the chart with filtered data
+      });
+
+    document
+      .getElementById("filterInspectionsButton")
+      .addEventListener("change", (event) => {
+        const newValue = event.target.value;
+        console.log("newValue: ", newValue);
+        // Do something with the new value
+
+        var filteredData = inspections_.filter((dataPoint) => {
+          var date = new Date(dataPoint.fields.created_at);
+          let month = parseInt(date.getMonth()) + 1;
+          return month == newValue;
+        });
+
+        let cleanedInspectionData = cleanInspectionData(filteredData);
+        console.log("cleanedInspectionData: ", cleanedInspectionData);
+        iChart.data.datasets[0].data = cleanedInspectionData.values_; // Update chart data
+        iChart.data.labels = cleanedInspectionData.keys_;
+        iChart.update(); // Render the chart with filtered data
+      });
+  });
+
+  function cleanMaintenanceData(maintenances) {
+    let maintenanceCount = {};
+
+    for (let i = 0; i < maintenances.length; i++) {
+      let maintenance = maintenances[i];
+      let maintenanceName = maintenance.fields.depot;
+      if (maintenanceName in maintenanceCount) {
+        if (maintenanceCount[maintenanceName] > 0) {
+          maintenanceCount[maintenanceName] =
+            maintenanceCount[maintenanceName] + 1;
+        }
+      } else {
+        maintenanceCount[maintenanceName] = 1;
+      }
+    }
+
+    let keysList = Object.keys(maintenanceCount);
+    let valuesList = Object.values(maintenanceCount);
+
+    return {
+      keys_: keysList,
+      values_: valuesList,
+    };
+  }
+
+  function cleanInspectionData(inspections) {
+    let inspectionCount = {};
+
+    for (let i = 0; i < inspections.length; i++) {
+      let inspection = inspections[i];
+      let inspectionName = inspection.fields.depot;
+      if (inspectionName in inspectionCount) {
+        if (inspectionCount[inspectionName] > 0) {
+          inspectionCount[inspectionName] = inspectionCount[inspectionName] + 1;
+        }
+      } else {
+        inspectionCount[inspectionName] = 1;
+      }
+    }
+
+    let keysList = Object.keys(inspectionCount);
+    let valuesList = Object.values(inspectionCount);
+
+    return {
+      keys_: keysList,
+      values_: valuesList,
+    };
+  }
+</script>
+<script>
+  // Get the select element and form
+  const selectDistrict = document.getElementById('selectDistrict');
+  const submitDistrictForm = document.getElementById('submitDistrictForm');
+
+  // Add event listener to the select element
+  selectDistrict.addEventListener('change', function() {
+    // Submit the form
+    submitDistrictForm.submit();
+  });
+
+  // Get the select element and form
+  const selectRegion = document.getElementById('selectRegion');
+  const submitRegionForm = document.getElementById('submitRegionForm');
+
+  // Add event listener to the select element
+  selectRegion.addEventListener('change', function() {
+    // Submit the form
+    submitRegionForm.submit();
+  });
+
+
+</script>
+{% endblock %}

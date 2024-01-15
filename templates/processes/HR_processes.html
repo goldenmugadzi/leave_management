@@ -1,0 +1,45 @@
+{% extends 'admin_layout.html' %}
+{%load static%}
+
+{%block content%}
+
+<div class="grid grid-cols-3 gap-4">
+    <div class="mt-10"><button type="button"><a class="rounded-xl bg-green-300 py-4 px-2 m-3   " tabindex="-1"
+                href="{% static 'documents\HR\Disciplinary Process.pdf' %}">Displinary Process</a></button></div>
+    <div class="mt-10"><button type="button"><a class="rounded-xl bg-blue-300 py-4 px-2 m-3 " tabindex="-1"
+                href="{% static 'documents\HR\Asset Acquisition Process Corrected.pdf' %}">Asset Acquisition
+            </a></button></div>
+    <!-- <div class="mt-10"><button type="button"><a class="rounded-xl bg-yellow-300 py-4 px-2 m-3 " tabindex="-1"
+                href="{% static  'documents\HR\Asset Acquisition Process Corrected.pdf' %}">Stores Issuing</a></button>
+    </div> -->
+    <div class="mt-10"><button type="button"><a class="rounded-xl bg-green-300 py-4 px-2 m-3  " tabindex="-1"
+                href="{% static 'documents\HR\DEATH LEVY PROCESS.pdf' %}">Death Levy
+            </a></button>
+    </div>
+    <div class="mt-10"> <button type="button" class=""><a class="rounded-xl bg-blue-300 py-4 px-2 m-3  " tabindex="-1"
+                href="{% static 'documents\HR\Emergency Response.pdf' %}">Emergency Response</a></button></div>
+    <div class="mt-10"> <button type="button"><a class="rounded-xl bg-yellow-300 py-4 px-2 m-3 " tabindex="-1"
+                href="{% static 'documents\HR\Employee Termination Process.pdf' %}">Employee Termination</a></button>
+    </div>
+    <div class="mt-10"><button type="button"><a class="rounded-xl bg-green-300 py-4 px-2 m-3 " tabindex="-1"
+                href="{% static 'documents\HR\FUNERAL ASSISTANCE.pdf' %}">Funeral Assistance</a></button></div>
+    <div class="mt-10"><button type="button"><a class="rounded-xl bg-blue-300 py-4 px-2 m-3 " tabindex="-1"
+                href="{% static 'documents\HR\Occupational accident handling.pdf' %}">Occupational accident handling</a></button>
+    </div>
+    <div class="mt-10"><button type="button"><a class="rounded-xl bg-yellow-300 py-4 px-2 m-3 " tabindex="-1"
+                href="{% static 'documents\HR\PERFORMANCE MANAGEMENT PROCESS.pdf' %}">Performance management</a></button>
+    </div>
+    <div class="mt-10">
+        <td><button type="button"><a class="rounded-xl bg-green-300 py-4 px-2 m-3" tabindex="-1"
+                    href="{% static 'documents\HR\Recruitment and Selection Process.pdf' %}">Recruitment and Selection</a></button>
+    </div>
+    <div class="mt-10"><button type="button"><a class="rounded-xl bg-blue-300 py-4 px-2 m-3 " tabindex="-1"
+                href="{% static 'documents\HR\Staff Special Fund - Process.pdf' %}">
+                Staff Special Fund 
+            </a></button></div>
+  </div>
+
+
+<div class=" flex justify-start "><a href="{%url 'file_search'%}"><button type="button"
+      class="bg-green-600 mt-20 w-40 rounded-full px-3 py-2 text-white text-4xl">Back</button></a></div>
+{%endblock %}

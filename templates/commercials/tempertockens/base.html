@@ -1,0 +1,32 @@
+{% extends 'admin_layout.html' %}
+{% load static %}
+{% block content %}
+
+<head>
+  <title>Prepaid Electricity Meter Tokens</title>
+  <style>
+    /* Add your custom CSS styles here */
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Prepaid Electricity Meter Tokens</h1>
+  </header>
+
+  <nav>
+    <ul>
+      <li><a href="{% url 'create_meter_token' %}">Create Token</a></li>
+      <li><a href="{% url 'display_meter_tokens' %}">Display Tokens</a></li>
+    </ul>
+  </nav>
+
+  <main>
+    {% block MeterTokens %}
+    {% endblock %}
+  </main>
+
+  <footer>
+    <p>&copy; 2022 Your Company. All rights reserved.</p>
+  </footer>
+</body>
+{% endblock %}
