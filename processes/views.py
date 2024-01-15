@@ -94,3 +94,68 @@ def file_search(request):
         print("Keyword not found")
 
     return render(request, 'processes/view_process.html', {'results': results, "page_title": "Process Maps (clause 4.2)"})
+
+# Create your views here.
+def pp_home(request):
+    return render(request,'forms/pp_index.html', {"page_title": "Processes and Procedures (Clause 4.4)"})
+
+def forms_index(request):
+    return render(request,'forms/forms_index.html', {"page_title": "Forms (Clause 7.5)"})
+
+def forms_upload(request):
+    return render(request,'forms/forms_upload.html', {"page_title": "Forms Upload"})
+
+def engineering_forms(request):
+    return render(request,'forms/engineering_forms.html', {"page_title": "Engineering Forms"})
+    
+def finance_forms(request):
+    return render(request,'forms/finance_forms.html', {"page_title": "Finance Forms"})
+
+def hr_forms(request):
+    return render(request,'forms/hr_forms.html', {"page_title": "Human Resources Forms"})
+
+def commercial_forms(request):
+    return render(request,'forms/commercial_forms.html', {"page_title": "Commercial Forms"})
+
+def download_static(request, filename):
+    file_path = os.path.join(settings.STATIC_ROOT, "documents", filename)
+    if os.path.exists(file_path):
+        with open(file_path, 'rb') as f:
+            response = FileResponse(f, content_type='application/pdf')  # Adjust content type as needed
+            response['Content-Disposition'] = 'attachment; filename="{}"'.format(filename)
+            return response
+    else:
+        # Handle file not found scenario
+        pass
+
+# Search forms
+def file_searchx(request):
+    keyword = request.GET.get('keyword', '')
+    pattern = r"\b" + str(keyword).lower() + r"\b"
+    match = re.search(pattern, keyword)
+    if match:
+       keyword=match.group()
+    results = []
+    if keyword:
+
+        
+# Specify the directory where you want to search for files
+        directory = 'C:\\Users\\Admin\\Desktop\\BEII\\beii\\static\\documents'
+        print(directory)
+        # Walk through the directory and search for files
+        for root, dirs, files in os.walk(directory):
+            for file in files:
+                file_path = os.path.join(root, file)
+                if re.search(pattern, str(file_path).lower()):
+                    filename = os.path.basename(file_path)
+                    results.append({
+                        "name": filename,
+                        "path": file_path
+                    })
+        print(results)
+
+    else:
+        print("Keyword not found")
+
+    return render(request, 'forms/forms_index.html', {'results': results, "page_title": "Forms (Clause 7.5)"})
+

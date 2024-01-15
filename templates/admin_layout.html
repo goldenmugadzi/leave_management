@@ -12,6 +12,11 @@
     <link href="{% static 'assets/css/tailwind.css' %}" rel="stylesheet" />
     <link href="{% static 'assets/css/be.css' %}" rel="stylesheet" />
 
+    <link href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css" rel="stylesheet">
+    <script
+      defer
+      src="https://unpkg.com/@alpinejs/collapse@3.x.x/dist/cdn.min.js"
+    ></script>
     {% block styles %}{% endblock styles %}
   </head>
 
@@ -27,12 +32,11 @@
           left: 0;
           width: 16rem;
           height: 100vh;
-          overflow-y: scroll;
           padding-bottom: 3rem;
         "
         class="bg-gradient-to-r from-gulf-blue-600 to-gulf-blue-800 rounded-xl mt-3 ml-3 mb-3"
       >
-        <!-- Component Start -->
+        <!-- Component Start overflow-y: scroll; -->
         <div
           style="display: flex; flex-direction: column"
           class="text-gulf-blue-50 rounded mt-3"
@@ -63,7 +67,7 @@
             >
               <a
                 class="flex items-center w-full h-12 px-3 mt-2 rounded hover:bg-gulf-blue-500"
-                href="{% url 'dashboard' %}"
+                href="{% url 'dashboard_index' %}"
               >
                 <svg
                   class="w-6 h-6 stroke-current"
@@ -81,7 +85,7 @@
                 </svg>
                 <span class="ml-2 text-sm font-medium">Home</span>
               </a>
-              <a
+              {% comment %} <a
                 class="flex items-center w-full h-12 px-3 mt-2 rounded hover:bg-gulf-blue-500"
                 href="{% url 'business_applications' %}"
               >
@@ -102,7 +106,7 @@
                 <span class="ml-2 text-sm font-medium"
                   >Business Applications</span
                 >
-              </a>
+              </a> {% endcomment %}
 
               {% comment %}
               <a
@@ -170,10 +174,10 @@
                   >Processes and Procedures</span
                 >
               </a>
-              <div x-data="{ expanded: false }">
-                <div
-                  class="flex items-center w-full h-12 px-3 mt-2 rounded hover:bg-gulf-blue-500"
-                >
+              <a
+                class="flex items-center w-full h-12 px-3 mt-2 rounded hover:bg-gulf-blue-500"
+                href="/competence/competence"
+              >
                 <svg
                   class="w-6 h-6 stroke-current"
                   xmlns="http://www.w3.org/2000/svg"
@@ -188,23 +192,10 @@
                     d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"
                   />
                 </svg>
-                  <button 
-                  @click="expanded = ! expanded"
-                  class="ml-2 text-sm font-medium"
-                  >Engineering</button>
-                </div>
-                <div style="flex-direction: column; padding-left: 1.5rem;" class="flex justify-center w-full">
-                  <div 
-                  class="flex justify-start items-center h-12 px-3 mt-2 rounded hover:bg-gulf-blue-400" 
-                  x-show="expanded" x-collapse.duration.1000ms
-                  ><span class="mr-2">P </span> <span class="ml-2">Petty Cash</span></div>
-                  <div
-                  class="flex justify-start items-center h-12 px-3 mt-2 rounded hover:bg-gulf-blue-400"
-                  x-show="expanded" x-collapse.duration.1000ms>
-                  <span class="mr-2">A </span> <span class="ml-2">ACE</span>
-                </div>
-                </div>
-              </div>
+                <span class="ml-2 text-sm font-medium"
+                  >Competence Building</span
+                >
+              </a>
             </div>
 
             {% comment %}
@@ -464,26 +455,19 @@
                   </button>
                 </div>
                 <div
-                  class="flex flex-1 items-center sm:items-stretch sm:justify-between md:justify-between lg:justify-between xl:justify-between"
+                  class="flex flex-1 items-center sm:items-stretch"
                 >
-                  <div class="flex ml-2 flex-shrink-0 items-center">
+                  <div style="flex: 0.2" class="flex ml-2 flex-shrink-0 items-center">
                     <img
                       class="h-14 w-auto"
                       src="{% static 'assets/images/website-logo.png' %}"
                       alt="ZETDC"
                     />
                   </div>
-                  <div class="flex sm:ml-6 items-center">
-                    <div class="">
-                      <!-- Current: "bg-gulf-blue-900 text-white", Default: "text-gulf-blue-300 hover:bg-gulf-blue-500 hover:text-white" -->
-                      <a
-                        href="#"
-                        class="text-gulf-blue-800 rounded-md px-3 py-2 font-medium"
-                        aria-current="page"
-                      >
-                        <span>ZETDC BUSINESS EXCELLENCE</span>
-                      </a>
-                    </div>
+                  <div style="flex: 0.8"  class="flex w-full items-center">
+                    <div id="scrolling-text"
+                    class="text-right text-lg whitespace-nowrap text-gulf-blue-950 px-3 py-2 font-medium">
+                        ZETDC BUSINESS EXCELLENCE
                   </div>
                 </div>
                 <div
@@ -661,10 +645,19 @@
       integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo="
       crossorigin="anonymous"
     ></script>
-    <script
-      defer
-      src="https://unpkg.com/@alpinejs/collapse@3.x.x/dist/cdn.min.js"
-    ></script>
+    <script>
+      const textElement = document.querySelector('#scrolling-text');
+      let textWidth = textElement.scrollWidth;  // Get text width
+      let scrollPosition = 0;
+      
+      const intervalId = setInterval(() => {
+        scrollPosition += 2;  // Adjust scrolling speed
+        textElement.style.textIndent = `${scrollPosition}px`;
+        if (scrollPosition >= textWidth) {
+          scrollPosition = 0;
+        }
+      }, 70);
+    </script>
     {% block scripts %}{% endblock scripts %}
   </body>
 </html>
