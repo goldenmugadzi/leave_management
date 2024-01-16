@@ -790,7 +790,7 @@ def get_to_reject_Ace(request):
 
             ace.approval_status="rejected by section head"
             ace.date_rejected=date.today()
-            ace.rejected_by=user_id
+            ace.rejected_by=user_title
             ace.section_head_approval_status="rejected by section head"
             ace.accounting_officer_approval_date=date.today()
             ace.save()
@@ -801,7 +801,7 @@ def get_to_reject_Ace(request):
 
             ace.approval_status="rejected by Accounting officer"
             ace.date_rejected=date.today()
-            ace.rejected_by=user_id
+            ace.rejected_by=user_title
             ace.accounting_officer_approval_date=date.today()
             ace.accounting_officer_approval_status="rejected by accounting officer"
             # ace.asset_number=asset_number
@@ -815,7 +815,7 @@ def get_to_reject_Ace(request):
             ace.date_approved=date.today()
             ace.fm_approval_status="rejected Finance Manager"
             ace.fm_date_approved=date.today()
-            ace.finance_manager=user_id
+            ace.finance_manager=user_title
             ace.save()
             messages.error(request, 'you have rejected ace',ace_id)
             sweetify.success(request,'you have rejected ace'+ ace_id)
@@ -826,7 +826,7 @@ def get_to_reject_Ace(request):
             ace.date_approved=date.today()
             ace.gm_approval_status="approved by General Manager"
             ace.gm_date_approved=date.today()
-            ace.general_manager=user_id
+            ace.general_manager=user_title
             ace.save()
             messages.error(request, 'you have rejected ace',ace_id)
             sweetify.success(request,'you have rejected ace'+ ace_id)
@@ -858,6 +858,7 @@ def get_to_reject_Ace(request):
             user_page = 'Ace/Ace_reject_internal.html'
         if str(context.classification)=="project":
             user_page = 'Ace/Ace_reject_project.html'
+    print(context)
 
 
 
