@@ -37,15 +37,72 @@ def index(request):
     l = request.user.groups.values_list('name', flat=True)  # QuerySet Object
     user_groups = list(l)
 
-    if "Ace_section_head" in user_groups:
-        return redirect('/Ace/list_section_head')
-    if "Ace_requester" in user_groups:
-        return redirect('/Ace/list_requester')
-    if "Ace_cashier" in user_groups:
-        return redirect('/Ace/list_disburser')
-    if "Ace_authoriser" in user_groups:
-        return redirect('/Ace/list_section_head')
+
+    user_title = request.user.get_full_name()
+    l = request.user.groups.values_list('name', flat=True)
+
+    # QuerySet Object
+    user_id = request.user.id
+    user = User.objects.filter(id=user_id).first()
+    user_profile = UserProfile.objects.filter(user_id=user.pk).first()
+
+    user_groups = user.groups.values_list('name', flat=True)
+
+    custom_user_roles = {
+    "non_conformity": {},
+    "remittance_advice": {},
+    "pettycash": {},
+    "adjudication": {},
+    "tokens": {},
+    "tenders": {},
+    "ace": {},
+    "users": {},
+    }
+
+    user_group_ids = user_profile.roles
+    user_group_ids = user_group_ids.split(",") if user_group_ids else []
+    for id in user_group_ids:
+
+        role = Roles.objects.filter(id=id).first()
+
+        if role.application == "users":
+            custom_user_roles["users"] = role
+
+        if role.application == "non_conformity":
+            custom_user_roles["non_conformity"] = role
+
+        if role.application == "remittance_advice":
+            custom_user_roles["remittance_advice"] = role
+
+        if role.application == "pettycash":
+            custom_user_roles["pettycash"] = role
+
+        if role.application == "adjudication":
+            custom_user_roles["adjudication"] = role
+
+        if role.application == "tokens":
+            custom_user_roles["tokens"] = role
+
+        if role.application == "tenders":
+            custom_user_roles["tenders"] = role
+
+        if role.application == "ace":
+            custom_user_roles["ace"] = role
+
+    Ace_role=custom_user_roles["ace"].role
+    print(Ace_role)
+
+    if str(Ace_role)=="pass":
+        return redirect('/ace/list_section_head')
+    if str(Ace_role)=="process":
+        return redirect('/ace/list_disburser')
+    if str(Ace_role)=="sanction":
+        return redirect('/ace/list_fm')
+    if str(Ace_role)=="approve":
+        return redirect('/ace/list_gm')
     else:
+        messages.error(request, 'you need to contact it to get a role in the ACE')
+        sweetify.success(request,'you need to contact it to get a role in the ACE')
         return redirect("/")
 
     return redirect("/")
@@ -310,6 +367,101 @@ def get_Ace_records_section_head(request):
                                        "user_title": user_title,
                                        "user_groups": user_groups})
 
+def get_Ace_records_accounting_officer(request):
+    user_id = request.user.id
+    user = UserProfile.objects.filter(user_id=user_id).first()
+    user_profile = UserProfile.objects.filter(user_id=user.pk).first()
+    region = Regions.objects.filter(id=user_profile.region).first()
+    district = Districts.objects.filter(code=user_profile.district).first()
+    depot = Depots.objects.filter(code=user_profile.depot).first()
+    section_used = Sections.objects.filter(code=user_profile.section).first()
+    user_designation = Designations.objects.filter(id=user_profile.designation).first() if user_profile.designation else None
+    # print(user_designation)
+
+    user_title = request.user.get_full_name()
+    l = request.user.groups.values_list('name', flat=True)
+
+    # QuerySet Object
+    user_groups = list(l)
+
+    # secction = user.section
+    print(section_used)
+    approval_status = "approved by section head"
+
+    records: object = Ace.objects.filter(approval_status=approval_status).all()
+    context = serializers.serialize('json', records)
+
+    user_page = 'Ace/index.html'
+    print(context)
+
+    return render(request, user_page, {"title": "All Records",
+                                       "context": context,
+                                       "user_title": user_title,
+                                       "user_groups": user_groups})
+
+def get_Ace_records_fm(request):
+    user_id = request.user.id
+    user = UserProfile.objects.filter(user_id=user_id).first()
+    user_profile = UserProfile.objects.filter(user_id=user.pk).first()
+    region = Regions.objects.filter(id=user_profile.region).first()
+    district = Districts.objects.filter(code=user_profile.district).first()
+    depot = Depots.objects.filter(code=user_profile.depot).first()
+    section_used = Sections.objects.filter(code=user_profile.section).first()
+    user_designation = Designations.objects.filter(id=user_profile.designation).first() if user_profile.designation else None
+    # print(user_designation)
+
+    user_title = request.user.get_full_name()
+    l = request.user.groups.values_list('name', flat=True)
+
+    # QuerySet Object
+    user_groups = list(l)
+
+    # secction = user.section
+    print(section_used)
+    approval_status = "approved by Accounting officer"
+
+    records: object = Ace.objects.filter(approval_status=approval_status).all()
+    context = serializers.serialize('json', records)
+
+    user_page = 'Ace/index.html'
+    print(context)
+
+    return render(request, user_page, {"title": "All Records",
+                                       "context": context,
+                                       "user_title": user_title,
+                                       "user_groups": user_groups})
+
+def get_Ace_records_gm(request):
+    user_id = request.user.id
+    user = UserProfile.objects.filter(user_id=user_id).first()
+    user_profile = UserProfile.objects.filter(user_id=user.pk).first()
+    region = Regions.objects.filter(id=user_profile.region).first()
+    district = Districts.objects.filter(code=user_profile.district).first()
+    depot = Depots.objects.filter(code=user_profile.depot).first()
+    section_used = Sections.objects.filter(code=user_profile.section).first()
+    user_designation = Designations.objects.filter(id=user_profile.designation).first() if user_profile.designation else None
+    # print(user_designation)
+
+    user_title = request.user.get_full_name()
+    l = request.user.groups.values_list('name', flat=True)
+
+    # QuerySet Object
+    user_groups = list(l)
+
+    # secction = user.section
+    # print(section_used)
+    approval_status = "approved by Finance Manager"
+
+    records: object = Ace.objects.filter(approval_status=approval_status).all()
+    context = serializers.serialize('json', records)
+
+    user_page = 'Ace/index.html'
+    print(context)
+
+    return render(request, user_page, {"title": "All Records",
+                                       "context": context,
+                                       "user_title": user_title,
+                                       "user_groups": user_groups})
 
 @login_required(login_url='/accounts/login/')
 def get_Ace_records_requester(request):
@@ -479,11 +631,32 @@ def get_to_approve_Ace(request):
             return redirect("/ace")
         if Ace_role=="approve" and str(ace.approval_status)!="approved by Finance Manager":
 
-            ace.approval_status="approved by General Manager"
-            ace.date_approved=date.today()
-            ace.gm_approval_status="approved by General Manager"
-            ace.gm_date_approved=date.today()
-            ace.save()
+
+            budget=ace.budget_id
+            amount=ace.amount
+            budget = Budget.objects.filter(budget_id=budget).first()
+            if float(budget.amount)<=amount:
+                ace.approval_status="approved by General Manager"
+                ace.date_approved=date.today()
+                ace.gm_approval_status="approved by General Manager"
+                ace.gm_date_approved=date.today()
+
+                ace.save()
+                Transaction = Transactions.objects.filter(Ace2=ace.Ace_id2).first()
+                Transaction.approval_status="approved by General Manager"
+                Transaction.save()
+                budget.balance = budget.balance - amount
+                budget.to_be_withdrawn = budget.to_be_withdrawn - amount
+                budget.withdrawn = budget.withdrawn + amount
+                budget.withdrawal_date = date.today
+                budget.save()
+
+            else:
+                sweetify.error(request, 'you have insufficient funds to approve')
+                return redirect("/ace")
+
+
+
             messages.error(request, 'you have approved ace',ace_id)
             sweetify.success(request,'you have approved ace'+ ace_id)
             return redirect("/ace")
@@ -504,13 +677,178 @@ def get_to_approve_Ace(request):
         # context = serializers.serialize('json', pettyc1)
 
 
-    user_page = 'Ace/Ace_approve.html'
+    print(context.classification)
+    if str(Ace_role)=="process":
+        if str(context.classification)=="internal":
+            user_page = 'Ace/Ace_approve_accounting_officer_internal.html'
+        else:
+            user_page = 'Ace/Ace_approve_accounting_officer_project.html'
+
+    else:
+        if str(context.classification)=="internal":
+            user_page = 'Ace/Ace_approve_internal.html'
+        if str(context.classification)=="project":
+            user_page = 'Ace/Ace_approve_project.html'
 
     return render(request, user_page, {"title": "All Records",
                                        "context": context,
                                        "user_title": user_title,
                                        "user_groups": user_groups})
 
+def get_to_reject_Ace(request):
+    user_title = request.user.get_full_name()
+    l = request.user.groups.values_list('name', flat=True)
+
+    if request.method == "GET":
+        Ace_id = request.GET['i']
+        print(Ace_id)
+        Ace_id = str(Ace_id)
+        pettyc = Ace.objects.filter(Ace_id2=Ace_id).first()
+        # pettyc1 = Ace.objects.filter(petty_id=Ace_id).first()
+        # print(pettyc)
+        context = pettyc
+        # print(context)
+        # print(context.quotation1)
+        # print("after context")
+        user_id = request.user.id
+
+
+    user_id = request.user.id
+    user = User.objects.filter(id=user_id).first()
+    user_profile = UserProfile.objects.filter(user_id=user.pk).first()
+
+    user_groups = user.groups.values_list('name', flat=True)
+
+    custom_user_roles = {
+        "non_conformity": {},
+        "remittance_advice": {},
+        "pettycash": {},
+        "adjudication": {},
+        "tokens": {},
+        "tenders": {},
+        "ace": {},
+        "users": {},
+    }
+
+    user_group_ids = user_profile.roles
+    user_group_ids = user_group_ids.split(",") if user_group_ids else []
+    for id in user_group_ids:
+
+        role = Roles.objects.filter(id=id).first()
+
+        if role.application == "users":
+            custom_user_roles["users"] = role
+
+        if role.application == "non_conformity":
+            custom_user_roles["non_conformity"] = role
+
+        if role.application == "remittance_advice":
+            custom_user_roles["remittance_advice"] = role
+
+        if role.application == "pettycash":
+            custom_user_roles["pettycash"] = role
+
+        if role.application == "adjudication":
+            custom_user_roles["adjudication"] = role
+
+        if role.application == "tokens":
+            custom_user_roles["tokens"] = role
+
+        if role.application == "tenders":
+            custom_user_roles["tenders"] = role
+
+        if role.application == "ace":
+            custom_user_roles["ace"] = role
+    Ace_role=str(custom_user_roles["ace"])
+    print(Ace_role,"ace role")
+    if request.method=="POST":
+        ace_id=request.POST["Ace_id2"]
+        asset_number=request.POST["asset_number"]
+        ace=Ace.objects.filter(Ace_id2=ace_id).first()
+
+        # if Ace_role=="check" and str(ace.approval_status)!="approved by foreperson":
+        #
+        #     ace.approval_status="approved by foreperson"
+        #     ace.date_approved=date.today()
+        #     ace.save()
+        #     messages.error(request, 'you have approved ace',ace_id)
+        #     sweetify.success(request,'you have approved ace'+ ace_id)
+        #     return redirect("/ace")
+        if Ace_role=="pass" and str(ace.approval_status)!="approved by section head":
+
+            ace.approval_status="rejected by section head"
+            ace.date_approved=date.today()
+            ace.section_head_approval_status="rejected by section head"
+            ace.accounting_officer_approval_date=date.today()
+            ace.save()
+            messages.error(request, 'you have rejected ace',ace_id)
+            sweetify.success(request,'you have rejected ace'+ ace_id)
+            return redirect("/ace")
+        if Ace_role=="process" and str(ace.approval_status)!="approved by Accounting officer":
+
+            ace.approval_status="rejected by Accounting officer"
+            ace.date_approved=date.today()
+            ace.accounting_officer_approval_date=date.today()
+            ace.accounting_officer_approval_status="rejected by accounting officer"
+            ace.asset_number=asset_number
+            ace.save()
+            messages.error(request, 'you have rejected ace',ace_id)
+            sweetify.success(request,'you have rejected ace'+ ace_id)
+            return redirect("/ace")
+        if Ace_role=="sanction" and str(ace.approval_status)!="approved by Finance Manager":
+
+            ace.approval_status="rejected Finance Manager"
+            ace.date_approved=date.today()
+            ace.fm_approval_status="rejected Finance Manager"
+            ace.fm_date_approved=date.today()
+            ace.save()
+            messages.error(request, 'you have rejected ace',ace_id)
+            sweetify.success(request,'you have rejected ace'+ ace_id)
+            return redirect("/ace")
+        if Ace_role=="approve" and str(ace.approval_status)!="approved by Finance Manager":
+
+            ace.approval_status="rejected by General Manager"
+            ace.date_approved=date.today()
+            ace.gm_approval_status="approved by General Manager"
+            ace.gm_date_approved=date.today()
+            ace.save()
+            messages.error(request, 'you have rejected ace',ace_id)
+            sweetify.success(request,'you have rejected ace'+ ace_id)
+            return redirect("/ace")
+        if str(ace.approval_status)=="approved by General Manager":
+            messages.error(request, 'The approval process for ace is complete',ace_id)
+            sweetify.success(request,'The approval process for ace is complete'+ ace_id)
+
+        else:
+            messages.error(request, 'you have no rights to reject aces')
+            sweetify.success(request, 'you have no rights to reject aces')
+            return redirect("/ace")
+
+
+    user_title = request.user.get_full_name()
+
+    # secction = user.section
+    # records = Ace.objects.filter(section=secction).all()
+    # context = serializers.serialize('json', pettyc1)
+    print(context.classification)
+    if str(Ace_role)=="process":
+        if str(context.classification)=="internal":
+            user_page = 'Ace/Ace_approve_accounting_officer_internal.html'
+        else:
+            user_page = 'Ace/Ace_approve_accounting_officer_project.html'
+
+    else:
+        if str(context.classification)=="internal":
+            user_page = 'Ace/Ace_approve_internal.html'
+        if str(context.classification)=="project":
+            user_page = 'Ace/Ace_approve_project.html'
+
+
+
+    return render(request, user_page, {"title": "All Records",
+                                       "context": context,
+                                       "user_title": user_title,
+                                       "user_groups": user_groups})
 
 @login_required(login_url='/accounts/login/')
 def final_approval(request):
@@ -589,7 +927,7 @@ def final_approval(request):
         Ace_1.date_rejected = date_approved
         Ace_1.save()
 
-    user_page = 'Ace/Ace_approve.html'
+    user_page = 'Ace/Ace_approve_project.html'
 
     return render(request, user_page, {"title": "All Records",
                                        "context": pettyc1,
@@ -620,7 +958,7 @@ def final_reject(request):
         pettyc1.save()
         # print(pettyc1)
 
-    user_page = 'Ace/Ace_approve.html'
+    user_page = 'Ace/Ace_approve_project.html'
 
     return render(request, user_page, {"title": "All Records",
                                        "context": pettyc1,

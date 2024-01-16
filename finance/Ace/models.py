@@ -103,12 +103,12 @@ class Ace(models.Model):
     designation = models.CharField(null = True, max_length=70)
     approval_code = models.IntegerField(null=True,max_length=5)
     # section_head = models.CharField(null = True, max_length=30)
-    accounting_officer = models.CharField(null = True, max_length=30)
-    finance_manager = models.CharField(null = True, max_length=30)
-    general_manager = models.CharField(null = True, max_length=30)
-    approver1_date = models.DateField(null = True)
-    approver2_date = models.DateField(null = True)
-    approver3_date = models.DateField(null = True)
+    # accounting_officer = models.CharField(null = True, max_length=30)
+    # finance_manager = models.CharField(null = True, max_length=30)
+    # general_manager = models.CharField(null = True, max_length=30)
+    # approver1_date = models.DateField(null = True)
+    # approver2_date = models.DateField(null = True)
+    # approver3_date = models.DateField(null = True)
 
     def __str__(self):
         return self.Ace_id2
