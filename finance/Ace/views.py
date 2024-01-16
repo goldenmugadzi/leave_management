@@ -95,7 +95,7 @@ def index(request):
     if str(Ace_role)=="pass":
         return redirect('/ace/list_section_head')
     if str(Ace_role)=="process":
-        return redirect('/ace/list_disburser')
+        return redirect('/ace/list_accounting_officer')
     if str(Ace_role)=="sanction":
         return redirect('/ace/list_fm')
     if str(Ace_role)=="approve":
@@ -507,6 +507,8 @@ def get_Ace_records_pettyauthoriser(request):
     user = UserProfile.objects.filter(user_id=user_id).first()
     secction = user.section
     records = Ace.objects.order_by('date_created').all()
+
+
     context = serializers.serialize('json', records)
 
     user_page = 'Ace/index_requester.html'
@@ -587,7 +589,7 @@ def get_to_approve_Ace(request):
     print(Ace_role,"ace role")
     if request.method=="POST":
         ace_id=request.POST["Ace_id2"]
-        asset_number=request.POST["asset_number"]
+        
         ace=Ace.objects.filter(Ace_id2=ace_id).first()
 
         # if Ace_role=="check" and str(ace.approval_status)!="approved by foreperson":
@@ -601,6 +603,7 @@ def get_to_approve_Ace(request):
         if Ace_role=="pass" and str(ace.approval_status)!="approved by section head":
 
             ace.approval_status="approved by section head"
+            ace.approved_by=user_id
             ace.date_approved=date.today()
             ace.section_head_approval_status="approved by section head"
             ace.accounting_officer_approval_date=date.today()
@@ -609,12 +612,14 @@ def get_to_approve_Ace(request):
             sweetify.success(request,'you have approved ace'+ ace_id)
             return redirect("/ace")
         if Ace_role=="process" and str(ace.approval_status)!="approved by Accounting officer":
-
+            asset_number: object=request.POST["asset_number"]
             ace.approval_status="approved by Accounting officer"
+            ace.approved_by=user_id
             ace.date_approved=date.today()
             ace.accounting_officer_approval_date=date.today()
             ace.accounting_officer_approval_status="approved by accounting officer"
             ace.asset_number=asset_number
+            ace.accounting_officer=user_id
             ace.save()
             messages.error(request, 'you have approved ace',ace_id)
             sweetify.success(request,'you have approved ace'+ ace_id)
@@ -623,21 +628,25 @@ def get_to_approve_Ace(request):
 
             ace.approval_status="approved by Finance Manager"
             ace.date_approved=date.today()
+            ace.approved_by=user_id
             ace.fm_approval_status="approved by Finance Manager"
             ace.fm_date_approved=date.today()
+            ace.finance_manager=user_id
             ace.save()
             messages.error(request, 'you have approved ace',ace_id)
             sweetify.success(request,'you have approved ace'+ ace_id)
             return redirect("/ace")
         if Ace_role=="approve" and str(ace.approval_status)!="approved by Finance Manager":
 
-
+            
             budget=ace.budget_id
             amount=ace.amount
             budget = Budget.objects.filter(budget_id=budget).first()
             if float(budget.amount)<=amount:
                 ace.approval_status="approved by General Manager"
                 ace.date_approved=date.today()
+                ace.approved_by=user_id
+                ace.general_manager=user_id
                 ace.gm_approval_status="approved by General Manager"
                 ace.gm_date_approved=date.today()
 
@@ -650,7 +659,7 @@ def get_to_approve_Ace(request):
                 budget.withdrawn = budget.withdrawn + amount
                 budget.withdrawal_date = date.today
                 budget.save()
-
+            
             else:
                 sweetify.error(request, 'you have insufficient funds to approve')
                 return redirect("/ace")
@@ -684,11 +693,14 @@ def get_to_approve_Ace(request):
         else:
             user_page = 'Ace/Ace_approve_accounting_officer_project.html'
 
+
     else:
         if str(context.classification)=="internal":
             user_page = 'Ace/Ace_approve_internal.html'
         if str(context.classification)=="project":
             user_page = 'Ace/Ace_approve_project.html'
+
+    print(user_page)
 
     return render(request, user_page, {"title": "All Records",
                                        "context": context,
@@ -763,7 +775,7 @@ def get_to_reject_Ace(request):
     print(Ace_role,"ace role")
     if request.method=="POST":
         ace_id=request.POST["Ace_id2"]
-        asset_number=request.POST["asset_number"]
+        # asset_number=request.POST["asset_number"]
         ace=Ace.objects.filter(Ace_id2=ace_id).first()
 
         # if Ace_role=="check" and str(ace.approval_status)!="approved by foreperson":
@@ -777,7 +789,8 @@ def get_to_reject_Ace(request):
         if Ace_role=="pass" and str(ace.approval_status)!="approved by section head":
 
             ace.approval_status="rejected by section head"
-            ace.date_approved=date.today()
+            ace.date_rejected=date.today()
+            ace.rejected_by=user_id
             ace.section_head_approval_status="rejected by section head"
             ace.accounting_officer_approval_date=date.today()
             ace.save()
@@ -787,10 +800,11 @@ def get_to_reject_Ace(request):
         if Ace_role=="process" and str(ace.approval_status)!="approved by Accounting officer":
 
             ace.approval_status="rejected by Accounting officer"
-            ace.date_approved=date.today()
+            ace.date_rejected=date.today()
+            ace.rejected_by=user_id
             ace.accounting_officer_approval_date=date.today()
             ace.accounting_officer_approval_status="rejected by accounting officer"
-            ace.asset_number=asset_number
+            # ace.asset_number=asset_number
             ace.save()
             messages.error(request, 'you have rejected ace',ace_id)
             sweetify.success(request,'you have rejected ace'+ ace_id)
@@ -801,6 +815,7 @@ def get_to_reject_Ace(request):
             ace.date_approved=date.today()
             ace.fm_approval_status="rejected Finance Manager"
             ace.fm_date_approved=date.today()
+            ace.finance_manager=user_id
             ace.save()
             messages.error(request, 'you have rejected ace',ace_id)
             sweetify.success(request,'you have rejected ace'+ ace_id)
@@ -811,6 +826,7 @@ def get_to_reject_Ace(request):
             ace.date_approved=date.today()
             ace.gm_approval_status="approved by General Manager"
             ace.gm_date_approved=date.today()
+            ace.general_manager=user_id
             ace.save()
             messages.error(request, 'you have rejected ace',ace_id)
             sweetify.success(request,'you have rejected ace'+ ace_id)
@@ -833,15 +849,15 @@ def get_to_reject_Ace(request):
     print(context.classification)
     if str(Ace_role)=="process":
         if str(context.classification)=="internal":
-            user_page = 'Ace/Ace_approve_accounting_officer_internal.html'
+            user_page = 'Ace/Ace_reject_accounting_officer_internal.html'
         else:
-            user_page = 'Ace/Ace_approve_accounting_officer_project.html'
+            user_page = 'Ace/Ace_reject_accounting_officer_project.html'
 
     else:
         if str(context.classification)=="internal":
-            user_page = 'Ace/Ace_approve_internal.html'
+            user_page = 'Ace/Ace_reject_internal.html'
         if str(context.classification)=="project":
-            user_page = 'Ace/Ace_approve_project.html'
+            user_page = 'Ace/Ace_reject_project.html'
 
 
 
