@@ -17,8 +17,9 @@
       defer
       src="https://unpkg.com/@alpinejs/collapse@3.x.x/dist/cdn.min.js"
     ></script>
-    {% block styles %}{% endblock styles %}
+
   </head>
+
 
   <body class="bg-gulf-blue-50">
     <main style="display: flex" class="flex justify-between p-4">
@@ -388,8 +389,11 @@
               <div style="flex-direction: column; padding-left: 1.5rem;" class="flex justify-center w-full">
                 <div 
                 class="flex justify-start items-center h-12 px-3 mt-2 rounded hover:bg-gulf-blue-400" 
-                x-show="expanded" x-collapse.duration.1000ms
-                ><span class="mr-2 font-medium">N </span> <span class="ml-2">Nonconformity</span></div>
+                x-show="expanded" x-collapse.duration.1000ms>
+                <a href="/nonconformities">
+                <span class="mr-2 font-medium">N </span> <span class="ml-2">Nonconformity</span>
+              </a>
+            </div>
               </div>
             </div>
           </div>
@@ -631,7 +635,15 @@
             </li>
             {% endfor %}
           </ul>
-          {% endif %} {% block content %}{% endblock content %}
+          {% endif %} 
+          <div class="d-flex justify-center text-center  ">
+          <h1 class=" font-bold text-primary" >
+          {% block pagename %}
+          {% endblock pagename %}
+            </h1>
+       </div>
+
+          {% block content %}{% endblock content %}
         </div>
       </div>
     </main>
