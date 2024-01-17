@@ -47,29 +47,31 @@ def create_nonconformity(request):
     
     return render(request, 'risk/nonconformity/create_nonconformity.html', {'form': form})
 
+
 @login_required
 def nonconformity_details(request, nonconformity_id):
     nonconformity = get_object_or_404(Nonconformity, id=nonconformity_id)
     response_form = NonconformityResponseForm()
 
     if request.method == 'POST':
-        response_form = NonconformityResponseForm(request.POST, instance=nonconformity)
+        response_form = NonconformityResponseForm(request.POST)
         if response_form.is_valid():
             response = response_form.save(commit=False)
-            response.auditee = request.user
-            response.response = f"Description: {response_form.cleaned_data['description'] if response_form.cleaned_data['description'] else ' '}\nExpected Completion Date: {response_form.cleaned_data['expected_completion_date'] if response_form.cleaned_data['expected_completion_date'] else ' '}"
+            response.user = request.user
+            response.nonconformity = nonconformity
             response.save()
-            messages.success(request, 'Nonconformity saved successfully!')
+            
+            # Notify the user who created the nonconformity
+            Notification.objects.create(
+                user=nonconformity.created_by,
+                message=f"Response from {request.user.username} on nonconformity: {nonconformity.description}",
+                url=nonconformity.get_absolute_url()
+            )
 
-            # Find the matching notification and mark it as read
-           
-            return redirect('/', messages.SUCCESS)
-    matching_notification = Notification.objects.filter(user=request.user, url=request.path, is_read=False).first()
-    if matching_notification:
-        matching_notification.is_read = True
-        matching_notification.save()
-        
-    return render(request, 'risk/nonconformity/nonconformity_details.html', {'nonconformity': nonconformity,'form': response_form, })
+            messages.success(request, 'Response added successfully!')
+            return redirect('/nonconformities', nonconformity_id=nonconformity.id)
+
+    return render(request, 'risk/nonconformity/nonconformity_details.html', {'nonconformity': nonconformity, 'form': response_form})
 
 @login_required
 def view_notifications(request):

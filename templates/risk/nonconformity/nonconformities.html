@@ -1,4 +1,6 @@
-{% extends "admin_layout.html" %} {% load static %} {% load humanize %}{% load custom_tags %}
+{% extends "admin_layout.html" %}
+{% load static %}
+{% load humanize %}{% load custom_tags %}
 
 {% block styles %}
 <link  rel="stylesheet"  href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css"/>
@@ -10,65 +12,84 @@
 {% endblock %}
 {% block content %}
 <div class="content-wrapper">
-  <div class="grid-margin stretch-card">
-    <div class="card">
-      <div class="card-body">
-        <h4 class="card-title text-center">Nonconformities</h4>
-        <table id="nonconformity" class="table table-striped col-10">
-          <thead>
-            <tr>
-              <th>Recipient</th>
-              <th>Date</th>
-              <th>Auditor</th>
-              <th>Description</th>
-              <th>Violation Standard Reference</th>
-              <th>Recommended Corrective Action</th>
-              <th>Attachment</th>
-              <th>Status</th>
-              <th>Response</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for nonconformity in nonconformities %}
-            <tr>
-              <td>
-                {% if nonconformity.recipient == user %} You {% else %} {{nonconformity.recipient.username }} {% endif %}
-              </td>
-              <td>{{ nonconformity.created_at|date:'Y-m-d H:i' }}</td>
-              <td>
-                {% if nonconformity.created_by == user %} You {% else %} {{nonconformity.created_by.get_full_name }} {% endif %}
-              </td>
-              <td>{{ nonconformity.description|default_if_none:'' }}</td>
-              <td>
-                {{ nonconformity.violation_standard_reference|default_if_none:''}}
-              </td>
-              <td>
-                {{nonconformity.recommended_corrective_action|default_if_none:''}}
-              </td>
-              <td>
-                {% with attachment_url=nonconformity.attachment.url %}
-                <a href="{{ nonconformity.attachment.url }}">{{ nonconformity.attachment.url|split_and_get_last:'/' }}</a>
-                {% comment %} <a href="{{ attachment_url }}">{{ attachment_url|split:'/'|last }}</a> {% endcomment %}
-            {% endwith %}
+  <div class="grid grid-cols-1">
+    <div class="bg-gulf-blue-100 shadow-lg rounded-lg p-6">
+      <a href="{% url 'nonconformity:create_nonconformity' %}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Create New</a>
+      <h3 class="text-center font-bold  mb-4">Nonconformities</h3>
+      <table id="nonconformity" class="table table-striped stripe table-bordered">
+        <thead>
+          <tr>
+            <th>Recipient</th>
+            <th>Date</th>
+            <th>Auditor</th>
+            <th>Description</th>
+            <th>Violation Standard Reference</th>
+            <th>Recommended Corrective Action</th>
+            <th>Attachment</th>
+            <th>Status</th>
+            <th>Response</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for nonconformity in nonconformities %}
+          <tr class="h-1">
+            <td>
+              {% if nonconformity.recipient == user %} You {% else %} {{nonconformity.recipient.username }} {% endif %}
+            </td>
+            <td>{{ nonconformity.created_at|date:'Y-m-d H:i' }}</td>
+            <td>
+              {% if nonconformity.created_by == user %} You {% else %} {{nonconformity.created_by.get_full_name }} {% endif %}
+            </td>
+            <td>{{ nonconformity.description|default_if_none:'' }}</td>
+            <td>
+              {{ nonconformity.violation_standard_reference|default_if_none:''}}
+            </td>
+            <td>
+              {{nonconformity.recommended_corrective_action|default_if_none:''}}
+            </td>
+            <td>
              
-              </td>
-              <td>{{ nonconformity.status|default_if_none:'' }}</td>
-              <td>{{ nonconformity.response|default_if_none:'' }}</td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
+             {% if  nonconformity.attachment %}
+               {% with attachment_url=nonconformity.attachment.url %}
+               <a href="{{ nonconformity.attachment.url }}">{{ nonconformity.attachment.url|split_and_get_last:'/' }}</a>
+               {% endwith %}
+             {% endif %}
+              
+            </td>
+            <td>{{ nonconformity.status|default_if_none:'' }}</td>
+            <td>{{ nonconformity.response|default_if_none:'' }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
   </div>
 </div>
-{% endblock %} {% block scripts %}
+{% endblock %}
+
+{% block scripts %}
 <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 <script>
   $(document).ready(function () {
-    // Initialize the DataTable
-    $("#nonconformity").DataTable();
+    // Initialize the DataTable with options and Tailwind CSS classes
+    $("#nonconformity").DataTable({
+      // Set the number of rows to display per page
+      "pageLength": 10,
+  
+      // Enable sorting on the specified columns
+      "columnDefs": [
+        { "orderable": true, "targets": [0, 1, 2] }
+      ],
+  
+      // Enable searching within the table
+      "searching": true,
+  
+      // Display the DataTable in a responsive manner
+      "responsive": true,
+  
+     
+    });
   });
 </script>
 {% endblock %}

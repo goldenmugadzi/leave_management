@@ -1,84 +1,84 @@
 {% extends "admin_layout.html" %}
 {% load static %}
+{% load custom_tags %}
+
 {% block content %}
-<div class=" m-auto mt-5 justify-content-center ">
-  <form class="row rounded py-4 border col-6 m-auto justify-content-center align-content-stretch container" method="POST" enctype="multipart/form-data">
-    {% csrf_token %}
-    <div class="m-auto container">
-      <div class="row align-content-stretch">
-        <h2 class="text-center">Nonconformity Details</h2>
-        <span>Created By: {{ nonconformity.created_by }}</span>
-        <p>Recipient: {{ nonconformity.created_at }}</p>
-        <span>Description: {{ nonconformity.description }}</span>
-        <span>Violation Standard Reference: {{ nonconformity.violation_standard_reference }}</span>
-        <span>Recommended Corrective Action: {{ nonconformity.recommended_corrective_action }}</span>
-        <span>Attachment:  {{notification.is_read}} </span>
-      </div>
-      <hr>
-      {% for field in form %}
-      {% if not field.is_hidden %}
-        <div class="row align-content-stretch">
-            <div class="col-6 pull-right m-auto">    
-                {{ field.label_tag }}
-                {% if field.help_text %}
+<div class="m-auto mt-5 justify-content-center">
+  <h1 class="text-center mb-4 font-bold">Nonconformity and Responses</h1>
+  <div class="m-auto   mt-5 justify-content-center">
+  
+    <div class="card grid grid-cols-2 gap-2 mb-3">
+      <div class="card-body m-2">
+        <div class="card-body m-auto mb-5 bg-gradient-to-r from-gulf-blue-100 to-blue-500 ed p-3 border rounded   justify-content-center align-content-stretch container">
+          <h5 class="card-title mb-3 font-bold">Nonconformity Details</h5>
+        <hr>
+        <br>
+        <p class="card-text">Created By: {{ nonconformity.created_by }}</p>
+        <p class="card-text">Recipient: {{ nonconformity.created_at }}</p>
+        <p class="card-text">Description: {{ nonconformity.description }}</p>
+        <p class="card-text">Violation Standard Reference: {{ nonconformity.violation_standard_reference }}</p>
+        <p class="card-text">Recommended Corrective Action: {{ nonconformity.recommended_corrective_action }}</p>
+        <p class="card-text">Attachment: <a href="{{ nonconformity.attachment.url }}">{{ nonconformity.attachment.url|split_and_get_last:'/' }}</a></p>
+        </div>
+        <form class="row rounded py-4 border bg-gulf-blue-100  col-6 m-auto p-3 justify-content-center align-content-stretch container" method="POST" enctype="multipart/form-data">
+          {% csrf_token %}
+        
+            
+            {% for field in form %}
+              <div class="row mb-3">
+                <div class="col-6 pull-right">    
+                  {{ field.label_tag }}
+                  {% if field.help_text %}
                     <sup>{{ field.help_text }}</sup><hr/>
-                {% endif %}
-                {{ field.errors }}
+                  {% endif %}
+                  {{ field.errors }}
+                </div>
+                <div class="col-6 pull-right">    
+                  {{ field }}
+                </div>
+              </div>
+            {% endfor %}
+            
+            <hr>
+        
+            {% if nonconformity.status == 'created' %}
+              {# Some content specific to 'created' status #}
+            {% endif %}
+        
+            <div class="row rounded py-4 border  text-center  justify-content-center align-content-stretch container">
+              <input class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded" type="submit" value="Submit">
             </div>
-            <div class="col-6 pull-right m-auto">    
-                {{ field }}
-            </div>
-        </div>
+          <input type="hidden" name='is_read' value='True'>
+        </form>   </div>
+     <div class="card-body m-2">
+        <h5 class="card-title mb-3 font-bold">Responses</h5>
+        <hr>
         <br>
-    {% else %}
-        <div class="row align-content-stretch">
-            <div class="col-6 pull-right m-auto">    
-                {{ field.errors }}
+        <div style="max-height: 40rem; overflow-y: auto;">
+          {% for response in nonconformity.response_set.all %}
+      <div class="card-body bg-gulf-blue-200">
+          <div class="card mb-3 row rounded py-4 border p-3 m-auto  justify-content-center align-content-stretch container">
+            <div class="card-body">
+              <p class="card-text">{{ response.comment }}</p>
             </div>
-            <div class="col-6 pull-right m-auto">    
-                {{ field }}
-            </div>
+          <br>  <div class="card-footer flex  justify-between items-end" style="max-height: 1rem; overflow-y: auto;">
+              <div class="text-left">
+                  <span class="text-sm">{{ response.user.username }}</span>
+              </div>
+              <div class="text-right">
+                  <span class="text-sm">{{ response.created_at }} {{ response.status }}</span>
+              </div>
+          </div>
+          
+          
+          
         </div>
-        <br>
-    {% endif %}
-{% endfor %}
-      <hr>
-  
-      {% if nonconformity.status.value == 'created' %}
-      {% endif %}
-  
-      <div class="m-auto text-center d-flex align-content-between justify-content-space-between btn-group">
-        <label for="accept-radio" class="btn btn-warning rounded mx-2">
-          <input id="accept-radio" type="radio" name="status" value="accepted" onchange="submitForm()">
-          Accept
-        </label>
-  
-        <label for="reject-radio" class="btn btn-danger rounded mx-2">
-          <input id="reject-radio" type="radio" name="status" value="rejected" onchange="submitForm()">
-          Reject
-        </label>
-  
-        <label for="pending-radio" class="btn btn-info rounded mx-2">
-          <input id="pending-radio" type="radio" name="status" value="pending" onchange="submitForm()">
-          Pending
-        </label>
-  
-        <label for="resolved-radio" class="btn btn-success rounded mx-2">
-          <input id="resolved-radio" type="radio" name="status" value="resolved" onchange="submitForm()">
-          Mark as Resolved
-        </label>
       </div>
+      {% endfor %}
     </div>
-    <input type="hidden"name='is_read'value='True' >
-  </form>
-  
-  <script>
-    function submitForm() {
-      document.querySelector('form').submit();
-    }
-  </script>
+  </div>
+  </div>
+  </div>
+    
 </div>
-
-
-
 {% endblock %}
