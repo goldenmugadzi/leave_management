@@ -775,6 +775,7 @@ def get_to_reject_Ace(request):
     print(Ace_role,"ace role")
     if request.method=="POST":
         ace_id=request.POST["Ace_id2"]
+        rejection_reason=request.POST["rejection_reason"]
         # asset_number=request.POST["asset_number"]
         ace=Ace.objects.filter(Ace_id2=ace_id).first()
 
@@ -793,6 +794,8 @@ def get_to_reject_Ace(request):
             ace.rejected_by=user_title
             ace.section_head_approval_status="rejected by section head"
             ace.accounting_officer_approval_date=date.today()
+            ace.rejection_reason=rejection_reason
+            ace.section_head_rejection_reason=rejection_reason
             ace.save()
             messages.error(request, 'you have rejected ace',ace_id)
             sweetify.success(request,'you have rejected ace'+ ace_id)
@@ -804,6 +807,8 @@ def get_to_reject_Ace(request):
             ace.rejected_by=user_title
             ace.accounting_officer_approval_date=date.today()
             ace.accounting_officer_approval_status="rejected by accounting officer"
+            ace.rejection_reason=rejection_reason
+            ace.accounting_officer_rejection_reason=rejection_reason
             # ace.asset_number=asset_number
             ace.save()
             messages.error(request, 'you have rejected ace',ace_id)
@@ -816,6 +821,8 @@ def get_to_reject_Ace(request):
             ace.fm_approval_status="rejected Finance Manager"
             ace.fm_date_approved=date.today()
             ace.finance_manager=user_title
+            ace.rejection_reason=rejection_reason
+            ace.fm_rejection_reason=rejection_reason
             ace.save()
             messages.error(request, 'you have rejected ace',ace_id)
             sweetify.success(request,'you have rejected ace'+ ace_id)
@@ -827,7 +834,21 @@ def get_to_reject_Ace(request):
             ace.gm_approval_status="approved by General Manager"
             ace.gm_date_approved=date.today()
             ace.general_manager=user_title
+            ace.rejection_reason=rejection_reason
+            ace.gm_rejection_reason=rejection_reason
             ace.save()
+            Transaction = Transactions.objects.filter(Ace2=ace.Ace_id2).first()
+            Transaction.approval_status="Rejected by General Manager"
+            Transaction.save()
+
+            budget=ace.budget_id
+            amount=ace.amount
+            budget = Budget.objects.filter(budget_id=budget).first()
+            # budget.balance = budget.balance - amount
+            budget.to_be_withdrawn = budget.to_be_withdrawn - amount
+            # budget.withdrawn = budget.withdrawn + amount
+            # budget.withdrawal_date = date.today
+            budget.save()
             messages.error(request, 'you have rejected ace',ace_id)
             sweetify.success(request,'you have rejected ace'+ ace_id)
             return redirect("/ace")
@@ -1069,8 +1090,8 @@ def quotation_download(request):
     try:
         filepath = os.path.join(settings.BASE_DIR, filename)
         print("file path", filepath)
-        return FileResponse(open(filepath, 'rb'), content_type='application/pdf')
-
+        # return FileResponse(open(filepath, 'rb'), content_type='application/pdf')
+        return FileResponse(open(filepath, 'rb'))
     except FileNotFoundError:
         print("File not found")
 
