@@ -48,3 +48,10 @@ webencodings==0.5.1
 Werkzeug==2.2.2
 WTForms==2.3.3
 zopfli==0.2.2
+
+django-email-users~=1.1.0
+pip~=22.0.4
+setuptools~=58.1.0
+openpyxl~=3.1.2
+sweetify~=2.3.1
+zipp~=3.17.0

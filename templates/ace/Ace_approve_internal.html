@@ -1,0 +1,1012 @@
+
+{% extends 'admin_layout.html' %} {% block content %}
+    <form enctype="multipart/form-data" method="post" action="/ace/approve">
+    <div class="content-wrapper">
+
+        <div class="bg-gray-200 shadow shadow-nepal-300 text-gray-700 rounded px-2 py-2">
+    {% csrf_token %}
+    <div class="space-y-12 px-5 py-5">
+    <div >
+
+        <div class="mt-10 border-b border-gray-900/10 pb-12">
+            <h2 class="text-base font-semibold leading-7 text-gray-900">
+                Approve Ace
+            </h2>
+            <p class="mt-1 text-sm leading-6 text-gray-600">
+                Fill all required fields for {{ context.Ace_id2 }}.
+            </p>
+
+            <div class="mt-10 grid grid-cols-3 gap-4">
+
+{#                <div>#}
+{#                    <label#}
+{#                            for="department"#}
+{#                            class="block text-sm font-medium leading-6 text-gray-900"#}
+{#                    >Department</label#}
+{#                    >#}
+{#                    <input#}
+{#                            readonly#}
+{#                            id="department"#}
+{#                            name="department"#}
+{#                            autocomplete="department"#}
+{#                            value="{{ context.Department }}"#}
+{#                            class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"#}
+{#                    />#}
+{#                    <input readonly hidden="hidden" value="{{ context.Ace_id2 }}" name="Ace_id2"/>#}
+{#                </div>#}
+
+                <div>
+                    <label
+                            for="location"
+                            class="block text-sm font-medium leading-6 text-gray-900"
+                    >Location</label
+                    >
+                    <div class="mt-2">
+                        <input
+                                readonly
+                                value="{{ context.location }}"
+                                id="location"
+                                name="section"
+                                autocomplete="section"
+                                class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+
+                        />
+                    </div>
+                </div>
+
+                <div>
+                    <label
+                            for="section"
+                            class="block text-sm font-medium leading-6 text-gray-900"
+                    >Section</label
+                    >
+                    <div class="mt-2">
+                        <input
+                                readonly
+                                value="{{ context.section }}"
+                                id="section"
+                                name="section"
+                                autocomplete="section"
+                                class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+
+                    />
+                    </div>
+                </div>
+
+                <div>
+                    <label
+                            for="details_of_exp"
+                            class="block text-sm font-medium leading-6 text-gray-900"
+                    >Details of Expenditure</label
+                    >
+                    <div class="mt-2">
+                        <input
+                                readonly
+                                id="details_of_exp"
+                                name="details_of_exp"
+                                type="text"
+                                value="{{ context.details_of_expenditure}}"
+                                autocomplete="details_of_exp"
+                                class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                        />
+                    </div>
+                </div>
+
+                <div>
+                    <label
+                            for="quotation1"
+                            class="block text-sm font-medium leading-6 text-gray-900"
+                    >Quote 1</label
+                    >
+                    <div class="mt-2">
+                        <a
+                                href="/ace/quotation_download?f={{ context.quotation1 }}"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                                id="quotation1"
+                                name="quotation1"
+                                value="{{ context.quotation1 }}"
+                                autocomplete="quotation1"
+                        >{{ context.quotation1 }}</a>
+                    </div>
+                </div>
+
+                <div>
+                    <label
+                            for="quotation2"
+                            class="block text-sm font-medium leading-6 text-gray-900"
+                    >Quote 2</label
+                    >
+                    <div class="mt-2">
+                        <a
+                                href="/ace/quotation_download?f={{ context.quotation2 }}"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                                id="quotation2"
+                                name="quotation2"
+                                value="{{ context.quotation2 }}"
+                                autocomplete="quotation2"
+                        >{{ context.quotation2 }}</a>
+                    </div>
+                </div>
+
+
+                <div>
+                    <label
+                            for="quotation3"
+                            class="block text-sm font-medium leading-6 text-gray-900"
+                    >Quote 3</label
+                    >
+                    <div class="mt-2">
+                        <a
+                                href="/ace/quotation_download?f={{ context.quotation3 }}"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                                id="quotation3"
+                                name="quotation3"
+                                value="{{ context.quotation3 }}"
+                                autocomplete="quotation3"
+                        >{{ context.quotation3 }}</a>
+                    </div>
+                </div>
+
+                <div>
+                    <label
+                            for="requested_by"
+                            class="block text-sm font-medium leading-6 text-gray-900"
+                    >Requested By</label
+                    >
+                    <div class="mt-2">
+                        <input
+                                readonly
+                                value="{{ context.requested_by }}"
+                                id="requested_by"
+                                name="requested_by"
+                                autocomplete="requested_by"
+                                class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+
+                        />
+                    </div>
+                </div>
+
+                <div>
+                    <label
+                            for="date_created"
+                            class="block text-sm font-medium leading-6 text-gray-900"
+                    >Date Created</label
+                    >
+                    <div class="mt-2">
+                        <input
+                                readonly
+                                value="{{ context.date_created }}"
+                                id="date_created"
+                                name="date_created"
+                                autocomplete="date_created"
+                                class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+
+                        />
+                    </div>
+                </div>
+
+                <div>
+                    <label
+                            for="approval_status"
+                            class="block text-sm font-medium leading-6 text-gray-900"
+                    >Approval Status</label
+                    >
+                    <div class="mt-2">
+                        <input
+                                readonly
+                                value="{{ context.approval_status }}"
+                                id="approval_status"
+                                name="approval_status"
+                                autocomplete="approval_status"
+                                class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+
+                        />
+                    </div>
+                </div>
+
+                <div>
+                    <label
+                            for="approved_by"
+                            class="block text-sm font-medium leading-6 text-gray-900"
+                    >Approved By</label
+                    >
+                    <div class="mt-2">
+                        <input
+                                readonly
+                                value="{{ context.approved_by }}"
+                                id="approved_by"
+                                name="approved_by"
+                                autocomplete="approved_by"
+                                class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+
+                        />
+                    </div>
+                </div>
+
+                <div>
+                    <label
+                            for="rejected_by"
+                            class="block text-sm font-medium leading-6 text-gray-900"
+                    >Rejected By</label
+                    >
+                    <div class="mt-2">
+                        <input
+                                readonly
+                                value="{{ context.rejected_by }}"
+                                id="rejected_by"
+                                name="rejected_by"
+                                autocomplete="rejected_by"
+                                class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+
+                        />
+                    </div>
+                </div>
+
+                <div>
+                    <label
+                            for="date_approved"
+                            class="block text-sm font-medium leading-6 text-gray-900"
+                    >Date Approved</label
+                    >
+                    <div class="mt-2">
+                        <input
+                                readonly
+                                value="{{ context.date_approved }}"
+                                id="date_approved"
+                                name="date_approved"
+                                autocomplete="date_approved"
+                                class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+
+                        />
+                    </div>
+                </div>
+
+
+                <div>
+                    <label
+                            for="date_rejected"
+                            class="block text-sm font-medium leading-6 text-gray-900"
+                    >Date Rejected</label
+                    >
+                    <div class="mt-2">
+                        <input
+                                readonly
+                                value="{{ context.date_rejected }}"
+                                id="date_rejected"
+                                name="date_rejected"
+                                autocomplete="date_rejected"
+                                class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+
+                        />
+                    </div>
+                </div>
+
+                <div>
+                    <label
+                            for="rejection_reason"
+                            class="block text-sm font-medium leading-6 text-gray-900"
+                    >Rejection Reason</label
+                    >
+                    <div class="mt-2">
+                        <input
+                                readonly
+                                value="{{ context.rejection_reason }}"
+                                id="rejection_reason"
+                                name="rejection_reason"
+                                autocomplete="rejection_reason"
+                                class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+
+                        />
+                    </div>
+                </div>
+
+                <div>
+                    <label
+                            for="section_head"
+                            class="block text-sm font-medium leading-6 text-gray-900"
+                    >Section Head</label
+                    >
+                    <div class="mt-2">
+                        <input
+                                readonly
+                                value="{{ context.section_head }}"
+                                id="section_head"
+                                name="section_head"
+                                autocomplete="section_head"
+                                class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+
+                        />
+                    </div>
+                </div>
+
+                <div>
+                    <label
+                            for="section_head_approval_status"
+                            class="block text-sm font-medium leading-6 text-gray-900"
+                    >Section Head Approval Status</label
+                    >
+                    <div class="mt-2">
+                        <input
+                                readonly
+                                value="{{ context.section_head_approval_status }}"
+                                id="section_head_approval_status"
+                                name="section_head_approval_status"
+                                autocomplete="section_head_approval_status"
+                                class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+
+                        />
+                    </div>
+                </div>
+
+                <div>
+                    <label
+                            for="section_head_rejection_reason"
+                            class="block text-sm font-medium leading-6 text-gray-900"
+                    >Section head Rejection Reason</label
+                    >
+                    <div class="mt-2">
+                        <input
+                                readonly
+                                value="{{ context.section_head_rejection_reason }}"
+                                id="section_head_rejection_reason"
+                                name="section_head_rejection_reason"
+                                autocomplete="section_head_rejection_reason"
+                                class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+
+                        />
+                    </div>
+                </div>
+
+                <div>
+                    <label
+                            for="section_head_approval_date"
+                            class="block text-sm font-medium leading-6 text-gray-900"
+                    >Section Head Approval Date</label
+                    >
+                    <div class="mt-2">
+                        <input
+                                readonly
+                                value="{{ context.section_head_approval_date }}"
+                                id="section_head_approval_date"
+                                name="section_head_approval_date"
+                                autocomplete="section_head_approval_date"
+                                class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+
+                        />
+                    </div>
+                </div>
+
+                <div>
+                    <label
+                            for="accounting_officer"
+                            class="block text-sm font-medium leading-6 text-gray-900"
+                    >Accounting Officer</label
+                    >
+                    <div class="mt-2">
+                        <input
+                                readonly
+                                value="{{ context.accounting_officer }}"
+                                id="accounting_officer"
+                                name="accounting_officer"
+                                autocomplete="accounting_officer"
+                                class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+
+                        />
+                    </div>
+                </div>
+
+                <div>
+                    <label
+                            for="accounting_officer_approval_status"
+                            class="block text-sm font-medium leading-6 text-gray-900"
+                    >Accounting Officer Approval Status</label
+                    >
+                    <div class="mt-2">
+                        <input
+                                readonly
+                                value="{{ context.accounting_officer_approval_status }}"
+                                id="accounting_officer_approval_status"
+                                name="accounting_officer_approval_status"
+                                autocomplete="accounting_officer_approval_status"
+                                class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+
+                        />
+                    </div>
+                </div>
+
+                <div>
+                    <label
+                            for="accounting_officer_rejection_reason"
+                            class="block text-sm font-medium leading-6 text-gray-900"
+                    >Accounting Officer Rejection Reason</label
+                    >
+                    <div class="mt-2">
+                        <input
+                                readonly
+                                value="{{ context.accounting_officer_rejection_reason }}"
+                                id="accounting_officer_rejection_reason"
+                                name="accounting_officer_rejection_reason"
+                                autocomplete="accounting_officer_rejection_reason"
+                                class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+
+                        />
+                    </div>
+                </div>
+
+                <div>
+                    <label
+                            for="accounting_officer_approval_date"
+                            class="block text-sm font-medium leading-6 text-gray-900"
+                    >Accounting Officer Approval Date</label
+                    >
+                    <div class="mt-2">
+                        <input
+                                readonly
+                                value="{{ context.accounting_officer_approval_date }}"
+                                id="accounting_officer_approval_date"
+                                name="accounting_officer_approval_date"
+                                autocomplete="accounting_officer_approval_date"
+                                class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+
+                        />
+                    </div>
+                </div>
+
+                <div>
+                    <label
+                            for="finance_manager"
+                            class="block text-sm font-medium leading-6 text-gray-900"
+                    >Finance Manager</label
+                    >
+                    <div class="mt-2">
+                        <input
+                                readonly
+                                value="{{ context.finance_manager }}"
+                                id="finance_manager"
+                                name="finance_manager"
+                                autocomplete="finance_manager"
+                                class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+
+                        />
+                    </div>
+                </div>
+
+                <div>
+                    <label
+                            for="fm_approval_status"
+                            class="block text-sm font-medium leading-6 text-gray-900"
+                    >FM Approval Status</label
+                    >
+                    <div class="mt-2">
+                        <input
+                                readonly
+                                value="{{ context.fm_approval_status }}"
+                                id="fm_approval_status"
+                                name="fm_approval_status"
+                                autocomplete="fm_approval_status"
+                                class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+
+                        />
+                    </div>
+                </div>
+
+                <div>
+                    <label
+                            for="fm_rejection_reason"
+                            class="block text-sm font-medium leading-6 text-gray-900"
+                    >FM Rejection Reason</label
+                    >
+                    <div class="mt-2">
+                        <input
+                                readonly
+                                value="{{ context.fm_rejection_reason }}"
+                                id="fm_rejection_reason"
+                                name="fm_rejection_reason"
+                                autocomplete="fm_rejection_reason"
+                                class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+
+                        />
+                    </div>
+                </div>
+
+                <div>
+                    <label
+                            for="fm_date_approved"
+                            class="block text-sm font-medium leading-6 text-gray-900"
+                    >FM Date Approved</label
+                    >
+                    <div class="mt-2">
+                        <input
+                                readonly
+                                value="{{ context.fm_date_approved }}"
+                                id="fm_date_approved"
+                                name="fm_date_approved"
+                                autocomplete="fm_date_approved"
+                                class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+
+                        />
+                    </div>
+                </div>
+
+                <div>
+                    <label
+                            for="fm_date_rejected"
+                            class="block text-sm font-medium leading-6 text-gray-900"
+                    >FM Date Rejected</label
+                    >
+                    <div class="mt-2">
+                        <input
+                                readonly
+                                value="{{ context.fm_date_rejected }}"
+                                id="fm_date_rejected"
+                                name="fm_date_rejected"
+                                autocomplete="fm_date_rejected"
+                                class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+
+                        />
+                    </div>
+                </div>
+
+                <div>
+                    <label
+                            for="general_manager"
+                            class="block text-sm font-medium leading-6 text-gray-900"
+                    >General Manager</label
+                    >
+                    <div class="mt-2">
+                        <input
+                                readonly
+                                value="{{ context.general_manager }}"
+                                id="general_manager"
+                                name="general_manager"
+                                autocomplete="general_manager"
+                                class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+
+                        />
+                    </div>
+                </div>
+
+                <div>
+                    <label
+                            for="gm_approval_status"
+                            class="block text-sm font-medium leading-6 text-gray-900"
+                    >GM Approval Status</label
+                    >
+                    <div class="mt-2">
+                        <input
+                                readonly
+                                value="{{ context.gm_approval_status }}"
+                                id="gm_approval_status"
+                                name="gm_approval_status"
+                                autocomplete="gm_approval_status"
+                                class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+
+                        />
+                    </div>
+                </div>
+
+                <div>
+                    <label
+                            for="gm_rejection_reason"
+                            class="block text-sm font-medium leading-6 text-gray-900"
+                    >GM Rejection Reason</label
+                    >
+                    <div class="mt-2">
+                        <input
+                                readonly
+                                value="{{ context.gm_rejection_reason }}"
+                                id="gm_rejection_reason"
+                                name="gm_rejection_reason"
+                                autocomplete="gm_rejection_reason"
+                                class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+
+                        />
+                    </div>
+                </div>
+
+                <div>
+                    <label
+                            for="gm_approved_date"
+                            class="block text-sm font-medium leading-6 text-gray-900"
+                    >GM approval Date</label
+                    >
+                    <div class="mt-2">
+                        <input
+                                readonly
+                                value="{{ context.gm_approved_date }}"
+                                id="gm_approved_date"
+                                name="gm_approved_date"
+                                autocomplete="gm_approved_date"
+                                class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+
+                        />
+                    </div>
+                </div>
+
+                <div>
+                    <label
+                            for="asset_number"
+                            class="block text-sm font-medium leading-6 text-gray-900"
+                    >Asset Number</label
+                    >
+                    <div class="mt-2">
+                        <input
+                                readonly
+                                value="{{ context.asset_number }}"
+                                id="asset_number"
+                                name="asset_number"
+                                autocomplete="asset_number"
+                                class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+
+                        />
+                    </div>
+                </div>
+
+{#                <div>#}
+{#                    <label#}
+{#                            for="section"#}
+{#                            class="block text-sm font-medium leading-6 text-gray-900"#}
+{#                    >Section</label#}
+{#                    >#}
+{#                    <div class="mt-2">#}
+{#                        <input#}
+{#                                readonly#}
+{#                                value="{{ context.section }}"#}
+{#                                id="section"#}
+{#                                name="section"#}
+{#                                autocomplete="section"#}
+{#                                class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"#}
+{##}
+{#                        />#}
+{#                    </div>#}
+{#                </div>#}
+
+
+
+                <div>
+                    <label
+                            for="budget"
+                            class="block text-sm font-medium leading-6 text-gray-900"
+                    >Budget</label
+                    >
+                    <div class="mt-2">
+                        <input
+                                readonly
+                                value="{{ context.budget_id }}"
+                                id="budget"
+                                name="budget"
+                                autocomplete="budget"
+                                class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+                        />
+                    </div>
+                </div>
+
+                {#                            <div>#}
+                {#                                <label#}
+                {#                                        for="amount"#}
+                {#                                        class="block text-sm font-medium leading-6 text-gray-900"#}
+                {#                                >Balance</label#}
+                {#                                >#}
+                {#                                <div class="mt-2">#}
+                {#                                    <input#}
+                {#                                            id="amount"#}
+                {#                                            name="amount"#}
+                {#                                            type="number"#}
+                {#                                            autocomplete="amount"#}
+                {#                                            class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"#}
+                {#                                    />#}
+                {#                                </div>#}
+                {#                            </div>#}
+
+                <div>
+                    <label
+                            for="amount"
+                            class="block text-sm font-medium leading-6 text-gray-900"
+                    >Amount($)</label
+                    >
+                    <div class="mt-2">
+                        <input
+                                readonly
+                                value="{{ context.amount }}"
+                                id="amount"
+                                name="amount"
+                                type="number"
+                                autocomplete="amount"
+                                class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                        />
+                    </div>
+                </div>
+
+            </div>
+
+            <div>
+                <label
+                        for="classification"
+                        class="block text-sm font-medium leading-6 text-gray-900"
+                >Classification</label>
+                <div class="mt-2">
+                    <input name="classification" onformdata="java_script_:classifications(this.options[this.selectedIndex].value);" onload="java_script_:classifications(this.options[this.selectedIndex].value);" style="width:1200px"
+                           required="required" readonly value="{{ context.classification }}"
+                    />
+                </div>
+            </div>
+{#            <div id="internal">#}
+{#                <div>#}
+{#                    <label#}
+{#                            for="capital_estimated"#}
+{#                            class="block text-sm font-medium leading-6 text-gray-900"#}
+{#                    >Amount</label#}
+{#                    >#}
+{#                    <div class="mt-2">#}
+{#                        <input#}
+{#                                readonly#}
+{#                                value="{{ context.amount }}"#}
+{#                                id="capital_estimated"#}
+{#                                name="capital_estimated"#}
+{#                                type="number"#}
+{#                                autocomplete="capital_estimated"#}
+{#                                class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"#}
+{#                        />#}
+{#                    </div>#}
+{#                </div>#}
+{#            </div>#}
+
+
+{#            <div id="project">#}
+{#                <div>#}
+{#                    <label#}
+{#                            for="capital_estimated"#}
+{#                            class="block text-sm font-medium leading-6 text-gray-900"#}
+{#                    >Amount($)</label#}
+{#                    >#}
+{#                    <div class="mt-2">#}
+{#                        <input#}
+{#                                id="capital_estimated"#}
+{#                                name="capital_estimated"#}
+{#                                type="number"#}
+{#                                autocomplete="capital_estimated"#}
+{#                                class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"#}
+{#                        />#}
+{#                    </div>#}
+{#                </div>#}
+
+{#                <div>#}
+{#                    <label#}
+{#                            for="present_tariff"#}
+{#                            class="block text-sm font-medium leading-6 text-gray-900"#}
+{#                    >Present Tariff($)</label#}
+{#                    >#}
+{#                    <div class="mt-2">#}
+{#                        <input#}
+{#                                readonly#}
+{#                                value="{{ context.present_tariff }}"#}
+{#                                id="present_tariff"#}
+{#                                name="present_tariff"#}
+{#                                type="number"#}
+{#                                autocomplete="present_tariff"#}
+{#                                class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"#}
+{#                        />#}
+{#                    </div>#}
+{#                </div>#}
+{##}
+{#                <div>#}
+{#                    <label#}
+{#                            for="present_fmc"#}
+{#                            class="block text-sm font-medium leading-6 text-gray-900"#}
+{#                    >Present Fmc</label#}
+{#                    >#}
+{#                    <div class="mt-2">#}
+{#                        <input#}
+{#                                readonly#}
+{#                                value="{{ context.present_fmc }}"#}
+{#                                id="present_fmc"#}
+{#                                name="present_fmc"#}
+{#                                type="text"#}
+{#                                autocomplete="N/A"#}
+{#                                class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"#}
+{#                        />#}
+{#                    </div>#}
+{#                </div>#}
+{##}
+{#                <div>#}
+{#                    <label#}
+{#                            for="capital_contribution"#}
+{#                            class="block text-sm font-medium leading-6 text-gray-900"#}
+{#                    >Capital Contribution($)</label#}
+{#                    >#}
+{#                    <div class="mt-2">#}
+{#                        <input#}
+{#                                readonly#}
+{#                                value="{{ context.capital_contribution }}"#}
+{#                                id="capital_contribution"#}
+{#                                name="capital_contribution"#}
+{#                                type="number"#}
+{#                                autocomplete="N/A"#}
+{#                                class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"#}
+{#                        />#}
+{#                    </div>#}
+{#                </div>#}
+{##}
+{#                <div>#}
+{#                    <label#}
+{#                            for="materials"#}
+{#                            class="block text-sm font-medium leading-6 text-gray-900"#}
+{#                    >Materials($)</label#}
+{#                    >#}
+{#                    <div class="mt-2">#}
+{#                        <input#}
+{#                                readonly#}
+{#                                value="{{ context.materials }}"#}
+{#                                id="materials"#}
+{#                                name="materials"#}
+{#                                type="number"#}
+{#                                autocomplete="materials"#}
+{#                                class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"#}
+{#                        />#}
+{#                    </div>#}
+{#                </div>#}
+{##}
+{#                <div>#}
+{#                    <label#}
+{#                            for="connection_fee"#}
+{#                            class="block text-sm font-medium leading-6 text-gray-900"#}
+{#                    >Connection Fee($)</label#}
+{#                    >#}
+{#                    <div class="mt-2">#}
+{#                        <input#}
+{#                                readonly#}
+{#                                value="{{ context.connection_fee }}"#}
+{#                                id="connection_fee"#}
+{#                                name="connection_fee"#}
+{#                                type="number"#}
+{#                                autocomplete="connection_fee"#}
+{#                                class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"#}
+{#                        />#}
+{#                    </div>#}
+{#                </div>#}
+{##}
+{#                <div>#}
+{#                    <label#}
+{#                            for="labour"#}
+{#                            class="block text-sm font-medium leading-6 text-gray-900"#}
+{#                    >Labour($)</label#}
+{#                    >#}
+{#                    <div class="mt-2">#}
+{#                        <input#}
+{#                                readonly#}
+{#                                value="{{ context.labour }}"#}
+{#                                id="labour"#}
+{#                                name="labour"#}
+{#                                type="number"#}
+{#                                autocomplete="labour"#}
+{#                                class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"#}
+{#                        />#}
+{#                    </div>#}
+{#                </div>#}
+{##}
+{#                <div>#}
+{#                    <label#}
+{#                            for="transport"#}
+{#                            class="block text-sm font-medium leading-6 text-gray-900"#}
+{#                    >Transport($)</label#}
+{#                    >#}
+{#                    <div class="mt-2">#}
+{#                        <input#}
+{#                                readonly#}
+{#                                value="{{ context.transport }}"#}
+{#                                id="transport"#}
+{#                                name="transport"#}
+{#                                type="text"#}
+{#                                autocomplete="N/A"#}
+{#                                class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"#}
+{#                        />#}
+{#                    </div>#}
+{#                </div>#}
+{#            </div>#}
+
+            <div class="flex mt-10 px-3 py-3">
+                <div style="width: 50%;">
+                    <button style="width: 100%;" class="text-sm font-semibold leading-6 text-gray-900">
+                        CANCEL
+                    </button>
+                </div>
+                <div style="width: 50%;">
+                    <button
+                            style="width: 100%;"
+                            type="submit"
+                            class="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                    >
+                        Approve Ace
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+    </form>
+{% endblock %}
+{% block scripts %}
+    <script type="text/javascript">
+        // var form = document.getElementById('ace_form');
+        // var submitButton = document.getElementById('internalbtn');
+        // form.addEventListener('submit', function() {
+        //    // Disable the submit button
+        //    submitButton.setAttribute('disabled', 'disabled');
+        //    // Change the "Submit" text
+        //    submitButton.value = 'Please wait...';
+        // }, false);
+
+
+
+        function sum() {
+            var x = document.getElementById("materials1").value;
+            var y = document.getElementById("labour").value;
+            var z = document.getElementById("transport").value;
+            var sum = (parseFloat(x) + parseFloat(y) + parseFloat(z)).toFixed(2);
+
+            if (!isNaN(sum)) {
+                document.getElementById("s_total").value = sum;
+            }
+            return sum;
+        }
+    </script>
+
+    <script>
+
+        function classifications(aval) {
+            if (aval === "internal") {
+                internal.style.display = 'inline-block';
+                project.style.display = 'none';
+                internalbtn.style.display = 'inline-block';
+                projectbtn.style.display = 'none';
+                {#document.getElementById("materials1").value = '';#}
+                {#document.getElementById("capital_contr").value = '';#}
+                {#document.getElementById("con_fee").value = '';#}
+                {#document.getElementById("labour").value = '';#}
+                {#document.getElementById("total_conn_fee").value = '';#}
+                {#document.getElementById("s_total").value = '';#}
+                {#document.getElementById("refund").value = '';#}
+                {#document.getElementById("transport").value = '';#}
+                {#document.getElementById("admin_fee").value = '';#}
+                {#document.getElementById("est_cost").value = '';#}
+                {#document.getElementById("classification").value = "";#}
+                {#document.getElementById("tariff").value = '';#}
+                {#document.getElementById("fmc").value = '';#}
+                {#document.getElementById("fee_select").value = '';#}
+                {#document.getElementById("admin_fee_info").value = '';#}
+                {#document.getElementById("cap_required").value = '';#}
+                {#document.getElementById("amount").value = '';#}
+            } else if (aval === 'project') {
+                project.style.display = 'inline-block';
+                internal.style.display = 'none';
+                internalbtn.style.display = 'none';
+                projectbtn.style.display = 'inline-block';
+                {#document.getElementById("materials").value = "";#}
+                {#document.getElementById("cap_required").value = '';#}
+                {#document.getElementById("ace_amt").value = '';#}
+            }
+        }
+        window.onload = classifications()
+
+
+        function calculategrossBalance() {
+            var allocated = document.getElementById("est_capital").value;
+            var cumulative_withdrawal = document.getElementById("cap_sanctioned").value;
+            var current = document.getElementById("cap_required").value;
+            var awaiting_sanctioning = document.getElementById("other_ace").value;
+            var balance = document.getElementById("temp_bal").value;
+            var balance = (parseFloat(balance)).toFixed(2);
+            var balField = document.getElementById("gross_balance");
+            balField.value = balance;
+            if (balance < 0) {
+                //balField.style.backgroundColor='red';
+            } else {}
+        }
+    </script>
+{% endblock %}

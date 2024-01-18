@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from datetime import date
+from django.utils import timezone
 
 # Create your models here.
 class UserProfile(models.Model):
@@ -80,3 +81,4 @@ class Notification(models.Model):
     def __str__(self):
         return self.message
 
+        return self.description

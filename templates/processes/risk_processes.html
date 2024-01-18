@@ -2,7 +2,12 @@
 {%load static%}
 
 {%block content%}
+<div style="background-color: rgb(251 207 232);"  class="flex justify-between items-center p-3">
+    <h1 class="text-2xl text-black font-bold ">Risk Processes</h1>
 
+    <div class="text-black mr-4">(Clause 4.4)</div>
+
+  </div>
 <div class="grid grid-cols-3 gap-4">
     <div class="mt-10"><button type="button"><a class="rounded-xl bg-red-300 py-4 px-2 m-3 col-span-3  " tabindex="-1"
                 href="{% static 'documents\Risk\001 PUBLIC LIABILTY CLAIMS PROCESS PDF.pdf' %}">Public liability
@@ -32,6 +37,8 @@
     </div>
 
 </div>
-    <div class=" flex justify-start "><a href="{%url 'file_search'%}"><button type="button"
-                class="bg-green-600 mt-20 w-40 rounded-full px-3 py-2 text-white text-4xl">Back</button></a></div>
+   
+<div class="bottom-0 left-0 right-0 mt-20 w-40 flex justify-left">
+    <a href="{%url 'file_search'%}"><button class="bg-black text-white font-bold px-4 py-2 rounded-full">Back</button></a>
+  </div>
     {%endblock %}

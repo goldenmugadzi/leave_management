@@ -29,9 +29,11 @@ urlpatterns = [
     path('dashboards/', include('exec_dashboards.urls')),
     path('knowledge-center/', include('knowledge_center.urls')),
     path('processes/',include('processes.urls'), name='processes'),
+    path('process_risks/',include('process_risks.urls'), name='process_risks'),
     path('competence/', include('competence_building.urls')),
     path('admin/', admin.site.urls),
     path('accounts/', include('django.contrib.auth.urls')),
+    path('ace/', include('Ace.urls')),
     
     # path('finance/', include('tenders.urls')),
     # path('network-development/', include('reticulations.urls')),

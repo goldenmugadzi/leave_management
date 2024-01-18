@@ -118,6 +118,9 @@ INSTALLED_APPS = [
     'executive.exec_dashboards.apps.ExecDashboardsConfig',
     'knowledge_center',
     'processes.apps.ProcessesConfig',
+    'process_risks.apps.ProcessRisksConfig',
+    'finance.Ace.apps.AceConfig',
+    'sweetify',
     
     'commecial.tempertockens',
     'competence_building.apps.CompetenceBuildingConfig'
@@ -129,7 +132,7 @@ INSTALLED_APPS = [
     # 'hr.okr.apps.OkrConfig',
     # 'reports.beii_reports.apps.BeiiReportsConfig',
     # 'api.ops_maintenance.safety_operations.apps.SafetyOperationsConfig',
-    # 'Ace.apps.AceConfig',
+
     # 'miscellaneous.knowledge_center.apps.KnowledgeCenterConfig'
 ]
 
@@ -222,7 +225,7 @@ LOGIN_URL = '/accounts/login'
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
 
 STATIC_URL = 'static/'
-STATICFILES_DIRS = [BASE_DIR / "static",]
+STATICFILES_DIRS = [BASE_DIR / "static",BASE_DIR / "uploads",]
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 # Default primary key field type
