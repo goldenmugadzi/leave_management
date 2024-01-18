@@ -14,6 +14,99 @@
   <div
     class="bg-gray-200 shadow shadow-nepal-300 text-gray-700 rounded px-2 py-2"
   >
+  <h1>
+      {% if ace_role == 'create' %}
+          <a href="/ace/list_requester"
+             style="width: 100%;"
+             class="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">ACE's yet to be actioned</a>
+          <a href="/ace/create"
+             style="width: 100%;"
+             class="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">Create Ace</a>
+          <a href="/ace/list_requester"
+             style="width: 100%;"
+             class="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">ACE's you created</a>
+{#          <a href="/ace/list_section_head"#}
+{#             style="width: 100%;"#}
+{#             class="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">Reports</a>#}
+      {% endif %}
+      {% if ace_role == 'check' %}
+          <a href="/ace/list_section_head"
+             style="width: 100%;"
+             class="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">ACE's yet to be actioned</a>
+          <a href="/ace/create"
+             style="width: 100%;"
+             class="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">Create Ace</a>
+          <a href="/ace/list_requester"
+             style="width: 100%;"
+             class="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">ACE's you created</a>
+          <a href="/ace/list_section_head"
+             style="width: 100%;"
+             class="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">Reports</a>
+      {% endif %}
+      {% if ace_role == 'pass' %}
+          <a href="/ace/list_section_head"
+             style="width: 100%;"
+             class="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">ACE's yet to be actioned</a>
+          <a href="/ace/create"
+             style="width: 100%;"
+             class="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">Create Ace</a>
+          <a href="/ace/list_requester"
+             style="width: 100%;"
+             class="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">ACE's you created</a>
+          <a href="/ace/list_section_head"
+             style="width: 100%;"
+             class="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">Reports</a>
+      {% endif %}
+
+      {% if ace_role == 'process' %}
+          <a href="/ace/list_accounting_officer"
+             style="width: 100%;"
+             class="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">ACE's yet to be actioned</a>
+          <a href="/ace/create"
+             style="width: 100%;"
+             class="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">Create Ace</a>
+          <a href="/ace/list_requester"
+             style="width: 100%;"
+             class="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">ACE's you created</a>
+          <a href="/ace/reports"
+             style="width: 100%;"
+             class="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">Reports</a>
+      {% endif %}
+
+      {% if ace_role == 'sanction' %}
+          <a href="/ace/list_fm"
+             style="width: 100%;"
+             class="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">ACE's yet to be Sanctioned</a>
+          <a href="/ace/create"
+             style="width: 100%;"
+             class="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">Create Ace</a>
+          <a href="/ace/list_requester"
+             style="width: 100%;"
+             class="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">ACE's you created</a>
+          <a href="/ace/reports"
+             style="width: 100%;"
+             class="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">Reports</a>
+      {% endif %}
+
+      {% if ace_role == 'approve' %}
+          <a href="/ace/list_gm"
+             style="width: 100%;"
+             class="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">ACE's yet to be actioned</a>
+{#          <a href="/ace/create"#}
+{#             style="width: 100%;"#}
+{#             class="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">Create Ace</a>#}
+{#          <a href="/ace/list_requester"#}
+{#             style="width: 100%;"#}
+{#             class="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">ACE's you created</a>#}
+          <a href="/ace/reports"
+             style="width: 100%;"
+             class="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">Reports</a>
+      {% endif %}
+
+{#      {% if ace_role not in ['pass', 'process', 'sanction', 'approve'] %}#}
+{#          <span class="text-muted">Contact IT to get a role in ACE.</span>#}
+{#      {% endif %}#}
+  </h1>
 
     <h2 class="text-base font-semibold leading-7 text-gray-900">Ace</h2>
     <p class="mt-1 text-sm leading-6 text-gray-600">Manage Aces</p>

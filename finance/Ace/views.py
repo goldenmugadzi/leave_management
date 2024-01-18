@@ -1,4 +1,5 @@
 import os
+import csv
 
 
 # import self as self
@@ -9,10 +10,12 @@ from random import randrange
 from django.apps import apps
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
-from django.http import FileResponse
+from django.http import FileResponse, HttpResponse
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from datetime import date
+
+# from openpyxl.reader.excel import load_workbook
 
 # from numpy.distutils.fcompiler import none
 
@@ -94,6 +97,8 @@ def index(request):
 
     if str(Ace_role)=="pass":
         return redirect('/ace/list_section_head')
+    if str(Ace_role)=="create":
+        return redirect('/ace/list_requester')
     if str(Ace_role)=="process":
         return redirect('/ace/list_accounting_officer')
     if str(Ace_role)=="sanction":
@@ -337,18 +342,58 @@ def create_Ace(request):
 
 @login_required(login_url='/accounts/login/')
 def get_Ace_records_section_head(request):
-    user_id = request.user.id
-    user = UserProfile.objects.filter(user_id=user_id).first()
-    user_profile = UserProfile.objects.filter(user_id=user.pk).first()
-    region = Regions.objects.filter(id=user_profile.region).first()
-    district = Districts.objects.filter(code=user_profile.district).first()
-    depot = Depots.objects.filter(code=user_profile.depot).first()
-    section_used = Sections.objects.filter(code=user_profile.section).first()
-    user_designation = Designations.objects.filter(id=user_profile.designation).first() if user_profile.designation else None
-    # print(user_designation)
-
     user_title = request.user.get_full_name()
     l = request.user.groups.values_list('name', flat=True)
+
+    user_id = request.user.id
+    user = User.objects.filter(id=user_id).first()
+    user_profile = UserProfile.objects.filter(user_id=user.pk).first()
+    section_used = Sections.objects.filter(code=user_profile.section).first()
+
+    user_groups = user.groups.values_list('name', flat=True)
+
+    custom_user_roles = {
+        "non_conformity": {},
+        "remittance_advice": {},
+        "pettycash": {},
+        "adjudication": {},
+        "tokens": {},
+        "tenders": {},
+        "ace": {},
+        "users": {},
+    }
+
+    user_group_ids = user_profile.roles
+    user_group_ids = user_group_ids.split(",") if user_group_ids else []
+    for id in user_group_ids:
+
+        role = Roles.objects.filter(id=id).first()
+
+        if role.application == "users":
+            custom_user_roles["users"] = role
+
+        if role.application == "non_conformity":
+            custom_user_roles["non_conformity"] = role
+
+        if role.application == "remittance_advice":
+            custom_user_roles["remittance_advice"] = role
+
+        if role.application == "pettycash":
+            custom_user_roles["pettycash"] = role
+
+        if role.application == "adjudication":
+            custom_user_roles["adjudication"] = role
+
+        if role.application == "tokens":
+            custom_user_roles["tokens"] = role
+
+        if role.application == "tenders":
+            custom_user_roles["tenders"] = role
+
+        if role.application == "ace":
+            custom_user_roles["ace"] = role
+    Ace_role=str(custom_user_roles["ace"])
+    print(Ace_role,"ace role")
 
     # QuerySet Object
     user_groups = list(l)
@@ -360,61 +405,140 @@ def get_Ace_records_section_head(request):
     context = serializers.serialize('json', records)
 
     user_page = 'Ace/index.html'
-    print(context)
+    # print(context)
 
     return render(request, user_page, {"title": "All Records",
                                        "context": context,
                                        "user_title": user_title,
-                                       "user_groups": user_groups})
+                                       "user_groups": user_groups,
+                                       "ace_role": Ace_role})
 
 def get_Ace_records_accounting_officer(request):
-    user_id = request.user.id
-    user = UserProfile.objects.filter(user_id=user_id).first()
-    user_profile = UserProfile.objects.filter(user_id=user.pk).first()
-    region = Regions.objects.filter(id=user_profile.region).first()
-    district = Districts.objects.filter(code=user_profile.district).first()
-    depot = Depots.objects.filter(code=user_profile.depot).first()
-    section_used = Sections.objects.filter(code=user_profile.section).first()
-    user_designation = Designations.objects.filter(id=user_profile.designation).first() if user_profile.designation else None
-    # print(user_designation)
 
     user_title = request.user.get_full_name()
     l = request.user.groups.values_list('name', flat=True)
 
+    user_id = request.user.id
+    user = User.objects.filter(id=user_id).first()
+    user_profile = UserProfile.objects.filter(user_id=user.pk).first()
+
+    user_groups = user.groups.values_list('name', flat=True)
+
+    custom_user_roles = {
+        "non_conformity": {},
+        "remittance_advice": {},
+        "pettycash": {},
+        "adjudication": {},
+        "tokens": {},
+        "tenders": {},
+        "ace": {},
+        "users": {},
+    }
+
+    user_group_ids = user_profile.roles
+    user_group_ids = user_group_ids.split(",") if user_group_ids else []
+    for id in user_group_ids:
+
+        role = Roles.objects.filter(id=id).first()
+
+        if role.application == "users":
+            custom_user_roles["users"] = role
+
+        if role.application == "non_conformity":
+            custom_user_roles["non_conformity"] = role
+
+        if role.application == "remittance_advice":
+            custom_user_roles["remittance_advice"] = role
+
+        if role.application == "pettycash":
+            custom_user_roles["pettycash"] = role
+
+        if role.application == "adjudication":
+            custom_user_roles["adjudication"] = role
+
+        if role.application == "tokens":
+            custom_user_roles["tokens"] = role
+
+        if role.application == "tenders":
+            custom_user_roles["tenders"] = role
+
+        if role.application == "ace":
+            custom_user_roles["ace"] = role
+    Ace_role=str(custom_user_roles["ace"])
+    print(Ace_role,"ace role")
+
     # QuerySet Object
     user_groups = list(l)
-
-    # secction = user.section
-    print(section_used)
     approval_status = "approved by section head"
 
     records: object = Ace.objects.filter(approval_status=approval_status).all()
     context = serializers.serialize('json', records)
 
     user_page = 'Ace/index.html'
-    print(context)
+    # print(context)
 
     return render(request, user_page, {"title": "All Records",
                                        "context": context,
                                        "user_title": user_title,
-                                       "user_groups": user_groups})
+                                       "user_groups": user_groups,
+                                       "ace_role": Ace_role})
 
 def get_Ace_records_fm(request):
-    user_id = request.user.id
-    user = UserProfile.objects.filter(user_id=user_id).first()
-    user_profile = UserProfile.objects.filter(user_id=user.pk).first()
-    region = Regions.objects.filter(id=user_profile.region).first()
-    district = Districts.objects.filter(code=user_profile.district).first()
-    depot = Depots.objects.filter(code=user_profile.depot).first()
-    section_used = Sections.objects.filter(code=user_profile.section).first()
-    user_designation = Designations.objects.filter(id=user_profile.designation).first() if user_profile.designation else None
+
     # print(user_designation)
 
     user_title = request.user.get_full_name()
     l = request.user.groups.values_list('name', flat=True)
 
-    # QuerySet Object
-    user_groups = list(l)
+    user_id = request.user.id
+    user = User.objects.filter(id=user_id).first()
+    user_profile = UserProfile.objects.filter(user_id=user.pk).first()
+    section_used = Sections.objects.filter(code=user_profile.section).first()
+
+    user_groups = user.groups.values_list('name', flat=True)
+
+    custom_user_roles = {
+        "non_conformity": {},
+        "remittance_advice": {},
+        "pettycash": {},
+        "adjudication": {},
+        "tokens": {},
+        "tenders": {},
+        "ace": {},
+        "users": {},
+    }
+
+    user_group_ids = user_profile.roles
+    user_group_ids = user_group_ids.split(",") if user_group_ids else []
+    for id in user_group_ids:
+
+        role = Roles.objects.filter(id=id).first()
+
+        if role.application == "users":
+            custom_user_roles["users"] = role
+
+        if role.application == "non_conformity":
+            custom_user_roles["non_conformity"] = role
+
+        if role.application == "remittance_advice":
+            custom_user_roles["remittance_advice"] = role
+
+        if role.application == "pettycash":
+            custom_user_roles["pettycash"] = role
+
+        if role.application == "adjudication":
+            custom_user_roles["adjudication"] = role
+
+        if role.application == "tokens":
+            custom_user_roles["tokens"] = role
+
+        if role.application == "tenders":
+            custom_user_roles["tenders"] = role
+
+        if role.application == "ace":
+            custom_user_roles["ace"] = role
+    Ace_role=str(custom_user_roles["ace"])
+    print(Ace_role,"ace role")
 
     # secction = user.section
     print(section_used)
@@ -429,21 +553,62 @@ def get_Ace_records_fm(request):
     return render(request, user_page, {"title": "All Records",
                                        "context": context,
                                        "user_title": user_title,
-                                       "user_groups": user_groups})
+                                       "user_groups": user_groups,
+                                       "ace_role": Ace_role})
 
 def get_Ace_records_gm(request):
-    user_id = request.user.id
-    user = UserProfile.objects.filter(user_id=user_id).first()
-    user_profile = UserProfile.objects.filter(user_id=user.pk).first()
-    region = Regions.objects.filter(id=user_profile.region).first()
-    district = Districts.objects.filter(code=user_profile.district).first()
-    depot = Depots.objects.filter(code=user_profile.depot).first()
-    section_used = Sections.objects.filter(code=user_profile.section).first()
-    user_designation = Designations.objects.filter(id=user_profile.designation).first() if user_profile.designation else None
-    # print(user_designation)
-
     user_title = request.user.get_full_name()
     l = request.user.groups.values_list('name', flat=True)
+
+    user_id = request.user.id
+    user = User.objects.filter(id=user_id).first()
+    user_profile = UserProfile.objects.filter(user_id=user.pk).first()
+    section_used = Sections.objects.filter(code=user_profile.section).first()
+
+    user_groups = user.groups.values_list('name', flat=True)
+
+    custom_user_roles = {
+        "non_conformity": {},
+        "remittance_advice": {},
+        "pettycash": {},
+        "adjudication": {},
+        "tokens": {},
+        "tenders": {},
+        "ace": {},
+        "users": {},
+    }
+
+    user_group_ids = user_profile.roles
+    user_group_ids = user_group_ids.split(",") if user_group_ids else []
+    for id in user_group_ids:
+
+        role = Roles.objects.filter(id=id).first()
+
+        if role.application == "users":
+            custom_user_roles["users"] = role
+
+        if role.application == "non_conformity":
+            custom_user_roles["non_conformity"] = role
+
+        if role.application == "remittance_advice":
+            custom_user_roles["remittance_advice"] = role
+
+        if role.application == "pettycash":
+            custom_user_roles["pettycash"] = role
+
+        if role.application == "adjudication":
+            custom_user_roles["adjudication"] = role
+
+        if role.application == "tokens":
+            custom_user_roles["tokens"] = role
+
+        if role.application == "tenders":
+            custom_user_roles["tenders"] = role
+
+        if role.application == "ace":
+            custom_user_roles["ace"] = role
+    Ace_role=str(custom_user_roles["ace"])
+    print(Ace_role,"ace role")
 
     # QuerySet Object
     user_groups = list(l)
@@ -461,19 +626,59 @@ def get_Ace_records_gm(request):
     return render(request, user_page, {"title": "All Records",
                                        "context": context,
                                        "user_title": user_title,
-                                       "user_groups": user_groups})
+                                       "user_groups": user_groups,
+                                       "ace_role": Ace_role})
 
 @login_required(login_url='/accounts/login/')
 def get_Ace_records_requester(request):
+
     user_id = request.user.id
-    user = UserProfile.objects.filter(user_id=user_id).first()
+    user = User.objects.filter(id=user_id).first()
     user_profile = UserProfile.objects.filter(user_id=user.pk).first()
-    region = Regions.objects.filter(id=user_profile.region).first()
-    district = Districts.objects.filter(code=user_profile.district).first()
-    depot = Depots.objects.filter(code=user_profile.depot).first()
-    section_used = Sections.objects.filter(code=user_profile.section).first()
-    user_designation = Designations.objects.filter(id=user_profile.designation).first() if user_profile.designation else None
-    # print(user_designation)
+
+
+    custom_user_roles = {
+        "non_conformity": {},
+        "remittance_advice": {},
+        "pettycash": {},
+        "adjudication": {},
+        "tokens": {},
+        "tenders": {},
+        "ace": {},
+        "users": {},
+    }
+
+    user_group_ids = user_profile.roles
+    user_group_ids = user_group_ids.split(",") if user_group_ids else []
+    for id in user_group_ids:
+
+        role = Roles.objects.filter(id=id).first()
+
+        if role.application == "users":
+            custom_user_roles["users"] = role
+
+        if role.application == "non_conformity":
+            custom_user_roles["non_conformity"] = role
+
+        if role.application == "remittance_advice":
+            custom_user_roles["remittance_advice"] = role
+
+        if role.application == "pettycash":
+            custom_user_roles["pettycash"] = role
+
+        if role.application == "adjudication":
+            custom_user_roles["adjudication"] = role
+
+        if role.application == "tokens":
+            custom_user_roles["tokens"] = role
+
+        if role.application == "tenders":
+            custom_user_roles["tenders"] = role
+
+        if role.application == "ace":
+            custom_user_roles["ace"] = role
+    Ace_role=str(custom_user_roles["ace"])
+    print(Ace_role,"ace role")
 
     user_title = request.user.get_full_name()
     l = request.user.groups.values_list('name', flat=True)
@@ -493,7 +698,8 @@ def get_Ace_records_requester(request):
     return render(request, user_page, {"title": "All Records",
                                        "context": context,
                                        "user_title": user_title,
-                                       "user_groups": user_groups})
+                                       "user_groups": user_groups,
+                                       "ace_role": Ace_role})
 
 
 @login_required(login_url='/accounts/login/')
@@ -1329,3 +1535,79 @@ def list_budgets(request):
                                        "context": context,
                                        "user_title": user_title,
                                        "user_groups": user_groups})
+
+def upload_budgets(request):
+    user_title = request.user.get_full_name()
+    user_id = request.user.id
+    user = User.objects.filter(id=user_id).first()
+    user_profile = UserProfile.objects.filter(user_id=user.pk).first()
+    print("in view upload")
+
+    user_groups = user.groups.values_list('name', flat=True)
+    if request.method == 'POST':
+        csvfile = request.FILES['file'] # file as key
+
+        decoded_file = csvfile.read().decode('cp1252').splitlines()
+        reader = csv.DictReader(decoded_file)
+
+        for row in reader:
+            print("row: ", row)
+            section_code = row['section_code']
+            section = row['section']
+            budget_name = row['budget']
+            allocated = row['allocated']
+            withdrawn = row['withdrawn']
+            balance = row['balance']
+
+            withdrawal_date = row['withdrawal_date']
+            withdrawal_date = withdrawal_date.strip().split(" ")[0]
+            if withdrawal_date!="null":
+
+                withdrawal_date = datetime.strptime(withdrawal_date, "%Y-%m-%d")
+            else:
+                withdrawal_date = None
+
+
+            awaiting_sanctioning = row['awaiting_sanctioning']
+            period = int(row['period'])
+            region = row['region']
+            created_date = date.today()
+
+
+            # withdrawal_date = datetime.strptime(row['withdrawal_date'], "%Y/%m/%d").strftime("%Y-%m-%d")
+            # areas = row['area'].split(',')
+            check_budget = Budget.objects.filter(budget_name=budget_name,period=period).first()
+            budget_note = csvfile
+
+
+            if check_budget:
+                print("duplicate record ....")
+            else:
+                Budget.objects.create(section_code=section_code,
+                                      section=section,
+                                      budget_name=budget_name,
+                                      allocated=allocated,
+                                      withdrawn=withdrawn,
+                                      balance=balance,
+                                      withdrawal_date=withdrawal_date,
+                                      awaiting_sanctioning=awaiting_sanctioning,
+                                      period=period,
+                                      region=region,
+                                      created_date=created_date,
+                                      budget_note=budget_note),
+                print("record created")
+        redirect("/ace/budgets")
+        try:
+            # ... view logic ...
+            return HttpResponse("Budget uploaded successfully")
+        except Exception as e:
+            return HttpResponse("Error: {}".format(e))
+        redirect("/ace/budgets")
+
+    else:
+        return render(request, 'Ace/upload_budget.html',
+                      {"title": "Upload budgets",
+                      "user_title": user_title,
+                    "user_groups": user_groups}
+                      )
+

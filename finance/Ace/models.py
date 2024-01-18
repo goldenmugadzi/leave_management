@@ -26,6 +26,7 @@ class Budget(models.Model):
     section = models.CharField(max_length=36, blank=True, null=True)
     budget_name = models.CharField(max_length=36, blank=True, null=True)
     allocated = models.FloatField( blank=True, null=True)
+    awaiting_sanctioning = models.FloatField( blank=True, null=True , default=0)
     withdrawn = models.FloatField(blank=True, null=True,default=0)
     to_be_withdrawn = models.FloatField(blank=True, null=True,default=0)
     balance = models.FloatField( blank=True, null=True,default=0)
