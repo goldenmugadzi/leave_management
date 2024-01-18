@@ -34,39 +34,18 @@
         <br>
 
 </div>
-{% if request.user.username ==  nonconformity.recipient.username %}
+{% if request.user.username ==  nonconformity.recipient.username or request.user.username == nonconformity.created_by.username  %}
 
   <form class="row rounded py-4 border bg-gulf-blue-100  col-6 m-auto p-3 justify-content-center align-content-stretch container" method="POST" enctype="multipart/form-data">
     {% csrf_token %}
+     {{form.as_table}}
 
-      
-    
-        {% for field in form %}
-        <div class="row mb-3">
-          <div class="col-6 pull-right">    
-            {{ field.label_tag }}
-            {% if field.help_text %}
-              <sup>{{ field.help_text }}</sup><hr/>
-            {% endif %}
-            {{ field.errors }}
-          </div>
-          <div class="col-6 pull-right">    
-            {{ field }}
-          </div>
-        </div>
-      {% endfor %}
-      
-      <hr>
-
-      {% if nonconformity.status == 'created' %}
-        {# Some content specific to 'created' status #}
-      {% endif %}
-
-      <div class="row rounded py-4 border  text-center  justify-content-center align-content-stretch container">
+    <div class="row rounded py-4 border  text-center  justify-content-center align-content-stretch container">
         <input class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded" type="submit" value="Submit">
       </div>
     <input type="hidden" name='is_read' value='True'>
   </form> 
+
 {% endif %}
       
 </div>
