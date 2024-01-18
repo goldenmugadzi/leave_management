@@ -18,15 +18,15 @@ urlpatterns =[
   path('client-processes/',views.view_client, name='client-processes'),
   path('payment-processes/',views.view_payment, name='payment-processes'),
   path('risk-processes/',views.view_risk, name='risk-processes'),
+  path('management-processes/',views.view_management, name='management-processes'),
 
-    path("forms_index",views.file_search,name="Forms Index"),
+    path("forms_index",views.file_searchx,name="Forms Index"),
     path("forms_upload",views.forms_upload,name="Forms Upload"),
     path("engineering_forms",views.engineering_forms,name="Engineering Forms"),
     path("finance_forms/",views.finance_forms,name="Finance Forms"),
     path("hr_forms/",views.hr_forms,name="Human Resources Forms"),
     path("commercial_forms/",views.commercial_forms,name="Commercial Forms"),
-    path("pp_index",views.pp_home,name="Processes and Procedures"),
-    path('file_searchx/',views.file_searchx, name='file_search'),
-
+    path('file_searchx/',views.file_searchx, name='file_searchx'),
+    path("new_view",views.new_view,name="Processes and Procedures"),
 
 ]

@@ -2,8 +2,15 @@
 {%load static%}
 
 {%block content%}
-<hr>
-<h1 class="text-4xl text-blue-600 mb-3"><strong>Click Process Map Diagram to Find process Maps</strong></h1>
+
+    <div style="background-color: rgb(251 207 232);"class="flex justify-between items-center p-3">
+      <h1 class="text-2xl text-black font-bold ">ZETDC Interrelationship of Processes</h1>
+    
+      <div class="text-black mr-4">Clause 4.4</div>
+  
+    </div>
+<div>
+<h1 class=" mt-6 text-4xl text-blue-950 mb-3"><strong>Click Process Map Diagram to Find process Maps</strong></h1>
 
     <figure class="relative h-auto max-w-full mx-auto ">
         <a href="{%url 'file_search'%}"><img class=" rounded-xl"
@@ -11,5 +18,9 @@
         <!-- <img src="{% static '../images/display.jpg' %}" alt="My Image"> -->
 
     </figure>
+</div>
+<div class="bottom-0 left-0 right-0 mt-20 w-40 flex justify-left">
+    <a href="{%url 'Processes and Procedures'%}"><button class="bg-gray-700 text-white font-bold px-4 py-2 rounded-full">Back</button></a>
+  </div>
 
 {%endblock%}
