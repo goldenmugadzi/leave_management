@@ -115,6 +115,7 @@ INSTALLED_APPS = [
     'executive.exec_dashboards.apps.ExecDashboardsConfig',
     'knowledge_center',
     'processes.apps.ProcessesConfig',
+    'process_risks.apps.ProcessRisksConfig',
     
     'commecial.tempertockens',
     'competence_building.apps.CompetenceBuildingConfig'
@@ -218,7 +219,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
 
 STATIC_URL = 'static/'
-STATICFILES_DIRS = [BASE_DIR / "static",]
+STATICFILES_DIRS = [BASE_DIR / "static",BASE_DIR / "uploads",]
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 # Default primary key field type

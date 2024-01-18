@@ -1,0 +1,113 @@
+{% extends 'admin_layout.html' %} {% block content %}
+
+<div class="content-wrapper">
+  
+  <div class="bg-gulf-blue-100 shadow shadow-gulf-blue-200 text-gray-900 rounded px-2 py-2">
+    <form method="post" enctype="multipart/form-data" action="">
+      {% csrf_token %}
+      <div class="space-y-12 px-5 py-5">
+
+        <div class="mt-10 border-b border-gray-900/10 pb-12">
+          <h2 class="text-base font-semibold leading-7 text-gray-900">
+            File Information
+          </h2>
+          <p class="mt-1 text-sm leading-6 text-gray-600">
+            Fill all required fields.
+          </p>
+
+          <div class="mt-10 grid grid-cols-3 gap-4">
+            
+            <div>
+              <label
+                for="file_name"
+                class="block text-sm font-medium leading-6 text-gray-900"
+                >File Name</label
+              >
+              <div class="mt-2">
+                <input
+                  type="text"
+                  name="file_name"
+                  id="file_name"
+                  autocomplete="given-name"
+                  class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                />
+              </div>
+            </div>
+
+           
+            <div>
+              <label
+                for="department_id"
+                class="block text-sm font-medium leading-6 text-gray-900"
+                >Department</label
+              >
+              <div class="mt-2">
+                <select
+                  id="department_id"
+                  name="department_id"
+                  autocomplete="department_id"
+                  class="block w-full rounded-xl px-4 border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+                >
+                  <option>Select Department</option>
+
+                  {% for option in departments %}
+                      <option value="{{ option.id }}">{{ option.name }}</option>
+                  {% endfor %}
+
+                  
+                </select>
+                
+              </div>
+            </div>
+
+
+
+            <div>
+                <label
+                  for="uploadedfile"
+                  class="block text-sm font-medium leading-6 text-gray-900"
+                  >Upload File</label
+                >
+                <div class="mt-2">
+                  <input
+                    type="file"
+                    name="uploadedfile"
+                    id="uploaded_file"
+                    autocomplete="family-name"
+                    class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 px-4"
+                  />
+                </div>
+              </div>
+
+            
+
+  
+
+
+          </div>
+        </div>
+      </div>
+
+      <div class="flex mt-10 px-3 py-3">
+        <div style="width: 50%;">
+          <button style="width: 100%;" class="text-sm font-semibold leading-6 text-gray-900">
+            CANCEL
+          </button>
+        </div>
+        <div style="width: 50%;">
+          <button
+          style="width: 100%;"
+            type="submit"
+            class="rounded-md bg-gulf-blue-900 hover:bg-gulf-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+          >
+            SAVE FILE
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+
+
