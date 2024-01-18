@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
   {% load static %}
+  {% load custom_tags %}
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -11,6 +12,7 @@
     />
     <link href="{% static 'assets/css/tailwind.css' %}" rel="stylesheet" />
     <link href="{% static 'assets/css/be.css' %}" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-" crossorigin="anonymous" />
 
     <link href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css" rel="stylesheet">
     <script
@@ -364,7 +366,8 @@
           >
             <div x-data="{ expanded: false }">
               <div
-                class="flex items-center w-full h-12 px-3 mt-2 rounded hover:bg-gulf-blue-500"
+              @click="expanded = ! expanded"
+              class="flex items-center w-full h-12 px-3 mt-2 rounded hover:bg-gulf-blue-500"
               >
               <svg
                 class="w-6 h-6 stroke-current"
@@ -381,7 +384,6 @@
                 />
               </svg>
                 <button 
-                @click="expanded = ! expanded"
                 class="ml-2 text-sm font-medium"
                 >RISK</button>
               </div>
@@ -389,7 +391,8 @@
                 <div 
                 class="flex justify-start items-center h-12 px-3 mt-2 rounded hover:bg-gulf-blue-400" 
                 x-show="expanded" x-collapse.duration.1000ms
-                ><span class="mr-2 font-medium">N </span> <span class="ml-2">Nonconformity</span></div>
+                >
+                <a href="/nonconformities"><span class="mr-2 font-medium">N </span> <span class="ml-2">Nonconformity</span></a></div>
               </div>
             </div>
           </div>
@@ -470,6 +473,22 @@
                         ZETDC BUSINESS EXCELLENCE
                   </div>
                 </div>
+                <div class="relative ml-3 flex items-center">
+                  <input
+                    type="text"
+                    placeholder="Search..."
+                    class="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring focus:border-blue-300"
+                  />
+                  <button
+                    type="button"
+                    class="rounded p-2 text-blue-900 hover:bg-gulf-blue-100 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gulf-blue-800"
+                  >
+                    <i class="fas fa-search mr-2"></i>
+                  </button>
+                  
+                </div>
+                
+ 
                 <div
                   class="absolute hide inset-y-0 right-0 flex items-center pr-2 sm:static sm:inset-auto sm:ml-6 sm:pr-0"
                 >
@@ -478,7 +497,7 @@
                       <button
                         @click="open = ! open"
                         type="button"
-                        class="relative ml-3 flex items-center text-blue-900 p-2 hover:bg-gulf-blue-500 rounded focus:outline-none focus:ring-2 focus:ring-tory-blue-50 focus:ring-offset-2 focus:ring-offset-gulf-blue-800 px-2 py-1"
+                        class="relative ml-3 flex items-center text-blue-900 p-2 hover:bg-gulf-blue-100 rounded focus:outline-none focus:ring-2 focus:ring-tory-blue-50 focus:ring-offset-2 focus:ring-offset-gulf-blue-800 px-2 py-1"
                         id="user-menu-button"
                         aria-expanded="false"
                         aria-haspopup="true"
@@ -487,22 +506,15 @@
                         <span class="sr-only">ACCOUNT</span>
                         <span class="text-tory-blue-900">{{user_title}}</span>
                         <span class="ml-2">
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke-width="1.5"
-                            stroke="currentColor"
-                            class="w-6 h-6"
-                          >
-                            <path
-                              stroke-linecap="round"
-                              stroke-linejoin="round"
-                              d="M19.5 8.25l-7.5 7.5-7.5-7.5"
-                            />
-                          </svg>
+                          <i class="fa fa-user me-1"></i>
+                          
+              Hello {% if request.user.first_name %}
+              {{request.user.first_name}}
+            {% else %}  {{request.user }} ! {% endif %}
                         </span>
                       </button>
+                      
+          
                     </div>
 
                     <div
@@ -512,88 +524,111 @@
                       role="menu"
                       aria-orientation="vertical"
                       aria-labelledby="user-menu-button"
-                      tabindex="-1"
-                    >
+                      tabindex="-1" >
                       <!-- Active: "bg-gulf-blue-100", Not Active: "" -->
-                      <a
-                        href="../../comments/forms.php"
-                        class="block px-4 py-2 text-sm text-gulf-blue-700 hover:bg-gulf-blue-500 rounded m-1 hover:text-blue-50"
-                        role="menuitem"
-                        tabindex="-1"
-                        id="user-menu-item-3"
-                        >FEEDBACK</a
-                      >
-                      <a
-                        href="../editmydetails.php"
-                        class="block px-4 py-2 text-sm text-gulf-blue-700 hover:bg-gulf-blue-500 rounded m-1 hover:text-blue-50"
-                        role="menuitem"
-                        tabindex="-1"
-                        id="user-menu-item-1"
-                        >CHANGE PASSWORD</a
-                      >
-                      <a
-                        href="../logout.php"
-                        class="block px-4 py-2 text-sm text-gulf-blue-700 hover:bg-gulf-blue-500 rounded m-1 hover:text-blue-50"
+                      
+                     {% if request.user.is_authenticated %}
+                     <a  href="{% url 'password_change' %}"
+                     class="relative ml-3 rounded p-2 text-blue-900 hover:bg-gulf-blue-100 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 flex items-center focus:ring-offset-gulf-blue-800"
+                     role="menuitem"
+                     tabindex="-1"
+                     id="user-menu-item-3"
+                   > 
+                     <span class="absolute -inset-1.5"></span>
+                     <i class="fas fa-eye mr-2"></i>View My Profile
+                   </a>
+                   <a  href="{% url 'password_change' %}"
+                   class="relative ml-3 rounded p-2 text-blue-900 hover:bg-gulf-blue-100 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 flex items-center focus:ring-offset-gulf-blue-800"
+                   role="menuitem"
+                   tabindex="-1"
+                   id="user-menu-item-3"
+                 > 
+                   <span class="absolute -inset-1.5"></span>
+                   <i class="fas fa-key mr-2"></i>Change Password
+                 </a>
+                        <a  href="{% url 'logout' %}" 
+                        class="relative ml-3 rounded p-2 text-red-900 hover:bg-gulf-blue-100 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 flex items-center focus:ring-offset-gulf-blue-800"
                         role="menuitem"
                         tabindex="-1"
                         id="user-menu-item-2"
-                        >LOGOUT</a
+                        > 
+                        <span class="absolute -inset-1.5"></span>
+                        <i class="fas fa-power-off mr-2"></i>Logout</a
                       >
+                      
+                     {% endif %}
+
                     </div>
+                    
+
                   </div>
 
                   <button
-                    type="button"
-                    class="relative ml-3 rounded p-2 text-blue-900 hover:bg-gulf-blue-500 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gulf-blue-800"
-                  >
-                    <a href="../../comments/forms.php">
-                      <span class="absolute -inset-1.5"></span>
-                      <span class="sr-only">FEEDBACK</span>
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke-width="1.5"
-                        stroke="currentColor"
-                        class="w-6 h-6"
-                      >
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          d="M2.25 12.76c0 1.6 1.123 2.994 2.707 3.227 1.068.157 2.148.279 3.238.364.466.037.893.281 1.153.671L12 21l2.652-3.978c.26-.39.687-.634 1.153-.67 1.09-.086 2.17-.208 3.238-.365 1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z"
-                        />
-                      </svg>
-                    </a>
-                  </button>
+  type="button"
+  class="relative ml-3 rounded p-2 text-blue-900 hover:bg-gulf-blue-100 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gulf-blue-800"
+>
+  <a href="/inbox" class="flex items-center">
+    <span class="absolute -inset-1.5"></span>
+    <i class="far fa-envelope mr-2"></i>
+  </a>
+</button>
 
-                  <button
-                    type="button"
-                    class="relative ml-3 rounded p-2 hover:bg-gulf-blue-500 text-gulf-blue-900 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gulf-blue-800"
-                  >
-                    <a href="../logout.php">
-                      <span class="absolute -inset-1.5"></span>
-                      <span class="sr-only">LOGOUT</span>
+{% get_filtered_notifications %}
 
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke-width="1.5"
-                        stroke="currentColor"
-                        class="w-6 h-6"
-                      >
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75"
-                        />
-                      </svg>
-                    </a>
-                  </button>
+        <div x-data="{ open: false }">
+            <!-- Toggle button -->
+            <a href="javascript:;" class="relative ml-3 rounded p-2 text-blue-900 hover:bg-gulf-blue-100 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gulf-blue-800"
+                id="dropdownMenuButton" @click="open = !open" aria-expanded="false">
+                <span class="inline-flex items-center">
+                    <i class="far fa-bell mr-2"></i>
+                    {% if filtered_notifications %}
+                    <span class="ml-1 text-sm text-danger">{{ filtered_notifications|length }}</span>
+                    {% endif %}
+                </span>
+            </a>
+
+            <!-- Dropdown content -->
+            <div x-show="open" @click.outside="open = false"
+                class="dropdown-content absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
+                role="menu" aria-labelledby="dropdownMenuButton" tabindex="-1">
+                {% if filtered_notifications %}
+                {% for notification in filtered_notifications %}
+                <div class="mb-2">
+                    <div class="notification {% if not notification.is_read %}unread{% endif %} rounded">
+                        <a href="{{ notification.url }}" class="notification-link">
+                            <div class="flex py-1">
+                                <!-- Avatar code -->
+                                <div class="flex flex-col justify-content-center">
+                                    <h6 class="text-sm font-normal mb-1">
+                                        <a href="{{ notification.url }}" class="ml-2 text-primary">
+                                            <span class="font-bold">{{ notification }}</span>
+                                    </h6>
+                                    <p class="text-xs text-secondary mb-0">
+                                        <i class="fa fa-clock me-1"></i>
+                                        {{ notification.created_at }}
+                                    </p></a>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+                {% endfor %}
+                {% else %}
+                <div class="mb-2">
+                    <div class="notification rounded">
+                        <p class="text-xs text-secondary mb-0">You have no notifications.</p>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+    
                 </div>
               </div>
             </div>
           </nav>
+          
         </div>
         <div
           style="margin-bottom: 10rem; margin-top: 6.5rem"

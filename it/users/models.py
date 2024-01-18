@@ -70,3 +70,13 @@ class Designations(models.Model):
     
     def __str__(self):
         return self.role
+
+class Notification(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    message = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_read = models.BooleanField(default=False)
+    url = models.CharField( max_length=250)
+    def __str__(self):
+        return self.message
+

@@ -50,7 +50,7 @@ def dashboard(request):
         "users": {},
     }
 
-    user_group_ids = user_profile.roles
+    user_group_ids = user_profile.roles 
     user_group_ids = user_group_ids.split(",") if user_group_ids else []
     for id in user_group_ids:
         role = Roles.objects.filter(id=id).first()

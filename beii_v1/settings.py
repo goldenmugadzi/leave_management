@@ -107,9 +107,12 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.humanize',
     'rest_framework',
     'rest_framework_simplejwt',
     
+    'risk.audit.checklist',
+    'risk.audit.nonconformity',
     'it.beii_auth.apps.BeiiAuthConfig',
     'it.users.apps.UsersConfig',
     'executive.exec_dashboards.apps.ExecDashboardsConfig',

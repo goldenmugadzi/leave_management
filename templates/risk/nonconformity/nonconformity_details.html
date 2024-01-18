@@ -1,0 +1,104 @@
+{% extends "admin_layout.html" %}
+{% load static %}
+{% load custom_tags %}
+
+{% block content %}
+<div class="m-auto mt-5 justify-content-center">
+  <h1 class="text-center mb-4 font-bold">Nonconformity and Responses</h1>
+  <div class="m-auto   mt-5 justify-content-center">
+  
+    <div class="card grid grid-cols-2 gap-2 mb-3">
+      <div class="card-body m-2">
+        <div class="card-body m-auto mb-5 bg-gradient-to-r from-gulf-blue-100 to-blue-500 ed p-3 border rounded   justify-content-center align-content-stretch container rounded  shadow-lg">
+            <div class="px-6 py-4">
+              <div class="font-bold text-xl text-center mb-2">Nonconformity Details</div>
+              
+              <p class="card-text   font-semibold text-base">Description: {{ nonconformity.description }}</p>
+              <p class="card-text  font-semibold text-base">Violation Standard Reference: {{ nonconformity.violation_standard_reference }}</p>
+              <p class="card-text  font-semibold text-base">Recommended Corrective Action: {{ nonconformity.recommended_corrective_action }}</p>
+             
+             {% if   nonconformity.attachment %}
+             <p class="card-text  font-semibold text-base">Attachment: <a href="{{ nonconformity.attachment.url }}">{{ nonconformity.attachment.url|split_and_get_last:'/' }}</a></p>
+              
+             {% endif %}
+             
+        
+            </div>
+                <div class=" grid grid-cols-2 text-center">
+                  <span class="inline-block rounded-full text-sm">Created By: {{ nonconformity.created_by }}</span>
+                  <span class="inline-block rounded-full text-sm">Directed To: 
+                    {% if nonconformity.recipient.get_full_name %}
+                      {{nonconformity.recipient.get_full_name}}
+                    {% else %}  {{ nonconformity.recipient }}{% endif %}</span>
+              </div> 
+        <br>
+
+</div>
+{% if request.user.username ==  nonconformity.recipient.username %}
+
+  <form class="row rounded py-4 border bg-gulf-blue-100  col-6 m-auto p-3 justify-content-center align-content-stretch container" method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+
+      
+    
+        {% for field in form %}
+        <div class="row mb-3">
+          <div class="col-6 pull-right">    
+            {{ field.label_tag }}
+            {% if field.help_text %}
+              <sup>{{ field.help_text }}</sup><hr/>
+            {% endif %}
+            {{ field.errors }}
+          </div>
+          <div class="col-6 pull-right">    
+            {{ field }}
+          </div>
+        </div>
+      {% endfor %}
+      
+      <hr>
+
+      {% if nonconformity.status == 'created' %}
+        {# Some content specific to 'created' status #}
+      {% endif %}
+
+      <div class="row rounded py-4 border  text-center  justify-content-center align-content-stretch container">
+        <input class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded" type="submit" value="Submit">
+      </div>
+    <input type="hidden" name='is_read' value='True'>
+  </form> 
+{% endif %}
+      
+</div>
+<div class="card-body m-2">
+  
+  {% if nonconformity.response_set.all %}
+  <h5 class="card-title mb-3 font-bold">Responses</h5>
+  <hr>
+  <br>
+    <div style="max-height: 40rem; overflow-y: auto;">
+      {% for response in nonconformity.response_set.all %}
+        <div class="card-body bg-gulf-blue-200">
+            <div class="card mb-3 row rounded py-4 border p-3 m-auto  justify-content-center align-content-stretch container">
+              <div class="card-body">
+                <p class="card-text">{{ response.comment }}</p>
+              </div>
+            <br>  <div class="card-footer flex  justify-between items-end" style="max-height: 1rem; overflow-y: auto;">
+                    <span class="text-sm text-left">{{ response.user.username }}</span>
+                    <span class="text-sm text-right">{{ response.created_at }} {{ response.status }}</span>
+            </div>
+            
+            
+            
+          </div>
+        </div>
+      {% endfor %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+    
+</div>
+    
+</div>
+{% endblock %}
