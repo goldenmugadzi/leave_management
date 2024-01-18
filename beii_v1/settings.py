@@ -119,6 +119,8 @@ INSTALLED_APPS = [
     'knowledge_center',
     'processes.apps.ProcessesConfig',
     'process_risks.apps.ProcessRisksConfig',
+    'finance.Ace.apps.AceConfig',
+    'sweetify',
     
     'commecial.tempertockens',
     'competence_building.apps.CompetenceBuildingConfig'
@@ -130,7 +132,7 @@ INSTALLED_APPS = [
     # 'hr.okr.apps.OkrConfig',
     # 'reports.beii_reports.apps.BeiiReportsConfig',
     # 'api.ops_maintenance.safety_operations.apps.SafetyOperationsConfig',
-    # 'Ace.apps.AceConfig',
+
     # 'miscellaneous.knowledge_center.apps.KnowledgeCenterConfig'
 ]
 
