@@ -1,6 +1,9 @@
 from django.template import Library
 from urllib.parse import urlparse, parse_qs
-from ..models import Nonconformity
+from ..models import Nonconformity 
+from django.apps import apps
+Notification = apps.get_model(app_label='users', model_name='Notification')
+
 
 register = Library()
 @register.filter
@@ -20,3 +23,11 @@ def get_nonconformity(nonconformity_id):
 @register.filter
 def split_and_get_last(value, delimiter):
     return value.split(delimiter)[-1]
+
+@register.simple_tag(takes_context=True)
+def get_filtered_notifications(context):
+    user = context['request'].user
+    notifications = Notification.objects.filter(user=user).order_by('-created_at')
+    filtered_notifications = notifications.filter(is_read=False).order_by('-created_at')
+    context['filtered_notifications'] = filtered_notifications
+    return ''
