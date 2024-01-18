@@ -1,4 +1,6 @@
-from django.urls import path
+from django.urls import path, include
+from django.conf import settings
+from django.conf.urls.static import static
 
 from . import views
 
@@ -7,5 +9,7 @@ urlpatterns = [
     path('charts', views.view_charts, name='charts'),
     path('headoffice', views.view_headoffice, name='headoffice'),
     path('regionaloffice', views.view_regionaloffice, name='regionaloffice'),
+    path('jobdescription', views.view_jobdescription, name='jobdescription'),
+
 
 ]

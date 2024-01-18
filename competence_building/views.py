@@ -15,6 +15,8 @@ def view_headoffice(request):
 def view_regionaloffice(request):
         return render(request, 'competence_building/regionaloffice.html')
 
+def view_jobdescription(request):
+        return render(request, 'competence_building/jobdescription.html')
 
 
 
