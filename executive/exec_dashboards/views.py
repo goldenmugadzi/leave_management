@@ -14,8 +14,8 @@ Regions = apps.get_model(app_label='users', model_name='Regions')
 # Create your views here.
 def dashboard_index(request):
     # fetch pbnc data
-    pbncs = PBNC.objects.all().order_by('amount')
-    tds = TD.objects.all().order_by('amount')
+    pbncs = PBNC.objects.all().order_by('-amount')
+    tds = TD.objects.all().order_by('-amount')
     upos = UPO.objects.all()
     inpections = Inspections.objects.all()
     maintenance_ = Maintenance.objects.all()
@@ -46,7 +46,23 @@ def dashboard_index(request):
     maintenance_keys_list = json.dumps(list(maintenance_count.keys()), default=str)
     maintenance_values_list = json.dumps(list(maintenance_count.values()), default=str)
     
-    return render(request, 'dashboards/index.html', {"pbncs": pbncs, "tds": tds, "upos": upos, "inspection_locations": keys_list, "inspections_count": values_list, "maintenance_count": maintenance_values_list, "maintenance_locations": maintenance_keys_list, "maintenance_": serializers.serialize('json', maintenance_), "inspections_": serializers.serialize('json', inpections) })
+    user_title = request.user.get_full_name()
+    
+    return render(request, 
+                  'dashboards/index.html', 
+                  {
+                      "user_title": user_title,
+                      "page_title": "Dashboards",
+                      "pbncs": pbncs, 
+                      "tds": tds, 
+                      "upos": upos, 
+                      "inspection_locations": keys_list, 
+                      "inspections_count": values_list, 
+                      "maintenance_count": maintenance_values_list, 
+                      "maintenance_locations": maintenance_keys_list, 
+                      "maintenance_": serializers.serialize('json', maintenance_), 
+                      "inspections_": serializers.serialize('json', inpections) 
+                  })
 
 def dashboard_filter(request, item):
     # fetch pbnc data
@@ -54,8 +70,8 @@ def dashboard_filter(request, item):
         district_id = request.POST['selectedDistrict']
         district_query = Districts.objects.filter(id=district_id).first()
         district = district_query.district
-        pbncs = PBNC.objects.filter(district=district).all().order_by('amount')
-        tds = TD.objects.filter(district=district).all().order_by('amount')
+        pbncs = PBNC.objects.filter(district=district).all().order_by('-amount')
+        tds = TD.objects.filter(district=district).all().order_by('-amount')
         upos = UPO.objects.filter(district=district).all()
         inpections = Inspections.objects.filter(district=district).all()
         maintenance_ = Maintenance.objects.filter(district=district).all()
@@ -63,8 +79,8 @@ def dashboard_filter(request, item):
         region_id = request.POST['selectedRegion']
         region_query = Regions.objects.filter(id=region_id).first()
         region = region_query.region
-        pbncs = PBNC.objects.filter(region=region).all().order_by('amount')
-        tds = TD.objects.filter(region=region).all().order_by('amount')
+        pbncs = PBNC.objects.filter(region=region).all().order_by('-amount')
+        tds = TD.objects.filter(region=region).all().order_by('-amount')
         upos = UPO.objects.filter(region=region).all()
         inpections = Inspections.objects.filter(region=region).all()
         maintenance_ = Maintenance.objects.filter(region=region).all()
@@ -72,8 +88,8 @@ def dashboard_filter(request, item):
         depot_id = request.POST['selectedDepot']
         depot_query = Depots.objects.filter(id=depot_id).first()
         depot = depot_query.depot
-        pbncs = PBNC.objects.filter(depot=depot).all().order_by('amount')
-        tds = TD.objects.filter(depot=depot).all().order_by('amount')
+        pbncs = PBNC.objects.filter(depot=depot).all().order_by('-amount')
+        tds = TD.objects.filter(depot=depot).all().order_by('-amount')
         upos = UPO.objects.filter(depot=depot).all()
         inpections = Inspections.objects.filter(depot=depot).all()
         maintenance_ = Maintenance.objects.filter(depot=depot).all()
@@ -104,7 +120,22 @@ def dashboard_filter(request, item):
     maintenance_keys_list = json.dumps(list(maintenance_count.keys()), default=str)
     maintenance_values_list = json.dumps(list(maintenance_count.values()), default=str)
     
-    return render(request, 'dashboards/index.html', {"pbncs": pbncs, "tds": tds, "upos": upos, "inspection_locations": keys_list, "inspections_count": values_list, "maintenance_count": maintenance_values_list, "maintenance_locations": maintenance_keys_list, "maintenance_": serializers.serialize('json', maintenance_), "inspections_": serializers.serialize('json', inpections) })
+    user_title = request.user.get_full_name()
+    
+    return render(request, 
+                  'dashboards/index.html', 
+                  {
+                      "user_title": user_title,
+                      "pbncs": pbncs, 
+                      "tds": tds, 
+                      "upos": upos, 
+                      "inspection_locations": keys_list, 
+                      "inspections_count": values_list, 
+                      "maintenance_count": maintenance_values_list, 
+                      "maintenance_locations": maintenance_keys_list, 
+                      "maintenance_": serializers.serialize('json', maintenance_), 
+                      "inspections_": serializers.serialize('json', inpections) 
+                  })
 
 def pbnc_upload(request):
     if request.method == 'POST':

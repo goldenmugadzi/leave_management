@@ -1,15 +1,50 @@
 {% extends "admin_layout.html" %} {% load static %} {% block content %}
 
+<div class="">
+  <span class="">
+    <span class="text-xl tracking-tight text-gulf-blue-950">
+      Welcome 
+    </span>
+    <span class="text-xl font-bold tracking-tight text-gulf-blue-950">
+      {{user_title}}
+    </span>
+    <span class="text-lg tracking-tight text-gulf-blue-950">
+      , to your dashboard.
+    </span>
+  </span>
 <div class="mx-auto py-6">
+  <div x-data="{ showNotification: true }">
+  <div x-show="showNotification" class="mb-3 bg-citron-100 border-t-4 border-citron-500 rounded-b text-citron-900 px-4 py-3 shadow shadow-citron-300" role="alert">
+    <div class="flex">
+      <div class="py-1"><svg class="fill-current h-6 w-6 text-citron-900 mr-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M2.93 17.07A10 10 0 1 1 17.07 2.93 10 10 0 0 1 2.93 17.07zm12.73-1.41A8 8 0 1 0 4.34 4.34a8 8 0 0 0 11.32 11.32zM9 11V9h2v6H9v-4zm0-6h2v2H9V5z"/></svg></div>
+      <div>
+        <p class="font-bold">News Flash</p>
+        <p class="text-sm">Make sure you know how these changes affect you.</p>
+      </div>
+      <div class="ml-auto flex">
+        <svg @click="showNotification = !showNotification" class="fill-current mr-3 h-6 w-6 text-gulf-blue-500" role="button" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+          <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 19.5 15-15m0 0H8.25m11.25 0v11.25" />
+        </svg>        
+        <svg @click="showNotification = !showNotification" class="fill-current mr-3 h-6 w-6 text-royal-heath-500" role="button" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+        </svg>        
+      </div>
+    </div>
+  </div>
+  </div>
   <div class="grid grid-cols-1 gap-4">
-    <div class="w-auto drop-shadow-md shadow shadow-gulf-blue-300 text-gulf-blue-950 rounded px-4 py-4">
+    <div class="w-auto bg-white drop-shadow-md shadow shadow-gulf-blue-300 text-gulf-blue-950 rounded px-4 py-4">
       <div class="flex justify-around">
         <div style="flex: 0.2;" class="flex justify-center items-center">
           Filter Data:
         </div>
         <div style="flex: 0.25;" class="flex justify-center">
+          <div class="w-full">
+            <form id="submitDepotForm" action="/dashboards/dashboard/filter/depot" method="post">
+            {% csrf_token %}
+            
           <select
-          class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+          class="block w-full bg-gulf-blue-50 rounded-md border-0 px-2 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
         >
           <option>Select Depot</option>
           <option value="524402">Makoni Depot</option>
@@ -26,31 +61,38 @@
           <option value="524705">Ruwa Depot</option>
           <option value="000000">Seke Depot</option>
         </select>
+      </form>
+    </div>
         </div>
         <div style="flex: 0.25;" class="flex justify-center">
+          <div class="w-full">
           <form id="submitDistrictForm" action="/dashboards/dashboard/filter/district" method="post">
           {% csrf_token %}
-          <select
-          id="selectDistrict"
-          name="selectedDistrict"
-          class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
-        >
-          <option>Select District</option>
-          <option value="1">South District</option>
-          <option value="2">North District</option>
-          <option value="3">East District</option>
-          <option value="4">Chitungwiza</option>
-          <option value="4">Regional Office</option>
-        </select>
+          
+            <select
+            id="selectDistrict"
+            name="selectedDistrict"
+            class="block w-full bg-gulf-blue-50 rounded-md border-0 px-2 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+          >
+            <option>Select District</option>
+            <option value="1">South District</option>
+            <option value="2">North District</option>
+            <option value="3">East District</option>
+            <option value="4">Chitungwiza</option>
+            <option value="4">Regional Office</option>
+          </select>
       </form>
+      
+    </div>
         </div>
         <div style="flex: 0.25;" class="flex justify-center">
+          <div class="w-full">
           <form id="submitRegionForm" action="/dashboards/dashboard/filter/region" method="post">
             {% csrf_token %}
           <select
           id="selectRegion"
           name="selectedRegion"
-          class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+          class="block w-full bg-gulf-blue-50 rounded-md border-0 px-2 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
         >
           <option>Select Region</option>
           <option value="1">Harare Region</option>
@@ -58,6 +100,8 @@
           <option value="3">South Region</option>
           <option value="4">West Region</option>
         </select>
+      </form>
+    </div>
         </div>
       </div>
     </div>
@@ -475,7 +519,7 @@
           <div class="flex justify-center">
             <select
               id="filterMaintenanceButton"
-              class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+              class="block w-full rounded-md border-0 px-2 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
             >
               <option>Current</option>
               <option value="1">January</option>
@@ -506,7 +550,7 @@
           <div class="flex justify-center">
             <select
               id="filterInspectionsButton"
-              class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+              class="block w-full rounded-md border-0 px-2 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
             >
               <option>Current</option>
               <option value="1">January</option>
@@ -525,6 +569,7 @@
       </div>
     </div>
   </div>
+</div>
 </div>
 
 {% endblock content %} {% block scripts %}
@@ -589,11 +634,20 @@ https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js
       .getElementById("inspectionBarChart")
       .getContext("2d");
 
+    var date = new Date();
+    var currentMonth = parseInt(date.getMonth()) + 1;
+    var inspections_count_data = inspections_.filter((dataPoint) => {
+        var date = new Date(dataPoint.fields.created_at);
+        let month = parseInt(date.getMonth()) + 1;
+        return month == currentMonth;
+    });
+    var inspections_cleaned = cleanInspectionData(inspections_count_data)
+
     var inspectionBarData = {
-      labels: inspection_locations,
+      labels: inspections_cleaned.keys_,
       datasets: [
         {
-          data: inspections_count,
+          data: inspections_cleaned.values_,
           backgroundColor: ["green", "blue", "purple", "pink", "red"],
           hoverBackgroundColor: ["green", "blue", "purple", "pink", "red"],
         },
@@ -692,12 +746,22 @@ https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js
       .getElementById("maintenanceBarChart")
       .getContext("2d");
 
+    var date = new Date();
+    var currentMonth = parseInt(date.getMonth()) + 1;
+    var maintenance_count_data = maintenances_.filter((dataPoint) => {
+        var date_ = new Date(dataPoint.fields.created_at);
+        let month = parseInt(date_.getMonth()) + 1;
+        return month == currentMonth;
+    });
+
+    var maintenance_cleaned = cleanMaintenanceData(maintenance_count_data)
+
     var maintenanceBarData = {
-      labels: maintenance_locations, // ['January', 'December']
+      labels: maintenance_cleaned.keys_, // ['January', 'December']
       datasets: [
         {
           label: "OneAndOnly",
-          data: maintenance_count, // [1,2,3,4]
+          data: maintenance_cleaned.values_, // [1,2,3,4]
           backgroundColor: ["green", "blue", "purple", "pink", "red"],
           hoverBackgroundColor: ["green", "blue", "purple", "pink", "red"],
         },
@@ -767,13 +831,13 @@ https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js
         console.log("newValue: ", newValue);
         // Do something with the new value
 
-        var filteredData = maintenances_.filter((dataPoint) => {
-          var date = new Date(dataPoint.fields.created_at);
-          let month = parseInt(date.getMonth()) + 1;
+        var filteredMtnData = maintenances_.filter((dataPoint) => {
+          var recordDate_ = new Date(dataPoint.fields.created_at);
+          let month = parseInt(recordDate_.getMonth()) + 1;
           return month == newValue;
         });
 
-        let cleanedMaintenanceData = cleanMaintenanceData(filteredData);
+        let cleanedMaintenanceData = cleanMaintenanceData(filteredMtnData);
         console.log("cleanedMaintenanceData: ", cleanedMaintenanceData);
         mChart.data.datasets[0].data = cleanedMaintenanceData.values_; // Update chart data
         mChart.data.labels = cleanedMaintenanceData.keys_;
@@ -786,14 +850,16 @@ https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js
         const newValue = event.target.value;
         console.log("newValue: ", newValue);
         // Do something with the new value
+        console.log("inspections_ - inspections_: ", inspections_);
 
-        var filteredData = inspections_.filter((dataPoint) => {
-          var date = new Date(dataPoint.fields.created_at);
-          let month = parseInt(date.getMonth()) + 1;
+        var filteredInspData = inspections_.filter((dataPoint) => {
+          var recordDate = new Date(dataPoint.fields.created_at);
+          let month = parseInt(recordDate.getMonth()) + 1;
+          console.log("month: ", month);
           return month == newValue;
         });
 
-        let cleanedInspectionData = cleanInspectionData(filteredData);
+        let cleanedInspectionData = cleanInspectionData(filteredInspData);
         console.log("cleanedInspectionData: ", cleanedInspectionData);
         iChart.data.datasets[0].data = cleanedInspectionData.values_; // Update chart data
         iChart.data.labels = cleanedInspectionData.keys_;
