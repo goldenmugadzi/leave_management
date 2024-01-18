@@ -1,7 +1,9 @@
+import datetime
 from django.shortcuts import render
 from django.http import FileResponse
 import  os, re
 from beii_v1 import settings
+from processes.models import FormsUploads
 
 # from re import pattern
 
@@ -9,49 +11,52 @@ from beii_v1 import settings
 #     return render(request,'processes/view_process.html')
 
 def view_it(request):
-    return render(request,'processes/it_process.html', {"page_title": "IT Process Maps"})
+    return render(request,'processes/it_process.html', {})
 
 def view_engineeringlist(request):
-    return render(request,'processes/engineering.html', {"page_title": "Engineering Process Maps"})
+    return render(request,'processes/engineering.html', {})
 
 #Engineering Process maps
 def view_commercial(request):
-    return render(request,'processes/commercial.html',{"page_title": "Commercial Process Maps"})
+    return render(request,'processes/commercial.html',{})
 
 def view_client(request):
-    return render(request,'processes/client.html',{"page_title": "Client Interaction Process Maps"})
+    return render(request,'processes/client.html',{})
 
 def view_revenue(request):
-    return render(request,'processes/revenue.html',{"page_title": "Revenue Assuarance Process Maps"})
+    return render(request,'processes/revenue.html',{})
 
 def view_payment(request):
-    return render(request,'processes/revenue.html',{"page_title": "Payment Process Maps"})
+    return render(request,'processes/payment.html',{})
 #end
 def view_finance(request):
-    return render(request,'processes/finance_processes.html',{"page_title": "Finance Process Maps"})
+    return render(request,'processes/finance_processes.html',{})
 
 def view_procurement(request):
-    return render(request,'processes/procurement.html',{"page_title": "Procurement Process Maps"})
+    return render(request,'processes/procurement.html',{})
+
+def view_management(request):
+    return render(request,'processes/management.html',{})
 
 def view_HR(request):
-    return render(request,'processes/HR_processes.html',{"page_title": "HR Process Maps"})
+    return render(request,'processes/HR_processes.html',{})
 
 def view_risk(request):
-    return render(request,'processes/risk_processes.html',{"page_title": "Risk Process Maps"})
+    return render(request,'processes/risk_processes.html',{})
 
 #Engineering Process maps
 def view_maintenance(request):
-    return render(request,'processes/maintenance_processes.html',{"page_title": "Maintenance Process Maps"})
+    return render(request,'processes/maintenance_processes.html',{})
 
 def view_planning(request):
-    return render(request,'processes/planning_processes.html',{"page_title": "Planning Process Maps"})
+    return render(request,'processes/planning_processes.html',{})
 
 def view_project(request):
-    return render(request,'processes/project_processes.html',{"page_title": "Project Process Maps"})
+    return render(request,'processes/project_processes.html',{})
 
 #First page after clicking view process maps
 def view_img(request):
-    return render(request,'processes/display.html',{"page_title": "ZETDC Interrelationship of Processes"})
+    return render(request,'processes/display.html',{})
 
 def download_static(request, filename):
     file_path = os.path.join(settings.STATIC_ROOT, "documents", filename)
@@ -93,29 +98,66 @@ def file_search(request):
     else:
         print("Keyword not found")
 
-    return render(request, 'processes/view_process.html', {'results': results, "page_title": "Process Maps (clause 4.2)"})
-
+    return render(request, 'processes/view_process.html', {'results': results,})
 # Create your views here.
-def pp_home(request):
-    return render(request,'forms/pp_index.html', {"page_title": "Processes and Procedures (Clause 4.4)"})
+#FORMS VIEWS
+def new_view(request):
+    return render(request, 'processes/forms/new_view.html',{})
 
 def forms_index(request):
-    return render(request,'forms/forms_index.html', {"page_title": "Forms (Clause 7.5)"})
+    return render(request,'processes/forms/forms_index.html', {})
 
+#FORMS UPLOAD 
 def forms_upload(request):
-    return render(request,'forms/forms_upload.html', {"page_title": "Forms Upload"})
+    
+    if request.method == 'POST':
+        # something
+        print("post data: ", request.POST)
+        filename = request.POST['filename']
+        filetype = request.POST['category_id']
+        section = request.POST['section']
+        region = request.POST['region']
+        
+        file_path = ''
+        try:
+            if 'uploaded_file' in request.FILES:
+                uploaded_file = request.FILES ['uploaded_file']
+                file_path = 'uploads/knowledge_center/'+datetime.now().strftime('%Y%m%d%I%M%S%p') + uploaded_file.name 
+                save_file(uploaded_file,file_path)
+        except Exception as ex:
+            print("Error:",ex)
+
+
+        file_type= Filetype.objects.filter(id=filetype).first() if filetype else None
+        um = FormsUploads(
+            filename= filename,
+            file_type= file_type.name if file_type else "",
+            filepath = file_path,
+            section= section,
+            region=region,
+            created_at = datetime.now().date(),
+            updated_at = datetime.now().date(),
+            
+        )
+        um.save()
+        return render(request,'processes/forms/forms_upload.html', {})   
+    
+    return render(request,'processes/forms/forms_upload.html', {})
+
+
+
 
 def engineering_forms(request):
-    return render(request,'forms/engineering_forms.html', {"page_title": "Engineering Forms"})
+    return render(request,'processes/forms/engineering_forms.html', {})
     
 def finance_forms(request):
-    return render(request,'forms/finance_forms.html', {"page_title": "Finance Forms"})
+    return render(request,'processes/forms/finance_forms.html', {})
 
 def hr_forms(request):
-    return render(request,'forms/hr_forms.html', {"page_title": "Human Resources Forms"})
+    return render(request,'processes/forms/hr_forms.html', {})
 
 def commercial_forms(request):
-    return render(request,'forms/commercial_forms.html', {"page_title": "Commercial Forms"})
+    return render(request,'processes/forms/commercial_forms.html', {})
 
 def download_static(request, filename):
     file_path = os.path.join(settings.STATIC_ROOT, "documents", filename)
@@ -157,5 +199,5 @@ def file_searchx(request):
     else:
         print("Keyword not found")
 
-    return render(request, 'forms/forms_index.html', {'results': results, "page_title": "Forms (Clause 7.5)"})
+    return render(request, 'processes/forms/forms_index.html', {'results': results,})
 

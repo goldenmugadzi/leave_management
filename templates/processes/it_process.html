@@ -2,7 +2,15 @@
 {%load static%}
 
 {%block content%}
-<div class="flex flex-row ...">
+
+        <div style= "background-color: rgb(251 207 232);)" class="flex justify-between items-center p-3">
+          <h1 class="text-2xl text-black font-bold ">IT Processes</h1>
+       
+          <div class="text-black mr-4">(Clause 4.4)</div>
+      
+        </div>
+      
+<div class="mt-4 flex flex-row ...">
 
     <button type="button"><a tabindex="-1" class="rounded-xl bg-blue-300 py-4 px-2 m-3"
             href="{% static 'documents/it/ZETDC HRE IT 01_001 INCIDENT MANAGEMENT.pdf' %}">Incident
@@ -26,8 +34,9 @@
             href="{% static 'documents/it/ZETDC HRE IT 01_007 RELEASE AND DEPLOYMENT.pdf' %}">Release and
             Deployment</a></button>
 </div>
-<div class=" flex justify-start "><a href="{%url 'file_search'%}"><button type="button"
-            class="bg-green-600 mt-20 w-40 rounded-full px-3 py-2 text-white text-4xl">Back</button></a></div>
 
+<div class="bottom-0 left-0 right-0 mt-20 w-40 flex justify-left">
+        <a href="{%url 'file_search'%}"><button class="bg-black text-white font-bold px-4 py-2 rounded-full">Back</button></a>
+      </div>
 
 {%endblock %}
