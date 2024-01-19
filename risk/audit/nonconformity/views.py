@@ -54,20 +54,24 @@ def nonconformity_details(request, nonconformity_id):
     response = Response.objects.filter(nonconformity=nonconformity, user=request.user).first()
 
     if request.method == 'POST':
-        if request.user == nonconformity.recipient:
-            response_form = NonconformityResponseForm(request.POST, instance=response)
-            if response_form.is_valid():
-                response = response_form.save(commit=False)
-                response.user = request.user
-                response.nonconformity = nonconformity
-                response.save()
-                
-                # Notify the user who created the nonconformity
-                Notification.objects.create(
-                    user=nonconformity.created_by,
-                    message=f"Response from {request.user.username} on nonconformity: {nonconformity.description}",
-                    url=nonconformity.get_absolute_url()
-                )
+        response_form = NonconformityResponseForm(request.POST)
+        if response_form.is_valid():
+            response = response_form.save(commit=False)
+            response.user = request.user
+            response.nonconformity = nonconformity
+            response.save()
+            
+            # Notify the user who created the nonconformity
+            Notification.objects.create(
+                user=nonconformity.created_by,
+                message=f"Response from {request.user.username} on nonconformity: {nonconformity.description}",
+                url=nonconformity.get_absolute_url()
+            )
+
+            messages.success(request, 'Response added successfully!')
+            return redirect('/nonconformities', nonconformity_id=nonconformity.id)
+
+    return render(request, 'risk/nonconformity/nonconformity_details.html', {'nonconformity': nonconformity, 'form': response_form})
 
                 messages.success(request, 'Response added successfully!')
                 return redirect('/nonconformities', nonconformity_id=nonconformity.id)
