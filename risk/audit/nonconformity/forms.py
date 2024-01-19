@@ -2,22 +2,37 @@ from django import forms
 from .models import *
 from django.utils import timezone
 
+import os
+from django.forms.widgets import ClearableFileInput
+
+class CustomClearableFileInput(ClearableFileInput):
+    def get_context(self, name, value, attrs):
+        context = super().get_context(name, value, attrs)
+        if value and hasattr(value, 'name'):
+            file_name = os.path.basename(value.name)
+            context['widget']['value'] = file_name
+        return context
+
 class NonconformityForm(forms.ModelForm):
     class Meta:
         model = Nonconformity
-
-        fields = ('created_by', 'recipient', 'attachment', 'violation_standard_reference', 'recommended_corrective_action', 'description','created_by', )
-        exclude= ['created_by','response', 'status']
+        fields = ('created_by', 'recipient', 'attachment', 'violation_standard_reference', 'recommended_corrective_action', 'description')
+        exclude = ['created_by', 'response', 'status']
+        widgets = {
+            'attachment': CustomClearableFileInput
+        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        
+
         for field_name, field in self.fields.items():
             field.widget.attrs.update({
-                'class': "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6",  })
-            
+                'class': "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6",
+            })
+
             if isinstance(field.widget, forms.Textarea):
                 field.widget.attrs.update({'rows': '3'})
+                
             field.label = field.label or field_name.replace('_', ' ').capitalize()
             field.label_attrs = {'class': 'block text-sm font-medium leading-6 text-gray-900'}
             if field_name == 'recipient':

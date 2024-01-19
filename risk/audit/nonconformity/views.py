@@ -3,7 +3,7 @@ from django.shortcuts import render, redirect,reverse,get_object_or_404,HttpResp
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 import json
-from .models import Nonconformity
+from .models import Nonconformity,Response
 from .forms import NonconformityForm, NonconformityResponseForm
 from django.contrib.auth.models import User
 # from it.users.models import Notification
@@ -51,7 +51,7 @@ def create_nonconformity(request):
 @login_required
 def nonconformity_details(request, nonconformity_id):
     nonconformity = get_object_or_404(Nonconformity, id=nonconformity_id)
-    response = get_object_or_404(Response, nonconformity=nonconformity, user=request.user)
+    response = Response.objects.filter(nonconformity=nonconformity, user=request.user).first()
 
     if request.method == 'POST':
         if request.user == nonconformity.recipient:
@@ -103,8 +103,14 @@ def nonconformity_details(request, nonconformity_id):
             form = NonconformityForm(instance=nonconformity)
         else:
             form = None
-
+    # Update the old notification to mark it as read
+    old_notifications = Notification.objects.filter( user=request.user,url=nonconformity.get_absolute_url())
+    for old_notification in old_notifications:
+        old_notification.is_read = True
+        old_notification.save()
+        
     return render(request, 'risk/nonconformity/nonconformity_details.html', {'nonconformity': nonconformity, 'form': form})
+
 @login_required
 def view_notifications(request):
     user = request.user  # Assuming you have authentication enabled
