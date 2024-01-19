@@ -25,7 +25,9 @@ def create(request):
         subtype1 = ""
         if 'subtype1' in request.POST:
             subtype1 = request.POST['subtype1']
-        subtype2 = request.POST['subtype2']
+        subtype2 = ""
+        if 'subtype2' in request.POST:
+            subtype2 = request.POST['subtype2']
         region = request.POST['region']
         
         file_path = ''
