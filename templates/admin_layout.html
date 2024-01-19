@@ -198,8 +198,18 @@
                   >Competence Building</span
                 >
               </a>
+              <a
+                class="flex items-center text-center w-full h-12 px-3 mt-2  rounded hover:bg-gulf-blue-500"
+                href="/inbox" 
+              >
+              <i class="far fa-envelope mr-2"></i>
+              <span class="ml-2 text-sm  font-medium"
+                  >Inbox</span
+                >
+              </a>
+             
             </div>
-
+           
             {% comment %}
             <div
               style="display: flex; flex-direction: column"
@@ -503,14 +513,12 @@
                         aria-haspopup="true"
                       >
                         <span class="absolute -inset-1.5"></span>
-                        <span class="sr-only">ACCOUNT</span>
-                        <span class="text-tory-blue-900">{{user_title}}</span>
                         <span class="ml-2">
                           <i class="fa fa-user me-1"></i>
-                          
-              Hello {% if request.user.first_name %}
-              {{request.user.first_name}}
-            {% else %}  {{request.user }} ! {% endif %}
+                           {% if request.user.first_name %}
+              {{request.user.get_full_name}}
+             
+            {% else %}  {{request.user }} {% endif %}
                         </span>
                       </button>
                       

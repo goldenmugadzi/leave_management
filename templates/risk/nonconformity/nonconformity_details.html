@@ -25,7 +25,7 @@
         
             </div>
                 <div class=" grid grid-cols-2 text-center">
-                  <span class="inline-block rounded-full text-sm">Created By: {{ nonconformity.created_by }}</span>
+                  <span class="inline-block rounded-full text-sm">Created By: {{ nonconformity.created_by.get_full_name }}</span>
                   <span class="inline-block rounded-full text-sm">Directed To: 
                     {% if nonconformity.recipient.get_full_name %}
                       {{nonconformity.recipient.get_full_name}}
@@ -34,7 +34,7 @@
         <br>
 
 </div>
-{% if request.user.username ==  nonconformity.recipient.username %}
+{% if request.user.username ==  nonconformity.recipient.username  %}
 
   <form class="row rounded py-4 border bg-gulf-blue-100  col-6 m-auto p-3 justify-content-center align-content-stretch container" method="POST" enctype="multipart/form-data">
     {% csrf_token %}
