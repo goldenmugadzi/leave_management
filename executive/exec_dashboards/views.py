@@ -4,6 +4,8 @@ import json
 from django.shortcuts import render,redirect
 from .models import PBNC, TD, UPO, Inspections, Maintenance
 from django.core import serializers
+from django.db.models import Count
+from django.db.models.functions import ExtractWeek
 
 from django.apps import apps
 UserProfile = apps.get_model(app_label='users', model_name='UserProfile')
@@ -19,8 +21,25 @@ def dashboard_index(request):
     upos = UPO.objects.all()
     inpections = Inspections.objects.all()
     maintenance_ = Maintenance.objects.all()
-    
-    # loop through inspections and foreach get record count from Files.
+
+    mtn = {}
+    depots = Depots.objects.all()
+    for depot in depots:
+        maintenance_december = Maintenance.objects.filter(depot=depot.depot, created_at__month=datetime.now().month)
+        maintenance_weekly_count = maintenance_december.annotate(week=ExtractWeek('created_at')).values('week').annotate(count=Count('id')).order_by('week')
+
+        # print("maintenance_weekly_count: ", maintenance_weekly_count)
+        week_count = []
+        for i in range(4):
+            if i < len(maintenance_weekly_count):
+                week_count.append(maintenance_weekly_count[i]['count'])
+            else:
+                week_count.append(0)
+                
+        mtn[depot.depot] = week_count
+        
+    print("mtn: ", mtn)
+   
     inspection_count = {}
     for inspection in inpections:
         inspection_name = str(inspection.depot)
@@ -28,6 +47,7 @@ def dashboard_index(request):
             if inspection_count[inspection_name] > 0:
                 inspection_count[inspection_name] = inspection_count[inspection_name] + 1
         else:
+            
            inspection_count[inspection_name] = 1 
     
     keys_list = json.dumps(list(inspection_count.keys()), default=str)
@@ -57,7 +77,8 @@ def dashboard_index(request):
                       "tds": tds, 
                       "upos": upos, 
                       "inspection_locations": keys_list, 
-                      "inspections_count": values_list, 
+                      "inspections_count": values_list,
+                      "mtn": json.dumps(mtn, default=str), 
                       "maintenance_count": maintenance_values_list, 
                       "maintenance_locations": maintenance_keys_list, 
                       "maintenance_": serializers.serialize('json', maintenance_), 

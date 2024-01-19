@@ -592,6 +592,7 @@ https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js
     var maintenance_locations = JSON.parse("{{maintenance_locations|escapejs}}");
     var maintenance_count = JSON.parse("{{maintenance_count|escapejs}}");
     var maintenances_ = JSON.parse("{{maintenance_|escapejs}}");
+    var mtn = JSON.parse("{{mtn|escapejs}}");
 
     console.log(
       "maintenance_locations: ",
@@ -667,6 +668,11 @@ https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js
         },
         scales: {
           y: {
+            display: true,
+            title: {
+              display: true,
+              text: 'Frequency'
+            },
             grid: {
               drawBorder: false,
               display: true,
@@ -757,30 +763,81 @@ https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js
     var maintenance_cleaned = cleanMaintenanceData(maintenance_count_data)
 
     var maintenanceBarData = {
-      labels: maintenance_cleaned.keys_, // ['January', 'December']
+      labels: ['1', '2', '3', '4'], // ['January', 'December']
       datasets: [
         {
-          label: "OneAndOnly",
-          data: maintenance_cleaned.values_, // [1,2,3,4]
-          backgroundColor: ["green", "blue", "purple", "pink", "red"],
-          hoverBackgroundColor: ["green", "blue", "purple", "pink", "red"],
+          label: "Mabelreign Depot",
+          data: mtn['Mabelreign Depot'], // [1,2,3,4]
+        },
+        {
+          label: "Borrowdale Depot",
+          data: mtn['Borrowdale Depot'], // [1,2,3,4]
+        },
+        {
+          label: "Glen View Depot",
+          data: mtn['Glen View Depot'], // [1,2,3,4]
+        },
+        {
+          label: "Kuwadzana Depot",
+          data: mtn['Kuwadzana Depot'], // [1,2,3,4]
+        },
+        {
+          label: "Mabvuku Depot",
+          data: mtn['Mabvuku Depot'], // [1,2,3,4]
+        },
+        {
+          label: "Ruwa Depot",
+          data: mtn['Ruwa Depot'], // [1,2,3,4]
+        },
+        {
+          label: "Southerton Depot",
+          data: mtn['Southerton Depot'], // [1,2,3,4]
+        },
+        {
+          label: "Warren Park Depot",
+          data: mtn['Warren Park Depot'], // [1,2,3,4]
+        },
+        {
+          label: "Waterfalls Depot",
+          data: mtn['Waterfalls Depot'], // [1,2,3,4]
+        },
+        {
+          label: "CBD Depot",
+          data: mtn['CBD Depot'], // [1,2,3,4]
+        },
+        {
+          label: "Makoni Depot",
+          data: mtn['Makoni Depot'], // [1,2,3,4]
+        },
+        {
+          label: "Zengeza Depot",
+          data: mtn['Zengeza Depot'], // [1,2,3,4]
+        },
+        {
+          label: "Seke",
+          data: mtn['Seke'], // [1,2,3,4]
         },
       ],
     };
 
     var mChart = new Chart(maintenanceBarCtx, {
-      type: "bar",
+      type: "line",
       data: maintenanceBarData,
       options: {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
           legend: {
-            display: false,
+            display: true,
           },
         },
         scales: {
           y: {
+            display: true,
+            title: {
+              display: true,
+              text: 'Frequency'
+            },
             grid: {
               drawBorder: false,
               display: true,
@@ -801,6 +858,11 @@ https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js
             },
           },
           x: {
+            display: true,
+            title: {
+              display: true,
+              text: 'Week'
+            },
             grid: {
               drawBorder: false,
               display: false,
