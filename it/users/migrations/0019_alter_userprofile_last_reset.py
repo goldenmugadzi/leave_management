@@ -7,7 +7,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('users', '0018_alter_userprofile_last_reset_notification'),
+        ('users', '0018_alter_userprofile_last_reset'),
     ]
 
     operations = [

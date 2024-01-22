@@ -22,7 +22,7 @@ def index(request):
         user_groups = list(l)
         
         return redirect(
-            '/dashboard', 
+            '/dashboards/dashboard', 
             user_title, 
             request, 
             user_groups
