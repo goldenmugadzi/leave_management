@@ -416,7 +416,7 @@
                     />
                 </div>
             </div>
-
+            {% if context.section_head_rejection_reason != "none" %}
             <div>
                 <label
                         for="section_head_rejection_reason"
@@ -435,6 +435,7 @@
                     />
                 </div>
             </div>
+            {% endif %}
 
             <div>
                 <label
@@ -492,7 +493,7 @@
                     />
                 </div>
             </div>
-
+            {% if context.accounting_officer_rejection_reason != "none" %}
             <div>
                 <label
                         for="accounting_officer_rejection_reason"
@@ -511,6 +512,7 @@
                     />
                 </div>
             </div>
+        {% endif %}
 
             <div>
                 <label
@@ -530,7 +532,7 @@
                     />
                 </div>
             </div>
-
+            {% if context.finance_manager != "none" %}
             <div>
                 <label
                         for="finance_manager"
@@ -568,7 +570,7 @@
                     />
                 </div>
             </div>
-
+            {% if context.fm_rejection_reason != "none" %}
             <div>
                 <label
                         for="fm_rejection_reason"
@@ -587,6 +589,7 @@
                     />
                 </div>
             </div>
+                {% endif %}
 
             <div>
                 <label
@@ -606,7 +609,7 @@
                     />
                 </div>
             </div>
-
+            {% if context.fm_date_rejected %}
             <div>
                 <label
                         for="fm_date_rejected"
@@ -625,7 +628,10 @@
                     />
                 </div>
             </div>
+                {% endif %}
 
+        {% endif %}
+        {% if context.general_manager != "none" %}
             <div>
                 <label
                         for="general_manager"
@@ -701,6 +707,7 @@
                     />
                 </div>
             </div>
+        {% endif %}
 
             <div>
                 <label
