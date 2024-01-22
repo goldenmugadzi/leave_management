@@ -13,7 +13,7 @@ class UserProfile(models.Model):
     district = models.CharField(max_length=100, blank=True)
     status = models.CharField(max_length=30, blank=True)
     roles = models.CharField(max_length=100, blank=True)
-    last_reset = models.DateField(default=date.today())
+    last_reset =  models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return self.status

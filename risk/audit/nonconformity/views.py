@@ -51,11 +51,15 @@ def create_nonconformity(request):
 @login_required
 def nonconformity_details(request, nonconformity_id):
     nonconformity = get_object_or_404(Nonconformity, id=nonconformity_id)
-    response = Response.objects.filter(nonconformity=nonconformity, user=request.user).first()
+    try:
+        response = Response.objects.get(Q(nonconformity=nonconformity), Q(user=request.user))
+    except Response.DoesNotExist:
+        # No matching response found
+        response = None
 
     if request.method == 'POST':
         if request.user == nonconformity.recipient:
-            response_form = NonconformityResponseForm(request.POST, instance=response)
+            response_form = NonconformityResponseForm(request.POST, instance=response, )
             if response_form.is_valid():
                 response = response_form.save(commit=False)
                 response.user = request.user

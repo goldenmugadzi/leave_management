@@ -5,11 +5,11 @@ class Nonconformity(models.Model):
     created_by = models.ForeignKey(User, on_delete=models.CASCADE)
     recipient = models.ForeignKey(User, on_delete=models.CASCADE, related_name='nonconformities_assigned_to', null=True, blank=True)
     description = models.TextField(max_length=400, blank=True, null=True, verbose_name='Description')
+    root_cause = models.TextField(max_length=400, blank=True, null=True)
     violation_standard_reference = models.CharField(max_length=400, blank=True, null=True, verbose_name='Violation Standard Reference')
     recommended_corrective_action = models.CharField(max_length=300, blank=False, null=False, verbose_name='Recommended Corrective Action')
     created_at = models.DateTimeField(auto_now_add=True)
     attachment = models.FileField(upload_to='static/nonconformity_files/', blank=True, null=True, verbose_name='Attachment')
-  
     def __str__(self):
         return self.description
     def get_absolute_url(self):

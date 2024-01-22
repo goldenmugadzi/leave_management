@@ -63,7 +63,13 @@
                 <p class="card-text">{{ response.comment }}</p>
               </div>
             <br>  <div class="card-footer flex  justify-between items-end" style="max-height: 1rem; overflow-y: auto;">
-                    <span class="text-sm text-left">{{ response.user.username }}</span>
+                    <span class="text-sm text-left"> 
+                    {% if response.user.get_full_name  %}
+                    {{ response.user.get_full_name }}
+                    {% else %}
+                    {{ response.user.username }}
+                    {% endif %}
+                      </span>
                     <span class="text-sm text-right">{{ response.created_at }} {{ response.status }}</span>
             </div>
             

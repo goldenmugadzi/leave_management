@@ -16,7 +16,7 @@ class CustomClearableFileInput(ClearableFileInput):
 class NonconformityForm(forms.ModelForm):
     class Meta:
         model = Nonconformity
-        fields = ('created_by', 'recipient', 'attachment', 'violation_standard_reference', 'recommended_corrective_action', 'description')
+        fields = ( 'recipient', 'attachment', 'description', 'root_cause', 'violation_standard_reference', 'recommended_corrective_action', )
         exclude = ['created_by', 'response', 'status']
         widgets = {
             'attachment': CustomClearableFileInput
