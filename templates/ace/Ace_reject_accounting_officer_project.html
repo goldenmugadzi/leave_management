@@ -500,6 +500,7 @@
                     </div>
                 </div>
 
+            {% if context.finance_manager != "none" %}
                 <div>
                     <label
                             for="finance_manager"
@@ -594,7 +595,9 @@
                         />
                     </div>
                 </div>
+            {% endif %}
 
+                {% if context.general_manager != "none" %}
                 <div>
                     <label
                             for="general_manager"
@@ -670,6 +673,7 @@
                         />
                     </div>
                 </div>
+                {% endif %}
 
                 <div>
                     <label
@@ -743,6 +747,7 @@
 {#                    </div>#}
 {#                </div>#}
 
+                {% if context.present_tariff != "none" %}
                 <div>
                     <label
                             for="present_tariff"
@@ -875,6 +880,7 @@
                         />
                     </div>
                 </div>
+                {% endif %}
             </div>
 
 

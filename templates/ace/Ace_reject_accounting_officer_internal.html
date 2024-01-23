@@ -484,7 +484,6 @@
                 >
                 <div class="mt-2">
                     <input
-                            readonly
                             value="{{ context.accounting_officer_rejection_reason }}"
                             id="accounting_officer_rejection_reason"
                             name="accounting_officer_rejection_reason"
@@ -514,6 +513,7 @@
                 </div>
             </div>
 
+        {% if context.finance_manager != "none" %}
             <div>
                 <label
                         for="finance_manager"
@@ -608,7 +608,9 @@
                     />
                 </div>
             </div>
+        {% endif %}
 
+            {% if context.general_manager != "none" %}
             <div>
                 <label
                         for="general_manager"
@@ -684,6 +686,7 @@
                     />
                 </div>
             </div>
+            {% endif %}
 
             <div>
                 <label

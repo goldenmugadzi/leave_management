@@ -457,6 +457,7 @@
                 </div>
             </div>
 
+
             <div>
                 <label
                         for="accounting_officer_approval_status"
@@ -514,6 +515,7 @@
                 </div>
             </div>
 
+            {% if context.finance_manager != "none" %}
             <div>
                 <label
                         for="finance_manager"
@@ -608,6 +610,9 @@
                     />
                 </div>
             </div>
+            {% endif %}
+
+        {% if context.general_manager != "none" %}
 
             <div>
                 <label
@@ -684,6 +689,7 @@
                     />
                 </div>
             </div>
+        {% endif %}
 
             <div>
                 <label
