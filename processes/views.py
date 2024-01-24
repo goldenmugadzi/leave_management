@@ -1,8 +1,10 @@
+from argparse import FileType
 import datetime
 from django.shortcuts import render
 from django.http import FileResponse
 import  os, re
 from beii_v1 import settings
+from processes.models import Filetype
 from processes.models import FormsUploads
 
 # from re import pattern
@@ -107,6 +109,15 @@ def new_view(request):
 def forms_index(request):
     return render(request,'processes/forms/forms_index.html', {})
 
+#save forms
+def save_file(f,file_path):
+    if f:
+        with open(file_path, 'wb+') as destination:
+            for chunk in f.chunks():
+                destination.write(chunk)
+                return True
+            else:
+                return False
 #FORMS UPLOAD 
 def forms_upload(request):
     
@@ -114,7 +125,7 @@ def forms_upload(request):
         # something
         print("post data: ", request.POST)
         filename = request.POST['filename']
-        filetype = request.POST['category_id']
+        file_type = request.POST['filetype']
         section = request.POST['section']
         region = request.POST['region']
         
@@ -122,13 +133,13 @@ def forms_upload(request):
         try:
             if 'uploaded_file' in request.FILES:
                 uploaded_file = request.FILES ['uploaded_file']
-                file_path = 'uploads/knowledge_center/'+datetime.now().strftime('%Y%m%d%I%M%S%p') + uploaded_file.name 
+                file_path = 'uploads/forms/'+datetime.now().strftime('%Y%m%d%I%M%S%p') + uploaded_file.name 
                 save_file(uploaded_file,file_path)
         except Exception as ex:
             print("Error:",ex)
 
 
-        file_type= Filetype.objects.filter(id=filetype).first() if filetype else None
+        file_type= Filetype.objects.filter(id=FileType).first() if file_type else None
         um = FormsUploads(
             filename= filename,
             file_type= file_type.name if file_type else "",
