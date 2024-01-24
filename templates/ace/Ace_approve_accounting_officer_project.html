@@ -309,6 +309,7 @@
                     </div>
                 </div>
 
+
                 <div>
                     <label
                             for="section_head"
@@ -431,7 +432,6 @@
                     >
                     <div class="mt-2">
                         <input
-                                readonly
                                 value="{{ context.accounting_officer_rejection_reason }}"
                                 id="accounting_officer_rejection_reason"
                                 name="accounting_officer_rejection_reason"
@@ -461,6 +461,7 @@
                     </div>
                 </div>
 
+                {% if context.finance_manager != "none" %}
                 <div>
                     <label
                             for="finance_manager"
@@ -555,6 +556,9 @@
                         />
                     </div>
                 </div>
+                {% endif %}
+
+            {% if context.general_manager != "none" %}
 
                 <div>
                     <label
@@ -631,6 +635,7 @@
                         />
                     </div>
                 </div>
+            {% endif %}
 
                 <div>
                     <label
@@ -760,6 +765,7 @@
 {#                    </div>#}
 {#                </div>#}
 
+                {% if context.present_tariff != "none" %}
                 <div>
                     <label
                             for="present_tariff"
@@ -892,6 +898,7 @@
                         />
                     </div>
                 </div>
+                {% endif %}
             </div>
 
             <div class="flex mt-10 px-3 py-3">

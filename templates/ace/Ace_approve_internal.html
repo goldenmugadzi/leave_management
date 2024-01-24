@@ -306,6 +306,7 @@
                     </div>
                 </div>
 
+                {% if context.section_head != "none" %}
                 <div>
                     <label
                             for="section_head"
@@ -381,7 +382,9 @@
                         />
                     </div>
                 </div>
+                {% endif %}
 
+            {% if context.accounting_officer %}
                 <div>
                     <label
                             for="accounting_officer"
@@ -457,6 +460,8 @@
                         />
                     </div>
                 </div>
+            {% endif %}
+            {% if context.finance_manager != "none" %}
 
                 <div>
                     <label
@@ -552,6 +557,8 @@
                         />
                     </div>
                 </div>
+            {% endif %}
+            {% if context.general_manager != "none" %}
 
                 <div>
                     <label
@@ -628,6 +635,7 @@
                         />
                     </div>
                 </div>
+            {% endif %}
 
                 <div>
                     <label

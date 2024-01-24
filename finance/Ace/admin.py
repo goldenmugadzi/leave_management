@@ -5,3 +5,4 @@ from .models import *
 
 admin.site.register(Ace)
 admin.site.register(Budget)
+admin.site.register(Transactions)

@@ -327,7 +327,7 @@
                         />
                     </div>
                 </div>
-
+                {% if context.section_head_rejection_reason != "none" %}
                 <div>
                     <label
                             for="section_head_rejection_reason"
@@ -346,6 +346,7 @@
                         />
                     </div>
                 </div>
+                {% endif %}
 
                 <div>
                     <label
@@ -365,7 +366,7 @@
                         />
                     </div>
                 </div>
-
+                {% if context.accounting_officer != "none" %}
                 <div>
                     <label
                             for="accounting_officer"
@@ -384,6 +385,7 @@
                         />
                     </div>
                 </div>
+            {% endif %}
 
                 <div>
                     <label
@@ -404,6 +406,7 @@
                     </div>
                 </div>
 
+            {% if context.accounting_officer_rejection_reason != "none" %}
                 <div>
                     <label
                             for="accounting_officer_rejection_reason"
@@ -422,6 +425,7 @@
                         />
                     </div>
                 </div>
+            {% endif %}
 
                 <div>
                     <label
@@ -442,6 +446,7 @@
                     </div>
                 </div>
 
+            {% if context.finance_manager != "none" %}
                 <div>
                     <label
                             for="finance_manager"
@@ -536,7 +541,8 @@
                         />
                     </div>
                 </div>
-
+            {% endif %}
+            {% if context.general_manager != "none" %}
                 <div>
                     <label
                             for="general_manager"
@@ -612,6 +618,8 @@
                         />
                     </div>
                 </div>
+
+            {% endif %}
 
                 <div>
                     <label
@@ -740,7 +748,7 @@
 {#                        />#}
 {#                    </div>#}
 {#                </div>#}
-
+            {% if context.present_tariff != "none" %}
                 <div>
                     <label
                             for="present_tariff"
@@ -873,6 +881,7 @@
                         />
                     </div>
                 </div>
+                {% endif %}
             </div>
 
             <div class="flex mt-10 px-3 py-3">

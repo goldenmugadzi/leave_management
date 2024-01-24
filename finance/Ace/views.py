@@ -162,6 +162,7 @@ def create_Ace(request):
         if role.application == "ace":
             custom_user_roles["ace"] = role
 
+    # print(user_profile.designation)
     region = Regions.objects.filter(id=user_profile.region).first()
     district = Districts.objects.filter(code=user_profile.district).first()
     depot = Depots.objects.filter(code=user_profile.depot).first()
@@ -548,7 +549,7 @@ def get_Ace_records_fm(request):
     context = serializers.serialize('json', records)
 
     user_page = 'Ace/index.html'
-    print(context)
+    # print(context)
 
     return render(request, user_page, {"title": "All Records",
                                        "context": context,
@@ -621,7 +622,7 @@ def get_Ace_records_gm(request):
     context = serializers.serialize('json', records)
 
     user_page = 'Ace/index.html'
-    print(context)
+    # print(context)
 
     return render(request, user_page, {"title": "All Records",
                                        "context": context,
@@ -693,7 +694,7 @@ def get_Ace_records_requester(request):
     context = serializers.serialize('json', records)
 
     user_page = 'Ace/index_requester.html'
-    print(context)
+    # print(context)
 
     return render(request, user_page, {"title": "All Records",
                                        "context": context,
@@ -718,7 +719,7 @@ def get_Ace_records_pettyauthoriser(request):
     context = serializers.serialize('json', records)
 
     user_page = 'Ace/index_requester.html'
-    print(context)
+    # print(context)
 
     return render(request, user_page, {"title": "All Records",
                                        "context": context,
@@ -1225,7 +1226,7 @@ def get_Ace_records_disburser(request):
     context = serializers.serialize('json', records)
 
     user_page = 'Ace/index.html'
-    print(context)
+    # print(context)
 
     return render(request, user_page, {"title": "All Records",
                                        "context": context,
