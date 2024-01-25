@@ -26,6 +26,7 @@ urlpatterns = [
     path('view_eng_base', views.view_eng_base, name='user_manual_eng_base'),
     path('view_ict_base', views.view_ict_base, name='user_manual_ict_base'),
     path('test', views.test, name='user_manual_test'),
+    path('view_specifications', views.view_specifications, name='view_specifications'),
 
     
     path('view_legislation/ea', views.view_ea, name='view_ea'),
@@ -86,11 +87,14 @@ urlpatterns = [
     path('view_legislation/external_docs', views.view_external_docs, name='view_external_docs'),
     path('view_legislation/drone_tech', views.view_drone_tech, name='view_drone_tech'),
 
-    path('view_legislation/user_manuals/commercial', views.view_commercial_usermanuals, name='view_commercial_usermanuals'),
+    path('view_legislation/knowledge_center/commercial', views.view_commercial_usermanuals, name='view_commercial_usermanuals'),
     path('view_legislation/user_manuals/hr', views.view_hr_usermanuals, name='view_hr_usermanuals'),
     path('view_legislation/user_manuals/finance', views.view_finance_usermanuals, name='view_finance_usermanuals'),
     path('view_legislation/user_manuals/ict', views.view_ict_usermanuals, name='view_ict_usermanuals'),
     path('view_legislation/user_manuals/risk', views.view_risk_usermanuals, name='view_risk_usermanuals'),
+    path('view_legislation/user_manuals/relations', views.view_relations_usermanuals, name='view_relations_usermanuals'),
+    path('view_legislation/user_manuals/legal', views.view_legal_usermanuals, name='view_legal_usermanuals'),
+    path('view_legislation/user_manuals/procurement', views.view_procurement_usermanuals, name='view_procurement_usermanuals'),
     path('view_legislation/switchgear', views.view_switchgear, name='view_switchgear'),
     path('view_legislation/dtech', views.view_dtech, name='view_dtech'),
     path('view_legislation/ndm', views.view_ndm, name='view_ndm'),
@@ -100,7 +104,7 @@ urlpatterns = [
     path('view_legislation/oms', views.view_oms, name='view_oms'),
     path('view_legislation/drawing', views.view_drawing, name='view_drawing'),
     path('view_legislation/standards', views.view_standards, name='view_standards'),
-    path('view_legislation/specifications', views.view_specifications, name='view_specifications'),
+    # path('view_legislation/specifications', views.view_specifications, name='view_specifications'),
     path('view_legislation/risk_management', views.view_risk_management, name='view_risk_management'),
     path('view_legislation/communication_management', views.view_communication_management, name='view_communication_management'),
     path('view_legislation/quality_management', views.view_quality_management, name='view_quality_management'),
@@ -110,6 +114,14 @@ urlpatterns = [
     path('view_legislation/quality_register', views.view_quality_register, name='view_quality_register'),
     path('view_legislation/configuration_item', views.view_configuration_item, name='view_configuration_item'),
     path('view_legislation/current_projects', views.view_current_projects, name='view_current_projects'),
+    path('view_specifications/commercial_spec', views.view_commercial_spec, name='view_commercial_spec'),
+    path('view_specifications/engineering_spec', views.view_engineering_spec, name='view_engineering_spec'),
+    path('view_specifications/finance_spec', views.view_finance_spec, name='view_finance_spec'),
+    path('view_specifications/ict_spec', views.view_ict_spec, name='view_ict_spec'),
+    path('view_specifications/risk_spec', views.view_risk_spec, name='view_risk_spec'),
+    path('view_specifications/relations_spec', views.view_relations_spec, name='view_relations_spec'),
+    path('view_specifications/legal_spec', views.view_legal_spec, name='view_legal_spec'),
+    path('view_specifications/procurement_spec', views.view_procurement_spec, name='view_procurement_spec'),
     
 
     path('search', views.file_search, name='file_search'),
