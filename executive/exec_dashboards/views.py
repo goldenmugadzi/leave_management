@@ -67,11 +67,14 @@ def dashboard_index(request):
     maintenance_values_list = json.dumps(list(maintenance_count.values()), default=str)
     
     user_title = request.user.get_full_name()
+    url_path = request.path.split("/")
+    print("url_path: ", url_path)
     
     return render(request, 
                   'dashboards/index.html', 
                   {
                       "user_title": user_title,
+                      "url_path": url_path,
                       "page_title": "Dashboards",
                       "pbncs": pbncs, 
                       "tds": tds, 

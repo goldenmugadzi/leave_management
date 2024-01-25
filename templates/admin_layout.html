@@ -102,7 +102,8 @@
               class="text-gulf-blue-50 w-full mt-3 border-t border-gulf-blue-700"
             >
               <a
-                class="flex items-center w-full h-12 px-3 mt-2 rounded hover:bg-gulf-blue-500"
+                id="menu-item"
+                class="flex items-center w-full h-12 px-3 mt-2 rounded hover:bg-gulf-blue-500 hover:shadow-lg"
                 href="{% url 'dashboard_index' %}"
               >
                 <svg
@@ -122,7 +123,8 @@
                 <span class="ml-2 text-sm font-medium">Home</span>
               </a>
               <a
-                class="flex items-center w-full h-12 px-3 mt-2 rounded hover:bg-gulf-blue-500"
+              id="menu-item"
+                class="flex items-center w-full h-12 px-3 mt-2 rounded hover:bg-gulf-blue-500 hover:shadow-lg"
                 href="/knowledge-center/view_firstview"
               >
                 <svg
@@ -142,7 +144,8 @@
                 <span class="ml-2 text-sm font-medium">Knowledge Centre</span>
               </a>
               <a
-                class="flex items-center w-full h-12 px-3 mt-2 rounded hover:bg-gulf-blue-500"
+              id="menu-item"
+                class="flex items-center w-full h-12 px-3 mt-2 rounded hover:bg-gulf-blue-500 hover:shadow-lg"
                 href="/processes/new_view"
               >
                 <svg
@@ -164,7 +167,8 @@
                 >
               </a>
               <a
-                class="flex items-center w-full h-12 px-3 mt-2 rounded hover:bg-gulf-blue-500"
+              id="menu-item"
+                class="flex items-center w-full h-12 px-3 mt-2 rounded hover:bg-gulf-blue-500 hover:shadow-lg"
                 href="/competence/competence"
               >
                 <svg
@@ -186,7 +190,8 @@
                 >
               </a>
               <a
-                class="flex items-center text-center w-full h-12 px-3 mt-2  rounded hover:bg-gulf-blue-500"
+              id="menu-item"
+                class="flex items-center text-center w-full h-12 px-3 mt-2  rounded hover:bg-gulf-blue-500 hover:shadow-lg"
                 href="/inbox" 
               >
               <i class="far fa-envelope mr-2"></i>
@@ -329,7 +334,7 @@
                   </div>
                   <div style="flex: 0.8" class="flex w-full items-center">
                     <div id="scrolling-text" class="text-right text-lg whitespace-nowrap text-gulf-blue-950 px-3 py-2 font-medium" style="text-indent: 182px;">
-                        ZETDC BUSINESS EXCELLENCE
+                        ZETDC BUSINESS EASY
                   </div>
                 </div>
                 <div class="relative ml-3 flex items-center">
@@ -450,9 +455,35 @@
           class="mx-auto px-4 py-6 sm:px-6 lg:px-8"
         >
           <div class="mx-auto py-6">
-            <h1 class="text-2xl font-bold tracking-tight text-gulf-blue-950">
+            <nav class="flex mb-3 mt-3" aria-label="Breadcrumb">
+              
+              <ol class="inline-flex items-center space-x-1 md:space-x-2">  
+                {% for path in url_path %}
+                  {% with forloop.counter as loop_index %}
+                  {% if loop_index == 1 %}
+                    <li class="inline-flex items-center">
+                      <a href="#" class="inline-flex items-center text-gray-700 hover:text-gray-900">
+                        <svg class="w-5 h-5 mr-2.5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"></path></svg>                       
+                      {{ path|capfirst }}
+                      </a>
+                    </li>
+                  {% else %}
+                  <li>
+                  <div class="flex items-center">
+                  <svg class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path></svg>
+                  <a href="#" class="ml-1 text-sm font-medium text-gray-700 hover:text-gray-900 md:ml-2">{{ path|capfirst }}</a>
+                  </div>
+                  </li>
+                  {% endif %}
+                  {% endwith %}
+                  
+                {% endfor %}
+              </ol>
+              </nav>
+          
+            <span class="text-2xl font-bold tracking-tight text-gulf-blue-950">
               {{page_title}}
-            </h1>
+            </span>
           </div>
           {% if messages %}
           <ul class="list-unstyled messages">
@@ -516,13 +547,26 @@
       let newsWidth = newsElement.scrollWidth;  // Get news width
       let newsPosition = 0;
       
-      const intervalId = setInterval(() => {
+      const intervalIdContainer = setInterval(() => {
         newsPosition += 2;  // Adjust newsing speed
         newsElement.style.newsIndent = `${newsPosition}px`;
         if (newsPosition >= containerWidth) {
           newsPosition = 0;
         }
       }, 50);
+    </script>
+    <script>
+      console.log("url history ...")
+      const currentUrl = window.location.href;
+      const menuItems = document.querySelectorAll("#menu-item");
+      for (const item of menuItems) {
+        const itemUrl = item.href;
+        console.log("currentUrl, itemUrl: ", currentUrl, itemUrl)
+        if (currentUrl === itemUrl) {
+          item.classList.add("bg-gulf-blue-400", "shadow-md");
+          console.log("item.classList: ", item.classList)
+        }
+      }
     </script>
     {% block scripts %}{% endblock scripts %}
   </body>
