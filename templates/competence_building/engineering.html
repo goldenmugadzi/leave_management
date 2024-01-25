@@ -1,0 +1,68 @@
+{% extends 'admin_layout.html' %}
+{%load static%}
+{% block styles %}
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+<script type="text/javascript">
+  
+  google.charts.load('current', {packages:["orgchart"]});
+  google.charts.setOnLoadCallback(drawChart);
+
+  function drawChart() {
+    var data = new google.visualization.DataTable();
+    data.addColumn('string', 'Name');
+    data.addColumn('string', 'Manager');
+    data.addColumn('string', 'ToolTip');
+
+    // For each orgchart box, provide the name, manager, and tooltip to show.
+    data.addRows([
+
+
+
+    [{'v':'EM', 'f':'<div style="color:black; font-style:bold">ENGINEERING MANAGER</div>'},
+    '', 'Engineeering'],
+
+   [{'v':'SECRETARY ', 'f':'<div style="color:black; font-style:bold">SECRETARY</div>'},
+    'EM', 'Engineeering'],
+    [{'v':'NDE', 'f':'<div style="color:black; font-style:bold">NETWORK DEVELOPMENT ENGINEER</div>'},
+    'EM', 'ENGINEERING'],
+    [{'v':'OPPS', 'f':'<div style="color:black; font-style:bold">OPERATIONS AND MAINTANANCE ENGINEER</div>'},
+    'EM', 'Opperations and maintanance'],
+    [{'v':'TC', 'f':'<div style="color:black; font-style:bold">TRANSPORT CONTROLLER</div>'},
+    'EM', 'Engineeering'],
+
+    [{'v':'GF', 'f':'<div style="color:black; font-style:bold">GARAGE FOREPERSON</div>'},
+    'TC', 'Engineeering'],
+    [{'v':'CD', 'f':'<div style="color:black; font-style:bold">AUGER/ CRANE DRIVE x 5</div>'},
+    'TC', 'Engineeering'],
+
+    [{'v':'AE', 'f':'<div style="color:black; font-style:bold">AUTO ELECTRICIAN</div>'},
+    'GF', 'Engineeering'],
+    [{'v':'AM', 'f':'<div style="color:black; font-style:bold">ATTISAN MECHANIC</div>'},
+    'GF', 'Engineeering'],
+    [{'v':'A', 'f':'<div style="color:black; font-style:bold">ASSISTANT</div>'},
+    'AE', 'Engineeering'],
+    [{'v':'AA', 'f':'<div style="color:black; font-style:bold">ARTISAN ASSISTANT</div>'},
+    'AM', 'Engineeering'],
+
+
+
+  
+    
+   
+    
+ ]);
+
+    // Create the chart.
+    var chart = new google.visualization.OrgChart(document.getElementById('chart_div'));
+    // Draw the chart, setting the allowHtml option to true for the tooltips.
+    chart.draw(data, {'allowHtml':true});
+  }
+</script>
+{% endblock %}
+{%block content%}
+
+<div>
+      <div id="chart_div"></div>
+</div>
+
+{%endblock%}

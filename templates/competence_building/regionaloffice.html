@@ -3,6 +3,7 @@
 {% block styles %}
 <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
 <script type="text/javascript">
+  
   google.charts.load('current', {packages:["orgchart"]});
   google.charts.setOnLoadCallback(drawChart);
 
@@ -18,35 +19,38 @@
 
       [{'v':'GM', 'f':'<div style="color:Black; font-style:bold">GENERAL MANAGER</div>'},
        '', 'The President'],
-      [{'v':'Commercial Manager', 'f':'<div style="color:black; font-style:bold">COMMERCIAL MANAGER</div>'},
+      [{'v':'Commercial Manager', 'f':'<a href="commercial"> <div style="color:black; font-style:bold">COMMERCIAL MANAGER</div></a>'},
        'GM', ''],
        [{'v':'DM Sub', 'f':'<div></div>'},
        'GM', ''],
-      [{'v':'District Manager', 'f':'<div style="color:black; font-style:bold">DISTRICT MANAGER</div>'},
+      [{'v':'District Manager', 'f':'<a href= "district" <div style="color:black; font-style:bold">DISTRICT MANAGER</div></a>'},
        'DM Sub', ''],
        [{'v':'Risk Sub', 'f':'<div></div>'},
        'GM', ''],
        [{'v':'Risk Sub2', 'f':'<div></div>'},
        'Risk Sub', ''],
-      ['CHIEF RISK OFFICER', 'Risk Sub2', ''], 
+       [{'v':'CRO', 'f':'<a href="losscontrol"><div style="color:black; font-style:bold">CHIEF RISK OFFICER</div></a>'},
+       'Risk Sub2', 'risk and loss control'],
+
       [{'v':'Procurement Sub', 'f':'<div></div>'},
       'GM', ''],
       [{'v':'Procurement Sub2', 'f':'<div></div>'},
       'Procurement Sub', ''],
-      ['PROCUREMENT OFFICER', 'Procurement Sub2', ''],    
-      [{'v':'Jim', 'f':'<div style="color:black; font-style:bold">ENGINEERING MANAGER</div>'},
+      [{'v':'Procurement', 'f':'<a href="procurement"><div style="color:black; font-style:bold">PROCUREMENT OFFICER</div></a>'},
+      'Procurement Sub2', 'Procurements'],    
+      [{'v':'ENG', 'f':'<a href="engineering"> <div style="color:black; font-style:bold">ENGINEERING MANAGER</div></a>'},
        'GM', 'VP'],
       [{'v':'IT Sub', 'f':'<div></div>'},
       'GM', ''],
       [{'v':'IT Sub2', 'f':'<div></div>'},
       'IT Sub', ''],
-      [{'v':'Information Technology', 'f':'<div style="color:black; font-style:bold">SYSTEMS ADMINISTARTOR</div>'},
+        [{'v':'Information Technology', 'f':'<a href="IT"><div style="color:black; font-style:bold">SYSTEMS ADMINISTARTOR</div></a>'},
       'IT Sub2', ''],
       [{'v':'HR Sub', 'f':'<div></div>'},
       'GM', ''],
-     [{'v':'HR Manager', 'f':'<div style="color:black; font-style:bold">HR MANAGER</div>'},
+     [{'v':'HR Manager', 'f':'<a href="humanresource"><div style="color:black; font-style:bold">HR MANAGER</div></a>'},
       'HR Sub', ''],
-      [{'v':'Finance Manager', 'f':'<div style="color:black; font-style:bold">FINANCE MANAGER</div>'},
+      [{'v':'Finance Manager', 'f':'<a href="finance"><div style="color:black; font-style:bold">FINANCE MANAGER</div></a>'},
       'GM', ''],
     ]);
 
