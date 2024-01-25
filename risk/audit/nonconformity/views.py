@@ -3,7 +3,7 @@ from django.shortcuts import render, redirect,reverse,get_object_or_404,HttpResp
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 import json
-from .models import Nonconformity
+from .models import Nonconformity,Response
 from .forms import NonconformityForm, NonconformityResponseForm
 from django.contrib.auth.models import User
 # from it.users.models import Notification
@@ -51,27 +51,69 @@ def create_nonconformity(request):
 @login_required
 def nonconformity_details(request, nonconformity_id):
     nonconformity = get_object_or_404(Nonconformity, id=nonconformity_id)
-    response_form = NonconformityResponseForm()
+    try:
+        response = Response.objects.get(Q(nonconformity=nonconformity), Q(user=request.user))
+    except Response.DoesNotExist:
+        # No matching response found
+        response = None
 
     if request.method == 'POST':
-        response_form = NonconformityResponseForm(request.POST)
-        if response_form.is_valid():
-            response = response_form.save(commit=False)
-            response.user = request.user
-            response.nonconformity = nonconformity
-            response.save()
-            
-            # Notify the user who created the nonconformity
-            Notification.objects.create(
-                user=nonconformity.created_by,
-                message=f"Response from {request.user.username} on nonconformity: {nonconformity.description}",
-                url=nonconformity.get_absolute_url()
-            )
+        if request.user == nonconformity.recipient:
+            response_form = NonconformityResponseForm(request.POST, instance=response, )
+            if response_form.is_valid():
+                response = response_form.save(commit=False)
+                response.user = request.user
+                response.nonconformity = nonconformity
+                response.save()
+                
+                # Notify the user who created the nonconformity
+                Notification.objects.create(
+                    user=nonconformity.created_by,
+                    message=f"Response from {request.user.username} on nonconformity: {nonconformity.description}",
+                    url=nonconformity.get_absolute_url()
+                )
 
-            messages.success(request, 'Response added successfully!')
-            return redirect('/nonconformities', nonconformity_id=nonconformity.id)
+                messages.success(request, 'Response added successfully!')
+                return redirect('/nonconformities', nonconformity_id=nonconformity.id)
 
-    return render(request, 'risk/nonconformity/nonconformity_details.html', {'nonconformity': nonconformity, 'form': response_form})
+        elif request.user == nonconformity.created_by:
+            form = NonconformityForm(request.POST, request.FILES, instance=nonconformity)
+            if form.is_valid():
+                edited_nonconformity = form.save(commit=False)
+
+                # Check if the recipient is the same as the current user
+                if edited_nonconformity.recipient != request.user:
+                    # Save the edited nonconformity
+                    edited_nonconformity.save()
+
+                    # Create a notification for the auditee
+                    auditee = edited_nonconformity.recipient
+                    notification = Notification.objects.create(
+                        user=auditee,
+                        message=f"nc: {edited_nonconformity.description}",
+                        url=reverse('nonconformity:nonconformity', args=[edited_nonconformity.id])
+                    )
+
+                    # Display a success message
+                    messages.success(request, 'Nonconformity edited successfully!')
+                    return redirect('/', messages.SUCCESS)
+        else:
+            return HttpResponse("You are not authorized to edit this nonconformity.")
+
+    else:  # GET request
+        if request.user == nonconformity.recipient:
+            form = NonconformityResponseForm(instance=response)
+        elif request.user == nonconformity.created_by:
+            form = NonconformityForm(instance=nonconformity)
+        else:
+            form = None
+    # Update the old notification to mark it as read
+    old_notifications = Notification.objects.filter( user=request.user,url=nonconformity.get_absolute_url())
+    for old_notification in old_notifications:
+        old_notification.is_read = True
+        old_notification.save()
+        
+    return render(request, 'risk/nonconformity/nonconformity_details.html', {'nonconformity': nonconformity, 'form': form})
 
 @login_required
 def view_notifications(request):
@@ -98,5 +140,5 @@ def view_nonconformities(request):
         nonconformities = Nonconformity.objects.filter(
             Q(created_by=user) | Q(recipient=user)
         )
-
+    nonconformities = Nonconformity.objects.all()
     return render(request, 'risk/nonconformity/nonconformities.html', {'nonconformities': nonconformities})

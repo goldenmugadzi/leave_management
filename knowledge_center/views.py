@@ -25,7 +25,9 @@ def create(request):
         subtype1 = ""
         if 'subtype1' in request.POST:
             subtype1 = request.POST['subtype1']
-        subtype2 = request.POST['subtype2']
+        subtype2 = ""
+        if 'subtype2' in request.POST:
+            subtype2 = request.POST['subtype2']
         region = request.POST['region']
         
         file_path = ''
@@ -243,6 +245,102 @@ def view_firstview(request):
     
     return render(request, 'knowledge-center/view_firstview.html', {"page_title": "KNOWLEDGE CENTRE", "results": []})
 
+
+def view_specifications(request):
+    
+    files = KnowledgeCenter.objects.all()
+    
+    return render(request, 'knowledge-center/view_specifications.html', {"page_title": "SPECIFICATIONS", "results": []})
+
+def view_commercial_spec(request):
+    
+    files = KnowledgeCenter.objects.filter(sub_category_1="Commercial")
+
+    print("files: ", files)
+    new_dict = get_kc_dict(files)
+    print("new_dict: ", new_dict)
+    
+    return render(request, 'knowledge-center/test.html',{"files": files,  "page_title": "Specifications Commercial Files"} )
+
+def view_hr_spec(request):
+    
+    files = KnowledgeCenter.objects.filter(sub_category_1="Human Resources")
+
+    print("files: ", files)
+    new_dict = get_kc_dict(files)
+    print("new_dict: ", new_dict)
+    
+    return render(request, 'knowledge-center/test.html',{"files": files,  "page_title": "Specifications Human Resources Files"} )
+
+def view_engineering_spec(request):
+    
+    files = KnowledgeCenter.objects.filter(sub_category_1="Engineering")
+
+    print("files: ", files)
+    new_dict = get_kc_dict(files)
+    print("new_dict: ", new_dict)
+    
+    return render(request, 'knowledge-center/test.html',{"files": files,  "page_title": "Specifications Engineering Files"} )
+
+def view_finance_spec(request):
+    
+    files = KnowledgeCenter.objects.filter(sub_category_1="Finance")
+
+    print("files: ", files)
+    new_dict = get_kc_dict(files)
+    print("new_dict: ", new_dict)
+    
+    return render(request, 'knowledge-center/test.html',{"files": files,  "page_title": "Specifications Finance Files"} )
+
+def view_ict_spec(request):
+    
+    files = KnowledgeCenter.objects.filter(sub_category_1="ICT")
+
+    print("files: ", files)
+    new_dict = get_kc_dict(files)
+    print("new_dict: ", new_dict)
+    
+    return render(request, 'knowledge-center/test.html',{"files": files,  "page_title": "Specifications ICT Files"} )
+
+def view_risk_spec(request):
+    
+    files = KnowledgeCenter.objects.filter(sub_category_1="Risk")
+
+    print("files: ", files)
+    new_dict = get_kc_dict(files)
+    print("new_dict: ", new_dict)
+    
+    return render(request, 'knowledge-center/test.html',{"files": files,  "page_title": "Specifications Risk Files"} )
+
+def view_relations_spec(request):
+    
+    files = KnowledgeCenter.objects.filter(sub_category_1="Stakeholder Relations")
+
+    print("files: ", files)
+    new_dict = get_kc_dict(files)
+    print("new_dict: ", new_dict)
+    
+    return render(request, 'knowledge-center/test.html',{"files": files,  "page_title": "Specifications Stakeholder Relations Files"} )
+
+def view_legal_spec(request):
+    
+    files = KnowledgeCenter.objects.filter(sub_category_1="Legal")
+
+    print("files: ", files)
+    new_dict = get_kc_dict(files)
+    print("new_dict: ", new_dict)
+    
+    return render(request, 'knowledge-center/test.html',{"files": files,  "page_title": "Specifications Legal Files"} )
+
+def view_procurement_spec(request):
+    
+    files = KnowledgeCenter.objects.filter(sub_category_1="Procurement")
+
+    print("files: ", files)
+    new_dict = get_kc_dict(files)
+    print("new_dict: ", new_dict)
+    
+    return render(request, 'knowledge-center/test.html',{"files": files,  "page_title": "Specifications Procurement Files"} )
 
 def view_policies(request):
     
@@ -840,6 +938,36 @@ def view_ict_usermanuals(request):
     
     return render(request, 'knowledge-center/test.html',{"files": files,  "page_title": "User Manuals ICT Files"} )
 
+def view_relations_usermanuals(request):
+    
+    files = KnowledgeCenter.objects.filter(sub_category_1="Stakeholder Relations")
+
+    print("files: ", files)
+    new_dict = get_kc_dict(files)
+    print("new_dict: ", new_dict)
+    
+    return render(request, 'knowledge-center/test.html',{"files": files,  "page_title": "User Manuals Stakeholder Relations Files"} )
+
+def view_legal_usermanuals(request):
+    
+    files = KnowledgeCenter.objects.filter(sub_category_1="Legal")
+
+    print("files: ", files)
+    new_dict = get_kc_dict(files)
+    print("new_dict: ", new_dict)
+    
+    return render(request, 'knowledge-center/test.html',{"files": files,  "page_title": "User Manuals Legal Files"} )
+
+def view_procurement_usermanuals(request):
+    
+    files = KnowledgeCenter.objects.filter(sub_category_1="Procurement")
+
+    print("files: ", files)
+    new_dict = get_kc_dict(files)
+    print("new_dict: ", new_dict)
+    
+    return render(request, 'knowledge-center/test.html',{"files": files,  "page_title": "User Manuals Procument Files"} )
+
 def view_risk_usermanuals(request):
     
     files = KnowledgeCenter.objects.filter(sub_category_1="Risk")
@@ -955,15 +1083,15 @@ def view_standards(request):
     
     return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "Standards Files"} )
 
-def view_specifications(request):
+# def view_specifications(request):
     
-    files = KnowledgeCenter.objects.filter(sub_category_2="Specifications")
+#     files = KnowledgeCenter.objects.filter(sub_category_2="Specifications")
 
-    print("files: ", files)
-    new_dict = get_kc_dict(files)
-    print("new_dict: ", new_dict)
+#     print("files: ", files)
+#     new_dict = get_kc_dict(files)
+#     print("new_dict: ", new_dict)
     
-    return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "Specifications Files"} )
+#     return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "Specifications Files"} )
 
 def view_publications(request):
     

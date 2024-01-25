@@ -64,7 +64,7 @@ class Ace(models.Model):
 
     section_head = models.CharField(null = True, max_length=30)
     section_head_approval_status = models.CharField(max_length=40, blank=True, null=True)
-    section_head_rejection_reason = models.CharField(max_length=35, blank=True, null=True)
+    section_head_rejection_reason = models.CharField(max_length=5000, blank=True, null=True)
     section_head_approval_date = models.DateField(null=True, blank=True)
 
     accounting_officer = models.CharField(null = True, max_length=30)

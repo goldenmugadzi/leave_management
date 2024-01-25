@@ -13,40 +13,28 @@
   <div class="grid grid-cols-3 gap-2 mt-6 row-span-2">
     
     <div class="flex justify-center">
-      <a href="{%url 'display'%}" style="background-color: rgb(29 78 216);" class=" text-white w-80 pt-6 h-24 rounded-md text-center mt-2 text-xl font-bold">Process Maps</a>
+      <a href="{%url 'display'%}" style="background-color: rgb(29 78 216);" class=" text-white w-96 pt-6 h-24 rounded-md text-center mt-2 text-xl font-bold">Process Maps</a>
       </div> 
 
     <div class="flex justify-center">
-    <a href="{%url 'display'%}"style="background-color: rgb(21 128 61);" class="text-white text-center mt-2 h-24 w-80 pt-6 rounded-md text-xl font-bold">Process Risks and Opportunities</a>
+    <a href="/process_risks/"style="background-color: rgb(21 128 61);" class="text-white text-center mt-2 h-24 w-80 pt-6 rounded-md text-xl font-bold">Process Risks and Opportunities</a>
     </div> 
 
     <div class="flex justify-center">
-    <a href="{%url 'display'%}" style= "background-color: rgb(217 119 6);"class=" text-white text-center h-24 mt- w-80 pt-6 font-bold rounded-md mt-2 text-xl">Procedures and Work Instructions</a>
+    <a href="{%url 'display'%}" style= "background-color: rgb(217 119 6);"class=" text-white text-center h-24 mt- w-96 pt-6 font-bold rounded-md mt-2 text-xl">Procedures and Work Instructions</a>
     </div>
-
-    
 
     </div>
   
-    <div class="dropdown mt-6 place-content-center mx-52">
-    <button style= "background-color: rgb(74 4 78);" class="dropdown-toggle text-center text-white font-bold text-lg w-80 h-24 rounded-md place-content-center">FORMS</button>
-    <div class="hidden dropdown-menu mt-2 flex-none ">
-        <a href="{%url 'Forms Index'%}" style= "background-color: rgb(14 165 233);" class="button px-2 py-2 text-black font-bold rounded-md hover:bg-blue-600 focus:bg-blue-700 ">View Forms</a>
-      <a href="{%url 'Forms Upload'%}" style= "	background-color: rgb(250 204 21);" class="button text-black font-bold px-2 py-2 rounded-md hover:bg-green-600 focus:bg-green-700">Upload Forms</a>
-    </div>
-  </div>
+    <div class="flex justify-center mt-2">
+      <a href="{%url 'Forms Index'%}" style= "background-color: rgb(112 26 117);"class=" text-white text-center h-24 mt- w-96 pt-6 font-bold rounded-md mt-2 text-xl">FORMS</a>
+      </div>
+    
+   
   
   <div class="bottom-0 left-0 right-0 mt-20 w-40 flex justify-left">
     <a href="{%url 'dashboard_index'%}"><button class="bg-black text-white font-bold px-4 py-2 rounded-full">Back</button></a>
   </div>
 
-<script>
-  const dropdown = document.querySelector('.dropdown-toggle');
-const dropdownMenu = document.querySelector('.dropdown-menu');
-
-dropdown.addEventListener('click', () => {
-  dropdownMenu.classList.toggle('hidden');
-});
-</script>
 
 {%endblock%}

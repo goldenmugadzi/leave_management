@@ -182,7 +182,7 @@ DATABASES = {
     # Localhost
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'ash',
+        'NAME': 'beii',
         'USER': 'root',
         'PASSWORD': '',
         'HOST': 'localhost'
@@ -218,7 +218,8 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 
 USE_TZ = True
-
+LOGIN_REDIRECT_URL='/'
+LOGIN_URL = '/accounts/login'
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
