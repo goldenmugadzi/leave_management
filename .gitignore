@@ -1,4 +1,5 @@
 uploads/
+static/documents/
 .env
 env.local
 
