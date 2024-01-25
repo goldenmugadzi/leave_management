@@ -1,0 +1,56 @@
+{% extends 'admin_layout.html' %}
+{%load static%}
+{% block styles %}
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+<script type="text/javascript">
+  
+  google.charts.load('current', {packages:["orgchart"]});
+  google.charts.setOnLoadCallback(drawChart);
+
+  function drawChart() {
+    var data = new google.visualization.DataTable();
+    data.addColumn('string', 'Name');
+    data.addColumn('string', 'Manager');
+    data.addColumn('string', 'ToolTip');
+
+    // For each orgchart box, provide the name, manager, and tooltip to show.
+    data.addRows([
+
+
+
+    [{'v':'CM', 'f':'<div style="color:black; font-style:bold">COMMERCIAL MANAGER</div>'},
+    '', 'Commercial'],
+
+   [{'v':'SECRETARY ', 'f':'<div style="color:black; font-style:bold">COMMERCIAL SECRETARY</div>'},
+    'EM', 'Commercial'],
+    [{'v':'CE', 'f':'<div style="color:black; font-style:bold">COMMERCIAL ENGINEER</div>'},
+    'CM', 'ENGINEERING'],
+    [{'v':'MO', 'f':'<div style="color:black; font-style:bold">MARKERTING OFFICER</div>'},
+    'CM', 'Marketing, commercial'],
+    [{'v':'SA', 'f':'<div style="color:black; font-style:bold">SALES ANALYST</div>'},
+    'CM', 'Commercial'],
+    [{'v':'SE', 'f':'<div style="color:black; font-style:bold">SALES EXECUTIVE</div>'},
+    'CM', 'Commercial'],
+    [{'v':'ET', 'f':'<div style="color:black; font-style:bold">ENERGY TECHNICIAN x 2</div>'},
+    'CE', 'Commercial'],
+    [{'v':'SB', 'f':'<div style="color:black; font-style:bold">SUPERVISOR BANK OFFICE</div>'},
+    'MO', 'Commercial'],
+    [{'v':'CCCF', 'f':'<div style="color:black; font-style:bold">CUSTOMER CARE CLERK FAULTS x 32</div>'},
+    'SB', 'Commercial']
+
+ ]);
+
+    // Create the chart.
+    var chart = new google.visualization.OrgChart(document.getElementById('chart_div'));
+    // Draw the chart, setting the allowHtml option to true for the tooltips.
+    chart.draw(data, {'allowHtml':true});
+  }
+</script>
+{% endblock %}
+{%block content%}
+
+<div>
+      <div id="chart_div"></div>
+</div>
+
+{%endblock%}

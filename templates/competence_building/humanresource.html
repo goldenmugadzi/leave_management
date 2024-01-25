@@ -1,0 +1,69 @@
+{% extends 'admin_layout.html' %}
+{%load static%}
+{% block styles %}
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+<script type="text/javascript">
+  
+  google.charts.load('current', {packages:["orgchart"]});
+  google.charts.setOnLoadCallback(drawChart);
+
+  function drawChart() {
+    var data = new google.visualization.DataTable();
+    data.addColumn('string', 'Name');
+    data.addColumn('string', 'Manager');
+    data.addColumn('string', 'ToolTip');
+
+    // For each orgchart box, provide the name, manager, and tooltip to show.
+    data.addRows([
+
+
+
+    [{'v':'HR', 'f':'<div style="color:black; font-style:bold">HUMAN RESOURCE & ADMINISTRATION MANAGER</div>'},
+    '', 'HRA Manager'],
+
+   [{'v':'HR Manager Secretary', 'f':'<div style="color:black; font-style:bold">SECRETARY</div>'},
+    'HR', 'human resource'],
+    [{'v':'AD', 'f':'<div style="color:black; font-style:bold">ADMINISTRATION OFFICER</div>'},
+    'HR', 'Admin Officer'],
+    [{'v':'HRO', 'f':'<div style="color:black; font-style:bold">HUMAN RESOURCE OFFICER</div>'},
+    'HR', 'HR Officer'],
+    [{'v':'SHE', 'f':'<div style="color:black; font-style:bold">SAFETY & HEALTHY OFFICER</div>'},
+    'HR', 'SHE Officer'],
+    
+    [{'v':'PO', 'f':'<div style="color:black; font-style:bold">PERSONEL OFFICER (DISTRICTS)</div>'},
+    'HR', 'PO Districts'],
+    [{'v':'IR', 'f':'<div style="color:black; font-style:bold">INDUSTRIAL RELATIONS OFFICER</div>'},
+    'HR', 'IR Officer'],
+    
+    [{'v':'PC', 'f':'<div style="color:black; font-style:bold">PERSONEL CLERK x 2</div>'},
+    'HRO', 'PERSONEL CLERKS'],
+    [{'v':'SWB', 'f':'<div style="color:black; font-style:bold">SWITCH BOARD OPERATOR x 2</div>'},
+    'AD', 'switch board'],
+    [{'v':'ADC', 'f':'<div style="color:black; font-style:bold">ADMINISTRATOR CLERK x 2</div>'},
+    'AD', 'Admin Clerk'],
+    [{'v':'MSG', 'f':'<div style="color:black; font-style:bold">MESSENGERS/ CLEANERS x 4</div>'},
+    'AD', 'Messangers'],
+    [{'v':'CT', 'f':'<div style="color:black; font-style:bold">HANDY PERSON/ CARETAKER</div>'},
+    'AD', 'Caretaker'],
+    [{'v':'CM', 'f':'<div style="color:black; font-style:bold">COMMISSIONNAIRE</div>'},
+    'AD', 'Commissionnaire'],
+    [{'v':'GH', 'f':'<div style="color:black; font-style:bold">GENERAL HAND</div>'},
+    'CT', 'general hand'],
+
+   
+ ]);
+
+    // Create the chart.
+    var chart = new google.visualization.OrgChart(document.getElementById('chart_div'));
+    // Draw the chart, setting the allowHtml option to true for the tooltips.
+    chart.draw(data, {'allowHtml':true});
+  }
+</script>
+{% endblock %}
+{%block content%}
+
+<div>
+      <div id="chart_div"></div>
+</div>
+
+{%endblock%}

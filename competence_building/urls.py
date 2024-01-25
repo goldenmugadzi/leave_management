@@ -10,6 +10,12 @@ urlpatterns = [
     path('headoffice', views.view_headoffice, name='headoffice'),
     path('regionaloffice', views.view_regionaloffice, name='regionaloffice'),
     path('jobdescription', views.view_jobdescription, name='jobdescription'),
+    path('IT', views.view_IT, name='IT'),
+    path('finance', views.view_finance, name='finance'),
+    path('humanresource', views.view_humanresource, name='humanresource'),
+    path('losscontrol', views.view_losscontrol, name='losscontrol'),
+    path('engineering', views.view_engineering, name='engineering'),
+    path('commercial', views.view_commercial, name='commercial'),
 
 
 ]

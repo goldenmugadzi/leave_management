@@ -1,0 +1,52 @@
+{% extends 'admin_layout.html' %}
+{%load static%}
+{% block styles %}
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+<script type="text/javascript">
+  
+  google.charts.load('current', {packages:["orgchart"]});
+  google.charts.setOnLoadCallback(drawChart);
+
+  function drawChart() {
+    var data = new google.visualization.DataTable();
+    data.addColumn('string', 'Name');
+    data.addColumn('string', 'Manager');
+    data.addColumn('string', 'ToolTip');
+
+    // For each orgchart box, provide the name, manager, and tooltip to show.
+    data.addRows([
+
+
+    [{'v':'SA', 'f':'<div style="color:Black; font-style:bold">SYSTEMS ADMINISTATOR</div>'},
+    '', 'Information Technology'],
+   [{'v':'Support Officer', 'f':'<div style="color:black; font-style:bold">SYSTEMS SUPPORT OFFICER</div>'},
+    'SA', ''],
+    [{'v':'SOE', 'f':'<div style="color:black; font-style:bold">SYSTEMS SUPPORT OFFICER NORTH</div>'},
+    'SA', ''],
+    [{'v':'Support Officer1', 'f':'<div style="color:black; font-style:bold">SYSTEMS SUPPORT OFFICER SOUTH</div>'},
+    'SA', ''],
+    [{'v':'Support Officer2', 'f':'<div style="color:black; font-style:bold">SYSTEMS SUPPORT OFFICER CHITUNGWIZA</div>'},
+    'SA', ''],
+   [{'v':'Hardware technician', 'f':'<div style="color:black; font-style:bold">HARDWARE TECHNICIAN</div>'},
+    'SA', ''],
+    [{'v':'Assistant Hardware technician', 'f':'<div>ASSISTANT HARDWARE TECHNICIAN</div>'},
+    'Hardware technician', ''],
+    [{'v':'', 'f':'<div></div>'},
+    '', ''],
+ 
+ ]);
+
+    // Create the chart.
+    var chart = new google.visualization.OrgChart(document.getElementById('chart_div'));
+    // Draw the chart, setting the allowHtml option to true for the tooltips.
+    chart.draw(data, {'allowHtml':true});
+  }
+</script>
+{% endblock %}
+{%block content%}
+
+<div>
+      <div id="chart_div"></div>
+</div>
+
+{%endblock%}
