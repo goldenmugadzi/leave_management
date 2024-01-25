@@ -9,6 +9,7 @@ urlpatterns = [
 
     path('list_Ace_authoriser', views.get_Ace_records_pettyauthoriser, name='Ace_authoriser'),
     path('quotation_download', views.quotation_download, name='quotation_downloaded'),
+    path('view', views.view_ace, name='view'),
     path('approve', views.get_to_approve_Ace, name='approve_Ace'),
     path('reject', views.get_to_reject_Ace, name='reject_Ace'),
     path('final_approve', views.final_approval, name='final_approval'),

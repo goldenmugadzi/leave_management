@@ -1612,3 +1612,97 @@ def upload_budgets(request):
                     "user_groups": user_groups}
                       )
 
+
+def view_ace(request):
+    user_title = request.user.get_full_name()
+    l = request.user.groups.values_list('name', flat=True)
+
+    if request.method == "GET":
+        Ace_id = request.GET['i']
+        print(Ace_id)
+        Ace_id = str(Ace_id)
+        pettyc = Ace.objects.filter(Ace_id2=Ace_id).first()
+        # pettyc1 = Ace.objects.filter(petty_id=Ace_id).first()
+        # print(pettyc)
+        context = pettyc
+        # print(context)
+        # print(context.quotation1)
+        # print("after context")
+        user_id = request.user.id
+
+
+    user_id = request.user.id
+    user = User.objects.filter(id=user_id).first()
+    user_profile = UserProfile.objects.filter(user_id=user.pk).first()
+
+    user_groups = user.groups.values_list('name', flat=True)
+
+    custom_user_roles = {
+        "non_conformity": {},
+        "remittance_advice": {},
+        "pettycash": {},
+        "adjudication": {},
+        "tokens": {},
+        "tenders": {},
+        "ace": {},
+        "users": {},
+    }
+
+    user_group_ids = user_profile.roles
+    user_group_ids = user_group_ids.split(",") if user_group_ids else []
+    for id in user_group_ids:
+
+        role = Roles.objects.filter(id=id).first()
+
+        if role.application == "users":
+            custom_user_roles["users"] = role
+
+        if role.application == "non_conformity":
+            custom_user_roles["non_conformity"] = role
+
+        if role.application == "remittance_advice":
+            custom_user_roles["remittance_advice"] = role
+
+        if role.application == "pettycash":
+            custom_user_roles["pettycash"] = role
+
+        if role.application == "adjudication":
+            custom_user_roles["adjudication"] = role
+
+        if role.application == "tokens":
+            custom_user_roles["tokens"] = role
+
+        if role.application == "tenders":
+            custom_user_roles["tenders"] = role
+
+        if role.application == "ace":
+            custom_user_roles["ace"] = role
+    Ace_role=str(custom_user_roles["ace"])
+    print(Ace_role,"ace role")
+    user_title = request.user.get_full_name()
+
+    # secction = user.section
+    # records = Ace.objects.filter(section=secction).all()
+    # context = serializers.serialize('json', pettyc1)
+
+
+    print(context.classification)
+    if str(Ace_role)=="process":
+        if str(context.classification)=="internal":
+            user_page = 'Ace/Ace_approve_accounting_officer_internal.html'
+        else:
+            user_page = 'Ace/Ace_approve_accounting_officer_project.html'
+
+
+    else:
+        if str(context.classification)=="internal":
+            user_page = 'Ace/Ace_view_internal.html'
+        if str(context.classification)=="project":
+            user_page = 'Ace/Ace_view_project.html'
+
+    print(user_page)
+
+    return render(request, user_page, {"title": "All Records",
+                                       "context": context,
+                                       "user_title": user_title,
+                                       "user_groups": user_groups})
