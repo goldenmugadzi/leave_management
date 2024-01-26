@@ -1,0 +1,4 @@
+INSERT INTO `users_userprofile` (`id`, `section`, `region`, `district`, `status`, `user_id`, `depot`, `roles`, `designation`, `last_reset`) VALUES (NULL, '52
+7001', '1', '524701', 'active', '19', '524402', '1,8,25,17,28,5,40,11', '133', '2023-10-10')
+
+INSERT INTO `auth_user` (`id`, `password`, `last_login`, `is_superuser`, `username`, `first_name`, `last_name`, `email`, `is_staff`, `is_active`, `date_joined`) VALUES (NULL, 'pbkdf2_sha256$720000$lrhhTwvpkzBM25KMSXZ7cw$ggoJL0biFYTsBcsqGJDfn7+H9e6Wl6go7Kz/bTuld1Q=', '2024-01-26 06:58:30.150906', '0', '9104681', 'Ashley', 'Mugwambi', 'ashleyzarter@gmail.com', '0', '1', '2023-10-10 09:53:41.226212')
