@@ -36,6 +36,7 @@
     <table id="users_index" class="display" style="width: 100%">
       <thead>
         <tr>
+            <th>Action</th>
           <th>Department</th>
           <th>Location</th>
           <th>Section</th>
@@ -74,6 +75,7 @@
       <tbody></tbody>
       <tfoot>
         <tr>
+            <th>Action</th>
             <th>Department</th>
             <th>Location</th>
             <th>Section</th>
@@ -162,6 +164,18 @@
       data: list,
         scrollX: true,
       columns: [
+          {
+              data: null,
+              render: function (data, type, row, meta) {
+                  return `
+                  <a
+                            href='/ace/view?i=${row.Ace_id2}'
+                            style="width: 100%;"
+                            class="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                    > View
+                    </a>`;
+              },
+          },
         {
           data: "Department",
         },
