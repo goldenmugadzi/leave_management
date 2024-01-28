@@ -558,11 +558,12 @@
     <script>
       console.log("url history ...")
       const currentUrl = window.location.href;
+      const currentUrlParts = currentUrl.split("/")[3]
       const menuItems = document.querySelectorAll("#menu-item");
       for (const item of menuItems) {
         const itemUrl = item.href;
-        console.log("currentUrl, itemUrl: ", currentUrl, itemUrl)
-        if (currentUrl === itemUrl) {
+        const itemUrlParts = itemUrl.split("/")[3] 
+        if (currentUrlParts === itemUrlParts) {
           item.classList.add("bg-gulf-blue-400", "shadow-md");
           console.log("item.classList: ", item.classList)
         }

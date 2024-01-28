@@ -1,6 +1,7 @@
 import csv
 from datetime import datetime
 import json
+from django.http import JsonResponse
 from django.shortcuts import render,redirect
 from .models import PBNC, TD, UPO, Inspections, Maintenance
 from django.core import serializers
@@ -15,6 +16,14 @@ Regions = apps.get_model(app_label='users', model_name='Regions')
 
 # Create your views here.
 def dashboard_index(request):
+    
+    
+    user_title = request.user.get_full_name()
+    user = request.user
+    user_profile = UserProfile.objects.filter(user_id=user.id).first()
+    l = request.user.groups.values_list('name',flat = True) # QuerySet Object
+    user_groups = list(l) 
+    
     # fetch pbnc data
     pbncs = PBNC.objects.all().order_by('-amount')
     tds = TD.objects.all().order_by('-amount')
@@ -28,7 +37,6 @@ def dashboard_index(request):
         maintenance_december = Maintenance.objects.filter(depot=depot.depot, created_at__month=datetime.now().month)
         maintenance_weekly_count = maintenance_december.annotate(week=ExtractWeek('created_at')).values('week').annotate(count=Count('id')).order_by('week')
 
-        # print("maintenance_weekly_count: ", maintenance_weekly_count)
         week_count = []
         for i in range(4):
             if i < len(maintenance_weekly_count):
@@ -89,29 +97,37 @@ def dashboard_index(request):
                   })
 
 def dashboard_filter(request, item):
+    
+    page_title = ""
     # fetch pbnc data
     if item == "district":
         district_id = request.POST['selectedDistrict']
         district_query = Districts.objects.filter(id=district_id).first()
         district = district_query.district
+        page_title = district
         pbncs = PBNC.objects.filter(district=district).all().order_by('-amount')
         tds = TD.objects.filter(district=district).all().order_by('-amount')
         upos = UPO.objects.filter(district=district).all()
         inpections = Inspections.objects.filter(district=district).all()
         maintenance_ = Maintenance.objects.filter(district=district).all()
+        depots = Depots.objects.filter(district_id=district_id).all()
+        
     elif item == "region":
         region_id = request.POST['selectedRegion']
         region_query = Regions.objects.filter(id=region_id).first()
         region = region_query.region
+        page_title = region
         pbncs = PBNC.objects.filter(region=region).all().order_by('-amount')
         tds = TD.objects.filter(region=region).all().order_by('-amount')
         upos = UPO.objects.filter(region=region).all()
         inpections = Inspections.objects.filter(region=region).all()
         maintenance_ = Maintenance.objects.filter(region=region).all()
+        depots = Depots.objects.filter(region_id=region_id).all()
     elif item == "depot":
         depot_id = request.POST['selectedDepot']
         depot_query = Depots.objects.filter(id=depot_id).first()
         depot = depot_query.depot
+        page_title = depot
         pbncs = PBNC.objects.filter(depot=depot).all().order_by('-amount')
         tds = TD.objects.filter(depot=depot).all().order_by('-amount')
         upos = UPO.objects.filter(depot=depot).all()
@@ -144,22 +160,61 @@ def dashboard_filter(request, item):
     maintenance_keys_list = json.dumps(list(maintenance_count.keys()), default=str)
     maintenance_values_list = json.dumps(list(maintenance_count.values()), default=str)
     
+    mtn = {}
+    for depot in depots:
+        maintenance_december = Maintenance.objects.filter(depot=depot.depot, created_at__month=datetime.now().month)
+        maintenance_weekly_count = maintenance_december.annotate(week=ExtractWeek('created_at')).values('week').annotate(count=Count('id')).order_by('week')
+
+        week_count = []
+        for i in range(4):
+            if i < len(maintenance_weekly_count):
+                week_count.append(maintenance_weekly_count[i]['count'])
+            else:
+                week_count.append(0)
+                
+        mtn[depot.depot] = week_count
+    
     user_title = request.user.get_full_name()
+    url_path = request.path.split("/")
+    print("url_path: ", url_path)
     
     return render(request, 
                   'dashboards/index.html', 
                   {
                       "user_title": user_title,
+                      "page_description": page_title,
+                      "url_path": url_path,
                       "pbncs": pbncs, 
                       "tds": tds, 
                       "upos": upos, 
                       "inspection_locations": keys_list, 
                       "inspections_count": values_list, 
+                      "mtn": json.dumps(mtn, default=str), 
                       "maintenance_count": maintenance_values_list, 
                       "maintenance_locations": maintenance_keys_list, 
                       "maintenance_": serializers.serialize('json', maintenance_), 
                       "inspections_": serializers.serialize('json', inpections) 
                   })
+
+def dashboards_maintenance_ajax(request):
+    month = request.GET['month']
+    
+    mtn = {}
+    depots = Depots.objects.all()
+    for depot in depots:
+        maintenance_december = Maintenance.objects.filter(depot=depot.depot, created_at__month=month)
+        maintenance_weekly_count = maintenance_december.annotate(week=ExtractWeek('created_at')).values('week').annotate(count=Count('id')).order_by('week')
+
+        week_count = []
+        for i in range(4):
+            if i < len(maintenance_weekly_count):
+                week_count.append(maintenance_weekly_count[i]['count'])
+            else:
+                week_count.append(0)
+                
+        mtn[depot.depot] = week_count
+    
+    return JsonResponse(mtn, safe=False)
 
 def pbnc_upload(request):
     if request.method == 'POST':
