@@ -76,7 +76,6 @@ def dashboard_index(request):
     
     user_title = request.user.get_full_name()
     url_path = request.path.split("/")
-    print("url_path: ", url_path)
     
     return render(request, 
                   'dashboards/index.html', 
