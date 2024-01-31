@@ -18,30 +18,27 @@
     // For each orgchart box, provide the name, manager, and tooltip to show.
     data.addRows([
 
-
-
-    [{'v':'CRO', 'f':'<div style="color:black; font-style:bold">CHIEF RISK OFFICER</div>'},
-    '', 'Risk'],
-
-   [{'v':'SECRETARY ', 'f':'<div style="color:black; font-style:bold">SECRETARY</div>'},
-    'CRO', 'Risk and loss office'],
-    [{'v':'RO', 'f':'<div style="color:black; font-style:bold">RISK OFFICER</div>'},
-    'CRO', ''],
-    [{'v':'SLCO', 'f':'<div style="color:black; font-style:bold">SENIOR LOSS CONTROL OFFICER</div>'},
-    'CRO', 'Risk Management'],
-
-    [{'v':'LCO', 'f':'<div style="color:black; font-style:bold">LOSS CONTROL OFFICER OPERATIONS</div>'},
-    'SLCO', 'Risk Management'],
-    [{'v':'LC', 'f':'<div style="color:black; font-style:bold">LOSS CONTROLLER x 4</div>'},
-    'LCO', 'Risk Management'],
-    [{'v':'LCA', 'f':'<div style="color:black; font-style:bold">LOSS CONTROLLER ASSISTANTS x 4</div>'},
-    'LC', 'Risk Management'],
-
-    [{'v':'LCOI', 'f':'<div style="color:black; font-style:bold">LOSS CONTROL OFFICER INVESTIGATIONS</div>'},
-    'SLCO', 'Risk, Loss Management'],
+    [{'v':'NDE', 'f':'<div style="color:black; font-style:bold">NETWORK DEVELOPMENT ENGINEER</div>'},
+    '', 'ENGINEERING'],
+    [{'v':'SEP', 'f':'<div style="color:black; font-style:bold">SENIOR ENGINEER PROJECTS</div>'},
+    'NDE', 'network development'],
+    [{'v':'SEPD', 'f':'<div style="color:black; font-style:bold">SENIOR ENGINEER PLANNING and DESIGN</div>'},
+    'NDE', 'network development'],
     
-    [{'v':'LCI', 'f':'<div style="color:black; font-style:bold">LOSS CONTROLLER x 2</div>'},
-    'LCOI', 'Risk Management'],
+    [{'v':'TC', 'f':'<div style="color:black; font-style:bold">TECHNICAL CLERK</div>'},
+    'NDE', 'network development'],
+    [{'v':'PTDO', 'f':'<div style="color:black; font-style:bold">PRINCIPAL TECHNICIAN DRAWING OFFICE</div>'},
+    'NDE', 'network development'],
+    [{'v':'TEC', 'f':'<div style="color:black; font-style:bold">TECHNICIAN x 5 </div>'},
+    'PTDO', 'network development'],
+    [{'v':'PTDO', 'f':'<div style="color:black; font-style:bold">TECHNICIAN x 4 </div>'},
+    'PTDO', 'network development'],
+    [{'v':'PT', 'f':'<div style="color:black; font-style:bold">PRINCIPAL TECHNICIAN  </div>'},
+    'SEP', 'network development'],
+    [{'v':'TN', 'f':'<div style="color:black; font-style:bold"> TECHNICIAN  </div>'},
+    'PT', 'network development'],
+    [{'v':'AT', 'f':'<div style="color:black; font-style:bold">ASSISTANT TECHNICIAN X 2 </div>'},
+    'TN', 'network development'],
     
  ]);
 
@@ -64,15 +61,14 @@
       // Convert canvas to PDF using html2pdf library
       var canvasDataUrl = canvas.toDataURL('image/png');
       var pdfOptions = {
-          filename: 'Risk_Chart.pdf',
+          filename: 'Network_development_Chart.pdf',
           image: { type: 'png', data: canvasDataUrl },
           html2canvas: { scale: 2 }
       };
       html2pdf().set(pdfOptions).from(chartContainer).save();
 
-
   })
-    
+
 
   }
 </script>
@@ -83,6 +79,5 @@
   <a href="#" id="download_button" style="text-color:blue"  class="download-button">Download Chart</a>
   <div id="chart_div" class="py-10 px-5"></div>
 </div>
-
 
 {%endblock%}
