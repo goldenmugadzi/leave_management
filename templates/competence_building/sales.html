@@ -20,29 +20,22 @@
 
 
 
-    [{'v':'CRO', 'f':'<div style="color:black; font-style:bold">CHIEF RISK OFFICER</div>'},
-    '', 'Risk'],
+    [{'v':'SE', 'f':'<div style="color:black; font-style:bold">SALES EXECUTIVE</div>'},
+    '', 'District'],
+    [{'v':'AOR', 'f':'<div style="color:black; font-style:bold">ACCOUNTING OFFICE REVENUE ASSURANCE</div>'},
+    'SE', 'District'],
+    [{'v':'AAC', 'f':'<div style="color:black; font-style:bold">ACCOUNTING CLERK</div>'},
+    'AOR', 'District'],
+    [{'v':'AOC', 'f':'<div style="color:black; font-style:bold">ACCOUNTING OFFICE COSTING</div>'},
+    'SE', 'District'],
+    [{'v':'AC', 'f':'<div style="color:black; font-style:bold">ACCOUNTING CLERK</div>'},
+    'AOC', 'District'],
+    [{'v':'AOC', 'f':'<div style="color:black; font-style:bold">ACCOUNTING OFFICE CASH</div>'},
+    'SE', 'District'],
+    [{'v':'CS', 'f':'<div style="color:black; font-style:bold">COMMERCIAL SUPERVISOR</div>'},
+    'SE', 'District'],
 
-   [{'v':'SECRETARY ', 'f':'<div style="color:black; font-style:bold">SECRETARY</div>'},
-    'CRO', 'Risk and loss office'],
-    [{'v':'RO', 'f':'<div style="color:black; font-style:bold">RISK OFFICER</div>'},
-    'CRO', ''],
-    [{'v':'SLCO', 'f':'<div style="color:black; font-style:bold">SENIOR LOSS CONTROL OFFICER</div>'},
-    'CRO', 'Risk Management'],
-
-    [{'v':'LCO', 'f':'<div style="color:black; font-style:bold">LOSS CONTROL OFFICER OPERATIONS</div>'},
-    'SLCO', 'Risk Management'],
-    [{'v':'LC', 'f':'<div style="color:black; font-style:bold">LOSS CONTROLLER x 4</div>'},
-    'LCO', 'Risk Management'],
-    [{'v':'LCA', 'f':'<div style="color:black; font-style:bold">LOSS CONTROLLER ASSISTANTS x 4</div>'},
-    'LC', 'Risk Management'],
-
-    [{'v':'LCOI', 'f':'<div style="color:black; font-style:bold">LOSS CONTROL OFFICER INVESTIGATIONS</div>'},
-    'SLCO', 'Risk, Loss Management'],
-    
-    [{'v':'LCI', 'f':'<div style="color:black; font-style:bold">LOSS CONTROLLER x 2</div>'},
-    'LCOI', 'Risk Management'],
-    
+   
  ]);
 
     // Create the chart.
@@ -64,15 +57,13 @@
       // Convert canvas to PDF using html2pdf library
       var canvasDataUrl = canvas.toDataURL('image/png');
       var pdfOptions = {
-          filename: 'Risk_Chart.pdf',
+          filename: 'Sales_Chart.pdf',
           image: { type: 'png', data: canvasDataUrl },
           html2canvas: { scale: 2 }
       };
       html2pdf().set(pdfOptions).from(chartContainer).save();
 
-
   })
-    
 
   }
 </script>
@@ -83,6 +74,5 @@
   <a href="#" id="download_button" style="text-color:blue"  class="download-button">Download Chart</a>
   <div id="chart_div" class="py-10 px-5"></div>
 </div>
-
 
 {%endblock%}

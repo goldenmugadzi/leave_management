@@ -19,31 +19,38 @@
     data.addRows([
 
 
-    [{'v':'EM', 'f':'<div style="color:black; font-style:bold">ENGINEERING MANAGER</div>'},
-    '', 'Engineeering'],
 
-   [{'v':'SECRETARY ', 'f':'<div style="color:black; font-style:bold">SECRETARY</div>'},
-    'EM', 'Engineeering'],
-    [{'v':'NDE', 'f':'<a href= "networkdevelopment" ><div style="color:black; font-style:bold">NETWORK DEVELOPMENT ENGINEER</div></a>'},
-    'EM', 'ENGINEERING'],
-    [{'v':'OPPS', 'f':'<a href= "operations" ><div style="color:black; font-style:bold">OPERATIONS AND MAINTANANCE ENGINEER</div></a>'},
-    'EM', 'Opperations and maintanance'],
-    [{'v':'TC', 'f':'<div style="color:black; font-style:bold">TRANSPORT CONTROLLER</div>'},
-    'EM', 'Engineeering'],
-
-    [{'v':'GF', 'f':'<div style="color:black; font-style:bold">GARAGE FOREPERSON</div>'},
-    'TC', 'Engineeering'],
-    [{'v':'CD', 'f':'<div style="color:black; font-style:bold">AUGER/ CRANE DRIVE x 5</div>'},
-    'TC', 'Engineeering'],
-
-    [{'v':'AE', 'f':'<div style="color:black; font-style:bold">AUTO ELECTRICIAN</div>'},
-    'GF', 'Engineeering'],
-    [{'v':'AM', 'f':'<div style="color:black; font-style:bold">ATTISAN MECHANIC</div>'},
-    'GF', 'Engineeering'],
-    [{'v':'A', 'f':'<div style="color:black; font-style:bold">ASSISTANT</div>'},
-    'AE', 'Engineeering'],
-    [{'v':'AA', 'f':'<div style="color:black; font-style:bold">ARTISAN ASSISTANT</div>'},
-    'AM', 'Engineeering'],
+    [{'v':'OPPS', 'f':'<div style="color:black; font-style:bold">OPERATIONS AND MAINTANANCE ENGINEER</div>'},
+    '', 'Operations and maintanance'],
+    
+    [{'v':'SEO', 'f':'<div style="color:black; font-style:bold">SENIOR ENGINEER OPERATIONS</div>'},
+    'OPPS', 'Operations and maintanance'],
+    [{'v':'SEM', 'f':'<div style="color:black; font-style:bold">SENIOR ENGINEER MAINTANANCE</div>'},
+    'OPPS', 'Operations and maintanance'],
+    [{'v':'SSC', 'f':'<div style="color:black; font-style:bold">SENIOR SYSTEMS CONTROLLER x 10</div>'},
+    'SEO', 'Operations and maintanance'],
+    [{'v':'SFPM', 'f':'<div style="color:black; font-style:bold">SENIOR FOREPERSON MAINTANANCE</div>'},
+    'SEM', 'Operations and maintanance'],
+    [{'v':'SFPS', 'f':'<div style="color:black; font-style:bold">SENIOR FOREPERSON SUBSTATION</div>'},
+    'SEM', 'Operations and maintanance'],
+    [{'v':'AL', 'f':'<div style="color:black; font-style:bold">ARTISAN LINE</div>'},
+    'SFPM', 'Operations and maintanance'],
+    [{'v':'APC', 'f':'<div style="color:black; font-style:bold">ARTISAN (POWER CABLES)</div>'},
+    'SFPM', 'Operations and maintanance'],
+    [{'v':'AAL', 'f':'<div style="color:black; font-style:bold">ARTISAN ASSISTANT LINE</div>'},
+    'AL', 'Operations and maintanance'],
+    [{'v':'LW', 'f':'<div style="color:black; font-style:bold">LINE WORKER x 4</div>'},
+    'AL', 'Operations and maintanance'],
+    [{'v':'AA', 'f':'<div style="color:black; font-style:bold">ARTISAN ASSISTANT x 8</div>'},
+    'APC', 'Operations and maintanance'],
+    [{'v':'GC', 'f':'<div style="color:black; font-style:bold">GANG CHARGE</div>'},
+    'SFPS', 'Operations and maintanance'],
+    [{'v':'TECN', 'f':'<div style="color:black; font-style:bold">TECHNICIAN X 5</div>'},
+    'SFPS', 'Operations and maintanance'],
+    [{'v':'WRK', 'f':'<div style="color:black; font-style:bold">WORKER x 5</div>'},
+    'GC', 'Operations and maintanance'],
+    [{'v':'GC', 'f':'<div style="color:black; font-style:bold">ASSISTANAT TECHNICIAN</div>'},
+    'TECN', 'Operations and maintanance'],
 
  ]);
 
@@ -66,7 +73,7 @@
       // Convert canvas to PDF using html2pdf library
       var canvasDataUrl = canvas.toDataURL('image/png');
       var pdfOptions = {
-          filename: 'Engineering_Chart.pdf',
+          filename: 'Operations_&_Maintanance_Chart.pdf',
           image: { type: 'png', data: canvasDataUrl },
           html2canvas: { scale: 2 },
   jsPDF: { format: 'a4', orientation: 'landscape' } // Adjust page size here
@@ -76,7 +83,9 @@
 
   })
 
-}
+
+
+  }
 </script>
 {% endblock %}
 {%block content%}

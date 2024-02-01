@@ -16,6 +16,10 @@ urlpatterns = [
     path('losscontrol', views.view_losscontrol, name='losscontrol'),
     path('engineering', views.view_engineering, name='engineering'),
     path('commercial', views.view_commercial, name='commercial'),
+    path('district', views.view_district, name='district'),
+    path('sales', views.view_sales, name='sales'),
+    path('networkdevelopment', views.view_networkdevelopment, name='networkdevelopment'),
+    path('operations', views.view_operations, name='operations'),
 
 
 ]

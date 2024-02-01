@@ -35,3 +35,15 @@ def view_engineering(request):
 
 def view_commercial(request):
         return render(request, 'competence_building/commercial.html')
+
+def view_district(request):
+        return render(request, 'competence_building/district.html')
+
+def view_sales(request):
+        return render(request, 'competence_building/sales.html')
+
+def view_networkdevelopment(request):
+        return render(request, 'competence_building/networkdevelopment.html')
+
+def view_operations(request):
+        return render(request, 'competence_building/operations.html')
