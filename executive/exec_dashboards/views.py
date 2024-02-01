@@ -17,7 +17,6 @@ Regions = apps.get_model(app_label='users', model_name='Regions')
 # Create your views here.
 def dashboard_index(request):
     
-    
     user_title = request.user.get_full_name()
     user = request.user
     user_profile = UserProfile.objects.filter(user_id=user.id).first()

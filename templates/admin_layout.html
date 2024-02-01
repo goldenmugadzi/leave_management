@@ -30,7 +30,7 @@
   </head>
 
   <body class="bg-gulf-blue-50">
-    <div
+    {% comment %} <div
       x-data="{ showNewsFlash: false }"
       style="position: fixed; width: 100%"
       class="z-30"
@@ -74,7 +74,7 @@
           </div>
         </nav>
       </div>
-    </div>
+    </div> {% endcomment %}
     <main style="display: flex" class="flex justify-between p-4">
       <aside
         id="sidebar"
@@ -141,7 +141,7 @@
             <a
               id="menu-item"
               class="flex items-center w-full h-12 px-3 mt-2 rounded hover:bg-gulf-blue-500 hover:shadow-lg"
-              href="/business_applications"
+              href="/business-applications"
             >
               <svg
                 class="w-6 h-6 stroke-current"
@@ -162,7 +162,7 @@
             <a
               id="menu-item"
               class="flex items-center w-full h-12 px-3 mt-2 rounded hover:bg-gulf-blue-500 hover:shadow-lg"
-              href="{% url 'dashboard_index' %}"
+              href="/knowledge-center/view_firstview"
             >
               <svg
                 class="w-6 h-6 stroke-current"
@@ -236,24 +236,6 @@
               </a>
             </div>
           </div>
-          <a
-            style="margin-top: 3rem"
-            class="flex items-center w-full px-3"
-            href="#"
-          >
-            <svg
-              class="w-8 h-8 fill-current"
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-            >
-              <path
-                d="M11 17a1 1 0 001.447.894l4-2A1 1 0 0017 15V9.236a1 1 0 00-1.447-.894l-4 2a1 1 0 00-.553.894V17zM15.211 6.276a1 1 0 000-1.788l-4.764-2.382a1 1 0 00-.894 0L4.789 4.488a1 1 0 000 1.788l4.764 2.382a1 1 0 00.894 0l4.764-2.382zM4.447 8.342A1 1 0 003 9.236V15a1 1 0 00.553.894l4 2A1 1 0 009 17v-5.764a1 1 0 00-.553-.894l-4-2z"
-              />
-            </svg>
-            <span class="item-center ml-2 text-sm font-bold">BUSINESS APPLICATIONS</span
-            >
-          </a>
         </div>
         <!-- Component End  -->
       </aside>
@@ -266,7 +248,7 @@
             width: 84%;
             height: 6.5rem;
           "
-          class="rounded-xl p-4 border bg-gulf-blue-100 border-gulf-blue-400 z-10 mt-5"
+          class="rounded-xl p-4 border bg-gulf-blue-100 border-gulf-blue-400 z-10 mt-5 max-w-screen"
         >
           <nav>
             <div class="mx-auto px-2 sm:px-6 md:px-2 lg:px-2 xl:px-2">
@@ -503,10 +485,10 @@
 
         <div
           style="margin-top: 6.5rem"
-          class="mx-auto px-4 py-6 sm:px-6 lg:px-8"
+          class="mx-auto px-4 py-4 sm:px-6 lg:px-8"
         >
           <div class="mx-auto py-6">
-            <nav class="flex mb-3 mt-3" aria-label="Breadcrumb">
+            <nav class="flex mb-5" aria-label="Breadcrumb">
               <ol class="inline-flex items-center space-x-1 md:space-x-2">
                 {% for path in url_path %} 
                 {% with forloop.counter as loop_index %} 
@@ -514,7 +496,7 @@
                 <li class="inline-flex items-center">
                   <a
                     href="#"
-                    class="inline-flex items-center text-gray-700 hover:text-gray-900"
+                    class="inline-flex items-center text-xl text-gray-700 hover:text-gray-900"
                   >
                     <svg
                       class="w-5 h-5 mr-2.5"
@@ -546,7 +528,7 @@
                     </svg>
                     <a
                       href="#"
-                      class="ml-1 text-sm font-medium text-gray-700 hover:text-gray-900 md:ml-2"
+                      class="ml-1 text-xl font-medium text-gray-700 hover:text-gray-900 md:ml-2"
                       >{{ path|capfirst }}</a
                     >
                   </div>

@@ -3,7 +3,7 @@
 {% extends 'admin_layout.html' %} {% block content %}
 <div class="content-wrapper">
   
-  <div class="bg-gray-200 shadow shadow-nepal-300 text-gray-700 rounded px-2 py-2">
+  <div class="bg-gulf-blue-100 shadow shadow-gulf-blue-300 text-gulf-blue-900 rounded px-2 py-2">
     <form method="post">
       <input
       type="hidden"
@@ -13,11 +13,11 @@
       {% csrf_token %}
       <div class="space-y-12 px-5 py-5">
 
-        <div class="mt-10 border-b border-gray-900/10 pb-12">
-          <h2 class="text-base font-semibold leading-7 text-gray-900">
+        <div class="mt-10 border-b border-gulf-blue-900/10 pb-12">
+          <h2 class="text-base font-semibold leading-7 text-gulf-blue-900">
             User Information
           </h2>
-          <p class="mt-1 text-sm leading-6 text-gray-600">
+          <p class="mt-1 text-sm leading-6 text-gulf-blue-900">
             Update relevant fields.
           </p>
 
@@ -88,7 +88,7 @@
                   id="designation"
                   name="designation"
                   autocomplete="designation"
-                  class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+                  class="block w-full rounded-md border-0 px-2 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
                 >
                   {% if user.designation %}
                   <option value="{{user.designation.id}}">{{user.designation.description}}</option>
@@ -130,7 +130,7 @@
                   id="section"
                   name="section"
                   autocomplete="section"
-                  class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+                  class="block w-full rounded-md border-0 px-2 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
                 >
                 {% if user.section %}
                 <option value="{{user.section.code}}" >{{user.section.section}}</option>
@@ -178,7 +178,7 @@
                   id="region"
                   name="region"
                   autocomplete="region"
-                  class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+                  class="block w-full rounded-md border-0 px-2 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
                 >
                 {% if user.region %}
                 <option value="{{ user.region.id }}" selected>
@@ -220,7 +220,7 @@
                   id="remittance_role"
                   name="remittance_role"
                   autocomplete="remittance_role"
-                  class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+                  class="block w-full rounded-md border-0 px-2 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
                 >
                 {% if user.roles.remittance_advice %}
                 <option value="{{user.roles.remittance_advice.id}}" selected>
@@ -246,7 +246,7 @@
                   id="petty_cash_role"
                   name="petty_cash_role"
                   autocomplete="petty_cash_role"
-                  class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+                  class="block w-full rounded-md border-0 px-2 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
                 >
                 {% if user.roles.pettycash %}
                 <option value="{{ user.roles.pettycash.id }}" selected>
@@ -272,7 +272,7 @@
                   id="direct_purchase_role"
                   name="direct_purchase_role"
                   autocomplete="direct_purchase_role"
-                  class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+                  class="block w-full rounded-md border-0 px-2 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
                 >
                 {% if user.roles.adjudication %}
                 <option value="{{ user.roles.adjudication.id }}" selected>
@@ -298,7 +298,7 @@
                   id="tokens_role"
                   name="tokens_role"
                   autocomplete="tokens_role"
-                  class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+                  class="block w-full rounded-md border-0 px-2 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
                 >
                 {% if user.roles.tokens %}
                 <option value="{{ user.roles.tokens.id }}" selected>
@@ -324,7 +324,7 @@
                   id="tenders_role"
                   name="tenders_role"
                   autocomplete="tenders_role"
-                  class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+                  class="block w-full rounded-md border-0 px-2 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
                 >
                 {% if user.roles.tenders %}
                 <option value="{{ user.roles.tenders.id }}" selected>
@@ -350,7 +350,7 @@
                   id="ace_role"
                   name="ace_role"
                   autocomplete="ace_role"
-                  class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+                  class="block w-full rounded-md border-0 px-2 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
                 >
                 {% if user.roles.ace %}
                 <option value="{{ user.roles.ace.id }}" selected>
@@ -376,7 +376,7 @@
                   id="non_conformity_role"
                   name="non_conformity_role"
                   autocomplete="non_conformity_role"
-                  class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+                  class="block w-full rounded-md border-0 px-2 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
                 >
                 {% if user.roles.non_conformity %}
                 <option value="{{ user.roles.non_conformity.id }}" selected>
@@ -402,7 +402,7 @@
                   id="users_role"
                   name="users_role"
                   autocomplete="users_role"
-                  class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+                  class="block w-full rounded-md border-0 px-2 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
                 >
                 {% if user.roles.users %}
                 <option value="{{ user.roles.users.id }}" selected>
