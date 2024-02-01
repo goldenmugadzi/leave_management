@@ -2,13 +2,24 @@
 
 <div style="margin-bottom: 25px;" class="content-wrapper flex flex-wrap p-2 m-px">
   {%for file in eng_files%}
+  {% with forloop.counter as loop_index %} 
      
+    {% if loop_index|divisibleby:2 %}
     <a href="/process_risks/download_file?file_id={{file.id}}">
     <button  style="width: 12rem;height: 5rem;background-color: #6634f0;margin-right: 20px;margin-bottom: 25px" class=" w-28 bg-blue-800 hover:bg-blue-900 outline-none focus:outline-none border px-3 py-1 rounded flex items-center">
         <span class="pr-1 font-semibold flex-1 text-blue-50">{{file.file_name}}</span>
        
     </button>
-   
+    
+    {% else %}
+
+    <a href="/process_risks/download_file?file_id={{file.id}}">
+        <button  style="width: 12rem;height: 5rem;background-color: #36270;margin-right: 20px;margin-bottom: 25px" class=" w-28 bg-blue-800 hover:bg-blue-900 outline-none focus:outline-none border px-3 py-1 rounded flex items-center">
+            <span class="pr-1 font-semibold flex-1 text-blue-50">{{file.file_name}}</span>
+           
+        </button>
+    {% endif %}
+    {% endwith %}
     {%endfor%}
 </div>
 <div style="display: flex;justify-content: start;">

@@ -1,0 +1,2013 @@
+{% extends "admin_layout.html" %} 
+{% load static %}
+{% block content %}
+
+<div class="content-wrapper">
+<div style="margin-bottom: 10rem;" class="mx-auto px-4 py-6 sm:px-6 lg:px-8">
+    <!-- COMMERCIAL START -->
+    <div class="grid grid-cols-3 gap-4">
+
+        {% comment %} 
+        <div class="w-auto bg-gray-200 shadow shadow-nepal-300 text-gray-700 rounded px-2 py-2">
+            <div class="sm:flex lg:items-center lg:justify-between">
+                <div class="min-w-0 flex-1">
+                    <div class="">
+                        <div class="mx-auto">
+
+                            <div class="group relative">
+                                <div class="aspect-h-1 aspect-w-1 w-full overflow-hidden rounded-md bg-gray-200 lg:aspect-none group-hover:opacity-75 lg:h-40">
+                                    <img src="{% static 'assets/images/electrical.jpg' %}" alt="" class="h-full w-full object-cover object-center lg:h-full lg:w-full">
+                                </div>
+                                <div class="mt-4 flex justify-center">
+                                    <div class="w-full1">
+                                        <div class="dropdown-group inline-block w-full text-blue-50">
+                                            <button class="w-full bg-blue-800 hover:bg-blue-900 outline-none focus:outline-none border px-3 py-1 rounded flex items-center">
+                                                <span class="pr-1 font-semibold flex-1 text-blue-50">COMMERCIAL</span>
+                                                <span class="text-blue-50">
+                                                    <svg class="fill-current h-4 w-4 transform group-hover:-rotate-180
+                                                            transition duration-150 ease-in-out" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                                        <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+                                                    </svg>
+                                                </span>
+                                            </button>
+
+
+                                            <ul style="min-width: 18rem;" class="bg-blue-50 z-10 text-gray-950 border rounded transform scale-0 group-hover:scale-100 absolute 
+                                                        transition duration-150 ease-in-out origin-top">
+
+                                                <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                    <a tabindex="-1" href="http://172.16.8.97:8200/commercials/connections/all-connections">
+                                                        Connections
+                                                    </a>
+                                                </li>
+                                                <li class="relative px-1 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                    <a class="w-full text-left px-3 flex items-center outline-none focus:outline-none">
+                                                        <span class="pr-1 flex-1">Tokens</span>
+                                                        <span class="mr-auto">
+                                                            <svg class="fill-current h-4 w-4
+                                                                    transition duration-150 ease-in-out" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                                                <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+                                                            </svg>
+                                                        </span>
+                                                    </a>
+                                                    <ul class="bg-blue-50 border rounded-sm absolute top-0 right-0 
+                                                            transition duration-150 ease-in-out origin-top-left
+                                                            min-w-32 text-gray-950
+                                                            ">
+
+                                                        <li class="relative px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                            <button class="w-full text-left flex items-center outline-none focus:outline-none">
+                                                                <span class="pr-1 flex-1">Clear Credit Request</span>
+                                                                <span class="mr-auto">
+                                                                    <svg class="fill-current h-4 w-4
+                                                                                transition duration-150 ease-in-out" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                                                        <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+                                                                    </svg>
+                                                                </span>
+                                                            </button>
+                                                            <ul class="bg-blue-50 border rounded-sm absolute top-0 right-0 
+                                                                transition duration-150 ease-in-out origin-top-left
+                                                                min-w-32 text-gray-950
+                                                                ">
+                                                                <?php
+                                                                if ($role3 == "create" || $role3 == "CS" || $role3 == "CG") { ?>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../tokens/credit_request.php">
+                                                                            CREATE
+                                                                        </a>
+                                                                    </li>
+                                                                <?php } else {
+                                                                } ?>
+                                                                <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                    <button class="w-full text-left flex items-center outline-none focus:outline-none">
+                                                                        <span class="pr-1 flex-1">VIEW</span>
+                                                                        <span class="mr-auto">
+                                                                            <svg class="fill-current h-4 w-4
+                                                                                transition duration-150 ease-in-out" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                                                                <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+                                                                            </svg>
+                                                                        </span>
+                                                                    </button>
+
+                                                                    <ul class="bg-blue-50 border rounded-sm absolute top-0 right-0 
+                                                                transition duration-150 ease-in-out origin-top-left
+                                                                min-w-32 text-gray-950
+                                                                ">
+                                                                        <?php if ($role3 == "approve") { ?>
+                                                                            <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                                <a tabindex="-1" href="../../tokens/section/pending_sectionhead.php">Pending
+                                                                                    Approval</a>
+                                                                            </li>
+                                                                            <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                                <a tabindex="-1" href="../../tokens/section/reports.php">Reports</a>
+                                                                            </li>
+
+                                                                        <?php } else if ($role3 == "create" || $role3 == "CS") { ?>
+                                                                            <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                                <a tabindex="-1" href="../../tokens/user/pending_sectionhead.php">Pending
+                                                                                    Approval</a>
+                                                                            </li>
+                                                                            <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                                <a tabindex="-1" href="../../tokens/user/pending_closure.php">Pending
+                                                                                    Closure</a>
+                                                                            </li>
+                                                                            <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                                <a tabindex="-1" href="../../tokens/user/reports.php">Reports</a>
+                                                                            </li>
+                                                                        <?php } else if ($role3 == "generation") { ?>
+                                                                            <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                                <a tabindex="-1" href="../../tokens/finance/pending_finance.php">Pending
+                                                                                    Generation</a>
+                                                                            </li>
+                                                                            <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                                <a tabindex="-1" href="../../tokens/finance/reports.php">Reports</a>
+                                                                            </li>
+                                                                            <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                                <a tabindex="-1" href="../../tokens/finance/reports.php">Reports</a>
+                                                                            </li>
+                                                                        <?php } else if ($role3 == "CG") { ?>
+                                                                            <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                                <a tabindex="-1" href="../../tokens/finance/pending_finance.php">Pending
+                                                                                    Generation</a>
+                                                                            </li>
+                                                                            <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                                <a tabindex="-1" href="../../tokens/finance/reports_CG.php">Reports</a>
+                                                                            </li>
+                                                                        <?php } else if ($role3 == "audit") { ?>
+                                                                            <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                                <a tabindex="-1" href="../../tokens/user/reports.php">Reports</a>
+                                                                            </li>
+                                                                        <?php } else {
+                                                                        } ?>
+                                                                    </ul>
+                                                                </li>
+                                                            </ul>
+                                                        </li>
+                                                        <li class="relative px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                            <button class="w-full text-left flex items-center outline-none focus:outline-none">
+                                                                <span class="pr-1 flex-1">Tamper Token Request</span>
+                                                                <span class="mr-auto">
+                                                                    <svg class="fill-current h-4 w-4
+                                                                                transition duration-150 ease-in-out" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                                                        <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+                                                                    </svg>
+                                                                </span>
+                                                            </button>
+                                                            <ul class="bg-blue-50 border rounded-sm absolute top-0 right-0 
+                                                                transition duration-150 ease-in-out origin-top-left
+                                                                min-w-32 text-gray-950
+                                                                ">
+                                                                <?php if ($role3 == "create" || $role3 == "CS" || $role3 == "CG") { ?>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a tabindex="-1" href="../../tokens/tamper_token/tamper_token.php">CREATE</a>
+                                                                    </li>
+                                                                <?php } else {
+                                                                } ?>
+                                                                <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                    <button class="w-full text-left flex items-center outline-none focus:outline-none">
+                                                                        <span class="pr-1 flex-1">VIEW</span>
+                                                                        <span class="mr-auto">
+                                                                            <svg class="fill-current h-4 w-4
+                                                                                transition duration-150 ease-in-out" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                                                                <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+                                                                            </svg>
+                                                                        </span>
+                                                                    </button>
+
+                                                                    <ul class="bg-blue-50 border rounded-sm absolute top-0 right-0 
+                                                                transition duration-150 ease-in-out origin-top-left
+                                                                min-w-32 text-gray-950
+                                                                ">
+                                                                        <?php if ($role3 == "approve") { ?>
+                                                                            <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                                <a tabindex="-1" href="../../tokens/section/pending_sectionhead.php">Pending
+                                                                                    Approval</a>
+                                                                            </li>
+                                                                            <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                                <a tabindex="-1" href="../../tokens/tamper_token/section/reports.php">Reports</a>
+                                                                            </li>
+
+                                                                        <?php } else if ($role3 == "create" || $role3 == "CS") { ?>
+                                                                            <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                                <a tabindex="-1" href="../../tokens/tamper_token/user/pending_sectionhead.php">Pending
+                                                                                    Approval</a>
+                                                                            </li>
+                                                                            <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                                <a tabindex="-1" href="../../tokens/tamper_token/user/pending_closure.php">Pending
+                                                                                    Closure</a>
+                                                                            </li>
+                                                                            <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                                <a tabindex="-1" href="../../tokens/tamper_token/user/reports.php">Reports</a>
+                                                                            </li>
+                                                                        <?php } else if ($role3 == "generation") { ?>
+                                                                            <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                                <a tabindex="-1" href="../../tokens/tamper_token/finance/pending_finance.php">Pending
+                                                                                    Generation</a>
+                                                                            </li>
+                                                                            <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50"><a tabindex="-1" href="../../tokens/tamper_token/finance/reports.php">Reports</a>
+                                                                            </li>
+                                                                        <?php } else if ($role3 == "CG") { ?>
+                                                                            <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                                <a tabindex="-1" href="../../tokens/tamper_token/finance/pending_finance.php">Pending
+                                                                                    Generation</a>
+                                                                            </li>
+                                                                            <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50"><a tabindex="-1" href="../../tokens/tamper_token/finance/reports_CG.php">Reports</a>
+                                                                            </li>
+                                                                        <?php } else if ($role3 == "audit") { ?>
+                                                                            <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50"><a tabindex="-1" href="../../tokens/tamper_token/user/reports.php">Reports</a>
+                                                                            </li>
+                                                                        <?php } else {
+                                                                        } ?>
+                                                                    </ul>
+                                                                </li>
+                                                            </ul>
+                                                        </li>
+
+                                                        <li class="relative px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                            <button class="w-full text-left flex items-center outline-none focus:outline-none">
+                                                                <span class="pr-1 flex-1">Reimbursement Token Request</span>
+                                                                <span class="mr-auto">
+                                                                    <svg class="fill-current h-4 w-4
+                                                                                transition duration-150 ease-in-out" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                                                        <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+                                                                    </svg>
+                                                                </span>
+                                                            </button>
+                                                            <ul class="bg-blue-50 border rounded-sm absolute top-0 right-0 
+                                                                transition duration-150 ease-in-out origin-top-left
+                                                                min-w-32 text-gray-950
+                                                                ">
+                                                                <?php if ($role3 == "create" || $role3 == "CS" || $role3 == "CG") { ?>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50"><a tabindex="-1" href="../../tokens/reimbursement_token/reimbursement_token.php">CREATE</a>
+                                                                    </li>
+                                                                <?php } else {
+                                                                } ?>
+                                                                <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                    <button class="w-full text-left flex items-center outline-none focus:outline-none">
+                                                                        <span class="pr-1 flex-1">VIEW</span>
+                                                                        <span class="mr-auto">
+                                                                            <svg class="fill-current h-4 w-4
+                                                                                transition duration-150 ease-in-out" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                                                                <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+                                                                            </svg>
+                                                                        </span>
+                                                                    </button>
+
+                                                                    <ul class="bg-blue-50 border rounded-sm absolute top-0 right-0 
+                                                                transition duration-150 ease-in-out origin-top-left
+                                                                min-w-32 text-gray-950
+                                                                ">
+                                                                        <?php if ($role3 == "approve") { ?>
+                                                                            <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                                <a tabindex="-1" href="../../tokens/reimbursement_token/section/pending_sectionhead.php">Pending
+                                                                                    Approval</a>
+                                                                            </li>
+                                                                            <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50"><a tabindex="-1" href="../../tokens/reimbursement_token/section/reports.php">Reports</a>
+                                                                            </li>
+
+                                                                        <?php }
+                                                                        if ($role3 == "meter downloading") { ?>
+                                                                            <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                                <a tabindex="-1" href="../../tokens/reimbursement_token/engineer/pending_engineer.php">Download
+                                                                                    Meter</a>
+                                                                            </li>
+                                                                            <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                                <a tabindex="-1" href="../../tokens/reimbursement_token/engineer/reports.php">Reports</a>
+                                                                            </li>
+                                                                        <?php } else if ($role3 == "create") { ?>
+                                                                            <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                                <a tabindex="-1" href="../../tokens/reimbursement_token/user/pending_sectionhead.php">Pending
+                                                                                    Approval</a>
+                                                                            </li>
+                                                                            <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                                <a tabindex="-1" href="../../tokens/reimbursement_token/user/pending_closure.php">Pending
+                                                                                    Closure</a>
+                                                                            </li>
+                                                                            <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50"> Closure</a>
+                                                                                <a tabindex="-1" href="../../tokens/reimbursement_token/user/reports.php">Reports</a>
+                                                                            </li>
+                                                                        <?php } else if ($role3 == "stores") { ?>
+                                                                            <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50"> Closure</a>
+                                                                                <a tabindex="-1" href="../../tokens/reimbursement_token/stores/pending_stores.php">Pending
+                                                                                    Loading</a>
+                                                                            </li>
+                                                                            <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50"> Closure</a>
+                                                                                <a tabindex="-1" href="../../tokens/reimbursement_token/stores/reports.php">Reports</a>
+                                                                            </li>
+                                                                        <?php } else if ($role3 == "generation") { ?>
+                                                                            <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                                <a tabindex="-1" href="../../tokens/reimbursement_token/finance/pending_finance.php">Pending
+                                                                                    Generation</a>
+                                                                            </li>
+                                                                            <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                                <a tabindex="-1" href="../../tokens/reimbursement_token/finance/reports.php">Reports</a>
+                                                                            </li>
+                                                                        <?php } else if ($role3 == "CS") { ?>
+                                                                            <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                                <a tabindex="-1" href="../../tokens/reimbursement_token/stores/pending_stores.php">Pending
+                                                                                    Loading</a>
+                                                                            </li>
+                                                                            <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                                <a tabindex="-1" href="../../tokens/reimbursement_token/user/pending_sectionhead.php">Pending
+                                                                                    Approval</a>
+                                                                            </li>
+                                                                            <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                                <a tabindex="-1" href="../../tokens/reimbursement_token/user/pending_closure.php">Pending
+                                                                                    Closure</a>
+                                                                            </li>
+                                                                            <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                                <a tabindex="-1" href="../../tokens/reimbursement_token/stores/reports_CS.php">Reports</a>
+                                                                            </li>
+                                                                        <?php } else if ($role3 == "CG") { ?>
+                                                                            <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                                <a tabindex="-1" href="../../tokens/tamper_token/finance/pending_finance.php">Pending
+                                                                                    Generation</a>
+                                                                            </li>
+                                                                            <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50"><a tabindex="-1" href="../../tokens/reimbursement_token/finance/reports_CG.php">Reports</a>
+                                                                            </li>
+                                                                        <?php } else if ($role3 == "audit") { ?>
+                                                                            <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50"><a tabindex="-1" href="../../tokens/tamper_token/user/reports.php">Reports</a>
+                                                                            </li>
+                                                                        <?php } else {
+                                                                        } ?>
+                                                                    </ul>
+                                                                </li>
+                                                            </ul>
+                                                        </li>
+                                                    </ul>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- More products... -->
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div> {% endcomment %}
+
+        <!-- COMMERCIAL END -->
+        <!-- FINANCE START -->
+
+        {% comment %} <div class="w-auto bg-gray-200 shadow shadow-nepal-300 text-gray-700 rounded px-2 py-2">
+            <div class="sm:flex lg:items-center lg:justify-between">
+                <div class="min-w-0 flex-1">
+                    <div class="">
+                        <div class="mx-auto">
+
+                            <div class="group relative">
+                                <div class="aspect-h-1 aspect-w-1 w-full overflow-hidden rounded-md bg-gray-200 lg:aspect-none group-hover:opacity-75 lg:h-40">
+                                    <img src="{% static 'assets/images/electrical.jpg' %}" alt="" class="h-full w-full object-cover object-center lg:h-full lg:w-full">
+                                </div>
+                                <div class="mt-4 flex justify-center">
+                                    <div class="w-full ">
+                                        <div class="dropdown-group inline-block w-full text-blue-50">
+                                            <button class="w-full bg-blue-800 hover:bg-blue-900 outline-none focus:outline-none border px-3 py-1 rounded flex items-center">
+                                                <span class="pr-1 font-semibold flex-1 text-blue-50">FINANCE</span>
+                                                <span class="text-blue-50">
+                                                    <svg class="fill-current h-4 w-4 transform group-hover:-rotate-180
+                                                            transition duration-150 ease-in-out" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                                        <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+                                                    </svg>
+                                                </span>
+                                            </button>
+
+                                            <ul style="min-width: 18rem;" class="bg-blue-50 z-10 text-gray-950 border rounded transform scale-0 group-hover:scale-100 absolute 
+                                                        transition duration-150 ease-in-out origin-top">
+
+                                                <!-- ACE START -->
+                                                <li class="relative px-1 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                    <a class="w-full text-left px-3 flex items-center outline-none focus:outline-none">
+                                                        <span class="pr-1 flex-1">ACE</span>
+                                                        <span class="mr-auto">
+                                                            <svg class="fill-current h-4 w-4
+                                                                    transition duration-150 ease-in-out" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                                                <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+                                                            </svg>
+                                                        </span>
+                                                    </a>
+                                                    <ul class="bg-blue-50 border rounded-sm absolute top-0 right-0 
+                                                            transition duration-150 ease-in-out origin-top-left
+                                                            min-w-32 text-gray-950
+                                                            ">
+                                                        <?php if ($role5 == "create") { ?>
+                                                            <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                <a href="../../../ace/ace.php">
+                                                                    CREATE ACE
+                                                                </a>
+                                                            </li>
+                                                        <?php
+                                                        } elseif ($role5 == "process") { ?>
+                                                            <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                <a href="../../ace/accounting/virament.php">
+                                                                    VIRARAMENT
+                                                                </a>
+                                                            </li>
+                                                        <?php } elseif ($role5 == "sanction") { ?>
+                                                            <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                <a href="../../ace/finance/finance_virament.php">
+                                                                    VIRARAMENT
+                                                                </a>
+                                                            </li>
+                                                        <?php } else {
+                                                        } ?>
+                                                        <li class="relative px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                            <button class="w-full text-left flex items-center outline-none focus:outline-none">
+                                                                <span class="pr-1 flex-1">VIEW
+                                                                    ACEs</span>
+                                                                <span class="mr-auto">
+                                                                    <svg class="fill-current h-4 w-4
+                                                                                transition duration-150 ease-in-out" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                                                        <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+                                                                    </svg>
+                                                                </span>
+                                                            </button>
+                                                            <ul class="bg-blue-50 border rounded-sm absolute top-0 right-0 
+                                                                transition duration-150 ease-in-out origin-top-left
+                                                                min-w-32 text-gray-950
+                                                                ">
+                                                                <?php if ($role5 == "check") { ?>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../ace/depot/pending_cso.php">Pending Checking</a>
+                                                                    </li>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../ace/user/reports.php">Reports</a>
+                                                                    </li>
+                                                                <?php
+                                                                } else if ($role5 == "create") {
+                                                                ?>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../ace/user/reports.php">Reports</a>
+                                                                    </li>
+                                                                <?php
+                                                                } else {
+                                                                }
+
+                                                                ?>
+                                                                <?php
+                                                                if ($role5 == "pass") { ?>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../ace/section/pending_sectionhead.php">Awaiting
+                                                                            Pass</a>
+                                                                    </li>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../ace/section/pending_virament.php">Virament
+                                                                            Requests</a>
+                                                                    </li>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../ace/section/reports.php">Reports</a>
+                                                                    </li>
+                                                                <?php } else if ($role5 == "audit") { ?>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../ace/section/reports.php">Reports</a>
+                                                                    </li>
+                                                                <?php  }
+
+
+                                                                //innerif termination
+                                                                else if ($role5 == "create") { ?>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../ace/user/pending_sectionhead.php">Pending
+                                                                            Authorisation</a>
+                                                                    </li>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../ace/user/reports.php">Reports</a>
+                                                                    </li>
+                                                                <?php
+                                                                } //else if termination
+                                                                elseif ($role5 == "process") {
+                                                                ?>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../ace/accounting/pending_accounts.php">Awaiting
+                                                                            Update</a>
+                                                                    </li>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../ace/accounting/reports.php">Reports</a>
+                                                                    </li>
+                                                                <?php } //2nnd inner elseif end UPTO HERE
+                                                                elseif ($type == "district" && $role5 == "create") { ?>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../ace/user/pending_sectionhead.php">Pending
+                                                                            Approval</a>
+                                                                    </li>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../ace/user/reports.php">Reports</a>
+                                                                    </li>
+                                                                <?php
+                                                                } elseif ($type == "district" && $role5 == "pass") { ?>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../ace/section/pending_sectionhead.php">Pending
+                                                                            Authorisation</a>
+                                                                    </li>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../ace/section/pending_virament.php">Virament
+                                                                            Requests</a>
+                                                                    </li>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../ace/section/network_manager.php">Reports</a>
+                                                                    </li>
+                                                                <?php } else if ($role5 == "sanction") { ?>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../ace/section/pending_sectionhead.php">Awaiting
+                                                                            Pass</a>
+                                                                        < </li>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../ace/finance/pending_finance.php">Awaiting
+                                                                            Sanctioning</a>
+                                                                    </li>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../ace/finance/pending_virament.php">Pending
+                                                                            Virament</a>
+                                                                    </li>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../ace/finance/reports.php">Reports</a>
+                                                                    </li>
+                                                                <?php } else if ($role5 == "order") { ?>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../ace/procurement/pending_order.php">Pending
+                                                                            Order</a>
+                                                                    </li>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../ace/procurement/reports.php">Reports</a>
+                                                                    </li>
+                                                                <?php } elseif ($role5 == "approve") { ?>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../ace/section/pending_sectionhead.php">Awaiting
+                                                                            Pass</a>
+                                                                    </li>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../ace/gm/pending_gm.php">Pending
+                                                                            Approval</a>
+                                                                    </li>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../ace/gm/pending_virament.php">Pending
+                                                                            Virament</a>
+                                                                    </li>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../ace/gm/reports.php">Reports</a>
+                                                                    </li>
+                                                                <?php } else {
+                                                                }
+                                                                ?>
+                                                            </ul>
+                                                        </li>
+
+                                                    </ul>
+                                                </li>
+                                                <!-- ACE END -->
+
+                                                <!-- PB START -->
+                                                <li class="relative px-1 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                    <a class="w-full text-left px-3 flex items-center outline-none focus:outline-none">
+                                                        <span class="pr-1 flex-1">PURCHASE BELOW LIMIT</span>
+                                                        <span class="mr-auto">
+                                                            <svg class="fill-current h-4 w-4
+                                                                    transition duration-150 ease-in-out" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                                                <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+                                                            </svg>
+                                                        </span>
+                                                    </a>
+                                                    <ul class="bg-blue-50 border rounded-sm absolute top-0 right-0 
+                                                            transition duration-150 ease-in-out origin-top-left
+                                                            min-w-32 text-gray-950
+                                                            ">
+                                                        <?php if ($role5 == "create") { ?>
+                                                            <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                <a href="../../../ace/ace.php">
+                                                                    CREATE ACE
+                                                                </a>
+                                                            </li>
+                                                        <?php
+                                                        } elseif ($role5 == "process") { ?>
+                                                            <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                <a href="../../ace/accounting/virament.php">
+                                                                    VIRARAMENT
+                                                                </a>
+                                                            </li>
+                                                        <?php } elseif ($role5 == "sanction") { ?>
+                                                            <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                <a href="../../ace/finance/finance_virament.php">
+                                                                    VIRARAMENT
+                                                                </a>
+                                                            </li>
+                                                        <?php } else {
+                                                        }
+                                                        ?>
+                                                        <li class="relative px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                            <button class="w-full text-left flex items-center outline-none focus:outline-none">
+                                                                <span class="pr-1 flex-1">VIEW
+                                                                    ACEs</span>
+                                                                <span class="mr-auto">
+                                                                    <svg class="fill-current h-4 w-4
+                                                                                transition duration-150 ease-in-out" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                                                        <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+                                                                    </svg>
+                                                                </span>
+                                                            </button>
+                                                            <ul class="bg-blue-50 border rounded-sm absolute top-0 right-0 
+                                                                        transition duration-150 ease-in-out origin-top-left
+                                                                        min-w-32 text-gray-950
+                                                                        ">
+                                                                <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                    REPORTS</li>
+                                                            </ul>
+                                                        </li>
+
+                                                    </ul>
+                                                </li>
+                                                <!-- PB END -->
+
+                                                <!-- DIRECT PURCHASE START -->
+                                                <li class="relative px-1 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                    <a class="w-full text-left px-3 flex items-center outline-none focus:outline-none">
+                                                        <span class="pr-1 flex-1">DIRECT PURCHASE</span>
+                                                        <span class="mr-auto">
+                                                            <svg class="fill-current h-4 w-4
+                                                                    transition duration-150 ease-in-out" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                                                <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+                                                            </svg>
+                                                        </span>
+                                                    </a>
+                                                    <ul class="bg-blue-50 border rounded-sm absolute top-0 right-0 
+                                                            transition duration-150 ease-in-out origin-top-left
+                                                            min-w-32 text-gray-950
+                                                            ">
+
+                                                        <li class="relative px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                            <button class="w-full text-left flex items-center outline-none focus:outline-none">
+                                                                <span class="pr-1 flex-1">VIEW</span>
+                                                                <span class="mr-auto">
+                                                                    <svg class="fill-current h-4 w-4
+                                                                                transition duration-150 ease-in-out" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                                                        <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+                                                                    </svg>
+                                                                </span>
+                                                            </button>
+                                                            <ul class="bg-blue-50 border rounded-sm absolute top-0 right-0 
+                                                                        transition duration-150 ease-in-out origin-top-left
+                                                                        min-w-32 text-gray-950
+                                                                        ">
+                                                                <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                    <a href="../../direct_purchases/depot/reports.php">Reports</a>
+                                                                </li>
+                                                                <?php
+
+
+                                                                //if ($type == "depot") { //outer if 
+                                                                if ("depot" == "depot") {
+                                                                    if ($role2 == "create") {
+                                                                ?>
+                                                                        <?php if ($role5 == "create") { ?>
+                                                                            <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                                <a href="../../direct_purchases/depot/reports.php">Reports</a>
+                                                                            </li>
+                                                                        <?php } //innerif termination
+                                                                        else if ($role2 == "check") {
+                                                                        ?>
+                                                                            <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50"><a href="../../direct_purchases/depot/check_adjudication.php">Pending
+                                                                                    Verification</a>
+                                                                            </li>
+                                                                            <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                                <a href="../../direct_purchases/depot/reports.php">Reports</a>
+                                                                            </li>
+                                                                        <?php } //innerif termination
+                                                                        else if ($role2 == "CC") {
+                                                                        ?>
+                                                                            <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                                <a href="../../direct_purchases/depot/check_adjudication.php">Pending
+                                                                                    Verification</a>
+                                                                            </li>
+                                                                            <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50"><a href="../../direct_purchases/depot/reports_CC.php">Reports</a>
+                                                                            </li>
+                                                                <?php } else {
+                                                                        }
+                                                                    }
+                                                                }
+                                                                ?>
+                                                                <?php
+                                                                if ($type == "section" && $role2 == "create") { ?>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../direct_purchases/user/pending_sectionhead.php">Pending
+                                                                            Authorisation</a>
+                                                                    </li>
+
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50"><a href="../../direct_purchases/user/reports.php">Reports</a>
+                                                                    </li>
+                                                                <?php
+                                                                } //innerif termination
+                                                                else if ($type == "section" && $role2 == "CA") { ?>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../direct_purchases/section_head/pending_sectionhead.php">Pending
+                                                                            Authorisation</a>
+                                                                    </li>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../direct_purchases/section_head/reports_CA.php">Reports</a>
+                                                                    </li>
+
+                                                                <?php
+                                                                } //else if termination
+                                                                else if ($type == "section" && $role2 == "process") {
+                                                                ?>
+
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50"><a href="../../direct_purchases/procurement/pending_procurement.php">Pending
+                                                                            Checking</a>
+                                                                    </li>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../direct_purchases/procurement/pending_order.php">Pending
+                                                                            Order Number</a>
+                                                                    </li>
+
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../direct_purchases/procurement/reports.php">Reports</a>
+                                                                    </li>
+
+                                                                <?php } //2nnd inner elseif end
+                                                                else if ($role2 == "approve" && $type == "section") {
+                                                                ?>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../direct_purchases/section_head/pending_sectionhead.php">Pending
+                                                                            Authorisation</a>
+                                                                    </li>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../direct_purchases/section_head/reports.php">Reports</a>
+                                                                    </li>
+                                                                <?php
+                                                                } elseif ($type == "district" && $role2 == "audit") { ?>
+
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../direct_purchases/section_head/reports.php">Reports</a>
+                                                                    </li>
+                                                                <?php
+                                                                } elseif ($type == "district" && $role2 == "CA") { ?>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../direct_purchases/district/pending_nm.php">Pending
+                                                                            Authorisation</a>
+                                                                    </li>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../direct_purchases/district/reports_CA.php">Reports</a>
+                                                                    </li>
+                                                                <?php
+                                                                } elseif ($type == "district" && $role2 == "approve") { ?>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../direct_purchases/finance/pending_finance.php">Pending
+                                                                            Confirmation</a>
+                                                                    </li>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../direct_purchases/finance/reports.php">Report</a>
+                                                                    </li>
+                                                                <?php } else if ($role2 == "confirm") { ?>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../direct_purchases/finance/pending_finance.php">Pending
+                                                                            Confirmation</a>
+                                                                    </li>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../direct_purchases/finance/reports.php">Report</a>
+                                                                    </li>
+                                                                <?php } elseif ($role2 == "authorise") { ?>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../direct_purchases/gm/pending_gm.php">Pending
+                                                                            Approval</a>
+                                                                    </li>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../direct_purchases/section_head/pending_sectionhead.php">Pending
+                                                                            Authorisation</a>
+                                                                    </li>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../direct_purchases/gm/reports.php">Regional
+                                                                            Reports</a>
+                                                                    </li>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../direct_purchases/section_head/reports.php">Section
+                                                                            Reports</a>
+                                                                    </li>
+                                                                <?php
+                                                                } else {
+                                                                } ?>
+
+                                                            </ul>
+
+                                                        </li>
+
+                                                    </ul>
+                                                </li>
+                                                <!-- DIRECT PURCHASE END -->
+
+                                                <!-- PURCHASE ABOVE START -->
+                                                <li class="relative px-1 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                    <a class="w-full text-left px-3 flex items-center outline-none focus:outline-none">
+                                                        <span class="pr-1 flex-1">PURCHASE ABOVE LIMIT</span>
+                                                        <span class="mr-auto">
+                                                            <svg class="fill-current h-4 w-4
+                                                                    transition duration-150 ease-in-out" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                                                <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+                                                            </svg>
+                                                        </span>
+                                                    </a>
+                                                    <ul class="bg-blue-50 border rounded-sm absolute top-0 right-0 
+                                                            transition duration-150 ease-in-out origin-top-left
+                                                            min-w-32 text-gray-950
+                                                            ">
+
+                                                        <?php if ($role4 == "create") { ?>
+                                                            <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                <a href="{% url 'tenders_create' %}">Create</a>
+                                                            </li>
+                                                            <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                <a href="../../tender/rfq/datatables/production/procurement_processed.php">Create
+                                                                    (from RFQ)</a>
+                                                            </li>
+                                                        <?php
+                                                        } elseif ($role4 == "check") { ?>
+                                                            <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                <a href="../../tender/finance/pending_finance.php">Pending
+                                                                    Checking</a>
+                                                            </li>
+                                                            <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                <a href="../../tender/rfq/datatables/production/awaiting_authorisation.php">RFQ`s
+                                                                    Pending Authorisation</a>
+                                                            </li>
+                                                            <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                <a href="../../tender/committee/pending_committee.php">Pending
+                                                                    Committee</a>
+                                                            </li>
+                                                        <?php
+                                                        } elseif ($role4 == "approve") { ?>
+                                                            <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                <a href="../../tender/gm/pending.php">Pending Approval</a>
+                                                            </li>
+                                                            <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                <a href="../../tender/gm/reports.php">Reports</a>
+                                                            </li>
+                                                        <?php
+                                                        } elseif ($role4 == "approve") { ?>
+                                                            <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                <a href="../../tender/gm/pending.php">Pending Approval</a>
+                                                            </li>
+
+                                                            <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                <a href="../../tender/gm/reports.php">Reports</a>
+                                                            </li>
+                                                        <?php //RFQ application roles
+                                                        } elseif ($role4 == "request") { ?>
+                                                            <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                <a href="../../tender/rfq/user/make_request.php">Request for
+                                                                    Quotation</a>
+                                                            </li>
+                                                        <?php
+                                                        } elseif ($role4 == "authorise") { ?>
+                                                            <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                <a href="../../tender/rfq/datatables/production/awaiting_authorisation.php">Pending
+                                                                    Authorisation</a>
+                                                            </li>
+                                                        <?php
+                                                        } elseif ($role4 == "verify") { ?>
+                                                            <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                <a href="../../tender/rfq/datatables/production/awaiting_verification.php">Pending
+                                                                    Verification</a>
+                                                            </li> <?php
+                                                                } else {
+                                                                } ?>
+
+
+                                                        <li class="relative px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                            <button class="w-full text-left flex items-center outline-none focus:outline-none">
+                                                                <span class="pr-1 flex-1">VIEW</span>
+                                                                <span class="mr-auto">
+                                                                    <svg class="fill-current h-4 w-4
+                                                                                transition duration-150 ease-in-out" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                                                        <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+                                                                    </svg>
+                                                                </span>
+                                                            </button>
+                                                            <ul class="bg-blue-50 border rounded-sm absolute top-0 right-0 
+                                                                        transition duration-150 ease-in-out origin-top-left
+                                                                        min-w-32 text-gray-950
+                                                                        ">
+                                                                <?php if ($role4 == "create") { ?>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../tender/rfq/datatables/production/awaiting_authorisation.php">Pending
+                                                                            Authorisation</a>
+                                                                    </li>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../tender/rfq/datatables/production/awaiting_procurement.php">Pending
+                                                                            Procurement</a>
+                                                                    </li>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../tender/pending_approval.php">Pending
+                                                                            Approval</a>
+                                                                    </li>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../tender/committee/pending_committee.php">Pending
+                                                                            Committee</a>
+                                                                    </li>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../tender/pending_order.php">Pending
+                                                                            Order</a>
+                                                                    </li>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../tender/reports.php">Reports</a>
+                                                                    </li>
+                                                                <?php
+                                                                } elseif ($role4 == "audit") { ?>
+
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../tender/reports.php">Reports</a>
+                                                                    </li>
+                                                                <?php } elseif ($role4 == "check") { ?>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../tender/finance/reports.php">Reports</a>
+                                                                    </li>
+                                                                <?php
+                                                                } elseif ($role4 == "approve") { ?>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../tender/gm/pending.php">Pending
+                                                                            Approval</a>
+                                                                    </li>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../tender/gm/reports.php">Reports</a>
+                                                                    </li>
+                                                                    <?php } else {
+                                                                }
+
+                                                                $host = "127.0.0.1";
+                                                                $username = "root";
+                                                                $password = "";
+                                                                $db = "dms";
+                                                                $conn = mysqli_connect($host, $username, $password, $db);
+                                                                if ($conn->connect_error) die($conn->connect_error);
+                                                                $query = mysqli_query($conn, "SELECT * FROM bid_update ");
+                                                                $count = mysqli_num_rows($query);
+                                                                if (!$query) {
+                                                                    echo mysqli_error($conn);
+                                                                } else {
+                                                                    while ($row = mysqli_fetch_array($query)) {
+                                                                        $user1 = $row['user1'];
+                                                                        $user2 = $row['user2'];
+                                                                        $user3 = $row['user3'];
+                                                                        $user4 = $row['user4'];
+                                                                        $user5 = $row['user5'];
+                                                                        $user6 = $row['user6'];
+                                                                        $user7 = $row['user7'];
+                                                                        $user8 = $row['user8'];
+                                                                        $user9 = $row['user9'];
+                                                                        $user10 = $row['user10'];
+                                                                        if (($_SESSION['username'] == $user1 || $_SESSION['username'] == $user2 || $_SESSION['username'] == $user3 || $_SESSION['username'] == $user4 || $_SESSION['username'] == $user5 ||
+                                                                                $_SESSION['username'] == $user6 ||     $_SESSION['username'] == $user7 || $_SESSION['username'] == $user8 || $_SESSION['username'] == $user9 || $_SESSION['username'] == $user10) || ($role4 == 'request' || $role4 == 'authorise')
+                                                                        ) {
+                                                                    ?>
+                                                                            <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                                <a href="../../tender/committee/pending_committee.php">Pending
+                                                                                    Committee</a>
+                                                                            </li>
+                                                                            <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                                <a href="../../tender/committee/reports.php">Reports</a>
+                                                                            </li>
+                                                                <?php    } //if
+                                                                    } // while
+                                                                } //else
+                                                                ?>
+                                                                <?php
+                                                                if (($section_code == "IT100" && $role2 == "IT1002" && $role1 == "") || ($section_code == "SAC300" && $role2 == "SAC3002" && $role1 == "") || ($section_code == "SAR300" && $role2 == "SAR3002" && $role1 == "") || ($section_code == "CC300" && $role2 == "CC3002" && $role1 == "") || ($section_code == "HR500" && $role2 == "HR5002" && $role1 == "") || ($section_code == "RM600" && $role2 == "RM6002" && $role1 == "") || ($section_code == "COM700" && $role2 == "COM7002" && $role1 == "") || ($section_code == "ENG800" && $role2 == "ENG8002" && $role1 == "")) { ?>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../pettycash/section/pending_sectionhead.php">Pending
+                                                                            Approval</a>
+                                                                    </li>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../pettycash/section/reports.php">Reports</a>
+                                                                    </li>
+                                                                <?php
+                                                                } //innerif termination
+                                                                else if (($section_code == "IT100" && $role1 == "IT1001" && $role2 == "") || ($section_code == "SAC300" && $role1 == "SAC3001" && $role2 == "") || ($section_code == "SAR300" && $role1 == "SAR3001" && $role2 == "") || ($section_code == "CC300" && $role1 == "CC3001" && $role2 == "") || ($section_code == "HR500" && $role1 == "HR5001" && $role2 == "") || ($section_code == "RM600" && $role1 == "RM6001" && $role2 == "") || ($section_code == "COM700" && $role1 == "COM7001" && $role2 == "") || ($section_code == "ENG800" && $role1 == "ENG8001" && $role2 == "")) { ?>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../pettycash/user/pending_sectionhead.php">Pending
+                                                                            Approval</a>
+                                                                    </li>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../pettycash/user/pending_acquittal.php">Pending
+                                                                            Clearance</a>
+                                                                    </li>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../pettycash/user/reports.php">Reports</a>
+                                                                    </li>
+                                                                <?php
+                                                                } //else if termination
+                                                                else if (($section_code == "IT100" && $role1 == "IT1001" && $role2 == "IT1002")
+                                                                    || ($section_code == "SAC300" && $role1 == "SAC3001" && $role2 == "SAC002")
+                                                                    || ($section_code == "SAR300" && $role1 == "SAR3001" && $role2 == "SAR3002")
+                                                                    || ($section_code == "CC300" && $role1 == "CC3001" && $role2 == "CC3002")
+                                                                    || ($section_code == "HR500" && $role1 == "HR5001" && $role2 == "HR5002")
+                                                                    || ($section_code == "RM600" && $role1 == "RM6001" && $role2 == "RM6002")
+                                                                    || ($section_code == "COM700" && $role1 == "COM7001" && $role2 == "COM7002")
+                                                                    || ($section_code == "ENG800" && $role1 == "ENG8001" && $role2 == "ENG8002")
+                                                                ) {
+                                                                ?>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../pettycash/section/pending_sectionhead.php">Pending
+                                                                            Approval</a>
+                                                                    </li>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../pettycash/section/reports.php">Reports</a>
+                                                                    </li>
+                                                                <?php } //2nnd inner elseif end
+                                                                elseif ($section_code == "CC900" && $role2 == "CC9002" && $role1 == "") {
+                                                                ?>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../pettycash/accounts/pending_accounts.php">Pending
+                                                                            Approval</a>
+                                                                    </li>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../pettycash/accounts/pending_acquittal.php">Pending
+                                                                            Clearance</a>
+                                                                    </li>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../pettycash/accounts/reports.php">Reports</a>
+                                                                    </li>
+                                                                <?php }
+
+                                                                //district cashiers
+                                                                elseif (($section_code == "MTD" || $section_code == "MND" || $section_code == "MSD") && $role2 == "CC9002") {
+                                                                ?>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../pettycash/accounts/pending_accounts.php">Pending
+                                                                            Approval</a>
+                                                                    </li>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../pettycash/accounts/pending_acquittal.php">Pending
+                                                                            Clearance</a>
+                                                                    </li>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../pettycash/accounts/reports.php">Reports</a>
+                                                                    </li>
+                                                                <?php
+                                                                } elseif (($section_code == "MTD" || $section_code == "MND" || $section_code == "MSD") && $role2 == "audit") { ?>
+
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../pettycash/accounts/reports.php">Reports</a>
+                                                                    </li>
+                                                                <?php } //2nnd inner elseif end UPTO HERE
+                                                                elseif (($section_code == 'MTD' || $section_code == 'MND' || $section_code == 'MSD') && $role1 == "create") { ?>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../pettycash/user/pending_sectionhead.php">Pending
+                                                                            Approval</a>
+                                                                    </li>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../pettycash/user/pending_acquittal.php">Pending
+                                                                            Acquittal</a>
+                                                                    </li>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../pettycash/user/reports.php">Reports</a>
+                                                                    </li>
+                                                                <?php
+                                                                } elseif (($section_code == 'MTD' || $section_code == 'MND' || $section_code == 'MSD') && $role2 == "DM001") { ?>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../pettycash/section/reports.php">Reports</a>
+                                                                    </li>
+                                                                <?php } else {
+                                                                }
+                                                                ?>
+                                                            </ul>
+
+                                                        </li>
+
+                                                    </ul>
+                                                </li>
+                                                <!-- PURCHASE ABOVE END -->
+
+                                                <!-- INVOICE VERIFICATION START -->
+                                                <li class="relative px-1 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                    <a class="w-full text-left px-3 flex items-center outline-none focus:outline-none">
+                                                        <span class="pr-1 flex-1">INVOICE VERIFICATION</span>
+                                                        <span class="mr-auto">
+                                                            <svg class="fill-current h-4 w-4
+                                                                    transition duration-150 ease-in-out" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                                                <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+                                                            </svg>
+                                                        </span>
+                                                    </a>
+                                                    <ul class="bg-blue-50 border rounded-sm absolute top-0 right-0 
+                                                            transition duration-150 ease-in-out origin-top-left
+                                                            min-w-32 text-gray-950
+                                                            ">
+
+                                                        <?php
+                                                        if ($role8 == "create") { ?>
+                                                            <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                <a href="../../Invoice_verification_finale/supplier.php">Create</a>
+                                                            </li>
+                                                        <?php
+                                                        } elseif ($role8 == "check") { ?>
+                                                            <!--button class="dropdown-item" type="button"><a href="../../Invoice_Verification/finance/pending_finance.php">Pending Checking</a></button>
+                            <button class="dropdown-item" type="button"><a href="../../Invoice_Verification/rfq/datatables/production/awaiting_authorisation.php">RFQ`s Pending Authorisation</a></button>
+                            <button class="dropdown-item" type="button"><a href="../../Invoice_Verification/committee/pending_committee.php">Pending Committee</a></button-->
+
+
+                                                        <?php
+                                                        } elseif ($role8 == "approve") { ?>
+                                                            <!--button class="dropdown-item" type="button"><a href="../../Invoice_Verification/gm/pending.php">Pending Approval</a></button>
+                            <button class="dropdown-item" type="button"><a href="../../Invoice_Verification/gm/reports.php">Reports</a></button-->
+                                                        <?php
+
+                                                            //RFQ application roles
+                                                        } elseif ($role8 == "request") { ?>
+                                                            <!--button class="dropdown-item" type="button"><a href="../../Invoice_Verification/rfq/user/make_request.php">Request for Quotation</a></button-->
+                                                        <?php
+                                                        } elseif ($role8 == "authorise") { ?>
+                                                            <!--button class="dropdown-item" type="button"><a href="../../Invoice_Verification/rfq/datatables/production/awaiting_authorisation.php">Pending Authorisation</a></button-->
+                                                        <?php
+                                                        } elseif ($role8 == "verify") { ?>
+                                                            <!--button class="dropdown-item" type="button"><a href="../../Invoice_Verification/rfq/datatables/production/awaiting_verification.php">Pending Verification</a></button-->
+                                                        <?php
+                                                        } else {
+                                                        }
+                                                        ?>
+
+                                                        <li class="relative px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                            <button class="w-full text-left flex items-center outline-none focus:outline-none">
+                                                                <span class="pr-1 flex-1">VIEW</span>
+                                                                <span class="mr-auto">
+                                                                    <svg class="fill-current h-4 w-4
+                                                                                transition duration-150 ease-in-out" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                                                        <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+                                                                    </svg>
+                                                                </span>
+                                                            </button>
+                                                            <ul class="bg-blue-50 border rounded-sm absolute top-0 right-0 
+                                                                        transition duration-150 ease-in-out origin-top-left
+                                                                        min-w-32 text-gray-950
+                                                                        ">
+                                                                <?php if ($role8 == "create") { ?>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../Invoice_verification_finale/pending_approval.php">Verification
+                                                                            Progress Status</a>
+                                                                    </li>
+                                                                <?php
+                                                                } elseif ($role8 == "audit") { ?>
+
+                                                                <?php } elseif ($role8 == "check") { ?>
+                                                                    <!--div class="dropdown-menu">
+                                                                    <button class="dropdown-item" type="button"><a href="../../Invoice_Verification/finance/reports.php">Reports</a></button-->
+
+                                                                <?php
+                                                                } elseif ($role8 == "approve") { ?>
+
+                                                                <?php } else {
+                                                                }
+                                                                ?>
+                                                            </ul>
+
+                                                        </li>
+
+                                                    </ul>
+                                                </li>
+                                                <!-- INVOICE VERIFICATION END -->
+
+                                                <!-- PETTY CASH START -->
+                                                <li class="relative px-1 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                    <a class="w-full text-left px-3 flex items-center outline-none focus:outline-none">
+                                                        <span class="pr-1 flex-1">PETTY CASH</span>
+                                                        <span class="mr-auto">
+                                                            <svg class="fill-current h-4 w-4
+                                                                    transition duration-150 ease-in-out" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                                                <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+                                                            </svg>
+                                                        </span>
+                                                    </a>
+                                                    <ul class="bg-blue-50 border rounded-sm absolute top-0 right-0 
+                                                            transition duration-150 ease-in-out origin-top-left
+                                                            min-w-32 text-gray-950
+                                                            ">
+                                                        <?php
+                                                        if ($role1 == "create" || $role1 == "CA" || $role1 == "CD" || $role1 == "CAD") { ?>
+                                                            <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                <a href="../../pettycash/pettyCash.php">Create</a>
+                                                            </li>
+                                                        <?php
+                                                        } else {
+                                                        }
+                                                        ?>
+                                                        <li class="relative px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                            <button class="w-full text-left flex items-center outline-none focus:outline-none">
+                                                                <span class="pr-1 flex-1">VIEW</span>
+                                                                <span class="mr-auto">
+                                                                    <svg class="fill-current h-4 w-4
+                                                                                transition duration-150 ease-in-out" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                                                        <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+                                                                    </svg>
+                                                                </span>
+                                                            </button>
+                                                            <ul class="bg-blue-50 border rounded-sm absolute top-0 right-0 
+                                                                        transition duration-150 ease-in-out origin-top-left
+                                                                        min-w-32 text-gray-950
+                                                                        ">
+
+                                                                <?php
+                                                                if ($role1 == "create") {
+                                                                ?>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../pettycash/user/pending_sectionhead.php">Pending
+                                                                            Approval</a>
+                                                                    </li>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../pettycash/user/pending_acquittal.php">Pending
+                                                                            Clearance</a>
+                                                                    </li>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../pettycash/user/reports.php">Reports</a>
+                                                                    </li>
+                                                                <?php
+                                                                } elseif ($role1 == "audit") { ?>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50"><a href="../../pettycash/user/reports.php">Reports</a>
+                                                                    </li>
+                                                                <?php } else if ($role1 == "CA") {
+                                                                ?>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../pettycash/user/pending_acquittal.php">Pending
+                                                                            Clearance</a>
+                                                                    </li>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../pettycash/section/pending_sectionhead.php">Pending
+                                                                            Approval</a>
+                                                                    </li>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../pettycash/section/reports_CA.php">Reports</a>
+                                                                    </li>
+                                                                <?php
+                                                                } else if ($role1 == "CD") {
+                                                                ?>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../pettycash/user/pending_acquittal.php">Pending
+                                                                            Clearance(R)</a>
+                                                                    </li>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../pettycash/accounts/pending_accounts.php">Pending
+                                                                            Disbursement</a>
+                                                                    </li>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../pettycash/accounts/pending_clearance.php">Awaiting
+                                                                            Receipts</a>
+                                                                    </li>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../pettycash/accounts/pending_acquittal.php">Pending
+                                                                            Clearance(C)</a>
+                                                                    </li>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../pettycash/accounts/reportsCD.php">Reports</a>
+                                                                    </li>
+                                                                <?php
+                                                                } //inner if termination
+                                                                else if ($role1 == "approve") {
+                                                                ?>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../pettycash/section/pending_sectionhead.php">Pending
+                                                                            Approval</a>
+                                                                    </li>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../pettycash/section/reports.php">Reports</a>
+                                                                    </li>
+
+                                                                <?php
+                                                                } //inner elseif termination
+
+                                                                else if ($role1 == "accountant") {
+                                                                ?>
+
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../pettycash/accountant/pending_sectionhead.php">Pending
+                                                                            Approval</a>
+                                                                    </li>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../pettycash/accountant/pending_acquittal.php">Pending
+                                                                            Clearance</a>
+                                                                    </li>
+
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../pettycash/accountant/reports.php">Reports</a>
+                                                                    </li>
+
+                                                                <?php
+                                                                } //inner elseif termination
+
+                                                                //Petty cash authoriser
+                                                                else if ($role1 == "authoriser") {
+                                                                ?>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../pettycash/authoriser/pending_accounts.php">Pending
+                                                                            Authorisation**</a>
+                                                                    </li>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../pettycash/authoriser/reports.php">Reports</a>
+                                                                    </li>
+                                                                <?php
+                                                                } //inner elseif termination
+
+                                                                //regional sections cashier
+                                                                elseif ($role1 == "disburse") {
+                                                                ?>
+
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../pettycash/accounts/pending_accounts.php">Pending
+                                                                            Disbursement</a>
+                                                                    </li>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../pettycash/accounts/pending_clearance.php">Awaiting
+                                                                            Receipts</a>
+                                                                    </li>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../pettycash/accounts/pending_acquittal.php">Pending
+                                                                            Clearance</a>
+                                                                    </li>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../pettycash/accounts/reports.php">Reports</a>
+                                                                    </li>
+                                                                <?php } elseif ($role1 == "supervisor") {
+                                                                ?>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../pettycash/supervisor/pending_accounts.php">Pending
+                                                                            Disbursement</a>
+                                                                    </li>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../pettycash/accounts/pending_clearance.php">Awaiting
+                                                                            Receipts</a>
+                                                                    </li>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../pettycash/supervisor/pending_acquittal.php">Pending
+                                                                            Clearance</a>
+                                                                    </li>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../pettycash/supervisor/reports.php">Reports</a>
+                                                                    </li>
+                                                                <?php } elseif ($role1 == "AD") {
+                                                                ?>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../pettycash/section/pending_sectionhead.php">Pending
+                                                                            Approval</a>
+                                                                    </li>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../pettycash/accounts/pending_accounts.php">Pending
+                                                                            Disbursement</a>
+                                                                    </li>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../pettycash/accounts/pending_clearance.php">Awaiting
+                                                                            Receipts</a>
+                                                                    </li>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../pettycash/accounts/pending_acquittal.php">Pending
+                                                                            Clearance</a>
+                                                                    </li>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../pettycash/accounts/reports_AD.php">Reports</a>
+                                                                    </li>
+                                                                <?php } elseif ($role1 == "CAD") {
+                                                                ?>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../pettycash/section/pending_sectionhead.php">Pending
+                                                                            Approval</a>
+                                                                    </li>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../pettycash/user/pending_acquittal.php">Pending
+                                                                            Clearance(R)</a>
+                                                                    </li>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../pettycash/accounts/pending_clearance.php">Awaiting
+                                                                            Receipts</a>
+                                                                    </li>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../pettycash/accounts/pending_accounts.php">Pending
+                                                                            Disbursement</a>
+                                                                    </li>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../pettycash/accounts/pending_acquittal.php">Pending
+                                                                            Clearance(C)</a>
+                                                                    </li>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../pettycash/accounts/reports_AD.php">Reports</a>
+                                                                    </li>
+                                                                <?php
+                                                                } else {
+                                                                } ?>
+
+                                                            </ul>
+
+                                                        </li>
+
+                                                    </ul>
+                                                </li>
+                                                <!-- PETTY CASH END -->
+
+                                                <!-- RESTRICTED BIDDING START -->
+                                                <li class="relative px-1 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                    <a class="w-full text-left px-3 flex items-center outline-none focus:outline-none">
+                                                        <span class="pr-1 flex-1">RESTRICTED BIDDING</span>
+                                                        <span class="mr-auto">
+                                                            <svg class="fill-current h-4 w-4
+                                                                    transition duration-150 ease-in-out" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                                                <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+                                                            </svg>
+                                                        </span>
+                                                    </a>
+                                                    <ul class="bg-blue-50 border rounded-sm absolute top-0 right-0 
+                                                            transition duration-150 ease-in-out origin-top-left
+                                                            min-w-32 text-gray-950
+                                                            ">
+                                                        <?php
+                                                        if ($role7 == "create") { ?>
+                                                            <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                <a href="../../restricted/requester/request.php">Create</a>
+                                                            </li>
+                                                        <?php
+                                                        } else {
+                                                        }
+                                                        ?>
+                                                        <li class="relative px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                            <button class="w-full text-left flex items-center outline-none focus:outline-none">
+                                                                <span class="pr-1 flex-1">VIEW</span>
+                                                                <span class="mr-auto">
+                                                                    <svg class="fill-current h-4 w-4
+                                                                                transition duration-150 ease-in-out" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                                                        <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+                                                                    </svg>
+                                                                </span>
+                                                            </button>
+                                                            <ul class="bg-blue-50 border rounded-sm absolute top-0 right-0 
+                                                                        transition duration-150 ease-in-out origin-top-left
+                                                                        min-w-32 text-gray-950
+                                                                        ">
+
+                                                                <?php
+                                                                if ($role7 == "create") {
+                                                                ?>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="">Pending
+                                                                            Authorisation</a>
+                                                                    </li>
+                                                                <?php
+                                                                }
+                                                                //Section Head
+                                                                elseif ($role7 == "authorise") {
+                                                                ?>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../restricted/section/pending_section.php">Pending
+                                                                            Authorisation</a>
+                                                                    </li>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../restricted/section/reports.php">Reports</a>
+                                                                    </li>
+                                                                <?php }
+                                                                //Procurement Officer
+                                                                elseif ($role7 == "process") {
+                                                                ?>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../restricted/procurement/pending_procurement.php">Pending
+                                                                            Procurement</a>
+                                                                    </li>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../restricted/section/pending_section.php">Pending
+                                                                            Authorisation</a>
+                                                                    </li>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../restricted/procurement/reports.php">Reports</a>
+                                                                    </li>
+                                                                <?php }
+                                                                //Finance Manager 
+                                                                elseif ($role7 == "confirm") {
+                                                                ?>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../restricted/finance/pending_finance.php">Pending
+                                                                            Finance</a>
+                                                                    </li>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../restricted/finance/reports.php">Reports</a>
+                                                                    </li>
+                                                                <?php }
+                                                                //General Manager
+                                                                elseif ($role7 == "approve") {
+                                                                ?>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../restricted/gm/pending_gm.php">Pending
+                                                                            Approval</a>
+                                                                    </li>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../restricted/gm/reports.php">Reports</a>
+                                                                    </li>
+
+                                                                <?php
+                                                                } else {
+                                                                } ?>
+
+                                                            </ul>
+
+                                                        </li>
+
+                                                    </ul>
+                                                </li>
+                                                <!-- RESTRICTED BIDDING END -->
+
+                                                <!-- REMITTANCE ADVICE START -->
+                                                <?php
+                                                switch ($role) {
+                                                    case "prepare":
+                                                    case "check":
+                                                    case "authorise":
+                                                    case "pay":
+                                                ?>
+                                                        <li class="relative px-1 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                            <a class="w-full text-left px-3 flex items-center outline-none focus:outline-none">
+                                                                <span class="pr-1 flex-1">REMITTANCE ADVICE</span>
+                                                                <span class="mr-auto">
+                                                                    <svg class="fill-current h-4 w-4
+                                                                    transition duration-150 ease-in-out" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                                                        <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+                                                                    </svg>
+                                                                </span>
+                                                            </a>
+                                                            <ul class="bg-blue-50 border rounded-sm absolute top-0 right-0 
+                                                            transition duration-150 ease-in-out origin-top-left
+                                                            min-w-32 text-gray-950
+                                                            ">
+                                                                <?php
+                                                                if ($role == "prepare") { ?>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../remittance/datatables/production/requester/pending_remittance.php">Create</a>
+                                                                    </li>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../remittance/datatables/production/requester/pending_checking.php">Edit</a>
+                                                                    </li>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../remittance/datatables/production/requester/report.php">Reports</a>
+                                                                    </li>
+                                                                <?php
+                                                                } elseif ($role == "audit") { ?>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../remittance/datatables/production/requester/report.php">Reports</a>
+                                                                    </li>
+                                                                <?php } else if ($role == "check") { ?>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../remittance/datatables/production/checker/pending_checking.php">Pending
+                                                                            Checking</a>
+                                                                    </li>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../remittance/datatables/production/checker/report.php">Reports</a>
+                                                                    </li>
+                                                                <?php
+                                                                } else if ($role == "authorise") { ?>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../remittance/datatables/production/authoriser/pending_authorisation.php">Pending
+                                                                            Authorisation</a>
+                                                                    </li>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../remittance/datatables/production/authoriser/report.php">Reports</a>
+                                                                    </li>
+                                                                <?php
+                                                                } else if ($role == "pay") { ?>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../remittance/datatables/production/payer/pending_payment.php">Pending
+                                                                            Payment</a>
+                                                                    </li>
+                                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                        <a href="../../remittance/datatables/production/payer/report.php">Reports</a>
+                                                                    </li>
+                                                                <?php
+                                                                } else {
+                                                                }
+                                                                ?>
+
+                                                            </ul>
+                                                        </li>
+                                                <?php
+                                                        break;
+                                                    default:
+                                                }
+                                                ?>
+                                                <!-- REMITTANCE ADVICE END -->
+
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- More products... -->
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>  {% endcomment %}
+
+        <!-- FINANCE END -->
+        <!-- ENGINEERING START -->
+
+        {% comment %} <div class="w-auto bg-gray-200 shadow shadow-nepal-300 text-gray-700 rounded px-2 py-2">
+            <div class="sm:flex lg:items-center lg:justify-between">
+                <div class="min-w-0 flex-1">
+                    <div class="">
+                        <div class="mx-auto">
+
+                            <div class="group relative">
+                                <div class="aspect-h-1 aspect-w-1 w-full overflow-hidden rounded-md bg-gray-200 lg:aspect-none group-hover:opacity-75 lg:h-40">
+                                    <img src="{% static 'assets/images/electrical.jpg' %}" alt="" class="h-full w-full object-cover object-center lg:h-full lg:w-full">
+                                </div>
+                                <div class="mt-4 flex justify-center">
+                                    <div class="w-full ">
+                                        <div class="dropdown-group inline-block w-full text-blue-50">
+                                            <button class="w-full bg-blue-800 hover:bg-blue-900 outline-none focus:outline-none border px-3 py-1 rounded flex items-center">
+                                                <span class="pr-1 font-semibold flex-1 text-blue-50">ENGINEERING</span>
+                                                <span class="text-blue-50">
+                                                    <svg class="fill-current h-4 w-4 transform group-hover:-rotate-180
+                                                            transition duration-150 ease-in-out" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                                        <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+                                                    </svg>
+                                                </span>
+                                            </button>
+
+
+                                            <ul style="min-width: 18rem;" class="bg-blue-50 z-10 text-gray-950 border rounded transform scale-0 group-hover:scale-100 absolute 
+                                                        transition duration-150 ease-in-out origin-top">
+                                                <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                    <a tabindex="-1" href="http://192.168.15.236/">GIS</a>
+                                                </li>
+                                                <?php if ($role7 == "foreman") { ?>
+                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                        <a tabindex="-1" href="../../fleet/service/foreman/foreman_create_job.php">Fleet Management</a>
+                                                    </li>
+                                                <?php } else if ($role7 == "mechanic") { ?>
+                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                        <a tabindex="-1" href="../../fleet/service/artisan/assignee.php">Fleet Management</a>
+                                                    </li>
+                                                <?php } else if ($role7 == "officer") { ?>
+                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                        <a tabindex="-1" href="../../fleet/internal_vehicles.php">Fleet Management</a>
+                                                    </li>
+                                                <?php } else if ($role7 == "create") { ?>
+                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                        <a tabindex="-1" href="../../fleet/service/service/booking.php">Fleet Management</a>
+                                                    </li>
+                                                <?php } else if ($role7 == "clerk") { ?>
+                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                        <a tabindex="-1" href="../../fleet/logbook.php">Fleet Management</a>
+                                                    </li>
+                                                <?php } else if ($role7 == "costing") { ?>
+                                                    <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                        <a tabindex="-1" href="../../fleet/service/costing/cost.php">Fleet Management</a>
+                                                    </li>
+                                                <?php } ?>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- More products... -->
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div> {% endcomment %}
+
+        <!-- ENGINEERING END -->
+        <!-- IT START -->
+
+        <div class="w-auto bg-gray-200 shadow shadow-nepal-300 text-gray-700 rounded px-2 py-2">
+            <div class="sm:flex lg:items-center lg:justify-between">
+                <div class="min-w-0 flex-1">
+                    <div class="">
+                        <div class="mx-auto">
+
+                            <div class="group relative">
+                                <div class="aspect-h-1 aspect-w-1 w-full overflow-hidden rounded-md bg-gray-200 lg:aspect-none group-hover:opacity-75 lg:h-40">
+                                    <img src="{% static 'assets/images/electrical.jpg' %}" alt="" class="h-full w-full object-cover object-center lg:h-full lg:w-full">
+                                </div>
+                                <div class="mt-4 flex justify-center">
+                                    <div class="w-full ">
+                                        <div class="dropdown-group inline-block w-full text-blue-50">
+                                            <button class="w-full bg-blue-800 hover:bg-blue-900 outline-none focus:outline-none border px-3 py-1 rounded flex items-center">
+                                                <span class="pr-1 font-semibold flex-1 text-blue-50">IT</span>
+                                                <span class="text-blue-50">
+                                                    <svg class="fill-current h-4 w-4 transform group-hover:-rotate-180
+                                                            transition duration-150 ease-in-out" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                                        <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+                                                    </svg>
+                                                </span>
+                                            </button>
+
+
+                                            <ul style="min-width: 18rem;" class="bg-blue-50 z-10 text-gray-950 border rounded transform scale-0 group-hover:scale-100 absolute 
+                                                        transition duration-150 ease-in-out origin-top">
+                                                <li class="relative px-1 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                    <a class="w-full text-left px-3 flex items-center outline-none focus:outline-none">
+                                                        <span class="pr-1 flex-1">ADMINISTRATION</span>
+                                                        <span class="mr-auto">
+                                                            <svg class="fill-current h-4 w-4
+                                                                    transition duration-150 ease-in-out" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                                                <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+                                                            </svg>
+                                                        </span>
+                                                    </a>
+                                                    <ul class="bg-blue-50 border rounded-sm absolute top-0 right-0 
+                                                            transition duration-150 ease-in-out origin-top-left
+                                                            min-w-32 text-gray-950
+                                                            ">
+                                                        <?php if ($roles == 'admin') {
+                                                        ?>
+                                                            <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                <a tabindex="-1" href="{% url 'user_create' %}">New User</a>
+                                                            </li>
+                                                            <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                <a tabindex="-1" href="../users/update.php">Edit User</a>
+                                                            </li>
+                                                            <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                <a tabindex="-1" href="../users/password.php">Reset Password</a>
+                                                            </li>
+                                                            <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                <a tabindex="-1" href="{% url 'index_user' %}">View Users</a>
+                                                            </li>
+                                                        <?php
+                                                        }  ?>
+
+                                                    </ul>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- More products... -->
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- IT END -->
+        <!-- HR START -->
+
+        {% comment %} <div class="w-auto bg-gray-200 shadow shadow-nepal-300 text-gray-700 rounded px-2 py-2">
+            <div class="sm:flex lg:items-center lg:justify-between">
+                <div class="min-w-0 flex-1">
+                    <div class="">
+                        <div class="mx-auto">
+
+                            <div class="group relative">
+                                <div class="aspect-h-1 aspect-w-1 w-full overflow-hidden rounded-md bg-gray-200 lg:aspect-none group-hover:opacity-75 lg:h-40">
+                                    <img src="{% static 'assets/images/electrical.jpg' %}" alt="" class="h-full w-full object-cover object-center lg:h-full lg:w-full">
+                                </div>
+                                <div class="mt-4 flex justify-center">
+                                    <div class="w-full ">
+                                        <div class="dropdown-group inline-block w-full text-blue-50">
+                                            <button class="w-full bg-blue-800 hover:bg-blue-900 outline-none focus:outline-none border px-3 py-1 rounded flex items-center">
+                                                <span class="pr-1 font-semibold flex-1 text-blue-50">HR</span>
+                                                <span class="text-blue-50">
+                                                    <svg class="fill-current h-4 w-4 transform group-hover:-rotate-180
+                                                            transition duration-150 ease-in-out" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                                        <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+                                                    </svg>
+                                                </span>
+                                            </button>
+
+
+                                            <ul style="min-width: 18rem;" class="bg-blue-50 z-10 text-gray-950 border rounded transform scale-0 group-hover:scale-100 absolute 
+                                                        transition duration-150 ease-in-out origin-top">
+
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- More products... -->
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div> {% endcomment %}
+
+        <!-- HR END -->
+        <!-- RISK START -->
+
+        <div class="w-auto bg-gray-200 shadow shadow-nepal-300 text-gray-700 rounded px-2 py-2">
+            <div class="sm:flex lg:items-center lg:justify-between">
+                <div class="min-w-0 flex-1">
+                    <div class="">
+                        <div class="mx-auto">
+
+                            <div class="group relative">
+                                <div class="aspect-h-1 aspect-w-1 w-full overflow-hidden rounded-md bg-gray-200 lg:aspect-none group-hover:opacity-75 lg:h-40">
+                                    <img src="{% static 'assets/images/electrical.jpg' %}" alt="" class="h-full w-full object-cover object-center lg:h-full lg:w-full">
+                                </div>
+                                <div class="mt-4 flex justify-center">
+                                    <div class="w-full ">
+                                        <div class="dropdown-group inline-block w-full text-blue-50">
+                                            <button class="w-full bg-blue-800 hover:bg-blue-900 outline-none focus:outline-none border px-3 py-1 rounded flex items-center">
+                                                <span class="pr-1 font-semibold flex-1 text-blue-50">RISK</span>
+                                                <span class="text-blue-50">
+                                                    <svg class="fill-current h-4 w-4 transform group-hover:-rotate-180
+                                                            transition duration-150 ease-in-out" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                                        <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+                                                    </svg>
+                                                </span>
+                                            </button>
+
+
+                                            <ul style="min-width: 18rem;" class="bg-blue-50 z-10 text-gray-950 border rounded transform scale-0 group-hover:scale-100 absolute 
+                                                        transition duration-150 ease-in-out origin-top">
+
+                                                <li class="relative px-1 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                    <a class="w-full text-left px-3 flex items-center outline-none focus:outline-none">
+                                                        <span class="pr-1 flex-1">SECURITY</span>
+                                                        <span class="mr-auto">
+                                                            <svg class="fill-current h-4 w-4
+                                                                    transition duration-150 ease-in-out" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                                                <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+                                                            </svg>
+                                                        </span>
+                                                    </a>
+                                                    <ul class="bg-blue-50 border rounded-sm absolute top-0 right-0 
+                                                            transition duration-150 ease-in-out origin-top-left
+                                                            min-w-32 text-gray-950
+                                                            ">
+                                                        <?php
+                                                        if ($role6 == 'originatorx') { ?>
+                                                            <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                <a tabindex="-1" href="../../IDs_generation/index.php">Create IDs</a>
+                                                            </li>
+                                                            <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                <a tabindex="-1" href="../../IDs_generation/index.php">Employee Repository</a>
+                                                            </li>
+                                                            <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                <a tabindex="-1" href="../../IDs_generation/indexx.php">Manage IDs</a>
+                                                            </li>
+                                                        <?php
+                                                        } elseif ($role6 == 'recipientx') { ?>
+                                                            <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                <a tabindex="-1" href="../../IDs_generation/id-cardx.php"> ID Search Engine</a>
+                                                            </li>
+                                                        <?php } else if ($role6 == 'supervisor') { ?>
+                                                            <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                <a tabindex="-1" href="../../NonConformity/nonconformity.php">Create</a>
+                                                            </li>
+                                                            <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                <a tabindex="-1" href="../../NonConformity/recipient/new.php">New NC`s</a>
+                                                            </li>
+                                                            <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                <a tabindex="-1" href="../../NonConformity/supervisor/new.php">Review NC`s</a>
+                                                            </li>
+                                                            <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                <a tabindex="-1" href="../../NonConformity/supervisor/reports.php">Reports</a>
+                                                            </li>
+
+                                                        <?php
+                                                        } else {
+                                                        }
+                                                        ?>
+
+                                                    </ul>
+                                                </li>
+                                                <li class="relative px-1 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                    <a class="w-full text-left px-3 flex items-center outline-none focus:outline-none">
+                                                        <span class="pr-1 flex-1">NON CONFORMITY</span>
+                                                        <span class="mr-auto">
+                                                            <svg class="fill-current h-4 w-4
+                                                                    transition duration-150 ease-in-out" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                                                <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+                                                            </svg>
+                                                        </span>
+                                                    </a>
+                                                    <ul class="bg-blue-50 border rounded-sm absolute top-0 right-0 
+                                                            transition duration-150 ease-in-out origin-top-left
+                                                            min-w-32 text-gray-950
+                                                            ">
+                                                        <?php
+                                                        if ($role6 == 'originator') { ?>
+                                                            <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                <a tabindex="-1" href="../../NonConformity/nonconformity.php">Create</a>
+                                                            </li>
+                                                            <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                <a tabindex="-1" href="../../NonConformity/recipient/new.php">New NC`s</a>
+                                                            </li>
+                                                            <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                <a tabindex="-1" href="../../NonConformity/reports.php">Reports</a>
+                                                            </li>
+                                                        <?php
+                                                        } elseif ($role6 == 'recipient') { ?>
+                                                            <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                <a tabindex="-1" href="../../NonConformity/nonconformity.php">Create</a>
+                                                            </li>
+                                                            <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                <a tabindex="-1" href="../../NonConformity/recipient/new.php">New NC`s</a>
+                                                            </li>
+                                                            <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                <a tabindex="-1" href="../../NonConformity/recipient/reports.php">Reports</a>
+                                                            </li>
+                                                        <?php } else if ($role6 == 'supervisor') { ?>
+                                                            <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                <a tabindex="-1" href="../../NonConformity/nonconformity.php">Create</a>
+                                                            </li>
+                                                            <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                <a tabindex="-1" href="../../NonConformity/recipient/new.php">New NC`s</a>
+                                                            </li>
+                                                            <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                <a tabindex="-1" href="../../NonConformity/supervisor/new.php">Review NC`s</a>
+                                                            </li>
+                                                            <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                <a tabindex="-1" href="../../NonConformity/supervisor/reports.php">Reports</a>
+                                                            </li>
+
+                                                        <?php
+                                                        } else {
+                                                        }
+                                                        ?>
+
+                                                    </ul>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- More products... -->
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- RISK END -->
+        <div class="w-auto bg-gray-200 shadow shadow-nepal-300 text-gray-700 rounded px-2 py-2">
+            <div class="sm:flex lg:items-center lg:justify-between">
+                <div class="min-w-0 flex-1">
+                    <div class="">
+                        <div class="mx-auto">
+
+                            <div class="group relative">
+                                <div class="aspect-h-1 aspect-w-1 w-full overflow-hidden rounded-md bg-gray-200 lg:aspect-none group-hover:opacity-75 lg:h-40">
+                                    <img src="/static/assets/images/electrical.jpg" alt="" class="h-full w-full object-cover object-center lg:h-full lg:w-full">
+                                </div>
+                                <div class="mt-4 flex justify-center">
+                                    <div class="w-full ">
+                                        <div class="dropdown-group inline-block w-full text-blue-50">
+                                            <button class="w-full bg-blue-800 hover:bg-blue-900 outline-none focus:outline-none border px-3 py-1 rounded flex items-center">
+                                                <span class="pr-1 font-semibold flex-1 text-blue-50">COMMERCIAL</span>
+                                                <span class="text-blue-50">
+                                                    <svg class="fill-current h-4 w-4 transform group-hover:-rotate-180
+                                                            transition duration-150 ease-in-out" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                                        <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"></path>
+                                                    </svg>
+                                                </span>
+                                            </button>
+
+
+                                            <ul style="min-width: 18rem;" class="bg-blue-50 z-10 text-gray-950 border rounded transform scale-0 group-hover:scale-100 absolute 
+                                                        transition duration-150 ease-in-out origin-top">
+                                                <li class="relative px-1 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                    <a class="w-full text-left px-3 flex items-center outline-none focus:outline-none">
+                                                        <span class="pr-1 flex-1">TOKENS</span>
+                                                        <span class="mr-auto">
+                                                            <svg class="fill-current h-4 w-4
+                                                                    transition duration-150 ease-in-out" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                                                <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"></path>
+                                                            </svg>
+                                                        </span>
+                                                    </a>
+                                                    <ul class="bg-blue-50 border rounded-sm absolute top-0 right-0 
+                                                            transition duration-150 ease-in-out origin-top-left
+                                                            min-w-32 text-gray-950
+                                                            ">
+                                                        <!--?php if ($roles == 'admin') {
+                                                        ?-->
+                                                            <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                <a tabindex="-1" href="/users/user/create">Temper Tokens</a>
+                                                            </li>
+                                                            <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
+                                                                <a tabindex="-1" href="../users/update.php">Reimbursement Token</a> 
+                                                            </li>
+                                                            <a tabindex="-1" href="../update.php"> Form </a>
+                                                        </li>
+                                                        <!--?php
+                                                        }  ?-->
+                                                    </ul>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- More products... -->
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+</div>
+{% endblock content %}

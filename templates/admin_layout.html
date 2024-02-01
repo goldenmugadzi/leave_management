@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html>
-  {% load static %}
-  {% load custom_tags %}
+  {% load static %} {% load custom_tags %}
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -12,9 +11,17 @@
     />
     <link href="{% static 'assets/css/tailwind.css' %}" rel="stylesheet" />
     <link href="{% static 'assets/css/be.css' %}" rel="stylesheet" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-" crossorigin="anonymous" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+      integrity="sha512-"
+      crossorigin="anonymous"
+    />
 
-    <link href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css" rel="stylesheet">
+    <link
+      href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css"
+      rel="stylesheet"
+    />
     <script
       defer
       src="https://unpkg.com/@alpinejs/collapse@3.x.x/dist/cdn.min.js"
@@ -23,42 +30,51 @@
   </head>
 
   <body class="bg-gulf-blue-50">
-    
-  <div x-data="{ showNewsFlash: false }" 
-  style="
-  position:fixed;
-    width: 100%;
-  " class="z-30">
-    <div
-    class="p-4 bg-gulf-blue-100"
-    x-show="showNewsFlash"
-  >
-    <nav >
-      <div class="mx-auto px-2 sm:px-6 md:px-2 lg:px-2 xl:px-2">
-        <div class="w-full flex h-8 items-center justify-between">
-          <div
-            class="flex w-full items-center sm:items-stretch"
-          >
-            <div id="scrolling-container" class="flex w-full items-center">
-              <div id="scrolling-news-text"
-              class="text-right text-lg whitespace-nowrap text-gulf-blue-950 px-3 py-2 font-medium">
-                  ZETDC NEWS FLASH
+    {% comment %} <div
+      x-data="{ showNewsFlash: false }"
+      style="position: fixed; width: 100%"
+      class="z-30"
+    >
+      <div class="p-4 bg-gulf-blue-100" x-show="showNewsFlash">
+        <nav>
+          <div class="mx-auto px-2 sm:px-6 md:px-2 lg:px-2 xl:px-2">
+            <div class="w-full flex h-8 items-center justify-between">
+              <div class="flex w-full items-center sm:items-stretch">
+                <div id="scrolling-container" class="flex w-full items-center">
+                  <div
+                    id="scrolling-news-text"
+                    class="text-right text-lg whitespace-nowrap text-gulf-blue-950 px-3 py-2 font-medium"
+                  >
+                    ZETDC NEWS FLASH
+                  </div>
+                </div>
+
+                <div
+                  class="absolute hide inset-y-0 right-0 flex items-center pr-2 sm:static sm:inset-auto sm:ml-6 sm:pr-0"
+                >
+                  <svg
+                    @click="showNewsFlash = !showNewsFlash"
+                    role="button"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke-width="1.5"
+                    stroke="currentColor"
+                    class="w-6 h-6"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      d="M6 18 18 6M6 6l12 12"
+                    />
+                  </svg>
+                </div>
+              </div>
             </div>
-            </div>
-            
-            <div
-            class="absolute hide inset-y-0 right-0 flex items-center pr-2 sm:static sm:inset-auto sm:ml-6 sm:pr-0"
-          >
-          <svg @click="showNewsFlash = !showNewsFlash" role="button" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
-          </svg>        
           </div>
-          </div>
-        </div>
+        </nav>
       </div>
-    </nav>
-  </div>
-</div>
+    </div> {% endcomment %}
     <main style="display: flex" class="flex justify-between p-4">
       <aside
         id="sidebar"
@@ -101,48 +117,72 @@
               style="display: flex; flex-direction: column"
               class="text-gulf-blue-50 w-full mt-3 border-t border-gulf-blue-700"
             >
-              <a
-                class="flex items-center w-full h-12 px-3 mt-2 rounded hover:bg-gulf-blue-500"
-                href="{% url 'dashboard_index' %}"
+            <a
+              id="menu-item"
+              class="flex items-center w-full h-12 px-3 mt-2 rounded hover:bg-gulf-blue-500 hover:shadow-lg"
+              href="{% url 'dashboard_index' %}"
+            >
+              <svg
+                class="w-6 h-6 stroke-current"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
               >
-                <svg
-                  class="w-6 h-6 stroke-current"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
-                  />
-                </svg>
-                <span class="ml-2 text-sm font-medium">Home</span>
-              </a>
-              <a
-                class="flex items-center w-full h-12 px-3 mt-2 rounded hover:bg-gulf-blue-500"
-                href="/knowledge-center/view_firstview"
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+                />
+              </svg>
+              <span class="ml-2 text-sm font-medium">Home</span>
+            </a>
+            <a
+              id="menu-item"
+              class="flex items-center w-full h-12 px-3 mt-2 rounded hover:bg-gulf-blue-500 hover:shadow-lg"
+              href="/business-applications"
+            >
+              <svg
+                class="w-6 h-6 stroke-current"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
               >
-                <svg
-                  class="w-6 h-6 stroke-current"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"
-                  />
-                </svg>
-                <span class="ml-2 text-sm font-medium">Knowledge Centre</span>
-              </a>
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"
+                />
+              </svg>
+              <span class="ml-2 text-sm font-medium">Business Applications</span>
+            </a>
+            <a
+              id="menu-item"
+              class="flex items-center w-full h-12 px-3 mt-2 rounded hover:bg-gulf-blue-500 hover:shadow-lg"
+              href="/knowledge-center/view_firstview"
+            >
+              <svg
+                class="w-6 h-6 stroke-current"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+                />
+              </svg>
+              <span class="ml-2 text-sm font-medium">Knowledge Centre</span>
+            </a>
               <a
-                class="flex items-center w-full h-12 px-3 mt-2 rounded hover:bg-gulf-blue-500"
+                id="menu-item"
+                class="flex items-center w-full h-12 px-3 mt-2 rounded hover:bg-gulf-blue-500 hover:shadow-lg"
                 href="/processes/new_view"
               >
                 <svg
@@ -164,7 +204,8 @@
                 >
               </a>
               <a
-                class="flex items-center w-full h-12 px-3 mt-2 rounded hover:bg-gulf-blue-500"
+                id="menu-item"
+                class="flex items-center w-full h-12 px-3 mt-2 rounded hover:bg-gulf-blue-500 hover:shadow-lg"
                 href="/competence/competence"
               >
                 <svg
@@ -186,273 +227,319 @@
                 >
               </a>
               <a
-                class="flex items-center text-center w-full h-12 px-3 mt-2  rounded hover:bg-gulf-blue-500"
-                href="/inbox" 
+                id="menu-item"
+                class="flex items-center text-center w-full h-12 px-3 mt-2 rounded hover:bg-gulf-blue-500 hover:shadow-lg"
+                href="/inbox"
               >
-              <i class="far fa-envelope mr-2"></i>
-              <span class="ml-2 text-sm  font-medium"
-                  >Inbox</span
-                >
+                <i class="far fa-envelope mr-2"></i>
+                <span class="ml-2 text-sm font-medium">Inbox</span>
               </a>
-             
             </div>
           </div>
-          <a
-          style="margin-top: 3rem"
-          class="flex items-center w-full px-3"
-          href="#"
-        >
-          <svg
-            class="w-8 h-8 fill-current"
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 20 20"
-            fill="currentColor"
-          >
-            <path
-              d="M11 17a1 1 0 001.447.894l4-2A1 1 0 0017 15V9.236a1 1 0 00-1.447-.894l-4 2a1 1 0 00-.553.894V17zM15.211 6.276a1 1 0 000-1.788l-4.764-2.382a1 1 0 00-.894 0L4.789 4.488a1 1 0 000 1.788l4.764 2.382a1 1 0 00.894 0l4.764-2.382zM4.447 8.342A1 1 0 003 9.236V15a1 1 0 00.553.894l4 2A1 1 0 009 17v-5.764a1 1 0 00-.553-.894l-4-2z"
-            />
-          </svg>
-          <span class="item-center ml-2 text-sm font-bold"
-            >BUSINESS APPLICATIONS</span
-          >
-        </a>
-        <div class="w-full px-2">
-          <div
-            style="display: flex; flex-direction: column"
-            class="text-gulf-blue-50 w-full mt-3 border-t border-gulf-blue-700"
-          >
-            <div x-data="{ expanded: false }">
-              <div
-                class="flex items-center w-full h-12 px-3 mt-2 rounded hover:bg-gulf-blue-500"
-              >
-              <svg
-                class="w-6 h-6 stroke-current"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"
-                />
-              </svg>
-                <button 
-                @click="expanded = ! expanded"
-                class="ml-2 text-sm font-medium"
-                >FINANCE</button>
-              </div>
-              <div style="flex-direction: column; padding-left: 1.5rem;" class="flex justify-center w-full">
-                <div 
-                class="flex justify-start items-center h-12 px-3 mt-2 rounded hover:bg-gulf-blue-400" 
-                x-show="expanded" x-collapse.duration.1000ms
-                ><span class="mr-2 font-medium">P </span> <span class="ml-2">Petty Cash</span></div>
-                <div
-                class="flex justify-start items-center h-12 px-3 mt-2 rounded hover:bg-gulf-blue-400"
-                x-show="expanded" x-collapse.duration.1000ms>
-                <span class="mr-2 font-medium">A </span> <span class="ml-2">ACE</span>
-              </div>
-              </div>
-            </div>
-          </div>
-          <div
-            style="display: flex; flex-direction: column"
-            class="text-gulf-blue-50 w-full mt-3 border-t border-gulf-blue-700"
-          >
-            <div x-data="{ expanded: false }">
-              <div
-              @click="expanded = ! expanded"
-              class="flex items-center w-full h-12 px-3 mt-2 rounded hover:bg-gulf-blue-500"
-              >
-              <svg
-                class="w-6 h-6 stroke-current"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"
-                />
-              </svg>
-                <button 
-                class="ml-2 text-sm font-medium"
-                >RISK</button>
-              </div>
-              <div style="flex-direction: column; padding-left: 1.5rem;" class="flex justify-center w-full">
-                <div 
-                class="flex justify-start items-center h-12 px-3 mt-2 rounded hover:bg-gulf-blue-400" 
-                x-show="expanded" x-collapse.duration.1000ms
-                >
-                <a href="/nonconformities"><span class="mr-2 font-medium">N </span> <span class="ml-2">Nonconformity</span></a></div>
-              </div>
-            </div>
-          </div>
-        </div>
         </div>
         <!-- Component End  -->
       </aside>
       <div id="content" style="width: 83%; margin-left: 17rem">
-
-        <div style="
+        <div
+          style="
             border-radius: 0.75rem;
             position: fixed;
             top: 0;
             width: 84%;
             height: 6.5rem;
-          " class="rounded-xl p-4 border bg-gulf-blue-100 border-gulf-blue-400 z-10 mt-5">
+          "
+          class="rounded-xl p-4 border bg-gulf-blue-100 border-gulf-blue-400 z-10 mt-5 max-w-screen"
+        >
           <nav>
             <div class="mx-auto px-2 sm:px-6 md:px-2 lg:px-2 xl:px-2">
               <div class="relative flex h-16 items-center justify-between">
-                <div class="absolute inset-y-0 left-0 flex items-center sm:hidden">
+                <div
+                  class="absolute inset-y-0 left-0 flex items-center sm:hidden"
+                >
                   <!-- Mobile menu button-->
-                  <button type="button" class="relative inline-flex items-center justify-center rounded-md p-2 text-gulf-blue-900 hover:bg-gulf-blue-500 hover:text-white focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white" aria-controls="mobile-menu" aria-expanded="false">
+                  <button
+                    type="button"
+                    class="relative inline-flex items-center justify-center rounded-md p-2 text-gulf-blue-900 hover:bg-gulf-blue-500 hover:text-white focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
+                    aria-controls="mobile-menu"
+                    aria-expanded="false"
+                  >
                     <span class="absolute -inset-0.5"></span>
                     <span class="sr-only">Open main menu</span>
 
-                    <svg class="block h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"></path>
+                    <svg
+                      class="block h-6 w-6"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke-width="1.5"
+                      stroke="currentColor"
+                      aria-hidden="true"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"
+                      ></path>
                     </svg>
-                    <svg class="hidden h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
+                    <svg
+                      class="hidden h-6 w-6"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke-width="1.5"
+                      stroke="currentColor"
+                      aria-hidden="true"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M6 18L18 6M6 6l12 12"
+                      ></path>
                     </svg>
                   </button>
                 </div>
                 <div class="flex flex-1 items-center sm:items-stretch">
-                  <div style="flex: 0.2" class="flex ml-2 flex-shrink-0 items-center">
-                    <img class="h-14 w-auto" src="/static/assets/images/website-logo.png" alt="ZETDC">
+                  <div
+                    style="flex: 0.2"
+                    class="flex ml-2 flex-shrink-0 items-center"
+                  >
+                    <img
+                      class="h-14 w-auto"
+                      src="/static/assets/images/website-logo.png"
+                      alt="ZETDC"
+                    />
                   </div>
                   <div style="flex: 0.8" class="flex w-full items-center">
-                    <div id="scrolling-text" class="text-right text-lg whitespace-nowrap text-gulf-blue-950 px-3 py-2 font-medium" style="text-indent: 182px;">
-                        ZETDC BUSINESS EXCELLENCE
+                    <div
+                      id="scrolling-text"
+                      class="text-right text-lg whitespace-nowrap text-gulf-blue-950 px-3 py-2 font-medium"
+                      style="text-indent: 182px"
+                    >
+                      ZETDC BUSINESS EASY
+                    </div>
                   </div>
-                </div>
-                <div class="relative ml-3 flex items-center">
-                  <input type="text" placeholder="Search..." class="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring focus:border-blue-300">
-                  <button type="button" class="rounded p-2 text-blue-900 hover:bg-gulf-blue-100 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gulf-blue-800">
-                    <i class="fas fa-search mr-2"></i>
-                  </button>
-                  
-                </div>
-                
- 
-                <div class="absolute hide inset-y-0 right-0 flex items-center pr-2 sm:static sm:inset-auto sm:ml-6 sm:pr-0">
-                  <div class="relative" x-data="{ open: false }">
-                    <div>
-                      <button @click="open = ! open" type="button" class="relative ml-3 flex items-center text-blue-900 p-2 hover:bg-gulf-blue-100 rounded focus:outline-none focus:ring-2 focus:ring-tory-blue-50 focus:ring-offset-2 focus:ring-offset-gulf-blue-800 px-2 py-1" id="user-menu-button" aria-expanded="false" aria-haspopup="true">
-                        <span class="absolute -inset-1.5"></span>
-                        <span class="ml-2">
-                          <i class="fa fa-user me-1"></i>
-                           {% if request.user.first_name %}
-              {{request.user.get_full_name}}
-             
-            {% else %}  {{request.user }} {% endif %}
-                        </span>
-                      </button>
-                      
-          
-                    </div>
-
-                    <div x-show="open" @click.outside="open = false" class="text-black absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none" role="menu" aria-orientation="vertical" aria-labelledby="user-menu-button" tabindex="-1" style="display: none;">
-                      <!-- Active: "bg-gulf-blue-100", Not Active: "" -->
-                      
-                     
-                     <a href="/accounts/password_change/" class="relative ml-3 rounded p-2 text-blue-900 hover:bg-gulf-blue-100 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 flex items-center focus:ring-offset-gulf-blue-800" role="menuitem" tabindex="-1" id="user-menu-item-3"> 
-                     <span class="absolute -inset-1.5"></span>
-                     <i class="fas fa-eye mr-2"></i>View My Profile
-                   </a>
-                   <a href="/accounts/password_change/" class="relative ml-3 rounded p-2 text-blue-900 hover:bg-gulf-blue-100 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 flex items-center focus:ring-offset-gulf-blue-800" role="menuitem" tabindex="-1" id="user-menu-item-3"> 
-                   <span class="absolute -inset-1.5"></span>
-                   <i class="fas fa-key mr-2"></i>Change Password
-                 </a>
-                        <a href="/accounts/logout/" class="relative ml-3 rounded p-2 text-red-900 hover:bg-gulf-blue-100 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 flex items-center focus:ring-offset-gulf-blue-800" role="menuitem" tabindex="-1" id="user-menu-item-2"> 
-                        <span class="absolute -inset-1.5"></span>
-                        <i class="fas fa-power-off mr-2"></i>Logout</a>
-                      
-                     
-
-                    </div>
-                    
-
+                  <div class="relative ml-3 flex items-center">
+                    <input
+                      type="text"
+                      placeholder="Search..."
+                      class="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring focus:border-blue-300"
+                    />
+                    <button
+                      type="button"
+                      class="rounded p-2 text-blue-900 hover:bg-gulf-blue-100 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gulf-blue-800"
+                    >
+                      <i class="fas fa-search mr-2"></i>
+                    </button>
                   </div>
 
-                  <button type="button" class="relative ml-3 rounded p-2 text-blue-900 hover:bg-gulf-blue-100 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gulf-blue-800">
-  <a href="/inbox" class="flex items-center">
-    <span class="absolute -inset-1.5"></span>
-    <i class="far fa-envelope mr-2"></i>
-  </a>
-</button>
+                  <div
+                    class="absolute hide inset-y-0 right-0 flex items-center pr-2 sm:static sm:inset-auto sm:ml-6 sm:pr-0"
+                  >
+                    <div class="relative" x-data="{ open: false }">
+                      <div>
+                        <button
+                          @click="open = ! open"
+                          type="button"
+                          class="relative ml-3 flex items-center text-blue-900 p-2 hover:bg-gulf-blue-100 rounded focus:outline-none focus:ring-2 focus:ring-tory-blue-50 focus:ring-offset-2 focus:ring-offset-gulf-blue-800 px-2 py-1"
+                          id="user-menu-button"
+                          aria-expanded="false"
+                          aria-haspopup="true"
+                        >
+                          <span class="absolute -inset-1.5"></span>
+                          <span class="ml-2">
+                            <i class="fa fa-user me-1"></i>
+                            {% if request.user.first_name %}
+                            {{request.user.get_full_name}} {% else %}
+                            {{request.user }} {% endif %}
+                          </span>
+                        </button>
+                      </div>
 
+                      <div
+                        x-show="open"
+                        @click.outside="open = false"
+                        class="text-black absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
+                        role="menu"
+                        aria-orientation="vertical"
+                        aria-labelledby="user-menu-button"
+                        tabindex="-1"
+                        style="display: none"
+                      >
+                        <!-- Active: "bg-gulf-blue-100", Not Active: "" -->
 
-
-        <div x-data="{ open: false }">
-            <!-- Toggle button -->
-            <a href="javascript:;" class="relative ml-3 rounded p-2 text-blue-900 hover:bg-gulf-blue-100 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gulf-blue-800" id="dropdownMenuButton" @click="open = !open" aria-expanded="false">
-                <span class="inline-flex items-center">
-                    <i class="far fa-bell mr-2"></i>
-                    
-                </span>
-            </a>
-
-            <!-- Dropdown content -->
-            <div x-show="open" @click.outside="open = false"
-                class="dropdown-content absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
-                style="max-height: 30rem; overflow-y: auto;"
-                  role="menu" aria-labelledby="dropdownMenuButton" tabindex="-1">
-                {% if filtered_notifications %}
-                {% for notification in filtered_notifications %}
-                <div class="mb-2">
-                    <div class="notification {% if not notification.is_read %}unread{% endif %} rounded">
-                        <a href="{{ notification.url }}" class="notification-link">
-                            <div class="flex py-1">
-                                <!-- Avatar code -->
-                                <div class="flex flex-col justify-content-center">
-                                    <h6 class="text-sm font-normal mb-1">
-                                        <a href="{{ notification.url }}" class="ml-2 text-primary">
-                                            <span class="font-bold">{{ notification }}</span>
-                                    </h6>
-                                    <p class="text-xs text-secondary mb-0">
-                                        <i class="fa fa-clock me-1"></i>
-                                        {{ notification.created_at }}
-                                    </p></a>
-                                </div>
-                            </div>
+                        <a
+                          href="/accounts/password_change/"
+                          class="relative ml-3 rounded p-2 text-blue-900 hover:bg-gulf-blue-100 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 flex items-center focus:ring-offset-gulf-blue-800"
+                          role="menuitem"
+                          tabindex="-1"
+                          id="user-menu-item-3"
+                        >
+                          <span class="absolute -inset-1.5"></span>
+                          <i class="fas fa-eye mr-2"></i>View My Profile
                         </a>
+                        <a
+                          href="/accounts/password_change/"
+                          class="relative ml-3 rounded p-2 text-blue-900 hover:bg-gulf-blue-100 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 flex items-center focus:ring-offset-gulf-blue-800"
+                          role="menuitem"
+                          tabindex="-1"
+                          id="user-menu-item-3"
+                        >
+                          <span class="absolute -inset-1.5"></span>
+                          <i class="fas fa-key mr-2"></i>Change Password
+                        </a>
+                        <a
+                          href="/accounts/logout/"
+                          class="relative ml-3 rounded p-2 text-red-900 hover:bg-gulf-blue-100 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 flex items-center focus:ring-offset-gulf-blue-800"
+                          role="menuitem"
+                          tabindex="-1"
+                          id="user-menu-item-2"
+                        >
+                          <span class="absolute -inset-1.5"></span>
+                          <i class="fas fa-power-off mr-2"></i>Logout</a
+                        >
+                      </div>
                     </div>
-                </div>
-                {% endfor %}
-                {% else %}
-                {%endif%}
-                <div class="mb-2">
-                    <div class="notification rounded">
-                        <p class="text-xs text-secondary mb-0">You have no notifications.</p>
-                    </div>
-                </div>
-                
-            </div>
-        </div>
 
-    
+                    <button
+                      type="button"
+                      class="relative ml-3 rounded p-2 text-blue-900 hover:bg-gulf-blue-100 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gulf-blue-800"
+                    >
+                      <a href="/inbox" class="flex items-center">
+                        <span class="absolute -inset-1.5"></span>
+                        <i class="far fa-envelope mr-2"></i>
+                      </a>
+                    </button>
+
+                    <div x-data="{ open: false }">
+                      <!-- Toggle button -->
+                      <a
+                        href="javascript:;"
+                        class="relative ml-3 rounded p-2 text-blue-900 hover:bg-gulf-blue-100 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gulf-blue-800"
+                        id="dropdownMenuButton"
+                        @click="open = !open"
+                        aria-expanded="false"
+                      >
+                        <span class="inline-flex items-center">
+                          <i class="far fa-bell mr-2"></i>
+                        </span>
+                      </a>
+
+                      <!-- Dropdown content -->
+                      <div
+                        x-show="open"
+                        @click.outside="open = false"
+                        class="dropdown-content absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
+                        style="max-height: 30rem; overflow-y: auto"
+                        role="menu"
+                        aria-labelledby="dropdownMenuButton"
+                        tabindex="-1"
+                      >
+                        {% if filtered_notifications %} 
+                        {% for notification in filtered_notifications %}
+                        <div class="mb-2">
+                          <div
+                            class="notification {% if not notification.is_read %}unread{% endif %} rounded"
+                          >
+                            <a
+                              href="{{ notification.url }}"
+                              class="notification-link"
+                            >
+                              <div class="flex py-1">
+                                <!-- Avatar code -->
+                                <div
+                                  class="flex flex-col justify-content-center"
+                                >
+                                  <h6 class="text-sm font-normal mb-1">
+                                    <a
+                                      href="{{ notification.url }}"
+                                      class="ml-2 text-primary"
+                                    >
+                                      <span class="font-bold">{{ notification }}</span
+                                      >
+                                    </a>
+                                  </h6>
+
+                                  <p class="text-xs text-secondary mb-0">
+                                    <i class="fa fa-clock me-1"></i>
+                                    {{ notification.created_at }}
+                                  </p>
+                                </div>
+                              </div>
+                            </a>
+                          </div>
+                        </div>
+                        {% endfor %} {%endif%}
+                        <div class="mb-2">
+                          <div class="notification rounded">
+                            <p class="text-xs text-secondary mb-0">
+                              You have no notifications.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
-          </div></nav>
-          
+          </nav>
         </div>
 
         <div
           style="margin-top: 6.5rem"
-          class="mx-auto px-4 py-6 sm:px-6 lg:px-8"
+          class="mx-auto px-4 py-4 sm:px-6 lg:px-8"
         >
           <div class="mx-auto py-6">
-            <h1 class="text-2xl font-bold tracking-tight text-gulf-blue-950">
+            <nav class="flex mb-5" aria-label="Breadcrumb">
+              <ol class="inline-flex items-center space-x-1 md:space-x-2">
+                {% for path in url_path %} 
+                {% with forloop.counter as loop_index %} 
+                {% if loop_index == 1 %}
+                <li class="inline-flex items-center">
+                  <a
+                    href="#"
+                    class="inline-flex items-center text-xl text-gray-700 hover:text-gray-900"
+                  >
+                    <svg
+                      class="w-5 h-5 mr-2.5"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"
+                      ></path>
+                    </svg>
+                    {{ path|capfirst }}
+                  </a>
+                </li>
+                {% else %}
+                <li>
+                  <div class="flex items-center">
+                    <svg
+                      class="w-6 h-6 text-gray-400"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        fill-rule="evenodd"
+                        d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                        clip-rule="evenodd"
+                      ></path>
+                    </svg>
+                    <a
+                      href="#"
+                      class="ml-1 text-xl font-medium text-gray-700 hover:text-gray-900 md:ml-2"
+                      >{{ path|capfirst }}</a
+                    >
+                  </div>
+                </li>
+                {% endif %} {% endwith %} {% endfor %}
+              </ol>
+            </nav>
+
+            <span class="text-2xl font-bold tracking-tight text-gulf-blue-950">
               {{page_title}}
-            </h1>
+            </span>
           </div>
           {% if messages %}
           <ul class="list-unstyled messages">
@@ -485,8 +572,7 @@
         </div>
       </div>
     </main>
-    {% load sweetify %}
-    {% sweetify %}
+    {% load sweetify %} {% sweetify %}
     <script
       defer
       src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"
@@ -497,12 +583,12 @@
       crossorigin="anonymous"
     ></script>
     <script>
-      const textElement = document.querySelector('#scrolling-text');
-      let textWidth = textElement.scrollWidth;  // Get text width
+      const textElement = document.querySelector("#scrolling-text");
+      let textWidth = textElement.scrollWidth; // Get text width
       let scrollPosition = 0;
-      
+
       const intervalId = setInterval(() => {
-        scrollPosition += 2;  // Adjust scrolling speed
+        scrollPosition += 2; // Adjust scrolling speed
         textElement.style.textIndent = `${scrollPosition}px`;
         if (scrollPosition >= textWidth) {
           scrollPosition = 0;
@@ -510,20 +596,169 @@
       }, 50);
     </script>
     <script>
-      const containerElement = document.querySelector('#scrolling-container');
-      let containerWidth = containerElement.scrollWidth
-      const newsElement = document.querySelector('#scrolling-news-text');
-      let newsWidth = newsElement.scrollWidth;  // Get news width
+      const containerElement = document.querySelector("#scrolling-container");
+      let containerWidth = containerElement.scrollWidth;
+      const newsElement = document.querySelector("#scrolling-news-text");
+      let newsWidth = newsElement.scrollWidth; // Get news width
       let newsPosition = 0;
-      
-      const intervalId = setInterval(() => {
-        newsPosition += 2;  // Adjust newsing speed
+
+      const intervalIdContainer = setInterval(() => {
+        newsPosition += 2; // Adjust newsing speed
         newsElement.style.newsIndent = `${newsPosition}px`;
         if (newsPosition >= containerWidth) {
           newsPosition = 0;
         }
       }, 50);
     </script>
+    <script>
+      const currentUrl = window.location.href;
+      const currentUrlParts = currentUrl.split("/")[3];
+      const menuItems = document.querySelectorAll("#menu-item");
+      for (const item of menuItems) {
+        const itemUrl = item.href;
+        const itemUrlParts = itemUrl.split("/")[3];
+        if (currentUrlParts === itemUrlParts) {
+          item.classList.add("bg-gulf-blue-400", "shadow-md");
+        }
+      }
+    </script>
     {% block scripts %}{% endblock scripts %}
   </body>
 </html>
+
+
+{% comment %} 
+
+              <div
+                style="display: flex; flex-direction: column"
+                class="text-gulf-blue-50 w-full mt-3 border-t border-gulf-blue-700"
+              >
+                <div
+                  x-data="{expanded: false, current_url: ''}"
+                  x-init="$watch('$route.path', (newPath) => currentUrl = newPath)"
+                >
+                  <div
+                    class="flex items-center w-full h-12 px-3 mt-2 rounded hover:bg-gulf-blue-500"
+                  >
+                    <svg
+                      class="w-6 h-6 stroke-current"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"
+                      />
+                    </svg>
+                    <button
+                      @click="expanded = ! expanded"
+                      class="ml-2 text-sm font-medium"
+                    >
+                      Knowledge Centre
+                    </button>
+                  </div>
+                  <div
+                    style="flex-direction: column; padding-left: 1.5rem"
+                    class="flex justify-center w-full"
+                  >
+                    <div x-show="url_path.find('knowledge-center')? true: expanded" x-collapse.duration.100ms>
+                      <a
+                        id="menu-item"
+                        href="/knowledge-center/view_legislation"
+                      >
+                        <div
+                          class="flex justify-start items-center h-12 px-3 py-2 mt-2 rounded hover:bg-gulf-blue-400"
+                        >
+                          <span class="mr-2 font-medium">L </span>
+                          <span class="ml-2">Legislation</span>
+                        </div>
+                      </a>
+                    </div>
+                    <div
+                      class="flex justify-start items-center h-12 px-3 py-2 mt-2 rounded hover:bg-gulf-blue-400"
+                      x-show="expanded"
+                      x-collapse.duration.1000ms
+                    >
+                      <span class="mr-2 font-medium">P </span>
+                      <span class="ml-2">Policies & Guidelines</span>
+                    </div>
+                    <div
+                      class="flex justify-start items-center h-12 px-3 py-2 mt-2 rounded hover:bg-gulf-blue-400"
+                      x-show="expanded"
+                      x-collapse.duration.1000ms
+                    >
+                      <span class="mr-2 font-medium">I </span>
+                      <span class="ml-2">Internal Publications</span>
+                    </div>
+                    <div
+                      class="flex justify-start items-center h-12 px-3 py-2 mt-2 rounded hover:bg-gulf-blue-400"
+                      x-show="expanded"
+                      x-collapse.duration.1000ms
+                    >
+                      <span class="mr-2 font-medium">E </span>
+                      <span class="ml-2">Engineering Instructions</span>
+                    </div>
+                    <div
+                      class="flex justify-start items-center h-12 px-3 py-2 mt-2 rounded hover:bg-gulf-blue-400"
+                      x-show="expanded"
+                      x-collapse.duration.1000ms
+                    >
+                      <span class="mr-2 font-medium">U </span>
+                      <span class="ml-2">User Manuals</span>
+                    </div>
+                    <div
+                      class="flex justify-start items-center h-12 px-3 py-2 mt-2 rounded hover:bg-gulf-blue-400"
+                      x-show="expanded"
+                      x-collapse.duration.1000ms
+                    >
+                      <span class="mr-2 font-medium">S </span>
+                      <span class="ml-2">Standards</span>
+                    </div>
+                    <div
+                      class="flex justify-start items-center h-12 px-3 py-2 mt-2 rounded hover:bg-gulf-blue-400"
+                      x-show="expanded"
+                      x-collapse.duration.1000ms
+                    >
+                      <span class="mr-2 font-medium">S </span>
+                      <span class="ml-2">Specifications</span>
+                    </div>
+                    <div
+                      class="flex justify-start items-center h-12 px-3 py-2 mt-2 rounded hover:bg-gulf-blue-400"
+                      x-show="expanded"
+                      x-collapse.duration.1000ms
+                    >
+                      <span class="mr-2 font-medium">D </span>
+                      <span class="ml-2">Drawings</span>
+                    </div>
+                    <div
+                      class="flex justify-start items-center h-12 px-3 py-2 mt-2 rounded hover:bg-gulf-blue-400"
+                      x-show="expanded"
+                      x-collapse.duration.1000ms
+                    >
+                      <span class="mr-2 font-medium">P </span>
+                      <span class="ml-2">Prince2 Centre</span>
+                    </div>
+                    <div
+                      class="flex justify-start items-center h-12 px-3 py-2 mt-2 rounded hover:bg-gulf-blue-400"
+                      x-show="expanded"
+                      x-collapse.duration.1000ms
+                    >
+                      <span class="mr-2 font-medium">O </span>
+                      <span class="ml-2">Other External Documents</span>
+                    </div>
+                    <div
+                      class="flex justify-start items-center h-12 px-3 py-2 mt-2 rounded hover:bg-gulf-blue-400"
+                      x-show="expanded"
+                      x-collapse.duration.1000ms
+                    >
+                      <span class="mr-2 font-medium">D </span>
+                      <span class="ml-2">Drone Technology</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+{% endcomment %}
