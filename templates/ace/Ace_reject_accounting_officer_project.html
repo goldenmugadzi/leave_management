@@ -1,5 +1,6 @@
 
 {% extends 'admin_layout.html' %} {% block content %}
+    {% load mathfilters %}
     <form enctype="multipart/form-data" method="post" action="/ace/reject">
     <div class="content-wrapper">
 
@@ -882,6 +883,49 @@
                 </div>
                 {% endif %}
             </div>
+
+            {% with a=budget.balance b=context.amount c=context.total_connection_fee %}
+                {% set total=b|add:c %}
+
+                <div>
+                    <label
+                            for="capital_estimated"
+                            class="block text-sm font-medium leading-6 text-gray-900"
+                    >Cost Of Project($)</label
+                    >
+                    <div class="mt-2">
+                        <input
+                                readonly
+                                value="{{ total }}"
+                                id="capital_estimated"
+                                name="capital_estimated"
+                                type="number"
+                                autocomplete="capital_estimated"
+                                class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                        />
+                    </div>
+                </div>
+
+                <div>
+                    <label
+                            for="amount"
+                            class="block text-sm font-medium leading-6 text-gray-900"
+                    >Current budget Balance after Ace($)</label
+                    >
+                    <div class="mt-2">
+                        <input
+                                readonly
+                                value="{{ a|sub:total }}"
+                                id="balance"
+                                name="balance"
+                                type="number"
+                                autocomplete="balance"
+                                class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                        />
+                    </div>
+                </div>
+            {% endwith %}
+
 
 
             <div>
