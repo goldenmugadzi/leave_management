@@ -3,60 +3,77 @@
 
 {%block content%}
 
-  <div style= "background-color: rgb(251 207 232);" class="flex justify-between items-center p-3">
-    <h1 class="text-2xl text-black font-bold ">Processes Maps</h1>
+<div style="background-color: rgb(251 207 232);" class="flex justify-between items-center p-3">
+  <h1 class="text-2xl text-black font-bold ">Processes Maps</h1>
 
-    <div class="text-black mr-4">Clause 4.2</div>
+  <div class="text-black mr-4">Clause 4.2</div>
 
-  </div>
+</div>
 
 
 <div class="card mt-6">
   <div class="grid grid-cols-2 gap-3 row-span-2">
-    <div class=" button bg-gulf-blue-400 px-16 py-10 rounded">
+    <div class=" button bg-gulf-blue-400 px-16 py-10 rounded ">
       <div class="flex justify-center"><a href="{%url 'Engineeringlist-processes'%}"
           class=" text-3xl text-center text-white"><strong>Engineering</strong></a></div>
     </div>
-  <div class="bg-apple-600 px-16 py-10 rounded-md shadow-md">
+    <div class="bg-apple-600 px-16 py-10 rounded-md shadow-md ml-3">
       <div class="flex justify-center"><a href="{%url 'commercial-process'%}"
-           class = "text-3xl text-center text-white"><strong>Commercial</strong></a></div>
+          class="text-3xl text-center text-white"><strong>Commercial</strong></a></div>
     </div>
-  </div>
-  <div style="background-color: rgb(234 179 8);"  class="flex justify-center mt-2 rounded-md">
-  <a href= "{%url 'management-processes' %}"  class="  text-center mt-2 mb-4 font-bold text-4xl">Management processes</a>
-  </div>
-  <div class="flex justify-center">
-    <a class="w-2/3 p-2 mt-2 rounded-xl bg-jade-300 text-center text-2xl" href="{%url 'it-process'%}">Information
-      Technology</a>
+
+    <div style="background-color: rgb(234 179 8); height: 120px;" class="mt-2 rounded-md">
+      <a href="{%url 'management-processes' %}"
+        class="flex justify-center  text-center mt-2 mb-4 font-bold text-3xl text-white"><strong>Management
+          Processes</strong></a>
+    </div>
+    <div ml-3 class="border-2 border-black">
+      <fieldset>
+        <div class="flex justify-center">
+          <p class="w-2/3 p-2 mt-2  text-center text-3xl">Support Services</p>
+        </div>
+        <div class="flex justify-center">
+          <a class="w-2/3 p-2 mt-2 rounded-xl bg-jade-300 text-center text-2xl" href="{%url 'it-process'%}">Information
+            Communication Technology</a>
+        </div>
+
+        <div class="flex justify-center">
+          <a class="w-2/3 p-2 mt-2 rounded-xl bg-gulf-blue-300 text-center text-2xl"
+            href="{%url 'finance-processes'%}">Finance</a>
+        </div>
+
+        <div class="flex justify-center">
+          <a class="w-2/3 p-2 mt-2 rounded-xl bg-gray-300 text-center text-2xl" href="{%url 'HR-processes'%}">Human
+            Resources</a>
+        </div>
+
+        <div class="flex justify-center">
+          <a class="w-2/3 p-2 mt-2 rounded-xl bg-royal-heath-300 text-center text-2xl"
+            href="{%url 'risk-processes'%}">Risk
+            Management</a>
+        </div>
+
+        <div class="flex justify-center">
+          <a class="w-2/3 p-2 mt-2 rounded-xl bg-apple-300 text-center text-2xl"
+            href="{%url 'procurement-processes'%}">Procurement</a>
+        </div>
+
+        <div class="flex justify-center">
+          <a class="w-2/3 p-2 mt-2 rounded-xl bg-gulf-blue-300 text-center text-2xl" href="#">Stakeholder Relations</a>
+        </div>
+
+        <div class="flex justify-center mb-10">
+          <a class="w-2/3 p-2 mt-2 rounded-xl bg-citron-400 text-center text-2xl" href="#">Legal Services</a>
+        </div>
+    </div>
+
+    </fieldset>
+
   </div>
 
-  <div class="flex justify-center">
-    <a class="w-2/3 p-2 mt-2 rounded-xl bg-gulf-blue-300 text-center text-2xl" href="{%url 'finance-processes'%}">Finance</a>
-  </div>
-
-  <div class="flex justify-center">
-    <a class="w-2/3 p-2 mt-2 rounded-xl bg-gray-300 text-center text-2xl" href="{%url 'HR-processes'%}">Human
-      Resources</a>
-  </div>
-
-  <div class="flex justify-center">
-    <a class="w-2/3 p-2 mt-2 rounded-xl bg-royal-heath-300 text-center text-2xl" href="{%url 'risk-processes'%}">Risk
-      Management</a>
-  </div>
-
-  <div class="flex justify-center">
-    <a class="w-2/3 p-2 mt-2 rounded-xl bg-apple-300 text-center text-2xl"
-      href="{%url 'procurement-processes'%}">Procurement</a>
-  </div>
-
-  <div class="flex justify-center">
-    <a class="w-2/3 p-2 mt-2 rounded-xl bg-gulf-blue-300 text-center text-2xl" href="#">Stakeholder Relations</a>
-  </div>
-
-  <div class="flex justify-center">
-    <a class="w-2/3 p-2 mt-2 rounded-xl bg-citron-400 text-center text-2xl" href="#">Legal Services</a>
-  </div>
 </div>
+
+
 
 <div class="bottom-0 left-0 right-0 mt-20 w-40 flex justify-left">
   <a href="{%url 'display'%}"><button class="bg-black text-white font-bold px-4 py-2 rounded-full">Back</button></a>
