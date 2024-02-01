@@ -1,11 +1,12 @@
 from argparse import FileType
 import datetime
-from django.shortcuts import render
+from django.shortcuts import redirect, render
 from django.http import FileResponse
 import  os, re
 from beii_v1 import settings
-from processes.models import Filetype
-from processes.models import FormsUploads
+from process_risks.views import Sections
+
+#from processes.models import FormsUploads
 
 # from re import pattern
 
@@ -212,3 +213,67 @@ def file_searchx(request):
 
     return render(request, 'processes/forms/forms_index.html', {'results': results,})
 
+#PROCEDURES AND WORK INSTRUCTIONS
+def viewWorkInstr(request):
+        return render(request, 'processes/procedures_workInstr/home.html')
+        
+def upload(request):
+    departments = Sections.objects.all()
+    if request.method == 'POST':
+
+        filename = request.POST['file_name']
+        department = request.POST['department_id']
+
+        file_path = ''
+        try:
+            if 'uploadedfile' in request.FILES:
+                uploaded_file = request.FILES ['uploadedfile']
+                file_path = 'uploads/work_instr/'+datetime.now().strftime('%Y%m%d%I%M%S%p') + uploaded_file.name
+                save_file(uploaded_file,file_path)
+        except Exception as ex:
+            print("Error:",ex)
+
+
+        workObj = WorkInstr(
+            file_name= filename,
+            cat_id = department,
+            file = file_path,
+            filepath = file_path,
+
+            )
+        workObj.save()
+        return render(request, 
+                      'procedures_workInstr/upload_workInstr.html',
+                        {'departments':departments}) 
+
+    return render(request,
+                   'procedures_workInstr/upload_workInstr.html',
+                   {'departments':departments} )
+
+
+def save_file(f,file_path):
+    if f:
+        with open(file_path, 'wb+') as destination:
+            for chunk in f.chunks():
+                destination.write(chunk)
+                return True
+            else:
+                return False
+
+
+
+def download_file(request):
+
+    file_id = request.GET['file_id']
+    file_record = WorkInstr.objects.filter(id=file_id).first()
+    file_path = file_record.filepath
+
+    # search for file in system
+    try:
+        base_directory_path = os.path.join(settings.BASE_DIR, file_path)
+
+        return FileResponse(open(base_directory_path, 'rb'), content_type='application/pdf')
+    except Exception as ex:
+        print(ex)
+
+    return redirect('/workInstructions/')

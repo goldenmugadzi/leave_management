@@ -28,5 +28,6 @@ urlpatterns =[
     path("commercial_forms/",views.commercial_forms,name="Commercial Forms"),
     path('file_searchx/',views.file_searchx, name='file_searchx'),
     path("new_view",views.new_view,name="Processes and Procedures"),
-
+    path('upload',views.upload,name='upload'),
+    path('viewWorkInstr',views.viewWorkInstr, name='viewWorkInstr'),
 ]
