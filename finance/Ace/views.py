@@ -245,6 +245,7 @@ def create_Ace(request):
         to_be_withdrawn= float(budget_id.balance)
         sweetify.success(request, 'The pending aces have drawn more than the budget can handle!')
         balance= float(budget_id.balance)
+        quantity = request.POST['quantity']
 
         if to_be_withdrawn<balance or amount<balance:
             if classification=="project":
@@ -307,6 +308,7 @@ def create_Ace(request):
                 labour=labour or None,
                 transport=transport or None,
                 total_connection_fee=total_connection_fee or None,
+                quantity=quantity,
             )
             objectify.save()
             # ace instance

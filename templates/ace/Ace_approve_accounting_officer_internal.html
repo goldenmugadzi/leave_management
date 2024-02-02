@@ -713,26 +713,80 @@
             </div>
         {% endif %}
 
-            <div>
+            {% if context.quantity > 1 %}
+                {% with %}
+                    {% set quantity = context.quantity %}
+
+                    {% if quantity > 1 %}
+                        <div>
+                        <label
+                                for="asset_number"
+                                class="block text-sm font-medium leading-6 text-gray-900"
+                        >Asset Number</label
+                        >
+                        <div class="mt-2">
+                                <textarea
+
+                                        id="asset_number"
+                                        required
+                                        name="asset_number[]"
+                                        type="text"
+                                        value="{{ context.asset_number}}"
+                                        autocomplete="asset_number"
+                                        class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                                >
+                                </textarea>
+                        </div>
+
+                        {% set quantity = quantity|sub:"1" %}
+                    {% else %}
+                        <div>
+                        <label
+                                for="asset_number"
+                                class="block text-sm font-medium leading-6 text-gray-900"
+                        >Asset Number</label
+                        >
+                        <div class="mt-2">
+                                <textarea
+
+                                        id="asset_number"
+                                        required
+                                        name="asset_number[]"
+                                        type="text"
+                                        value="{{ context.asset_number}}"
+                                        autocomplete="asset_number"
+                                        class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                                >
+                                </textarea>
+                        </div>
+
+                    {% endif %}
+                {% endwith %}
+
+                <p>No items found.</p>
+            {% else %}
+                <div>
                 <label
                         for="asset_number"
                         class="block text-sm font-medium leading-6 text-gray-900"
                 >Asset Number</label
                 >
                 <div class="mt-2">
-                    <textarea
-                            required
-                            value="{{ context.asset_number }}"
-                            id="asset_number"
-                            name="asset_number"
-                            autocomplete="asset_number"
-                            class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+                                <textarea
 
-                    >
-                    </textarea>
+                                        id="asset_number"
+                                        required
+                                        name="asset_number[]"
+                                        type="text"
+                                        value="{{ context.asset_number}}"
+                                        autocomplete="asset_number"
+                                        class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                                >
+                                </textarea>
                 </div>
-            </div>
-{#            <div id="internal">#}
+            {% endif %}
+
+            {#            <div id="internal">#}
 {#                <div>#}
 {#                    <label#}
 {#                            for="capital_estimated"#}
