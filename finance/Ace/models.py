@@ -103,6 +103,8 @@ class Ace(models.Model):
     total_connection_fee = models.FloatField( blank=True, null=True)
     designation = models.CharField(null = True, max_length=700)
     approval_code = models.IntegerField(null=True,max_length=5)
+
+    quantity = models.IntegerField(null=True,max_length=20)
     # section_head = models.CharField(null = True, max_length=30)
     # accounting_officer = models.CharField(null = True, max_length=30)
     # finance_manager = models.CharField(null = True, max_length=30)
