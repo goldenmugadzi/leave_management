@@ -280,6 +280,7 @@ def create_Ace(request):
             print(budget_id)
 
             ace_id = "ACE" + date + rand2
+            print(region)
 
             objectify = Ace(
                 Department=department,
