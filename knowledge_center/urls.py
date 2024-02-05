@@ -88,6 +88,7 @@ urlpatterns = [
     path('view_legislation/drone_tech', views.view_drone_tech, name='view_drone_tech'),
 
     path('view_legislation/knowledge_center/commercial', views.view_commercial_usermanuals, name='view_commercial_usermanuals'),
+    path('view_legislation/user_manuals/commercial', views.view_commercial_usermanuals, name='view_commercial_usermanuals'),
     path('view_legislation/user_manuals/hr', views.view_hr_usermanuals, name='view_hr_usermanuals'),
     path('view_legislation/user_manuals/finance', views.view_finance_usermanuals, name='view_finance_usermanuals'),
     path('view_legislation/user_manuals/ict', views.view_ict_usermanuals, name='view_ict_usermanuals'),
@@ -115,6 +116,7 @@ urlpatterns = [
     path('view_legislation/configuration_item', views.view_configuration_item, name='view_configuration_item'),
     path('view_legislation/current_projects', views.view_current_projects, name='view_current_projects'),
     path('view_specifications/commercial_spec', views.view_commercial_spec, name='view_commercial_spec'),
+    path('view_specifications/hr_spec', views.view_hr_spec, name='view_hr_spec'),
     path('view_specifications/engineering_spec', views.view_engineering_spec, name='view_engineering_spec'),
     path('view_specifications/finance_spec', views.view_finance_spec, name='view_finance_spec'),
     path('view_specifications/ict_spec', views.view_ict_spec, name='view_ict_spec'),

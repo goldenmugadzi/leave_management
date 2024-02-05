@@ -1,23 +1,104 @@
 {% extends 'admin_layout.html' %} {% load static %} {% block content %}
+ <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Business Excellence</title>
+  <link
+    rel="shortcut icon"
+    href="{% static 'assets/images/website-logo.png' %}"
+  />
+  <link href="{% static 'assets/css/tailwind.css' %}" rel="stylesheet" />
+  <link href="{% static 'assets/css/be.css' %}" rel="stylesheet" />
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+    integrity="sha512-"
+    crossorigin="anonymous"
+  />
 
-<div style="margin-bottom: 25px;" class="content-wrapper flex flex-wrap p-2 m-px">
-    {% for f in files %}
-    <div>  
-    <a tabindex="-1" href="/knowledge-center/download_file?file_id={{f.id}}" class="w-full text-left px-3 flex items-center outline-none focus:outline-none ">   
-    <button  style="width: 16rem;height: 10rem;background-color: #a21caf;margin-right: 20px;margin-bottom: 25px" class=" w-28 bg-blue-800 hover:bg-blue-900 outline-none focus:outline-none border px-3 py-1 rounded flex items-center">
-        <span class="pr-1 font-semibold flex-1 text-blue-50">{{f.filename}}</span>
-       
-    </button>
-    
+  <link
+    href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css"
+    rel="stylesheet"
+  />
+  <script
+    defer
+    src="https://unpkg.com/@alpinejs/collapse@3.x.x/dist/cdn.min.js"
+  ></script>
+  {% block styles %}{% endblock styles %}
+</head> 
+
+<div
+  style="margin-bottom: 25px"
+  class="content-wrapper flex flex-wrap p-2 m-px"
+>
+  {% for f in files %} {% with forloop.counter as loop_index %} {% if loop_index|divisibleby:2%}
+  <div class="text-gray-800">
+    <a
+      tabindex="-1"
+      href="/knowledge-center/download_file?file_id={{f.id}}"
+      class="w-full text-left px-3 flex items-center outline-none focus:outline-none"
+    >
+      <button
+        style="
+          width: 19rem;
+          height: 6rem;
+          margin-bottom: 25px;
+        "
+        class="w-28 bg-citron-200 hover:bg-citron-400 outline-none focus:outline-none border px-3 py-1 rounded flex items-center"
+      >
+        <i
+          class="far fa-file-pdf font-family-bold"
+          style="font-size: 2rem; color: #e11432;"
+        ></i>
+
+        <span class="pr-1 font-semibold flex-1"
+          >{{f.filename}}</span
+        >
+      </button>
     </a>
-    </div>
-    {% endfor %}
+  </div>
+  {% else %}
+  <div class="text-gray-800">
+    <a
+      tabindex="-1"
+      href="/knowledge-center/download_file?file_id={{f.id}}"
+      class="w-full text-left px-3 flex items-center outline-none focus:outline-none"
+    >
+      <button
+        style="
+          width: 19rem;
+          height: 6rem;
+          margin-bottom: 25px;
+        "
+        class="w-28 bg-gulf-blue-300 hover:bg-gulf-blue-400 outline-none focus:outline-none border px-3 py-1 rounded flex items-center"
+      >
+        <i
+          class="far fa-file-pdf font-family-bold"
+          style="font-size: 2rem; color: #e11432"
+        ></i>
+
+        <span class="pr-1 font-semibold flex-1 "
+          >{{f.filename}}</span
+        >
+      </button>
+    </a>
+  </div>
+  {% endif %} {% endwith %} {% endfor %}
 </div>
-<div style="display: flex;justify-content: center;">
-    <a href="javascript:history.back()">
-    <button  style="width: 6rem;height: 3rem;background-color: #020617;margin-right: 20px;border-radius: 1.5rem;" class=" w-28 bg-blue-800 hover:bg-blue-900 outline-none focus:outline-none border px-3 py-1 rounded flex items-center">
-        <span class="pr-1 font-semibold flex-1 text-blue-50">Back</span>
-       
-    </button> </a>
+<div style="display: flex; justify-content: center">
+  <a href="javascript:history.back()">
+    <button
+      style="
+        width: 6rem;
+        height: 3rem;
+
+        margin-right: 20px;
+        border-radius: 1.5rem;
+      "
+      class="w-28 bg-blue-800 hover:bg-blue-900 outline-none focus:outline-none border px-3 py-1 rounded flex items-center"
+    >
+      <span class="pr-1 font-semibold flex-1 text-blue-50">Back</span>
+    </button>
+  </a>
 </div>
 {% endblock %}

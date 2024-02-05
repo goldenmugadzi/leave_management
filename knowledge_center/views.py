@@ -652,7 +652,7 @@ def view_substations(request):
     new_dict = get_kc_dict(files)
     print("new_dict: ", new_dict)
     
-    return render(request, 'knowledge-center/test.html',{"context": new_dict, "files": files} )
+    return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "Engineering Instructions Main Index Substations Files" } )
 
 def view_fire(request):
     
@@ -662,7 +662,7 @@ def view_fire(request):
     new_dict = get_kc_dict(files)
     print("new_dict: ", new_dict)
     
-    return render(request, 'knowledge-center/test.html',{"context": new_dict, "files": files} )
+    return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "Engineering Instructions Main Index Fire Fighting Files"} )
 
 def view_defective(request):
     
@@ -672,7 +672,7 @@ def view_defective(request):
     new_dict = get_kc_dict(files)
     print("new_dict: ", new_dict)
     
-    return render(request, 'knowledge-center/test.html',{"context": new_dict, "files": files} )
+    return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "Engineering Instructions Main Index Defective and Damaged Equipment Insurance & Guarantees Files"} )
 
 def view_services(request):
     
@@ -682,7 +682,7 @@ def view_services(request):
     new_dict = get_kc_dict(files)
     print("new_dict: ", new_dict)
     
-    return render(request, 'knowledge-center/test.html',{"context": new_dict, "files": files} )
+    return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "Engineering Instructions Main Index Services and Service Equipment Files"} )
 
 def view_consumers(request):
     
@@ -692,7 +692,7 @@ def view_consumers(request):
     new_dict = get_kc_dict(files)
     print("new_dict: ", new_dict)
     
-    return render(request, 'knowledge-center/test.html',{"context": new_dict, "files": files} )
+    return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "Engineering Instructions Main Index Consumer's Equipment and installation Files"} )
 
 def view_lifting(request):
     
@@ -702,7 +702,7 @@ def view_lifting(request):
     new_dict = get_kc_dict(files)
     print("new_dict: ", new_dict)
     
-    return render(request, 'knowledge-center/test.html',{"context": new_dict, "files": files} )
+    return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "Engineering Instructions Main Index Lifting Equipment Files"} )
 
 def view_transport(request):
     
@@ -712,7 +712,7 @@ def view_transport(request):
     new_dict = get_kc_dict(files)
     print("new_dict: ", new_dict)
     
-    return render(request, 'knowledge-center/test.html',{"context": new_dict, "files": files} )
+    return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "Engineering Instructions Main Index Transport Files"} )
 
 def view_lpa(request):
     
@@ -722,7 +722,7 @@ def view_lpa(request):
     new_dict = get_kc_dict(files)
     print("new_dict: ", new_dict)
     
-    return render(request, 'knowledge-center/test.html',{"context": new_dict, "files": files} )
+    return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "Engineering Instructions Main Index Lighting Protection and Arrestors Files"} )
 
 def view_insulation(request):
     
@@ -732,7 +732,7 @@ def view_insulation(request):
     new_dict = get_kc_dict(files)
     print("new_dict: ", new_dict)
     
-    return render(request, 'knowledge-center/test.html',{"context": new_dict, "files": files} )
+    return render(request, 'knowledge-center/test.html',{ "files": files, "page_title": "Engineering Instructions Main Index Insulation Files"} )
 
 
 def view_31_45(request):
@@ -749,7 +749,7 @@ def view_cables(request):
     new_dict = get_kc_dict(files)
     print("new_dict: ", new_dict)
     
-    return render(request, 'knowledge-center/test.html',{"context": new_dict, "files": files} )
+    return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "Engineering Instructions Main Index Cable Jointing Laying Files"} )
 
 def view_capacitors(request):
     
@@ -759,7 +759,7 @@ def view_capacitors(request):
     new_dict = get_kc_dict(files)
     print("new_dict: ", new_dict)
     
-    return render(request, 'knowledge-center/test.html',{"context": new_dict, "files": files} )
+    return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "Engineering Instructions Main Index Capacitors and Power Factor Correction Files"} )
 
 def view_explosive(request):
     
@@ -769,7 +769,7 @@ def view_explosive(request):
     new_dict = get_kc_dict(files)
     print("new_dict: ", new_dict)
     
-    return render(request, 'knowledge-center/test.html',{"context": new_dict, "files": files} )
+    return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "Engineering Instructions Main Index Explosive and Magazine Files"} )
 
 def view_standard(request):
     
@@ -779,7 +779,7 @@ def view_standard(request):
     new_dict = get_kc_dict(files)
     print("new_dict: ", new_dict)
     
-    return render(request, 'knowledge-center/test.html',{"context": new_dict, "files": files} )
+    return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "Engineering Instructions Main Index Standard Stock Items Files"} )
 
 def view_cradles(request):
     
@@ -789,7 +789,7 @@ def view_cradles(request):
     new_dict = get_kc_dict(files)
     print("new_dict: ", new_dict)
     
-    return render(request, 'knowledge-center/test.html',{"context": new_dict, "files": files} )
+    return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "Engineering Instructions Main Index Cradles and Guards Files"} )
 
 def view_11kv(request):
     
@@ -799,7 +799,7 @@ def view_11kv(request):
     new_dict = get_kc_dict(files)
     print("new_dict: ", new_dict)
     
-    return render(request, 'knowledge-center/test.html',{"context": new_dict, "files": files} )
+    return render(request, 'knowledge-center/test.html',{ "files": files, "page_title": "Engineering Instructions Main Index Standard 11kv Line Construction Files"} )
 
 def view_conductors(request):
     
@@ -809,7 +809,7 @@ def view_conductors(request):
     new_dict = get_kc_dict(files)
     print("new_dict: ", new_dict)
     
-    return render(request, 'knowledge-center/test.html',{"context": new_dict, "files": files} )
+    return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "Engineering Instructions Main Index Conductors, Earthwires and Accessories Files"} )
 
 def view_roads(request):
     
@@ -819,7 +819,7 @@ def view_roads(request):
     new_dict = get_kc_dict(files)
     print("new_dict: ", new_dict)
     
-    return render(request, 'knowledge-center/test.html',{"context": new_dict, "files": files} )
+    return render(request, 'knowledge-center/test.html',{ "files": files, "page_title": "Engineering Instructions Main Index Road, Rail, and Line Crossings Files"} )
 
 def view_zetdc(request):
     
@@ -829,7 +829,7 @@ def view_zetdc(request):
     new_dict = get_kc_dict(files)
     print("new_dict: ", new_dict)
     
-    return render(request, 'knowledge-center/test.html',{"context": new_dict, "files": files} )
+    return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "Engineering Instructions Main Index Z.E.T.D.C Regulations and sfaety Precautions Files"} )
 
 def view_power(request):
     
@@ -839,7 +839,7 @@ def view_power(request):
     new_dict = get_kc_dict(files)
     print("new_dict: ", new_dict)
     
-    return render(request, 'knowledge-center/test.html',{"context": new_dict, "files": files} )
+    return render(request, 'knowledge-center/test.html',{ "files": files, "page_title": "Engineering Instructions Main Index Power Stations Files"} )
 
 def view_substation(request):
     
@@ -849,7 +849,7 @@ def view_substation(request):
     new_dict = get_kc_dict(files)
     print("new_dict: ", new_dict)
     
-    return render(request, 'knowledge-center/test.html',{"context": new_dict, "files": files} )
+    return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "Engineering Instructions Main Index Substation Batteries Files"} )
 
 def view_safety(request):
     
@@ -859,7 +859,7 @@ def view_safety(request):
     new_dict = get_kc_dict(files)
     print("new_dict: ", new_dict)
     
-    return render(request, 'knowledge-center/test.html',{"context": new_dict, "files": files} )
+    return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "Engineering Instructions Main Index Safety Rule For Operation and Maintenance Switching Authorization Files"} )
 
 def view_lighting(request):
     
@@ -869,7 +869,7 @@ def view_lighting(request):
     new_dict = get_kc_dict(files)
     print("new_dict: ", new_dict)
     
-    return render(request, 'knowledge-center/test.html',{"context": new_dict, "files": files} )
+    return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "Engineering Instructions Main Index High Mast Lighting Files"} )
 
 def view_capacity(request):
     
@@ -879,7 +879,7 @@ def view_capacity(request):
     new_dict = get_kc_dict(files)
     print("new_dict: ", new_dict)
     
-    return render(request, 'knowledge-center/test.html',{"context": new_dict, "files": files} )
+    return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "Engineering Instructions Main Index Planning Policy on Firm Capacity Files"} )
 
 def view_procurement(request):
     
@@ -889,7 +889,7 @@ def view_procurement(request):
     new_dict = get_kc_dict(files)
     print("new_dict: ", new_dict)
     
-    return render(request, 'knowledge-center/test.html',{"context": new_dict, "files": files} )
+    return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "Engineering Instructions Main Index Procurement Files"} )
 
 
 def view_user_manuals(request):
@@ -982,9 +982,9 @@ def view_risk_usermanuals(request):
 
 def view_eng_manuals(request):
     
-    files = KnowledgeCenter.objects.all()
+    files = KnowledgeCenter.objects.filter(file_type='USER MANUALS', sub_category_1="Engineering").all()
     
-    return render(request, 'knowledge-center/view_eng_manuals.html', {"page_title": "USER MANUALS (Engineering)"})
+    return render(request, 'knowledge-center/view_eng_manuals.html', {"page_title": "USER MANUALS (Engineering)", "files": files})
 
 def view_switchgear(request):
     
