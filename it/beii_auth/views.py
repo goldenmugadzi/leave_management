@@ -197,11 +197,15 @@ def business_applications(request):
     l = request.user.groups.values_list('name',flat = True) # QuerySet Object
     user_groups = list(l)  
 
+
+    url_path = request.path.split("/")
     return render(
         request, 
         user_page, 
         {
-            "user_title": user_title, 
+            "user_title": user_title,
+            "url_path": url_path,
+            "page_title": "Business Applications", 
             "user_groups": user_groups
         })
 
