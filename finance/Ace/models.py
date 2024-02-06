@@ -85,7 +85,7 @@ class Ace(models.Model):
     gm_rejection_reason = models.CharField(max_length=400, blank=True, null=True)
     gm_approved_date = models.DateField(null=True, blank=True)
 
-    asset_number = models.CharField(max_length=26, blank=True, null=True)
+    asset_number = models.CharField(max_length=10000, blank=True, null=True)
     capital_estimated = models.FloatField( blank=True, null=True)
     capital_sanctioned = models.FloatField( blank=True, null=True)
     budget_id = models.ForeignKey(Budget, on_delete=models.CASCADE ,default=1)

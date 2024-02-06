@@ -947,6 +947,7 @@ def get_to_approve_Ace(request):
     # print(budget)
     budget = Budget.objects.filter(budget_name=budget).first()
     # pettyc1 = Ace.objects.filter(petty_id=Ace_id).first()
+    quantity = range(pettyc.quantity)
     # print(pettyc)
     context = pettyc
 
@@ -971,7 +972,8 @@ def get_to_approve_Ace(request):
                                        "user_title": user_title,
                                        "user_groups": user_groups,
                                        "budgets": section_budgets,
-                                       "budget": budget})
+                                       "budget": budget,
+                                       "quantity": quantity})
 
 def get_to_reject_Ace(request):
     user_title = request.user.get_full_name()
