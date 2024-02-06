@@ -1,21 +1,40 @@
 {% extends 'admin_layout.html' %} {% load static %} {% block content %}
 
-<div style="margin-bottom: 25px;" class="content-wrapper flex flex-wrap p-2 m-px">
-  {%for file in eng_files%}
-     
-    <a href="/process_risks/download_file?file_id={{file.id}}">
-    <button  style="width: 12rem;height: 5rem;background-color: #6634f0;margin-right: 20px;margin-bottom: 25px" class=" w-28 bg-blue-800 hover:bg-blue-900 outline-none focus:outline-none border px-3 py-1 rounded flex items-center">
-        <span class="pr-1 font-semibold flex-1 text-blue-50">{{file.file_name}}</span>
-       
-    </button>
-   
+<div style="margin-bottom: 25px;" class="content-wrapper flex flex-wrap  m-px">
+    {%for file in eng_files%}
+    {% with forloop.counter as for_loop%}
+    {%if for_loop|divisibleby:2 %}
+    <a href="/process_risks/download_file?file_id={{file.id}}" class="p-2 m-2">
+        <div
+            class=" bg-gulf-blue-300 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold">
+            <div class="group relative">
+                <button type="button" style="width:18rem; height:6rem">
+                    <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                    <span class="ml-3 text-2xl">{{file.file_name}}</span></button>
+            </div>
+        </div>
+    </a>
+    {%else%}
+    <a href="/process_risks/download_file?file_id={{file.id}}" class="p-2 m-2">
+        <div
+            class=" bg-green-300 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold">
+            <div class="group relative">
+                <button type="button" style="width:18rem; height:6rem">
+                    <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                    <span class="ml-3 text-2xl">{{file.file_name}}</span></button>
+            </div>
+        </div>
+    </a>
+    {%endif%}
+    {%endwith%}
     {%endfor%}
 </div>
 <div style="display: flex;justify-content: start;">
     <a href="javascript:history.back()">
-    <button  style="width: 6rem;height: 3rem;background-color: #020617;margin-right: 20px;border-radius: 1.5rem;" class=" w-28 bg-blue-800 hover:bg-blue-900 outline-none focus:outline-none border px-3 py-1 rounded flex items-center">
-        <span class="pr-1 font-semibold flex-1 text-blue-50">Back</span>
-       
-    </button> </a>
+        <button style="width: 6rem;height: 3rem;margin-right: 20px;border-radius: 1.5rem;"
+            class=" w-28  hover:bg-blue-900 outline-none focus:outline-none border px-3 py-1 rounded flex items-center">
+            <span class="pr-1 font-semibold flex-1 text-blue-50">Back</span>
+
+        </button> </a>
 </div>
 {% endblock %}

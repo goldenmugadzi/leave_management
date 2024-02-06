@@ -2,41 +2,156 @@
 {%load static%}
 
 {%block content%}
+<div class="flex justify-between items-center p-3">
+        <h1 class="text-2xl text-black font-bold ">Information Communication Technology Processes</h1>
 
-        <div style= "background-color: rgb(251 207 232);)" class="flex justify-between items-center p-3">
-          <h1 class="text-2xl text-black font-bold ">IT Processes</h1>
-       
-          <div class="text-black mr-4">(Clause 4.4)</div>
-      
+        <div class="text-md mr-4 text-2xl font-semibold">(Clause 4.2)
         </div>
-      
-<div class="mt-4 flex flex-row ...">
-
-    <button type="button"><a tabindex="-1" class="rounded-xl bg-blue-300 py-4 px-2 m-3"
-            href="{% static 'documents/it/ZETDC HRE IT 01_001 INCIDENT MANAGEMENT.pdf' %}">Incident
-            Management</a></button>
-    <button type="button" class="rounded-xl bg-gray-300 py-4 px-2 m-3"><a tabindex="-1"
-            href="{% static 'documents/it/ZETDC HRE IT 01_002 PROBLEM MANAGEMENT.pdf' %}">Problem
-            Management</a></button>
-    <button type="button" class="rounded-xl bg-red-300 py-4 px-2 m-3"><a tabindex="-1"
-            href="{% static 'documents/it/ZETDC HRE IT 01_003 EVENT MANAGEMENT.pdf' %}">Event Management</a></button>
-    <button type="button" class="rounded-xl bg-yellow-300 py-4 px-2 m-3"><a tabindex="-1"
-            href="{% static 'documents/it/ZETDC HRE IT 01_004 REQUEST FULFILMENT.pdf' %}">Request
-            Fulfilment</a></button>
-    <button type="button" class="rounded-xl bg-green-300 py-4 px-2 m-3"><a tabindex="-1"
-            href="{% static 'documents/it/ZETDC HRE IT 01_005 CHANGE MANAGEMENT.pdf' %}">Change Management</a></button>
 </div>
 
-<div class="flex flex-row ...">
-    <button type="button" class="rounded-xl bg-gray-300 py-4 px-2 m-3"><a tabindex="-1"
-            href="{% static 'documents/it/ZETDC HRE IT 01_006 ACCESS MANAGEMENT.pdf' %}">Access Management</a></button>
-    <button type="button" class="rounded-xl bg-yellow-300 py-4 px-2 m-3"><a tabindex="-1"
-            href="{% static 'documents/it/ZETDC HRE IT 01_007 RELEASE AND DEPLOYMENT.pdf' %}">Release and
-            Deployment</a></button>
+<div class="grid grid-cols-3 gap-6 mt-4">
+        <a href="{% static 'documents\IT\ZETDC HRE IT 01_001 INCIDENT MANAGEMENT.pdf' %}">
+                <div
+                        class=" bg-gulf-blue-300 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold">
+                        <div class="group relative">
+                                <button type="button" style="width:18rem; height:6rem">
+                                        <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                                        <span class="ml-3 text-2xl">Incident management</span></button>
+                        </div>
+                </div>
+        </a>
+
+        <a href="{% static 'documents\IT\ZETDC HRE IT 01_002 PROBLEM MANAGEMENT.pdf' %}">
+                <div
+                        class="bg-citron-200 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold">
+                        <div class="group relative">
+                                <button type="button" style="width:18rem; height:6rem">
+                                        <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                                        <span class="ml-3 text-2xl">Problem management</span></button>
+                        </div>
+                </div>
+        </a>
+
+        <a href="{% static  'documents\IT\ZETDC HRE IT 01_003 EVENT MANAGEMENT.pdf' %}">
+                <div
+                        class="bg-green-300 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold">
+                        <div class="group relative">
+                                <button type="button" style="width:18rem; height:6rem">
+                                        <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                                        <span class="ml-3 text-2xl">Event management</span></button>
+                        </div>
+                </div>
+        </a>
+
+        <a href="{% static 'documents\IT\ZETDC HRE IT 01_004 REQUEST FULFILMENT.pdf' %}">
+                <div
+                        class=" bg-gulf-blue-300 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold">
+                        <div class="group relative">
+                                <button type="button" style="width:18rem; height:6rem">
+                                        <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                                        <span class="ml-3 text-2xl">Request fulfilment</span></button>
+                        </div>
+                </div>
+        </a>
+
+        <a href="{% static 'documents\IT\ZETDC HRE IT 01_005 CHANGE MANAGEMENT.pdf' %}">
+                <div
+                        class="bg-citron-200 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold">
+                        <div class="group relative">
+                                <button type="button" style="width:18rem; height:6rem">
+                                        <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                                        <span class="ml-3 text-2xl">Change management</span></button>
+                        </div>
+                </div>
+        </a>
+
+        <a href="{% static  'documents\IT\ZETDC HRE IT 01_006 ACCESS MANAGEMENT.pdf' %}">
+                <div
+                        class="bg-green-300 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold">
+                        <div class="group relative">
+                                <button type="button" style="width:18rem; height:6rem">
+                                        <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                                        <span class="ml-3 text-2xl">Access management</span></button>
+                        </div>
+                </div>
+        </a>
+
+
+
+
+
+
+
+        <a href="{% static 'documents\IT\ZETDC HRE IT 01_007 RELEASE AND DEPLOYMENT.pdf' %}">
+                <div
+                        class=" bg-gulf-blue-300 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold">
+                        <div class="group relative">
+                                <button type="button" style="width:18rem; height:6rem">
+                                        <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                                        <span class="ml-3 text-2xl">Release and deployment</span></button>
+                        </div>
+                </div>
+        </a>
+
+        <a href="{% static 'documents\IT\Continual service improvement process(version 1).pdf' %}">
+                <div
+                        class="bg-citron-200 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold">
+                        <div class="group relative">
+                                <button type="button" style="width:18rem; height:6rem">
+                                        <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                                        <span class="ml-3 text-2xl">Problem management</span></button>
+                        </div>
+                </div>
+        </a>
+
+        <a href="{% static  'documents\IT\Replacement process (version 1).pdf' %}">
+                <div
+                        class="bg-green-300 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold">
+                        <div class="group relative">
+                                <button type="button" style="width:18rem; height:6rem">
+                                        <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                                        <span class="ml-3 text-2xl">Event management</span></button>
+                        </div>
+                </div>
+        </a>
+
+        <a href="{% static 'documents\IT\security management process(version 1).pdf' %}">
+                <div
+                        class=" bg-gulf-blue-300 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold">
+                        <div class="group relative">
+                                <button type="button" style="width:18rem; height:6rem">
+                                        <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                                        <span class="ml-3 text-2xl">Security management</span></button>
+                        </div>
+                </div>
+        </a>
+
+        <a href="{% static 'documents\IT\Application development process (version 1).pdf' %}">
+                <div
+                        class="bg-citron-200 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold">
+                        <div class="group relative">
+                                <button type="button" style="width:18rem; height:6rem">
+                                        <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                                        <span class="ml-3 text-2xl">Application development</span></button>
+                        </div>
+                </div>
+        </a>
+
+
 </div>
 
-<div class="bottom-0 left-0 right-0 mt-20 w-40 flex justify-left">
-        <a href="{%url 'file_search'%}"><button class="bg-black text-white font-bold px-4 py-2 rounded-full">Back</button></a>
-      </div>
+<div style="display: flex;justify-content: start;" class="mt-6">
+        <a href="javascript:history.back()">
+                <button style="width: 6rem;height: 3rem;background-color: #020617;margin-right: 20px"
+                        class=" w-28 bg-blue-800 hover:bg-blue-900 outline-none focus:outline-none border px-3 py-1 rounded-xl flex items-center">
+                        <span class="pr-1 font-bold flex-1 text-blue-50">Back</span>
+
+                        </span></button> </a>
+
+</div>
+
+
+
+
 
 {%endblock %}

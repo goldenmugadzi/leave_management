@@ -2,40 +2,86 @@
 {%load static%}
 
 {%block content%}
-
-
-    <div style= "background-color: rgb(251 207 232);)" class="flex justify-between items-center p-3">
+<div class="flex justify-between items-center p-3">
       <h1 class="text-2xl text-black font-bold ">Management Processes</h1>
+
+      <div class="text-md mr-4 text-2xl font-semibold">(Clause 4.2)
+      </div>
+</div>
+
+<div class="grid grid-cols-3 gap-6 mt-4">
+      <a href="{% static 'documents\Commercial\client interaction\management.pdf' %}">
+            <div
+                  class=" bg-gulf-blue-300 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold">
+                  <div class="group relative">
+                        <button type="button" style="width:18rem; height:6rem">
+                              <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                              <span class="ml-3 text-2xl">Management review</span></button>
+                  </div>
+            </div>
+      </a>
+
+      <a href="{% static 'documents\Commercial\client interaction\Waste management.pdf' %}">
+            <div
+                  class="bg-citron-200 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold">
+                  <div class="group relative">
+                        <button type="button" style="width:18rem; height:6rem">
+                              <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                              <span class="ml-3 text-2xl">Waste management</span></button>
+                  </div>
+            </div>
+      </a>
+
+      <a href="{% static  'documents\Commercial\client interaction\Internal audit.pdf' %}">
+            <div
+                  class="bg-green-300 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold">
+                  <div class="group relative">
+                        <button type="button" style="width:18rem; height:6rem">
+                              <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                              <span class="ml-3 text-2xl">Internal audit</span></button>
+                  </div>
+            </div>
+      </a>
+
+      <a href="{% static 'documents\Commercial\client interaction\Nonconformities.pdf' %}">
+            <div
+                  class=" bg-gulf-blue-300 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold">
+                  <div class="group relative">
+                        <button type="button" style="width:18rem; height:6rem">
+                              <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                              <span class="ml-3 text-2xl">Non conformities and corrective action</span></button>
+                  </div>
+            </div>
+      </a>
+
+      <a href="{% static 'documents\Commercial\client interaction\risk management.pdf' %}">
+            <div
+                  class="bg-citron-200 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold">
+                  <div class="group relative">
+                        <button type="button" style="width:18rem; height:6rem">
+                              <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                              <span class="ml-3 text-2xl">Risk management</span></button>
+                  </div>
+            </div>
+      </a>
+
       
-      <div class="text-black mr-4">(Clause 4.4)</div>
-  
-    </div>
-
-<div class="grid grid-cols-3 gap-4">
-    <div class="mt-10"><button type="button"><a class="rounded-xl bg-blue-300 py-4 px-2 m-3   " tabindex="-1"
-                href="{% static 'documents\HR\Disciplinary Process.pdf' %}">Management Review</a></button></div>
-    <div class="mt-10"><button type="button"><a class="rounded-xl bg-yellow-300 py-4 px-2 m-3 " tabindex="-1"
-                href="{% static 'documents\HR\Asset Acquisition Process Corrected.pdf' %}">Waste Management
-            </a></button></div>
-
-    <div class="mt-10"><button type="button"><a class="rounded-xl bg-green-300 py-4 px-2 m-3  " tabindex="-1"
-                href="{% static 'documents\HR\DEATH LEVY PROCESS.pdf' %}">Internal Audit
-            </a></button>
-   
-    <div class=" place-content-end">
-        <div class="mt-4"><button type="button"><a class="rounded-xl flex bg-green-300 py-4 px-2 m-3   " tabindex="-1"
-                    href="{% static 'documents\HR\Disciplinary Process.pdf' %}">Non-Conformities and Corrective Action Reporting </a></button></div>
-         </div>
-         <div class="mt-4"><button type="button"><a class="rounded-xl bg-green-300 py-4 px-2 m-3   " tabindex="-1"
-            href="{% static 'documents\HR\Disciplinary Process.pdf' %}">Risk Management</a><button></div>
-        </div>
-         
-        </div>
-   
 
 
-  <div class="bottom-0 left-0 right-0 mt-20 w-40 flex justify-left">
-    <a href="{%url 'file_search'%}"><button class="bg-black text-white font-bold px-4 py-2 rounded-full">Back</button></a>
-  </div>
+</div>
+
+<div style="display: flex;justify-content: start;" class="mt-6">
+      <a href="javascript:history.back()">
+            <button style="width: 6rem;height: 3rem;background-color: #020617;margin-right: 20px"
+                  class=" w-28 bg-blue-800 hover:bg-blue-900 outline-none focus:outline-none border px-3 py-1 rounded-xl flex items-center">
+                  <span class="pr-1 font-bold flex-1 text-blue-50">Back</span>
+
+                  </span></button> </a>
+
+</div>
+
+
+
+
 
 {%endblock %}
