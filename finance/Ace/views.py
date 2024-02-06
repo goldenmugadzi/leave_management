@@ -859,7 +859,9 @@ def get_to_approve_Ace(request):
             sweetify.success(request,'you have approved ace'+ ace_id)
             return redirect("/ace")
         if Ace_role=="process" and str(ace.approval_status)!="approved by Accounting officer":
-            asset_number: object=request.POST["asset_number"]
+            asset_number: object=request.POST.getlist('asset_number[]')
+            joined_asset_numbers = ','.join(item.strip() for item in asset_number)
+            print(joined_asset_numbers)
             ace.approval_status="approved by Accounting officer"
             budget=ace.budget_id
             budget = Budget.objects.filter(budget_name=budget).first()
@@ -867,7 +869,7 @@ def get_to_approve_Ace(request):
             ace.date_approved=date.today()
             ace.accounting_officer_approval_date=date.today()
             ace.accounting_officer_approval_status="approved by accounting officer"
-            ace.asset_number=asset_number
+            ace.asset_number=joined_asset_numbers
             ace.accounting_officer=user_id
             ace.save()
             messages.error(request, 'you have approved ace',ace_id)
