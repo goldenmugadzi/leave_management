@@ -3,51 +3,66 @@
 
 {%block content%}
 
+<div class="flex justify-between items-center p-3">
+  <h1 class="text-2xl text-black font-bold ">FORMS</h1>
 
-  <div style= "background-color: rgb(251 207 232);)" class="flex justify-between items-center p-3">
-    <h1 class="text-2xl text-black font-bold ">Forms</h1>
 
-  
-    <div style= "	color: rgb(3 7 18);" class=" text-md mr-4">Clause 7.5</div>
+  <div style= "	color: rgb(3 7 18);" class=" text-md mr-4">CLAUSE 7.5</div>
 
-   </div>
-   
-
-<div class="grid grid-cols-3 gap-3 row-span-2 mt-6">
-
-  <div>
+ </div>
+ <div class="grid grid-cols-2 gap-6 mt-4">
   <a href="{%url 'Engineering Forms'%}">
-    <button style="	background-color: rgb(16 185 129);" class=" text-white px-10 py-9 rounded-md text-center text-xl font-bold">Engineering Forms</button>
-  </a>
-  </div>
+     <div
+       class=" bg-gulf-blue-300 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-2xl font-bold"
+     >
+               <div class="group relative">
+                 <button type="button" style="width:18rem; height:6rem">
+                   <span class="ml-3">Engineering Forms</span></button>
+               </div>
+       </div></a>
 
-  <div>
-    <a href="{%url 'Finance Forms'%}">
-      <button style= "	background-color: rgb(236 72 153);" class=" text-white px-16 py-9 rounded-md text-center text-xl font-bold">Finance Forms</button>
-    </a>
-    </div>
+       <a href="{%url 'Finance Forms'%}">
+        <div
+        class="bg-citron-200 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-2xl font-bold"
+      >
+                <div class="group relative">
+                  <button type="button" style="width:18rem; height:6rem">
+                    <span> Finance Forms</span></button>
+                </div>
+        </div></a>
 
-    
-  <div>
-    <a href="{%url 'Commercial Forms'%}">
-      <button style="background-color: rgb(234 179 8);" class=" text-white px-10 py-9 rounded-md text-center text-xl font-bold">Commercial Forms</button>
-    </a>
-    </div>
+        <a href="{%url 'Commercial Forms'%}">
+       <div
+          class="bg-green-300 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-2xl font-bold"
+          >
+                     <div class="group relative">
+                       <button type="button" style="width:18rem; height:6rem">
+                         <span> Commercial Forms</span></button>
+                     </div>
+             </div>
+           </a>
 
-</div>  
+           <a href="{%url 'Human Resources Forms'%}" >
+              <div
+                class="bg-gulf-blue-300 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-2xl font-bold"
+              >
+                        <div class="group relative">
+                          <button type="button" style="width:18rem; height:6rem">
+                            <span>Human Resources Forms</span></button>
+                        </div>
+                </div></a>
 
-<div class=" mt-6 flex justify-center">
-  <a href="{%url 'Human Resources Forms'%}">
-    <button style="background-color: rgb(168 85 247);" class=" text-white px-10 py-9 rounded-md text-center text-xl font-bold">Human Resources Forms</button>
-  </a>
-  </div>
-<div >
+              </div>
 
+   
+<div style="display: flex;justify-content: start;" class="mt-6">
+  <a href="javascript:history.back()">
+      <button style="width: 6rem;height: 3rem;background-color: #020617;margin-right: 20px"
+          class=" w-28 bg-blue-800 hover:bg-blue-900 outline-none focus:outline-none border px-3 py-1 rounded-xl flex items-center">
+          <span class="pr-1 font-bold flex-1 text-blue-50">Back</span>
 
-  <div class="bottom-0 left-0 right-0 mt-20 w-40 flex justify-left">
-    <a href="{%url 'Processes and Procedures'%}"><button  type="button" class="bg-black font-bold text-white px-4 py-2 rounded-full">Back</button></a>
-  </div>
-
+      </span></button> </a>
+</div>
 {%endblock%}
 
 

@@ -2,127 +2,453 @@
 {%load static%}
 
 {%block content%}
-<div style= "background-color: rgb(251 207 232);" class="flex justify-between items-center p-3">
+<div  class="flex justify-between items-center p-3">
    <h1 class="text-2xl text-black font-bold ">Human Resources Forms</h1>
 
    <div style= "color: rgb(3 7 18);" class="text-md mr-4">(Clause 7.5)</div>
 </div>
   
-<div class="grid grid-cols-3 gap-3">
-   <div class="mt-10"><button type="button"><a class="rounded-xl bg-red-300 py-4 px-2 m-3 col-span-3  " tabindex="-1"
-               href="{% static 'documents\FORMS\HR\management leave form s49b.pdf' %}">Leave Form (S49B)</a></button></div>
-   
-   <div class="mt-10"><button type="button"><a class="rounded-xl bg-blue-300 py-4 px-2 m-3 col-span-3 " tabindex="-1"
-               href="{% static 'documents\FORMS\HR\occasional leave FORM 5.2.pdf' %}">Occassional Leave Form 5.2</a></button></div>
+<div class="grid grid-cols-3 gap-6 mt-4">
+   <a href="{% static 'documents\FORMS\HR\management leave form s49b.pdf' %}">
+      <div
+        class=" bg-gulf-blue-300 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold"
+      >
+                <div class="group relative">
+                  <button type="button" style="width:18rem; height:6rem">
+                    <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                    <span class="ml-3"> Leave Form (S49B)</span></button>
+                </div>
+        </div></a>
 
-   <div class="mt-10"><button type="button"><a class="rounded-xl bg-yellow-300 py-4 px-2 m-3 col-span-3" tabindex="-1"
-            href="{% static  'documents\FORMS\HR\advice of salary change Form S39.pdf' %}">Advice of Salary Change (S39)</a></button></div>
-   
-   <div class="mt-10"><button type="button"><a class="rounded-xl bg-red-300 py-4 px-2 m-3 col-span-3  " tabindex="-1"
-               href="{% static 'documents\FORMS\HR\advice of staff joining form S31.pdf' %}">Advice of Staff Joining Form (S31)</a></button></div>
-   
-   <div class="mt-10"><button type="button"><a class="rounded-xl bg-blue-300 py-4 px-2 m-3 col-span-3 " tabindex="-1"
-               href="{% static 'documents\FORMS\HR\affidavite form.pdf' %}">Affidavit Form</a></button></div>
+      <a href="{% static 'documents\FORMS\HR\occasional leave FORM 5.2.pdf' %}">
+         <div
+         class="bg-citron-200 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold"
+       >
+                 <div class="group relative">
+                   <button type="button" style="width:18rem; height:6rem">
+                     <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                     <span class="ml-3"> Occassional Leave Form 5.2</span></button>
+                 </div>
+         </div></a>
 
-   <div class="mt-10"><button type="button"><a class="rounded-xl bg-yellow-300 py-4 px-2 m-3 col-span-3" tabindex="-1"
-            href="{% static  'documents\FORMS\HR\application of training Form Corp 1.pdf' %}">Application of Training Corp 1</a></button></div>
-
-   <div class="mt-10"><button type="button"><a class="rounded-xl bg-red-300 py-4 px-2 m-3 col-span-3  " tabindex="-1"
-            href="{% static 'documents\FORMS\HR\appointment of beneficiary form.pdf' %}">Appointment of Beneficiry</a></button></div>
-
-   <div class="mt-10"><button type="button"><a class="rounded-xl bg-blue-300 py-4 px-2 m-3 col-span-3 " tabindex="-1"
-            href="{% static 'documents\FORMS\HR\assistance to buy tools form.pdf' %}">Assistance to buy tools</a></button></div>
-
-   <div class="mt-10"><button type="button"><a class="rounded-xl bg-yellow-300 py-4 px-2 m-3 col-span-3" tabindex="-1"
-         href="{% static  'documents\FORMS\HR\Contract Form.doc' %}">Contract Form</a></button></div>
-
-   <div class="mt-10"><button type="button"><a class="rounded-xl bg-red-300 py-4 px-2 m-3 col-span-3  " tabindex="-1"
-            href="{% static 'documents\FORMS\HR\clearance Form S 25.pdf' %}">Clearance Form (S25)</a></button></div>
-
-   <div class="mt-10"><button type="button"><a class="rounded-xl bg-blue-300 py-4 px-2 m-3 col-span-3 " tabindex="-1"
-            href="{% static 'documents\FORMS\HR\AUTHORITY TO USE OWN VEHICLE FORM.pdf' %}">Authority to use Own Vehicle</a></button></div>
-   
-   <div class="mt-10"><button type="button"><a class="rounded-xl bg-yellow-300 py-4 px-2 m-3 col-span-3" tabindex="-1"
-               href="{% static  'documents\FORMS\HR\BENEFIT FUND claim FORM.pdf' %}">Benefit Fund Claim 2</a></button></div>
-               <div class="mt-10"><button type="button"><a class="rounded-xl bg-red-300 py-4 px-2 m-3 col-span-3  " tabindex="-1"
-                  href="{% static 'documents\FORMS\HR\contract of employment form.doc' %}">Contract of Employment Form</a></button></div>
-      
-         <div class="mt-10"><button type="button"><a class="rounded-xl bg-blue-300 py-4 px-2 m-3 col-span-3 " tabindex="-1"
-                  href="{% static 'documents\FORMS\HR\Contract of serviceFORM  S8.pdf' %}">Contract of Service (S8)</a></button></div>
+     <a href="{% static  'documents\FORMS\HR\advice of salary change Form S39.pdf' %}">
+        <div
+           class="bg-green-300 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold"
+           >
+                      <div class="group relative">
+                        <button type="button" style="width:18rem; height:6rem">
+                          <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                          <span class="ml-3"> Advice of Salary Change (S39)</span></button>
+                      </div>
+              </div>
+            </a>
+            <a href="{% static 'documents\FORMS\HR\advice of staff joining form S31.pdf' %}">
+               <div
+                 class=" bg-gulf-blue-300 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold"
+               >
+                         <div class="group relative">
+                           <button type="button" style="width:18rem; height:6rem">
+                             <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                             <span class="ml-3"> Advice of Staff Joining Form (S31)</span></button>
+                         </div>
+                 </div></a>
          
-         <div class="mt-10"><button type="button"><a class="rounded-xl bg-yellow-300 py-4 px-2 m-3 col-span-3" tabindex="-1"
-                     href="{% static  'documents\FORMS\HR\contract staff requisition form MP1 (A).pdf' %}">Contract Staff Requisition Form (MP1)</a></button></div>
-           
-         <div class="mt-10"><button type="button"><a class="rounded-xl bg-red-300 py-4 px-2 m-3 col-span-3  " tabindex="-1"
-                        href="{% static 'documents\FORMS\HR\driving licence Form S73.pdf' %}">Drivers Licence Form (S73)</a></button></div>
-            
-         <div class="mt-10"><button type="button"><a class="rounded-xl bg-blue-300 py-4 px-2 m-3 col-span-3 " tabindex="-1"
-                        href="{% static 'documents\FORMS\HR\GRIEVANCE FORM.pdf' %}">Grievance Form</a></button></div>
-               
-         <div class="mt-10"><button type="button"><a class="rounded-xl bg-yellow-300 py-4 px-2 m-3 col-span-3" tabindex="-1"
-                           href="{% static  '#' %}">Induction Program Form</a></button></div>
-         <div class="mt-10"><button type="button"><a class="rounded-xl bg-red-300 py-4 px-2 m-3 col-span-3  " tabindex="-1"
-                              href="{% static 'documents\FORMS\HR\internal application S.116.pdf' %}">Internal Application (S116)</a></button></div>
+         <a href="{% static 'documents\FORMS\HR\affidavite form.pdf' %}">
+               <div
+                  class="bg-citron-200 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold"
+                >
+                    <div class="group relative">
+                      <button type="button" style="width:18rem; height:6rem">
+                        <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                        <span class="ml-3">  Affidavit Form</span></button>
+                     </div>
+                  </div></a>
+         
+         <a href="{% static  'documents\FORMS\HR\application of training Form Corp 1.pdf' %}">
+               <div
+                 class="bg-green-300 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold"
+                     >
+                     <div class="group relative">
+                        <button type="button" style="width:18rem; height:6rem">
+                         <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                         <span class="ml-3">Application of Training Corp 1</span></button>
+                        </div>
+                       </div>
+                     </a>           
+         <a href="{% static 'documents\FORMS\HR\appointment of beneficiary form.pdf' %}">
+
+                        <div
+                          class=" bg-gulf-blue-300 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold"
+                        >
+                                  <div class="group relative">
+                                    <button type="button" style="width:18rem; height:6rem">
+                                      <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                                      <span class="ml-3"> Appointment of Beneficiry</span></button>
+                                  </div>
+                          </div></a>
                   
-         <div class="mt-10"><button type="button"><a class="rounded-xl bg-blue-300 py-4 px-2 m-3 col-span-3 " tabindex="-1"
-                              href="{% static 'documents\FORMS\HR\internal Memo Head.pdf' %}">Internal Memo Head</a></button></div>
-                     
-         <div class="mt-10"><button type="button"><a class="rounded-xl bg-yellow-300 py-4 px-2 m-3 col-span-3" tabindex="-1"
-                                 href="{% static  'documents\FORMS\HR\interview Form MP2 AA.pdf' %}">Interview Form (MP2 AA)</a></button></div>
-         <div class="mt-10"><button type="button"><a class="rounded-xl bg-red-300 py-4 px-2 m-3 col-span-3  " tabindex="-1"
-                                    href="{% static 'documents\FORMS\HR\interview notes  MP3.pdf' %}">Interview Notes (MP3)</a></button></div>
-                        
-         <div class="mt-10"><button type="button"><a class="rounded-xl bg-blue-300 py-4 px-2 m-3 col-span-3 " tabindex="-1"
-                                    href="{% static 'documents\FORMS\HR\interview score sheet form s132.pdf' %}">Interview Scoresheet Form (S132)</a></button></div>
-                           
-         <div class="mt-10"><button type="button"><a class="rounded-xl bg-yellow-300 py-4 px-2 m-3 col-span-3" tabindex="-1"
-            href="{% static  'documents\FORMS\HR\INTERVIEW SHORTLIST FORM.pdf' %}">Interview Shortlist Form</a></button></div>
-         <div class="mt-10"><button type="button"><a class="rounded-xl bg-red-300 py-4 px-2 m-3 col-span-3  " tabindex="-1"
-            href="{% static 'documents\FORMS\HR\management leave form s49b.pdf' %}">Management Leave Form (S49B)</a></button></div>
+         <a href="{% static 'documents\FORMS\HR\assistance to buy tools form.pdf' %}">
+               <div
+                class="bg-citron-200 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold"
+                   >
+                   <div class="group relative">
+                     <button type="button" style="width:18rem; height:6rem">
+                        <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                           <span class="ml-3">  Assistance to buy tools</span></button>
+                           </div>
+                     </div></a>
+                  
+         <a href="{% static  'documents\FORMS\HR\Contract Form.doc' %}">
+                  <div
+                   class="bg-green-300 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold"
+                      >
+                        <div class="group relative">
+                           <button type="button" style="width:18rem; height:6rem">
+                           <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                           <span class="ml-3">Contract Form</span></button>
+                            </div>
+                     </div></a>           
+               
+                     <a href="{% static 'documents\FORMS\HR\clearance Form S 25.pdf' %}">
+                        <div
+                          class=" bg-gulf-blue-300 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold"
+                        >
+                                  <div class="group relative">
+                                    <button type="button" style="width:18rem; height:6rem">
+                                      <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                                      <span class="ml-3"> Clearance Form (S25)</span></button>
+                                  </div>
+                          </div></a>
+
+                          <a href="{% static 'documents\FORMS\HR\AUTHORITY TO USE OWN VEHICLE FORM.pdf' %}">
+                           <div
+                            class="bg-citron-200 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold"
+                               >
+                               <div class="group relative">
+                                 <button type="button" style="width:18rem; height:6rem">
+                                    <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                                       <span class="ml-3"> Authority to use Own Vehicle</span></button>
+                                       </div>
+                                 </div></a>
                               
-         <div class="mt-10"><button type="button"><a class="rounded-xl bg-blue-300 py-4 px-2 m-3 col-span-3 " tabindex="-1"
-            href="{% static 'documents\FORMS\HR\medical exam S.5.pdf' %}">Medical Exam (S5)</a></button></div>
-                                 
-         <div class="mt-10"><button type="button"><a class="rounded-xl bg-yellow-300 py-4 px-2 m-3 col-span-3" tabindex="-1"
-              href="{% static  'documents\FORMS\HR\NEXT OF KIN FORM.pdf' %}">Next of Kin</a></button></div>
-                                    
-      <div class="mt-10"><button type="button"><a class="rounded-xl bg-red-300 py-4 px-2 m-3 col-span-3  " tabindex="-1"
-               href="{% static 'documents\FORMS\HR\nyaradzo form.pdf' %}">Nyaradzo Form</a></button></div>
-   
-      <div class="mt-10"><button type="button"><a class="rounded-xl bg-blue-300 py-4 px-2 m-3 col-span-3 " tabindex="-1"
-               href="{% static 'documents\FORMS\HR\optical lens Form S.67.pdf' %}">Optical Lens Form (S67)</a></button></div>
-      
-      <div class="mt-10"><button type="button"><a class="rounded-xl bg-yellow-300 py-4 px-2 m-3 col-span-3" tabindex="-1"
-                  href="{% static  'documents\FORMS\HR\worker of month FORM WR 1.pdf' %}">Worker of the month form WR1</a></button></div>
-      <div class="mt-10"><button type="button"><a class="rounded-xl bg-red-300 py-4 px-2 m-3 col-span-3  " tabindex="-1"
-                     href="{% static 'documents\FORMS\HR\vehicle job card S74.pdf' %}">Vehicle Job Card (S74)</a></button></div>
-         
-      <div class="mt-10"><button type="button"><a class="rounded-xl bg-blue-300 py-4 px-2 m-3 col-span-3 " tabindex="-1"
-                     href="{% static '#' %}">Pension Form 1</a></button></div>
+                     <a href="{% static  'documents\FORMS\HR\BENEFIT FUND claim FORM.pdf' %}">
+                              <div
+                               class="bg-green-300 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold"
+                                  >
+                                    <div class="group relative">
+                                       <button type="button" style="width:18rem; height:6rem">
+                                       <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                                       <span class="ml-3">Benefit Fund Claim 2</span></button>
+                                        </div>
+                                 </div></a> 
+
+                                 <a href="{% static 'documents\FORMS\HR\contract of employment form.doc' %}">
+                                    <div
+                                      class=" bg-gulf-blue-300 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold"
+                                    >
+                                              <div class="group relative">
+                                                <button type="button" style="width:18rem; height:6rem">
+                                                  <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                                                  <span class="ml-3"> Contract of Employment Form</span></button>
+                                              </div>
+                                      </div></a>
             
-      <div class="mt-10"><button type="button"><a class="rounded-xl bg-yellow-300 py-4 px-2 m-3 col-span-3" tabindex="-1"
-                        href="{% static  'documents\FORMS\HR\pensionLife certficate Form.pdf' %}">Pension Life Certificate</a></button></div>
-    <div class="mt-10"><button type="button"><a class="rounded-xl bg-red-300 py-4 px-2 m-3 col-span-3  " tabindex="-1"
-           href="{% static 'documents\FORMS\HR\PRIVATE MILEAGE form  S69.pdf' %}">Private Mileage (S69) </a></button></div>
+                                      <a href="{% static 'documents\FORMS\HR\Contract of serviceFORM  S8.pdf' %}">
+                                       <div
+                                        class="bg-citron-200 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold"
+                                           >
+                                           <div class="group relative">
+                                             <button type="button" style="width:18rem; height:6rem">
+                                                <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                                                   <span class="ml-3"> Contract of Service (S8)</span></button>
+                                                   </div>
+                                             </div></a>
+                                          
+                                 <a href="{% static  'documents\FORMS\HR\contract staff requisition form MP1 (A).pdf' %}">
+                                          <div
+                                           class="bg-green-300 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold"
+                                              >
+                                                <div class="group relative">
+                                                   <button type="button" style="width:18rem; height:6rem">
+                                                   <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                                                   <span class="ml-3"> Contract Staff Requisition Form (MP1)</span></button>
+                                                    </div>
+                                             </div></a>    
+                                             <a  href="{% static 'documents\FORMS\HR\driving licence Form S73.pdf' %}">
+                                                <div
+                                                  class=" bg-gulf-blue-300 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold"
+                                                >
+                                                          <div class="group relative">
+                                                            <button type="button" style="width:18rem; height:6rem">
+                                                              <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                                                              <span class="ml-3">Drivers Licence Form (S73)</span></button>
+                                                          </div>
+                                                  </div></a>
+                                                  <a href="{% static 'documents\FORMS\HR\GRIEVANCE FORM.pdf' %}">
+                                                    <div
+                                                    class="bg-citron-200 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold"
+                                                  >
+                                                            <div class="group relative">
+                                                              <button type="button" style="width:18rem; height:6rem">
+                                                                <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                                                                <span class="ml-3"> Grievance Form</span></button>
+                                                            </div>
+                                                    </div></a>
+                                                  
+                                                    <a href="{% static  '#' %}">
+                                                  <div
+                                                    class="bg-green-300 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold"
+                                                  >
+                                                            <div class="group relative">
+                                                              <button type="button" style="width:18rem; height:6rem">
+                                                                <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                                                                <span class="ml-3"> Induction Program Form</span></button>
+                                                            </div>
+                                                    </div>
+                                                  </a>     
+
+                                                  <a href="{% static 'documents\FORMS\HR\internal application S.116.pdf' %}">
+                                                    <div
+                                                      class=" bg-gulf-blue-300 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold"
+                                                    >
+                                                              <div class="group relative">
+                                                                <button type="button" style="width:18rem; height:6rem">
+                                                                  <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                                                                  <span class="ml-3">Internal Application (S116)</span></button>
+                                                              </div>
+                                                      </div></a>
+                                                
+                                                      <a href="{% static 'documents\FORMS\HR\internal Memo Head.pdf' %}">
+                                                      <div
+                                                      class="bg-citron-200 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold"
+                                                    >
+                                                              <div class="group relative">
+                                                                <button type="button" style="width:18rem; height:6rem">
+                                                                  <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                                                                  <span class="ml-3"> Internal Memo Head</span></button>
+                                                              </div>
+                                                      </div></a>
+                                                    
+                                                      <a href="{% static  'documents\FORMS\HR\interview Form MP2 AA.pdf' %}">
+                                                    <div
+                                                      class="bg-green-300 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold"
+                                                    >
+                                                              <div class="group relative">
+                                                                <button type="button" style="width:18rem; height:6rem">
+                                                                  <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                                                                  <span class="ml-3"> Interview Form (MP2 AA)</span></button>
+                                                              </div>
+                                                      </div>
+                                                    </a>
                
-      <div class="mt-10"><button type="button"><a class="rounded-xl bg-blue-300 py-4 px-2 m-3 col-span-3 " tabindex="-1"
-         href="{% static 'documents\FORMS\HR\staff requisition MP1.pdf' %}">Staff Requisition MP1</a></button></div>
-                  
-      <div class="mt-10"><button type="button"><a class="rounded-xl bg-yellow-300 py-4 px-2 m-3 col-span-3" tabindex="-1"
-              href="{% static  'documents\FORMS\HR\TRAINING EVALUATION FORM ER.pdf' %}">Training Evaluation Form ER</a></button></div>
-                     
-      <div class="mt-10"><button type="button"><a class="rounded-xl bg-red-300 py-4 px-2 m-3 col-span-3  " tabindex="-1"
-           href="{% static 'documents\FORMS\HR\transfer S.17.pdf' %}">Transfer Form (S17) </a></button></div>        
+             <a href="{% static 'documents\FORMS\HR\interview notes  MP3.pdf' %}">
+    <div
+      class=" bg-gulf-blue-300 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold"
+    >
+              <div class="group relative">
+                <button type="button" style="width:18rem; height:6rem">
+                  <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                  <span class="ml-3"> Interview Notes (MP3)</span></button>
+              </div>
+      </div></a>
+
+      <a href="{% static 'documents\FORMS\HR\interview score sheet form s132.pdf' %}">
+      <div
+      class="bg-citron-200 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold"
+    >
+              <div class="group relative">
+                <button type="button" style="width:18rem; height:6rem">
+                  <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                  <span class="ml-3"> Interview Scoresheet Form (S132)</span></button>
+              </div>
+      </div></a>
+    
+      <a href="{% static  'documents\FORMS\HR\INTERVIEW SHORTLIST FORM.pdf' %}">
+    <div
+      class="bg-green-300 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold"
+    >
+              <div class="group relative">
+                <button type="button" style="width:18rem; height:6rem">
+                  <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                  <span class="ml-3"> Interview Shortlist Form</span></button>
+              </div>
+      </div>
+    </a>
+    <a href="{% static 'documents\FORMS\HR\management leave form s49b.pdf' %}">
+      <div
+        class=" bg-gulf-blue-300 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold"
+      >
+                <div class="group relative">
+                  <button type="button" style="width:18rem; height:6rem">
+                    <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                    <span class="ml-3">Management Leave Form (S49B)</span></button>
+                </div>
+        </div></a>
+  
+        <a href="{% static 'documents\FORMS\HR\medical exam S.5.pdf' %}">
+        <div
+        class="bg-citron-200 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold"
+      >
+                <div class="group relative">
+                  <button type="button" style="width:18rem; height:6rem">
+                    <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                    <span class="ml-3">Medical Exam (S5)</span></button>
+                </div>
+        </div></a>
       
-      <div class="mt-10"><button type="button"><a class="rounded-xl bg-blue-300 py-4 px-2 m-3 col-span-3 " tabindex="-1"
-            href="{% static 'documents\FORMS\HR\meter details form S35.pdf' %}">Meter Details Form (S35)</a></button></div>
+        <a href="{% static  'documents\FORMS\HR\NEXT OF KIN FORM.pdf' %}">
+      <div
+        class="bg-green-300 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold"
+      >
+                <div class="group relative">
+                  <button type="button" style="width:18rem; height:6rem">
+                    <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                    <span class="ml-3">Next of Kin Form</span></button>
+                </div>
+        </div>
+      </a>
+      <a href="{% static 'documents\FORMS\HR\nyaradzo form.pdf' %}">
+        <div
+          class=" bg-gulf-blue-300 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold"
+        >
+                  <div class="group relative">
+                    <button type="button" style="width:18rem; height:6rem">
+                      <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                      <span class="ml-3"> Nyaradzo Form</span></button>
+                  </div>
+          </div></a>
+    
+          <a href="{% static 'documents\FORMS\HR\optical lens Form S.67.pdf' %}">
+          <div
+          class="bg-citron-200 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold"
+        >
+                  <div class="group relative">
+                    <button type="button" style="width:18rem; height:6rem">
+                      <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                      <span class="ml-3">Optical Lens Form (S67)</span></button>
+                  </div>
+          </div></a>
+        
+          <a href="{% static  'documents\FORMS\HR\worker of month FORM WR 1.pdf' %}">
+        <div
+          class="bg-green-300 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold"
+        >
+                  <div class="group relative">
+                    <button type="button" style="width:18rem; height:6rem">
+                      <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                      <span class="ml-3"> Worker of the month form WR1</span></button>
+                  </div>
+          </div>
+        </a>
+        <a href="{% static 'documents\FORMS\HR\vehicle job card S74.pdf' %}">
+          <div
+            class=" bg-gulf-blue-300 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold"
+          >
+                    <div class="group relative">
+                      <button type="button" style="width:18rem; height:6rem">
+                        <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                        <span class="ml-3">Vehicle Job Card (S74)</span></button>
+                    </div>
+            </div></a>
       
-      <div class="mt-10"><button type="button"><a class="rounded-xl bg-yellow-300 py-4 px-2 m-3 col-span-3" tabindex="-1"
-            href="{% static  'documents\FORMS\HR\medical milage form s12.pdf' %}">Medical Mileage Form (S12)</a></button></div>
+            <a href="{% static '#' %}">
+            <div
+            class="bg-citron-200 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold"
+          >
+                    <div class="group relative">
+                      <button type="button" style="width:18rem; height:6rem">
+                        <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                        <span class="ml-3"> Pension Form 1</span></button>
+                    </div>
+            </div></a>
+          
+            <a href="{% static  'documents\FORMS\HR\pensionLife certficate Form.pdf' %}">
+          <div
+            class="bg-green-300 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold"
+          >
+                    <div class="group relative">
+                      <button type="button" style="width:18rem; height:6rem">
+                        <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                        <span class="ml-3"> Pension Life Certificate</span></button>
+                    </div>
+            </div>
+          </a>
+          <a  href="{% static 'documents\FORMS\HR\PRIVATE MILEAGE form  S69.pdf' %}">
+            <div
+              class=" bg-gulf-blue-300 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold"
+            >
+                      <div class="group relative">
+                        <button type="button" style="width:18rem; height:6rem">
+                          <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                          <span class="ml-3">Private Mileage (S69)</span></button>
+                      </div>
+              </div></a>
+        
+              <a href="{% static 'documents\FORMS\HR\staff requisition MP1.pdf' %}">
+              <div
+              class="bg-citron-200 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold"
+            >
+                      <div class="group relative">
+                        <button type="button" style="width:18rem; height:6rem">
+                          <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                          <span class="ml-3"> Staff Requisition MP1</span></button>
+                      </div>
+              </div></a>
+            
+              <a href="{% static  'documents\FORMS\HR\TRAINING EVALUATION FORM ER.pdf' %}">
+            <div
+              class="bg-green-300 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold"
+            >
+                      <div class="group relative">
+                        <button type="button" style="width:18rem; height:6rem">
+                          <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                          <span class="ml-3"> Training Evaluation Form ER</span></button>
+                      </div>
+              </div>
+            </a>
+            <a href="{% static 'documents\FORMS\HR\transfer S.17.pdf' %}"> 
+              <div
+                class=" bg-gulf-blue-300 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold"
+              >
+                        <div class="group relative">
+                          <button type="button" style="width:18rem; height:6rem">
+                            <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                            <span class="ml-3">Transfer Form (S17)</span></button>
+                        </div>
+                </div></a>
+          
+                <a href="{% static 'documents\FORMS\HR\meter details form S35.pdf' %}">
+                <div
+                class="bg-citron-200 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold"
+              >
+                        <div class="group relative">
+                          <button type="button" style="width:18rem; height:6rem">
+                            <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                            <span class="ml-3">Meter Details Form (S35)</span></button>
+                        </div>
+                </div></a>
+              
+                <a href="{% static  'documents\FORMS\Finance\A61 MD Meter cards.pdf' %}">
+              <div
+                class="bg-green-300 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold"
+              >
+                        <div class="group relative">
+                          <button type="button" style="width:18rem; height:6rem">
+                            <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                            <span class="ml-3"> Medical Mileage Form (S12)</span></button>
+                        </div>
+                </div>
+              </a>
 
             </div>
-         <div class="bottom-0 left-0 right-0 mt-20 w-40 flex justify-left">
-            <a href="{%url 'Forms Index'%}"><button class="bg-black text-white font-bold px-4 py-2 rounded-full">Back</button></a>
-          </div>
+            
+      <div style="display: flex;justify-content: start;" class="mt-6">
+      <a href="javascript:history.back()">
+          <button style="width: 6rem;height: 3rem;background-color: #020617;margin-right: 20px"
+              class=" w-28 bg-blue-800 hover:bg-blue-900 outline-none focus:outline-none border px-3 py-1 rounded-xl flex items-center">
+              <span class="pr-1 font-bold flex-1 text-blue-50">Back</span>
+    
+          </span></button> </a>
+    </div>
         
 {%endblock %}

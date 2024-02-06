@@ -20,7 +20,7 @@ urlpatterns =[
   path('risk-processes/',views.view_risk, name='risk-processes'),
   path('management-processes/',views.view_management, name='management-processes'),
 
-    path("forms_index",views.file_searchx,name="Forms Index"),
+    path("forms_index",views.forms_index,name="Forms Index"),
     path("forms_upload",views.forms_upload,name="Forms Upload"),
     path("engineering_forms",views.engineering_forms,name="Engineering Forms"),
     path("finance_forms/",views.finance_forms,name="Finance Forms"),
@@ -28,6 +28,10 @@ urlpatterns =[
     path("commercial_forms/",views.commercial_forms,name="Commercial Forms"),
     path('file_searchx/',views.file_searchx, name='file_searchx'),
     path("new_view",views.new_view,name="Processes and Procedures"),
-    path('upload',views.upload,name='upload'),
+   
     path('viewWorkInstr',views.viewWorkInstr, name='viewWorkInstr'),
+    path('viewEngProcedureHome',views.viewEngProcedureHome, name='Eng_ProcedureHome'),
+    path('viewCommercialProcedureHome',views.viewCommercialProcedureHome, name='Commercial_ProcedureHome'),
+    path('viewFinanceProcedures',views.viewFinanceProcedures, name='FinanceProcedures'),
+    
 ]
