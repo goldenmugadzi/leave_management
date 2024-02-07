@@ -173,21 +173,21 @@ WSGI_APPLICATION = 'beii_v1.wsgi.application'
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
 
 DATABASES = {
-    # 'default': {
-    #     'ENGINE': 'django.db.backends.mysql',
-    #     'NAME': 'beii',
-    #     'USER': 'beii_user',
-    #     'PASSWORD': 'v4mnwVrOsAupSY0k',
-    #     'HOST': '172.16.8.22'
-    # }
-    # Localhost
     'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'ENGINE': 'django.db.backends.mysql',
         'NAME': 'beii',
-        'USER': 'Excellence',
+        'USER': 'excellence',
         'PASSWORD': 'Z3tdc_it@2021_',
         'HOST': 'localhost'
     }
+    # Localhost
+    # 'default': {
+    #     'ENGINE': 'django.db.backends.postgresql_psycopg2',
+    #     'NAME': 'beii',
+    #     'USER': 'Excellence',
+    #     'PASSWORD': 'Z3tdc_it@2021_',
+    #     'HOST': 'localhost'
+    # }
 }
 
 # Password validation
