@@ -11,4 +11,6 @@ urlpatterns=[
     path('ict',views.view_ICT,name='ict'),
     path('hr',views.view_HR,name='hr'),
     path('risk',views.view_Risk,name='risk'),
+    path('table',views.view_files,name='table'),
+    path('edit_file',views.edit_file,name='edit'),
 ]

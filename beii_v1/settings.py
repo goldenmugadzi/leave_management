@@ -181,12 +181,19 @@ DATABASES = {
     #     'HOST': '172.16.8.22'
     # }
     # Localhost
+    # 'default': {
+    #     'ENGINE': 'django.db.backends.postgresql_psycopg2',
+    #     'NAME': 'beii',
+    #     'USER': 'Excellence',
+    #     'PASSWORD': 'Z3tdc_it@2021_',
+    #     'HOST': 'localhost'
+    # }
     'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'ENGINE': 'django.db.backends.mysql',
         'NAME': 'beii',
-        'USER': 'Excellence',
-        'PASSWORD': 'Z3tdc_it@2021_',
-        'HOST': 'localhost'
+        'USER': 'root',
+        'PASSWORD': '',
+        'HOST': 'localhost',
     }
 }
 

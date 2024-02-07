@@ -36,5 +36,12 @@
     <a href="{%url 'dashboard_index'%}"><button class="bg-black text-white font-bold px-4 py-2 rounded-full">Back</button></a>
   </div>
 
+<script>
+  const dropdown = document.querySelector('.dropdown-toggle');
+const dropdownMenu = document.querySelector('.dropdown-menu');
 
+dropdown.addEventListener('click', () => {
+  dropdownMenu.classList.toggle('hidden');
+});
+</script>
 {%endblock%}
