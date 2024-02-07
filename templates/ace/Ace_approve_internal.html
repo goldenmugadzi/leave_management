@@ -1,5 +1,6 @@
 
 {% extends 'admin_layout.html' %} {% block content %}
+    {% load mathfilters %}
     <form enctype="multipart/form-data" method="post" action="/ace/approve">
     <div class="content-wrapper">
 
@@ -32,8 +33,9 @@
 {#                            value="{{ context.Department }}"#}
 {#                            class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"#}
 {#                    />#}
-{#                    <input readonly hidden="hidden" value="{{ context.Ace_id2 }}" name="Ace_id2"/>#}
+
 {#                </div>#}
+                                    <input readonly hidden="hidden" value="{{ context.Ace_id2 }}" name="Ace_id2"/>
 
                 <div>
                     <label
@@ -382,6 +384,25 @@
                         />
                     </div>
                 </div>
+
+                    <div>
+                        <label
+                                for="quantity"
+                                class="block text-sm font-medium leading-6 text-gray-900"
+                        >Quantity</label
+                        >
+                        <div class="mt-2">
+                            <input
+                                    readonly
+                                    value="{{ context.quantity }}"
+                                    id="quantity"
+                                    name="quantity"
+                                    type="number"
+                                    autocomplete="quantity"
+                                    class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                            />
+                        </div>
+                    </div>
                 {% endif %}
 
             {% if context.accounting_officer %}
@@ -712,24 +733,24 @@
                 {#                                </div>#}
                 {#                            </div>#}
 
-                <div>
-                    <label
-                            for="amount"
-                            class="block text-sm font-medium leading-6 text-gray-900"
-                    >Amount($)</label
-                    >
-                    <div class="mt-2">
-                        <input
-                                readonly
-                                value="{{ context.amount }}"
-                                id="amount"
-                                name="amount"
-                                type="number"
-                                autocomplete="amount"
-                                class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                        />
-                    </div>
-                </div>
+{#                <div>#}
+{#                    <label#}
+{#                            for="amount"#}
+{#                            class="block text-sm font-medium leading-6 text-gray-900"#}
+{#                    >Amount($)</label#}
+{#                    >#}
+{#                    <div class="mt-2">#}
+{#                        <input#}
+{#                                readonly#}
+{#                                value="{{ context.amount }}"#}
+{#                                id="amount"#}
+{#                                name="amount"#}
+{#                                type="number"#}
+{#                                autocomplete="amount"#}
+{#                                class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"#}
+{#                        />#}
+{#                    </div>#}
+{#                </div>#}
 
             </div>
 
@@ -744,6 +765,84 @@
                     />
                 </div>
             </div>
+
+
+            <div>
+                <label
+                        for="amount"
+                        class="block text-sm font-medium leading-6 text-gray-900"
+                >{{ context.budget_id }}   <br>
+                    budget Balance($)</label
+                >
+                <div class="mt-2">
+                    <input
+                            readonly
+                            value="{{ budget.balance }}"
+                            id="balance"
+                            name="balance"
+                            type="number"
+                            autocomplete="balance"
+                            class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                    />
+                </div>
+            </div>
+
+            <div>
+                <label
+                        for="amount"
+                        class="block text-sm font-medium leading-6 text-gray-900"
+                >Amount($)</label
+                >
+                <div class="mt-2">
+                    <input
+                            readonly
+                            value="{{ context.amount }}"
+                            id="balance"
+                            name="balance"
+                            type="number"
+                            autocomplete="balance"
+                            class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                    />
+                </div>
+            </div>
+
+
+
+
+
+
+{#            {% set total = budget.balance %}  {% set subtrahend = context.amount %}#}
+
+            {% with a=budget.balance b=context.amount %}
+
+
+
+
+
+
+            <div>
+                <label
+                        for="amount"
+                        class="block text-sm font-medium leading-6 text-gray-900"
+                >Current budget Balance after Ace($)</label
+                >
+                <div class="mt-2">
+                    <input
+                            readonly
+                            value="{{ a|sub:b }}"
+                            id="balance"
+                            name="balance"
+                            type="number"
+                            autocomplete="balance"
+                            class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                    />
+                </div>
+            </div>
+            {% endwith %}
+
+
+
+
 {#            <div id="internal">#}
 {#                <div>#}
 {#                    <label#}

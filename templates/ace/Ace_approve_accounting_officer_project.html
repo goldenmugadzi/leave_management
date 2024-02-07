@@ -1,5 +1,6 @@
 
 {% extends 'admin_layout.html' %} {% block content %}
+    {% load mathfilters %}
     <form enctype="multipart/form-data" method="post" action="/ace/approve">
     <div class="content-wrapper">
 
@@ -19,23 +20,8 @@
             <div class="mt-10 grid grid-cols-3 gap-4">
 
 
-                <div>
-                    <label
-                            for="asset_number"
-                            class="block text-sm font-medium leading-6 text-gray-900"
-                    >Asset Number</label
-                    >
-                    <div class="mt-2">
-                        <input
 
-                                id="asset_number"
-                                name="asset_number"
-                                type="text"
-                                value="{{ context.asset_number}}"
-                                autocomplete="asset_number"
-                                class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                        />
-                    </div>
+
                 </div>
 
                 <div>
@@ -637,24 +623,7 @@
                 </div>
             {% endif %}
 
-                <div>
-                    <label
-                            for="asset_number"
-                            class="block text-sm font-medium leading-6 text-gray-900"
-                    >Asset Number</label
-                    >
-                    <div class="mt-2">
-                        <input
-                                readonly
-                                value="{{ context.asset_number }}"
-                                id="asset_number"
-                                name="asset_number"
-                                autocomplete="asset_number"
-                                class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
 
-                        />
-                    </div>
-                </div>
 
 
 
@@ -711,6 +680,8 @@
                         />
                     </div>
                 </div>
+        
+
 
             </div>
 
@@ -898,8 +869,99 @@
                         />
                     </div>
                 </div>
+
+
+
+                    {% if context.quantity > 1 %}
+
+                        {% for item in quantity %}
+                            <div>
+                            <label
+                                    for="asset_number"
+                                    class="block text-sm font-medium leading-6 text-gray-900"
+                            >Asset Number {{ item|add:1 }}</label
+                            >
+                            <div class="mt-2">
+                                <textarea
+
+                                        id="asset_number"
+                                        required
+                                        name="asset_number[]"
+                                        type="text"
+                                        value="{{ context.asset_number}}"
+                                        autocomplete="asset_number"
+                                        class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                                >
+                                </textarea>
+                            </div>
+                        {% endfor %}
+
+                    {% else %}
+                        <div>
+                        <label
+                                for="asset_number"
+                                class="block text-sm font-medium leading-6 text-gray-900"
+                        >Asset Number</label
+                        >
+                        <div class="mt-2">
+                                <textarea
+
+                                        id="asset_number"
+                                        required
+                                        name="asset_number[]"
+                                        type="text"
+                                        value="{{ context.asset_number}}"
+                                        autocomplete="asset_number"
+                                        class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                                >
+                                </textarea>
+                        </div>
+                    {% endif %}
+
                 {% endif %}
             </div>
+            {% with a=budget.balance b=context.amount c=context.total_connection_fee %}
+            {% set total=b|add:c %}
+
+                <div>
+                    <label
+                            for="capital_estimated"
+                            class="block text-sm font-medium leading-6 text-gray-900"
+                    >Cost Of Project($)</label
+                    >
+                    <div class="mt-2">
+                        <input
+                                readonly
+                                value="{{ total }}"
+                                id="capital_estimated"
+                                name="capital_estimated"
+                                type="number"
+                                autocomplete="capital_estimated"
+                                class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                        />
+                    </div>
+                </div>
+
+
+                <div>
+                    <label
+                            for="amount"
+                            class="block text-sm font-medium leading-6 text-gray-900"
+                    >Current budget Balance after Ace($)</label
+                    >
+                    <div class="mt-2">
+                        <input
+                                readonly
+                                value="{{ a|sub:total }}"
+                                id="balance"
+                                name="balance"
+                                type="number"
+                                autocomplete="balance"
+                                class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                        />
+                    </div>
+                </div>
+            {% endwith %}
 
             <div class="flex mt-10 px-3 py-3">
                 <div style="width: 50%;">

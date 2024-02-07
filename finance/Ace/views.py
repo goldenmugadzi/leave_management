@@ -211,9 +211,29 @@ def create_Ace(request):
         # payment_mode = request.POST['payment_mode']
         # region = request.POST['region']
         # form = UploadFileForm(request.POST, request.FILES)
-        quotation1 = request.FILES['quotation1'] or ""
-        quotation2 = request.FILES['quotation2'] or ""
-        quotation3 = request.FILES['quotation3'] or ""
+        if 'quotation1' in request.FILES:
+            # File exists, do something with it
+            quotation1 = request.FILES['quotation1']
+        else:
+            # File doesn't exist, handle the empty case
+            quotation1 = None
+
+        if 'quotation2' in request.FILES:
+            # File exists, do something with it
+            quotation2 = request.FILES['quotation2']
+        else:
+            # File doesn't exist, handle the empty case
+            quotation2 = None
+
+        if 'quotation3' in request.FILES:
+            # File exists, do something with it
+            quotation3 = request.FILES['quotation3']
+        else:
+            # File doesn't exist, handle the empty case
+            quotation3 = None
+        # quotation1 = request.FILES['quotation1']
+        # quotation2 = request.FILES['quotation2']
+        # quotation3 = request.FILES['quotation3']
 
         requested_by = request.user.username
         classification= request.POST['classification1']
@@ -225,6 +245,7 @@ def create_Ace(request):
         to_be_withdrawn= float(budget_id.balance)
         sweetify.success(request, 'The pending aces have drawn more than the budget can handle!')
         balance= float(budget_id.balance)
+        quantity = request.POST['quantity']
 
         if to_be_withdrawn<balance or amount<balance:
             if classification=="project":
@@ -259,6 +280,7 @@ def create_Ace(request):
             print(budget_id)
 
             ace_id = "ACE" + date + rand2
+            print(region)
 
             objectify = Ace(
                 Department=department,
@@ -287,6 +309,7 @@ def create_Ace(request):
                 labour=labour or None,
                 transport=transport or None,
                 total_connection_fee=total_connection_fee or None,
+                quantity=quantity,
             )
             objectify.save()
             # ace instance
@@ -731,12 +754,21 @@ def get_Ace_records_pettyauthoriser(request):
 def get_to_approve_Ace(request):
     user_title = request.user.get_full_name()
     l = request.user.groups.values_list('name', flat=True)
+    section_budgets = Budget.objects.all()
+
+    section_budgets=list(section_budgets)
+
+    # print(section_budgets)
 
     if request.method == "GET":
         Ace_id = request.GET['i']
-        print(Ace_id)
+        # print(Ace_id)
         Ace_id = str(Ace_id)
+        ace_id = Ace_id
         pettyc = Ace.objects.filter(Ace_id2=Ace_id).first()
+        budget = pettyc.budget_id
+        # print(budget)
+        budget = Budget.objects.filter(budget_name=budget).first()
         # pettyc1 = Ace.objects.filter(petty_id=Ace_id).first()
         # print(pettyc)
         context = pettyc
@@ -748,6 +780,9 @@ def get_to_approve_Ace(request):
 
     user_id = request.user.id
     user = User.objects.filter(id=user_id).first()
+    # print(user)
+    user_id = str(user)
+    print(user_id)
     user_profile = UserProfile.objects.filter(user_id=user.pk).first()
 
     user_groups = user.groups.values_list('name', flat=True)
@@ -793,11 +828,13 @@ def get_to_approve_Ace(request):
         if role.application == "ace":
             custom_user_roles["ace"] = role
     Ace_role=str(custom_user_roles["ace"])
-    print(Ace_role,"ace role")
+    # print(Ace_role,"ace role")
     if request.method=="POST":
         ace_id=request.POST["Ace_id2"]
         
         ace=Ace.objects.filter(Ace_id2=ace_id).first()
+        budget=ace.budget_id
+        budget = Budget.objects.filter(budget_name=budget).first()
 
         # if Ace_role=="check" and str(ace.approval_status)!="approved by foreperson":
         #
@@ -811,29 +848,40 @@ def get_to_approve_Ace(request):
 
             ace.approval_status="approved by section head"
             ace.approved_by=user_id
+            budget=ace.budget_id
+            budget = Budget.objects.filter(budget_name=budget).first()
             ace.date_approved=date.today()
+
             ace.section_head_approval_status="approved by section head"
-            ace.accounting_officer_approval_date=date.today()
+            ace.section_head_approval_date = date.today()
             ace.save()
             messages.error(request, 'you have approved ace',ace_id)
             sweetify.success(request,'you have approved ace'+ ace_id)
             return redirect("/ace")
         if Ace_role=="process" and str(ace.approval_status)!="approved by Accounting officer":
-            asset_number: object=request.POST["asset_number"]
+            asset_number: object=request.POST.getlist('asset_number[]')
+            joined_asset_numbers = ','.join(item.strip() for item in asset_number)
+            print(joined_asset_numbers)
             ace.approval_status="approved by Accounting officer"
+            budget=ace.budget_id
+            budget = Budget.objects.filter(budget_name=budget).first()
             ace.approved_by=user_id
             ace.date_approved=date.today()
             ace.accounting_officer_approval_date=date.today()
             ace.accounting_officer_approval_status="approved by accounting officer"
-            ace.asset_number=asset_number
+            ace.asset_number=joined_asset_numbers
             ace.accounting_officer=user_id
             ace.save()
             messages.error(request, 'you have approved ace',ace_id)
             sweetify.success(request,'you have approved ace'+ ace_id)
+            print(date.today())
             return redirect("/ace")
+
         if Ace_role=="sanction" and str(ace.approval_status)!="approved by Finance Manager":
 
             ace.approval_status="approved by Finance Manager"
+            budget=ace.budget_id
+            budget = Budget.objects.filter(budget_name=budget).first()
             ace.date_approved=date.today()
             ace.approved_by=user_id
             ace.fm_approval_status="approved by Finance Manager"
@@ -843,13 +891,14 @@ def get_to_approve_Ace(request):
             messages.error(request, 'you have approved ace',ace_id)
             sweetify.success(request,'you have approved ace'+ ace_id)
             return redirect("/ace")
-        if Ace_role=="approve" and str(ace.approval_status)!="approved by Finance Manager":
+        if Ace_role=="approve" and str(ace.approval_status)=="approved by Finance Manager":
 
-            
+            print("You are a gm")
             budget=ace.budget_id
             amount=ace.amount
-            budget = Budget.objects.filter(budget_id=budget).first()
-            if float(budget.amount)<=amount:
+            budget = Budget.objects.filter(budget_name=budget).first()
+            if float(budget.balance)>=amount:
+                print("now in approval bracket")
                 ace.approval_status="approved by General Manager"
                 ace.date_approved=date.today()
                 ace.approved_by=user_id
@@ -858,7 +907,7 @@ def get_to_approve_Ace(request):
                 ace.gm_date_approved=date.today()
 
                 ace.save()
-                Transaction = Transactions.objects.filter(Ace2=ace.Ace_id2).first()
+                Transaction = Transactions.objects.filter(Ace_id2=ace.Ace_id2).first()
                 Transaction.approval_status="approved by General Manager"
                 Transaction.save()
                 budget.balance = budget.balance - amount
@@ -866,6 +915,8 @@ def get_to_approve_Ace(request):
                 budget.withdrawn = budget.withdrawn + amount
                 budget.withdrawal_date = date.today
                 budget.save()
+                print("approved")
+                return redirect("/ace")
             
             else:
                 sweetify.error(request, 'you have insufficient funds to approve')
@@ -893,7 +944,16 @@ def get_to_approve_Ace(request):
         # context = serializers.serialize('json', pettyc1)
 
 
-    print(context.classification)
+    pettyc = Ace.objects.filter(Ace_id2=ace_id).first()
+    budget = pettyc.budget_id
+    # print(budget)
+    budget = Budget.objects.filter(budget_name=budget).first()
+    # pettyc1 = Ace.objects.filter(petty_id=Ace_id).first()
+    quantity = range(pettyc.quantity)
+    # print(pettyc)
+    context = pettyc
+
+    # print(context.classification)
     if str(Ace_role)=="process":
         if str(context.classification)=="internal":
             user_page = 'Ace/Ace_approve_accounting_officer_internal.html'
@@ -907,12 +967,15 @@ def get_to_approve_Ace(request):
         if str(context.classification)=="project":
             user_page = 'Ace/Ace_approve_project.html'
 
-    print(user_page)
+    # print(user_page)
 
     return render(request, user_page, {"title": "All Records",
                                        "context": context,
                                        "user_title": user_title,
-                                       "user_groups": user_groups})
+                                       "user_groups": user_groups,
+                                       "budgets": section_budgets,
+                                       "budget": budget,
+                                       "quantity": quantity})
 
 def get_to_reject_Ace(request):
     user_title = request.user.get_full_name()
@@ -985,6 +1048,8 @@ def get_to_reject_Ace(request):
         rejection_reason=request.POST["rejection_reason"]
         # asset_number=request.POST["asset_number"]
         ace=Ace.objects.filter(Ace_id2=ace_id).first()
+        budget=ace.budget_id
+        budget = Budget.objects.filter(budget_id=budget).first()
 
         # if Ace_role=="check" and str(ace.approval_status)!="approved by foreperson":
         #
@@ -997,6 +1062,8 @@ def get_to_reject_Ace(request):
         if Ace_role=="pass" and str(ace.approval_status)!="approved by section head":
 
             ace.approval_status="rejected by section head"
+            budget=ace.budget_id
+            budget = Budget.objects.filter(budget_id=budget).first()
             ace.date_rejected=date.today()
             ace.rejected_by=user_title
             ace.section_head_approval_status="rejected by section head"
@@ -1011,6 +1078,8 @@ def get_to_reject_Ace(request):
 
             ace.approval_status="rejected by Accounting officer"
             ace.date_rejected=date.today()
+            budget=ace.budget_id
+            budget = Budget.objects.filter(budget_id=budget).first()
             ace.rejected_by=user_title
             ace.accounting_officer_approval_date=date.today()
             ace.accounting_officer_approval_status="rejected by accounting officer"
@@ -1025,6 +1094,8 @@ def get_to_reject_Ace(request):
 
             ace.approval_status="rejected Finance Manager"
             ace.date_approved=date.today()
+            budget=ace.budget_id
+            budget = Budget.objects.filter(budget_id=budget).first()
             ace.fm_approval_status="rejected Finance Manager"
             ace.fm_date_approved=date.today()
             ace.finance_manager=user_title
@@ -1038,6 +1109,8 @@ def get_to_reject_Ace(request):
 
             ace.approval_status="rejected by General Manager"
             ace.date_approved=date.today()
+            budget=ace.budget_id
+            budget = Budget.objects.filter(budget_id=budget).first()
             ace.gm_approval_status="approved by General Manager"
             ace.gm_date_approved=date.today()
             ace.general_manager=user_title
@@ -1093,7 +1166,8 @@ def get_to_reject_Ace(request):
     return render(request, user_page, {"title": "All Records",
                                        "context": context,
                                        "user_title": user_title,
-                                       "user_groups": user_groups})
+                                       "user_groups": user_groups,
+                                       "budget": budget})
 
 @login_required(login_url='/accounts/login/')
 def final_approval(request):
@@ -1161,6 +1235,8 @@ def final_approval(request):
 
     if request.method == "POST":
         Ace_id = request.POST['Ace_id2']
+        budget=ace.budget_id
+        budget = Budget.objects.filter(budget_id=budget).first()
 
         Ace_1 = Ace.objects.filter(Ace_id2=Ace_id).first()
         # if r
@@ -1177,7 +1253,8 @@ def final_approval(request):
     return render(request, user_page, {"title": "All Records",
                                        "context": pettyc1,
                                        "user_title": user_title,
-                                       "user_groups": user_groups})
+                                       "user_groups": user_groups,
+                                       "budget": budget})
 
 
 @login_required(login_url='/accounts/login/')
@@ -1318,10 +1395,10 @@ def petty_reports(request):
     user = UserProfile.objects.filter(user_id=user_id).first()
     secction = user.section
 
-    records = Ace.objects.filter(section=secction).all()
+    records = Ace.objects.all()
     context = serializers.serialize('json', records)
 
-    user_page = 'Ace/pettty_reports.html'
+    user_page = 'Ace/index.html'
     print(context)
 
     return render(request, user_page, {"title": "All Records",
@@ -1347,13 +1424,13 @@ def generate_report(request):
         records = Ace.objects.filter(section=secction, date_created__range=[start_date, end_date]).all()
         context = serializers.serialize('json', records)
         print(context)
-        user_page = 'Ace/pettty_reports.html'
+        user_page = 'Ace/index.html'
         return render(request, user_page, {"title": "All Records",
                                            "context": context,
                                            "user_title": user_title,
                                            "user_groups": user_groups})
     else:
-        return redirect('/Ace/petty_reports/')
+        return redirect('/Ace/reports/')
 
 @login_required(login_url='/accounts/login/')
 def create_budget(request):

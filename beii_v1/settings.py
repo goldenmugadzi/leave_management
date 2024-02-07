@@ -121,6 +121,7 @@ INSTALLED_APPS = [
     'process_risks.apps.ProcessRisksConfig',
     'finance.Ace.apps.AceConfig',
     'sweetify',
+    'mathfilters',
     
     'commecial.tempertockens',
     'competence_building.apps.CompetenceBuildingConfig'
@@ -181,10 +182,10 @@ DATABASES = {
     # }
     # Localhost
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'NAME': 'beii',
-        'USER': 'root',
-        'PASSWORD': '',
+        'USER': 'Excellence',
+        'PASSWORD': 'Z3tdc_it@2021_',
         'HOST': 'localhost'
     }
 }

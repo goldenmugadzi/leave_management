@@ -97,6 +97,101 @@
 
                 <div>
                     <label
+                            for="requested_by"
+                            class="block text-sm font-medium leading-6 text-gray-900"
+                    >Requested By</label
+                    >
+                    <div class="mt-2">
+                        <input
+                                readonly
+                                value="{{ context.requested_by }}"
+                                id="requested_by"
+                                name="requested_by"
+                                autocomplete="requested_by"
+                                class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+
+                        />
+                    </div>
+                </div>
+
+                <div>
+                    <label
+                            for="date_created"
+                            class="block text-sm font-medium leading-6 text-gray-900"
+                    >Date Created</label
+                    >
+                    <div class="mt-2">
+                        <input
+                                readonly
+                                value="{{ context.date_created }}"
+                                id="date_created"
+                                name="date_created"
+                                autocomplete="date_created"
+                                class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+
+                        />
+                    </div>
+                </div>
+
+                <div>
+                    <label
+                            for="budget"
+                            class="block text-sm font-medium leading-6 text-gray-900"
+                    >Budget</label
+                    >
+                    <div class="mt-2">
+                        <input
+                                readonly
+                                value="{{ context.budget_id }}"
+                                id="budget"
+                                name="budget"
+                                autocomplete="budget"
+                                class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+                        />
+                    </div>
+                </div>
+
+                <div>
+                    <label
+                            for="amount"
+                            class="block text-sm font-medium leading-6 text-gray-900"
+                    >Amount</label
+                    >
+                    <div class="mt-2">
+                        <input
+                                readonly
+                                value="{{ context.amount }}"
+                                id="amount"
+                                name="amount"
+                                type="number"
+                                autocomplete="amount"
+                                class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                        />
+                    </div>
+                </div>
+
+                <div>
+                    <label
+                            for="approval_status"
+                            class="block text-sm font-medium leading-6 text-gray-900"
+                    >Approval Status</label
+                    >
+                    <div class="mt-2">
+                        <input
+                                readonly
+                                value="{{ context.approval_status }}"
+                                id="approval_status"
+                                name="approval_status"
+                                autocomplete="approval_status"
+                                class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+
+                        />
+                    </div>
+                </div>
+
+
+                <div>
+                    <label
                             for="quotation1"
                             class="block text-sm font-medium leading-6 text-gray-900"
                     >Quote 1</label
@@ -158,130 +253,11 @@
 
 
 
-                <div>
-                    <label
-                            for="budget"
-                            class="block text-sm font-medium leading-6 text-gray-900"
-                    >Budget</label
-                    >
-                    <div class="mt-2">
-                        <input
-                                readonly
-                                value="{{ context.budget_id }}"
-                                id="budget"
-                                name="budget"
-                                autocomplete="budget"
-                                class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
-                        />
-                    </div>
-                </div>
 
-                {#                            <div>#}
-                {#                                <label#}
-                {#                                        for="amount"#}
-                {#                                        class="block text-sm font-medium leading-6 text-gray-900"#}
-                {#                                >Balance</label#}
-                {#                                >#}
-                {#                                <div class="mt-2">#}
-                {#                                    <input#}
-                {#                                            id="amount"#}
-                {#                                            name="amount"#}
-                {#                                            type="number"#}
-                {#                                            autocomplete="amount"#}
-                {#                                            class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"#}
-                {#                                    />#}
-                {#                                </div>#}
-                {#                            </div>#}
 
-                <div>
-                    <label
-                            for="amount"
-                            class="block text-sm font-medium leading-6 text-gray-900"
-                    >Amount</label
-                    >
-                    <div class="mt-2">
-                        <input
-                                readonly
-                                value="{{ context.amount }}"
-                                id="amount"
-                                name="amount"
-                                type="number"
-                                autocomplete="amount"
-                                class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                        />
-                    </div>
-                </div>
 
-            </div>
 
-            <div>
-                <label
-                        for="classification"
-                        class="block text-sm font-medium leading-6 text-gray-900"
-                >Classification</label>
-                <div class="mt-2">
-                    <input name="classification" onformdata="java_script_:classifications(this.options[this.selectedIndex].value);" onload="java_script_:classifications(this.options[this.selectedIndex].value);" style="width:1200px"
-                           required="required" readonly value="{{ context.classification }}"
-                    />
-                </div>
-            </div>
 
-            <div>
-                <label
-                        for="requested_by"
-                        class="block text-sm font-medium leading-6 text-gray-900"
-                >Requested By</label
-                >
-                <div class="mt-2">
-                    <input
-                            readonly
-                            value="{{ context.requested_by }}"
-                            id="requested_by"
-                            name="requested_by"
-                            autocomplete="requested_by"
-                            class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
-
-                    />
-                </div>
-            </div>
-
-            <div>
-                <label
-                        for="date_created"
-                        class="block text-sm font-medium leading-6 text-gray-900"
-                >Date Created</label
-                >
-                <div class="mt-2">
-                    <input
-                            readonly
-                            value="{{ context.date_created }}"
-                            id="date_created"
-                            name="date_created"
-                            autocomplete="date_created"
-                            class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
-
-                    />
-                </div>
-            </div>
-
-            <div>
-                <label
-                        for="approval_status"
-                        class="block text-sm font-medium leading-6 text-gray-900"
-                >Approval Status</label
-                >
-                <div class="mt-2">
-                    <input
-                            readonly
-                            value="{{ context.approval_status }}"
-                            id="approval_status"
-                            name="approval_status"
-                            autocomplete="approval_status"
-                            class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
-
-                    />
-                </div>
-            </div>
 
             <div>
                 <label
@@ -417,6 +393,26 @@
                 </div>
             </div>
             {% if context.section_head_rejection_reason != None %}
+
+                <div>
+                    <label
+                            for="quantity"
+                            class="block text-sm font-medium leading-6 text-gray-900"
+                    >Quantity</label
+                    >
+                    <div class="mt-2">
+                        <input
+                                readonly
+                                value="{{ context.quantity }}"
+                                id="quantity"
+                                name="quantity"
+                                autocomplete="quantity"
+                                class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+
+                        />
+                    </div>
+                </div>
+
             <div>
                 <label
                         for="section_head_rejection_reason"
@@ -513,6 +509,18 @@
                 </div>
             </div>
         {% endif %}
+
+            <div>
+                <label
+                        for="classification"
+                        class="block text-sm font-medium leading-6 text-gray-900"
+                >Classification</label>
+                <div class="mt-2">
+                    <input name="classification"  class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+                           required="required" readonly value="{{ context.classification }}"
+                    />
+                </div>
+            </div>
 
             <div>
                 <label
@@ -707,27 +715,56 @@
                     />
                 </div>
             </div>
-        {% endif %}
 
-            <div>
+
+        {% endif %}
+            {% if context.quantity > 1 %}
+
+                {% for item in quantity %}
+                    <div>
+                    <label
+                            for="asset_number"
+                            class="block text-sm font-medium leading-6 text-gray-900"
+                    >Asset Number {{ item|add:1 }}</label
+                    >
+                    <div class="mt-2">
+                                <textarea
+
+                                        id="asset_number"
+                                        required
+                                        name="asset_number[]"
+                                        type="text"
+                                        value="{{ context.asset_number}}"
+                                        autocomplete="asset_number"
+                                        class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                                >
+                                </textarea>
+                    </div>
+                {% endfor %}
+
+            {% else %}
+                <div>
                 <label
                         for="asset_number"
                         class="block text-sm font-medium leading-6 text-gray-900"
                 >Asset Number</label
                 >
                 <div class="mt-2">
-                    <input
-                            readonly
-                            value="{{ context.asset_number }}"
-                            id="asset_number"
-                            name="asset_number"
-                            autocomplete="asset_number"
-                            class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+                                <textarea
 
-                    />
+                                        id="asset_number"
+                                        required
+                                        name="asset_number[]"
+                                        type="text"
+                                        value="{{ context.asset_number}}"
+                                        autocomplete="asset_number"
+                                        class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                                >
+                                </textarea>
                 </div>
-            </div>
-{#            <div id="internal">#}
+            {% endif %}
+
+            {#            <div id="internal">#}
 {#                <div>#}
 {#                    <label#}
 {#                            for="capital_estimated"#}

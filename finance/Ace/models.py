@@ -79,13 +79,13 @@ class Ace(models.Model):
     fm_date_approved = models.DateField(null=True, blank=True)
     fm_date_rejected = models.DateField(null=True,blank=True)
 
-    general_manager = models.CharField(max_length=30, blank=True, null=True)
+    general_manager = models.CharField(max_length=70, blank=True, null=True)
     gm_approval_status = models.CharField(max_length=16, blank=True, null=True)
     gm_approved = models.CharField(max_length=26, blank=True, null=True)
-    gm_rejection_reason = models.CharField(max_length=200, blank=True, null=True)
+    gm_rejection_reason = models.CharField(max_length=400, blank=True, null=True)
     gm_approved_date = models.DateField(null=True, blank=True)
 
-    asset_number = models.CharField(max_length=26, blank=True, null=True)
+    asset_number = models.CharField(max_length=10000, blank=True, null=True)
     capital_estimated = models.FloatField( blank=True, null=True)
     capital_sanctioned = models.FloatField( blank=True, null=True)
     budget_id = models.ForeignKey(Budget, on_delete=models.CASCADE ,default=1)
@@ -101,8 +101,10 @@ class Ace(models.Model):
     labour = models.FloatField( blank=True, null=True)
     transport = models.FloatField( blank=True, null=True)
     total_connection_fee = models.FloatField( blank=True, null=True)
-    designation = models.CharField(null = True, max_length=70)
+    designation = models.CharField(null = True, max_length=700)
     approval_code = models.IntegerField(null=True,max_length=5)
+
+    quantity = models.IntegerField(null=True,max_length=20)
     # section_head = models.CharField(null = True, max_length=30)
     # accounting_officer = models.CharField(null = True, max_length=30)
     # finance_manager = models.CharField(null = True, max_length=30)
