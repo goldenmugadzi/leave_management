@@ -33,5 +33,10 @@ urlpatterns =[
     path('viewEngProcedureHome',views.viewEngProcedureHome, name='Eng_ProcedureHome'),
     path('viewCommercialProcedureHome',views.viewCommercialProcedureHome, name='Commercial_ProcedureHome'),
     path('viewFinanceProcedures',views.viewFinanceProcedures, name='FinanceProcedures'),
+    path('viewHRProcedures',views.viewHRProcedures, name='HR_Procedures'),
+    path('viewSRProcedures',views.viewSRProcedures, name='Stakeholder Relations'),
+    path('viewLegalProcedures',views.viewLegalProcedures, name='Legal Procedures'),
+    path('viewProcurementProcedures',views.viewProcurementProcedures, name='Procurement Procedures'),
+     path('viewICTProcedures',views.viewICTProcedures, name='ICT Procedures'),
     
 ]

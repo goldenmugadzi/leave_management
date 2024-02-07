@@ -225,3 +225,20 @@ def viewCommercialProcedureHome(request):
     
 def viewFinanceProcedures(request):
         return render(request, 'processes/procedures_workInstr/finance_procedures.html')
+
+def viewHRProcedures(request):
+        return render(request, 'processes/procedures_workInstr/hr_procedure.html')
+    
+def viewSRProcedures(request):
+    return render(request, 'processes/procedures_workInstr/stakeholderRelations.html')
+    
+def viewLegalProcedures(request):
+    return render(request, 'processes/procedures_workInstr/legal_procedures.html')
+
+   
+def viewProcurementProcedures(request):
+    return render(request, 'processes/procedures_workInstr/procurement_procedures.html')
+
+
+def viewICTProcedures(request):
+    return render(request, 'processes/procedures_workInstr/ict_procedures.html')
