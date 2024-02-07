@@ -1057,15 +1057,15 @@ def view_oms(request):
     return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "User Manuals OMS Files"} )
 
 
-def view_drawings(request):
+# def view_drawings(request):
     
-    files = KnowledgeCenter.objects.all()
+#     files = KnowledgeCenter.objects.all()
     
-    return render(request, 'knowledge-center/view_drawings.html', {"page_title": "STANDARDS, SPECIFICATIONS AND DRAWINGS"} )
+#     return render(request, 'knowledge-center/view_drawings.html', {"page_title": "STANDARDS, SPECIFICATIONS AND DRAWINGS"} )
 
 def view_drawing(request):
     
-    files = KnowledgeCenter.objects.filter(sub_category_2="Drawings")
+    files = KnowledgeCenter.objects.filter(file_type="Drawings")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -1075,7 +1075,7 @@ def view_drawing(request):
 
 def view_standards(request):
     
-    files = KnowledgeCenter.objects.filter(sub_category_2="Standards")
+    files = KnowledgeCenter.objects.filter(file_type="Standards")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -1085,7 +1085,7 @@ def view_standards(request):
 
 # def view_specifications(request):
     
-#     files = KnowledgeCenter.objects.filter(sub_category_2="Specifications")
+#     files = KnowledgeCenter.objects.filter(file_type="Specifications")
 
 #     print("files: ", files)
 #     new_dict = get_kc_dict(files)
