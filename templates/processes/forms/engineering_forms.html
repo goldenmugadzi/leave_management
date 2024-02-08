@@ -3,100 +3,322 @@
 
 {%block content%}
 
-<div style= "background-color: rgb(251 207 232);" class="flex justify-between items-center p-3">
+<div class=" flex justify-between items-center p-3">
    <h1 class="text-2xl text-black font-bold ">Engineering Forms</h1>
   
-   <div style= "	color: rgb(3 7 18);" class="text-md mr-4">(Clause 7.5)</div>
+   <div  class="text-lg mr-6">(Clause 7.5)</div>
  
  </div>
-
- <div class="grid grid-cols-3 gap-3">
-   <div class="mt-10"><button type="button"><a class="rounded-xl bg-red-300 py-4 px-2 m-3 col-span-3  " tabindex="-1"
-               href="{% static 'documents\FORMS\Engineering\E6  Inspection clearance certificate.pdf' %}">E6 Inspection clearance certificate</a></button></div>
+ 
+ <div class="grid grid-cols-3 gap-6 mt-4">
    
-   <div class="mt-10"><button type="button"><a class="rounded-xl bg-blue-300 py-4 px-2 m-3 col-span-3 " tabindex="-1"
-               href="{% static 'documents\FORMS\Engineering\E10 Controllers instruction.pdf' %}">E10 Controller`s instruction</a></button></div>
+   <a href="{% static 'documents\FORMS\Engineering\E6  Inspection clearance certificate.pdf' %}"><div
+     class=" bg-gulf-blue-300 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px  text-center text-xl font-bold"
+   >
 
-   <div class="mt-10"><button type="button"><a class="rounded-xl bg-yellow-300 py-4 px-2 m-3 col-span-3" tabindex="-1"
-            href="{% static  'documents\FORMS\Engineering\E18 Permit to work.pdf' %}">E18 Permit to work</a></button></div>
-
-   <div class="mt-10"><button type="button"><a class="rounded-xl bg-red-300 py-4 px-2 m-3 col-span-3  " tabindex="-1"
-         href="{% static 'documents\FORMS\Engineering\E21  E22  E25 Connections.pdf' %}">E21 E22 E25 Connections</a></button></div>
+             <div class="group relative">
+               <button type="button" style="width:18rem; height:6rem">
+                  <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                  <span class="ml-3">E6 Inspection clearance certificate</span></button>
+             </div>
          
-   <div class="mt-10"><button type="button"><a class="rounded-xl bg-blue-300 py-4 px-2 m-3 col-span-3 " tabindex="-1"
-            href="{% static 'documents\FORMS\Engineering\E44 Limitation of Access.pdf' %}">E44 Limitation of access</a></button></div>         
-            
-   <div class="mt-10"><button type="button"><a class="rounded-xl bg-yellow-300 py-4 px-2 m-3 col-span-3" tabindex="-1"
-               href="{% static  'documents\FORMS\Engineering\E60.1,2,3 Inspection and overlhaul of consumer sub.pdf' %}">E60.1.2.3 Inspection Overhaul</a></button></div>         
-            
+     </div></a>
+    
 
-   <div class="mt-10"><button type="button"><a class="rounded-xl bg-red-300 py-4 px-2 m-3 col-span-3  " tabindex="-1"
-      href="{% static 'documents\FORMS\Engineering\E84 11kV Line Inspection Report.pdf' %}">E84 11kV Line Inspection Report </a></button></div>
+     <a href="{% static 'documents\FORMS\Engineering\E10 Controllers instruction.pdf' %}"><div
+     class=" bg-citron-200 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px  text-center  text-xl font-bold"
+   >
+             <div class="group relative">
+               <button type="button" style="width:18rem; height:6rem">
+                  <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                  <span class="ml-3">E10 Controller`s instruction</span></button>
+             </div>
+       
+     </div></a>
+
+     <a  href="{% static  'documents\FORMS\Engineering\E18 Permit to work.pdf' %}"> <div
+     class="bg-green-300 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px  text-center text-xl font-bold"
+   >
+             <div class="group relative">
+               <button type="button" style="width:18rem; height:6rem">
+                  <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                  <span class="ml-3">E18 Permit to work</span></button>
+             </div>
       
-   <div class="mt-10"><button type="button"><a class="rounded-xl bg-blue-300 py-4 px-2 m-3 col-span-3 " tabindex="-1"
-         href="{% static 'documents\FORMS\Engineering\E86a Fault Report.pdf' %}">E86(a) Fault Report</a></button></div>         
-         
-   <div class="mt-10"><button type="button"><a class="rounded-xl bg-yellow-300 py-4 px-2 m-3 col-span-3" tabindex="-1"
-      href="{% static  'documents\FORMS\Engineering\E96A Sanction for Test.pdf' %}">E96A Sanction for Test </a></button></div>
+     </div></a>
+   
 
-   <div class="mt-10"><button type="button"><a class="rounded-xl bg-red-300 py-4 px-2 m-3 col-span-3  " tabindex="-1"
-            href="{% static 'documents\FORMS\Engineering\E98 Visitors live enclosure permit.pdf' %}">E98 Visitor`s Live Enclosure Permit</a></button></div>
+     <a href="{% static 'documents\FORMS\Engineering\E21  E22  E25 Connections.pdf' %}"><div
+     class="bg-gulf-blue-300 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px  text-center text-xl font-bold"
+   >
+             <div class="group relative">
+               <button type="button" style="width:18rem; height:6rem">
+                  <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                  <span class="ml-3">E21 E22 E25 Connections</span></button>
+             </div>
+          
+     </div></a>
+
+     <a href="{% static 'documents\FORMS\Engineering\E6  Inspection clearance certificate.pdf' %}"><div
+       class="bg-citron-200 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px  text-center text-xl font-bold"
+     >
+   
+               <div class="group relative">
+                 <button type="button" style="width:18rem; height:6rem">
+                  <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                  <span class="ml-3">E6 Limitation of access</span></button>
+               </div>
+         
+       </div> </a>
+
+       <a  href="{% static  'documents\FORMS\Engineering\60.1,2,3 Inspection and overlhaul of consumer sub.pdf' %}"><div
+         class="bg-green-300 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px  text-center text-xl font-bold"
+       >
+      
+                 <div class="group relative">
+                   <button type="button" style="width:18rem; height:6rem">
+                     <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                     <span class="ml-3">E60.1.2.3 Inspection Overhaul</span></button>
+                 </div>
+              
+         </div></a>
+
+         <a href="{% static 'documents\FORMS\Engineering\E84 11kV Line Inspection Report.pdf' %}"><div
+           class=" bg-gulf-blue-300 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px  text-center text-xl font-bold"
+         >
+          
+                   <div class="group relative">
+                     <button type="button" style="width:18rem; height:6rem">
+                        <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                        <span class="ml-3"> E84 11kV Line Inspection Report</span> </button>
+                   </div>
+                   
+         </div></a>
+         
+           <a href="{% static 'documents\FORMS\Engineering\E86a Fault Report.pdf' %}"><div
+            class=" bg-citron-200 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px  text-center text-xl font-bold"
+           >
+           
+                     <div class="group relative">
+                       <button type="button" style="width:18rem; height:6rem">
+                        <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                        <span class="ml-3">E86(a) Fault Report</span></button>
+                     </div>
             
-   <div class="mt-10"><button type="button"><a class="rounded-xl bg-blue-300 py-4 px-2 m-3 col-span-3 " tabindex="-1"
-               href="{% static 'documents\FORMS\Engineering\E117 Inspection Report.pdf' %}">E117 Inspection Report</a></button></div>         
+             </div> </a>
+      
+             <a href="{% static  'documents\FORMS\Engineering\E96A Sanction for Test.pdf' %}"> <div
+               class="bg-green-300 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px  text-center text-xl font-bold"
+             >
+         
+                       <div class="group relative">
+                         <button type="button" style="width:18rem; height:6rem">
+                           <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                           <span class="ml-3">E96A Sanction for Test</span></button>
+                       </div>
+                
+               </div></a>
+
+               <a  href="{% static 'documents\FORMS\Engineering\E98 Visitors live enclosure permit.pdf' %}"><div
+                 class="bg-gulf-blue-300 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px  text-center text-xl font-bold"
+               >
+                         <div class="group relative">
+                           <button type="button" style="width:18rem; height:6rem">
+                              <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                              <span class="ml-3">E98 Visitor`s Live Enclosure Permit</span></button>
+                         </div>
+                 </div></a>
+
+                 <a href="{% static 'documents\FORMS\Engineering\E117 Inspection Report.pdf' %}"><div
+                   class=" bg-citron-200 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px  text-center text-xl font-bold"
+                 >
+                           <div class="group relative">
+                             <button type="button" style="width:18rem; height:6rem">
+                              <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                              <span class="ml-3">E117 Inspection Report</span></button>
+                           </div>
+
+                   </div></a>
+
+                   <a href="{% static  'documents\FORMS\Engineering\Monthly load readings.pdf' %}"><div
+                     class="bg-green-300 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px  text-center text-xl font-bold"
+                   >
+                             <div class="group relative">
+                               <button type="button" style="width:18rem; height:6rem">
+                                 <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                                 <span class="ml-3"> Monthly Load Readings</span></button>
+                             </div>
+
+                     </div></a>
                
-   <div class="mt-10"><button type="button"><a class="rounded-xl bg-yellow-300 py-4 px-2 m-3 col-span-3" tabindex="-1"
-            href="{% static  'documents\FORMS\Engineering\Monthly load readings.pdf' %}">Monthly Load Readings</a></button></div>
+               <a  href="{% static 'documents\FORMS\Engineering\Pre task risk assessment.pdf' %}"><div
+                 class="bg-gulf-blue-300 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px  text-center text-xl font-bold"
+               >
+                         <div class="group relative">
+                           <button type="button" style="width:18rem; height:6rem">
+                              <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                              <span class="ml-3"> Pre-task Risk Assessment</span></button>
+                         </div>
+                 </div> </a> 
+      
+                 <a href="{% static 'documents\FORMS\Engineering\CHECKLIST FOR ELECTRICAL Substations.pdf' %}"><div
+                   class=" bg-citron-200 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px  text-center text-xl font-bold"
+                 >
+                           <div class="group relative">
+                             <button type="button" style="width:18rem; height:6rem">
+                              <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                              <span class="ml-3">Checklist for Electrical Substations</span></button>
+                           </div>
+                   </div></a>
+               
+                   <a href="{% static  'documents\FORMS\Engineering\Battery maintenance E121.pdf' %}"> <div 
+                     class="bg-green-300 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px  text-center text-xl font-bold"
+                   >
+                           <div class="group relative">
+                             <button type="button" style="width:18rem; height:6rem">
+                              <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                              <span class="ml-3">E121 Battery Maintanence</span></button>
+                           </div>
+                   </div></a>
 
-   <div class="mt-10"><button type="button"><a class="rounded-xl bg-red-300 py-4 px-2 m-3 col-span-3  " tabindex="-1"
-         href="{% static 'documents\FORMS\Engineering\Pre task risk assessment.pdf' %}">Pre-task Risk Assessment</a></button></div>
-         
-   <div class="mt-10"><button type="button"><a class="rounded-xl bg-blue-300 py-4 px-2 m-3 col-span-3 " tabindex="-1"
-            href="{% static 'documents\FORMS\Engineering\CHECKLIST FOR ELECTRICAL Substations.pdf' %}">Checklist for Electrical Substations</a></button></div>         
+                   <a  href="{% static 'documents\FORMS\Engineering\E50 Monthly load readings.pdf' %}"><div
+                     class=" bg-gulf-blue-300 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px  text-center text-xl font-bold"
+                   >
+                             <div class="group relative">
+                               <button type="button" style="width:18rem; height:6rem">
+                                 <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                                 <span class="ml-3"> E50 Monthly Load Readings</span></button>
+                             </div>
+                     </div> </a> 
+          
+                     <a href="{% static 'documents\FORMS\Engineering\connection application FORM E22.pdf' %}"> <div
+                       class="bg-citron-200 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px  text-center text-xl font-bold"
+                     >
+                        <div class="group relative">
+                           <button type="button" style="width:18rem; height:6rem">
+                                 <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                                 <span class="ml-3">E22 Connection Application Form</span></button>
+                           </div>
+                       </div></a>
+                   
+                       <a href="{% static  'documents\FORMS\Engineering\switching certificate form.pdf' %}"><div
+                         class="bg-green-300 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px  text-center text-xl font-bold"
+                       >
+                               <div class="group relative">
+                                 <button type="button" style="width:18rem; height:6rem">
+                                    <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                                    <span class="ml-3">Switching Certificate</span> </button>
+                               </div>
+                       </div></a>
+                
+                       <a href="{% static 'documents\FORMS\Engineering\Takeover papers-privates.pdf' %}"><div
+                     class=" bg-gulf-blue-300 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px  text-center text-xl font-bold"
+                   >
+                              <div class="group relative">
+                                <button type="button" style="width:18rem; height:6rem">
+                                 <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                                 <span class="ml-3">Takeover Papers-Privates</span></button>
+                              </div>
+                      </div>  </a>
+           
+                      <a  href="{% static 'documents\FORMS\Engineering\E16 Overhaul report.pdf' %}"><div
+                        class="bg-citron-200  shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px  text-center text-xl font-bold"
+                      >
+                                <div class="group relative">
+                                  <button type="button" style="width:18rem; height:6rem">
+                                    <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                                    <span class="ml-3">E16 Overhaul Report</span></button>
+                                </div>
+                        </div></a>
+                    
+                        <a href="{% static  'documents\FORMS\Engineering\E68_line_inspection_report.pdf' %}">
+                        <div
+                          class="bg-green-300 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px  text-center text-xl font-bold"
+                        >
+                                <div class="group relative">
+                                  <button type="button" style="width:18rem; height:6rem">
+                                    <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                                    <span class="ml-3">E68 Line Inspection Report</span></button>
+                                </div>
+                        </div> </a>
+
+                        <a href="{% static 'documents\FORMS\Engineering\E116_vote_completion_certificate.pdf' %}">
+                        <div
+                          class=" bg-gulf-blue-300  shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px  text-center text-xl font-bold"
+                        >
+                                   <div class="group relative">
+                                     <button type="button" style="width:18rem; height:6rem">
+                                       <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                                       <span class="ml-3"> E116 Vote Completion Certificate</span></button>
+                                   </div>
+                           </div></a>  
+                
+                           <a  href="{% static 'documents\FORMS\Engineering\ET3_vehicle_hiring_form.pdf' %}">
+                           <div
+                             class="bg-citron-200 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px  text-center text-xl font-bold"
+                           >
+                                     <div class="group relative">
+                                       <button type="button" style="width:18rem; height:6rem">
+                                          <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                                          <span class="ml-3">ET3 Vehicle Hiring Form</span></button>
+                                     </div>
+                             </div></a>
+                           
+                             <a href="{% static  'documents\FORMS\Engineering\Form E70.pdf' %}">
+                             <div
+                               class="bg-green-300 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px  text-center text-xl font-bold"
+                             >
+                                     <div class="group relative">
+                                       <button type="button" style="width:18rem; height:6rem">
+                                          <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                                          <span class="ml-3">E70 ACE</span></button>
+                                     </div>
+                             </div>  </a>                    
+     
+                             <a href="{% static 'documents\FORMS\Engineering\Form E70.pdf' %}">
+                             <div
+                          class="bg-gulf-blue-300  shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px  text-center text-xl font-bold"
+                        >
+                                   <div class="group relative">
+                                     <button type="button" style="width:18rem; height:6rem">
+                                       <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                                       <span class="ml-3"> Vehicle Checklist</span></button>
+                                   </div>
+                           </div>  </a>
+                
+                           <a  href="{% static 'documents\FORMS\Engineering\ZESA PUBLIC LIABILITY CLAIM FORM.pdf' %}">
+                           <div
+                           
+                             class="bg-citron-200 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px  text-center text-xl font-bold"
+                           >
+                                     <div class="group relative">
+                                       <button type="button" style="width:18rem; height:6rem">
+                                          <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                                          <span class="ml-3">Zesa Public Liability Claim Form</span></button>
+                                     </div>
+                             </div></a>
+                         
+                             <a href="{% static  '' %}"><div
+                            
+                               class="bg-green-300 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px  text-center text-xl font-bold"
+                             >
+                                     <div class="group relative">
+                                       <button type="button" style="width:18rem; height:6rem">
+                                          <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                                          <span class="ml-3">E116</span></button>
+                                     </div>
+                             </div></a>    
+
+</div>       
             
-   <div class="mt-10"><button type="button"><a class="rounded-xl bg-yellow-300 py-4 px-2 m-3 col-span-3" tabindex="-1"
-         href="{% static  'documents\FORMS\Engineering\Battery maintenance E121.pdf' %}">E121 Battery Maintanence  </a></button></div>  
+<div style="display: flex;justify-content: start;" class="mt-6">
+    <a href="javascript:history.back()">
+        <button style="width: 6rem;height: 3rem;background-color: #020617;margin-right: 20px"
+            class=" w-28 bg-blue-800 hover:bg-blue-900 outline-none focus:outline-none border  rounded-xl flex items-center">
+            <span class="pr-1 font-bold flex-1 text-blue-50">Back</span>
 
-   <div class="mt-10"><button type="button"><a class="rounded-xl bg-red-300 py-4 px-2 m-3 col-span-3  " tabindex="-1"
-      href="{% static 'documents\FORMS\Engineering\E50 Monthly load readings.pdf' %}">E50 Monthly Load Readings</a></button></div>
-      
-   <div class="mt-10"><button type="button"><a class="rounded-xl bg-blue-300 py-4 px-2 m-3 col-span-3 " tabindex="-1"
-         href="{% static 'documents\FORMS\Engineering\connection application FORM E22.pdf' %}">Connection Application Form E22</a></button></div>         
-         
-   <div class="mt-10"><button type="button"><a class="rounded-xl bg-yellow-300 py-4 px-2 m-3 col-span-3" tabindex="-1"
-      href="{% static  'documents\FORMS\Engineering\switching certificate form.pdf' %}">Switching Certificate </a></button></div>
-
-   <div class="mt-10"><button type="button"><a class="rounded-xl bg-red-300 py-4 px-2 m-3 col-span-3  " tabindex="-1"
-   href="{% static 'documents\FORMS\Engineering\Takeover papers-privates.pdf' %}">Takeover Papers-Privates</a></button></div>
-   
-   <div class="mt-10"><button type="button"><a class="rounded-xl bg-blue-300 py-4 px-2 m-3 col-span-3 " tabindex="-1"
-      href="{% static 'documents\FORMS\Engineering\E16 Overhaul report.pdf' %}">E16 Overhaul Report</a></button></div>         
-      
-   <div class="mt-10"><button type="button"><a class="rounded-xl bg-yellow-300 py-4 px-2 m-3 col-span-3" tabindex="-1"
-   href="{% static  'documents\FORMS\Engineering\E48_line_inspection_report.pdf' %}">E48 Line Inspection Report</a></button></div>
-
-<div class="mt-10"><button type="button"><a class="rounded-xl bg-red-300 py-4 px-2 m-3 col-span-3  " tabindex="-1"
-   href="{% static 'documents\FORMS\Engineering\E116_vote_completion_certificate.pdf' %}">E116 Vote Completion Certificate</a></button></div>
-   
-<div class="mt-10"><button type="button"><a class="rounded-xl bg-blue-300 py-4 px-2 m-3 col-span-3 " tabindex="-1"
-      href="{% static 'documents\FORMS\Engineering\ET3_vehicle_hiring_form.pdf' %}">ET3 Vehicle Hiring Form</a></button></div>         
-      
-<div class="mt-10"><button type="button"><a class="rounded-xl bg-yellow-300 py-4 px-2 m-3 col-span-3" tabindex="-1"
-      href="{% static  'documents\FORMS\Engineering\Form E70.pdf' %}">E70 ACE</a></button></div>
-         
-   <div class="mt-10"><button type="button"><a class="rounded-xl bg-red-300 py-4 px-2 m-3 col-span-3  " tabindex="-1"
-         href="{% static 'documents\FORMS\Engineering\Form E70.pdf' %}">Vehicle Checklist</a></button></div>
-
-   <div class="mt-10"><button type="button"><a class="rounded-xl bg-blue-300 py-4 px-2 m-3 col-span-3 " tabindex="-1"
-            href="{% static 'documents\FORMS\Engineering\ZESA PUBLIC LIABILITY CLAIM FORM.pdf' %}">Zesa Public Liability Claim Form</a></button></div>         
-            
-   <div class="mt-10"><button type="button"><a class="rounded-xl bg-yellow-300 py-4 px-2 m-3 col-span-3" tabindex="-1"
-      href="{% static  '' %}">E114</a></button></div>
-   
-   </div>
-         <div class="bottom-0 left-0 right-0 mt-20 w-40 flex justify-left">
-            <a href="{%url 'Forms Index'%}"><button class="bg-black text-white font-bold px-4 py-2 rounded-full">Back</button></a>
-          </div>
+        </button> </a>
+</div>
 
         
 {%endblock %}

@@ -2,69 +2,202 @@
 {%load static%}
 
 {%block content%}
-<div style= "background-color: rgb(251 207 232);)" class="flex justify-between items-center p-3">
+<div class="flex justify-between items-center p-3">
       <h1 class="text-2xl text-black font-bold ">Planning Processes</h1>
 
-      <div class="text-black mr-4">(Clause 4.4)</div>
-    
-    </div>
-<div class="grid grid-cols-3 gap-4">
-
-      <div class="mt-10"><button type="button"><a class="rounded-xl bg-green-300 py-4 px-2 m-3 " tabindex="-1"
-                        href="{% static 'documents\Engineering\planning\Distribution losses analysis.pdf' %}">Distribution
-                        losses analysis</a></button>
+      <div class="text-md mr-4 text-2xl font-semibold">(Clause 4.2)
       </div>
-      <div class="mt-10"><button type="button"><a class="rounded-xl bg-blue-300 py-4 px-2 m-3 " tabindex="-1"
-                        href="{% static 'documents\Engineering\planning\DRAWING OFFICE  DRAUGHTING PROCESS.pdf' %}">Draughting
-                        process</a></button></div>
-      <div class="mt-10"><button type="button"><a class="rounded-xl bg-gray-300 py-4 px-2 m-3 " tabindex="-1"
-                        href="{% static 'documents\Engineering\planning\DRAWING OFFICE  WAYLEAVES PROCESSING PROCESS.pdf' %}">Wayleave
-                        processing</a></button>
-      </div>
-      <div class="mt-10"> <button type="button"><a class="rounded-xl bg-green-300 py-4 px-2 m-3" tabindex="-1"
-                        href="{% static 'documents\Engineering\planning\DRAWING OFFICE BUILDING PLANS PROCESSING.pdf' %}">Building
-                        plans processing</a></button> </div>
+</div>
 
-      <div class="mt-10"><button type="button"><a class="rounded-xl bg-blue-300 py-4 px-2 m-3 " tabindex="-1"
-                        href="{% static 'documents\Engineering\planning\DRAWING OFFICE MAINS CLEARANCE ISSUING PROCESS.pdf' %}">Mains
-                        clearance issuing</a></button></div>
-      <div class="mt-10"><button type="button"><a class="rounded-xl bg-gray-300 py-4 px-2 m-3 " tabindex="-1"
-                        href="{% static 'documents\Engineering\planning\DRAWING OFFICE SUBDIVISIONS PROCESSING PROCESS.pdf' %}">Subdivisions
-                        processing</a></button>
-      </div>
+<div class="grid grid-cols-3 gap-6 mt-4">
+      <a href="{% static 'documents\Engineering\planning\Distribution losses analysis.pdf' %}">
+            <div
+                  class=" bg-gulf-blue-300 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold">
+                  <div class="group relative">
+                        <button type="button" style="width:18rem; height:6rem">
+                              <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                              <span class="ml-3 text-2xl"> Distribution Losses Analysis</span></button>
+                  </div>
+            </div>
+      </a>
 
-      <div class="mt-10"> <button type="button"><a class="rounded-xl bg-green-300 py-4 px-2 m-3" tabindex="-1"
-                        href="{% static 'documents\Engineering\planning\Fault Analysis Process.pdf' %}">Fault
-                        analysis</a></button> </div>
+      <a href="{% static 'documents\Engineering\planning\Change process.pdf' %}">
+            <div
+                  class="bg-citron-200 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold">
+                  <div class="group relative">
+                        <button type="button" style="width:18rem; height:6rem">
+                              <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                              <span class="ml-3 text-2xl"> Change process</span></button>
+                  </div>
+            </div>
+      </a>
 
-      <div class="mt-10"><button type="button"><a class="rounded-xl bg-blue-300 py-4 px-2 m-3 " tabindex="-1"
-                        href="{% static 'documents\Engineering\planning\GIS asset construction process.pdf' %}">GIS
-                        asset construction</a></button></div>
-      <div class="mt-10"><button type="button"><a class="rounded-xl bg-gray-300 py-4 px-2 m-3 " tabindex="-1"
-                        href="{% static 'documents\Engineering\planning\Grid Impact Assessment for connection of Independent Power Producers-signed.pdf' %}">Grid
-                        Impact Assessment</a></button>
-      </div>
-      <div class="mt-10"> <button type="button"><a class="rounded-xl bg-green-300 py-4 px-2 m-3" tabindex="-1"
-                        href="{% static 'documents\Engineering\planning\Monthly Engineering Report Consolidation Process.pdf' %}">Engineering
-                        Report Consolidation</a></button> </div>
+      <a href="{% static  'documents\Engineering\planning\DRAWING OFFICE  DRAUGHTING PROCESS.pdf' %}">
+            <div
+                  class="bg-green-300 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold">
+                  <div class="group relative">
+                        <button type="button" style="width:18rem; height:6rem">
+                              <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                              <span class="ml-3 text-2xl"> Draughting process</span></button>
+                  </div>
+            </div>
+      </a>
 
-      <div class="mt-10"><button type="button"><a class="rounded-xl bg-blue-300 py-4 px-2 m-3 " tabindex="-1"
-                        href="{% static 'documents\Engineering\planning\New Development Reticulation Design Process-signed.pdf' %}">Reticulation
-                        Design</a></button></div>
+      <a href="{% static 'documents\Engineering\planning\DRAWING OFFICE  WAYLEAVES PROCESSING PROCESS.pdf' %}">
+            <div
+                  class=" bg-gulf-blue-300 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold">
+                  <div class="group relative">
+                        <button type="button" style="width:18rem; height:6rem">
+                              <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                              <span class="ml-3 text-2xl"> Wayleave processing</span></button>
+                  </div>
+            </div>
+      </a>
 
-      <div class="mt-10"><button type="button"><a class="rounded-xl bg-gray-300 py-4 px-2 m-3 " tabindex="-1"
-                        href="{% static 'documents\Engineering\planning\PSIP Budgeting Process.pdf' %}">PSIP
-                        Budgeting</a></button></div>
+      <a href="{% static 'documents\Engineering\planning\DRAWING OFFICE BUILDING PLANS PROCESSING.pdf' %}">
+            <div
+                  class="bg-citron-200 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold">
+                  <div class="group relative">
+                        <button type="button" style="width:18rem; height:6rem">
+                              <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                              <span class="ml-3 text-2xl"> Building plans</span></button>
+                  </div>
+            </div>
+      </a>
 
+      <a href="{% static  'documents\Engineering\planning\DRAWING OFFICE MAINS CLEARANCE ISSUING PROCESS.pdf' %}">
+            <div
+                  class="bg-green-300 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold">
+                  <div class="group relative">
+                        <button type="button" style="width:18rem; height:6rem">
+                              <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                              <span class="ml-3 text-2xl"> Mains clearance issuing</span></button>
+                  </div>
+            </div>
+      </a>
+
+      <a href="{% static  'documents\Engineering\planning\DRAWING OFFICE SUBDIVISIONS PROCESSING PROCESS.pdf' %}">
+            <div
+                  class=" bg-gulf-blue-300 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold">
+                  <div class="group relative">
+                        <button type="button" style="width:18rem; height:6rem">
+                              <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                              <span class="ml-3 text-2xl"> Subdivisions processing</span></button>
+                  </div>
+            </div>
+      </a>
+
+      <a href="{% static 'documents\Engineering\planning\Fault Analysis Process.pdf' %}">
+            <div
+                  class="bg-citron-200 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold">
+                  <div class="group relative">
+                        <button type="button" style="width:18rem; height:6rem">
+                              <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                              <span class="ml-3 text-2xl"> Fault analysis</span></button>
+                  </div>
+            </div>
+      </a>
+
+      <a href="{% static 'documents\Engineering\planning\GIS asset construction process.pdf' %}">
+            <div
+                  class="bg-green-300 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold">
+                  <div class="group relative">
+                        <button type="button" style="width:18rem; height:6rem">
+                              <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                              <span class="ml-3 text-2xl"> GIS asset construction</span></button>
+                  </div>
+            </div>
+      </a>
+
+      <a
+            href="{% static 'documents\Engineering\planning\Grid Impact Assessment for connection of Independent Power Producers-signed.pdf' %}">
+            <div
+                  class=" bg-gulf-blue-300 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold">
+                  <div class="group relative">
+                        <button type="button" style="width:18rem; height:6rem">
+                              <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                              <span class="ml-3 text-2xl"> Grid Impact Assessment</span></button>
+                  </div>
+
+            </div>
+      </a>
+
+      <a href="{% static 'documents\Engineering\planning\Monthly Engineering Report Consolidation Process.pdf' %}">
+            <div
+                  class="bg-citron-200 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold">
+                  <div class="group relative">
+                        <button type="button" style="width:18rem; height:6rem">
+                              <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                              <span class="ml-3 text-2xl"> Engineering Report Consolidation</span></button>
+                  </div>
+
+            </div>
+      </a>
+
+
+
+      <a href="{% static 'documents\Engineering\planning\New Development Reticulation Design Process-signed.pdf' %}">
+            <div
+                  class="bg-green-300 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold">
+                  <div class="group relative">
+                        <button type="button" style="width:18rem; height:6rem">
+                              <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                              <span class="ml-3 text-2xl">New Development Reticulation</span></button>
+                  </div>
+            </div>
+      </a>
+
+      <a
+            href="{% static 'documents\Engineering\planning\Newpoint of supply and uprates quotation process-signed.pdf' %}">
+            <div
+                  class=" bg-gulf-blue-300 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold">
+                  <div class="group relative">
+                        <button type="button" style="width:18rem; height:6rem">
+                              <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                              <span class="ml-3 text-2xl"> Newpoint of supply and uprates</span></button>
+                  </div>
+
+            </div>
+      </a>
+
+      <a href="{% static 'documents\Engineering\planning\PSIP Budgeting Process.pdf' %}">
+            <div
+                  class="bg-citron-200 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold">
+                  <div class="group relative">
+                        <button type="button" style="width:18rem; height:6rem">
+                              <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                              <span class="ml-3 text-2xl"> PSIP Budgeting</span></button>
+                  </div>
+
+            </div>
+      </a>
+
+
+      <a href="{% static 'documents\Engineering\planning\System development planning process.pdf' %}">
+            <div
+                  class="bg-green-300 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold">
+                  <div class="group relative">
+                        <button type="button" style="width:18rem; height:6rem">
+                              <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                              <span class="ml-3 text-2xl">System development planning </span></button>
+                  </div>
+            </div>
+      </a>
 
 </div>
-      <div class="mt-20"><button type="button"><a class="rounded-xl bg-green-300 py-4 px-2 m-3 " tabindex="-1"
-                        href="{% static 'documents\Engineering\planning\Newpoint of supply and uprates quotation process-signed.pdf' %}">Newpoint
-                        of supply and uprates quotation</a></button>
-      </div>
+
+<div style="display: flex;justify-content: start;" class="mt-6">
+      <a href="javascript:history.back()">
+            <button style="width: 6rem;height: 3rem;background-color: #020617;margin-right: 20px"
+                  class=" w-28 bg-blue-800 hover:bg-blue-900 outline-none focus:outline-none border px-3 py-1 rounded-xl flex items-center">
+                  <span class="pr-1 font-bold flex-1 text-blue-50">Back</span>
+
+                  </span></button> </a>
+
+</div>
 
 
-      <div class="bottom-0 left-0 right-0 mt-20 w-40 flex justify-left">
-            <a href="{%url 'Engineeringlist-processes'%}"><button class="bg-black text-white font-bold px-4 py-2 rounded-full">Back</button></a>
-          </div>
-      {%endblock %}
+
+
+
+{%endblock %}

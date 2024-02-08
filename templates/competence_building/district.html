@@ -1,0 +1,112 @@
+{% extends 'admin_layout.html' %}
+{%load static%}
+{% block styles %}
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/canvg/1.5/canvg.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.2/html2pdf.bundle.js"></script>
+<script type="text/javascript">
+  
+  google.charts.load('current', {packages:["orgchart"]});
+  google.charts.setOnLoadCallback(drawChart);
+
+  function drawChart() {
+    var data = new google.visualization.DataTable();
+    data.addColumn('string', 'Name');
+    data.addColumn('string', 'Manager');
+    data.addColumn('string', 'ToolTip');
+
+    // For each orgchart box, provide the name, manager, and tooltip to show.
+    data.addRows([
+
+
+
+    [{'v':'DM', 'f':'<div style="color:black; font-style:bold">DISTRICT MANAGER</div>'},
+    '', 'District'],
+    [{'v':'S', 'f':'<div style="color:black; font-style:bold">SECRETARY</div>'},
+    'DM', 'District'],
+    
+    [{'v':'SE', 'f':'<div style="color:black; font-style:bold">SENIOR ENGINEER</div>'},
+    'DM', 'District'],
+    [{'v':'SCSO', 'f':'<div style="color:black; font-style:bold">SENIOR CUSTOMER SERVICE OFFICER</div>'},
+    'DM', 'District'],
+    [{'v':'CO', 'f':'<div style="color:black; font-style:bold">COMMERCIAL OFFICER</div>'},
+    'SE', 'District'],
+    [{'v':'CC', 'f':'<div style="color:black; font-style:bold">COMMERCIAL CLERK</div>'},
+    'CO', 'District'],
+    [{'v':'SE', 'f':'<div style="color:black; font-style:bold">SALES EXECUTIVE</div>'},
+    'DM', 'District'],
+    [{'v':'PO', 'f':'<div style="color:black; font-style:bold">PERSONEL OFFICER</div>'},
+    'DM', 'District'],
+    [{'v':'PC', 'f':'<div style="color:black; font-style:bold">PERSONEL CLERK</div>'},
+    'PO', 'District'],
+    [{'v':'MSG', 'f':'<div style="color:black; font-style:bold">MESSANGER/ CLEANER</div>'},
+    'PO', 'District'],
+    [{'v':'LA', 'f':'<div style="color:black; font-style:bold">LEAD ARTISAN</div>'},
+    'SCSO', 'District'],
+    [{'v':'AA', 'f':'<div style="color:black; font-style:bold">ASSISTANT ARTISAN</div>'},
+    'LA', 'District'],
+    [{'v':'AR', 'f':'<div style="color:black; font-style:bold"> ARTISAN x 13</div>'},
+    'SCSO', 'District'],
+    [{'v':'AR', 'f':'<div style="color:black; font-style:bold">ASSISTANT ARTISAN</div>'},
+    'SCSO', 'District'],
+    [{'v':'AL', 'f':'<div style="color:black; font-style:bold"> ARTISAN (LINE)</div>'},
+    'SCSO', 'District'],
+    [{'v':'AAL', 'f':'<div style="color:black; font-style:bold">ASSISTANT ARTISAN (LINE)</div>'},
+    'AL', 'District'],
+    [{'v':'LW', 'f':'<div style="color:black; font-style:bold">LINE WORKER</div>'},
+    'AL', 'District'],
+    [{'v':'CS', 'f':'<div style="color:black; font-style:bold">COMMERCIAL SUPERVISOR</div>'},
+    'SCSO', 'District'],
+    [{'v':'RAA', 'f':'<div style="color:black; font-style:bold">REVENUE ASSURANCE ASSISTANT</div>'},
+    'CS', 'District'],
+    [{'v':'CLA', 'f':'<div style="color:black; font-style:bold">CUSTOMER LIASON ATTENDANT</div>'},
+    'CS', 'District'],
+    [{'v':'C', 'f':'<div style="color:black; font-style:bold">CASHIER</div>'},
+    'CS', 'District'],
+    [{'v':'DC', 'f':'<div style="color:black; font-style:bold">DEPOT CLERK</div>'},
+    'SCSO', 'District'],
+  
+
+ ]);
+
+    // Create the chart.
+    var chart = new google.visualization.OrgChart(document.getElementById('chart_div'));
+    // Draw the chart, setting the allowHtml option to true for the tooltips.
+    chart.draw(data, {'allowHtml':true});
+
+    document.getElementById('download_button').addEventListener('click', function() {
+      var chartContainer = document.getElementById('chart_div');
+      var chartImage = chartContainer.getElementsByTagName('table')[0].outerHTML;
+
+      // Create a temporary canvas element to draw the chart as an image
+      var canvas = document.createElement('canvas');
+      canvas.width = chartContainer.offsetWidth;
+      canvas.height = chartContainer.offsetHeight;
+      var ctx = canvas.getContext('2d');
+      ctx.drawSvg(chartImage, 0, 0, canvas.width, canvas.height);
+
+      // Convert canvas to PDF using html2pdf library
+      var canvasDataUrl = canvas.toDataURL('image/png');
+      var pdfOptions = {
+          filename: 'District_Chart.pdf',
+          image: { type: 'png', data: canvasDataUrl },
+          html2canvas: { scale: 2 },
+  jsPDF: { format: 'a4', orientation: 'landscape' } // Adjust page size here
+
+      };
+      html2pdf().set(pdfOptions).from(chartContainer).save();
+
+  })
+
+}
+</script>
+
+{% endblock %}
+{%block content%}
+
+<div>
+  <a href="#" id="download_button" style="text-color:blue"  class="download-button">Download Chart</a>
+  <div id="chart_div" class="py-10 px-5"></div>
+</div>
+
+{%endblock%}

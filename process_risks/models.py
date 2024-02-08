@@ -13,6 +13,7 @@ class RiskFiles(models.Model):
     cat       = models.ForeignKey(Departments, on_delete = models.CASCADE)
     file      = models.FileField(null=True)
     filepath = models.CharField(max_length=400)
+    
 
     def __str__(self):
         return self.file_name

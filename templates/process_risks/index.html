@@ -2,88 +2,103 @@
 {%load static%}
 
 {%block content%}
-<div style="margin-bottom: 25px;" class="content-wrapper flex flex-wrap p-2 m-px">
-    <a href="{%url 'commercial'%}">
-        <button style="width: 16rem;height: 10rem;margin-right: 20px;margin-bottom: 25px"
-            class=" w-28 bg-green-400 hover:bg-blue-200 outline-none focus:outline-none border px-3 py-1 rounded flex items-center">
-            <span class="pr-1 font-bold flex-1 text-blue-50 text-2xl">Commercial</span>
 
-        </button>
-    </a>
+<div class="flex justify-between items-center p-3">
+    <h1 class="text-2xl text-black font-bold ">Process Risks and Opportunities</h1>
+
+
+    <div style="	color: rgb(3 7 18);" class=" text-md mr-4">CLAUSE 6.1</div>
+
+</div>
+<div class="grid grid-cols-3 gap-6 mt-4">
     <a href="{%url 'engineering'%}">
-        <button style="width: 16rem;height: 10rem;margin-right: 20px;"
-            class=" w-28 bg-blue-500 hover:bg-blue-200 outline-none focus:outline-none border px-3 py-1 rounded flex items-center">
-            <span class="pr-1 font-bold flex-1 text-blue-50 text-2xl">Engineering</span>
-
-        </button>
+        <div
+            class=" bg-gulf-blue-300 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-2xl font-bold">
+            <div class="group relative">
+                <button type="button" style="width:18rem; height:6rem">
+                    <span class="ml-3">Engineering</span></button>
+            </div>
+        </div>
     </a>
+
+    <a href="{%url 'commercial'%}">
+        <div
+            class="bg-citron-200 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-2xl font-bold">
+            <div class="group relative">
+                <button type="button" style="width:18rem; height:6rem">
+                    <span> Commercial</span></button>
+            </div>
+        </div>
+    </a>
+
     <a href="{%url 'finance'%}">
-        <button style="width: 16rem;height: 10rem;margin-right: 20px;"
-            class=" w-28 bg-gray-700 hover:bg-blue-200 outline-none focus:outline-none border px-3 py-1 rounded flex items-center">
-            <span class="pr-1 font-bold flex-1 text-blue-50 text-2xl">Finance</span>
-
-        </button>
-    </a>
-    <a href="{%url 'procurement'%}">
-        <button style="width: 16rem;height: 10rem;margin-right: 20px;margin-bottom: 25px"
-            class=" w-28 bg-green-400 hover:bg-blue-200 outline-none focus:outline-none border px-3 py-1 rounded flex items-center">
-            <span class="pr-1 font-bold flex-1 text-blue-50 text-2xl">Procurement</span>
-
-        </button>
+        <div class="bg-green-300 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-2xl font-bold">
+            <div class="group relative">
+                <button type="button" style="width:18rem; height:6rem">
+                    <span> Finance</span></button>
+            </div>
+        </div>
     </a>
 
     <a href="{%url 'hr'%}">
-        <button style="width: 16rem;height: 10rem;margin-right: 20px;margin-bottom: 25px"
-            class=" w-28 bg-blue-500 hover:bg-blue-200 outline-none focus:outline-none border px-3 py-1 rounded flex items-center">
-            <span class="pr-1 font-bold flex-1 text-blue-50 text-2xl">Human Resources</span>
+        <div
+            class="bg-gulf-blue-300 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-2xl font-bold">
+            <div class="group relative">
+                <button type="button" style="width:18rem; height:6rem">
+                    <span>Human Resources</span></button>
+            </div>
+        </div>
+    </a>
 
-        </button>
+
+    <a href="{%url 'ict'%}">
+        <div
+            class=" bg-citron-200  shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-2xl font-bold">
+            <div class="group relative">
+                <button type="button" style="width:18rem; height:6rem">
+                    <span class="ml-3">Information Communication Technology</span></button>
+            </div>
+        </div>
     </a>
 
     <a href="{%url 'risk'%}">
-        <button style="width: 16rem;height: 10rem;margin-right: 20px;margin-bottom: 25px"
-            class=" w-28 bg-gray-700 hover:bg-blue-200 outline-none focus:outline-none border px-3 py-1 rounded flex items-center">
-            <span class="pr-1 font-bold flex-1 text-blue-50 text-2xl">Risk Management</span>
-
-        </button>
-    </a>
-
-    <a href="{%url 'ict'%}">
-        <button style="width: 16rem;height: 10rem;margin-right: 20px;margin-bottom: 25px"
-            class=" w-28 bg-green-400 hover:bg-blue-200 outline-none focus:outline-none border px-3 py-1 rounded flex items-center">
-            <span class="pr-1 font-bold flex-1 text-blue-50 text-2xl">Information Communication Technology</span>
-
-        </button>
+        <div
+            class="bg-green-300 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-2xl font-bold">
+            <div class="group relative">
+                <button type="button" style="width:18rem; height:6rem">
+                    <span> Risk Management</span></button>
+            </div>
+        </div>
     </a>
 
     <a href="#">
-        <button style="width: 16rem;height: 10rem;margin-right: 20px;margin-bottom: 25px"
-            class=" w-28 bg-blue-500 hover:bg-blue-200 outline-none focus:outline-none border px-3 py-1 rounded flex items-center">
-            <span class="pr-1 font-bold flex-1 text-blue-50 text-2xl">Legal Services</span>
-
-        </button>
+        <div class="bg-gulf-blue-300 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-2xl font-bold">
+            <div class="group relative">
+                <button type="button" style="width:18rem; height:6rem">
+                    <span> Legal Services</span></button>
+            </div>
+        </div>
     </a>
 
     <a href="#">
-        <button style="width: 16rem;height: 10rem;margin-right: 20px;margin-bottom: 25px"
-            class=" w-28 bg-gray-700 hover:bg-blue-200 outline-none focus:outline-none border px-3 py-1 rounded flex items-center">
-            <span class="pr-1 font-bold flex-1 text-blue-50 text-2xl">Stakeholder Relations</span>
-
-        </button>
+        <div
+            class="bg-citron-200  shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-2xl font-bold">
+            <div class="group relative">
+                <button type="button" style="width:18rem; height:6rem">
+                    <span>Stakeholder Relations</span></button>
+            </div>
+        </div>
     </a>
+
 </div>
-<div style="display: flex;justify-content: start;">
+
+
+<div style="display: flex;justify-content: start;" class="mt-6">
     <a href="javascript:history.back()">
         <button style="width: 6rem;height: 3rem;background-color: #020617;margin-right: 20px"
             class=" w-28 bg-blue-800 hover:bg-blue-900 outline-none focus:outline-none border px-3 py-1 rounded-xl flex items-center">
             <span class="pr-1 font-bold flex-1 text-blue-50">Back</span>
 
-        </button> </a>
+            </span></button> </a>
 </div>
-
-
-
-
-
-
 {%endblock%}
