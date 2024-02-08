@@ -30,51 +30,6 @@
   </head>
 
   <body class="bg-gulf-blue-50">
-    {% comment %} <div
-      x-data="{ showNewsFlash: false }"
-      style="position: fixed; width: 100%"
-      class="z-30"
-    >
-      <div class="p-4 bg-gulf-blue-100" x-show="showNewsFlash">
-        <nav>
-          <div class="mx-auto px-2 sm:px-6 md:px-2 lg:px-2 xl:px-2">
-            <div class="w-full flex h-8 items-center justify-between">
-              <div class="flex w-full items-center sm:items-stretch">
-                <div id="scrolling-container" class="flex w-full items-center">
-                  <div
-                    id="scrolling-news-text"
-                    class="text-right text-lg whitespace-nowrap text-gulf-blue-950 px-3 py-2 font-medium"
-                  >
-                    ZETDC NEWS FLASH
-                  </div>
-                </div>
-
-                <div
-                  class="absolute hide inset-y-0 right-0 flex items-center pr-2 sm:static sm:inset-auto sm:ml-6 sm:pr-0"
-                >
-                  <svg
-                    @click="showNewsFlash = !showNewsFlash"
-                    role="button"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke-width="1.5"
-                    stroke="currentColor"
-                    class="w-6 h-6"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      d="M6 18 18 6M6 6l12 12"
-                    />
-                  </svg>
-                </div>
-              </div>
-            </div>
-          </div>
-        </nav>
-      </div>
-    </div> {% endcomment %}
     <main style="display: flex" class="flex justify-between p-4">
       <aside
         id="sidebar"
@@ -83,7 +38,6 @@
           position: fixed;
           top: 0;
           left: 0;
-          width: 16rem;
           height: 100vh;
           padding-bottom: 3rem;
         "
@@ -117,69 +71,71 @@
               style="display: flex; flex-direction: column"
               class="text-gulf-blue-50 w-full mt-3 border-t border-gulf-blue-700"
             >
-            <a
-              id="menu-item"
-              class="flex items-center w-full h-12 px-3 mt-2 rounded hover:bg-gulf-blue-500 hover:shadow-lg"
-              href="{% url 'dashboard_index' %}"
-            >
-              <svg
-                class="w-6 h-6 stroke-current"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
+              <a
+                id="menu-item"
+                class="flex items-center w-full h-12 px-3 mt-2 rounded hover:bg-gulf-blue-500 hover:shadow-lg"
+                href="{% url 'dashboard_index' %}"
               >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
-                />
-              </svg>
-              <span class="ml-2 text-sm font-medium">Home</span>
-            </a>
-            <a
-              id="menu-item"
-              class="flex items-center w-full h-12 px-3 mt-2 rounded hover:bg-gulf-blue-500 hover:shadow-lg"
-              href="/business-applications"
-            >
-              <svg
-                class="w-6 h-6 stroke-current"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
+                <svg
+                  class="w-6 h-6 stroke-current"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+                  />
+                </svg>
+                <span class="ml-2 text-sm font-medium">Home</span>
+              </a>
+              <a
+                id="menu-item"
+                class="flex items-center w-full h-12 px-3 mt-2 rounded hover:bg-gulf-blue-500 hover:shadow-lg"
+                href="/business-applications"
               >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"
-                />
-              </svg>
-              <span class="ml-2 text-sm font-medium">Business Applications</span>
-            </a>
-            <a
-              id="menu-item"
-              class="flex items-center w-full h-12 px-3 mt-2 rounded hover:bg-gulf-blue-500 hover:shadow-lg"
-              href="/knowledge-center/view_firstview"
-            >
-              <svg
-                class="w-6 h-6 stroke-current"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
+                <svg
+                  class="w-6 h-6 stroke-current"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"
+                  />
+                </svg>
+                <span class="ml-2 text-sm font-medium"
+                  >Business Applications</span
+                >
+              </a>
+              <a
+                id="menu-item"
+                class="flex items-center w-full h-12 px-3 mt-2 rounded hover:bg-gulf-blue-500 hover:shadow-lg"
+                href="/knowledge-center/view_firstview"
               >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
-                />
-              </svg>
-              <span class="ml-2 text-sm font-medium">Knowledge Centre</span>
-            </a>
+                <svg
+                  class="w-6 h-6 stroke-current"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+                  />
+                </svg>
+                <span class="ml-2 text-sm font-medium">Knowledge Centre</span>
+              </a>
               <a
                 id="menu-item"
                 class="flex items-center w-full h-12 px-3 mt-2 rounded hover:bg-gulf-blue-500 hover:shadow-lg"
@@ -239,16 +195,17 @@
         </div>
         <!-- Component End  -->
       </aside>
-      <div id="content" style="width: 83%; margin-left: 17rem">
+      <div id="content" style="width: 100%;">
         <div
           style="
             border-radius: 0.75rem;
             position: fixed;
             top: 0;
-            width: 84%;
+            right: 0;
+            width: 83%;
             height: 6.5rem;
           "
-          class="rounded-xl p-4 border bg-gulf-blue-100 border-gulf-blue-400 z-10 mt-5 max-w-screen"
+          class="rounded-xl p-4 border bg-gulf-blue-100 border-gulf-blue-400 z-10 mx-2 mt-5 max-w-screen"
         >
           <nav>
             <div class="mx-auto px-2 sm:px-6 md:px-2 lg:px-2 xl:px-2">
@@ -311,7 +268,7 @@
                     <div
                       id="scrolling-text"
                       class="text-right text-lg whitespace-nowrap text-gulf-blue-950 px-3 py-2 font-medium"
-                      style="text-indent: 182px"
+                      style="text-indent: 10px"
                     >
                       ZETDC BUSINESS EASY
                     </div>
@@ -452,7 +409,8 @@
                                       href="{{ notification.url }}"
                                       class="ml-2 text-primary"
                                     >
-                                      <span class="font-bold">{{ notification }}</span
+                                      <span class="font-bold"
+                                        >{{ notification }}</span
                                       >
                                     </a>
                                   </h6>
@@ -484,8 +442,8 @@
         </div>
 
         <div
-          style="margin-top: 6.5rem"
-          class="mx-auto px-4 py-4 sm:px-6 lg:px-8"
+          style="margin-top: 6.5rem; width: 83%;"
+          class="px-4 py-4 float-right"
         >
           <div class="mx-auto py-6">
             <nav class="flex mb-5" aria-label="Breadcrumb">
@@ -626,139 +584,184 @@
   </body>
 </html>
 
+{% comment %}
 
-{% comment %} 
+<div
+  style="display: flex; flex-direction: column"
+  class="text-gulf-blue-50 w-full mt-3 border-t border-gulf-blue-700"
+>
+  <div
+    x-data="{expanded: false, current_url: ''}"
+    x-init="$watch('$route.path', (newPath) => currentUrl = newPath)"
+  >
+    <div
+      class="flex items-center w-full h-12 px-3 mt-2 rounded hover:bg-gulf-blue-500"
+    >
+      <svg
+        class="w-6 h-6 stroke-current"
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"
+        />
+      </svg>
+      <button @click="expanded = ! expanded" class="ml-2 text-sm font-medium">
+        Knowledge Centre
+      </button>
+    </div>
+    <div
+      style="flex-direction: column; padding-left: 1.5rem"
+      class="flex justify-center w-full"
+    >
+      <div
+        x-show="url_path.find('knowledge-center')? true: expanded"
+        x-collapse.duration.100ms
+      >
+        <a id="menu-item" href="/knowledge-center/view_legislation">
+          <div
+            class="flex justify-start items-center h-12 px-3 py-2 mt-2 rounded hover:bg-gulf-blue-400"
+          >
+            <span class="mr-2 font-medium">L </span>
+            <span class="ml-2">Legislation</span>
+          </div>
+        </a>
+      </div>
+      <div
+        class="flex justify-start items-center h-12 px-3 py-2 mt-2 rounded hover:bg-gulf-blue-400"
+        x-show="expanded"
+        x-collapse.duration.1000ms
+      >
+        <span class="mr-2 font-medium">P </span>
+        <span class="ml-2">Policies & Guidelines</span>
+      </div>
+      <div
+        class="flex justify-start items-center h-12 px-3 py-2 mt-2 rounded hover:bg-gulf-blue-400"
+        x-show="expanded"
+        x-collapse.duration.1000ms
+      >
+        <span class="mr-2 font-medium">I </span>
+        <span class="ml-2">Internal Publications</span>
+      </div>
+      <div
+        class="flex justify-start items-center h-12 px-3 py-2 mt-2 rounded hover:bg-gulf-blue-400"
+        x-show="expanded"
+        x-collapse.duration.1000ms
+      >
+        <span class="mr-2 font-medium">E </span>
+        <span class="ml-2">Engineering Instructions</span>
+      </div>
+      <div
+        class="flex justify-start items-center h-12 px-3 py-2 mt-2 rounded hover:bg-gulf-blue-400"
+        x-show="expanded"
+        x-collapse.duration.1000ms
+      >
+        <span class="mr-2 font-medium">U </span>
+        <span class="ml-2">User Manuals</span>
+      </div>
+      <div
+        class="flex justify-start items-center h-12 px-3 py-2 mt-2 rounded hover:bg-gulf-blue-400"
+        x-show="expanded"
+        x-collapse.duration.1000ms
+      >
+        <span class="mr-2 font-medium">S </span>
+        <span class="ml-2">Standards</span>
+      </div>
+      <div
+        class="flex justify-start items-center h-12 px-3 py-2 mt-2 rounded hover:bg-gulf-blue-400"
+        x-show="expanded"
+        x-collapse.duration.1000ms
+      >
+        <span class="mr-2 font-medium">S </span>
+        <span class="ml-2">Specifications</span>
+      </div>
+      <div
+        class="flex justify-start items-center h-12 px-3 py-2 mt-2 rounded hover:bg-gulf-blue-400"
+        x-show="expanded"
+        x-collapse.duration.1000ms
+      >
+        <span class="mr-2 font-medium">D </span>
+        <span class="ml-2">Drawings</span>
+      </div>
+      <div
+        class="flex justify-start items-center h-12 px-3 py-2 mt-2 rounded hover:bg-gulf-blue-400"
+        x-show="expanded"
+        x-collapse.duration.1000ms
+      >
+        <span class="mr-2 font-medium">P </span>
+        <span class="ml-2">Prince2 Centre</span>
+      </div>
+      <div
+        class="flex justify-start items-center h-12 px-3 py-2 mt-2 rounded hover:bg-gulf-blue-400"
+        x-show="expanded"
+        x-collapse.duration.1000ms
+      >
+        <span class="mr-2 font-medium">O </span>
+        <span class="ml-2">Other External Documents</span>
+      </div>
+      <div
+        class="flex justify-start items-center h-12 px-3 py-2 mt-2 rounded hover:bg-gulf-blue-400"
+        x-show="expanded"
+        x-collapse.duration.1000ms
+      >
+        <span class="mr-2 font-medium">D </span>
+        <span class="ml-2">Drone Technology</span>
+      </div>
+    </div>
+  </div>
+</div>
+{% endcomment %}
 
-              <div
-                style="display: flex; flex-direction: column"
-                class="text-gulf-blue-50 w-full mt-3 border-t border-gulf-blue-700"
-              >
-                <div
-                  x-data="{expanded: false, current_url: ''}"
-                  x-init="$watch('$route.path', (newPath) => currentUrl = newPath)"
-                >
+
+    {% comment %}
+    <div
+      x-data="{ showNewsFlash: false }"
+      style="position: fixed; width: 100%"
+      class="z-30"
+    >
+      <div class="p-4 bg-gulf-blue-100" x-show="showNewsFlash">
+        <nav>
+          <div class="mx-auto px-2 sm:px-6 md:px-2 lg:px-2 xl:px-2">
+            <div class="w-full flex h-8 items-center justify-between">
+              <div class="flex w-full items-center sm:items-stretch">
+                <div id="scrolling-container" class="flex w-full items-center">
                   <div
-                    class="flex items-center w-full h-12 px-3 mt-2 rounded hover:bg-gulf-blue-500"
+                    id="scrolling-news-text"
+                    class="text-right text-lg whitespace-nowrap text-gulf-blue-950 px-3 py-2 font-medium"
                   >
-                    <svg
-                      class="w-6 h-6 stroke-current"
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"
-                      />
-                    </svg>
-                    <button
-                      @click="expanded = ! expanded"
-                      class="ml-2 text-sm font-medium"
-                    >
-                      Knowledge Centre
-                    </button>
-                  </div>
-                  <div
-                    style="flex-direction: column; padding-left: 1.5rem"
-                    class="flex justify-center w-full"
-                  >
-                    <div x-show="url_path.find('knowledge-center')? true: expanded" x-collapse.duration.100ms>
-                      <a
-                        id="menu-item"
-                        href="/knowledge-center/view_legislation"
-                      >
-                        <div
-                          class="flex justify-start items-center h-12 px-3 py-2 mt-2 rounded hover:bg-gulf-blue-400"
-                        >
-                          <span class="mr-2 font-medium">L </span>
-                          <span class="ml-2">Legislation</span>
-                        </div>
-                      </a>
-                    </div>
-                    <div
-                      class="flex justify-start items-center h-12 px-3 py-2 mt-2 rounded hover:bg-gulf-blue-400"
-                      x-show="expanded"
-                      x-collapse.duration.1000ms
-                    >
-                      <span class="mr-2 font-medium">P </span>
-                      <span class="ml-2">Policies & Guidelines</span>
-                    </div>
-                    <div
-                      class="flex justify-start items-center h-12 px-3 py-2 mt-2 rounded hover:bg-gulf-blue-400"
-                      x-show="expanded"
-                      x-collapse.duration.1000ms
-                    >
-                      <span class="mr-2 font-medium">I </span>
-                      <span class="ml-2">Internal Publications</span>
-                    </div>
-                    <div
-                      class="flex justify-start items-center h-12 px-3 py-2 mt-2 rounded hover:bg-gulf-blue-400"
-                      x-show="expanded"
-                      x-collapse.duration.1000ms
-                    >
-                      <span class="mr-2 font-medium">E </span>
-                      <span class="ml-2">Engineering Instructions</span>
-                    </div>
-                    <div
-                      class="flex justify-start items-center h-12 px-3 py-2 mt-2 rounded hover:bg-gulf-blue-400"
-                      x-show="expanded"
-                      x-collapse.duration.1000ms
-                    >
-                      <span class="mr-2 font-medium">U </span>
-                      <span class="ml-2">User Manuals</span>
-                    </div>
-                    <div
-                      class="flex justify-start items-center h-12 px-3 py-2 mt-2 rounded hover:bg-gulf-blue-400"
-                      x-show="expanded"
-                      x-collapse.duration.1000ms
-                    >
-                      <span class="mr-2 font-medium">S </span>
-                      <span class="ml-2">Standards</span>
-                    </div>
-                    <div
-                      class="flex justify-start items-center h-12 px-3 py-2 mt-2 rounded hover:bg-gulf-blue-400"
-                      x-show="expanded"
-                      x-collapse.duration.1000ms
-                    >
-                      <span class="mr-2 font-medium">S </span>
-                      <span class="ml-2">Specifications</span>
-                    </div>
-                    <div
-                      class="flex justify-start items-center h-12 px-3 py-2 mt-2 rounded hover:bg-gulf-blue-400"
-                      x-show="expanded"
-                      x-collapse.duration.1000ms
-                    >
-                      <span class="mr-2 font-medium">D </span>
-                      <span class="ml-2">Drawings</span>
-                    </div>
-                    <div
-                      class="flex justify-start items-center h-12 px-3 py-2 mt-2 rounded hover:bg-gulf-blue-400"
-                      x-show="expanded"
-                      x-collapse.duration.1000ms
-                    >
-                      <span class="mr-2 font-medium">P </span>
-                      <span class="ml-2">Prince2 Centre</span>
-                    </div>
-                    <div
-                      class="flex justify-start items-center h-12 px-3 py-2 mt-2 rounded hover:bg-gulf-blue-400"
-                      x-show="expanded"
-                      x-collapse.duration.1000ms
-                    >
-                      <span class="mr-2 font-medium">O </span>
-                      <span class="ml-2">Other External Documents</span>
-                    </div>
-                    <div
-                      class="flex justify-start items-center h-12 px-3 py-2 mt-2 rounded hover:bg-gulf-blue-400"
-                      x-show="expanded"
-                      x-collapse.duration.1000ms
-                    >
-                      <span class="mr-2 font-medium">D </span>
-                      <span class="ml-2">Drone Technology</span>
-                    </div>
+                    ZETDC NEWS FLASH
                   </div>
                 </div>
+
+                <div
+                  class="absolute hide inset-y-0 right-0 flex items-center pr-2 sm:static sm:inset-auto sm:ml-6 sm:pr-0"
+                >
+                  <svg
+                    @click="showNewsFlash = !showNewsFlash"
+                    role="button"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke-width="1.5"
+                    stroke="currentColor"
+                    class="w-6 h-6"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      d="M6 18 18 6M6 6l12 12"
+                    />
+                  </svg>
+                </div>
               </div>
-{% endcomment %}
+            </div>
+          </div>
+        </nav>
+      </div>
+    </div>
+    {% endcomment %}

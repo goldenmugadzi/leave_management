@@ -4,46 +4,92 @@ from django.views import View
 
 
 def view_competence(request):
-        return render(request, 'competence_building/competence.html')
+        
+        url_path = request.path.split("/")
+        url_path = request.path.split("/")
+        return render(request, 'competence_building/competence.html', {
+                      "url_path": url_path})
 
 def view_charts(request):
-        return render(request, 'competence_building/charts.html')
+        
+        url_path = request.path.split("/")
+        return render(request, 'competence_building/charts.html', {
+                      "url_path": url_path})
 
 def view_headoffice(request):
-        return render(request, 'competence_building/headoffice.html')
+        
+        url_path = request.path.split("/")
+        return render(request, 'competence_building/headoffice.html', {
+                      "url_path": url_path})
 
 def view_regionaloffice(request):
-        return render(request, 'competence_building/regionaloffice.html')
+        
+        url_path = request.path.split("/")
+        return render(request, 'competence_building/regionaloffice.html', {
+                      "url_path": url_path})
 
 def view_jobdescription(request):
-        return render(request, 'competence_building/jobdescription.html')
+        
+        url_path = request.path.split("/")
+        return render(request, 'competence_building/jobdescription.html', {
+                      "url_path": url_path})
 
 def view_IT(request):
-        return render(request, 'competence_building/IT.html')
+        
+        url_path = request.path.split("/")
+        return render(request, 'competence_building/IT.html', {
+                      "url_path": url_path})
 
 def view_finance(request):
-        return render(request, 'competence_building/finance.html')
+        
+        url_path = request.path.split("/")
+        return render(request, 'competence_building/finance.html', {
+                      "url_path": url_path})
    
 def view_humanresource(request):
-        return render(request, 'competence_building/humanresource.html')
+        
+        url_path = request.path.split("/")
+        return render(request, 'competence_building/humanresource.html', {
+                      "url_path": url_path})
 
 def view_losscontrol(request):
-        return render(request, 'competence_building/losscontrol.html')
+        
+        url_path = request.path.split("/")
+        return render(request, 'competence_building/losscontrol.html', {
+                      "url_path": url_path})
 
 def view_engineering(request):
-        return render(request, 'competence_building/engineering.html')
+        
+        url_path = request.path.split("/")
+        return render(request, 'competence_building/engineering.html', {
+                      "url_path": url_path})
 
 def view_commercial(request):
-        return render(request, 'competence_building/commercial.html')
+        
+        url_path = request.path.split("/")
+        return render(request, 'competence_building/commercial.html', {
+                      "url_path": url_path})
 
 def view_district(request):
-        return render(request, 'competence_building/district.html')
+        
+        url_path = request.path.split("/")
+        return render(request, 'competence_building/district.html', {
+                      "url_path": url_path})
 
 def view_sales(request):
-        return render(request, 'competence_building/sales.html')
+        
+        url_path = request.path.split("/")
+        return render(request, 'competence_building/sales.html', {
+                      "url_path": url_path})
 
 def view_networkdevelopment(request):
-        return render(request, 'competence_building/networkdevelopment.html')
+        
+        url_path = request.path.split("/")
+        return render(request, 'competence_building/networkdevelopment.html', {
+                      "url_path": url_path})
 
 def view_operations(request):
-        return render(request, 'competence_building/operations.html')
+        
+        url_path = request.path.split("/")
+        return render(request, 'competence_building/operations.html', {
+                      "url_path": url_path})
