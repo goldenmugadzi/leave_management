@@ -40,7 +40,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://172.16.8.98:9300"
 ]
 
-CSRF_TRUSTED_ORIGINS = ['http://172.16.8.97', "http://172.16.8.97:3200"]
+CSRF_TRUSTED_ORIGINS = ['http://172.16.8.97', "http://172.16.8.97:3200","http://172.16.8.98"]
 
 CORS_ALLOW_HEADERS = ('content-disposition', 'accept-encoding',
                       'content-type', 'accept', 'origin', 'authorization')
@@ -252,6 +252,8 @@ LOGIN_URL = '/accounts/login'
 STATIC_URL = 'static/'
 STATICFILES_DIRS = [BASE_DIR / "static",BASE_DIR / "uploads",]
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+MEDIA_URL  = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
