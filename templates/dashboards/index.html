@@ -1,10 +1,15 @@
 {% extends "admin_layout.html" %} {% load static %} {% block content %}
 
 <div class="">
+  {% if page_description %}
   <span class="">
-    <span class="text-xl tracking-tight text-gulf-blue-950">
-      Welcome 
+    <span class="text-xl font-bold tracking-tight text-gulf-blue-950">
+      {{page_description}}
     </span>
+  </span>
+  {% else %}
+  <span class="">
+    <span class="text-xl tracking-tight text-gulf-blue-950"> Welcome </span>
     <span class="text-xl font-bold tracking-tight text-gulf-blue-950">
       {{user_title}}
     </span>
@@ -12,564 +17,622 @@
       , to your dashboard.
     </span>
   </span>
-<div class="mx-auto py-6">
-  <div x-data="{ showNotification: true }">
-  <div x-show="showNotification" class="mb-3 bg-citron-100 border-t-4 border-citron-500 rounded-b text-citron-900 px-4 py-3 shadow shadow-citron-300" role="alert">
-    <div class="flex">
-      <div class="py-1"><svg class="fill-current h-6 w-6 text-citron-900 mr-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M2.93 17.07A10 10 0 1 1 17.07 2.93 10 10 0 0 1 2.93 17.07zm12.73-1.41A8 8 0 1 0 4.34 4.34a8 8 0 0 0 11.32 11.32zM9 11V9h2v6H9v-4zm0-6h2v2H9V5z"/></svg></div>
-      <div>
-        <p class="font-bold">News Flash</p>
-        <p class="text-sm">Make sure you know how these changes affect you.</p>
-      </div>
-      <div class="ml-auto flex">
-        <svg @click="showNotification = !showNotification" class="fill-current mr-3 h-6 w-6 text-gulf-blue-500" role="button" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
-          <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 19.5 15-15m0 0H8.25m11.25 0v11.25" />
-        </svg>        
-        <svg @click="showNotification = !showNotification" class="fill-current mr-3 h-6 w-6 text-royal-heath-500" role="button" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
-        </svg>        
-      </div>
-    </div>
-  </div>
-  </div>
-  <div class="grid grid-cols-1 gap-4">
-    <div class="w-auto bg-white drop-shadow-md shadow shadow-gulf-blue-300 text-gulf-blue-950 rounded px-4 py-4">
-      <div class="flex justify-around">
-        <div style="flex: 0.2;" class="flex justify-center items-center">
-          Filter Data:
-        </div>
-        <div style="flex: 0.25;" class="flex justify-center">
-          <div class="w-full">
-            <form id="submitDepotForm" action="/dashboards/dashboard/filter/depot" method="post">
-            {% csrf_token %}
-            
-          <select
-          class="block w-full bg-gulf-blue-50 rounded-md border-0 px-2 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
-        >
-          <option>Select Depot</option>
-          <option value="524402">Makoni Depot</option>
-          <option value="524403">Zengeza Depot</option>
-          <option value="524502">Kuwadzana Depot</option>
-          <option value="524503">Mabelreign Depot</option>
-          <option value="524504">Warren Park Depot</option>
-          <option value="524602">Glen View Depot</option>
-          <option value="524603">Waterfalls Depot</option>
-          <option value="524604">Southerton Depot</option>
-          <option value="524702">CBD Depot</option>
-          <option value="524703">Borrowdale Depot</option>
-          <option value="524704">Mabvuku Depot</option>
-          <option value="524705">Ruwa Depot</option>
-          <option value="000000">Seke Depot</option>
-        </select>
-      </form>
-    </div>
-        </div>
-        <div style="flex: 0.25;" class="flex justify-center">
-          <div class="w-full">
-          <form id="submitDistrictForm" action="/dashboards/dashboard/filter/district" method="post">
-          {% csrf_token %}
-          
-            <select
-            id="selectDistrict"
-            name="selectedDistrict"
-            class="block w-full bg-gulf-blue-50 rounded-md border-0 px-2 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
-          >
-            <option>Select District</option>
-            <option value="1">South District</option>
-            <option value="2">North District</option>
-            <option value="3">East District</option>
-            <option value="4">Chitungwiza</option>
-            <option value="4">Regional Office</option>
-          </select>
-      </form>
-      
-    </div>
-        </div>
-        <div style="flex: 0.25;" class="flex justify-center">
-          <div class="w-full">
-          <form id="submitRegionForm" action="/dashboards/dashboard/filter/region" method="post">
-            {% csrf_token %}
-          <select
-          id="selectRegion"
-          name="selectedRegion"
-          class="block w-full bg-gulf-blue-50 rounded-md border-0 px-2 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
-        >
-          <option>Select Region</option>
-          <option value="1">Harare Region</option>
-          <option value="2">East Region</option>
-          <option value="3">South Region</option>
-          <option value="4">West Region</option>
-        </select>
-      </form>
-    </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="grid grid-cols-5 gap-4 mt-5">
-    <div
-      class="w-auto bg-gradient-to-r from-gulf-blue-100 to-gulf-blue-300 drop-shadow-md shadow shadow-gulf-blue-300 text-gulf-blue-900 rounded px-2 py-2"
-    >
-      <div class="sm:flex lg:items-center lg:justify-between">
-        <div class="min-w-0 flex-1">
-          <div
-            class="text-center text-lg font-bold text-gulf-blue-950 sm:truncate sm:tracking-tight"
-          >
-            REVENUE ASSURANCE
-          </div>
-          <div class="mt-2">
-            <a href="../../ace/user/pending_sectionhead.php?source=home">
-              <div
-                class="border border-gulf-blue-200 hover:bg-gulf-blue-400 rounded-lg px-3 py-1 justify-between items-center sm:mt-0 sm:flex-row sm:flex-wrap"
-              >
-                <div class="col-xl col-sm text-center mb-xl-0 mb-4">
-                  <div class="card">
-                    <div class="card-body p-2">
-                      <div class="row">
-                        <div class="col-8">
-                          <div class="numbers">
-                            <p
-                              class="text-xs mb-0 text-capitalize font-weight-bold"
-                            >
-                              Points Visited
-                            </p>
-                            <h6 class="font-weight-bolder mb-0">100</h6>
-                          </div>
-
-                          <div
-                            class="overflow-hidden bg-blue-50 h-1.5 rounded-full w-full"
-                          >
-                            <span
-                              class="h-full bg-gulf-blue-900 w-full block rounded-full"
-                              style="width: 62%"
-                            ></span>
-                          </div>
-                          <p class="text-xs text-muted mt-2 mb-0">
-                            Monthly Target:1000
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </a>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div
-      class="w-auto bg-gradient-to-r from-jade-100 to-jade-300 drop-shadow-md shadow shadow-jade-300 text-jade-900 rounded px-2 py-2"
-    >
-      <div class="sm:flex lg:items-center lg:justify-between">
-        <div class="min-w-0 flex-1">
-          <div
-            class="text-center text-lg font-bold text-jade-900 sm:truncate sm:tracking-tight"
-          >
-            GROWTH
-          </div>
-          <div class="mt-2">
-            <a href="../../ace/user/pending_sectionhead.php?source=home">
-              <div
-                class="border border-jade-200 hover:bg-jade-400 rounded-lg px-3 py-1 justify-between items-center sm:mt-0 sm:flex-row sm:flex-wrap"
-              >
-                <div class="col-xl col-sm text-center mb-xl-0 mb-4">
-                  <div class="card">
-                    <div class="card-body p-2">
-                      <div class="row">
-                        <div class="col-8">
-                          <div class="numbers">
-                            <p
-                              class="text-xs mb-0 text-capitalize font-weight-bold"
-                            >
-                              Connected
-                            </p>
-                            <h6 class="font-weight-bolder mb-0">100</h6>
-                          </div>
-
-                          <div
-                            class="overflow-hidden bg-jade-50 h-1.5 rounded-full w-full"
-                          >
-                            <span
-                              class="h-full bg-jade-900 w-full block rounded-full"
-                              style="width: 78%"
-                            ></span>
-                          </div>
-                          <p class="text-xs text-muted mt-2 mb-0">
-                            YTD Target:1000
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </a>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div
-      class="w-auto bg-gradient-to-r from-royal-heath-100 to-royal-heath-300 drop-shadow-md shadow shadow-royal-heath-300 text-royal-heath-900 rounded px-2 py-2"
-    >
-      <div class="sm:flex lg:items-center lg:justify-between">
-        <div class="min-w-0 flex-1">
-          <div
-            class="text-center text-lg font-bold text-royal-heath-950 sm:truncate sm:tracking-tight"
-          >
-            INSPECTIONS
-          </div>
-          <div class="mt-2">
-            <a href="../../ace/user/pending_sectionhead.php?source=home">
-              <div
-                class="border border-royal-heath-200 hover:bg-royal-heath-400 rounded-lg px-3 py-1 justify-between items-center sm:mt-0 sm:flex-row sm:flex-wrap"
-              >
-                <div class="col-xl col-sm text-center mb-xl-0 mb-4">
-                  <div class="card">
-                    <div class="card-body p-2">
-                      <div class="row">
-                        <div class="col-8">
-                          <div class="numbers">
-                            <p
-                              class="text-xs mb-0 text-capitalize font-weight-bold"
-                            >
-                              Inspected
-                            </p>
-                            <h6 class="font-weight-bolder mb-0">100</h6>
-                          </div>
-
-                          <div
-                            class="overflow-hidden bg-royal-heath-50 h-1.5 rounded-full w-full"
-                          >
-                            <span
-                              class="h-full bg-royal-heath-900 w-full block rounded-full"
-                              style="width: 80%"
-                            ></span>
-                          </div>
-                          <p class="text-xs text-muted mt-2 mb-0">
-                            YTD Target:1000
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </a>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div
-      class="w-auto bg-gradient-to-r from-gulf-blue-100 to-gulf-blue-300 drop-shadow-md shadow shadow-gulf-blue-300 text-gulf-blue-900 rounded px-2 py-2"
-    >
-      <div class="sm:flex lg:items-center lg:justify-between">
-        <div class="min-w-0 flex-1">
-          <div
-            class="text-center text-lg font-bold text-gulf-blue-950 sm:truncate sm:tracking-tight"
-          >
-            FAULTS
-          </div>
-          <div class="mt-2">
-            <a href="../../ace/user/pending_sectionhead.php?source=home">
-              <div
-                class="border border-gulf-blue-200 hover:bg-gulf-blue-400 rounded-lg px-3 py-1 justify-between items-center sm:mt-0 sm:flex-row sm:flex-wrap"
-              >
-                <div class="col-xl col-sm text-center mb-xl-0 mb-4">
-                  <div class="card">
-                    <div class="card-body p-2">
-                      <div class="row">
-                        <div class="col-8">
-                          <div class="numbers">
-                            <p
-                              class="text-xs mb-0 text-capitalize font-weight-bold"
-                            >
-                              Unresolved
-                            </p>
-                            <h6 class="font-weight-bolder mb-0">100</h6>
-                          </div>
-
-                          <div
-                            class="overflow-hidden bg-gulf-blue-50 h-1.5 rounded-full w-full"
-                          >
-                            <span
-                              class="h-full bg-gulf-blue-900 w-full block rounded-full"
-                              style="width: 30%"
-                            ></span>
-                          </div>
-                          <p class="text-xs text-muted mt-2 mb-0">
-                            YTD Target:1000
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </a>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div
-      class="w-auto bg-gradient-to-r from-jade-100 to-jade-300 drop-shadow-md shadow shadow-jade-300 text-jade-900 rounded px-2 py-2"
-    >
-      <div class="sm:flex lg:items-center lg:justify-between">
-        <div class="min-w-0 flex-1">
-          <div
-            class="text-center text-lg font-bold text-jade-950 sm:truncate sm:tracking-tight"
-          >
-            MAINTENANCE
-          </div>
-          <div class="mt-2">
-            <a href="../../ace/user/pending_sectionhead.php?source=home">
-              <div
-                class="border border-jade-200 hover:bg-jade-400 rounded-lg px-3 py-1 justify-between items-center sm:mt-0 sm:flex-row sm:flex-wrap"
-              >
-                <div class="col-xl col-sm text-center mb-xl-0 mb-4">
-                  <div class="card">
-                    <div class="card-body p-2">
-                      <div class="row">
-                        <div class="col-8">
-                          <div class="numbers">
-                            <p
-                              class="text-xs mb-0 text-capitalize font-weight-bold"
-                            >
-                              Maintained
-                            </p>
-                            <h6 class="font-weight-bolder mb-0">100</h6>
-                          </div>
-
-                          <div
-                            class="overflow-hidden bg-jade-50 h-1.5 rounded-full w-full"
-                          >
-                            <span
-                              class="h-full bg-jade-900 w-full block rounded-full"
-                              style="width: 50%"
-                            ></span>
-                          </div>
-                          <p class="text-xs text-muted mt-2 mb-0">
-                            YTD Target:1000
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </a>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-  <div class="grid grid-cols-5 gap-4 mt-10">
-    <div
-      class="w-auto bg-gulf-blue-200 drop-shadow-md shadow shadow-gulf-blue-300 text-gray-900 rounded px-2 py-2"
-    >
-      <div class="sm:flex lg:items-center lg:justify-between">
-        <div class="min-w-0 flex-1">
-          <div
-            class="text-center text-lg font-bold sm:truncate sm:tracking-tight"
-          >
-            Top PBNC Customers
-          </div>
-          <div style="height: 14rem" class="mt-2 h-20 overflow-auto">
-            <a href="../../ace/user/pending_sectionhead.php?source=home">
-              <table class="table-auto">
-                <thead>
-                  <tr>
-                    <th></th>
-                    <th></th>
-                    <th></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {% for pbnc in pbncs %}
-                  <tr>
-                    <td>{{ forloop.counter }}</td>
-                    <td>{{pbnc.name}}</td>
-                    <td>{{pbnc.amount}}</td>
-                  </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
-            </a>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div
-      class="w-auto bg-royal-heath-200 drop-shadow-md shadow shadow-royal-heath-300 text-gray-900 rounded px-2 py-2"
-    >
-      <div class="sm:flex lg:items-center lg:justify-between">
-        <div class="min-w-0 flex-1">
-          <div
-            class="text-center text-lg font-bold sm:truncate sm:tracking-tight"
-          >
-            Unresolved Power Outages
-          </div>
-          <div style="height: 14rem" class="mt-2 h-20 overflow-auto">
-            <a href="../../ace/user/pending_sectionhead.php?source=home">
-              <table class="table-auto">
-                <thead>
-                  <tr>
-                    <th></th>
-                    <th></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {% for upo in upos %}
-                  <tr>
-                    <td>{{forloop.counter}}</td>
-                    <td>{{upo.description}}</td>
-                  </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
-            </a>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div
-      class="w-auto bg-citron-200 drop-shadow-md shadow shadow-citron-300 text-gray-900 rounded px-2 py-2"
-    >
-      <div class="sm:flex lg:items-center lg:justify-between">
-        <div class="min-w-0 flex-1">
-          <div
-            class="text-center text-lg font-bold text-gulf-blue-950 sm:truncate sm:tracking-tight"
-          >
-            Inspection breakdown
-          </div>
-          <div style="height: 14rem" class="mt-2 h-20 overflow-auto">
-            <a href="../../ace/user/pending_sectionhead.php?source=home">
-              <canvas id="Inspection"></canvas>
-            </a>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div
-      class="w-auto bg-gulf-blue-200 drop-shadow-md shadow shadow-gulf-blue-300 text-gulf-blue-900 rounded px-2 py-2"
-    >
-      <div class="sm:flex lg:items-center lg:justify-between">
-        <div class="min-w-0 flex-1">
-          <div
-            class="text-center text-lg font-bold text-gulf-blue-950 sm:truncate sm:tracking-tight"
-          >
-            Top Debtors
-          </div>
-          <div style="height: 14rem" class="mt-2 h-20 overflow-auto">
-            <a href="../../ace/user/pending_sectionhead.php?source=home">
-              <table class="table-auto">
-                <thead>
-                  <tr>
-                    <th></th>
-                    <th></th>
-                    <th></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {% for td in tds %}
-                  <tr>
-                    <td>{{forloop.counter}}</td>
-                    <td>{{td.name}}</td>
-                    <td>{{td.amount}}</td>
-                  </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
-            </a>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div
-      class="w-auto bg-citron-200 drop-shadow-md shadow shadow-citron-300 text-gray-900 rounded px-2 py-2"
-    >
-      <div class="sm:flex lg:items-center lg:justify-between">
-        <div class="min-w-0 flex-1">
-          <div
-            class="text-center text-lg font-bold text-gulf-blue-950 sm:truncate sm:tracking-tight"
-          >
-            Maintanance breakdown
-          </div>
-          <div style="height: 14rem" class="mt-2 h-20 overflow-auto">
-            <a href="../../ace/user/pending_sectionhead.php?source=home">
-              <canvas id="Maintenance"></canvas>
-            </a>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-  <div class="grid grid-cols-2 mt-4 gap-4">
-    <div
-      class="w-auto bg-gulf-blue-200 shadow shadow-gulf-blue-300 text-gulf-blue-700 rounded px-2 py-2"
-    >
-      <div class="sm:flex lg:items-center lg:justify-between">
-        <div class="min-w-0 flex-1">
-          <div
-            class="text-center text-lg font-bold text-gulf-blue-950 sm:truncate sm:tracking-tight"
-          >
-            Maintanance
-          </div>
-          <div class="flex justify-center">
-            <select
-              id="filterMaintenanceButton"
-              class="block w-full rounded-md border-0 px-2 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+  {% endif %}
+  <div class="mx-auto py-6">
+    <div x-data="{ showNotification: false }">
+      <div
+        x-show="showNotification"
+        class="mb-3 bg-citron-100 border-t-4 border-citron-500 rounded-b text-citron-900 px-4 py-3 shadow shadow-citron-300"
+        role="alert"
+      >
+        <div class="flex">
+          <div class="py-1">
+            <svg
+              class="fill-current h-6 w-6 text-citron-900 mr-4"
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 20 20"
             >
-              <option>Current</option>
-              <option value="1">January</option>
-              <option value="12">December</option>
-            </select>
+              <path
+                d="M2.93 17.07A10 10 0 1 1 17.07 2.93 10 10 0 0 1 2.93 17.07zm12.73-1.41A8 8 0 1 0 4.34 4.34a8 8 0 0 0 11.32 11.32zM9 11V9h2v6H9v-4zm0-6h2v2H9V5z"
+              />
+            </svg>
           </div>
           <div>
-            <canvas
-              id="maintenanceBarChart"
-              class="chart-canvas"
-              width="400"
-              height="300"
-            ></canvas>
+            <p class="font-bold">News Flash</p>
+            <p class="text-sm">
+              Make sure you know how these changes affect you.
+            </p>
+          </div>
+          <div class="ml-auto flex">
+            <svg
+              @click="showNotification = !showNotification"
+              class="fill-current mr-3 h-6 w-6 text-gulf-blue-500"
+              role="button"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="currentColor"
+              class="w-6 h-6"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="m4.5 19.5 15-15m0 0H8.25m11.25 0v11.25"
+              />
+            </svg>
+            <svg
+              @click="showNotification = !showNotification"
+              class="fill-current mr-3 h-6 w-6 text-royal-heath-500"
+              role="button"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="currentColor"
+              class="w-6 h-6"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M6 18 18 6M6 6l12 12"
+              />
+            </svg>
           </div>
         </div>
       </div>
     </div>
-    <div
-      class="w-auto bg-gulf-blue-200 shadow shadow-gulf-blue-300 text-gulf-blue-700 rounded px-2 py-2"
-    >
-      <div class="sm:flex lg:items-center lg:justify-between">
-        <div class="min-w-0 flex-1">
-          <div
-            class="text-center text-lg font-bold text-gulf-blue-950 sm:truncate sm:tracking-tight"
-          >
-            Inspections
+    <div class="grid grid-cols-1 gap-4">
+      <div
+        class="w-auto bg-white drop-shadow-md shadow shadow-gulf-blue-300 text-gulf-blue-950 rounded px-4 py-4"
+      >
+        <div class="flex justify-around">
+          <div style="flex: 0.2" class="flex justify-center items-center">
+            Filter Data:
           </div>
-          <div class="flex justify-center">
-            <select
-              id="filterInspectionsButton"
-              class="block w-full rounded-md border-0 px-2 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+          <div style="flex: 0.25" class="flex justify-center">
+            <div class="w-full">
+              <form
+                id="submitDepotForm"
+                action="/dashboards/filter/depot"
+                method="post"
+              >
+                {% csrf_token %}
+
+                <select
+                  class="block w-full bg-gulf-blue-50 rounded-md border-0 px-2 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+                >
+                  <option>Select Depot</option>
+                  <option value="524402">Makoni Depot</option>
+                  <option value="524403">Zengeza Depot</option>
+                  <option value="524502">Kuwadzana Depot</option>
+                  <option value="524503">Mabelreign Depot</option>
+                  <option value="524504">Warren Park Depot</option>
+                  <option value="524602">Glen View Depot</option>
+                  <option value="524603">Waterfalls Depot</option>
+                  <option value="524604">Southerton Depot</option>
+                  <option value="524702">CBD Depot</option>
+                  <option value="524703">Borrowdale Depot</option>
+                  <option value="524704">Mabvuku Depot</option>
+                  <option value="524705">Ruwa Depot</option>
+                  <option value="000000">Seke Depot</option>
+                </select>
+              </form>
+            </div>
+          </div>
+          <div style="flex: 0.25" class="flex justify-center">
+            <div class="w-full">
+              <form
+                id="submitDistrictForm"
+                action="/dashboards/filter/district"
+                method="post"
+              >
+                {% csrf_token %}
+
+                <select
+                  id="selectDistrict"
+                  name="selectedDistrict"
+                  class="block w-full bg-gulf-blue-50 rounded-md border-0 px-2 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+                >
+                  <option>Select District</option>
+                  <option value="1">South District</option>
+                  <option value="2">North District</option>
+                  <option value="3">East District</option>
+                  <option value="4">Chitungwiza</option>
+                  <option value="4">Regional Office</option>
+                </select>
+              </form>
+            </div>
+          </div>
+          <div style="flex: 0.25" class="flex justify-center">
+            <div class="w-full">
+              <form
+                id="submitRegionForm"
+                action="/dashboards/filter/region"
+                method="post"
+              >
+                {% csrf_token %}
+                <select
+                  id="selectRegion"
+                  name="selectedRegion"
+                  class="block w-full bg-gulf-blue-50 rounded-md border-0 px-2 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+                >
+                  <option>Select Region</option>
+                  <option value="1">Harare Region</option>
+                  <option value="2">East Region</option>
+                  <option value="3">South Region</option>
+                  <option value="4">West Region</option>
+                </select>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-5 gap-4 mt-5">
+      <div
+        class="w-auto bg-gradient-to-r from-gulf-blue-100 to-gulf-blue-300 drop-shadow-md shadow shadow-gulf-blue-300 text-gulf-blue-900 rounded px-2 py-2"
+      >
+        <div class="sm:flex lg:items-center lg:justify-between">
+          <div class="min-w-0 flex-1">
+            <div
+              class="text-center text-lg font-bold text-gulf-blue-950 sm:truncate sm:tracking-tight"
             >
-              <option>Current</option>
-              <option value="1">January</option>
-              <option value="12">December</option>
-            </select>
+              REVENUE ASSURANCE
+            </div>
+            <div class="mt-2">
+              <a href="../../ace/user/pending_sectionhead.php?source=home">
+                <div
+                  class="border border-gulf-blue-200 hover:bg-gulf-blue-400 rounded-lg px-3 py-1 justify-between items-center sm:mt-0 sm:flex-row sm:flex-wrap"
+                >
+                  <div class="col-xl col-sm text-center mb-xl-0 mb-4">
+                    <div class="card">
+                      <div class="card-body p-2">
+                        <div class="row">
+                          <div class="col-8">
+                            <div class="numbers">
+                              <p
+                                class="text-xs mb-0 text-capitalize font-weight-bold"
+                              >
+                                Points Visited
+                              </p>
+                              <h6 class="font-weight-bolder mb-0">100</h6>
+                            </div>
+
+                            <div
+                              class="overflow-hidden bg-blue-50 h-1.5 rounded-full w-full"
+                            >
+                              <span
+                                class="h-full bg-gulf-blue-900 w-full block rounded-full"
+                                style="width: 62%"
+                              ></span>
+                            </div>
+                            <p class="text-xs text-muted mt-2 mb-0">
+                              Monthly Target:1000
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </a>
+            </div>
           </div>
-          <div>
-            <canvas
-              id="inspectionBarChart"
-              class="chart-canvas"
-              width="400"
-              height="300"
-            ></canvas>
+        </div>
+      </div>
+      <div
+        class="w-auto bg-gradient-to-r from-jade-100 to-jade-300 drop-shadow-md shadow shadow-jade-300 text-jade-900 rounded px-2 py-2"
+      >
+        <div class="sm:flex lg:items-center lg:justify-between">
+          <div class="min-w-0 flex-1">
+            <div
+              class="text-center text-lg font-bold text-jade-900 sm:truncate sm:tracking-tight"
+            >
+              GROWTH
+            </div>
+            <div class="mt-2">
+              <a href="../../ace/user/pending_sectionhead.php?source=home">
+                <div
+                  class="border border-jade-200 hover:bg-jade-400 rounded-lg px-3 py-1 justify-between items-center sm:mt-0 sm:flex-row sm:flex-wrap"
+                >
+                  <div class="col-xl col-sm text-center mb-xl-0 mb-4">
+                    <div class="card">
+                      <div class="card-body p-2">
+                        <div class="row">
+                          <div class="col-8">
+                            <div class="numbers">
+                              <p
+                                class="text-xs mb-0 text-capitalize font-weight-bold"
+                              >
+                                Connected
+                              </p>
+                              <h6 class="font-weight-bolder mb-0">100</h6>
+                            </div>
+
+                            <div
+                              class="overflow-hidden bg-jade-50 h-1.5 rounded-full w-full"
+                            >
+                              <span
+                                class="h-full bg-jade-900 w-full block rounded-full"
+                                style="width: 78%"
+                              ></span>
+                            </div>
+                            <p class="text-xs text-muted mt-2 mb-0">
+                              YTD Target:1000
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div
+        class="w-auto bg-gradient-to-r from-royal-heath-100 to-royal-heath-300 drop-shadow-md shadow shadow-royal-heath-300 text-royal-heath-900 rounded px-2 py-2"
+      >
+        <div class="sm:flex lg:items-center lg:justify-between">
+          <div class="min-w-0 flex-1">
+            <div
+              class="text-center text-lg font-bold text-royal-heath-950 sm:truncate sm:tracking-tight"
+            >
+              INSPECTIONS
+            </div>
+            <div class="mt-2">
+              <a href="../../ace/user/pending_sectionhead.php?source=home">
+                <div
+                  class="border border-royal-heath-200 hover:bg-royal-heath-400 rounded-lg px-3 py-1 justify-between items-center sm:mt-0 sm:flex-row sm:flex-wrap"
+                >
+                  <div class="col-xl col-sm text-center mb-xl-0 mb-4">
+                    <div class="card">
+                      <div class="card-body p-2">
+                        <div class="row">
+                          <div class="col-8">
+                            <div class="numbers">
+                              <p
+                                class="text-xs mb-0 text-capitalize font-weight-bold"
+                              >
+                                Inspected
+                              </p>
+                              <h6 class="font-weight-bolder mb-0">100</h6>
+                            </div>
+
+                            <div
+                              class="overflow-hidden bg-royal-heath-50 h-1.5 rounded-full w-full"
+                            >
+                              <span
+                                class="h-full bg-royal-heath-900 w-full block rounded-full"
+                                style="width: 80%"
+                              ></span>
+                            </div>
+                            <p class="text-xs text-muted mt-2 mb-0">
+                              YTD Target:1000
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div
+        class="w-auto bg-gradient-to-r from-gulf-blue-100 to-gulf-blue-300 drop-shadow-md shadow shadow-gulf-blue-300 text-gulf-blue-900 rounded px-2 py-2"
+      >
+        <div class="sm:flex lg:items-center lg:justify-between">
+          <div class="min-w-0 flex-1">
+            <div
+              class="text-center text-lg font-bold text-gulf-blue-950 sm:truncate sm:tracking-tight"
+            >
+              FAULTS
+            </div>
+            <div class="mt-2">
+              <a href="../../ace/user/pending_sectionhead.php?source=home">
+                <div
+                  class="border border-gulf-blue-200 hover:bg-gulf-blue-400 rounded-lg px-3 py-1 justify-between items-center sm:mt-0 sm:flex-row sm:flex-wrap"
+                >
+                  <div class="col-xl col-sm text-center mb-xl-0 mb-4">
+                    <div class="card">
+                      <div class="card-body p-2">
+                        <div class="row">
+                          <div class="col-8">
+                            <div class="numbers">
+                              <p
+                                class="text-xs mb-0 text-capitalize font-weight-bold"
+                              >
+                                Unresolved
+                              </p>
+                              <h6 class="font-weight-bolder mb-0">100</h6>
+                            </div>
+
+                            <div
+                              class="overflow-hidden bg-gulf-blue-50 h-1.5 rounded-full w-full"
+                            >
+                              <span
+                                class="h-full bg-gulf-blue-900 w-full block rounded-full"
+                                style="width: 30%"
+                              ></span>
+                            </div>
+                            <p class="text-xs text-muted mt-2 mb-0">
+                              YTD Target:1000
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div
+        class="w-auto bg-gradient-to-r from-jade-100 to-jade-300 drop-shadow-md shadow shadow-jade-300 text-jade-900 rounded px-2 py-2"
+      >
+        <div class="sm:flex lg:items-center lg:justify-between">
+          <div class="min-w-0 flex-1">
+            <div
+              class="text-center text-lg font-bold text-jade-950 sm:truncate sm:tracking-tight"
+            >
+              MAINTENANCE
+            </div>
+            <div class="mt-2">
+              <a href="../../ace/user/pending_sectionhead.php?source=home">
+                <div
+                  class="border border-jade-200 hover:bg-jade-400 rounded-lg px-3 py-1 justify-between items-center sm:mt-0 sm:flex-row sm:flex-wrap"
+                >
+                  <div class="col-xl col-sm text-center mb-xl-0 mb-4">
+                    <div class="card">
+                      <div class="card-body p-2">
+                        <div class="row">
+                          <div class="col-8">
+                            <div class="numbers">
+                              <p
+                                class="text-xs mb-0 text-capitalize font-weight-bold"
+                              >
+                                Maintained
+                              </p>
+                              <h6 class="font-weight-bolder mb-0">100</h6>
+                            </div>
+
+                            <div
+                              class="overflow-hidden bg-jade-50 h-1.5 rounded-full w-full"
+                            >
+                              <span
+                                class="h-full bg-jade-900 w-full block rounded-full"
+                                style="width: 50%"
+                              ></span>
+                            </div>
+                            <p class="text-xs text-muted mt-2 mb-0">
+                              YTD Target:1000
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="grid grid-cols-5 gap-4 mt-10">
+      <div
+        class="w-auto bg-gulf-blue-200 drop-shadow-md shadow shadow-gulf-blue-300 text-gray-900 rounded px-2 py-2"
+      >
+        <div class="sm:flex lg:items-center lg:justify-between">
+          <div class="min-w-0 flex-1">
+            <div
+              class="text-center text-lg font-bold sm:truncate sm:tracking-tight"
+            >
+              Top PBNC Customers
+            </div>
+            <div style="height: 14rem" class="mt-2 h-20 overflow-auto">
+              <a href="../../ace/user/pending_sectionhead.php?source=home">
+                <table class="table-auto">
+                  <thead>
+                    <tr>
+                      <th></th>
+                      <th></th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for pbnc in pbncs %}
+                    <tr>
+                      <td>{{ forloop.counter }}</td>
+                      <td>{{pbnc.name}}</td>
+                      <td>{{pbnc.amount}}</td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div
+        class="w-auto bg-royal-heath-200 drop-shadow-md shadow shadow-royal-heath-300 text-gray-900 rounded px-2 py-2"
+      >
+        <div class="sm:flex lg:items-center lg:justify-between">
+          <div class="min-w-0 flex-1">
+            <div
+              class="text-center text-lg font-bold sm:truncate sm:tracking-tight"
+            >
+              Unresolved Power Outages
+            </div>
+            <div style="height: 14rem" class="mt-2 h-20 overflow-auto">
+              <a href="../../ace/user/pending_sectionhead.php?source=home">
+                <table class="table-auto">
+                  <thead>
+                    <tr>
+                      <th></th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for upo in upos %}
+                    <tr>
+                      <td>{{forloop.counter}}</td>
+                      <td>{{upo.description}}</td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div
+        class="w-auto bg-citron-200 drop-shadow-md shadow shadow-citron-300 text-gray-900 rounded px-2 py-2"
+      >
+        <div class="sm:flex lg:items-center lg:justify-between">
+          <div class="min-w-0 flex-1">
+            <div
+              class="text-center text-lg font-bold text-gulf-blue-950 sm:truncate sm:tracking-tight"
+            >
+              Inspection breakdown
+            </div>
+            <div style="height: 14rem" class="mt-2 h-20 overflow-auto">
+              <a href="../../ace/user/pending_sectionhead.php?source=home">
+                <canvas id="Inspection"></canvas>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div
+        class="w-auto bg-gulf-blue-200 drop-shadow-md shadow shadow-gulf-blue-300 text-gulf-blue-900 rounded px-2 py-2"
+      >
+        <div class="sm:flex lg:items-center lg:justify-between">
+          <div class="min-w-0 flex-1">
+            <div
+              class="text-center text-lg font-bold text-gulf-blue-950 sm:truncate sm:tracking-tight"
+            >
+              Top Debtors
+            </div>
+            <div style="height: 14rem" class="mt-2 h-20 overflow-auto">
+              <a href="../../ace/user/pending_sectionhead.php?source=home">
+                <table class="table-auto">
+                  <thead>
+                    <tr>
+                      <th></th>
+                      <th></th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for td in tds %}
+                    <tr>
+                      <td>{{forloop.counter}}</td>
+                      <td>{{td.name}}</td>
+                      <td>{{td.amount}}</td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div
+        class="w-auto bg-citron-200 drop-shadow-md shadow shadow-citron-300 text-gray-900 rounded px-2 py-2"
+      >
+        <div class="sm:flex lg:items-center lg:justify-between">
+          <div class="min-w-0 flex-1">
+            <div
+              class="text-center text-lg font-bold text-gulf-blue-950 sm:truncate sm:tracking-tight"
+            >
+              Maintanance breakdown
+            </div>
+            <div style="height: 14rem" class="mt-2 h-20 overflow-auto">
+              <a href="../../ace/user/pending_sectionhead.php?source=home">
+                <canvas id="Maintenance"></canvas>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="grid grid-cols-2 mt-4 gap-4">
+      <div
+        class="w-auto bg-gulf-blue-200 shadow shadow-gulf-blue-300 text-gulf-blue-700 rounded px-2 py-2"
+      >
+        <div class="sm:flex lg:items-center lg:justify-between">
+          <div class="min-w-0 flex-1">
+            <div
+              class="text-center text-lg font-bold text-gulf-blue-950 sm:truncate sm:tracking-tight"
+            >
+              Maintanance
+            </div>
+            <div class="flex justify-center">
+              <select
+                id="filterMaintenanceButton"
+                class="block w-full rounded-md border-0 px-2 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+              >
+                <option>Current</option>
+                <option value="1">January</option>
+                <option value="12">December</option>
+              </select>
+            </div>
+            <div>
+              <canvas
+                id="maintenanceBarChart"
+                class="chart-canvas"
+                width="400"
+                height="400"
+              ></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div
+        class="w-auto bg-gulf-blue-200 shadow shadow-gulf-blue-300 text-gulf-blue-700 rounded px-2 py-2"
+      >
+        <div class="sm:flex lg:items-center lg:justify-between">
+          <div class="min-w-0 flex-1">
+            <div
+              class="text-center text-lg font-bold text-gulf-blue-950 sm:truncate sm:tracking-tight"
+            >
+              Inspections
+            </div>
+            <div class="flex justify-center">
+              <select
+                id="filterInspectionsButton"
+                class="block w-full rounded-md border-0 px-2 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+              >
+                <option>Current</option>
+                <option value="1">January</option>
+                <option value="12">December</option>
+              </select>
+            </div>
+            <div>
+              <canvas
+                id="inspectionBarChart"
+                class="chart-canvas"
+                width="400"
+                height="400"
+              ></canvas>
+            </div>
           </div>
         </div>
       </div>
     </div>
   </div>
-</div>
 </div>
 
 {% endblock content %} {% block scripts %}
@@ -581,25 +644,6 @@ https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js
     var inspection_locations = JSON.parse("{{inspection_locations|escapejs}}");
     var inspections_count = JSON.parse("{{inspections_count|escapejs}}");
     var inspections_ = JSON.parse("{{inspections_|escapejs}}");
-
-    console.log(
-      "inspection_locations: ",
-      inspection_locations,
-      "inspections_count: ",
-      inspections_count
-    );
-
-    var maintenance_locations = JSON.parse("{{maintenance_locations|escapejs}}");
-    var maintenance_count = JSON.parse("{{maintenance_count|escapejs}}");
-    var maintenances_ = JSON.parse("{{maintenance_|escapejs}}");
-    var mtn = JSON.parse("{{mtn|escapejs}}");
-
-    console.log(
-      "maintenance_locations: ",
-      maintenance_locations,
-      "maintenance_count: ",
-      maintenance_count
-    );
 
     // Get the canvas element
     var inspectionCtx = document.getElementById("Inspection").getContext("2d");
@@ -638,11 +682,11 @@ https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js
     var date = new Date();
     var currentMonth = parseInt(date.getMonth()) + 1;
     var inspections_count_data = inspections_.filter((dataPoint) => {
-        var date = new Date(dataPoint.fields.created_at);
-        let month = parseInt(date.getMonth()) + 1;
-        return month == currentMonth;
+      var date = new Date(dataPoint.fields.created_at);
+      let month = parseInt(date.getMonth()) + 1;
+      return month == currentMonth;
     });
-    var inspections_cleaned = cleanInspectionData(inspections_count_data)
+    var inspections_cleaned = cleanInspectionData(inspections_count_data);
 
     var inspectionBarData = {
       labels: inspections_cleaned.keys_,
@@ -671,7 +715,7 @@ https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js
             display: true,
             title: {
               display: true,
-              text: 'Frequency'
+              text: "Frequency",
             },
             grid: {
               drawBorder: false,
@@ -717,6 +761,63 @@ https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js
         },
       },
     });
+
+    document
+      .getElementById("filterInspectionsButton")
+      .addEventListener("change", (event) => {
+        const newValue = event.target.value;
+        console.log("newValue: ", newValue);
+        // Do something with the new value
+        console.log("inspections_ - inspections_: ", inspections_);
+
+        var filteredInspData = inspections_.filter((dataPoint) => {
+          var recordDate = new Date(dataPoint.fields.created_at);
+          let month = parseInt(recordDate.getMonth()) + 1;
+          console.log("month: ", month);
+          return month == newValue;
+        });
+
+        let cleanedInspectionData = cleanInspectionData(filteredInspData);
+        console.log("cleanedInspectionData: ", cleanedInspectionData);
+        iChart.data.datasets[0].data = cleanedInspectionData.values_; // Update chart data
+        iChart.data.labels = cleanedInspectionData.keys_;
+        iChart.update(); // Render the chart with filtered data
+      });
+
+    function cleanInspectionData(inspections) {
+      let inspectionCount = {};
+
+      for (let i = 0; i < inspections.length; i++) {
+        let inspection = inspections[i];
+        let inspectionName = inspection.fields.depot;
+        if (inspectionName in inspectionCount) {
+          if (inspectionCount[inspectionName] > 0) {
+            inspectionCount[inspectionName] =
+              inspectionCount[inspectionName] + 1;
+          }
+        } else {
+          inspectionCount[inspectionName] = 1;
+        }
+      }
+
+      let keysList = Object.keys(inspectionCount);
+      let valuesList = Object.values(inspectionCount);
+
+      return {
+        keys_: keysList,
+        values_: valuesList,
+      };
+    }
+  });
+</script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    var maintenance_locations = JSON.parse(
+      "{{maintenance_locations|escapejs}}"
+    );
+    var maintenance_count = JSON.parse("{{maintenance_count|escapejs}}");
+    var maintenances_ = JSON.parse("{{maintenance_|escapejs}}");
+    var mtn = JSON.parse("{{mtn|escapejs}}");
 
     // Get the canvas element
     var maintenanceCtx = document
@@ -755,67 +856,71 @@ https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js
     var date = new Date();
     var currentMonth = parseInt(date.getMonth()) + 1;
     var maintenance_count_data = maintenances_.filter((dataPoint) => {
-        var date_ = new Date(dataPoint.fields.created_at);
-        let month = parseInt(date_.getMonth()) + 1;
-        return month == currentMonth;
+      var date_ = new Date(dataPoint.fields.created_at);
+      let month = parseInt(date_.getMonth()) + 1;
+      return month == currentMonth;
     });
 
-    var maintenance_cleaned = cleanMaintenanceData(maintenance_count_data)
+    var maintenance_cleaned = cleanMaintenanceData(maintenance_count_data);
 
     var maintenanceBarData = {
-      labels: ['1', '2', '3', '4'], // ['January', 'December']
+      labels: ["1", "2", "3", "4"], // ['January', 'December']
       datasets: [
         {
           label: "Mabelreign Depot",
-          data: mtn['Mabelreign Depot'], // [1,2,3,4]
+          data: mtn["Mabelreign Depot"], // [1,2,3,4]
+          fill: 2
         },
         {
           label: "Borrowdale Depot",
-          data: mtn['Borrowdale Depot'], // [1,2,3,4]
+          data: mtn["Borrowdale Depot"], // [1,2,3,4]
+          fill: 2
         },
         {
           label: "Glen View Depot",
-          data: mtn['Glen View Depot'], // [1,2,3,4]
+          data: mtn["Glen View Depot"], // [1,2,3,4]
+          fill: 2
         },
         {
           label: "Kuwadzana Depot",
-          data: mtn['Kuwadzana Depot'], // [1,2,3,4]
+          data: mtn["Kuwadzana Depot"], // [1,2,3,4]
+          fill: 2
         },
         {
           label: "Mabvuku Depot",
-          data: mtn['Mabvuku Depot'], // [1,2,3,4]
+          data: mtn["Mabvuku Depot"], // [1,2,3,4]
         },
         {
           label: "Ruwa Depot",
-          data: mtn['Ruwa Depot'], // [1,2,3,4]
+          data: mtn["Ruwa Depot"], // [1,2,3,4]
         },
         {
           label: "Southerton Depot",
-          data: mtn['Southerton Depot'], // [1,2,3,4]
+          data: mtn["Southerton Depot"], // [1,2,3,4]
         },
         {
           label: "Warren Park Depot",
-          data: mtn['Warren Park Depot'], // [1,2,3,4]
+          data: mtn["Warren Park Depot"], // [1,2,3,4]
         },
         {
           label: "Waterfalls Depot",
-          data: mtn['Waterfalls Depot'], // [1,2,3,4]
+          data: mtn["Waterfalls Depot"], // [1,2,3,4]
         },
         {
           label: "CBD Depot",
-          data: mtn['CBD Depot'], // [1,2,3,4]
+          data: mtn["CBD Depot"], // [1,2,3,4]
         },
         {
           label: "Makoni Depot",
-          data: mtn['Makoni Depot'], // [1,2,3,4]
+          data: mtn["Makoni Depot"], // [1,2,3,4]
         },
         {
           label: "Zengeza Depot",
-          data: mtn['Zengeza Depot'], // [1,2,3,4]
+          data: mtn["Zengeza Depot"], // [1,2,3,4]
         },
         {
           label: "Seke",
-          data: mtn['Seke'], // [1,2,3,4]
+          data: mtn["Seke"], // [1,2,3,4]
         },
       ],
     };
@@ -830,13 +935,19 @@ https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js
           legend: {
             display: true,
           },
+          filler: {
+            propagate: false
+          },
+          'samples-filler-analyser': {
+            target: 'chart-analyser'
+          }
         },
         scales: {
           y: {
             display: true,
             title: {
               display: true,
-              text: 'Frequency'
+              text: "Frequency",
             },
             grid: {
               drawBorder: false,
@@ -861,7 +972,7 @@ https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js
             display: true,
             title: {
               display: true,
-              text: 'Week'
+              text: "Week",
             },
             grid: {
               drawBorder: false,
@@ -893,112 +1004,116 @@ https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js
         console.log("newValue: ", newValue);
         // Do something with the new value
 
-        var filteredMtnData = maintenances_.filter((dataPoint) => {
-          var recordDate_ = new Date(dataPoint.fields.created_at);
-          let month = parseInt(recordDate_.getMonth()) + 1;
-          return month == newValue;
-        });
+        //var filteredMtnData = maintenances_.filter((dataPoint) => {
+        //  var recordDate_ = new Date(dataPoint.fields.created_at);
+        //  let month = parseInt(recordDate_.getMonth()) + 1;
+        //  return month == newValue;
+        //});
 
-        let cleanedMaintenanceData = cleanMaintenanceData(filteredMtnData);
-        console.log("cleanedMaintenanceData: ", cleanedMaintenanceData);
-        mChart.data.datasets[0].data = cleanedMaintenanceData.values_; // Update chart data
-        mChart.data.labels = cleanedMaintenanceData.keys_;
+        //let cleanedMaintenanceData = cleanMaintenanceData(filteredMtnData);
+        //console.log("cleanedMaintenanceData: ", cleanedMaintenanceData);
+
+        let resData = getThisMonthData(newValue)
+        
+        mChart.data.datasets[0].data = resData["Mabelreign Depot"];
+        mChart.data.datasets[0].label = "Mabelreign Depot"; 
+        mChart.data.datasets[0].data = resData["Borrowdale Depot"];
+        mChart.data.datasets[0].label = "Borrowdale Depot";        
+        mChart.data.datasets[0].data = resData["Glen View Depot"];
+        mChart.data.datasets[0].label = "Glen View Depot"; 
+        mChart.data.datasets[0].data = resData["Kuwadzana Depot"];
+        mChart.data.datasets[0].label = "Kuwadzana Depot";        
+        mChart.data.datasets[0].data = resData["Mabvuku Depot"];
+        mChart.data.datasets[0].label = "Mabvuku Depot"; 
+        mChart.data.datasets[0].data = resData["Ruwa Depot"];
+        mChart.data.datasets[0].label = "Ruwa Depot";        
+        mChart.data.datasets[0].data = resData["Southerton Depot"];
+        mChart.data.datasets[0].label = "Southerton Depot"; 
+        mChart.data.datasets[0].data = resData["Warren Park Depot"];
+        mChart.data.datasets[0].label = "Warren Park Depot"; 
+        mChart.data.datasets[0].data = resData["Waterfalls Depot"];
+        mChart.data.datasets[0].label = "Waterfalls Depot"; 
+        mChart.data.datasets[0].data = resData["CBD Depot"];
+        mChart.data.datasets[0].label = "CBD Depot"; 
+        mChart.data.datasets[0].data = resData["Makoni Depot"];
+        mChart.data.datasets[0].label = "Makoni Depot"; 
+        mChart.data.datasets[0].data = resData["Zengeza Depot"];
+        mChart.data.datasets[0].label = "Zengeza Depot"; 
+        mChart.data.datasets[0].data = resData["Seke"];
+        mChart.data.datasets[0].label = "Seke";
         mChart.update(); // Render the chart with filtered data
-      });
+    });
 
-    document
-      .getElementById("filterInspectionsButton")
-      .addEventListener("change", (event) => {
-        const newValue = event.target.value;
-        console.log("newValue: ", newValue);
-        // Do something with the new value
-        console.log("inspections_ - inspections_: ", inspections_);
+    function cleanMaintenanceData(maintenances) {
+      let maintenanceCount = {};
 
-        var filteredInspData = inspections_.filter((dataPoint) => {
-          var recordDate = new Date(dataPoint.fields.created_at);
-          let month = parseInt(recordDate.getMonth()) + 1;
-          console.log("month: ", month);
-          return month == newValue;
-        });
+      for (let i = 0; i < maintenances.length; i++) {
+        let maintenance = maintenances[i];
+        let maintenanceName = maintenance.fields.depot;
+        if (maintenanceName in maintenanceCount) {
+          if (maintenanceCount[maintenanceName] > 0) {
+            maintenanceCount[maintenanceName] =
+              maintenanceCount[maintenanceName] + 1;
+          }
+        } else {
+          maintenanceCount[maintenanceName] = 1;
+        }
+      }
 
-        let cleanedInspectionData = cleanInspectionData(filteredInspData);
-        console.log("cleanedInspectionData: ", cleanedInspectionData);
-        iChart.data.datasets[0].data = cleanedInspectionData.values_; // Update chart data
-        iChart.data.labels = cleanedInspectionData.keys_;
-        iChart.update(); // Render the chart with filtered data
-      });
+      let keysList = Object.keys(maintenanceCount);
+      let valuesList = Object.values(maintenanceCount);
+
+      return {
+        keys_: keysList,
+        values_: valuesList,
+      };
+    }
+
+    function getThisMonthData(month){
+      // Create an XMLHttpRequest object
+      const xhr = new XMLHttpRequest();
+      res = {}
+
+      // Set up the request
+      xhr.open('GET', `http://localhost:8000/dashboards/ajax?month=${month}`); // Replace with your actual URL and parameters
+
+      // Handle the response
+      xhr.onload = function() {
+        if (xhr.status === 200) {
+          const responseData = xhr.responseText; // Access the response data as text
+          // Parse the response data as needed (e.g., JSON.parse(responseData))
+          console.log(responseData);
+          res = responseData
+        } else {
+          console.error('Request failed with status:', xhr.status);
+        }
+      };
+
+      // Send the request
+      xhr.send();
+      return res;
+    }
   });
-
-  function cleanMaintenanceData(maintenances) {
-    let maintenanceCount = {};
-
-    for (let i = 0; i < maintenances.length; i++) {
-      let maintenance = maintenances[i];
-      let maintenanceName = maintenance.fields.depot;
-      if (maintenanceName in maintenanceCount) {
-        if (maintenanceCount[maintenanceName] > 0) {
-          maintenanceCount[maintenanceName] =
-            maintenanceCount[maintenanceName] + 1;
-        }
-      } else {
-        maintenanceCount[maintenanceName] = 1;
-      }
-    }
-
-    let keysList = Object.keys(maintenanceCount);
-    let valuesList = Object.values(maintenanceCount);
-
-    return {
-      keys_: keysList,
-      values_: valuesList,
-    };
-  }
-
-  function cleanInspectionData(inspections) {
-    let inspectionCount = {};
-
-    for (let i = 0; i < inspections.length; i++) {
-      let inspection = inspections[i];
-      let inspectionName = inspection.fields.depot;
-      if (inspectionName in inspectionCount) {
-        if (inspectionCount[inspectionName] > 0) {
-          inspectionCount[inspectionName] = inspectionCount[inspectionName] + 1;
-        }
-      } else {
-        inspectionCount[inspectionName] = 1;
-      }
-    }
-
-    let keysList = Object.keys(inspectionCount);
-    let valuesList = Object.values(inspectionCount);
-
-    return {
-      keys_: keysList,
-      values_: valuesList,
-    };
-  }
 </script>
 <script>
   // Get the select element and form
-  const selectDistrict = document.getElementById('selectDistrict');
-  const submitDistrictForm = document.getElementById('submitDistrictForm');
+  const selectDistrict = document.getElementById("selectDistrict");
+  const submitDistrictForm = document.getElementById("submitDistrictForm");
 
   // Add event listener to the select element
-  selectDistrict.addEventListener('change', function() {
+  selectDistrict.addEventListener("change", function () {
     // Submit the form
     submitDistrictForm.submit();
   });
 
   // Get the select element and form
-  const selectRegion = document.getElementById('selectRegion');
-  const submitRegionForm = document.getElementById('submitRegionForm');
+  const selectRegion = document.getElementById("selectRegion");
+  const submitRegionForm = document.getElementById("submitRegionForm");
 
   // Add event listener to the select element
-  selectRegion.addEventListener('change', function() {
+  selectRegion.addEventListener("change", function () {
     // Submit the form
     submitRegionForm.submit();
   });
-
-
 </script>
 {% endblock %}

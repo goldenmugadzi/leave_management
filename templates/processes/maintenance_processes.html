@@ -2,63 +2,191 @@
 {%load static%}
 
 {%block content%}
-<div style= "background-color: rgb(251 207 232);)" class="flex justify-between items-center p-3">
+<div class="flex justify-between items-center p-3">
       <h1 class="text-2xl text-black font-bold ">Maintenance Processes</h1>
-      <div class="text-black mr-4">(Clause 4.4)</div>
-    </div>
 
-<div class="grid grid-cols-4 gap-4 row-span-4">
-  <div class="mt-10"><button type="button"><a class="rounded-xl bg-blue-300 py-4 px-2 m-3" tabindex="-1"
-        href="{% static 'documents\Engineering\processes\ZEDTC HRE MAINS LINE INSPECTION.pdf' %}">Line
-        Inspection</a></button></div>
-  <div class="mt-10"><button type="button"><a class="rounded-xl bg-gray-300 py-4 px-2 m-3 " tabindex="-1"
-        href="{% static 'documents\Engineering\processes\SUBSTATION INSPECTION.pdf' %}">Substation
-        Inspection</a></button></div>
-  <div class="mt-10"><button type="button"><a class="rounded-xl bg-green-300 py-4 px-2 m-3 " tabindex="-1"
-        href="{% static 'documents\Engineering\processes\SUBSTATION INSPECTION.pdf' %}">Fault meter
-        replacement</a></button></div>
-  <div class="mt-10"><button type="button"><a class="rounded-xl bg-yellow-300 py-4 px-2 m-3  " tabindex="-1"
-        href="{% static 'documents\Engineering\processes\SUBSTATION INSPECTION.pdf' %}">Installation
-        Inspection</a></button></div>
-  <div class="mt-10"> <button type="button" class=""><a class="rounded-xl bg-blue-300 py-4 px-2 m-3  " tabindex="-1"
-        href="{% static 'documents\Engineering\processes\SUBSTATION INSPECTION.pdf' %}">Installation
-        Inspection</a></button></div>
-  <div class="mt-10"> <button type="button"><a class="rounded-xl bg-gray-300 py-4 px-2 m-3 " tabindex="-1"
-        href="{% static 'documents\Engineering\processes\POLE REPLACEMENT PROCESS.pdf' %}">Pole replacement</a></button>
-  </div>
-  <div class="mt-10"><button type="button"><a class="rounded-xl bg-green-300 py-4 px-2 m-3 " tabindex="-1"
-        href="{% static 'documents\Engineering\processes\SUBSTATION INSPECTION.pdf' %}">Material Storage</a></button>
-  </div>
-  <div class="mt-10"><button type="button"><a class="rounded-xl bg-yellow-300 py-4 px-2 m-3 " tabindex="-1"
-        href="{% static 'documents\Engineering\processes\SUBSTATION INSPECTION.pdf' %}">Calibration</a></button></div>
-  <div class="mt-10"><button type="button"><a class="rounded-xl bg-blue-300 py-4 px-2 m-3 " tabindex="-1"
-        href="{% static 'documents\Engineering\processes\SUBSTATION INSPECTION.pdf' %}">Goods/Services
-        receiving</a></button></div>
-  <div class="mt-10">
-    <td><button type="button"><a class="rounded-xl bg-gray-300 py-4 px-2 m-3" tabindex="-1"
-          href="{% static 'documents\Engineering\processes\SUBSTATION INSPECTION.pdf' %}">Maintenance
-          Planning</a></button>
-  </div>
-  <div class="mt-10"><button type="button"><a class="rounded-xl bg-green-300 py-4 px-2 m-3 " tabindex="-1"
-        href="{% static 'documents\Engineering\processes\SUBSTATION INSPECTION.pdf' %}"> Plant Maintenance </a></button>
-  </div>
-  <div class="mt-10"><button type="button"><a class="rounded-xl bg-yellow-300 py-4 px-2 m-3 " tabindex="-1"
-        href="{% static 'documents\Engineering\processes\SUBSTATION INSPECTION.pdf' %}">Vehicle hiring</a></button>
-  </div>
-  <div class="mt-10"><button type="button"><a class="rounded-xl bg-blue-300 py-4 px-2 m-3 " tabindex="-1"
-        href="{% static 'documents\Engineering\processes\SUBSTATION INSPECTION.pdf' %}">Hv Switching
-        Authorisation</a></button></div>
-  <div class="mt-10"><button type="button"><a class="rounded-xl bg-gray-300 py-4 px-2 m-3 " tabindex="-1"
-        href="{% static 'documents\Engineering\processes\SUBSTATION INSPECTION.pdf' %}">Change management</a></button>
-  </div>
-  <div class="mt-10"> <button type="button"><a class="rounded-xl bg-green-300 py-4 px-2 m-3" tabindex="-1"
-        href="{% static 'documents\Engineering\processes\SUBSTATION INSPECTION.pdf' %}">Construction</a></button> </div>
-  <div class="mt-10"> <button type="button"><a class="rounded-xl bg-yellow-300 py-4 px-2 m-3" tabindex="-1"
-        href="{% static 'documents\Engineering\processes\ZEDTC HRE MAINS WAYLEAVE.pdf' %}">Mains wayleave</a></button>
-  </div>
+      <div class="text-md mr-4 text-2xl font-semibold">(Clause 4.2)
+      </div>
 </div>
-<div class="bottom-0 left-0 right-0 mt-20 w-40 flex justify-left">
-      <a href="{%url 'Engineeringlist-processes'%}"><button class="bg-black text-white font-bold px-4 py-2 rounded-full">Back</button></a>
-    </div>
+
+<div class="grid grid-cols-3 gap-6 mt-4">
+      <a href="{% static 'documents\Engineering\maintenance\CABLE TRENCHING AND LAYING.pdf' %}">
+            <div
+                  class=" bg-gulf-blue-300 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold">
+                  <div class="group relative">
+                        <button type="button" style="width:18rem; height:6rem">
+                              <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                              <span class="ml-3 text-2xl"> Cable trenching and laying</span></button>
+                  </div>
+            </div>
+      </a>
+
+      <a href="{% static 'documents\Engineering\maintenance\Calibration process.pdf' %}">
+            <div
+                  class="bg-citron-200 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold">
+                  <div class="group relative">
+                        <button type="button" style="width:18rem; height:6rem">
+                              <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                              <span class="ml-3 text-2xl"> Calibration</span></button>
+                  </div>
+            </div>
+      </a>
+
+      <a href="{% static  'documents\Engineering\maintenance\CB MAINTENANCE PROCESS (003).pdf' %}">
+            <div
+                  class="bg-green-300 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold">
+                  <div class="group relative">
+                        <button type="button" style="width:18rem; height:6rem">
+                              <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                              <span class="ml-3 text-2xl">CB maintenance</span></button>
+                  </div>
+            </div>
+      </a>
+
+      <a href="{% static 'documents\Engineering\maintenance\GIS Data collection process.pdf' %}">
+            <div
+                  class=" bg-gulf-blue-300 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold">
+                  <div class="group relative">
+                        <button type="button" style="width:18rem; height:6rem">
+                              <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                              <span class="ml-3 text-2xl">GIS Data collection</span></button>
+                  </div>
+            </div>
+      </a>
+
+      <a href="{% static 'documents\Engineering\maintenance\Goods or service receiving process.pdf' %}">
+            <div
+                  class="bg-citron-200 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold">
+                  <div class="group relative">
+                        <button type="button" style="width:18rem; height:6rem">
+                              <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                              <span class="ml-3 text-2xl">Goods or service receiving</span></button>
+                  </div>
+            </div>
+      </a>
+
+      <a href="{% static  'documents\Engineering\maintenance\HV Switching  Authorisation Process.pdf' %}">
+            <div
+                  class="bg-green-300 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold">
+                  <div class="group relative">
+                        <button type="button" style="width:18rem; height:6rem">
+                              <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                              <span class="ml-3 text-2xl">HV Switching  Authorisation</span></button>
+                  </div>
+            </div>
+      </a>
+
+      <a href="{% static  'documents\Engineering\maintenance\Maintenance planning process.pdf' %}">
+            <div
+                  class=" bg-gulf-blue-300 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold">
+                  <div class="group relative">
+                        <button type="button" style="width:18rem; height:6rem">
+                              <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                              <span class="ml-3 text-2xl">Maintenance planning</span></button>
+                  </div>
+            </div>
+      </a>
+
+      <a href="{% static 'documents\Engineering\maintenance\map digitising process.pdf' %}">
+            <div
+                  class="bg-citron-200 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold">
+                  <div class="group relative">
+                        <button type="button" style="width:18rem; height:6rem">
+                              <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                              <span class="ml-3 text-2xl">Map digitising</span></button>
+                  </div>
+            </div>
+      </a>
+
+      <a href="{% static 'documents\Engineering\maintenance\Plant maintenance process.pdf' %}">
+            <div
+                  class="bg-green-300 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold">
+                  <div class="group relative">
+                        <button type="button" style="width:18rem; height:6rem">
+                              <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                              <span class="ml-3 text-2xl">Plant maintenance</span></button>
+                  </div>
+            </div>
+      </a>
+
+      <a
+            href="{% static 'documents\Engineering\maintenance\POLE REPLACEMENT PROCESS.pdf.pdf' %}">
+            <div
+                  class=" bg-gulf-blue-300 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold">
+                  <div class="group relative">
+                        <button type="button" style="width:18rem; height:6rem">
+                              <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                              <span class="ml-3 text-2xl">Pole replacement</span></button>
+                  </div>
+
+            </div>
+      </a>
+
+      <a href="{% static 'documents\Engineering\maintenance\SUBSTATION INSPECTION.pdf' %}">
+            <div
+                  class="bg-citron-200 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold">
+                  <div class="group relative">
+                        <button type="button" style="width:18rem; height:6rem">
+                              <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                              <span class="ml-3 text-2xl">Substation maintenance</span></button>
+                  </div>
+
+            </div>
+      </a>
+
+
+
+      <a href="{% static 'documents\Engineering\maintenance\Vehicle hiring process.pdf' %}">
+            <div
+                  class="bg-green-300 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold">
+                  <div class="group relative">
+                        <button type="button" style="width:18rem; height:6rem">
+                              <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                              <span class="ml-3 text-2xl">Vehicle hiring</span></button>
+                  </div>
+            </div>
+      </a>
+
+      <a
+            href="{% static 'documents\Engineering\maintenance\ZEDTC HRE MAINS LINE INSPECTION.pdf' %}">
+            <div
+                  class=" bg-gulf-blue-300 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold">
+                  <div class="group relative">
+                        <button type="button" style="width:18rem; height:6rem">
+                              <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                              <span class="ml-3 text-2xl"> Mains line inspection</span></button>
+                  </div>
+
+            </div>
+      </a>
+
+      <a href="{% static 'documents\Engineering\maintenance\ZEDTC HRE MAINS WAYLEAVE.pdf' %}">
+            <div
+                  class="bg-citron-200 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold">
+                  <div class="group relative">
+                        <button type="button" style="width:18rem; height:6rem">
+                              <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                              <span class="ml-3 text-2xl">Mains wayleave</span></button>
+                  </div>
+
+            </div>
+      </a>
+
+
+</div>
+
+<div style="display: flex;justify-content: start;" class="mt-6">
+      <a href="javascript:history.back()">
+            <button style="width: 6rem;height: 3rem;background-color: #020617;margin-right: 20px"
+                  class=" w-28 bg-blue-800 hover:bg-blue-900 outline-none focus:outline-none border px-3 py-1 rounded-xl flex items-center">
+                  <span class="pr-1 font-bold flex-1 text-blue-50">Back</span>
+
+                  </span></button> </a>
+
+</div>
+
+
+
+
 
 {%endblock %}

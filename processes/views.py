@@ -1,11 +1,12 @@
 from argparse import FileType
 import datetime
-from django.shortcuts import render
+from django.shortcuts import redirect, render
 from django.http import FileResponse
 import  os, re
 from beii_v1 import settings
-from processes.models import Filetype
-from processes.models import FormsUploads
+from process_risks.views import Sections
+
+#from processes.models import FormsUploads
 
 # from re import pattern
 
@@ -212,3 +213,15 @@ def file_searchx(request):
 
     return render(request, 'processes/forms/forms_index.html', {'results': results,})
 
+#PROCEDURES AND WORK INSTRUCTIONS
+def viewWorkInstr(request):
+        return render(request, 'processes/procedures_workInstr/home.html')
+        
+def viewEngProcedureHome(request):
+        return render(request, 'processes/procedures_workInstr/eng_proceduresHome.html')
+    
+def viewCommercialProcedureHome(request):
+        return render(request, 'processes/procedures_workInstr/com_procedureHome.html')
+    
+def viewFinanceProcedures(request):
+        return render(request, 'processes/procedures_workInstr/finance_procedures.html')

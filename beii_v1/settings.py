@@ -175,6 +175,28 @@ WSGI_APPLICATION = 'beii_v1.wsgi.application'
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
 
 DATABASES = {
+    # 'default': {
+    #     'ENGINE': 'django.db.backends.mysql',
+    #     'NAME': 'beii',
+    #     'USER': 'beii_user',
+    #     'PASSWORD': 'v4mnwVrOsAupSY0k',
+    #     'HOST': '172.16.8.22'
+    # }
+    # Localhost
+    # 'default': {
+    #     'ENGINE': 'django.db.backends.postgresql_psycopg2',
+    #     'NAME': 'beii',
+    #     'USER': 'Excellence',
+    #     'PASSWORD': 'Z3tdc_it@2021_',
+    #     'HOST': 'localhost'
+    # }
+    # 'default': {
+    #     'ENGINE': 'django.db.backends.mysql',
+    #     'NAME': 'beii',
+    #     'USER': 'root',
+    #     'PASSWORD': '',
+    #     'HOST': 'localhost',
+    # }
     'default': {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'beii',
@@ -236,4 +258,4 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-LOGIN_REDIRECT_URL = '/dashboards/dashboard'
+LOGIN_REDIRECT_URL = '/dashboards/overview'

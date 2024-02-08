@@ -12,7 +12,7 @@ def index(request):
     return render(request, 'process_risks/index.html')
 
 def create(request):
-    departments = Sections.objects.all()
+    departments = Departments.objects.all()
     if request.method == 'POST':
 
         filename = request.POST['file_name']
@@ -74,7 +74,7 @@ def download_file(request):
     return redirect('/process_risks/')
 
 def view_Commercial(request):
-    file=RiskFiles.objects.all()
+    file=Departments.objects.all()
     files = RiskFiles.objects.filter(cat_id="1")
    
     # even =False
@@ -130,5 +130,56 @@ def view_Risk(request):
     
     risk_files = RiskFiles.objects.filter(cat_id="8")
     return render(request, 'process_risks/risk.html',
-                  {"finance_files": risk_files,
+                  {"risk_files": risk_files,
                     "page_title": "Risk Mnangement Process Risks"})
+
+def view_files(request):
+    
+    files = RiskFiles.objects.all()
+    
+    files_list = []
+    for file in files:
+        new_file = {
+            "id": file.id,
+            "filename": file.file_name,
+            "file": file.filepath,
+            "department": file.cat,
+        }
+        files_list.append(new_file)
+    
+    context = json.dumps(files_list, default=str)
+    
+    return render(request, 'process_risks/risk_table.html', {"context": context})
+
+def edit_file(request):
+    departments = Departments.objects.all()
+    if request.method == 'POST':
+        fileid = request.POST['id']
+        filename = request.POST['fileName']
+        department = request.POST['department_id']
+        # file_path = request.FILES['uploadedfile']
+
+        file_path = ''
+        try:
+            if 'uploadedfile' in request.FILES:
+                uploaded_file = request.FILES ['uploadedfile']
+                file_path = 'uploads/process_risks/'+datetime.now().strftime('%Y%m%d%I%M%S%p') + uploaded_file.name
+                save_file(uploaded_file,file_path)
+        except Exception as ex:
+            print("Error:",ex)
+        
+        department_ = Departments.objects.filter(id=department).first()
+        risk = RiskFiles.objects.filter(id=fileid).first()
+        risk.file_name = filename
+        risk.filepath = file_path
+        risk.cat = department_
+        risk.save()
+        return render(request, 
+                      'process_risks/edit_file.html',
+                        {'departments':departments,'risk':risk}) 
+
+    risk_id = request.GET['file_id']
+    risk = RiskFiles.objects.filter(id=risk_id).first()
+    return render(request,
+                   'process_risks/edit_file.html',
+                   {'departments':departments, 'risk':risk})
