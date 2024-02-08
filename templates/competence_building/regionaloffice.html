@@ -2,8 +2,6 @@
 {%load static%}
 {% block styles %}
 <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/canvg/1.5/canvg.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.2/html2pdf.bundle.js"></script>
 <script type="text/javascript">
   
   google.charts.load('current', {packages:["orgchart"]});
@@ -21,72 +19,44 @@
 
       [{'v':'GM', 'f':'<div style="color:Black; font-style:bold">GENERAL MANAGER</div>'},
        '', 'The President'],
-      [{'v':'Commercial Manager', 'f':'<a href="commercial"> <div style="color:black; font-style:bold">COMMERCIAL MANAGER</div></a>'},
+       [{'v':'SECRETARY', 'f':'<a href="commercial"> <div style="color:black; font-style:bold">SECRETARY</div></a>'},
        'GM', ''],
-       [{'v':'DM Sub', 'f':'<div></div>'},
+      [{'v':'Commercial Manager', 'f':'<a href="commercial"> <div style="color:black; font-style:bold">COMMERCIAL MANAGER (Chart D4.10)</div></a>'},
        'GM', ''],
-      [{'v':'District Manager', 'f':'<a href= "district" <div style="color:black; font-style:bold">DISTRICT MANAGER</div></a>'},
-       'DM Sub', ''],
-       [{'v':'Risk Sub', 'f':'<div></div>'},
-       'GM', ''],
-       [{'v':'Risk Sub2', 'f':'<div></div>'},
-       'Risk Sub', ''],
-       [{'v':'CRO', 'f':'<a href="losscontrol"><div style="color:black; font-style:bold">CHIEF RISK OFFICER</div></a>'},
-       'Risk Sub2', 'risk and loss control'],
+   
+      
+      [{'v':'District Manager', 'f':'<a href= "district" <div style="color:black; font-style:bold">DISTRICT MANAGER(4) (ChartD4.6-9)</div></a>'},
+       'GM', 'DISTRICT'],
+     
+       
+       [{'v':'CRO', 'f':'<a href="losscontrol"><div style="color:black; font-style:bold">CHIEF_RISK OFFICER (Chart D4.4)</div></a>'},
+       'GM', 'risk and loss control'],
 
-      [{'v':'Procurement Sub', 'f':'<div></div>'},
-      'GM', ''],
-      [{'v':'Procurement Sub2', 'f':'<div></div>'},
-      'Procurement Sub', ''],
-      [{'v':'Procurement', 'f':'<a href="procurement"><div style="color:black; font-style:bold">PROCUREMENT OFFICER</div></a>'},
-      'Procurement Sub2', 'Procurements'],    
-      [{'v':'ENG', 'f':'<a href="engineering"> <div style="color:black; font-style:bold">ENGINEERING MANAGER</div></a>'},
+      [{'v':'PA', 'f':'<a href="procurement"><div style="color:black; font-style:bold">PROCUREMENT ADMINISTRATOR</div></a>'},
+      'GM', 'Procurements'],    
+      [{'v':'ENG', 'f':'<a href="engineering"> <div style="color:black; font-style:bold">ENGINEERING MANAGER (Chart D4.5)</div></a>'},
        'GM', 'VP'],
-      [{'v':'IT Sub', 'f':'<div></div>'},
+    
+        [{'v':'Information Technology', 'f':'<a href="IT"><div style="color:black; font-style:bold">SYSTEMS ADMINISTARTOR (Chart D4.11)</div></a>'},
+      'GM', 'IT'],
+      
+     [{'v':'HR Manager', 'f':'<a href="humanresource"><div style="color:black; font-style:bold">HUMAN RESOURCE AND ADMIN MANAGER (Chart D4.3)</div></a>'},
       'GM', ''],
-      [{'v':'IT Sub2', 'f':'<div></div>'},
-      'IT Sub', ''],
-        [{'v':'Information Technology', 'f':'<a href="IT"><div style="color:black; font-style:bold">SYSTEMS ADMINISTARTOR</div></a>'},
-      'IT Sub2', ''],
-      [{'v':'HR Sub', 'f':'<div></div>'},
-      'GM', ''],
-     [{'v':'HR Manager', 'f':'<a href="humanresource"><div style="color:black; font-style:bold">HR MANAGER</div></a>'},
-      'HR Sub', ''],
-      [{'v':'Finance Manager', 'f':'<a href="finance"><div style="color:black; font-style:bold">FINANCE MANAGER</div></a>'},
+      [{'v':'Finance Manager', 'f':'<a href="finance"><div style="color:black; font-style:bold">FINANCE MANAGER (Chart D4.2)</div></a>'},
       'GM', ''],
     ]);
 
     // Create the chart.
     var chart = new google.visualization.OrgChart(document.getElementById('chart_div'));
     // Draw the chart, setting the allowHtml option to true for the tooltips.
-    chart.draw(data, {'allowHtml':true});
-
-    document.getElementById('download_button').addEventListener('click', function() {
-      var chartContainer = document.getElementById('chart_div');
-      var chartImage = chartContainer.getElementsByTagName('table')[0].outerHTML;
-
-      // Create a temporary canvas element to draw the chart as an image
-      var canvas = document.createElement('canvas');
-      canvas.width = chartContainer.offsetWidth;
-      canvas.height = chartContainer.offsetHeight;
-      var ctx = canvas.getContext('2d');
-      ctx.drawSvg(chartImage, 0, 0, canvas.width, canvas.height);
-
-      // Convert canvas to PDF using html2pdf library
-      var canvasDataUrl = canvas.toDataURL('image/png');
-      var pdfOptions = {
-          filename: 'Harare_Region_Chart.pdf',
-          image: { type: 'png', data: canvasDataUrl },
-          html2canvas: { scale: 2 }
+    chart.draw(data, {'allowHtml':true})
+  
       };
-      html2pdf().set(pdfOptions).from(chartContainer).save();
 
-  })
-
-  }
 </script>
 {% endblock %}
 {%block content%}
+<div style="text-color:blue"  class="download-button">CHART D4.1 HARARE REGION MANAGEMENT</div>
 <!-- <h1 class="flex justify-center text-4xl text-blue-900 mb-3"><strong>REGIONAL OFFICE CHART</strong></h1>
 <div class="bg-black">
 
@@ -102,8 +72,7 @@
     </figure>
      -->
      <div>
-      <a href="#" id="download_button" style="text-color:blue"  class="download-button">Download Chart</a>
-      <div id="chart_div" class="py-10 px-5"></div>
+      <div id="chart_div"></div>
     </div>
 
 {%endblock%}

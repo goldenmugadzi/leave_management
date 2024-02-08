@@ -17,12 +17,18 @@
     data.addRows([
 
 
-
-    [{'v':'CRO', 'f':'<div style="color:black; font-style:bold">CHIEF RISK OFFICER</div>'},
-    '', 'Risk'],
-
-    [{'v':'CRO', 'f':'<div style="color:black; font-style:bold">RISK OFFICER</div>'},
-    'CRO', ''],
+    [{'v':'SO', 'f':'<div style="color:black; font-style:bold">SUPPLIES OFFICER</div>'},
+    '', 'Supplies'],
+    [{'v':'STO', 'f':'<div style="color:black; font-style:bold">STORES OFFICER</div>'},
+    'SO', 'STORES'],
+    [{'v':'STK', 'f':'<div style="color:black; font-style:bold">STORES KEEPER</div>'},
+    'STO', 'STORES'],
+    [{'v':'HDD', 'f':'<div style="color:black; font-style:bold">HEAVY DUTY DRIVER</div>'},
+    'STO', 'STORES'],
+    [{'v':'FUA', 'f':'<div style="color:black; font-style:bold">FUEL ATTANDENT 2</div>'},
+    'STK', 'STORES'],
+    [{'v':'STA', 'f':'<div style="color:black; font-style:bold">STORES ASSISTANT 3</div>'},
+    'STK', 'STORES'],
     
  ]);
 
@@ -31,14 +37,14 @@
     // Draw the chart, setting the allowHtml option to true for the tooltips.
     chart.draw(data, {'allowHtml':true});
 
-  }
+}
 </script>
 {% endblock %}
 {%block content%}
 
 <div>
+  
   <div id="chart_div"></div>
 </div>
-
 
 {%endblock%}

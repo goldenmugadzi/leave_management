@@ -2,8 +2,8 @@
 {%load static%}
 {% block styles %}
 <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/canvg/1.5/canvg.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.2/html2pdf.bundle.js"></script>
+{% comment %} <script src="https://cdnjs.cloudflare.com/ajax/libs/canvg/1.5/canvg.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.2/html2pdf.bundle.js"></script> {% endcomment %}
 <script type="text/javascript">
   
   google.charts.load('current', {packages:["orgchart"]});
@@ -24,9 +24,9 @@
 
    [{'v':'SECRETARY ', 'f':'<div style="color:black; font-style:bold">SECRETARY</div>'},
     'EM', 'Engineeering'],
-    [{'v':'NDE', 'f':'<a href= "networkdevelopment" ><div style="color:black; font-style:bold">NETWORK DEVELOPMENT ENGINEER</div></a>'},
+    [{'v':'NDE', 'f':'<a href= "networkdevelopment" ><div style="color:black; font-style:bold">NETWORK DEVELOPMENT ENGINEER (chart D4.5a)</div></a>'},
     'EM', 'ENGINEERING'],
-    [{'v':'OPPS', 'f':'<a href= "operations" ><div style="color:black; font-style:bold">OPERATIONS AND MAINTANANCE ENGINEER</div></a>'},
+    [{'v':'OPPS', 'f':'<a href= "operations" ><div style="color:black; font-style:bold">OPERATIONS & MAINTANANCE ENGINEER (chart D4.5b)</div></a>'},
     'EM', 'Opperations and maintanance'],
     [{'v':'TC', 'f':'<div style="color:black; font-style:bold">TRANSPORT CONTROLLER</div>'},
     'EM', 'Engineeering'],
@@ -38,11 +38,11 @@
 
     [{'v':'AE', 'f':'<div style="color:black; font-style:bold">AUTO ELECTRICIAN</div>'},
     'GF', 'Engineeering'],
-    [{'v':'AM', 'f':'<div style="color:black; font-style:bold">ATTISAN MECHANIC</div>'},
+    [{'v':'AM', 'f':'<div style="color:black; font-style:bold">ARTISAN MECHANIC x 4</div>'},
     'GF', 'Engineeering'],
     [{'v':'A', 'f':'<div style="color:black; font-style:bold">ASSISTANT</div>'},
     'AE', 'Engineeering'],
-    [{'v':'AA', 'f':'<div style="color:black; font-style:bold">ARTISAN ASSISTANT</div>'},
+    [{'v':'AA', 'f':'<div style="color:black; font-style:bold">ARTISAN ASSISTANT x 4</div>'},
     'AM', 'Engineeering'],
 
  ]);
@@ -52,29 +52,29 @@
     // Draw the chart, setting the allowHtml option to true for the tooltips.
     chart.draw(data, {'allowHtml':true});
 
-    document.getElementById('download_button').addEventListener('click', function() {
-      var chartContainer = document.getElementById('chart_div');
-      var chartImage = chartContainer.getElementsByTagName('table')[0].outerHTML;
+    //document.getElementById('download_button').addEventListener('click', function() {
+     // var chartContainer = document.getElementById('chart_div');
+     // var chartImage = chartContainer.getElementsByTagName('table')[0].outerHTML;
 
       // Create a temporary canvas element to draw the chart as an image
-      var canvas = document.createElement('canvas');
-      canvas.width = chartContainer.offsetWidth;
-      canvas.height = chartContainer.offsetHeight;
-      var ctx = canvas.getContext('2d');
-      ctx.drawSvg(chartImage, 0, 0, canvas.width, canvas.height);
+      //var canvas = document.createElement('canvas');
+     // canvas.width = chartContainer.offsetWidth;
+     // canvas.height = chartContainer.offsetHeight;
+     // var ctx = canvas.getContext('2d');
+     // ctx.drawSvg(chartImage, 0, 0, canvas.width, canvas.height);
 
       // Convert canvas to PDF using html2pdf library
-      var canvasDataUrl = canvas.toDataURL('image/png');
-      var pdfOptions = {
-          filename: 'Engineering_Chart.pdf',
-          image: { type: 'png', data: canvasDataUrl },
-          html2canvas: { scale: 2 },
-  jsPDF: { format: 'a4', orientation: 'landscape' } // Adjust page size here
+      //var canvasDataUrl = canvas.toDataURL('image/png');
+      //var pdfOptions = {
+        //  filename: 'Engineering_Chart.pdf',
+        //  image: { type: 'png', data: canvasDataUrl },
+    //      html2canvas: { scale: 2 },
+  //jsPDF: { format: 'a4', orientation: 'landscape' } // Adjust page size here
 
-      };
-      html2pdf().set(pdfOptions).from(chartContainer).save();
+     // };
+   //   html2pdf().set(pdfOptions).from(chartContainer).save();
 
-  })
+ // })
 
 }
 </script>
@@ -82,7 +82,7 @@
 {%block content%}
 
 <div>
-  <a href="#" id="download_button" style="text-color:blue"  class="download-button">Download Chart</a>
+  <div style="text-color:blue"  class="download-button">CHART D4.5 HARARE REGION - ENGINEERING</div>
   <div id="chart_div" class="py-10 px-5"></div>
 </div>
 
