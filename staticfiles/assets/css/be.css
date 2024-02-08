@@ -1,3 +1,57 @@
+html,
+body {
+  height: 100%;
+}
+
+.text-wht {
+  color: white;
+}
+
+.text-ylw {
+  color: "#FFFF00";
+}
+
+/* since nested groupes are not supported we have to use 
+regular css for the nested dropdowns 
+*/
+li > ul {
+  transform: translatex(100%) scale(0);
+}
+
+li:hover > ul {
+  transform: translatex(101%) scale(1);
+}
+
+li > button svg {
+  transform: rotate(-90deg);
+}
+
+li:hover > button svg {
+  transform: rotate(-270deg);
+}
+
+/* Below styles fake what can be achieved with the tailwind config
+you need to add the group-hover variant to scale and define your custom
+min width style.
+See https://codesandbox.io/s/tailwindcss-multilevel-dropdown-y91j7?file=/index.html
+for implementation with config file
+*/
+.dropdown-group:hover .dropdown-group-hover\:scale-100 {
+  transform: scale(1);
+}
+
+.dropdown-group:hover .dropdown-group-hover\:-rotate-180 {
+  transform: rotate(180deg);
+}
+
+.scale-0 {
+  transform: scale(0);
+}
+
+.min-w-32 {
+  min-width: 8rem;
+}
+
 progress {
   vertical-align: baseline;
 }
@@ -23,11 +77,11 @@ progress {
   --bs-progress-bar-bg: #cb0c9f;
   --bs-progress-bar-transition: width 0.6s ease;
   display: flex;
-  height: var(--bs-progress-height);
+  height: 0.5rem;
   overflow: hidden;
-  font-size: var(--bs-progress-font-size);
-  background-color: var(--bs-progress-bg);
-  border-radius: var(--bs-progress-border-radius);
+  font-size: 1rem;
+  background-color: #cb0c9f;
+  border-radius: 0.5rem;
 }
 
 .progress-bar {
@@ -35,10 +89,10 @@ progress {
   flex-direction: column;
   justify-content: center;
   overflow: hidden;
-  color: var(--bs-progress-bar-color);
+  color: #cb0c9f;
   text-align: center;
   white-space: nowrap;
-  background-color: var(--bs-progress-bar-bg);
+  background-color: #cb0c9f;
   transition: var(--bs-progress-bar-transition);
 }
 @media (prefers-reduced-motion: reduce) {
@@ -58,7 +112,7 @@ progress {
     transparent 75%,
     transparent
   );
-  background-size: var(--bs-progress-height) var(--bs-progress-height);
+  background-size: 1rem 1rem;
 }
 
 .progress-bar-animated {
@@ -73,19 +127,18 @@ progress {
 }
 
 .progress-bar {
-    height: 6px;
-    border-radius: 0.375rem;
-    margin-top: -0.095rem;
-    margin-left: -1px;
-  }
-  
-  .progress {
-    overflow: visible;
-  }
-  .progress.progress-sm {
-    height: 4px;
-  }
-  .progress.progress-lg {
-    height: 20px;
-  }
-  
+  height: 6px;
+  border-radius: 0.375rem;
+  margin-top: -0.095rem;
+  margin-left: -1px;
+}
+
+.progress {
+  overflow: visible;
+}
+.progress.progress-sm {
+  height: 4px;
+}
+.progress.progress-lg {
+  height: 20px;
+}
