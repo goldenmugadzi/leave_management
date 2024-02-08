@@ -1,0 +1,59 @@
+{% extends 'admin_layout.html' %}
+{%load static%}
+{% block styles %}
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+<script type="text/javascript">
+  
+  google.charts.load('current', {packages:["orgchart"]});
+  google.charts.setOnLoadCallback(drawChart);
+
+  function drawChart() {
+    var data = new google.visualization.DataTable();
+    data.addColumn('string', 'Name');
+    data.addColumn('string', 'Manager');
+    data.addColumn('string', 'ToolTip');
+
+    // For each orgchart box, provide the name, manager, and tooltip to show.
+    data.addRows([
+
+
+
+    [{'v':'SE', 'f':'<div style="color:black; font-style:bold">SALES EXECUTIVE</div>'},
+    '', 'District'],
+    [{'v':'AOR', 'f':'<div style="color:black; font-style:bold">ACCOUNTING OFFICE REVENUE ASSURANCE (1)</div>'},
+    'SE', 'District'],
+    [{'v':'AAC', 'f':'<div style="color:black; font-style:bold">ACCOUNTING CLERK (1)</div>'},
+    'AOR', 'District'],
+    [{'v':'AOC', 'f':'<div style="color:black; font-style:bold">ACCOUNTING OFFICE COSTING (1)</div>'},
+    'SE', 'District'],
+    [{'v':'AC', 'f':'<div style="color:black; font-style:bold">ACCOUNTING CLERK (1)</div>'},
+    'AOC', 'District'],
+    [{'v':'AOC', 'f':'<div style="color:black; font-style:bold">ACCOUNTING OFFICE CASH (1)</div>'},
+    'SE', 'District'],
+    [{'v':'CASH', 'f':'<div style="color:black; font-style:bold"> CASHIER (4) (1)</div>'},
+    'AOC', 'District'],
+    [{'v':'CLA', 'f':'<div style="color:black; font-style:bold"> CUSTOMER LIASON ATTENDANT (2) (1)</div>'},
+    'AOC', 'District'],
+    [{'v':'CS', 'f':'<div style="color:black; border-dashed: 4px font-style:bold">COMMERCIAL SUPERVISOR</div>'},
+    'SE', 'District'],
+
+   
+ ]);
+
+    // Create the chart.
+    var chart = new google.visualization.OrgChart(document.getElementById('chart_div'));
+    // Draw the chart, setting the allowHtml option to true for the tooltips.
+    chart.draw(data, {'allowHtml':true});
+
+  
+  }
+</script>
+{% endblock %}
+{%block content%}
+
+<div>
+    <div style="text-color:blue font-size:14pt"><strong>CHART D4.9e HARARE REGION - ENGINEERING EAST DISTRICT SALES</strong></div>
+    <div id="chart_div" class="py-10 px-5"></div>
+</div>
+
+{%endblock%}

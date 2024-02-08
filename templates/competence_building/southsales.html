@@ -18,12 +18,22 @@
 
 
 
-    [{'v':'CRO', 'f':'<div style="color:black; font-style:bold">CHIEF RISK OFFICER</div>'},
-    '', 'Risk'],
+    [{'v':'SE', 'f':'<div style="color:black; font-style:bold">SALES EXECUTIVE</div>'},
+    '', 'District'],
+    [{'v':'AOR', 'f':'<div style="color:black; font-style:bold">ACCOUNTING OFFICE REVENUE ASSURANCE (1)</div>'},
+    'SE', 'District'],
+    [{'v':'AAC', 'f':'<div style="color:black; font-style:bold">ACCOUNTING CLERK (1)</div>'},
+    'AOR', 'District'],
+    [{'v':'AOC', 'f':'<div style="color:black; font-style:bold">ACCOUNTING OFFICE COSTING (1)</div>'},
+    'SE', 'District'],
+    [{'v':'AC', 'f':'<div style="color:black; font-style:bold">ACCOUNTING CLERK (1)</div>'},
+    'AOC', 'District'],
+    [{'v':'AOC', 'f':'<div style="color:black; font-style:bold">ACCOUNTING OFFICE CASH (1)</div>'},
+    'SE', 'District'],
+    [{'v':'CS', 'f':'<div style="color:black; border-dashed: 4px font-style:bold">COMMERCIAL SUPERVISOR</div>'},
+    'SE', 'District'],
 
-    [{'v':'CRO', 'f':'<div style="color:black; font-style:bold">RISK OFFICER</div>'},
-    'CRO', ''],
-    
+   
  ]);
 
     // Create the chart.
@@ -31,14 +41,15 @@
     // Draw the chart, setting the allowHtml option to true for the tooltips.
     chart.draw(data, {'allowHtml':true});
 
+  
   }
 </script>
 {% endblock %}
 {%block content%}
 
 <div>
+  
   <div id="chart_div"></div>
 </div>
-
 
 {%endblock%}
