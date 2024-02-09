@@ -1,0 +1,19 @@
+{% extends 'admin_layout.html' %}
+{%load static%}
+
+{%block content%}
+<div class="grid grid-cols-3 gap-4 flex flex-row ...">
+
+    <button type="button" class="rounded-xl bg-green-300 py-4 px-2 m-3"><a tabindex="-1"
+            href="{% static 'ob_descriptions\finance\Accountant - General Ledger & Budgets, Creditors (1).pdf' %}"> <strong>ACCOUNTANT</strong></a></button>
+    <button type="button" class="rounded-xl bg-blue-300 py-4 px-2 m-3"><a tabindex="-1"
+            href="{% static 'job_descriptions\finance\accounting_officer_revenue (1).pdf' %}"><strong>ACCOUNTING OFFICER</strong></a></button>
+    <button type="button" class="rounded-xl bg-green-300 py-4 px-2 m-3"><a tabindex="-1"
+            href="{% static 'job_descriptions\finance\accounting_officer_stores (1).pdf' %}"><strong>ACCOUNTING OFFICER STORES</strong></a></button>
+    <button type="button" class="rounded-xl bg-blue-300 py-4 px-2 m-3"><a tabindex="-1"
+            href="{% static 'job_descriptions\finance\procurement_officer.pdf' %}"><strong>PROCUREMENT ADMINISTRATOR</strong></a></button>
+    
+</div>
+
+
+{%endblock %}

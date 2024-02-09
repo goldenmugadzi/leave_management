@@ -1,0 +1,18 @@
+{% extends 'admin_layout.html' %}
+{%load static%}
+
+{%block content%}
+<div class="flex flex-row ...">
+
+    <button type="button"><a tabindex="-1" class="rounded-xl bg-blue-300 py-4 px-2 m-3"
+            href="{% static 'job_descriptions\ict\Systems Administrator.pdf' %}"> <strong>SYSTEMS ADMINISTRATOR</strong></a></button>
+    <button type="button" class="rounded-xl bg-green-300 py-4 px-2 m-3"><a tabindex="-1"
+            href="{% static 'job_descriptions\ict\Systems Support Officer.pdf' %}"><strong>SYSTEMS SUPPORT OFFICER</strong></a></button>
+    <button type="button" class="rounded-xl bg-blue-300 py-4 px-2 m-3"><a tabindex="-1"
+            href="{% static 'job_descriptions\ict\hardware technician.pdf' %}"><strong>HARDWARE TECHNICIAN</strong></a></button>
+    
+
+</div>
+
+
+{%endblock %}

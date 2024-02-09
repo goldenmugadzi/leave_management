@@ -2,8 +2,6 @@
 {%load static%}
 {% block styles %}
 <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/canvg/1.5/canvg.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.2/html2pdf.bundle.js"></script>
 <script type="text/javascript">
   
   google.charts.load('current', {packages:["orgchart"]});
@@ -35,28 +33,20 @@
     'PO', ''],
     [{'v':'AOP', 'f':'<div style="color:black; font-style:bold"> ACCOUNTING OFFICER PAYMENTS </div>'},
     'FA', ''],
+    [{'v':'ACl', 'f':'<div style="color:black; font-style:bold"> ACCOUNTS CLERK </div>'},
+    'AOP', 'payments'],
     [{'v':'AOR', 'f':'<div style="color:black; font-style:bold"> ACCOUNTING OFFICER REVENUE </div>'},
-    'FA', ''],
-    [{'v':'AC', 'f':'<div style="color:black; font-style:bold"> ACCOUNTS CLERK </div>'},
+    'FA', ''],[{'v':'AC', 'f':'<div style="color:black; font-style:bold"> ACCOUNTS CLERK </div>'},
     'AOR', ''],
-    [{'v':'AC', 'f':'<div style="color:black; font-style:bold"> ACCOUNTS CLERK </div>'},
+    [{'v':'ACl', 'f':'<div style="color:black; font-style:bold"> ACCOUNTS CLERK </div>'},
     'AOP', ''],
     [{'v':'AOB', 'f':'<div style="color:black; font-style:bold">ACCOUNTING OFFICER (COST/BUDGET)</div>'},
     'MA', 'Management Accounting'],
-    [{'v':'SO', 'f':'<div style="color:black; font-style:bold">SUPPLIES OFFICER)</div>'},
+    [{'v':'SO', 'f':'<div style="color:black; font-style:bold">SUPPLIES OFFICER (chart D4.2a)</div>'},
     'MA', 'Supplies'],
     [{'v':'ACK', 'f':'<div style="color:black; font-style:bold"> ACCOUNTS CLERK </div>'},
     'AOB', 'Management Accounting'],
-    [{'v':'STO', 'f':'<div style="color:black; font-style:bold">STORES OFFICER</div>'},
-    'SO', 'STORES'],
-    [{'v':'STK', 'f':'<div style="color:black; font-style:bold">STORES KEEPER</div>'},
-    'STO', 'STORES'],
-    [{'v':'HDD', 'f':'<div style="color:black; font-style:bold">HEAVY DUTY DRIVER</div>'},
-    'STO', 'STORES'],
-    [{'v':'FUA', 'f':'<div style="color:black; font-style:bold">FUEL ATTANDENT</div>'},
-    'STK', 'STORES'],
-    [{'v':'STA', 'f':'<div style="color:black; font-style:bold">STORES ASSISTANT</div>'},
-    'STK', 'STORES'],
+   
     
  ]);
 
@@ -65,37 +55,14 @@
     // Draw the chart, setting the allowHtml option to true for the tooltips.
     chart.draw(data, {'allowHtml':true});
 
-    document.getElementById('download_button').addEventListener('click', function() {
-      var chartContainer = document.getElementById('chart_div');
-      var chartImage = chartContainer.getElementsByTagName('table')[0].outerHTML;
-
-      // Create a temporary canvas element to draw the chart as an image
-      var canvas = document.createElement('canvas');
-      canvas.width = chartContainer.offsetWidth;
-      canvas.height = chartContainer.offsetHeight;
-      var ctx = canvas.getContext('2d');
-      ctx.drawSvg(chartImage, 0, 0, canvas.width, canvas.height);
-
-      // Convert canvas to PDF using html2pdf library
-      var canvasDataUrl = canvas.toDataURL('image/png');
-      var pdfOptions = {
-          filename: 'Finance_Chart.pdf',
-          image: { type: 'png', data: canvasDataUrl },
-          html2canvas: { scale: 2 }
-      };
-      html2pdf().set(pdfOptions).from(chartContainer).save();
-
-
-  })
-
 }
 </script>
 {% endblock %}
 {%block content%}
 
 <div>
-  <a href="#" id="download_button" style="text-color:blue"  class="download-button">Download Chart</a>
-  <div id="chart_div" class="py-10 px-5"></div>
+  
+  <div id="chart_div"></div>
 </div>
 
 {%endblock%}
