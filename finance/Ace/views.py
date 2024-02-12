@@ -701,7 +701,7 @@ def get_Ace_records_requester(request):
 
         if role.application == "ace":
             custom_user_roles["ace"] = role
-    Ace_role=str(custom_user_roles["ace"])git pull
+    Ace_role=str(custom_user_roles["ace"])
     print(Ace_role,"ace role")
 
     user_title = request.user.get_full_name()
@@ -1235,8 +1235,8 @@ def final_approval(request):
 
     if request.method == "POST":
         Ace_id = request.POST['Ace_id2']
-        budget=ace.budget_id
-        budget = Budget.objects.filter(budget_id=budget).first()
+        # budget=ace.budget_id
+        # budget = Budget.objects.filter(budget_id=budget).first()
 
         Ace_1 = Ace.objects.filter(Ace_id2=Ace_id).first()
         # if r
@@ -1253,8 +1253,7 @@ def final_approval(request):
     return render(request, user_page, {"title": "All Records",
                                        "context": pettyc1,
                                        "user_title": user_title,
-                                       "user_groups": user_groups,
-                                       "budget": budget})
+                                       "user_groups": user_groups})
 
 
 @login_required(login_url='/accounts/login/')
