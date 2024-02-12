@@ -701,7 +701,7 @@ def get_Ace_records_requester(request):
 
         if role.application == "ace":
             custom_user_roles["ace"] = role
-    Ace_role=str(custom_user_roles["ace"])
+    Ace_role=str(custom_user_roles["ace"])git pull
     print(Ace_role,"ace role")
 
     user_title = request.user.get_full_name()
@@ -716,7 +716,7 @@ def get_Ace_records_requester(request):
     records = Ace.objects.filter(requested_by=requested_by).all()
     context = serializers.serialize('json', records)
 
-    user_page = 'Ace/index_requester.html'
+    user_page = 'ace/index_requester.html'
     # print(context)
 
     return render(request, user_page, {"title": "All Records",
