@@ -129,10 +129,14 @@ def home(request):
         "ace": {},
         "users": {},
     }
-
-    roles = user_profile.roles
-    if roles:
-        user_group_ids = roles
+    
+    region = None
+    district = None
+    depot = None
+    section = None
+    user_designation = None
+    if user_profile:
+        user_group_ids = user_profile.roles
         user_group_ids = user_group_ids.split(",") if user_group_ids else []
         for id in user_group_ids:
             role = Roles.objects.filter(id=id).first()
@@ -161,27 +165,27 @@ def home(request):
             if role.application == "ace":
                 custom_user_roles["ace"] = role
                 
-
         region = Regions.objects.filter(id=user_profile.region).first()
         district = Districts.objects.filter(code=user_profile.district).first()
         depot = Depots.objects.filter(code=user_profile.depot).first()
         section = Sections.objects.filter(code=user_profile.section).first()
+        user_designation = Designations.objects.filter(id=user_profile.designation).first() if user_profile.designation else None
 
-        custom_user = {
-            "id": user.pk,
-            "username": user.username,
-            "firstname": user.first_name,
-            "lastname": user.last_name,
-            "designation": user_profile.designation,
-            "email": user.email,
-            "section": section,
-            "depot": depot,
-            "district": district,
-            "region": region,
-            "roles": custom_user_roles,
-        }
+    custom_user = {
+        "id": user.pk,
+        "username": user.username,
+        "firstname": user.first_name,
+        "lastname": user.last_name,
+        "designation": user_designation,
+        "email": user.email,
+        "section": section,
+        "depot": depot,
+        "district": district,
+        "region": region,
+        "roles": custom_user_roles,
+    }
         
-        print("custom_user: ", custom_user)
+    print("custom_user: ", custom_user)
 
     return render(
         request, 
