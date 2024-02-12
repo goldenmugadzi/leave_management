@@ -701,7 +701,7 @@ def get_Ace_records_requester(request):
 
         if role.application == "ace":
             custom_user_roles["ace"] = role
-    Ace_role=str(custom_user_roles["ace"])
+    Ace_role=str(custom_user_roles["ace"])git pull
     print(Ace_role,"ace role")
 
     user_title = request.user.get_full_name()
