@@ -64,7 +64,7 @@ def view_southsales(request):
         return render(request, 'competence_building/southsales.html')
 
 def view_northdistrict(request):
-        return render(request, 'competence_building/northditrict.html')
+        return render(request, 'competence_building/northdistrict.html')
 
 def view_northkuwadzana(request):
         return render(request, 'competence_building/northkuwadzana.html')
@@ -85,7 +85,7 @@ def view_eastcbd(request):
         return render(request, 'competence_building/eastcbd.html')
 
 def view_eastborrowdale(request):
-        return render(request, 'competence_building/borrowdale.html')
+        return render(request, 'competence_building/eastborrowdale.html')
 
 def view_eastmabvuku(request):
         return render(request, 'competence_building/eastmabvuku.html')
@@ -141,3 +141,17 @@ def view_infojobdescription(request):
 def view_eastengineering(request):
         return render(request, 'competence_building/eastengineering.html')
 
+def view_easternregion(request):
+        return render(request, 'competence_building/easternregion.html')
+
+def view_chitownengineering(request):
+        return render(request, 'competence_building/chitownengineering.html')
+
+def view_northengineering(request):
+        return render(request, 'competence_building/northengineering.html')
+
+def view_southengineering(request):
+        return render(request, 'competence_building/southengineering.html')
+
+def view_southertoncommercial(request):
+        return render(request, 'competence_building/southertoncommercial.html')
