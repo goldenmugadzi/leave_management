@@ -242,3 +242,30 @@ def viewProcurementProcedures(request):
 
 def viewICTProcedures(request):
     return render(request, 'processes/procedures_workInstr/ict_procedures.html')
+
+def viewICT_WorkInstr(request):
+    return render(request, 'processes/procedures_workInstr/ict_workInstr.html')
+
+
+def viewEng_PlanningProcedure(request):
+    return render(request, 'processes/procedures_workInstr/engPlanning.html')
+
+def viewEng_MaintananceProcedure(request):
+    return render(request, 'processes/procedures_workInstr/engMaintanance.html')
+
+def viewEng_ProjectsProcedure(request):
+    return render(request, 'processes/procedures_workInstr/engProjectsPlanning.html')
+
+def viewRiskProcedures(request):
+    return render(request, 'processes/procedures_workInstr/riskProcedures.html')
+
+def viewClientInteractionProcedures(request):
+    return render(request, 'processes/procedures_workInstr/clientProcedures.html')
+
+def viewPaymentProcedures(request):
+    return render(request, 'processes/procedures_workInstr/paymentProcedures.html')
+
+def viewRevenueAssuranceProcedures(request):
+    return render(request, 'processes/procedures_workInstr/revenueProcedures.html')
+
+
