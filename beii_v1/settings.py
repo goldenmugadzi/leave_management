@@ -30,13 +30,9 @@ SECRET_KEY = 'django-insecure-7per#nouy422m0!hn0!ecb7ltnq#!^#g!2r5&%^5c%v(!ivv&a
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', '172.16.8.97', '172.16.8.22', '127.0.0.1']
+ALLOWED_HOSTS = ["*"]
 
-CORS_ALLOWED_ORIGINS = [
-    "http://172.16.8.97",
-    "http://172.16.8.97:3200",
-    "http://localhost:3000",
-]
+CORS_ALLOWED_ORIGINS = ["*"]
 
 CSRF_TRUSTED_ORIGINS = ['http://172.16.8.97', "http://172.16.8.97:3200"]
 
@@ -110,13 +106,16 @@ INSTALLED_APPS = [
     'django.contrib.humanize',
     'rest_framework',
     'rest_framework_simplejwt',
-    
+     'django_elasticsearch_dsl',
+    'django_elasticsearch_dsl_drf',
+
     'risk.audit.checklist',
     'risk.audit.nonconformity',
     'it.beii_auth.apps.BeiiAuthConfig',
     'it.users.apps.UsersConfig',
     'executive.exec_dashboards.apps.ExecDashboardsConfig',
     'knowledge_center',
+    'Docs',
     'processes.apps.ProcessesConfig',
     'process_risks.apps.ProcessRisksConfig',
     'finance.Ace.apps.AceConfig',
@@ -146,6 +145,12 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+ELASTICSEARCH_DSL = {
+    'default': {
+        'hosts': '127.0.0.1:9200/',  # Replace with your Elasticsearch host and port
+    },
+}
 
 ROOT_URLCONF = 'beii_v1.urls'
 

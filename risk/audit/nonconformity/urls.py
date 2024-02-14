@@ -7,8 +7,7 @@ urlpatterns = [
     path('create_nonconformity/', create_nonconformity, name='create_nonconformity'),
     path('inbox/', view_notifications, name='inbox'),
     path('nonconformities/', view_nonconformities, name='nonconformities'),
-
+    path('my_nonconformities/', my_nonconformities, name='my_nonconformities'),
     path('nonconformity/<int:nonconformity_id>/', nonconformity_details, name='nonconformity'),
-    # path('nonconformity/<int:nonconformity_id>/resolve/', resolve_nonconformity, name='resolve_nonconformity'),
-    # path('nonconformity/<int:nonconformity_id>/reject/', reject_nonconformity, name='reject_nonconformity'),
+    path('newinfo/<int:nonconformity_id>/', additionalInfoForm, name='newinfo'),
 ]

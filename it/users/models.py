@@ -3,20 +3,6 @@ from django.contrib.auth.models import User
 from datetime import date
 from django.utils import timezone
 
-# Create your models here.
-class UserProfile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
-    designation = models.CharField(max_length=100, blank=True)
-    section = models.CharField(max_length=100, blank=True)
-    depot = models.CharField(max_length=100, blank=True)
-    region = models.CharField(max_length=100, blank=True)
-    district = models.CharField(max_length=100, blank=True)
-    status = models.CharField(max_length=30, blank=True)
-    roles = models.CharField(max_length=100, blank=True)
-    last_reset =  models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return self.status
 
 
 class Districts(models.Model):
@@ -70,7 +56,22 @@ class Designations(models.Model):
     chk = models.CharField(max_length=100, blank=True)
     
     def __str__(self):
-        return self.role
+        return self.description
+        
+# Create your models here.
+class UserProfile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    designation = models.ForeignKey(Designations, on_delete=models.CASCADE)
+    section = models.ForeignKey(Sections, on_delete=models.CASCADE)
+    depot =models.ForeignKey(Depots, on_delete=models.CASCADE)
+    region =models.ForeignKey(Regions, on_delete=models.CASCADE)
+    district = models.ForeignKey(Districts, on_delete=models.CASCADE)
+    status = models.CharField(max_length=30, blank=True)
+    roles = models.ManyToManyField(Roles, blank=True, null=True)
+    last_reset = models.DateTimeField(default=timezone.now)
+
+    def __str__(self):
+        return self.user.username
 
 class Notification(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)

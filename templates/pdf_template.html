@@ -1,0 +1,57 @@
+{% extends "admin_layout.html" %}
+
+{% block content %}
+  <div class="w-21cm h-29.7cm mx-auto my-auto">
+    <div id="pdf-canvas"></div>
+
+    <script>
+      // Specify the PDF file URL
+      const pdfFile = '{{ pdf_response }}';
+
+      // Load the PDF document
+      PDFJS.getDocument(pdfFile).promise.then(pdf => {
+          const totalPages = pdf.numPages;
+          let currentPage = 1;
+
+          const canvas = document.getElementById('pdf-canvas');
+          const context = canvas.getContext('2d');
+
+          function renderPage(pageNumber) {
+              // Get the desired page from the PDF
+              pdf.getPage(pageNumber).then(page => {
+                  // Set the desired scale for rendering (1 = 100%)
+                  const scale = 1;
+
+                  // Set the viewport based on the page width and scale
+                  const viewport = page.getViewport({ scale });
+
+                  // Set the canvas dimensions to match the viewport
+                  canvas.width = viewport.width / 2;
+                  canvas.height = viewport.height;
+
+                  // Render the PDF page on the canvas
+                  page.render({
+                      canvasContext: context,
+                      viewport: viewport,
+                  });
+              });
+          }
+
+          function goToPage(event) {
+              event.preventDefault();
+              const pageNumber = parseInt(document.getElementById('page-input').value);
+
+              if (pageNumber >= 1 && pageNumber <= totalPages) {
+                  currentPage = pageNumber;
+                  renderPage(currentPage);
+              }
+          }
+
+          document.getElementById('page-form').addEventListener('submit', goToPage);
+
+          // Initial rendering of the first page
+          renderPage(currentPage);
+      });
+    </script>
+  </div>
+{% endblock %}
