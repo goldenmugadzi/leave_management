@@ -646,7 +646,7 @@ def get_Ace_records_gm(request):
     records: object = Ace.objects.filter(approval_status=approval_status).all()
     context = serializers.serialize('json', records)
 
-    user_page = 'Ace/index.html'
+    user_page = 'ace/index.html'
     # print(context)
 
     return render(request, user_page, {"title": "All Records",
@@ -743,7 +743,7 @@ def get_Ace_records_pettyauthoriser(request):
 
     context = serializers.serialize('json', records)
 
-    user_page = 'Ace/index_requester.html'
+    user_page = 'ace/index_requester.html'
     # print(context)
 
     return render(request, user_page, {"title": "All Records",
@@ -1152,9 +1152,9 @@ def get_to_reject_Ace(request):
     print(context.classification)
     if str(Ace_role)=="process":
         if str(context.classification)=="internal":
-            user_page = 'Ace/Ace_reject_accounting_officer_internal.html'
+            user_page = 'ace/Ace_reject_accounting_officer_internal.html'
         else:
-            user_page = 'Ace/Ace_reject_accounting_officer_project.html'
+            user_page = 'ace/Ace_reject_accounting_officer_project.html'
 
     else:
         if str(context.classification)=="internal":
@@ -1250,7 +1250,7 @@ def final_approval(request):
         Ace_1.date_rejected = date_approved
         Ace_1.save()
 
-    user_page = 'Ace/Ace_approve_project.html'
+    user_page = 'ace/Ace_approve_project.html'
 
     return render(request, user_page, {"title": "All Records",
                                        "context": pettyc1,
@@ -1425,7 +1425,7 @@ def generate_report(request):
         records = Ace.objects.filter(section=secction, date_created__range=[start_date, end_date]).all()
         context = serializers.serialize('json', records)
         print(context)
-        user_page = 'Ace/index.html'
+        user_page = 'ace/index.html'
         return render(request, user_page, {"title": "All Records",
                                            "context": context,
                                            "user_title": user_title,
