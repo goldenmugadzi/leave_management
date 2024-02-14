@@ -357,9 +357,11 @@ def create_Ace(request):
 
         messages.error(request, 'ace succesfully created',ace_id)
         sweetify.success(request, 'ace succesfully created')
-        return redirect('/ace')
 
-    return render(request, 'ace/Ace_create.html', {"title": "Create",
+        return redirect('/ace')
+    user_page = 'ace/Ace_create.html'
+
+    return render(request, user_page, {"title": "Create",
                                                    "user_title": user_title,
                                                    "section_budget": section_budgets})
 
