@@ -83,22 +83,17 @@ def start_fscrawler(request):
     return redirect('/', messages.SUCCESS)
 
 from wsgiref.util import FileWrapper
-
 def view_pdf(request):
     if request.method == 'POST':
         pdf_url = request.POST.get('pdf_url')
         file_path = '/static/' + os.path.relpath(pdf_url, "static")
+        file_path = file_path.replace('\\', '/')
         print(file_path)
         try:
-            # Open the file without the context manager
-            file = open(file_path, 'rb')
-            file_wrapper = FileWrapper(file)
-            response = FileResponse(file_wrapper, content_type='application/pdf')
-            response['Content-Disposition'] = 'inline; filename="your_pdf_filename.pdf"'
-            return render(request, 'pdf_template.html', {'pdf_response': response})
+            return render(request, 'pdf_template.html', {'pdf_path': file_path})
         except FileNotFoundError:
             messages.error(request, 'File not found!')
-            return redirect('home')
+            return redirect('/')
     else:
         messages.error(request, 'Invalid request!')
-        return redirect('home')
+        return redirect('/')

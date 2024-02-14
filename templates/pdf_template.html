@@ -1,59 +1,31 @@
-{% extends "admin_layout.html" %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>PDF Viewer</title>
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
 
-{% block content %}
-  <div class="w-21cm h-29.7cm mx-auto my-auto">
-    Specify the PDF file URL
-   {{pdf_path}} <div id="pdf-canvas"></div>
+        .pdf-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
 
-    <script src="https://mozilla.github.io/pdf.js/build/pdf.js"></script>
-    <script>
-      // Specify the PDF file URL
-      const pdfFile = '{{pdf_path}}';  // Replace "pdf_file" with your URL name
-
-      // Load the PDF document
-      pdfjsLib.getDocument(pdfFile).promise.then(pdf => {
-          const totalPages = pdf.numPages;
-          let currentPage = 1;
-
-          const canvas = document.getElementById('pdf-canvas');
-          const context = canvas.getContext('2d');
-
-          function renderPage(pageNumber) {
-              // Get the desired page from the PDF
-              pdf.getPage(pageNumber).then(page => {
-                  // Set the desired scale for rendering (1 = 100%)
-                  const scale = 1;
-
-                  // Set the viewport based on the page width and scale
-                  const viewport = page.getViewport({ scale });
-
-                  // Set the canvas dimensions to match the viewport
-                  canvas.width = viewport.width / 2;
-                  canvas.height = viewport.height;
-
-                  // Render the PDF page on the canvas
-                  page.render({
-                      canvasContext: context,
-                      viewport: viewport,
-                  });
-              });
-          }
-
-          function goToPage(event) {
-              event.preventDefault();
-              const pageNumber = parseInt(document.getElementById('page-input').value);
-
-              if (pageNumber >= 1 && pageNumber <= totalPages) {
-                  currentPage = pageNumber;
-                  renderPage(currentPage);
-              }
-          }
-
-          document.getElementById('page-form').addEventListener('submit', goToPage);
-
-          // Initial rendering of the first page
-          renderPage(currentPage);
-      });
-    </script>
-  </div>
-{% endblock %}
+        .pdf-container embed {
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div class="pdf-container">
+        <embed src="{{ pdf_path }}" type="application/pdf">
+    </div>
+</body>
+</html>
