@@ -1684,7 +1684,7 @@ def upload_budgets(request):
         redirect("/ace/budgets")
 
     else:
-        return render(request, 'Ace/upload_budget.html',
+        return render(request, 'ace/upload_budget.html',
                       {"title": "Upload budgets",
                       "user_title": user_title,
                     "user_groups": user_groups}
