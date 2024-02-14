@@ -33,5 +33,20 @@ urlpatterns =[
     path('viewEngProcedureHome',views.viewEngProcedureHome, name='Eng_ProcedureHome'),
     path('viewCommercialProcedureHome',views.viewCommercialProcedureHome, name='Commercial_ProcedureHome'),
     path('viewFinanceProcedures',views.viewFinanceProcedures, name='FinanceProcedures'),
+    path('viewHRProcedures',views.viewHRProcedures, name='HR_Procedures'),
+    path('viewSRProcedures',views.viewSRProcedures, name='Stakeholder Relations'),
+    path('viewLegalProcedures',views.viewLegalProcedures, name='Legal Procedures'),
+    path('viewProcurementProcedures',views.viewProcurementProcedures, name='Procurement Procedures'),
+     path('viewICTProcedures',views.viewICTProcedures, name='ICT Procedures'),
+    path('viewICT_WorkInstr',views.viewICT_WorkInstr, name='ICT Procedures and WorkInstr'),
+    path('viewEng_PlanningProcedure',views.viewEng_PlanningProcedure, name='Eng_PlanningProcedure'),
+    path(' viewEng_MaintananceProcedure',views. viewEng_MaintananceProcedure, name='Eng_MaintananceProcedure'),
+    path(' viewEng_ProjectsProcedure',views. viewEng_ProjectsProcedure, name='Engineering Projects Planning'),
+    path(' viewRiskProcedures',views. viewRiskProcedures, name='RiskProcedures'),
+    path(' viewClientInteractionProcedures',views. viewClientInteractionProcedures, name='Client Procedures'),
+    path(' viewPaymentProcedures',views. viewPaymentProcedures, name='Payment Procedures'),
+    path(' viewRevenueAssuranceProcedures',views. viewRevenueAssuranceProcedures, name='Revenue Procedures'),
+    
+   
     
 ]
