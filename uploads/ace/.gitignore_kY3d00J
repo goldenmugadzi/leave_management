@@ -1,5 +1,4 @@
-static/documents/
-static/job_descriptions/
+uploads/
 .env
 env.local
 
