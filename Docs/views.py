@@ -87,10 +87,8 @@ from wsgiref.util import FileWrapper
 def view_pdf(request):
     if request.method == 'POST':
         pdf_url = request.POST.get('pdf_url')
-
-        # Convert the URL to a file path
-        file_path = os.path.join('static', pdf_url.replace('/', os.sep))
-
+        file_path = '/static/' + os.path.relpath(pdf_url, "static")
+        print(file_path)
         try:
             # Open the file without the context manager
             file = open(file_path, 'rb')
@@ -99,7 +97,8 @@ def view_pdf(request):
             response['Content-Disposition'] = 'inline; filename="your_pdf_filename.pdf"'
             return render(request, 'pdf_template.html', {'pdf_response': response})
         except FileNotFoundError:
-            # Handle the case when the file is not found
-            return render(request, 'file_not_found.html')
+            messages.error(request, 'File not found!')
+            return redirect('home')
     else:
-        return render(request, 'pdf_form.html')
+        messages.error(request, 'Invalid request!')
+        return redirect('home')

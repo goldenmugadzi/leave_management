@@ -2,14 +2,16 @@
 
 {% block content %}
   <div class="w-21cm h-29.7cm mx-auto my-auto">
-    <div id="pdf-canvas"></div>
+    Specify the PDF file URL
+   {{pdf_path}} <div id="pdf-canvas"></div>
 
+    <script src="https://mozilla.github.io/pdf.js/build/pdf.js"></script>
     <script>
       // Specify the PDF file URL
-      const pdfFile = '{{ pdf_response }}';
+      const pdfFile = '{{pdf_path}}';  // Replace "pdf_file" with your URL name
 
       // Load the PDF document
-      PDFJS.getDocument(pdfFile).promise.then(pdf => {
+      pdfjsLib.getDocument(pdfFile).promise.then(pdf => {
           const totalPages = pdf.numPages;
           let currentPage = 1;
 
