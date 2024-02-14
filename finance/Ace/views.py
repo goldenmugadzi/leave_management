@@ -357,9 +357,11 @@ def create_Ace(request):
 
         messages.error(request, 'ace succesfully created',ace_id)
         sweetify.success(request, 'ace succesfully created')
-        return redirect('/ace')
 
-    return render(request, 'Ace/Ace_create.html', {"title": "Create",
+        return redirect('/ace')
+    user_page = 'ace/Ace_create.html'
+
+    return render(request, user_page, {"title": "Create",
                                                    "user_title": user_title,
                                                    "section_budget": section_budgets})
 
@@ -428,7 +430,7 @@ def get_Ace_records_section_head(request):
     records = Ace.objects.filter(section=section_used).all()
     context = serializers.serialize('json', records)
 
-    user_page = 'Ace/index.html'
+    user_page = 'ace/index.html'
     # print(context)
 
     return render(request, user_page, {"title": "All Records",
@@ -498,7 +500,7 @@ def get_Ace_records_accounting_officer(request):
     records: object = Ace.objects.filter(approval_status=approval_status).all()
     context = serializers.serialize('json', records)
 
-    user_page = 'Ace/index.html'
+    user_page = 'ace/index.html'
     # print(context)
 
     return render(request, user_page, {"title": "All Records",
@@ -644,7 +646,7 @@ def get_Ace_records_gm(request):
     records: object = Ace.objects.filter(approval_status=approval_status).all()
     context = serializers.serialize('json', records)
 
-    user_page = 'Ace/index.html'
+    user_page = 'ace/index.html'
     # print(context)
 
     return render(request, user_page, {"title": "All Records",
@@ -741,7 +743,7 @@ def get_Ace_records_pettyauthoriser(request):
 
     context = serializers.serialize('json', records)
 
-    user_page = 'Ace/index_requester.html'
+    user_page = 'ace/index_requester.html'
     # print(context)
 
     return render(request, user_page, {"title": "All Records",
@@ -956,16 +958,16 @@ def get_to_approve_Ace(request):
     # print(context.classification)
     if str(Ace_role)=="process":
         if str(context.classification)=="internal":
-            user_page = 'Ace/Ace_approve_accounting_officer_internal.html'
+            user_page = 'ace/Ace_approve_accounting_officer_internal.html'
         else:
-            user_page = 'Ace/Ace_approve_accounting_officer_project.html'
+            user_page = 'ace/Ace_approve_accounting_officer_project.html'
 
 
     else:
         if str(context.classification)=="internal":
-            user_page = 'Ace/Ace_approve_internal.html'
+            user_page = 'ace/Ace_approve_internal.html'
         if str(context.classification)=="project":
-            user_page = 'Ace/Ace_approve_project.html'
+            user_page = 'ace/Ace_approve_project.html'
 
     # print(user_page)
 
@@ -1150,15 +1152,15 @@ def get_to_reject_Ace(request):
     print(context.classification)
     if str(Ace_role)=="process":
         if str(context.classification)=="internal":
-            user_page = 'Ace/Ace_reject_accounting_officer_internal.html'
+            user_page = 'ace/Ace_reject_accounting_officer_internal.html'
         else:
-            user_page = 'Ace/Ace_reject_accounting_officer_project.html'
+            user_page = 'ace/Ace_reject_accounting_officer_project.html'
 
     else:
         if str(context.classification)=="internal":
-            user_page = 'Ace/Ace_reject_internal.html'
+            user_page = 'ace/Ace_reject_internal.html'
         if str(context.classification)=="project":
-            user_page = 'Ace/Ace_reject_project.html'
+            user_page = 'ace/Ace_reject_project.html'
     print(context)
 
 
@@ -1248,7 +1250,7 @@ def final_approval(request):
         Ace_1.date_rejected = date_approved
         Ace_1.save()
 
-    user_page = 'Ace/Ace_approve_project.html'
+    user_page = 'ace/Ace_approve_project.html'
 
     return render(request, user_page, {"title": "All Records",
                                        "context": pettyc1,
@@ -1279,7 +1281,7 @@ def final_reject(request):
         pettyc1.save()
         # print(pettyc1)
 
-    user_page = 'Ace/Ace_approve_project.html'
+    user_page = 'ace/Ace_approve_project.html'
 
     return render(request, user_page, {"title": "All Records",
                                        "context": pettyc1,
@@ -1301,7 +1303,7 @@ def get_Ace_records_disburser(request):
     records = Ace.objects.filter(approval_status="approved").all()
     context = serializers.serialize('json', records)
 
-    user_page = 'Ace/index.html'
+    user_page = 'ace/index.html'
     # print(context)
 
     return render(request, user_page, {"title": "All Records",
@@ -1327,7 +1329,7 @@ def disburse(request):
         pettyc1 = Ace.objects.filter(petty_id=Ace_id).first()
         # print(pettyc1)
 
-    user_page = 'Ace/disburse.html'
+    user_page = 'ace/disburse.html'
 
     return render(request, user_page, {"title": "All Records",
                                        "context": pettyc1,
@@ -1358,7 +1360,7 @@ def disburse_final(request):
         pettyc1.save()
         # print(pettyc1)
 
-    user_page = 'Ace/disburse.html'
+    user_page = 'ace/disburse.html'
 
     return render(request, user_page, {"title": "All Records",
                                        "context": pettyc1,
@@ -1397,7 +1399,7 @@ def petty_reports(request):
     records = Ace.objects.all()
     context = serializers.serialize('json', records)
 
-    user_page = 'Ace/index.html'
+    user_page = 'ace/index.html'
     print(context)
 
     return render(request, user_page, {"title": "All Records",
@@ -1423,7 +1425,7 @@ def generate_report(request):
         records = Ace.objects.filter(section=secction, date_created__range=[start_date, end_date]).all()
         context = serializers.serialize('json', records)
         print(context)
-        user_page = 'Ace/index.html'
+        user_page = 'ace/index.html'
         return render(request, user_page, {"title": "All Records",
                                            "context": context,
                                            "user_title": user_title,
@@ -1605,7 +1607,7 @@ def list_budgets(request):
     # QuerySet Object
     context = serializers.serialize('json', section_budget)
 
-    user_page = 'Ace/budgets_index.html'
+    user_page = 'ace/budgets_index.html'
     print(context)
 
     return render(request, user_page, {"title": "All Records",
@@ -1765,16 +1767,16 @@ def view_ace(request):
     print(context.classification)
     if str(Ace_role)=="process":
         if str(context.classification)=="internal":
-            user_page = 'Ace/Ace_approve_accounting_officer_internal.html'
+            user_page = 'ace/Ace_approve_accounting_officer_internal.html'
         else:
-            user_page = 'Ace/Ace_approve_accounting_officer_project.html'
+            user_page = 'ace/Ace_approve_accounting_officer_project.html'
 
 
     else:
         if str(context.classification)=="internal":
-            user_page = 'Ace/Ace_view_internal.html'
+            user_page = 'ace/Ace_view_internal.html'
         if str(context.classification)=="project":
-            user_page = 'Ace/Ace_view_project.html'
+            user_page = 'ace/Ace_view_project.html'
 
     print(user_page)
 
