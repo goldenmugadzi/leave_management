@@ -17,11 +17,14 @@ urlpatterns = [
     path('engineering', views.view_engineering, name='engineering'),
     path('commercial', views.view_commercial, name='commercial'),
     path('district', views.view_district, name='district'),
-    path('sales', views.view_sales, name='sales'),
+    path('eastsales', views.view_eastsales, name='eastsales'),
     path('networkdevelopment', views.view_networkdevelopment, name='networkdevelopment'),
     path('operations', views.view_operations, name='operations'),
     path('suplies', views.view_suplies, name='suplies'),
     path('southdistrict', views.view_southdistrict, name='southdistrict'),
+    
+    
+    path('southengineering', views.view_southengineering, name='southengineering'), 
     path('southglenview', views.view_southglenview, name='southglenview'),
     path('southwaterfalls', views.view_southwaterfalls, name='southwaterfalls'),
     path('southsales', views.view_southsales, name='southsales'),
@@ -49,6 +52,10 @@ urlpatterns = [
     path('engjobdescription', views.view_engjobdescription, name='engjobdescription'),
     path('comjobdescription', views.view_comjobdescription, name='comjobdescription'),
     path('eastengineering', views.view_eastengineering, name='eastengineering'),
+    path('easternregion', views.view_easternregion, name='easternregion'),
+    path('chitownengineering', views.view_chitownengineering, name='chitownengineering'),
+    path('northengineering', views.view_northengineering, name='northengineering'),
+    path('southertoncommercial', views.view_southertoncommercial, name='southertoncommercial'),
 
 
 

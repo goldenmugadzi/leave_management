@@ -17,32 +17,50 @@
     data.addRows([
 
 
-    
- 
-    [{'v':'SCSO', 'f':'<div style="color:black; font-style:bold">SENIOR CUSTOMER SERVICE OFFICER (1)</div>'},
-    '', 'District'],
 
+    [{'v':'DM', 'f':'<div style="color:black; font-style:bold">DISTRICT MANAGER</div>'},
+    '', 'District'],
+    [{'v':'S', 'f':'<div style="color:black; font-style:bold">SECRETARY (1)</div>'},
+    'DM', 'District'],
+    
+    [{'v':'SE', 'f':'<div style="color:black; font-style:bold">SENIOR ENGINEER (1)</div>'},
+    'DM', 'District'],
+    [{'v':'SCSO', 'f':'<div style="color:black; font-style:bold">SENIOR CUSTOMER SERVICE OFFICER (1)</div>'},
+    'DM', 'District'],
+    [{'v':'CO', 'f':'<div style="color:black; font-style:bold">COMMERCIAL OFFICER (1)</div>'},
+    'SE', 'District'],
+    [{'v':'CC', 'f':'<div style="color:black; font-style:bold">COMMERCIAL CLERK (1)</div>'},
+    'CO', 'District'],
+    [{'v':'SE', 'f':'<div style="color:black; font-style:bold">SALES EXECUTIVE (1)</div>'},
+    'DM', 'District'],
+    [{'v':'PO', 'f':'<div style="color:black; font-style:bold">PERSONEL OFFICER (1)</div>'},
+    'DM', 'District'],
+    [{'v':'PC', 'f':'<div style="color:black; font-style:bold">PERSONEL CLERK (1)</div>'},
+    'PO', 'District'],
+    [{'v':'MSG', 'f':'<div style="color:black; font-style:bold">MESSANGER/ CLEANER (1)</div>'},
+    'PO', 'District'],
     [{'v':'LA', 'f':'<div style="color:black; font-style:bold">LEAD ARTISAN (1)</div>'},
     'SCSO', 'District'],
     [{'v':'AA', 'f':'<div style="color:black; font-style:bold">ASSISTANT ARTISAN (1)</div>'},
     'LA', 'District'],
     [{'v':'AR', 'f':'<div style="color:black; font-style:bold"> ARTISAN (13)</div>'},
     'SCSO', 'District'],
-    [{'v':'AR', 'f':'<div style="color:black; font-style:bold"> ARTISAN ASSISTANT (13)</div>'},
+    [{'v':'AR', 'f':'<div style="color:black; font-style:bold">ASSISTANT ARTISAN (1)</div>'},
     'SCSO', 'District'],
-    [{'v':'AL', 'f':'<div style="color:black; font-style:bold"> ARTISAN (LINES) (1)</div>'},
+    [{'v':'AL', 'f':'<div style="color:black; font-style:bold"> ARTISAN (LINE) (1)</div>'},
     'SCSO', 'District'],
-    [{'v':'AAL', 'f':'<div style="color:black; font-style:bold"> ARTISAN ASSISTANT(LINES) (2)</div>'},
+    [{'v':'AAL', 'f':'<div style="color:black; font-style:bold">ASSISTANT ARTISAN (LINE) (1)</div>'},
     'AL', 'District'],
-    [{'v':'LW', 'f':'<div style="color:black; font-style:bold">LINE WORKER (3)</div>'},
+    [{'v':'LW', 'f':'<div style="color:black; font-style:bold">LINE WORKER (1)</div>'},
     'AL', 'District'],
     [{'v':'CS', 'f':'<div style="color:black; font-style:bold">COMMERCIAL SUPERVISOR (1)</div>'},
     'SCSO', 'District'],
-    [{'v':'RAA', 'f':'<div style="color:black; font-style:bold">REVENUE ASSURANCE ASSISTANT (12)</div>'},
+    [{'v':'RAA', 'f':'<div style="color:black; font-style:bold">REVENUE ASSURANCE ASSISTANT (1)</div>'},
     'CS', 'District'],
     [{'v':'CLA', 'f':'<div style="color:black; font-style:bold">CUSTOMER LIASON ATTENDANT (1)</div>'},
     'CS', 'District'],
-
+    [{'v':'C', 'f':'<div style="color:black; font-style:bold">CASHIER (1)</div>'},
+    'CS', 'District'],
     [{'v':'DC', 'f':'<div style="color:black; font-style:bold">DEPOT CLERK (1)</div>'},
     'SCSO', 'District'],
   
@@ -61,9 +79,8 @@
 {%block content%}
 
 <div>
-    
-    <div style="text-color:blue font-size:14pt"><strong>CHART D4.9a HARARE REGION - ENGINEERING SOUTH DISTRICT CENTRAL BUSINESS DISTRICT CUSTOMER SERVICE CENTRE 2016</strong></div>
-    <div id="chart_div" class="py-10 px-5"></div>
+  <div style="text-color:blue"  class="download-button"><strong>CHART D4.7 HARARE REGION - ENGINEERING SOUTH DISTRICT 2016</strong></div>
+  <div id="chart_div" class="py-10 px-5"></div>
 </div>
 
 {%endblock%}

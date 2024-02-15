@@ -1,0 +1,65 @@
+{% extends 'admin_layout.html' %}
+{%load static%}
+{% block styles %}
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+<script type="text/javascript">
+  
+  google.charts.load('current', {packages:["orgchart"]});
+  google.charts.setOnLoadCallback(drawChart);
+
+  function drawChart() {
+    var data = new google.visualization.DataTable();
+    data.addColumn('string', 'Name');
+    data.addColumn('string', 'Manager');
+    data.addColumn('string', 'ToolTip');
+
+    // For each orgchart box, provide the name, manager, and tooltip to show.
+    data.addRows([
+
+
+      [{'v':'GM', 'f':'<div style="color:Black; font-style:bold">GENERAL MANAGER</div>'},
+       '', 'The President'],
+       [{'v':'SECRETARY', 'f':'<a href="commercial"> <div style="color:black; font-style:bold">SECRETARY</div></a>'},
+       'GM', ''],
+      [{'v':'Commercial Manager', 'f':'<a href="commercial"> <div style="color:black; font-style:bold">COMMERCIAL MANAGER (Chart )</div></a>'},
+       'GM', ''],
+   
+      
+      [{'v':'District Manager', 'f':'<a href= "district" <div style="color:black; font-style:bold">DISTRICT MANAGER (Chart )</div></a>'},
+       'GM', 'DISTRICT'],
+     
+       
+       [{'v':'CRO', 'f':'<a href="losscontrol"><div style="color:black; font-style:bold">CHIEF_RISK OFFICER (Chart )</div></a>'},
+       'GM', 'risk and loss control'],
+
+      [{'v':'PA', 'f':'<a href="procurement"><div style="color:black; font-style:bold">PROCUREMENT ADMINISTRATOR</div></a>'},
+      'GM', 'Procurements'],    
+      [{'v':'ENG', 'f':'<a href="engineering"> <div style="color:black; font-style:bold">ENGINEERING MANAGER (Chart )</div></a>'},
+       'GM', 'VP'],
+    
+        [{'v':'Information Technology', 'f':'<a href="IT"><div style="color:black; font-style:bold">SYSTEMS ADMINISTARTOR (Chart )</div></a>'},
+      'GM', 'IT'],
+      
+     [{'v':'HR Manager', 'f':'<a href="humanresource"><div style="color:black; font-style:bold">HUMAN RESOURCE AND ADMIN MANAGER (Chart )</div></a>'},
+      'GM', ''],
+      [{'v':'Finance Manager', 'f':'<a href="finance"><div style="color:black; font-style:bold">FINANCE MANAGER (Chart )</div></a>'},
+      'GM', ''],
+    ]);
+
+    // Create the chart.
+    var chart = new google.visualization.OrgChart(document.getElementById('chart_div'));
+    // Draw the chart, setting the allowHtml option to true for the tooltips.
+    chart.draw(data, {'allowHtml':true})
+  
+      };
+
+</script>
+{% endblock %}
+{%block content%}
+
+     <div>
+        <div style="text-color:blue"  class="download-button"><strong>CHART -  EASTERN REGION 2016</strong></div>
+        <div id="chart_div" class="py-10 px-5"></div>
+    </div>
+
+{%endblock%}
