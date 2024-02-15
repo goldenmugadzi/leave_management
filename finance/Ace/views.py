@@ -359,7 +359,7 @@ def create_Ace(request):
         sweetify.success(request, 'ace succesfully created')
 
         return redirect('/ace')
-    user_page = 'ace/Ace_create.html'
+    user_page = 'ace/Ace_Create.html'
 
     return render(request, user_page, {"title": "Create",
                                                    "user_title": user_title,
@@ -1684,7 +1684,7 @@ def upload_budgets(request):
         redirect("/ace/budgets")
 
     else:
-        return render(request, 'Ace/upload_budget.html',
+        return render(request, 'ace/upload_budget.html',
                       {"title": "Upload budgets",
                       "user_title": user_title,
                     "user_groups": user_groups}
