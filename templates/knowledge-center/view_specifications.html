@@ -1,5 +1,5 @@
 {% extends 'admin_layout.html' %} {% load static %} {% block content %}
-  <form action="/knowledge-center/search">
+  {% comment %} <form action="/knowledge-center/search">
     {% csrf_token %}
       <div class="flex mt-10 px-3 py-3">
         <div style="width: 100%">
@@ -37,7 +37,7 @@
         {% endfor %}
       </ul>
     </div>
-  </div>
+  </div> {% endcomment %}
 <div class="content-wrapper flex flex-wrap p-2 m-px">
 <div style="margin-bottom: 25px;" class="content-wrapper flex flex-wrap p-2 m-px">
     
