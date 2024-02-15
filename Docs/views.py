@@ -14,7 +14,7 @@ def search_view(request):
     query = request.GET.get('q', '')
 
     try:
-        url = 'http://localhost:9200/_all/_search'
+        url = 'http://172.16.8.98:9200/_all/_search'
         params = {'q': 'content:' + query}
 
         response = requests.get(url, params=params)
