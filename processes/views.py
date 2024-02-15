@@ -171,6 +171,13 @@ def hr_forms(request):
 def commercial_forms(request):
     return render(request,'processes/forms/commercial_forms.html', {})
 
+def it_forms(request):
+    return render(request,'processes/forms/it_forms.html', {})
+
+def risk_forms(request):
+    return render(request,'processes/forms/risk_forms.html', {})
+
+
 def download_static(request, filename):
     file_path = os.path.join(settings.STATIC_ROOT, "documents", filename)
     if os.path.exists(file_path):
