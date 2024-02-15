@@ -19,7 +19,7 @@
 
       [{'v':'GM', 'f':'<div style="color:Black; font-style:bold">GENERAL MANAGER</div>'},
        '', 'The President'],
-       [{'v':'SECRETARY', 'f':'<a href="commercial"> <div style="color:black; font-style:bold">SECRETARY</div></a>'},
+       [{'v':'SECRETARY', 'f':'<a href="#"> <div style="color:black; font-style:bold">SECRETARY</div></a>'},
        'GM', ''],
       [{'v':'Commercial Manager', 'f':'<a href="commercial"> <div style="color:black; font-style:bold">COMMERCIAL MANAGER (Chart D4.10)</div></a>'},
        'GM', ''],
@@ -37,10 +37,10 @@
       [{'v':'ENG', 'f':'<a href="engineering"> <div style="color:black; font-style:bold">ENGINEERING MANAGER (Chart D4.5)</div></a>'},
        'GM', 'VP'],
     
-        [{'v':'Information Technology', 'f':'<a href="IT"><div style="color:black; font-style:bold">SYSTEMS ADMINISTARTOR (Chart D4.11)</div></a>'},
+        [{'v':'Information Technology', 'f':'<a href="IT"><div style="color:black; font-style:bold">SYSTEMS ADMINISTRATOR (Chart D4.11)</div></a>'},
       'GM', 'IT'],
       
-     [{'v':'HR Manager', 'f':'<a href="humanresource"><div style="color:black; font-style:bold">HUMAN RESOURCE AND ADMIN MANAGER (Chart D4.3)</div></a>'},
+     [{'v':'HR Manager', 'f':'<a href="humanresource"><div style="color:black; font-style:bold">HUMAN RESOURCES AND ADMIN MANAGER (Chart D4.3)</div></a>'},
       'GM', ''],
       [{'v':'Finance Manager', 'f':'<a href="finance"><div style="color:black; font-style:bold">FINANCE MANAGER (Chart D4.2)</div></a>'},
       'GM', ''],
@@ -56,7 +56,8 @@
 </script>
 {% endblock %}
 {%block content%}
-<div style="text-color:blue"  class="download-button">CHART D4.1 HARARE REGION MANAGEMENT</div>
+<div style="text-color:blue"  class="download-button"><strong>CHART D4.1 HARARE REGION MANAGEMENT 2016</strong></div>
+<div id="chart_div" class="py-10 px-5"></div>
 <!-- <h1 class="flex justify-center text-4xl text-blue-900 mb-3"><strong>REGIONAL OFFICE CHART</strong></h1>
 <div class="bg-black">
 

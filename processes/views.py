@@ -171,6 +171,13 @@ def hr_forms(request):
 def commercial_forms(request):
     return render(request,'processes/forms/commercial_forms.html', {})
 
+def it_forms(request):
+    return render(request,'processes/forms/it_forms.html', {})
+
+def risk_forms(request):
+    return render(request,'processes/forms/risk_forms.html', {})
+
+
 def download_static(request, filename):
     file_path = os.path.join(settings.STATIC_ROOT, "documents", filename)
     if os.path.exists(file_path):
@@ -225,3 +232,47 @@ def viewCommercialProcedureHome(request):
     
 def viewFinanceProcedures(request):
         return render(request, 'processes/procedures_workInstr/finance_procedures.html')
+
+def viewHRProcedures(request):
+        return render(request, 'processes/procedures_workInstr/hr_procedure.html')
+    
+def viewSRProcedures(request):
+    return render(request, 'processes/procedures_workInstr/stakeholderRelations.html')
+    
+def viewLegalProcedures(request):
+    return render(request, 'processes/procedures_workInstr/legal_procedures.html')
+
+   
+def viewProcurementProcedures(request):
+    return render(request, 'processes/procedures_workInstr/procurement_procedures.html')
+
+
+def viewICTProcedures(request):
+    return render(request, 'processes/procedures_workInstr/ict_procedures.html')
+
+def viewICT_WorkInstr(request):
+    return render(request, 'processes/procedures_workInstr/ict_workInstr.html')
+
+
+def viewEng_PlanningProcedure(request):
+    return render(request, 'processes/procedures_workInstr/engPlanning.html')
+
+def viewEng_MaintananceProcedure(request):
+    return render(request, 'processes/procedures_workInstr/engMaintanance.html')
+
+def viewEng_ProjectsProcedure(request):
+    return render(request, 'processes/procedures_workInstr/engProjectsPlanning.html')
+
+def viewRiskProcedures(request):
+    return render(request, 'processes/procedures_workInstr/riskProcedures.html')
+
+def viewClientInteractionProcedures(request):
+    return render(request, 'processes/procedures_workInstr/clientProcedures.html')
+
+def viewPaymentProcedures(request):
+    return render(request, 'processes/procedures_workInstr/paymentProcedures.html')
+
+def viewRevenueAssuranceProcedures(request):
+    return render(request, 'processes/procedures_workInstr/revenueProcedures.html')
+
+

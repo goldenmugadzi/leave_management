@@ -1,0 +1,37 @@
+{% extends "admin_layout.html" %}
+{% load static %}
+{% load custom_tags %}
+{% load humanize %}
+
+{% block content %}
+    <div class="container mx-auto px-4 py-8">
+        {% comment %} <h1 class="text-3xl font-bold mb-4">Search Results</h1> {% endcomment %}
+        <div id="search-results" class="space-y-4">
+            {% comment %} {% for hit in cleaned_hits %}
+                <div class="bg-white rounded-lg p-4 shadow">
+                    <a href="{{ hit.url }}" class="text-blue-500 hover:underline">{{ hit.file }}</a>
+                    <p class="text-sm  mt-2">{{ hit.content }}</p>
+                </div>
+            {% endfor %} {% endcomment %}
+            {% for hit in cleaned_hits %}
+            <div class="bg-white rounded-lg shadow-lg p-4 mb-4">
+                <form id="pdfForm" method="POST" action="{% url 'view_pdf' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="pdf_url" id="pdfUrlInput" value="{{ hit.url }}">
+                    <button type="submit" class="text-blue-500 hover:underline border-none background-transparent p-0">
+                      <h2 class="text-xl font-bold mb-2">{{ hit.file }}</h2>
+                    </button>
+                  </form>  <p class="mb-2">{{ hit.content }}</p>
+                <div class="card-footer flex  justify-between items-end" style="max-height: 1rem; overflow-y: auto;">
+                    <span class="text-sm text-right  text-green-400">Author: {{ hit.author }}</span>
+                    <span class="text-sm text-right text-yellow-400">{{ hit.date_created }}</span>
+                    {% comment %} <span class="text-sm text-right">{{ response.created_at }} {{ response.status }}</span> {% endcomment %}
+            </div>
+            </div>
+        {% endfor %}
+        </div>
+
+    </div>
+    
+{% endblock %}
+

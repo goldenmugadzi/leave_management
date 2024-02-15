@@ -4,11 +4,12 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 import json
 from .models import Nonconformity,Response
-from .forms import NonconformityForm, NonconformityResponseForm
+from .forms import NonconformityForm, NonconformityResponseForm,AdditionalInfoForm
 from django.contrib.auth.models import User
 # from it.users.models import Notification
 from django.apps import apps
 Notification = apps.get_model(app_label='users', model_name='Notification')
+# Section = apps.get_model(app_label='users', model_name='Sections')
 
 
 from django.contrib import messages
@@ -47,6 +48,19 @@ def create_nonconformity(request):
     
     return render(request, 'risk/nonconformity/create_nonconformity.html', {'form': form})
 
+@login_required
+def additionalInfoForm(request, nonconformity_id):
+    nonconformity = get_object_or_404(Nonconformity, id=nonconformity_id)
+    if request.method == 'POST':
+        form = AdditionalInfoForm(request.POST, instance=nonconformity)
+        if form.is_valid():
+            nonconformity = form.save(commit=False)
+            # Additional processing or validation if needed
+            nonconformity.save()
+            return redirect('nonconformity:nonconformities')
+    else:
+        form = AdditionalInfoForm()
+    return render(request, 'risk/nonconformity/additional_info.html', {'nonconformity': nonconformity, 'form': form})
 
 @login_required
 def nonconformity_details(request, nonconformity_id):
@@ -59,12 +73,17 @@ def nonconformity_details(request, nonconformity_id):
 
     if request.method == 'POST':
         if request.user == nonconformity.recipient:
-            response_form = NonconformityResponseForm(request.POST, instance=response, )
+            response_form = NonconformityResponseForm(request.POST, instance=response)
             if response_form.is_valid():
                 response = response_form.save(commit=False)
                 response.user = request.user
                 response.nonconformity = nonconformity
                 response.save()
+
+                # Prompt for additional information if status is 'accepted'
+                if response.status == 'accepted':
+                    additional_info_form = AdditionalInfoForm(instance=nonconformity)  # Create an instance of the additional info form
+                    return render(request, 'risk/nonconformity/additional_info.html', {'nonconformity': nonconformity, 'form': additional_info_form})
                 
                 # Notify the user who created the nonconformity
                 Notification.objects.create(
@@ -75,7 +94,9 @@ def nonconformity_details(request, nonconformity_id):
 
                 messages.success(request, 'Response added successfully!')
                 return redirect('/nonconformities', nonconformity_id=nonconformity.id)
-
+            else:
+                print(str(response_form))
+                return render(request, 'risk/nonconformity/nonconformity_details.html', {'nonconformity': nonconformity, 'form': response_form})
         elif request.user == nonconformity.created_by:
             form = NonconformityForm(request.POST, request.FILES, instance=nonconformity)
             if form.is_valid():
@@ -120,25 +141,23 @@ def view_notifications(request):
     user = request.user  # Assuming you have authentication enabled
     notifications = Notification.objects.filter(user=user).order_by('is_read', '-created_at')
     return render(request, 'risk/nonconformity/inbox.html', {'notifications': notifications})
+    
 @login_required
 def view_nonconformities(request):
     # Get the current user
     user = request.user
+    profile = user.userprofile  # Access the UserProfile instance
 
-    # Check if the current user belongs to the section head group
-    if user.groups.filter(name='Section Head').exists():
-        # Get the users with the same designation and region as the section head
-        users_with_same_designation = User.objects.filter(section=user.section)
+    nonconformities = Nonconformity.objects.filter(
+        Q(created_by__userprofile__region=profile.region) | Q(recipient__userprofile__region=profile.region)
+    )
+    return render(request, 'risk/nonconformity/nonconformities.html', {'nonconformities': nonconformities})
 
-        # Get the nonconformities created by the users with the same designation and region,
-        # as well as nonconformities created for or by the section head
-        nonconformities = Nonconformity.objects.filter(
-            Q(created_by__in=users_with_same_designation) |  Q(recipient__in=users_with_same_designation) | Q(recipient=request.user)
-        )
-    else:
-        # If the user is not a section head, show all nonconformities created for or by the user
-        nonconformities = Nonconformity.objects.filter(
+@login_required
+def my_nonconformities(request):
+    # Get the current user
+    user = request.user
+    nonconformities = Nonconformity.objects.filter(
             Q(created_by=user) | Q(recipient=user)
         )
-    nonconformities = Nonconformity.objects.all()
-    return render(request, 'risk/nonconformity/nonconformities.html', {'nonconformities': nonconformities})
+    return render(request, 'risk/nonconformity/mynonconformities.html', {'nonconformities': nonconformities})

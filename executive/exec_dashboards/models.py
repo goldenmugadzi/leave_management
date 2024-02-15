@@ -46,3 +46,8 @@ class Maintenance(models.Model):
     district = models.CharField(max_length=100, blank=True, null=True)
     region = models.CharField(max_length=100, blank=True, null=True)
     created_at = models.DateField(blank=True, null=True)
+class File(models.Model):
+    file = models.FileField(upload_to='files/')
+    name = models.CharField(max_length=255)
+    file_type = models.CharField(max_length=50)
+    content = models.TextField(blank=True)

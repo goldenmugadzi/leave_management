@@ -1,5 +1,5 @@
 {% extends 'admin_layout.html' %} {% load static %} {% block content %}
-<div>
+{% comment %} <div>
   <form action="/knowledge-center/search">
     {% csrf_token %}
 
@@ -43,7 +43,7 @@
       {% endfor %}
     </ul>
   </div>
-</div>
+</div> {% endcomment %}
 <div class="content-wrapper flex flex-wrap p-2 m-px">
   <div class="grid grid-cols-3 gap-4">
     <div
@@ -610,6 +610,7 @@
         </div>
       </div>
     </div>
+    
   </div>
 </div>
 

@@ -112,13 +112,15 @@ INSTALLED_APPS = [
     'django.contrib.humanize',
     'rest_framework',
     'rest_framework_simplejwt',
-    
+    'django_elasticsearch_dsl',
+
     'risk.audit.checklist',
     'risk.audit.nonconformity',
     'it.beii_auth.apps.BeiiAuthConfig',
     'it.users.apps.UsersConfig',
     'executive.exec_dashboards.apps.ExecDashboardsConfig',
     'knowledge_center',
+    'Docs',
     'processes.apps.ProcessesConfig',
     'process_risks.apps.ProcessRisksConfig',
     'finance.Ace.apps.AceConfig',
@@ -149,6 +151,12 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+ELASTICSEARCH_DSL = {
+    'default': {
+        'hosts': '127.0.0.1:9200/',  # Replace with your Elasticsearch host and port
+    },
+}
 
 ROOT_URLCONF = 'beii_v1.urls'
 
@@ -190,20 +198,20 @@ DATABASES = {
     #     'PASSWORD': 'Z3tdc_it@2021_',
     #     'HOST': 'localhost'
     # }
-    # 'default': {
-    #     'ENGINE': 'django.db.backends.mysql',
-    #     'NAME': 'beii',
-    #     'USER': 'root',
-    #     'PASSWORD': '',
-    #     'HOST': 'localhost',
-    # }
     'default': {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'beii',
-        'USER': 'excellence',
-        'PASSWORD': 'Z3tdc_it@2021_',
-        'HOST': 'localhost'
+        'USER': 'root',
+        'PASSWORD': '',
+        'HOST': 'localhost',
     }
+    # 'default': {
+    #     'ENGINE': 'django.db.backends.mysql',
+    #     'NAME': 'beii',
+    #     'USER': 'excellence',
+    #     'PASSWORD': 'Z3tdc_it@2021_',
+    #     'HOST': 'localhost'
+    # }
     # Localhost
     # 'default': {
     #     'ENGINE': 'django.db.backends.postgresql_psycopg2',
