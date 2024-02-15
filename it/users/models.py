@@ -70,7 +70,26 @@ class Designations(models.Model):
     chk = models.CharField(max_length=100, blank=True)
     
     def __str__(self):
+<<<<<<< HEAD
         return self.identifier
+=======
+        return self.description
+        
+# Create your models here.
+class UserProfile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    designation = models.ForeignKey(Designations, on_delete=models.CASCADE)
+    section = models.ForeignKey(Sections, on_delete=models.CASCADE)
+    depot =models.ForeignKey(Depots, on_delete=models.CASCADE)
+    region =models.ForeignKey(Regions, on_delete=models.CASCADE)
+    district = models.ForeignKey(Districts, on_delete=models.CASCADE)
+    status = models.CharField(max_length=30, blank=True)
+    roles = models.ManyToManyField(Roles, blank=True, null=True)
+    last_reset = models.DateTimeField(default=timezone.now)
+
+    def __str__(self):
+        return self.user.username
+>>>>>>> e915a7244423c8a4b1416ad8bbae0703b0102d7e
 
 class Notification(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)

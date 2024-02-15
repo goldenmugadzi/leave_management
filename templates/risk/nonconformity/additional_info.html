@@ -16,15 +16,7 @@
               <p class="card-text   font-semibold text-base">Description: {{ nonconformity.description }}</p>
               <p class="card-text  font-semibold text-base">Violation Standard Reference: {{ nonconformity.violation_standard_reference }}</p>
               <p class="card-text  font-semibold text-base">Recommended Corrective Action: {{ nonconformity.recommended_corrective_action }}</p>
-           
-              {% if nonconformity.plan_of_action %}
-              <p class="card-text  font-semibold text-base">Plan of Action: {{ nonconformity.plan_of_action }}</p>
-               
-              {% endif %}
-              {% if nonconformity.expected_completion_date %}
-              <p class="card-text  font-semibold text-base">Expected completion date: {{ nonconformity.expected_completion_date }}</p>
-               
-              {% endif %}
+             
              {% if   nonconformity.attachment %}
              <p class="card-text  font-semibold text-base">Attachment: <a href="{{ nonconformity.attachment.url }}">{{ nonconformity.attachment.url|split_and_get_last:'/' }}</a></p>
               
@@ -44,7 +36,7 @@
 </div>
 {% if request.user.username ==  nonconformity.recipient.username or request.user.username == nonconformity.created_by.username  %}
 
-  <form class="row rounded py-4 border bg-gulf-blue-100  col-6 m-auto p-3 justify-content-center align-content-stretch container" method="POST" enctype="multipart/form-data">
+  <form class="row rounded py-4 border bg-gulf-blue-100  col-6 m-auto p-3 justify-content-center align-content-stretch container" method="POST"  action="{% url 'nonconformity:newinfo' nonconformity_id=nonconformity.id %}" enctype="multipart/form-data">
     {% csrf_token %}
       {{ form.as_table }}
   <table>
