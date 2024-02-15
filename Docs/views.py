@@ -1,17 +1,11 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
 import requests
-import re
 import os
 import subprocess
-import sys
-import socket
-import time
 from pathlib import Path
-import psutil
 from datetime import datetime
 import yaml
-from django.http import FileResponse
 
 documents_path = os.path.join(Path(__file__).resolve().parent.parent, 'static', 'documents')
 
