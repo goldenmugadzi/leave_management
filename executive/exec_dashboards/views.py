@@ -14,8 +14,6 @@ Districts = apps.get_model(app_label='users', model_name='Districts')
 Depots = apps.get_model(app_label='users', model_name='Depots')
 Regions = apps.get_model(app_label='users', model_name='Regions')
 
-months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
-
 # Create your views here.
 def dashboard_index(request):
     
@@ -29,20 +27,13 @@ def dashboard_index(request):
     pbncs = PBNC.objects.all().order_by('-amount')
     tds = TD.objects.all().order_by('-amount')
     upos = UPO.objects.all()
-    
-    current_month = {
-        "id": datetime.now().month,
-        "name": months[datetime.now().month-1]
-    }
-    
     inpections = Inspections.objects.all()
-    inpections_current = Inspections.objects.filter(created_at__month=current_month["id"]).all()
     maintenance_ = Maintenance.objects.all()
 
     mtn = {}
     depots = Depots.objects.all()
     for depot in depots:
-        maintenance_december = Maintenance.objects.filter(depot=depot.depot, created_at__month=current_month["id"])
+        maintenance_december = Maintenance.objects.filter(depot=depot.depot, created_at__month=datetime.now().month)
         maintenance_weekly_count = maintenance_december.annotate(week=ExtractWeek('created_at')).values('week').annotate(count=Count('id')).order_by('week')
 
         week_count = []
@@ -57,7 +48,7 @@ def dashboard_index(request):
     print("mtn: ", mtn)
    
     inspection_count = {}
-    for inspection in inpections_current:
+    for inspection in inpections:
         inspection_name = str(inspection.depot)
         if inspection_name in inspection_count:
             if inspection_count[inspection_name] > 0:
@@ -91,7 +82,6 @@ def dashboard_index(request):
                       "user_title": user_title,
                       "url_path": url_path,
                       "page_title": "Dashboards",
-                      "current_month": current_month,
                       "pbncs": pbncs, 
                       "tds": tds, 
                       "upos": upos, 
@@ -107,16 +97,12 @@ def dashboard_index(request):
 def dashboard_filter(request, item):
     
     page_title = ""
-    district_ = None
-    region_ = None
-    
     # fetch pbnc data
     if item == "district":
         district_id = request.POST['selectedDistrict']
         district_query = Districts.objects.filter(id=district_id).first()
         district = district_query.district
         page_title = district
-        district_ = district_query
         pbncs = PBNC.objects.filter(district=district).all().order_by('-amount')
         tds = TD.objects.filter(district=district).all().order_by('-amount')
         upos = UPO.objects.filter(district=district).all()
@@ -129,7 +115,6 @@ def dashboard_filter(request, item):
         region_query = Regions.objects.filter(id=region_id).first()
         region = region_query.region
         page_title = region
-        region_ = region_query
         pbncs = PBNC.objects.filter(region=region).all().order_by('-amount')
         tds = TD.objects.filter(region=region).all().order_by('-amount')
         upos = UPO.objects.filter(region=region).all()
@@ -196,8 +181,6 @@ def dashboard_filter(request, item):
                   {
                       "user_title": user_title,
                       "page_description": page_title,
-                      "district": district_,
-                      "region": region_,
                       "url_path": url_path,
                       "pbncs": pbncs, 
                       "tds": tds, 

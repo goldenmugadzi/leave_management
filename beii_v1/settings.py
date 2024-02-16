@@ -112,6 +112,7 @@ INSTALLED_APPS = [
     'django.contrib.humanize',
     'rest_framework',
     'rest_framework_simplejwt',
+    'django_elasticsearch_dsl',
 
     'risk.audit.checklist',
     'risk.audit.nonconformity',
