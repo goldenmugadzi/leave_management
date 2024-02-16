@@ -88,37 +88,10 @@
       >
         <div class="flex justify-around">
           <div style="flex: 0.2" class="flex justify-center items-center">
-            Filter Data:
-          </div>
-          <div style="flex: 0.25" class="flex justify-center">
-            <div class="w-full">
-              <form
-                id="submitDepotForm"
-                action="/dashboards/filter/depot"
-                method="post"
-              >
-                {% csrf_token %}
-
-                <select
-                  class="block w-full bg-gulf-blue-50 rounded-md border-0 px-2 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
-                >
-                  <option>Select Depot</option>
-                  <option value="524402">Makoni Depot</option>
-                  <option value="524403">Zengeza Depot</option>
-                  <option value="524502">Kuwadzana Depot</option>
-                  <option value="524503">Mabelreign Depot</option>
-                  <option value="524504">Warren Park Depot</option>
-                  <option value="524602">Glen View Depot</option>
-                  <option value="524603">Waterfalls Depot</option>
-                  <option value="524604">Southerton Depot</option>
-                  <option value="524702">CBD Depot</option>
-                  <option value="524703">Borrowdale Depot</option>
-                  <option value="524704">Mabvuku Depot</option>
-                  <option value="524705">Ruwa Depot</option>
-                  <option value="000000">Seke Depot</option>
-                </select>
-              </form>
-            </div>
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 13.5V3.75m0 9.75a1.5 1.5 0 0 1 0 3m0-3a1.5 1.5 0 0 0 0 3m0 3.75V16.5m12-3V3.75m0 9.75a1.5 1.5 0 0 1 0 3m0-3a1.5 1.5 0 0 0 0 3m0 3.75V16.5m-6-9V3.75m0 3.75a1.5 1.5 0 0 1 0 3m0-3a1.5 1.5 0 0 0 0 3m0 9.75V10.5" />
+            </svg>            
+            Filter
           </div>
           <div style="flex: 0.25" class="flex justify-center">
             <div class="w-full">
@@ -134,12 +107,15 @@
                   name="selectedDistrict"
                   class="block w-full bg-gulf-blue-50 rounded-md border-0 px-2 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
                 >
+                  {% if district %}
+                  <option value="{{district.id}}">{{district.district}}</option>
+                  {% else %}
                   <option>Select District</option>
-                  <option value="1">South District</option>
+                  {% endif %}
+                  <option value="1">Chitungwiza</option>
                   <option value="2">North District</option>
-                  <option value="3">East District</option>
-                  <option value="4">Chitungwiza</option>
-                  <option value="4">Regional Office</option>
+                  <option value="3">South District</option>
+                  <option value="4">East District</option>
                 </select>
               </form>
             </div>
@@ -157,7 +133,11 @@
                   name="selectedRegion"
                   class="block w-full bg-gulf-blue-50 rounded-md border-0 px-2 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
                 >
+                  {% if region %}
+                  <option value="{{region.id}}">{{region.region}}</option>
+                  {% else %}
                   <option>Select Region</option>
+                  {% endif %}
                   <option value="1">Harare Region</option>
                   <option value="2">East Region</option>
                   <option value="3">South Region</option>
@@ -584,8 +564,20 @@
                 id="filterMaintenanceButton"
                 class="block w-full rounded-md border-0 px-2 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
               >
-                <option>Current</option>
+                {% if current_month %}
+                <option value="{{current_month.id}}">{{current_month.name}}</option>
+                {% endif %}
                 <option value="1">January</option>
+                <option value="2">February</option>
+                <option value="3">March</option>
+                <option value="4">April</option>
+                <option value="5">May</option>
+                <option value="6">June</option>
+                <option value="7">July</option>
+                <option value="8">August</option>
+                <option value="9">September</option>
+                <option value="10">October</option>
+                <option value="11">November</option>
                 <option value="12">December</option>
               </select>
             </div>
@@ -615,9 +607,21 @@
                 id="filterInspectionsButton"
                 class="block w-full rounded-md border-0 px-2 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
               >
-                <option>Current</option>
-                <option value="1">January</option>
-                <option value="12">December</option>
+              {% if current_month %}
+              <option value="{{current_month.id}}">{{current_month.name}}</option>
+              {% endif %}
+              <option value="1">January</option>
+              <option value="2">February</option>
+              <option value="3">March</option>
+              <option value="4">April</option>
+              <option value="5">May</option>
+              <option value="6">June</option>
+              <option value="7">July</option>
+              <option value="8">August</option>
+              <option value="9">September</option>
+              <option value="10">October</option>
+              <option value="11">November</option>
+              <option value="12">December</option>
               </select>
             </div>
             <div>
@@ -1117,3 +1121,35 @@ https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js
   });
 </script>
 {% endblock %}
+
+
+{% comment %} <div style="flex: 0.25" class="flex justify-center">
+  <div class="w-full">
+    <form
+      id="submitDepotForm"
+      action="/dashboards/filter/depot"
+      method="post"
+    >
+      {% csrf_token %}
+
+      <select
+        class="block w-full bg-gulf-blue-50 rounded-md border-0 px-2 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+      >
+        <option>Select Depot</option>
+        <option value="524402">Makoni Depot</option>
+        <option value="524403">Zengeza Depot</option>
+        <option value="524502">Kuwadzana Depot</option>
+        <option value="524503">Mabelreign Depot</option>
+        <option value="524504">Warren Park Depot</option>
+        <option value="524602">Glen View Depot</option>
+        <option value="524603">Waterfalls Depot</option>
+        <option value="524604">Southerton Depot</option>
+        <option value="524702">CBD Depot</option>
+        <option value="524703">Borrowdale Depot</option>
+        <option value="524704">Mabvuku Depot</option>
+        <option value="524705">Ruwa Depot</option>
+        <option value="000000">Seke Depot</option>
+      </select>
+    </form>
+  </div>
+</div> {% endcomment %}
