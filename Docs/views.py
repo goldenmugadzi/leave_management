@@ -6,9 +6,7 @@ import os
 import subprocess
 import sys
 import socket
-import time
 from pathlib import Path
-import psutil
 from datetime import datetime
 import yaml
 from django.http import FileResponse
@@ -20,10 +18,17 @@ def search_view(request):
     query = request.GET.get('q', '')
 
     try:
-        url = 'http://localhost:9200/_all/_search'
-        params = {'q': 'content:' + query}
+        url = 'http://localhost:9200/_search'
+        params = {
+            'q': query
+        }
 
         response = requests.get(url, params=params)
+        
+        # url = 'http://localhost:9200/_all/_search'
+        # params = {'q': 'content:' + query}
+
+        # response = requests.get(url, params=params)
         results = []
         if response.status_code == 200:
             data = response.json()
