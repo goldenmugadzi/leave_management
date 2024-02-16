@@ -112,8 +112,7 @@ INSTALLED_APPS = [
     'django.contrib.humanize',
     'rest_framework',
     'rest_framework_simplejwt',
-    'django_elasticsearch_dsl',
-
+    
     'risk.audit.checklist',
     'risk.audit.nonconformity',
     'it.beii_auth.apps.BeiiAuthConfig',
@@ -198,20 +197,20 @@ DATABASES = {
     #     'PASSWORD': 'Z3tdc_it@2021_',
     #     'HOST': 'localhost'
     # }
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'beii',
-        'USER': 'root',
-        'PASSWORD': '',
-        'HOST': 'localhost',
-    }
     # 'default': {
     #     'ENGINE': 'django.db.backends.mysql',
     #     'NAME': 'beii',
-    #     'USER': 'excellence',
-    #     'PASSWORD': 'Z3tdc_it@2021_',
-    #     'HOST': 'localhost'
+    #     'USER': 'root',
+    #     'PASSWORD': '',
+    #     'HOST': 'localhost',
     # }
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'beii',
+        'USER': 'excellence',
+        'PASSWORD': 'Z3tdc_it@2021_',
+        'HOST': 'localhost'
+    }
     # Localhost
     # 'default': {
     #     'ENGINE': 'django.db.backends.postgresql_psycopg2',

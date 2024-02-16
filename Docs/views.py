@@ -2,10 +2,8 @@ from django.shortcuts import render, redirect
 from django.contrib import messages
 import requests
 import os
-import subprocess
 from pathlib import Path
 from datetime import datetime
-import yaml
 
 documents_path = os.path.join(Path(__file__).resolve().parent.parent, 'static', 'documents')
 
@@ -14,10 +12,17 @@ def search_view(request):
     query = request.GET.get('q', '')
 
     try:
-        url = 'http://172.16.8.98:9200/_all/_search'
-        params = {'q': 'content:' + query}
+        url = 'http://localhost:9200/_search'
+        params = {
+            'q': query
+        }
 
         response = requests.get(url, params=params)
+        
+        # url = 'http://localhost:9200/_all/_search'
+        # params = {'q': 'content:' + query}
+
+        # response = requests.get(url, params=params)
         results = []
         if response.status_code == 200:
             data = response.json()
@@ -55,26 +60,26 @@ def search_view(request):
         # Handle the error appropriately, such as displaying an error page or message
         return render(request, 'Docs/search.html', {'results': "results"})
 
-def start_fscrawler(request):
-    fscrawler_path = os.path.join(Path(__file__).resolve().parent.parent, 'fscrawler-2.10', 'bin', 'fscrawler.bat')
+# def start_fscrawler(request):
+#     fscrawler_path = os.path.join(Path(__file__).resolve().parent.parent, 'fscrawler-2.10', 'bin', 'fscrawler.bat')
 
-    config_file_path = os.path.join('fscrawler-2.10', 'DOCS', 'docs', '_settings.yaml')
+#     config_file_path = os.path.join('fscrawler-2.10', 'DOCS', 'docs', '_settings.yaml')
 
-    with open(config_file_path, 'r') as file:
-        config = yaml.safe_load(file)
+#     with open(config_file_path, 'r') as file:
+#         config = yaml.safe_load(file)
 
-    config['fs']['url'] = documents_path
+#     config['fs']['url'] = documents_path
 
-    with open(config_file_path, 'w') as file:
-        yaml.safe_dump(config, file)
+#     with open(config_file_path, 'w') as file:
+#         yaml.safe_dump(config, file)
   
-    print('Running FS crawler...')
-    command_to_run = f'start cmd /k {fscrawler_path} --config_dir ./DOCS docs'
-    subprocess.Popen(command_to_run, shell=True)
-    print('FS crawler has been started')
+#     print('Running FS crawler...')
+#     command_to_run = f'start cmd /k {fscrawler_path} --config_dir ./DOCS docs'
+#     subprocess.Popen(command_to_run, shell=True)
+#     print('FS crawler has been started')
 
-    messages.success(request, 'FS crawler has been started')
-    return redirect('/', messages.SUCCESS)
+#     messages.success(request, 'FS crawler has been started')
+#     return redirect('/', messages.SUCCESS)
 
 from wsgiref.util import FileWrapper
 def view_pdf(request):

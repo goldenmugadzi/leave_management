@@ -56,11 +56,14 @@
                 {{ nonconformity.recipient.userprofile.section }}
               {% endif %}
             </td>
-        <td>
-              {% for response in nonconformity.response_set.all|slice:"-1" %}
-                {{ response.status }}
-              {% endfor %}
-            </td>
+            {% for response in nonconformity.response_set.all %}
+            {% if forloop.last %}
+              <td>
+                <small>
+              {% if  response.user == user %} You : {{ response.status }} {% else %} {{ response.user.first_name|slice:"1" }}. {{ response.user.last_name }}: {{ response.status }} {% endif %}</small>
+              </td>
+            {% endif %}
+          {% endfor %}
           </tr>
           {% endfor %}
         </tbody>
