@@ -64,12 +64,12 @@ class Ace(models.Model):
 
     section_head = models.CharField(null = True, max_length=30)
     section_head_approval_status = models.CharField(max_length=40, blank=True, null=True)
-    section_head_rejection_reason = models.CharField(max_length=5000, blank=True, null=True)
+    section_head_rejection_reason = models.TextField(max_length=5000, blank=True, null=True)
     section_head_approval_date = models.DateField(null=True, blank=True)
 
     accounting_officer = models.CharField(null = True, max_length=30)
     accounting_officer_approval_status = models.CharField(max_length=40, blank=True, null=True)
-    accounting_officer_rejection_reason = models.CharField(max_length=4000,blank=True,null=True)
+    accounting_officer_rejection_reason = models.TextField(max_length=4000,blank=True,null=True)
     accounting_officer_approval_date = models.DateField(null=True, blank=True)
 
     finance_manager = models.CharField(max_length=60, blank=True, null=True)
@@ -85,7 +85,7 @@ class Ace(models.Model):
     gm_rejection_reason = models.CharField(max_length=400, blank=True, null=True)
     gm_approved_date = models.DateField(null=True, blank=True)
 
-    asset_number = models.CharField(max_length=10000, blank=True, null=True)
+    asset_number = models.TextField(max_length=10000, blank=True, null=True)
     capital_estimated = models.FloatField( blank=True, null=True)
     capital_sanctioned = models.FloatField( blank=True, null=True)
     budget_id = models.ForeignKey(Budget, on_delete=models.CASCADE ,default=1)
