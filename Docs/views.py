@@ -5,7 +5,7 @@ import os
 import subprocess
 from pathlib import Path
 from datetime import datetime
-import yaml
+from wsgiref.util import FileWrapper
 
 documents_path = os.path.join(Path(__file__).resolve().parent.parent, 'static', 'documents')
 
@@ -55,28 +55,27 @@ def search_view(request):
         # Handle the error appropriately, such as displaying an error page or message
         return render(request, 'Docs/search.html', {'results': "results"})
 
-def start_fscrawler(request):
-    fscrawler_path = os.path.join(Path(__file__).resolve().parent.parent, 'fscrawler-2.10', 'bin', 'fscrawler.bat')
+# def start_fscrawler(request):
+#     fscrawler_path = os.path.join(Path(__file__).resolve().parent.parent, 'fscrawler-2.10', 'bin', 'fscrawler.bat')
 
-    config_file_path = os.path.join('fscrawler-2.10', 'DOCS', 'docs', '_settings.yaml')
+#     config_file_path = os.path.join('fscrawler-2.10', 'DOCS', 'docs', '_settings.yaml')
 
-    with open(config_file_path, 'r') as file:
-        config = yaml.safe_load(file)
+#     with open(config_file_path, 'r') as file:
+#         config = yaml.safe_load(file)
 
-    config['fs']['url'] = documents_path
+#     config['fs']['url'] = documents_path
 
-    with open(config_file_path, 'w') as file:
-        yaml.safe_dump(config, file)
+#     with open(config_file_path, 'w') as file:
+#         yaml.safe_dump(config, file)
   
-    print('Running FS crawler...')
-    command_to_run = f'start cmd /k {fscrawler_path} --config_dir ./DOCS docs'
-    subprocess.Popen(command_to_run, shell=True)
-    print('FS crawler has been started')
+#     print('Running FS crawler...')
+#     command_to_run = f'start cmd /k {fscrawler_path} --config_dir ./DOCS docs'
+#     subprocess.Popen(command_to_run, shell=True)
+#     print('FS crawler has been started')
 
-    messages.success(request, 'FS crawler has been started')
-    return redirect('/', messages.SUCCESS)
+#     messages.success(request, 'FS crawler has been started')
+#     return redirect('/', messages.SUCCESS)
 
-from wsgiref.util import FileWrapper
 def view_pdf(request):
     if request.method == 'POST':
         pdf_url = request.POST.get('pdf_url')
