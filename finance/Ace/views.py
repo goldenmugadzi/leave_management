@@ -428,14 +428,26 @@ def get_Ace_records_section_head(request):
     Ace_role=str(custom_user_roles["ace"])
     print(Ace_role,"ace role")
 
+    if Ace_role=="pass":
+        # secction = user.section
+        print(section_used)
+        approval_status = "approved by Accounting officer"
+
+        print(section_used)
+
+        records = Ace.objects.filter(section=section_used).all()
+        context = serializers.serialize('json', records)
+
+    else:
+        redirect('/ace')
     # QuerySet Object
-    user_groups = list(l)
+    # user_groups = list(l)
 
     # secction = user.section
-    print(section_used)
-
-    records = Ace.objects.filter(section=section_used).all()
-    context = serializers.serialize('json', records)
+    # print(section_used)
+    #
+    # records = Ace.objects.filter(section=section_used).all()
+    # context = serializers.serialize('json', records)
 
     user_page = 'ace/index.html'
     # print(context)
@@ -572,13 +584,17 @@ def get_Ace_records_fm(request):
             custom_user_roles["ace"] = role
     Ace_role=str(custom_user_roles["ace"])
     print(Ace_role,"ace role")
-
+    if Ace_role=="sanction":
     # secction = user.section
-    print(section_used)
-    approval_status = "approved by Accounting officer"
+        print(section_used)
+        approval_status = "approved by Accounting officer"
 
-    records: object = Ace.objects.filter(approval_status=approval_status).all()
-    context = serializers.serialize('json', records)
+        records: object = Ace.objects.filter(approval_status=approval_status).all()
+        context = serializers.serialize('json', records)
+
+    else:
+        redirect('/ace')
+
 
     user_page = 'ace/index.html'
     # print(context)
@@ -643,15 +659,16 @@ def get_Ace_records_gm(request):
     Ace_role=str(custom_user_roles["ace"])
     print(Ace_role,"ace role")
 
-    # QuerySet Object
-    user_groups = list(l)
+    if Ace_role=="approve":
+        # secction = user.section
+        print(section_used)
+        approval_status = "approved by Finance Manager"
 
-    # secction = user.section
-    # print(section_used)
-    approval_status = "approved by Finance Manager"
+        records: object = Ace.objects.filter(approval_status=approval_status).all()
+        context = serializers.serialize('json', records)
 
-    records: object = Ace.objects.filter(approval_status=approval_status).all()
-    context = serializers.serialize('json', records)
+    else:
+        redirect('/ace')
 
     user_page = 'ace/index.html'
     # print(context)
