@@ -389,7 +389,7 @@
                         role="menu"
                         aria-labelledby="dropdownMenuButton"
                         tabindex="-1"
-                      >
+                       {% get_filtered_notifications %}>
                         {% if filtered_notifications %} 
                         {% for notification in filtered_notifications %}
                         <div class="mb-2">
