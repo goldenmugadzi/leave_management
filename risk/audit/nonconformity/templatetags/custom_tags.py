@@ -30,3 +30,4 @@ def get_filtered_notifications(context):
     notifications = Notification.objects.filter(user=user).order_by('-created_at')
     filtered_notifications = notifications.filter(is_read=False).order_by('-created_at')#[:10]
     context['filtered_notifications'] = filtered_notifications
+    return ""
