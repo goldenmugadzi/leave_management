@@ -1,5 +1,5 @@
 {% extends 'admin_layout.html' %} {% load static %} {% block content %}
-<div>
+{% comment %} <div>
     <form action="/knowledge-center/search">
       {% csrf_token %}
   
@@ -43,7 +43,7 @@
         {% endfor %}
       </ul>
     </div>
-  </div>
+  </div> {% endcomment %}
 <div style="margin-bottom: 25px;" class="content-wrapper flex flex-wrap p-2 m-px">
     <a href="/knowledge-center/view_legislation/rmasts">
     <button  style="width: 19rem;height: 6rem;bg-gulf-blue-300;margin-right: 20px;margin-bottom: 25px" class=" w-28 bg-gulf-blue-300 outline-none focus:outline-none border px-3 py-1 rounded flex items-center">

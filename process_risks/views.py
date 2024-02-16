@@ -3,20 +3,33 @@ from django.http import FileResponse, JsonResponse
 from datetime import datetime
 from django.conf import settings
 import json, os
+from it import users
 from .models import Departments, RiskFiles
 from django.apps import apps
 Sections = apps.get_model(app_label='users', model_name='Sections')
-
+UserProfile = apps.get_model(app_label="users", model_name="UserProfile")
 def index(request):
     
     return render(request, 'process_risks/index.html')
 
 def create(request):
+    user_title = request.user.get_full_name()
+    l = request.user.groups.values_list('name', flat=True)
+    # QuerySet Object
+    user_groups = list(l)
+
+    user_id = request.user.id
+    user = UserProfile.objects.filter(user_id=user_id).first()
+    secction = user.section
     departments = Departments.objects.all()
     if request.method == 'POST':
 
         filename = request.POST['file_name']
         department = request.POST['department_id']
+        section = secction
+        created_by = request.user.username
+        created_at = datetime.now()
+        region =request.user.region
         # file_path = request.FILES['uploadedfile']
 
         file_path = ''
@@ -34,16 +47,18 @@ def create(request):
             cat_id = department,
             file = file_path,
             filepath = file_path,
-
+            section = section,
+            created_by = created_by,
+            region = region,
             )
         riskObj.save()
         return render(request, 
                       'process_risks/create_process_risk.html',
-                        {'departments':departments}) 
+                        {'departments':departments,riskObj:'riskObj'}) 
 
     return render(request,
                    'process_risks/create_process_risk.html',
-                   {'departments':departments} )
+                   {'departments':departments,riskObj:'riskObj'} )
 
 
 def save_file(f,file_path):

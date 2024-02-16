@@ -1,0 +1,67 @@
+{% extends 'admin_layout.html' %}
+{%load static%}
+{% block styles %}
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+<script type="text/javascript">
+  
+  google.charts.load('current', {packages:["orgchart"]});
+  google.charts.setOnLoadCallback(drawChart);
+
+  function drawChart() {
+    var data = new google.visualization.DataTable();
+    data.addColumn('string', 'Name');
+    data.addColumn('string', 'Manager');
+    data.addColumn('string', 'ToolTip');
+
+    // For each orgchart box, provide the name, manager, and tooltip to show.
+    data.addRows([
+
+
+    
+ 
+    [{'v':'DM', 'f':'<div style="color:black; font-style:bold">DISTRICT MANAGER (1)</div>'},
+    '', 'District'],
+    [{'v':'S', 'f':'<div style="color:black; font-style:bold">SECRETARY (1)</div>'},
+    'DM', 'District'],
+    
+    [{'v':'SE', 'f':'<div style="color:black; font-style:bold">SENIOR ENGINEER (1)</div>'},
+    'DM', 'District'],
+    [{'v':'SCSO', 'f':'<a href = "chitownseke"<div style="color:black; font-style:bold">SENIOR CUSTOMER SERVICE OFFICER CHARTD4.10a (1)</div></a>'},
+    'DM', 'District'],
+    [{'v':'SCSO1', 'f':'<a href = "chitownzengeza"<div style="color:black; font-style:bold">SENIOR CUSTOMER SERVICE OFFICER CHARTD4.10b (1)</div></a>'},
+    'DM', 'District'],
+   
+
+    [{'v':'CO', 'f':'<div style="color:black; font-style:bold">COMMERCIAL OFFICER (1)</div>'},
+    'SE', 'District'],
+    [{'v':'CC', 'f':'<div style="color:black; font-style:bold">COMMERCIAL CLERK (1)</div>'},
+    'CO', 'District'],
+    [{'v':'SEC', 'f':'<a href= "chitownsales"<div style="color:black; border: dashed 4pxfont-style:bold">SALES EXECUTIVE (1) (CHART D4.10c)</div></a>'},
+    'DM', 'District'],
+    [{'v':'PO', 'f':'<div style="color:black; font-style:bold">PERSONEL OFFICER (1)</div>'},
+    'DM', 'District'],
+    [{'v':'PC', 'f':'<div style="color:black; font-style:bold">PERSONEL CLERK (1) </div>'},
+    'PO', 'District'],
+    [{'v':'MSG', 'f':'<div style="color:black; font-style:bold">MESSANGER/ CLEANER (1)</div>'},
+    'PO', 'District'],
+
+ ]);
+
+    // Create the chart.
+    var chart = new google.visualization.OrgChart(document.getElementById('chart_div'));
+    // Draw the chart, setting the allowHtml option to true for the tooltips.
+    chart.draw(data, {'allowHtml':true});
+  }
+
+</script>
+
+{% endblock %}
+{%block content%}
+
+<div>
+    
+    <div style="text-color:blue font-size:14pt"><strong>CHART D4.10 HARARE REGION - CHITUNGWIZA DISTRICT </strong></div>
+    <div id="chart_div" class="py-10 px-5"></div>
+</div>
+
+{%endblock%}
