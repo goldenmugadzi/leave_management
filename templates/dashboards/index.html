@@ -1008,47 +1008,9 @@ https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js
       .getElementById("filterMaintenanceButton")
       .addEventListener("change", (event) => {
         const newValue = event.target.value;
-        console.log("newValue: ", newValue);
-        // Do something with the new value
 
-        //var filteredMtnData = maintenances_.filter((dataPoint) => {
-        //  var recordDate_ = new Date(dataPoint.fields.created_at);
-        //  let month = parseInt(recordDate_.getMonth()) + 1;
-        //  return month == newValue;
-        //});
-
-        //let cleanedMaintenanceData = cleanMaintenanceData(filteredMtnData);
-        //console.log("cleanedMaintenanceData: ", cleanedMaintenanceData);
-
-        let resData = getThisMonthData(newValue)
+        getThisMonthData(newValue)
         
-        mChart.data.datasets[0].data = resData["Mabelreign Depot"];
-        mChart.data.datasets[0].label = "Mabelreign Depot"; 
-        mChart.data.datasets[0].data = resData["Borrowdale Depot"];
-        mChart.data.datasets[0].label = "Borrowdale Depot";        
-        mChart.data.datasets[0].data = resData["Glen View Depot"];
-        mChart.data.datasets[0].label = "Glen View Depot"; 
-        mChart.data.datasets[0].data = resData["Kuwadzana Depot"];
-        mChart.data.datasets[0].label = "Kuwadzana Depot";        
-        mChart.data.datasets[0].data = resData["Mabvuku Depot"];
-        mChart.data.datasets[0].label = "Mabvuku Depot"; 
-        mChart.data.datasets[0].data = resData["Ruwa Depot"];
-        mChart.data.datasets[0].label = "Ruwa Depot";        
-        mChart.data.datasets[0].data = resData["Southerton Depot"];
-        mChart.data.datasets[0].label = "Southerton Depot"; 
-        mChart.data.datasets[0].data = resData["Warren Park Depot"];
-        mChart.data.datasets[0].label = "Warren Park Depot"; 
-        mChart.data.datasets[0].data = resData["Waterfalls Depot"];
-        mChart.data.datasets[0].label = "Waterfalls Depot"; 
-        mChart.data.datasets[0].data = resData["CBD Depot"];
-        mChart.data.datasets[0].label = "CBD Depot"; 
-        mChart.data.datasets[0].data = resData["Makoni Depot"];
-        mChart.data.datasets[0].label = "Makoni Depot"; 
-        mChart.data.datasets[0].data = resData["Zengeza Depot"];
-        mChart.data.datasets[0].label = "Zengeza Depot"; 
-        mChart.data.datasets[0].data = resData["Seke"];
-        mChart.data.datasets[0].label = "Seke";
-        mChart.update(); // Render the chart with filtered data
     });
 
     function cleanMaintenanceData(maintenances) {
@@ -1087,10 +1049,21 @@ https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js
       // Handle the response
       xhr.onload = function() {
         if (xhr.status === 200) {
-          const responseData = xhr.responseText; // Access the response data as text
-          // Parse the response data as needed (e.g., JSON.parse(responseData))
-          console.log(responseData);
-          res = responseData
+          const responseData = xhr.responseText;
+          res = JSON.parse(responseData) 
+          console.log("responsible data: ", responseData);
+          // Clear existing data
+          mChart.data.datasets = [];
+
+          // Add new datasets
+          Object.keys(res).forEach((key) => {
+            mChart.data.datasets.push({
+              label: key,
+              data: res[key]
+            });
+          });
+          
+          mChart.update(); // Render the chart with filtered data
         } else {
           console.error('Request failed with status:', xhr.status);
         }
