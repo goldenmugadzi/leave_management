@@ -81,7 +81,6 @@ def search_view(request):
 #     messages.success(request, 'FS crawler has been started')
 #     return redirect('/', messages.SUCCESS)
 
-from wsgiref.util import FileWrapper
 def view_pdf(request):
     if request.method == 'POST':
         pdf_url = request.POST.get('pdf_url')
