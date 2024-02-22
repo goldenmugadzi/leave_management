@@ -1,0 +1,216 @@
+<!--users/templates/quotations/index.html-->
+{% extends 'admin_layout.html' %}
+{% block styles %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.2.0/css/bootstrap.min.css" />
+<link rel="stylesheet" href="https://cdn.datatables.net/1.12.1/css/dataTables.bootstrap5.min.css" />
+{% endblock styles %}
+{% block content %}
+<div class="content-wrapper">
+  <div class="page-header">
+    <h3 class="page-title">
+      <span class="page-title-icon bg-primary text-white me-2">
+        <i class="menu-icon">
+            <span class="material-symbols-outlined mt-1">
+                straighten
+            </span>
+          </i>
+      </span>
+      Reticulations
+    </h3>
+  </div>
+  <div class="col-12 grid-margin stretch-card">
+    <div class="card">
+      <div class="card-body">
+        <h4 class="card-title">Reticulations</h4>
+        <p class="card-description">All Reticulations</p>
+        <table id="planning_design" class="table table-striped" style="width:100%">
+            <thead>
+                <tr>
+                    <th>Approved Layout Plan</th>
+                    <th>Development Permit</th>
+                    <th>Proof Of Land Title</th>
+                    <th>Draft Design</th>
+                    <th>Design Plan</th>
+                    <th>Design Details</th>
+                    <th>Paper Size</th>
+                    <th>Scheduled Start</th>
+                    <th>Actual Start</th>
+                    <th>Scheduled Completion</th>
+                    <th>Actual Completion</th>
+                    <th>Duration</th>
+                    <th>Draughts Person</th>
+                    <th>Comments</th>
+                    <th>STATUS</th>
+                    <th>STAGE</th>
+                    <th>ACTION</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+            <tfoot>
+                <tr>
+                    <th>Approved Layout Plan</th>
+                    <th>Development Permit</th>
+                    <th>Proof Of Land Title</th>
+                    <th>Draft Design</th>
+                    <th>Design Plan</th>
+                    <th>Design Details</th>
+                    <th>Paper Size</th>
+                    <th>Scheduled Start</th>
+                    <th>Actual Start</th>
+                    <th>Scheduled Completion</th>
+                    <th>Actual Completion</th>
+                    <th>Duration</th>
+                    <th>Draughts Person</th>
+                    <th>Comments</th>
+                    <th>STATUS</th>
+                    <th>STAGE</th>
+                    <th>ACTION</th>
+                </tr>
+            </tfoot>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %} 
+<script src="https://code.jquery.com/jquery-3.5.1.js"></script>
+<script src="https://cdn.datatables.net/1.12.1/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.12.1/js/dataTables.bootstrap5.min.js"></script>
+<script>
+    var objs = JSON.parse("{{context|escapejs}}");
+  
+    $(document).ready(function () {
+        $('#planning_design').DataTable(
+          {
+            scrollX: true,
+            data: objs,
+            columns: [
+              {
+                data: "layout_plan_doc",
+                render: function (data, type, row, meta) {
+                  let component;
+                  if(data){
+                    component = `
+                    <a class="btn btn-link" href='/network-development/reticulations/download?f=${data}' >
+                      Download Layout
+                    </a>`
+                  } else {
+                    component = 'None'
+                  }
+                  return component;
+                },
+              },
+              {
+                data: "dev_permit_doc",
+                render: function (data, type, row, meta) {
+                  let component;
+                  if(data){
+                    component = `
+                    <a class="btn btn-link" href='/network-development/reticulations/download?f=${data}' >
+                      Download Permit
+                    </a>`
+                  } else {
+                    component = 'None'
+                  }
+                  return component;
+                },
+              },
+              {
+                data: "land_title",
+                render: function (data, type, row, meta) {
+                  let component;
+                  if(data){
+                    component = `
+                    <a class="btn btn-link" href='/network-development/reticulations/download?f=${data}' >
+                      Download Title
+                    </a>`
+                  } else {
+                    component = 'None'
+                  }
+                  return component;
+                },
+              },
+              {
+                data: "design_draft_plan_path",
+                render: function (data, type, row, meta) {
+                  let component;
+                  if(data){
+                    component = `
+                    <a class="btn btn-link" href='/network-development/reticulations/download?f=${data}' >
+                      Download Draft
+                    </a>`
+                  } else {
+                    component = 'None'
+                  }
+                  return component;
+                },
+              },
+              {
+                data: "design_plan_path",
+                render: function (data, type, row, meta) {
+                  let component;
+                  if(data){
+                    component = `
+                    <a class="btn btn-link" href='/network-development/reticulations/download?f=${data}' >
+                      Download Design Plan
+                    </a>`
+                  } else {
+                    component = 'None'
+                  }
+                  return component;
+                },
+              },
+              {  
+                data: "design_details",
+              },
+              {
+                data: "paper_size",
+              },
+              {
+                data: "design_scheduled_start_date",
+              },
+              {
+                data: "design_actual_start_date",
+              },
+              {
+                data: "design_scheduled_completion_date",
+              },
+              {
+                data: "design_actual_completion_date",
+              },
+              {
+                data: "design_duration_days",
+              },
+              {
+                data: "design_assigned_to",
+              },
+              {
+                data: "design_comments",
+              },
+              {
+                data: "design_status",
+              },
+              {
+                data: "design_stage",
+              },
+              {
+                data: null,
+                render: function (data, type, row, meta) {
+                  return `
+                      <a type="button" class="btn btn-info" href='/network-development/reticulations/draughts_person/create?i=${row.id}' >
+                        <span class="material-symbols-outlined">
+                            chevron_right
+                        </span>
+                      </a>`;
+                },
+              },
+            ],
+          }
+        );
+    });
+  </script>
+{% endblock scripts %}

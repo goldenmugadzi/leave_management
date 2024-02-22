@@ -1,0 +1,79 @@
+{% extends 'admin_layout.html' %}
+{%load static%}
+{% block styles %}
+<style>
+  .google-visualization-orgchart-linebottom {
+    border-bottom: 1px solid #3388dd;
+    height: 2rem;
+}
+.google-visualization-orgchart-lineleft {
+  border-left: 1px solid #3388dd;
+  height: 2rem;
+}
+  </style>
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+<script type="text/javascript">
+  
+  google.charts.load('current', {packages:["orgchart"]});
+  google.charts.setOnLoadCallback(drawChart);
+
+  function drawChart() {
+    var data = new google.visualization.DataTable();
+    data.addColumn('string', 'Name');
+    data.addColumn('string', 'Manager');
+    data.addColumn('string', 'ToolTip');
+
+    // For each orgchart box, provide the name, manager, and tooltip to show.
+    data.addRows([
+
+
+
+    [{'v':'FM', 'f':'<div style="color:black; font-style:bold">FINANCE MANAGER (1)</div>'},
+    '', 'Finance Manager'],
+
+   [{'v':'Finance Manager Secretary', 'f':'<div style="color:black; font-style:bold">SECRETARY (1)</div>'},
+    'FM', ''],
+    [{'v':'FA', 'f':'<div style="color:black; font-style:bold">SENIOR ACCOUNTANT(FINANCIAL ACCOUNTING) (1)</div>'},
+    'FM', ''],
+    [{'v':'MA', 'f':'<div style="color:black; font-style:bold">SENIOR ACCOUNTANT(MANAGEMENT ACCOUNTING) (1)</div>'},
+    'FM', ''],
+    [{'v':'PO', 'f':'<div style="color:black; font-style:bold">PROCUREMENT OFFICER (1)</div>'},
+    'FM', ''],
+    [{'v':'B', 'f':'<div style="color:black; font-style:bold">BUYER (1)</div>'},
+    'PO', ''],
+    [{'v':'AOP', 'f':'<div style="color:black; font-style:bold"> ACCOUNTING OFFICER PAYMENTS (1) </div>'},
+    'FA', ''],
+    [{'v':'ACl', 'f':'<div style="color:black; font-style:bold"> ACCOUNTS CLERK (1) </div>'},
+    'AOP', 'payments'],
+    [{'v':'AOR', 'f':'<div style="color:black; font-style:bold"> ACCOUNTING OFFICER REVENUE (1) </div>'},
+    'FA', ''],[{'v':'AC', 'f':'<div style="color:black; font-style:bold"> ACCOUNTS CLERK (1) </div>'},
+    'AOR', ''],
+    [{'v':'ACl', 'f':'<div style="color:black; font-style:bold"> ACCOUNTS CLERK (1) </div>'},
+    'AOP', ''],
+    [{'v':'AOB', 'f':'<div style="color:black; font-style:bold">ACCOUNTING OFFICER (1) (COST/BUDGET)</div>'},
+    'MA', 'Management Accounting'],
+    [{'v':'SO', 'f':'<a href= "suplies"<div style="color:black; font-style:bold">SUPPLIES OFFICER (1) (chart D4.2a)</div></a>'},
+    'MA', 'Supplies'],
+    [{'v':'ACK', 'f':'<div style="color:black; font-style:bold"> ACCOUNTS CLERK (1) </div>'},
+    'AOB', 'Management Accounting'],
+   
+    
+ ]);
+
+    // Create the chart.
+    var chart = new google.visualization.OrgChart(document.getElementById('chart_div'));
+    // Draw the chart, setting the allowHtml option to true for the tooltips.
+    chart.draw(data, {'allowHtml':true});
+
+}
+</script>
+{% endblock %}
+{%block content%}
+
+<div>
+  
+  <div style="text-color:blue font-size:14pt"><strong>CHART D4.2 HARARE REGION - HARARE REGION BUSINESS UNIT: FINANCE 2016</strong></div>
+  <div id="chart_div" class="py-10 px-5"></div>
+</div>
+
+{%endblock%}

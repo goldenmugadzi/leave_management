@@ -1,0 +1,200 @@
+{% extends "admin_layout.html" %} 
+
+{% block styles %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.2.0/css/bootstrap.min.css" />
+<link rel="stylesheet" href="https://cdn.datatables.net/1.12.1/css/dataTables.bootstrap5.min.css" />
+<link href="https://cdn.datatables.net/fixedcolumns/4.2.1/css/fixedColumns.dataTables.css" rel="stylesheet" type="text/css" />
+{% endblock styles %}
+
+{% block content %}
+<div class="content-wrapper">
+  <div class="page-header">
+    <h3 class="page-title">
+      <span class="page-title-icon bg-primary text-white me-2">
+        <i class="menu-icon">
+            <span class="material-symbols-outlined mt-1">
+                straighten
+            </span>
+          </i>
+      </span>
+      All Connections
+    </h3>
+    <nav aria-label="breadcrumb">
+      <ul class="breadcrumb">
+        <li class="breadcrumb-item active" aria-current="page">
+            <a href="/commercials/connections/connection/create" class="text-decoration-none">
+                <span></span>Create New Connection
+                <i
+                  class="icon-sm text-primary align-middle"
+                >
+                <span class="material-symbols-outlined">
+                  add
+                  </span>
+              </i>
+            </a>
+        </li>
+      </ul>
+    </nav>
+  </div>
+  <div class="col-12 grid-margin stretch-card">
+    <div class="card">
+      <div class="card-body">
+        <table id="connections" class="table table-striped" style="width:100%">
+            <thead>
+              <tr>
+                <th>Account No.</th>
+                <th>Meter No.</th>
+                <th>Reference No.</th>
+                <th>Client</th>
+                <th>National ID</th>
+                <th>Phone</th>
+                <th>Email</th>
+                <th>Region</th>
+                <th>District</th>
+                <th>Depot</th>
+                <th>Created By</th>
+                <th>Date Created</th>
+                <th>Updated By</th>
+                <th>Last Updated</th>
+                <th></th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tfoot>
+              <tr>
+                <th>Account No.</th>
+                <th>Meter No.</th>
+                <th>Reference No.</th>
+                <th>Client</th>
+                <th>National ID</th>
+                <th>Phone</th>
+                <th>Email</th>
+                <th>Region</th>
+                <th>District</th>
+                <th>Depot</th>
+                <th>Created By</th>
+                <th>Date Created</th>
+                <th>Updated By</th>
+                <th>Last Updated</th>
+                <th></th>
+                <th>Actions</th>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock content %} {% block scripts %}
+<script src="https://code.jquery.com/jquery-3.5.1.js"></script>
+<script src="https://cdn.datatables.net/1.12.1/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.12.1/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.datatables.net/fixedcolumns/4.2.2/js/dataTables.fixedColumns.min.js"></script>
+
+<script>
+
+  var objs = JSON.parse("{{context|escapejs}}");
+  
+  var isCreator = "{{is_creator|escapejs}}";
+  var userId = "{{user_id|escapejs}}";
+  isCreator = "True"
+
+  let list = [];
+  objs.forEach((element, index) => {
+    let o = {
+      account_no: element.account_number,
+      meter_number: element.meter_number,
+      reference_number: element.reference_number,
+      name: element.name,
+      national_id: element.national_id,
+      phone_number: element.phone_number,
+      email: element.email,
+      region: element.region,
+      depot: element.depot,
+      district: element.district,
+      attachments: element.attachments,
+      created_by: element.created_by,
+      created_at: element.created_at,
+      updated_by: element.updated_by,
+      updated_at: element.updated_at,
+      created_by_id: element.created_by_id
+    };
+
+    list.push(o);
+  });
+
+  $(document).ready(function () {
+    $("#connections").DataTable({
+      scrollX: true,
+      data: list,
+      fixedColumns: true,
+      fixedColumns: {
+        left: 0,
+        right: 1
+      },
+      columns: [
+        {
+          data: "account_no",
+        },
+        {
+          data: "meter_number",
+        },
+        {
+          data: "reference_number",
+        },
+        {
+          data: "name",
+        },
+        {
+          data: "national_id",
+        },
+        {
+          data: "phone_number",
+        },
+        {
+          data: "email",
+        },
+        {
+          data: "region",
+        },
+        {
+          data: "district",
+        },
+        {
+          data: "depot",
+        },
+        {
+          data: "created_by",
+        },
+        {
+          data: "created_at",
+        },
+        {
+          data: "updated_by",
+        },
+        {
+          data: "updated_at",
+        },
+        {
+          data: null,
+          render: function (data, type, row, meta) {
+            return `<a class="btn btn-link btn-fw" href="/commercials/connections/connection/forms/download?i=${row.account_no}">Attachments</a>`;
+          },
+        },
+        {
+          data: null,
+          render: function (data, type, row, meta) {
+            return userId == row.created_by_id? `
+                <a type="button" class="btn btn-secondary" href='/commercials/connections/connection/edit?i=${row.account_no}' >
+                  <div class="d-flex justify-content-center"><i class="mdi mdi-table-edit"></i></div>
+                </a>
+                <a type="button" class="btn btn-outline-danger" href='/commercials/connections/connection/delete?i=${row.account_no}' >
+                  <i class="mdi mdi-delete"></i>
+                </a>`: "";
+          },
+        },
+      ],
+    });
+  });
+</script>
+{% endblock scripts %}

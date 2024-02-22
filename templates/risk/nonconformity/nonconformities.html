@@ -1,0 +1,103 @@
+{% extends "admin_layout.html" %}
+{% load static %}
+{% load humanize %}{% load custom_tags %}
+
+{% block styles %}
+<link  rel="stylesheet"  href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css"/>
+<style>
+  .dataTables_wrapper .dataTables_length select {
+    width: 4rem;
+  }
+</style>
+{% endblock %}
+{% block content %}
+<div class="content-wrapper">
+  <div class="grid grid-cols-1">
+    <div class="bg-gulf-blue-100 shadow-lg rounded-lg p-6">
+     
+       <h3 class="text-center  mb-4">Nonconformities</h3>
+      <div class=" grid grid-cols-4 container text-center ">
+        <a href="{% url 'nonconformity:create_nonconformity' %}" class="bg-blue-500 hover:bg-blue-700 inline-block rounded-full mx-3 text-white py-2 px-4 rounded">Create New</a>
+        {% comment %} <a href="{% url 'nonconformity:checklist' %}" class="bg-blue-500 hover:bg-blue-700 inline-block rounded-full mx-3 text-white py-2 px-4 rounded">Create from checklist</a> {% endcomment %}
+        <a href="{% url 'nonconformity:my_nonconformities' %}" class="bg-gray-500 hover:bg-gray-700 inline-block rounded-full mx-3 text-white py-2 px-4 rounded">Review </a>
+      </div>
+      <br> <table id="nonconformity" class="table table-striped stripe table-bordered">
+        <thead>
+          <tr>
+            <th>Recipient</th>
+            <th>Date</th>
+            <th>Auditor</th>
+            <th>Description</th>
+            <th>Violation Standard Reference</th>
+            <th>Recommended Corrective Action</th>
+            <th>Section</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for nonconformity in nonconformities %}
+          <tr class="h-1">
+            <td>
+              {% if nonconformity.recipient == user %} You {% else %} {{nonconformity.recipient.get_full_name }} {% endif %}
+            </td>
+            <td>{{ nonconformity.created_at|date:'Y-m-d H:i' }}</td>
+            <td>
+              {% if nonconformity.created_by == user %} You {% else %} {{nonconformity.created_by.get_full_name }} {% endif %}
+            </td>
+            <td><a class="text-blue-500" href="/nonconformity/{{nonconformity.id}}">{{ nonconformity.description|default_if_none:'' }}</a></td>
+            <td>
+              {{ nonconformity.violation_standard_reference|default_if_none:''}}
+            </td>
+            <td>
+              {{nonconformity.recommended_corrective_action|default_if_none:''}}
+            </td>
+            <td>
+              {% if nonconformity.recipient.userprofile.section %}
+                {{ nonconformity.recipient.userprofile.section }}
+              {% endif %}
+            </td>
+            {% for response in nonconformity.response_set.all %}
+            {% if forloop.last %}
+              <td>
+                <small>
+              {% if  response.user == user %} You : {{ response.status }} {% else %} {{ response.user.first_name|slice:"1" }}. {{ response.user.last_name }}: {{ response.status }} {% endif %}</small>
+              </td>
+            {% endif %}
+          {% endfor %}
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script>
+  $(document).ready(function () {
+    // Initialize the DataTable with options and Tailwind CSS classes
+    $("#nonconformity").DataTable({
+      // Set the number of rows to display per page
+      "pageLength": 10,
+  
+      // Enable sorting on the specified columns
+      "columnDefs": [
+        { "orderable": true, "targets": [0, 1, 2] }
+      ],
+  
+      // Enable searching within the table
+      "searching": true,
+  
+      // Display the DataTable in a responsive manner
+      "responsive": true,
+  
+     
+    });
+  });
+</script>
+{% endblock %}

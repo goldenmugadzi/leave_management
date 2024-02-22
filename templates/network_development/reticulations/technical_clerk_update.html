@@ -1,0 +1,126 @@
+<!--users/templates/users/add_user.html-->
+{% extends 'admin_layout.html' %}
+{% block styles %}
+
+{% endblock styles %}
+{% block content %}
+<div class="content-wrapper">
+  <div class="page-header">
+    <h3 class="page-title">
+      <span class="page-title-icon bg-primary text-white me-2">
+        <i class="menu-icon">
+            <span class="material-symbols-outlined mt-1">
+                straighten
+            </span>
+          </i>
+      </span>
+      Reticulations
+    </h3>
+    <nav aria-label="breadcrumb">
+      <ul class="breadcrumb">
+        <li class="breadcrumb-item active" aria-current="page">
+        <a href="/network-development/reticulations/create" class="text-decoration-none">
+          <span></span>Back
+          <i
+            class="icon-sm text-primary align-middle"
+          >
+          <span class="material-symbols-outlined">
+            arrow_back
+          </span>
+        </i>
+    </a>
+        </li>
+      </ul>
+    </nav>
+</div>
+<div class="col-12 grid-margin stretch-card">
+
+  <div class="card">
+    <div class="card-body">
+      <h4 class="card-title">Update Design Record</h4>
+      <p class="card-description">Fill all required fields</p>
+      <form action="/network-development/reticulations/technical_clerk/update" method="post" enctype="multipart/form-data" class="forms-sample">
+        {% csrf_token %}
+        <input type="hidden" value="{{item.id}}" name="item" />
+        <div class="form-group">
+          <label for="description">Description</label>
+          <input
+            type="text"
+            class="form-control"
+            id="design_details"
+            name="design_details"
+            placeholder="Description"
+            value="{{item.design_details}}"
+          />
+        </div>
+        <div class="form-group">
+          <label for="comments">Comments</label>
+          <input
+            type="text"
+            class="form-control"
+            id="comments"
+            name="comments"
+            placeholder="Comments"
+            value="{{item.recording_comments}}"
+          />
+        </div>
+        <div class="form-group">
+            <label for="numberofstands">Number of Stands</label>
+            <input
+              type="number"
+              class="form-control"
+              id="numberofstands"
+              name="numberofstands"
+              placeholder="Number of Stands"
+              value="{{item.number_of_stands}}"
+            />
+          </div>
+        <div class="form-group">
+            <label for="recording_date">Date Received</label>
+            <input
+              type="date"
+              class="form-control"
+              id="recording_date"
+              name="recording_date"
+              value="{{item.recording_date}}"
+            />
+        </div>
+        <div class="form-group">
+            <label for="recording_status">STATUS</label>
+            <select name="recording_status" class="form-control" id="recording_status">
+              <option value="{{item.recording_status}}">{{item.recording_status}}</option>
+              <option value="PENDING">PENDING</option>
+              <option value="COMPLETE">COMPLETE</option>
+            </select>
+          </div>
+        <div class="mb-3">
+            <label for="formone" class="form-label">Approved Layout Plan</label>
+            <input name="layout_plan_doc" class="form-control" type="file" id="formone">
+        </div>
+        <div class="mb-3">
+            <label for="formtwo" class="form-label">Form 2</label>
+            <input name="dev_permit_doc" class="form-control" type="file" id="formtwo">
+        </div>
+        <div class="mb-3">
+            <label for="formthree" class="form-label">Form 3</label>
+            <input name="land_title" class="form-control" type="file" id="formthree">
+        </div>
+          <div class="row">
+            <div class="col-6">
+                <a href="/network-development/reticulations" class="btn btn-light w-100">Cancel</a>
+            </div>
+            <div class="col-6">
+                <button type="submit" class="btn btn-info me-2 w-100">
+                    Submit
+                </button>
+            </div>
+          </div>
+      </form>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %} 
+{% endblock scripts %}

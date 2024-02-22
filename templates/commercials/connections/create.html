@@ -1,0 +1,271 @@
+{% extends "admin_layout.html" %} {% block content %}
+<div class="content-wrapper">
+  <div class="page-header">
+    <h3 class="page-title">
+      <span class="page-title-icon bg-primary text-white me-2">
+        <i class="menu-icon">
+          <span class="material-symbols-outlined mt-1"> straighten </span>
+        </i>
+      </span>
+      Create New Connection Record
+    </h3>
+    <nav aria-label="breadcrumb">
+      <ul class="breadcrumb">
+        <li class="breadcrumb-item active" aria-current="page">
+          <a href="/commercials/connections" class="text-decoration-none">
+            <span></span>Back
+            <i class="icon-sm text-primary align-middle">
+              <span class="material-symbols-outlined"> arrow_back </span>
+            </i>
+          </a>
+        </li>
+      </ul>
+    </nav>
+  </div>
+  <div class="col-12 grid-margin stretch-card">
+    <div class="card">
+      <div class="card-body">
+        <form
+          method="post"
+          action="/commercials/connections/connection/create"
+          enctype="multipart/form-data"
+          role="form text-left"
+        >
+          {% csrf_token %}
+          <div class="row mb-4">
+            <div class="mb-3 col-md-6">
+              <label for="account_no" class="form-label">Account Number</label>
+              <input
+                type="text"
+                name="account_no"
+                class="form-control"
+                placeholder="Account Number"
+                aria-label="Account Number"
+              />
+            </div>
+            <div class="mb-3 col-md-6">
+              <label for="meter_no" class="form-label">Meter Number</label>
+              <input
+                type="text"
+                name="meter_no"
+                class="form-control"
+                placeholder="Meter Number"
+                aria-label="Meter Number"
+              />
+            </div>
+            <div class="mb-3 col-md-6">
+              <label for="reference_no" class="form-label"
+                >Reference Number</label
+              >
+              <input
+                type="text"
+                name="reference_no"
+                class="form-control"
+                placeholder="Reference Number"
+                aria-label="Reference Number"
+              />
+            </div>
+            <div class="mb-4 col-md-12">
+            </div>
+            <div class="mb-3 col-md-6">
+              <label for="fullname" class="form-label">Fullname</label>
+              <input
+                type="text"
+                name="name"
+                class="form-control"
+                placeholder="Full Name"
+                aria-label="Name"
+              />
+            </div>
+            <div class="mb-3 col-md-6">
+              <label for="national_id" class="form-label">National ID</label>
+              <input
+                type="text"
+                name="national_id"
+                class="form-control"
+                placeholder="National ID"
+                aria-label="National ID"
+              />
+            </div>
+            <div class="mb-3 col-md-6">
+              <label for="phone_no" class="form-label">Phone Number</label>
+              <input
+                type="text"
+                name="phone_no"
+                class="form-control"
+                placeholder="Phone Number"
+                aria-label="Phone Number"
+              />
+            </div>
+            <div class="mb-3 col-md-6">
+              <label for="email" class="form-label">Email</label>
+              <input
+                type="email"
+                name="email"
+                class="form-control"
+                placeholder="Email"
+                aria-label="Email"
+              />
+            </div>
+            {% comment %}
+            <div class="mb-3 col-md-6">
+              <label for="address" class="form-label">Address</label>
+              <input
+                type="text"
+                name="address"
+                class="form-control"
+                placeholder="Address"
+                aria-label="Address"
+              />
+            </div>
+            {% endcomment %}
+            <div class="mb-4 col-md-12">
+            </div>
+            <div class="mb-3 col-md-6" id="depot">
+              <label for="depot" class="form-label">Depot</label>
+              <select id="depot" class="form-select" name="depot" aria-label="">
+                <option selected>Select Depot</option>
+                <option value="524402">Makoni Depot</option>
+                <option value="524403">Zengeza Depot</option>
+                <option value="524502">Kuwadzana Depot</option>
+                <option value="524503">Mabelreign Depot</option>
+                <option value="524504">Warren Park Depot</option>
+                <option value="524602">Glen View Depot</option>
+                <option value="524603">Waterfalls Depot</option>
+                <option value="524604">Southerton Depot</option>
+                <option value="524702">CBD Depot</option>
+                <option value="524703">Borrowdale Depot</option>
+                <option value="524704">Mabvuku Depot</option>
+                <option value="524705">Ruwa Depot</option>
+                <option value="000000">Seke Depot</option>
+              </select>
+            </div>
+            <div class="mb-3 col-md-6" id="district">
+              <label for="district" class="form-label">District</label>
+              <select
+                id="district"
+                class="form-select"
+                name="district"
+                aria-label=""
+              >
+                <option selected>Select District</option>
+                <option value="524501">North</option>
+                <option value="524701">East</option>
+                <option value="524601">South</option>
+                <option value="524401">Chitungwiza</option>
+              </select>
+            </div>
+            <div class="mb-3 col-md-6" id="region">
+              <label for="region" class="form-label">Region</label>
+              <select
+                id="region"
+                class="form-select"
+                name="region"
+                aria-label=""
+              >
+                <option selected>Select Region</option>
+                <option value="1">Harare Region</option>
+                <option value="2">East Region</option>
+                <option value="3">South Region</option>
+                <option value="4">West Region</option>
+              </select>
+            </div>
+            <div class="mb-4 col-md-12">
+            </div>
+            <div class="mb-3 col-md-6">
+              <label for="formFile" class="form-label">Upload Attachment</label>
+              <input type="file" name="attachments" class="form-control" />
+            </div>
+          </div>
+
+          <div class="text-center">
+            <div class="row">
+              <div class="col-6">
+                <a
+                  type="button"
+                  href="/commercials/connections/all-connections"
+                  class="btn btn-secondary w-100 my-4 mb-2"
+                >
+                  Cancel
+                </a>
+              </div>
+              <div class="col-6">
+                <button
+                  type="submit"
+                  class="btnzz w-100 my-4 mb-2"
+                >
+                  Submit
+                </button>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  <div class="modal" id="responseModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          {% if success == "true" %}
+          <h5 class="modal-title">SUCCESS</h5>
+          {% else %}
+          <h5 class="modal-title">FAILED</h5>
+          {% endif %}
+          <button
+            type="button"
+            class="btn-close"
+            data-bs-dismiss="modal"
+            aria-label="Close"
+          ></button>
+        </div>
+        <div class="modal-body">
+          {% if success == "true" %}
+          <div class="alert alert-success" role="alert">
+            Record created successfully
+          </div>
+          {% else %}
+          <div class="alert alert-danger" role="alert">
+            Failed to create record
+          </div>
+          {% endif %}
+        </div>
+        <div class="modal-footer">
+          <button
+            type="button"
+            class="btn btn-secondary"
+            data-bs-dismiss="modal"
+          >
+            Close
+          </button>
+          <button
+            type="button"
+            class="btn btn-info"
+            data-bs-dismiss="modal"
+          >
+            OK
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endblock content %} {% block js %}
+  <script>
+    $(document).ready(function () {
+      var success = "{{success|safe}}";
+      console.log("response state: ", success);
+      if (success !== "") {
+        newClassModalOpen();
+      }
+
+      function newClassModalOpen() {
+        let myModal = new bootstrap.Modal(
+          document.getElementById("responseModal"),
+          {}
+        );
+        myModal.show();
+      }
+    });
+  </script>
+  {% endblock js %}
+</div>

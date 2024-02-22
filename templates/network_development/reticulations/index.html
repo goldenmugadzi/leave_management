@@ -1,0 +1,119 @@
+<!--users/templates/quotations/index.html-->
+{% extends 'admin_layout.html' %}
+{% block styles %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.2.0/css/bootstrap.min.css" />
+<link rel="stylesheet" href="https://cdn.datatables.net/1.12.1/css/dataTables.bootstrap5.min.css" />
+{% endblock styles %}
+{% block content %}
+<div class="content-wrapper">
+  <div class="page-header">
+    <h3 class="page-title">
+      <span class="page-title-icon bg-primary text-white me-2">
+        <i class="menu-icon">
+            <span class="material-symbols-outlined mt-1">
+                straighten
+            </span>
+          </i>
+      </span>
+      Reticulations
+    </h3>
+    <nav aria-label="breadcrumb">
+      <ul class="breadcrumb">
+        <li class="breadcrumb-item active" aria-current="page">
+            <a href="/reticulations/create" class="text-decoration-none">
+                <span></span>Create Design Draft
+                <i
+                  class="icon-sm text-primary align-middle"
+                >
+                <span class="material-symbols-outlined">
+                  add
+                  </span>
+              </i>
+            </a>
+        </li>
+      </ul>
+    </nav>
+  </div>
+
+  <div class="col-12 grid-margin stretch-card">
+    <div class="card">
+      <div class="card-body">
+        <h4 class="card-title">Quotations</h4>
+        <p class="card-description">All Quotations</p>
+        <table id="technical_clerk" class="table table-striped" style="width:100%">
+            <thead>
+                <tr>
+                    <th>Date Received</th>
+                    <th>Design details</th>
+                    <th>Comments</th>
+                    <th>No. Of Stands</th>
+                    <th>STATUS</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+            <tfoot>
+                <tr>
+                  <th>Date Received</th>
+                  <th>Design details</th>
+                  <th>Comments</th>
+                  <th>No. Of Stands</th>
+                  <th>STATUS</th>
+                </tr>
+            </tfoot>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %} 
+<script src="https://code.jquery.com/jquery-3.5.1.js"></script>
+<script src="https://cdn.datatables.net/1.12.1/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.12.1/js/dataTables.bootstrap5.min.js"></script>
+<script>
+  var objs = JSON.parse("{{context|escapejs}}");
+  //var isCreator = "{{is_creator|escapejs}}";
+  //console.log("is creator: ", isCreator);
+  let list = [];
+  objs.forEach((element, index) => {
+    let o = {
+      recording_date: element.fields.recording_date,
+      design_details: element.fields.design_details,
+      recording_comments: element.fields.recording_comments,
+      number_of_stands: element.fields.number_of_stands,
+      recording_status: element.fields.recording_status,
+    };
+
+    list.push(o);
+  });
+
+  $(document).ready(function () {
+      $('#technical_clerk').DataTable(
+        {
+          data: list,
+          columns: [
+            {
+              data: "recording_date",
+            },
+            {
+              data: "design_details",
+              width: 200,
+            },
+            {
+              data: "recording_comments",
+            },
+            {
+              data: "number_of_stands",
+            },
+            {
+              data: "recording_status",
+            }
+          ],
+        }
+      );
+  });
+</script>
+{% endblock scripts %}

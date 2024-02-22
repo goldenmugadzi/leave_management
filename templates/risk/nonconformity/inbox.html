@@ -1,0 +1,34 @@
+{% extends "admin_layout.html" %}
+{% load static %}{% load custom_tags %}
+
+{% block content %}
+<h1 class="text-center">Messages</h1>
+
+<ul class="notification-list">
+    {% for notification in notifications %}
+        <li class="rounded notification{% if not notification.is_read %} unread{% endif %}">
+            <a href="{{ notification.url }}">
+                {{ notification.message }}
+            </a>
+        </li>
+    {% endfor %}
+</ul>
+
+<style>
+    .notification-list {
+        list-style-type: none;
+    }
+
+    .notification {
+        margin-bottom: 10px;
+        padding: 10px;
+        background-color: #f7f7f7;
+        border: 1px solid #ddd;
+    }
+
+    .unread {
+        background-color: #ffecd7;
+    }
+</style>
+
+{% endblock %}

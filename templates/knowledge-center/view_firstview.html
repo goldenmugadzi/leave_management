@@ -1,0 +1,617 @@
+{% extends 'admin_layout.html' %} {% load static %} {% block content %}
+{% comment %} <div>
+  <form action="/knowledge-center/search">
+    {% csrf_token %}
+
+    <div class="flex mt-10 px-3 py-3">
+      <div style="width: 100%">
+        <div>
+          <input
+            type="text"
+            name="filename"
+            id="filename"
+            autocomplete="given-name"
+            class="block w-full rounded-md border-0 py-1.5 text-gulf-blue-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+          />
+        </div>
+      </div>
+      <div style="width: 50%">
+        <button
+          style="width: 50%"
+          type="submit"
+          class="rounded-md bg-gulf-blue-600 hover:bg-gulf-blue-800 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+        >
+          SEARCH
+        </button>
+      </div>
+    </div>
+  </form>
+  <div class="card">
+    <ul>
+      {% for result in results %}
+      <li>
+        <a
+          class="m-3 text-blue-600 rounded-xl no-underline font-semibold decoration-sky-600"
+          tabindex="-1"
+          href="/knowledge-center/download_file?file_id={{result.id}}"
+        >
+          {{ result.name }}
+        </a>
+      </li>
+      {% empty %}
+      <li>No results found.</li>
+      {% endfor %}
+    </ul>
+  </div>
+</div> {% endcomment %}
+<div class="content-wrapper flex flex-wrap p-2 m-px">
+  <div class="grid grid-cols-3 gap-4">
+    <div
+      class="w-auto bg-gray-200 shadow shadow-nepal-300 text-gray-700 rounded px-2 py-2"
+    >
+      <div class="sm:flex lg:items-center lg:justify-between">
+        <div class="min-w-0 flex-1">
+          <div class="">
+            <div class="mx-auto">
+              <div class="group relative">
+                <div
+                  style="background-color: #a16207"
+                  class="aspect-h-1 aspect-w-1 w-full overflow-hidden rounded-md bg-gray-200 lg:aspect-none group-hover:opacity-75 lg:h-40"
+                >
+                <a href="view_legislation">
+                  <img
+                    src="{% static 'assets/images/legislation.jpg' %}"
+                    alt=""
+                    class="h-full w-full object-cover object-center lg:h-full lg:w-full"
+                  />
+                </a>
+                </div>
+                <div class="mt-4 flex justify-center">
+                  <div class="w-full">
+                    <div
+                      class="dropdown-group inline-block w-full text-blue-50"
+                    >
+                      <a href="view_legislation">
+                        <button
+                          class="w-full bg-gulf-blue-600 hover:bg-blue-800 outline-none focus:outline-none border px-3 py-1 rounded flex items-center"
+                        >
+                          <span class="pr-1 font-semibold flex-1 text-blue-50"
+                            >LEGISLATION</span
+                          >
+                          <span class="text-blue-50"> </span>
+                        </button>
+                      </a>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- More products... -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div
+      class="w-auto bg-gray-200 shadow shadow-nepal-300 text-gray-700 rounded px-2 py-2"
+    >
+      <div class="sm:flex lg:items-center lg:justify-between">
+        <div class="min-w-0 flex-1">
+          <div class="">
+            <div class="mx-auto">
+              <div class="group relative">
+                <div
+                  class="aspect-h-1 aspect-w-1 w-full overflow-hidden rounded-md bg-gray-200 lg:aspect-none group-hover:opacity-75 lg:h-40"
+                >
+                <a href="view_policies">
+                  <img
+                    src="{% static 'assets/images/policies.png' %}"
+                    alt=""
+                    class="h-full w-full object-cover object-center lg:h-full lg:w-full"
+                  />
+                </a>
+                </div>
+                <div class="mt-4 flex justify-center">
+                  <div class="w-full">
+                    <div
+                      class="dropdown-group inline-block w-full text-blue-50"
+                    >
+                      <a href="view_policies">
+                        <button
+                          class="w-full bg-gulf-blue-600 hover:bg-blue-800 outline-none focus:outline-none border px-3 py-1 rounded flex items-center"
+                        >
+                          <span class="pr-1 font-semibold flex-1 text-blue-50"
+                            >POLICIES & GUIDELINES</span
+                          >
+                          <span class="text-blue-50"> </span>
+                        </button>
+                      </a>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- More products... -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div
+      class="w-auto bg-gray-200 shadow shadow-nepal-300 text-gray-700 rounded px-2 py-2"
+    >
+      <div class="sm:flex lg:items-center lg:justify-between">
+        <div class="min-w-0 flex-1">
+          <div class="">
+            <div class="mx-auto">
+              <div class="group relative">
+                <div
+                  class="aspect-h-1 aspect-w-1 w-full overflow-hidden rounded-md bg-gray-200 lg:aspect-none group-hover:opacity-75 lg:h-40"
+                >
+                <a href="view_legislation/publications">
+                  <img
+                    src="{% static 'assets/images/publications.jpg' %}"
+                    alt=""
+                    class="h-full w-full object-cover object-center lg:h-full lg:w-full"
+                  />
+                </a>
+                </div>
+                <div class="mt-4 flex justify-center">
+                  <div class="w-full">
+                    <div
+                      class="dropdown-group inline-block w-full text-blue-50"
+                    >
+                      <a href="view_legislation/publications">
+                        <button
+                          class="w-full bg-gulf-blue-600 hover:bg-gulf-blue-800 outline-none focus:outline-none border px-3 py-1 rounded flex items-center"
+                        >
+                          <span class="pr-1 font-semibold flex-1 text-blue-50"
+                            >INTERNAL PUBLICATIONS</span
+                          >
+                          <span class="text-blue-50">
+                            {% comment %}
+                            <svg
+                              class="fill-current h-4 w-4 transform group-hover:-rotate-180 transition duration-150 ease-in-out"
+                              xmlns="http://www.w3.org/2000/svg"
+                              viewBox="0 0 20 20"
+                            >
+                              <path
+                                d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"
+                              />
+                            </svg>
+                            {% endcomment %}
+                          </span>
+                        </button>
+                      </a>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- More products... -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div
+      class="w-auto bg-gray-200 shadow shadow-nepal-300 text-gray-700 rounded px-2 py-2"
+    >
+      <div class="sm:flex lg:items-center lg:justify-between">
+        <div class="min-w-0 flex-1">
+          <div class="">
+            <div class="mx-auto">
+              <div class="group relative">
+                <div
+                  class="aspect-h-1 aspect-w-1 w-full overflow-hidden rounded-md bg-gray-200 lg:aspect-none group-hover:opacity-75 lg:h-40"
+                >
+                <a href="view_index">
+                  <img
+                    src="{% static 'assets/images/engins instructions.jfif' %}"
+                    alt=""
+                    class="h-full w-full object-cover object-center lg:h-full lg:w-full"
+                  />
+                </a>
+                </div>
+                <div class="mt-4 flex justify-center">
+                  <div class="w-full">
+                    <div
+                      class="dropdown-group inline-block w-full text-blue-50"
+                    >
+                      <a href="view_index">
+                        <button
+                          class="w-full bg-gulf-blue-600 hover:bg-blue-800 outline-none focus:outline-none border px-3 py-1 rounded flex items-center"
+                        >
+                          <span class="pr-1 font-semibold flex-1 text-blue-50"
+                            >ENGINEERING INSTRUCTIONS MAIN INDEX</span
+                          >
+                          <span class="text-blue-50"> </span>
+                        </button>
+                      </a>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- More products... -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div
+      class="w-auto bg-gray-200 shadow shadow-nepal-300 text-gray-700 rounded px-2 py-2"
+    >
+      <div class="sm:flex lg:items-center lg:justify-between">
+        <div class="min-w-0 flex-1">
+          <div class="">
+            <div class="mx-auto">
+              <div class="group relative">
+                <div
+                  class="aspect-h-1 aspect-w-1 w-full overflow-hidden rounded-md bg-gray-200 lg:aspect-none group-hover:opacity-75 lg:h-40"
+                >
+                <a href="view_user_manuals">
+                  <img
+                    src="{% static 'assets/images/user manuals.jfif' %}"
+                    alt=""
+                    class="h-full w-full object-cover object-center lg:h-full lg:w-full"
+                  />
+                </a>
+                </div>
+                <div class="mt-4 flex justify-center">
+                  <div class="w-full">
+                    <div
+                      class="dropdown-group inline-block w-full text-blue-50"
+                    >
+                      <a href="view_user_manuals">
+                        <button
+                          class="w-full bg-gulf-blue-600 hover:bg-blue-800 outline-none focus:outline-none border px-3 py-1 rounded flex items-center"
+                        >
+                          <span class="pr-1 font-semibold flex-1 text-blue-50"
+                            >USER MANUALS</span
+                          >
+                          <span class="text-blue-50"> </span>
+                        </button>
+                      </a>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- More products... -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {% comment %}
+    <div
+      class="w-auto bg-gray-200 shadow shadow-nepal-300 text-gray-700 rounded px-2 py-2"
+    >
+      <div class="sm:flex lg:items-center lg:justify-between">
+        <div class="min-w-0 flex-1">
+          <div class="">
+            <div class="mx-auto">
+              <div class="group relative">
+                <div
+                  class="aspect-h-1 aspect-w-1 w-full overflow-hidden rounded-md bg-gray-200 lg:aspect-none group-hover:opacity-75 lg:h-40"
+                >
+                  <img
+                    src="{% static 'assets/images/standards.jfif' %}"
+                    alt=""
+                    class="h-full w-full object-cover object-center lg:h-full lg:w-full"
+                  />
+                </div>
+                <div class="mt-4 flex justify-center">
+                  <div class="w-full">
+                    <div
+                      class="dropdown-group inline-block w-full text-blue-50"
+                    >
+                      <a href="view_drawings">
+                        <button
+                          class="w-full bg-gulf-blue-600 hover:bg-blue-800 outline-none focus:outline-none border px-3 py-1 rounded flex items-center"
+                        >
+                          <span class="pr-1 font-semibold flex-1 text-blue-50"
+                            >STANDARDS, SPECIFICATIONS AND DRAWINGS</span
+                          >
+                          <span class="text-blue-50"> </span>
+                        </button>
+                      </a>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- More products... -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endcomment %}
+
+    <div
+      class="w-auto bg-gray-200 shadow shadow-nepal-300 text-gray-700 rounded px-2 py-2"
+    >
+      <div class="sm:flex lg:items-center lg:justify-between">
+        <div class="min-w-0 flex-1">
+          <div class="">
+            <div class="mx-auto">
+              <div class="group relative">
+                <div
+                  class="aspect-h-1 aspect-w-1 w-full overflow-hidden rounded-md bg-gray-200 lg:aspect-none group-hover:opacity-75 lg:h-40"
+                >
+                <a href="view_legislation/standards">
+                  <img
+                    src="{% static 'assets/images/standards.jfif' %}"
+                    alt=""
+                    class="h-full w-full object-cover object-center lg:h-full lg:w-full"
+                  />
+                </a>
+                </div>
+                <div class="mt-4 flex justify-center">
+                  <div class="w-full">
+                    <div
+                      class="dropdown-group inline-block w-full text-blue-50"
+                    >
+                      <a href="view_legislation/standards">
+                        <button
+                          class="w-full bg-gulf-blue-600 hover:bg-blue-800 outline-none focus:outline-none border px-3 py-1 rounded flex items-center"
+                        >
+                          <span class="pr-1 font-semibold flex-1 text-blue-50"
+                            >STANDARDS</span
+                          >
+                          <span class="text-blue-50"> </span>
+                        </button>
+                      </a>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- More products... -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div
+      class="w-auto bg-gray-200 shadow shadow-nepal-300 text-gray-700 rounded px-2 py-2"
+    >
+      <div class="sm:flex lg:items-center lg:justify-between">
+        <div class="min-w-0 flex-1">
+          <div class="">
+            <div class="mx-auto">
+              <div class="group relative">
+                <div
+                  class="aspect-h-1 aspect-w-1 w-full overflow-hidden rounded-md bg-gray-200 lg:aspect-none group-hover:opacity-75 lg:h-40"
+                >
+                <a href="view_specifications">
+                  <img
+                    src="{% static 'assets/images/specifications.jpg' %}"
+                    alt=""
+                    class="h-full w-full object-cover object-center lg:h-full lg:w-full"
+                  />
+                </a>
+                </div>
+                <div class="mt-4 flex justify-center">
+                  <div class="w-full">
+                    <div
+                      class="dropdown-group inline-block w-full text-blue-50"
+                    >
+                      <a href="view_specifications">
+                        <button
+                          class="w-full bg-gulf-blue-600 hover:bg-blue-800 outline-none focus:outline-none border px-3 py-1 rounded flex items-center"
+                        >
+                          <span class="pr-1 font-semibold flex-1 text-blue-50"
+                            >SPECIFICATIONS</span
+                          >
+                          <span class="text-blue-50"> </span>
+                        </button>
+                      </a>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- More products... -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div
+      class="w-auto bg-gray-200 shadow shadow-nepal-300 text-gray-700 rounded px-2 py-2"
+    >
+      <div class="sm:flex lg:items-center lg:justify-between">
+        <div class="min-w-0 flex-1">
+          <div class="">
+            <div class="mx-auto">
+              <div class="group relative">
+                <div
+                  class="aspect-h-1 aspect-w-1 w-full overflow-hidden rounded-md bg-gray-200 lg:aspect-none group-hover:opacity-75 lg:h-40"
+                >
+                <a href="view_legislation/drawing">
+                  <img
+                    src="{% static 'assets/images/drawings.jfif' %}"
+                    alt=""
+                    class="h-full w-full object-cover object-center lg:h-full lg:w-full"
+                  />
+                </a>
+                </div>
+                <div class="mt-4 flex justify-center">
+                  <div class="w-full">
+                    <div
+                      class="dropdown-group inline-block w-full text-blue-50"
+                    >
+                      <a href="view_legislation/drawing">
+                        <button
+                          class="w-full bg-gulf-blue-600 hover:bg-blue-800 outline-none focus:outline-none border px-3 py-1 rounded flex items-center"
+                        >
+                          <span class="pr-1 font-semibold flex-1 text-blue-50"
+                            >DRAWINGS</span
+                          >
+                          <span class="text-blue-50"> </span>
+                        </button>
+                      </a>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- More products... -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div
+      class="w-auto bg-gray-200 shadow shadow-nepal-300 text-gray-700 rounded px-2 py-2"
+    >
+      <div class="sm:flex lg:items-center lg:justify-between">
+        <div class="min-w-0 flex-1">
+          <div class="">
+            <div class="mx-auto">
+              <div class="group relative">
+                <div
+                  class="aspect-h-1 aspect-w-1 w-full overflow-hidden rounded-md bg-gray-200 lg:aspect-none group-hover:opacity-75 lg:h-40"
+                >
+                <a href="view_knowledge_base">
+                  <img
+                    src="{% static 'assets/images/knowledge.jpg' %}"
+                    alt=""
+                    class="h-full w-full object-cover object-center lg:h-full lg:w-full"
+                  />
+                </a>
+                </div>
+                <div class="mt-4 flex justify-center">
+                  <div class="w-full">
+                    <div
+                      class="dropdown-group inline-block w-full text-blue-50"
+                    >
+                      <a href="view_knowledge_base">
+                        <button
+                          class="w-full bg-gulf-blue-600 hover:bg-blue-800 outline-none focus:outline-none border px-3 py-1 rounded flex items-center"
+                        >
+                          <span class="pr-1 font-semibold flex-1 text-blue-50"
+                            >PRINCE2 CENTRE OF EXCELLENCE</span
+                          >
+                          <span class="text-blue-50"> </span>
+                        </button>
+                      </a>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- More products... -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div
+      class="w-auto bg-gray-200 shadow shadow-nepal-300 text-gray-700 rounded px-2 py-2"
+    >
+      <div class="sm:flex lg:items-center lg:justify-between">
+        <div class="min-w-0 flex-1">
+          <div class="">
+            <div class="mx-auto">
+              <div class="group relative">
+                <div
+                  class="aspect-h-1 aspect-w-1 w-full overflow-hidden rounded-md bg-gray-200 lg:aspect-none group-hover:opacity-75 lg:h-40"
+                >
+                <a href="view_legislation/external_docs">
+                  <img
+                    src="{% static 'assets/images/external doc.jpg' %}"
+                    alt=""
+                    class="h-full w-full object-cover object-center lg:h-full lg:w-full"
+                  />
+                </a>
+                </div>
+                <div class="mt-4 flex justify-center">
+                  <div class="w-full">
+                    <div
+                      class="dropdown-group inline-block w-full text-blue-50"
+                    >
+                      <a href="view_legislation/external_docs">
+                        <button
+                          class="w-full bg-gulf-blue-600 hover:bg-blue-800 outline-none focus:outline-none border px-3 py-1 rounded flex items-center"
+                        >
+                          <span class="pr-1 font-semibold flex-1 text-blue-50"
+                            >OTHER EXTERNAL DOCUMENTS</span
+                          >
+                          <span class="text-blue-50"> </span>
+                        </button>
+                      </a>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- More products... -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div
+      class="w-auto bg-gray-200 shadow shadow-nepal-300 text-gray-700 rounded px-2 py-2"
+    >
+      <div class="sm:flex lg:items-center lg:justify-between">
+        <div class="min-w-0 flex-1">
+          <div class="">
+            <div class="mx-auto">
+              <div class="group relative">
+                <div
+                  class="aspect-h-1 aspect-w-1 w-full overflow-hidden rounded-md bg-gray-200 lg:aspect-none group-hover:opacity-75 lg:h-40"
+                >
+                <a href="view_legislation/drone_tech">
+                  <img
+                    src="{% static 'assets/images/Drones.webp' %}"
+                    alt=""
+                    class="h-full w-full object-cover object-center lg:h-full lg:w-full"
+                  />
+                </a>
+                </div>
+                <div class="mt-4 flex justify-center">
+                  <div class="w-full">
+                    <div
+                      class="dropdown-group inline-block w-full text-blue-50"
+                    >
+                      <a href="view_legislation/drone_tech">
+                        <button
+                          class="w-full bg-gulf-blue-600 hover:bg-gulf-blue-800 outline-none focus:outline-none border px-3 py-1 rounded flex items-center"
+                        >
+                          <span class="pr-1 font-semibold flex-1 text-blue-50"
+                            >DRONE TECHNOLOGY</span
+                          >
+                          <span class="text-blue-50"> </span>
+                        </button>
+                      </a>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- More products... -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+  </div>
+</div>
+
+{% endblock %}

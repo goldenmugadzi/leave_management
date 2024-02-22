@@ -1,0 +1,83 @@
+{% extends 'admin_layout.html' %}
+{%load static%}
+{% block styles %}
+
+<style>
+  .google-visualization-orgchart-linebottom {
+    border-bottom: 1px solid #3388dd;
+    height: 2rem;
+}
+.google-visualization-orgchart-lineleft {
+  border-left: 1px solid #3388dd;
+  height: 2rem;
+}
+  </style>
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+<script type="text/javascript">
+  
+  google.charts.load('current', {packages:["orgchart"]});
+  google.charts.setOnLoadCallback(drawChart);
+
+  function drawChart() {
+    var data = new google.visualization.DataTable();
+    data.addColumn('string', 'Name');
+    data.addColumn('string', 'Manager');
+    data.addColumn('string', 'ToolTip');
+
+    // For each orgchart box, provide the name, manager, and tooltip to show.
+    data.addRows([
+
+
+
+    [{'v':'OPPS', 'f':'<div style="color:black; font-style:bold">OPERATIONS AND MAINTANANCE ENGINEER (1)</div>'},
+    '', 'Operations and maintanance'],
+    
+    [{'v':'SEO', 'f':'<div style="color:black; font-style:bold">SENIOR ENGINEER OPERATIONS (1)</div>'},
+    'OPPS', 'Operations and maintanance'],
+    [{'v':'SEM', 'f':'<div style="color:black; font-style:bold">SENIOR ENGINEER MAINTANANCE (1)</div>'},
+    'OPPS', 'Operations and maintanance'],
+    [{'v':'SSC', 'f':'<div style="color:black; font-style:bold">SENIOR SYSTEMS CONTROLLER (10)</div>'},
+    'SEO', 'Operations and maintanance'],
+    [{'v':'SFPM', 'f':'<div style="color:black; font-style:bold">SENIOR FOREPERSON MAINTANANCE (1)</div>'},
+    'SEM', 'Operations and maintanance'],
+    [{'v':'SFPS', 'f':'<div style="color:black; font-style:bold">SENIOR FOREPERSON SUBSTATION (1)</div>'},
+    'SEM', 'Operations and maintanance'],
+    [{'v':'AL', 'f':'<div style="color:black; font-style:bold">ARTISAN LINES (1)</div>'},
+    'SFPM', 'Operations and maintanance'],
+    [{'v':'APC', 'f':'<div style="color:black; font-style:bold">ARTISAN (POWER CABLES) (1)</div>'},
+    'SFPM', 'Operations and maintanance'],
+    [{'v':'AAL', 'f':'<div style="color:black; font-style:bold">ARTISAN ASSISTANT LINES (1)</div>'},
+    'AL', 'Operations and maintanance'],
+    [{'v':'LW', 'f':'<div style="color:black; font-style:bold">LINE WORKER (4)</div>'},
+    'AL', 'Operations and maintanance'],
+    [{'v':'AA', 'f':'<div style="color:black; font-style:bold">ARTISAN ASSISTANT (8)</div>'},
+    'APC', 'Operations and maintanance'],
+    [{'v':'GC', 'f':'<div style="color:black; font-style:bold">GANG CHARGE (1)</div>'},
+    'SFPS', 'Operations and maintanance'],
+    [{'v':'TECN', 'f':'<div style="color:black; font-style:bold">TECHNICIAN (5)</div>'},
+    'SFPS', 'Operations and maintanance'],
+    [{'v':'WRK', 'f':'<div style="color:black; font-style:bold">WORKER (5)</div>'},
+    'GC', 'Operations and maintanance'],
+    [{'v':'AT', 'f':'<div style="color:black; font-style:bold">ASSISTANAT TECHNICIAN (5)</div>'},
+    'TECN', 'Operations and maintanance'],
+
+ ]);
+
+    // Create the chart.
+    var chart = new google.visualization.OrgChart(document.getElementById('chart_div'));
+    // Draw the chart, setting the allowHtml option to true for the tooltips.
+    chart.draw(data, {'allowHtml':true});
+
+  
+
+  }
+</script>
+{% endblock %}
+{%block content%}
+
+<div>
+  <a href="#" id="download_button" style="text-color:blue"  class="download-button"><strong>CHART D4.5b HARARE REGION - ENGINEERING OPERATIONS AND MAINTANANCE 2016</strong></a>
+  <div id="chart_div" class="py-6 px-2"></div>
+</div>
+
+{%endblock%}

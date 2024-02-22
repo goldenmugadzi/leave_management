@@ -1,0 +1,81 @@
+{% extends 'admin_layout.html' %} {% load static %} {% block content %}
+
+{% comment %} <div>
+    <form action="/knowledge-center/search">
+      {% csrf_token %}
+  
+      <div class="flex mt-10 px-3 py-3">
+        <div style="width: 100%">
+          <div>
+            <input
+              type="text"
+              name="filename"
+              id="filename"
+              autocomplete="given-name"
+              class="block w-full rounded-md border-0 py-1.5 text-gulf-blue-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+            />
+          </div>
+        </div>
+        <div style="width: 50%">
+          <button
+            style="width: 50%"
+            type="submit"
+            class="rounded-md bg-gulf-blue-600 hover:bg-gulf-blue-800 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+          >
+            SEARCH
+          </button>
+        </div>
+      </div>
+    </form>
+    <div class="card">
+      <ul>
+        {% for result in results %}
+        <li>
+          <a
+            class="m-3 text-blue-600 rounded-xl no-underline font-semibold decoration-sky-600"
+            tabindex="-1"
+            href="/knowledge-center/download_file?file_id={{result.id}}"
+          >
+            {{ result.name }}
+          </a>
+        </li>
+        {% empty %}
+        <li>No results found.</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div> {% endcomment %}
+<div style="margin-bottom: 25px;" class="content-wrapper flex flex-wrap p-2 m-px">
+    <a href="view_1_10">
+    <button  style="width: 19rem;height: 6rem;bg-gulf-blue-300;margin-right: 20px;margin-bottom: 25px" class=" w-28 bg-gulf-blue-300 outline-none focus:outline-none border px-3 py-1 rounded flex items-center">
+        <span class="pr-1 font-semibold flex-1 text-gray-800">User Support</span>
+       
+    </button>
+    </a>
+    <a href="view_11_20">
+    <button  style="width: 19rem;height: 6rem;bg-citron-200;margin-right: 20px;" class=" w-28 bg-citron-200 outline-none focus:outline-none border px-3 py-1 rounded flex items-center">
+        <span class="pr-1 font-semibold flex-1 text-gray-800">Network Support</span>
+        
+    </button>
+    </a>
+    <a href="view_21_30">
+    <button  style="width: 19rem;height: 6rem;bg-green-300;margin-right: 20px;" class=" w-28 bg-green-300 outline-none focus:outline-none border px-3 py-1 rounded flex items-center">
+        <span class="pr-1 font-semibold flex-1 text-gray-800">ICT Audit</span>
+       
+    </button>
+    </a>
+    <a href="view_31_45">
+    <button  style="width: 19rem;height: 6rem;bg-gulf-blue-300;margin-right: 20px;margin-bottom: 25px" class=" w-28 bg-gulf-blue-300 outline-none focus:outline-none border px-3 py-1 rounded flex items-center">
+        <span class="pr-1 font-semibold flex-1 text-gray-800">Trending Technologies</span>
+       
+    </button> 
+    </a> 
+</div>
+<div style="display: flex;justify-content: center;">
+    <a href="view_knowledge_base">
+    <button  style="width: 6rem;height: 3rem;background-color: #020617;margin-right: 20px;border-radius: 1.5rem;" class=" w-28 bg-blue-800 hover:bg-blue-900 outline-none focus:outline-none border px-3 py-1 rounded flex items-center">
+        <span class="pr-1 font-semibold flex-1 text-blue-50">Back</span>
+       
+    </button> </a>
+</div>
+{% endblock %}

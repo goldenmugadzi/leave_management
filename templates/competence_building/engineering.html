@@ -1,0 +1,88 @@
+{% extends 'admin_layout.html' %}
+{%load static%}
+{% block styles %}
+
+<style>
+  .google-visualization-orgchart-linebottom {
+    border-bottom: 1px solid #3388dd;
+    height: 2rem;
+}
+.google-visualization-orgchart-lineleft {
+  border-left: 1px solid #3388dd;
+  height: 2rem;
+}
+  </style>
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+{% comment %} <script src="https://cdnjs.cloudflare.com/ajax/libs/canvg/1.5/canvg.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.2/html2pdf.bundle.js"></script> {% endcomment %}
+<script type="text/javascript">
+  
+  google.charts.load('current', {packages:["orgchart"]});
+  google.charts.setOnLoadCallback(drawChart);
+
+  function drawChart() {
+    var data = new google.visualization.DataTable();
+    data.addColumn('string', 'Name');
+    data.addColumn('string', 'Manager');
+    data.addColumn('string', 'ToolTip');
+
+    // For each orgchart box, provide the name, manager, and tooltip to show.
+    data.addRows([
+
+
+    [{'v':'EM', 'f':'<div style="color:black; font-style:bold">ENGINEERING MANAGER (1) </div>'},
+    '', 'Engineeering'],
+
+   [{'v':'SECRETARY ', 'f':'<div style="color:black; font-style:bold">SECRETARY  (1)</div>'},
+    'EM', 'Engineeering'],
+    [{'v':'NDE', 'f':'<a href= "networkdevelopment" ><div style="color:black; font-style:bold">NETWORK DEVELOPMENT ENGINEER (1) (chart D4.5a)</div></a>'},
+    'EM', 'ENGINEERING'],
+    [{'v':'OPPS', 'f':'<a href= "operations" ><div style="color:black; font-style:bold">OPERATIONS & MAINTANANCE ENGINEER (1) (chart D4.5b)</div></a>'},
+    'EM', 'Opperations and maintanance'],
+    [{'v':'TC', 'f':'<div style="color:black; font-style:bold">TRANSPORT CONTROLLER (1)</div>'},
+    'EM', 'Engineeering'],
+
+  
+
+ ]);
+
+    // Create the chart.
+    var chart = new google.visualization.OrgChart(document.getElementById('chart_div'));
+    // Draw the chart, setting the allowHtml option to true for the tooltips.
+    chart.draw(data, {'allowHtml':true});
+
+    //document.getElementById('download_button').addEventListener('click', function() {
+     // var chartContainer = document.getElementById('chart_div');
+     // var chartImage = chartContainer.getElementsByTagName('table')[0].outerHTML;
+
+      // Create a temporary canvas element to draw the chart as an image
+      //var canvas = document.createElement('canvas');
+     // canvas.width = chartContainer.offsetWidth;
+     // canvas.height = chartContainer.offsetHeight;
+     // var ctx = canvas.getContext('2d');
+     // ctx.drawSvg(chartImage, 0, 0, canvas.width, canvas.height);
+
+      // Convert canvas to PDF using html2pdf library
+      //var canvasDataUrl = canvas.toDataURL('image/png');
+      //var pdfOptions = {
+        //  filename: 'Engineering_Chart.pdf',
+        //  image: { type: 'png', data: canvasDataUrl },
+    //      html2canvas: { scale: 2 },
+  //jsPDF: { format: 'a4', orientation: 'landscape' } // Adjust page size here
+
+     // };
+   //   html2pdf().set(pdfOptions).from(chartContainer).save();
+
+ // })
+
+}
+</script>
+{% endblock %}
+{%block content%}
+
+<div>
+  <div style="text-color:blue"  class="download-button"><STRONG>CHART D4.5 HARARE REGION - ENGINEERING 2016</STRONG></div>
+  <div id="chart_div" class="py-10 px-5"></div>
+</div>
+
+{%endblock%}

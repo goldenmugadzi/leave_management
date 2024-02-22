@@ -1,0 +1,96 @@
+{% extends 'admin_layout.html' %}
+{%load static%}
+
+{%block content%}
+<div class="flex justify-between items-center p-3">
+      <h1 class="text-2xl text-black font-bold ">Revenue assuarance Processes</h1>
+
+      <div class="text-md mr-4 text-2xl font-semibold">(Clause 4.2)
+      </div>
+</div>
+
+<div class="grid grid-cols-3 gap-6 mt-4">
+      <a href="{% static 'documents\Commercial\payment\Cash payment process.pdf' %}">
+            <div
+                  class=" bg-gulf-blue-300 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold">
+                  <div class="group relative">
+                        <button type="button" style="width:18rem; height:6rem">
+                              <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                              <span class="ml-3 text-2xl">Cash payment</span></button>
+                  </div>
+            </div>
+      </a>
+
+      <a href="{% static 'documents\Commercial\payment\Ipay Prepaid Payment process.pdf' %}">
+            <div
+                  class="bg-citron-200 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold">
+                  <div class="group relative">
+                        <button type="button" style="width:18rem; height:6rem">
+                              <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                              <span class="ml-3 text-2xl">Ipay prepaid payment</span></button>
+                  </div>
+            </div>
+      </a>
+
+      <a href="{% static  'documents\Commercial\payment\Post Paid Payment process.pdf' %}">
+            <div
+                  class="bg-green-300 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold">
+                  <div class="group relative">
+                        <button type="button" style="width:18rem; height:6rem">
+                              <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                              <span class="ml-3 text-2xl">Post paid payment</span></button>
+                  </div>
+            </div>
+      </a>
+
+      <a href="{% static 'documents\Commercial\payment\RTGS payment process.pdf' %}">
+            <div
+                  class=" bg-gulf-blue-300 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold">
+                  <div class="group relative">
+                        <button type="button" style="width:18rem; height:6rem">
+                              <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                              <span class="ml-3 text-2xl">RTGS payment</span></button>
+                  </div>
+            </div>
+      </a>
+
+      <a href="{% static 'documents\Commercial\payment\Swipe payment process.pdf' %}">
+            <div
+                  class="bg-citron-200 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold">
+                  <div class="group relative">
+                        <button type="button" style="width:18rem; height:6rem">
+                              <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                              <span class="ml-3 text-2xl">Swipe payment</span></button>
+                  </div>
+            </div>
+      </a>
+
+      <a href="{% static  'documents\Commercial\payment\Token Receipt cancellation process.pdf' %}">
+            <div
+                  class="bg-green-300 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold">
+                  <div class="group relative">
+                        <button type="button" style="width:18rem; height:6rem">
+                              <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                              <span class="ml-3 text-2xl">Token Receipt cancellation</span></button>
+                  </div>
+            </div>
+      </a>
+
+
+</div>
+
+<div style="display: flex;justify-content: start;" class="mt-6">
+      <a href="javascript:history.back()">
+            <button style="width: 6rem;height: 3rem;background-color: #020617;margin-right: 20px"
+                  class=" w-28 bg-blue-800 hover:bg-blue-900 outline-none focus:outline-none border px-3 py-1 rounded-xl flex items-center">
+                  <span class="pr-1 font-bold flex-1 text-blue-50">Back</span>
+
+                  </span></button> </a>
+
+</div>
+
+
+
+
+
+{%endblock %}

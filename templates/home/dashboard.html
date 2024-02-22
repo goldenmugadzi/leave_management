@@ -1,0 +1,390 @@
+{% extends "home_layout.html" %} {% block content %}
+<main class="">
+  <header class="">
+    <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+      <h1 class="text-3xl font-bold tracking-tight text-nepal-950">
+        Dashboard
+      </h1>
+    </div>
+  </header>
+  <div class="mx-auto px-4 py-6 sm:px-6 lg:px-8">
+    <div class="grid grid-cols-3 gap-4">
+      <div
+        class="w-auto shadow shadow-nepal-300 text-gray-700 rounded px-2 py-2"
+      >
+        <div class="sm:flex lg:items-center lg:justify-between">
+          <div class="min-w-0 flex-1">
+            <div
+              class="text-lg font-bold text-nepal-950 sm:truncate sm:tracking-tight"
+            >
+              ACE
+            </div>
+            <div class="mt-2">
+              <div
+                class="flex flex-row border border-nepal-200 rounded-lg px-3 py-1 justify-between items-center sm:mt-0 sm:flex-row sm:flex-wrap"
+              >
+                <div class="text-sm">PENDING APPROVAL</div>
+                <div class="text-sm">
+                  <span
+                    class="inline-flex items-center rounded-md bg-nepal-100 px-2 py-1 text-xs font-medium text-scarlet-red-700 ring-1 ring-inset ring-blue-700/10"
+                    >12</span
+                  >
+                </div>
+              </div>
+            </div>
+            <div class="mt-2">
+              <div
+                class="flex flex-row border border-nepal-200 rounded-lg px-3 py-1 justify-between items-center sm:mt-0 sm:flex-row sm:flex-wrap"
+              >
+                <div class="text-sm">APPROVED</div>
+                <div class="text-sm">
+                  <span
+                    class="inline-flex items-center rounded-md bg-nepal-100 px-2 py-1 text-xs font-medium text-scarlet-red-700 ring-1 ring-inset ring-blue-700/10"
+                    >3</span
+                  >
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div
+        class="w-auto shadow shadow-nepal-300 text-gray-700 rounded px-2 py-2"
+      >
+        <div class="sm:flex lg:items-center lg:justify-between">
+          <div class="min-w-0 flex-1">
+            <div
+              class="text-lg font-bold text-nepal-950 sm:truncate sm:tracking-tight"
+            >
+              PURCHASES ABOVE LIMIT
+            </div>
+            <div class="mt-2">
+              <div
+                class="flex flex-row border border-nepal-200 rounded-lg px-3 py-1 justify-between items-center sm:mt-0 sm:flex-row sm:flex-wrap"
+              >
+                <div class="text-sm">PENDING APPROVAL</div>
+                <div class="text-sm">
+                  <span
+                    class="inline-flex items-center rounded-md bg-nepal-100 px-2 py-1 text-xs font-medium text-scarlet-red-700 ring-1 ring-inset ring-blue-700/10"
+                    >12</span
+                  >
+                </div>
+              </div>
+            </div>
+            <div class="mt-2">
+              <div
+                class="flex flex-row border border-nepal-200 rounded-lg px-3 py-1 justify-between items-center sm:mt-0 sm:flex-row sm:flex-wrap"
+              >
+                <div class="text-sm">AWAITING RFQ</div>
+                <div class="text-sm">
+                  <span
+                    class="inline-flex items-center rounded-md bg-nepal-100 px-2 py-1 text-xs font-medium text-scarlet-red-700 ring-1 ring-inset ring-blue-700/10"
+                    >3</span
+                  >
+                </div>
+              </div>
+            </div>
+            <div class="mt-2">
+              <div
+                class="flex flex-row border border-nepal-200 rounded-lg px-3 py-1 justify-between items-center sm:mt-0 sm:flex-row sm:flex-wrap sm:space-x-6"
+              >
+                <div class="text-sm">PENDING COMMITTEE</div>
+                <div class="text-sm">
+                  <span
+                    class="inline-flex items-center rounded-md bg-nepal-100 px-2 py-1 text-xs font-medium text-scarlet-red-700 ring-1 ring-inset ring-blue-700/10"
+                    >2</span
+                  >
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div
+        class="w-auto shadow shadow-nepal-300 text-gray-700 rounded px-2 py-2"
+      >
+        <div class="sm:flex lg:items-center lg:justify-between">
+          <div class="min-w-0 flex-1">
+            <div
+              class="text-lg font-bold text-nepal-950 sm:truncate sm:tracking-tight"
+            >
+              PURCHASES BELOW LIMIT
+            </div>
+            <div class="mt-2">
+              <div
+                class="flex flex-row border border-nepal-200 rounded-lg px-3 py-1 justify-between items-center sm:mt-0 sm:flex-row sm:flex-wrap sm:space-x-6"
+              >
+                <div class="text-sm">PENDING APPROVAL</div>
+                <div class="text-sm">
+                  <span
+                    class="inline-flex items-center rounded-md bg-nepal-100 px-2 py-1 text-xs font-medium text-scarlet-red-700 ring-1 ring-inset ring-blue-700/10"
+                    >12</span
+                  >
+                </div>
+              </div>
+            </div>
+            <div class="mt-2">
+              <div
+                class="flex flex-row border border-nepal-200 rounded-lg px-3 py-1 justify-between items-center sm:mt-0 sm:flex-row sm:flex-wrap sm:space-x-6"
+              >
+                <div class="text-sm">AWAITING RFQ</div>
+                <div class="text-sm">
+                  <span
+                    class="inline-flex items-center rounded-md bg-nepal-100 px-2 py-1 text-xs font-medium text-scarlet-red-700 ring-1 ring-inset ring-blue-700/10"
+                    >3</span
+                  >
+                </div>
+              </div>
+            </div>
+            <div class="mt-2">
+              <div
+                class="flex flex-row border border-nepal-200 rounded-lg px-3 py-1 justify-between items-center sm:mt-0 sm:flex-row sm:flex-wrap sm:space-x-6"
+              >
+                <div class="text-sm">PENDING COMMITTEE</div>
+                <div class="text-sm">
+                  <span
+                    class="inline-flex items-center rounded-md bg-nepal-100 px-2 py-1 text-xs font-medium text-scarlet-red-700 ring-1 ring-inset ring-blue-700/10"
+                    >1</span
+                  >
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div
+        class="w-auto shadow shadow-nepal-300 text-gray-700 rounded px-2 py-2"
+      >
+        <div class="sm:flex lg:items-center lg:justify-between">
+          <div class="min-w-0 flex-1">
+            <div
+              class="text-lg font-bold text-nepal-950 sm:truncate sm:tracking-tight"
+            >
+              PETTY CASH
+            </div>
+            <div class="mt-2">
+              <div
+                class="flex flex-row border border-nepal-200 rounded-lg px-3 py-1 justify-between items-center sm:mt-0 sm:flex-row sm:flex-wrap sm:space-x-6"
+              >
+                <div class="text-sm">PENDING APPROVAL</div>
+                <div class="text-sm">
+                  <span
+                    class="inline-flex items-center rounded-md bg-nepal-100 px-2 py-1 text-xs font-medium text-scarlet-red-700 ring-1 ring-inset ring-blue-700/10"
+                    >12</span
+                  >
+                </div>
+              </div>
+            </div>
+            <div class="mt-2">
+              <div
+                class="flex flex-row border border-nepal-200 rounded-lg px-3 py-1 justify-between items-center sm:mt-0 sm:flex-row sm:flex-wrap sm:space-x-6"
+              >
+                <div class="text-sm">REJECTED</div>
+                <div class="text-sm">
+                  <span
+                    class="inline-flex items-center rounded-md bg-nepal-100 px-2 py-1 text-xs font-medium text-scarlet-red-700 ring-1 ring-inset ring-blue-700/10"
+                    >1</span
+                  >
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div
+        class="w-auto shadow shadow-nepal-300 text-gray-700 rounded px-2 py-2"
+      >
+        <div class="sm:flex lg:items-center lg:justify-between">
+          <div class="min-w-0 flex-1">
+            <div
+              class="text-lg font-bold text-nepal-950 sm:truncate sm:tracking-tight"
+            >
+              DIRECT PURCHASES
+            </div>
+            <div class="mt-2">
+              <div
+                class="flex flex-row border border-nepal-200 rounded-lg px-3 py-1 justify-between items-center sm:mt-0 sm:flex-row sm:flex-wrap sm:space-x-6"
+              >
+                <div class="text-sm">PENDING APPROVAL</div>
+                <div class="text-sm">
+                  <span
+                    class="inline-flex items-center rounded-md bg-nepal-100 px-2 py-1 text-xs font-medium text-scarlet-red-700 ring-1 ring-inset ring-blue-700/10"
+                    >12</span
+                  >
+                </div>
+              </div>
+            </div>
+            <div class="mt-2">
+              <div
+                class="flex flex-row border border-nepal-200 rounded-lg px-3 py-1 justify-between items-center sm:mt-0 sm:flex-row sm:flex-wrap sm:space-x-6"
+              >
+                <div class="text-sm">REJECTED</div>
+                <div class="text-sm">
+                  <span
+                    class="inline-flex items-center rounded-md bg-nepal-100 px-2 py-1 text-xs font-medium text-scarlet-red-700 ring-1 ring-inset ring-blue-700/10"
+                    >2</span
+                  >
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div
+        class="w-auto shadow shadow-nepal-300 text-gray-700 rounded px-2 py-2"
+      >
+        <div class="sm:flex lg:items-center lg:justify-between">
+          <div class="min-w-0 flex-1">
+            <div
+              class="text-lg font-bold text-nepal-950 sm:truncate sm:tracking-tight"
+            >
+              REMITTANCE ADVICE
+            </div>
+            <div class="mt-2">
+            <div
+              class="flex flex-row border border-nepal-200 rounded-lg px-3 py-1 justify-between items-center sm:mt-0 sm:flex-row sm:flex-wrap sm:space-x-6"
+            >
+              <div class="text-sm">PENDING AUTHORISATION</div>
+              <div class="text-sm">
+                <span
+                  class="inline-flex items-center rounded-md bg-nepal-100 px-2 py-1 text-xs font-medium text-scarlet-red-700 ring-1 ring-inset ring-blue-700/10"
+                  >12</span
+                >
+              </div>
+            </div>
+        </div>
+        <div class="mt-2">
+            <div
+              class="flex flex-row border border-nepal-200 rounded-lg px-3 py-1 justify-between items-center sm:mt-0 sm:flex-row sm:flex-wrap sm:space-x-6"
+            >
+              <div class="text-sm">REJECTED</div>
+              <div class="text-sm">
+                <span
+                  class="inline-flex items-center rounded-md bg-nepal-100 px-2 py-1 text-xs font-medium text-scarlet-red-700 ring-1 ring-inset ring-blue-700/10"
+                  >2</span
+                >
+              </div>
+            </div>
+        </div>
+          </div>
+        </div>
+      </div>
+      <div class="w-auto shadow shadow-nepal-300 text-gray-700 rounded px-2 py-2">
+        <div class="sm:flex lg:items-center lg:justify-between">
+          <div class="min-w-0 flex-1">
+            <div
+              class="text-lg font-bold text-nepal-950 sm:truncate sm:tracking-tight"
+            >
+              RETICULATIONS
+            </div>
+            <div class="mt-2">
+            <div
+              class="flex flex-row border border-nepal-200 rounded-lg px-3 py-1 justify-between items-center sm:mt-0 sm:flex-row sm:flex-wrap sm:space-x-6"
+            >
+              <div class="text-sm">PENDING AUTHORISATION</div>
+              <div class="text-sm">
+                <span
+                  class="inline-flex items-center rounded-md bg-nepal-100 px-2 py-1 text-xs font-medium text-scarlet-red-700 ring-1 ring-inset ring-blue-700/10"
+                  >12</span
+                >
+              </div>
+            </div>
+        </div>
+        <div class="mt-2">
+            <div
+              class="flex flex-row border border-nepal-200 rounded-lg px-3 py-1 justify-between items-center sm:mt-0 sm:flex-row sm:flex-wrap sm:space-x-6"
+            >
+              <div class="text-sm">REJECTED</div>
+              <div class="text-sm">
+                <span
+                  class="inline-flex items-center rounded-md bg-nepal-100 px-2 py-1 text-xs font-medium text-scarlet-red-700 ring-1 ring-inset ring-blue-700/10"
+                  >2</span
+                >
+              </div>
+            </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="w-auto shadow shadow-nepal-300 text-gray-700 rounded px-2 py-2">
+        <div class="sm:flex lg:items-center lg:justify-between">
+          <div class="min-w-0 flex-1">
+            <div
+              class="text-lg font-bold text-nepal-950 sm:truncate sm:tracking-tight"
+            >
+              CONNECTIONS
+            </div>
+            <div class="mt-2">
+            <div
+              class="flex flex-row border border-nepal-200 rounded-lg px-3 py-1 justify-between items-center sm:mt-0 sm:flex-row sm:flex-wrap sm:space-x-6"
+            >
+              <div class="text-sm">PENDING AUTHORISATION</div>
+              <div class="text-sm">
+                <span
+                  class="inline-flex items-center rounded-md bg-nepal-100 px-2 py-1 text-xs font-medium text-scarlet-red-700 ring-1 ring-inset ring-blue-700/10"
+                  >12</span
+                >
+              </div>
+            </div>
+        </div>
+        <div class="mt-2">
+            <div
+              class="flex flex-row border border-nepal-200 rounded-lg px-3 py-1 justify-between items-center sm:mt-0 sm:flex-row sm:flex-wrap sm:space-x-6"
+            >
+              <div class="text-sm">REJECTED</div>
+              <div class="text-sm">
+                <span
+                  class="inline-flex items-center rounded-md bg-nepal-100 px-2 py-1 text-xs font-medium text-scarlet-red-700 ring-1 ring-inset ring-blue-700/10"
+                  >2</span
+                >
+              </div>
+            </div>
+        </div>
+          </div>
+        </div>
+      </div>
+      <div class="w-auto shadow shadow-nepal-300 text-gray-700 rounded px-2 py-2">
+        <div class="sm:flex lg:items-center lg:justify-between">
+          <div class="min-w-0 flex-1">
+            <div
+              class="text-lg font-bold text-nepal-950 sm:truncate sm:tracking-tight"
+            >
+              OBJECTIVE KEY RESULTS
+            </div>
+            <div class="mt-2">
+            <div
+              class="flex flex-row border border-nepal-200 rounded-lg px-3 py-1 justify-between items-center sm:mt-0 sm:flex-row sm:flex-wrap sm:space-x-6"
+            >
+              <div class="text-sm">PENDING AUTHORISATION</div>
+              <div class="text-sm">
+                <span
+                  class="inline-flex items-center rounded-md bg-nepal-100 px-2 py-1 text-xs font-medium text-scarlet-red-700 ring-1 ring-inset ring-blue-700/10"
+                  >12</span
+                >
+              </div>
+            </div>
+        </div>
+        <div class="mt-2">
+            <div
+              class="flex flex-row border border-nepal-200 rounded-lg px-3 py-1 justify-between items-center sm:mt-0 sm:flex-row sm:flex-wrap sm:space-x-6"
+            >
+              <div class="text-sm">REJECTED</div>
+              <div class="text-sm">
+                <span
+                  class="inline-flex items-center rounded-md bg-nepal-100 px-2 py-1 text-xs font-medium text-scarlet-red-700 ring-1 ring-inset ring-blue-700/10"
+                  >2</span
+                >
+              </div>
+            </div>
+        </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+{% endblock content %} {% block js %}
+<script>
+  const myChart = new Chart(ctx, {...});
+</script>
+{% endblock js %}

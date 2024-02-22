@@ -1,0 +1,69 @@
+{% extends 'admin_layout.html' %}
+{%load static%}
+{% block styles %}
+<style>
+  .google-visualization-orgchart-linebottom {
+    border-bottom: 1px solid #3388dd;
+    height: 2rem;
+}
+.google-visualization-orgchart-lineleft {
+  border-left: 1px solid #3388dd;
+  height: 2rem;
+}
+  </style>
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+<script type="text/javascript">
+  
+  google.charts.load('current', {packages:["orgchart"]});
+  google.charts.setOnLoadCallback(drawChart);
+
+  function drawChart() {
+    var data = new google.visualization.DataTable();
+    data.addColumn('string', 'Name');
+    data.addColumn('string', 'Manager');
+    data.addColumn('string', 'ToolTip');
+
+    // For each orgchart box, provide the name, manager, and tooltip to show.
+    data.addRows([
+
+    [{'v':'NDE', 'f':'<div style="color:black; font-style:bold">NETWORK DEVELOPMENT ENGINEER</div>'},
+    '', 'ENGINEERING'],
+    [{'v':'SEP', 'f':'<div style="color:black; font-style:bold">SENIOR ENGINEER PROJECTS</div>'},
+    'NDE', 'network development'],
+    [{'v':'SEPD', 'f':'<div style="color:black; font-style:bold">SENIOR ENGINEER PLANNING & DESIGN x 2</div>'},
+    'NDE', 'network development'],
+    [{'v':'TECN', 'f':'<div style="color:black; font-style:bold">TECHNICIAN x 4 </div>'},
+    'SEPD', 'network development'],
+    [{'v':'TC', 'f':'<div style="color:black; font-style:bold">TECHNICAL CLERK</div>'},
+    'NDE', 'network development'],
+    [{'v':'PTDO', 'f':'<div style="color:black; font-style:bold">PRINCIPAL TECHNICIAN DRAWING OFFICE</div>'},
+    'NDE', 'network development'],
+    [{'v':'TEC', 'f':'<div style="color:black; font-style:bold">TECHNICIAN x 5 </div>'},
+    'PTDO', 'network development'],
+    [{'v':'PTDO', 'f':'<div style="color:black; font-style:bold">TECHNICIAN x 4 </div>'},
+    'PTDO', 'network development'],
+    [{'v':'PT', 'f':'<div style="color:black; font-style:bold">PRINCIPAL TECHNICIAN  </div>'},
+    'SEP', 'network development'],
+    [{'v':'TN', 'f':'<div style="color:black; font-style:bold"> TECHNICIAN  </div>'},
+    'PT', 'network development'],
+    [{'v':'AT', 'f':'<div style="color:black; font-style:bold">ASSISTANT TECHNICIAN X 2 </div>'},
+    'TN', 'network development'],
+    
+ ]);
+
+    // Create the chart.
+    var chart = new google.visualization.OrgChart(document.getElementById('chart_div'));
+    // Draw the chart, setting the allowHtml option to true for the tooltips.
+    chart.draw(data, {'allowHtml':true});
+
+  }
+</script>
+{% endblock %}
+{%block content%}
+
+<div>
+  <a href="#" id="download_button" style="text-color:blue"  class="download-button"><STRONG>CHART D4.5a HARARE REGION - ENGINEERING NETWORK DEVELOPMENT 2016</STRONG></a>
+  <div id="chart_div" class="py-10 px-5"></div>
+</div>
+
+{%endblock%}

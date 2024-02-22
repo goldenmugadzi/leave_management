@@ -1,0 +1,93 @@
+{% extends 'admin_layout.html' %}
+{%load static%}
+
+{%block content%}
+<div class="flex justify-between items-center p-3">
+   <h1 class="text-2xl text-black font-bold ">Commercial Forms</h1>
+
+   <div style= "color: rgb(3 7 18); "class="text mr-4">(Clause 7.5)</div>
+</div>
+<div class="grid grid-cols-3 gap-3">
+    <a href="{% static 'documents\FORMS\Fw-_COMMERCIAL_FORMS\Billing Correction Form.pdf' %}">
+        <div
+          class=" bg-gulf-blue-300 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold"
+        >
+                  <div class="group relative">
+                    <button type="button" style="width:18rem; height:6rem">
+                      <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                      <span class="ml-3"> Billing Correction Form</span></button>
+                  </div>
+          </div></a>
+
+          <a href="{% static 'documents\FORMS\Fw-_COMMERCIAL_FORMS\Commisioning Certificate.pdf' %}">
+            <div
+              class=" bg-citron-200 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold"
+            >
+                      <div class="group relative">
+                        <button type="button" style="width:18rem; height:6rem">
+                          <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                          <span class="ml-3"> Commissioning Certificate</span></button>
+                      </div>
+              </div></a>
+              <a href="{% static 'documents\FORMS\Fw-_COMMERCIAL_FORMS\Contractor Registration Form.pdf' %}">
+                <div
+                  class=" bg-green-300 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold"
+                >
+                          <div class="group relative">
+                            <button type="button" style="width:18rem; height:6rem">
+                              <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                              <span class="ml-3">Contractor Registration Form</span></button>
+                          </div>
+                  </div></a>
+                  <a href="{% static 'documents\FORMS\Fw-_COMMERCIAL_FORMS\Customer change of Tariff Application Form.pdf' %}">
+                    <div
+                      class=" bg-gulf-blue-300 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold"
+                    >
+                              <div class="group relative">
+                                <button type="button" style="width:18rem; height:6rem">
+                                  <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                                  <span class="ml-3">Customer change of Tariff Application Form</span></button>
+                              </div>
+                      </div></a>
+                      <a href="{% static 'documents\FORMS\Fw-_COMMERCIAL_FORMS\FORM ENM1 for use (1).pdf' %}">
+                        <div
+                          class=" bg-citron-200 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold"
+                        >
+                                  <div class="group relative">
+                                    <button type="button" style="width:18rem; height:6rem">
+                                      <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                                      <span class="ml-3">FORM ENM1 for use </span></button>
+                                  </div>
+                          </div></a>
+                          <a href="{% static 'documents\FORMS\Fw-_COMMERCIAL_FORMS\FORM ENM2 for use (1).pdf' %}">
+                            <div
+                              class=" bg-green-300 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold"
+                            >
+                                      <div class="group relative">
+                                        <button type="button" style="width:18rem; height:6rem">
+                                          <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                                          <span class="ml-3">FORM ENM2 for use</span></button>
+                                      </div>
+                              </div></a>
+                              <a href="{% static 'documents\FORMS\Fw-_COMMERCIAL_FORMS\Smart Metering Data Capturing Sheet.pdf' %}">
+                                <div
+                                  class=" bg-gulf-blue-300 shadow shadow-nepal-300 text-gray-700 rounded p-2 m-px text-center text-xl font-bold"
+                                >
+                                          <div class="group relative">
+                                            <button type="button" style="width:18rem; height:6rem">
+                                              <i class="fa-regular fa-file-pdf fa-2xl text-left" style="color: #e11432;"></i>
+                                              <span class="ml-3">Smart Metering Data Capturing Sheet</span></button>
+                                          </div>
+                                  </div></a>
+   </div>
+   
+   <div style="display: flex;justify-content: start;" class="mt-6">
+      <a href="javascript:history.back()">
+          <button style="width: 6rem;height: 3rem;background-color: #020617;margin-right: 20px"
+              class=" w-28 bg-blue-800 hover:bg-blue-900 outline-none focus:outline-none border px-3 py-1 rounded-xl flex items-center">
+              <span class="pr-1 font-bold flex-1 text-blue-50">Back</span>
+    
+          </span></button> </a>
+    </div>
+        
+{%endblock %}

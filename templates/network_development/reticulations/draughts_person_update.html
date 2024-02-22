@@ -1,0 +1,93 @@
+<!--users/templates/users/add_user.html-->
+{% extends 'admin_layout.html' %}
+{% block styles %}
+
+{% endblock styles %}
+{% block content %}
+<div class="content-wrapper">
+  <div class="page-header">
+    <h3 class="page-title">
+      <span class="page-title-icon bg-primary text-white me-2">
+        <i class="menu-icon">
+            <span class="material-symbols-outlined mt-1">
+                straighten
+            </span>
+          </i>
+      </span>
+      Reticulations
+    </h3>
+    <nav aria-label="breadcrumb">
+      <ul class="breadcrumb">
+        <li class="breadcrumb-item active" aria-current="page">
+        <a href="/network-development/reticulations" class="text-decoration-none">
+          <span></span>Back
+          <i
+            class="icon-sm text-primary align-middle"
+          >
+          <span class="material-symbols-outlined">
+            arrow_back
+          </span>
+        </i>
+    </a>
+        </li>
+      </ul>
+    </nav>
+</div>
+<div class="col-12 grid-margin stretch-card">
+
+  <div class="card">
+    <div class="card-body">
+      <h4 class="card-title">Update Design Record</h4>
+      <p class="card-description">Fill all required fields</p>
+      <form action="/network-development/reticulations/draughts_person/update" method="post" enctype="multipart/form-data" class="forms-sample">
+        {% csrf_token %}
+        <input type="hidden" value="{{item}}" name="item" />
+        <div class="mb-3">
+          <label for="formone" class="form-label">Design Plan</label>
+          <input name="design_plan_doc" class="form-control" type="file" id="formone">
+        </div>
+        <div class="form-group">
+            <label for="design_actual_start_date">Actual Start</label>
+            <input
+              type="date"
+              class="form-control"
+              id="design_actual_start_date"
+              name="design_actual_start_date"
+            />
+        </div>
+        <div class="form-group">
+            <label for="design_actual_completion_date">Actual Completion</label>
+            <input
+              type="date"
+              class="form-control"
+              id="design_actual_completion_date"
+              name="design_actual_completion_date"
+            />
+        </div>
+        <div class="form-group">
+            <label for="design_status">STATUS</label>
+            <select name="design_status" class="form-control" id="design_status">
+              <option>Select Status</option>
+              <option value="PENDING">PENDING</option>
+              <option value="COMPLETE">COMPLETE</option>
+            </select>
+          </div>
+          <div class="row">
+            <div class="col-6">
+                <a href="/network-development/reticulations" class="btn btn-light w-100">Cancel</a>
+            </div>
+            <div class="col-6">
+                <button type="submit" class="btn btn-info me-2 w-100">
+                    Submit
+                </button>
+            </div>
+          </div>
+      </form>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %} 
+{% endblock scripts %}

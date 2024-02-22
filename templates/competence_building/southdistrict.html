@@ -1,0 +1,51 @@
+{% extends 'admin_layout.html' %}
+{%load static%}
+{% block styles %}
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+<script type="text/javascript">
+  
+  google.charts.load('current', {packages:["orgchart"]});
+  google.charts.setOnLoadCallback(drawChart);
+
+  function drawChart() {
+    var data = new google.visualization.DataTable();
+    data.addColumn('string', 'Name');
+    data.addColumn('string', 'Manager');
+    data.addColumn('string', 'ToolTip');
+
+    // For each orgchart box, provide the name, manager, and tooltip to show.
+    data.addRows([
+
+
+
+    [{'v':'DM', 'f':'<a href= "southengineering" <div style="color:black; font-style:bold">SOUTH DISTRICT ENGINEERING</div></a>'},
+    '', 'District'],
+    [{'v':'S', 'f':'<a href="southsales"<div style="color:black; font-style:bold">SOUTH DISTRICT SALES</div></a>'},
+    '', 'South District'],
+    [{'v':'GV', 'f':'<a href= "southglenview"<div style="color:black; font-style:bold">SOUTH DISTRICT GLENVIEW</div></a>'},
+    '', 'South District'],
+    [{'v':'SN', 'f':'<a href ="southertoncommercial"<div style="color:black; font-style:bold">SOUTHERTON COMMERCIAL</div></a>'},
+    '', 'South District'],
+    [{'v':'WF', 'f':'<a href="southwaterfalls"<div style="color:black; font-style:bold">SOUTH DISTRICT WATERFALLS</div></a>'},
+    '', 'South District'],
+  
+
+ ]);
+
+    // Create the chart.
+    var chart = new google.visualization.OrgChart(document.getElementById('chart_div'));
+    // Draw the chart, setting the allowHtml option to true for the tooltips.
+    chart.draw(data, {'allowHtml':true});
+  }
+
+</script>
+
+{% endblock %}
+{%block content%}
+
+<div>
+  <div style="text-color:blue"  class="download-button"><strong>CHART D4.7 HARARE REGION  SOUTH DISTRICT 2016</strong></div>
+  <div id="chart_div" class="py-10 px-5"></div>
+</div>
+
+{%endblock%}

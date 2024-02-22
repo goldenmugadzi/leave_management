@@ -1,0 +1,172 @@
+{% extends "admin_layout.html" %} {% block content %}
+<div class="content-wrapper">
+  <div class="page-header">
+    <h3 class="page-title">
+      <span class="page-title-icon bg-primary text-white me-2">
+        <i class="menu-icon">
+            <span class="material-symbols-outlined mt-1">
+                straighten
+            </span>
+          </i>
+      </span>
+      Connections
+    </h3>
+    <nav aria-label="breadcrumb">
+      <ul class="breadcrumb">
+        <li class="breadcrumb-item active" aria-current="page">
+        <a href="/commercials/connections/connection/create" class="text-decoration-none">
+          <span></span>Back
+          <i
+            class="icon-sm text-primary align-middle"
+          >
+          <span class="material-symbols-outlined">
+            arrow_back
+          </span>
+        </i>
+    </a>
+        </li>
+      </ul>
+    </nav>
+</div>
+<div class="col-12 grid-margin stretch-card">
+    <div class="card">
+      <div class="card-body">
+        <h4 class="card-title">Edit Connection Record</h4>
+        <p class="card-description">Fill all required fields</p>
+        <form
+          method="post"
+          action="/commercials/connections/connection/edit"
+          enctype="multipart/form-data"
+          role="form text-left"
+        >
+          {% csrf_token %}
+          <input type="hidden" name="enquiry_no" value="{{ ctx.enquiry_number }}" />
+          <div class="mb-3">
+            <input
+              type="text"
+              value="{{ ctx.enquiry_number }}"
+              class="form-control"
+              placeholder="Account Number"
+              aria-label="Account Number"
+            />
+          </div>
+          <div class="mb-3">
+            <input
+              type="text"
+              name="name"
+              value="{{ ctx.name }}"
+              class="form-control"
+              placeholder="Full Name"
+              aria-label="Name"
+            />
+          </div>
+          <div class="mb-3">
+            <input
+              type="text"
+              name="address"
+              value="{{ ctx.address }}"
+              class="form-control"
+              placeholder="Address"
+              aria-label="Address"
+            />
+          </div>
+          <div class="mb-3">
+            <select class="form-select" name="depot" aria-label="">
+              <option value="{{ ctx.depot }}" selected>{{ ctx.depot }}</option>
+              <option value="Mabelreign Depot">Mabelreign Depot</option>
+              <option value="Borrowdale Depot">Borrowdale Depot</option>
+              <option value="Glen View Depot">Glen View Depot</option>
+              <option value="Kuwadzana Depot">Kuwadzana Depot</option>
+              <option value="Mabvuku Depot">Mabvuku Depot</option>
+              <option value="Ruwa Depot">Ruwa Depot</option>
+              <option value="Warren Park Depot">Warren Park Depot</option>
+              <option value="Waterfalls Depot">Waterfalls Depot</option>
+              <option value="CBD Depot">CBD Depot</option>
+              <option value="Zengeza Depot">Zengeza Depot</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <select class="form-select" name="district" aria-label="">
+              <option value="{{ ctx.district }}" selected>{{ ctx.district }}</option>
+              <option value="Harare North">Harare North</option>
+              <option value="Harare North East">Harare North East</option>
+              <option value="Harare East">Harare East</option>
+              <option value="Harare South">Harare South</option>
+              <option value="Harare CITY CENTRE">Harare CITY CENTRE</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label for="formFile" class="form-label">Attachment</label>
+            <input
+              type="file"
+              name="attachment"
+              class="form-control"
+              placeholder="Form E21"
+              aria-label=""
+              aria-describedby=""
+            />
+          </div>
+
+          <div class="text-center">
+            <button type="submit" class="btn btn-info w-100 my-4 mb-2">
+              Submit
+            </button>
+            <a type="button" href="/commercials/connections/connection/dashboard" class="btn btn-secondary w-100 my-2 mb-2">
+              Cancel
+            </a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal" id="responseModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        {% if success == "true" %}
+        <h5 class="modal-title">SUCCESS</h5>
+        {% else %}
+        <h5 class="modal-title">FAILED</h5>
+        {% endif %}
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        {% if success == "true" %}
+        <div class="alert alert-success" role="alert">
+          Record edited successfully
+        </div>
+        {% else %}
+        <div class="alert alert-danger" role="alert">
+          Failed to edit record
+        </div>
+        {% endif %}
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-info" data-bs-dismiss="modal">OK</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock content %} 
+{% block js %}
+<script>
+  $(document).ready(function () {
+    let success = "{{success|safe}}"
+    console.log("response state: ", success);
+    if(success !== ""){
+      newClassModalOpen()
+    }
+
+    function newClassModalOpen() {
+      let myModal = new bootstrap.Modal(
+        document.getElementById("responseModal"),
+        {}
+      );
+      myModal.show();
+    };
+  
+  })
+</script> 
+{% endblock js %}

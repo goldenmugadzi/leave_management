@@ -1,0 +1,89 @@
+{% extends 'admin_layout.html' %}
+{%load static%}
+{% block styles %}
+<style>
+  .google-visualization-orgchart-linebottom {
+    border-bottom: 1px solid #3388dd;
+    height: 2rem;
+}
+.google-visualization-orgchart-lineleft {
+  border-left: 1px solid #3388dd;
+  height: 2rem;
+}
+  </style>
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+<script type="text/javascript">
+  
+  google.charts.load('current', {packages:["orgchart"]});
+  google.charts.setOnLoadCallback(drawChart);
+
+  function drawChart() {
+    var data = new google.visualization.DataTable();
+    data.addColumn('string', 'Name');
+    data.addColumn('string', 'Manager');
+    data.addColumn('string', 'ToolTip');
+
+    // For each orgchart box, provide the name, manager, and tooltip to show.
+    data.addRows([
+
+
+      [{'v':'GM', 'f':'<div style="color:Black; font-style:bold">GENERAL MANAGER</div>'},
+       '', 'The President'],
+       [{'v':'SECRETARY', 'f':'<a href="#"> <div style="color:black; font-style:bold">SECRETARY</div></a>'},
+       'GM', ''],
+      [{'v':'Commercial Manager', 'f':'<a href="commercial"> <div style="color:black; font-style:bold">COMMERCIAL MANAGER (Chart D4.10)</div></a>'},
+       'GM', ''],
+   
+      
+      [{'v':'District Manager', 'f':'<a href= "district" <div style="color:black; font-style:bold">DISTRICT MANAGER(4) (ChartD4.6-9)</div></a>'},
+       'GM', 'DISTRICT'],
+     
+       
+       [{'v':'CRO', 'f':'<a href="losscontrol"><div style="color:black; font-style:bold">CHIEF_RISK OFFICER (Chart D4.4)</div></a>'},
+       'GM', 'risk and loss control'],
+
+      [{'v':'PA', 'f':'<a href="procurement"><div style="color:black; font-style:bold">PROCUREMENT ADMINISTRATOR</div></a>'},
+      'GM', 'Procurements'],    
+      [{'v':'ENG', 'f':'<a href="engineering"> <div style="color:black; font-style:bold">ENGINEERING MANAGER (Chart D4.5)</div></a>'},
+       'GM', 'VP'],
+    
+        [{'v':'Information Technology', 'f':'<a href="IT"><div style="color:black; font-style:bold">SYSTEMS ADMINISTRATOR (Chart D4.11)</div></a>'},
+      'GM', 'IT'],
+      
+     [{'v':'HR Manager', 'f':'<a href="humanresource"><div style="color:black; font-style:bold">HUMAN RESOURCES AND ADMIN MANAGER (Chart D4.3)</div></a>'},
+      'GM', ''],
+      [{'v':'Finance Manager', 'f':'<a href="finance"><div style="color:black; font-style:bold">FINANCE MANAGER (Chart D4.2)</div></a>'},
+      'GM', ''],
+    ]);
+
+    // Create the chart.
+    var chart = new google.visualization.OrgChart(document.getElementById('chart_div'));
+    // Draw the chart, setting the allowHtml option to true for the tooltips.
+    chart.draw(data, {'allowHtml':true})
+  
+      };
+
+</script>
+{% endblock %}
+{%block content%}
+<div style="text-color:blue"  class="download-button"><strong>CHART D4.1 HARARE REGION MANAGEMENT 2016</strong></div>
+<div id="chart_div" class="py-10 px-5"></div>
+<!-- <h1 class="flex justify-center text-4xl text-blue-900 mb-3"><strong>REGIONAL OFFICE CHART</strong></h1>
+<div class="bg-black">
+
+
+
+
+    <figure class="relative h-auto max-w-full mx-20 mb-6 ">
+        <img class=" rounded-xl"
+                src="{% static 'assets\images\regionaloffice.png' %}" alt="image description">
+                
+                <img src="{% static '../images/display.jpg' %}" alt="My Image"> 
+
+    </figure>
+     -->
+     <div>
+      <div id="chart_div"></div>
+    </div>
+
+{%endblock%}
