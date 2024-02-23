@@ -427,6 +427,7 @@
           class="px-4 py-4 float-right"
         >
           <div class="mx-auto py-6">
+            
             <nav
               x-data="{segments: '{{ request.path }}'.split('/')}"
               class="flex mb-5"
@@ -471,16 +472,27 @@
                         </svg>
                         <a
                           href="#"
+                          x-data="{
+                            _segments: segment.includes('_')? segment.split('_'): [segment],
+                            s_length: segment.includes('_')? segment.split('_').length: 0
+                          }"
                           class="ml-1 text-md font-medium text-gray-700 hover:text-gray-900 md:ml-2"
-                          ><span x-text="segment.charAt(0).toUpperCase() + segment.slice(1)"></span
-                        ></a>
+                          >
+                          <template
+                          x-effect="console.log('segments: ', segments)"
+                          x-for="(segment_, index) in _segments"
+                        >
+                          <template x-if="segment_">
+                          <span x-text="segment_.charAt(0).toUpperCase() + segment_.slice(1) + ' '"></span>
+                          </template>
+                        </template>
+                        </a>
                       </div>
                     </li>
                   </template>
                 </template>
               </ol>
             </nav>
-
             <span class="text-2xl font-bold tracking-tight text-gulf-blue-950">
               {{page_title}}
             </span>
