@@ -40,8 +40,8 @@ def search_view(request):
                 
                 cleaned_hit = {
                     'file': hit['_source']['file']['filename'][:-4],
-                    # 'author': hit['_source']['meta']['author'],
-                    # 'date_created': datetime.strptime(hit['_source']['meta']['created'], "%Y-%m-%dT%H:%M:%S.%f%z").strftime("%B %d, %Y %H:%M"),
+                    'author': hit['_source']['meta']['author'] if 'meta' in hit['_source'] else "",
+                    'date_created': datetime.strptime(hit['_source']['meta']['created'], "%Y-%m-%dT%H:%M:%S.%f%z").strftime("%B %d, %Y %H:%M") if 'meta' in hit['_source'] else "",
                     # 'url':url ,
                     'url':hit['_source']['path']['real'] ,
                 }
