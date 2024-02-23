@@ -27,8 +27,8 @@ def search_view(request):
         results = []
         if response.status_code == 200:
             data = response.json()
-
             hits = data.get('hits', {}).get('hits', [])
+            print("hits: ", hits)
             cleaned_hits = []
             for hit in hits:
                 file_path = hit['_source']['file']['url']
