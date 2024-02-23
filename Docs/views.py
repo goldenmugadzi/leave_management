@@ -17,7 +17,7 @@ def search_view(request):
             'q': query
         }
 
-        response = requests.get(url, params=params)
+        response = requests.get(url, params=params, auth=("elastic", "Password1234567890"))
         
         # url = 'http://localhost:9200/_all/_search'
         # params = {'q': 'content:' + query}
