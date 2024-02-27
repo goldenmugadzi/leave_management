@@ -149,11 +149,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ELASTICSEARCH_DSL = {
-    'default': {
-        'hosts': '127.0.0.1:9200/',  # Replace with your Elasticsearch host and port
-    },
-}
+
 
 ROOT_URLCONF = 'beii_v1.urls'
 
