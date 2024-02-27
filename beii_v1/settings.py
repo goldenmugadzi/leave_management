@@ -90,7 +90,6 @@ SIMPLE_JWT = {
     "SLIDING_TOKEN_REFRESH_SERIALIZER": "rest_framework_simplejwt.serializers.TokenRefreshSlidingSerializer",
 }
 
-
 # Application definition
 sys.path.insert(0, os.path.join(BASE_DIR, 'it'))
 sys.path.insert(1, os.path.join(BASE_DIR, 'engineering'))
