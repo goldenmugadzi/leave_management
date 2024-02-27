@@ -91,7 +91,6 @@ SIMPLE_JWT = {
 }
 
 # Application definition
-sys.path.insert(0, os.path.join(BASE_DIR, 'it'))
 sys.path.insert(1, os.path.join(BASE_DIR, 'engineering'))
 sys.path.insert(2, os.path.join(BASE_DIR, 'commercials'))
 sys.path.insert(3, os.path.join(BASE_DIR, 'hr'))
@@ -112,8 +111,8 @@ INSTALLED_APPS = [
     
     'risk.audit.checklist',
     'risk.audit.nonconformity',
-    'it.beii_auth.apps.BeiiAuthConfig',
-    'it.users.apps.UsersConfig',
+    'it.beii_auth',
+    'it.users',
     'executive.exec_dashboards',
     'knowledge_center',
     'Docs',

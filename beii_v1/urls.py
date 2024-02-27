@@ -26,11 +26,11 @@ from rest_framework_simplejwt.views import (
 )
 
 urlpatterns = [
-    path('', include('beii_auth.urls')),
+    path('', include('it.beii_auth.urls')),
     path('', include('Docs.urls')),
     path('', include('risk.audit.nonconformity.urls')),
     path('meter/', include('commecial.tempertockens.urls')),
-    path('users/', include('users.urls')),
+    path('users/', include('it.users.urls')),
     path('dashboards/', include('executive.exec_dashboards.urls')),
     path('knowledge-center/', include('knowledge_center.urls')),
     path('processes/',include('processes.urls'), name='processes'),

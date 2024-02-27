@@ -6,17 +6,17 @@ from django.shortcuts import redirect, render
 from django.urls import reverse
 
 from .models import UserProfile
-from users.forms import CustomUserCreationForm
+from it.users.forms import CustomUserCreationForm
 from django.contrib.auth.models import User
 from django.contrib.auth.models import Group
-
+from it.users.models import *
 from django.apps import apps
-Sections = apps.get_model(app_label='users', model_name='Sections')
-Districts = apps.get_model(app_label='users', model_name='Districts')
-Depots = apps.get_model(app_label='users', model_name='Depots')
-Regions = apps.get_model(app_label='users', model_name='Regions')
-Roles = apps.get_model(app_label='users', model_name='Roles')
-Designations = apps.get_model(app_label='users', model_name='Designations')
+# Sections = apps.get_model(app_label='users', model_name='Sections')
+# Districts = apps.get_model(app_label='users', model_name='Districts')
+# Depots = apps.get_model(app_label='users', model_name='Depots')
+# Regions = apps.get_model(app_label='users', model_name='Regions')
+# Roles = apps.get_model(app_label='users', model_name='Roles')
+# Designations = apps.get_model(app_label='users', model_name='Designations')
 
 from utils.helper_functions import group_user_roles
 
