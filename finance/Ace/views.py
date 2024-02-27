@@ -1,7 +1,5 @@
 import os
 import csv
-Notification = apps.get_model(app_label='users', model_name='Notification')
-
 
 # import self as self
 import sweetify
@@ -15,6 +13,7 @@ from django.http import FileResponse, HttpResponse
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from datetime import date
+Notification = apps.get_model(app_label='users', model_name='Notification')
 
 # from openpyxl.reader.excel import load_workbook
 

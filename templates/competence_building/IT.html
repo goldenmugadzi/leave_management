@@ -1,6 +1,16 @@
 {% extends 'admin_layout.html' %}
 {%load static%}
 {% block styles %}
+<style>
+  .google-visualization-orgchart-linebottom {
+    border-bottom: 1px solid #3388dd;
+    height: 2rem;
+}
+.google-visualization-orgchart-lineleft {
+  border-left: 1px solid #3388dd;
+  height: 2rem;
+}
+  </style>
 <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/canvg/1.5/canvg.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.2/html2pdf.bundle.js"></script>
@@ -19,15 +29,9 @@
     data.addRows([
 
 
-    [{'v':'SA', 'f':'<div style="color:Black; font-style:bold">SYSTEMS ADMINISTATOR (1)</div>'},
+    [{'v':'SA', 'f':'<div style="color:Black; font-style:bold">SYSTEMS ADMINISTATOR</div>'},
     '', 'Information Technology'],
-   [{'v':'Support Officer', 'f':'<div style="color:black; font-style:bold">SYSTEMS SUPPORT OFFICER EAST (1)</div>'},
-    'SA', ''],
-    [{'v':'SOE', 'f':'<div style="color:black; font-style:bold">SYSTEMS SUPPORT OFFICER NORTH (1)</div>'},
-    'SA', ''],
-    [{'v':'Support Officer1', 'f':'<div style="color:black; font-style:bold">SYSTEMS SUPPORT OFFICER SOUTH (1)</div>'},
-    'SA', ''],
-    [{'v':'Support Officer2', 'f':'<div style="color:black; font-style:bold">SYSTEMS SUPPORT OFFICER CHITUNGWIZA (1)</div>'},
+    [{'v':'Support Officer', 'f':'<div style="color:black; font-style:bold">SYSTEMS SUPPORT OFFICER (3)</div>'},
     'SA', ''],
    [{'v':'Hardware technician', 'f':'<div style="color:black; font-style:bold">HARDWARE TECHNICIAN  (2)</div>'},
     'SA', ''],

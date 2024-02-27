@@ -14,6 +14,8 @@ Districts = apps.get_model(app_label='users', model_name='Districts')
 Depots = apps.get_model(app_label='users', model_name='Depots')
 Regions = apps.get_model(app_label='users', model_name='Regions')
 
+MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+
 # Create your views here.
 def dashboard_index(request):
     
@@ -24,6 +26,11 @@ def dashboard_index(request):
     user_groups = list(l) 
     
     # fetch pbnc data
+    month_id = datetime.now().month
+    current_month = {
+        "id": month_id,
+        "name": MONTHS[month_id-1]
+    }
     pbncs = PBNC.objects.all().order_by('-amount')
     tds = TD.objects.all().order_by('-amount')
     upos = UPO.objects.all()
@@ -33,7 +40,7 @@ def dashboard_index(request):
     mtn = {}
     depots = Depots.objects.all()
     for depot in depots:
-        maintenance_december = Maintenance.objects.filter(depot=depot.depot, created_at__month=datetime.now().month)
+        maintenance_december = Maintenance.objects.filter(depot=depot.depot, created_at__month=month_id)
         maintenance_weekly_count = maintenance_december.annotate(week=ExtractWeek('created_at')).values('week').annotate(count=Count('id')).order_by('week')
 
         week_count = []
@@ -50,12 +57,13 @@ def dashboard_index(request):
     inspection_count = {}
     for inspection in inpections:
         inspection_name = str(inspection.depot)
-        if inspection_name in inspection_count:
-            if inspection_count[inspection_name] > 0:
-                inspection_count[inspection_name] = inspection_count[inspection_name] + 1
-        else:
-            
-           inspection_count[inspection_name] = 1 
+        inspection_month = inspection.created_at.month
+        if inspection_month == month_id:
+            if inspection_name in inspection_count:
+                if inspection_count[inspection_name] > 0:
+                    inspection_count[inspection_name] = inspection_count[inspection_name] + 1
+            else:
+                inspection_count[inspection_name] = 1 
     
     keys_list = json.dumps(list(inspection_count.keys()), default=str)
     values_list = json.dumps(list(inspection_count.values()), default=str)
@@ -82,6 +90,7 @@ def dashboard_index(request):
                       "user_title": user_title,
                       "url_path": url_path,
                       "page_title": "Dashboards",
+                      "current_month": current_month,
                       "pbncs": pbncs, 
                       "tds": tds, 
                       "upos": upos, 
@@ -97,10 +106,18 @@ def dashboard_index(request):
 def dashboard_filter(request, item):
     
     page_title = ""
+    district_ = None
+    region_ = None
+    month_id = datetime.now().month
+    current_month = {
+        "id": month_id,
+        "name": MONTHS[month_id-1]
+    }
     # fetch pbnc data
     if item == "district":
         district_id = request.POST['selectedDistrict']
         district_query = Districts.objects.filter(id=district_id).first()
+        district_ = district_query
         district = district_query.district
         page_title = district
         pbncs = PBNC.objects.filter(district=district).all().order_by('-amount')
@@ -113,6 +130,7 @@ def dashboard_filter(request, item):
     elif item == "region":
         region_id = request.POST['selectedRegion']
         region_query = Regions.objects.filter(id=region_id).first()
+        region_ = region_query
         region = region_query.region
         page_title = region
         pbncs = PBNC.objects.filter(region=region).all().order_by('-amount')
@@ -136,11 +154,13 @@ def dashboard_filter(request, item):
     inspection_count = {}
     for inspection in inpections:
         inspection_name = str(inspection.depot)
-        if inspection_name in inspection_count:
-            if inspection_count[inspection_name] > 0:
-                inspection_count[inspection_name] = inspection_count[inspection_name] + 1
-        else:
-           inspection_count[inspection_name] = 1 
+        inspection_month = inspection.created_at.month
+        if inspection_month == month_id:
+            if inspection_name in inspection_count:
+                if inspection_count[inspection_name] > 0:
+                    inspection_count[inspection_name] = inspection_count[inspection_name] + 1
+            else:
+                inspection_count[inspection_name] = 1 
     
     keys_list = json.dumps(list(inspection_count.keys()), default=str)
     values_list = json.dumps(list(inspection_count.values()), default=str)
@@ -149,18 +169,20 @@ def dashboard_filter(request, item):
     maintenance_count = {}
     for maintenance in maintenance_:
         maintenance_name = str(maintenance.depot)
-        if maintenance_name in maintenance_count:
-            if maintenance_count[maintenance_name] > 0:
-                maintenance_count[maintenance_name] = maintenance_count[maintenance_name] + 1
-        else:
-           maintenance_count[maintenance_name] = 1 
+        mmt_month = maintenance.created_at.month
+        if mmt_month == month_id:
+            if maintenance_name in maintenance_count:
+                if maintenance_count[maintenance_name] > 0:
+                    maintenance_count[maintenance_name] = maintenance_count[maintenance_name] + 1
+            else:
+                maintenance_count[maintenance_name] = 1 
     
     maintenance_keys_list = json.dumps(list(maintenance_count.keys()), default=str)
     maintenance_values_list = json.dumps(list(maintenance_count.values()), default=str)
     
     mtn = {}
     for depot in depots:
-        maintenance_december = Maintenance.objects.filter(depot=depot.depot, created_at__month=datetime.now().month)
+        maintenance_december = Maintenance.objects.filter(depot=depot.depot, created_at__month=month_id)
         maintenance_weekly_count = maintenance_december.annotate(week=ExtractWeek('created_at')).values('week').annotate(count=Count('id')).order_by('week')
 
         week_count = []
@@ -181,7 +203,10 @@ def dashboard_filter(request, item):
                   {
                       "user_title": user_title,
                       "page_description": page_title,
+                      "district": district_,
+                      "region": region_,
                       "url_path": url_path,
+                      "current_month": current_month,
                       "pbncs": pbncs, 
                       "tds": tds, 
                       "upos": upos, 
@@ -198,6 +223,10 @@ def dashboards_maintenance_ajax(request):
     month = request.GET['month']
     
     mtn = {}
+    current_month = {
+        "id": month,
+        "name": MONTHS[int(month)-1]
+    }
     depots = Depots.objects.all()
     for depot in depots:
         maintenance_december = Maintenance.objects.filter(depot=depot.depot, created_at__month=month)

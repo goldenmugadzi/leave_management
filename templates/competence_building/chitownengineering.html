@@ -1,6 +1,16 @@
 {% extends 'admin_layout.html' %}
 {%load static%}
 {% block styles %}
+<style>
+  .google-visualization-orgchart-linebottom {
+    border-bottom: 1px solid #3388dd;
+    height: 2rem;
+}
+.google-visualization-orgchart-lineleft {
+  border-left: 1px solid #3388dd;
+  height: 2rem;
+}
+  </style>
 <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
 <script type="text/javascript">
   
@@ -19,7 +29,7 @@
 
     
  
-    [{'v':'DM', 'f':'<div style="color:black; font-style:bold">DISTRICT MANAGER (1)</div>'},
+    [{'v':'DM', 'f':'<div style="color:black; font-style:bold">DISTRICT MANAGER </div>'},
     '', 'District'],
     [{'v':'S', 'f':'<div style="color:black; font-style:bold">SECRETARY (1)</div>'},
     'DM', 'District'],
@@ -36,7 +46,7 @@
     'SE', 'District'],
     [{'v':'CC', 'f':'<div style="color:black; font-style:bold">COMMERCIAL CLERK (1)</div>'},
     'CO', 'District'],
-    [{'v':'SEC', 'f':'<a href= "chitownsales"<div style="color:black; border: dashed 4pxfont-style:bold">SALES EXECUTIVE (1) (CHART D4.10c)</div></a>'},
+    [{'v':'SEC', 'f':'<a href= "chitownsales"><div style="color:black;  border: dashed 2px gray; font-style:bold">SALES EXECUTIVE (1) (CHART D4.10c)</div></a>'},
     'DM', 'District'],
     [{'v':'PO', 'f':'<div style="color:black; font-style:bold">PERSONEL OFFICER (1)</div>'},
     'DM', 'District'],

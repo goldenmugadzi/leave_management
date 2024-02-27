@@ -18,7 +18,7 @@ Regions = apps.get_model(app_label='users', model_name='Regions')
 Roles = apps.get_model(app_label='users', model_name='Roles')
 Designations = apps.get_model(app_label='users', model_name='Designations')
 
-from utils.helper_functions import get_user_groups, group_user_roles
+from utils.helper_functions import group_user_roles
 
 def add_user(request):
     if request.method == "GET":
@@ -317,7 +317,7 @@ def update_user(request):
 
         return redirect("/users/users-index")
 
-def change_user_password(request):
+def reset_user_password(request):
     if request.method == "POST":
 
         id = request.POST['item']
@@ -350,6 +350,42 @@ def change_user_password(request):
             })
 
     return redirect('/users/users-index')
+
+def change_user_password(request):
+    if request.method == "POST":
+
+        user_id = request.user.id
+        current_password = request.POST['current_password']
+        password1 = request.POST['password1']
+        password2 = request.POST['password2']
+
+        if password1 == password2:
+            user = User.objects.filter(id=user_id).first()
+            if user.check_password(current_password):
+                user.set_password(password1)
+                user.save()
+                print("Password changed successfully")
+            else:
+                print("Current password is incorrect. Password not changed.")
+
+        return redirect('/accounts/login')
+
+    elif request.method == "GET":
+
+        user_page = 'users/user_change_password.html'
+        user_title = request.user.get_full_name()
+        l = request.user.groups.values_list('name', flat=True)  # QuerySet Object
+        user_groups = list(l)
+
+        return render(
+            request,
+            user_page,
+            {
+                "user_title": user_title,
+                "user_groups": user_groups,
+            })
+
+    return redirect('/dashboards/overview')
 
 def delete_user(request):
     if request.method == "GET":

@@ -2,10 +2,8 @@ from django.shortcuts import render, redirect
 from django.contrib import messages
 import requests
 import os
-import subprocess
 from pathlib import Path
 from datetime import datetime
-from wsgiref.util import FileWrapper
 
 documents_path = os.path.join(Path(__file__).resolve().parent.parent, 'static', 'documents')
 
@@ -14,10 +12,17 @@ def search_view(request):
     query = request.GET.get('q', '')
 
     try:
-        url = 'http://172.16.8.98:9200/_all/_search'
-        params = {'q': 'content:' + query}
+        url = 'http://localhost:9200/_search'
+        params = {
+            'q': query
+        }
 
         response = requests.get(url, params=params)
+        
+        # url = 'http://localhost:9200/_all/_search'
+        # params = {'q': 'content:' + query}
+
+        # response = requests.get(url, params=params)
         results = []
         if response.status_code == 200:
             data = response.json()
