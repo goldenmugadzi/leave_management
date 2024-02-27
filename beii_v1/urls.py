@@ -27,7 +27,7 @@ urlpatterns = [
     path('', include('risk.audit.nonconformity.urls')),
     path('meter/', include('commecial.tempertockens.urls')),
     path('users/', include('users.urls')),
-    path('dashboards/', include('executive.exec_dashboards.urls')),
+   path('dashboards/', include('executive.exec_dashboards.urls')),
     path('knowledge-center/', include('knowledge_center.urls')),
     path('processes/',include('processes.urls'), name='processes'),
     path('process_risks/',include('process_risks.urls'), name='process_risks'),

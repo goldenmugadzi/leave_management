@@ -6,6 +6,12 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# Ignore Django migrations for all apps
+**/migrations/
+**/migrations/*.py
+**/migrations/*.pyc
+**/migrations/__pycache__/
+
 # C extensions
 *.so
 be/
