@@ -122,6 +122,7 @@ INSTALLED_APPS = [
     'processes.apps.ProcessesConfig',
     'process_risks.apps.ProcessRisksConfig',
     'finance.Ace.apps.AceConfig',
+    'finance.rfq.apps.RfqConfig',
     'sweetify',
     'mathfilters',
     
