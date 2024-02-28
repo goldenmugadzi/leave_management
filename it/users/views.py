@@ -60,26 +60,25 @@ def add_user(request):
             region = Regions.objects.filter(id=region_).first()
             section = Sections.objects.filter(code=section_).first()
             designation = Designations.objects.filter(id=designation_).first()
+            print("section: ", section)
             
             roles = []
-            if remittance_role:
+            if remittance_role and remittance_role != "":
                 roles.append(remittance_role)
-            if pettycash:
+            if pettycash and pettycash != "":
                 roles.append(pettycash)
-            if tenders:
+            if tenders and tenders != "":
                 roles.append(tenders)
-            if tokens:
+            if tokens and tokens != "":
                 roles.append(tokens)
-            if ace:
+            if ace and ace != "":
                 roles.append(ace)
-            if non_conformity:
+            if non_conformity and non_conformity:
                 roles.append(non_conformity)
-            if users_role:
+            if users_role and users_role != "":
                 roles.append(users_role)
-            if adjudication:
+            if adjudication and adjudication != "":
                 roles.append(adjudication)
-            
-            str_roles = ','.join(str(x) for x in roles)
             
             if password1 == password2:
                 user = UserProfile(
@@ -87,7 +86,6 @@ def add_user(request):
                     first_name=firstnames,
                     last_name=lastnames,
                     email=email,
-                    password=password1,
                     designation=designation,
                     section=section,
                     region=region,
@@ -99,6 +97,7 @@ def add_user(request):
                 # Get actual Role objects:
                 role_objects = Roles.objects.filter(role__in=roles)  # Example of retrieving roles
                 user.roles.set(role_objects)
+                user.set_password(password1)
                 
         except Exception as ex:
             print("save user error", ex)
@@ -142,7 +141,7 @@ def update_user(request):
     if request.method == "GET":
 
         id = request.GET['i']
-        user_profile = UserProfile.objects.filter(id=id).first()
+        user_profile = UserProfile.objects.get(id=id)
         
         user_groups = user_profile.groups.values_list('name', flat=True)
 
@@ -195,7 +194,9 @@ def update_user(request):
             region = Regions.objects.filter(id=user_profile.region.id).first()
             district = Districts.objects.filter(code=user_profile.district).first()
             depot = Depots.objects.filter(code=user_profile.depot).first()
-            section = Sections.objects.filter(code=user_profile.section).first()
+            print("section userprofile: ", user_profile)
+            section = Sections.objects.filter(id=user_profile.section.id).first()
+            print("section: ", section)
             user_designation = Designations.objects.filter(id=user_profile.designation.id).first() if user_profile.designation else None
 
         new_user = {
@@ -258,7 +259,9 @@ def update_user(request):
             users_role = request.POST['users_role']
             
             region = Regions.objects.filter(id=region_).first()
+            print("section_: ", section_)
             section = Sections.objects.filter(code=section_).first()
+            print("section: ", section.id)
             designation = Designations.objects.filter(id=designation_).first()
 
             user_profile = UserProfile.objects.filter(id=id).first()
@@ -276,26 +279,32 @@ def update_user(request):
                 user_profile.section = section
             if designation:
                 user_profile.designation = designation
-
-            if remittance_role:
-                user_profile.roles.add(remittance_role)
-            if pettycash:
-                user_profile.roles.add(pettycash)
-            if tenders:
-                user_profile.roles.add(tenders)
-            if tokens:
-                user_profile.roles.add(tokens)
-            if ace:
-                user_profile.roles.add(ace)
-            if non_conformity:
-                user_profile.roles.add(non_conformity)
-            if users_role:
-                user_profile.roles.add(users_role)
-            if adjudication:
-                user_profile.roles.add(adjudication)
-                
-            user_profile.save()
-                
+            
+            user_profile.save() 
+            
+            roles = []
+            if remittance_role and remittance_role != "Select Role":
+                roles.append(remittance_role)
+            if pettycash and pettycash != "Select Role":
+                roles.append(pettycash)
+            if tenders and tenders != "Select Role":
+                roles.append(tenders)
+            if tokens and tokens != "Select Role":
+                roles.append(tokens)
+            if ace and ace != "Select Role":
+                roles.append(ace)
+            if non_conformity and non_conformity != "Select Role":
+                roles.append(non_conformity)
+            if users_role and users_role != "Select Role":
+                roles.append(users_role)
+            if adjudication and adjudication != "Select Role":
+                roles.append(adjudication)
+            
+            print("roles: ", roles)
+            role_objects = Roles.objects.filter(id__in=roles)  # Example of retrieving roles
+            # user_profile.roles.clear()
+            user_profile.roles.add(*role_objects)
+            
         except Exception as ex:
             print("save user error", ex)
 
