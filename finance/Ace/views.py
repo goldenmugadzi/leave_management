@@ -5,6 +5,7 @@ import csv
 import sweetify
 from datetime import datetime
 from random import randrange
+from it.users.models import *
 
 from django.apps import apps
 from django.conf import settings
@@ -13,23 +14,23 @@ from django.http import FileResponse, HttpResponse
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from datetime import date
-Notification = apps.get_model(app_label='users', model_name='Notification')
+# Notification = apps.get_model(app_label='users', model_name='Notification')
 
-# from openpyxl.reader.excel import load_workbook
+# # from openpyxl.reader.excel import load_workbook
 
-# from numpy.distutils.fcompiler import none
+# # from numpy.distutils.fcompiler import none
 
-UserProfile = apps.get_model(app_label="users", model_name="UserProfile")
+# UserProfile = apps.get_model(app_label="users", model_name="UserProfile")
 from .models import *
 from django.core import serializers
-from django.apps import apps
-Sections = apps.get_model(app_label='users', model_name='Sections')
-Districts = apps.get_model(app_label='users', model_name='Districts')
-Depots = apps.get_model(app_label='users', model_name='Depots')
-Regions = apps.get_model(app_label='users', model_name='Regions')
-Roles = apps.get_model(app_label='users', model_name='Roles')
-Designations = apps.get_model(app_label='users', model_name='Designations')
-from django.contrib.auth.models import User
+# from django.apps import apps
+# Sections = apps.get_model(app_label='users', model_name='Sections')
+# Districts = apps.get_model(app_label='users', model_name='Districts')
+# Depots = apps.get_model(app_label='users', model_name='Depots')
+# Regions = apps.get_model(app_label='users', model_name='Regions')
+# Roles = apps.get_model(app_label='users', model_name='Roles')
+# Designations = apps.get_model(app_label='users', model_name='Designations')
+# from django.contrib.auth.models import User
 
 
 # Create your views here.

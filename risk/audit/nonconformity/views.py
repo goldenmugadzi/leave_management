@@ -6,10 +6,10 @@ import json
 from .models import Nonconformity,Response
 from .forms import NonconformityForm, NonconformityResponseForm,AdditionalInfoForm
 from django.contrib.auth.models import User
-# from it.users.models import Notification
+# from it.users.models import Notification,Sections   
 from django.apps import apps
 Notification = apps.get_model(app_label='users', model_name='Notification')
-# Section = apps.get_model(app_label='users', model_name='Sections')
+Section = apps.get_model(app_label='users', model_name='Sections')
 
 
 from django.contrib import messages
@@ -144,13 +144,23 @@ def view_notifications(request):
     
 @login_required
 def view_nonconformities(request):
-    # Get the current user
     user = request.user
     profile = user.userprofile  # Access the UserProfile instance
 
     nonconformities = Nonconformity.objects.filter(
         Q(created_by__userprofile__region=profile.region) | Q(recipient__userprofile__region=profile.region)
     )
+    #for each nonconformity in nonconformities, get the add a field section with the section name of the recipient
+    for nonconformity in nonconformities:
+        section = Section.objects.get(id=nonconformity.recipient.userprofile.section)
+        nonconformity.section = section.section
+        #also get the latest response status along with name of user who responded in this format P.Chinaka : accepted  for each nonconformity if no response exists, set status to 'created'
+        try:
+            response = Response.objects.filter(nonconformity=nonconformity).latest('created_at')
+            nonconformity.status = f"{response.user.first_name[0]}. {response.user.last_name} : {response.status}"
+        except Response.DoesNotExist:
+            nonconformity.status = 'created'
+
     return render(request, 'risk/nonconformity/nonconformities.html', {'nonconformities': nonconformities})
 
 @login_required

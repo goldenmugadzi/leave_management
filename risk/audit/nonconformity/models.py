@@ -10,7 +10,7 @@ class Nonconformity(models.Model):
     violation_standard_reference = models.CharField(max_length=400, blank=True, null=True, verbose_name='Violation Standard Reference')
     recommended_corrective_action = models.CharField(max_length=300, blank=False, null=False, verbose_name='Recommended Corrective Action')
     created_at = models.DateTimeField(auto_now_add=True)
-    attachment = models.FileField(upload_to='static/nonconformity_files/', blank=True, null=True, verbose_name='Attachment')
+    attachment = models.FileField(upload_to='nonconformity_attachments/', blank=True, null=True, verbose_name='Attachment')
     plan_of_action = models.TextField(max_length=400, blank=True, null=True, verbose_name='Plan of Action')
     expected_completion_date = models.DateField(blank=True, null=True, verbose_name='Expected Completion Date')
     

@@ -90,17 +90,13 @@ SIMPLE_JWT = {
     "SLIDING_TOKEN_REFRESH_SERIALIZER": "rest_framework_simplejwt.serializers.TokenRefreshSlidingSerializer",
 }
 
-
 # Application definition
-sys.path.insert(0, os.path.join(BASE_DIR, 'it'))
 sys.path.insert(1, os.path.join(BASE_DIR, 'engineering'))
 sys.path.insert(2, os.path.join(BASE_DIR, 'commercials'))
 sys.path.insert(3, os.path.join(BASE_DIR, 'hr'))
 sys.path.insert(4, os.path.join(BASE_DIR, 'reports'))
 sys.path.insert(5, os.path.join(BASE_DIR, 'api/ops_maintenance'))
-sys.path.insert(6, os.path.join(BASE_DIR, 'finance'))
 sys.path.insert(7, os.path.join(BASE_DIR, 'miscellaneous'))
-sys.path.insert(8, os.path.join(BASE_DIR, 'executive'))
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -115,15 +111,15 @@ INSTALLED_APPS = [
     
     'risk.audit.checklist',
     'risk.audit.nonconformity',
-    'it.beii_auth.apps.BeiiAuthConfig',
-    'it.users.apps.UsersConfig',
-    'executive.exec_dashboards.apps.ExecDashboardsConfig',
+    'it.beii_auth',
+    'it.users',
+    'executive.exec_dashboards',
     'knowledge_center',
     'Docs',
     'processes.apps.ProcessesConfig',
     'process_risks.apps.ProcessRisksConfig',
-    'finance.Ace.apps.AceConfig',
-    'finance.rfq.apps.RfqConfig',
+    'finance.Ace',
+    'finance.rfq',
     'sweetify',
     'mathfilters',
     
@@ -152,11 +148,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ELASTICSEARCH_DSL = {
-    'default': {
-        'hosts': '127.0.0.1:9200/',  # Replace with your Elasticsearch host and port
-    },
-}
+
 
 ROOT_URLCONF = 'beii_v1.urls'
 

@@ -1,5 +1,5 @@
 from django.db import models
-
+from finance.Ace.models import Ace
 # Create your models here.
 class RFQ(models.Model):
     rfq_id = models.CharField(primary_key=True, max_length=60)
@@ -20,7 +20,7 @@ class RFQ(models.Model):
 
     approval_status = models.CharField(max_length=120, blank=True, null=True)
     date_approved = models.DateField(null=True, blank=True)
-    ace = models.ForeignKey('Ace', models.DO_NOTHING, db_column='ace_id2', blank=True, null=True)
+    ace = models.ForeignKey(Ace, models.DO_NOTHING, db_column='ace_id2', blank=True, null=True)
 
     section_head = models.CharField(max_length=100, blank=True, null=True)
     finance_manager = models.CharField(max_length=100, blank=True, null=True)

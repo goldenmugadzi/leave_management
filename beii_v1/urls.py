@@ -13,6 +13,10 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+
+from django.conf.urls.static import static
+from django.conf import settings
+
 from django.contrib import admin
 from django.urls import path, include
 from rest_framework_simplejwt.views import (
@@ -22,39 +26,32 @@ from rest_framework_simplejwt.views import (
 )
 
 urlpatterns = [
-    path('', include('beii_auth.urls')),
+    path('', include('it.beii_auth.urls')),
     path('', include('Docs.urls')),
     path('', include('risk.audit.nonconformity.urls')),
     path('meter/', include('commecial.tempertockens.urls')),
-    path('users/', include('users.urls')),
-    path('dashboards/', include('exec_dashboards.urls')),
+    path('users/', include('it.users.urls')),
+    path('dashboards/', include('executive.exec_dashboards.urls')),
     path('knowledge-center/', include('knowledge_center.urls')),
     path('processes/',include('processes.urls'), name='processes'),
     path('process_risks/',include('process_risks.urls'), name='process_risks'),
     path('competence/', include('competence_building.urls')),
     path('admin/', admin.site.urls),
     path('accounts/', include('django.contrib.auth.urls')),
+<<<<<<< HEAD
     path('ace/', include('Ace.urls')),
     # path('rfq/', include('rfq.urls')),
+=======
+    path('ace/', include('finance.Ace.urls')),
+    path('', include('finance.rfq.urls')),
+>>>>>>> 38b12571de7d236b5cdac313e6a80262951b356a
     
-    # path('finance/', include('tenders.urls')),
-    # path('network-development/', include('reticulations.urls')),
-    # path('commercials/', include('connections.urls')),
-    # path('hr/', include('okr.urls')),    
-    # path('pettycash/', include('Pettycash.urls')),
-    # path('knowledge-center/', include('knowledge_center.urls')),
-    
-    # API ENDPOINT
-    
-    # AUTH ENDPOINTS
+      # AUTH ENDPOINTS
     path('api-auth/', include('rest_framework.urls')),
     path('api/auth/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('api/auth/token/verify/', TokenVerifyView.as_view(), name='token_verify'),
     
-    # OPS & MAINTENANCE
-    # path('api/safety/operations/', include('safety_operations.urls')),
-    
-    # REPORTS ENDPOINTS
-    # path('reports/', include('beii_reports.urls')),
-]
+ ]
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
