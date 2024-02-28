@@ -63,6 +63,7 @@ def add_user(request):
             adjudication = request.POST['direct_purchase_role']
             tokens = request.POST['tokens_role']
             ace = request.POST['ace_role']
+            rfq = request.POST['rfq_role']
             non_conformity = request.POST['non_conformity_role']
             users_role = request.POST['users_role']
             
@@ -77,6 +78,8 @@ def add_user(request):
                 roles.append(tokens)
             if ace:
                 roles.append(ace)
+            if rfq:
+                roles.append(rfq)
             if non_conformity:
                 roles.append(non_conformity)
             if users_role:
@@ -164,6 +167,7 @@ def update_user(request):
             "tenders": {},
             "ace": {},
             "users": {},
+            "rfq": {},
         }
 
         new_user = None
@@ -203,6 +207,9 @@ def update_user(request):
                 if role.application == "ace":
                     custom_user_roles["ace"] = role
 
+                if role.application == "rfq":
+                    custom_user_roles["rfq"] = role
+
             region = Regions.objects.filter(id=user_profile.region).first()
             district = Districts.objects.filter(code=user_profile.district).first()
             depot = Depots.objects.filter(code=user_profile.depot).first()
@@ -231,6 +238,8 @@ def update_user(request):
         
         # get roles
         user_roles = Roles.objects.all()
+        # rfq_role = Roles.objects.filter(application="rfq").all()
+        # print("user_roles: ", rfq_role)
         grouped_user_roles = group_user_roles(user_roles)
         
         # get designations
@@ -265,6 +274,7 @@ def update_user(request):
             adjudication = request.POST['direct_purchase_role']
             tokens = request.POST['tokens_role']
             ace = request.POST['ace_role']
+            rfq = request.POST['rfq_role']
             non_conformity = request.POST['non_conformity_role']
             users_role = request.POST['users_role']
 
@@ -300,6 +310,8 @@ def update_user(request):
                     roles.append(tokens)
                 if ace:
                     roles.append(ace)
+                if rfq:
+                    roles.append(rfq)
                 if non_conformity:
                     roles.append(non_conformity)
                 if users_role:
