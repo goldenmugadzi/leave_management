@@ -186,4 +186,67 @@
   </div>
 </div>
 {% endblock %}
+{% block scripts %}
+<script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+<script>
+  $("#category_id").change(function() {
+    var selectedValue = $(this).val();
+    $.ajax({
+      url: '/knowledge-center/get-files/' + selectedValue,
+      type: 'GET',
+      success: function(data) {
+          var selectElement = document.getElementById("subtype1");
+          // Clear existing options
+          selectElement.options.length = 0;
+
+          // Add new options based on data
+          for (var option of data.options) {
+              var opt = new Option(option.name, option.id);
+              selectElement.add(opt);
+          }
+      }
+    });
+  });
+{% comment %} function updateSelectOptions(category_id, Categories, file_type, searchTerm) {
+  $.ajax({
+      url: '/user_manual/get-files/' + Categories + '/' + file_type + '/',
+      type: 'GET',
+      success: function(data) {
+          var selectElement = document.getElementById(selectElementId);
+          // Clear existing options
+          selectElement.options.length = 0;
+
+          // Add new options based on data
+          for (var option of data.options) {
+              var opt = new Option(option, option);
+              selectElement.add(opt);
+          }
+      }
+  });
+} {% endcomment %}
+</script>
+<script>
+  $("#subtype1").change(function() {
+    var selectedValue = $(this).val();
+    var fileType = document.getElementById("category_id").value;
+    $.ajax({
+      url: '/knowledge-center/get-cat2/'+ fileType + '/' + selectedValue,
+      type: 'GET',
+      success: function(data) {
+          var secondCategory = document.getElementById("subtype2");
+          // Clear existing options
+          secondCategory.options.length = 0;
+
+          // Add new options based on data
+          for (var option of data.options_list) {
+              var opt = new Option(option.name, option.id);
+              secondCategory.add(opt);
+          }
+      }
+    });
+  });
+
+</script>
+{% endblock scripts %}
+
 

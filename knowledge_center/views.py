@@ -15,7 +15,7 @@ from .models import KnowledgeCenter
 
 # Create your views here.
 def create(request):
-    
+    url_path = request.path.split("/")
     if request.method == 'POST':
         # something
         print("post data: ", request.POST)
@@ -56,13 +56,11 @@ def create(request):
             created_by = "Max",
         )
         um.save()
-        url_path = request.path.split("/")
         
         return render(request, 'knowledge-center/create.html', {
                       "url_path": url_path
                       })    
     
-        url_path = request.path.split("/")
     return render(request, 'knowledge-center/create.html', {"url_path": url_path})
 
 def view_files(request):
@@ -274,7 +272,7 @@ def view_specifications(request):
 
 def view_commercial_spec(request):
     
-    files = KnowledgeCenter.objects.filter(sub_category_1="Commercial")
+    files = KnowledgeCenter.objects.filter(file_type="SPECIFICATIONS", sub_category_1="Commercial")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -285,7 +283,7 @@ def view_commercial_spec(request):
 
 def view_hr_spec(request):
     
-    files = KnowledgeCenter.objects.filter(sub_category_1="Human Resources")
+    files = KnowledgeCenter.objects.filter(file_type="SPECIFICATIONS", sub_category_1="Human Resources")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -296,7 +294,7 @@ def view_hr_spec(request):
 
 def view_engineering_spec(request):
     
-    files = KnowledgeCenter.objects.filter(sub_category_1="Engineering")
+    files = KnowledgeCenter.objects.filter(file_type="SPECIFICATIONS", sub_category_1="Engineering")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -308,7 +306,7 @@ def view_engineering_spec(request):
 
 def view_finance_spec(request):
     
-    files = KnowledgeCenter.objects.filter(sub_category_1="Finance")
+    files = KnowledgeCenter.objects.filter(file_type="SPECIFICATIONS", sub_category_1="Finance")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -320,7 +318,7 @@ def view_finance_spec(request):
 
 def view_ict_spec(request):
     
-    files = KnowledgeCenter.objects.filter(sub_category_1="ICT")
+    files = KnowledgeCenter.objects.filter(file_type="SPECIFICATIONS", sub_category_1="ICT")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -332,7 +330,7 @@ def view_ict_spec(request):
 
 def view_risk_spec(request):
     
-    files = KnowledgeCenter.objects.filter(sub_category_1="Risk")
+    files = KnowledgeCenter.objects.filter(file_type="SPECIFICATIONS", sub_category_1="Risk")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -343,7 +341,7 @@ def view_risk_spec(request):
 
 def view_relations_spec(request):
     
-    files = KnowledgeCenter.objects.filter(sub_category_1="Stakeholder Relations")
+    files = KnowledgeCenter.objects.filter(file_type="SPECIFICATIONS", sub_category_1="Stakeholder Relations")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -354,7 +352,7 @@ def view_relations_spec(request):
 
 def view_legal_spec(request):
     
-    files = KnowledgeCenter.objects.filter(sub_category_1="Legal")
+    files = KnowledgeCenter.objects.filter(file_type="SPECIFICATIONS", sub_category_1="Legal")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -365,7 +363,7 @@ def view_legal_spec(request):
 
 def view_procurement_spec(request):
     
-    files = KnowledgeCenter.objects.filter(sub_category_1="Procurement")
+    files = KnowledgeCenter.objects.filter(file_type="SPECIFICATIONS", sub_category_1="Procurement")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -989,7 +987,7 @@ def view_user_manuals(request):
 
 def view_commercial_usermanuals(request):
     
-    files = KnowledgeCenter.objects.filter(sub_category_1="Commercial")
+    files = KnowledgeCenter.objects.filter(file_type="USER MANUALS", sub_category_1="Commercial")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -1000,7 +998,7 @@ def view_commercial_usermanuals(request):
 
 def view_hr_usermanuals(request):
     
-    files = KnowledgeCenter.objects.filter(sub_category_1="hr")
+    files = KnowledgeCenter.objects.filter(file_type="USER MANUALS", sub_category_1="hr")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -1011,7 +1009,7 @@ def view_hr_usermanuals(request):
 
 def view_finance_usermanuals(request):
     
-    files = KnowledgeCenter.objects.filter(sub_category_1="Finance")
+    files = KnowledgeCenter.objects.filter(file_type="USER MANUALS", sub_category_1="Finance")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -1022,7 +1020,7 @@ def view_finance_usermanuals(request):
 
 def view_ict_usermanuals(request):
     
-    files = KnowledgeCenter.objects.filter(sub_category_1="ICT")
+    files = KnowledgeCenter.objects.filter(file_type="USER MANUALS", sub_category_1="ICT")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -1033,7 +1031,7 @@ def view_ict_usermanuals(request):
 
 def view_relations_usermanuals(request):
     
-    files = KnowledgeCenter.objects.filter(sub_category_1="Stakeholder Relations")
+    files = KnowledgeCenter.objects.filter(file_type="USER MANUALS", sub_category_1="Stakeholder Relations")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -1044,7 +1042,7 @@ def view_relations_usermanuals(request):
 
 def view_legal_usermanuals(request):
     
-    files = KnowledgeCenter.objects.filter(sub_category_1="Legal")
+    files = KnowledgeCenter.objects.filter(file_type="USER MANUALS", sub_category_1="Legal")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -1055,7 +1053,7 @@ def view_legal_usermanuals(request):
 
 def view_procurement_usermanuals(request):
     
-    files = KnowledgeCenter.objects.filter(sub_category_1="Procurement")
+    files = KnowledgeCenter.objects.filter(file_type="USER MANUALS", sub_category_1="Procurement")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -1066,7 +1064,7 @@ def view_procurement_usermanuals(request):
 
 def view_risk_usermanuals(request):
     
-    files = KnowledgeCenter.objects.filter(sub_category_1="Risk")
+    files = KnowledgeCenter.objects.filter(file_type ="USER MANUALS", sub_category_1="Risk")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
