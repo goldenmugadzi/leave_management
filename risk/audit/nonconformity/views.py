@@ -5,16 +5,11 @@ from django.db.models import Q
 import json
 from .models import Nonconformity,Response
 from .forms import NonconformityForm, NonconformityResponseForm,AdditionalInfoForm
-from django.contrib.auth.models import User
 # from it.users.models import Notification
-from django.apps import apps
-Notification = apps.get_model(app_label='users', model_name='Notification')
-# Section = apps.get_model(app_label='users', model_name='Sections')
+from it.users.models import UserProfile, Depots, Districts, Regions, Notification
 
 
 from django.contrib import messages
-
-
 
 @login_required
 def create_nonconformity(request):
@@ -144,12 +139,9 @@ def view_notifications(request):
     
 @login_required
 def view_nonconformities(request):
-    # Get the current user
     user = request.user
-    profile = user.userprofile  # Access the UserProfile instance
-
     nonconformities = Nonconformity.objects.filter(
-        Q(created_by__userprofile__region=profile.region) | Q(recipient__userprofile__region=profile.region)
+        Q(created_by__region=user.region) | Q(recipient__region=user.region)
     )
     return render(request, 'risk/nonconformity/nonconformities.html', {'nonconformities': nonconformities})
 

@@ -138,6 +138,8 @@ INSTALLED_APPS = [
     # 'miscellaneous.knowledge_center.apps.KnowledgeCenterConfig'
 ]
 
+AUTH_USER_MODEL = 'users.UserProfile'
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -197,7 +199,7 @@ DATABASES = {
     # }
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'beii',
+        'NAME': 'beii_test',
         'USER': 'root',
         'PASSWORD': '',
         'HOST': 'localhost',
