@@ -43,7 +43,7 @@
             <td><a class="text-blue-500" href="/nonconformity/{{nonconformity.id}}">{{ nonconformity.description|default_if_none:'' }}</a></td>
             <td>{{ nonconformity.violation_standard_reference|default_if_none:''}}</td>
             <td>{{nonconformity.recommended_corrective_action|default_if_none:''}}</td>
-            <td>{{nonconformity.section|default_if_none:''}}</td>
+            <td>{{nonconformity.recipient.section|default_if_none:''}}</td>
             <td>{{nonconformity.status}}</td>
           </tr>
           {% endfor %}

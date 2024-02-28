@@ -8,11 +8,7 @@ from django.core import serializers
 from django.db.models import Count
 from django.db.models.functions import ExtractWeek
 
-from django.apps import apps
-UserProfile = apps.get_model(app_label='users', model_name='UserProfile')
-Districts = apps.get_model(app_label='users', model_name='Districts')
-Depots = apps.get_model(app_label='users', model_name='Depots')
-Regions = apps.get_model(app_label='users', model_name='Regions')
+from it.users.models import UserProfile, Depots, Districts, Regions
 
 MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
 
@@ -21,7 +17,7 @@ def dashboard_index(request):
     
     user_title = request.user.get_full_name()
     user = request.user
-    user_profile = UserProfile.objects.filter(user_id=user.id).first()
+    user_profile = UserProfile.objects.filter(id=user.id).first()
     l = request.user.groups.values_list('name',flat = True) # QuerySet Object
     user_groups = list(l) 
     
