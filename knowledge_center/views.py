@@ -148,7 +148,7 @@ def download_file(request):
 
 
 def edit_file(request, file_id):
-
+    url_path = request.path.split("/")
     if request.method == 'GET':
         print("file_id: ", file_id)
         file_record = KnowledgeCenter.objects.filter(id=file_id).first()
@@ -157,7 +157,52 @@ def edit_file(request, file_id):
         url_path = request.path.split("/")
         return render(request, 'knowledge-center/edit_file.html', {"record": file_record, "url_path": url_path})    
     
-    url_path = request.path.split("/")
+    if request.method == 'POST':
+        # something
+        print("post data: ", request.POST)
+        id = request.POST['id']
+        filename = request.POST['filename']
+        filetype = request.POST['category_id']
+        section = request.POST['section']
+        subtype1 = ""
+        if 'subtype1' in request.POST:
+            subtype1 = request.POST['subtype1']
+        subtype2 = ""
+        if 'subtype2' in request.POST:
+            subtype2 = request.POST['subtype2']
+        region = request.POST['region']
+        
+        file_path = ''
+        try:
+            if 'uploaded_file' in request.FILES:
+                uploaded_file = request.FILES ['uploaded_file']
+                file_path = 'uploads/knowledge_center/'+datetime.now().strftime('%Y%m%d%I%M%S%p') + uploaded_file.name 
+                save_file(uploaded_file,file_path)
+        except Exception as ex:
+            print("Error:",ex)
+
+
+        file_type= Filetype.objects.filter(id=filetype).first() if filetype else None
+        subtype1_ = First_Category.objects.filter(id=subtype1).first() if subtype1 else None
+        subtype2_ = Secondary_Category.objects.filter(id=subtype2).first() if subtype2 else None
+
+        um = KnowledgeCenter.objects.filter(id=id).first()
+        um.filename= filename
+        um.file_type= file_type.name if file_type else ""
+        um.filepath = file_path
+        um.section= section
+        um.sub_category_1 = subtype1_.name if subtype1_ else ""
+        um.sub_category_2 = subtype2_.name if subtype2_ else ""
+        um.region=region
+        um.updated_at = datetime.now().date()
+        um.created_by = "Max"
+
+        um.save()
+        
+        return render(request, 'knowledge-center/create.html', {
+                      "url_path": url_path
+                      })    
+    
     return render(request, 'knowledge-center/edit_file.html', {"url_path": url_path})
 
 
