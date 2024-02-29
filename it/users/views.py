@@ -4,6 +4,7 @@ import json
 from django.contrib.auth import login
 from django.shortcuts import redirect, render
 from django.urls import reverse
+from django.contrib.auth.hashers import make_password
 
 from it.users.models import Roles, UserProfile, Depots, Districts, Regions, Designations, Sections
 from it.users.forms import CustomUserCreationForm
@@ -24,6 +25,8 @@ def add_user(request):
         
         # get designations
         user_designations = Designations.objects.all()
+        sections = Sections.objects.all()
+        regions = Regions.objects.all()
 
         return render(
             request,
@@ -32,6 +35,8 @@ def add_user(request):
                 "form": CustomUserCreationForm,
                 "user_roles": grouped_user_roles,
                 "user_designations": user_designations,
+                "sections": sections,
+                "regions": regions,
                 "user_title": user_title,
                 "user_groups": user_groups,
             }
@@ -95,9 +100,10 @@ def add_user(request):
                 user.save()
                 
                 # Get actual Role objects:
-                role_objects = Roles.objects.filter(role__in=roles)  # Example of retrieving roles
-                user.roles.set(role_objects)
-                user.set_password(password1)
+                role_objects = Roles.objects.filter(id__in=roles)  # Example of retrieving roles
+                user.roles.add(*role_objects)
+                user.set_password(make_password(password1))
+                user.save()
                 
         except Exception as ex:
             print("save user error", ex)
@@ -191,12 +197,10 @@ def update_user(request):
                 if role.application == "ace":
                     custom_user_roles["ace"] = role
 
-            region = Regions.objects.filter(id=user_profile.region.id).first()
-            district = Districts.objects.filter(code=user_profile.district).first()
-            depot = Depots.objects.filter(code=user_profile.depot).first()
-            print("section userprofile: ", user_profile)
-            section = Sections.objects.filter(id=user_profile.section.id).first()
-            print("section: ", section)
+            region = Regions.objects.filter(id=user_profile.region.id).first() if user_profile.region else None
+            district = Districts.objects.filter(code=user_profile.district).first() if user_profile.district else None
+            depot = Depots.objects.filter(code=user_profile.depot).first() if user_profile.depot else None
+            section = Sections.objects.filter(id=user_profile.section.id).first() if user_profile.section else None
             user_designation = Designations.objects.filter(id=user_profile.designation.id).first() if user_profile.designation else None
 
         new_user = {
@@ -212,8 +216,6 @@ def update_user(request):
             "roles": custom_user_roles,
             "designation": user_designation,
         }
-        
-        # print("new_user: ", new_user)
 
         user_title = request.user.get_full_name()
         l = request.user.groups.values_list('name', flat=True)  # QuerySet Object
@@ -225,6 +227,8 @@ def update_user(request):
         
         # get designations
         user_designations = Designations.objects.all()
+        sections = Sections.objects.all()
+        regions = Regions.objects.all()
 
         return render(
             request,
@@ -233,6 +237,8 @@ def update_user(request):
                 "form": CustomUserCreationForm,
                 "user_roles": grouped_user_roles,
                 "user_designations": user_designations,
+                "sections": sections,
+                "regions": regions,
                 "user_title": user_title,
                 "user_groups": user_groups,
                 "user": new_user
@@ -259,9 +265,7 @@ def update_user(request):
             users_role = request.POST['users_role']
             
             region = Regions.objects.filter(id=region_).first()
-            print("section_: ", section_)
             section = Sections.objects.filter(code=section_).first()
-            print("section: ", section.id)
             designation = Designations.objects.filter(id=designation_).first()
 
             user_profile = UserProfile.objects.filter(id=id).first()
@@ -302,7 +306,6 @@ def update_user(request):
             
             print("roles: ", roles)
             role_objects = Roles.objects.filter(id__in=roles)  # Example of retrieving roles
-            # user_profile.roles.clear()
             user_profile.roles.add(*role_objects)
             
         except Exception as ex:
@@ -319,7 +322,7 @@ def reset_user_password(request):
 
         if password1 == password2:
             user_profile = UserProfile.objects.filter(id=id).first()
-            user_profile.set_password(password1)
+            user_profile.set_password(make_password(password1))
             user_profile.save()
             print("saving done ....")
 
@@ -355,7 +358,7 @@ def change_user_password(request):
         if password1 == password2:
             user_profile = UserProfile.objects.filter(id=user_id).first()
             if user_profile.check_password(current_password):
-                user_profile.set_password(password1)
+                user_profile.set_password(make_password(password1))
                 user_profile.save()
                 print("Password changed successfully")
             else:
