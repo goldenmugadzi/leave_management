@@ -102,7 +102,7 @@ def add_user(request):
                 # Get actual Role objects:
                 role_objects = Roles.objects.filter(id__in=roles)  # Example of retrieving roles
                 user.roles.add(*role_objects)
-                user.set_password(make_password(password1))
+                user.set_password(password1)
                 user.save()
                 
         except Exception as ex:
