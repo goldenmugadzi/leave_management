@@ -96,6 +96,30 @@
           <div style="flex: 0.25" class="flex justify-center">
             <div class="w-full">
               <form
+                id="submitRegionForm"
+                action="/dashboards/filter/region"
+                method="post"
+              >
+                {% csrf_token %}
+                <select
+                  id="selectRegion"
+                  name="selectedRegion"
+                  class="block w-full bg-gulf-blue-50 rounded-md border-0 px-2 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+                >
+                  {% if region %}
+                  <option value="{{region.id}}">{{region.region}}</option>
+                  {% endif %}
+                  <option>Select Region</option>
+                  {% for region_ in regions %}
+                  <option value="{{region_.id}}">{{region_.region}}</option>
+                  {% endfor %}
+                </select>
+              </form>
+            </div>
+          </div>
+          <div style="flex: 0.25" class="flex justify-center">
+            <div class="w-full">
+              <form
                 id="submitDistrictForm"
                 action="/dashboards/filter/district"
                 method="post"
@@ -109,39 +133,11 @@
                 >
                   {% if district %}
                   <option value="{{district.id}}">{{district.district}}</option>
-                  {% else %}
-                  <option>Select District</option>
                   {% endif %}
-                  <option value="1">Chitungwiza</option>
-                  <option value="2">North District</option>
-                  <option value="3">South District</option>
-                  <option value="4">East District</option>
-                </select>
-              </form>
-            </div>
-          </div>
-          <div style="flex: 0.25" class="flex justify-center">
-            <div class="w-full">
-              <form
-                id="submitRegionForm"
-                action="/dashboards/filter/region"
-                method="post"
-              >
-                {% csrf_token %}
-                <select
-                  id="selectRegion"
-                  name="selectedRegion"
-                  class="block w-full bg-gulf-blue-50 rounded-md border-0 px-2 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
-                >
-                  {% if region %}
-                  <option value="{{region.id}}">{{region.region}}</option>
-                  {% else %}
-                  <option>Select Region</option>
-                  {% endif %}
-                  <option value="1">Harare Region</option>
-                  <option value="2">East Region</option>
-                  <option value="3">South Region</option>
-                  <option value="4">West Region</option>
+                  <option>Select Center</option>
+                  {% for district_ in districts %}
+                  <option value="{{district_.id}}">{{district_.section}}</option>
+                  {% endfor %}
                 </select>
               </form>
             </div>

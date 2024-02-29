@@ -322,7 +322,7 @@ def reset_user_password(request):
 
         if password1 == password2:
             user_profile = UserProfile.objects.filter(id=id).first()
-            user_profile.set_password(make_password(password1))
+            user_profile.set_password(password1)
             user_profile.save()
             print("saving done ....")
 
@@ -358,7 +358,7 @@ def change_user_password(request):
         if password1 == password2:
             user_profile = UserProfile.objects.filter(id=user_id).first()
             if user_profile.check_password(current_password):
-                user_profile.set_password(make_password(password1))
+                user_profile.set_password(password1)
                 user_profile.save()
                 print("Password changed successfully")
             else:
