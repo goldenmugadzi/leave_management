@@ -38,10 +38,15 @@ urlpatterns = [
     path('competence/', include('competence_building.urls')),
     path('admin/', admin.site.urls),
     path('accounts/', include('django.contrib.auth.urls')),
+<<<<<<< HEAD
 
     path('ace/', include('finance.Ace.urls')),
     path('rfq/', include('finance.rfq.urls')),
     # path('', include('finance.rfq.urls')),
+=======
+    path('ace/', include('finance.Ace.urls')),
+    path('', include('finance.rfq.urls')),
+>>>>>>> af1116be5793a3a7d71e060f2d536a64302c7f87
     
       # AUTH ENDPOINTS
     path('api-auth/', include('rest_framework.urls')),

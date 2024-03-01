@@ -16,6 +16,7 @@ class RFQ(models.Model):
     quotation3 = models.FileField(upload_to='uploads/finance/rfq')
     payment_mode = models.CharField(max_length=100, blank=True, null=True)
     requested_by = models.CharField(max_length=100, blank=True, null=True)
+    designation = models.CharField(max_length=100, blank=True, null=True)
     date_created = models.DateField(auto_now_add=True, blank=True, null=True)
 
     approval_status = models.CharField(max_length=120, blank=True, null=True)
