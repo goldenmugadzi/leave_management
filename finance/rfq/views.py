@@ -27,8 +27,7 @@ def index(request):
 
     # QuerySet Object
     user_id = request.user.id
-    user = User.objects.filter(id=user_id).first()
-    user_profile = UserProfile.objects.filter(user_id=user.pk).first()
+    user_profile = UserProfile.objects.filter(id=user_id).first()
 
     custom_user_roles = {
         "non_conformity": {},
@@ -42,7 +41,7 @@ def index(request):
         "rfq": {},
     }
 
-    user_group_ids = user_profile.roles
+    user_group_ids = user_profile.roles.all()
     user_group_ids = user_group_ids.split(",") if user_group_ids else []
     for id in user_group_ids:
 
@@ -61,7 +60,7 @@ def index(request):
     elif Rfq_role == "RFQ Finance Manager":
         return render(request, "rfq/rfq_fm.html")
     elif Rfq_role == "RFQ General Manager":
-        return render(request, "rfq/rfq_gm.html")
+        return render(request, "rfq/rfq_view.html")
     else:
         messages.error(request, 'you need to contact it to get a role in the ACE')
         sweetify.success(request,'you need to contact it to get a role in the ACE')

@@ -4,7 +4,7 @@ from django.contrib.auth import logout
 # from utils.helper_functions import get_dashboard_reports
 
 
-from it.users.models import UserProfile, Depots, Districts, Regions, Designations, Sections
+from it.users.models import Roles, UserProfile, Depots, Districts, Regions, Designations, Sections
 
 # Create your views here.
 def index(request):
