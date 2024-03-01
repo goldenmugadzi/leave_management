@@ -55,13 +55,13 @@ def index(request):
     print(Rfq_role)
 
     if Rfq_role == "RFQ Requester":
-        return render(request, "rfq/rfq_requester.html")
+        return redirect('/rfq/create_rfq')
     elif Rfq_role == "RFQ Section Head":
-        return render(request, "rfq/rfq_authoriser.html")
+        return redirect('/rfq/section_head_approve_rfq')
     elif Rfq_role == "RFQ Finance Manager":
-        return render(request, "rfq/rfq_fm.html")
+        return redirect('/rfq/finance_manager_approve_rfq')
     elif Rfq_role == "RFQ General Manager":
-        return render(request, "rfq/rfq_gm.html")
+        return redirect('/rfq/general_manager_approve_rfq')
     else:
         messages.error(request, 'you need to contact it to get a role in the ACE')
         sweetify.success(request,'you need to contact it to get a role in the ACE')
