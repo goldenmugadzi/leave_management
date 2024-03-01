@@ -14,9 +14,8 @@ class UserManager(BaseUserManager):
 
     def create_superuser(self, username, password=None, **extra_fields):
         extra_fields.setdefault('is_staff', True)
-        extra_fields.setdefault('is_superuser', False)
+        extra_fields.setdefault('is_superuser', True)
         return self.create_user(username, password, **extra_fields)
-
 
 class Districts(models.Model):
     district = models.CharField(max_length=100)
@@ -123,6 +122,7 @@ class UserProfile(AbstractBaseUser, PermissionsMixin):
    
     class Meta:
         app_label = 'users'
+
 class Notification(models.Model):
     user = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
     message = models.TextField()

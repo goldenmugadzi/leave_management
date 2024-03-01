@@ -134,35 +134,11 @@
                 >
                 {% if user.section %}
                 <option value="{{user.section.code}}" >{{user.section.section}}</option>
-                {% else %}
-                <option>Select Section</option>
                 {% endif %}
-                  <option>Select Section</option>
-                  <option value="521001">GM Office</option>
-                  <option value="522001">Finance</option>
-                  <option value="522102">Stores</option>
-                  <option value="522301">Procurement</option>
-                  <option value="523001">Human Resource</option>
-                  <option value="524001">Engineering</option>
-                  <option value="524101">Network Development</option>
-                  <option value="524202">Transport</option>
-                  <option value="524301">Operations and Maintenance</option>
-                  <option value="525000">Commercial</option>
-                  <option value="526001">Risk Management</option>
-                  <option value="527001">Information Technology</option>
-                  <option value="524402">Makoni Depot</option>
-                  <option value="524403">Zengeza Depot</option>
-                  <option value="524502">Kuwadzana Depot</option>
-                  <option value="524503">Mabelreign Depot</option>
-                  <option value="524504">Warren Park Depot</option>
-                  <option value="524602">Glen View Depot</option>
-                  <option value="524603">Waterfalls Depot</option>
-                  <option value="524604">Southerton Depot</option>
-                  <option value="524702">CBD Depot</option>
-                  <option value="524703">Borrowdale Depot</option>
-                  <option value="524704">Mabvuku Depot</option>
-                  <option value="524705">Ruwa Depot</option>
-                  <option value="000000">Seke Depot</option>
+                <option>Select Section</option>
+                {% for section in sections %}
+                <option value="{{section.code}}">{{section.section}}</option>
+                {% endfor %}
                 </select>
               </div>
             </div>
@@ -184,14 +160,11 @@
                 <option value="{{ user.region.id }}" selected>
                   {{ user.region.region }}
                 </option>
-                {% else %}
-                <option>Select Region</option>
                 {% endif %}
-                  <option>Select Region</option>
-                  <option value="1">Harare Region</option>
-                  <option value="2">East Region</option>
-                  <option value="3">South Region</option>
-                  <option value="4">West Region</option>
+                <option>Select Region</option>
+                {% for region in regions %}
+                <option value="{{region.id}}">{{region.region}}</option>
+                {% endfor %}
                 </select>
               </div>
             </div>

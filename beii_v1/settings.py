@@ -150,8 +150,6 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-
-
 ROOT_URLCONF = 'beii_v1.urls'
 
 TEMPLATES = [

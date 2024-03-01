@@ -20,6 +20,7 @@ Notification = apps.get_model(app_label='users', model_name='Notification')
 Ace = apps.get_model(app_label='Ace', model_name='Ace')
 UserProfile = apps.get_model(app_label="users", model_name="UserProfile")
 from django.contrib.auth.models import User
+from it.users.models import *
 
 # Create your views here.
 def index(request):
