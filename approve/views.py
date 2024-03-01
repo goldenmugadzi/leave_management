@@ -10,14 +10,14 @@ def create_workflow(request):
     if request.method == 'POST':
         try:
             wf= Workflow.objects.get(name=request.POST['name'])
-            workflow_form = WorkflowForm(request.POST,instance=wf)
+            number_of_steps =int(request.POST['number_of_steps'])
+            workflow_form = WorkflowUpdateForm(request.POST,instance=wf)
         except: 
-            workflow_form = WorkflowForm(request.POST)
+            number_of_steps = int(request.POST['number_of_steps'])
+            workflow_form = WorkflowUpdateForm(request.POST)
 
         if workflow_form.is_valid():
             workflow = workflow_form.save(commit=False)
-            number_of_steps = workflow_form.cleaned_data['number_of_steps']
-            # workflow.save()
 
             # StepFormset = formset_factory(StepForm, extra=number_of_steps)
             step_formset = StepFormset(prefix='step')
@@ -40,7 +40,7 @@ def create_workflow(request):
        
         return render(request, 'approve/create_workflow.html', {'workflow_form': workflow_form})
 
-    workflow_form = WorkflowForm()
+    workflow_form = WorkflowCreateForm()
 
     return render(request, 'approve/create_workflow.html', {
         'workflow_form': workflow_form,
@@ -50,9 +50,9 @@ def create_steps(request):
     if request.method == 'POST':
         try:
             wf= Workflow.objects.get(name=request.POST['name'])
-            workflow_form = WorkflowForm(request.POST,instance=wf)
+            workflow_form = WorkflowUpdateForm(request.POST,instance=wf)
         except: 
-            workflow_form = WorkflowForm(request.POST)
+            workflow_form = WorkflowCreateForm(request.POST)
 
         step_formset = StepFormset(request.POST, prefix='step')
 
@@ -67,7 +67,7 @@ def create_steps(request):
                 i+=1
             return redirect('/')
     else:
-        workflow_form = WorkflowForm()
+        workflow_form = WorkflowCreateForm()
         step_formset = StepFormset(prefix='step')
 
     return render(request, 'approve/create_workflow.html', {
