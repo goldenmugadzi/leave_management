@@ -116,6 +116,7 @@ INSTALLED_APPS = [
     'executive.exec_dashboards',
     'knowledge_center',
     'Docs',
+    'approve',
     'processes.apps.ProcessesConfig',
     'process_risks.apps.ProcessRisksConfig',
     'finance.Ace',
@@ -136,6 +137,8 @@ INSTALLED_APPS = [
 
     # 'miscellaneous.knowledge_center.apps.KnowledgeCenterConfig'
 ]
+
+AUTH_USER_MODEL = 'users.UserProfile'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -192,7 +195,7 @@ DATABASES = {
     # }
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'beii',
+        'NAME': 'beii_test',
         'USER': 'root',
         'PASSWORD': '',
         'HOST': 'localhost',

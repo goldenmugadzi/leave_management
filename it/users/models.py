@@ -1,22 +1,21 @@
 from django.db import models
-from django.contrib.auth.models import User
 from datetime import date
 from django.utils import timezone
+from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
 
-# Create your models here.
-class UserProfile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
-    designation = models.CharField(max_length=100, blank=True)
-    section = models.CharField(max_length=100, blank=True)
-    depot = models.CharField(max_length=100, blank=True)
-    region = models.CharField(max_length=100, blank=True)
-    district = models.CharField(max_length=100, blank=True)
-    status = models.CharField(max_length=30, blank=True)
-    roles = models.CharField(max_length=100, blank=True)
-    last_reset =  models.DateField(default=date.today())
+class UserManager(BaseUserManager):
+    def create_user(self, username, password=None, **extra_fields):
+        extra_fields.setdefault('is_staff', False)
+        extra_fields.setdefault('is_superuser', False)
+        user = self.model(username=username, **extra_fields)
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
 
-    def __str__(self):
-        return self.status
+    def create_superuser(self, username, password=None, **extra_fields):
+        extra_fields.setdefault('is_staff', True)
+        extra_fields.setdefault('is_superuser', True)
+        return self.create_user(username, password, **extra_fields)
 
 
 class Districts(models.Model):
@@ -26,7 +25,9 @@ class Districts(models.Model):
 
     def __str__(self):
         return self.district
-
+    
+    class Meta:
+        app_label = 'users'
 
 class Sections(models.Model):
     section = models.CharField(max_length=100)
@@ -37,6 +38,8 @@ class Sections(models.Model):
     def __str__(self):
         return self.section
 
+    class Meta:
+        app_label = 'users'
 
 class Depots(models.Model):
     depot = models.CharField(max_length=100)
@@ -46,7 +49,9 @@ class Depots(models.Model):
 
     def __str__(self):
         return self.depot
-
+ 
+    class Meta:
+        app_label = 'users'
 
 class Regions(models.Model):
     region = models.CharField(max_length=100)
@@ -54,6 +59,9 @@ class Regions(models.Model):
 
     def __str__(self):
         return self.region
+ 
+    class Meta:
+        app_label = 'users'
 
 class Roles(models.Model):
     role = models.CharField(max_length=100)
@@ -63,6 +71,9 @@ class Roles(models.Model):
     
     def __str__(self):
         return self.role
+ 
+    class Meta:
+        app_label = 'users'
     
 class Designations(models.Model):
     identifier = models.CharField(max_length=100, blank=True)
@@ -71,12 +82,73 @@ class Designations(models.Model):
     
     def __str__(self):
         return self.identifier
+ 
+    class Meta:
+        app_label = 'users'
 
+
+class UserProfile(AbstractBaseUser, PermissionsMixin):
+    username = models.CharField(max_length=15, unique=True, verbose_name='EC Number')
+    first_name = models.CharField(blank=True, max_length=150, verbose_name='first name')
+    last_name = models.CharField(blank=True, max_length=150, verbose_name='last name')
+    email = models.EmailField(blank=True, max_length=254, verbose_name='email address')
+    designation = models.ForeignKey(Designations, on_delete=models.DO_NOTHING , blank=True, null=True)
+    section = models.ForeignKey(Sections, on_delete=models.DO_NOTHING, blank=True, null=True)
+    depot = models.ForeignKey(Depots, on_delete=models.DO_NOTHING, blank=True, null=True)
+    district = models.ForeignKey(Districts, on_delete=models.DO_NOTHING, blank=True, null=True)
+    roles = models.ManyToManyField(Roles, blank=True, null=True)
+    region = models.ForeignKey(Regions, on_delete=models.DO_NOTHING, blank=True, null=True)
+    status = models.CharField(max_length=30, blank=True)
+    is_staff = models.BooleanField(default=False, help_text='Designates whether the user can log into this admin site.', verbose_name='staff status')
+    is_active = models.BooleanField(default=True, help_text='Designates whether this user should be treated as active. Unselect this instead of deleting accounts.', verbose_name='active')
+    date_joined = models.DateTimeField(auto_now_add=True, verbose_name='date joined')
+    last_reset =  models.DateField(default=date.today())
+
+    objects = UserManager()
+
+    USERNAME_FIELD = 'username'
+    REQUIRED_FIELDS = []
+    def get_full_name(self):
+        if self.first_name and self.last_name:
+            return f"{self.first_name} {self.last_name}"
+        elif self.first_name:
+            return self.first_name
+        elif self.last_name:
+            return self.last_name
+        else:
+            return self.username
+    
+    def __str__(self):
+        return self.get_full_name()
+   
+    class Meta:
+        app_label = 'users'
 class Notification(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
     message = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
     is_read = models.BooleanField(default=False)
     url = models.CharField( max_length=250)
     def __str__(self):
         return self.message
+ 
+    class Meta:
+        app_label = 'users'
+   
+# Create your models here.    
+# class UserProfile(models.Model):
+    # user = models.OneToOneField(User', on_delete=models.CASCADE)
+    # designation = models.CharField(max_length=100, blank=True)
+    # section = models.CharField(max_length=100, blank=True)
+    # depot = models.CharField(max_length=100, blank=True)
+    # region = models.CharField(max_length=100, blank=True)
+    # district = models.CharField(max_length=100, blank=True)
+    # status = models.CharField(max_length=30, blank=True)
+    # roles = models.CharField(max_length=100, blank=True)
+    # last_reset =  models.DateField(default=date.today())
+
+    # def __str__(self):
+    #     return self.status
+ 
+    # class Meta:
+    #     app_label = 'users'

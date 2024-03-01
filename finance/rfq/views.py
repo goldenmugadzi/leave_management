@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect
 from .models import RFQ, Quotation
 from .forms import RFQForm, QuotationFormSet
+from it.users.models import *
 
 def create_rfq(request):
     if request.method == 'POST':
@@ -20,3 +21,4 @@ def create_rfq(request):
         formset = QuotationFormSet()
 
     return render(request, 'finance/rfq/create_rfq.html', {'form': form, 'formset': formset})
+

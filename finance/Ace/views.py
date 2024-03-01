@@ -20,37 +20,25 @@ from datetime import date
 
 # # from numpy.distutils.fcompiler import none
 
-# UserProfile = apps.get_model(app_label="users", model_name="UserProfile")
 from .models import *
 from django.core import serializers
-# from django.apps import apps
-# Sections = apps.get_model(app_label='users', model_name='Sections')
-# Districts = apps.get_model(app_label='users', model_name='Districts')
-# Depots = apps.get_model(app_label='users', model_name='Depots')
-# Regions = apps.get_model(app_label='users', model_name='Regions')
-# Roles = apps.get_model(app_label='users', model_name='Roles')
-# Designations = apps.get_model(app_label='users', model_name='Designations')
-# from django.contrib.auth.models import User
-
+from it.users.models import Roles, UserProfile, Depots, Districts, Regions, Designations, Sections
 
 # Create your views here.
 @login_required(login_url='/accounts/login/')
 def index(request):
-    user_title = request.user.get_full_name()
 
     l = request.user.groups.values_list('name', flat=True)  # QuerySet Object
     user_groups = list(l)
-
 
     user_title = request.user.get_full_name()
     l = request.user.groups.values_list('name', flat=True)
 
     # QuerySet Object
     user_id = request.user.id
-    user = User.objects.filter(id=user_id).first()
-    user_profile = UserProfile.objects.filter(user_id=user.pk).first()
+    user_profile = UserProfile.objects.filter(id=user_id).first()
 
-    user_groups = user.groups.values_list('name', flat=True)
+    user_groups = user_profile.groups.values_list('name', flat=True)
 
     custom_user_roles = {
     "non_conformity": {},
@@ -63,11 +51,9 @@ def index(request):
     "users": {},
     }
 
-    user_group_ids = user_profile.roles
-    user_group_ids = user_group_ids.split(",") if user_group_ids else []
-    for id in user_group_ids:
-
-        role = Roles.objects.filter(id=id).first()
+    roles_ = user_profile.roles.all()
+    for _role in roles_:
+        role = Roles.objects.filter(id=_role.id).first()
 
         if role.application == "users":
             custom_user_roles["users"] = role
@@ -116,11 +102,11 @@ def index(request):
 
 @login_required(login_url='/accounts/login/')
 def create_Ace(request):
-    user_id = request.user.id
-    user = User.objects.filter(id=user_id).first()
-    user_profile = UserProfile.objects.filter(user_id=user.pk).first()
 
-    user_groups = user.groups.values_list('name', flat=True)
+    user_id = request.user.id
+    user_profile = UserProfile.objects.filter(id=user_id).first()
+
+    user_groups = user_profile.groups.values_list('name', flat=True)
 
     custom_user_roles = {
         "non_conformity": {},
@@ -133,11 +119,9 @@ def create_Ace(request):
         "users": {},
     }
 
-    user_group_ids = user_profile.roles
-    user_group_ids = user_group_ids.split(",") if user_group_ids else []
-    for id in user_group_ids:
-
-        role = Roles.objects.filter(id=id).first()
+    roles_ = user_profile.roles.all()
+    for _role in roles_:
+        role = Roles.objects.filter(id=_role.id).first()
 
         if role.application == "users":
             custom_user_roles["users"] = role
@@ -164,19 +148,19 @@ def create_Ace(request):
             custom_user_roles["ace"] = role
 
     # print(user_profile.designation)
-    region = Regions.objects.filter(id=user_profile.region).first()
+    region = Regions.objects.filter(id=user_profile.region.id).first()
     district = Districts.objects.filter(code=user_profile.district).first()
     depot = Depots.objects.filter(code=user_profile.depot).first()
     section_used = Sections.objects.filter(code=user_profile.section).first()
-    user_designation = Designations.objects.filter(id=user_profile.designation).first() if user_profile.designation else None
+    user_designation = Designations.objects.filter(id=user_profile.designation.id).first() if user_profile.designation else None
     # print(user_designation)
 
     new_user = {
-        "id": user.pk,
-        "username": user.username,
-        "firstname": user.first_name,
-        "lastname": user.last_name,
-        "email": user.email,
+        "id": user_profile.pk,
+        "username": user_profile.username,
+        "firstname": user_profile.first_name,
+        "lastname": user_profile.last_name,
+        "email": user_profile.email,
         "section": section_used,
         "depot": depot,
         "district": district,
@@ -375,15 +359,17 @@ def create_Ace(request):
 
 @login_required(login_url='/accounts/login/')
 def get_Ace_records_section_head(request):
+    
     user_title = request.user.get_full_name()
-    l = request.user.groups.values_list('name', flat=True)
-
     user_id = request.user.id
-    user = User.objects.filter(id=user_id).first()
-    user_profile = UserProfile.objects.filter(user_id=user.pk).first()
+    user_profile = UserProfile.objects.filter(id=user_id).first()
+
+    user_groups = user_profile.groups.values_list('name', flat=True)
+    
+    l = request.user.groups.values_list('name', flat=True)
     section_used = Sections.objects.filter(code=user_profile.section).first()
 
-    user_groups = user.groups.values_list('name', flat=True)
+    user_groups = user_profile.groups.values_list('name', flat=True)
 
     custom_user_roles = {
         "non_conformity": {},
@@ -396,11 +382,9 @@ def get_Ace_records_section_head(request):
         "users": {},
     }
 
-    user_group_ids = user_profile.roles
-    user_group_ids = user_group_ids.split(",") if user_group_ids else []
-    for id in user_group_ids:
-
-        role = Roles.objects.filter(id=id).first()
+    roles_ = user_profile.roles.all()
+    for _role in roles_:
+        role = Roles.objects.filter(id=_role.id).first()
 
         if role.application == "users":
             custom_user_roles["users"] = role
@@ -464,10 +448,9 @@ def get_Ace_records_accounting_officer(request):
     l = request.user.groups.values_list('name', flat=True)
 
     user_id = request.user.id
-    user = User.objects.filter(id=user_id).first()
-    user_profile = UserProfile.objects.filter(user_id=user.pk).first()
+    user_profile = UserProfile.objects.filter(id=user_id).first()
 
-    user_groups = user.groups.values_list('name', flat=True)
+    user_groups = user_profile.groups.values_list('name', flat=True)
 
     custom_user_roles = {
         "non_conformity": {},
@@ -480,11 +463,9 @@ def get_Ace_records_accounting_officer(request):
         "users": {},
     }
 
-    user_group_ids = user_profile.roles
-    user_group_ids = user_group_ids.split(",") if user_group_ids else []
-    for id in user_group_ids:
-
-        role = Roles.objects.filter(id=id).first()
+    roles_ = user_profile.roles.all()
+    for _role in roles_:
+        role = Roles.objects.filter(id=_role.id).first()
 
         if role.application == "users":
             custom_user_roles["users"] = role
@@ -536,11 +517,10 @@ def get_Ace_records_fm(request):
     l = request.user.groups.values_list('name', flat=True)
 
     user_id = request.user.id
-    user = User.objects.filter(id=user_id).first()
-    user_profile = UserProfile.objects.filter(user_id=user.pk).first()
+    user_profile = UserProfile.objects.filter(id=user_id).first()
     section_used = Sections.objects.filter(code=user_profile.section).first()
 
-    user_groups = user.groups.values_list('name', flat=True)
+    user_groups = user_profile.groups.values_list('name', flat=True)
 
     custom_user_roles = {
         "non_conformity": {},
@@ -553,11 +533,9 @@ def get_Ace_records_fm(request):
         "users": {},
     }
 
-    user_group_ids = user_profile.roles
-    user_group_ids = user_group_ids.split(",") if user_group_ids else []
-    for id in user_group_ids:
-
-        role = Roles.objects.filter(id=id).first()
+    roles_ = user_profile.roles.all()
+    for _role in roles_:
+        role = Roles.objects.filter(id=_role.id).first()
 
         if role.application == "users":
             custom_user_roles["users"] = role
@@ -582,6 +560,7 @@ def get_Ace_records_fm(request):
 
         if role.application == "ace":
             custom_user_roles["ace"] = role
+            
     Ace_role=str(custom_user_roles["ace"])
     print(Ace_role,"ace role")
     if Ace_role=="sanction":
@@ -610,11 +589,10 @@ def get_Ace_records_gm(request):
     l = request.user.groups.values_list('name', flat=True)
 
     user_id = request.user.id
-    user = User.objects.filter(id=user_id).first()
-    user_profile = UserProfile.objects.filter(user_id=user.pk).first()
+    user_profile = UserProfile.objects.filter(id=user_id).first()
     section_used = Sections.objects.filter(code=user_profile.section).first()
 
-    user_groups = user.groups.values_list('name', flat=True)
+    user_groups = user_profile.groups.values_list('name', flat=True)
 
     custom_user_roles = {
         "non_conformity": {},
@@ -627,11 +605,9 @@ def get_Ace_records_gm(request):
         "users": {},
     }
 
-    user_group_ids = user_profile.roles
-    user_group_ids = user_group_ids.split(",") if user_group_ids else []
-    for id in user_group_ids:
-
-        role = Roles.objects.filter(id=id).first()
+    roles_ = user_profile.roles.all()
+    for _role in roles_:
+        role = Roles.objects.filter(id=_role.id).first()
 
         if role.application == "users":
             custom_user_roles["users"] = role
@@ -683,9 +659,7 @@ def get_Ace_records_gm(request):
 def get_Ace_records_requester(request):
 
     user_id = request.user.id
-    user = User.objects.filter(id=user_id).first()
-    user_profile = UserProfile.objects.filter(user_id=user.pk).first()
-
+    user_profile = UserProfile.objects.filter(id=user_id).first()
 
     custom_user_roles = {
         "non_conformity": {},
@@ -698,11 +672,9 @@ def get_Ace_records_requester(request):
         "users": {},
     }
 
-    user_group_ids = user_profile.roles
-    user_group_ids = user_group_ids.split(",") if user_group_ids else []
-    for id in user_group_ids:
-
-        role = Roles.objects.filter(id=id).first()
+    roles_ = user_profile.roles.all()
+    for _role in roles_:
+        role = Roles.objects.filter(id=_role.id).first()
 
         if role.application == "users":
             custom_user_roles["users"] = role
@@ -760,7 +732,7 @@ def get_Ace_records_pettyauthoriser(request):
     # QuerySet Object
     user_groups = list(l)
     user_id = request.user.id
-    user = UserProfile.objects.filter(user_id=user_id).first()
+    user = UserProfile.objects.filter(id=user_id).first()
     secction = user.section
     records = Ace.objects.order_by('date_created').all()
 
@@ -805,13 +777,9 @@ def get_to_approve_Ace(request):
 
 
     user_id = request.user.id
-    user = User.objects.filter(id=user_id).first()
-    # print(user)
-    user_id = str(user)
-    print(user_id)
-    user_profile = UserProfile.objects.filter(user_id=user.pk).first()
+    user_profile = UserProfile.objects.filter(id=user_id).first()
 
-    user_groups = user.groups.values_list('name', flat=True)
+    user_groups = user_profile.groups.values_list('name', flat=True)
 
     custom_user_roles = {
         "non_conformity": {},
@@ -824,11 +792,9 @@ def get_to_approve_Ace(request):
         "users": {},
     }
 
-    user_group_ids = user_profile.roles
-    user_group_ids = user_group_ids.split(",") if user_group_ids else []
-    for id in user_group_ids:
-
-        role = Roles.objects.filter(id=id).first()
+    roles_ = user_profile.roles.all()
+    for _role in roles_:
+        role = Roles.objects.filter(id=_role.id).first()
 
         if role.application == "users":
             custom_user_roles["users"] = role
@@ -933,7 +899,7 @@ def get_to_approve_Ace(request):
                 ace.gm_date_approved=date.today()
 
                 ace.save()
-                Transaction = Transactions.objects.filter(Ace_id2=ace.Ace_id2).first()
+                Transaction = Transactions.objects.filter(Ace_id2=ace).first()
                 Transaction.approval_status="approved by General Manager"
                 Transaction.save()
                 budget.balance = budget.balance - amount
@@ -1021,11 +987,11 @@ def get_to_reject_Ace(request):
         user_id = request.user.id
 
 
-    user_id = request.user.id
-    user = User.objects.filter(id=user_id).first()
-    user_profile = UserProfile.objects.filter(user_id=user.pk).first()
 
-    user_groups = user.groups.values_list('name', flat=True)
+    user_id = request.user.id
+    user_profile = UserProfile.objects.filter(id=user_id).first()
+
+    user_groups = user_profile.groups.values_list('name', flat=True)
 
     custom_user_roles = {
         "non_conformity": {},
@@ -1038,11 +1004,9 @@ def get_to_reject_Ace(request):
         "users": {},
     }
 
-    user_group_ids = user_profile.roles
-    user_group_ids = user_group_ids.split(",") if user_group_ids else []
-    for id in user_group_ids:
-
-        role = Roles.objects.filter(id=id).first()
+    roles_ = user_profile.roles.all()
+    for _role in roles_:
+        role = Roles.objects.filter(id=_role.id).first()
 
         if role.application == "users":
             custom_user_roles["users"] = role
@@ -1202,11 +1166,11 @@ def final_approval(request):
     l = request.user.groups.values_list('name', flat=True)
 
     # QuerySet Object
-    user_id = request.user.id
-    user = User.objects.filter(id=user_id).first()
-    user_profile = UserProfile.objects.filter(user_id=user.pk).first()
 
-    user_groups = user.groups.values_list('name', flat=True)
+    user_id = request.user.id
+    user_profile = UserProfile.objects.filter(id=user_id).first()
+
+    user_groups = user_profile.groups.values_list('name', flat=True)
 
     custom_user_roles = {
         "non_conformity": {},
@@ -1219,11 +1183,9 @@ def final_approval(request):
         "users": {},
     }
 
-    user_group_ids = user_profile.roles
-    user_group_ids = user_group_ids.split(",") if user_group_ids else []
-    for id in user_group_ids:
-
-        role = Roles.objects.filter(id=id).first()
+    roles_ = user_profile.roles.all()
+    for _role in roles_:
+        role = Roles.objects.filter(id=_role.id).first()
 
         if role.application == "users":
             custom_user_roles["users"] = role
@@ -1252,11 +1214,11 @@ def final_approval(request):
     Ace_role=custom_user_roles["ace"].role
     print(Ace_role)
 
-    region = Regions.objects.filter(id=user_profile.region).first()
+    region = Regions.objects.filter(id=user_profile.region.id).first()
     district = Districts.objects.filter(code=user_profile.district).first()
     depot = Depots.objects.filter(code=user_profile.depot).first()
     section_used = Sections.objects.filter(code=user_profile.section).first()
-    user_designation = Designations.objects.filter(id=user_profile.designation).first() if user_profile.designation else None
+    user_designation = Designations.objects.filter(id=user_profile.designation.id).first() if user_profile.designation else None
 
 
     if request.method == "POST":
@@ -1291,7 +1253,7 @@ def final_reject(request):
     # QuerySet Object
     user_groups = list(l)
     user_id = request.user.id
-    user = UserProfile.objects.filter(user_id=user_id).first()
+    user = UserProfile.objects.filter(id=user_id).first()
 
     if request.method == "GET":
         Ace_id = request.GET['f']
@@ -1345,7 +1307,7 @@ def disburse(request):
     # QuerySet Object
     user_groups = list(l)
     user_id = request.user.id
-    user = UserProfile.objects.filter(user_id=user_id).first()
+    user = UserProfile.objects.filter(id=user_id).first()
 
     if request.method == "GET":
         Ace_id = request.GET['f']
@@ -1370,7 +1332,7 @@ def disburse_final(request):
     # QuerySet Object
     user_groups = list(l)
     user_id = request.user.id
-    user = UserProfile.objects.filter(user_id=user_id).first()
+    user = UserProfile.objects.filter(id=user_id).first()
 
     if request.method == "GET":
         Ace_id = request.GET['f']
@@ -1417,7 +1379,7 @@ def petty_reports(request):
     # QuerySet Object
     user_groups = list(l)
     user_id = request.user.id
-    user = UserProfile.objects.filter(user_id=user_id).first()
+    user = UserProfile.objects.filter(id=user_id).first()
     secction = user.section
 
     records = Ace.objects.all()
@@ -1437,7 +1399,7 @@ def generate_report(request):
     l = request.user.groups.values_list('name', flat=True)
     user_groups = list(l)
     user_id = request.user.id
-    user = UserProfile.objects.filter(user_id=user_id).first()
+    user = UserProfile.objects.filter(id=user_id).first()
     secction = user.section
     if request.method == "POST":
         start_date = request.POST['start_date']
@@ -1459,11 +1421,11 @@ def generate_report(request):
 
 @login_required(login_url='/accounts/login/')
 def create_budget(request):
-    user_id = request.user.id
-    user = User.objects.filter(id=user_id).first()
-    user_profile = UserProfile.objects.filter(user_id=user.pk).first()
 
-    user_groups = user.groups.values_list('name', flat=True)
+    user_id = request.user.id
+    user_profile = UserProfile.objects.filter(id=user_id).first()
+
+    user_groups = user_profile.groups.values_list('name', flat=True)
 
     custom_user_roles = {
         "non_conformity": {},
@@ -1476,11 +1438,9 @@ def create_budget(request):
         "users": {},
     }
 
-    user_group_ids = user_profile.roles
-    user_group_ids = user_group_ids.split(",") if user_group_ids else []
-    for id in user_group_ids:
-
-        role = Roles.objects.filter(id=id).first()
+    roles_ = user_profile.roles.all()
+    for _role in roles_:
+        role = Roles.objects.filter(id=_role.id).first()
 
         if role.application == "users":
             custom_user_roles["users"] = role
@@ -1506,11 +1466,11 @@ def create_budget(request):
         if role.application == "ace":
             custom_user_roles["ace"] = role
 
-    region = Regions.objects.filter(id=user_profile.region).first()
+    region = Regions.objects.filter(id=user_profile.region.id).first()
     district = Districts.objects.filter(code=user_profile.district).first()
     depot = Depots.objects.filter(code=user_profile.depot).first()
     section_used = Sections.objects.filter(code=user_profile.section).first()
-    user_designation = Designations.objects.filter(id=user_profile.designation).first() if user_profile.designation else None
+    user_designation = Designations.objects.filter(id=user_profile.designation.id).first() if user_profile.designation else None
     sections = Sections.objects.filter(code=user_profile.section).first()
 
     if request.method == "POST":
@@ -1555,11 +1515,11 @@ def create_budget(request):
 
 @login_required(login_url='/accounts/login/')
 def list_budgets(request):
-    user_id = request.user.id
-    user = User.objects.filter(id=user_id).first()
-    user_profile = UserProfile.objects.filter(user_id=user.pk).first()
 
-    user_groups = user.groups.values_list('name', flat=True)
+    user_id = request.user.id
+    user_profile = UserProfile.objects.filter(id=user_id).first()
+
+    user_groups = user_profile.groups.values_list('name', flat=True)
 
     custom_user_roles = {
         "non_conformity": {},
@@ -1572,11 +1532,9 @@ def list_budgets(request):
         "users": {},
     }
 
-    user_group_ids = user_profile.roles
-    user_group_ids = user_group_ids.split(",") if user_group_ids else []
-    for id in user_group_ids:
-
-        role = Roles.objects.filter(id=id).first()
+    roles_ = user_profile.roles.all()
+    for _role in roles_:
+        role = Roles.objects.filter(id=_role.id).first()
 
         if role.application == "users":
             custom_user_roles["users"] = role
@@ -1602,18 +1560,18 @@ def list_budgets(request):
         if role.application == "ace":
             custom_user_roles["ace"] = role
 
-    region = Regions.objects.filter(id=user_profile.region).first()
+    region = Regions.objects.filter(id=user_profile.region.id).first()
     district = Districts.objects.filter(code=user_profile.district).first()
     depot = Depots.objects.filter(code=user_profile.depot).first()
     section_used = Sections.objects.filter(code=user_profile.section).first()
-    user_designation = Designations.objects.filter(id=user_profile.designation).first() if user_profile.designation else None
+    user_designation = Designations.objects.filter(id=user_profile.designation.id).first() if user_profile.designation else None
 
     new_user = {
-        "id": user.pk,
-        "username": user.username,
-        "firstname": user.first_name,
-        "lastname": user.last_name,
-        "email": user.email,
+        "id": user_profile.pk,
+        "username": user_profile.username,
+        "firstname": user_profile.first_name,
+        "lastname": user_profile.last_name,
+        "email": user_profile.email,
         "section": section_used,
         "depot": depot,
         "district": district,
@@ -1642,11 +1600,10 @@ def list_budgets(request):
 def upload_budgets(request):
     user_title = request.user.get_full_name()
     user_id = request.user.id
-    user = User.objects.filter(id=user_id).first()
-    user_profile = UserProfile.objects.filter(user_id=user.pk).first()
+    user_profile = UserProfile.objects.filter(id=user_id).first()
     print("in view upload")
 
-    user_groups = user.groups.values_list('name', flat=True)
+    user_groups = user_profile.groups.values_list('name', flat=True)
     if request.method == 'POST':
         csvfile = request.FILES['file'] # file as key
 
@@ -1733,11 +1690,11 @@ def view_ace(request):
         user_id = request.user.id
 
 
-    user_id = request.user.id
-    user = User.objects.filter(id=user_id).first()
-    user_profile = UserProfile.objects.filter(user_id=user.pk).first()
 
-    user_groups = user.groups.values_list('name', flat=True)
+    user_id = request.user.id
+    user_profile = UserProfile.objects.filter(id=user_id).first()
+
+    user_groups = user_profile.groups.values_list('name', flat=True)
 
     custom_user_roles = {
         "non_conformity": {},
@@ -1750,11 +1707,9 @@ def view_ace(request):
         "users": {},
     }
 
-    user_group_ids = user_profile.roles
-    user_group_ids = user_group_ids.split(",") if user_group_ids else []
-    for id in user_group_ids:
-
-        role = Roles.objects.filter(id=id).first()
+    roles_ = user_profile.roles.all()
+    for _role in roles_:
+        role = Roles.objects.filter(id=_role.id).first()
 
         if role.application == "users":
             custom_user_roles["users"] = role

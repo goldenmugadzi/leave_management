@@ -1,6 +1,6 @@
 from django.db import models
 from finance.Ace.models import Ace
-from it.users.models import User,  Sections
+from it.users.models import *
 from django.utils import timezone
 
 
@@ -13,7 +13,7 @@ class RFQ(models.Model):
     proc_ref = models.CharField(max_length=100, blank=True, null=True)
     amount = models.FloatField(blank=True, null=True)
     payment_mode = models.CharField(max_length=100, blank=True, null=True)
-    requested_by = models.ForeignKey(User, on_delete=models.CASCADE)
+    requested_by = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
     date_created = models.DateTimeField(auto_now_add=True, blank=True, null=True)
     section = models.ForeignKey(Sections, on_delete=models.CASCADE)
     ace = models.ForeignKey(Ace, on_delete=models.SET_NULL, blank=True, null=True)
@@ -43,41 +43,41 @@ class Quotation(models.Model):
         return str(self.pk)
 
 
-class ApprovalStage(models.Model):
-    stage = models.CharField(max_length=100)
+# class ApprovalStage(models.Model):
+#     stage = models.CharField(max_length=100)
 
-    class Meta:
-        db_table = 'approval_stage'
+#     class Meta:
+#         db_table = 'approval_stage'
 
-    def __str__(self):
-        return self.stage
-
-
-class ApprovalStatus(models.Model):
-    stage = models.ForeignKey(ApprovalStage, on_delete=models.CASCADE)
-    status = models.CharField(
-        max_length=100,
-        choices=[
-            ('Approved', 'Approved'),
-            ('Rejected', 'Rejected'),
-            ('Pending', 'Pending'),
-            ('Cancelled', 'Cancelled'),
-        ],
-        default='Pending'
-    )
-
-    class Meta:
-        db_table = 'approval_status'
-
-    def __str__(self):
-        return self.status
+#     def __str__(self):
+#         return self.stage
 
 
-class RFQApproval(models.Model):
-    rfq = models.ForeignKey(RFQ, on_delete=models.CASCADE)
-    approval_status = models.ForeignKey(ApprovalStatus, on_delete=models.CASCADE)
-    approval_date = models.DateField(null=True, blank=True)
-    rejection_reason = models.TextField(max_length=500, blank=True, null=True)
+# class ApprovalStatus(models.Model):
+#     stage = models.ForeignKey(ApprovalStage, on_delete=models.CASCADE)
+#     status = models.CharField(
+#         max_length=100,
+#         choices=[
+#             ('Approved', 'Approved'),
+#             ('Rejected', 'Rejected'),
+#             ('Pending', 'Pending'),
+#             ('Cancelled', 'Cancelled'),
+#         ],
+#         default='Pending'
+#     )
 
-    class Meta:
-        db_table = 'rfq_approval'
+#     class Meta:
+#         db_table = 'approval_status'
+
+#     def __str__(self):
+#         return self.status
+
+
+# class RFQApproval(models.Model):
+#     rfq = models.ForeignKey(RFQ, on_delete=models.CASCADE)
+#     approval_status = models.ForeignKey(ApprovalStatus, on_delete=models.CASCADE)
+#     approval_date = models.DateField(null=True, blank=True)
+#     rejection_reason = models.TextField(max_length=500, blank=True, null=True)
+
+#     class Meta:
+#         db_table = 'rfq_approval'

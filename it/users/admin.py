@@ -10,7 +10,7 @@ class SectionsAdmin(admin.ModelAdmin):
 
 @admin.register(UserProfile)
 class UserProfileAdmin(admin.ModelAdmin):
-    list_display =('user', 'designation', 'section', 'depot', 'region', 'district', 'status', ) 
+    list_display =('username', 'designation', 'section', 'depot', 'region', 'district', 'status', ) 
     
 @admin.register(Depots)
 class DepotsAdmin(admin.ModelAdmin):
