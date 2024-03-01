@@ -52,22 +52,34 @@ def index(request):
             custom_user_roles["rfq"]=role
 
     Rfq_role=custom_user_roles["rfq"].role
+    section_used = Sections.objects.filter(code=user_profile.section).first()
     print(Rfq_role)
 
     if Rfq_role == "RFQ Requester":
-        return redirect('/rfq/create_rfq')
+        rfq=RFQ.objects.filter(requested_by=request.user.username)
+        context = rfq
     elif Rfq_role == "RFQ Section Head":
-        return redirect('/rfq/section_head_approve_rfq')
+        rfq=RFQ.objects.filter(section=section_used ).filter(approval_status="pending")
+        context = rfq
     elif Rfq_role == "RFQ Finance Manager":
-        return redirect('/rfq/finance_manager_approve_rfq')
+        rfq=RFQ.objects.filter(approval_status="approved by section head")
+        context = rfq
     elif Rfq_role == "RFQ General Manager":
-        return redirect('/rfq/general_manager_approve_rfq')
+        rfq=RFQ.objects.filter(approval_status="approved by finance manager")
+        context = rfq
     else:
         messages.error(request, 'you need to contact it to get a role in the ACE')
         sweetify.success(request,'you need to contact it to get a role in the ACE')
         return redirect("/")
 
-    return redirect("/")
+    user_page = 'rfq/index.html'
+    user_title = request.user.get_full_name()
+    # print(context)
+
+    return render(request, user_page, {"title": "All Records",
+                                       "context": context,
+                                       "user_title": user_title,
+                                        "Rfq_role": Rfq_role})
 
 def create_rfq_from_ace(request):
     requested_by = request.user.username
