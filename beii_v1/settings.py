@@ -202,7 +202,7 @@ DATABASES = {
         'NAME': 'beii_vi',
         'USER': 'excellence',
         'PASSWORD': 'Z3tdc_it@2021_',
-        'HOST': 'localhost'
+        'HOST': '172.16.8.98'
     }
     # Localhost
     # 'default': {
