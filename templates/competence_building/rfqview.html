@@ -35,8 +35,9 @@
         <thead>
           <tr>
             <th>DOCUMENT ID</th>
-            <th>PR NUMBER</th>
-            <th style >PR DATE</th>
+            <th>PROC REF</th>
+            <th>QUANTITY</th>
+            <th>AMOUNT</th>
             <th>SCOPE OF WORK</th>
             <th>DECISION</th>
           </tr>
@@ -45,8 +46,9 @@
         <tfoot>
           <tr>
             <th>DOCUMENT ID</th>
-            <th>PR NUMBER</th>
-            <th>PR DATE</th>
+            <th>PROC REF</th>
+            <th>QUANTITY</th>
+            <th>AMOUNT</th>
             <th>SCOPE OF WORK</th>
             <th>DECISION</th>
           </tr>
@@ -69,10 +71,13 @@
           data: "document_id",
         },
         {
-          data: "pr_number",
+          data: "proc ref",
         },
         {
-          data: "rfq_date",
+          data: "quantity",
+        },
+        {
+          data: "amount",
         },
         {
           data: "scope",
