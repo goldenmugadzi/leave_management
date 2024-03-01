@@ -586,7 +586,6 @@ def get_Ace_records_fm(request):
 
 def get_Ace_records_gm(request):
     user_title = request.user.get_full_name()
-    l = request.user.groups.values_list('name', flat=True)
 
     user_id = request.user.id
     user_profile = UserProfile.objects.filter(id=user_id).first()
@@ -609,35 +608,14 @@ def get_Ace_records_gm(request):
     for _role in roles_:
         role = Roles.objects.filter(id=_role.id).first()
 
-        if role.application == "users":
-            custom_user_roles["users"] = role
-
-        if role.application == "non_conformity":
-            custom_user_roles["non_conformity"] = role
-
-        if role.application == "remittance_advice":
-            custom_user_roles["remittance_advice"] = role
-
-        if role.application == "pettycash":
-            custom_user_roles["pettycash"] = role
-
-        if role.application == "adjudication":
-            custom_user_roles["adjudication"] = role
-
-        if role.application == "tokens":
-            custom_user_roles["tokens"] = role
-
-        if role.application == "tenders":
-            custom_user_roles["tenders"] = role
-
         if role.application == "ace":
             custom_user_roles["ace"] = role
     Ace_role=str(custom_user_roles["ace"])
-    print(Ace_role,"ace role")
+    # print(Ace_role,"ace role")
 
     if Ace_role=="approve":
         # secction = user.section
-        print(section_used)
+        # print(section_used)
         approval_status = "approved by Finance Manager"
 
         records: object = Ace.objects.filter(approval_status=approval_status).all()
@@ -760,19 +738,12 @@ def get_to_approve_Ace(request):
 
     if request.method == "GET":
         Ace_id = request.GET['i']
-        # print(Ace_id)
         Ace_id = str(Ace_id)
         ace_id = Ace_id
         pettyc = Ace.objects.filter(Ace_id2=Ace_id).first()
         budget = pettyc.budget_id
-        # print(budget)
         budget = Budget.objects.filter(budget_name=budget).first()
-        # pettyc1 = Ace.objects.filter(petty_id=Ace_id).first()
-        # print(pettyc)
         context = pettyc
-        # print(context)
-        # print(context.quotation1)
-        # print("after context")
         user_id = request.user.id
 
 

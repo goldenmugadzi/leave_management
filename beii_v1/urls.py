@@ -40,7 +40,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('accounts/', include('django.contrib.auth.urls')),
     path('ace/', include('finance.Ace.urls')),
-    path('', include('finance.rfq.urls')),
+    path('rfq/', include('finance.rfq.urls')),
     
       # AUTH ENDPOINTS
     path('api-auth/', include('rest_framework.urls')),

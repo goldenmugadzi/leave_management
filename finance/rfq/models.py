@@ -13,10 +13,27 @@ class RFQ(models.Model):
     proc_ref = models.CharField(max_length=100, blank=True, null=True)
     amount = models.FloatField(blank=True, null=True)
     payment_mode = models.CharField(max_length=100, blank=True, null=True)
-    requested_by = models.ForeignKey(UserProfile, on_delete=models.DO_NOTHING)
-    date_created = models.DateTimeField(auto_now_add=True, blank=True, null=True)
-    section = models.ForeignKey(Sections, on_delete=models.CASCADE)
-    ace = models.ForeignKey(Ace, on_delete=models.SET_NULL, blank=True, null=True)
+    requested_by = models.CharField(max_length=100, blank=True, null=True)
+    designation = models.CharField(max_length=100, blank=True, null=True)
+    date_created = models.DateField(auto_now_add=True, blank=True, null=True)
+
+    approval_status = models.CharField(max_length=120, blank=True, null=True)
+    date_approved = models.DateField(null=True, blank=True)
+    ace = models.ForeignKey(Ace, models.DO_NOTHING, db_column='ace_id2', blank=True, null=True)
+
+    section_head = models.CharField(max_length=100, blank=True, null=True)
+    finance_manager = models.CharField(max_length=100, blank=True, null=True)
+    general_manager = models.CharField(max_length=100, blank=True, null=True)
+
+    general_manager_approval_status = models.CharField(max_length=100, blank=True, null=True)
+    general_manager_approval_date = models.DateField(null=True, blank=True)
+    general_manager_rejection_reason = models.TextField(max_length=500, blank=True, null=True)
+    finance_manager_approval_status = models.CharField(max_length=100, blank=True, null=True)
+    finance_manager_approval_date = models.DateField(null=True, blank=True)
+    finance_manager_rejection_reason = models.TextField(max_length=500, blank=True, null=True)
+    section_head_approval_status = models.CharField(max_length=100, blank=True, null=True)
+    section_head_approval_date = models.DateField(null=True, blank=True)
+    section_head_rejection_reason = models.TextField(max_length=500, blank=True, null=True)
 
     class Meta:
         db_table = 'rfq'

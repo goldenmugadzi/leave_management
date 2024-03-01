@@ -59,6 +59,7 @@ def add_user(request):
             adjudication = request.POST['direct_purchase_role']
             tokens = request.POST['tokens_role']
             ace = request.POST['ace_role']
+            rfq = request.POST['rfq_role']
             non_conformity = request.POST['non_conformity_role']
             users_role = request.POST['users_role']
             
@@ -78,6 +79,10 @@ def add_user(request):
                 roles.append(tokens)
             if ace and ace != "":
                 roles.append(ace)
+
+            if rfq:
+                roles.append(rfq)
+
             if non_conformity and non_conformity:
                 roles.append(non_conformity)
             if users_role and users_role != "":
@@ -160,6 +165,7 @@ def update_user(request):
             "tenders": {},
             "ace": {},
             "users": {},
+            "rfq": {},
         }
 
         new_user = None
@@ -197,7 +203,14 @@ def update_user(request):
                 if role.application == "ace":
                     custom_user_roles["ace"] = role
 
+
+                if role.application == "rfq":
+                    custom_user_roles["rfq"] = role
+
+            region = Regions.objects.filter(id=user_profile.region).first()
+
             region = Regions.objects.filter(id=user_profile.region.id).first() if user_profile.region else None
+
             district = Districts.objects.filter(code=user_profile.district).first() if user_profile.district else None
             depot = Depots.objects.filter(code=user_profile.depot).first() if user_profile.depot else None
             section = Sections.objects.filter(id=user_profile.section.id).first() if user_profile.section else None
@@ -223,6 +236,8 @@ def update_user(request):
         
         # get roles
         user_roles = Roles.objects.all()
+        # rfq_role = Roles.objects.filter(application="rfq").all()
+        # print("user_roles: ", rfq_role)
         grouped_user_roles = group_user_roles(user_roles)
         
         # get designations
@@ -261,9 +276,46 @@ def update_user(request):
             adjudication = request.POST['direct_purchase_role']
             tokens = request.POST['tokens_role']
             ace = request.POST['ace_role']
+            rfq = request.POST['rfq_role']
             non_conformity = request.POST['non_conformity_role']
             users_role = request.POST['users_role']
             
+
+            user_profile = UserProfile.objects.filter(user_id=id).first()
+            if user_profile:
+                if region:
+                    user_profile.region = region
+                if section:
+                    user_profile.section = section
+                if designation:
+                    user_profile.designation = designation
+                    
+                roles = []
+                if remittance_role:
+                    roles.append(remittance_role)
+                if pettycash:
+                    roles.append(pettycash)
+                if tenders:
+                    roles.append(tenders)
+                if tokens:
+                    roles.append(tokens)
+                if ace:
+                    roles.append(ace)
+                if rfq:
+                    roles.append(rfq)
+                if non_conformity:
+                    roles.append(non_conformity)
+                if users_role:
+                    roles.append(users_role)
+                if adjudication:
+                    roles.append(adjudication)
+                
+                str_roles = ','.join(str(x) for x in roles)
+                
+                user_profile.roles = str_roles
+                user_profile.save()
+                
+
             region = Regions.objects.filter(id=region_).first()
             section = Sections.objects.filter(code=section_).first()
             designation = Designations.objects.filter(id=designation_).first()
@@ -308,6 +360,7 @@ def update_user(request):
             role_objects = Roles.objects.filter(id__in=roles)  # Example of retrieving roles
             user_profile.roles.add(*role_objects)
             
+
         except Exception as ex:
             print("save user error", ex)
 
