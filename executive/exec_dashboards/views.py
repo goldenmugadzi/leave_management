@@ -8,11 +8,7 @@ from django.core import serializers
 from django.db.models import Count
 from django.db.models.functions import ExtractWeek
 
-from django.apps import apps
-UserProfile = apps.get_model(app_label='users', model_name='UserProfile')
-Districts = apps.get_model(app_label='users', model_name='Districts')
-Depots = apps.get_model(app_label='users', model_name='Depots')
-Regions = apps.get_model(app_label='users', model_name='Regions')
+from it.users.models import Sections, UserProfile, Depots, Districts, Regions
 
 MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
 
@@ -21,7 +17,7 @@ def dashboard_index(request):
     
     user_title = request.user.get_full_name()
     user = request.user
-    user_profile = UserProfile.objects.filter(user_id=user.id).first()
+    user_profile = UserProfile.objects.filter(id=user.id).first()
     l = request.user.groups.values_list('name',flat = True) # QuerySet Object
     user_groups = list(l) 
     
@@ -36,9 +32,11 @@ def dashboard_index(request):
     upos = UPO.objects.all()
     inpections = Inspections.objects.all()
     maintenance_ = Maintenance.objects.all()
+    depots = Depots.objects.all()
+    districts = Sections.objects.all()
+    regions = Regions.objects.all()
 
     mtn = {}
-    depots = Depots.objects.all()
     for depot in depots:
         maintenance_december = Maintenance.objects.filter(depot=depot.depot, created_at__month=month_id)
         maintenance_weekly_count = maintenance_december.annotate(week=ExtractWeek('created_at')).values('week').annotate(count=Count('id')).order_by('week')
@@ -90,6 +88,8 @@ def dashboard_index(request):
                       "user_title": user_title,
                       "url_path": url_path,
                       "page_title": "Dashboards",
+                      "districts": districts,
+                      "regions": regions,
                       "current_month": current_month,
                       "pbncs": pbncs, 
                       "tds": tds, 
