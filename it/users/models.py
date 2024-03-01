@@ -122,7 +122,6 @@ class UserProfile(AbstractBaseUser, PermissionsMixin):
    
     class Meta:
         app_label = 'users'
-
 class Notification(models.Model):
     user = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
     message = models.TextField()

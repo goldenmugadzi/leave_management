@@ -1,8 +1,7 @@
 from django.urls import path
-
-from . import views
+from .views import *
 
 urlpatterns = [
-    # path('', views.index, name='index'),
-   
+    # Other URL patterns
+    path('create_rfq/', create_rfq, name='create_rfq'),
 ]
