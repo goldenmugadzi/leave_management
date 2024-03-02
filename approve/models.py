@@ -26,7 +26,7 @@ class Role(models.Model):
 
 class Step(models.Model):
     approver = models.ForeignKey(Role, on_delete=models.CASCADE)
-    workflow = models.ForeignKey(Workflow, on_delete=models.CASCADE)
+    workflow = models.ForeignKey(Workflow, on_delete=models.CASCADE,null=True, blank=True)
     step = models.PositiveIntegerField(null=True, blank=True)
 
     class Meta:
