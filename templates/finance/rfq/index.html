@@ -61,11 +61,12 @@
 <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 <script>
-//  var objs = JSON.parse("{{context|escapejs}}");
+  var objs = JSON.parse("{{context|escapejs}}");
+  console.log(objs)
 
   $(document).ready(function () {
     $("#rfq_index").DataTable({
-      data: [],
+      data: objs,
       columns: [
         {
           data: "document_id",
@@ -80,7 +81,7 @@
           data: "amount",
         },
         {
-          data: "scope",
+          data: "scope_of_work",
           width: 500,
         },
         {

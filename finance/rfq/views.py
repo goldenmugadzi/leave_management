@@ -8,6 +8,7 @@ from it.users.models import *
 
 from datetime import datetime, date
 from random import randrange
+import json
 
 from django.contrib import messages
 from django.shortcuts import render, redirect
@@ -178,11 +179,41 @@ def get_user_rfq(username, section):
     return rfq
 
 def get_procuremtn_rfq(username):
-    rfq=RFQ.objects.filter(requested_by=username).order_by('-date_created')
+    rfqs=RFQ.objects.filter(requested_by=username).order_by('-date_created')
+    
+    record_list = []
+    for record in rfqs:
+        o = {
+            "document_id": record.pk,
+            "proc ref": record.proc_ref,
+            "quantinty": record.quantity,
+            "amount":record.amount,
+            "scope_of_work": record.scope_of_work,
+            "decision":record.decision
+
+        }
+        record_list.append(o)
+    rfq = json.dumps(record_list, default=str)
     return rfq
 
 def get_section_head_rfq(username, section):
-    rfq=RFQ.objects.filter(requested_by=username, section_code=section, approval_status="pending").order_by('-date_created')
+    rfqs=RFQ.objects.all().order_by('-date_created')
+    
+    record_list = []
+    for record in rfqs:
+        o = {
+            "document_id": record.pk,
+            "proc ref": record.proc_ref,
+            "quantity": record.quantity,
+            "amount":record.amount,
+            "scope_of_work": record.scope_of_work,
+            "decision":record.approval_status
+
+        }
+        record_list.append(o)
+    print(record_list)
+    rfq = json.dumps(record_list, default=str)
+   
     return rfq
 
 def get_finance_manager_rfq():
