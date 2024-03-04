@@ -85,7 +85,7 @@ def index(request):
         sweetify.success(request,'you need to contact it to get a role in the RFQ')
         return redirect("/")
 
-    user_page = 'rfq/index.html'
+    user_page = 'finance/rfq/index.html'
     user_title = request.user.get_full_name()
     # print(context)
 
