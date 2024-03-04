@@ -14,6 +14,7 @@ class RFQ(models.Model):
     amount = models.FloatField(blank=True, null=True)
     payment_mode = models.CharField(max_length=100, blank=True, null=True)
     requested_by = models.CharField(max_length=100, blank=True, null=True)
+    section_code = models.CharField(max_length=100, blank=True, null=True)
     designation = models.CharField(max_length=100, blank=True, null=True)
     date_created = models.DateField(auto_now_add=True, blank=True, null=True)
 

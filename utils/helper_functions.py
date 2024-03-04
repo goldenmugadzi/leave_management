@@ -8,9 +8,11 @@ def group_user_roles(user_roles):
         "tenders": [],
         "ace": [],
         "users": [],
+        "rfq": [],
     }
-        
+    
     for role in user_roles:
+        print(role.application)
         if role.application == "users":
             custom_role = {
                 "id": role.id,
@@ -98,7 +100,19 @@ def group_user_roles(user_roles):
             }
             
             custom_user_roles['ace'].append(custom_role)
+
+        if role.application == "rfq":
+            custom_role = {
+                "id": role.id,
+                "role": role.role,
+                "name": role.name,
+                "description": role.description,
+                "application": role.application
+            }
             
+            custom_user_roles['rfq'].append(custom_role)
+
+    # print(custom_user_roles)            
     return custom_user_roles
 
 
