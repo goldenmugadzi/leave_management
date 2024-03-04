@@ -116,6 +116,7 @@ INSTALLED_APPS = [
     'executive.exec_dashboards',
     'knowledge_center',
     'Docs',
+    'approve',
     'processes.apps.ProcessesConfig',
     'process_risks.apps.ProcessRisksConfig',
     'finance.Ace',

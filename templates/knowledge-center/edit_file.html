@@ -18,7 +18,11 @@
           </p>
 
           <div class="mt-10 grid grid-cols-3 gap-4">
-            
+            <input
+            type="hidden"
+            name="id"
+            value="{{record.id}}"
+          />
             <div>
               <label
                 for="filename"
@@ -32,7 +36,7 @@
                   value="{{record.filename}}"
                   id="filename"
                   autocomplete="given-name"
-                  class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                  class="block w-full rounded-md border-0 py-1.5 text-gray-900  px-2 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                 />
               </div>
             </div>
@@ -44,21 +48,35 @@
               >
               <div class="mt-2">
                 <select
-                  id="filetype"
-                  name="filetype"
-                  autocomplete="filetype"
-                  class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+                  id="category_id"
+                  name="category_id"
+                  autocomplete="category_id"
+                  class="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
                 >
+                  {% if record.file_type %}
+                    <option value="{{ record.id }}">{{ record.file_type }}</option>
+                  {%endif%}
                   <option>Select File Type</option>
-                  <option value="LEGISLATION">LEGISLATION</option>
-                  <option value="POLICIES & GUIDELINES">POLICIES & GUIDELINES</option>
-                  <option value="PUBLICATIONS">PUBLICATIONS</option>
-                  <option value="ENGINEERING INSTRUCTIONS MAIN INDEX">ENGINEERING INSTRUCTIONS MAIN INDEX</option>
-                  <option value="USER MANUALS">USER MANUALS</option>
-                  <option value="STANDARDS, SPECIFICATIONS & DRAWINGS">STANDARDS, SPECIFICATIONS & DRAWINGS</option>
-                  <option value="KNOWLEDGE BASE">KNOWLEDGE BASE</option>
+                  <option value="1">LEGISLATION</option>
+                  <option value="2">POLICIES & GUIDELINES</option>
+                  <option value="3">PUBLICATIONS</option>
+                  <option value="4">ENGINEERING INSTRUCTIONS MAIN INDEX</option>
+                  <option value="5">USER MANUALS</option>
+                  <option value="6">STANDARDS, SPECIFICATIONS & DRAWINGS</option>
+                  <option value="7">KNOWLEDGE BASE</option>
+                  <option value="8">STANDARDS</option> 
+                  <option value="9">SPECIFICATIONS</option> 
+                  <option value="10">DRAWINGS</option> 
+                  <option value="11">PRINCE2 CENTRE OF EXCELLENCE</option> 
+                  <option value="12">OTHER EXTERNAL DOCUMENTS</option> 
+                  <option value="13">DRONE TECHNOLOGY</option> 
+                  {% for option in options %}
+                      <option value="{{ option.id }}">{{ option.name }}</option>
+                  {% endfor %}
+
                   
                 </select>
+                
               </div>
             </div>
 
@@ -69,13 +87,24 @@
                 >Sub type 1</label
               >
               <div class="mt-2">
-                <input
+                {% comment %} <input
                   type="text"
                   name="subtype1"
                   id="subtype1"
                   autocomplete="family-name"
-                  class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                />
+                  class="block w-full rounded-md border-0 py-1.5 text-gray-900  px-2 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                /> {% endcomment %}
+                <select
+                id="subtype1"
+                name="subtype1"
+                autocomplete="category_id"
+                class="block w-full rounded-md border-0 py-1.5 text-gray-900  px-2 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+              >
+              {% if record.sub_category_1 %}
+                <option value="{{ record.id }}">{{ record.sub_category_1 }}</option>
+              {%endif%}
+              <option></option>
+              </select>
               </div>
             </div>
             <div>
@@ -85,13 +114,24 @@
                 >Sub type 2</label
               >
               <div class="mt-2">
-                <input
+                {% comment %} <input
                   type="text"
                   name="subtype2"
                   id="subtype2"
-                  autocomplete="family-name"
-                  class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                />
+                  autocomplete="subtype1"
+                  class="block w-full rounded-md border-0 py-1.5 text-gray-900  px-2 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                /> {% endcomment %}
+                <select
+                id="subtype2"
+                name="subtype2"
+                autocomplete="subtype1"
+                class="block w-full rounded-md border-0 py-1.5 text-gray-900  px-2 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+              >
+              {% if record.sub_category_2 %}
+                <option value="{{ record.id }}">{{ record.sub_category_2 }}</option>
+              {%endif%}
+              <option></option>
+              </select>
               </div>
             </div>
             <div>
@@ -105,7 +145,7 @@
                     id="section"
                     name="section"
                     autocomplete="section"
-                    class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+                    class="block w-full rounded-md border-0 py-1.5 text-gray-900  px-2 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
                   >
                     {% if record.section %}
                     <option value="{{record.section}}">{{record.section}}</option>
@@ -151,7 +191,7 @@
                     id="region"
                     name="region"
                     autocomplete="region"
-                    class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+                    class="block w-full rounded-md border-0 px-2 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
                   >
                     <option>Select Region</option>
                     <option value="1">Harare Region</option>
@@ -186,4 +226,67 @@
   </div>
 </div>
 {% endblock %}
+{% block scripts %}
+<script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+<script>
+  $("#category_id").change(function() {
+    var selectedValue = $(this).val();
+    $.ajax({
+      url: '/knowledge-center/get-files/' + selectedValue,
+      type: 'GET',
+      success: function(data) {
+          var selectElement = document.getElementById("subtype1");
+          // Clear existing options
+          selectElement.options.length = 0;
+
+          // Add new options based on data
+          for (var option of data.options) {
+              var opt = new Option(option.name, option.id);
+              selectElement.add(opt);
+          }
+      }
+    });
+  });
+{% comment %} function updateSelectOptions(category_id, Categories, file_type, searchTerm) {
+  $.ajax({
+      url: '/user_manual/get-files/' + Categories + '/' + file_type + '/',
+      type: 'GET',
+      success: function(data) {
+          var selectElement = document.getElementById(selectElementId);
+          // Clear existing options
+          selectElement.options.length = 0;
+
+          // Add new options based on data
+          for (var option of data.options) {
+              var opt = new Option(option, option);
+              selectElement.add(opt);
+          }
+      }
+  });
+} {% endcomment %}
+</script>
+<script>
+  $("#subtype1").change(function() {
+    var selectedValue = $(this).val();
+    var fileType = document.getElementById("category_id").value;
+    $.ajax({
+      url: '/knowledge-center/get-cat2/'+ fileType + '/' + selectedValue,
+      type: 'GET',
+      success: function(data) {
+          var secondCategory = document.getElementById("subtype2");
+          // Clear existing options
+          secondCategory.options.length = 0;
+
+          // Add new options based on data
+          for (var option of data.options_list) {
+              var opt = new Option(option.name, option.id);
+              secondCategory.add(opt);
+          }
+      }
+    });
+  });
+
+</script>
+{% endblock scripts %}
+
 
