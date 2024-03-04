@@ -82,7 +82,6 @@ def add_user(request):
 
             if rfq:
                 roles.append(rfq)
-            if non_conformity:
 
             if non_conformity and non_conformity:
 
