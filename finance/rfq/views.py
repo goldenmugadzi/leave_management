@@ -223,9 +223,9 @@ def create_rfq_from_ace(request):
         date = date.strftime("%Y%m%d")
 
         rfq_id = "RFQ" + date + rand2
-        rfq_type = request.POST.get("rfq_type")
+        rfq_type = str('ACE')
         section = request.POST.get("section")
-        allocation_code_of_expenditure = request.POST.get("allocation_code_of_expenditure")
+        allocation_code_of_expenditure = section
         scope_of_work = request.POST.get("scope_of_work")
         quantity = request.POST.get("quantity")
         proc_ref = request.POST.get("proc_ref")
@@ -237,6 +237,7 @@ def create_rfq_from_ace(request):
         requested_by = requested_by
         date_created = date
         ace = request.POST.get("ace")
+        ace = Ace.objects.filter(ace_id=ace).first()
 
 
 
