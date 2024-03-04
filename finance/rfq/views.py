@@ -1,3 +1,10 @@
+from django.shortcuts import render, redirect
+
+from utils.helper_functions import group_user_roles
+from .models import RFQ, Quotation
+from .forms import RFQForm, QuotationFormSet
+from it.users.models import *
+
 from datetime import datetime, date
 from random import randrange
 
@@ -9,18 +16,28 @@ from sweetify import sweetify
 
 from finance.rfq.models import *
 from finance.Ace.models import *
-
-Sections = apps.get_model(app_label='users', model_name='Sections')
-Districts = apps.get_model(app_label='users', model_name='Districts')
-Depots = apps.get_model(app_label='users', model_name='Depots')
-Regions = apps.get_model(app_label='users', model_name='Regions')
-Roles = apps.get_model(app_label='users', model_name='Roles')
-Designations = apps.get_model(app_label='users', model_name='Designations')
-Notification = apps.get_model(app_label='users', model_name='Notification')
-Ace = apps.get_model(app_label='Ace', model_name='Ace')
-UserProfile = apps.get_model(app_label="users", model_name="UserProfile")
-from django.contrib.auth.models import User
 from it.users.models import *
+
+
+def create_rfq(request):
+    if request.method == 'POST':
+        form = RFQForm(request.POST, request.FILES)
+        formset = QuotationFormSet(request.POST, request.FILES)
+
+        if form.is_valid() and formset.is_valid():
+            rfq = form.save()
+            for quotation_form in formset:
+                quotation = quotation_form.save(commit=False)
+                quotation.rfq = rfq
+                quotation.save()
+
+            return redirect('/dashboards/overview/', rfq_id=rfq.rfq_id)
+    else:
+        form = RFQForm()
+        formset = QuotationFormSet()
+
+    return render(request, 'finance/rfq/create_rfq.html', {'form': form, 'formset': formset})
+
 
 # Create your views here.
 def index(request):
@@ -41,32 +58,62 @@ def index(request):
         "rfq": {},
     }
 
-    user_group_ids = user_profile.roles.all()
-    user_group_ids = user_group_ids.split(",") if user_group_ids else []
-    for id in user_group_ids:
 
-        role = Roles.objects.filter(id=id).first()
-
+    roles_ = user_profile.roles.all()
+    for _role in roles_:
+        role = Roles.objects.filter(id=_role.id).first()
         if role.application =="rfq":
             custom_user_roles["rfq"]=role
 
-    Rfq_role=custom_user_roles["rfq"].role
+    Rfq_role=custom_user_roles["rfq"].role if custom_user_roles["rfq"] else None
+    section_code = user_profile.section.code
     print(Rfq_role)
+    print(section_code)
 
-    if Rfq_role == "RFQ Requester":
-        return render(request, "rfq/rfq_requester.html")
-    elif Rfq_role == "RFQ Section Head":
-        return render(request, "rfq/rfq_authoriser.html")
-    elif Rfq_role == "RFQ Finance Manager":
-        return render(request, "rfq/rfq_fm.html")
-    elif Rfq_role == "RFQ General Manager":
-        return render(request, "rfq/rfq_view.html")
+    if Rfq_role == "request":
+        context = get_user_rfq(request.user.username, section_code)
+    if Rfq_role == "create":
+        context = get_procuremtn_rfq(request.user.username)
+    elif Rfq_role == "authenticate":
+        context = get_section_head_rfq(request.user.username, section_code)
+    elif Rfq_role == "check":
+        context = get_finance_manager_rfq()
+    elif Rfq_role == "approve":
+        context = get_general_manager_rfq()
     else:
-        messages.error(request, 'you need to contact it to get a role in the ACE')
-        sweetify.success(request,'you need to contact it to get a role in the ACE')
+        messages.error(request, 'you need to contact it to get a role in the RFQ')
+        sweetify.success(request,'you need to contact it to get a role in the RFQ')
         return redirect("/")
 
-    return redirect("/")
+    user_page = 'finance/rfq/index.html'
+    user_title = request.user.get_full_name()
+    # print(context)
+
+    return render(request, user_page, {"title": "All Records",
+                                       "context": context,
+                                       "user_title": user_title,
+                                        "Rfq_role": Rfq_role})
+
+def get_user_rfq(username, section):
+    rfq=RFQ.objects.filter(requested_by=username, section_code=section).order_by('-date_created')
+    return rfq
+
+def get_procuremtn_rfq(username):
+    rfq=RFQ.objects.filter(requested_by=username).order_by('-date_created')
+    return rfq
+
+def get_section_head_rfq(username, section):
+    rfq=RFQ.objects.filter(requested_by=username, section_code=section, approval_status="pending").order_by('-date_created')
+    return rfq
+
+def get_finance_manager_rfq():
+    rfq=RFQ.objects.filter(approval_status="approved by section head").order_by('-date_created')
+    return rfq
+
+def get_general_manager_rfq():
+    rfq=RFQ.objects.filter(approval_status="approved by finance manager").order_by('-date_created')
+    return rfq
+    
 
 def create_rfq_from_ace(request):
     requested_by = request.user.username
@@ -139,29 +186,10 @@ def create_rfq_from_ace(request):
 
 def get_to_approve_rfq(request):
     user_id = request.user.id
-    user = User.objects.filter(id=user_id).first()
+    user = UserProfile.objects.filter(id=user_id).first()
     user_profile = UserProfile.objects.filter(user_id=user.pk).first()
 
-    custom_user_roles = {
-        "non_conformity": {},
-        "remittance_advice": {},
-        "pettycash": {},
-        "adjudication": {},
-        "tokens": {},
-        "tenders": {},
-        "ace": {},
-        "users": {},
-        "rfq": {},
-    }
-
-    user_group_ids = user_profile.roles
-    user_group_ids = user_group_ids.split(",") if user_group_ids else []
-    for id in user_group_ids:
-
-        role = Roles.objects.filter(id=id).first()
-
-        if role.application =="rfq":
-            custom_user_roles["rfq"]=role
+    custom_user_roles = group_user_roles(user_profile.roles)
 
     Rfq_role=custom_user_roles["rfq"].role
     print(Rfq_role)
@@ -214,7 +242,7 @@ def get_to_approve_rfq(request):
 
 def get_to_reject_rfq(request):
     user_id = request.user.id
-    user = User.objects.filter(id=user_id).first()
+    user = UserProfile.objects.filter(id=user_id).first()
     user_profile = UserProfile.objects.filter(user_id=user.pk).first()
 
     custom_user_roles = {

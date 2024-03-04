@@ -79,10 +79,8 @@ def add_user(request):
                 roles.append(tokens)
             if ace and ace != "":
                 roles.append(ace)
-
-            if rfq:
+            if rfq and rfq!="":
                 roles.append(rfq)
-
             if non_conformity and non_conformity:
                 roles.append(non_conformity)
             if users_role and users_role != "":
@@ -203,14 +201,10 @@ def update_user(request):
                 if role.application == "ace":
                     custom_user_roles["ace"] = role
 
-
                 if role.application == "rfq":
                     custom_user_roles["rfq"] = role
 
-            region = Regions.objects.filter(id=user_profile.region).first()
-
             region = Regions.objects.filter(id=user_profile.region.id).first() if user_profile.region else None
-
             district = Districts.objects.filter(code=user_profile.district).first() if user_profile.district else None
             depot = Depots.objects.filter(code=user_profile.depot).first() if user_profile.depot else None
             section = Sections.objects.filter(id=user_profile.section.id).first() if user_profile.section else None
@@ -239,6 +233,7 @@ def update_user(request):
         # rfq_role = Roles.objects.filter(application="rfq").all()
         # print("user_roles: ", rfq_role)
         grouped_user_roles = group_user_roles(user_roles)
+        # print("grouped_user_roles: ", grouped_user_roles)
         
         # get designations
         user_designations = Designations.objects.all()
@@ -279,41 +274,6 @@ def update_user(request):
             rfq = request.POST['rfq_role']
             non_conformity = request.POST['non_conformity_role']
             users_role = request.POST['users_role']
-            
-
-            user_profile = UserProfile.objects.filter(user_id=id).first()
-            if user_profile:
-                if region:
-                    user_profile.region = region
-                if section:
-                    user_profile.section = section
-                if designation:
-                    user_profile.designation = designation
-                    
-                roles = []
-                if remittance_role:
-                    roles.append(remittance_role)
-                if pettycash:
-                    roles.append(pettycash)
-                if tenders:
-                    roles.append(tenders)
-                if tokens:
-                    roles.append(tokens)
-                if ace:
-                    roles.append(ace)
-                if rfq:
-                    roles.append(rfq)
-                if non_conformity:
-                    roles.append(non_conformity)
-                if users_role:
-                    roles.append(users_role)
-                if adjudication:
-                    roles.append(adjudication)
-                
-                str_roles = ','.join(str(x) for x in roles)
-                
-                user_profile.roles = str_roles
-                user_profile.save()
                 
 
             region = Regions.objects.filter(id=region_).first()
@@ -349,6 +309,8 @@ def update_user(request):
                 roles.append(tokens)
             if ace and ace != "Select Role":
                 roles.append(ace)
+            if rfq and rfq != "Select Role":
+                roles.append(rfq)
             if non_conformity and non_conformity != "Select Role":
                 roles.append(non_conformity)
             if users_role and users_role != "Select Role":
@@ -356,7 +318,6 @@ def update_user(request):
             if adjudication and adjudication != "Select Role":
                 roles.append(adjudication)
             
-            print("roles: ", roles)
             role_objects = Roles.objects.filter(id__in=roles)  # Example of retrieving roles
             user_profile.roles.add(*role_objects)
             
@@ -375,7 +336,7 @@ def reset_user_password(request):
 
         if password1 == password2:
             user_profile = UserProfile.objects.filter(id=id).first()
-            user_profile.set_password(make_password(password1))
+            user_profile.set_password(password1)
             user_profile.save()
             print("saving done ....")
 
@@ -411,7 +372,7 @@ def change_user_password(request):
         if password1 == password2:
             user_profile = UserProfile.objects.filter(id=user_id).first()
             if user_profile.check_password(current_password):
-                user_profile.set_password(make_password(password1))
+                user_profile.set_password(password1)
                 user_profile.save()
                 print("Password changed successfully")
             else:

@@ -116,6 +116,7 @@ INSTALLED_APPS = [
     'executive.exec_dashboards',
     'knowledge_center',
     'Docs',
+    'approve',
     'processes.apps.ProcessesConfig',
     'process_risks.apps.ProcessRisksConfig',
     'finance.Ace',
@@ -192,7 +193,7 @@ DATABASES = {
     # }
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'beii',
+        'NAME': 'beii_test',
         'USER': 'root',
         'PASSWORD': '',
         'HOST': 'localhost',
