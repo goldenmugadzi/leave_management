@@ -186,10 +186,10 @@ def get_procuremtn_rfq(username):
         o = {
             "document_id": record.pk,
             "proc ref": record.proc_ref,
-            "quantinty": record.quantity,
+            "quantity": record.quantity,
             "amount":record.amount,
             "scope_of_work": record.scope_of_work,
-            "decision":record.decision
+            "decision":record.approval_status
 
         }
         record_list.append(o)
