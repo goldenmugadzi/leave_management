@@ -99,7 +99,11 @@
                             <span class="inline-block rounded-full text-sm">  requested by {{rfq.requested_by}}</span>
                             </div>
                             {% for step in rfq.process.workflow.step_set.all %}
-                            {% for approval in rfq.process.approval_set.all %}
+                           
+                           {% if rfq.process.approval_set.all %}
+                            
+                          
+                             {% for approval in rfq.process.approval_set.all %}
                             {% if step == approval.step %}
                                <div class="card-body m-auto arrow arrow-step mb-5 bg-gradient-to-r from-gulf-blue-100 to-green-700 ed p-3 border rounded justify-content-center align-content-stretch container rounded shadow-lg">
                                     <div class="p-4 rounded-lg" title="Comment : {{ approval.comment }}" >
@@ -130,7 +134,18 @@
                                 </div>
                                 {% endif %}
                                 {% endfor %}
-                            {% endfor %}
+                                {% else %}
+                                <div class="card-body m-auto arrow arrow-step mb-5 bg-gradient-to-r from-gulf-blue-100 to-blue-500 ed p-3 border rounded justify-content-center align-content-stretch container rounded shadow-lg">
+                                    <div class="p-4 rounded-lg" title="{{ approval.comment }}" >
+                                        <p class="font-bold">{{ step }}</p> <br>
+                                        {% if step.to %}
+                                            <span class="inline-block rounded-full text-sm">{{ step.to|default_if_none:'' }}</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                {% endif %}
+                                
+                                {% endfor %}
                             <div class="mb-5 bg-blue-500 border rounded">
                                 <div class="p-4 font-bold rounded-lg">Completed</div>
                             </div>
