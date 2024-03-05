@@ -8,15 +8,15 @@
     {% csrf_token %}
     <div class="m-auto container justify-content-stretch align-content-stretch">
       <h3>Workflow</h3> <div class="my-10 grid grid-cols-4 gap-2">
-        {{ form.as_table }}
+        {{ workflow.as_table }}
       </div>
       <br><hr> <div>
-        {{ step_formset.management_form }}
+        {{ formset.management_form }}
        
-       {% if step_formset %}
+       {% if formset  %}
        <h3>Steps</h3>
-       {{ step_formset.management_form }}
-       {% for form in step_formset %}
+       {{ formset.management_form }}
+       {% for form in formset  %}
 <div class="row rounded mt-5">
   {{ form.as_table }}
 

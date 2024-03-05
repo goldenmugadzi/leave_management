@@ -9,6 +9,10 @@ class WorkflowAdmin(admin.ModelAdmin):
 class StepAdmin(admin.ModelAdmin):
     list_display = [field.name for field in Step._meta.fields]
 
+@admin.register(Process)
+class ProcessAdmin(admin.ModelAdmin):
+    list_display = [field.name for field in Process._meta.fields]
+
 @admin.register(Approval)
 class ApprovalAdmin(admin.ModelAdmin):
     list_display = ('step', 'user', 'comment', 'approved', )
@@ -17,9 +21,9 @@ class ApprovalAdmin(admin.ModelAdmin):
 class ApplicationAdmin(admin.ModelAdmin):
     list_display = ['name']
 
-@admin.register(Role)
-class RoleAdmin(admin.ModelAdmin):
-    list_display =('name', 'description', )
+# @admin.register(Role)
+# class RoleAdmin(admin.ModelAdmin):
+#     list_display =('name', 'description', )
 
 
 

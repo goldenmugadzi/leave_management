@@ -1,0 +1,135 @@
+{% extends "admin_layout.html" %}
+{% load static %}
+{% load custom_tags %}
+
+{% block content %}
+<head>
+  <style>
+      .arrow {
+          position: relative;
+      }
+
+      .arrow::after {
+          content: "";
+          position: absolute;
+          top: 50%;
+          transform: translateY(-50%);
+          width: 0;
+          height: 0;
+          border-top: 15px solid transparent;
+          border-bottom: 15px solid transparent;
+          border-left: 10px solid #3B82F6; /* Adjust arrow color here */
+          left: -10px;
+      }
+      
+      .arrow-step::before {
+          content: "";
+          position: absolute;
+          top: 50%;
+          right: -20px;
+          transform: translateY(-50%);
+          width: 0;
+          height: 0;
+          border-top: 10px solid transparent;
+          border-bottom: 10px solid transparent;
+          border-left: 20px solid #3B82F6; /* Adjust arrow color here */
+      }
+  </style>
+</head>
+<div class="m-auto mt-5 justify-content-center">
+    <div class="card grid grid-cols-1 gap-2 mb-3">
+        <div class="card-body m-2">
+            <div class="card-body m-auto mb-5 p-3 border rounded   justify-content-center align-content-stretch container rounded  shadow-lg">
+                <div class="px-6 py-4">
+                    <div class="card grid grid-cols-2 gap-2 mb-3">
+                        <div class="card-body m-auto mb-5 bg-gradient-to-r from-gulf-blue-100 to-blue-500 ed p-3 border rounded   justify-content-center align-content-stretch container rounded  shadow-lg">
+                            <h1 class="text-center mb-4 font-bold text-xl  mb-2">RFQ Details</h1>
+                            <p class="font-bold   mb-2"> Description: {{ rfq.description }}</p>
+                            <p class="font-bold   mb-2"> allocation_code_of_expenditure: {{ rfq.allocation_code_of_expenditure }}</p>
+                            <p class="font-bold   mb-2"> scope_of_work: {{ rfq.scope_of_work }}</p>
+                            <p class="font-bold   mb-2"> proc_ref: {{ rfq.proc_ref }}</p>
+                            <p class="font-bold   mb-2"> quantity: {{ rfq.quantity }}</p>
+                            <p class="font-bold   mb-2"> amount: {{ rfq.amount }}</p>
+                            <p class="font-bold   mb-2"> payment_mode: {{ rfq.payment_mode }}</p>
+                            <p class="font-bold   mb-2"> requested_by: {{ rfq.requested_by }}</p>
+                            <p class="font-bold   mb-2"> created_at: {{ rfq.created_at }}</p>
+                            <p class="font-bold   mb-2"> section: {{ rfq.section }}</p>
+                    </div>
+               
+               {% if rfq.ace %}
+                     <div class=" m-4 ">
+                         <h1 class="text-center mb-4 font-bold text-xl  mb-2">Depends on Ace with these Details</h1>
+                         <p class="font-bold   mb-2"> Description: {{ rfq.description }}</p>
+                         <p class="font-bold   mb-2"> allocation_code_of_expenditure: {{ rfq.allocation_code_of_expenditure }}</p>
+                         <p class="font-bold   mb-2"> scope_of_work: {{ rfq.scope_of_work }}</p>
+                         <p class="font-bold   mb-2"> proc_ref: {{ rfq.proc_ref }}</p>
+                         <p class="font-bold   mb-2"> quantity: {{ rfq.quantity }}</p>
+                         <p class="font-bold   mb-2"> amount: {{ rfq.amount }}</p>
+                         <p class="font-bold   mb-2"> payment_mode: {{ rfq.payment_mode }}</p>
+                         <p class="font-bold   mb-2"> requested_by: {{ rfq.requested_by }}</p>
+                         <p class="font-bold   mb-2"> created_at: {{ rfq.created_at }}</p>
+                         <p class="font-bold   mb-2"> section: {{ rfq.section }}</p>
+                 </div>
+               {% endif %}
+                
+                 </div>
+                    <h1 class="text-center mb-4 font-bold text-xl  mb-2">Workflow Details</h1>
+                    <p class="font-bold  mb-2"> Workflow name : {{ rfq.process.workflow }}</p>
+               
+               {% if approvalForm %}
+                    <form class="row rounded py-4 border bg-gulf-blue-400 rounded-lg p-3 m-auto container" method="POST" action="{% url 'approve:approve' rfq.process.id %}" enctype="multipart/form-data">
+                         {% csrf_token %}
+                        <div class=" m-auto container  ">
+                             {{approvalForm.comment}}
+
+
+
+                                 <div class="m-4 text-center">
+                                    <button type="submit" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded" name="approved" value="Rejected">Reject</button>
+                                    <button type="submit" class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded" name="approved" value="Approved"> {{ to }} </button>
+                              </div>
+                        </div>
+                    </form>   
+               {% endif %}
+
+                    <div class="card grid grid-cols-5 gap-4">
+
+                        <div class="px-2 mb-5  bg-gradient-to-r from-gulf-blue-100 to-green-700 border rounded ">
+                            <div class="p-4 font-bold rounded-lg">Start</div>
+                            <span class="inline-block rounded-full text-sm">  created</span>
+                            </div>
+                            {% for step in rfq.process.workflow.step_set.all %}
+                            {% for approval in rfq.process.approval_set.all %}
+                            {% if step == approval.step %}
+                               <div class="card-body m-auto arrow arrow-step mb-5 bg-gradient-to-r from-gulf-blue-100 to-green-700 ed p-3 border rounded justify-content-center align-content-stretch container rounded shadow-lg">
+                                    <div class="p-4 rounded-lg" title="Comment : {{ approval.comment }}" >
+                                        <p class="font-bold">{{ step }}</p> <br>
+                                        {% if step.to %}
+                                            <span class="inline-block rounded-full text-sm">{{ step.to|default_if_none:'' }}</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                {% else %}
+
+                                <div class="card-body m-auto arrow arrow-step mb-5 bg-gradient-to-r from-gulf-blue-100 to-blue-500 ed p-3 border rounded justify-content-center align-content-stretch container rounded shadow-lg">
+                                    <div class="p-4 rounded-lg" title="{{ approval.comment }}" >
+                                        <p class="font-bold">{{ step }}</p> <br>
+                                        {% if step.to %}
+                                            <span class="inline-block rounded-full text-sm">{{ step.to|default_if_none:'' }}</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                {% endif %}
+                                {% endfor %}
+                            {% endfor %}
+                            <div class="mb-5 bg-blue-500 border rounded">
+                                <div class="p-4 font-bold rounded-lg">Completed</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>    
+            </div>    
+        </div>    
+    </div>
+</div>
+{% endblock %}
