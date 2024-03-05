@@ -79,10 +79,8 @@ def add_user(request):
                 roles.append(tokens)
             if ace and ace != "":
                 roles.append(ace)
-
-            if rfq:
+            if rfq and rfq!="":
                 roles.append(rfq)
-
             if non_conformity and non_conformity:
                 roles.append(non_conformity)
             if users_role and users_role != "":
@@ -206,10 +204,7 @@ def update_user(request):
                 if role.application == "rfq":
                     custom_user_roles["rfq"] = role
 
-            region = Regions.objects.filter(id=user_profile.region.id).first()
-
             region = Regions.objects.filter(id=user_profile.region.id).first() if user_profile.region else None
-
             district = Districts.objects.filter(code=user_profile.district).first() if user_profile.district else None
             depot = Depots.objects.filter(code=user_profile.depot).first() if user_profile.depot else None
             section = Sections.objects.filter(id=user_profile.section.id).first() if user_profile.section else None
