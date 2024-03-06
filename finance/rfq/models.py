@@ -50,6 +50,7 @@ class RFQ(models.Model):
             self.rfq_id = f"RFQ{timestamp}"
         super().save(*args, **kwargs)
 
+
 class Quotation(models.Model):
     rfq = models.ForeignKey(RFQ, on_delete=models.CASCADE)
     quotation_file = models.FileField(upload_to='uploads/rfq')
@@ -59,7 +60,6 @@ class Quotation(models.Model):
 
     def __str__(self):
         return str(self.pk)
-
 
 # class ApprovalStage(models.Model):
 #     stage = models.CharField(max_length=100)

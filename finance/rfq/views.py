@@ -15,7 +15,7 @@ from django.apps import apps
 from sweetify import sweetify
 
 from finance.rfq.models import *
-from finance.Ace.models import *
+from finance.Ace.models import Ace, Transactions, Budget
 from it.users.models import *
 
 
@@ -41,7 +41,6 @@ def create_rfq(request):
 
 # Create your views here.
 def index(request):
-
     # QuerySet Object
     user_id = request.user.id
     user_profile = UserProfile.objects.filter(id=user_id).first()
@@ -58,14 +57,13 @@ def index(request):
         "rfq": {},
     }
 
-
     roles_ = user_profile.roles.all()
     for _role in roles_:
         role = Roles.objects.filter(id=_role.id).first()
-        if role.application =="rfq":
-            custom_user_roles["rfq"]=role
+        if role.application == "rfq":
+            custom_user_roles["rfq"] = role
 
-    Rfq_role=custom_user_roles["rfq"].role if custom_user_roles["rfq"] else None
+    Rfq_role = custom_user_roles["rfq"].role if custom_user_roles["rfq"] else None
     section_code = user_profile.section.code
     print(Rfq_role)
     print(section_code)
@@ -82,7 +80,7 @@ def index(request):
         context = get_general_manager_rfq()
     else:
         messages.error(request, 'you need to contact it to get a role in the RFQ')
-        sweetify.success(request,'you need to contact it to get a role in the RFQ')
+        sweetify.success(request, 'you need to contact it to get a role in the RFQ')
         return redirect("/")
 
     user_page = 'finance/rfq/index.html'
@@ -92,48 +90,55 @@ def index(request):
     return render(request, user_page, {"title": "All Records",
                                        "context": context,
                                        "user_title": user_title,
-                                        "Rfq_role": Rfq_role})
+                                       "Rfq_role": Rfq_role})
+
 
 def get_user_rfq(username, section):
-    rfq=RFQ.objects.filter(requested_by=username, section_code=section).order_by('-date_created')
+    rfq = RFQ.objects.filter(requested_by=username, section_code=section).order_by('-date_created')
     return rfq
+
 
 def get_procuremtn_rfq(username):
-    rfq=RFQ.objects.filter(requested_by=username).order_by('-date_created')
+    rfq = RFQ.objects.filter(requested_by=username).order_by('-date_created')
     return rfq
+
 
 def get_section_head_rfq(username, section):
-    rfq=RFQ.objects.filter(requested_by=username, section_code=section, approval_status="pending").order_by('-date_created')
+    rfq = RFQ.objects.filter(requested_by=username, section_code=section, approval_status="pending").order_by(
+        '-date_created')
     return rfq
+
 
 def get_finance_manager_rfq():
-    rfq=RFQ.objects.filter(approval_status="approved by section head").order_by('-date_created')
+    rfq = RFQ.objects.filter(approval_status="approved by section head").order_by('-date_created')
     return rfq
 
+
 def get_general_manager_rfq():
-    rfq=RFQ.objects.filter(approval_status="approved by finance manager").order_by('-date_created')
+    rfq = RFQ.objects.filter(approval_status="approved by finance manager").order_by('-date_created')
     return rfq
-    
+
 
 def create_rfq_from_ace(request):
     requested_by = request.user.username
     user_id = request.user.id
 
     user_profile = UserProfile.objects.filter(id=user_id).first()
-    user_designation = Designations.objects.filter(id=user_profile.designation.id).first() if user_profile.designation else None
-
+    user_designation = Designations.objects.filter(
+        id=user_profile.designation.id).first() if user_profile.designation else None
+    # acee = Ace.objects.all()
 
     if request.method == "GET":
         Ace_id = request.GET['i']
         Ace_id = str(Ace_id)
         ace_id = Ace_id
-        Ace = Ace.objects.filter(ace_id=ace_id).first()
-        context = Ace
-        user_page = "rfq/create_rfq.html"
+        acee = Ace.objects.filter(Ace_id2=ace_id).first()
+        context = acee
+        user_page = "finance/rfq/create_rfq_from_ace.html"
 
         return render(request, user_page, {"title": "All Records",
-                                              "ace": context,
-                                            "user_title": requested_by
+                                           "ace": context,
+                                           "user_title": requested_by
                                            })
 
 
@@ -159,31 +164,34 @@ def create_rfq_from_ace(request):
         requested_by = requested_by
         date_created = date
         ace = request.POST.get("ace")
-        ace = Ace.objects.filter(ace_id=ace).first()
-
-
+        ace = Ace.objects.filter(Ace_id2=ace).first()
 
         rfq = RFQ(
             rfq_id=rfq_id,
             rfq_type=rfq_type,
-            section=section,
+            section_code=section,
             allocation_code_of_expenditure=allocation_code_of_expenditure,
             scope_of_work=scope_of_work,
             quantity=quantity,
             proc_ref=proc_ref,
             amount=amount,
-            quotation1=quotation1,
-            quotation2=quotation2,
-            quotation3=quotation3,
             payment_mode=payment_mode,
             requested_by=requested_by,
             date_created=date_created,
             ace=ace,
-            designation=user_designation
+            designation=user_designation.description
         )
+        print(rfq)
+        quotation1.rfq = quotation1
+        quotation2.rfq = quotation2
+        quotation3.rfq = quotation3
         rfq.save()
+        quotation1.save()
+        quotation2.save()
+        quotation3.save()
         messages.error(request, 'you have successfully created an RFQ', extra_tags="success")
     return redirect("/rfq")
+
 
 def get_to_approve_rfq(request):
     user_id = request.user.id
@@ -192,49 +200,48 @@ def get_to_approve_rfq(request):
 
     custom_user_roles = group_user_roles(user_profile.roles)
 
-    Rfq_role=custom_user_roles["rfq"].role
+    Rfq_role = custom_user_roles["rfq"].role
     print(Rfq_role)
     if request.method == "POST":
         rfq_id = request.POST.get("rfq_id")
         rfq = RFQ.objects.filter(rfq_id=rfq_id).first()
-        #if rfq role is section head
+        # if rfq role is section head
         if Rfq_role == "authenticate" and rfq.section_head_approval_status != "approved by section head":
-            rfq.approval_status="approved by section head"
-            rfq.section_head=user_id
-            rfq.date_approved=date.today()
+            rfq.approval_status = "approved by section head"
+            rfq.section_head = user_id
+            rfq.date_approved = date.today()
 
-            rfq.section_head_approval_status="approved by section head"
+            rfq.section_head_approval_status = "approved by section head"
             rfq.section_head_approval_date = date.today()
             rfq.save()
-            messages.error(request, 'you have approved ace',rfq_id)
-            sweetify.success(request,'you have approved ace'+ rfq_id)
+            messages.error(request, 'you have approved ace', rfq_id)
+            sweetify.success(request, 'you have approved ace' + rfq_id)
             return render(request, "rfq/rfq_authoriser.html")
-        #if rfq role is finance manager
+        # if rfq role is finance manager
         elif Rfq_role == "check" and rfq.finance_manager_approval_status != "approved by finance manager":
-            rfq.approval_status="approved by finance manager"
-            rfq.finance_manager=user_id
-            rfq.date_approved=date.today()
-            rfq.finance_manager_approval_status="approved by finance manager"
+            rfq.approval_status = "approved by finance manager"
+            rfq.finance_manager = user_id
+            rfq.date_approved = date.today()
+            rfq.finance_manager_approval_status = "approved by finance manager"
             rfq.finance_manager_approval_date = date.today()
             rfq.save()
-            messages.error(request, 'you have approved ace',rfq_id)
-            sweetify.success(request,'you have approved ace'+ rfq_id)
+            messages.error(request, 'you have approved ace', rfq_id)
+            sweetify.success(request, 'you have approved ace' + rfq_id)
             # return render(request, "rfq/rfq_fm.html")
-        #if rfq role is general manager
+        # if rfq role is general manager
         elif Rfq_role == "approve" and rfq.general_manager_approval_status != "approved by general manager":
-            rfq.approval_status="approved by general manager"
-            rfq.general_manager=user_id
-            rfq.date_approved=date.today()
-            rfq.general_manager_approval_status="approved by general manager"
+            rfq.approval_status = "approved by general manager"
+            rfq.general_manager = user_id
+            rfq.date_approved = date.today()
+            rfq.general_manager_approval_status = "approved by general manager"
             rfq.general_manager_approval_date = date.today()
             rfq.save()
-            messages.error(request, 'you have approved ace',rfq_id)
-            sweetify.success(request,'you have approved ace'+ rfq_id)
+            messages.error(request, 'you have approved ace', rfq_id)
+            sweetify.success(request, 'you have approved ace' + rfq_id)
             # return render(request, "rfq/rfq_gm.html")
         else:
             messages.error(request, 'you need to contact IT to get a role in the RFQ')
-            sweetify.success(request,'you need to contact IT to get a role in the RFQ')
-
+            sweetify.success(request, 'you need to contact IT to get a role in the RFQ')
 
         return redirect("/")
 
@@ -264,52 +271,51 @@ def get_to_reject_rfq(request):
 
         role = Roles.objects.filter(id=id).first()
 
-        if role.application =="rfq":
-            custom_user_roles["rfq"]=role
+        if role.application == "rfq":
+            custom_user_roles["rfq"] = role
 
-    Rfq_role=custom_user_roles["rfq"].role
+    Rfq_role = custom_user_roles["rfq"].role
     print(Rfq_role)
     if request.method == "POST":
         rfq_id = request.POST.get("rfq_id")
         rfq = RFQ.objects.filter(rfq_id=rfq_id).first()
-        #if rfq role is section head
+        # if rfq role is section head
         if Rfq_role == "authenticate" and rfq.section_head_approval_status != "rejected by section head":
-            rfq.approval_status="rejected by section head"
-            rfq.section_head=user_id
-            rfq.date_rejected=date.today()
+            rfq.approval_status = "rejected by section head"
+            rfq.section_head = user_id
+            rfq.date_rejected = date.today()
 
-            rfq.section_head_approval_status="rejected by section head"
+            rfq.section_head_approval_status = "rejected by section head"
             rfq.section_head_approval_date = date.today()
             rfq.save()
-            messages.error(request, 'you have rejected rfq',rfq_id)
-            sweetify.success(request,'you have rejected rfq'+ rfq_id)
+            messages.error(request, 'you have rejected rfq', rfq_id)
+            sweetify.success(request, 'you have rejected rfq' + rfq_id)
             return render(request, "rfq/rfq_authoriser.html")
-        #if rfq role is finance manager
+        # if rfq role is finance manager
         elif Rfq_role == "check" and rfq.finance_manager_approval_status != "rejected by finance manager":
-            rfq.approval_status="rejected by finance manager"
-            rfq.finance_manager=user_id
-            rfq.date_rejected=date.today()
-            rfq.finance_manager_approval_status="rejected by finance manager"
+            rfq.approval_status = "rejected by finance manager"
+            rfq.finance_manager = user_id
+            rfq.date_rejected = date.today()
+            rfq.finance_manager_approval_status = "rejected by finance manager"
             rfq.finance_manager_approval_date = date.today()
             rfq.save()
-            messages.error(request, 'you have rejected rfq',rfq_id)
-            sweetify.success(request,'you have rejected rfq'+ rfq_id)
+            messages.error(request, 'you have rejected rfq', rfq_id)
+            sweetify.success(request, 'you have rejected rfq' + rfq_id)
             # return render(request, "rfq/rfq_fm.html")
-        #if rfq role is general manager
+        # if rfq role is general manager
         elif Rfq_role == "approve" and rfq.general_manager_approval_status != "rejected by general manager":
-            rfq.approval_status="rejected by general manager"
-            rfq.general_manager=user_id
-            rfq.date_rejected=date.today()
-            rfq.general_manager_approval_status="rejected by general manager"
+            rfq.approval_status = "rejected by general manager"
+            rfq.general_manager = user_id
+            rfq.date_rejected = date.today()
+            rfq.general_manager_approval_status = "rejected by general manager"
             rfq.general_manager_approval_date = date.today()
             rfq.save()
-            messages.error(request, 'you have rejected rfq',rfq_id)
-            sweetify.success(request,'you have rejected rfq'+ rfq_id)
+            messages.error(request, 'you have rejected rfq', rfq_id)
+            sweetify.success(request, 'you have rejected rfq' + rfq_id)
             # return render(request, "rfq/rfq_gm.html")
         else:
             messages.error(request, 'you need to contact IT to get a role in the RFQ')
-            sweetify.success(request,'you need to contact IT to get a role in the RFQ')
-
+            sweetify.success(request, 'you need to contact IT to get a role in the RFQ')
 
         return redirect("/")
 

@@ -1,6 +1,6 @@
 
 {% extends 'admin_layout.html' %} {% block content %}
-    <form enctype="multipart/form-data" method="post" action="/ace/create">
+    <form enctype="multipart/form-data" method="post" action="/rfq/create_rfq_from_ace">
         <div class="content-wrapper">
             {% if messages %}
 
@@ -152,8 +152,8 @@
                                     <label
                                             for="proc_ref"
                                             class="block text-sm font-medium leading-6 text-gray-900"
-                                    >Scope of Work</label
-                                    >
+                                    >Proc Ref
+                                    </label>
                                     <div class="mt-2">
                                         <input
                                                 id="proc_ref"
@@ -263,11 +263,28 @@
                                 <div class="mt-2">
                                     <select name="payment_mode"  style="width:1200px" required="required">
                                         <i>
-                                            <option value="">Select ACE Type</option>
+                                            <option value="">Select RFQ Type</option>
                                         </i>
-                                        <option value="internal">Cash</option>
-                                        <option value="project">Bank>
+                                        <option value="cash">Cash</option>
+                                        <option value="bank">Bank Transfer</option>
                                     </select>
+                                </div>
+                            </div>
+
+                            <div class="flex mt-10 px-3 py-3">
+                                <div style="width: 50%;">
+                                    <button style="width: 100%;" class="text-sm font-semibold leading-6 text-gray-900">
+                                        CANCEL
+                                    </button>
+                                </div>
+                                <div style="width: 50%;">
+                                    <button
+                                            style="width: 100%;"
+                                            type="submit"
+                                            class="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                                    >
+                                        create RFQ
+                                    </button>
                                 </div>
                             </div>
 
