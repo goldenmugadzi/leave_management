@@ -118,20 +118,3 @@ class Notification(models.Model):
     class Meta:
         app_label = 'users'
    
-# Create your models here.    
-# class UserProfile(models.Model):
-    # user = models.OneToOneField(User', on_delete=models.CASCADE)
-    # designation = models.CharField(max_length=100, blank=True)
-    # section = models.CharField(max_length=100, blank=True)
-    # depot = models.CharField(max_length=100, blank=True)
-    # region = models.CharField(max_length=100, blank=True)
-    # district = models.CharField(max_length=100, blank=True)
-    # status = models.CharField(max_length=30, blank=True)
-    # roles = models.CharField(max_length=100, blank=True)
-    # last_reset =  models.DateField(default=date.today())
-
-    # def __str__(self):
-    #     return self.status
- 
-    # class Meta:
-    #     app_label = 'users'
