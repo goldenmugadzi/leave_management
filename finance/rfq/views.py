@@ -133,12 +133,23 @@ def create_rfq_from_ace(request):
         Ace_id = str(Ace_id)
         ace_id = Ace_id
         acee = Ace.objects.filter(Ace_id2=ace_id).first()
-        context = acee
+
+        ace = acee.Ace_id2
+
+        amount = acee.amount
+        cost_center = str(acee.section)
+        quantity = acee.quantity
+        description = acee.details_of_expenditure
+        print(cost_center)
         user_page = "finance/rfq/create_rfq_from_ace.html"
 
         return render(request, user_page, {"title": "All Records",
-                                           "ace": context,
-                                           "user_title": requested_by
+                                           "ace": ace,
+                                           "amount": amount,
+                                           "cost_center": cost_center,
+                                           "user_title": requested_by,
+                                           "quantity": quantity,
+                                           'description': description
                                            })
 
 
@@ -146,8 +157,8 @@ def create_rfq_from_ace(request):
         rand = randrange(1, 99)
         rand2 = str(rand)
 
-        date = datetime.now()
-        date = date.strftime("%Y%m%d")
+        date1 = datetime.now()
+        date = date1.strftime("%Y%m%d")
 
         rfq_id = "RFQ" + date + rand2
         rfq_type = str('ACE')
@@ -157,14 +168,32 @@ def create_rfq_from_ace(request):
         quantity = request.POST.get("quantity")
         proc_ref = request.POST.get("proc_ref")
         amount = request.POST.get("amount")
-        quotation1 = request.FILES.get("quotation1")
-        quotation2 = request.FILES.get("quotation2")
-        quotation3 = request.FILES.get("quotation3")
+        # quotation1 = request.FILES('quotation1')
+        # quotation2 = request.FILES('quotation2')
+        # quotation3 = request.FILES('quotation3')
+
+        # check if qoutation1, qoutation2, qoutation3 are in the request.FILES
+        if 'quotation1' in request.FILES:
+            quotation1 = request.FILES['quotation1']
+        else:
+            quotation1 = None
+        if 'quotation2' in request.FILES:
+            quotation2 = request.FILES['quotation2']
+        else:
+            quotation2 = None
+        if 'quotation3' in request.FILES:
+            quotation3 = request.FILES['quotation3']
+        else:
+            quotation3 = None
+
+
         payment_mode = request.POST.get("payment_mode")
         requested_by = requested_by
-        date_created = date
+        date_created = datetime.now()
         ace = request.POST.get("ace")
         ace = Ace.objects.filter(Ace_id2=ace).first()
+
+        print(quotation1, quotation2, quotation3)
 
         rfq = RFQ(
             rfq_id=rfq_id,
@@ -181,14 +210,17 @@ def create_rfq_from_ace(request):
             ace=ace,
             designation=user_designation.description
         )
-        print(rfq)
-        quotation1.rfq = quotation1
-        quotation2.rfq = quotation2
-        quotation3.rfq = quotation3
+
         rfq.save()
-        quotation1.save()
-        quotation2.save()
-        quotation3.save()
+        rfq = RFQ.objects.filter(rfq_id=rfq_id).first()
+        quotation1 = Quotation(quotation_file=quotation1, rfq=rfq)
+        quotation2 = Quotation(quotation_file=quotation2, rfq=rfq)
+        quotation3 = Quotation(quotation_file=quotation3, rfq=rfq)
+
+        print(quotation1, quotation2, quotation3)
+        # quotation1.save()
+        # quotation2.save()
+        # quotation3.save()
         messages.error(request, 'you have successfully created an RFQ', extra_tags="success")
     return redirect("/rfq")
 
