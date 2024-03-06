@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect
 
 from utils.helper_functions import group_user_roles
+from utils.save_file import save_file
 from .models import RFQ, Quotation
 from .forms import RFQForm, QuotationFormSet
 from it.users.models import *
@@ -17,7 +18,6 @@ from sweetify import sweetify
 from finance.rfq.models import *
 from finance.Ace.models import Ace, Transactions, Budget
 from it.users.models import *
-
 
 def create_rfq(request):
     if request.method == 'POST':
@@ -38,7 +38,86 @@ def create_rfq(request):
 
     return render(request, 'finance/rfq/create_rfq.html', {'form': form, 'formset': formset})
 
+def rfq_create(request):
+    
+    if request.method == "GET":
+        return render(
+            request, 
+            'finance/rfq/rfq_create.html', 
+            {
+                "title": "All Records",
+                "user_title": "requested_by"
+            })
+        
+    elif request.method == "POST":
+        rand = randrange(1, 99)
+        rand2 = str(rand)
 
+        date = datetime.now()
+        date = date.strftime("%Y%m%d")
+
+        rfq_id = "RFQ" + date + rand2
+        rfq_type = request.POST.get("rfq_type")
+        allocation_code_of_expenditure = request.POST.get("allocation_code_of_expenditure")
+        scope_of_work = request.POST.get("scope_of_work")
+        quantity = request.POST.get("quantity")
+        proc_ref = request.POST.get("proc_ref")
+        amount = request.POST.get("amount")
+        quotation1 = request.FILES.get("quotation1")
+        quotation2 = request.FILES.get("quotation2")
+        quotation3 = request.FILES.get("quotation3")
+        payment_mode = request.POST.get("payment_mode")
+        requested_by = request.user.username
+        section = request.user.section.code
+        designation = request.user.designation.id
+        date_created = date
+        
+        file_paths = []
+        try:
+            if quotation1:
+                file_path1 = 'uploads/rfq/'+datetime.now().strftime('%Y%m%d%I%M%S%p') + quotation1.name 
+                save_file(quotation1,file_path1)
+                file_paths.append(file_path1)
+            if quotation2:
+                file_path2 = 'uploads/rfq/'+datetime.now().strftime('%Y%m%d%I%M%S%p') + quotation2.name 
+                save_file(quotation2,file_path2)
+                file_paths.append(file_path2)
+            if quotation3:
+                file_path3 = 'uploads/rfq/'+datetime.now().strftime('%Y%m%d%I%M%S%p') + quotation3.name 
+                save_file(quotation3,file_path3)
+                file_paths.append(file_path3)
+            
+        except Exception as ex:
+            print("Error:",ex)
+
+        rfq = RFQ(
+            rfq_id=rfq_id,
+            rfq_type=rfq_type,
+            section_code=section,
+            designation=designation,
+            allocation_code_of_expenditure=allocation_code_of_expenditure,
+            scope_of_work=scope_of_work,
+            quantity=quantity,
+            proc_ref=proc_ref,
+            amount=amount,
+            payment_mode=payment_mode,
+            requested_by=requested_by,
+            date_created=date_created,
+        )
+        rfq.save()
+        
+        # save the file paths
+        for file_path in file_paths:
+            print("file_path: ", file_path)
+            quotation = Quotation(
+                rfq=rfq,
+                quotation_file=file_path
+            )
+            quotation.save()
+            
+        messages.error(request, 'you have successfully created an RFQ', extra_tags="success")
+    return redirect("/rfq")
+    
 # Create your views here.
 def index(request):
     # QuerySet Object
@@ -117,8 +196,7 @@ def get_finance_manager_rfq():
 def get_general_manager_rfq():
     rfq = RFQ.objects.filter(approval_status="approved by finance manager").order_by('-date_created')
     return rfq
-
-
+    
 def create_rfq_from_ace(request):
     requested_by = request.user.username
     user_id = request.user.id
