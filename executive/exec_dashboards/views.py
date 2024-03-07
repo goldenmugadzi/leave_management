@@ -3,6 +3,8 @@ from datetime import datetime
 import json
 from django.http import JsonResponse
 from django.shortcuts import render,redirect
+
+from executive.exec_dashboards.utils import *
 from .models import PBNC, TD, UPO, Inspections, Maintenance
 from django.core import serializers
 from django.db.models import Count
@@ -15,72 +17,38 @@ MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'Augus
 # Create your views here.
 def dashboard_index(request):
     
+    user_title = request.user.get_full_name()    
     user_title = request.user.get_full_name()
+    url_path = request.path.split("/")
+    
     user = request.user
     user_profile = UserProfile.objects.filter(id=user.id).first()
-    l = request.user.groups.values_list('name',flat = True) # QuerySet Object
-    user_groups = list(l) 
-    
+    sections = Sections.objects.all()
+    districts = Districts.objects.all()
+    regions = Regions.objects.all()
+
     # fetch pbnc data
+    pbncs = PBNC.objects.all().order_by('-amount')
+    tds = TD.objects.all().order_by('-amount')
+    upos = UPO.objects.all()
+    
     month_id = datetime.now().month
     current_month = {
         "id": month_id,
         "name": MONTHS[month_id-1]
     }
-    pbncs = PBNC.objects.all().order_by('-amount')
-    tds = TD.objects.all().order_by('-amount')
-    upos = UPO.objects.all()
-    inpections = Inspections.objects.all()
-    maintenance_ = Maintenance.objects.all()
-    depots = Depots.objects.all()
-    districts = Sections.objects.all()
-    regions = Regions.objects.all()
-
-    mtn = {}
-    for depot in depots:
-        maintenance_december = Maintenance.objects.filter(depot=depot.depot, created_at__month=month_id)
-        maintenance_weekly_count = maintenance_december.annotate(week=ExtractWeek('created_at')).values('week').annotate(count=Count('id')).order_by('week')
-
-        week_count = []
-        for i in range(4):
-            if i < len(maintenance_weekly_count):
-                week_count.append(maintenance_weekly_count[i]['count'])
-            else:
-                week_count.append(0)
-                
-        mtn[depot.depot] = week_count
-        
-    print("mtn: ", mtn)
-   
-    inspection_count = {}
-    for inspection in inpections:
-        inspection_name = str(inspection.depot)
-        inspection_month = inspection.created_at.month
-        if inspection_month == month_id:
-            if inspection_name in inspection_count:
-                if inspection_count[inspection_name] > 0:
-                    inspection_count[inspection_name] = inspection_count[inspection_name] + 1
-            else:
-                inspection_count[inspection_name] = 1 
     
-    keys_list = json.dumps(list(inspection_count.keys()), default=str)
-    values_list = json.dumps(list(inspection_count.values()), default=str)
+    inspections = get_inspections(user_profile, month_id)
+    maintenance_ = get_mmts(user_profile, month_id)
+    mtn = get_mmt(user_profile, month_id)
+    print("mtn: ", mtn)
+    
+    keys_list, values_list = get_inspections_bargraph(user_profile, month_id)
+    inspection_locations = keys_list
+    inspections_count = values_list
     
     # loop through maintences and foreach get record count from Files.
-    maintenance_count = {}
-    for maintenance in maintenance_:
-        maintenance_name = str(maintenance.depot)
-        if maintenance_name in maintenance_count:
-            if maintenance_count[maintenance_name] > 0:
-                maintenance_count[maintenance_name] = maintenance_count[maintenance_name] + 1
-        else:
-           maintenance_count[maintenance_name] = 1 
-    
-    maintenance_keys_list = json.dumps(list(maintenance_count.keys()), default=str)
-    maintenance_values_list = json.dumps(list(maintenance_count.values()), default=str)
-    
-    user_title = request.user.get_full_name()
-    url_path = request.path.split("/")
+    maintenance_keys_list, maintenance_values_list = get_maintenance_linegraph(user_profile, month_id)
     
     return render(request, 
                   'dashboards/index.html', 
@@ -88,19 +56,19 @@ def dashboard_index(request):
                       "user_title": user_title,
                       "url_path": url_path,
                       "page_title": "Dashboards",
-                      "districts": districts,
+                      "districts": sections,
                       "regions": regions,
                       "current_month": current_month,
                       "pbncs": pbncs, 
                       "tds": tds, 
                       "upos": upos, 
-                      "inspection_locations": keys_list, 
-                      "inspections_count": values_list,
+                      "inspection_locations": inspection_locations, 
+                      "inspections_count": inspections_count,
                       "mtn": json.dumps(mtn, default=str), 
                       "maintenance_count": maintenance_values_list, 
                       "maintenance_locations": maintenance_keys_list, 
                       "maintenance_": serializers.serialize('json', maintenance_), 
-                      "inspections_": serializers.serialize('json', inpections) 
+                      "inspections_": serializers.serialize('json', inspections) 
                   })
 
 def dashboard_filter(request, item):
@@ -221,27 +189,27 @@ def dashboard_filter(request, item):
 
 def dashboards_maintenance_ajax(request):
     month = request.GET['month']
-    
+    user_ = request.user
+    user_profile = UserProfile.objects.filter(id=user_.id).first()
     mtn = {}
     current_month = {
         "id": month,
         "name": MONTHS[int(month)-1]
     }
-    depots = Depots.objects.all()
-    for depot in depots:
-        maintenance_december = Maintenance.objects.filter(depot=depot.depot, created_at__month=month)
-        maintenance_weekly_count = maintenance_december.annotate(week=ExtractWeek('created_at')).values('week').annotate(count=Count('id')).order_by('week')
-
-        week_count = []
-        for i in range(4):
-            if i < len(maintenance_weekly_count):
-                week_count.append(maintenance_weekly_count[i]['count'])
-            else:
-                week_count.append(0)
-                
-        mtn[depot.depot] = week_count
+    mtn = get_mmt(user_profile, month)
     
     return JsonResponse(mtn, safe=False)
+
+def dashboards_inspections_ajax(request):
+    month = request.GET['month']
+    user_ = request.user
+    user_profile = UserProfile.objects.filter(id=user_.id).first()
+    keys_list, values_list = get_inspections_bargraph(user_profile, month)
+    
+    return JsonResponse({
+        "keys_list": keys_list,
+        "values_list": values_list
+        }, safe=False)
 
 def pbnc_upload(request):
     if request.method == 'POST':

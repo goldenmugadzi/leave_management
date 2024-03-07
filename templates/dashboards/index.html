@@ -647,6 +647,7 @@ https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js
     var inspection_locations = JSON.parse("{{inspection_locations|escapejs}}");
     var inspections_count = JSON.parse("{{inspections_count|escapejs}}");
     var inspections_ = JSON.parse("{{inspections_|escapejs}}");
+    console.log(inspection_locations, inspections_count);
 
     // Get the canvas element
     var inspectionCtx = document.getElementById("Inspection").getContext("2d");
@@ -689,13 +690,12 @@ https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js
       let month = parseInt(date.getMonth()) + 1;
       return month == currentMonth;
     });
-    var inspections_cleaned = cleanInspectionData(inspections_count_data);
 
     var inspectionBarData = {
-      labels: inspections_cleaned.keys_,
+      labels: inspection_locations,
       datasets: [
         {
-          data: inspections_cleaned.values_,
+          data: inspections_count,
           backgroundColor: baseColors,
           hoverBackgroundColor: baseColors,
         },
@@ -769,23 +769,44 @@ https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js
       .getElementById("filterInspectionsButton")
       .addEventListener("change", (event) => {
         const newValue = event.target.value;
-        console.log("newValue: ", newValue);
-        // Do something with the new value
-        console.log("inspections_ - inspections_: ", inspections_);
 
-        var filteredInspData = inspections_.filter((dataPoint) => {
-          var recordDate = new Date(dataPoint.fields.created_at);
-          let month = parseInt(recordDate.getMonth()) + 1;
-          console.log("month: ", month);
-          return month == newValue;
-        });
-
-        let cleanedInspectionData = cleanInspectionData(filteredInspData);
-        console.log("cleanedInspectionData: ", cleanedInspectionData);
-        iChart.data.datasets[0].data = cleanedInspectionData.values_; // Update chart data
-        iChart.data.labels = cleanedInspectionData.keys_;
-        iChart.update(); // Render the chart with filtered data
+        getInspectionsMonthData(newValue)
       });
+
+    
+
+      function getInspectionsMonthData(month){
+        // Create an XMLHttpRequest object
+        const xhr = new XMLHttpRequest();
+        res = {}
+  
+        // Set up the request
+        xhr.open('GET', `http://localhost:8000/dashboards/inspections/ajax?month=${month}`); // Replace with your actual URL and parameters
+  
+        // Handle the response
+        xhr.onload = function() {
+          if (xhr.status === 200) {
+            const responseData = xhr.responseText;
+            res = JSON.parse(responseData);       
+            let keysList = JSON.parse(res.keys_list);
+            let valuesList = JSON.parse(res.values_list);
+            console.log("responsible data: ", res, keysList, valuesList);
+            // Clear existing data
+            iChart.data.datasets = [];
+            iChart.data.datasets.push({
+              label: keysList,
+              data: valuesList
+            });
+            iChart.update(); // Render the chart with filtered data
+          } else {
+            console.error('Request failed with status:', xhr.status);
+          }
+        };
+  
+        // Send the request
+        xhr.send();
+        return res;
+      }
 
     function cleanInspectionData(inspections) {
       let inspectionCount = {};
@@ -821,6 +842,7 @@ https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js
     var maintenance_count = JSON.parse("{{maintenance_count|escapejs}}");
     var maintenances_ = JSON.parse("{{maintenance_|escapejs}}");
     var mtn = JSON.parse("{{mtn|escapejs}}");
+    console.log("mtn: ", mtn)
 
     // Get the canvas element
     var maintenanceCtx = document
@@ -858,75 +880,17 @@ https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js
 
     var date = new Date();
     var currentMonth = parseInt(date.getMonth()) + 1;
-    var maintenance_count_data = maintenances_.filter((dataPoint) => {
-      var date_ = new Date(dataPoint.fields.created_at);
-      let month = parseInt(date_.getMonth()) + 1;
-      return month == currentMonth;
-    });
-
-    var maintenance_cleaned = cleanMaintenanceData(maintenance_count_data);
 
     var maintenanceBarData = {
-      labels: ["1", "2", "3", "4"], // ['January', 'December']
-      datasets: [
-        {
-          label: "Mabelreign Depot",
-          data: mtn["Mabelreign Depot"], // [1,2,3,4]
-          fill: 2
-        },
-        {
-          label: "Borrowdale Depot",
-          data: mtn["Borrowdale Depot"], // [1,2,3,4]
-          fill: 2
-        },
-        {
-          label: "Glen View Depot",
-          data: mtn["Glen View Depot"], // [1,2,3,4]
-          fill: 2
-        },
-        {
-          label: "Kuwadzana Depot",
-          data: mtn["Kuwadzana Depot"], // [1,2,3,4]
-          fill: 2
-        },
-        {
-          label: "Mabvuku Depot",
-          data: mtn["Mabvuku Depot"], // [1,2,3,4]
-        },
-        {
-          label: "Ruwa Depot",
-          data: mtn["Ruwa Depot"], // [1,2,3,4]
-        },
-        {
-          label: "Southerton Depot",
-          data: mtn["Southerton Depot"], // [1,2,3,4]
-        },
-        {
-          label: "Warren Park Depot",
-          data: mtn["Warren Park Depot"], // [1,2,3,4]
-        },
-        {
-          label: "Waterfalls Depot",
-          data: mtn["Waterfalls Depot"], // [1,2,3,4]
-        },
-        {
-          label: "CBD Depot",
-          data: mtn["CBD Depot"], // [1,2,3,4]
-        },
-        {
-          label: "Makoni Depot",
-          data: mtn["Makoni Depot"], // [1,2,3,4]
-        },
-        {
-          label: "Zengeza Depot",
-          data: mtn["Zengeza Depot"], // [1,2,3,4]
-        },
-        {
-          label: "Seke",
-          data: mtn["Seke"], // [1,2,3,4]
-        },
-      ],
+      labels: ["1", "2", "3", "4"], // ['January', 'December'],
     };
+
+    Object.keys(mtn).forEach((key) => {
+      mChart.data.datasets.push({
+        label: key,
+        data: mtn[key]
+      });
+    });
 
     var mChart = new Chart(maintenanceBarCtx, {
       type: "line",
@@ -1008,31 +972,6 @@ https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js
         getThisMonthData(newValue)
         
     });
-
-    function cleanMaintenanceData(maintenances) {
-      let maintenanceCount = {};
-
-      for (let i = 0; i < maintenances.length; i++) {
-        let maintenance = maintenances[i];
-        let maintenanceName = maintenance.fields.depot;
-        if (maintenanceName in maintenanceCount) {
-          if (maintenanceCount[maintenanceName] > 0) {
-            maintenanceCount[maintenanceName] =
-              maintenanceCount[maintenanceName] + 1;
-          }
-        } else {
-          maintenanceCount[maintenanceName] = 1;
-        }
-      }
-
-      let keysList = Object.keys(maintenanceCount);
-      let valuesList = Object.values(maintenanceCount);
-
-      return {
-        keys_: keysList,
-        values_: valuesList,
-      };
-    }
 
     function getThisMonthData(month){
       // Create an XMLHttpRequest object
