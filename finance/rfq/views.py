@@ -30,8 +30,10 @@ def rfq_detail(request, rfq_id):
             to=newStep.to
     except Step.DoesNotExist:
         pass
+    approved_steps = rfq.process.approval_set.all().values_list('step__step', flat=True)
+    print(approved_steps)
+    return render(request, 'finance/rfq/rfq_detail.html', {'rfq': rfq, 'approved_steps':approved_steps,'approvalForm': approvalForm,'to':to})
     
-    return render(request, 'finance/rfq/rfq_detail.html', {'rfq': rfq, 'approvalForm': approvalForm,'to':to})
 @login_required
 def create_rfq(request):
     if request.method == 'POST':
@@ -58,18 +60,31 @@ def create_rfq(request):
     return render(request, 'finance/rfq/create_rfq.html', {'form': form, 'formset': formset})
 @login_required
 def rfqs_awaiting_my_action(request):
-    rfqs_awaiting_my_action = []
-    user_role = request.user.roles
-    for process in Process.objects.filter(workflow__name='rfq'):
-        last_approval = process.approval_set.last()
-        if last_approval and last_approval.step:
-            last_approval_step = last_approval.step
-            next_step = Step.objects.get(step=last_approval_step + 1, workflow=process.workflow, approver=user_role)
-            if next_step:
-                rfqs_awaiting_my_action.append(process.rfq)
+    """
+    for each rfq.process in the rfqs,  let curent_step = the last rfq.process.approval if any else 0 and let next_step =curent_step+1
+    then check if  next_step=step.step for rfq.process.workflow.step_set filtered by approcer = user.roles.all.
+    """
+    rfqs_to_process = []
+    user_roles = request.user.roles.all()
 
-    return render(request, 'finance/rfq/view_all_rfqs.html', {'rfqs': rfqs_awaiting_my_action})
+    for rfq in RFQ.objects.all():
+        process = rfq.process
 
+        if process.approval_set.exists():
+            last_approval = process.approval_set.last()
+            current_step = last_approval.step.step
+        else:
+            current_step = 0
+
+        next_step = current_step + 1
+
+        workflow = process.workflow
+        step = workflow.step_set.filter(step=next_step, approver__in=user_roles).first()
+        
+        if step:
+            rfqs_to_process.append(rfq)
+
+    return render(request, 'finance/rfq/view_all_rfqs.html', {'rfqs': rfqs_to_process})
 @login_required
 def view_all_rfqs(request):
     rfqs = RFQ.objects.all()
