@@ -200,9 +200,9 @@ DATABASES = {
     # }
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'be_user',
-        'USER': 'excellence',
-        'PASSWORD': 'Z3tdc_it@2021_',
+        'NAME': 'beii_vi',
+        'USER': 'be_user',
+        'PASSWORD': 'Z3tdc_it@2024',
         'HOST': 'localhost'
     }
     # Localhost
