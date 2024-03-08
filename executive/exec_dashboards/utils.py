@@ -73,28 +73,24 @@ def get_mmts(user, month_id):
 
 def get_mmt(user, month_id):
     mtn = {}
-    print("user.region.id: ", user.region.region)
-    depots = Depots.objects.filter(region_id=user.region.id).all()
-    print("depots: ", depots)
-    depot = user.section if user.section else None
-    for depot in depots:
-        print("depot: ", depot)
-        if depot.depot == depot and any(role.role == 'fore_person' for role in user.roles.all()):
-            
-            if depot.id:
-                maintenance_december = Maintenance.objects.filter(depot=depot.section, created_at__month=month_id)
-                maintenance_weekly_count = maintenance_december.annotate(week=ExtractWeek('created_at')).values('week').annotate(count=Count('id')).order_by('week')
+    if any(role.role == 'fore_person' for role in user.roles.all()):
+        depot = user.section if user.section else None
+        if depot.id:
+            maintenance_december = Maintenance.objects.filter(depot=depot.section, created_at__month=month_id)
+            maintenance_weekly_count = maintenance_december.annotate(week=ExtractWeek('created_at')).values('week').annotate(count=Count('id')).order_by('week')
 
-                week_count = []
-                for i in range(4):
-                    if i < len(maintenance_weekly_count):
-                        week_count.append(maintenance_weekly_count[i]['count'])
-                    else:
-                        week_count.append(0)
-                        
-                mtn[depot.section] = week_count
-                
-        if any(role.role == 'district_manager' for role in user.roles.all()):
+            week_count = []
+            for i in range(4):
+                if i < len(maintenance_weekly_count):
+                    week_count.append(maintenance_weekly_count[i]['count'])
+                else:
+                    week_count.append(0)
+                    
+            mtn[depot.section] = week_count
+            
+    if any(role.role == 'district_manager' for role in user.roles.all()):
+        depots = Depots.objects.filter(region_id=user.region.id).all()
+        for depot in depots:
             district = user.district if user.district else None
             if district:
                 maintenance_december = Maintenance.objects.filter(district=district.district, created_at__month=month_id)
@@ -107,14 +103,15 @@ def get_mmt(user, month_id):
                     else:
                         week_count.append(0)
                         
-                mtn[depot.section] = week_count
-                
-        if any(role.role == 'executive' for role in user.roles.all()):
+                mtn[depot.depot] = week_count
+            
+    if any(role.role == 'executive' for role in user.roles.all()):
+        depots = Depots.objects.filter(region_id=user.region.id).all()
+        for depot in depots:
             region = user.region if user.region else None
             if region:
                 maintenance_december = Maintenance.objects.filter(region=region.region, created_at__month=month_id)
                 maintenance_weekly_count = maintenance_december.annotate(week=ExtractWeek('created_at')).values('week').annotate(count=Count('id')).order_by('week')
-                print("maintenance_december: ", maintenance_december)
                 week_count = []
                 for i in range(4):
                     if i < len(maintenance_weekly_count):
@@ -122,8 +119,8 @@ def get_mmt(user, month_id):
                     else:
                         week_count.append(0)
                         
-                mtn[depot.section] = week_count
-        
+                mtn[depot.depot] = week_count
+    
     return mtn
 
 def get_mmt_weekly(depots, month_id):
@@ -140,8 +137,6 @@ def get_mmt_weekly(depots, month_id):
                 week_count.append(0)
                 
         mtn[depot.depot] = week_count
-        
-    print("mtn: ", mtn)
 
 def get_mmt_monthly(maintenances, month_id):
     maintenance_count = {}

@@ -23,6 +23,9 @@ def dashboard_index(request):
     
     user = request.user
     user_profile = UserProfile.objects.filter(id=user.id).first()
+    section = user_profile.section
+    district = user_profile.district
+    region = user_profile.region
     sections = Sections.objects.all()
     districts = Districts.objects.all()
     regions = Regions.objects.all()
@@ -44,11 +47,13 @@ def dashboard_index(request):
     print("mtn: ", mtn)
     
     keys_list, values_list = get_inspections_bargraph(user_profile, month_id)
+
     inspection_locations = keys_list
     inspections_count = values_list
     
     # loop through maintences and foreach get record count from Files.
     maintenance_keys_list, maintenance_values_list = get_maintenance_linegraph(user_profile, month_id)
+    
     
     return render(request, 
                   'dashboards/index.html', 
@@ -56,8 +61,12 @@ def dashboard_index(request):
                       "user_title": user_title,
                       "url_path": url_path,
                       "page_title": "Dashboards",
-                      "districts": sections,
+                      "sections": sections,
+                      "districts": districts,
                       "regions": regions,
+                      "section": section,
+                      "district": district,
+                      "region": region,
                       "current_month": current_month,
                       "pbncs": pbncs, 
                       "tds": tds, 
@@ -81,6 +90,15 @@ def dashboard_filter(request, item):
         "id": month_id,
         "name": MONTHS[month_id-1]
     }
+    user = request.user
+    user_profile = UserProfile.objects.filter(id=user.id).first()
+    _section = user_profile.section
+    _district = user_profile.district
+    _region = user_profile.region
+    
+    sections = Sections.objects.all()
+    districts = Districts.objects.all()
+    regions = Regions.objects.all()
     # fetch pbnc data
     if item == "district":
         district_id = request.POST['selectedDistrict']
@@ -171,8 +189,12 @@ def dashboard_filter(request, item):
                   {
                       "user_title": user_title,
                       "page_description": page_title,
-                      "district": district_,
-                      "region": region_,
+                      "section": _section if _section else None,
+                      "district": district_ if district_ else _district,
+                      "region": region_ if region_ else _region,
+                      "sections": sections,
+                      "districts": districts,
+                      "regions": regions,
                       "url_path": url_path,
                       "current_month": current_month,
                       "pbncs": pbncs, 

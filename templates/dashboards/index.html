@@ -87,12 +87,6 @@
         class="w-auto bg-white drop-shadow-md shadow shadow-gulf-blue-300 text-gulf-blue-950 rounded px-4 py-4"
       >
         <div class="flex justify-around">
-          <div style="flex: 0.2" class="flex justify-center items-center">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M6 13.5V3.75m0 9.75a1.5 1.5 0 0 1 0 3m0-3a1.5 1.5 0 0 0 0 3m0 3.75V16.5m12-3V3.75m0 9.75a1.5 1.5 0 0 1 0 3m0-3a1.5 1.5 0 0 0 0 3m0 3.75V16.5m-6-9V3.75m0 3.75a1.5 1.5 0 0 1 0 3m0-3a1.5 1.5 0 0 0 0 3m0 9.75V10.5" />
-            </svg>            
-            Filter
-          </div>
           <div style="flex: 0.25" class="flex justify-center">
             <div class="w-full">
               <form
@@ -125,7 +119,6 @@
                 method="post"
               >
                 {% csrf_token %}
-
                 <select
                   id="selectDistrict"
                   name="selectedDistrict"
@@ -134,9 +127,34 @@
                   {% if district %}
                   <option value="{{district.id}}">{{district.district}}</option>
                   {% endif %}
-                  <option>Select Center</option>
+                  <option>Select district</option>
                   {% for district_ in districts %}
-                  <option value="{{district_.id}}">{{district_.section}}</option>
+                  <option value="{{district_.id}}">{{district_.district}}</option>
+                  {% endfor %}
+                </select>
+              </form>
+            </div>
+          </div>
+          <div style="flex: 0.25" class="flex justify-center">
+            <div class="w-full">
+              <form
+                id="submitSectionForm"
+                action="/dashboards/filter/section"
+                method="post"
+              >
+                {% csrf_token %}
+
+                <select
+                  id="selectSection"
+                  name="selectedSection"
+                  class="block w-full bg-gulf-blue-50 rounded-md border-0 px-2 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+                >
+                  {% if section %}
+                  <option value="{{section.id}}">{{section.section}}</option>
+                  {% endif %}
+                  <option>Select Center</option>
+                  {% for section_ in sections %}
+                  <option value="{{section_.id}}">{{section_.section}}</option>
                   {% endfor %}
                 </select>
               </form>
@@ -881,16 +899,26 @@ https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js
     var date = new Date();
     var currentMonth = parseInt(date.getMonth()) + 1;
 
-    var maintenanceBarData = {
-      labels: ["1", "2", "3", "4"], // ['January', 'December'],
-    };
-
+    maintenanceDataset = []
     Object.keys(mtn).forEach((key) => {
-      mChart.data.datasets.push({
+      maintenanceDataset.push({
         label: key,
-        data: mtn[key]
+        data: mtn[key], // [1,2,3,4]
+        fill: 2,
       });
     });
+
+    console.log("maintenanceDataset: ", maintenanceDataset)
+    var maintenanceBarData = {
+      labels: ["1", "2", "3", "4"], // ['January', 'December'],
+      datasets: maintenanceDataset.map((data) => {
+        return {
+          label: data.label,
+          data: data.data,
+          fill: 2,
+        }
+      }),
+    };
 
     var mChart = new Chart(maintenanceBarCtx, {
       type: "line",
