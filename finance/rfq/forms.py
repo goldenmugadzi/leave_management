@@ -14,7 +14,7 @@ class RFQForm(forms.ModelForm):
     class Meta:
         model = RFQ
         fields = '__all__'
-
+        exclude = ['process','ace','requested_by']
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 

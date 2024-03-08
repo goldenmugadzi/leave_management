@@ -3,15 +3,16 @@ from django.shortcuts import render, redirect
 from utils.helper_functions import group_user_roles
 from utils.save_file import save_file
 from .models import RFQ, Quotation
+from django.shortcuts import render, redirect, get_object_or_404
+from .models import RFQ, Quotation,Process,Application
+from django.contrib.auth.decorators import login_required
 from .forms import RFQForm, QuotationFormSet
-from it.users.models import *
 
 from datetime import datetime, date
 from random import randrange
 import json
 
 from django.contrib import messages
-from django.shortcuts import render, redirect
 
 from django.apps import apps
 from sweetify import sweetify
@@ -20,24 +21,90 @@ from finance.rfq.models import *
 from finance.Ace.models import Ace, Transactions, Budget
 from it.users.models import *
 
+from it.users.models import *
+from approve.views import intiate
+from approve.models import Step
+from approve.forms import ApprovalForm
+from django.urls import reverse
+
+@login_required
+def rfq_detail(request, rfq_id):
+    rfq = RFQ.objects.get(id=rfq_id)
+    approvalForm=None
+    to=None
+    user_roles = request.user.roles.all()  # Accessing the user's roles through the 'roles' attribute
+    
+    try:
+        last_approved = rfq.process.approval_set.last().step.step
+    except AttributeError:
+        last_approved = 0
+    
+    next_step = last_approved + 1
+    
+    try:
+        newStep= Step.objects.get(step=next_step, workflow=rfq.process.workflow, approver__in=user_roles)
+        if newStep and request.user.section==rfq.section and next_step==1:
+            approvalForm = ApprovalForm 
+            to=newStep.to
+        elif newStep:
+            approvalForm = ApprovalForm
+            to=newStep.to
+    except Step.DoesNotExist:
+        pass
+    approved_steps = rfq.process.approval_set.all().values_list('step__step', flat=True)
+    print(approved_steps)
+    return render(request, 'finance/rfq/rfq_detail.html', {'rfq': rfq, 'approved_steps':approved_steps,'approvalForm': approvalForm,'to':to})
+    
+@login_required
 def create_rfq(request):
     if request.method == 'POST':
         form = RFQForm(request.POST, request.FILES)
         formset = QuotationFormSet(request.POST, request.FILES)
-
+        app= Application.objects.get(name='rfq')
         if form.is_valid() and formset.is_valid():
-            rfq = form.save()
+            rfq = form.save(commit=False)
+            rfq.process = intiate(request, 'rfq')
+            rfq.requested_by = request.user
+            rfq.save()
+
             for quotation_form in formset:
                 quotation = quotation_form.save(commit=False)
                 quotation.rfq = rfq
                 quotation.save()
 
-            return redirect('/dashboards/overview/', rfq_id=rfq.rfq_id)
+            url = reverse('rfq:rfq_detail', args=[rfq.id])
+            return redirect(url)
     else:
         form = RFQForm()
         formset = QuotationFormSet()
 
     return render(request, 'finance/rfq/create_rfq.html', {'form': form, 'formset': formset})
+@login_required
+def rfqs_awaiting_my_action(request):
+    """
+    for each rfq.process in the rfqs,  let curent_step = the last rfq.process.approval if any else 0 and let next_step =curent_step+1
+    then check if  next_step=step.step for rfq.process.workflow.step_set filtered by approcer = user.roles.all.
+    """
+    rfqs_to_process = []
+    user_roles = request.user.roles.all()
+    for rfq in RFQ.objects.all():
+        process = rfq.process
+
+        if process.approval_set.exists():
+            last_approval = process.approval_set.last()
+            current_step = last_approval.step.step
+        else:
+            current_step = 0
+
+        next_step = current_step + 1
+
+        workflow = process.workflow
+        step = workflow.step_set.filter(step=next_step, approver__in=user_roles).first()
+        
+        if step:
+            rfqs_to_process.append(rfq)
+
+    return render(request, 'finance/rfq/view_all_rfqs.html', {'rfqs': rfqs_to_process})
 
 def rfq_create(request):
     
@@ -445,3 +512,7 @@ def get_to_reject_rfq(request):
         return redirect("/")
 
     return redirect("/")
+@login_required
+def view_all_rfqs(request):
+    rfqs = RFQ.objects.all()
+    return render(request, 'finance/rfq/view_all_rfqs.html', {'rfqs': rfqs})
