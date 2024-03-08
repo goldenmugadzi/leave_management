@@ -7,25 +7,30 @@
   <form class="row rounded py-4 border bg-gulf-blue-100 p-3 m-auto text-center justify-content-center align-content-stretch container" method="POST" action="{{url}}" enctype="multipart/form-data">
     {% csrf_token %}
     <div class="m-auto container justify-content-stretch align-content-stretch">
-      <div class="mt-10 grid grid-cols-4 gap-2">
-        {{ workflow_form.as_table }}
+        <h3 class="font-bold my-4">Workflow</h3>
+       {{form.as_p}}
+    </div>
+    <br>
+    <div class="m-auto container justify-content-stretch align-content-stretch">
+      {% if step_formset %}
+      <h3 class="font-bold my-4">Steps</h3>
+      {{ step_formset.managementform.as_hidden }}
+      <div id="step-forms">
+        {% for form in step_formset %}
+        <div class="mt-10 grid grid-cols-2 gap-2">
+          <!-- Step form fields -->
+            {{form.as_p}}
+        </div>
+        {% empty %}
+        <p>No steps added yet.</p>
+        {% endfor %}
       </div>
-       <div>
-        {{ step_formset.management_form }}
-       
-       {% if step_formset %}
-       <h3>Steps</h3>
-       {{ step_formset.management_form }}
-       {% for form in step_formset %}
-         {{ form.as_table }}
-       {% endfor %}
       {% endif %}
     </div>
-       <br>
-      <div class="m-auto justify-content-stretch align-content-stretch">
-        <a class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded" href="/dashboard">Back</a>
-        <input class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded" type="submit" value="Add approval steps">
-      </div>
+    <br>
+    <div class="m-auto justify-content-stretch align-content-stretch">
+      <a class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded" href="/dashboard">Back</a>
+      <input class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded" type="submit" value="Add approval steps">
     </div>
   </form>
 </div>
