@@ -1,8 +1,8 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import RFQ, Quotation,Process,Application
 from django.contrib.auth.decorators import login_required
-from .forms import RFQForm, QuotationFormSet
-
+from .forms import RFQForm, QuotationFormSet,aceRFQForm
+from finance.Ace.models import Ace
 from it.users.models import *
 from approve.views import intiate
 from approve.models import Step
@@ -61,9 +61,9 @@ def create_rfq(request):
     return render(request, 'finance/rfq/create_rfq.html', {'form': form, 'formset': formset})
 
 def create_ace_rfq(request,ace_id):
-    ace = Ace.objects.get(id=ace_id)
-    form = aceRFQForm( initial={'ace':ace, 'section':ace.section, 'requested_by':request.user,ammount:ace.ammount,quantity:ace.quantity})
-
+    ace = Ace.objects.get(Ace_id=ace_id)
+    form = aceRFQForm()
+    
     if request.method == 'POST':
         form = aceRFQForm(request.POST, request.FILES)
         formset = QuotationFormSet(request.POST, request.FILES)
@@ -73,7 +73,6 @@ def create_ace_rfq(request,ace_id):
             rfq.requested_by = request.user
             rfq.ace = ace
             rfq.save()
-
             for quotation_form in formset:
                 quotation = quotation_form.save(commit=False)
                 quotation.rfq = rfq

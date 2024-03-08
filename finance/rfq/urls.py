@@ -4,7 +4,7 @@ app_name ='rfq'
 urlpatterns = [
     # Other URL patterns
     path('create_rfq/', create_rfq, name='create_rfq'),
-    path('create_ace_rfq/<str:ace_id>/', create_ace_rfq, name='create_ace_rfq'),
+    path('create_ace_rfq/<int:ace_id>/', create_ace_rfq, name='create_ace_rfq'),
     path('rfq_detail/<str:rfq_id>/', rfq_detail, name='rfq_detail'),
     path('rfqs/', view_all_rfqs, name='view_all_rfqs'),
     path('rfqs_awaiting_my_action/', rfqs_awaiting_my_action, name='rfqs_awaiting_my_action'),

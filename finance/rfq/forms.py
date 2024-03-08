@@ -65,7 +65,14 @@ class aceRFQForm(forms.ModelForm):
         fields = '__all__'
         exclude = ['process']
     def __init__(self, *args, **kwargs):
+        initial_data = kwargs.get('initial', {})
+        
         super().__init__(*args, **kwargs)
+
+        self.fields['section'].widget.attrs['readonly'] = True
+        self.fields['requested_by'].widget.attrs['readonly'] = True
+        self.fields['amount'].widget.attrs['readonly'] = True
+        self.fields['quantity'].widget.attrs['readonly'] = True
 
         for field_name, field in self.fields.items():
             field.widget.attrs.update({

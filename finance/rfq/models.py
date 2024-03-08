@@ -9,7 +9,7 @@ class RFQ(models.Model):
     description = models.TextField( blank=True, null=True)
     allocation_code_of_expenditure = models.CharField(max_length=100, blank=True, null=True)
     scope_of_work = models.CharField(max_length=100, blank=True, null=True)
-    quantity = models.FloatField(blank=True, null=True)
+    quantity = models.IntegerField(blank=True, null=True)
     proc_ref = models.CharField(max_length=100, blank=True, null=True)
     amount = models.FloatField(blank=True, null=True)
     PAYMENT_MODE_CHOICES = [
