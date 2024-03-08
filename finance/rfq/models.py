@@ -22,6 +22,9 @@ class RFQ(models.Model):
     date_approved = models.DateField(null=True, blank=True)
     ace = models.ForeignKey(Ace, models.DO_NOTHING, db_column='ace_id2', blank=True, null=True)
 
+    PR_number = models.CharField(max_length=100, blank=True, null=True)
+    PR_date = models.DateField(null=True, blank=True)
+
     section_head = models.CharField(max_length=100, blank=True, null=True)
     finance_manager = models.CharField(max_length=100, blank=True, null=True)
     general_manager = models.CharField(max_length=100, blank=True, null=True)
@@ -50,6 +53,7 @@ class RFQ(models.Model):
             self.rfq_id = f"RFQ{timestamp}"
         super().save(*args, **kwargs)
 
+
 class Quotation(models.Model):
     rfq = models.ForeignKey(RFQ, on_delete=models.CASCADE)
     quotation_file = models.FileField(upload_to='uploads/rfq')
@@ -59,7 +63,6 @@ class Quotation(models.Model):
 
     def __str__(self):
         return str(self.pk)
-
 
 # class ApprovalStage(models.Model):
 #     stage = models.CharField(max_length=100)

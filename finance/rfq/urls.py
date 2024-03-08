@@ -1,5 +1,6 @@
 from django.urls import path
-from .views import *
+from . import views
+from .views import create_rfq_from_ace, get_to_approve_rfq, get_to_reject_rfq, index
 
 urlpatterns = [
     path('', index, name='index'),
