@@ -25,8 +25,11 @@ def rfq_detail(request, rfq_id):
     
     try:
         newStep= Step.objects.get(step=next_step, workflow=rfq.process.workflow, approver__in=user_roles)
-        if newStep:
+        if newStep and request.user.section==rfq.section and next_step==1:
             approvalForm = ApprovalForm 
+            to=newStep.to
+        elif newStep:
+            approvalForm = ApprovalForm
             to=newStep.to
     except Step.DoesNotExist:
         pass
