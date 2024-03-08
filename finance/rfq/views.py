@@ -34,7 +34,6 @@ def rfq_detail(request, rfq_id):
     except Step.DoesNotExist:
         pass
     approved_steps = rfq.process.approval_set.all().values_list('step__step', flat=True)
-    print(approved_steps)
     return render(request, 'finance/rfq/rfq_detail.html', {'rfq': rfq, 'approved_steps':approved_steps,'approvalForm': approvalForm,'to':to})
     
 @login_required
@@ -42,7 +41,6 @@ def create_rfq(request):
     if request.method == 'POST':
         form = RFQForm(request.POST, request.FILES)
         formset = QuotationFormSet(request.POST, request.FILES)
-        app= Application.objects.get(name='rfq')
         if form.is_valid() and formset.is_valid():
             rfq = form.save(commit=False)
             rfq.process = intiate(request, 'rfq')
@@ -61,6 +59,32 @@ def create_rfq(request):
         formset = QuotationFormSet()
 
     return render(request, 'finance/rfq/create_rfq.html', {'form': form, 'formset': formset})
+
+def create_ace_rfq(request,ace_id):
+    ace = Ace.objects.get(id=ace_id)
+    form = aceRFQForm( initial={'ace':ace, 'section':ace.section, 'requested_by':request.user,ammount:ace.ammount,quantity:ace.quantity})
+
+    if request.method == 'POST':
+        form = aceRFQForm(request.POST, request.FILES)
+        formset = QuotationFormSet(request.POST, request.FILES)
+        if form.is_valid() and formset.is_valid():
+            rfq = form.save(commit=False)
+            rfq.process = intiate(request, 'rfq')
+            rfq.requested_by = request.user
+            rfq.ace = ace
+            rfq.save()
+
+            for quotation_form in formset:
+                quotation = quotation_form.save(commit=False)
+                quotation.rfq = rfq
+                quotation.save()
+
+            url = reverse('rfq:rfq_detail', args=[rfq.id])
+            return redirect(url)
+    else:
+        formset = QuotationFormSet()
+
+    return render(request, 'finance/rfq/create_rfq.html', {'form': form, 'formset': formset,'ace':ace})
 @login_required
 def rfqs_awaiting_my_action(request):
     """
