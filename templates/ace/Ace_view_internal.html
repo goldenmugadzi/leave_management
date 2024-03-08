@@ -9,18 +9,17 @@
     <div >
 
         <div class="mt-10 border-b border-gray-900/10 pb-12">
-            <h2 class="text-base font-semibold leading-7 text-gray-900">
-                Approve Ace
-            </h2>
-            <p class="mt-1 text-sm leading-6 text-gray-600">
-                Fill all required fields for {{ context.Ace_id2 }}.
-            </p>
 
-            if (context.approval_status == "approved by General Manager") {
-            <h1 class="text-2xl font-semibold leading-7 text-gray-900">
-                <a href="/rfq/create_rfq_from_ace?i={{ context.Ace_id2 }}">Create RFQ for ACE {{ context.Ace_id2 }}</a>
-            </h1>
-            }
+            {% if context.approval_status == "approved by General Manager" %}
+                <h1 class="text-2xl font-semibold leading-7 text-gray-900">
+                    <a href="/rfq/create_rfq_from_ace?i={{ context.Ace_id2 }}"
+                       target="_blank"
+                       rel="noopener noreferrer"
+                       class="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                       name="{{ context.Ace_id2 }}"
+                    >Create RFQ for ACE {{ context.Ace_id2 }}</a>
+                </h1>
+            {% endif %}
 
             <div class="mt-10 grid grid-cols-3 gap-4">
 

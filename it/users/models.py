@@ -1,21 +1,22 @@
 from django.db import models
 from datetime import date
+from django.contrib.auth.models import AbstractUser
 from django.utils import timezone
-from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
+# from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
 
-class UserManager(BaseUserManager):
-    def create_user(self, username, password=None, **extra_fields):
-        extra_fields.setdefault('is_staff', False)
-        extra_fields.setdefault('is_superuser', False)
-        user = self.model(username=username, **extra_fields)
-        user.set_password(password)
-        user.save(using=self._db)
-        return user
+# class UserManager(BaseUserManager):
+#     def create_user(self, username, password=None, **extra_fields):
+#         extra_fields.setdefault('is_staff', False)
+#         extra_fields.setdefault('is_superuser', False)
+#         user = self.model(username=username, **extra_fields)
+#         user.set_password(password)
+#         user.save(using=self._db)
+#         return user
 
-    def create_superuser(self, username, password=None, **extra_fields):
-        extra_fields.setdefault('is_staff', True)
-        extra_fields.setdefault('is_superuser', True)
-        return self.create_user(username, password, **extra_fields)
+#     def create_superuser(self, username, password=None, **extra_fields):
+#         extra_fields.setdefault('is_staff', True)
+#         extra_fields.setdefault('is_superuser', True)
+#         return self.create_user(username, password, **extra_fields)
 
 class Districts(models.Model):
     district = models.CharField(max_length=100)
@@ -86,11 +87,8 @@ class Designations(models.Model):
         app_label = 'users'
 
 
-class UserProfile(AbstractBaseUser, PermissionsMixin):
+class UserProfile(AbstractUser):
     username = models.CharField(max_length=15, unique=True, verbose_name='EC Number')
-    first_name = models.CharField(blank=True, max_length=150, verbose_name='first name')
-    last_name = models.CharField(blank=True, max_length=150, verbose_name='last name')
-    email = models.EmailField(blank=True, max_length=254, verbose_name='email address')
     designation = models.ForeignKey(Designations, on_delete=models.DO_NOTHING , blank=True, null=True)
     section = models.ForeignKey(Sections, on_delete=models.DO_NOTHING, blank=True, null=True)
     depot = models.ForeignKey(Depots, on_delete=models.DO_NOTHING, blank=True, null=True)
@@ -98,30 +96,16 @@ class UserProfile(AbstractBaseUser, PermissionsMixin):
     roles = models.ManyToManyField(Roles, blank=True, null=True)
     region = models.ForeignKey(Regions, on_delete=models.DO_NOTHING, blank=True, null=True)
     status = models.CharField(max_length=30, blank=True)
-    is_staff = models.BooleanField(default=False, help_text='Designates whether the user can log into this admin site.', verbose_name='staff status')
-    is_active = models.BooleanField(default=True, help_text='Designates whether this user should be treated as active. Unselect this instead of deleting accounts.', verbose_name='active')
-    date_joined = models.DateTimeField(auto_now_add=True, verbose_name='date joined')
     last_reset =  models.DateField(default=date.today())
-
-    objects = UserManager()
-
-    USERNAME_FIELD = 'username'
-    REQUIRED_FIELDS = []
-    def get_full_name(self):
-        if self.first_name and self.last_name:
-            return f"{self.first_name} {self.last_name}"
-        elif self.first_name:
-            return self.first_name
-        elif self.last_name:
-            return self.last_name
-        else:
-            return self.username
     
     def __str__(self):
-        return self.get_full_name()
+        if self.first_name and self.last_name:
+            return f"{self.first_name} {self.last_name}"
+        else:
+            return self.username
    
-    class Meta:
-        app_label = 'users'
+
+   
 class Notification(models.Model):
     user = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
     message = models.TextField()
