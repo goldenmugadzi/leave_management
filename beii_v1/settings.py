@@ -193,7 +193,7 @@ DATABASES = {
     # }
     # 'default': {
     #     'ENGINE': 'django.db.backends.mysql',
-    #     'NAME': 'beii',
+    #     'NAME': 'beii_test',
     #     'USER': 'root',
     #     'PASSWORD': '',
     #     'HOST': 'localhost',
