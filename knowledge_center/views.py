@@ -65,9 +65,18 @@ def create(request):
     
     return render(request, 'knowledge-center/create.html', {"url_path": url_path})
 
+def archive_file(request, file_id):
+
+    um = KnowledgeCenter.objects.filter(id=file_id).first()
+    um.archived=True
+    um.save()
+    
+    return redirect('/knowledge-center/view_files')
+
+
 def view_files(request):
     
-    files = KnowledgeCenter.objects.all()
+    files = KnowledgeCenter.objects.filter(archived=False).all()
     
     files_list = []
     for file in files:
@@ -89,6 +98,29 @@ def view_files(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/view_files.html', {"context": context, "url_path": url_path})
 
+def view_archived_files(request):
+    
+    files = KnowledgeCenter.objects.filter(archived=True).all()
+    
+    files_list = []
+    for file in files:
+        new_file = {
+            "id": file.id,
+            "filename": file.filename,
+            "filetype": file.file_type,
+            "section": file.section,
+            "subcategory1": file.sub_category_1,
+            "subcategory2": file.sub_category_2,
+            "region": file.region,
+            "created_by": file.created_by,
+            "created_at": file.created_at,
+        }
+        files_list.append(new_file)
+    
+    context = json.dumps(files_list, default=str)
+    
+    url_path = request.path.split("/")
+    return render(request, 'knowledge-center/view_files.html', {"context": context, "url_path": url_path})
 
 def view_by_category(request):
     

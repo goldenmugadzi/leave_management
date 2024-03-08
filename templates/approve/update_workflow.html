@@ -1,0 +1,35 @@
+{% extends "admin_layout.html" %}
+{% load static %}{% load custom_tags %}
+
+{% block content %}
+
+<div class="m-auto mt-5 justify-content-center">
+  <form class="row rounded py-4 border bg-gulf-blue-100 p-3 m-auto text-center justify-content-center align-content-stretch container" method="POST" action="{{url}}" enctype="multipart/form-data">
+    {% csrf_token %}
+    <div class="m-auto container justify-content-stretch align-content-stretch">
+      <h3>Workflow</h3> <div class="my-10 grid grid-cols-4 gap-2">
+        {{ workflow.as_table }}
+      </div>
+      <br><hr> <div>
+        {{ formset.management_form }}
+       
+       {% if formset  %}
+       <h3>Steps</h3>
+       {{ formset.management_form }}
+       {% for form in formset  %}
+<div class="row rounded mt-5">
+  {{ form.as_table }}
+
+</div>       {% endfor %}
+      {% endif %}
+    </div>
+       <br>
+      <div class="mx-auto my-10 justify-content-stretch align-content-stretch">
+        <a class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded" href="/dashboard">Back</a>
+        <input class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded" type="submit" value="Add approval steps">
+      </div>
+    </div>
+  </form>
+</div>
+
+{% endblock %}

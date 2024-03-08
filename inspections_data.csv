@@ -1,101 +1,1001 @@
 location,depot,district,region,created_at
-"Seke Unit B, Makoni",Warren Park Depot,North District,West,2024-02-03
-Cranborne Park,Seke,Chitungwiza District,East,2024-02-07
-Winchdon,CBD Depot,North District,South,2024-02-19
-Mufakose,CBD Depot,North District,East,2024-02-05
-Rolf Valley N,Southerton Depot,East District,South,2024-02-23
-Avondale West,Zengeza Depot,Chitungwiza District,East,2024-02-23
-Langford Farm,Zengeza Depot,Chitungwiza District,Harare,2024-02-15
-Avonlea - Part,CBD Depot,North District,West,2024-02-21
-Rolf Valley N,Makoni Depot,Chitungwiza District,East,2024-02-13
-Warren Park - Part,Warren Park Depot,Chitungwiza District,South,2024-02-14
-Mt Pleasant & Heights,Waterfalls Depot,Chitungwiza District,West,2024-02-14
-3-2 Battalion,Mabelreign Depot,North District,Harare,2024-02-12
-Old Highfields,Glen View Depot,Chitungwiza District,East,2024-02-21
-Twentydales Ext.,CBD Depot,South District,South,2024-02-04
-Chadcombe,CBD Depot,Chitungwiza District,East,2024-02-25
-Komani,CBD Depot,North District,West,2024-02-06
-Mutare Rd,Kuwadzana Depot,East District,Harare,2024-02-06
-Crowborough,Warren Park Depot,South District,South,2024-02-24
-Mayambara,Warren Park Depot,Chitungwiza District,South,2024-02-12
-Surface Investments,Kuwadzana Depot,Chitungwiza District,Harare,2024-02-08
-Luna,Southerton Depot,East District,South,2024-02-08
-Alex Park - Part,CBD Depot,East District,East,2024-02-14
-Burma Valley,Makoni Depot,North District,South,2024-02-18
-Malvern,Warren Park Depot,North District,Harare,2024-02-23
-Kingsmead,Makoni Depot,North District,Harare,2024-02-03
-Glen Wood,Mabvuku Depot,North District,South,2024-02-05
-Crowhill,Borrowdale Depot,Chitungwiza District,East,2024-02-21
-Chishawasha,Warren Park Depot,North District,East,2024-02-02
-Westlea,Southerton Depot,Chitungwiza District,Harare,2024-02-18
-Quinnington S,Borrowdale Depot,East District,Harare,2024-02-21
-Msasa Park,CBD Depot,North District,South,2024-02-22
-Glen Wood,Kuwadzana Depot,North District,East,2024-02-08
-Avenues,Warren Park Depot,South District,East,2024-02-14
-Rhodesville,CBD Depot,South District,East,2024-02-26
-Bikita,Borrowdale Depot,East District,South,2024-02-22
-Bannockburn,Borrowdale Depot,South District,East,2024-02-10
-Bangazani Dam,Mabvuku Depot,Chitungwiza District,Harare,2024-02-24
-Westlea,Waterfalls Depot,North District,West,2024-02-12
-Rolf Valley N,CBD Depot,Chitungwiza District,Harare,2024-02-01
+"Seke Unit B, Makoni",Warren Park Depot,North District,West,2023-04-20
+Cranborne Park,Seke,Chitungwiza District,East,2024-02-19
+Winchdon,CBD Depot,North District,South,2023-05-20
+Mufakose,CBD Depot,North District,East,2024-01-18
+Rolf Valley N,Southerton Depot,East District,South,2024-01-15
+Avondale West,Zengeza Depot,Chitungwiza District,East,2024-01-05
+Langford Farm,Zengeza Depot,Chitungwiza District,Harare,2023-03-30
+Avonlea - Part,CBD Depot,North District,West,2023-10-20
+Rolf Valley N,Makoni Depot,Chitungwiza District,East,2023-10-21
+Warren Park - Part,Warren Park Depot,Chitungwiza District,South,2023-01-09
+Mt Pleasant & Heights,Waterfalls Depot,Chitungwiza District,West,2024-02-10
+3-2 Battalion,Mabelreign Depot,North District,Harare,2023-03-20
+Old Highfields,Glen View Depot,Chitungwiza District,East,2023-04-06
+Twentydales Ext.,CBD Depot,South District,South,2023-02-07
+Chadcombe,CBD Depot,Chitungwiza District,East,2023-05-01
+Komani,CBD Depot,North District,West,2023-09-01
+Mutare Rd,Kuwadzana Depot,East District,Harare,2023-05-30
+Crowborough,Warren Park Depot,South District,South,2023-11-07
+Mayambara,Warren Park Depot,Chitungwiza District,South,2023-06-04
+Surface Investments,Kuwadzana Depot,Chitungwiza District,Harare,2024-01-28
+Luna,Southerton Depot,East District,South,2023-11-13
+Alex Park - Part,CBD Depot,East District,East,2024-01-01
+Burma Valley,Makoni Depot,North District,South,2023-11-10
+Malvern,Warren Park Depot,North District,Harare,2024-03-01
+Kingsmead,Makoni Depot,North District,Harare,2023-12-02
+Glen Wood,Mabvuku Depot,North District,South,2023-01-20
+Crowhill,Borrowdale Depot,Chitungwiza District,East,2023-01-30
+Chishawasha,Warren Park Depot,North District,East,2023-09-23
+Westlea,Southerton Depot,Chitungwiza District,Harare,2023-02-10
+Quinnington S,Borrowdale Depot,East District,Harare,2023-05-23
+Msasa Park,CBD Depot,North District,South,2023-02-08
+Glen Wood,Kuwadzana Depot,North District,East,2023-01-11
+Avenues,Warren Park Depot,South District,East,2023-11-04
+Rhodesville,CBD Depot,South District,East,2023-05-07
+Bikita,Borrowdale Depot,East District,South,2023-12-22
+Bannockburn,Borrowdale Depot,South District,East,2023-10-01
+Bangazani Dam,Mabvuku Depot,Chitungwiza District,Harare,2023-11-07
+Westlea,Waterfalls Depot,North District,West,2023-12-02
+Rolf Valley N,CBD Depot,Chitungwiza District,Harare,2023-01-27
+Glenview - Part,CBD Depot,East District,South,2024-01-10
+Mbare,Ruwa Depot,South District,West,2023-08-18
+Eastlea,Mabvuku Depot,North District,Harare,2023-06-16
+4 Brigade,Zengeza Depot,Chitungwiza District,South,2023-11-15
+Parktown,Waterfalls Depot,Chitungwiza District,West,2023-03-28
+Southern Granite,Zengeza Depot,South District,South,2023-04-10
+Ridgeview,Waterfalls Depot,East District,Harare,2023-04-23
+Marlborough,Warren Park Depot,Chitungwiza District,West,2023-04-23
+St Mary’s,Kuwadzana Depot,South District,Harare,2024-01-06
+Bangazani Dam,Southerton Depot,North District,South,2024-02-05
+Bordervale,Southerton Depot,East District,West,2023-05-22
+Little Norfolk,Kuwadzana Depot,North District,Harare,2023-11-06
+Wilmington Park,Warren Park Depot,Chitungwiza District,Harare,2023-12-09
+GDC,Glen View Depot,Chitungwiza District,South,2023-06-09
+Little Norfolk,CBD Depot,South District,South,2024-01-25
+Highlands - Part,Makoni Depot,North District,East,2024-03-04
+Mandara,Mabelreign Depot,North District,East,2023-02-24
+Coronation Park,Ruwa Depot,Chitungwiza District,Harare,2023-07-18
+Chikurubi,Borrowdale Depot,Chitungwiza District,Harare,2024-02-16
+Parts of Unit K,Seke,East District,East,2023-10-21
+Chishawasha,Kuwadzana Depot,Chitungwiza District,East,2023-08-01
+Mandara,Borrowdale Depot,East District,Harare,2023-06-15
+Pension Farm,Southerton Depot,East District,West,2024-01-16
+22 Miles,Mabvuku Depot,Chitungwiza District,Harare,2023-02-26
+Haig Park,Borrowdale Depot,Chitungwiza District,South,2023-07-01
+Newlands,Zengeza Depot,North District,East,2023-06-10
+Parkridge Estate,Kuwadzana Depot,South District,South,2023-11-20
+Merwede,Ruwa Depot,East District,West,2023-06-11
+"Murisa T/Ship, Dema",Ruwa Depot,North District,South,2023-01-24
+"Seke Unit F, G Old",Zengeza Depot,South District,East,2023-05-20
+Bordervale,Seke,Chitungwiza District,Harare,2023-02-03
+Logan Park,Makoni Depot,North District,Harare,2023-03-29
+Strathaven,Seke,South District,East,2024-02-17
+Pension Farm,Borrowdale Depot,East District,Harare,2023-07-07
+Monavale,Borrowdale Depot,South District,West,2023-05-14
+Lincoln Green,Kuwadzana Depot,North District,West,2023-12-24
+Dzivaresekwa,Waterfalls Depot,Chitungwiza District,West,2023-04-02
+Widdecombe,Glen View Depot,Chitungwiza District,South,2023-09-19
+Southern Granite,Kuwadzana Depot,East District,South,2023-10-13
+Chishawasha,Makoni Depot,East District,Harare,2023-11-03
+Groombridge,Kuwadzana Depot,South District,South,2023-02-27
+Seki Rd N,Southerton Depot,South District,East,2023-10-20
+Kambuzuma South,Glen View Depot,South District,Harare,2024-01-22
+Helensvale S,Mabvuku Depot,Chitungwiza District,Harare,2023-01-22
+Greengrove,Southerton Depot,East District,South,2023-12-14
+Msasa Park,Glen View Depot,East District,South,2024-01-29
+Glen Norah A - Part,Mabvuku Depot,Chitungwiza District,East,2023-05-24
+Bonda Irrigation,Seke,Chitungwiza District,South,2023-03-08
+Mt Pleasant & Heights,Glen View Depot,East District,East,2023-09-21
+All of Masvingo Province,Kuwadzana Depot,Chitungwiza District,Harare,2023-08-04
+Helensvale S,Southerton Depot,North District,Harare,2023-09-28
+Southlea Park,Ruwa Depot,North District,East,2023-08-20
+Adams Barracks,Mabelreign Depot,East District,South,2023-08-07
+Mabelreign,Borrowdale Depot,North District,South,2023-05-22
+Surface Investments,Kuwadzana Depot,Chitungwiza District,East,2023-06-09
+Mandara,Waterfalls Depot,South District,Harare,2023-02-14
+Crowborough Estate,Zengeza Depot,East District,Harare,2023-11-12
+Kensington,Zengeza Depot,North District,West,2023-05-31
+Manyame Park,Borrowdale Depot,South District,Harare,2023-03-11
+Colne Valley,Glen View Depot,East District,South,2023-08-29
+Uplands,Borrowdale Depot,East District,South,2024-02-26
+"Seke Unit B, Makoni",Warren Park Depot,North District,West,2023-12-09
+Cranborne Park,Seke,Chitungwiza District,East,2023-06-12
+Winchdon,CBD Depot,North District,South,2024-01-01
+Mufakose,CBD Depot,North District,East,2023-06-18
+Rolf Valley N,Southerton Depot,East District,South,2023-04-05
+Avondale West,Zengeza Depot,Chitungwiza District,East,2023-12-14
+Langford Farm,Zengeza Depot,Chitungwiza District,Harare,2023-06-22
+Avonlea - Part,CBD Depot,North District,West,2023-09-29
+Rolf Valley N,Makoni Depot,Chitungwiza District,East,2023-02-20
+Warren Park - Part,Warren Park Depot,Chitungwiza District,South,2023-07-21
+Mt Pleasant & Heights,Waterfalls Depot,Chitungwiza District,West,2023-04-15
+3-2 Battalion,Mabelreign Depot,North District,Harare,2023-12-04
+Old Highfields,Glen View Depot,Chitungwiza District,East,2023-09-03
+Twentydales Ext.,CBD Depot,South District,South,2023-12-24
+Chadcombe,CBD Depot,Chitungwiza District,East,2023-02-03
+Komani,CBD Depot,North District,West,2023-11-18
+Mutare Rd,Kuwadzana Depot,East District,Harare,2023-02-14
+Crowborough,Warren Park Depot,South District,South,2023-09-19
+Mayambara,Warren Park Depot,Chitungwiza District,South,2023-03-18
+Surface Investments,Kuwadzana Depot,Chitungwiza District,Harare,2024-01-03
+Luna,Southerton Depot,East District,South,2023-05-01
+Alex Park - Part,CBD Depot,East District,East,2023-06-03
+Burma Valley,Makoni Depot,North District,South,2023-06-14
+Malvern,Warren Park Depot,North District,Harare,2023-09-11
+Kingsmead,Makoni Depot,North District,Harare,2023-10-30
+Glen Wood,Mabvuku Depot,North District,South,2023-01-02
+Crowhill,Borrowdale Depot,Chitungwiza District,East,2023-06-05
+Chishawasha,Warren Park Depot,North District,East,2023-02-27
+Westlea,Southerton Depot,Chitungwiza District,Harare,2023-10-22
+Quinnington S,Borrowdale Depot,East District,Harare,2023-03-27
+Msasa Park,CBD Depot,North District,South,2023-05-11
+Glen Wood,Kuwadzana Depot,North District,East,2023-06-05
+Avenues,Warren Park Depot,South District,East,2023-11-21
+Rhodesville,CBD Depot,South District,East,2023-04-26
+Bikita,Borrowdale Depot,East District,South,2023-09-07
+Bannockburn,Borrowdale Depot,South District,East,2023-12-28
+Bangazani Dam,Mabvuku Depot,Chitungwiza District,Harare,2024-01-19
+Westlea,Waterfalls Depot,North District,West,2023-03-08
+Rolf Valley N,CBD Depot,Chitungwiza District,Harare,2023-12-28
+Glenview - Part,CBD Depot,East District,South,2023-10-30
+Mbare,Ruwa Depot,South District,West,2023-09-03
+Eastlea,Mabvuku Depot,North District,Harare,2023-01-10
+4 Brigade,Zengeza Depot,Chitungwiza District,South,2024-01-21
+Parktown,Waterfalls Depot,Chitungwiza District,West,2023-08-07
+Southern Granite,Zengeza Depot,South District,South,2023-08-31
+Ridgeview,Waterfalls Depot,East District,Harare,2023-12-16
+Marlborough,Warren Park Depot,Chitungwiza District,West,2023-11-08
+St Mary’s,Kuwadzana Depot,South District,Harare,2023-07-29
+Bangazani Dam,Southerton Depot,North District,South,2023-07-26
+Bordervale,Southerton Depot,East District,West,2023-07-30
+Little Norfolk,Kuwadzana Depot,North District,Harare,2023-11-01
+Wilmington Park,Warren Park Depot,Chitungwiza District,Harare,2023-06-28
+GDC,Glen View Depot,Chitungwiza District,South,2023-10-26
+Little Norfolk,CBD Depot,South District,South,2024-01-24
+Highlands - Part,Makoni Depot,North District,East,2023-05-13
+Mandara,Mabelreign Depot,North District,East,2023-11-25
+Coronation Park,Ruwa Depot,Chitungwiza District,Harare,2023-05-04
+Chikurubi,Borrowdale Depot,Chitungwiza District,Harare,2024-02-13
+Parts of Unit K,Seke,East District,East,2024-01-31
+Chishawasha,Kuwadzana Depot,Chitungwiza District,East,2023-05-20
+Mandara,Borrowdale Depot,East District,Harare,2023-06-13
+Pension Farm,Southerton Depot,East District,West,2023-11-03
+22 Miles,Mabvuku Depot,Chitungwiza District,Harare,2023-10-10
+Haig Park,Borrowdale Depot,Chitungwiza District,South,2023-06-11
+Newlands,Zengeza Depot,North District,East,2023-07-10
+Parkridge Estate,Kuwadzana Depot,South District,South,2023-05-19
+Merwede,Ruwa Depot,East District,West,2023-03-30
+"Murisa T/Ship, Dema",Ruwa Depot,North District,South,2023-04-25
+"Seke Unit F, G Old",Zengeza Depot,South District,East,2023-09-04
+Bordervale,Seke,Chitungwiza District,Harare,2023-03-08
+Logan Park,Makoni Depot,North District,Harare,2023-01-31
+Strathaven,Seke,South District,East,2023-10-10
+Pension Farm,Borrowdale Depot,East District,Harare,2023-06-29
+Monavale,Borrowdale Depot,South District,West,2023-07-02
+Lincoln Green,Kuwadzana Depot,North District,West,2023-12-09
+Dzivaresekwa,Waterfalls Depot,Chitungwiza District,West,2023-05-03
+Widdecombe,Glen View Depot,Chitungwiza District,South,2023-12-08
+Southern Granite,Kuwadzana Depot,East District,South,2023-08-17
+Chishawasha,Makoni Depot,East District,Harare,2023-06-27
+Groombridge,Kuwadzana Depot,South District,South,2024-02-07
+Seki Rd N,Southerton Depot,South District,East,2023-09-22
+Kambuzuma South,Glen View Depot,South District,Harare,2023-02-11
+Helensvale S,Mabvuku Depot,Chitungwiza District,Harare,2023-04-22
+Greengrove,Southerton Depot,East District,South,2023-07-22
+Msasa Park,Glen View Depot,East District,South,2023-07-13
+Glen Norah A - Part,Mabvuku Depot,Chitungwiza District,East,2023-11-16
+Bonda Irrigation,Seke,Chitungwiza District,South,2023-12-21
+Mt Pleasant & Heights,Glen View Depot,East District,East,2023-11-11
+All of Masvingo Province,Kuwadzana Depot,Chitungwiza District,Harare,2023-10-18
+Helensvale S,Southerton Depot,North District,Harare,2023-02-12
+Southlea Park,Ruwa Depot,North District,East,2024-02-19
+Adams Barracks,Mabelreign Depot,East District,South,2023-03-05
+Mabelreign,Borrowdale Depot,North District,South,2023-08-24
+Surface Investments,Kuwadzana Depot,Chitungwiza District,East,2023-05-13
+Mandara,Waterfalls Depot,South District,Harare,2023-04-28
+Crowborough Estate,Zengeza Depot,East District,Harare,2023-04-30
+Kensington,Zengeza Depot,North District,West,2023-03-20
+Manyame Park,Borrowdale Depot,South District,Harare,2023-04-08
+Colne Valley,Glen View Depot,East District,South,2023-12-06
+Uplands,Borrowdale Depot,East District,South,2023-11-25
+"Seke Unit B, Makoni",Warren Park Depot,North District,West,2023-09-15
+Cranborne Park,Seke,Chitungwiza District,East,2024-02-09
+Winchdon,CBD Depot,North District,South,2023-04-16
+Mufakose,CBD Depot,North District,East,2023-08-16
+Rolf Valley N,Southerton Depot,East District,South,2023-08-11
+Avondale West,Zengeza Depot,Chitungwiza District,East,2023-04-15
+Langford Farm,Zengeza Depot,Chitungwiza District,Harare,2023-10-17
+Avonlea - Part,CBD Depot,North District,West,2023-10-14
+Rolf Valley N,Makoni Depot,Chitungwiza District,East,2023-10-24
+Warren Park - Part,Warren Park Depot,Chitungwiza District,South,2023-10-20
+Mt Pleasant & Heights,Waterfalls Depot,Chitungwiza District,West,2023-04-05
+3-2 Battalion,Mabelreign Depot,North District,Harare,2023-07-12
+Old Highfields,Glen View Depot,Chitungwiza District,East,2023-10-31
+Twentydales Ext.,CBD Depot,South District,South,2023-11-02
+Chadcombe,CBD Depot,Chitungwiza District,East,2023-07-21
+Komani,CBD Depot,North District,West,2023-08-25
+Mutare Rd,Kuwadzana Depot,East District,Harare,2023-11-29
+Crowborough,Warren Park Depot,South District,South,2023-09-19
+Mayambara,Warren Park Depot,Chitungwiza District,South,2024-03-04
+Surface Investments,Kuwadzana Depot,Chitungwiza District,Harare,2023-08-26
+Luna,Southerton Depot,East District,South,2023-08-07
+Alex Park - Part,CBD Depot,East District,East,2023-05-26
+Burma Valley,Makoni Depot,North District,South,2023-05-30
+Malvern,Warren Park Depot,North District,Harare,2023-01-24
+Kingsmead,Makoni Depot,North District,Harare,2023-12-10
+Glen Wood,Mabvuku Depot,North District,South,2023-12-13
+Crowhill,Borrowdale Depot,Chitungwiza District,East,2023-10-22
+Chishawasha,Warren Park Depot,North District,East,2023-06-03
+Westlea,Southerton Depot,Chitungwiza District,Harare,2023-05-15
+Quinnington S,Borrowdale Depot,East District,Harare,2023-08-09
+Msasa Park,CBD Depot,North District,South,2023-11-05
+Glen Wood,Kuwadzana Depot,North District,East,2023-12-25
+Avenues,Warren Park Depot,South District,East,2023-05-15
+Rhodesville,CBD Depot,South District,East,2023-01-03
+Bikita,Borrowdale Depot,East District,South,2023-10-25
+Bannockburn,Borrowdale Depot,South District,East,2023-03-10
+Bangazani Dam,Mabvuku Depot,Chitungwiza District,Harare,2023-07-24
+Westlea,Waterfalls Depot,North District,West,2023-02-07
+Rolf Valley N,CBD Depot,Chitungwiza District,Harare,2023-09-15
+Glenview - Part,CBD Depot,East District,South,2024-02-04
+Mbare,Ruwa Depot,South District,West,2024-02-11
+Eastlea,Mabvuku Depot,North District,Harare,2023-09-15
+4 Brigade,Zengeza Depot,Chitungwiza District,South,2023-03-10
+Parktown,Waterfalls Depot,Chitungwiza District,West,2023-01-07
+Southern Granite,Zengeza Depot,South District,South,2024-02-04
+Ridgeview,Waterfalls Depot,East District,Harare,2023-11-11
+Marlborough,Warren Park Depot,Chitungwiza District,West,2023-02-03
+St Mary’s,Kuwadzana Depot,South District,Harare,2023-12-25
+Bangazani Dam,Southerton Depot,North District,South,2023-08-16
+Bordervale,Southerton Depot,East District,West,2023-04-21
+Little Norfolk,Kuwadzana Depot,North District,Harare,2023-01-28
+Wilmington Park,Warren Park Depot,Chitungwiza District,Harare,2023-02-19
+GDC,Glen View Depot,Chitungwiza District,South,2024-02-22
+Little Norfolk,CBD Depot,South District,South,2023-07-03
+Highlands - Part,Makoni Depot,North District,East,2023-03-22
+Mandara,Mabelreign Depot,North District,East,2023-05-05
+Coronation Park,Ruwa Depot,Chitungwiza District,Harare,2023-04-26
+Chikurubi,Borrowdale Depot,Chitungwiza District,Harare,2023-03-15
+Parts of Unit K,Seke,East District,East,2023-10-17
+Chishawasha,Kuwadzana Depot,Chitungwiza District,East,2023-09-16
+Mandara,Borrowdale Depot,East District,Harare,2023-09-19
+Pension Farm,Southerton Depot,East District,West,2023-10-22
+22 Miles,Mabvuku Depot,Chitungwiza District,Harare,2023-05-04
+Haig Park,Borrowdale Depot,Chitungwiza District,South,2023-09-01
+Newlands,Zengeza Depot,North District,East,2023-10-19
+Parkridge Estate,Kuwadzana Depot,South District,South,2023-06-01
+Merwede,Ruwa Depot,East District,West,2023-08-21
+"Murisa T/Ship, Dema",Ruwa Depot,North District,South,2023-01-31
+"Seke Unit F, G Old",Zengeza Depot,South District,East,2023-09-14
+Bordervale,Seke,Chitungwiza District,Harare,2024-02-06
+Logan Park,Makoni Depot,North District,Harare,2023-11-07
+Strathaven,Seke,South District,East,2023-05-15
+Pension Farm,Borrowdale Depot,East District,Harare,2023-12-10
+Monavale,Borrowdale Depot,South District,West,2023-03-21
+Lincoln Green,Kuwadzana Depot,North District,West,2024-03-05
+Dzivaresekwa,Waterfalls Depot,Chitungwiza District,West,2023-12-03
+Widdecombe,Glen View Depot,Chitungwiza District,South,2023-09-05
+Southern Granite,Kuwadzana Depot,East District,South,2023-10-06
+Chishawasha,Makoni Depot,East District,Harare,2023-04-23
+Groombridge,Kuwadzana Depot,South District,South,2023-09-19
+Seki Rd N,Southerton Depot,South District,East,2024-01-19
+Kambuzuma South,Glen View Depot,South District,Harare,2023-01-23
+Helensvale S,Mabvuku Depot,Chitungwiza District,Harare,2023-05-02
+Greengrove,Southerton Depot,East District,South,2023-05-22
+Msasa Park,Glen View Depot,East District,South,2023-09-15
+Glen Norah A - Part,Mabvuku Depot,Chitungwiza District,East,2023-09-09
+Bonda Irrigation,Seke,Chitungwiza District,South,2023-08-29
+Mt Pleasant & Heights,Glen View Depot,East District,East,2023-03-25
+All of Masvingo Province,Kuwadzana Depot,Chitungwiza District,Harare,2023-01-14
+Helensvale S,Southerton Depot,North District,Harare,2023-09-17
+Southlea Park,Ruwa Depot,North District,East,2023-08-11
+Adams Barracks,Mabelreign Depot,East District,South,2023-01-18
+Mabelreign,Borrowdale Depot,North District,South,2023-01-27
+Surface Investments,Kuwadzana Depot,Chitungwiza District,East,2024-01-15
+Mandara,Waterfalls Depot,South District,Harare,2023-01-02
+Crowborough Estate,Zengeza Depot,East District,Harare,2023-05-21
+Kensington,Zengeza Depot,North District,West,2023-02-16
+Manyame Park,Borrowdale Depot,South District,Harare,2024-01-28
+Colne Valley,Glen View Depot,East District,South,2023-09-11
+Uplands,Borrowdale Depot,East District,South,2023-03-15
+"Seke Unit B, Makoni",Warren Park Depot,North District,West,2023-09-03
+Cranborne Park,Seke,Chitungwiza District,East,2024-02-21
+Winchdon,CBD Depot,North District,South,2023-10-28
+Mufakose,CBD Depot,North District,East,2023-04-21
+Rolf Valley N,Southerton Depot,East District,South,2023-11-21
+Avondale West,Zengeza Depot,Chitungwiza District,East,2023-09-26
+Langford Farm,Zengeza Depot,Chitungwiza District,Harare,2024-01-26
+Avonlea - Part,CBD Depot,North District,West,2023-03-04
+Rolf Valley N,Makoni Depot,Chitungwiza District,East,2024-01-24
+Warren Park - Part,Warren Park Depot,Chitungwiza District,South,2023-04-17
+Mt Pleasant & Heights,Waterfalls Depot,Chitungwiza District,West,2023-04-21
+3-2 Battalion,Mabelreign Depot,North District,Harare,2023-12-23
+Old Highfields,Glen View Depot,Chitungwiza District,East,2023-01-31
+Twentydales Ext.,CBD Depot,South District,South,2023-08-16
+Chadcombe,CBD Depot,Chitungwiza District,East,2024-01-04
+Komani,CBD Depot,North District,West,2023-09-22
+Mutare Rd,Kuwadzana Depot,East District,Harare,2023-09-08
+Crowborough,Warren Park Depot,South District,South,2023-02-13
+Mayambara,Warren Park Depot,Chitungwiza District,South,2023-11-29
+Surface Investments,Kuwadzana Depot,Chitungwiza District,Harare,2024-01-05
+Luna,Southerton Depot,East District,South,2023-05-22
+Alex Park - Part,CBD Depot,East District,East,2023-10-02
+Burma Valley,Makoni Depot,North District,South,2023-08-17
+Malvern,Warren Park Depot,North District,Harare,2023-12-17
+Kingsmead,Makoni Depot,North District,Harare,2024-01-04
+Glen Wood,Mabvuku Depot,North District,South,2024-01-23
+Crowhill,Borrowdale Depot,Chitungwiza District,East,2023-03-17
+Chishawasha,Warren Park Depot,North District,East,2023-03-21
+Westlea,Southerton Depot,Chitungwiza District,Harare,2023-01-18
+Quinnington S,Borrowdale Depot,East District,Harare,2023-11-12
+Msasa Park,CBD Depot,North District,South,2023-05-14
+Glen Wood,Kuwadzana Depot,North District,East,2023-10-30
+Avenues,Warren Park Depot,South District,East,2023-06-02
+Rhodesville,CBD Depot,South District,East,2023-01-04
+Bikita,Borrowdale Depot,East District,South,2023-11-28
+Bannockburn,Borrowdale Depot,South District,East,2023-05-11
+Bangazani Dam,Mabvuku Depot,Chitungwiza District,Harare,2023-05-25
+Westlea,Waterfalls Depot,North District,West,2023-10-03
+Rolf Valley N,CBD Depot,Chitungwiza District,Harare,2023-01-05
 Glenview - Part,CBD Depot,East District,South,2024-02-21
-Mbare,Ruwa Depot,South District,West,2024-02-20
-Eastlea,Mabvuku Depot,North District,Harare,2024-02-16
-4 Brigade,Zengeza Depot,Chitungwiza District,South,2024-02-02
-Parktown,Waterfalls Depot,Chitungwiza District,West,2024-02-22
-Southern Granite,Zengeza Depot,South District,South,2024-02-05
-Ridgeview,Waterfalls Depot,East District,Harare,2024-02-09
-Marlborough,Warren Park Depot,Chitungwiza District,West,2024-02-10
-St Mary’s,Kuwadzana Depot,South District,Harare,2024-02-01
-Bangazani Dam,Southerton Depot,North District,South,2024-02-28
-Bordervale,Southerton Depot,East District,West,2024-02-28
-Little Norfolk,Kuwadzana Depot,North District,Harare,2024-02-28
-Wilmington Park,Warren Park Depot,Chitungwiza District,Harare,2024-02-26
-GDC,Glen View Depot,Chitungwiza District,South,2024-02-04
-Little Norfolk,CBD Depot,South District,South,2024-02-19
-Highlands - Part,Makoni Depot,North District,East,2024-02-09
-Mandara,Mabelreign Depot,North District,East,2024-02-16
-Coronation Park,Ruwa Depot,Chitungwiza District,Harare,2024-02-15
-Chikurubi,Borrowdale Depot,Chitungwiza District,Harare,2024-02-20
-Parts of Unit K,Seke,East District,East,2024-02-11
-Chishawasha,Kuwadzana Depot,Chitungwiza District,East,2024-02-20
-Mandara,Borrowdale Depot,East District,Harare,2024-02-13
-Pension Farm,Southerton Depot,East District,West,2024-02-10
-22 Miles,Mabvuku Depot,Chitungwiza District,Harare,2024-02-20
-Haig Park,Borrowdale Depot,Chitungwiza District,South,2024-02-13
-Newlands,Zengeza Depot,North District,East,2024-02-13
-Parkridge Estate,Kuwadzana Depot,South District,South,2024-02-06
-Merwede,Ruwa Depot,East District,West,2024-02-13
-"Murisa T/Ship, Dema",Ruwa Depot,North District,South,2024-02-07
-"Seke Unit F, G Old",Zengeza Depot,South District,East,2024-02-04
-Bordervale,Seke,Chitungwiza District,Harare,2024-02-02
-Logan Park,Makoni Depot,North District,Harare,2024-02-28
-Strathaven,Seke,South District,East,2024-02-01
-Pension Farm,Borrowdale Depot,East District,Harare,2024-02-16
-Monavale,Borrowdale Depot,South District,West,2024-02-07
-Lincoln Green,Kuwadzana Depot,North District,West,2024-02-14
-Dzivaresekwa,Waterfalls Depot,Chitungwiza District,West,2024-02-19
-Widdecombe,Glen View Depot,Chitungwiza District,South,2024-02-19
-Southern Granite,Kuwadzana Depot,East District,South,2024-02-09
-Chishawasha,Makoni Depot,East District,Harare,2024-02-02
+Mbare,Ruwa Depot,South District,West,2023-04-04
+Eastlea,Mabvuku Depot,North District,Harare,2023-05-15
+4 Brigade,Zengeza Depot,Chitungwiza District,South,2023-03-14
+Parktown,Waterfalls Depot,Chitungwiza District,West,2023-07-10
+Southern Granite,Zengeza Depot,South District,South,2023-05-09
+Ridgeview,Waterfalls Depot,East District,Harare,2023-11-13
+Marlborough,Warren Park Depot,Chitungwiza District,West,2023-04-17
+St Mary’s,Kuwadzana Depot,South District,Harare,2023-12-08
+Bangazani Dam,Southerton Depot,North District,South,2023-08-18
+Bordervale,Southerton Depot,East District,West,2023-06-30
+Little Norfolk,Kuwadzana Depot,North District,Harare,2023-11-08
+Wilmington Park,Warren Park Depot,Chitungwiza District,Harare,2023-12-27
+GDC,Glen View Depot,Chitungwiza District,South,2023-04-02
+Little Norfolk,CBD Depot,South District,South,2023-10-23
+Highlands - Part,Makoni Depot,North District,East,2024-03-03
+Mandara,Mabelreign Depot,North District,East,2023-03-10
+Coronation Park,Ruwa Depot,Chitungwiza District,Harare,2023-12-15
+Chikurubi,Borrowdale Depot,Chitungwiza District,Harare,2024-03-03
+Parts of Unit K,Seke,East District,East,2023-03-06
+Chishawasha,Kuwadzana Depot,Chitungwiza District,East,2024-02-05
+Mandara,Borrowdale Depot,East District,Harare,2023-09-01
+Pension Farm,Southerton Depot,East District,West,2023-01-05
+22 Miles,Mabvuku Depot,Chitungwiza District,Harare,2023-08-05
+Haig Park,Borrowdale Depot,Chitungwiza District,South,2023-08-09
+Newlands,Zengeza Depot,North District,East,2024-01-28
+Parkridge Estate,Kuwadzana Depot,South District,South,2023-01-09
+Merwede,Ruwa Depot,East District,West,2023-02-02
+"Murisa T/Ship, Dema",Ruwa Depot,North District,South,2023-07-24
+"Seke Unit F, G Old",Zengeza Depot,South District,East,2023-06-17
+Bordervale,Seke,Chitungwiza District,Harare,2024-02-07
+Logan Park,Makoni Depot,North District,Harare,2023-02-01
+Strathaven,Seke,South District,East,2023-11-17
+Pension Farm,Borrowdale Depot,East District,Harare,2023-10-19
+Monavale,Borrowdale Depot,South District,West,2024-02-11
+Lincoln Green,Kuwadzana Depot,North District,West,2023-10-10
+Dzivaresekwa,Waterfalls Depot,Chitungwiza District,West,2023-03-04
+Widdecombe,Glen View Depot,Chitungwiza District,South,2023-04-15
+Southern Granite,Kuwadzana Depot,East District,South,2024-01-31
+Chishawasha,Makoni Depot,East District,Harare,2023-09-12
+Groombridge,Kuwadzana Depot,South District,South,2023-11-19
+Seki Rd N,Southerton Depot,South District,East,2023-11-26
+Kambuzuma South,Glen View Depot,South District,Harare,2023-08-04
+Helensvale S,Mabvuku Depot,Chitungwiza District,Harare,2023-12-02
+Greengrove,Southerton Depot,East District,South,2023-12-29
+Msasa Park,Glen View Depot,East District,South,2023-08-12
+Glen Norah A - Part,Mabvuku Depot,Chitungwiza District,East,2023-01-09
+Bonda Irrigation,Seke,Chitungwiza District,South,2023-03-27
+Mt Pleasant & Heights,Glen View Depot,East District,East,2024-02-01
+All of Masvingo Province,Kuwadzana Depot,Chitungwiza District,Harare,2023-04-06
+Helensvale S,Southerton Depot,North District,Harare,2023-12-01
+Southlea Park,Ruwa Depot,North District,East,2023-01-27
+Adams Barracks,Mabelreign Depot,East District,South,2023-08-06
+Mabelreign,Borrowdale Depot,North District,South,2024-02-19
+Surface Investments,Kuwadzana Depot,Chitungwiza District,East,2023-09-05
+Mandara,Waterfalls Depot,South District,Harare,2023-06-30
+Crowborough Estate,Zengeza Depot,East District,Harare,2023-12-12
+Kensington,Zengeza Depot,North District,West,2023-12-29
+Manyame Park,Borrowdale Depot,South District,Harare,2023-05-22
+Colne Valley,Glen View Depot,East District,South,2024-01-07
+Uplands,Borrowdale Depot,East District,South,2023-12-07
+"Seke Unit B, Makoni",Warren Park Depot,North District,West,2023-04-14
+Cranborne Park,Seke,Chitungwiza District,East,2023-12-24
+Winchdon,CBD Depot,North District,South,2023-04-11
+Mufakose,CBD Depot,North District,East,2023-10-29
+Rolf Valley N,Southerton Depot,East District,South,2023-08-11
+Avondale West,Zengeza Depot,Chitungwiza District,East,2023-10-12
+Langford Farm,Zengeza Depot,Chitungwiza District,Harare,2023-03-01
+Avonlea - Part,CBD Depot,North District,West,2023-05-14
+Rolf Valley N,Makoni Depot,Chitungwiza District,East,2023-04-29
+Warren Park - Part,Warren Park Depot,Chitungwiza District,South,2023-01-23
+Mt Pleasant & Heights,Waterfalls Depot,Chitungwiza District,West,2024-01-05
+3-2 Battalion,Mabelreign Depot,North District,Harare,2023-12-25
+Old Highfields,Glen View Depot,Chitungwiza District,East,2023-06-04
+Twentydales Ext.,CBD Depot,South District,South,2023-03-01
+Chadcombe,CBD Depot,Chitungwiza District,East,2023-05-22
+Komani,CBD Depot,North District,West,2024-01-29
+Mutare Rd,Kuwadzana Depot,East District,Harare,2023-05-10
+Crowborough,Warren Park Depot,South District,South,2024-02-26
+Mayambara,Warren Park Depot,Chitungwiza District,South,2023-10-28
+Surface Investments,Kuwadzana Depot,Chitungwiza District,Harare,2023-09-07
+Luna,Southerton Depot,East District,South,2023-12-26
+Alex Park - Part,CBD Depot,East District,East,2023-12-28
+Burma Valley,Makoni Depot,North District,South,2023-04-30
+Malvern,Warren Park Depot,North District,Harare,2024-02-22
+Kingsmead,Makoni Depot,North District,Harare,2023-06-23
+Glen Wood,Mabvuku Depot,North District,South,2023-08-22
+Crowhill,Borrowdale Depot,Chitungwiza District,East,2023-01-17
+Chishawasha,Warren Park Depot,North District,East,2023-01-30
+Westlea,Southerton Depot,Chitungwiza District,Harare,2023-10-12
+Quinnington S,Borrowdale Depot,East District,Harare,2023-05-16
+Msasa Park,CBD Depot,North District,South,2023-04-03
+Glen Wood,Kuwadzana Depot,North District,East,2024-01-06
+Avenues,Warren Park Depot,South District,East,2023-03-22
+Rhodesville,CBD Depot,South District,East,2024-02-23
+Bikita,Borrowdale Depot,East District,South,2023-09-12
+Bannockburn,Borrowdale Depot,South District,East,2023-07-01
+Bangazani Dam,Mabvuku Depot,Chitungwiza District,Harare,2023-08-04
+Westlea,Waterfalls Depot,North District,West,2024-02-25
+Rolf Valley N,CBD Depot,Chitungwiza District,Harare,2023-07-28
+Glenview - Part,CBD Depot,East District,South,2023-09-01
+Mbare,Ruwa Depot,South District,West,2023-12-31
+Eastlea,Mabvuku Depot,North District,Harare,2023-11-29
+4 Brigade,Zengeza Depot,Chitungwiza District,South,2023-12-11
+Parktown,Waterfalls Depot,Chitungwiza District,West,2023-03-15
+Southern Granite,Zengeza Depot,South District,South,2023-04-07
+Ridgeview,Waterfalls Depot,East District,Harare,2023-01-09
+Marlborough,Warren Park Depot,Chitungwiza District,West,2023-05-05
+St Mary’s,Kuwadzana Depot,South District,Harare,2023-08-16
+Bangazani Dam,Southerton Depot,North District,South,2023-01-01
+Bordervale,Southerton Depot,East District,West,2023-11-25
+Little Norfolk,Kuwadzana Depot,North District,Harare,2024-02-05
+Wilmington Park,Warren Park Depot,Chitungwiza District,Harare,2023-10-18
+GDC,Glen View Depot,Chitungwiza District,South,2023-05-01
+Little Norfolk,CBD Depot,South District,South,2023-01-07
+Highlands - Part,Makoni Depot,North District,East,2023-09-24
+Mandara,Mabelreign Depot,North District,East,2023-08-19
+Coronation Park,Ruwa Depot,Chitungwiza District,Harare,2023-08-18
+Chikurubi,Borrowdale Depot,Chitungwiza District,Harare,2024-02-09
+Parts of Unit K,Seke,East District,East,2023-04-23
+Chishawasha,Kuwadzana Depot,Chitungwiza District,East,2023-08-28
+Mandara,Borrowdale Depot,East District,Harare,2023-01-28
+Pension Farm,Southerton Depot,East District,West,2023-08-09
+22 Miles,Mabvuku Depot,Chitungwiza District,Harare,2023-11-06
+Haig Park,Borrowdale Depot,Chitungwiza District,South,2023-04-16
+Newlands,Zengeza Depot,North District,East,2023-04-13
+Parkridge Estate,Kuwadzana Depot,South District,South,2023-04-30
+Merwede,Ruwa Depot,East District,West,2023-03-23
+"Murisa T/Ship, Dema",Ruwa Depot,North District,South,2024-01-08
+"Seke Unit F, G Old",Zengeza Depot,South District,East,2023-01-22
+Bordervale,Seke,Chitungwiza District,Harare,2023-10-10
+Logan Park,Makoni Depot,North District,Harare,2023-10-01
+Strathaven,Seke,South District,East,2023-09-06
+Pension Farm,Borrowdale Depot,East District,Harare,2024-01-21
+Monavale,Borrowdale Depot,South District,West,2024-01-09
+Lincoln Green,Kuwadzana Depot,North District,West,2023-06-18
+Dzivaresekwa,Waterfalls Depot,Chitungwiza District,West,2023-05-04
+Widdecombe,Glen View Depot,Chitungwiza District,South,2024-01-28
+Southern Granite,Kuwadzana Depot,East District,South,2023-03-29
+Chishawasha,Makoni Depot,East District,Harare,2024-02-08
+Groombridge,Kuwadzana Depot,South District,South,2023-08-31
+Seki Rd N,Southerton Depot,South District,East,2023-03-23
+Kambuzuma South,Glen View Depot,South District,Harare,2023-06-26
+Helensvale S,Mabvuku Depot,Chitungwiza District,Harare,2023-03-26
+Greengrove,Southerton Depot,East District,South,2023-03-22
+Msasa Park,Glen View Depot,East District,South,2023-03-08
+Glen Norah A - Part,Mabvuku Depot,Chitungwiza District,East,2023-08-20
+Bonda Irrigation,Seke,Chitungwiza District,South,2023-07-28
+Mt Pleasant & Heights,Glen View Depot,East District,East,2024-02-15
+All of Masvingo Province,Kuwadzana Depot,Chitungwiza District,Harare,2023-11-21
+Helensvale S,Southerton Depot,North District,Harare,2024-01-26
+Southlea Park,Ruwa Depot,North District,East,2023-10-25
+Adams Barracks,Mabelreign Depot,East District,South,2024-03-01
+Mabelreign,Borrowdale Depot,North District,South,2023-05-14
+Surface Investments,Kuwadzana Depot,Chitungwiza District,East,2023-06-24
+Mandara,Waterfalls Depot,South District,Harare,2023-10-06
+Crowborough Estate,Zengeza Depot,East District,Harare,2023-02-24
+Kensington,Zengeza Depot,North District,West,2023-04-21
+Manyame Park,Borrowdale Depot,South District,Harare,2023-12-14
+Colne Valley,Glen View Depot,East District,South,2023-03-03
+Uplands,Borrowdale Depot,East District,South,2024-02-02
+"Seke Unit B, Makoni",Warren Park Depot,North District,West,2023-04-29
+Cranborne Park,Seke,Chitungwiza District,East,2023-11-22
+Winchdon,CBD Depot,North District,South,2024-01-14
+Mufakose,CBD Depot,North District,East,2023-06-09
+Rolf Valley N,Southerton Depot,East District,South,2023-04-14
+Avondale West,Zengeza Depot,Chitungwiza District,East,2023-12-31
+Langford Farm,Zengeza Depot,Chitungwiza District,Harare,2023-12-31
+Avonlea - Part,CBD Depot,North District,West,2023-09-17
+Rolf Valley N,Makoni Depot,Chitungwiza District,East,2023-03-20
+Warren Park - Part,Warren Park Depot,Chitungwiza District,South,2024-02-13
+Mt Pleasant & Heights,Waterfalls Depot,Chitungwiza District,West,2024-01-07
+3-2 Battalion,Mabelreign Depot,North District,Harare,2023-05-08
+Old Highfields,Glen View Depot,Chitungwiza District,East,2024-02-03
+Twentydales Ext.,CBD Depot,South District,South,2023-09-10
+Chadcombe,CBD Depot,Chitungwiza District,East,2023-10-22
+Komani,CBD Depot,North District,West,2023-11-15
+Mutare Rd,Kuwadzana Depot,East District,Harare,2023-09-25
+Crowborough,Warren Park Depot,South District,South,2023-08-10
+Mayambara,Warren Park Depot,Chitungwiza District,South,2023-03-20
+Surface Investments,Kuwadzana Depot,Chitungwiza District,Harare,2023-04-09
+Luna,Southerton Depot,East District,South,2024-03-01
+Alex Park - Part,CBD Depot,East District,East,2023-12-08
+Burma Valley,Makoni Depot,North District,South,2023-08-13
+Malvern,Warren Park Depot,North District,Harare,2024-01-09
+Kingsmead,Makoni Depot,North District,Harare,2023-09-09
+Glen Wood,Mabvuku Depot,North District,South,2023-08-05
+Crowhill,Borrowdale Depot,Chitungwiza District,East,2024-02-13
+Chishawasha,Warren Park Depot,North District,East,2023-08-17
+Westlea,Southerton Depot,Chitungwiza District,Harare,2023-08-08
+Quinnington S,Borrowdale Depot,East District,Harare,2024-03-01
+Msasa Park,CBD Depot,North District,South,2023-08-23
+Glen Wood,Kuwadzana Depot,North District,East,2023-07-29
+Avenues,Warren Park Depot,South District,East,2023-01-29
+Rhodesville,CBD Depot,South District,East,2023-03-30
+Bikita,Borrowdale Depot,East District,South,2023-01-06
+Bannockburn,Borrowdale Depot,South District,East,2023-09-06
+Bangazani Dam,Mabvuku Depot,Chitungwiza District,Harare,2023-06-21
+Westlea,Waterfalls Depot,North District,West,2023-12-12
+Rolf Valley N,CBD Depot,Chitungwiza District,Harare,2023-02-20
+Glenview - Part,CBD Depot,East District,South,2024-01-29
+Mbare,Ruwa Depot,South District,West,2024-02-26
+Eastlea,Mabvuku Depot,North District,Harare,2023-01-22
+5 Brigade,Zengeza Depot,Chitungwiza District,South,2023-07-10
+Parktown,Waterfalls Depot,Chitungwiza District,West,2023-12-12
+Southern Granite,Zengeza Depot,South District,South,2023-08-22
+Ridgeview,Waterfalls Depot,East District,Harare,2023-07-29
+Marlborough,Warren Park Depot,Chitungwiza District,West,2024-01-15
+St Mary’s,Kuwadzana Depot,South District,Harare,2023-07-25
+Bangazani Dam,Southerton Depot,North District,South,2023-12-16
+Bordervale,Southerton Depot,East District,West,2024-01-23
+Little Norfolk,Kuwadzana Depot,North District,Harare,2023-10-07
+Wilmington Park,Warren Park Depot,Chitungwiza District,Harare,2024-01-05
+GDC,Glen View Depot,Chitungwiza District,South,2024-01-20
+Little Norfolk,CBD Depot,South District,South,2023-03-29
+Highlands - Part,Makoni Depot,North District,East,2023-03-10
+Mandara,Mabelreign Depot,North District,East,2024-02-06
+Coronation Park,Ruwa Depot,Chitungwiza District,Harare,2023-12-03
+Chikurubi,Borrowdale Depot,Chitungwiza District,Harare,2023-12-02
+Parts of Unit K,Seke,East District,East,2024-03-01
+Chishawasha,Kuwadzana Depot,Chitungwiza District,East,2023-03-03
+Mandara,Borrowdale Depot,East District,Harare,2023-11-12
+Pension Farm,Southerton Depot,East District,West,2024-02-13
+23 Miles,Mabvuku Depot,Chitungwiza District,Harare,2023-09-27
+Haig Park,Borrowdale Depot,Chitungwiza District,South,2023-06-09
+Newlands,Zengeza Depot,North District,East,2024-02-23
+Parkridge Estate,Kuwadzana Depot,South District,South,2023-02-16
+Merwede,Ruwa Depot,East District,West,2023-09-29
+"Murisa T/Ship, Dema",Ruwa Depot,North District,South,2023-11-28
+"Seke Unit F, G Old",Zengeza Depot,South District,East,2024-02-21
+Bordervale,Seke,Chitungwiza District,Harare,2023-10-09
+Logan Park,Makoni Depot,North District,Harare,2023-12-31
+Strathaven,Seke,South District,East,2023-09-14
+Pension Farm,Borrowdale Depot,East District,Harare,2023-07-07
+Monavale,Borrowdale Depot,South District,West,2023-04-29
+Lincoln Green,Kuwadzana Depot,North District,West,2023-03-21
+Dzivaresekwa,Waterfalls Depot,Chitungwiza District,West,2023-09-15
+Widdecombe,Glen View Depot,Chitungwiza District,South,2023-07-08
+Southern Granite,Kuwadzana Depot,East District,South,2023-05-29
+Chishawasha,Makoni Depot,East District,Harare,2023-04-27
+Groombridge,Kuwadzana Depot,South District,South,2023-12-22
+Seki Rd N,Southerton Depot,South District,East,2023-08-30
+Kambuzuma South,Glen View Depot,South District,Harare,2023-04-11
+Helensvale S,Mabvuku Depot,Chitungwiza District,Harare,2023-09-26
+Greengrove,Southerton Depot,East District,South,2023-11-29
+Msasa Park,Glen View Depot,East District,South,2023-08-03
+Glen Norah A - Part,Mabvuku Depot,Chitungwiza District,East,2024-02-02
+Bonda Irrigation,Seke,Chitungwiza District,South,2024-02-05
+Mt Pleasant & Heights,Glen View Depot,East District,East,2023-02-18
+All of Masvingo Province,Kuwadzana Depot,Chitungwiza District,Harare,2024-01-14
+Helensvale S,Southerton Depot,North District,Harare,2024-02-27
+Southlea Park,Ruwa Depot,North District,East,2024-01-15
+Adams Barracks,Mabelreign Depot,East District,South,2023-03-01
+Mabelreign,Borrowdale Depot,North District,South,2023-06-27
+Surface Investments,Kuwadzana Depot,Chitungwiza District,East,2024-02-15
+Mandara,Waterfalls Depot,South District,Harare,2023-04-30
+Crowborough Estate,Zengeza Depot,East District,Harare,2024-02-12
+Kensington,Zengeza Depot,North District,West,2023-05-20
+Manyame Park,Borrowdale Depot,South District,Harare,2023-05-19
+Colne Valley,Glen View Depot,East District,South,2023-09-08
+Uplands,Borrowdale Depot,East District,South,2023-11-02
+"Seke Unit B, Makoni",Warren Park Depot,North District,West,2023-01-14
+Cranborne Park,Seke,Chitungwiza District,East,2024-01-26
+Winchdon,CBD Depot,North District,South,2023-05-30
+Mufakose,CBD Depot,North District,East,2023-06-02
+Rolf Valley N,Southerton Depot,East District,South,2023-02-21
+Avondale West,Zengeza Depot,Chitungwiza District,East,2023-11-08
+Langford Farm,Zengeza Depot,Chitungwiza District,Harare,2023-06-28
+Avonlea - Part,CBD Depot,North District,West,2023-02-19
+Rolf Valley N,Makoni Depot,Chitungwiza District,East,2023-07-06
+Warren Park - Part,Warren Park Depot,Chitungwiza District,South,2023-04-09
+Mt Pleasant & Heights,Waterfalls Depot,Chitungwiza District,West,2023-12-13
+3-2 Battalion,Mabelreign Depot,North District,Harare,2023-01-12
+Old Highfields,Glen View Depot,Chitungwiza District,East,2024-01-26
+Twentydales Ext.,CBD Depot,South District,South,2023-11-18
+Chadcombe,CBD Depot,Chitungwiza District,East,2023-08-07
+Komani,CBD Depot,North District,West,2023-10-08
+Mutare Rd,Kuwadzana Depot,East District,Harare,2023-04-29
+Crowborough,Warren Park Depot,South District,South,2023-08-17
+Mayambara,Warren Park Depot,Chitungwiza District,South,2023-10-25
+Surface Investments,Kuwadzana Depot,Chitungwiza District,Harare,2023-03-26
+Luna,Southerton Depot,East District,South,2023-12-21
+Alex Park - Part,CBD Depot,East District,East,2023-12-20
+Burma Valley,Makoni Depot,North District,South,2023-12-29
+Malvern,Warren Park Depot,North District,Harare,2023-03-18
+Kingsmead,Makoni Depot,North District,Harare,2023-10-19
+Glen Wood,Mabvuku Depot,North District,South,2023-01-12
+Crowhill,Borrowdale Depot,Chitungwiza District,East,2023-03-28
+Chishawasha,Warren Park Depot,North District,East,2023-01-13
+Westlea,Southerton Depot,Chitungwiza District,Harare,2023-07-03
+Quinnington S,Borrowdale Depot,East District,Harare,2023-05-19
+Msasa Park,CBD Depot,North District,South,2023-05-19
+Glen Wood,Kuwadzana Depot,North District,East,2024-01-11
+Avenues,Warren Park Depot,South District,East,2023-09-30
+Rhodesville,CBD Depot,South District,East,2024-02-19
+Bikita,Borrowdale Depot,East District,South,2023-07-24
+Bannockburn,Borrowdale Depot,South District,East,2023-06-25
+Bangazani Dam,Mabvuku Depot,Chitungwiza District,Harare,2023-01-08
+Westlea,Waterfalls Depot,North District,West,2023-11-15
+Rolf Valley N,CBD Depot,Chitungwiza District,Harare,2023-04-04
+Glenview - Part,CBD Depot,East District,South,2023-10-07
+Mbare,Ruwa Depot,South District,West,2024-02-10
+Eastlea,Mabvuku Depot,North District,Harare,2023-12-31
+6 Brigade,Zengeza Depot,Chitungwiza District,South,2023-03-13
+Parktown,Waterfalls Depot,Chitungwiza District,West,2023-10-28
+Southern Granite,Zengeza Depot,South District,South,2024-01-14
+Ridgeview,Waterfalls Depot,East District,Harare,2023-06-01
+Marlborough,Warren Park Depot,Chitungwiza District,West,2023-06-03
+St Mary’s,Kuwadzana Depot,South District,Harare,2024-01-12
+Bangazani Dam,Southerton Depot,North District,South,2023-08-18
+Bordervale,Southerton Depot,East District,West,2023-09-12
+Little Norfolk,Kuwadzana Depot,North District,Harare,2023-11-26
+Wilmington Park,Warren Park Depot,Chitungwiza District,Harare,2023-10-15
+GDC,Glen View Depot,Chitungwiza District,South,2023-01-14
+Little Norfolk,CBD Depot,South District,South,2023-07-03
+Highlands - Part,Makoni Depot,North District,East,2023-03-26
+Mandara,Mabelreign Depot,North District,East,2023-05-29
+Coronation Park,Ruwa Depot,Chitungwiza District,Harare,2023-11-26
+Chikurubi,Borrowdale Depot,Chitungwiza District,Harare,2024-02-16
+Parts of Unit K,Seke,East District,East,2023-08-06
+Chishawasha,Kuwadzana Depot,Chitungwiza District,East,2023-08-25
+Mandara,Borrowdale Depot,East District,Harare,2023-05-19
+Pension Farm,Southerton Depot,East District,West,2023-02-13
+24 Miles,Mabvuku Depot,Chitungwiza District,Harare,2023-06-11
+Haig Park,Borrowdale Depot,Chitungwiza District,South,2023-01-02
+Newlands,Zengeza Depot,North District,East,2023-06-16
+Parkridge Estate,Kuwadzana Depot,South District,South,2023-08-28
+Merwede,Ruwa Depot,East District,West,2023-05-29
+"Murisa T/Ship, Dema",Ruwa Depot,North District,South,2023-10-07
+"Seke Unit F, G Old",Zengeza Depot,South District,East,2023-09-06
+Bordervale,Seke,Chitungwiza District,Harare,2023-08-08
+Logan Park,Makoni Depot,North District,Harare,2023-07-27
+Strathaven,Seke,South District,East,2023-11-26
+Pension Farm,Borrowdale Depot,East District,Harare,2023-03-26
+Monavale,Borrowdale Depot,South District,West,2023-06-30
+Lincoln Green,Kuwadzana Depot,North District,West,2023-05-11
+Dzivaresekwa,Waterfalls Depot,Chitungwiza District,West,2023-08-22
+Widdecombe,Glen View Depot,Chitungwiza District,South,2023-07-24
+Southern Granite,Kuwadzana Depot,East District,South,2023-02-17
+Chishawasha,Makoni Depot,East District,Harare,2023-07-04
+Groombridge,Kuwadzana Depot,South District,South,2023-04-12
+Seki Rd N,Southerton Depot,South District,East,2023-11-14
+Kambuzuma South,Glen View Depot,South District,Harare,2023-04-17
+Helensvale S,Mabvuku Depot,Chitungwiza District,Harare,2024-01-25
+Greengrove,Southerton Depot,East District,South,2023-01-21
+Msasa Park,Glen View Depot,East District,South,2023-11-28
+Glen Norah A - Part,Mabvuku Depot,Chitungwiza District,East,2023-04-22
+Bonda Irrigation,Seke,Chitungwiza District,South,2023-12-07
+Mt Pleasant & Heights,Glen View Depot,East District,East,2023-01-26
+All of Masvingo Province,Kuwadzana Depot,Chitungwiza District,Harare,2023-03-13
+Helensvale S,Southerton Depot,North District,Harare,2023-04-29
+Southlea Park,Ruwa Depot,North District,East,2023-01-15
+Adams Barracks,Mabelreign Depot,East District,South,2024-02-08
+Mabelreign,Borrowdale Depot,North District,South,2023-09-26
+Surface Investments,Kuwadzana Depot,Chitungwiza District,East,2023-02-10
+Mandara,Waterfalls Depot,South District,Harare,2023-07-24
+Crowborough Estate,Zengeza Depot,East District,Harare,2023-09-17
+Kensington,Zengeza Depot,North District,West,2023-01-26
+Manyame Park,Borrowdale Depot,South District,Harare,2023-10-27
+Colne Valley,Glen View Depot,East District,South,2023-05-08
+Uplands,Borrowdale Depot,East District,South,2023-03-28
+"Seke Unit B, Makoni",Warren Park Depot,North District,West,2023-02-18
+Cranborne Park,Seke,Chitungwiza District,East,2023-07-12
+Winchdon,CBD Depot,North District,South,2023-03-25
+Mufakose,CBD Depot,North District,East,2023-04-22
+Rolf Valley N,Southerton Depot,East District,South,2023-02-10
+Avondale West,Zengeza Depot,Chitungwiza District,East,2023-08-03
+Langford Farm,Zengeza Depot,Chitungwiza District,Harare,2023-01-03
+Avonlea - Part,CBD Depot,North District,West,2023-04-03
+Rolf Valley N,Makoni Depot,Chitungwiza District,East,2023-11-16
+Warren Park - Part,Warren Park Depot,Chitungwiza District,South,2023-05-23
+Mt Pleasant & Heights,Waterfalls Depot,Chitungwiza District,West,2023-06-04
+3-2 Battalion,Mabelreign Depot,North District,Harare,2023-03-12
+Old Highfields,Glen View Depot,Chitungwiza District,East,2023-11-20
+Twentydales Ext.,CBD Depot,South District,South,2023-05-18
+Chadcombe,CBD Depot,Chitungwiza District,East,2023-09-20
+Komani,CBD Depot,North District,West,2023-12-15
+Mutare Rd,Kuwadzana Depot,East District,Harare,2024-02-10
+Crowborough,Warren Park Depot,South District,South,2023-08-30
+Mayambara,Warren Park Depot,Chitungwiza District,South,2023-07-12
+Surface Investments,Kuwadzana Depot,Chitungwiza District,Harare,2023-11-03
+Luna,Southerton Depot,East District,South,2023-03-18
+Alex Park - Part,CBD Depot,East District,East,2023-10-26
+Burma Valley,Makoni Depot,North District,South,2023-07-24
+Malvern,Warren Park Depot,North District,Harare,2023-05-22
+Kingsmead,Makoni Depot,North District,Harare,2023-08-27
+Glen Wood,Mabvuku Depot,North District,South,2023-11-27
+Crowhill,Borrowdale Depot,Chitungwiza District,East,2023-02-12
+Chishawasha,Warren Park Depot,North District,East,2023-06-06
+Westlea,Southerton Depot,Chitungwiza District,Harare,2024-03-04
+Quinnington S,Borrowdale Depot,East District,Harare,2023-05-30
+Msasa Park,CBD Depot,North District,South,2023-10-01
+Glen Wood,Kuwadzana Depot,North District,East,2024-01-19
+Avenues,Warren Park Depot,South District,East,2024-01-24
+Rhodesville,CBD Depot,South District,East,2023-05-19
+Bikita,Borrowdale Depot,East District,South,2023-03-01
+Bannockburn,Borrowdale Depot,South District,East,2023-01-02
+Bangazani Dam,Mabvuku Depot,Chitungwiza District,Harare,2023-08-13
+Westlea,Waterfalls Depot,North District,West,2023-07-30
+Rolf Valley N,CBD Depot,Chitungwiza District,Harare,2023-08-10
+Glenview - Part,CBD Depot,East District,South,2023-05-05
+Mbare,Ruwa Depot,South District,West,2023-03-28
+Eastlea,Mabvuku Depot,North District,Harare,2023-03-15
+7 Brigade,Zengeza Depot,Chitungwiza District,South,2024-01-04
+Parktown,Waterfalls Depot,Chitungwiza District,West,2023-04-07
+Southern Granite,Zengeza Depot,South District,South,2023-04-06
+Ridgeview,Waterfalls Depot,East District,Harare,2023-10-23
+Marlborough,Warren Park Depot,Chitungwiza District,West,2024-01-27
+St Mary’s,Kuwadzana Depot,South District,Harare,2023-08-15
+Bangazani Dam,Southerton Depot,North District,South,2023-12-02
+Bordervale,Southerton Depot,East District,West,2024-02-15
+Little Norfolk,Kuwadzana Depot,North District,Harare,2024-02-18
+Wilmington Park,Warren Park Depot,Chitungwiza District,Harare,2023-06-05
+GDC,Glen View Depot,Chitungwiza District,South,2023-03-16
+Little Norfolk,CBD Depot,South District,South,2023-12-08
+Highlands - Part,Makoni Depot,North District,East,2023-04-18
+Mandara,Mabelreign Depot,North District,East,2023-02-23
+Coronation Park,Ruwa Depot,Chitungwiza District,Harare,2023-12-09
+Chikurubi,Borrowdale Depot,Chitungwiza District,Harare,2023-02-15
+Parts of Unit K,Seke,East District,East,2023-08-28
+Chishawasha,Kuwadzana Depot,Chitungwiza District,East,2023-03-18
+Mandara,Borrowdale Depot,East District,Harare,2023-05-31
+Pension Farm,Southerton Depot,East District,West,2023-03-12
+25 Miles,Mabvuku Depot,Chitungwiza District,Harare,2023-11-24
+Haig Park,Borrowdale Depot,Chitungwiza District,South,2023-03-19
+Newlands,Zengeza Depot,North District,East,2023-05-29
+Parkridge Estate,Kuwadzana Depot,South District,South,2023-12-14
+Merwede,Ruwa Depot,East District,West,2023-01-05
+"Murisa T/Ship, Dema",Ruwa Depot,North District,South,2023-10-01
+"Seke Unit F, G Old",Zengeza Depot,South District,East,2024-01-23
+Bordervale,Seke,Chitungwiza District,Harare,2023-03-11
+Logan Park,Makoni Depot,North District,Harare,2024-02-27
+Strathaven,Seke,South District,East,2023-07-03
+Pension Farm,Borrowdale Depot,East District,Harare,2023-02-27
+Monavale,Borrowdale Depot,South District,West,2023-03-18
+Lincoln Green,Kuwadzana Depot,North District,West,2023-11-30
+Dzivaresekwa,Waterfalls Depot,Chitungwiza District,West,2023-01-12
+Widdecombe,Glen View Depot,Chitungwiza District,South,2023-09-10
+Southern Granite,Kuwadzana Depot,East District,South,2023-11-16
+Chishawasha,Makoni Depot,East District,Harare,2024-03-02
 Groombridge,Kuwadzana Depot,South District,South,2024-02-28
-Seki Rd N,Southerton Depot,South District,East,2024-02-24
-Kambuzuma South,Glen View Depot,South District,Harare,2024-02-07
+Seki Rd N,Southerton Depot,South District,East,2023-06-11
+Kambuzuma South,Glen View Depot,South District,Harare,2023-06-24
 Helensvale S,Mabvuku Depot,Chitungwiza District,Harare,2024-02-16
-Greengrove,Southerton Depot,East District,South,2024-02-16
-Msasa Park,Glen View Depot,East District,South,2024-02-04
-Glen Norah A - Part,Mabvuku Depot,Chitungwiza District,East,2024-02-27
-Bonda Irrigation,Seke,Chitungwiza District,South,2024-02-08
-Mt Pleasant & Heights,Glen View Depot,East District,East,2024-02-10
-All of Masvingo Province,Kuwadzana Depot,Chitungwiza District,Harare,2024-02-23
-Helensvale S,Southerton Depot,North District,Harare,2024-02-20
-Southlea Park,Ruwa Depot,North District,East,2024-02-13
+Greengrove,Southerton Depot,East District,South,2023-06-30
+Msasa Park,Glen View Depot,East District,South,2023-09-29
+Glen Norah A - Part,Mabvuku Depot,Chitungwiza District,East,2023-10-05
+Bonda Irrigation,Seke,Chitungwiza District,South,2023-03-26
+Mt Pleasant & Heights,Glen View Depot,East District,East,2023-11-27
+All of Masvingo Province,Kuwadzana Depot,Chitungwiza District,Harare,2023-01-28
+Helensvale S,Southerton Depot,North District,Harare,2023-01-18
+Southlea Park,Ruwa Depot,North District,East,2023-07-09
+Adams Barracks,Mabelreign Depot,East District,South,2024-02-19
+Mabelreign,Borrowdale Depot,North District,South,2023-11-22
+Surface Investments,Kuwadzana Depot,Chitungwiza District,East,2023-02-16
+Mandara,Waterfalls Depot,South District,Harare,2023-12-07
+Crowborough Estate,Zengeza Depot,East District,Harare,2023-02-24
+Kensington,Zengeza Depot,North District,West,2023-01-01
+Manyame Park,Borrowdale Depot,South District,Harare,2024-02-15
+Colne Valley,Glen View Depot,East District,South,2023-10-23
+Uplands,Borrowdale Depot,East District,South,2023-03-26
+"Seke Unit B, Makoni",Warren Park Depot,North District,West,2023-07-17
+Cranborne Park,Seke,Chitungwiza District,East,2023-01-01
+Winchdon,CBD Depot,North District,South,2023-11-15
+Mufakose,CBD Depot,North District,East,2023-10-14
+Rolf Valley N,Southerton Depot,East District,South,2024-02-26
+Avondale West,Zengeza Depot,Chitungwiza District,East,2023-10-22
+Langford Farm,Zengeza Depot,Chitungwiza District,Harare,2023-07-24
+Avonlea - Part,CBD Depot,North District,West,2023-08-22
+Rolf Valley N,Makoni Depot,Chitungwiza District,East,2023-01-31
+Warren Park - Part,Warren Park Depot,Chitungwiza District,South,2023-07-22
+Mt Pleasant & Heights,Waterfalls Depot,Chitungwiza District,West,2023-09-20
+3-2 Battalion,Mabelreign Depot,North District,Harare,2024-02-16
+Old Highfields,Glen View Depot,Chitungwiza District,East,2023-11-11
+Twentydales Ext.,CBD Depot,South District,South,2024-02-23
+Chadcombe,CBD Depot,Chitungwiza District,East,2023-10-09
+Komani,CBD Depot,North District,West,2023-03-01
+Mutare Rd,Kuwadzana Depot,East District,Harare,2023-04-09
+Crowborough,Warren Park Depot,South District,South,2023-12-17
+Mayambara,Warren Park Depot,Chitungwiza District,South,2023-04-07
+Surface Investments,Kuwadzana Depot,Chitungwiza District,Harare,2023-09-20
+Luna,Southerton Depot,East District,South,2023-07-01
+Alex Park - Part,CBD Depot,East District,East,2023-04-19
+Burma Valley,Makoni Depot,North District,South,2023-05-06
+Malvern,Warren Park Depot,North District,Harare,2023-09-11
+Kingsmead,Makoni Depot,North District,Harare,2024-01-24
+Glen Wood,Mabvuku Depot,North District,South,2024-01-16
+Crowhill,Borrowdale Depot,Chitungwiza District,East,2023-11-27
+Chishawasha,Warren Park Depot,North District,East,2023-10-16
+Westlea,Southerton Depot,Chitungwiza District,Harare,2023-07-14
+Quinnington S,Borrowdale Depot,East District,Harare,2023-01-02
+Msasa Park,CBD Depot,North District,South,2023-06-28
+Glen Wood,Kuwadzana Depot,North District,East,2023-08-26
+Avenues,Warren Park Depot,South District,East,2023-08-19
+Rhodesville,CBD Depot,South District,East,2024-01-21
+Bikita,Borrowdale Depot,East District,South,2023-02-03
+Bannockburn,Borrowdale Depot,South District,East,2023-03-25
+Bangazani Dam,Mabvuku Depot,Chitungwiza District,Harare,2023-06-29
+Westlea,Waterfalls Depot,North District,West,2023-05-24
+Rolf Valley N,CBD Depot,Chitungwiza District,Harare,2024-02-26
+Glenview - Part,CBD Depot,East District,South,2023-01-20
+Mbare,Ruwa Depot,South District,West,2023-09-10
+Eastlea,Mabvuku Depot,North District,Harare,2023-10-24
+8 Brigade,Zengeza Depot,Chitungwiza District,South,2023-05-29
+Parktown,Waterfalls Depot,Chitungwiza District,West,2023-04-22
+Southern Granite,Zengeza Depot,South District,South,2023-02-11
+Ridgeview,Waterfalls Depot,East District,Harare,2023-09-01
+Marlborough,Warren Park Depot,Chitungwiza District,West,2023-07-06
+St Mary’s,Kuwadzana Depot,South District,Harare,2023-01-03
+Bangazani Dam,Southerton Depot,North District,South,2023-01-22
+Bordervale,Southerton Depot,East District,West,2023-09-03
+Little Norfolk,Kuwadzana Depot,North District,Harare,2023-12-13
+Wilmington Park,Warren Park Depot,Chitungwiza District,Harare,2023-03-04
+GDC,Glen View Depot,Chitungwiza District,South,2023-10-13
+Little Norfolk,CBD Depot,South District,South,2023-03-13
+Highlands - Part,Makoni Depot,North District,East,2023-12-13
+Mandara,Mabelreign Depot,North District,East,2023-01-25
+Coronation Park,Ruwa Depot,Chitungwiza District,Harare,2024-02-21
+Chikurubi,Borrowdale Depot,Chitungwiza District,Harare,2023-01-31
+Parts of Unit K,Seke,East District,East,2023-07-30
+Chishawasha,Kuwadzana Depot,Chitungwiza District,East,2023-05-27
+Mandara,Borrowdale Depot,East District,Harare,2023-02-17
+Pension Farm,Southerton Depot,East District,West,2023-06-28
+26 Miles,Mabvuku Depot,Chitungwiza District,Harare,2023-11-29
+Haig Park,Borrowdale Depot,Chitungwiza District,South,2023-06-20
+Newlands,Zengeza Depot,North District,East,2023-03-31
+Parkridge Estate,Kuwadzana Depot,South District,South,2023-02-14
+Merwede,Ruwa Depot,East District,West,2024-03-03
+"Murisa T/Ship, Dema",Ruwa Depot,North District,South,2023-07-15
+"Seke Unit F, G Old",Zengeza Depot,South District,East,2023-06-08
+Bordervale,Seke,Chitungwiza District,Harare,2023-01-01
+Logan Park,Makoni Depot,North District,Harare,2023-01-14
+Strathaven,Seke,South District,East,2023-05-17
+Pension Farm,Borrowdale Depot,East District,Harare,2023-10-24
+Monavale,Borrowdale Depot,South District,West,2023-04-09
+Lincoln Green,Kuwadzana Depot,North District,West,2024-01-06
+Dzivaresekwa,Waterfalls Depot,Chitungwiza District,West,2023-09-22
+Widdecombe,Glen View Depot,Chitungwiza District,South,2023-02-13
+Southern Granite,Kuwadzana Depot,East District,South,2024-02-08
+Chishawasha,Makoni Depot,East District,Harare,2023-04-24
+Groombridge,Kuwadzana Depot,South District,South,2023-07-22
+Seki Rd N,Southerton Depot,South District,East,2023-06-09
+Kambuzuma South,Glen View Depot,South District,Harare,2023-07-31
+Helensvale S,Mabvuku Depot,Chitungwiza District,Harare,2024-01-09
+Greengrove,Southerton Depot,East District,South,2024-01-21
+Msasa Park,Glen View Depot,East District,South,2023-06-28
+Glen Norah A - Part,Mabvuku Depot,Chitungwiza District,East,2023-12-04
+Bonda Irrigation,Seke,Chitungwiza District,South,2023-01-17
+Mt Pleasant & Heights,Glen View Depot,East District,East,2023-06-12
+All of Masvingo Province,Kuwadzana Depot,Chitungwiza District,Harare,2023-06-05
+Helensvale S,Southerton Depot,North District,Harare,2023-04-09
+Southlea Park,Ruwa Depot,North District,East,2023-01-13
 Adams Barracks,Mabelreign Depot,East District,South,2024-02-12
-Mabelreign,Borrowdale Depot,North District,South,2024-02-02
-Surface Investments,Kuwadzana Depot,Chitungwiza District,East,2024-02-07
+Mabelreign,Borrowdale Depot,North District,South,2023-01-29
+Surface Investments,Kuwadzana Depot,Chitungwiza District,East,2023-04-20
 Mandara,Waterfalls Depot,South District,Harare,2024-02-26
-Crowborough Estate,Zengeza Depot,East District,Harare,2024-02-20
-Kensington,Zengeza Depot,North District,West,2024-02-25
-Manyame Park,Borrowdale Depot,South District,Harare,2024-02-06
-Colne Valley,Glen View Depot,East District,South,2024-02-18
-Uplands,Borrowdale Depot,East District,South,2024-02-28
+Crowborough Estate,Zengeza Depot,East District,Harare,2023-06-03
+Kensington,Zengeza Depot,North District,West,2023-09-26
+Manyame Park,Borrowdale Depot,South District,Harare,2023-09-07
+Colne Valley,Glen View Depot,East District,South,2023-01-24
+Uplands,Borrowdale Depot,East District,South,2023-03-06
+"Seke Unit B, Makoni",Warren Park Depot,North District,West,2023-02-09
+Cranborne Park,Seke,Chitungwiza District,East,2023-11-22
+Winchdon,CBD Depot,North District,South,2023-02-21
+Mufakose,CBD Depot,North District,East,2023-09-24
+Rolf Valley N,Southerton Depot,East District,South,2023-04-04
+Avondale West,Zengeza Depot,Chitungwiza District,East,2023-08-17
+Langford Farm,Zengeza Depot,Chitungwiza District,Harare,2023-03-26
+Avonlea - Part,CBD Depot,North District,West,2023-08-23
+Rolf Valley N,Makoni Depot,Chitungwiza District,East,2023-01-22
+Warren Park - Part,Warren Park Depot,Chitungwiza District,South,2023-03-19
+Mt Pleasant & Heights,Waterfalls Depot,Chitungwiza District,West,2023-12-23
+3-2 Battalion,Mabelreign Depot,North District,Harare,2023-06-18
+Old Highfields,Glen View Depot,Chitungwiza District,East,2024-02-25
+Twentydales Ext.,CBD Depot,South District,South,2023-08-08
+Chadcombe,CBD Depot,Chitungwiza District,East,2023-08-28
+Komani,CBD Depot,North District,West,2023-01-29
+Mutare Rd,Kuwadzana Depot,East District,Harare,2023-04-23
+Crowborough,Warren Park Depot,South District,South,2023-05-03
+Mayambara,Warren Park Depot,Chitungwiza District,South,2023-08-14
+Surface Investments,Kuwadzana Depot,Chitungwiza District,Harare,2023-03-05
+Luna,Southerton Depot,East District,South,2023-05-03
+Alex Park - Part,CBD Depot,East District,East,2023-12-12
+Burma Valley,Makoni Depot,North District,South,2023-05-29
+Malvern,Warren Park Depot,North District,Harare,2023-10-17
+Kingsmead,Makoni Depot,North District,Harare,2023-04-22
+Glen Wood,Mabvuku Depot,North District,South,2023-01-11
+Crowhill,Borrowdale Depot,Chitungwiza District,East,2023-08-16
+Chishawasha,Warren Park Depot,North District,East,2023-08-27
+Westlea,Southerton Depot,Chitungwiza District,Harare,2023-07-30
+Quinnington S,Borrowdale Depot,East District,Harare,2023-02-15
+Msasa Park,CBD Depot,North District,South,2023-01-05
+Glen Wood,Kuwadzana Depot,North District,East,2023-11-26
+Avenues,Warren Park Depot,South District,East,2023-11-06
+Rhodesville,CBD Depot,South District,East,2023-04-30
+Bikita,Borrowdale Depot,East District,South,2023-09-07
+Bannockburn,Borrowdale Depot,South District,East,2023-11-05
+Bangazani Dam,Mabvuku Depot,Chitungwiza District,Harare,2023-08-14
+Westlea,Waterfalls Depot,North District,West,2023-11-22
+Rolf Valley N,CBD Depot,Chitungwiza District,Harare,2023-05-29
+Glenview - Part,CBD Depot,East District,South,2023-07-18
+Mbare,Ruwa Depot,South District,West,2023-05-18
+Eastlea,Mabvuku Depot,North District,Harare,2023-05-16
+9 Brigade,Zengeza Depot,Chitungwiza District,South,2023-07-01
+Parktown,Waterfalls Depot,Chitungwiza District,West,2023-12-08
+Southern Granite,Zengeza Depot,South District,South,2023-07-28
+Ridgeview,Waterfalls Depot,East District,Harare,2023-01-28
+Marlborough,Warren Park Depot,Chitungwiza District,West,2023-09-22
+St Mary’s,Kuwadzana Depot,South District,Harare,2023-01-20
+Bangazani Dam,Southerton Depot,North District,South,2023-01-02
+Bordervale,Southerton Depot,East District,West,2024-03-05
+Little Norfolk,Kuwadzana Depot,North District,Harare,2023-08-16
+Wilmington Park,Warren Park Depot,Chitungwiza District,Harare,2023-02-17
+GDC,Glen View Depot,Chitungwiza District,South,2024-02-22
+Little Norfolk,CBD Depot,South District,South,2023-08-31
+Highlands - Part,Makoni Depot,North District,East,2023-01-02
+Mandara,Mabelreign Depot,North District,East,2023-09-08
+Coronation Park,Ruwa Depot,Chitungwiza District,Harare,2023-08-20
+Chikurubi,Borrowdale Depot,Chitungwiza District,Harare,2023-12-19
+Parts of Unit K,Seke,East District,East,2023-10-26
+Chishawasha,Kuwadzana Depot,Chitungwiza District,East,2023-06-13
+Mandara,Borrowdale Depot,East District,Harare,2023-12-06
+Pension Farm,Southerton Depot,East District,West,2023-03-06
+27 Miles,Mabvuku Depot,Chitungwiza District,Harare,2023-10-30
+Haig Park,Borrowdale Depot,Chitungwiza District,South,2023-12-18
+Newlands,Zengeza Depot,North District,East,2023-04-09
+Parkridge Estate,Kuwadzana Depot,South District,South,2023-09-20
+Merwede,Ruwa Depot,East District,West,2023-10-14
+"Murisa T/Ship, Dema",Ruwa Depot,North District,South,2024-02-04
+"Seke Unit F, G Old",Zengeza Depot,South District,East,2023-06-09
+Bordervale,Seke,Chitungwiza District,Harare,2023-08-19
+Logan Park,Makoni Depot,North District,Harare,2023-06-09
+Strathaven,Seke,South District,East,2023-03-18
+Pension Farm,Borrowdale Depot,East District,Harare,2023-02-03
+Monavale,Borrowdale Depot,South District,West,2023-09-07
+Lincoln Green,Kuwadzana Depot,North District,West,2023-07-12
+Dzivaresekwa,Waterfalls Depot,Chitungwiza District,West,2023-06-09
+Widdecombe,Glen View Depot,Chitungwiza District,South,2023-02-08
+Southern Granite,Kuwadzana Depot,East District,South,2023-04-01
+Chishawasha,Makoni Depot,East District,Harare,2023-11-17
+Groombridge,Kuwadzana Depot,South District,South,2023-08-25
+Seki Rd N,Southerton Depot,South District,East,2023-12-25
+Kambuzuma South,Glen View Depot,South District,Harare,2023-07-15
+Helensvale S,Mabvuku Depot,Chitungwiza District,Harare,2023-03-24
+Greengrove,Southerton Depot,East District,South,2023-02-22
+Msasa Park,Glen View Depot,East District,South,2024-01-19
+Glen Norah A - Part,Mabvuku Depot,Chitungwiza District,East,2023-07-27
+Bonda Irrigation,Seke,Chitungwiza District,South,2024-03-03
+Mt Pleasant & Heights,Glen View Depot,East District,East,2023-06-30
+All of Masvingo Province,Kuwadzana Depot,Chitungwiza District,Harare,2023-06-21
+Helensvale S,Southerton Depot,North District,Harare,2023-07-20
+Southlea Park,Ruwa Depot,North District,East,2023-05-20
+Adams Barracks,Mabelreign Depot,East District,South,2023-09-19
+Mabelreign,Borrowdale Depot,North District,South,2023-01-27
+Surface Investments,Kuwadzana Depot,Chitungwiza District,East,2023-08-30
+Mandara,Waterfalls Depot,South District,Harare,2023-03-08
+Crowborough Estate,Zengeza Depot,East District,Harare,2023-09-18
+Kensington,Zengeza Depot,North District,West,2023-05-07
+Manyame Park,Borrowdale Depot,South District,Harare,2024-01-22
+Colne Valley,Glen View Depot,East District,South,2023-07-30
+,,,,2023-09-02
