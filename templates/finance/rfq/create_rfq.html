@@ -1,0 +1,64 @@
+{% extends "admin_layout.html" %}{% load static %}
+
+{% block content %}
+    <div class="content-wrapper">
+
+<div class=" m-auto mt-5 justify-content-center ">
+    <div class="space-y-12 px-5 py-5">
+  <form class="row rounded py-4 border  bg-gulf-blue-100 p-3 m-auto justify-content-center align-content-stretch container" method="POST" action="" enctype="multipart/form-data">
+    {% csrf_token %}
+   <div class=" m-auto container justify-content-stretch align-content-stretch ">
+    <div class="mx-10 my-3 d-flex col-span-4 ">
+      {% for field in form %}
+        <div class="rounded row py-2 my-3 ">
+          {% if field.is_hidden %}
+            {{ field }}
+              <label class="block text-sm font-medium leading-6 text-gray-900" for="{{ field.id_for_label }}">{{ field.value }}</label>
+          {% else %}
+            <div class="gap-4  m-auto grid grid-cols-3  ">
+              {{ field.label_tag }}
+              {{ field }}
+              <div class="text-red-500">
+                {{ field.errors }}
+              </div>
+          {% endif %}
+        </div>
+      {% endfor %}
+      </div>  
+    </div> 
+     <div class="m-10 justify-content-stretch align-content-stretch">
+            {{ formset.management_form }}
+            
+            {% for form in formset  %}
+            {% for field in form %}
+            <div class="rounded row py-2 my-3 ">
+              {% if field.is_hidden %}
+                {{ field }}
+              {% else %}
+
+                <div class="gap-4  m-auto grid grid-cols-3  "> 
+                  {{ field.label_tag }}
+                  {{ field }}
+                  <div class="text-red-500">
+                    {{ field.errors }}
+                  </div>
+              {% endif %}
+            </div>
+          {% endfor %}
+            {% endfor %}
+              
+        </div>
+     <br>
+     <div class="m-auto justify-content-stretch text-center align-content-stretch">
+      <a class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded" href="/dashboard">Back</a>
+      <input  class="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600" type="submit" value="Submit">
+  </div>
+  </form>
+</div>
+</div>
+    </div>
+    </div>
+
+
+
+{% endblock %}
