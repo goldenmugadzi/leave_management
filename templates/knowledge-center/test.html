@@ -31,7 +31,7 @@
   <div class="grid grid-cols-4 gap-4">
   {% for f in files %} {% with forloop.counter as loop_index %} {% if loop_index|divisibleby:2%}
   <div
-    class="w-auto bg-gulf-blue-300 text-center shadow shadow-nepal-300 text-gray-700 rounded px-10 py-10"
+    class="w-auto bg-gulf-blue-300 text-center shadow shadow-nepal-300 text-gray-700 rounded px-10 py-4"
   >
     <a tabindex="-1" href="/knowledge-center/download_file?file_id={{f.id}}">
       <div class="sm:flex lg:items-center lg:justify-between">
@@ -59,7 +59,7 @@
   </div>
   {% else %}
   <div
-    class="w-auto bg-citron-400 text-center shadow shadow-nepal-300 text-gray-700 rounded px-10 py-10"
+    class="w-auto bg-citron-200 text-center shadow shadow-nepal-300 text-gray-700 rounded px-10 py-4"
   >
   <a tabindex="-1" href="/knowledge-center/download_file?file_id={{f.id}}">
     <div class="sm:flex lg:items-center lg:justify-between">

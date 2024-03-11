@@ -29,6 +29,8 @@ urlpatterns = [
     path('', include('it.beii_auth.urls')),
     path('', include('Docs.urls')),
     path('', include('risk.audit.nonconformity.urls')),
+    path('', include('finance.rfq.urls')),
+    path('', include('approve.urls')),
     path('meter/', include('commecial.tempertockens.urls')),
     path('users/', include('it.users.urls')),
     path('dashboards/', include('executive.exec_dashboards.urls')),
@@ -39,12 +41,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('accounts/', include('django.contrib.auth.urls')),
 
-
-    # path('rfq/', include('rfq.urls')),
-
     path('ace/', include('finance.Ace.urls')),
-    path('', include('finance.rfq.urls')),
-
     
       # AUTH ENDPOINTS
     path('api-auth/', include('rest_framework.urls')),

@@ -35,10 +35,7 @@ class NonconformityForm(forms.ModelForm):
                 
             field.label = field.label or field_name.replace('_', ' ').capitalize()
             field.label_attrs = {'class': 'block text-sm font-medium leading-6 text-gray-900'}
-            if field_name == 'recipient':
-                choices = [(user.id, user.get_full_name()) if user.get_full_name() else (user.id, user.username) for user in User.objects.all()]
-                field.choices = choices
-
+           
 class AdditionalInfoForm(forms.ModelForm):
     expected_completion_date = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}))
 

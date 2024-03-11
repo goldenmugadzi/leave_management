@@ -4,21 +4,13 @@ import json
 from django.contrib.auth import login
 from django.shortcuts import redirect, render
 from django.urls import reverse
+from django.contrib.auth.hashers import make_password
 
-from .models import UserProfile
+from it.users.models import Roles, UserProfile, Depots, Districts, Regions, Designations, Sections
 from it.users.forms import CustomUserCreationForm
-from django.contrib.auth.models import User
-from django.contrib.auth.models import Group
-from it.users.models import *
-from django.apps import apps
-# Sections = apps.get_model(app_label='users', model_name='Sections')
-# Districts = apps.get_model(app_label='users', model_name='Districts')
-# Depots = apps.get_model(app_label='users', model_name='Depots')
-# Regions = apps.get_model(app_label='users', model_name='Regions')
-# Roles = apps.get_model(app_label='users', model_name='Roles')
-# Designations = apps.get_model(app_label='users', model_name='Designations')
 
 from utils.helper_functions import group_user_roles
+from django.contrib.auth.models import Group
 
 def add_user(request):
     if request.method == "GET":
@@ -33,6 +25,8 @@ def add_user(request):
         
         # get designations
         user_designations = Designations.objects.all()
+        sections = Sections.objects.all()
+        regions = Regions.objects.all()
 
         return render(
             request,
@@ -41,6 +35,8 @@ def add_user(request):
                 "form": CustomUserCreationForm,
                 "user_roles": grouped_user_roles,
                 "user_designations": user_designations,
+                "sections": sections,
+                "regions": regions,
                 "user_title": user_title,
                 "user_groups": user_groups,
             }
@@ -50,10 +46,10 @@ def add_user(request):
             firstnames = request.POST['firstname']
             lastnames = request.POST['lastname']
             username = request.POST['username']
-            designation = request.POST['designation']
+            designation_ = request.POST['designation']
             email = request.POST['email']
-            section = request.POST['section']
-            region = request.POST['region']
+            section_ = request.POST['section']
+            region_ = request.POST['region']
             password1 = request.POST['password1']
             password2 = request.POST['password2']
             
@@ -63,58 +59,65 @@ def add_user(request):
             adjudication = request.POST['direct_purchase_role']
             tokens = request.POST['tokens_role']
             ace = request.POST['ace_role']
+            rfq = request.POST['rfq_role']
+            dashboards = request.POST['dashboards_role']
             non_conformity = request.POST['non_conformity_role']
             users_role = request.POST['users_role']
             
-            roles = []
-            if remittance_role:
-                roles.append(remittance_role)
-            if pettycash:
-                roles.append(pettycash)
-            if tenders:
-                roles.append(tenders)
-            if tokens:
-                roles.append(tokens)
-            if ace:
-                roles.append(ace)
-            if non_conformity:
-                roles.append(non_conformity)
-            if users_role:
-                roles.append(users_role)
-            if adjudication:
-                roles.append(adjudication)
+            region = Regions.objects.filter(id=region_).first()
+            section = Sections.objects.filter(code=section_).first()
+            designation = Designations.objects.filter(id=designation_).first()
+            print("section: ", section)
             
-            str_roles = ','.join(str(x) for x in roles)
+            roles = []
+            if remittance_role and remittance_role != "":
+                roles.append(remittance_role)
+            if pettycash and pettycash != "":
+                roles.append(pettycash)
+            if tenders and tenders != "":
+                roles.append(tenders)
+            if tokens and tokens != "":
+                roles.append(tokens)
+            if ace and ace != "":
+                roles.append(ace)
+            if rfq and rfq!="":
+                roles.append(rfq)
+            if non_conformity and non_conformity:
+                roles.append(non_conformity)
+            if users_role and users_role != "":
+                roles.append(users_role)
+            if adjudication and adjudication != "":
+                roles.append(adjudication)
+            if dashboards and dashboards != "":
+                roles.append(dashboards)
             
             if password1 == password2:
-                user = User.objects.create_user(
-                    username,
-                    email,
-                    password1
-                )
-
-                profile = UserProfile(
-                    None,
-                    user.pk,
+                user = UserProfile(
+                    username=username,
+                    first_name=firstnames,
+                    last_name=lastnames,
+                    email=email,
                     designation=designation,
                     section=section,
                     region=region,
-                    roles=str_roles,
-                    status="active")
-
-                profile.save()
-
-                user.first_name = firstnames
-                user.last_name = lastnames
-
+                    status="active"
+                )
+                
                 user.save()
+                
+                # Get actual Role objects:
+                role_objects = Roles.objects.filter(id__in=roles)  # Example of retrieving roles
+                user.roles.add(*role_objects)
+                user.set_password(password1)
+                user.save()
+                
         except Exception as ex:
             print("save user error", ex)
 
         return redirect("/users/users-index")
 
 def get_user_records(request):
-    records = User.objects.order_by('-date_joined').all()
+    records = UserProfile.objects.order_by('-date_joined').all()
 
     records_list = []
     for record in records:
@@ -150,10 +153,9 @@ def update_user(request):
     if request.method == "GET":
 
         id = request.GET['i']
-        user = User.objects.filter(id=id).first()
-        user_profile = UserProfile.objects.filter(user_id=user.pk).first()
+        user_profile = UserProfile.objects.get(id=id)
         
-        user_groups = user.groups.values_list('name', flat=True)
+        user_groups = user_profile.groups.values_list('name', flat=True)
 
         custom_user_roles = {
             "non_conformity": {},
@@ -164,6 +166,8 @@ def update_user(request):
             "tenders": {},
             "ace": {},
             "users": {},
+            "rfq": {},
+            "dashboards": {}
         }
 
         new_user = None
@@ -173,11 +177,9 @@ def update_user(request):
         section = None
         user_designation = None
         if user_profile:
-            user_group_ids = user_profile.roles
-            user_group_ids = user_group_ids.split(",") if user_group_ids else []
-            for id in user_group_ids:
-                
-                role = Roles.objects.filter(id=id).first()
+            roles_ = user_profile.roles.all()
+            for _role in roles_:
+                role = Roles.objects.filter(id=_role.id).first()
 
                 if role.application == "users":
                     custom_user_roles["users"] = role
@@ -203,18 +205,25 @@ def update_user(request):
                 if role.application == "ace":
                     custom_user_roles["ace"] = role
 
-            region = Regions.objects.filter(id=user_profile.region).first()
-            district = Districts.objects.filter(code=user_profile.district).first()
-            depot = Depots.objects.filter(code=user_profile.depot).first()
-            section = Sections.objects.filter(code=user_profile.section).first()
-            user_designation = Designations.objects.filter(id=user_profile.designation).first() if user_profile.designation else None
+                if role.application == "rfq":
+                    custom_user_roles["rfq"] = role
 
+                if role.application == "dashboards":
+                    custom_user_roles["dashboards"] = role
+
+            region = Regions.objects.filter(id=user_profile.region.id).first() if user_profile.region else None
+            district = Districts.objects.filter(code=user_profile.district).first() if user_profile.district else None
+            depot = Depots.objects.filter(code=user_profile.depot).first() if user_profile.depot else None
+            section = Sections.objects.filter(id=user_profile.section.id).first() if user_profile.section else None
+            user_designation = Designations.objects.filter(id=user_profile.designation.id).first() if user_profile.designation else None
+
+        print(custom_user_roles)
         new_user = {
-            "id": user.pk,
-            "username": user.username,
-            "firstname": user.first_name,
-            "lastname": user.last_name,
-            "email": user.email,
+            "id": user_profile.pk,
+            "username": user_profile.username,
+            "firstname": user_profile.first_name,
+            "lastname": user_profile.last_name,
+            "email": user_profile.email,
             "section": section,
             "depot": depot,
             "district": district,
@@ -222,8 +231,6 @@ def update_user(request):
             "roles": custom_user_roles,
             "designation": user_designation,
         }
-        
-        # print("new_user: ", new_user)
 
         user_title = request.user.get_full_name()
         l = request.user.groups.values_list('name', flat=True)  # QuerySet Object
@@ -231,10 +238,15 @@ def update_user(request):
         
         # get roles
         user_roles = Roles.objects.all()
+        # rfq_role = Roles.objects.filter(application="rfq").all()
+        # print("user_roles: ", rfq_role)
         grouped_user_roles = group_user_roles(user_roles)
+        # print("grouped_user_roles: ", grouped_user_roles)
         
         # get designations
         user_designations = Designations.objects.all()
+        sections = Sections.objects.all()
+        regions = Regions.objects.all()
 
         return render(
             request,
@@ -243,6 +255,8 @@ def update_user(request):
                 "form": CustomUserCreationForm,
                 "user_roles": grouped_user_roles,
                 "user_designations": user_designations,
+                "sections": sections,
+                "regions": regions,
                 "user_title": user_title,
                 "user_groups": user_groups,
                 "user": new_user
@@ -255,9 +269,9 @@ def update_user(request):
             lastnames = request.POST['lastname']
             username = request.POST['username']
             email = request.POST['email']
-            section = request.POST['section']
-            region = request.POST['region']
-            designation = request.POST['designation']
+            section_ = request.POST['section']
+            region_ = request.POST['region']
+            designation_ = request.POST['designation']
             
             remittance_role = request.POST['remittance_role']
             pettycash = request.POST['petty_cash_role']
@@ -265,53 +279,61 @@ def update_user(request):
             adjudication = request.POST['direct_purchase_role']
             tokens = request.POST['tokens_role']
             ace = request.POST['ace_role']
+            rfq = request.POST['rfq_role']
+            dashboards = request.POST['dashboards_role']
             non_conformity = request.POST['non_conformity_role']
             users_role = request.POST['users_role']
+                
 
-            user = User.objects.filter(id=id).first()
+            region = Regions.objects.filter(id=region_).first()
+            section = Sections.objects.filter(code=section_).first()
+            designation = Designations.objects.filter(id=designation_).first()
+
+            user_profile = UserProfile.objects.filter(id=id).first()
             if firstnames:
-                user.first_name = firstnames
+                user_profile.first_name = firstnames
             if lastnames:
-                user.last_name = lastnames
+                user_profile.last_name = lastnames
             if username:
-                user.username = username
+                user_profile.username = username
             if email:
-                user.email = email
-
-            user.save()
+                user_profile.email = email
+            if region:
+                user_profile.region = region
+            if section:
+                user_profile.section = section
+            if designation:
+                user_profile.designation = designation
             
-            user_profile = UserProfile.objects.filter(user_id=id).first()
-            if user_profile:
-                if region:
-                    user_profile.region = region
-                if section:
-                    user_profile.section = section
-                if designation:
-                    user_profile.designation = designation
-                    
-                roles = []
-                if remittance_role:
-                    roles.append(remittance_role)
-                if pettycash:
-                    roles.append(pettycash)
-                if tenders:
-                    roles.append(tenders)
-                if tokens:
-                    roles.append(tokens)
-                if ace:
-                    roles.append(ace)
-                if non_conformity:
-                    roles.append(non_conformity)
-                if users_role:
-                    roles.append(users_role)
-                if adjudication:
-                    roles.append(adjudication)
-                
-                str_roles = ','.join(str(x) for x in roles)
-                
-                user_profile.roles = str_roles
-                user_profile.save()
-                
+            user_profile.save() 
+            
+            roles = []
+            if remittance_role and remittance_role != "Select Role":
+                roles.append(remittance_role)
+            if pettycash and pettycash != "Select Role":
+                roles.append(pettycash)
+            if tenders and tenders != "Select Role":
+                roles.append(tenders)
+            if tokens and tokens != "Select Role":
+                roles.append(tokens)
+            if ace and ace != "Select Role":
+                roles.append(ace)
+            if rfq and rfq != "Select Role":
+                roles.append(rfq)
+            if non_conformity and non_conformity != "Select Role":
+                roles.append(non_conformity)
+            if users_role and users_role != "Select Role":
+                roles.append(users_role)
+            if adjudication and adjudication != "Select Role":
+                roles.append(adjudication)
+            if dashboards and dashboards != "Select Role":
+                roles.append(dashboards)
+            
+            print("roles: ", roles)
+            role_objects = Roles.objects.filter(id__in=roles)  # Example of retrieving roles
+            user_profile.roles.clear()
+            user_profile.roles.add(*role_objects)
+            
         except Exception as ex:
             print("save user error", ex)
 
@@ -325,9 +347,9 @@ def reset_user_password(request):
         password2 = request.POST['password2']
 
         if password1 == password2:
-            user = User.objects.filter(id=id).first()
-            user.set_password(password1)
-            user.save()
+            user_profile = UserProfile.objects.filter(id=id).first()
+            user_profile.set_password(password1)
+            user_profile.save()
             print("saving done ....")
 
         return redirect('/users/users-index')
@@ -360,10 +382,10 @@ def change_user_password(request):
         password2 = request.POST['password2']
 
         if password1 == password2:
-            user = User.objects.filter(id=user_id).first()
-            if user.check_password(current_password):
-                user.set_password(password1)
-                user.save()
+            user_profile = UserProfile.objects.filter(id=user_id).first()
+            if user_profile.check_password(current_password):
+                user_profile.set_password(password1)
+                user_profile.save()
                 print("Password changed successfully")
             else:
                 print("Current password is incorrect. Password not changed.")
@@ -390,8 +412,8 @@ def change_user_password(request):
 def delete_user(request):
     if request.method == "GET":
         id = request.GET['i']
-        user = User.objects.filter(id=id).first()
-        user.delete()
+        user_profile = UserProfile.objects.filter(id=id).first()
+        user_profile.delete()
 
     return redirect('/users/users-index')
 
@@ -404,12 +426,11 @@ def get_user_all_groups(request):
         user_groups = list(l)
         
         user_id = request.GET['i']
-        user = User.objects.filter(id=user_id).first()
+        user = UserProfile.objects.filter(id=user_id).first()
         
-        user = User.objects.filter(id=user_id).first()
-        from django.contrib.auth.models import Group
+        user = UserProfile.objects.filter(id=user_id).first()
         all_groups = Group.objects.all()
-        
+
         group_names = []
         if user:
             groups = user.groups.all()
@@ -468,7 +489,7 @@ def get_user_all_groups(request):
             )
 
 def add_user_to_group(request, user_id, group_name):
-    user = User.objects.filter(id=user_id).first()
+    user = UserProfile.objects.filter(id=user_id).first()
     if user:
         group = Group.objects.get(name=group_name)
         group.user_set.add(user)
@@ -476,7 +497,7 @@ def add_user_to_group(request, user_id, group_name):
         print("User not found")
         
 def add_user_to_groups(request, user_id, group_names):
-    user = User.objects.filter(id=user_id).first()
+    user = UserProfile.objects.filter(id=user_id).first()
     if user:
         
         for group_name in group_names:
@@ -487,7 +508,7 @@ def add_user_to_groups(request, user_id, group_names):
         print("User not found")
 
 def remove_user_from_group(request, user_id, group_name):
-    user = User.objects.filter(id=user_id).first()
+    user = UserProfile.objects.filter(id=user_id).first()
     if user:
         group = Group.objects.get(name=group_name)
         group.user_set.remove(user)
@@ -495,7 +516,7 @@ def remove_user_from_group(request, user_id, group_name):
         print("User not found")
         
 def remove_user_from_groups(request, user_id, group_names):
-    user = User.objects.filter(id=user_id).first()
+    user = UserProfile.objects.filter(id=user_id).first()
     if user:
         
         for group_name in group_names:
