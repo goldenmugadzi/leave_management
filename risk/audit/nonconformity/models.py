@@ -1,13 +1,10 @@
 from django.db import models
-
+from django.contrib.auth.models import User
 from django.urls import reverse
 from django.core.exceptions import ValidationError
-
-from it.users.models import UserProfile
-
 class Nonconformity(models.Model):
-    created_by = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
-    recipient = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='nonconformities_assigned_to', null=True, blank=True)
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE)
+    recipient = models.ForeignKey(User, on_delete=models.CASCADE, related_name='nonconformities_assigned_to', null=True, blank=True)
     description = models.TextField(max_length=400, blank=True, null=True, verbose_name='Description')
     root_cause = models.TextField(max_length=400, blank=True, null=True)
     violation_standard_reference = models.CharField(max_length=400, blank=True, null=True, verbose_name='Violation Standard Reference')
@@ -24,7 +21,7 @@ class Nonconformity(models.Model):
         return reverse('nonconformity:nonconformity', args=[str(self.id)])
 
 class Response(models.Model):
-    user = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     nonconformity = models.ForeignKey(Nonconformity, on_delete=models.CASCADE)
     comment = models.TextField(max_length=400, blank=True, null=True)
     created_at = models.DateTimeField(auto_now=True)

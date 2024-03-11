@@ -56,7 +56,6 @@ urlpatterns = [
     path('chitownengineering', views.view_chitownengineering, name='chitownengineering'),
     path('northengineering', views.view_northengineering, name='northengineering'),
     path('southertoncommercial', views.view_southertoncommercial, name='southertoncommercial'),
-    path('rfqview',views.view_rfqview, name='rfqview'),
 
 
 

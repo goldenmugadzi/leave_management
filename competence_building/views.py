@@ -202,6 +202,3 @@ def view_southengineering(request):
 
 def view_southertoncommercial(request):
         return render(request, 'competence_building/southertoncommercial.html')
-
-def view_rfqview(request):
-        return render(request, 'competence_building/rfqview.html')
