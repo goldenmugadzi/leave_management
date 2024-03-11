@@ -26,7 +26,7 @@
           <tr>
             <tr>
                 <th>Description</th>
-                <th>Allocation Code of Expenditure</th>
+{#                <th>Allocation Code of Expenditure</th>#}
                 <th>Scope of Work</th>
                 <th>Quantity</th>
                 <th>Proc Ref</th>
@@ -42,7 +42,7 @@
             {% for rfq in rfqs %}
             <tr class="h-1">
                 <td><a class="text-blue-500" href="/rfq_detail/{{rfq.id}}">{{ rfq.description|default_if_none:'' }}</a></td>
-              <td>{{ rfq.allocation_code_of_expenditure }}</td>
+{#              <td>{{ rfq.allocation_code_of_expenditure }}</td>#}
               <td>{{ rfq.scope_of_work }}</td>
               <td>{{ rfq.quantity }}</td>
               <td>{{ rfq.proc_ref }}</td>
