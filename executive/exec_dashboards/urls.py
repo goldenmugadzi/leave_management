@@ -10,5 +10,4 @@ urlpatterns = [
     path('inspections/upload', inspections_upload, name='inspections_upload'),
     path('maintenance/upload', maintenance_upload, name='maintenance_upload'),
     path('ajax', dashboards_maintenance_ajax, name='ajax_month'),
-    path('inspections/ajax', dashboards_inspections_ajax, name='dashboards_inspections_ajax'),
     ]

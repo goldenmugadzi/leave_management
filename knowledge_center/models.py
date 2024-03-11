@@ -7,7 +7,6 @@ class KnowledgeCenter(models.Model):
     sub_category_1 = models.CharField(max_length=100)
     sub_category_2 = models.CharField(max_length=100)
     filepath = models.CharField(max_length=400)
-    archived = models.BooleanField(default=False)
     section = models.CharField(max_length=100)
     region = models.CharField(max_length=100)
     created_at = models.DateField()

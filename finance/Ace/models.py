@@ -80,7 +80,7 @@ class Ace(models.Model):
     fm_date_rejected = models.DateField(null=True,blank=True)
 
     general_manager = models.CharField(max_length=70, blank=True, null=True)
-    gm_approval_status = models.CharField(max_length=50, blank=True, null=True)
+    gm_approval_status = models.CharField(max_length=16, blank=True, null=True)
     gm_approved = models.CharField(max_length=26, blank=True, null=True)
     gm_rejection_reason = models.CharField(max_length=400, blank=True, null=True)
     gm_approved_date = models.DateField(null=True, blank=True)

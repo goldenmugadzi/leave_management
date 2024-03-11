@@ -116,7 +116,6 @@ INSTALLED_APPS = [
     'executive.exec_dashboards',
     'knowledge_center',
     'Docs',
-    'approve',
     'processes.apps.ProcessesConfig',
     'process_risks.apps.ProcessRisksConfig',
     'finance.Ace',
@@ -138,8 +137,6 @@ INSTALLED_APPS = [
     # 'miscellaneous.knowledge_center.apps.KnowledgeCenterConfig'
 ]
 
-AUTH_USER_MODEL = 'users.UserProfile'
-
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -150,6 +147,8 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+
 
 ROOT_URLCONF = 'beii_v1.urls'
 
@@ -193,7 +192,7 @@ DATABASES = {
     # }
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'beii_vi',
+        'NAME': 'beii',
         'USER': 'root',
         'PASSWORD': '',
         'HOST': 'localhost',
