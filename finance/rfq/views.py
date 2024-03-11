@@ -11,6 +11,7 @@ from random import randrange
 
 from django.contrib import messages
 from django.shortcuts import render, redirect
+from django.db.models import Q
 
 from django.apps import apps
 from sweetify import sweetify
@@ -18,6 +19,7 @@ from sweetify import sweetify
 from finance.rfq.models import *
 from finance.Ace.models import Ace, Transactions, Budget
 from it.users.models import *
+
 
 def create_rfq(request):
     if request.method == 'POST':
@@ -38,17 +40,17 @@ def create_rfq(request):
 
     return render(request, 'finance/rfq/create_rfq.html', {'form': form, 'formset': formset})
 
+
 def rfq_create(request):
-    
     if request.method == "GET":
         return render(
-            request, 
-            'finance/rfq/rfq_create.html', 
+            request,
+            'finance/rfq/rfq_create.html',
             {
                 "title": "All Records",
                 "user_title": "requested_by"
             })
-        
+
     elif request.method == "POST":
         rand = randrange(1, 99)
         rand2 = str(rand)
@@ -71,24 +73,25 @@ def rfq_create(request):
         section = request.user.section.code
         designation = request.user.designation.id
         date_created = date
-        
+        approval_status = "pending"
+
         file_paths = []
         try:
             if quotation1:
-                file_path1 = 'uploads/rfq/'+datetime.now().strftime('%Y%m%d%I%M%S%p') + quotation1.name 
-                save_file(quotation1,file_path1)
+                file_path1 = 'uploads/rfq/' + datetime.now().strftime('%Y%m%d%I%M%S%p') + quotation1.name
+                save_file(quotation1, file_path1)
                 file_paths.append(file_path1)
             if quotation2:
-                file_path2 = 'uploads/rfq/'+datetime.now().strftime('%Y%m%d%I%M%S%p') + quotation2.name 
-                save_file(quotation2,file_path2)
+                file_path2 = 'uploads/rfq/' + datetime.now().strftime('%Y%m%d%I%M%S%p') + quotation2.name
+                save_file(quotation2, file_path2)
                 file_paths.append(file_path2)
             if quotation3:
-                file_path3 = 'uploads/rfq/'+datetime.now().strftime('%Y%m%d%I%M%S%p') + quotation3.name 
-                save_file(quotation3,file_path3)
+                file_path3 = 'uploads/rfq/' + datetime.now().strftime('%Y%m%d%I%M%S%p') + quotation3.name
+                save_file(quotation3, file_path3)
                 file_paths.append(file_path3)
-            
+
         except Exception as ex:
-            print("Error:",ex)
+            print("Error:", ex)
 
         rfq = RFQ(
             rfq_id=rfq_id,
@@ -103,9 +106,10 @@ def rfq_create(request):
             payment_mode=payment_mode,
             requested_by=requested_by,
             date_created=date_created,
+            approval_status=approval_status
         )
         rfq.save()
-        
+
         # save the file paths
         for file_path in file_paths:
             print("file_path: ", file_path)
@@ -114,10 +118,11 @@ def rfq_create(request):
                 quotation_file=file_path
             )
             quotation.save()
-            
+
         messages.error(request, 'you have successfully created an RFQ', extra_tags="success")
     return redirect("/rfq")
-    
+
+
 # Create your views here.
 def index(request):
     # QuerySet Object
@@ -149,7 +154,7 @@ def index(request):
 
     if Rfq_role == "request":
         context = get_user_rfq(request.user.username, section_code)
-    if Rfq_role == "create":
+    elif Rfq_role == "create":
         context = get_procuremtn_rfq(request.user.username)
     elif Rfq_role == "authenticate":
         context = get_section_head_rfq(request.user.username, section_code)
@@ -178,7 +183,7 @@ def get_user_rfq(username, section):
 
 
 def get_procuremtn_rfq(username):
-    rfq = RFQ.objects.filter(requested_by=username).order_by('-date_created')
+    rfq = RFQ.objects.filter(Q(requested_by=username) | Q(approval_status='pending')).order_by('-date_created')
     return rfq
 
 
@@ -196,7 +201,8 @@ def get_finance_manager_rfq():
 def get_general_manager_rfq():
     rfq = RFQ.objects.filter(approval_status="approved by finance manager").order_by('-date_created')
     return rfq
-    
+
+
 def create_rfq_from_ace(request):
     requested_by = request.user.username
     user_id = request.user.id
@@ -246,6 +252,7 @@ def create_rfq_from_ace(request):
         quantity = request.POST.get("quantity")
         proc_ref = request.POST.get("proc_ref")
         amount = request.POST.get("amount")
+        approval_status = "pending"
         # quotation1 = request.FILES('quotation1')
         # quotation2 = request.FILES('quotation2')
         # quotation3 = request.FILES('quotation3')
@@ -263,7 +270,6 @@ def create_rfq_from_ace(request):
             quotation3 = request.FILES['quotation3']
         else:
             quotation3 = None
-
 
         payment_mode = request.POST.get("payment_mode")
         requested_by = requested_by
@@ -286,7 +292,8 @@ def create_rfq_from_ace(request):
             requested_by=requested_by,
             date_created=date_created,
             ace=ace,
-            designation=user_designation.description
+            designation=user_designation.description,
+            approval_status=approval_status
         )
 
         rfq.save()
@@ -315,6 +322,7 @@ def get_to_approve_rfq(request):
     if request.method == "POST":
         rfq_id = request.POST.get("rfq_id")
         rfq = RFQ.objects.filter(rfq_id=rfq_id).first()
+        # if rfq role is procurement officer
         # if rfq role is section head
         if Rfq_role == "authenticate" and rfq.section_head_approval_status != "approved by section head":
             rfq.approval_status = "approved by section head"
@@ -324,30 +332,43 @@ def get_to_approve_rfq(request):
             rfq.section_head_approval_status = "approved by section head"
             rfq.section_head_approval_date = date.today()
             rfq.save()
-            messages.error(request, 'you have approved ace', rfq_id)
-            sweetify.success(request, 'you have approved ace' + rfq_id)
+            messages.error(request, 'you have approved rfq', rfq_id)
+            sweetify.success(request, 'you have approved rfq' + rfq_id)
             return render(request, "rfq/rfq_authoriser.html")
+        # if rfq role is procurement officer
+        elif Rfq_role == "create" and rfq.procurement_officer_approval_status == "approved by section head":
+            rfq.approval_status = "approved by procurement officer"
+            rfq.procurement_officer = user_id
+            rfq.date_approved = date.today()
+            rfq.procurement_officer_approval_status = "approved by procurement officer"
+            rfq.procurement_officer_approval_date = date.today()
+            rfq.PR_number = request.POST.get("PR_number")
+            rfq.PR_date = request.POST.get("PR_date")
+            rfq.save()
+            messages.error(request, 'you have approved rfq', rfq_id)
+            sweetify.success(request, 'you have approved rfq' + rfq_id)
+            return render(request, "rfq/rfq_procurement_officer.html")
         # if rfq role is finance manager
-        elif Rfq_role == "check" and rfq.finance_manager_approval_status != "approved by finance manager":
+        elif Rfq_role == "check" and rfq.finance_manager_approval_status == "approved by procurement officer":
             rfq.approval_status = "approved by finance manager"
             rfq.finance_manager = user_id
             rfq.date_approved = date.today()
             rfq.finance_manager_approval_status = "approved by finance manager"
             rfq.finance_manager_approval_date = date.today()
             rfq.save()
-            messages.error(request, 'you have approved ace', rfq_id)
-            sweetify.success(request, 'you have approved ace' + rfq_id)
+            messages.error(request, 'you have approved rfq', rfq_id)
+            sweetify.success(request, 'you have approved rfq' + rfq_id)
             # return render(request, "rfq/rfq_fm.html")
         # if rfq role is general manager
-        elif Rfq_role == "approve" and rfq.general_manager_approval_status != "approved by general manager":
+        elif Rfq_role == "approve" and rfq.general_manager_approval_status != "approved by finance manager":
             rfq.approval_status = "approved by general manager"
             rfq.general_manager = user_id
             rfq.date_approved = date.today()
             rfq.general_manager_approval_status = "approved by general manager"
             rfq.general_manager_approval_date = date.today()
             rfq.save()
-            messages.error(request, 'you have approved ace', rfq_id)
-            sweetify.success(request, 'you have approved ace' + rfq_id)
+            messages.error(request, 'you have approved rfq', rfq_id)
+            sweetify.success(request, 'you have approved rfq' + rfq_id)
             # return render(request, "rfq/rfq_gm.html")
         else:
             messages.error(request, 'you need to contact IT to get a role in the RFQ')
@@ -390,6 +411,7 @@ def get_to_reject_rfq(request):
         rfq_id = request.POST.get("rfq_id")
         rfq = RFQ.objects.filter(rfq_id=rfq_id).first()
         # if rfq role is section head
+
         if Rfq_role == "authenticate" and rfq.section_head_approval_status != "rejected by section head":
             rfq.approval_status = "rejected by section head"
             rfq.section_head = user_id

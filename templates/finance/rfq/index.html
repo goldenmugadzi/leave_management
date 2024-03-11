@@ -70,6 +70,18 @@
         {
           data: "document_id",
         },
+          {
+              data: null,
+              render: function (data, type, row, meta) {
+                  return `
+                  <a
+                            href='/rfq/approve_rfq?i=${rfq_id}'
+                            style="width: 100%;"
+                            class="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                    > Approve
+                    </a>`;
+              },
+          },
         {
           data: "proc ref",
         },

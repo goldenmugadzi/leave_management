@@ -28,6 +28,7 @@ class RFQ(models.Model):
     section_head = models.CharField(max_length=100, blank=True, null=True)
     finance_manager = models.CharField(max_length=100, blank=True, null=True)
     general_manager = models.CharField(max_length=100, blank=True, null=True)
+    procurement_officer = models.CharField(max_length=100, blank=True, null=True)
 
     general_manager_approval_status = models.CharField(max_length=100, blank=True, null=True)
     general_manager_approval_date = models.DateField(null=True, blank=True)
@@ -38,6 +39,9 @@ class RFQ(models.Model):
     section_head_approval_status = models.CharField(max_length=100, blank=True, null=True)
     section_head_approval_date = models.DateField(null=True, blank=True)
     section_head_rejection_reason = models.TextField(max_length=500, blank=True, null=True)
+    procurement_officer_approval_status = models.CharField(max_length=100, blank=True, null=True)
+    procurement_officer_approval_date = models.DateField(null=True, blank=True)
+    procurement_officer_rejection_reason = models.TextField(max_length=500, blank=True, null=True)
 
     class Meta:
         db_table = 'rfq'
@@ -63,6 +67,8 @@ class Quotation(models.Model):
 
     def __str__(self):
         return str(self.pk)
+
+
 
 # class ApprovalStage(models.Model):
 #     stage = models.CharField(max_length=100)

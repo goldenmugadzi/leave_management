@@ -206,7 +206,7 @@ def update_user(request):
                 if role.application == "rfq":
                     custom_user_roles["rfq"] = role
 
-            region = Regions.objects.filter(id=user_profile.region.id).first()
+            # region = Regions.objects.filter(id=user_profile.region.id).first()
 
             region = Regions.objects.filter(id=user_profile.region.id).first() if user_profile.region else None
 
