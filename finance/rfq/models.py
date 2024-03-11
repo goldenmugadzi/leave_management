@@ -1,110 +1,47 @@
 from django.db import models
 from finance.Ace.models import Ace
 from it.users.models import *
-from django.utils import timezone
-
+import random, time
+from approve.models import Process,Application
 
 class RFQ(models.Model):
-    rfq_id = models.CharField(primary_key=True, max_length=20, editable=False)
-    rfq_type = models.CharField(max_length=15, blank=True, null=True)
+    id = models.CharField(primary_key=True, max_length=20, editable=False)
+    description = models.TextField( blank=True, null=True)
     allocation_code_of_expenditure = models.CharField(max_length=100, blank=True, null=True)
     scope_of_work = models.CharField(max_length=100, blank=True, null=True)
-    quantity = models.FloatField(blank=True, null=True)
+    quantity = models.IntegerField(blank=True, null=True)
     proc_ref = models.CharField(max_length=100, blank=True, null=True)
     amount = models.FloatField(blank=True, null=True)
-    payment_mode = models.CharField(max_length=100, blank=True, null=True)
-    requested_by = models.CharField(max_length=100, blank=True, null=True)
-    section_code = models.CharField(max_length=100, blank=True, null=True)
-    designation = models.CharField(max_length=100, blank=True, null=True)
-    date_created = models.DateField(auto_now_add=True, blank=True, null=True)
-
-    approval_status = models.CharField(max_length=120, blank=True, null=True)
-    date_approved = models.DateField(null=True, blank=True)
-    ace = models.ForeignKey(Ace, models.DO_NOTHING, db_column='ace_id2', blank=True, null=True)
-
-    PR_number = models.CharField(max_length=100, blank=True, null=True)
-    PR_date = models.DateField(null=True, blank=True)
-
-    section_head = models.CharField(max_length=100, blank=True, null=True)
-    finance_manager = models.CharField(max_length=100, blank=True, null=True)
-    general_manager = models.CharField(max_length=100, blank=True, null=True)
-    procurement_officer = models.CharField(max_length=100, blank=True, null=True)
-
-    general_manager_approval_status = models.CharField(max_length=100, blank=True, null=True)
-    general_manager_approval_date = models.DateField(null=True, blank=True)
-    general_manager_rejection_reason = models.TextField(max_length=500, blank=True, null=True)
-    finance_manager_approval_status = models.CharField(max_length=100, blank=True, null=True)
-    finance_manager_approval_date = models.DateField(null=True, blank=True)
-    finance_manager_rejection_reason = models.TextField(max_length=500, blank=True, null=True)
-    section_head_approval_status = models.CharField(max_length=100, blank=True, null=True)
-    section_head_approval_date = models.DateField(null=True, blank=True)
-    section_head_rejection_reason = models.TextField(max_length=500, blank=True, null=True)
-    procurement_officer_approval_status = models.CharField(max_length=100, blank=True, null=True)
-    procurement_officer_approval_date = models.DateField(null=True, blank=True)
-    procurement_officer_rejection_reason = models.TextField(max_length=500, blank=True, null=True)
-
-    class Meta:
-        db_table = 'rfq'
+    PAYMENT_MODE_CHOICES = [
+        ('USD Cash', 'USD Cash'),
+        ('USD Swipe', 'USD Swipe'),
+        ('ZWL Cash', 'ZWL Cash'),
+        ('ZWL Transfer', 'ZWL Transfer'),
+    ]
+    payment_mode = models.CharField(max_length=100, blank=True, null=True, choices=PAYMENT_MODE_CHOICES)
+    requested_by = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True, blank=True, null=True)
+    section = models.ForeignKey(Sections, on_delete=models.CASCADE)
+    ace = models.ForeignKey(Ace, on_delete=models.SET_NULL, blank=True, null=True)
+    process = models.OneToOneField(Process, on_delete=models.SET_NULL, blank=True, null=True)
 
     def __str__(self):
-        return self.rfq_id
+        return self.description
 
     def save(self, *args, **kwargs):
-        if not self.rfq_id:
-            if self.date_created is None:
-                self.date_created = timezone.now()
-            timestamp = self.date_created.strftime('%Y%m%d%H%M%S')
-            self.rfq_id = f"RFQ{timestamp}"
+        if not self.id:  # Generate rfq_id only if it doesn't exist
+            timestamp = str(int(time.time()))
+            random_number = str(random.randint(10000, 99999))
+            self.id = "RFQ" + timestamp + random_number
         super().save(*args, **kwargs)
-
-
+        
 class Quotation(models.Model):
     rfq = models.ForeignKey(RFQ, on_delete=models.CASCADE)
     quotation_file = models.FileField(upload_to='uploads/rfq')
 
-    class Meta:
-        db_table = 'quotation'
+    # class Meta:
+    #     db_table = 'quotation'
 
     def __str__(self):
         return str(self.pk)
 
-
-
-# class ApprovalStage(models.Model):
-#     stage = models.CharField(max_length=100)
-
-#     class Meta:
-#         db_table = 'approval_stage'
-
-#     def __str__(self):
-#         return self.stage
-
-
-# class ApprovalStatus(models.Model):
-#     stage = models.ForeignKey(ApprovalStage, on_delete=models.CASCADE)
-#     status = models.CharField(
-#         max_length=100,
-#         choices=[
-#             ('Approved', 'Approved'),
-#             ('Rejected', 'Rejected'),
-#             ('Pending', 'Pending'),
-#             ('Cancelled', 'Cancelled'),
-#         ],
-#         default='Pending'
-#     )
-
-#     class Meta:
-#         db_table = 'approval_status'
-
-#     def __str__(self):
-#         return self.status
-
-
-# class RFQApproval(models.Model):
-#     rfq = models.ForeignKey(RFQ, on_delete=models.CASCADE)
-#     approval_status = models.ForeignKey(ApprovalStatus, on_delete=models.CASCADE)
-#     approval_date = models.DateField(null=True, blank=True)
-#     rejection_reason = models.TextField(max_length=500, blank=True, null=True)
-
-#     class Meta:
-#         db_table = 'rfq_approval'

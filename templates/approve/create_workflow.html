@@ -4,28 +4,35 @@
 {% block content %}
 
 <div class="m-auto mt-5 justify-content-center">
-  <form class="row rounded py-4 border bg-gulf-blue-100 p-3 m-auto text-center justify-content-center align-content-stretch container" method="POST" action="{{url}}" enctype="multipart/form-data">
+  <form class="row rounded py-4 border bg-gulf-blue-100 p-3 m-auto  container" method="POST" action="{{url}}" enctype="multipart/form-data">
     {% csrf_token %}
-    <div class="m-auto container justify-content-stretch align-content-stretch">
-      <div class="mt-10 grid grid-cols-4 gap-2">
-        {{ workflow_form.as_table }}
-      </div>
-       <div>
-        {{ step_formset.management_form }}
-       
-       {% if step_formset %}
-       <h3>Steps</h3>
-       {{ step_formset.management_form }}
-       {% for form in step_formset %}
-         {{ form.as_table }}
-       {% endfor %}
-      {% endif %}
+    <div class="rounded d-flex justify-content-center align-items-center p-3 gap-4  m-auto grid grid-cols-1">
+      {% comment %} <div class="m-auto container cols-6 "> {% endcomment %}
+        <h3 class="font-bold my-4 text-center">Workflow</h3>
+            
+            <div class="rounded  ">
+              {% for field in form %}
+              {% if field.is_hidden %}
+                {{ field }}
+              {% else %}
+                <div class="col-span-4">
+                  {{ field.label_tag }}
+                  <div class="text-red-500">
+                    {{ field.errors }}
+                  </div>
+                  {{ field }}
+                </div>
+              {% endif %}
+            {% endfor %}
+            </div>
+              
     </div>
-       <br>
-      <div class="m-auto justify-content-stretch align-content-stretch">
-        <a class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded" href="/dashboard">Back</a>
-        <input class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded" type="submit" value="Add approval steps">
-      </div>
+    <br>
+
+    <br>
+    <div class="m-auto justify-content-stretch  text-center align-content-stretch">
+      <a class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded" href="/dashboard">Back</a>
+      <input class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded" type="submit" value="Add approval steps">
     </div>
   </form>
 </div>
