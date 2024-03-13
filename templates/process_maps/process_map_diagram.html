@@ -1,0 +1,94 @@
+{% extends 'admin_layout.html' %}
+{%load static%}
+
+{%block content%}
+
+<div style="background-color: rgb(241, 239, 245);" class="flex justify-between items-center p-3">
+  <h1 class="text-2xl text-black font-bold ">Processes Maps</h1>
+
+  <div class="text-black mr-4">Clause 4.2</div>
+
+</div>
+<div>
+  <a href="/processes/create/" class="bg-blue-700 ml-10 rounded text-white p-3">Create Process Map File</a>
+  <a href="/processes/table/" class="bg-blue-700 ml-10 rounded text-white p-3"> Manage Process Map Files</a>
+</div>
+
+
+<div class="card mt-6">
+  <div class="grid grid-cols-2 gap-3 row-span-2">
+    <a href="/processes/engineering/">
+      <div class="bg-gulf-blue-300 px-16 py-10 rounded-md shadow-md ml-3 h-30">
+        <div class="flex justify-center">
+          <strong class="text-2xl text-gray-600">Engineering</strong>
+        </div>
+      </div>
+    </a>
+    <a href="/processes/commercial/">
+      <div class="bg-yellow-200 px-16 py-10 rounded-md shadow-md ml-3 h-30">
+        <div class="flex justify-center">
+          <strong class="text-2xl text-gray-600">Commercial</strong>
+        </div>
+      </div>
+    </a>
+
+    <a href="">
+      <div class="bg-green-300 px-16 py-10 rounded-md shadow-md ml-3 h-30">
+        <div class="flex justify-center">
+          <strong class="text-2xl text-gray-600">Management</strong>
+        </div>
+      </div>
+    </a>
+    <div ml-3 class="border-2 border-blue-900 bg-apple-200">
+      <fieldset>
+        <div class="flex justify-center">
+          <p class="w-2/3 p-2 mt-2  text-center text-2xl"><strong class="text-2xl text-gray-600">Support Processes</strong></p>
+        </div>
+        <div class="flex justify-center">
+          <a class="w-2/3 p-2 mt-2 rounded-xl bg-jade-300 text-center text-xl" href="/processes/ict/">Information
+            Communication Technology</a>
+        </div>
+
+        <div class="flex justify-center">
+          <a class="w-2/3 p-2 mt-2 rounded-xl bg-gulf-blue-300 text-center text-xl"
+            href="/processes/finance/">Finance</a>
+        </div>
+
+        <div class="flex justify-center">
+          <a class="w-2/3 p-2 mt-2 rounded-xl bg-gray-300 text-center text-xl" href="/processes/hr/">Human
+            Resources</a>
+        </div>
+
+        <div class="flex justify-center">
+          <a class="w-2/3 p-2 mt-2 rounded-xl bg-royal-heath-300 text-center text-2xl"
+            href="/processes/risk/">Risk
+            Management</a>
+        </div>
+
+        <div class="flex justify-center">
+          <a class="w-2/3 p-2 mt-2 rounded-xl bg-apple-300 text-center text-2xl"
+            href="/processes/procurement/">Procurement</a>
+        </div>
+
+        <div class="flex justify-center">
+          <a class="w-2/3 p-2 mt-2 rounded-xl bg-gulf-blue-300 text-center text-2xl" href="#">Stakeholder Relations</a>
+        </div>
+
+        <div class="flex justify-center mb-10">
+          <a class="w-2/3 p-2 mt-2 rounded-xl bg-citron-400 text-center text-2xl" href="#">Legal Services</a>
+        </div>
+    </div>
+
+    </fieldset>
+
+  </div>
+
+</div>
+
+
+
+<div class="bottom-0 left-0 right-0 mt-20 w-40 flex justify-left">
+  <a href="javascript:history.back()"><button class="bg-black text-white font-bold px-4 py-2 rounded-full">Back</button></a>
+</div>
+
+{%endblock %}
