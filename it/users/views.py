@@ -203,11 +203,17 @@ def update_user(request):
                 if role.application == "ace":
                     custom_user_roles["ace"] = role
 
-            region = Regions.objects.filter(id=user_profile.region).first()
-            district = Districts.objects.filter(code=user_profile.district).first()
-            depot = Depots.objects.filter(code=user_profile.depot).first()
-            section = Sections.objects.filter(code=user_profile.section).first()
-            user_designation = Designations.objects.filter(id=user_profile.designation).first() if user_profile.designation else None
+                if role.application == "rfq":
+                    custom_user_roles["rfq"] = role
+
+            region = Regions.objects.filter(id=user_profile.region.id).first()
+
+            region = Regions.objects.filter(id=user_profile.region.id).first() if user_profile.region else None
+
+            district = Districts.objects.filter(code=user_profile.district).first() if user_profile.district else None
+            depot = Depots.objects.filter(code=user_profile.depot).first() if user_profile.depot else None
+            section = Sections.objects.filter(id=user_profile.section.id).first() if user_profile.section else None
+            user_designation = Designations.objects.filter(id=user_profile.designation.id).first() if user_profile.designation else None
 
         new_user = {
             "id": user.pk,

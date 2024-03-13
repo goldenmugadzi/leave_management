@@ -39,4 +39,66 @@ class RFQ(models.Model):
     class Meta:
         db_table = 'rfq'
     def __str__(self):
+<<<<<<< HEAD
         return str(self.rfq_id)
+=======
+        return self.rfq_id
+
+    def save(self, *args, **kwargs):
+        if not self.rfq_id:
+            if self.date_created is None:
+                self.date_created = timezone.now()
+            timestamp = self.date_created.strftime('%Y%m%d%H%M%S')
+            self.rfq_id = f"RFQ{timestamp}"
+        super().save(*args, **kwargs)
+
+
+class Quotation(models.Model):
+    rfq = models.ForeignKey(RFQ, on_delete=models.CASCADE)
+    quotation_file = models.FileField(upload_to='uploads/rfq')
+
+    class Meta:
+        db_table = 'quotation'
+
+    def __str__(self):
+        return str(self.pk)
+
+# class ApprovalStage(models.Model):
+#     stage = models.CharField(max_length=100)
+
+#     class Meta:
+#         db_table = 'approval_stage'
+
+#     def __str__(self):
+#         return self.stage
+
+
+# class ApprovalStatus(models.Model):
+#     stage = models.ForeignKey(ApprovalStage, on_delete=models.CASCADE)
+#     status = models.CharField(
+#         max_length=100,
+#         choices=[
+#             ('Approved', 'Approved'),
+#             ('Rejected', 'Rejected'),
+#             ('Pending', 'Pending'),
+#             ('Cancelled', 'Cancelled'),
+#         ],
+#         default='Pending'
+#     )
+
+#     class Meta:
+#         db_table = 'approval_status'
+
+#     def __str__(self):
+#         return self.status
+
+
+# class RFQApproval(models.Model):
+#     rfq = models.ForeignKey(RFQ, on_delete=models.CASCADE)
+#     approval_status = models.ForeignKey(ApprovalStatus, on_delete=models.CASCADE)
+#     approval_date = models.DateField(null=True, blank=True)
+#     rejection_reason = models.TextField(max_length=500, blank=True, null=True)
+
+#     class Meta:
+#         db_table = 'rfq_approval'
+>>>>>>> parent of decd928 (tables in sqlite)
