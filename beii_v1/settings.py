@@ -98,6 +98,8 @@ sys.path.insert(4, os.path.join(BASE_DIR, 'reports'))
 sys.path.insert(5, os.path.join(BASE_DIR, 'api/ops_maintenance'))
 sys.path.insert(7, os.path.join(BASE_DIR, 'miscellaneous'))
 
+AUTH_USER_MODEL = 'users.UserProfile'
+
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -118,6 +120,7 @@ INSTALLED_APPS = [
     'Docs',
     'processes.apps.ProcessesConfig',
     'process_risks.apps.ProcessRisksConfig',
+    'approve',
     'finance.Ace',
     'finance.rfq',
     'sweetify',
