@@ -151,8 +151,6 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-
-
 ROOT_URLCONF = 'beii_v1.urls'
 
 TEMPLATES = [
@@ -193,12 +191,19 @@ DATABASES = {
     #     'PASSWORD': 'Z3tdc_it@2021_',
     #     'HOST': 'localhost'
     # }
+    # 'default': {
+    #     'ENGINE': 'django.db.backends.mysql',
+    #     'NAME': 'beii_test',
+    #     'USER': 'root',
+    #     'PASSWORD': '',
+    #     'HOST': 'localhost',
+    # }
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'beii_test',
-        'USER': 'root',
-        'PASSWORD': '',
-        'HOST': 'localhost',
+        'NAME': 'beii_vi',
+        'USER': 'be_user',
+        'PASSWORD': 'Z3tdc_it@2024',
+        'HOST': 'localhost'
     }
     # 'default': {
     #     'ENGINE': 'django.db.backends.mysql',

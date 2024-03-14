@@ -1,0 +1,94 @@
+{% extends 'admin_layout.html' %}
+{%load static%}
+{% block styles %}
+<link
+  rel="stylesheet"
+  href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css"
+/>
+<style>
+  .dataTables_wrapper .dataTables_length select {
+    width: 4rem;
+  }
+</style>
+{% endblock styles %}
+
+{%block content%}
+<div class="flex margin: 6 space-x-2">
+    <button class="bg-blue-800 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded">
+      Copy
+    </button>
+    <button class="bg-blue-800 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded">
+      CSV
+    </button>
+    <button class="bg-blue-800 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded">
+      Print
+    </button>
+  </div>
+
+<div class="content-wrapper">
+    <div
+      class="bg-gulf-blue-100 shadow shadow-gulf-blue-300 text-gulf-blue-900 rounded px-2 py-2"
+    >
+      
+ 
+      <table id="rfq_index" class="display" style="width: 100%">
+        <thead>
+          <tr>
+            <th>DOCUMENT ID</th>
+            <th>PROC REF</th>
+            <th>QUANTITY</th>
+            <th>AMOUNT</th>
+            <th>SCOPE OF WORK</th>
+            <th>DECISION</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+        <tfoot>
+          <tr>
+            <th>DOCUMENT ID</th>
+            <th>PROC REF</th>
+            <th>QUANTITY</th>
+            <th>AMOUNT</th>
+            <th>SCOPE OF WORK</th>
+            <th>DECISION</th>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+
+{%endblock%} {% block scripts %}
+<script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script>
+  var objs = JSON.parse("{{context|escapejs}}");
+  console.log(objs)
+
+  $(document).ready(function () {
+    $("#rfq_index").DataTable({
+      data: objs,
+      columns: [
+        {
+          data: "document_id",
+        },
+        {
+          data: "proc ref",
+        },
+        {
+          data: "quantity",
+        },
+        {
+          data: "amount",
+        },
+        {
+          data: "scope_of_work",
+          width: 500,
+        },
+        {
+          data: "decision",
+        },
+      ]
+    });
+  });
+</script>
+{% endblock scripts %}

@@ -20,14 +20,14 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='RFQ',
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('id', models.CharField(editable=False, max_length=20, primary_key=True, serialize=False)),
                 ('description', models.TextField(blank=True, null=True)),
                 ('allocation_code_of_expenditure', models.CharField(blank=True, max_length=100, null=True)),
                 ('scope_of_work', models.CharField(blank=True, max_length=100, null=True)),
-                ('quantity', models.FloatField(blank=True, null=True)),
+                ('quantity', models.IntegerField(blank=True, null=True)),
                 ('proc_ref', models.CharField(blank=True, max_length=100, null=True)),
                 ('amount', models.FloatField(blank=True, null=True)),
-                ('payment_mode', models.CharField(blank=True, max_length=100, null=True)),
+                ('payment_mode', models.CharField(blank=True, choices=[('USD Cash', 'USD Cash'), ('USD Swipe', 'USD Swipe'), ('ZWL Cash', 'ZWL Cash'), ('ZWL Transfer', 'ZWL Transfer')], max_length=100, null=True)),
                 ('created_at', models.DateTimeField(auto_now_add=True, null=True)),
                 ('ace', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to='Ace.ace')),
                 ('process', models.OneToOneField(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to='approve.process')),

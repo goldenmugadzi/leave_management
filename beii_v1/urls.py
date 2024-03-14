@@ -28,19 +28,21 @@ from rest_framework_simplejwt.views import (
 urlpatterns = [
     path('', include('it.beii_auth.urls')),
     path('', include('Docs.urls')),
-    path('', include('approve.urls')),
     path('', include('risk.audit.nonconformity.urls')),
+    path('', include('finance.rfq.urls')),
+    path('', include('approve.urls')),
     path('meter/', include('commecial.tempertockens.urls')),
     path('users/', include('it.users.urls')),
     path('dashboards/', include('executive.exec_dashboards.urls')),
     path('knowledge-center/', include('knowledge_center.urls')),
     path('processes/',include('processes.urls'), name='processes'),
     path('process_risks/',include('process_risks.urls'), name='process_risks'),
+    #path('process_maps/',include('process_maps.urls'), name='process_maps'),
     path('competence/', include('competence_building.urls')),
     path('admin/', admin.site.urls),
     path('accounts/', include('django.contrib.auth.urls')),
+
     path('ace/', include('finance.Ace.urls')),
-    path('', include('finance.rfq.urls')),
     
       # AUTH ENDPOINTS
     path('api-auth/', include('rest_framework.urls')),
