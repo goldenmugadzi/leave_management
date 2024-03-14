@@ -26,6 +26,7 @@ def split_and_get_last(value, delimiter):
 
 @register.simple_tag(takes_context=True)
 def get_filtered_notifications(context):
+     
     user = context['request'].user
     notifications = Notification.objects.filter(user=user).order_by('-created_at')
     filtered_notifications = notifications.filter(is_read=False).order_by('-created_at')#[:10]
