@@ -25,7 +25,7 @@ def create(request):
     user_groups = list(l)
     user_title = request.user.get_full_name()
     user_id = request.user.id
-    user = UserProfile.objects.filter(user_id=user_id).first()
+    user = UserProfile.objects.filter(id=user_id).first()
     secction = user.section
     # departments = Departments.objects.all()
     
@@ -91,15 +91,15 @@ def bulk_create(request):
     user_groups = list(l)
     user_title = request.user.get_full_name()
     user_id = request.user.id
-    user = UserProfile.objects.filter(user_id=user_id).first()
+    user = UserProfile.objects.filter(id=user_id).first()
     secction = user.section
     # departments = Departments.objects.all()
     
     if request.method == 'GET':
 
-        created_by = UserProfile.objects.filter(id=1).first()
-        section = created_by.section
-        region = created_by.region
+        created_by = user.id
+        section = user.section.id
+        region = user.region.id
         created_at = datetime.now()
         updated_at = datetime.now()
 
