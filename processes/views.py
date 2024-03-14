@@ -1,116 +1,164 @@
-from argparse import FileType
-import datetime
-from django.shortcuts import redirect, render
-from django.http import FileResponse
-import  os, re
-from beii_v1 import settings
-from process_risks.views import Sections
+import shutil
+from django.shortcuts import render, redirect
+from django.http import FileResponse, JsonResponse
+from datetime import datetime
+from django.conf import settings
+import json, os
+from it import users
+from .models import Process_maps
+from django.apps import apps
+from utils.helper_functions import get_kc_dict
+Sections = apps.get_model(app_label='users', model_name='Sections')
+UserProfile = apps.get_model(app_label="users", model_name="UserProfile")
+def index(request):
+    
+    return render(request, 'process_maps/index.html')
 
-#from processes.models import FormsUploads
+def view_map_diagram(request):
+    
+    return render(request, 'process_maps/process_map_diagram.html')
 
-# from re import pattern
+def create(request):
+    user_title = request.user.get_full_name()
+    l = request.user.groups.values_list('name', flat=True)
+    # QuerySet Object
+    user_groups = list(l)
+    user_title = request.user.get_full_name()
+    user_id = request.user.id
+    user = UserProfile.objects.filter(id=user_id).first()
+    secction = user.section
+    # departments = Departments.objects.all()
+    
+    if request.method == 'POST':
 
-# def view_process(request):
-#     return render(request,'processes/view_process.html')
-
-def view_it(request):
-    return render(request,'processes/it_process.html', {})
-
-def view_engineeringlist(request):
-    return render(request,'processes/engineering.html', {})
-
-#Engineering Process maps
-def view_commercial(request):
-    return render(request,'processes/commercial.html',{})
-
-def view_client(request):
-    return render(request,'processes/client.html',{})
-
-def view_revenue(request):
-    return render(request,'processes/revenue.html',{})
-
-def view_payment(request):
-    return render(request,'processes/payment.html',{})
-#end
-def view_finance(request):
-    return render(request,'processes/finance_processes.html',{})
-
-def view_procurement(request):
-    return render(request,'processes/procurement.html',{})
-
-def view_management(request):
-    return render(request,'processes/management.html',{})
-
-def view_HR(request):
-    return render(request,'processes/HR_processes.html',{})
-
-def view_risk(request):
-    return render(request,'processes/risk_processes.html',{})
-
-#Engineering Process maps
-def view_maintenance(request):
-    return render(request,'processes/maintenance_processes.html',{})
-
-def view_planning(request):
-    return render(request,'processes/planning_processes.html',{})
-
-def view_project(request):
-    return render(request,'processes/project_processes.html',{})
-
-#First page after clicking view process maps
-def view_img(request):
-    return render(request,'processes/display.html',{})
-
-def download_static(request, filename):
-    file_path = os.path.join(settings.STATIC_ROOT, "documents", filename)
-    if os.path.exists(file_path):
-        with open(file_path, 'rb') as f:
-            response = FileResponse(f, content_type='application/pdf')  # Adjust content type as needed
-            response['Content-Disposition'] = 'attachment; filename="{}"'.format(filename)
-            return response
-    else:
-        # Handle file not found scenario
-        pass
-
-# Search processes and procedures
-def file_search(request):
-    keyword = request.GET.get('keyword', '')
-    pattern = r"\b" + str(keyword).lower() + r"\b"
-    match = re.search(pattern, keyword)
-    if match:
-       keyword=match.group()
-    results = []
-    if keyword:
+        filename = request.POST['file_name']
+        department = request.POST['category_id']
+        if 'subtype' in request.POST:
+           sub_category=request.POST['subtype']
+        else:
+            sub_category=""
+        region=request.POST['region']
+        section = secction
+        created_by = request.user.username
+        created_at = datetime.now()
+        updated_at = datetime.now()
 
         
-        # Specify the directory where you want to search for files
-        directory = 'C:\\Users\ze366375\Documents\\beii\\static\\documents'
-        print(directory)
-        # Walk through the directory and search for files
-        for root, dirs, files in os.walk(directory):
-            for file in files:
-                file_path = os.path.join(root, file)
-                if re.search(pattern, str(file_path).lower()):
-                    filename = os.path.basename(file_path)
-                    results.append({
-                        "name": filename,
-                        "path": file_path
+        # file_path = request.FILES['uploaded_file']
+
+        file_path = ''
+        try:
+            if 'uploaded_file' in request.FILES:
+                uploaded_file = request.FILES ['uploaded_file']
+                file_path = 'uploads/process_maps/'+datetime.now().strftime('%Y%m%d%I%M%S%p') + uploaded_file.name
+                save_file(uploaded_file,file_path)
+        except Exception as ex:
+            print("Error:",ex)
+
+       
+       
+    
+        processObj = Process_maps(
+            filename= filename,
+            department = department,
+            region=region,
+            filepath = file_path,
+            sub_category= sub_category,
+            section = section,
+            created_by = created_by,
+            created_at=created_at,
+            updated_at=updated_at,
+            )
+        processObj.save()
+        return render(request, 
+                      'process_maps/create_process_maps.html',
+                        {
+                         'user':user,
+                         'user_title':user_title,
+                         }) 
+
+    return render(request,
+                   'process_maps/create_process_maps.html',
+                   {
+                    'user':user,
+                    'user_title':user_title,
                     })
-        print(results)
 
-    else:
-        print("Keyword not found")
+def bulk_create(request):
+    user_title = request.user.get_full_name()
+    l = request.user.groups.values_list('name', flat=True)
+    # QuerySet Object
+    user_groups = list(l)
+    user_title = request.user.get_full_name()
+    user_id = request.user.id
+    user = UserProfile.objects.filter(id=user_id).first()
+    secction = user.section
+    # departments = Departments.objects.all()
+    
+    if request.method == 'GET':
 
-    return render(request, 'processes/view_process.html', {'results': results,})
-# Create your views here.
-#FORMS VIEWS
-def new_view(request):
-    return render(request, 'processes/forms/new_view.html',{})
+        created_by = user.id
+        section = user.section.id
+        region = user.region.id
+        created_at = datetime.now()
+        updated_at = datetime.now()
 
-def forms_index(request):
-    return render(request,'processes/forms/forms_index.html', {})
+        """
+        Walks through a directory recursively, collecting information about files and directories.
 
-#save forms
+        Args:
+            directory: The directory path to explore.
+
+        Returns:
+            A dictionary containing:
+                - files: A list of dictionaries, each containing information about a file.
+                - directories: A list of strings, representing the names of subdirectories.
+        """
+        files = []
+        directories = []
+        for root, dirnames, filenames in os.walk('static/documents/'):
+            for filename in filenames:
+                filepath = os.path.join(root, filename)
+                file_info = {
+                    "name": filename,
+                    "path": filepath,
+                    # Add other desired file details here (e.g., size, last modified time)
+                }
+                files.append(file_info)
+                directories += dirnames
+
+                if '\\' in root:
+                    _department = root.split("/")[2]
+                    department = _department.split("\\")[0]
+                    subtype = root.split("\\")[1]
+                    file_path = 'uploads/process_maps/' + filename
+                    processObj = Process_maps(
+                        filename= filename.split(".")[0],
+                        department = department,
+                        region=region,
+                        filepath = file_path,
+                        sub_category= subtype + " processes",
+                        section = section,
+                        created_by = created_by,
+                        created_at=created_at,
+                        updated_at=updated_at,
+                        )
+                    processObj.save()
+
+        return render(request, 
+                      'process_maps/create_process_maps.html',
+                        {
+                         'user':user,
+                         'user_title':user_title,
+                         }) 
+
+    return render(request,
+                   'process_maps/create_process_maps.html',
+                   {
+                    'user':user,
+                    'user_title':user_title,
+                    })
+
 def save_file(f,file_path):
     if f:
         with open(file_path, 'wb+') as destination:
@@ -119,160 +167,209 @@ def save_file(f,file_path):
                 return True
             else:
                 return False
-#FORMS UPLOAD 
-def forms_upload(request):
-    
-    if request.method == 'POST':
-        # something
-        print("post data: ", request.POST)
-        filename = request.POST['filename']
-        file_type = request.POST['filetype']
-        section = request.POST['section']
-        region = request.POST['region']
-        
-        file_path = ''
-        try:
-            if 'uploaded_file' in request.FILES:
-                uploaded_file = request.FILES ['uploaded_file']
-                file_path = 'uploads/forms/'+datetime.now().strftime('%Y%m%d%I%M%S%p') + uploaded_file.name 
-                save_file(uploaded_file,file_path)
-        except Exception as ex:
-            print("Error:",ex)
-
-
-        file_type= Filetype.objects.filter(id=FileType).first() if file_type else None
-        um = FormsUploads(
-            filename= filename,
-            file_type= file_type.name if file_type else "",
-            filepath = file_path,
-            section= section,
-            region=region,
-            created_at = datetime.now().date(),
-            updated_at = datetime.now().date(),
-            
-        )
-        um.save()
-        return render(request,'processes/forms/forms_upload.html', {})   
-    
-    return render(request,'processes/forms/forms_upload.html', {})
 
 
 
+def download_file(request):
 
-def engineering_forms(request):
-    return render(request,'processes/forms/engineering_forms.html', {})
-    
-def finance_forms(request):
-    return render(request,'processes/forms/finance_forms.html', {})
+    file_id = request.GET['file_id']
+    file_record = Process_maps.objects.filter(id=file_id).first()
+    file_path = file_record.filepath
 
-def hr_forms(request):
-    return render(request,'processes/forms/hr_forms.html', {})
+    # search for file in system
+    try:
+        base_directory_path = os.path.join(settings.BASE_DIR, file_path)
 
-def commercial_forms(request):
-    return render(request,'processes/forms/commercial_forms.html', {})
+        return FileResponse(open(base_directory_path, 'rb'), content_type='application/pdf')
+    except Exception as ex:
+        print(ex)
 
-def it_forms(request):
-    return render(request,'processes/forms/it_forms.html', {})
+    return redirect('/process_maps/')
 
-def risk_forms(request):
-    return render(request,'processes/forms/risk_forms.html', {})
-
-
-def download_static(request, filename):
-    file_path = os.path.join(settings.STATIC_ROOT, "documents", filename)
-    if os.path.exists(file_path):
-        with open(file_path, 'rb') as f:
-            response = FileResponse(f, content_type='application/pdf')  # Adjust content type as needed
-            response['Content-Disposition'] = 'attachment; filename="{}"'.format(filename)
-            return response
-    else:
-        # Handle file not found scenario
-        pass
-
-# Search forms
-def file_searchx(request):
-    keyword = request.GET.get('keyword', '')
-    pattern = r"\b" + str(keyword).lower() + r"\b"
-    match = re.search(pattern, keyword)
-    if match:
-       keyword=match.group()
-    results = []
-    if keyword:
-
-        
-# Specify the directory where you want to search for files
-        directory = 'C:\\Users\\Admin\\Desktop\\BEII\\beii\\static\\documents'
-        print(directory)
-        # Walk through the directory and search for files
-        for root, dirs, files in os.walk(directory):
-            for file in files:
-                file_path = os.path.join(root, file)
-                if re.search(pattern, str(file_path).lower()):
-                    filename = os.path.basename(file_path)
-                    results.append({
-                        "name": filename,
-                        "path": file_path
-                    })
-        print(results)
-
-    else:
-        print("Keyword not found")
-
-    return render(request, 'processes/forms/forms_index.html', {'results': results,})
-
-#PROCEDURES AND WORK INSTRUCTIONS
-def viewWorkInstr(request):
-        return render(request, 'processes/procedures_workInstr/home.html')
-        
-def viewEngProcedureHome(request):
-        return render(request, 'processes/procedures_workInstr/eng_proceduresHome.html')
-    
-def viewCommercialProcedureHome(request):
-        return render(request, 'processes/procedures_workInstr/com_procedureHome.html')
-    
-def viewFinanceProcedures(request):
-        return render(request, 'processes/procedures_workInstr/finance_procedures.html')
-
-def viewHRProcedures(request):
-        return render(request, 'processes/procedures_workInstr/hr_procedure.html')
-    
-def viewSRProcedures(request):
-    return render(request, 'processes/procedures_workInstr/stakeholderRelations.html')
-    
-def viewLegalProcedures(request):
-    return render(request, 'processes/procedures_workInstr/legal_procedures.html')
-
+def view_Client(request):
    
-def viewProcurementProcedures(request):
-    return render(request, 'processes/procedures_workInstr/procurement_procedures.html')
+    files = Process_maps.objects.filter(sub_category="client interaction processes")
+   
+
+    return render(request, 'process_maps/ict.html',
+                  { "files": files,
+                    "page_title": "Client Interaction Process Maps"},
+                    )
+def view_payment(request):
+   
+    files = Process_maps.objects.filter(sub_category="payment processes")
+   
+
+    return render(request, 'process_maps/ict.html',
+                  { " files": files,
+                    "page_title": "Payment Process Maps"},
+                    )
+def view_revenue_assurance(request):
+   
+    files = Process_maps.objects.filter(sub_category="revenue assuarance processes")
+   
+
+    return render(request, 'process_maps/ict.html',
+                  { " files": files,
+                    "page_title": "Revenue Process Maps"},
+                    )
+def view_eng_planning(request):
+    
+    files = Process_maps.objects.filter(department="ENGINEERING", sub_category="Planning processes")
+
+    print("files: ", files)
+    
+    url_path = request.path.split("/")
+    return render(request, 'process_maps/ict.html',{
+        "files": files,  "page_title": "Planning process map Files", "url_path": url_path} )
+
+#Project procesess
+
+def view_eng_project(request):
+    
+    files = Process_maps.objects.filter(department="ENGINEERING", sub_category="projects processes")
+
+    
+    
+    url_path = request.path.split("/")
+    return render(request, 'process_maps/ict.html',{
+        "files": files,  "page_title": "Planning process map Files", "url_path": url_path} )
+
+def view_Maintenance(request):
+        files = Process_maps.objects.filter(department="ENGINEERING", sub_category="Maintenance processes")
+
+    
+    
+        url_path = request.path.split("/")
+        return render(request, 'process_maps/ict.html',{
+        "files": files,  "page_title": "Maintenace process map Files", "url_path": url_path} )
+
+def view_Procurement(request):
+    
+    files = Process_maps.objects.filter(department="PROCUREMENT")
+
+    
+    
+    url_path = request.path.split("/")
+    return render(request, 'process_maps/ict.html',{
+        "files": files,  "page_title": "Procurement process map Files", "url_path": url_path} )
+
+def view_Engineering(request):
+    
+    return render(request, 'process_maps/eng.html',
+                  {
+                    "page_title": "Engineering Process Maps"})
+#NEW ENGINEERING LIST OF PROCESS MAPS
 
 
-def viewICTProcedures(request):
-    return render(request, 'processes/procedures_workInstr/ict_procedures.html')
-
-def viewICT_WorkInstr(request):
-    return render(request, 'processes/procedures_workInstr/ict_workInstr.html')
-
-
-def viewEng_PlanningProcedure(request):
-    return render(request, 'processes/procedures_workInstr/engPlanning.html')
-
-def viewEng_MaintananceProcedure(request):
-    return render(request, 'processes/procedures_workInstr/engMaintanance.html')
-
-def viewEng_ProjectsProcedure(request):
-    return render(request, 'processes/procedures_workInstr/engProjectsPlanning.html')
-
-def viewRiskProcedures(request):
-    return render(request, 'processes/procedures_workInstr/riskProcedures.html')
-
-def viewClientInteractionProcedures(request):
-    return render(request, 'processes/procedures_workInstr/clientProcedures.html')
-
-def viewPaymentProcedures(request):
-    return render(request, 'processes/procedures_workInstr/paymentProcedures.html')
-
-def viewRevenueAssuranceProcedures(request):
-    return render(request, 'processes/procedures_workInstr/revenueProcedures.html')
+def view_Commercial(request):
+    
+    return render(request, 'process_maps/commercial.html',
+                  {
+                    "page_title": "Commercial Process Risks"})
 
 
+
+    
+     
+
+def view_Finance(request):
+    
+    files = Process_maps.objects.filter(department="FINANCE")
+
+    
+    
+    url_path = request.path.split("/")
+    return render(request, 'process_maps/ict.html',{
+        "files": files,  "page_title": "FINANCE process map Files", "url_path": url_path} )
+
+def view_ICT(request):
+    
+    
+    files = Process_maps.objects.filter(department="ICT")
+
+    
+    
+    url_path = request.path.split("/")
+    return render(request, 'process_maps/ict.html',{
+        "files": files,  "page_title": "ICT process map Files", "url_path": url_path} )
+
+def view_HR(request):
+    
+    
+    files = Process_maps.objects.filter(department="HUMAN RESOURCES")
+
+    
+    
+    url_path = request.path.split("/")
+    return render(request, 'process_maps/ict.html',{
+        "files": files,  "page_title": "Human resources process map Files", "url_path": url_path} )
+
+def view_Risk(request):
+    
+    
+    files = Process_maps.objects.filter(department="RISK MANAGEMENT")
+
+    
+    
+    url_path = request.path.split("/")
+    return render(request, 'process_maps/ict.html',{
+        "files": files,  "page_title": "Risk management process map Files", "url_path": url_path} )
+
+def view_Map(request):
+    return render(request, 'process_maps/process_map_diagram.html',
+                  
+            )
+
+def view_process_map_table(request):
+    
+    files = Process_maps.objects.all()
+    
+    files_list = []
+    for file in files:
+        new_file = {
+            "id": file.id,
+            "filename": file.filename,
+            "file": file.filepath,
+            "department": file.department,
+            "subcategory":file.sub_category,
+            "created_by": file.created_by,
+        }
+        files_list.append(new_file)
+    
+    context = json.dumps(files_list, default=str)
+    
+    return render(request, 'process_maps/process_maps_table.html', {"context": context})
+
+# def edit_file(request):
+#     departments = Departments.objects.all()
+#     if request.method == 'POST':
+#         fileid = request.POST['id']
+#         filename = request.POST['fileName']
+#         department = request.POST['department_id']
+#         # file_path = request.FILES['uploaded_file']
+
+#         file_path = ''
+#         try:
+#             if 'uploaded_file' in request.FILES:
+#                 uploaded_file = request.FILES ['uploaded_file']
+#                 file_path = 'uploads/process_maps/'+datetime.now().strftime('%Y%m%d%I%M%S%p') + uploaded_file.name
+#                 save_file(uploaded_file,file_path)
+#         except Exception as ex:
+#             print("Error:",ex)
+        
+#         department_ = Departments.objects.filter(id=department).first()
+#         risk = RiskFiles.objects.filter(id=fileid).first()
+#         risk.file_name = filename
+#         risk.filepath = file_path
+#         risk.cat = department_
+#         risk.save()
+#         return render(request, 
+#                       'process_maps/edit_file.html',
+#                         {'departments':departments,'risk':risk}) 
+
+#     risk_id = request.GET['file_id']
+#     risk = RiskFiles.objects.filter(id=risk_id).first()
+#     return render(request,
+#                    'process_maps/edit_file.html',
+#                    {'departments':departments, 'risk':risk})

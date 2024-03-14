@@ -17,11 +17,12 @@ def create(request):
     l = request.user.groups.values_list('name', flat=True)
     # QuerySet Object
     user_groups = list(l)
-
+    user_title = request.user.get_full_name()
     user_id = request.user.id
     user = UserProfile.objects.filter(user_id=user_id).first()
     secction = user.section
     departments = Departments.objects.all()
+    
     if request.method == 'POST':
 
         filename = request.POST['file_name']
@@ -29,7 +30,8 @@ def create(request):
         section = secction
         created_by = request.user.username
         created_at = datetime.now()
-        region =request.user.region
+        updated_at = datetime.now()
+        
         # file_path = request.FILES['uploadedfile']
 
         file_path = ''
@@ -49,16 +51,23 @@ def create(request):
             filepath = file_path,
             section = section,
             created_by = created_by,
-            region = region,
+            created_at=created_at,
+            updated_at=updated_at,
             )
         riskObj.save()
         return render(request, 
                       'process_risks/create_process_risk.html',
-                        {'departments':departments,riskObj:'riskObj'}) 
+                        {'departments':departments,
+                         'user':user,
+                         'user_title':user_title,
+                         }) 
 
     return render(request,
                    'process_risks/create_process_risk.html',
-                   {'departments':departments,riskObj:'riskObj'} )
+                   {'departments':departments,
+                    'user':user,
+                    'user_title':user_title,
+                    })
 
 
 def save_file(f,file_path):

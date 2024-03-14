@@ -45,13 +45,20 @@
                         <div class="card-body m-auto mb-5 bg-gradient-to-r from-gulf-blue-100 to-blue-500 ed p-3 border rounded   justify-content-center align-content-stretch container rounded  shadow-lg">
                             <h1 class="text-center mb-4 font-bold text-xl  mb-2">RFQ Details</h1>
                             <p class="font-bold   mb-2"> Description: {{ rfq.description }}</p>
-                            <p class="font-bold   mb-2"> allocation_code_of_expenditure: {{ rfq.allocation_code_of_expenditure }}</p>
-                            <p class="font-bold   mb-2"> scope_of_work: {{ rfq.scope_of_work }}</p>
-                            <p class="font-bold   mb-2"> proc_ref: {{ rfq.proc_ref }}</p>
+                            <p class="font-bold   mb-2"> allocation code of expenditure: {{ rfq.allocation_code_of_expenditure }}</p>
+                            <p class="font-bold   mb-2"> scope of work: {{ rfq.scope_of_work }}</p>
+                            <p class="font-bold   mb-2"> Procurement reference: {{ rfq.proc_ref }}</p>
                             <p class="font-bold   mb-2"> quantity: {{ rfq.quantity }}</p>
                             <p class="font-bold   mb-2"> amount: {{ rfq.amount }}</p>
-                            <p class="font-bold   mb-2"> payment_mode: {{ rfq.payment_mode }}</p>
-                            <p class="font-bold   mb-2"> requested_by: {{ rfq.requested_by }}</p>
+                            <p class="font-bold   mb-2"> payment mode: {{ rfq.payment_mode }}</p>
+                            <p class="font-bold   mb-2"> requested by: 
+                                {% if request.user == rfq.requested_by %}
+                                                            You
+                                                            {% elif rfq.requested_by.get_full_name %}
+                                                                {{rfq.requested_by.get_full_name}}
+                                                        {% elif request.user == rfq.requested_by %}
+                                                                {{ rfq.requested_by }}
+                                                        {% endif %}</p>
                             <p class="font-bold   mb-2"> created_at: {{ rfq.created_at }}</p>
                             <p class="font-bold   mb-2"> section: {{ rfq.section }}</p>
                     </div>
@@ -59,16 +66,14 @@
                {% if rfq.ace %}
                      <div class=" m-4 ">
                          <h1 class="text-center mb-4 font-bold text-xl  mb-2">Depends on Ace with these Details</h1>
-                         <p class="font-bold   mb-2"> Description: {{ rfq.description }}</p>
-                         <p class="font-bold   mb-2"> allocation_code_of_expenditure: {{ rfq.allocation_code_of_expenditure }}</p>
-                         <p class="font-bold   mb-2"> scope_of_work: {{ rfq.scope_of_work }}</p>
-                         <p class="font-bold   mb-2"> proc_ref: {{ rfq.proc_ref }}</p>
-                         <p class="font-bold   mb-2"> quantity: {{ rfq.quantity }}</p>
-                         <p class="font-bold   mb-2"> amount: {{ rfq.amount }}</p>
-                         <p class="font-bold   mb-2"> payment_mode: {{ rfq.payment_mode }}</p>
-                         <p class="font-bold   mb-2"> requested_by: {{ rfq.requested_by }}</p>
-                         <p class="font-bold   mb-2"> created_at: {{ rfq.created_at }}</p>
-                         <p class="font-bold   mb-2"> section: {{ rfq.section }}</p>
+                         <p class="font-bold   mb-2"> Department: {{ rfq.ace.Department }}</p>
+                         <p class="font-bold   mb-2"> location: {{ rfq.ace.location }}</p>
+                         <p class="font-bold   mb-2"> section: {{ rfq.ace.section }}</p>
+                         <p class="font-bold   mb-2"> allocation code of expenditure: {{ rfq.ace.allocation_code_of_expenditure }}</p>
+                         <p class="font-bold   mb-2"> quantity: {{ rfq.ace.quantity }}</p>
+                         <p class="font-bold   mb-2"> amount: {{ rfq.ace.amount }}</p>
+                         <p class="font-bold   mb-2"> rejection reason: {{ rfq.ace.rejection_reason }}</p>
+                         <p class="font-bold   mb-2"> date created: {{ rfq.ace.date_created }}</p>
                  </div>
                {% endif %}
                 

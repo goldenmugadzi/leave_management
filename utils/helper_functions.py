@@ -13,7 +13,6 @@ def group_user_roles(user_roles):
     }
     
     for role in user_roles:
-        print(role.application)
         if role.application == "users":
             custom_role = {
                 "id": role.id,
@@ -126,7 +125,6 @@ def group_user_roles(user_roles):
 
     # print(custom_user_roles)            
     return custom_user_roles
-
 
 def get_user_groups(user_groups):
     

@@ -26,6 +26,7 @@ def add_user(request):
         # get designations
         user_designations = Designations.objects.all()
         sections = Sections.objects.all()
+        districts = Districts.objects.all()
         regions = Regions.objects.all()
 
         return render(
@@ -36,6 +37,7 @@ def add_user(request):
                 "user_roles": grouped_user_roles,
                 "user_designations": user_designations,
                 "sections": sections,
+                "districts": districts,
                 "regions": regions,
                 "user_title": user_title,
                 "user_groups": user_groups,
@@ -49,6 +51,7 @@ def add_user(request):
             designation_ = request.POST['designation']
             email = request.POST['email']
             section_ = request.POST['section']
+            district_ = request.POST['district']
             region_ = request.POST['region']
             password1 = request.POST['password1']
             password2 = request.POST['password2']
@@ -65,6 +68,7 @@ def add_user(request):
             users_role = request.POST['users_role']
             
             region = Regions.objects.filter(id=region_).first()
+            district = Districts.objects.filter(code=district_).first()
             section = Sections.objects.filter(code=section_).first()
             designation = Designations.objects.filter(id=designation_).first()
             print("section: ", section)
@@ -99,6 +103,7 @@ def add_user(request):
                     email=email,
                     designation=designation,
                     section=section,
+                    district=district,
                     region=region,
                     status="active"
                 )
@@ -212,12 +217,11 @@ def update_user(request):
                     custom_user_roles["dashboards"] = role
 
             region = Regions.objects.filter(id=user_profile.region.id).first() if user_profile.region else None
-            district = Districts.objects.filter(code=user_profile.district).first() if user_profile.district else None
+            district = Districts.objects.filter(id=user_profile.district.id).first() if user_profile.district else None
             depot = Depots.objects.filter(code=user_profile.depot).first() if user_profile.depot else None
             section = Sections.objects.filter(id=user_profile.section.id).first() if user_profile.section else None
             user_designation = Designations.objects.filter(id=user_profile.designation.id).first() if user_profile.designation else None
 
-        print(custom_user_roles)
         new_user = {
             "id": user_profile.pk,
             "username": user_profile.username,
@@ -246,6 +250,7 @@ def update_user(request):
         # get designations
         user_designations = Designations.objects.all()
         sections = Sections.objects.all()
+        districts = Districts.objects.all()
         regions = Regions.objects.all()
 
         return render(
@@ -256,6 +261,7 @@ def update_user(request):
                 "user_roles": grouped_user_roles,
                 "user_designations": user_designations,
                 "sections": sections,
+                "districts": districts,
                 "regions": regions,
                 "user_title": user_title,
                 "user_groups": user_groups,
@@ -270,6 +276,7 @@ def update_user(request):
             username = request.POST['username']
             email = request.POST['email']
             section_ = request.POST['section']
+            district_ = request.POST['district']
             region_ = request.POST['region']
             designation_ = request.POST['designation']
             
@@ -286,6 +293,7 @@ def update_user(request):
                 
 
             region = Regions.objects.filter(id=region_).first()
+            district = Districts.objects.filter(id=district_).first()
             section = Sections.objects.filter(code=section_).first()
             designation = Designations.objects.filter(id=designation_).first()
 
@@ -300,6 +308,8 @@ def update_user(request):
                 user_profile.email = email
             if region:
                 user_profile.region = region
+            if district:
+                user_profile.district = district
             if section:
                 user_profile.section = section
             if designation:
@@ -328,8 +338,7 @@ def update_user(request):
                 roles.append(adjudication)
             if dashboards and dashboards != "Select Role":
                 roles.append(dashboards)
-            
-            print("roles: ", roles)
+
             role_objects = Roles.objects.filter(id__in=roles)  # Example of retrieving roles
             user_profile.roles.clear()
             user_profile.roles.add(*role_objects)

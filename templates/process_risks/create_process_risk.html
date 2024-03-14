@@ -89,7 +89,7 @@
                 <div class="mt-2">
                   <input
                     readonly
-                    value = {{riskObj.created_by}}
+                    value = "{{ user_title }}"
                     type="text"
                     name="created_by"
                     id="created_by"
@@ -97,6 +97,28 @@
                     class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 px-4"
                   />
                 </div>
+
+              </div>
+
+              <div>
+                <label
+                  for="region"
+                  class="block text-sm font-medium leading-6 text-gray-900"
+                  >Region</label
+                >
+<!-- 
+              <div class="mt-2">
+                <input
+                  readonly
+                  value = "{{ region }}"
+                  type="text"
+                  name="region"
+                  id="region"
+                  autocomplete="family-name"
+                  class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 sm:text-sm sm:leading-6 px-4"
+                />
+              </div> -->
+
               </div>
             
 
