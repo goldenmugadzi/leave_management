@@ -54,7 +54,6 @@ def dashboard_index(request):
     # loop through maintences and foreach get record count from Files.
     maintenance_keys_list, maintenance_values_list = get_maintenance_linegraph(user_profile, month_id)
     
-    
     return render(request, 
                   'dashboards/index.html', 
                   {

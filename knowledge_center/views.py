@@ -173,7 +173,7 @@ def download_file(request):
     # search for file in system
     try:
         base_directory_path = os.path.join(settings.BASE_DIR, file_path)
-
+        print("base_directory_path: ", base_directory_path)
         return FileResponse(open(base_directory_path, 'rb'), content_type='application/pdf')
     except Exception as ex:
         print(ex)
