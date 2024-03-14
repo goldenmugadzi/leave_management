@@ -73,6 +73,13 @@ def archive_file(request, file_id):
     
     return redirect('/knowledge-center/view_files')
 
+def unarchive_file(request, file_id):
+
+    um = KnowledgeCenter.objects.filter(id=file_id).first()
+    um.archived=False
+    um.save()
+    
+    return redirect('/knowledge-center/view_files')
 
 def view_files(request):
     
@@ -88,6 +95,7 @@ def view_files(request):
             "subcategory1": file.sub_category_1,
             "subcategory2": file.sub_category_2,
             "region": file.region,
+            "archived": file.archived,
             "created_by": file.created_by,
             "created_at": file.created_at,
         }
@@ -96,7 +104,7 @@ def view_files(request):
     context = json.dumps(files_list, default=str)
     
     url_path = request.path.split("/")
-    return render(request, 'knowledge-center/view_files.html', {"context": context, "url_path": url_path})
+    return render(request, 'knowledge-center/view_files.html', {"context": context, "url_path": url_path, "page": "kc_all"})
 
 def view_archived_files(request):
     
@@ -112,6 +120,7 @@ def view_archived_files(request):
             "subcategory1": file.sub_category_1,
             "subcategory2": file.sub_category_2,
             "region": file.region,
+            "archived": file.archived,
             "created_by": file.created_by,
             "created_at": file.created_at,
         }
@@ -120,7 +129,7 @@ def view_archived_files(request):
     context = json.dumps(files_list, default=str)
     
     url_path = request.path.split("/")
-    return render(request, 'knowledge-center/view_files.html', {"context": context, "url_path": url_path})
+    return render(request, 'knowledge-center/view_files.html', {"context": context, "url_path": url_path, "page": "kc_archived"})
 
 def view_by_category(request):
     

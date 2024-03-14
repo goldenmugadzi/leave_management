@@ -7,6 +7,7 @@ urlpatterns = [
     path('view_files', views.view_files, name='user_manual_index'),
     path('download_file', views.download_file, name='download_file'),
     path('archive_file/<int:file_id>', views.archive_file, name='archive_file'),
+    path('unarchive_file/<int:file_id>', views.unarchive_file, name='unarchive_file'),
     path('edit_file/<str:file_id>', views.edit_file, name='user_manual_edit_file'),
     path('view_myfiles', views.view_by_category, name='user_manual_view_files'),
     path('view_archive', views.view_archived_files, name='view_archived_files'),

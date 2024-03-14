@@ -145,7 +145,6 @@ def bulk_create(request):
                         )
                     processObj.save()
 
-
         return render(request, 
                       'process_maps/create_process_maps.html',
                         {
