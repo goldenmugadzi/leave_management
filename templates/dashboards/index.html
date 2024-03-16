@@ -607,6 +607,8 @@
               Inspections
             </div>
             <div class="flex justify-center">
+              {% csrf_token %}
+              <input id="selectInspForm" type="hidden" name="csrfmiddlewaretoken" value="{{csrf_token}}" />
               <select
                 id="filterInspectionsButton"
                 class="block w-full rounded-md border-0 px-2 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
@@ -791,11 +793,14 @@ https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js
       const xhr = new XMLHttpRequest();
       res = {};
 
+      const csrfToken = document.getElementById('selectInspForm').value;
+      console.log("csrfToken: ", csrfToken);
       // Set up the request
       xhr.open(
         "GET",
         `http://localhost:8000/dashboards/inspections/ajax?month=${month}`
       ); // Replace with your actual URL and parameters
+      xhr.setRequestHeader("X-CSRFToken", csrfToken);
 
       // Handle the response
       xhr.onload = function () {
@@ -821,6 +826,7 @@ https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js
       xhr.send();
       return res;
     }
+
   });
 
 </script>
@@ -974,9 +980,13 @@ https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js
       const xhr = new XMLHttpRequest();
       res = {};
 
+      const csrfToken = document.getElementById('selectInspForm').value;
+      console.log("csrfToken: ", csrfToken);
+
       // Set up the request
       xhr.open("GET", `http://localhost:8000/dashboards/ajax?month=${month}`); // Replace with your actual URL and parameters
 
+      xhr.setRequestHeader("X-CSRFToken", csrfToken);
       // Handle the response
       xhr.onload = function () {
         if (xhr.status === 200) {

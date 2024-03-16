@@ -127,17 +127,28 @@ def bulk_create(request):
                 files.append(file_info)
                 directories += dirnames
 
-                if '\\' in root:
-                    _department = root.split("/")[2]
-                    department = _department.split("\\")[0]
-                    subtype = root.split("\\")[1]
+                if os.path.sep in root:
+                    
+                    norm = os.path.normpath(root)
+                    items = norm.split(os.path.sep)
                     file_path = 'uploads/process_maps/' + filename
+                    
+                    destination_folder = 'uploads/process_maps/'  # Specify the destination folder
+                    destination_path = os.path.join(destination_folder, filename)
+
+                    # Copy the file to the destination folder
+                    try:
+                        shutil.copy2(filepath, destination_path)
+                    except shutil.Error as e:
+                        print(f"Error occurred while copying file: {e}")
+                    
+                    
                     processObj = Process_maps(
                         filename= filename.split(".")[0],
-                        department = department,
+                        department = items[2] if len(items) > 1 else "",
                         region=region,
                         filepath = file_path,
-                        sub_category= subtype + " processes",
+                        sub_category= items[3] + " processes" if len(items) > 2 else "",
                         section = section,
                         created_by = created_by,
                         created_at=created_at,
