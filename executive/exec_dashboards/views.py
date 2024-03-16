@@ -2,7 +2,8 @@ import csv
 from datetime import datetime
 import json
 from django.http import JsonResponse
-from django.shortcuts import render,redirect
+from django.shortcuts import render,redirect\
+from django.views.decorators.csrf import csrf_exempt
 
 from executive.exec_dashboards.utils import *
 from .models import PBNC, TD, UPO, Inspections, Maintenance
@@ -208,6 +209,7 @@ def dashboard_filter(request, item):
                       "inspections_": serializers.serialize('json', inpections) 
                   })
 
+@csrf_exempt
 def dashboards_maintenance_ajax(request):
     month = request.GET['month']
     user_ = request.user
@@ -221,6 +223,7 @@ def dashboards_maintenance_ajax(request):
     
     return JsonResponse(mtn, safe=False)
 
+@csrf_exempt
 def dashboards_inspections_ajax(request):
     month = request.GET['month']
     user_ = request.user
