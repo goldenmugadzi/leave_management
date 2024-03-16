@@ -145,10 +145,10 @@ def bulk_create(request):
                     
                     processObj = Process_maps(
                         filename= filename.split(".")[0],
-                        department = items[2] if len(items) > 1 else "",
+                        department = items[2] if len(items) > 2 else "",
                         region=region,
                         filepath = file_path,
-                        sub_category= items[3] + " processes" if len(items) > 2 else "",
+                        sub_category= items[3] + " processes" if len(items) > 3 else "",
                         section = section,
                         created_by = created_by,
                         created_at=created_at,
