@@ -121,6 +121,7 @@ INSTALLED_APPS = [
     'process_risks.apps.ProcessRisksConfig',
     'finance.Ace',
     'finance.rfq',
+    'reports',
     'sweetify',
     'mathfilters',
     
@@ -191,19 +192,12 @@ DATABASES = {
     #     'PASSWORD': 'Z3tdc_it@2021_',
     #     'HOST': 'localhost'
     # }
-    # 'default': {
-    #     'ENGINE': 'django.db.backends.mysql',
-    #     'NAME': 'beii_test',
-    #     'USER': 'root',
-    #     'PASSWORD': '',
-    #     'HOST': 'localhost',
-    # }
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'beii_vi',
-        'USER': 'be_user',
-        'PASSWORD': 'Z3tdc_it@2024',
-        'HOST': 'localhost'
+        'NAME': 'beii_test',
+        'USER': 'root',
+        'PASSWORD': '',
+        'HOST': 'localhost',
     }
     # Localhost
     # 'default': {
