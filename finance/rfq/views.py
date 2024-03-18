@@ -2,6 +2,8 @@ from django.shortcuts import render, redirect, get_object_or_404
 from .models import RFQ, Quotation,Process,Application
 from django.contrib.auth.decorators import login_required
 from .forms import RFQForm, QuotationFormSet,aceRFQForm
+from django.views.generic import CreateView
+from django.urls import reverse_lazy
 from finance.Ace.models import Ace
 from it.users.models import *
 from approve.views import intiate
@@ -60,6 +62,13 @@ def create_rfq(request):
 
     return render(request, 'finance/rfq/create_rfq.html', {'form': form, 'formset': formset})
 
+class CreateRFQView(CreateView):
+    model = RFQ
+    fields = '__all__'
+    template_name = 'finance/rfq/create_rfq.html'
+    success_url = reverse_lazy('rfqs')
+
+@login_required    
 def create_ace_rfq(request,ace_id):
     ace = Ace.objects.get(Ace_id=ace_id)
     form = aceRFQForm()
