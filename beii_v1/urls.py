@@ -30,6 +30,7 @@ urlpatterns = [
     path('', include('Docs.urls')),
     path('', include('risk.audit.nonconformity.urls')),
     path('rfq/', include('finance.rfq.urls')),
+    path('pettycash/', include('finance.pettycash.urls')),
     path('process', include('approve.urls')),
     path('meter/', include('commecial.tempertockens.urls')),
     path('users/', include('it.users.urls')),
@@ -40,13 +41,13 @@ urlpatterns = [
     path('competence/', include('competence_building.urls')),
     path('admin/', admin.site.urls),
     path('accounts/', include('django.contrib.auth.urls')),
-<<<<<<< HEAD
+
     path('ace/', include('Ace.urls')),
     # path('rfq/', include('rfq.urls')),
-=======
+
     path('ace/', include('finance.Ace.urls')),
     path('', include('finance.rfq.urls')),
->>>>>>> 38b12571de7d236b5cdac313e6a80262951b356a
+
 
     # AUTH ENDPOINTS
     path('api-auth/', include('rest_framework.urls')),
