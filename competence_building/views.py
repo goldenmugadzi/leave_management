@@ -1,5 +1,6 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.views import View
+# from models import *
 
 
 
@@ -205,3 +206,15 @@ def view_southertoncommercial(request):
 
 def view_rfqview(request):
         return render(request, 'competence_building/rfqview.html')
+
+def Job_description(request):
+    Job_description = Job_description.objects.all()
+    categories = Categories.objects.all()
+    file_types = Filetype.objects.all()
+
+    context = {
+        'Job_description': Job_description,
+        'categories': categories,
+        'file_types': file_types,
+    }
+    return render(request, '/job_upload.html', context)

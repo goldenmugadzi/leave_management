@@ -57,6 +57,7 @@ urlpatterns = [
     path('northengineering', views.view_northengineering, name='northengineering'),
     path('southertoncommercial', views.view_southertoncommercial, name='southertoncommercial'),
     path('rfqview',views.view_rfqview, name='rfqview'),
+    path('job_upload', views.Job_description, name='job_upload'),
 
 
 
