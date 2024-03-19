@@ -55,7 +55,7 @@
              
               {% for step in steps %}
         <div class="card-body m-auto arrow arrow-step mb-5 bg-gradient-to-r from-gulf-blue-100 to-blue-500 ed p-3 border rounded   justify-content-center align-content-stretch container rounded  shadow-lg">
-                  <div class="p-4 rounded-lg "><p class="font-bold"> {{step.approver}}</p> <br>
+                  <div class="p-4 rounded-lg "><p class="font-bold"> {{step.approver.role}}</p> <br>
                  
                  {% if step.to %}
                    <span class="inline-block rounded-full text-sm"> to: {{ step.to|default_if_none:'' }}</span>
