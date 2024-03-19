@@ -24,6 +24,7 @@ def step_formset_view(request, workflow_id):
     workflow = Workflow.objects.get(id=workflow_id)
     extra_steps = int(request.GET.get('extra', 5))  # Default value of 5 if no 'extra' parameter is provided
     formset_class = inlineformset_factory(Workflow, Step, form=StepForm, extra=extra_steps, can_delete=False)
+    formset_class.form.base_fields['approver'].queryset = Roles.objects.filter(application=workflow.application.name)
     existing_steps = Step.objects.filter(workflow_id=workflow_id)
 
     if request.method == 'POST':

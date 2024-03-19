@@ -40,12 +40,10 @@ class SaveStepForm(forms.ModelForm):
 
 
 class StepForm(forms.ModelForm):
-    class Meta:
-        model = Step
-        fields = ['approver','to']
-
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, workflow_application=None, **kwargs):
         super().__init__(*args, **kwargs)
+        self.workflow_application = form_kwargs.pop('workflow_application', None)
+        self.fields['approver'].queryset = Roles.objects.filter(application=self.workflow_application.name)
 
         for field_name, field in self.fields.items():
             field.widget.attrs.update({
@@ -54,7 +52,7 @@ class StepForm(forms.ModelForm):
 
             field.label = field.label or field_name.replace('_', ' ').capitalize()
             field.label_attrs = {'class': 'block text-sm font-medium text-gray-900'}
-
+      
 class ApprovalForm(forms.ModelForm):
     class Meta:
         model = Approval
