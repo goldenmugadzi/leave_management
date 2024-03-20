@@ -1,7 +1,13 @@
+from datetime import timezone
+
 from django.db import models
-from it.users.models import UserProfile,Regions,Sections
+
+from finance.Ace.models import Ace
+from it.users.models import UserProfile, Regions, Sections
 from finance.rfq.models import RFQ
 from approve.models import Process
+
+
 # Create your models here.
 class Direct_purchase(models.Model):
     id = models.CharField(primary_key=True, max_length=60)
@@ -10,7 +16,7 @@ class Direct_purchase(models.Model):
     allocation_code_of_expenditure = models.CharField(max_length=100, blank=True, null=True)
     details_of_expenditure = models.CharField(max_length=100, blank=True, null=True)
     amount = models.FloatField(blank=True, null=True)
-    requested_by = models.ForeignKey(UserProfile , models.DO_NOTHING,blank=True, null=True)
+    requested_by = models.ForeignKey(UserProfile, models.DO_NOTHING, blank=True, null=True)
     date_created = models.DateField(auto_now_add=True, blank=True, null=True)
     rfq = models.ForeignKey(RFQ, models.CASCADE, blank=True, null=True)
     service_type = models.CharField(max_length=100, blank=True, null=True)
@@ -19,7 +25,8 @@ class Direct_purchase(models.Model):
     grn_date = models.DateField(blank=True, null=True)
     payment_status = models.CharField(max_length=100, blank=True, null=True)
     payment_date = models.DateField(blank=True, null=True)
-    
+    ace = models.ForeignKey(Ace, models.DO_NOTHING, blank=True, null=True)
+
     def __str__(self):
         return self.id
 
@@ -33,15 +40,17 @@ class Direct_purchase(models.Model):
 
 
 class Supplier(models.Model):
-    name = models.CharField(max_length=100,unique=True)
+    name = models.CharField(max_length=100, unique=True)
     email = models.EmailField(blank=True, null=True)
     phone = models.IntegerField(max_length=13, blank=True, null=True)
     address = models.CharField(max_length=100, blank=True, null=True)
 
     class Meta:
-       ordering = ['name']
+        ordering = ['name']
+
     def __str__(self):
         return self.name
+
 
 class Item(models.Model):
     name = models.CharField(max_length=100, blank=True, null=True)
@@ -52,10 +61,9 @@ class Item(models.Model):
     total = models.FloatField(blank=True, null=True)
     supplier = models.ForeignKey(Supplier, models.DO_NOTHING)
     direct_purchase = models.ForeignKey(Direct_purchase, models.DO_NOTHING)
+
     class Meta:
         ordering = ['name']
+
     def __str__(self):
         return self.name
-
-
-
