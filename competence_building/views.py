@@ -1,7 +1,8 @@
 from django.shortcuts import render, redirect
 from django.views import View
-# from models import *
-
+from .models import *
+from .forms import *
+import os
 
 
 def view_competence(request):
@@ -207,9 +208,9 @@ def view_southertoncommercial(request):
 def view_rfqview(request):
         return render(request, 'competence_building/rfqview.html')
 
-def Job_description(request):
-    Job_description = Job_description.objects.all()
-    categories = Categories.objects.all()
+def job_description_view(request):
+    job_description = Job_description.objects.all()
+    categories = First_Category.objects.all()
     file_types = Filetype.objects.all()
 
     context = {
@@ -217,4 +218,27 @@ def Job_description(request):
         'categories': categories,
         'file_types': file_types,
     }
-    return render(request, '/job_upload.html', context)
+    return render(request, 'competence_building/job_upload.html', context)
+
+def view_upload_file(request):
+    if request.method == 'POST':
+        form = DocumentForm(request.POST, request.FILES)
+        if form.is_valid():
+            document = form.save(commit=False)  
+            document.created_by = request.user
+            if not document.name:  # If name is not given in the form
+                file_name = request.FILES['file'].name
+                document.name = os.path.splitext(file_name)[0]  # Set document name from uploaded file
+            document.save()  # Commit the changes to the database
+            return redirect('/') 
+    return render(request, 'competence_building/upload_file.html', {'form': DocumentForm()})
+
+def view_categories(request):
+        return render(request, 'competence_building/categories.html', {'categories': Category.objects.all()})
+from django.shortcuts import render
+from .models import Category
+
+def view_files(request, category):
+    category_obj = Category.objects.get(id=category)
+    files = category_obj.document_set.all()
+    return render(request, 'competence_building/files.html', {'files': files})

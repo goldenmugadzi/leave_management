@@ -49,20 +49,14 @@
                   autocomplete="category_id"
                   class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
                 >
-                  <option>  COMPETENCE TYPE</option>
-                  <option value="1">LEGISLATION</option>
-                  <option value="2">POLICIES & GUIDELINES</option>
-                  <option value="3">PUBLICATIONS</option>
-                  <option value="4">ENGINEERING INSTRUCTIONS MAIN INDEX</option>
-                  <option value="5">USER MANUALS</option>
-                  <option value="6">STANDARDS, SPECIFICATIONS & DRAWINGS</option>
-                  <option value="7">KNOWLEDGE BASE</option>
-                  <option value="8">STANDARDS</option> 
-                  <option value="9">SPECIFICATIONS</option> 
-                  <option value="10">DRAWINGS</option> 
-                  <option value="11">PRINCE2 CENTRE OF EXCELLENCE</option> 
-                  <option value="12">OTHER EXTERNAL DOCUMENTS</option> 
-                  <option value="13">DRONE TECHNOLOGY</option> 
+                  <option>  Select Type</option>
+                  <option value="1">VACANCIES</option>
+                  <option value="2">ORGANISATION CHARTS</option>
+                  <option value="4">SAFETY CIRCULAR</option>
+                  <option value="3">JOBDESCRIPTION</option>
+                  <option value="11">TRAININGS & DEVELOPMENT</option> 
+                  <option value="12">UPCOMING EVENTS</option> 
+                  
                   {% for option in options %}
                       <option value="{{ option.id }}">{{ option.name }}</option>
                   {% endfor %}
@@ -75,46 +69,22 @@
 
             <div>
               <label
-                for="subtype1"
+                for="department"
                 class="block text-sm font-medium leading-6 text-gray-900"
-                >Sub type 1</label
+                >Department</label
               >
               <div class="mt-2">
                 {% comment %} <input
                   type="text"
-                  name="subtype1"
-                  id="subtype1"
+                  name="department"
+                  id="department"
                   autocomplete="family-name"
                   class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                 /> {% endcomment %}
                 <select
-                id="subtype1"
-                name="subtype1"
+                id="department"
+                name="department"
                 autocomplete="category_id"
-                class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
-              >
-              <option></option>
-              </select>
-              </div>
-            </div>
-            <div>
-              <label
-                for="subtype2"
-                class="block text-sm font-medium leading-6 text-gray-900"
-                >Sub type 2</label
-              >
-              <div class="mt-2">
-                {% comment %} <input
-                  type="text"
-                  name="subtype2"
-                  id="subtype2"
-                  autocomplete="subtype1"
-                  class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                /> {% endcomment %}
-                <select
-                id="subtype2"
-                name="subtype2"
-                autocomplete="subtype1"
                 class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
               >
               <option></option>
@@ -238,7 +208,7 @@
       url: '/knowledge-center/get-files/' + selectedValue,
       type: 'GET',
       success: function(data) {
-          var selectElement = document.getElementById("subtype1");
+          var selectElement = document.getElementById("department");
           // Clear existing options
           selectElement.options.length = 0;
 
@@ -269,7 +239,7 @@
 } {% endcomment %}
 </script>
 <script>
-  $("#subtype1").change(function() {
+  $("#department").change(function() {
     var selectedValue = $(this).val();
     var fileType = document.getElementById("category_id").value;
     $.ajax({

@@ -1,0 +1,22 @@
+{% extends "admin_layout.html" %}
+{% load static %}
+
+{% block content %}
+
+<div class="m-auto mt-5 justify-content-center">
+  <form class="row rounded py-4 border bg-gulf-blue-100 p-3 m-auto text-center justify-content-center 
+  align-content-stretch container" method="POST" action="" enctype="multipart/form-data">
+    {% csrf_token %}
+    <div class="m-auto container ">
+      <div class="mt-10 grid grid-cols-4 gap-2">
+        {{ form.as_table }}
+      </div>
+      
+      <div class="m-5 ">
+        <input class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded" type="submit" >
+      </div>
+    </div>
+  </form>
+</div>
+
+{% endblock %}
