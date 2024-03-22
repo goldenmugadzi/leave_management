@@ -1,0 +1,72 @@
+{% extends "admin_layout.html" %}
+{% load static %}
+{% load humanize %}{% load custom_tags %}
+
+{% block styles %}
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css"/>
+<style>.dataTables_wrapper .dataTables_length select { width: 4rem; }</style>
+{% endblock %}
+
+{% block content %}
+<div class="content-wrapper">
+  <div class="grid grid-cols-1">
+    <div class="bg-gulf-blue-100 shadow-lg rounded-lg p-6">
+      <h3 class="text-center font-bold mb-4">Temper Tokens</h3>
+      <div class="grid grid-cols-4 container text-center">
+      </div>
+      <br>
+      <table id="tempertoken" class="table table-striped stripe table-bordered">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Customer</th>
+            <th>Meter number</th>
+            <th>Description</th>
+            <th>Reason</th>
+            <th>Address</th>
+            <th>Phone No</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for tempertoken in tempertokens %}
+          <tr class="h-1">
+            <td>{{ tempertoken.created_at|date:'d/m/Y' }}</td>
+            <td>{{ tempertoken.customer.name|default_if_none:''}}</td>
+            <td><span title="{{ tempertoken.meter.meter_type }}">{{ tempertoken.meter.meter_number }}</span></td>
+            {% if tempertoken.fault_set.first %}
+            <td><a class="text-blue-500" href="/tempertoken/{{tempertoken.id}}">{{ tempertoken.fault_set.first.description|default_if_none:'' }}</a></td>
+            <td>Fault</td>
+            {% endif %}
+            {% if tempertoken.recover_set.first %}
+            <td><a class="text-blue-500" href="/tempertoken/{{tempertoken.id}}">{{ tempertoken.recover_set.first.description|default_if_none:'' }}</a></td>
+            <td>Recover</td>
+            {% endif %}
+            {% if tempertoken.reconnection_set.first %}
+            <td><a class="text-blue-500" href="/tempertoken/{{tempertoken.id}}">{{ tempertoken.reconnection_set.first.description|default_if_none:'' }}</a></td>
+            <td>Reconnection</td>
+            {% endif %}
+            <td>{{ tempertoken.customer.address|default_if_none:'' }}</td>
+            <td>{{ tempertoken.customer.contact_number|default_if_none:'' }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script>
+  $(document).ready(function () {
+    $("#tempertoken").DataTable({
+      "pageLength": 10,
+      "columnDefs": [{ "orderable": true, "targets": [0, 1, 2] }],
+      "searching": true,
+      "responsive": true,
+    });
+  });
+</script>
+{% endblock %}
