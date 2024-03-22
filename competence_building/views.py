@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect
 from django.views import View
 from .models import *
 from .forms import *
+from .models import Category
 import os
 
 
@@ -208,17 +209,6 @@ def view_southertoncommercial(request):
 def view_rfqview(request):
         return render(request, 'competence_building/rfqview.html')
 
-def job_description_view(request):
-    job_description = Job_description.objects.all()
-    categories = First_Category.objects.all()
-    file_types = Filetype.objects.all()
-
-    context = {
-        'Job_description': Job_description,
-        'categories': categories,
-        'file_types': file_types,
-    }
-    return render(request, 'competence_building/job_upload.html', context)
 
 def view_upload_file(request):
     if request.method == 'POST':
@@ -235,10 +225,17 @@ def view_upload_file(request):
 
 def view_categories(request):
         return render(request, 'competence_building/categories.html', {'categories': Category.objects.all()})
-from django.shortcuts import render
-from .models import Category
+
 
 def view_files(request, category):
     category_obj = Category.objects.get(id=category)
     files = category_obj.document_set.all()
     return render(request, 'competence_building/files.html', {'files': files})
+
+
+
+def uploaded_jobs_view(request):
+#     Fetches job descriptions and renders them in a table.
+    documents = Document.objects.all()  # Fetch all documents
+    context = {'documents': documents}
+    return render(request, 'competence_building/competence_index.html', context)

@@ -1,7 +1,6 @@
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
-
 from .views import *
 
 urlpatterns = [
@@ -57,10 +56,10 @@ urlpatterns = [
     path('northengineering', view_northengineering, name='northengineering'),
     path('southertoncommercial', view_southertoncommercial, name='southertoncommercial'),
     path('rfqview',view_rfqview, name='rfqview'),
-    # path('job_upload', job_description_view, name='job_upload'),
     path('upload_file',view_upload_file, name='upload_file'),
     path('categories',view_categories, name='categories'),
     path('<int:category>/files',view_files, name='files'),
+    path('<str:competence>/competence_index', uploaded_jobs_view, name='competence_index'),
 
 
 
