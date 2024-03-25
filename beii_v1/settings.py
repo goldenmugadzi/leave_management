@@ -121,6 +121,7 @@ INSTALLED_APPS = [
     'process_risks.apps.ProcessRisksConfig',
     'finance.Ace',
     'finance.rfq',
+    'reports',
     'sweetify',
     'mathfilters',
     
