@@ -10,7 +10,6 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('users', '0002_alter_userprofile_options_alter_userprofile_managers_and_more'),
         ('Ace', '__first__'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
         ('approve', '0001_initial'),
