@@ -124,7 +124,7 @@ INSTALLED_APPS = [
     'reports',
     'sweetify',
     'mathfilters',
-    
+    'temper_token',
     'commecial.tempertockens',
     'competence_building.apps.CompetenceBuildingConfig'
 
