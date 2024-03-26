@@ -59,7 +59,7 @@ urlpatterns = [
     path('upload_file',view_upload_file, name='upload_file'),
     path('categories',view_categories, name='categories'),
     path('<int:category>/files',view_files, name='files'),
-    path('<str:competence>/competence_index', uploaded_jobs_view, name='competence_index'),
+    path('competence_index', uploaded_jobs_view, name='competence_index'),
 
 
 

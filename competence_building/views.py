@@ -1,3 +1,4 @@
+import json
 from django.shortcuts import render, redirect
 from django.views import View
 from .models import *
@@ -233,9 +234,23 @@ def view_files(request, category):
     return render(request, 'competence_building/files.html', {'files': files})
 
 
-
 def uploaded_jobs_view(request):
 #     Fetches job descriptions and renders them in a table.
     documents = Document.objects.all()  # Fetch all documents
-    context = {'documents': documents}
-    return render(request, 'competence_building/competence_index.html', context)
+    files_list = []
+    for file in documents:
+        new_file = {
+        "region": file.region,
+        "category": file.category,
+        "section": file.section,
+        "file": file.file,
+        "name": file.name,
+        "created by": file.created_by,
+        "created at": file.created_at,
+        }
+        files_list.append(new_file)
+    
+    context = json.dumps(files_list, default=str)
+#     context = {'documents': documents}
+    return render(request, 'competence_building/competence_index.html', {"context": context})
+
