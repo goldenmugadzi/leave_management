@@ -1,5 +1,6 @@
 from django.db import models
 from it.users.models import UserProfile
+from approve.models import Process
 
 class MeterType(models.Model):
     type_name = models.CharField(max_length=20)
@@ -27,7 +28,7 @@ class TemperToken(models.Model):
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
     created_by = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True, blank=True, null=True)
-    process=models.ForeignKey('approve.Process', on_delete=models.CASCADE, blank=True, null=True)
+    process=models.ForeignKey(Process, on_delete=models.CASCADE, blank=True, null=True)
     def __str__(self):
         return str(self.meter.meter_number)
 

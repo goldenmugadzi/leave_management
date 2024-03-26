@@ -21,10 +21,10 @@
        <table id="tempertoken" class="table table-striped stripe table-bordered">
         <thead>
           <tr>
+            <th>Description</th>
             <th>Date</th>
             <th>Customer</th>
             <th>Meter number</th>
-            <th>Description</th>
             <th>Reason</th>
             <th>Address</th>
             <th>Phone Number</th>
@@ -33,9 +33,6 @@
         <tbody>
           {% for tempertoken in tempertokens %}
           <tr class="h-1">
-            <td>{{ tempertoken.created_at|date:'d/m/Y' }}</td>
-            <td>{{ tempertoken.customer.name|default_if_none:''}}</td>
-            <td><span title="{{ tempertoken.meter.meter_type }}">{{ tempertoken.meter.meter_number }}</span></td>
             {% if tempertoken.fault_set.first %}
             <td><a class="text-blue-500" href="/tempertoken/{{tempertoken.id}}">{{ tempertoken.fault_set.first.description|default_if_none:'' }}</a></td>
             <td>Fault</td>
@@ -48,6 +45,9 @@
             <td><a class="text-blue-500" href="/tempertoken/{{tempertoken.id}}">{{ tempertoken.reconnection_set.first.description|default_if_none:'' }}</a></td>
             <td>Reconnection</td>
             {% endif %}
+            <td>{{ tempertoken.created_at|date:'d/m/Y' }}</td>
+            <td>{{ tempertoken.customer.name|default_if_none:''}}</td>
+            <td><span title="{{ tempertoken.meter.meter_type }}">{{ tempertoken.meter.meter_number }}</span></td>
             <td>{{ tempertoken.customer.address|default_if_none:'' }}</td>
             <td>{{ tempertoken.customer.contact_number|default_if_none:'' }}</td>
           </tr>
