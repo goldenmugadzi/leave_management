@@ -80,3 +80,11 @@ webencodings==0.5.1
 Werkzeug==2.2.2
 WTForms==2.3.3
 zopfli==0.2.2
+
+django-email-users~=1.1.0
+pip~=22.0.4
+colorclass~=2.2.2
+setuptools~=58.1.0
+zipp~=3.17.0
+docopt~=0.6.2
+terminaltables~=3.1.10
