@@ -1,6 +1,11 @@
+from datetime import datetime
 import json
+import shutil
 from django.shortcuts import render, redirect
+from django.http import FileResponse
 from django.views import View
+
+from beii_v1 import settings
 from .models import *
 from .forms import *
 from .models import Category
@@ -13,6 +18,74 @@ def view_competence(request):
         url_path = request.path.split("/")
         return render(request, 'competence_building/competence.html', {
                       "url_path": url_path})
+
+def bulk_create(request):
+        user_id = request.user.id
+        user = UserProfile.objects.filter(id=user_id).first()
+        region = Regions.objects.filter(id=1).first()
+        created_by = user
+        created_at = datetime.now()
+
+        files = []
+        directories = []
+        for root, dirnames, filename in os.walk('static/job_descriptions'):
+                for filename in filename:
+                        filepath = os.path.join(root, filename)
+                        file_info ={
+                                "name": filename,
+                                "path": filepath,
+                        }
+                        files.append(file_info)
+                        directories +=dirnames
+
+                        if os.path.sep in root:
+                                norm = os.path.normpath(root)
+                                items = norm.split(os.path.sep)
+                                destination_folder = 'media/'
+                                destination_path = os.path.join(destination_folder, filename)
+
+                                try:
+                                        shutil.copy2(filepath,destination_path)
+                                except shutil.Error as e:
+                                        print(f"error occured while coping files: {e}")
+
+                                ft = items[2] if len(items) >=3 else ""
+                                dp = items[3] if len(items) >=4 else ""
+                                print(ft, dp)
+                                section = Sections.objects.filter(section=ft).first()
+
+                                cat = Category.objects.filter(id=5).first()
+                                documentObj = Document(
+                                        category=cat,
+                                        name = filename,
+                                        region= region,
+                                        section= section,
+                                        created_at = created_at,
+                                        created_by = created_by,
+                                        file = filename
+                                        )
+                                documentObj.save()
+
+        return redirect("/competence/competence")
+
+
+
+def download_file(request):
+
+    file_id = request.GET['file_id']
+    file_record = Document.objects.filter(id=file_id).first()
+    file_path = "media/" + file_record.name
+
+    # search for file in system
+    try:
+        base_directory_path = os.path.join(settings.BASE_DIR,file_path )
+
+        return FileResponse(open(base_directory_path, 'rb'), content_type='application/pdf')
+    except Exception as ex:
+        print(ex)
+
+    return redirect('/competence/competence')
+
 
 def view_charts(request):
         
@@ -160,31 +233,49 @@ def view_chitowndistrict(request):
         return render(request, 'competence_building/chitowndistrict.html')
 
 def view_itjobdescription(request):
-        return render(request, 'competence_building/itjobdescription.html')
+    section = Sections.objects.filter(section="Information Technology").first()
+    documents = Document.objects.filter(section=section).all()  # Fetch all documents
+    return render(request, 'competence_building/itjobdescription.html', {"Documents": documents})
 
 def view_hrjobdescription(request):
-        return render(request, 'competence_building/hrjobdescription.html')
+         section = Sections.objects.filter(section="Human Resource").first()
+         documents = Document.objects.filter(section=section).all()  # Fetch all documents
+         return render(request, 'competence_building/itjobdescription.html', {"Documents": documents})
 
 def view_srjobdescription(request):
-        return render(request, 'competence_building/srjobdescription.html')
+         section = Sections.objects.filter(section="Stakeholder Relations").first()
+         documents = Document.objects.filter(section=section).all()  # Fetch all documents
+         return render(request, 'competence_building/itjobdescription.html', {"Documents": documents})
 
 def view_riskjobdescription(request):
-        return render(request, 'competence_building/riskjobdescription.html')
+         section = Sections.objects.filter(section="Risk Management").first()
+         documents = Document.objects.filter(section=section).all()  # Fetch all documents
+         return render(request, 'competence_building/itjobdescription.html', {"Documents": documents})
 
 def view_procjobdescription(request):
-        return render(request, 'competence_building/procjobdescription.html')
+         section = Sections.objects.filter(section="Procurement").first()
+         documents = Document.objects.filter(section=section).all()  # Fetch all documents
+         return render(request, 'competence_building/itjobdescription.html', {"Documents": documents})
 
 def view_legaljobdescription(request):
-        return render(request, 'competence_building/legaljobdescription.html')
+         section = Sections.objects.filter(section="Legal Services").first()
+         documents = Document.objects.filter(section=section).all()  # Fetch all documents
+         return render(request, 'competence_building/itjobdescription.html', {"Documents": documents})
 
 def view_finjobdescription(request):
-        return render(request, 'competence_building/finjobdescription.html')
+         section = Sections.objects.filter(section="Finance").first()
+         documents = Document.objects.filter(section=section).all()  # Fetch all documents
+         return render(request, 'competence_building/itjobdescription.html', {"Documents": documents})
 
 def view_engjobdescription(request):
-        return render(request, 'competence_building/engjobdescription.html')
+         section = Sections.objects.filter(section="Engineering").first()
+         documents = Document.objects.filter(section=section).all()  # Fetch all documents
+         return render(request, 'competence_building/itjobdescription.html', {"Documents": documents})
 
 def view_comjobdescription(request):
-        return render(request, 'competence_building/comjobdescription.html')
+         section = Sections.objects.filter(section="Commercial").first()
+         documents = Document.objects.filter(section=section).all()  # Fetch all documents
+         return render(request, 'competence_building/itjobdescription.html', {"Documents": documents})
 
 def view_infojobdescription(request):
         return render(request, 'competence_building/infojobdescription.html')

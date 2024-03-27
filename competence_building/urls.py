@@ -60,6 +60,9 @@ urlpatterns = [
     path('categories',view_categories, name='categories'),
     path('<int:category>/files',view_files, name='files'),
     path('competence_index', uploaded_jobs_view, name='competence_index'),
+    path('bulk', bulk_create, name='bulk_create'),
+    path('download', download_file, name='download_file'),
+    
 
 
 
