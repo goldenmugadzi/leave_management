@@ -28,10 +28,10 @@
 </head> 
 
 <div style="margin-bottom: 25px" class="content-wrapper p-2 m-px text-gray-800">
-  <div class="grid grid-cols-4 gap-4">
+  <div class="grid grid-cols-5 gap-4">
   {% for document in Documents %} {% with forloop.counter as loop_index %} {% if loop_index|divisibleby:2%}
   <div
-    class="w-auto bg-gulf-blue-300 text-center shadow shadow-nepal-300 text-gray-700 rounded px-10 py-4"
+    class="w-auto bg-gulf-blue-200 text-center shadow shadow-nepal-300 text-gray-700 rounded px-10 py-4"
   >
     <a tabindex="-1" href="/competence/download?file_id={{document.id}}">
       <div class="sm:flex lg:items-center lg:justify-between">
@@ -59,7 +59,7 @@
   </div>
   {% else %}
   <div
-    class="w-auto bg-citron-200 text-center shadow shadow-nepal-300 text-gray-700 rounded px-10 py-4"
+    class="w-auto bg-green-200 text-center shadow shadow-nepal-300 text-gray-700 rounded px-10 py-4"
   >
   <a tabindex="-1" href="/competence/download?file_id={{document.id}}">
     <div class="sm:flex lg:items-center lg:justify-between">
@@ -102,24 +102,3 @@
   </a>
 </div>
 {% endblock %}
-
-
-{% comment %} {% extends 'admin_layout.html' %}
-{%load static%}
-
-{%block content%}
-<div class="flex flex-row ...">
-
-    <button type="button"><a tabindex="-1" class="rounded-xl bg-blue-300 py-4 px-2 m-3"
-            href="{% static 'job_descriptions\ict\Systems Administrator.pdf' %}"> <strong>SYSTEMS ADMINISTRATOR</strong></a></button>
-    <button type="button" class="rounded-xl bg-green-300 py-4 px-2 m-3"><a tabindex="-1"
-            href="{% static 'job_descriptions\ict\Systems Support Officer.pdf' %}"><strong>SYSTEMS SUPPORT OFFICER</strong></a></button>
-    <button type="button" class="rounded-xl bg-blue-300 py-4 px-2 m-3"><a tabindex="-1"
-            href="{% static 'job_descriptions\ict\hardware technician.pdf' %}"><strong>HARDWARE TECHNICIAN</strong></a></button>
-    
-
-</div>
-
-
-{%endblock %} {% endcomment %}
-
