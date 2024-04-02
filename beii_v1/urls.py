@@ -28,6 +28,7 @@ from rest_framework_simplejwt.views import (
 urlpatterns = [
     path('', include('it.beii_auth.urls')),
     path('', include('Docs.urls')),
+    path('', include('temper_token.urls')),
     path('', include('risk.audit.nonconformity.urls')),
     path('', include('finance.rfq.urls')),
     path('', include('approve.urls')),

@@ -1,13 +1,14 @@
-from django.shortcuts import render, redirect, get_object_or_404
-from .models import RFQ, Quotation,Process,Application
 from django.contrib.auth.decorators import login_required
-from .forms import RFQForm, QuotationFormSet,aceRFQForm
-from finance.Ace.models import Ace
-from it.users.models import *
-from approve.views import intiate
-from approve.models import Step
-from approve.forms import ApprovalForm
+from django.shortcuts import render, redirect
 from django.urls import reverse
+
+from approve.forms import ApprovalForm
+from approve.models import Step
+from approve.views import intiate
+from finance.Ace.models import Ace
+from .forms import RFQForm, QuotationFormSet, aceRFQForm
+from .models import RFQ
+
 
 @login_required
 def rfq_detail(request, rfq_id):
