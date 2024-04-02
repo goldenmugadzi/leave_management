@@ -108,6 +108,7 @@ INSTALLED_APPS = [
     'django.contrib.humanize',
     'rest_framework',
     'rest_framework_simplejwt',
+    'clearcache',
     
     'risk.audit.checklist',
     'risk.audit.nonconformity',
@@ -121,17 +122,19 @@ INSTALLED_APPS = [
     'process_risks.apps.ProcessRisksConfig',
     'finance.Ace',
     'finance.rfq',
+    # 'finance.DirectPurchases',
+
     'reports',
     'sweetify',
     'mathfilters',
-    
+    'temper_token',
     'commecial.tempertockens',
     'competence_building.apps.CompetenceBuildingConfig'
 
     # 'finance.tenders.apps.TendersConfig',
     # 'engineering.reticulations.apps.ReticulationsConfig',
     # 'commercials.connections.apps.ConnectionsConfig',
-    # 'Pettycash.apps.PettycashConfig',
+    # 'Pettycash.apps.PettyCashConfig',
     # 'hr.okr.apps.OkrConfig',
     # 'reports.beii_reports.apps.BeiiReportsConfig',
     # 'api.ops_maintenance.safety_operations.apps.SafetyOperationsConfig',

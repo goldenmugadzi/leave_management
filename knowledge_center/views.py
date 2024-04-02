@@ -10,7 +10,6 @@ from .models import Categories, First_Category, Secondary_Category, Filetype
 from django.shortcuts import render
 from django.db.models import Q
 
-
 from utils.helper_functions import get_kc_dict
 
 from .models import KnowledgeCenter
@@ -71,7 +70,7 @@ def archive_file(request, file_id):
     um.archived=True
     um.save()
     
-    return redirect('/knowledge-center/view_files')
+    return redirect('/knowledge_center/view_files')
 
 def unarchive_file(request, file_id):
 
@@ -79,7 +78,7 @@ def unarchive_file(request, file_id):
     um.archived=False
     um.save()
     
-    return redirect('/knowledge-center/view_files')
+    return redirect('/knowledge_center/view_files')
 
 def view_files(request):
     
@@ -158,12 +157,10 @@ def view_by_category(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/view_myfiles.html', {"context": new_dict, "url_path": url_path})
 
-
 def get_category(request, file_type, cat_1, cat_2):
     file_ = KnowledgeCenter.objects.filter(file_type=file_type).all()
     file_ = KnowledgeCenter.objects.filter(file_type=file_type, cat_1=cat_1).all()
     file_ = KnowledgeCenter.objects.filter(file_type=file_type, cat_1=cat_1, cat_2=cat_2).all()
-
 
 def view_myfiles(request):
     
@@ -171,7 +168,6 @@ def view_myfiles(request):
     
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/view_myfiles.html', {"url_path": url_path})
-
 
 def download_file(request):
 
@@ -187,8 +183,7 @@ def download_file(request):
     except Exception as ex:
         print(ex)
 
-    return redirect('/knowledge-center/view_files')
-
+    return redirect('/knowledge_center/view_files')
 
 def edit_file(request, file_id):
     url_path = request.path.split("/")
