@@ -81,13 +81,6 @@
                 >Sub type 1</label
               >
               <div class="mt-2">
-                {% comment %} <input
-                  type="text"
-                  name="subtype1"
-                  id="subtype1"
-                  autocomplete="family-name"
-                  class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm px-2 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                /> {% endcomment %}
                 <select
                 id="subtype1"
                 name="subtype1"
@@ -105,13 +98,6 @@
                 >Sub type 2</label
               >
               <div class="mt-2">
-                {% comment %} <input
-                  type="text"
-                  name="subtype2"
-                  id="subtype2"
-                  autocomplete="subtype1"
-                  class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm px-2 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                /> {% endcomment %}
                 <select
                 id="subtype2"
                 name="subtype2"
@@ -140,7 +126,6 @@
                 </div>
               </div>
 
-            
               <div>
                 <label
                   for="section"
@@ -236,7 +221,7 @@
   $("#category_id").change(function() {
     var selectedValue = $(this).val();
     $.ajax({
-      url: '/knowledge-center/get-files/' + selectedValue,
+      url: '/knowledge_center/get-files/' + selectedValue,
       type: 'GET',
       success: function(data) {
           var selectElement = document.getElementById("subtype1");
@@ -274,7 +259,7 @@
     var selectedValue = $(this).val();
     var fileType = document.getElementById("category_id").value;
     $.ajax({
-      url: '/knowledge-center/get-cat2/'+ fileType + '/' + selectedValue,
+      url: '/knowledge_center/get-cat2/'+ fileType + '/' + selectedValue,
       type: 'GET',
       success: function(data) {
           var secondCategory = document.getElementById("subtype2");

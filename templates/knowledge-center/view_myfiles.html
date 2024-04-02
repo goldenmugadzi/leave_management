@@ -6,7 +6,7 @@
     <div style="display: flex; justify-content: space-between; margin: 1rem; padding: 0.5rem; width: 100%;">
         <div>KNOWLEDGE CENTRE</div>
         <div>
-            <a href="/knowledge-center/view_files" class="w-full bg-blue-800 hover:bg-blue-900 outline-none focus:outline-none border px-3 py-1 rounded flex items-center">
+            <a href="/knowledge_center/view_files" class="w-full bg-blue-800 hover:bg-blue-900 outline-none focus:outline-none border px-3 py-1 rounded flex items-center">
                 <span class="pr-1 font-semibold flex-1 text-blue-50">Manage Files</span>
             </a>
         </div>
@@ -57,7 +57,7 @@
                                                         ">
                                                 {% for file in context.legislation.0.electricity_acts %}
                                                 <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
-                                                    <a tabindex="-1" href="/knowledge-center/download_file?file_id={{file.id}}">{{file.filename}}</a>
+                                                    <a tabindex="-1" href="/knowledge_center/download_file?file_id={{file.id}}">{{file.filename}}</a>
                                                 </li>
                                                 
                                                 {% endfor %}
@@ -81,7 +81,7 @@
                                                         ">
                                                 {% for file in context.legislation.0.general_legislation %}
                                                 <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
-                                                    <a tabindex="-1" href="/knowledge-center/download_file?file_id={{file.id}}">{{file.filename}}</a>
+                                                    <a tabindex="-1" href="/knowledge_center/download_file?file_id={{file.id}}">{{file.filename}}</a>
                                                 </li>
                                                 {% endfor %}
                                                 
@@ -105,7 +105,7 @@
                                                         ">
                                                 {% for file in context.legislation.0.statutory_instruments %}
                                                 <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
-                                                    <a tabindex="-1" href="/knowledge-center/download_file?file_id={{file.id}}">{{file.filename}}</a>
+                                                    <a tabindex="-1" href="/knowledge_center/download_file?file_id={{file.id}}">{{file.filename}}</a>
                                                 </li>
                                                 {% endfor %}
                                                 
@@ -169,7 +169,7 @@
                                                         ">
                                                 {% for file in context.policies.0.commercial %}
                                                 <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
-                                                    <a tabindex="-1" href="/knowledge-center/download_file?file_id={{file.id}}">{{file.filename}}</a>
+                                                    <a tabindex="-1" href="/knowledge_center/download_file?file_id={{file.id}}">{{file.filename}}</a>
                                                 </li>
                                                 {% endfor %}
                                                 
@@ -193,7 +193,7 @@
                                                         ">
                                                 {% for file in context.policies.0.hr %}
                                                 <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
-                                                    <a tabindex="-1" href="/knowledge-center/download_file?file_id={{file.id}}">{{file.filename}}</a>
+                                                    <a tabindex="-1" href="/knowledge_center/download_file?file_id={{file.id}}">{{file.filename}}</a>
                                                 </li>
                                                 {% endfor %}
                                                 
@@ -217,7 +217,7 @@
                                                         ">
                                                 {% for file in context.policies.0.engineering %}
                                                 <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
-                                                    <a tabindex="-1" href="/knowledge-center/download_file?file_id={{file.id}}">{{file.filename}}</a>
+                                                    <a tabindex="-1" href="/knowledge_center/download_file?file_id={{file.id}}">{{file.filename}}</a>
                                                 </li>
                                                 {% endfor %}
                                                 
@@ -241,7 +241,7 @@
                                                         ">
                                                 {% for file in context.policies.0.finance %}
                                                 <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
-                                                    <a tabindex="-1" href="/knowledge-center/download_file?file_id={{file.id}}">{{file.filename}}</a>
+                                                    <a tabindex="-1" href="/knowledge_center/download_file?file_id={{file.id}}">{{file.filename}}</a>
                                                 </li>
                                                 {% endfor %}
                                                 
@@ -265,7 +265,7 @@
                                                         ">
                                                 {% for file in context.policies.0.ict %}
                                                 <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
-                                                    <a tabindex="-1" href="/knowledge-center/download_file?file_id={{file.id}}">{{file.filename}}</a>
+                                                    <a tabindex="-1" href="/knowledge_center/download_file?file_id={{file.id}}">{{file.filename}}</a>
                                                 </li>
                                                 {% endfor %}
                                                 
@@ -289,7 +289,7 @@
                                                         ">
                                                 {% for file in context.policies.0.risk %}
                                                 <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
-                                                    <a tabindex="-1" href="/knowledge-center/download_file?file_id={{file.id}}">{{file.filename}}</a>
+                                                    <a tabindex="-1" href="/knowledge_center/download_file?file_id={{file.id}}">{{file.filename}}</a>
                                                 </li>
                                                 {% endfor %}
                                                 
@@ -337,7 +337,7 @@
                                         transition duration-150 ease-in-out origin-top">
                                         {% for file in context.publication %}
                                         <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
-                                            <a tabindex="-1" href="/knowledge-center/download_file?file_id={{file.id}}">{{file.filename}}</a>
+                                            <a tabindex="-1" href="/knowledge_center/download_file?file_id={{file.id}}">{{file.filename}}</a>
                                         </li>
                                         {% endfor %}
                                
@@ -412,7 +412,7 @@
                                                                     ">
                                                             {% for file in context.engineering.0.1_10.0.reports %}
                                                             <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
-                                                                <a tabindex="-1" href="/knowledge-center/download_file?file_id={{file.id}}">{{file.filename}}</a>
+                                                                <a tabindex="-1" href="/knowledge_center/download_file?file_id={{file.id}}">{{file.filename}}</a>
                                                             </li>
                                                             {% endfor %}
                                                             </ul>
@@ -433,7 +433,7 @@
                                                                     ">
                                                             {% for file in context.engineering.0.1_10.0.protection %}
                                                             <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
-                                                                <a tabindex="-1" href="/knowledge-center/download_file?file_id={{file.id}}">{{file.filename}}</a>
+                                                                <a tabindex="-1" href="/knowledge_center/download_file?file_id={{file.id}}">{{file.filename}}</a>
                                                             </li>
                                                             {% endfor %}
                                                             </ul>
@@ -455,7 +455,7 @@
                                                                     ">
                                                             {% for file in context.engineering.0.1_10.0.earthing %}
                                                             <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
-                                                                <a tabindex="-1" href="/knowledge-center/download_file?file_id={{file.id}}">{{file.filename}}</a>
+                                                                <a tabindex="-1" href="/knowledge_center/download_file?file_id={{file.id}}">{{file.filename}}</a>
                                                             </li>
                                                             {% endfor %}
                                                             
@@ -478,7 +478,7 @@
                                                                     ">
                                                             {% for file in context.engineering.0.1_10.0.transformers %}
                                                             <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
-                                                                <a tabindex="-1" href="/knowledge-center/download_file?file_id={{file.id}}">{{file.filename}}</a>
+                                                                <a tabindex="-1" href="/knowledge_center/download_file?file_id={{file.id}}">{{file.filename}}</a>
                                                             </li>
                                                             {% endfor %}
                                                             
@@ -501,7 +501,7 @@
                                                                     ">
                                                             {% for file in context.engineering.0.1_10.0.fuses %}
                                                             <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
-                                                                <a tabindex="-1" href="/knowledge-center/download_file?file_id={{file.id}}">{{file.filename}}</a>
+                                                                <a tabindex="-1" href="/knowledge_center/download_file?file_id={{file.id}}">{{file.filename}}</a>
                                                             </li>
                                                             {% endfor %}
                                                             
@@ -524,7 +524,7 @@
                                                                     ">
                                                             {% for file in context.engineering.0.1_10.0.instruments %}
                                                             <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
-                                                                <a tabindex="-1" href="/knowledge-center/download_file?file_id={{file.id}}">{{file.filename}}</a>
+                                                                <a tabindex="-1" href="/knowledge_center/download_file?file_id={{file.id}}">{{file.filename}}</a>
                                                             </li>
                                                             {% endfor %}
                                                             
@@ -546,7 +546,7 @@
                                                                     ">
                                                             {% for file in context.engineering.0.1_10.0.gaskets %}
                                                             <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
-                                                                <a tabindex="-1" href="/knowledge-center/download_file?file_id={{file.id}}">{{file.filename}}</a>
+                                                                <a tabindex="-1" href="/knowledge_center/download_file?file_id={{file.id}}">{{file.filename}}</a>
                                                             </li>
                                                             {% endfor %}
                                                             </ul>
@@ -567,7 +567,7 @@
                                                                     ">
                                                             {% for file in context.engineering.0.1_10.0.switchgear %}
                                                             <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
-                                                                <a tabindex="-1" href="/knowledge-center/download_file?file_id={{file.id}}">{{file.filename}}</a>
+                                                                <a tabindex="-1" href="/knowledge_center/download_file?file_id={{file.id}}">{{file.filename}}</a>
                                                             </li>
                                                             {% endfor %}
                                                             </ul>
@@ -588,7 +588,7 @@
                                                                     ">
                                                             {% for file in context.engineering.0.1_10.0.regulations %}
                                                             <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
-                                                                <a tabindex="-1" href="/knowledge-center/download_file?file_id={{file.id}}">{{file.filename}}</a>
+                                                                <a tabindex="-1" href="/knowledge_center/download_file?file_id={{file.id}}">{{file.filename}}</a>
                                                             </li>
                                                             {% endfor %}
                                                             </ul>
@@ -609,7 +609,7 @@
                                                                     ">
                                                             {% for file in context.engineering.0.1_10.0.insulating_oils %}
                                                             <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
-                                                                <a tabindex="-1" href="/knowledge-center/download_file?file_id={{file.id}}">{{file.filename}}</a>
+                                                                <a tabindex="-1" href="/knowledge_center/download_file?file_id={{file.id}}">{{file.filename}}</a>
                                                             </li>
                                                             {% endfor %}
                                                             </ul>
@@ -648,7 +648,7 @@
                                                             ">
                                                     {% for file in context.engineering.0.11_20.0.clearance_distance %}
                                                     <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
-                                                        <a tabindex="-1" href="/knowledge-center/download_file?file_id={{file.id}}">{{file.filename}}</a>
+                                                        <a tabindex="-1" href="/knowledge_center/download_file?file_id={{file.id}}">{{file.filename}}</a>
                                                     </li>
                                                     {% endfor %}
                                                     
@@ -671,7 +671,7 @@
                                                             ">
                                                     {% for file in context.engineering.0.11_20.0.mines %}
                                                     <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
-                                                        <a tabindex="-1" href="/knowledge-center/download_file?file_id={{file.id}}">{{file.filename}}</a>
+                                                        <a tabindex="-1" href="/knowledge_center/download_file?file_id={{file.id}}">{{file.filename}}</a>
                                                     </li>
                                                     {% endfor %}
                                                     
@@ -694,7 +694,7 @@
                                                             ">
                                                     {% for file in context.engineering.0.11_20.0.interruptions %}
                                                     <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
-                                                        <a tabindex="-1" href="/knowledge-center/download_file?file_id={{file.id}}">{{file.filename}}</a>
+                                                        <a tabindex="-1" href="/knowledge_center/download_file?file_id={{file.id}}">{{file.filename}}</a>
                                                     </li>
                                                     {% endfor %}
                                                     
@@ -717,7 +717,7 @@
                                                             ">
                                                     {% for file in context.engineering.0.11_20.0.water_samples %}
                                                     <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
-                                                        <a tabindex="-1" href="/knowledge-center/download_file?file_id={{file.id}}">{{file.filename}}</a>
+                                                        <a tabindex="-1" href="/knowledge_center/download_file?file_id={{file.id}}">{{file.filename}}</a>
                                                     </li>
                                                     {% endfor %}
                                                     
@@ -740,7 +740,7 @@
                                                             ">
                                                     {% for file in context.engineering.0.11_20.0.cables %}
                                                     <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
-                                                        <a tabindex="-1" href="/knowledge-center/download_file?file_id={{file.id}}">{{file.filename}}</a>
+                                                        <a tabindex="-1" href="/knowledge_center/download_file?file_id={{file.id}}">{{file.filename}}</a>
                                                     </li>
                                                     {% endfor %}
                                                     
@@ -763,7 +763,7 @@
                                                             ">
                                                     {% for file in context.engineering.0.11_20.0.capital_works %}
                                                     <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
-                                                        <a tabindex="-1" href="/knowledge-center/download_file?file_id={{file.id}}">{{file.filename}}</a>
+                                                        <a tabindex="-1" href="/knowledge_center/download_file?file_id={{file.id}}">{{file.filename}}</a>
                                                     </li>
                                                     {% endfor %}
                                                     
@@ -786,7 +786,7 @@
                                                             ">
                                                     {% for file in context.engineering.0.11_20.0.gvt_planning %}
                                                     <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
-                                                        <a tabindex="-1" href="/knowledge-center/download_file?file_id={{file.id}}">{{file.filename}}</a>
+                                                        <a tabindex="-1" href="/knowledge_center/download_file?file_id={{file.id}}">{{file.filename}}</a>
                                                     </li>
                                                     {% endfor %}
                                                     
@@ -809,7 +809,7 @@
                                                             ">
                                                     {% for file in context.engineering.0.11_20.0.phase_rotation %}
                                                     <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
-                                                        <a tabindex="-1" href="/knowledge-center/download_file?file_id={{file.id}}">{{file.filename}}</a>
+                                                        <a tabindex="-1" href="/knowledge_center/download_file?file_id={{file.id}}">{{file.filename}}</a>
                                                     </li>
                                                     {% endfor %}
                                                     
@@ -832,7 +832,7 @@
                                                             ">
                                                     {% for file in context.engineering.0.11_20.0.insulators %}
                                                     <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
-                                                        <a tabindex="-1" href="/knowledge-center/download_file?file_id={{file.id}}">{{file.filename}}</a>
+                                                        <a tabindex="-1" href="/knowledge_center/download_file?file_id={{file.id}}">{{file.filename}}</a>
                                                     </li>
                                                     {% endfor %}
                                                     
@@ -855,7 +855,7 @@
                                                             ">
                                                     {% for file in context.engineering.0.11_20.0.locks %}
                                                     <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
-                                                        <a tabindex="-1" href="/knowledge-center/download_file?file_id={{file.id}}">{{file.filename}}</a>
+                                                        <a tabindex="-1" href="/knowledge_center/download_file?file_id={{file.id}}">{{file.filename}}</a>
                                                     </li>
                                                     {% endfor %}
                                                     
@@ -897,7 +897,7 @@
                                                             ">
                                                     {% for file in context.engineering.0.21_30.0.poles %}
                                                     <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
-                                                        <a tabindex="-1" href="/knowledge-center/download_file?file_id={{file.id}}">{{file.filename}}</a>
+                                                        <a tabindex="-1" href="/knowledge_center/download_file?file_id={{file.id}}">{{file.filename}}</a>
                                                     </li>
                                                     {% endfor %}
                                                     
@@ -920,7 +920,7 @@
                                                             ">
                                                     {% for file in context.engineering.0.21_30.0.substations %}
                                                     <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
-                                                        <a tabindex="-1" href="/knowledge-center/download_file?file_id={{file.id}}">{{file.filename}}</a>
+                                                        <a tabindex="-1" href="/knowledge_center/download_file?file_id={{file.id}}">{{file.filename}}</a>
                                                     </li>
                                                     {% endfor %}
                                                     
@@ -943,7 +943,7 @@
                                                             ">
                                                     {% for file in context.engineering.0.21_30.0.fire_fighting %}
                                                     <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
-                                                        <a tabindex="-1" href="/knowledge-center/download_file?file_id={{file.id}}">{{file.filename}}</a>
+                                                        <a tabindex="-1" href="/knowledge_center/download_file?file_id={{file.id}}">{{file.filename}}</a>
                                                     </li>
                                                     {% endfor %}
                                                     
@@ -966,7 +966,7 @@
                                                             ">
                                                     {% for file in context.engineering.0.21_30.0.defective %}
                                                     <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
-                                                        <a tabindex="-1" href="/knowledge-center/download_file?file_id={{file.id}}">{{file.filename}}</a>
+                                                        <a tabindex="-1" href="/knowledge_center/download_file?file_id={{file.id}}">{{file.filename}}</a>
                                                     </li>
                                                     {% endfor %}
                                                     
@@ -989,7 +989,7 @@
                                                             ">
                                                     {% for file in context.engineering.0.21_30.0.services %}
                                                     <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
-                                                        <a tabindex="-1" href="/knowledge-center/download_file?file_id={{file.id}}">{{file.filename}}</a>
+                                                        <a tabindex="-1" href="/knowledge_center/download_file?file_id={{file.id}}">{{file.filename}}</a>
                                                     </li>
                                                     {% endfor %}
                                                     
@@ -1012,7 +1012,7 @@
                                                             ">
                                                     {% for file in context.engineering.0.21_30.0.consumer_equipments %}
                                                     <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
-                                                        <a tabindex="-1" href="/knowledge-center/download_file?file_id={{file.id}}">{{file.filename}}</a>
+                                                        <a tabindex="-1" href="/knowledge_center/download_file?file_id={{file.id}}">{{file.filename}}</a>
                                                     </li>
                                                     {% endfor %}
                                                     
@@ -1035,7 +1035,7 @@
                                                             ">
                                                     {% for file in context.engineering.0.21_30.0.lift_equipments %}
                                                     <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
-                                                        <a tabindex="-1" href="/knowledge-center/download_file?file_id={{file.id}}">{{file.filename}}</a>
+                                                        <a tabindex="-1" href="/knowledge_center/download_file?file_id={{file.id}}">{{file.filename}}</a>
                                                     </li>
                                                     {% endfor %}
                                                     
@@ -1058,7 +1058,7 @@
                                                             ">
                                                     {% for file in context.engineering.0.21_30.0.transport %}
                                                     <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
-                                                        <a tabindex="-1" href="/knowledge-center/download_file?file_id={{file.id}}">{{file.filename}}</a>
+                                                        <a tabindex="-1" href="/knowledge_center/download_file?file_id={{file.id}}">{{file.filename}}</a>
                                                     </li>
                                                     {% endfor %}
                                                     
@@ -1081,7 +1081,7 @@
                                                             ">
                                                     {% for file in context.engineering.0.21_30.0.lighting_protection %}
                                                     <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
-                                                        <a tabindex="-1" href="/knowledge-center/download_file?file_id={{file.id}}">{{file.filename}}</a>
+                                                        <a tabindex="-1" href="/knowledge_center/download_file?file_id={{file.id}}">{{file.filename}}</a>
                                                     </li>
                                                     {% endfor %}
                                                     
@@ -1104,7 +1104,7 @@
                                                             ">
                                                     {% for file in context.engineering.0.21_30.0.insulation %}
                                                     <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
-                                                        <a tabindex="-1" href="/knowledge-center/download_file?file_id={{file.id}}">{{file.filename}}</a>
+                                                        <a tabindex="-1" href="/knowledge_center/download_file?file_id={{file.id}}">{{file.filename}}</a>
                                                     </li>
                                                     {% endfor %}
                                                     
@@ -1146,7 +1146,7 @@
                                                             ">
                                                     {% for file in context.engineering.0.31_45.0.cable_jointing %}
                                                     <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
-                                                        <a tabindex="-1" href="/knowledge-center/download_file?file_id={{file.id}}">{{file.filename}}</a>
+                                                        <a tabindex="-1" href="/knowledge_center/download_file?file_id={{file.id}}">{{file.filename}}</a>
                                                     </li>
                                                     {% endfor %}
                                                     
@@ -1169,7 +1169,7 @@
                                                             ">
                                                     {% for file in context.engineering.0.31_45.0.capacitors %}
                                                     <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
-                                                        <a tabindex="-1" href="/knowledge-center/download_file?file_id={{file.id}}">{{file.filename}}</a>
+                                                        <a tabindex="-1" href="/knowledge_center/download_file?file_id={{file.id}}">{{file.filename}}</a>
                                                     </li>
                                                     {% endfor %}
                                                     
@@ -1192,7 +1192,7 @@
                                                             ">
                                                     {% for file in context.engineering.0.31_45.0.explosives %}
                                                     <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
-                                                        <a tabindex="-1" href="/knowledge-center/download_file?file_id={{file.id}}">{{file.filename}}</a>
+                                                        <a tabindex="-1" href="/knowledge_center/download_file?file_id={{file.id}}">{{file.filename}}</a>
                                                     </li>
                                                     {% endfor %}
                                                     
@@ -1215,7 +1215,7 @@
                                                             ">
                                                     {% for file in context.engineering.0.31_45.0.standard_stock %}
                                                     <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
-                                                        <a tabindex="-1" href="/knowledge-center/download_file?file_id={{file.id}}">{{file.filename}}</a>
+                                                        <a tabindex="-1" href="/knowledge_center/download_file?file_id={{file.id}}">{{file.filename}}</a>
                                                     </li>
                                                     {% endfor %}
                                                     
@@ -1238,7 +1238,7 @@
                                                             ">
                                                     {% for file in context.engineering.0.31_45.0.cradles %}
                                                     <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
-                                                        <a tabindex="-1" href="/knowledge-center/download_file?file_id={{file.id}}">{{file.filename}}</a>
+                                                        <a tabindex="-1" href="/knowledge_center/download_file?file_id={{file.id}}">{{file.filename}}</a>
                                                     </li>
                                                     {% endfor %}
                                                     
@@ -1261,7 +1261,7 @@
                                                             ">
                                                     {% for file in context.engineering.0.31_45.0.standard_11kv %}
                                                     <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
-                                                        <a tabindex="-1" href="/knowledge-center/download_file?file_id={{file.id}}">{{file.filename}}</a>
+                                                        <a tabindex="-1" href="/knowledge_center/download_file?file_id={{file.id}}">{{file.filename}}</a>
                                                     </li>
                                                     {% endfor %}
                                                     
@@ -1284,7 +1284,7 @@
                                                             ">
                                                     {% for file in context.engineering.0.31_45.0.conductors %}
                                                     <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
-                                                        <a tabindex="-1" href="/knowledge-center/download_file?file_id={{file.id}}">{{file.filename}}</a>
+                                                        <a tabindex="-1" href="/knowledge_center/download_file?file_id={{file.id}}">{{file.filename}}</a>
                                                     </li>
                                                     {% endfor %}
                                                     
@@ -1307,7 +1307,7 @@
                                                             ">
                                                     {% for file in context.engineering.0.31_45.0.road_rail %}
                                                     <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
-                                                        <a tabindex="-1" href="/knowledge-center/download_file?file_id={{file.id}}">{{file.filename}}</a>
+                                                        <a tabindex="-1" href="/knowledge_center/download_file?file_id={{file.id}}">{{file.filename}}</a>
                                                     </li>
                                                     {% endfor %}
                                                     
@@ -1330,7 +1330,7 @@
                                                             ">
                                                     {% for file in context.engineering.0.31_45.0.regulations %}
                                                     <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
-                                                        <a tabindex="-1" href="/knowledge-center/download_file?file_id={{file.id}}">{{file.filename}}</a>
+                                                        <a tabindex="-1" href="/knowledge_center/download_file?file_id={{file.id}}">{{file.filename}}</a>
                                                     </li>
                                                     {% endfor %}
                                                     
@@ -1353,7 +1353,7 @@
                                                             ">
                                                     {% for file in context.engineering.0.31_45.0.power_stations %}
                                                     <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
-                                                        <a tabindex="-1" href="/knowledge-center/download_file?file_id={{file.id}}">{{file.filename}}</a>
+                                                        <a tabindex="-1" href="/knowledge_center/download_file?file_id={{file.id}}">{{file.filename}}</a>
                                                     </li>
                                                     {% endfor %}
                                                     
@@ -1376,7 +1376,7 @@
                                                             ">
                                                     {% for file in context.engineering.0.31_45.0.substation_batteries %}
                                                     <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
-                                                        <a tabindex="-1" href="/knowledge-center/download_file?file_id={{file.id}}">{{file.filename}}</a>
+                                                        <a tabindex="-1" href="/knowledge_center/download_file?file_id={{file.id}}">{{file.filename}}</a>
                                                     </li>
                                                     {% endfor %}
                                                     
@@ -1399,7 +1399,7 @@
                                                             ">
                                                     {% for file in context.engineering.0.31_45.0.safety_rules %}
                                                     <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
-                                                        <a tabindex="-1" href="/knowledge-center/download_file?file_id={{file.id}}">{{file.filename}}</a>
+                                                        <a tabindex="-1" href="/knowledge_center/download_file?file_id={{file.id}}">{{file.filename}}</a>
                                                     </li>
                                                     {% endfor %}
                                                     
@@ -1422,7 +1422,7 @@
                                                             ">
                                                     {% for file in context.engineering.0.31_45.0.high_mast %}
                                                     <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
-                                                        <a tabindex="-1" href="/knowledge-center/download_file?file_id={{file.id}}">{{file.filename}}</a>
+                                                        <a tabindex="-1" href="/knowledge_center/download_file?file_id={{file.id}}">{{file.filename}}</a>
                                                     </li>
                                                     {% endfor %}
                                                     
@@ -1445,7 +1445,7 @@
                                                             ">
                                                     {% for file in context.engineering.0.31_45.0.planning_policy %}
                                                     <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
-                                                        <a tabindex="-1" href="/knowledge-center/download_file?file_id={{file.id}}">{{file.filename}}</a>
+                                                        <a tabindex="-1" href="/knowledge_center/download_file?file_id={{file.id}}">{{file.filename}}</a>
                                                     </li>
                                                     {% endfor %}
                                                     
@@ -1468,7 +1468,7 @@
                                                             ">
                                                     {% for file in context.engineering.0.31_45.0.procurement %}
                                                     <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
-                                                        <a tabindex="-1" href="/knowledge-center/download_file?file_id={{file.id}}">{{file.filename}}</a>
+                                                        <a tabindex="-1" href="/knowledge_center/download_file?file_id={{file.id}}">{{file.filename}}</a>
                                                     </li>
                                                     {% endfor %}
                                                     
@@ -1536,7 +1536,7 @@
                                                         ">
                                                 {% for file in context.user_manual.0.commercial %}
                                                 <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
-                                                    <a tabindex="-1" href="/knowledge-center/download_file?file_id={{file.id}}">{{file.filename}}</a>
+                                                    <a tabindex="-1" href="/knowledge_center/download_file?file_id={{file.id}}">{{file.filename}}</a>
                                                 </li>
                                                 {% endfor %}
                                                 
@@ -1560,7 +1560,7 @@
                                                         ">
                                                 {% for file in context.user_manual.0.hr %}
                                                 <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
-                                                    <a tabindex="-1" href="/knowledge-center/download_file?file_id={{file.id}}">{{file.filename}}</a>
+                                                    <a tabindex="-1" href="/knowledge_center/download_file?file_id={{file.id}}">{{file.filename}}</a>
                                                 </li>
                                                 {% endfor %}
                                                 
@@ -1599,7 +1599,7 @@
                                                             ">
                                                     {% for file in context.user_manual.0.engineering.0.switchgear %}
                                                     <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
-                                                        <a tabindex="-1" href="/knowledge-center/download_file?file_id={{file.id}}">{{file.filename}}</a>
+                                                        <a tabindex="-1" href="/knowledge_center/download_file?file_id={{file.id}}">{{file.filename}}</a>
                                                     </li>
                                                     {% endfor %}
                                                     
@@ -1622,7 +1622,7 @@
                                                             ">
                                                     {% for file in context.user_manual.0.engineering.0.drone_technology %}
                                                     <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
-                                                        <a tabindex="-1" href="/knowledge-center/download_file?file_id={{file.id}}">{{file.filename}}</a>
+                                                        <a tabindex="-1" href="/knowledge_center/download_file?file_id={{file.id}}">{{file.filename}}</a>
                                                     </li>
                                                     {% endfor %}
                                                     
@@ -1645,7 +1645,7 @@
                                                             ">
                                                     {% for file in context.user_manual.0.engineering.0.ndm %}
                                                     <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
-                                                        <a tabindex="-1" href="/knowledge-center/download_file?file_id={{file.id}}">{{file.filename}}</a>
+                                                        <a tabindex="-1" href="/knowledge_center/download_file?file_id={{file.id}}">{{file.filename}}</a>
                                                     </li>
                                                     {% endfor %}
                                                     
@@ -1668,7 +1668,7 @@
                                                             ">
                                                     {% for file in context.user_manual.0.engineering.0.gis %}
                                                     <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
-                                                        <a tabindex="-1" href="/knowledge-center/download_file?file_id={{file.id}}">{{file.filename}}</a>
+                                                        <a tabindex="-1" href="/knowledge_center/download_file?file_id={{file.id}}">{{file.filename}}</a>
                                                     </li>
                                                     {% endfor %}
                                                     
@@ -1691,7 +1691,7 @@
                                                             ">
                                                     {% for file in context.user_manual.0.engineering.0.itrack_zim %}
                                                     <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
-                                                        <a tabindex="-1" href="/knowledge-center/download_file?file_id={{file.id}}">{{file.filename}}</a>
+                                                        <a tabindex="-1" href="/knowledge_center/download_file?file_id={{file.id}}">{{file.filename}}</a>
                                                     </li>
                                                     {% endfor %}
                                                     
@@ -1714,7 +1714,7 @@
                                                             ">
                                                     {% for file in context.user_manual.0.engineering.0.sap %}
                                                     <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
-                                                        <a tabindex="-1" href="/knowledge-center/download_file?file_id={{file.id}}">{{file.filename}}</a>
+                                                        <a tabindex="-1" href="/knowledge_center/download_file?file_id={{file.id}}">{{file.filename}}</a>
                                                     </li>
                                                     {% endfor %}
                                                     </ul>
@@ -1736,7 +1736,7 @@
                                                             ">
                                                     {% for file in context.user_manual.0.engineering.0.oms %}
                                                     <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
-                                                        <a tabindex="-1" href="/knowledge-center/download_file?file_id={{file.id}}">{{file.filename}}</a>
+                                                        <a tabindex="-1" href="/knowledge_center/download_file?file_id={{file.id}}">{{file.filename}}</a>
                                                     </li>
                                                     {% endfor %} 
                                                     </ul>
@@ -1761,7 +1761,7 @@
                                                         ">
                                                 {% for file in context.user_manual.0.finance %}
                                                 <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
-                                                    <a tabindex="-1" href="/knowledge-center/download_file?file_id={{file.id}}">{{file.filename}}</a>
+                                                    <a tabindex="-1" href="/knowledge_center/download_file?file_id={{file.id}}">{{file.filename}}</a>
                                                 </li>
                                                 {% endfor %}
                                                 
@@ -1785,7 +1785,7 @@
                                                         ">
                                                 {% for file in context.user_manual.0.ict %}
                                                 <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
-                                                    <a tabindex="-1" href="/knowledge-center/download_file?file_id={{file.id}}">{{file.filename}}</a>
+                                                    <a tabindex="-1" href="/knowledge_center/download_file?file_id={{file.id}}">{{file.filename}}</a>
                                                 </li>
                                                 {% endfor %}
                                                 
@@ -1809,7 +1809,7 @@
                                                         ">
                                                 {% for file in context.user_manual.0.risk %}
                                                 <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
-                                                    <a tabindex="-1" href="/knowledge-center/download_file?file_id={{file.id}}">{{file.filename}}</a>
+                                                    <a tabindex="-1" href="/knowledge_center/download_file?file_id={{file.id}}">{{file.filename}}</a>
                                                 </li>
                                                 {% endfor %}
                                                 
@@ -1874,7 +1874,7 @@
                                                         ">
                                                 {% for file in context.drawings.0.drawings %}
                                                 <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
-                                                    <a tabindex="-1" href="/knowledge-center/download_file?file_id={{file.id}}">{{file.filename}}</a>
+                                                    <a tabindex="-1" href="/knowledge_center/download_file?file_id={{file.id}}">{{file.filename}}</a>
                                                 </li>
                                                 {% endfor %}
                                                 
@@ -1898,7 +1898,7 @@
                                                         ">
                                                 {% for file in context.drawings.0.standards %}
                                                 <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
-                                                    <a tabindex="-1" href="/knowledge-center/download_file?file_id={{file.id}}">{{file.filename}}</a>
+                                                    <a tabindex="-1" href="/knowledge_center/download_file?file_id={{file.id}}">{{file.filename}}</a>
                                                 </li>
                                                 {% endfor %}
                                                 
@@ -1922,7 +1922,7 @@
                                                         ">
                                                 {% for file in context.drawings.0.specifications %}
                                                 <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
-                                                    <a tabindex="-1" href="/knowledge-center/download_file?file_id={{file.id}}">{{file.filename}}</a>
+                                                    <a tabindex="-1" href="/knowledge_center/download_file?file_id={{file.id}}">{{file.filename}}</a>
                                                 </li>
                                                 {% endfor %}
                                                 
@@ -2001,7 +2001,7 @@
                                                                     ">
                                                             {% for file in context.knowledge_base.0.commercial.0.client_risk %}
                                                             <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
-                                                                <a tabindex="-1" href="/knowledge-center/download_file?file_id={{file.id}}">{{file.filename}}</a>
+                                                                <a tabindex="-1" href="/knowledge_center/download_file?file_id={{file.id}}">{{file.filename}}</a>
                                                             </li>
                                                             {% endfor %}
                                                             
@@ -2025,7 +2025,7 @@
                                                                     ">
                                                             {% for file in context.knowledge_base.0.commercial.0.payment_risk %}
                                                             <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
-                                                                <a tabindex="-1" href="/knowledge-center/download_file?file_id={{file.id}}">{{file.filename}}</a>
+                                                                <a tabindex="-1" href="/knowledge_center/download_file?file_id={{file.id}}">{{file.filename}}</a>
                                                             </li>
                                                             {% endfor %}
                                                             
@@ -2049,7 +2049,7 @@
                                                                     ">
                                                             {% for file in context.knowledge_base.0.commercial.0.revenue_risk %}
                                                             <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
-                                                                <a tabindex="-1" href="/knowledge-center/download_file?file_id={{file.id}}">{{file.filename}}</a>
+                                                                <a tabindex="-1" href="/knowledge_center/download_file?file_id={{file.id}}">{{file.filename}}</a>
                                                             </li>
                                                             {% endfor %}
                                                             
@@ -2091,7 +2091,7 @@
                                                                     ">
                                                             {% for file in context.knowledge_base.0.engineering.0.maintainance %}
                                                             <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
-                                                                <a tabindex="-1" href="/knowledge-center/download_file?file_id={{file.id}}">{{file.filename}}</a>
+                                                                <a tabindex="-1" href="/knowledge_center/download_file?file_id={{file.id}}">{{file.filename}}</a>
                                                             </li>
                                                             {% endfor %}
                                                             
@@ -2115,7 +2115,7 @@
                                                                     ">
                                                             {% for file in context.knowledge_base.0.engineering.0.drone_tech %}
                                                             <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
-                                                                <a tabindex="-1" href="/knowledge-center/download_file?file_id={{file.id}}">{{file.filename}}</a>
+                                                                <a tabindex="-1" href="/knowledge_center/download_file?file_id={{file.id}}">{{file.filename}}</a>
                                                             </li>
                                                             {% endfor %}
                                                             
@@ -2141,7 +2141,7 @@
                                                         ">
                                                 {% for file in context.knowledge_base.0.hr %}
                                                 <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
-                                                    <a tabindex="-1" href="/knowledge-center/download_file?file_id={{file.id}}">{{file.filename}}</a>
+                                                    <a tabindex="-1" href="/knowledge_center/download_file?file_id={{file.id}}">{{file.filename}}</a>
                                                 </li>
                                                 {% endfor %}
                                                 
@@ -2165,7 +2165,7 @@
                                                         ">
                                                 {% for file in context.knowledge_base.0.risk %}
                                                 <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
-                                                    <a tabindex="-1" href="/knowledge-center/download_file?file_id={{file.id}}">{{file.filename}}</a>
+                                                    <a tabindex="-1" href="/knowledge_center/download_file?file_id={{file.id}}">{{file.filename}}</a>
                                                 </li>
                                                 {% endfor %}
                                                 
@@ -2189,7 +2189,7 @@
                                                         ">
                                                 {% for file in context.knowledge_base.0.finance %}
                                                 <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
-                                                    <a tabindex="-1" href="/knowledge-center/download_file?file_id={{file.id}}">{{file.filename}}</a>
+                                                    <a tabindex="-1" href="/knowledge_center/download_file?file_id={{file.id}}">{{file.filename}}</a>
                                                 </li>
                                                 {% endfor %}
                                                 
@@ -2228,7 +2228,7 @@
                                                                     ">
                                                             {% for file in context.knowledge_base.0.ict.0.user_support %}
                                                             <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
-                                                                <a tabindex="-1" href="/knowledge-center/download_file?file_id={{file.id}}">{{file.filename}}</a>
+                                                                <a tabindex="-1" href="/knowledge_center/download_file?file_id={{file.id}}">{{file.filename}}</a>
                                                             </li>
                                                             {% endfor %}
                                                             
@@ -2252,7 +2252,7 @@
                                                                     ">
                                                             {% for file in context.knowledge_base.0.ict.0.network_support %}
                                                             <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
-                                                                <a tabindex="-1" href="/knowledge-center/download_file?file_id={{file.id}}">{{file.filename}}</a>
+                                                                <a tabindex="-1" href="/knowledge_center/download_file?file_id={{file.id}}">{{file.filename}}</a>
                                                             </li>
                                                             {% endfor %}
                                                             
@@ -2276,7 +2276,7 @@
                                                                     ">
                                                             {% for file in context.knowledge_base.0.ict.0.ict_audit %}
                                                             <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
-                                                                <a tabindex="-1" href="/knowledge-center/download_file?file_id={{file.id}}">{{file.filename}}</a>
+                                                                <a tabindex="-1" href="/knowledge_center/download_file?file_id={{file.id}}">{{file.filename}}</a>
                                                             </li>
                                                             {% endfor %}
                                                             
@@ -2298,7 +2298,7 @@
                                                                     ">
                                                             {% for file in context.knowledge_base.0.ict.0.trending_tect %}
                                                             <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
-                                                                <a tabindex="-1" href="/knowledge-center/download_file?file_id={{file.id}}">{{file.filename}}</a>
+                                                                <a tabindex="-1" href="/knowledge_center/download_file?file_id={{file.id}}">{{file.filename}}</a>
                                                             </li>
                                                             {% endfor %}
                                                             

@@ -144,13 +144,13 @@
           render: function (data, type, row, meta) {
             let archiveButton = ""
             if(row.archived === true){
-              archiveButton = `<a type="button" class="btn btn-warning" href='/knowledge-center/unarchive_file/${row.id}' >
+              archiveButton = `<a type="button" class="btn btn-warning" href='/knowledge_center/unarchive_file/${row.id}' >
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" />
                 </svg>                               
               </a>`
             } else {
-              archiveButton = `<a type="button" class="btn btn-danger" href='/knowledge-center/archive_file/${row.id}' >
+              archiveButton = `<a type="button" class="btn btn-danger" href='/knowledge_center/archive_file/${row.id}' >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   fill="none"
@@ -169,12 +169,12 @@
             }
             return `
               <div>
-                <a type="button" class="btn btn-info" href='/knowledge-center/edit_file/${row.id}' >
+                <a type="button" class="btn btn-info" href='/knowledge_center/edit_file/${row.id}' >
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
                   </svg>                
                 </a>
-                <a type="button" class="btn btn-secondary" href='/knowledge-center/download_file?file_id=${row.id}' >
+                <a type="button" class="btn btn-secondary" href='/knowledge_center/download_file?file_id=${row.id}' >
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 13.5l3 3m0 0l3-3m-3 3v-6m1.06-4.19l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" />
                   </svg>                               
