@@ -14,12 +14,7 @@ class RFQ(models.Model):
     quantity = models.IntegerField(blank=True, null=True)
     proc_ref = models.CharField(max_length=100, blank=True, null=True)
     amount = models.FloatField(blank=True, null=True)
-    PAYMENT_MODE_CHOICES = [
-        ('USD Cash', 'USD Cash'),
-        ('USD Swipe', 'USD Swipe'),
-        ('ZWL Cash', 'ZWL Cash'),
-        ('ZWL Transfer', 'ZWL Transfer'),
-    ]
+    PAYMENT_MODE_CHOICES = [('USD Cash', 'USD Cash'),('USD Swipe', 'USD Swipe'),('ZWL Cash', 'ZWL Cash'),('ZWL Transfer', 'ZWL Transfer'),]
     payment_mode = models.CharField(max_length=100, blank=True, null=True, choices=PAYMENT_MODE_CHOICES)
     requested_by = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True, blank=True, null=True)
@@ -41,9 +36,45 @@ class RFQ(models.Model):
 class Quotation(models.Model):
     rfq = models.ForeignKey(RFQ, on_delete=models.CASCADE)
     quotation_file = models.FileField(upload_to='uploads/rfq')
+    supplier_name = models.CharField(max_length=100)
+    amount = models.IntegerField()    
 
-    # class Meta:
-    #     db_table = 'quotation'
+
+    def __str__(self):
+        return f"Quotation from {self.supplier_name} for Order {self.rfq}"
+
+class Order(models.Model):
+    rfq = models.ForeignKey('RFQ', on_delete=models.CASCADE)
+    order_number = models.CharField(max_length=20)
+    signed = models.BooleanField(default=False)
+    cancelled = models.BooleanField(default=False)
+
+    def __str__(self):
+        return self.order_number
+
+
+class SiteVisit(models.Model):
+    order = models.ForeignKey('Order', on_delete=models.CASCADE)
+    scheduled = models.BooleanField(default=False)
+    completed = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"Site Visit for Order {self.order}"
+
+class Bid(models.Model):
+    rfq = models.ForeignKey('RFQ', on_delete=models.CASCADE)
+    response_received = models.BooleanField(default=False)
+    second_non_response = models.BooleanField(default=False)
 
     def __str__(self):
         return str(self.pk)
+
+        return f"Bid for RFQ {self.rfq}"
+
+
+class Delivery(models.Model):
+    order = models.ForeignKey('Order', on_delete=models.CASCADE)
+    able_to_deliver = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"Delivery for Order {self.order}"
