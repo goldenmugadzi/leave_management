@@ -9,15 +9,16 @@ from .models import PBNC, TD, UPO, Inspections, Maintenance
 from django.core import serializers
 from django.db.models import Count
 from django.db.models.functions import ExtractWeek
+from django.contrib.auth.decorators import login_required
 
 from it.users.models import Sections, UserProfile, Depots, Districts, Regions
 
 MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
 
 # Create your views here.
+@login_required(login_url='/accounts/login/')
 def dashboard_index(request):
     
-    user_title = request.user.get_full_name()    
     user_title = request.user.get_full_name()
     url_path = request.path.split("/")
     

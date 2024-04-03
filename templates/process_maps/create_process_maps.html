@@ -23,7 +23,7 @@
               <label
                 for="file_name"
                 class="block text-sm font-medium leading-6 text-gray-900"
-                >Process Map Name</label
+                >Process Name</label
               >
               <div class="mt-2">
                 <input
@@ -31,7 +31,7 @@
                   name="file_name"
                   id="file_name"
                   autocomplete="given-name"
-                  class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                  class="block w-full rounded-md border-0 py-2 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                 />
               </div>
             </div>
@@ -41,51 +41,58 @@
               <label
                 for="section"
                 class="block text-sm font-medium leading-6 text-gray-900"
-                >File Type</label
+                >File Category</label
               >
               <div class="mt-2">
                 <select
-                  id="category_id"
-                  name="category_id"
+                  id="filetype"
+                  name="filetype"
                   autocomplete="category_id"
-                  class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+                  class="block w-full rounded-md border-0 py-2 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
                 >
-                  <option value="">Select Process Map Category</option>
-                  <option value="ENGINEERING">ENGINEERING</option>
-                  <option value="COMMERCIAL">COMMERCIAL</option>
-                  <option value="FINANCE">FINANCE</option>
-                  <option value="HUMAN RESOURCES">HUMAN RESOURCES</option>
-                  <option value="ICT">ICT</option>
-                  <option value="RISK MANAGEMENT">RISK MANAGEMENT</option>
-                  <option value="PROCUREMENT">PROCUREMENT</option>
-                  <option value="LEGAL SERVICES">LEGAL SERVICES</option> 
-                  <option value="PUBLIC RELATIONS">PUBLIC RELATIONS</option> 
-
-                  
-            </select>
-                
+                  <option value="">Select File Category</option>
+                  {% for option in filetypes %}
+                    <option value="{{ option.id }}">{{ option.name }}</option>
+                  {% endfor %}
+                </select>
               </div>
             </div>
 
             <div
-            id="subtypel">
+            id="subtype1">
               <label
                 for="subtype"
                 class="text-sm font-medium leading-6 text-gray-900"
-                >Sub type</label
+                >Subtype</label
               >
               <div class="mt-2">
                 <select
                 id="subtype"
                 name="subtype"
-                autocomplete="category_id"
-                class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+                autocomplete="subtype"
+                class="block w-full rounded-md border-0 py-2 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
               >
-              
               </select>
               </div>
             </div>
 
+            <div
+            id="subtype2">
+              <label
+                for="subsubtype"
+                class="text-sm font-medium leading-6 text-gray-900"
+                >Subsubtype</label
+              >
+              <div class="mt-2">
+                <select
+                id="subsubtype"
+                name="subsubtype"
+                autocomplete="subsubtype"
+                class="block w-full rounded-md border-0 py-2 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+              >
+              </select>
+              </div>
+            </div>
 
             <div>
                 <label
@@ -99,7 +106,7 @@
                     name="uploaded_file"
                     id="uploaded_file"
                     autocomplete="family-name"
-                    class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                    class="block w-full rounded-md border-0 py-2 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                   />
                 </div>
               </div>
@@ -115,15 +122,12 @@
                     id="region"
                     name="region"
                     autocomplete="region"
-                    class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+                    class="block w-full rounded-md border-0 py-2 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
                   >
                     <option>Select Region</option>
-                    <option value="Harare Region">Harare Region</option>
-                    <option value="Eastern Region">Eastern Region</option>
-                    <option value="Southern Region">Southern Region</option>
-                    <option value="Westen Region">Westen Region</option>
-                    <option value="Transmission west Region">Transmission west Region</option>
-                    <option value="Transmission south Region">Transmission south Region</option>
+                    {% for region in regions %}
+                      <option value="{{ region.id }}">{{ region.region }}</option>
+                    {% endfor %}
                   </select>
                 </div>
               </div>
@@ -155,69 +159,44 @@
 {% block scripts %}
 <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
 <script>
- // Get references to the parent and child select elements
-const parentSelect = document.getElementById("category_id");
-const childSelect = document.getElementById("subtype");
-const childSelect1 = document.getElementById("subtypel");
+  $("#filetype").change(function() {
+    var selectedValue = $(this).val();
+    var fileType = document.getElementById("filetype").value;
+    $.ajax({
+      url: '/processes/subtype/get/'+ selectedValue,
+      type: 'GET',
+      success: function(data) {
+          var secondCategory = document.getElementById("subtype");
+          // Clear existing options
+          secondCategory.options.length = 0;
 
-// Add event listener to the parent select element
-parentSelect.addEventListener("change", function() {
-  // Get the selected value of the parent select
-  const selectedValue = parentSelect.value;
+          // Add new options based on data
+          for (var option of data.subtypes) {
+              var opt = new Option(option.name, option.id);
+              secondCategory.add(opt);
+          }
+      }
+    });
+  });
+  $("#subtype").change(function() {
+    var selectedValue = $(this).val();
+    var fileType = document.getElementById("subtype").value;
+    $.ajax({
+      url: '/processes/subsubtype/get/'+ selectedValue,
+      type: 'GET',
+      success: function(data) {
+          var secondCategory = document.getElementById("subsubtype");
+          // Clear existing options
+          secondCategory.options.length = 0;
 
-  // Check if a value is selected
-  if (selectedValue !== "") {
-    // Show the child select element
-    childSelect.style.display = "block";
-    childSelect1.style.display = "block";
-
-    // Update child select options based on the selected parent value (modify this logic based on your specific needs)
-    childSelect.options.length = 0; // Clear existing options
-    if (selectedValue === "ENGINEERING") {
-      const option1 = document.createElement("option");
-      option1.value = "Planning processes";
-      option1.text = "Planning processes";
-      childSelect.add(option1);
-
-      const option2 = document.createElement("option");
-      option2.value = "Maintenance processes";
-      option2.text = "Maintenance processes";
-      childSelect.add(option2);
-
-      const option3 = document.createElement("option");
-      option3.value = "Project processes";
-      option3.text = "Project processes";
-      childSelect.add(option3);
-    } else if (selectedValue === "COMMERCIAL") {
-      const option4 = document.createElement("option");
-      option4.value = "Client processes";
-      option4.text = "Client processes";
-      childSelect.add(option4);
-
-      const option5 = document.createElement("option");
-      option5.value = "Revenue assuarance processes";
-      option5.text = "Revenue assuarance processes";
-      childSelect.add(option5);
-
-      const option6 = document.createElement("option");
-      option6.value = "Payment processes";
-      option6.text = "Payment processes";
-      childSelect.add(option6);
-    } else {
-      // Handle other options if needed
-    }
-  } else {
-    // Hide the child select element if no value is selected
-    childSelect.style.display = "none";
-    childSelect1.style.display = "none";
-  }
-});
-
-// Initially hide the child select element
-childSelect.style.display = "none";
-childSelect1.style.display = "block";
-
-
+          // Add new options based on data
+          for (var option of data.subsubtypes) {
+              var opt = new Option(option.name, option.id);
+              secondCategory.add(opt);
+          }
+      }
+    });
+  });
 </script>
 {% endblock scripts %}
 

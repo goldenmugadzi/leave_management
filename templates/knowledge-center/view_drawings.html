@@ -1,7 +1,7 @@
 {% extends 'admin_layout.html' %} {% load static %} {% block content %}
 
 {% comment %} <div>
-    <form action="/knowledge-center/search">
+    <form action="/knowledge_center/search">
       {% csrf_token %}
   
       <div class="flex mt-10 px-3 py-3">
@@ -34,7 +34,7 @@
           <a
             class="m-3 text-blue-600 rounded-xl no-underline font-semibold decoration-sky-600"
             tabindex="-1"
-            href="/knowledge-center/download_file?file_id={{result.id}}"
+            href="/knowledge_center/download_file?file_id={{result.id}}"
           >
             {{ result.name }}
           </a>
@@ -46,19 +46,19 @@
     </div>
   </div> {% endcomment %}
 <div style="margin-bottom: 25px;" class="content-wrapper flex flex-wrap p-2 m-px">
-    <a href="/knowledge-center/view_legislation/drawing">
+    <a href="/knowledge_center/view_legislation/drawing">
     <button  style="width: 16rem;height: 10rem;background-color: #a21caf;margin-right: 20px;margin-bottom: 25px" class=" w-28 bg-blue-800 outline-none focus:outline-none border px-3 py-1 rounded flex items-center">
         <span class="pr-1 font-semibold flex-1 text-blue-50">Drawings</span>
        
     </button>
     </a>
-    <a href="/knowledge-center/view_legislation/standards">
+    <a href="/knowledge_center/view_legislation/standards">
     <button  style="width: 16rem;height: 10rem;bg-citron-200;margin-right: 20px;" class=" w-28 bg-citron-200 outline-none focus:outline-none border px-3 py-1 rounded flex items-center">
         <span class="pr-1 font-semibold flex-1 text-blue-50">Standards</span>
         
     </button>
     </a>
-    <a href="/knowledge-center/view_legislation/specifications">
+    <a href="/knowledge_center/view_legislation/specifications">
     <button  style="width: 16rem;height: 10rem;background-color: #1e1b4b;margin-right: 20px;" class=" w-28 bg-blue-800 outline-none focus:outline-none border px-3 py-1 rounded flex items-center">
         <span class="pr-1 font-semibold flex-1 text-blue-50">Specifications</span>
        

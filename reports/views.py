@@ -58,7 +58,7 @@ def create_report(request):
             print("Error:", ex)
         
         new_plans_and_reports_fields = Report(
-            uploaded_by=user.id if user else "",
+            uploaded_by=user if user else "",
             region=request.POST['region'],
             report_period=request.POST['report_period'],
             date_created=datetime.now().strftime("%Y%m%d"),

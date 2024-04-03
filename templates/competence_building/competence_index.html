@@ -1,0 +1,87 @@
+{% extends 'admin_layout.html' %}
+{% load static%}
+
+{% block styles %}
+<link
+  rel="stylesheet"
+  href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css"
+/>
+<style>
+  .dataTables_wrapper .dataTables_length select {
+    width: 4rem;
+  }
+</style>
+{% endblock styles %}
+{% block content %}
+<div class="content-wrapper">
+  <div
+    class="bg-gulf-blue-100 shadow shadow-gulf-blue-500 text-gulf-blue-900 rounded px-2 py-2"
+  >
+    
+    <table id="Document" class="display" style="width: 100%">
+      <thead>
+        <tr>
+          <th>category</th>
+          <th>name</th>
+          <th>region</th>
+          <th>section</th>
+          <th>file</th>
+          <th>created by</th>
+          <th>created at</th>
+        </tr>
+      </thead>
+      <tbody>
+      </tbody>
+      <tfoot>
+        <tr>
+          <th>category</th>
+          <th>name</th>
+          <th>region</th>
+          <th>section</th>
+          <th>file</th>
+          <th>created by</th>
+          <th>created at</th>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+</div>
+
+{%endblock%} {% block scripts %}
+<script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script>
+ var objs = JSON.parse("{{context|escapejs}}");
+ console.log("objs: ", objs)
+
+$(document).ready(function () {
+  $("#Document").DataTable({
+    data: objs,
+    columns: [
+      {
+        data: "category",
+      },
+      {
+        data: "name",
+      },
+      {
+        data: "region",
+      },
+      {
+        data: "section",
+      },
+      {
+        data: "file",
+      },
+      {
+        data: "created by",
+      }, 
+      {
+        data: "created at",
+      },
+    ]
+  });
+});
+</script>
+{% endblock scripts %}
+
