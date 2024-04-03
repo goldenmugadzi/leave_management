@@ -788,13 +788,28 @@ https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js
         getInspectionsMonthData(newValue);
       });
 
+      function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+          const cookies = document.cookie.split(';');
+          for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+              cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+              break;
+            }
+          }
+        }
+        return cookieValue;
+      }
+
     function getInspectionsMonthData(month) {
       // Create an XMLHttpRequest object
       const xhr = new XMLHttpRequest();
       res = {};
 
-      const csrfToken = document.getElementById('selectInspForm').value;
-      console.log("csrfToken: ", csrfToken);
+      const csrfToken = getCookie('csrf_token')
+      console.log("csrfToken: ", csrfToken)
       // Set up the request
       xhr.open(
         "GET",
