@@ -44,14 +44,18 @@ def bulk_create(request):
                                 destination_path = os.path.join(destination_folder, filename)
 
                                 try:
-                                        shutil.copy2(filepath,destination_path)
+                                        if not os.path.exists(destination_path):
+                                                shutil.copy2(filepath, destination_path)
+                                        else:
+                                                print(f"File {filename} already exists in the destination folder.")
                                 except shutil.Error as e:
                                         print(f"error occured while coping files: {e}")
 
                                 ft = items[2] if len(items) >=3 else ""
                                 dp = items[3] if len(items) >=4 else ""
                                 print(ft, dp)
-                                if ft:
+                                doc_ = Document.objects.filter(name=filename).first()
+                                if ft and doc_ is None:
                                         ft = ft.capitalize()
                                         section = Sections.objects.filter(section=ft).first()
 
