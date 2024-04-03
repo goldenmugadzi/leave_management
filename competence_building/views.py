@@ -51,19 +51,21 @@ def bulk_create(request):
                                 ft = items[2] if len(items) >=3 else ""
                                 dp = items[3] if len(items) >=4 else ""
                                 print(ft, dp)
-                                section = Sections.objects.filter(section=ft).first()
+                                if ft:
+                                        ft = ft.capitalize()
+                                        section = Sections.objects.filter(section=ft).first()
 
-                                cat = Category.objects.filter(id=5).first()
-                                documentObj = Document(
-                                        category=cat,
-                                        name = filename,
-                                        region= region,
-                                        section= section,
-                                        created_at = created_at,
-                                        created_by = created_by,
-                                        file = filename
-                                        )
-                                documentObj.save()
+                                        cat = Category.objects.filter(id=section.id).first()
+                                        documentObj = Document(
+                                                category=cat,
+                                                name = filename,
+                                                region= region,
+                                                section= section,
+                                                created_at = created_at,
+                                                created_by = created_by,
+                                                file = filename
+                                                )
+                                        documentObj.save()
 
         return redirect("/competence/competence")
 

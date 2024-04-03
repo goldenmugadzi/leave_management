@@ -322,7 +322,11 @@ def bulk_create(request):
 
                     # Copy the file to the destination folder
                     try:
-                        shutil.copy2(filepath, destination_path)
+                        if not os.path.exists(destination_path):
+                            shutil.copy2(filepath, destination_path)
+                        else:
+                            print(f"File {filename} already exists in the destination folder.")
+                        # shutil.copy2(filepath, destination_path)
                     except shutil.Error as e:
                         print(f"Error occurred while copying file: {e}")
                     
