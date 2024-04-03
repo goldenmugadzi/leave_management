@@ -36,12 +36,12 @@ class RFQ(models.Model):
 class Quotation(models.Model):
     rfq = models.ForeignKey(RFQ, on_delete=models.CASCADE)
     quotation_file = models.FileField(upload_to='uploads/rfq')
-    supplier_name = models.CharField(max_length=100)
+    supplier = models.CharField(max_length=100)
     amount = models.IntegerField()    
 
 
     def __str__(self):
-        return f"Quotation from {self.supplier_name} for Order {self.rfq}"
+        return f"Quotation from {self.supplier} for Order {self.rfq}"
 
 class Order(models.Model):
     rfq = models.ForeignKey('RFQ', on_delete=models.CASCADE)
@@ -55,6 +55,7 @@ class Order(models.Model):
 
 class SiteVisit(models.Model):
     order = models.ForeignKey('Order', on_delete=models.CASCADE)
+    comment = models.TextField(blank=True, null=True)
     scheduled = models.BooleanField(default=False)
     completed = models.BooleanField(default=False)
 
