@@ -292,10 +292,10 @@ def update_user(request):
             users_role = request.POST['users_role']
                 
 
-            region = Regions.objects.filter(id=region_).first()
-            district = Districts.objects.filter(id=district_).first()
-            section = Sections.objects.filter(code=section_).first()
-            designation = Designations.objects.filter(id=designation_).first()
+            region = Regions.objects.filter(id=region_).first() if region_ != "Select Region" or "" else None
+            district = Districts.objects.filter(id=district_).first() if district_ != "Select District" or "" else None
+            section = Sections.objects.filter(code=section_).first() if section_ != "Select Section" or "" else None
+            designation = Designations.objects.filter(id=designation_).first() if designation_ != "Select Designation" or "" else None
 
             user_profile = UserProfile.objects.filter(id=id).first()
             if firstnames:

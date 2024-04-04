@@ -10,7 +10,7 @@ from approve.models import Process
 
 # Create your models here.
 class Direct_purchase(models.Model):
-    id = models.CharField(primary_key=True, max_length=60)
+    Dp_id = models.CharField(primary_key=True, max_length=60)
     section = models.ForeignKey(Sections, models.DO_NOTHING, blank=True, null=True)
     process = models.OneToOneField(Process, on_delete=models.SET_NULL, blank=True, null=True)
     allocation_code_of_expenditure = models.CharField(max_length=100, blank=True, null=True)
@@ -44,6 +44,8 @@ class Supplier(models.Model):
     email = models.EmailField(blank=True, null=True)
     phone = models.IntegerField(max_length=13, blank=True, null=True)
     address = models.CharField(max_length=100, blank=True, null=True)
+    created_by = models.ForeignKey(UserProfile, models.DO_NOTHING, blank=True, null=True)
+    date_created = models.DateField(auto_now_add=True, blank=True, null=True)
 
     class Meta:
         ordering = ['name']
@@ -61,6 +63,7 @@ class Item(models.Model):
     total = models.FloatField(blank=True, null=True)
     supplier = models.ForeignKey(Supplier, models.DO_NOTHING)
     direct_purchase = models.ForeignKey(Direct_purchase, models.DO_NOTHING)
+    rfq = models.ForeignKey(RFQ, models.DO_NOTHING, blank=True, null=True)
 
     class Meta:
         ordering = ['name']

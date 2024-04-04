@@ -40,7 +40,7 @@ def pettyCash_detail(request, petty_id):
 
 
 @login_required
-def create_rfq(request):
+def create_pettycash(request):
     if request.method == 'POST':
         form = PettycashForm(request.POST, request.FILES)
         formset = QuotationFormSet(request.POST, request.FILES)

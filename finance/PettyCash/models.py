@@ -1,6 +1,5 @@
 from django.db import models
 from django.db.models import fields
-from users.models import User
 import random
 import time
 from approve.models import Process
