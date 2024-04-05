@@ -1,0 +1,169 @@
+<!--users/templates/users/add_user.html-->
+{% extends 'admin_layout.html' %}
+{% block styles %}
+
+{% endblock styles %}
+{% block content %}
+<div class="content-wrapper">
+  <div class="page-header">
+    <h3 class="page-title">
+      <span class="page-title-icon bg-primary text-white me-2">
+        <i class="menu-icon">
+            <span class="material-symbols-outlined mt-1">
+                straighten
+            </span>
+          </i>
+      </span>
+      Pettycash
+    </h3>
+    <nav aria-label="breadcrumb">
+      <ul class="breadcrumb">
+        <li class="breadcrumb-item active" aria-current="page">
+        <a href="/pettycash/create" class="text-decoration-none">
+          <span></span>Back
+          <i
+            class="icon-sm text-primary align-middle"
+          >
+          <span class="material-symbols-outlined">
+            arrow_back
+          </span>
+        </i>
+    </a>
+        </li>
+      </ul>
+    </nav>
+</div>
+<div class="col-12 grid-margin stretch-card">
+
+  <div class="card">
+    <div class="card-body">
+      <h4 class="card-title">Create New Pettycash</h4>
+      <p class="card-description">Fill all required fields</p>
+      <form action="/pettycash/create" method="post" enctype="multipart/form-data" class="forms-sample">
+        {% csrf_token %}
+        <div class="form-group">
+          <label for="department">Department</label>
+            <select name="department" class="form-control" id="department">
+                <option>Select Department</option>
+                <option value="GM Office">GM Office</option>
+                <option value="Finance">Finance</option>
+                <option value="Stores">Stores</option>
+                <option value="Procurement">Procurement</option>
+                <option value="Human Resources">Human Resource</option>
+                <option value="Engineering">Engineering</option>
+                <option value="Network Development">Network Development</option>
+                <option value="Transport">Transport</option>
+                <option value="Operations and Maintenance">Operations and Maintenance</option>
+                <option value="Commercial">Commercial</option>
+                <option value="Risk Management">Risk Management</option>
+                <option value="Information Technology">Information Technology</option>
+            </select>
+        </div>
+        <div class="form-group">
+          <label for="location">Location</label>
+            <select name="location" class="form-control" id="location">
+                <option>Select Location</option>
+                <option value="524402">Makoni Depot</option>
+                <option value="524403">Zengeza Depot</option>
+                <option value="524502">Kuwadzana Depot</option>
+                <option value="524503">Mabelreign Depot</option>
+                <option value="524504">Warren Park Depot</option>
+                <option value="524602">Glen View Depot</option>
+                <option value="524603">Waterfalls Depot</option>
+                <option value="524604">Southerton Depot</option>
+                <option value="524702">CBD Depot</option>
+                <option value="524703">Borrowdale Depot</option>
+                <option value="524704">Mabvuku Depot</option>
+                <option value="524705">Ruwa Depot</option>
+                <option value="000000">Seke Depot</option>
+            </select>
+        </div>
+{#        <div class="form-group">#}
+{#            <label for="section">Section</label>#}
+{#            <input#}
+{#              type="text"#}
+{#              class="form-control"#}
+{#              id="section"#}
+{#              name="section"#}
+{#              placeholder="Section"#}
+{#            />#}
+{#          </div>#}
+          <div class="form-group">
+              <label for="details_of_expenditure">Details</label>
+              <input
+                      type="text"
+                      class="form-control"
+                      id="details_of_expenditure"
+                      name="details_of_expenditure"
+                      placeholder="Details"
+              />
+          </div>
+          <div class="form-group">
+              <label for="amount">Amount</label>
+              <input
+                      type="number"
+                      class="form-control"
+                      id="amount"
+                      name="amount"
+                      placeholder="amount"
+              />
+          </div>
+
+          <div class="form-group">
+              <label for="payment_mode">Payment Mode</label>
+              <select name="department" class="form-control" id="department">
+              <option>Select Payment Mode</option>
+              <option value="cash">Cash</option>
+              <option value="swpe">Swipe/Ecocash</option>
+          </select>
+          </div>
+
+          <div class="form-group">
+              <label for="allocation_code_of_expenditure">allocation code of expenditure</label>
+              <select name="allocation_code_of_expenditure" class="form-control" id="allocation_code_of_expenditure">
+                  <option>Select Allocation Code</option>
+                  <option value="521001">GM Office</option>
+                  <option value="522001">Finance</option>
+                  <option value="522102">Stores</option>
+                  <option value="522301">Procurement</option>
+                  <option value="523001">Human Resource</option>
+                  <option value="524001">Engineering</option>
+                  <option value="524101">Network Development</option>
+                  <option value="524202">Transport</option>
+                  <option value="524301">Operations and Maintenance</option>
+                  <option value="525000">Commercial</option>
+                  <option value="526001">Risk Management</option>
+                  <option value="527001">Information Technology</option>
+              </select>
+          </div>
+        <div class="mb-3">
+            <label for="quotation1" class="form-label">Quotation 1</label>
+            <input name="quotation1" class="form-control" type="file" id="quotation1">
+        </div>
+        <div class="mb-3">
+            <label for="quotation2" class="form-label">Quotation 2</label>
+            <input name="quotation2" class="form-control" type="file" id="quotation2">
+        </div>
+        <div class="mb-3">
+            <label for="quotation3" class="form-label">Quotation 3</label>
+            <input name="quotation3" class="form-control" type="file" id="quotation3">
+        </div>
+          <div class="row">
+            <div class="col-6">
+                <a href="/pettycash" class="btn btn-light w-100">Cancel</a>
+            </div>
+            <div class="col-6">
+                <button type="submit" class="btn btn-info me-2 w-100">
+                    Submit
+                </button>
+            </div>
+          </div>
+      </form>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% endblock scripts %}

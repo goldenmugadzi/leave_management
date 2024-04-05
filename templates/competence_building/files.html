@@ -1,0 +1,27 @@
+{% extends "admin_layout.html" %}
+{% load static %}
+
+{% block content %}
+
+<div class="m-auto mt-5 container">
+    <div class="mt-10 grid grid-cols-3 gap-5">
+      {% for file in files %}
+      <div class="sm:flex rounded {% cycle 'bg-yellow-200' 'bg-blue-500' 'bg-red-400' %} lg:items-center lg:justify-between">
+        <div class="min-w-0 flex-1">
+          <div class="">
+            <div class="mx-auto">
+              <div class="group relative">
+                <div><a href="{{srjobdescription}}" class="flex justify-center rounded-md py-8 px-3 text-black text-2xl"><strong>
+                    {{ file }}
+                    </strong></a></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+     
+      {% endfor %}
+ </div>
+</div>
+
+{% endblock %}

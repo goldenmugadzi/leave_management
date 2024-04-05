@@ -110,8 +110,7 @@ class UserProfile(AbstractUser):
             return f"{self.first_name} {self.last_name}"
         else:
             return self.username
-
-
+   
 class Notification(models.Model):
     user = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
     message = models.TextField()

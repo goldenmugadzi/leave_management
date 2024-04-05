@@ -234,7 +234,7 @@
   $("#category_id").change(function() {
     var selectedValue = $(this).val();
     $.ajax({
-      url: '/knowledge-center/get-files/' + selectedValue,
+      url: '/knowledge_center/get-files/' + selectedValue,
       type: 'GET',
       success: function(data) {
           var selectElement = document.getElementById("subtype1");
@@ -272,7 +272,7 @@
     var selectedValue = $(this).val();
     var fileType = document.getElementById("category_id").value;
     $.ajax({
-      url: '/knowledge-center/get-cat2/'+ fileType + '/' + selectedValue,
+      url: '/knowledge_center/get-cat2/'+ fileType + '/' + selectedValue,
       type: 'GET',
       success: function(data) {
           var secondCategory = document.getElementById("subtype2");

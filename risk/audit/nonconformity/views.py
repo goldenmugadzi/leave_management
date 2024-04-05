@@ -3,13 +3,14 @@ from django.shortcuts import render, redirect,reverse,get_object_or_404,HttpResp
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 import json
-from .models import Nonconformity,Response
-from .forms import NonconformityForm, NonconformityResponseForm,AdditionalInfoForm
+from django.views.generic import CreateView
+from .models import *
+from .forms import *
 # from it.users.models import Notification
 from it.users.models import UserProfile, Depots, Districts, Regions, Notification, Sections
-
-
 from django.contrib import messages
+from django.urls import reverse_lazy
+from django.forms import inlineformset_factory
 
 @login_required
 def create_nonconformity(request):
@@ -18,13 +19,10 @@ def create_nonconformity(request):
         if form.is_valid():
             nonconformity = form.save(commit=False)
             nonconformity.created_by = request.user
-            
-
             # Check if the recipient is the same as the current user
             if nonconformity.recipient != request.user:
                 # Save the nonconformity
                 nonconformity.save()
-                
                 # Create a notification for the auditee
                 auditee = nonconformity.recipient
                 notification = Notification.objects.create(
@@ -37,10 +35,37 @@ def create_nonconformity(request):
                 return redirect('/', messages.SUCCESS)
             else:
                 return HttpResponse("You cannot create a nonconformity for yourself.")
-            
     else:
         form = NonconformityForm()
     
+    return render(request, 'risk/nonconformity/create_nonconformity.html', {'form': form})
+
+@login_required
+def create_nonconformity_from_checklist(request, clause):
+    clause = Question.objects.get(id=clause)
+    if request.method == 'POST':
+        form = NonconformityForm(request.POST, request.FILES)
+        if form.is_valid():
+            nonconformity = form.save(commit=False)
+            nonconformity.created_by = request.user
+            # Check if the recipient is the same as the current user
+            if nonconformity.recipient != request.user:
+                # Save the nonconformity
+                nonconformity.save()
+                # Create a notification for the auditee
+                auditee = nonconformity.recipient
+                notification = Notification.objects.create(
+                    user=auditee,
+                    message=f"nc: {nonconformity.description}",
+                    url = reverse('nonconformity:nonconformity', args=[nonconformity.id])
+                )
+                # Display a success message
+                messages.success(request, 'Nonconformity created successfully!')
+                return redirect('nonconformity:nonconformities')
+            else:
+                return HttpResponse("You cannot create a nonconformity for yourself.")
+    else:
+        form = NonconformityForm(instance=clause, initial={'violation_standard_reference': clause})
     return render(request, 'risk/nonconformity/create_nonconformity.html', {'form': form})
 
 @login_required
@@ -164,3 +189,45 @@ def my_nonconformities(request):
             Q(created_by=user) | Q(recipient=user)
         )
     return render(request, 'risk/nonconformity/mynonconformities.html', {'nonconformities': nonconformities})
+#create clause and its questions using generic view 
+class ClauseCreateView(CreateView):
+    form_class = ClauseForm
+    template_name = 'risk/nonconformity/create_clause.html'
+    extra_qns = None
+    
+    def form_valid(self, form):
+        self.extra_qns = form.cleaned_data['number_of_iso_requirements']
+        return super().form_valid(form)
+    
+    def get_success_url(self):
+        return f'/{self.object.id}/add-qns?extra={self.extra_qns}'
+
+
+def Question_formset_view(request, clause_id):
+    clause = Clause.objects.get(id=clause_id)
+    extra_qns = int(request.GET.get('extra', 5))  # Default value of 5 if no 'extra' parameter is provided
+    formset_class = inlineformset_factory(Clause, Question, form=QuestionForm, extra=extra_qns)
+    existing_qns = Question.objects.filter(clause_id=clause_id)
+
+    if request.method == 'POST':
+        formset = formset_class(request.POST, instance=clause)
+        if existing_qns.exists():
+            # Show a pop-up message if there are existing questions
+            messages.warning(request, 'There are existing questions for this clause.')
+            url = reverse('nonconformity:nonconformities')
+            return redirect(url)
+        elif formset.is_valid():
+            instances = formset.save(commit=False)
+            for index, instance in enumerate(instances):
+                instance.clause = clause
+                instance.save()
+            url = reverse('nonconformity:nonconformities')
+            return redirect(url)
+        else:
+            return render(request, 'risk/nonconformity/update_clause.html', {'formset': formset, 'clause': clause})
+    else:
+        formset = formset_class(instance=clause)
+
+    return render(request, 'risk/nonconformity/update_clause.html', {'formset': formset, 'clause': clause})
+def checklist(request):
+    return render(request, 'risk/nonconformity/checklist.html',{'clauses':Clause.objects.all()}) 

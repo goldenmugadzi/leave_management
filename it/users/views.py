@@ -11,6 +11,36 @@ from it.users.forms import CustomUserCreationForm
 
 from utils.helper_functions import group_user_roles
 from django.contrib.auth.models import Group
+from .helpers import REGIONS, DISTRICTS, DEPOTS
+
+def add_centers(request):
+    
+    # add regions
+    for region in REGIONS:
+        _region = Regions(
+            region=region['name'],
+            code=region['code'],
+        )
+        _region.save()
+    
+    for district in DISTRICTS:
+        _district = Districts(
+            district=district['name'],
+            code=district['code'],
+            region_id=district['parent_code']
+        )
+        _district.save()
+        
+    for depot in DEPOTS:
+        _depot = Depots(
+            depot=depot['name'],
+            code=depot['code'],
+            district_id=depot['district_code'],
+            region_id=depot['parent_code']
+        )
+        _depot.save()
+        
+    return redirect('/users/users-index')
 
 def add_user(request):
     if request.method == "GET":
@@ -172,7 +202,8 @@ def update_user(request):
             "ace": {},
             "users": {},
             "rfq": {},
-            "dashboards": {}
+            "dashboards": {},
+            
         }
 
         new_user = None
@@ -292,10 +323,10 @@ def update_user(request):
             users_role = request.POST['users_role']
                 
 
-            region = Regions.objects.filter(id=region_).first() if region_ != "Select Region" or "" else None
-            district = Districts.objects.filter(id=district_).first() if district_ != "Select District" or "" else None
-            section = Sections.objects.filter(code=section_).first() if section_ != "Select Section" or "" else None
-            designation = Designations.objects.filter(id=designation_).first() if designation_ != "Select Designation" or "" else None
+            region = Regions.objects.filter(id=region_).first()
+            district = Districts.objects.filter(id=district_).first() if (district_ != "Select District" or "") else None
+            section = Sections.objects.filter(code=section_).first()
+            designation = Designations.objects.filter(id=designation_).first() if (designation_ != "Select Designation" or "") else None
 
             user_profile = UserProfile.objects.filter(id=id).first()
             if firstnames:

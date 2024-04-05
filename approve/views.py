@@ -99,6 +99,9 @@ def approve_step(request, process_id):
             approval.save()
             if process.workflow.name=='rfq':
                 return redirect('rfq:rfq_detail', process.rfq.id)
+            elif process.workflow.name=='tokens':
+                return redirect('tempertoken:tempertoken', process.tempertoken_set.last().id)
+          
             else:
                 return redirect('approve:workflow_detail', process.workflow.id)
         else:
