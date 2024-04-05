@@ -1,0 +1,158 @@
+{% extends "admin_layout.html" %}
+{% load static %}
+{% load custom_tags %}
+
+{% block content %}
+<head>
+  <style>
+      .arrow {
+          position: relative;
+      }
+
+      .arrow::after {
+          content: "";
+          position: absolute;
+          top: 50%;
+          transform: translateY(-50%);
+          width: 0;
+          height: 0;
+          border-top: 15px solid transparent;
+          border-bottom: 15px solid transparent;
+          border-left: 10px solid #3B82F6; /* Adjust arrow color here */
+          left: -10px;
+      }
+
+      .arrow-step::before {
+          content: "";
+          position: absolute;
+          top: 50%;
+          right: -20px;
+          transform: translateY(-50%);
+          width: 0;
+          height: 0;
+          border-top: 10px solid transparent;
+          border-bottom: 10px solid transparent;
+          border-left: 20px solid #3B82F6; /* Adjust arrow color here */
+      }
+  </style>
+</head>
+<div class="m-auto mt-5 justify-content-center">
+    <div class="card grid grid-cols-1 gap-2 mb-3">
+        <div class="card-body m-2">
+            <div class="card-body m-auto mb-5 p-3      container rounded  shadow-lg">
+                <div class="px-6 py-4">
+                    <div class="card bg-gradient-to-r from-gulf-blue-100 to-blue-500 mb-3">
+                        <h1 class="text-center mb-4 font-bold text-xl  mb-2"> Details</h1>
+                        <div class="card-body grid grid-cols-2 gap-2  m-auto mb-5 ed p-3     justify-content-center align-content-stretch container rounded  shadow-lg">
+                            <div class=" text-center">
+                                <p class="font-bold mb-2">Customer </p> 
+                            <p class="font-bold mb-2">Phone Number </p>
+                            <p class="font-bold mb-2">Address </p>
+                            <p class="font-bold mb-2">Created at </p> 
+                            <p class="font-bold mb-2">Created By</p>
+                            </div>
+                            <div>
+                                <p class="mb-2 font-normal">{{ tempertoken.customer.name|default_if_none:'' }}</p>
+                             <p class="mb-2 font-normal">{{ tempertoken.customer.contact_number|default_if_none:'' }}</p>
+                             <p class="mb-2 font-normal">{{ tempertoken.customer.address|default_if_none:'' }}</p>
+                            <p class="mb-2 font-normal">{{ tempertoken.created_at|default_if_none:'' }}</p>
+                            <p class="mb-2 font-normal">{% if request.user == tempertoken.created_by %}You{% elif  tempertoken.created_by.get_full_name %}{{tempertoken.created_by.get_full_name}}{% elif request.user == tempertoken.created_by %}{{ tempertoken.created_by  }}{% endif %}</p>
+                            </div>
+                             {% if tempertoken.fault_set.first %}
+                                <p class="font-bold text-center mb-2">Fault :</p> <p class="mb-2 font-normal">  {{ tempertoken.fault_set.first.description|default_if_none:'' }}</p>
+                            {% endif %}
+                            {% if tempertoken.recover_set.first %}
+                                <p class="font-bold text-center mb-2">Recovery :</p> <p class="mb-2 font-normal"> {{ tempertoken.recover_set.first.description|default_if_none:'' }}</p>
+                            {% endif %}
+                            {% if tempertoken.reconnection_set.first %}
+                                <p class="font-bold text-center mb-2">Reconnection:  <p class="mb-2 font-normal">{{ tempertoken.reconnection_set.first.description|default_if_none:'' }}</p>
+                            {% endif %}
+                    </div>
+                 </div>
+                    <h1 class="text-center mb-4 font-bold text-xl  mb-2">Workflow Details</h1>
+                    <p class="font-bold  mb-2"> Workflow name : {{ tempertoken.process.workflow }}</p>
+               
+               {% if approvalForm %}
+                    <form class="row rounded py-4 border bg-gulf-blue-400 rounded-lg p-3 m-auto container" method="POST" action="{% url 'approve:approve' tempertoken.process.id %}" enctype="multipart/form-data">
+                         {% csrf_token %}
+                        <div class=" m-auto container  ">
+                             <div class="col-span-4">
+                                {{ approvalForm.comment.label_tag }}
+                                <div class="text-red-500">
+                                  {{ approvalForm.comment.errors }}
+                                </div>
+                                {{ approvalForm.comment }}
+                              </div>
+
+
+                                 <div class="m-4 text-center">
+                                    <button type="submit" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded" name="approved" value="Rejected">Reject</button>
+                                    <button type="submit" class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded" name="approved" value="Approved"> {{ to }} </button>
+                              </div>
+                        </div>
+                    </form>   
+               {% endif %}
+
+                    <div class="card grid grid-cols-5 gap-4">
+
+                        <div class="px-2 mb-5  h-40 bg-gradient-to-r from-gulf-blue-100 to-green-700  ">
+                            <div class="p-4 font-bold rounded-lg">Start</div>
+                             <p class="mb-2 font-normal">  requested by {{tempertoken.requested_by}}</p>
+                            </div>
+                            {% for step in tempertoken.process.workflow.step_set.all %}
+                                    {% if step.step in approved_steps %}
+                                        {% for approval in tempertoken.process.approval_set.all %}
+                                           {% if step == approval.step %}
+                                                <div class="card-body h-40  m-auto arrow arrow-step mb-5 bg-gradient-to-r from-gulf-blue-100 to-green-700 ed p-3  justify-content-center align-content-stretch container rounded shadow-lg">
+                                                    <div class="p-4  rounded-lg" title="Comment : {{ approval.comment }}" >
+                                                        <p class="font-bold">{{ step }}</p> <br>
+                                                        </div>
+                                                    <div class=" grid grid-cols-3 text-center">
+                                                             <p class="mb-2 font-normal"> {{ approval.approved }}</p>
+                                                         <p class="mb-2 font-normal">By: 
+                                                        {% if request.user == approval.user %}
+                                                            You
+                                                            {% elif  approval.user.get_full_name %}
+                                                                {{approval.user.get_full_name}}
+                                                        {% elif request.user == approval.user %}
+                                                                {{ approval.user  }}
+                                                        {% endif %}</p>
+                                                    </div> 
+                                                </div>
+                                                {% endif %}
+                                            {% endfor %}
+
+                                        {% else %}
+                                            <div class="card-body  h-40 m-auto arrow arrow-step mb-5 bg-gradient-to-r from-gulf-blue-100 to-blue-500 ed p-3  justify-content-center align-content-stretch container rounded shadow-lg">
+                                                <div class="p-4 rounded-lg" title="{{ approval.comment }}" >
+                                                    <p class="font-bold">{{ step }}</p> <br>
+                                                    {% if step.to %}
+                                                         <p class="mb-2 font-normal">To {{ step.to|default_if_none:'' }}</p>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        
+                                    {% endif %}
+                                {% endfor %}
+                          
+                          {% if completed %}
+                            <div class="px-2 mb-5  bg-gradient-to-r from-gulf-blue-100 to-green-700  ">
+                                <div class="p-4 font-bold rounded-lg">Completed</div>
+                                <div class=" grid grid-cols-2 text-center"><p class="mb-2 font-normal">Approved</p>
+                            </div>     
+                            </div>
+                           
+                            {% else %}
+                            <div class="mb-5 bg-blue-500 ">
+                                <div class="p-4 font-bold rounded-lg">Completed</div>
+                            </div>
+                          {% endif %}
+                              
+                        </div>
+                    </div>
+                </div>    
+            </div>    
+        </div>    
+    </div>
+</div>
+{% endblock %}

@@ -148,25 +148,29 @@ def get_mmt_monthly(maintenances, month_id):
         else:
            maintenance_count[maintenance_name] = 1 
     
-    maintenance_keys_list = json.dumps(list(maintenance_count.keys()), default=str)
-    maintenance_values_list = json.dumps(list(maintenance_count.values()), default=str)
+    maintenance_keys_list = maintenance_count.keys()
+    maintenance_values_list = maintenance_count.values()
     return maintenance_keys_list, maintenance_values_list
 
 def get_maintenance_linegraph(user, month_id):
     maintenance_keys_list, maintenance_values_list = [], []
+    region_ = Regions.objects.filter(id=user.region.id).first() if user.region else None if user.region else None
+    district = user.district if user.district else None
+    depot = user.section if user.section else None
+    print(region_.region)
+    region = str(region_.region).split(" ")[0] if region_ else None
+    
     if any(role.role == 'fore_person' for role in user.roles.all()):
-        depot = user.section if user.section else None
         if depot.id:
-            maintenances = Maintenance.objects.filter(depot=depot.section, created_at__month=month_id)
+            maintenances = Maintenance.objects.filter(region=region, district=district.district, depot=depot.section, created_at__month=month_id)
             maintenance_keys_list, maintenance_values_list = get_inspections_monthly(maintenances, month_id)
     if any(role.role == 'district_manager' for role in user.roles.all()):
-        district = user.district if user.district else None
+        print(district.district, region, month_id)
         if district:
             maintenances = Maintenance.objects.filter(district=district.district, created_at__month=month_id)
             maintenance_keys_list, maintenance_values_list = get_inspections_monthly(maintenances, month_id)
     if any(role.role == 'executive' for role in user.roles.all()):
-        region = user.region if user.region else None
         if region.id:
-            maintenances = Maintenance.objects.filter(region=region.region, created_at__month=month_id)
+            maintenances = Maintenance.objects.filter(region=region, created_at__month=month_id)
             maintenance_keys_list, maintenance_values_list = get_inspections_monthly(maintenances, month_id)
     return maintenance_keys_list, maintenance_values_list
