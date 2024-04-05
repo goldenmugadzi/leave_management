@@ -3,7 +3,7 @@ from .views import *
 app_name ='rfq'
 
 urlpatterns = [
-    # path('', index, name='index'),
+    path('i', CreateRFQView.as_view(), name='i'),
     # path('rfq_create', rfq_create, name='create_rfq'),
     # path('create_rfq', create_rfq, name='create_rfq'),
     # path('create_ace_rfq', create_rfq_from_ace, name='create_rfq'),

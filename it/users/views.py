@@ -205,7 +205,8 @@ def update_user(request):
             "ace": {},
             "users": {},
             "rfq": {},
-            "dashboards": {}
+            "dashboards": {},
+            
         }
 
         new_user = None
@@ -326,9 +327,9 @@ def update_user(request):
                 
 
             region = Regions.objects.filter(id=region_).first()
-            district = Districts.objects.filter(id=district_).first()
+            district = Districts.objects.filter(id=district_).first() if (district_ != "Select District" or "") else None
             section = Sections.objects.filter(code=section_).first()
-            designation = Designations.objects.filter(id=designation_).first()
+            designation = Designations.objects.filter(id=designation_).first() if (designation_ != "Select Designation" or "") else None
 
             user_profile = UserProfile.objects.filter(id=id).first()
             if firstnames:

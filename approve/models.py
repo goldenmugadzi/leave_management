@@ -27,7 +27,7 @@ class Step(models.Model):
         ordering = ['workflow', 'step']
 
     def __str__(self):
-        return f"{self.approver}"
+        return f"{self.approver.name}"
 
 
 class Process(models.Model):
@@ -48,7 +48,7 @@ class Approval(models.Model):
     user = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
     process = models.ForeignKey(Process, on_delete=models.CASCADE)
     comment = models.TextField(max_length=200, blank=True, null=True)
-    approved = models.CharField(max_length=8, choices=APPROVAL_CHOICES)
+    approved = models.CharField(max_length=8, choices=APPROVAL_CHOICES, blank=True, null=True)
 
     def __str__(self):
         return f"Approval for step {self.step} by {self.user}"

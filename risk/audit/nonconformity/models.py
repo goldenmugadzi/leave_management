@@ -5,12 +5,34 @@ from django.core.exceptions import ValidationError
 
 from it.users.models import UserProfile
 
+class Clause(models.Model):
+    id = models.CharField(max_length=4, blank=False, null=False,primary_key=True, verbose_name='Clause')
+    name = models.CharField(max_length=200, blank=True, null=True, verbose_name='Name')
+    def __str__(self):
+        return self.id
+class Topic(models.Model):
+    clause= models.ForeignKey(Clause, on_delete=models.CASCADE, blank=True, null=True)
+    name = models.CharField(max_length=200, blank=True, null=True, verbose_name='Name')
+    def __str__(self):
+        return self.name
+
+class Question(models.Model):
+    clause = models.ForeignKey(Clause, on_delete=models.CASCADE, blank=True, null=True)
+    topic = models.ForeignKey(Topic, on_delete=models.CASCADE, blank=True, null=True)
+    id = models.CharField(max_length=200, blank=False, null=False, primary_key=True, verbose_name='Clause')
+    description = models.TextField(max_length=400, blank=True, null=True, verbose_name='ISO: Requirements')
+    maintained_info = models.CharField(max_length=200, blank=True, null=True, verbose_name='Maintained Info', help_text='“Maintained” Documented information')
+    retained_info = models.CharField(max_length=200, blank=True, null=True, verbose_name='Retained Info', help_text='“Retained” Documented information')
+    
+    def __str__(self):
+        return self.id
+        
 class Nonconformity(models.Model):
     created_by = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
     recipient = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='nonconformities_assigned_to', null=True, blank=True)
     description = models.TextField(max_length=400, blank=True, null=True, verbose_name='Description')
     root_cause = models.TextField(max_length=400, blank=True, null=True)
-    violation_standard_reference = models.CharField(max_length=400, blank=True, null=True, verbose_name='Violation Standard Reference')
+    violation_standard_reference = models.ForeignKey(Question,on_delete=models.SET_NULL ,  blank=True, null=True, verbose_name='Violation Standard Reference')
     recommended_corrective_action = models.CharField(max_length=300, blank=False, null=False, verbose_name='Recommended Corrective Action')
     created_at = models.DateTimeField(auto_now_add=True)
     attachment = models.FileField(upload_to='nonconformity_attachments/', blank=True, null=True, verbose_name='Attachment')
@@ -33,3 +55,4 @@ class Response(models.Model):
  
     def __str__(self):
         return f"Response by {self.user.username} on {self.nonconformity.description}"
+
