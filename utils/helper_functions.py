@@ -8,7 +8,7 @@ def group_user_roles(user_roles):
         "tenders": [],
         "ace": [],
         "users": [],
-        "procurement": [],
+        "rfq": [],
         "dashboards": []
     }
     
@@ -101,7 +101,7 @@ def group_user_roles(user_roles):
             
             custom_user_roles['ace'].append(custom_role)
 
-        if role.application == "procurement":
+        if role.application == "rfq":
             custom_role = {
                 "id": role.id,
                 "role": role.role,
@@ -110,7 +110,7 @@ def group_user_roles(user_roles):
                 "application": role.application
             }
             
-            custom_user_roles['procurement'].append(custom_role)
+            custom_user_roles['rfq'].append(custom_role)
 
         if role.application == "dashboards":
             custom_role = {

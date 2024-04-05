@@ -1,6 +1,7 @@
 from django.contrib import admin
-from .models import  Meter, Customer, TemperToken, Fault, Reconnection, Recover
+from .models import MeterType, Meter, Customer, TemperToken, Fault, Reconnection, Recover
 
+admin.site.register(MeterType)
 admin.site.register(Meter)
 admin.site.register(Customer)
 admin.site.register(TemperToken)

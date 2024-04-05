@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect
-from .forms import  MeterForm, CustomerForm,ReasonForm,PernaltForm
+from .forms import  MeterForm, CustomerForm,ReasonForm
 from .models import *
 from approve.views import intiate
 from approve.models import Step
@@ -9,7 +9,7 @@ from django.contrib.auth.decorators import login_required
 def create_tempertoken(request):
     if request.method == 'POST':
         #meter details from the database if the meter number already exists and use its instance to upldate the meter details
-        try: meter = Meter.objects.get(number=request.POST['number'])
+        try: meter = Meter.objects.get(meter_number=request.POST['meter_number'])
         except Meter.DoesNotExist: meter = None 
         meter_form = MeterForm(request.POST, instance=meter)
 #         customer details from the database if the customer already exists and use its instance to upldate the customer details
@@ -28,7 +28,7 @@ def create_tempertoken(request):
             return redirect('/tempertokens/')
         else: return render(request, 'temper_token/create_tempertoken.html', {'Customer': customer_form ,'reason':ReasonForm(request.POST) ,'Meter': meter_form })
 
-    return render(request, 'temper_token/create_tempertoken.html', {'Customer': CustomerForm, 'reason':ReasonForm ,'Meter': MeterForm ,'Pernalt':PernaltForm})
+    return render(request, 'temper_token/create_tempertoken.html', {'Customer': CustomerForm, 'reason':ReasonForm ,'Meter': MeterForm })
 
 @login_required
 def tempertoken_details(request, tempertoken_id):

@@ -4,7 +4,7 @@ from django.db import models
 
 from finance.Ace.models import Ace
 from it.users.models import UserProfile, Regions, Sections
-from finance.procurement.models import Procurement
+from finance.rfq.models import RFQ
 from approve.models import Process
 
 
@@ -18,7 +18,7 @@ class Direct_purchase(models.Model):
     amount = models.FloatField(blank=True, null=True)
     requested_by = models.ForeignKey(UserProfile, models.DO_NOTHING, blank=True, null=True)
     date_created = models.DateField(auto_now_add=True, blank=True, null=True)
-    procurement = models.ForeignKey(Procurement, models.CASCADE, blank=True, null=True)
+    rfq = models.ForeignKey(RFQ, models.CASCADE, blank=True, null=True)
     service_type = models.CharField(max_length=100, blank=True, null=True)
     region = models.ForeignKey(Regions, models.DO_NOTHING, blank=True, null=True)
     grn_delivery_status = models.CharField(max_length=100, blank=True, null=True)

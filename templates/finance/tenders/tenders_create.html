@@ -19,7 +19,7 @@
           class="px-4 sm:px-0 mt-6 border-t border-gray-100 border-gray-900/10"
         >
           <h2 class="text-base font-semibold leading-6 text-gray-900">
-            Procurement DETAILS
+            RFQ DETAILS
           </h2>
 
           <div
@@ -29,7 +29,7 @@
               <label
                 for="rfq_id"
                 class="block text-sm font-medium leading-6 text-gray-900"
-                >Procurement ID</label
+                >RFQ ID</label
               >
               <div class="mt-2">
                 <input
@@ -91,14 +91,14 @@
           >
             <div class="flex-1 w-20 ml-1">
               <label
-                for="procurement"
+                for="rfq"
                 class="block text-sm font-medium leading-6 text-gray-900"
-                >Procurement No.</label
+                >RFQ No.</label
               >
               <div class="mt-2">
                 <input
-                  name="procurement"
-                  id="procurement"
+                  name="rfq"
+                  id="rfq"
                   required="required"
                   class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                 />
@@ -123,7 +123,7 @@
               <label
                 for="rfq_date"
                 class="block text-sm font-medium leading-6 text-gray-900"
-                >Procurement Date</label
+                >RFQ Date</label
               >
               <div class="mt-2">
                 {% include "components/datepicker.html" with input_name="rfq_date" %}
@@ -238,7 +238,7 @@
           class="px-4 sm:px-0 mt-6 border-t border-gray-100 border-b border-gray-900/10 pb-12"
         >
           <h2 class="text-base font-semibold leading-6 text-gray-900">
-            OPENING Procurement PRICE
+            OPENING RFQ PRICE
           </h2>
 
           <div id="bid_container" class="bg-nepal-500 rounded-md">
@@ -652,18 +652,18 @@
   }
 
   function prNumber() {
-    var prField = document.getElementById("procurement").value;
+    var prField = document.getElementById("rfq").value;
     if (prField == "") {
-      alert("Please enter the Procurement number.");
+      alert("Please enter the RFQ number.");
       e.preventDefault();
     } else if (prField.length < 8) {
       alert(
-        "You have entered less than 8 digits for the Procurement number. Please rectify."
+        "You have entered less than 8 digits for the RFQ number. Please rectify."
       );
       e.preventDefault();
     } else if (prField.length > 11) {
       alert(
-        "You have entered more than 8 digits for the Procurement number. Please rectify."
+        "You have entered more than 8 digits for the RFQ number. Please rectify."
       );
       e.preventDefault();
     }
@@ -672,8 +672,8 @@
 
 <script>
   function selected_rfq() {
-    var procurement = document.getElementById("rfqno").value;
-    document.getElementById("rfq_id").value = procurement;
+    var rfq = document.getElementById("rfqno").value;
+    document.getElementById("rfq_id").value = rfq;
   }
 </script>
 

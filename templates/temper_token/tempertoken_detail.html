@@ -97,30 +97,28 @@
 
                         <div class="px-2 mb-5  h-40 bg-gradient-to-r from-gulf-blue-100 to-green-700  ">
                             <div class="p-4 font-bold rounded-lg">Start</div>
-                             <p class="mb-2 font-normal">  requested by {{tempertoken.created_by}}</p>
+                             <p class="mb-2 font-normal">  requested by {{tempertoken.requested_by}}</p>
                             </div>
                             {% for step in tempertoken.process.workflow.step_set.all %}
                                     {% if step.step in approved_steps %}
                                         {% for approval in tempertoken.process.approval_set.all %}
                                            {% if step == approval.step %}
-                                           <div class="card-body h-40 m-auto arrow arrow-step mb-5 bg-gradient-to-r from-gulf-blue-100 to-green-700 ed p-3 justify-content-center align-content-stretch container rounded shadow-lg">
-                                            <div class="p-4 rounded-lg" title="Comment: {{ approval.comment }}">
-                                              <p class="font-bold">{{ step }}</p> <br>
-                                            </div>
-                                            <div class="grid grid-cols-3 text-center">
-                                              <p class="mb-2 font-normal">{{ approval.approved }}</p>
-                                              <p class="mb-2 font-normal">
-                                                By:
-                                                {% if request.user == approval.user %}
-                                                You
-                                                {% elif approval.user.get_full_name %}
-                                                {{ approval.user.get_full_name }}
-                                                {% elif request.user == approval.user %}
-                                                {{ approval.user }}
-                                                {% endif %}
-                                              </p>
-                                            </div>
-                                          </div>
+                                                <div class="card-body h-40  m-auto arrow arrow-step mb-5 bg-gradient-to-r from-gulf-blue-100 to-green-700 ed p-3  justify-content-center align-content-stretch container rounded shadow-lg">
+                                                    <div class="p-4  rounded-lg" title="Comment : {{ approval.comment }}" >
+                                                        <p class="font-bold">{{ step }}</p> <br>
+                                                        </div>
+                                                    <div class=" grid grid-cols-3 text-center">
+                                                             <p class="mb-2 font-normal"> {{ approval.approved }}</p>
+                                                         <p class="mb-2 font-normal">By: 
+                                                        {% if request.user == approval.user %}
+                                                            You
+                                                            {% elif  approval.user.get_full_name %}
+                                                                {{approval.user.get_full_name}}
+                                                        {% elif request.user == approval.user %}
+                                                                {{ approval.user  }}
+                                                        {% endif %}</p>
+                                                    </div> 
+                                                </div>
                                                 {% endif %}
                                             {% endfor %}
 

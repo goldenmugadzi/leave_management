@@ -817,8 +817,8 @@
                                                                 <a href="{% url 'tenders_create' %}">Create</a>
                                                             </li>
                                                             <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
-                                                                <a href="../../tender/procurement/datatables/production/procurement_processed.php">Create
-                                                                    (from Procurement)</a>
+                                                                <a href="../../tender/rfq/datatables/production/procurement_processed.php">Create
+                                                                    (from RFQ)</a>
                                                             </li>
                                                         <?php
                                                         } elseif ($role4 == "check") { ?>
@@ -827,7 +827,7 @@
                                                                     Checking</a>
                                                             </li>
                                                             <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
-                                                                <a href="../../tender/procurement/datatables/production/awaiting_authorisation.php">Procurement`s
+                                                                <a href="../../tender/rfq/datatables/production/awaiting_authorisation.php">RFQ`s
                                                                     Pending Authorisation</a>
                                                             </li>
                                                             <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
@@ -851,22 +851,22 @@
                                                             <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
                                                                 <a href="../../tender/gm/reports.php">Reports</a>
                                                             </li>
-                                                        <?php //Procurement application roles
+                                                        <?php //RFQ application roles
                                                         } elseif ($role4 == "request") { ?>
                                                             <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
-                                                                <a href="../../tender/procurement/user/make_request.php">Request for
+                                                                <a href="../../tender/rfq/user/make_request.php">Request for
                                                                     Quotation</a>
                                                             </li>
                                                         <?php
                                                         } elseif ($role4 == "authorise") { ?>
                                                             <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
-                                                                <a href="../../tender/procurement/datatables/production/awaiting_authorisation.php">Pending
+                                                                <a href="../../tender/rfq/datatables/production/awaiting_authorisation.php">Pending
                                                                     Authorisation</a>
                                                             </li>
                                                         <?php
                                                         } elseif ($role4 == "verify") { ?>
                                                             <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
-                                                                <a href="../../tender/procurement/datatables/production/awaiting_verification.php">Pending
+                                                                <a href="../../tender/rfq/datatables/production/awaiting_verification.php">Pending
                                                                     Verification</a>
                                                             </li> <?php
                                                                 } else {
@@ -889,11 +889,11 @@
                                                                         ">
                                                                 <?php if ($role4 == "create") { ?>
                                                                     <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
-                                                                        <a href="../../tender/procurement/datatables/production/awaiting_authorisation.php">Pending
+                                                                        <a href="../../tender/rfq/datatables/production/awaiting_authorisation.php">Pending
                                                                             Authorisation</a>
                                                                     </li>
                                                                     <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
-                                                                        <a href="../../tender/procurement/datatables/production/awaiting_procurement.php">Pending
+                                                                        <a href="../../tender/rfq/datatables/production/awaiting_procurement.php">Pending
                                                                             Procurement</a>
                                                                     </li>
                                                                     <li class="px-3 py-1 hover:bg-blue-550 rounded m-1 hover:text-blue-50">
@@ -1101,7 +1101,7 @@
                                                         <?php
                                                         } elseif ($role8 == "check") { ?>
                                                             <!--button class="dropdown-item" type="button"><a href="../../Invoice_Verification/finance/pending_finance.php">Pending Checking</a></button>
-                            <button class="dropdown-item" type="button"><a href="../../Invoice_Verification/procurement/datatables/production/awaiting_authorisation.php">Procurement`s Pending Authorisation</a></button>
+                            <button class="dropdown-item" type="button"><a href="../../Invoice_Verification/rfq/datatables/production/awaiting_authorisation.php">RFQ`s Pending Authorisation</a></button>
                             <button class="dropdown-item" type="button"><a href="../../Invoice_Verification/committee/pending_committee.php">Pending Committee</a></button-->
 
 
@@ -1111,15 +1111,15 @@
                             <button class="dropdown-item" type="button"><a href="../../Invoice_Verification/gm/reports.php">Reports</a></button-->
                                                         <?php
 
-                                                            //Procurement application roles
+                                                            //RFQ application roles
                                                         } elseif ($role8 == "request") { ?>
-                                                            <!--button class="dropdown-item" type="button"><a href="../../Invoice_Verification/procurement/user/make_request.php">Request for Quotation</a></button-->
+                                                            <!--button class="dropdown-item" type="button"><a href="../../Invoice_Verification/rfq/user/make_request.php">Request for Quotation</a></button-->
                                                         <?php
                                                         } elseif ($role8 == "authorise") { ?>
-                                                            <!--button class="dropdown-item" type="button"><a href="../../Invoice_Verification/procurement/datatables/production/awaiting_authorisation.php">Pending Authorisation</a></button-->
+                                                            <!--button class="dropdown-item" type="button"><a href="../../Invoice_Verification/rfq/datatables/production/awaiting_authorisation.php">Pending Authorisation</a></button-->
                                                         <?php
                                                         } elseif ($role8 == "verify") { ?>
-                                                            <!--button class="dropdown-item" type="button"><a href="../../Invoice_Verification/procurement/datatables/production/awaiting_verification.php">Pending Verification</a></button-->
+                                                            <!--button class="dropdown-item" type="button"><a href="../../Invoice_Verification/rfq/datatables/production/awaiting_verification.php">Pending Verification</a></button-->
                                                         <?php
                                                         } else {
                                                         }

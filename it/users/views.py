@@ -92,7 +92,7 @@ def add_user(request):
             adjudication = request.POST['direct_purchase_role']
             tokens = request.POST['tokens_role']
             ace = request.POST['ace_role']
-            procurement = request.POST['rfq_role']
+            rfq = request.POST['rfq_role']
             dashboards = request.POST['dashboards_role']
             non_conformity = request.POST['non_conformity_role']
             users_role = request.POST['users_role']
@@ -114,8 +114,8 @@ def add_user(request):
                 roles.append(tokens)
             if ace and ace != "":
                 roles.append(ace)
-            if procurement and procurement!="":
-                roles.append(procurement)
+            if rfq and rfq!="":
+                roles.append(rfq)
             if non_conformity and non_conformity:
                 roles.append(non_conformity)
             if users_role and users_role != "":
@@ -201,7 +201,7 @@ def update_user(request):
             "tenders": {},
             "ace": {},
             "users": {},
-            "procurement": {},
+            "rfq": {},
             "dashboards": {},
             
         }
@@ -241,8 +241,8 @@ def update_user(request):
                 if role.application == "ace":
                     custom_user_roles["ace"] = role
 
-                if role.application == "procurement":
-                    custom_user_roles["procurement"] = role
+                if role.application == "rfq":
+                    custom_user_roles["rfq"] = role
 
                 if role.application == "dashboards":
                     custom_user_roles["dashboards"] = role
@@ -273,7 +273,7 @@ def update_user(request):
         
         # get roles
         user_roles = Roles.objects.all()
-        # rfq_role = Roles.objects.filter(application="procurement").all()
+        # rfq_role = Roles.objects.filter(application="rfq").all()
         # print("user_roles: ", rfq_role)
         grouped_user_roles = group_user_roles(user_roles)
         # print("grouped_user_roles: ", grouped_user_roles)
@@ -317,7 +317,7 @@ def update_user(request):
             adjudication = request.POST['direct_purchase_role']
             tokens = request.POST['tokens_role']
             ace = request.POST['ace_role']
-            procurement = request.POST['rfq_role']
+            rfq = request.POST['rfq_role']
             dashboards = request.POST['dashboards_role']
             non_conformity = request.POST['non_conformity_role']
             users_role = request.POST['users_role']
@@ -359,8 +359,8 @@ def update_user(request):
                 roles.append(tokens)
             if ace and ace != "Select Role":
                 roles.append(ace)
-            if procurement and procurement != "Select Role":
-                roles.append(procurement)
+            if rfq and rfq != "Select Role":
+                roles.append(rfq)
             if non_conformity and non_conformity != "Select Role":
                 roles.append(non_conformity)
             if users_role and users_role != "Select Role":

@@ -69,7 +69,7 @@ class PettycashForm(forms.ModelForm):
 
 # class aceRFQForm(forms.ModelForm):
 #     class Meta:
-#         model = Procurement
+#         model = RFQ
 #         fields = '__all__'
 #         exclude = ['process']
 #

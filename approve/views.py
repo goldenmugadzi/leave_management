@@ -97,8 +97,8 @@ def approve_step(request, process_id):
             approval.process = process
             approval.step = step
             approval.save()
-            if process.workflow.name=='procurement':
-                return redirect('procurement:rfq_detail', process.procurement.id)
+            if process.workflow.name=='rfq':
+                return redirect('rfq:rfq_detail', process.rfq.id)
             elif process.workflow.name=='tokens':
                 return redirect('tempertoken:tempertoken', process.tempertoken_set.last().id)
           
