@@ -1,0 +1,224 @@
+<!--users/templates/users/add_user.html-->
+
+{% extends 'admin_layout.html' %} {% block content %}
+<div class="content-wrapper">
+  
+  <div class="bg-gulf-blue-100 shadow shadow-gulf-blue-300 text-gulf-blue-900 rounded px-2 py-2">
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      <div class="space-y-12 px-5 py-5">
+
+        <div class="mt-10 border-b border-gulf-blue-900/10 pb-12">
+          <h2 class="text-base font-semibold leading-7 text-gulf-blue-900">
+            Procurement Information
+          </h2>
+          <p class="mt-1 text-sm leading-6 text-gulf-blue-900">
+            Fill all required fields.
+          </p>
+
+          <div class="mt-10 grid grid-cols-3 gap-4">
+            
+            <div>
+              <label
+                for="rfq_type"
+                class="block text-sm font-medium leading-6 text-gray-900"
+                >Procurement Type</label
+              >
+              <div class="mt-2">
+                <input
+                  type="text"
+                  name="rfq_type"
+                  id="rfq_type"
+                  autocomplete="rfq_type"
+                  class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 px-2 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label
+                for="allocation_code_of_expenditure"
+                class="block text-sm font-medium leading-6 text-gray-900"
+                >Allocation Code of Expenditure</label
+              >
+              <div class="mt-2">
+                <input
+                  type="text"
+                  name="allocation_code_of_expenditure"
+                  id="allocation_code_of_expenditure"
+                  autocomplete="allocation_code_of_expenditure"
+                  class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 px-2 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label
+                for="scope_of_work"
+                class="block text-sm font-medium leading-6 text-gray-900"
+                >Scope of Work</label
+              >
+              <div class="mt-2">
+                <input
+                  type="text"
+                  name="scope_of_work"
+                  id="scope_of_work"
+                  autocomplete="scope_of_work"
+                  class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 px-2 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label
+                for="quantity"
+                class="block text-sm font-medium leading-6 text-gray-900"
+                >Quantity</label
+              >
+              <div class="mt-2">
+                <input
+                  type="text"
+                  name="quantity"
+                  id="quantity"
+                  autocomplete="quantity"
+                  class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 px-2 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label
+                for="proc_ref"
+                class="block text-sm font-medium leading-6 text-gray-900"
+                >Procurement Reference</label
+              >
+              <div class="mt-2">
+                <input
+                  type="text"
+                  name="proc_ref"
+                  id="proc_ref"
+                  autocomplete="proc_ref"
+                  class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 px-2 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label
+                for="amount"
+                class="block text-sm font-medium leading-6 text-gray-900"
+                >Amount</label
+              >
+              <div class="mt-2">
+                <input
+                  type="text"
+                  name="amount"
+                  id="amount"
+                  autocomplete="amount"
+                  class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 px-2 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label
+                for="payment_mode"
+                class="block text-sm font-medium leading-6 text-gray-900"
+                >Payment Mode</label
+              >
+              <div class="mt-2">
+                <input
+                  type="text"
+                  name="payment_mode"
+                  id="payment_mode"
+                  autocomplete="payment_mode"
+                  class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 px-2 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                />
+              </div>
+            </div>
+
+            <div>
+              <div class="mt-2">
+              </div>
+            </div>
+
+            <div>
+              <div class="mt-2">
+              </div>
+            </div>
+
+            <div>
+              <label
+                for="quotation1"
+                class="block text-sm font-medium leading-6 text-gray-900"
+                >Quotation 1</label
+              >
+              <div class="mt-2">
+                <input
+                  type="file"
+                  name="quotation1"
+                  id="quotation1"
+                  autocomplete="quotation1"
+                  class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 px-2 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label
+                for="quotation2"
+                class="block text-sm font-medium leading-6 text-gray-900"
+                >Quotation 2</label
+              >
+              <div class="mt-2">
+                <input
+                  type="file"
+                  name="quotation2"
+                  id="quotation2"
+                  autocomplete="quotation2"
+                  class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 px-2 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label
+                for="quotation3"
+                class="block text-sm font-medium leading-6 text-gray-900"
+                >Quotation 3</label
+              >
+              <div class="mt-2">
+                <input
+                  type="file"
+                  name="quotation3"
+                  id="quotation3"
+                  autocomplete="quotation3"
+                  class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 px-2 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                />
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <div class="flex mt-10 px-3 py-3">
+        <div style="width: 50%;">
+          <button style="width: 100%;" class="text-sm font-semibold leading-6 text-gray-900">
+            CANCEL
+          </button>
+        </div>
+        <div style="width: 50%;">
+          <button
+          style="width: 100%;"
+            type="submit"
+            class="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+          >
+            SUBMIT
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

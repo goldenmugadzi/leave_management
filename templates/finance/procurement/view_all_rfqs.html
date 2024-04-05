@@ -1,0 +1,92 @@
+{% extends "admin_layout.html" %}
+{% load static %}
+{% load humanize %}{% load custom_tags %}
+
+{% block styles %}
+<link  rel="stylesheet"  href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css"/>
+<style>
+  .dataTables_wrapper .dataTables_length select {
+    width: 4rem;
+  }
+</style>
+{% endblock %}
+{% block content %}
+<div class="content-wrapper">
+  <div class="grid grid-cols-1">
+    <div class="bg-gulf-blue-100 shadow-lg rounded-lg p-6">
+     
+       <h3 class="text-center font-bold  mb-4">All Procurements</h3>
+      <div class=" grid grid-cols-4 container text-center ">
+        <a href="{% url 'procurement:create_rfq' %}" class="bg-blue-500 hover:bg-blue-700 inline-block rounded-full mx-3 text-white py-2 px-4 rounded">Create New</a>
+        {% comment %} <a href="{% url 'nonconformity:checklist' %}" class="bg-blue-500 hover:bg-blue-700 inline-block rounded-full mx-3 text-white py-2 px-4 rounded">Create from checklist</a> {% endcomment %}
+        <a href="{% url 'procurement:rfqs_awaiting_my_action' %}" class="bg-gray-500 hover:bg-gray-700 inline-block rounded-full mx-3 text-white py-2 px-4 rounded">Awaiting my action </a>
+      </div>
+      <br> <table id="nonconformity" class="table table-striped stripe table-bordered">
+        <thead>
+          <tr>
+            <tr>
+                <th>Description</th>
+                <th>Allocation Code of Expenditure</th>
+                <th>Scope of Work</th>
+                <th>Quantity</th>
+                <th>Proc Ref</th>
+                <th>Amount</th>
+                <th>Payment Mode</th>
+                <th>Requested By</th>
+                <th>Created At</th>
+                <th>Section</th>
+                <th>ACE</th>
+          </tr>
+        </thead>
+        <tbody>
+            {% for procurement in rfqs %}
+            <tr class="h-1">
+                <td><a class="text-blue-500" href="/rfq_detail/{{procurement.id}}">{{ procurement.description|default_if_none:'' }}</a></td>
+              <td>{{ procurement.allocation_code_of_expenditure }}</td>
+              <td>{{ procurement.scope_of_work }}</td>
+              <td>{{ procurement.quantity }}</td>
+              <td>{{ procurement.proc_ref }}</td>
+              <td>{{ procurement.amount }}</td>
+              <td>{{ procurement.payment_mode }}</td>
+            <td>{% if procurement.requested_by == user %} You {% else %} {{procurement.requested_by.get_full_name }} {% endif %}</td>
+              <td>{{ procurement.created_at }}</td>
+              <td>{{ procurement.section }}</td>
+              <td>{{ procurement.ace|default_if_none:'' }}</td>
+              {% comment %} <td>{{ procurement.process }}</td> {% endcomment %}
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script>
+  $(document).ready(function () {
+    // Initialize the DataTable with options and Tailwind CSS classes
+    $("#nonconformity").DataTable({
+      // Set the number of rows to display per page
+      "pageLength": 10,
+  
+      // Enable sorting on the specified columns
+      "columnDefs": [
+        { "orderable": true, "targets": [0, 1, 2] }
+      ],
+  
+      // Enable searching within the table
+      "searching": true,
+  
+      // Display the DataTable in a responsive manner
+      "responsive": true,
+  
+     
+    });
+  });
+</script>
+{% endblock %}
