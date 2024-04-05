@@ -279,7 +279,7 @@ var DashboardFilter = function (_React$Component) {
 
     _this.getRegions = function () {
 
-      fetch("http://localhost:8000/dashboards/regions").then(function (response) {
+      fetch("http://172.16.8.98:9300/dashboards/regions").then(function (response) {
         return response.json();
       }).then(function (data) {
         console.log(data);
@@ -295,7 +295,7 @@ var DashboardFilter = function (_React$Component) {
     };
 
     _this.getDashboardData = function () {
-      fetch("http://localhost:8000/dashboards/dashboard_data").then(function (response) {
+      fetch("http://172.16.8.98:9300/dashboards/dashboard_data").then(function (response) {
         return response.json();
       }).then(function (data) {
 
@@ -425,7 +425,7 @@ var DashboardFilter = function (_React$Component) {
       console.log("csrfToken: ", csrfToken);
 
       // Set up the request
-      xhr.open("GET", "http://localhost:8000/dashboards/ajax?month=" + month); // Replace with your actual URL and parameters
+      xhr.open("GET", "http://172.16.8.98:9300/dashboards/ajax?month=" + month); // Replace with your actual URL and parameters
 
       xhr.setRequestHeader("X-CSRFToken", csrfToken);
       // Handle the response
@@ -488,7 +488,7 @@ var DashboardFilter = function (_React$Component) {
       var csrfToken = getCookie("csrf_token");
       console.log("csrfToken: ", csrfToken);
       // Set up the request
-      xhr.open("GET", "http://localhost:8000/dashboards/inspections/ajax?month=" + month); // Replace with your actual URL and parameters
+      xhr.open("GET", "http://172.16.8.98:9300/dashboards/inspections/ajax?month=" + month); // Replace with your actual URL and parameters
       xhr.setRequestHeader("X-CSRFToken", csrfToken);
 
       // Handle the response

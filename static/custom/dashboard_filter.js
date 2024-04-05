@@ -342,7 +342,7 @@ class DashboardFilter extends React.Component {
     console.log("csrfToken: ", csrfToken);
 
     // Set up the request
-    xhr.open("GET", `http://localhost:8000/dashboards/ajax?month=${month}`); // Replace with your actual URL and parameters
+    xhr.open("GET", `http://172.16.8.98:9300/dashboards/ajax?month=${month}`); // Replace with your actual URL and parameters
 
     xhr.setRequestHeader("X-CSRFToken", csrfToken);
     // Handle the response
@@ -404,7 +404,7 @@ class DashboardFilter extends React.Component {
     // Set up the request
     xhr.open(
       "GET",
-      `http://localhost:8000/dashboards/inspections/ajax?month=${month}`
+      `http://172.16.8.98:9300/dashboards/inspections/ajax?month=${month}`
     ); // Replace with your actual URL and parameters
     xhr.setRequestHeader("X-CSRFToken", csrfToken);
 
@@ -436,7 +436,7 @@ class DashboardFilter extends React.Component {
   // get service branch
   getRegions = () => {
 
-    fetch(`http://localhost:8000/dashboards/regions`)
+    fetch(`http://172.16.8.98:9300/dashboards/regions`)
       .then((response) => response.json())
       .then((data) => {
         console.log(data);
@@ -452,7 +452,7 @@ class DashboardFilter extends React.Component {
   };
 
   getDashboardData = () => {
-    fetch(`http://localhost:8000/dashboards/dashboard_data`)
+    fetch(`http://172.16.8.98:9300/dashboards/dashboard_data`)
       .then((response) => response.json())
       .then((data) => {
 
