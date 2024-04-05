@@ -1,6 +1,7 @@
 import csv
 from datetime import datetime
 import json
+import simplejson as jsons
 from django.http import JsonResponse
 from django.shortcuts import render,redirect
 from django.views.decorators.csrf import csrf_exempt
@@ -17,6 +18,74 @@ from it.users.models import Sections, UserProfile, Depots, Districts, Regions
 MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
 
 # Create your views here.
+def get_regions(request):
+    regions = Regions.objects.all()
+    districts = Districts.objects.all()
+    sections = Sections.objects.all()
+    return JsonResponse({
+        
+        "regions": list(regions.values('id', 'region')),
+        "districts": list(districts.values('id', 'district', 'region_id')),
+        "sections": list(sections.values('id', 'section', 'district_id', 'region_id')),
+        }, safe=False)
+
+def get_districts(request):
+    districts = Districts.objects.all()
+    return JsonResponse(list(districts.values('id', 'district')), safe=False)
+
+def dashboard_data(request):
+    
+    user_title = request.user.get_full_name()
+    url_path = request.path.split("/")
+    
+    user = request.user
+    user_profile = UserProfile.objects.filter(id=user.id).first()
+    
+    section = user_profile.section
+    district = user_profile.district
+    region = user_profile.region
+    sections = Sections.objects.all()
+    districts = Districts.objects.all()
+    regions = Regions.objects.all()
+
+    # fetch pbnc data
+    pbncs = PBNC.objects.all().order_by('-amount')
+    tds = TD.objects.all().order_by('-amount')
+    upos = UPO.objects.all()
+    
+    month_id = datetime.now().month
+    current_month = {
+        "id": month_id,
+        "name": MONTHS[month_id-1]
+    }
+    
+    inspections = get_inspections(user_profile, month_id)
+    maintenance_ = get_mmts(user_profile, month_id)
+    mtn = get_mmt(user_profile, month_id)
+    print("mtn: ", mtn)
+    
+    keys_list, values_list = get_inspections_bargraph(user_profile, month_id)
+
+    inspection_locations = keys_list
+    inspections_count = values_list
+    
+    # loop through maintences and foreach get record count from Files.
+    maintenance_keys_list, maintenance_values_list = get_maintenance_linegraph(user_profile, month_id)
+
+    data = {
+            "pbncs": list(pbncs.values('id', 'name', 'amount', 'depot', 'district', 'region', 'created_at')),
+            "tds": list(tds.values('id', 'name', 'amount', 'depot', 'district', 'region', 'created_at')),
+            "upos": list(upos.values('id', 'description', 'depot', 'district', 'region', 'created_at')),
+            "inspection_locations": inspection_locations, 
+            "inspections_count": inspections_count,
+            "mtn": mtn, 
+            "maintenance_count": maintenance_values_list, 
+            "maintenance_locations": maintenance_keys_list
+        }
+
+    return JsonResponse(data, safe=False)
+
+
 @login_required(login_url='/accounts/login/')
 def dashboard_index(request):
     
@@ -25,6 +94,7 @@ def dashboard_index(request):
     
     user = request.user
     user_profile = UserProfile.objects.filter(id=user.id).first()
+    
     section = user_profile.section
     district = user_profile.district
     region = user_profile.region
@@ -56,11 +126,14 @@ def dashboard_index(request):
     # loop through maintences and foreach get record count from Files.
     maintenance_keys_list, maintenance_values_list = get_maintenance_linegraph(user_profile, month_id)
     
+    regions_json = json.dumps(list(regions.values('id', 'region')))
+    districts_json = json.dumps(list(districts.values('id', 'district')))
+    sections_json = json.dumps(list(sections.values('id', 'section')))
+
     return render(request, 
                   'dashboards/index.html', 
                   {
                       "user_title": user_title,
-                      "url_path": url_path,
                       "page_title": "Dashboards",
                       "sections": sections,
                       "districts": districts,
@@ -68,6 +141,9 @@ def dashboard_index(request):
                       "section": section,
                       "district": district,
                       "region": region,
+                    "regions_json": regions_json,
+                    "districts_json": districts_json,
+                    "sections_json": sections_json,
                       "current_month": current_month,
                       "pbncs": pbncs, 
                       "tds": tds, 

@@ -11,4 +11,7 @@ urlpatterns = [
     path('maintenance/upload', maintenance_upload, name='maintenance_upload'),
     path('ajax', dashboards_maintenance_ajax, name='ajax_month'),
     path('inspections/ajax', dashboards_inspections_ajax, name='dashboards_inspections_ajax'),
+    path('regions', get_regions, name='get_regions'),
+    path('districts', get_districts, name='get_districts'),
+    path('dashboard_data', dashboard_data, name='dashboard_data'),
     ]

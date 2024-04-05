@@ -16,29 +16,32 @@ from .helpers import REGIONS, DISTRICTS, DEPOTS
 def add_centers(request):
     
     # add regions
-    for region in REGIONS:
-        _region = Regions(
-            region=region['name'],
-            code=region['code'],
-        )
-        _region.save()
+    # for region in REGIONS:
+    #     _region = Regions(
+    #         region=region['name'],
+    #         code=region['code'],
+    #     )
+    #     _region.save()
     
     for district in DISTRICTS:
+        region_id = Regions.objects.filter(code=district['parent_code']).first()
         _district = Districts(
             district=district['name'],
             code=district['code'],
-            region_id=district['parent_code']
+            region_id=region_id.id
         )
         _district.save()
         
-    for depot in DEPOTS:
-        _depot = Depots(
-            depot=depot['name'],
-            code=depot['code'],
-            district_id=depot['district_code'],
-            region_id=depot['parent_code']
-        )
-        _depot.save()
+    # for depot in DEPOTS:
+    #     district_id=Districts.objects.filter(code=depot['district_code']).first()
+    #     region_id = Regions.objects.filter(code=depot['parent_code']).first()
+    #     _depot = Depots(
+    #         depot=depot['name'],
+    #         code=depot['code'],
+    #         district_id=district_id.id,
+    #         region_id=region_id.id
+    #     )
+    #     _depot.save()
         
     return redirect('/users/users-index')
 
