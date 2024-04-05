@@ -68,7 +68,7 @@ def create_rfq(request):
 def pettycash_awaiting_my_action(request):
     """
     for each pettycash.Process in the rfqs,  let current_step = the last pettycash.process.approval if any else 0 and
-    let next_step =current_step+1 then check if  next_step=step.step for rfq.process.workflow.step_set filtered by
+    let next_step =current_step+1 then check if  next_step=step.step for procurement.process.workflow.step_set filtered by
     approver = user.roles.all.
     """
     pettycashs_to_process = []
@@ -96,5 +96,5 @@ def pettycash_awaiting_my_action(request):
 @login_required
 def view_all_pettycashs(request):
     pettycashs = Pettycash.objects.all()
-    return render(request, 'finance/rfq/view_all_pettycashs.html', {'pettycashs': pettycashs})
+    return render(request, 'finance/procurement/view_all_pettycashs.html', {'pettycashs': pettycashs})
 

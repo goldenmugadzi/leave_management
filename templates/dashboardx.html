@@ -306,7 +306,7 @@
                         <div class="mt-2">
                             <a href="../ace/user/pending_rfq.php?source=home">
                                 <div class="flex flex-row border border-nepal-200 hover:bg-nepal-600 rounded-lg px-3 py-1 justify-between items-center sm:mt-0 sm:flex-row sm:flex-wrap sm:space-x-6">
-                                    <div class="text-sm">AWAITING RFQ</div>
+                                    <div class="text-sm">AWAITING Procurement</div>
                                     <div class="text-sm">
                                         <span class="inline-flex items-center rounded-md bg-nepal-100 px-2 py-1 text-xs font-medium text-scarlet-red-700 ring-1 ring-inset ring-blue-700/10">
                                             <?php echo $pending_rfq_count; ?>
@@ -330,7 +330,7 @@
                         {% endif %}
                         {% if user.roles.adjudication|stringformat:'s' == 'process' %}
                         <div class="mt-2">
-                            <a href="../../tender/rfq/datatables/production/awaiting_procurement.php?source=home">
+                            <a href="../../tender/procurement/datatables/production/awaiting_procurement.php?source=home">
                                 <div class="flex flex-row border border-nepal-200 hover:bg-nepal-600 rounded-lg px-3 py-1 justify-between items-center sm:mt-0 sm:flex-row sm:flex-wrap sm:space-x-6">
                                     <div class="text-sm">PENDING PROCUREMENT</div>
                                     <div class="text-sm">
@@ -427,9 +427,9 @@
                             </a>
                         </div>
                         <div class="mt-2">
-                            <a href="../tender/rfq/datatables/production/awaiting_authorisation.php?source=home">
+                            <a href="../tender/procurement/datatables/production/awaiting_authorisation.php?source=home">
                                 <div class="flex flex-row border border-nepal-200 hover:bg-nepal-600 rounded-lg px-3 py-1 justify-between items-center sm:mt-0 sm:flex-row sm:flex-wrap sm:space-x-6">
-                                    <div class="text-sm">RFQ `s - PENDING AUTHORISATION</div>
+                                    <div class="text-sm">Procurement `s - PENDING AUTHORISATION</div>
                                     <div class="text-sm">
                                         <span class="inline-flex items-center rounded-md bg-nepal-100 px-2 py-1 text-xs font-medium text-scarlet-red-700 ring-1 ring-inset ring-blue-700/10">
                                             <?php echo $awaiting_authorisation_count; ?>
@@ -441,7 +441,7 @@
                         {% endif %}
                         {% if user.roles.adjudication|stringformat:'s' == 'authorise' %}
                         <div class="mt-2">
-                            <a href="../../tender/rfq/datatables/production/awaiting_authorisation.php?source=home">
+                            <a href="../../tender/procurement/datatables/production/awaiting_authorisation.php?source=home">
                                 <div class="flex flex-row border border-nepal-200 hover:bg-nepal-600 rounded-lg px-3 py-1 justify-between items-center sm:mt-0 sm:flex-row sm:flex-wrap sm:space-x-6">
                                     <div class="text-sm">PENDING AUTHORISATION</div>
                                     <div class="text-sm">

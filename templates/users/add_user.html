@@ -305,7 +305,7 @@
               <label
                 for="tenders_role"
                 class="block text-sm font-medium leading-6 text-gray-900"
-                >RFQ/ Tender Management</label
+                >Procurement/ Tender Management</label
               >
               <div class="mt-2">
                 <select
@@ -389,7 +389,7 @@
                 <label
                         for="ace_role"
                         class="block text-sm font-medium leading-6 text-gray-900"
-                >RFQ</label
+                >Procurement</label
                 >
                 <div class="mt-2">
                     <select
@@ -398,13 +398,13 @@
                             autocomplete="rfq_role"
                             class="block w-full rounded-md border-0 px-2 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
                     >
-                        {% if user.roles.rfq %}
-                            <option value="{{ user.roles.rfq.id }}" selected>
-                                {{ user.roles.rfq.name }}
+                        {% if user.roles.procurement %}
+                            <option value="{{ user.roles.procurement.id }}" selected>
+                                {{ user.roles.procurement.name }}
                             </option>
                         {% endif %}
                         <option>Select Role</option>
-                        {% for role in user_roles.rfq %}
+                        {% for role in user_roles.procurement %}
                             <option value="{{role.id}}">{{role.name}}</option>
                         {% endfor %}
                     </select>

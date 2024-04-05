@@ -121,7 +121,7 @@ INSTALLED_APPS = [
     'processes.apps.ProcessesConfig',
     'process_risks.apps.ProcessRisksConfig',
     'finance.Ace',
-    'finance.rfq',
+    'finance.procurement',
     # 'finance.DirectPurchases',
 
     'reports',

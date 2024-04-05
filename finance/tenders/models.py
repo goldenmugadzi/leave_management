@@ -1,13 +1,13 @@
 from django.db import models
 from finance.Direct_purchases.models import Supplier
 
-from finance.rfq.models import RFQ
+from finance.procurement.models import Procurement
 from it.users.models import *
 
 # Create your models here.
 class Tender(models.Model):
     tender_id = models.CharField(max_length=100)
-    rfq_id = models.ForeignKey(RFQ, on_delete=models.CASCADE)
+    rfq_id = models.ForeignKey(Procurement, on_delete=models.CASCADE)
     rfq_date = models.DateField()
     scope_of_work = models.CharField(max_length=400)
     closing_date = models.DateField()
