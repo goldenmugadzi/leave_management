@@ -29,6 +29,11 @@ class DashboardFilter extends React.Component {
       maintenance_locations: [],
       maintenance_count: [],
       mnt: {},
+
+      selectedRegion: "",
+      selectedDistrict: "",
+      selectedSection: ""
+
     };
     this.inspectionPieChartRef = React.createRef();
     this.mmtPieChartRef = React.createRef();
@@ -43,6 +48,15 @@ class DashboardFilter extends React.Component {
     });
     this.getRegions();
     this.getDashboardData();
+  }
+
+  onFilterSelectCenters = (name_, event) => {
+    let { name, value } = event.target
+    console.log(name, value)
+    this.setState({
+      [name]: value,
+      [name_]: value
+    })
   }
 
   initComponents = () => {
@@ -288,27 +302,27 @@ class DashboardFilter extends React.Component {
       },
     });
 
-    var regions = this.state.regions;
-    var centers = this.state.districts;
-    var sections = this.state.sections;
-    const selectDistrict = document.getElementById("selectDistrict");
-    const submitDistrictForm = document.getElementById("submitDistrictForm");
+    // var regions = this.state.regions;
+    // var centers = this.state.districts;
+    // var sections = this.state.sections;
+    // const selectDistrict = document.getElementById("selectDistrict");
+    // const submitDistrictForm = document.getElementById("submitDistrictForm");
 
-    // Add event listener to the select element
-    selectDistrict.addEventListener("change", function () {
-      // Submit the form
-      submitDistrictForm.submit();
-    });
+    // // Add event listener to the select element
+    // selectDistrict.addEventListener("change", function () {
+    //   // Submit the form
+    //   submitDistrictForm.submit();
+    // });
 
-    // Get the select element and form
-    const selectRegion = document.getElementById("selectRegion");
-    const submitRegionForm = document.getElementById("submitRegionForm");
+    // // Get the select element and form
+    // const selectRegion = document.getElementById("selectRegion");
+    // const submitRegionForm = document.getElementById("submitRegionForm");
 
-    // Add event listener to the select element
-    selectRegion.addEventListener("change", function () {
-      // Submit the form
-      submitRegionForm.submit();
-    });
+    // // Add event listener to the select element
+    // selectRegion.addEventListener("change", function () {
+    //   // Submit the form
+    //   submitRegionForm.submit();
+    // });
   };
 
   onMaintenanceMonthSelected(event) {
@@ -522,6 +536,7 @@ class DashboardFilter extends React.Component {
                   <select
                     id="selectRegion"
                     name="selectedRegion"
+                    onChange={(event) => this.onFilterSelectCenters("region", event)}
                     className="block w-full bg-gulf-blue-50 rounded-md border-0 px-2 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
                   >
                     {this.state.region ? (
@@ -540,6 +555,7 @@ class DashboardFilter extends React.Component {
                   <select
                     id="selectDistrict"
                     name="selectedDistrict"
+                    onChange={(event) => this.onFilterSelectCenters("district", event)}
                     className="block w-full bg-gulf-blue-50 rounded-md border-0 px-2 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
                   >
                     {this.state.district ? (
@@ -558,6 +574,7 @@ class DashboardFilter extends React.Component {
                   <select
                     id="selectSection"
                     name="selectedSection"
+                    onChange={(event) => this.onFilterSelectCenters("section", event)}
                     className="block w-full bg-gulf-blue-50 rounded-md border-0 px-2 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
                   >
                     {this.state.section ? (
@@ -833,9 +850,9 @@ class DashboardFilter extends React.Component {
                       </thead>
                       <tbody>
                         {this.state.upos
-                          ? this.state.upos.map((pbnc, index) => (
+                          ? this.state.upos.map((upo, index) => (
                               <tr>
-                                <td>{forloop.counter}</td>
+                                <td>{index + 1}</td>
                                 <td>{upo.description}</td>
                               </tr>
                             ))
@@ -879,9 +896,9 @@ class DashboardFilter extends React.Component {
                       </thead>
                       <tbody>
                         {this.state.tds
-                          ? this.state.tds.map((pbnc, index) => (
+                          ? this.state.tds.map((td, index) => (
                               <tr>
-                                <td>{forloop.counter}</td>
+                                <td>{(index + 1)}</td>
                                 <td>{td.name}</td>
                                 <td>{td.amount}</td>
                               </tr>

@@ -18,9 +18,22 @@ var DashboardFilter = function (_React$Component) {
   _inherits(DashboardFilter, _React$Component);
 
   function DashboardFilter(props) {
+    var _this$state;
+
     _classCallCheck(this, DashboardFilter);
 
     var _this = _possibleConstructorReturn(this, (DashboardFilter.__proto__ || Object.getPrototypeOf(DashboardFilter)).call(this, props));
+
+    _this.onFilterSelectCenters = function (name_, event) {
+      var _this$setState;
+
+      var _event$target = event.target,
+          name = _event$target.name,
+          value = _event$target.value;
+
+      console.log(name, value);
+      _this.setState((_this$setState = {}, _defineProperty(_this$setState, name, value), _defineProperty(_this$setState, name_, value), _this$setState));
+    };
 
     _this.initComponents = function () {
       var baseColors = ["#f62c06", "#94834b", "#1288fe", "#c8a806", "#f02e0e", "#e118d5", "#0fb11c", "#3b3cf0", "#188350", "#c93986", "#90921e"];
@@ -241,27 +254,27 @@ var DashboardFilter = function (_React$Component) {
         }
       });
 
-      var regions = _this.state.regions;
-      var centers = _this.state.districts;
-      var sections = _this.state.sections;
-      var selectDistrict = document.getElementById("selectDistrict");
-      var submitDistrictForm = document.getElementById("submitDistrictForm");
+      // var regions = this.state.regions;
+      // var centers = this.state.districts;
+      // var sections = this.state.sections;
+      // const selectDistrict = document.getElementById("selectDistrict");
+      // const submitDistrictForm = document.getElementById("submitDistrictForm");
 
-      // Add event listener to the select element
-      selectDistrict.addEventListener("change", function () {
-        // Submit the form
-        submitDistrictForm.submit();
-      });
+      // // Add event listener to the select element
+      // selectDistrict.addEventListener("change", function () {
+      //   // Submit the form
+      //   submitDistrictForm.submit();
+      // });
 
-      // Get the select element and form
-      var selectRegion = document.getElementById("selectRegion");
-      var submitRegionForm = document.getElementById("submitRegionForm");
+      // // Get the select element and form
+      // const selectRegion = document.getElementById("selectRegion");
+      // const submitRegionForm = document.getElementById("submitRegionForm");
 
-      // Add event listener to the select element
-      selectRegion.addEventListener("change", function () {
-        // Submit the form
-        submitRegionForm.submit();
-      });
+      // // Add event listener to the select element
+      // selectRegion.addEventListener("change", function () {
+      //   // Submit the form
+      //   submitRegionForm.submit();
+      // });
     };
 
     _this.getRegions = function () {
@@ -310,9 +323,9 @@ var DashboardFilter = function (_React$Component) {
 
     _this.onServiceSelected = function (event) {
       console.log(event);
-      var _event$target = event.target,
-          name = _event$target.name,
-          checked = _event$target.checked;
+      var _event$target2 = event.target,
+          name = _event$target2.name,
+          checked = _event$target2.checked;
 
       _this.setState({
         form: Object.assign({}, _this.state.form, {
@@ -340,16 +353,16 @@ var DashboardFilter = function (_React$Component) {
 
     _this.onInputChange = function (event) {
       console.log(event);
-      var _event$target2 = event.target,
-          name = _event$target2.name,
-          value = _event$target2.value;
+      var _event$target3 = event.target,
+          name = _event$target3.name,
+          value = _event$target3.value;
 
       _this.setState({
         form: Object.assign({}, _this.state.form, _defineProperty({}, name, value))
       });
     };
 
-    _this.state = {
+    _this.state = (_this$state = {
       regions: [],
       districts: [],
       sections: [],
@@ -373,7 +386,8 @@ var DashboardFilter = function (_React$Component) {
       maintenance_locations: [],
       maintenance_count: [],
       mnt: {}
-    };
+
+    }, _defineProperty(_this$state, "selectedRegion", ""), _defineProperty(_this$state, "selectedDistrict", ""), _defineProperty(_this$state, "selectedSection", ""), _this$state);
     _this.inspectionPieChartRef = React.createRef();
     _this.mmtPieChartRef = React.createRef();
     _this.mmtBarChartRef = React.createRef();
@@ -507,6 +521,8 @@ var DashboardFilter = function (_React$Component) {
   }, {
     key: "render",
     value: function render() {
+      var _this2 = this;
+
       var servicesList = this.state.services;
 
       return React.createElement(
@@ -532,6 +548,9 @@ var DashboardFilter = function (_React$Component) {
                     {
                       id: "selectRegion",
                       name: "selectedRegion",
+                      onChange: function onChange(event) {
+                        return _this2.onFilterSelectCenters("region", event);
+                      },
                       className: "block w-full bg-gulf-blue-50 rounded-md border-0 px-2 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
                     },
                     this.state.region ? React.createElement(
@@ -564,6 +583,9 @@ var DashboardFilter = function (_React$Component) {
                     {
                       id: "selectDistrict",
                       name: "selectedDistrict",
+                      onChange: function onChange(event) {
+                        return _this2.onFilterSelectCenters("district", event);
+                      },
                       className: "block w-full bg-gulf-blue-50 rounded-md border-0 px-2 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
                     },
                     this.state.district ? React.createElement(
@@ -596,6 +618,9 @@ var DashboardFilter = function (_React$Component) {
                     {
                       id: "selectSection",
                       name: "selectedSection",
+                      onChange: function onChange(event) {
+                        return _this2.onFilterSelectCenters("section", event);
+                      },
                       className: "block w-full bg-gulf-blue-50 rounded-md border-0 px-2 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
                     },
                     this.state.section ? React.createElement(
@@ -1108,14 +1133,14 @@ var DashboardFilter = function (_React$Component) {
                       React.createElement(
                         "tbody",
                         null,
-                        this.state.upos ? this.state.upos.map(function (pbnc, index) {
+                        this.state.upos ? this.state.upos.map(function (upo, index) {
                           return React.createElement(
                             "tr",
                             null,
                             React.createElement(
                               "td",
                               null,
-                              forloop.counter
+                              index + 1
                             ),
                             React.createElement(
                               "td",
@@ -1194,14 +1219,14 @@ var DashboardFilter = function (_React$Component) {
                       React.createElement(
                         "tbody",
                         null,
-                        this.state.tds ? this.state.tds.map(function (pbnc, index) {
+                        this.state.tds ? this.state.tds.map(function (td, index) {
                           return React.createElement(
                             "tr",
                             null,
                             React.createElement(
                               "td",
                               null,
-                              forloop.counter
+                              index + 1
                             ),
                             React.createElement(
                               "td",

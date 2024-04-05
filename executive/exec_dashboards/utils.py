@@ -167,7 +167,7 @@ def get_maintenance_linegraph(user, month_id):
     if any(role.role == 'district_manager' for role in user.roles.all()):
         print(district.district, region, month_id)
         if district:
-            maintenances = Maintenance.objects.filter(region=region, district=district.district, created_at__month=month_id)
+            maintenances = Maintenance.objects.filter(district=district.district, created_at__month=month_id)
             maintenance_keys_list, maintenance_values_list = get_inspections_monthly(maintenances, month_id)
     if any(role.role == 'executive' for role in user.roles.all()):
         if region.id:
