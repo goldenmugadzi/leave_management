@@ -36,13 +36,13 @@
       }
   </style>
 </head>
-<div class="m-auto mt-5 justify-content-center">
+<div class="m-auto mt-5 ">
     <div class="card grid grid-cols-1 gap-2 mb-3">
         <div class="card-body m-2">
-            <div class="card-body m-auto mb-5 p-3 border rounded   justify-content-center align-content-stretch container rounded  shadow-lg">
+            <div class="card-body m-auto mb-5 p-3 border rounded    container rounded  shadow-lg">
                 <div class="px-6 py-4">
                     <div class="card grid grid-cols-2 gap-2 mb-3">
-                        <div class="card-body m-auto mb-5 bg-gradient-to-r from-gulf-blue-100 to-blue-500 ed p-3 border rounded   justify-content-center align-content-stretch container rounded  shadow-lg">
+                        <div class="card-body m-auto mb-5 bg-gradient-to-r from-gulf-blue-100 to-blue-500 ed p-3 border rounded    container rounded  shadow-lg">
                             <h1 class="text-center mb-4 font-bold text-xl  mb-2">Petty Cash Details</h1>
                             <p class="font-bold   mb-2"> Details of expenditure: {{ pettycash.details_of_expenditure }}</p>
                             <p class="font-bold   mb-2"> allocation code of expenditure: {{ pettycash.section }}</p>
@@ -93,7 +93,7 @@
                                     {% if step.step in approved_steps %}
                                         {% for approval in pettycash.process.approval_set.all %}
                                            {% if step == approval.step %}
-                                                <div class="card-body m-auto arrow arrow-step mb-5 bg-gradient-to-r from-gulf-blue-100 to-green-700 ed p-3 border rounded justify-content-center align-content-stretch container rounded shadow-lg">
+                                                <div class="card-body m-auto arrow arrow-step mb-5 bg-gradient-to-r from-gulf-blue-100 to-green-700 ed p-3 border rounded  container rounded shadow-lg">
                                                     <div class="p-4 rounded-lg" title="Comment : {{ approval.comment }}" >
                                                         <p class="font-bold">{{ step }}</p> <br>
                                                     </div>
@@ -113,7 +113,7 @@
                                             {% endfor %}
 
                                         {% else %}
-                                            <div class="card-body m-auto arrow arrow-step mb-5 bg-gradient-to-r from-gulf-blue-100 to-blue-500 ed p-3 border rounded justify-content-center align-content-stretch container rounded shadow-lg">
+                                            <div class="card-body m-auto arrow arrow-step mb-5 bg-gradient-to-r from-gulf-blue-100 to-blue-500 ed p-3 border rounded  container rounded shadow-lg">
                                                 <div class="p-4 rounded-lg" title="{{ approval.comment }}" >
                                                     <p class="font-bold">{{ step }}</p> <br>
                                                     {% if step.to %}

@@ -36,13 +36,13 @@
       }
   </style>
 </head>
-<div class="m-auto mt-5 justify-content-center">
+<div class="m-auto mt-5 ">
   <h1 class="text-center mb-4 font-bold text-xl  mb-2">Workflow Details</h1>
-  <div class="m-auto   mt-5 justify-content-center">
+  <div class="m-auto   mt-5 ">
   
     <div class="card grid grid-cols-1 gap-2 mb-3">
       <div class="card-body m-2">
-        <div class="card-body m-auto mb-5 p-3 border rounded   justify-content-center align-content-stretch container rounded  shadow-lg">
+        <div class="card-body m-auto mb-5 p-3 border rounded    container rounded  shadow-lg">
             <div class="px-6 py-4">
               Workflow Identified By <div class="font-bold text-xl text-center mb-2"> Name: {{ workflow.name }}</div>
               
@@ -54,7 +54,7 @@
                   </div>
              
               {% for step in steps %}
-        <div class="card-body m-auto arrow arrow-step mb-5 bg-gradient-to-r from-gulf-blue-100 to-blue-500 ed p-3 border rounded   justify-content-center align-content-stretch container rounded  shadow-lg">
+        <div class="card-body m-auto arrow arrow-step mb-5 bg-gradient-to-r from-gulf-blue-100 to-blue-500 ed p-3 border rounded    container rounded  shadow-lg">
                   <div class="p-4 rounded-lg "><p class="font-bold"> {{step.approver.role}}</p> <br>
                  
                  {% if step.to %}

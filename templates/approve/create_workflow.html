@@ -3,10 +3,10 @@
 
 {% block content %}
 
-<div class="m-auto mt-5 justify-content-center">
+<div class="m-auto mt-5 ">
   <form class="row rounded py-4 border bg-gulf-blue-100 p-3 m-auto  container" method="POST" action="{{url}}" enctype="multipart/form-data">
     {% csrf_token %}
-    <div class="rounded d-flex justify-content-center align-items-center p-3 gap-4  m-auto grid grid-cols-1">
+    <div class="rounded d-flex  align-items-center p-3 gap-4  m-auto grid grid-cols-1">
       {% comment %} <div class="m-auto container cols-6 "> {% endcomment %}
         <h3 class="font-bold my-4 text-center">Workflow</h3>
             

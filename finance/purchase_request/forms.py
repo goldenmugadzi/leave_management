@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.auth.models import User
-from .models import RFQ, Quotation
+from .models import PurchaseRequest, Quotation,Item
 from django.forms import formset_factory
 
 
@@ -13,9 +13,9 @@ class QuotationForm(forms.ModelForm):
 QuotationFormSet = formset_factory(QuotationForm, extra=0, min_num=3, validate_min=True)
 
 
-class RFQForm(forms.ModelForm):
+class PurchaseRequestForm(forms.ModelForm):
     class Meta:
-        model = RFQ
+        model = PurchaseRequest
         fields = '__all__'
         exclude = ['process', 'ace', 'requested_by']
 
@@ -63,9 +63,9 @@ class RFQForm(forms.ModelForm):
         return cleaned_data
 
 
-class aceRFQForm(forms.ModelForm):
+class acePurchaseRequestForm(forms.ModelForm):
     class Meta:
-        model = RFQ
+        model = PurchaseRequest
         fields = '__all__'
         exclude = ['process']
 
@@ -118,3 +118,38 @@ class aceRFQForm(forms.ModelForm):
             quotation_files.add(quotation_file)
 
         return cleaned_data
+
+class QuotationForm(forms.ModelForm):
+    class Meta:
+        model = Quotation
+        fields = '__all__'
+        exclude =['purchase_request',  'created_by']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field_name, field in self.fields.items():
+            field.widget.attrs.update({
+                'class': "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6",
+            })
+
+            if isinstance(field.widget, forms.Textarea):
+                field.widget.attrs.update({'rows': '3'})
+
+class ItemForm(forms.ModelForm):
+    class Meta:
+        model = Item
+        fields = '__all__'
+        exclude = ['quotation']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        for field_name, field in self.fields.items():
+            field.widget.attrs.update({
+                'class': "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6",
+            })
+
+            if isinstance(field.widget, forms.Textarea):
+                field.widget.attrs.update({'rows': '3'})
+
+ItemFormSet = formset_factory(ItemForm, extra=0, validate_min=True)
