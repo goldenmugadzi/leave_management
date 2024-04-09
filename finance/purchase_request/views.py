@@ -136,21 +136,22 @@ def view_all_purchase_requests(request):
 @login_required
 def quote_purchase_request(request, purchase_request_id):
     purchase_request = PurchaseRequest.objects.get(id=purchase_request_id)
-    count = int(request.GET.get('items', 5))  # Default value of 5 if no 'extra' parameter is provided
-    items = inlineformset_factory( Quotation,Item, form=ItemForm, extra=count, can_delete=False)
-    
-    if request.method == 'POST':
-        form = QuotationForm(request.POST, request.FILES)
-        formset = items(request.POST, instance=purchase_request)
-        instances = formset.save(commit=False)
+    ItemFormSet = inlineformset_factory(Quotation, Item, form=ItemForm, extra=int(request.POST.get('items', 5)), can_delete=False)
+
+    if request.method == 'POST' and not request.POST.get('get'):
+        form = QuotationForm(request.POST, request.FILES, instance=purchase_request)
         if form.is_valid():
             quotation = form.save(commit=False)
             quotation.purchase_request = purchase_request
             quotation.created_by = request.user
             quotation.save()
-            for instance in instances:
-                instance.quotation = quotation
-                instance.save()
+            formset = ItemFormSet(request.POST, instance=quotation)
+            if formset.is_valid():
+                formset.save()
+
             return redirect('purchase_request:purchase_request_detail', purchase_request_id)
-        
-    return render(request, 'finance/purchase_request/create_quote.html', {'formset': items,'quote': QuotationForm()})
+    else:
+        form = QuotationForm()
+        formset = ItemFormSet(instance=Quotation())
+
+    return render(request, 'finance/purchase_request/create_quote.html', {'formset': formset, 'quote': form})
