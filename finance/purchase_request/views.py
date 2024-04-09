@@ -135,23 +135,33 @@ def view_all_purchase_requests(request):
 
 @login_required
 def quote_purchase_request(request, purchase_request_id):
-    purchase_request = PurchaseRequest.objects.get(id=purchase_request_id)
-    ItemFormSet = inlineformset_factory(Quotation, Item, form=ItemForm, extra=int(request.POST.get('items', 5)), can_delete=False)
-
-    if request.method == 'POST' and not request.POST.get('get'):
-        form = QuotationForm(request.POST, request.FILES, instance=purchase_request)
-        if form.is_valid():
-            quotation = form.save(commit=False)
-            quotation.purchase_request = purchase_request
+    prq = PurchaseRequest.objects.get(id=purchase_request_id)
+    if request.method == 'POST'and not request.POST.get('quote'):
+        itemFormset = inlineformset_factory(Quotation, Item, form=ItemForm, extra=5 , can_delete=False)
+        quote = QuotationForm(request.POST, request.FILES, instance=Quotation(purchase_request=prq))
+        if quote.is_valid():
+            quotation = quote.save(commit=False)
+            quotation.purchase_request = prq
             quotation.created_by = request.user
             quotation.save()
-            formset = ItemFormSet(request.POST, instance=quotation)
-            if formset.is_valid():
-                formset.save()
-
+            formset = itemFormset(request.POST, request.FILES, instance=Item(quotation=quotation))
+            for form in formset:
+                if form.is_valid():
+                    try:
+                        item = form.save(commit=False)
+                        item.quotation = quotation
+                        item.save()
+                    except:
+                        pass
+                else:
+                    return render(request, 'finance/purchase_request/create_quote.html', {'formset': formset, 'quote': quote})
             return redirect('purchase_request:purchase_request_detail', purchase_request_id)
+        else:
+            return render(request, 'finance/purchase_request/create_quote.html', {'formset': formset, 'quote': quote})
     else:
-        form = QuotationForm()
-        formset = ItemFormSet(instance=Quotation())
+        print(request.method == 'POST'and not request.POST.get('quote'))
+        quote = QuotationForm()
+        itemFormset = inlineformset_factory(Quotation, Item, form=ItemForm, extra=int(request.POST.get('items')) , can_delete=False)
+        # formset = ItemFormSet(instance=Quotation())
 
-    return render(request, 'finance/purchase_request/create_quote.html', {'formset': formset, 'quote': form})
+        return render(request, 'finance/purchase_request/create_quote.html', {'formset': itemFormset(), 'quote': quote})

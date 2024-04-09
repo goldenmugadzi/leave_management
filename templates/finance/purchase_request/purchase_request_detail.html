@@ -43,14 +43,14 @@
                 <div class="px-6 py-4">
                  <div class="card grid grid-cols-2 gap-2 mb-3">
                         <div class="card-body m-auto mb-5 bg-gradient-to-r from-gulf-blue-100 to-blue-500 ed p-3 border rounded    container rounded  shadow-lg">
-                            <h1 class="text-center mb-4 font-bold text-xl  mb-2">RFQ Details</h1>
-                            <p class="font-bold   mb-2"> Description: {{ purchase_request.description }}</p>
-                            <p class="font-bold   mb-2"> allocation code of expenditure: {{ purchase_request.allocation_code_of_expenditure }}</p>
-                            <p class="font-bold   mb-2"> scope of work: {{ purchase_request.scope_of_work }}</p>
-                            <p class="font-bold   mb-2"> Procurement reference: {{ purchase_request.proc_ref }}</p>
-                            <p class="font-bold   mb-2"> quantity: {{ purchase_request.quantity }}</p>
-                            <p class="font-bold   mb-2"> amount: {{ purchase_request.amount }}</p>
-                            <p class="font-bold   mb-2"> payment mode: {{ purchase_request.payment_mode }}</p>
+                            <h1 class="text-center mb-4 font-bold text-xl  mb-2">Purchase Request Details</h1>
+                            <p class="font-bold   mb-2"> Description: {{ purchase_request.description |default_if_none:''}}</p>
+                            <p class="font-bold   mb-2"> allocation code of expenditure: {{ purchase_request.allocation_code_of_expenditure |default_if_none:''}}</p>
+                            <p class="font-bold   mb-2"> scope of work: {{ purchase_request.scope_of_work |default_if_none:''}}</p>
+                            <p class="font-bold   mb-2"> Procurement reference: {{ purchase_request.proc_ref |default_if_none:''}}</p>
+                            <p class="font-bold   mb-2"> quantity: {{ purchase_request.quantity |default_if_none:''}}</p>
+                            <p class="font-bold   mb-2"> amount: {{ purchase_request.amount |default_if_none:''}}</p>
+                            <p class="font-bold   mb-2"> payment mode: {{ purchase_request.payment_mode |default_if_none:''}}</p>
                             <p class="font-bold   mb-2"> requested by: 
                                 {% if request.user == purchase_request.requested_by %}
                                                             You
@@ -59,8 +59,8 @@
                                                         {% elif request.user == purchase_request.requested_by %}
                                                                 {{ purchase_request.requested_by }}
                                                         {% endif %}</p>
-                            <p class="font-bold   mb-2"> created_at: {{ purchase_request.created_at }}</p>
-                            <p class="font-bold   mb-2"> section: {{ purchase_request.section }}</p>
+                            <p class="font-bold   mb-2"> created_at: {{ purchase_request.created_at |default_if_none:''}}</p>
+                            <p class="font-bold   mb-2"> section: {{ purchase_request.section |default_if_none:''}}</p>
                             <div class="m-4 flex flex-row-reverse gap-2 mb-3">
                                 <details>
                                   <summary class='p-2 text-xl font-bold bg-white rounded '>Add a Quotation</summary>
@@ -70,7 +70,7 @@
                                       <form class="" method="POST" action="{% url 'purchase_request:quote_purchase_request' purchase_request.id %}" enctype="multipart/form-data">
                                         {% csrf_token %}
                                         <input type="number" class="border border-gray-300 rounded px-4 py-2 mt-4" name='items' placeholder="Enter a number">
-                                        <input type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mt-4" name='get' value='get' />
+                                        <input type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mt-4" name='quote' value="Quote" />
                                           
                                       </form>
                                     </div>
@@ -82,26 +82,72 @@
                {% if purchase_request.ace %}
                      <div class=" m-4 ">
                          <h1 class="text-center mb-4 font-bold text-xl  mb-2">Depends on Ace with these Details</h1>
-                         <p class="font-bold   mb-2"> Department: {{ purchase_request.ace.Department }}</p>
-                         <p class="font-bold   mb-2"> location: {{ purchase_request.ace.location }}</p>
-                         <p class="font-bold   mb-2"> section: {{ purchase_request.ace.section }}</p>
-                         <p class="font-bold   mb-2"> allocation code of expenditure: {{ purchase_request.ace.allocation_code_of_expenditure }}</p>
-                         <p class="font-bold   mb-2"> quantity: {{ purchase_request.ace.quantity }}</p>
-                         <p class="font-bold   mb-2"> amount: {{ purchase_request.ace.amount }}</p>
-                         <p class="font-bold   mb-2"> rejection reason: {{ purchase_request.ace.rejection_reason }}</p>
-                         <p class="font-bold   mb-2"> date created: {{ purchase_request.ace.date_created }}</p>
+                         <p class="font-bold   mb-2"> Department: {{ purchase_request.ace.Department |default_if_none:''}}</p>
+                         <p class="font-bold   mb-2"> location: {{ purchase_request.ace.location |default_if_none:''}}</p>
+                         <p class="font-bold   mb-2"> section: {{ purchase_request.ace.section |default_if_none:''}}</p>
+                         <p class="font-bold   mb-2"> allocation code of expenditure: {{ purchase_request.ace.allocation_code_of_expenditure |default_if_none:''}}</p>
+                         <p class="font-bold   mb-2"> quantity: {{ purchase_request.ace.quantity |default_if_none:''}}</p>
+                         <p class="font-bold   mb-2"> amount: {{ purchase_request.ace.amount |default_if_none:''}}</p>
+                         <p class="font-bold   mb-2"> rejection reason: {{ purchase_request.ace.rejection_reason |default_if_none:''}}</p>
+                         <p class="font-bold   mb-2"> date created: {{ purchase_request.ace.date_created |default_if_none:''}}</p>
                  </div>
                {% endif %}
-               
-           
-           
-               
-                
-   
                  </div>
-                
-                      <h1 class="text-center mb-4 font-bold text-xl  mb-2">Workflow Details</h1>
-                    <p class="font-bold  mb-2"> Workflow name : {{ purchase_request.process.workflow }}</p>
+                <div >
+                    <h1 class="text-center mb-4 font-bold text-xl  mb-2">Quotations</h1>
+                    {% for quote in purchase_request.quotation_set.all %}
+                    <details >
+                        <summary class='text-center bg-blue-200 border font-bold my-2'>{{ quote.supplier }}</summary>
+                        <div class="bg-black bg-opacity-60 p-8 rounded shadow mx-auto my-0">
+                            <div class="m-4 flex flex-row gap-2 mb-3">
+                                <details>
+                                    <summary class='p-2 text-xl font-bold bg-blue-400 rounded'>Scanned Quotation </summary>
+                                    <div class="flex items-center justify-center">
+                                        <img class="m-10 p-10" src='{{quote.file.url}}' />
+                                    </div>
+                                </details>
+                            </div>
+                            <div class="grid grid-cols-4 gap-4 p-4 rounded bg-gray-500">
+                                <p class="font-bold mb-2">Supplier: {{ quote.supplier |default_if_none:''}}</p>
+                                <p class="font-bold mb-2">Created at: {{ quote.created_at |default_if_none:''}}</p>
+                                <p class="font-bold mb-2">Created by:
+                                    {% if request.user == quote.created_by %}
+                                        You
+                                    {% elif quote.created_by.get_full_name %}
+                                        {{ quote.created_by.get_full_name }}
+                                    {% elif request.user == quote.created_by %}
+                                        {{ quote.created_by }}
+                                    {% endif %}
+                                </p>
+                                <p class="font-bold mb-2">Total : {{ quote.id|total_price }}  {{ purchase_request.payment_mode |default_if_none:''}} </p>
+                            </div>
+                            <div class=" bg-gray-500 rounded">
+                                <div class="my-4 p-4 gap-2 grid grid-cols-5 mb-3 underline">
+                                    <p class="font-bold mb-2">name</p>
+                                    <p class="font-bold mb-2">description </p>
+                                    <p class="font-bold mb-2">unit measure </p>
+                                    <p class="font-bold mb-2">price </p>
+                                    <p class="font-bold mb-2">quantity </p>
+                                </div>
+                                <div class="m-4">
+                                    {% for item in quote.item_set.all %}
+                                        <div class="m-4 gap-2 grid grid-cols-5 mb-3">
+                                            <p class=" mb-2">{{ item.name |default_if_none:''}}</p>
+                                            <p class=" mb-2">{{ item.description |default_if_none:''}}</p>
+                                            <p class=" mb-2">{{ item.unit_measure |default_if_none:''}}</p>
+                                            <p class=" mb-2">{{ item.price |default_if_none:''}}</p>
+                                            <p class=" mb-2">{{ item.quantity |default_if_none:''}}</p>
+                                        </div>
+                                    {% endfor %}
+                                </div>  
+                            </div>
+                        </div>
+                    </details>
+                    {% endfor %}
+
+                </div>
+                    <h1 class="text-center mb-4 font-bold text-xl  mb-2">Approval Workflow Details</h1>
+                    <p class="font-bold  mb-2"> Workflow name : {{ purchase_request.process.workflow |default_if_none:''}}</p>
                
                {% if approvalForm %}
                     <form class="row rounded py-4 border bg-gulf-blue-400 rounded-lg p-3 m-auto container" method="POST" action="{% url 'approve:approve' purchase_request.process.id %}" enctype="multipart/form-data">
@@ -133,7 +179,7 @@
                                            {% if step == approval.step %}
                                                 <div class="card-body m-auto arrow arrow-step mb-5 bg-gradient-to-r from-gulf-blue-100 to-green-700 ed p-3 border rounded  container rounded shadow-lg">
                                                     <div class="p-4 rounded-lg" title="Comment : {{ approval.comment }}" >
-                                                        <p class="font-bold">{{ step }}</p> <br>
+                                                        <p class="font-bold">{{ step |default_if_none:''}}</p> <br>
                                                     </div>
                                                     <div class=" grid grid-cols-2 text-center">
                                                         <span class="inline-block rounded-full text-sm"> {{ approval.approved }}</span>
@@ -153,7 +199,7 @@
                                         {% else %}
                                             <div class="card-body m-auto arrow arrow-step mb-5 bg-gradient-to-r from-gulf-blue-100 to-blue-500 ed p-3 border rounded  container rounded shadow-lg">
                                                 <div class="p-4 rounded-lg" title="{{ approval.comment }}" >
-                                                    <p class="font-bold">{{ step }}</p> <br>
+                                                    <p class="font-bold">{{ step |default_if_none:''}}</p> <br>
                                                     {% if step.to %}
                                                         <span class="inline-block rounded-full text-sm">To {{ step.to|default_if_none:'' }}</span>
                                                     {% endif %}
@@ -162,9 +208,9 @@
                                         
                                     {% endif %}
                                 {% endfor %}
-                            <div class="mb-5 bg-blue-500 border rounded">
-                                <div class="p-4 font-bold rounded-lg">Completed</div>
-                            </div>
+                            {% comment %} <div class="mb-5 bg-blue-500 border rounded">
+                                <div class="p-4 font-bold rounded-lg">Complete</div>
+                            </div> {% endcomment %}
                         </div>
                     </div>
                 </div>    

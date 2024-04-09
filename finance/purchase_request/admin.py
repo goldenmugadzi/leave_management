@@ -6,7 +6,7 @@ class PurchaseRequestAdmin(admin.ModelAdmin):
     'requested_by', 'ace')
 
 class QuotationAdmin(admin.ModelAdmin):
-    list_display = ('purchase_request', 'quotation_file')
+    list_display = ('purchase_request', 'file')
 
 class ItemAdmin(admin.ModelAdmin):
     list_display = ('name', 'description', 'unit_measure', 'price', 'quantity', 'quotation')    

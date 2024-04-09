@@ -32,4 +32,11 @@ def get_filtered_notifications(context):
     filtered_notifications = notifications.filter(is_read=False).order_by('-created_at')#[:10]
     context['filtered_notifications'] = filtered_notifications
     return ""
-    
+
+@register.filter
+def total_price(quote_id):
+    from finance.purchase_request.models import Quotation  # replace with your actual app and model name
+
+    quote = Quotation.objects.get(id=quote_id)
+    total = sum(item.price * item.quantity for item in quote.item_set.all())
+    return total if total else 0

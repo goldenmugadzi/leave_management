@@ -7,7 +7,7 @@ from django.forms import formset_factory
 class QuotationForm(forms.ModelForm):
     class Meta:
         model = Quotation
-        fields = ['quotation_file']
+        fields = ['file']
 
 
 QuotationFormSet = formset_factory(QuotationForm, extra=0, min_num=3, validate_min=True)
