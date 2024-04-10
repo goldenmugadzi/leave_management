@@ -62,6 +62,8 @@ urlpatterns = [
     path('competence_index', uploaded_jobs_view, name='competence_index'),
     path('bulk', bulk_create, name='bulk_create'),
     path('download', download_file, name='download_file'),
+    path('edit_document/<int:document_id>', edit_document, name='edit_document'),
+
     
 
 

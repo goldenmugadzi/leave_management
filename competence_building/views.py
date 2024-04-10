@@ -10,6 +10,7 @@ from .models import *
 from .forms import *
 from .models import Category
 import os
+from .forms import DocumentForm,editDocumentForm
 
 def view_competence(request):
         
@@ -328,6 +329,7 @@ def uploaded_jobs_view(request):
     files_list = []
     for file in documents:
         new_file = {
+        "id":file.id,
         "region": file.region,
         "category": file.category,
         "section": file.section,
@@ -341,4 +343,24 @@ def uploaded_jobs_view(request):
     context = json.dumps(files_list, default=str)
 #     context = {'documents': documents}
     return render(request, 'competence_building/competence_index.html', {"context": context})
+
+
+
+def edit_document(request, document_id):
+    document = Document.objects.get(pk=document_id)
+
+    if request.method == 'POST':
+        form = editDocumentForm(request.POST, request.FILES, instance=document) 
+
+        if form.is_valid():
+            form.save()  
+            return redirect('document_list') 
+
+    else:
+        form = editDocumentForm(instance=document)
+
+    context = {'document': document, 'form': form}
+    return render(request, 'competence_building/edit_document.html', context)
+
+
 
