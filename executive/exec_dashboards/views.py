@@ -2,6 +2,7 @@ import csv
 from datetime import datetime
 import json
 import simplejson as jsons
+from django.core import serializers
 from django.http import JsonResponse
 from django.shortcuts import render,redirect
 from django.views.decorators.csrf import csrf_exempt
@@ -22,8 +23,10 @@ def get_regions(request):
     regions = Regions.objects.all()
     districts = Districts.objects.all()
     sections = Sections.objects.all()
+    depots = Depots.objects.all()
+    
     return JsonResponse({
-        
+        "depots": list(depots.values('id', 'depot', 'district_id', 'region_id')),
         "regions": list(regions.values('id', 'region')),
         "districts": list(districts.values('id', 'district', 'region_id')),
         "sections": list(sections.values('id', 'section', 'district_id', 'region_id')),
@@ -35,18 +38,8 @@ def get_districts(request):
 
 def dashboard_data(request):
     
-    user_title = request.user.get_full_name()
-    url_path = request.path.split("/")
-    
     user = request.user
     user_profile = UserProfile.objects.filter(id=user.id).first()
-    
-    section = user_profile.section
-    district = user_profile.district
-    region = user_profile.region
-    sections = Sections.objects.all()
-    districts = Districts.objects.all()
-    regions = Regions.objects.all()
 
     # fetch pbnc data
     pbncs = PBNC.objects.all().order_by('-amount')
@@ -54,15 +47,7 @@ def dashboard_data(request):
     upos = UPO.objects.all()
     
     month_id = datetime.now().month
-    current_month = {
-        "id": month_id,
-        "name": MONTHS[month_id-1]
-    }
-    
-    inspections = get_inspections(user_profile, month_id)
-    maintenance_ = get_mmts(user_profile, month_id)
     mtn = get_mmt(user_profile, month_id)
-    print("mtn: ", mtn)
     
     keys_list, values_list = get_inspections_bargraph(user_profile, month_id)
 
@@ -96,9 +81,11 @@ def dashboard_index(request):
     user_profile = UserProfile.objects.filter(id=user.id).first()
     
     section = user_profile.section
+    depot = user_profile.depot
     district = user_profile.district
     region = user_profile.region
     sections = Sections.objects.all()
+    depots = Depots.objects.all()
     districts = Districts.objects.all()
     regions = Regions.objects.all()
 
@@ -136,9 +123,11 @@ def dashboard_index(request):
                       "user_title": user_title,
                       "page_title": "Dashboards",
                       "sections": sections,
+                      "depots": depots,
                       "districts": districts,
                       "regions": regions,
                       "section": section,
+                      "depot": depot,
                       "district": district,
                       "region": region,
                     "regions_json": regions_json,

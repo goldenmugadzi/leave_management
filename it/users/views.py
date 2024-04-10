@@ -32,16 +32,16 @@ def add_centers(request):
         )
         _district.save()
         
-    # for depot in DEPOTS:
-    #     district_id=Districts.objects.filter(code=depot['district_code']).first()
-    #     region_id = Regions.objects.filter(code=depot['parent_code']).first()
-    #     _depot = Depots(
-    #         depot=depot['name'],
-    #         code=depot['code'],
-    #         district_id=district_id.id,
-    #         region_id=region_id.id
-    #     )
-    #     _depot.save()
+    for depot in DEPOTS:
+        district_id=Districts.objects.filter(code=depot['district_code']).first()
+        region_id = Regions.objects.filter(code=depot['parent_code']).first()
+        _depot = Depots(
+            depot=depot['name'],
+            code=depot['code'],
+            district_id=district_id.id,
+            region_id=region_id.id
+        )
+        _depot.save()
         
     return redirect('/users/users-index')
 
