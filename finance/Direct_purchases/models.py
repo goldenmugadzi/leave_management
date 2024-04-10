@@ -3,7 +3,7 @@ from datetime import timezone
 from django.db import models
 
 from finance.Ace.models import Ace
-from it.users.models import UserProfile, Regions, Sections
+from it.users.models import UserProfile, Regions, Sections,Supplier
 from finance.rfq.models import RFQ
 from approve.models import Process
 
@@ -39,17 +39,7 @@ class Direct_purchase(models.Model):
         super().save(*args, **kwargs)
 
 
-class Supplier(models.Model):
-    name = models.CharField(max_length=100, unique=True)
-    email = models.EmailField(blank=True, null=True)
-    phone = models.IntegerField(max_length=13, blank=True, null=True)
-    address = models.CharField(max_length=100, blank=True, null=True)
 
-    class Meta:
-        ordering = ['name']
-
-    def __str__(self):
-        return self.name
 
 
 class Item(models.Model):

@@ -2,9 +2,12 @@
 
 {% block content %}
 
-<div class=" m-auto mt-5 justify-content-center ">
-  <form class="row rounded py-4 border  bg-gulf-blue-100 p-3 m-auto justify-content-center align-content-stretch container" method="POST" action="" enctype="multipart/form-data">
+<div class=" m-auto mt-5  ">
+  <form class="row rounded py-4 border  bg-gulf-blue-100 p-3 m-auto  container" method="POST" action="" enctype="multipart/form-data">
     {% csrf_token %}
+    <div class="m-auto text-center">
+      <h1 class="text-2xl font-bold ">Add Purchase Request For ACE</h1>
+    </div>
    <div class=" m-auto container justify-content-stretch align-content-stretch ">
     <div class="mx-10 my-3 d-flex col-span-4 ">
       {% for field in form %}
@@ -46,7 +49,6 @@
         </div>
      <br>
      <div class="m-auto justify-content-stretch text-center align-content-stretch">
-      <a class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded" href="/dashboard">Back</a>
       <input class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded" type="submit" value="Submit">
   </div>
   </form>

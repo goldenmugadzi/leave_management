@@ -3,8 +3,8 @@
 
 {% block content %}
 
-<div class="m-auto mt-5 justify-content-center">
-  <form class="row rounded py-4 border bg-gulf-blue-100 p-3 m-auto  justify-content-center align-content-stretch container" method="POST" action="{{url}}" enctype="multipart/form-data">
+<div class="m-auto mt-5 ">
+  <form class="row rounded py-4 border bg-gulf-blue-100 p-3 m-auto   container" method="POST" action="{{url}}" enctype="multipart/form-data">
     {% csrf_token %}
     <div class="m-auto container justify-content-stretch align-content-stretch">
       <h1 class="font-bold" >Workflow : {{ workflow.name }}</h1>
@@ -14,7 +14,7 @@
         <h3 class="font-bold">Steps</h3>
         {{ formset.management_form }}
         {% for form in formset %}
-          <div class="rounded d-flex justify-content-center align-items-center p-3 gap-4 bg-gulf-blue-200 m-3 grid grid-cols-8">
+          <div class="rounded d-flex  align-items-center p-3 gap-4 bg-gulf-blue-200 m-3 grid grid-cols-8">
             {% if form.non_field_errors %}
               <div class="col-span-8">
                 <div class="text-red-500">
