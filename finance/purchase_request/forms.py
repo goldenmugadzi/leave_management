@@ -1,21 +1,21 @@
 from django import forms
 from django.contrib.auth.models import User
-from .models import RFQ, Quotation
+from .models import PurchaseRequest, Quotation,Item
 from django.forms import formset_factory
 
 
 class QuotationForm(forms.ModelForm):
     class Meta:
         model = Quotation
-        fields = ['quotation_file']
+        fields = ['file']
 
 
 QuotationFormSet = formset_factory(QuotationForm, extra=0, min_num=3, validate_min=True)
 
 
-class RFQForm(forms.ModelForm):
+class PurchaseRequestForm(forms.ModelForm):
     class Meta:
-        model = RFQ
+        model = PurchaseRequest
         fields = '__all__'
         exclude = ['process', 'ace', 'requested_by']
 
@@ -63,21 +63,16 @@ class RFQForm(forms.ModelForm):
         return cleaned_data
 
 
-class aceRFQForm(forms.ModelForm):
+class acePurchaseRequestForm(forms.ModelForm):
     class Meta:
-        model = RFQ
+        model = PurchaseRequest
         fields = '__all__'
-        exclude = ['process']
+        exclude = ['process','requested_by']
 
     def __init__(self, *args, **kwargs):
         initial_data = kwargs.get('initial', {})
 
         super().__init__(*args, **kwargs)
-
-        self.fields['section'].widget.attrs['readonly'] = True
-        self.fields['requested_by'].widget.attrs['readonly'] = True
-        self.fields['amount'].widget.attrs['readonly'] = True
-        self.fields['quantity'].widget.attrs['readonly'] = True
 
         for field_name, field in self.fields.items():
             field.widget.attrs.update({
@@ -90,14 +85,8 @@ class aceRFQForm(forms.ModelForm):
             field.label = field.label or self.humanize_field_name(field_name)
             field.label_attrs = {'class': 'block text-sm font-medium leading-6 text-gray-900'}
 
-        self.formset = QuotationFormSet(*args, **kwargs)
 
-        for i, quotation_form in enumerate(self.formset.forms):
-            quotation_form.fields['quotation_file'].widget.attrs.update({
-                'class': "block w-full rounded-md border-0 py-1.5 text-gray-900 bg-white shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6",
-            })
-            quotation_form.fields['quotation_file'].label = self.get_quotation_label(i + 1)
-
+       
     def humanize_field_name(self, field_name):
         words = field_name.split('_')
         capitalized_words = [word.capitalize() for word in words]
@@ -118,3 +107,38 @@ class aceRFQForm(forms.ModelForm):
             quotation_files.add(quotation_file)
 
         return cleaned_data
+
+class QuotationForm(forms.ModelForm):
+    class Meta:
+        model = Quotation
+        fields = '__all__'
+        exclude =['purchase_request',  'created_by']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field_name, field in self.fields.items():
+            field.widget.attrs.update({
+                'class': "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6",
+            })
+
+            if isinstance(field.widget, forms.Textarea):
+                field.widget.attrs.update({'rows': '3'})
+
+class ItemForm(forms.ModelForm):
+    class Meta:
+        model = Item
+        fields = '__all__'
+        exclude = ['quotation']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        for field_name, field in self.fields.items():
+            field.widget.attrs.update({
+                'class': "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6",
+            })
+
+            if isinstance(field.widget, forms.Textarea):
+                field.widget.attrs.update({'rows': '3'})
+
+ItemFormSet = formset_factory(ItemForm, extra=0, validate_min=True)

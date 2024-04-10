@@ -7968,7 +7968,7 @@ textarea.form-control-lg {
   -ms-flex-pack: end !important;
   justify-content: flex-end !important; }
 
-.justify-content-center {
+. {
   -webkit-box-pack: center !important;
   -ms-flex-pack: center !important;
   justify-content: center !important; }

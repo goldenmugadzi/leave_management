@@ -120,3 +120,15 @@ class Notification(models.Model):
 
     class Meta:
         app_label = 'users'
+
+class Supplier(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+    email = models.EmailField(blank=True, null=True)
+    phone = models.IntegerField(max_length=13, blank=True, null=True)
+    address = models.CharField(max_length=100, blank=True, null=True)
+
+    class Meta:
+        ordering = ['name']
+
+    def __str__(self):
+        return self.name

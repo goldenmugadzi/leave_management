@@ -361,6 +361,7 @@ def update_user(request):
             if tokens and tokens != "Select Role":
                 roles.append(tokens)
             if ace and ace != "Select Role":
+                print("ace: ", ace)
                 roles.append(ace)
             if rfq and rfq != "Select Role":
                 roles.append(rfq)
@@ -373,6 +374,7 @@ def update_user(request):
             if dashboards and dashboards != "Select Role":
                 roles.append(dashboards)
 
+            print("roles: ", roles)
             role_objects = Roles.objects.filter(id__in=roles)  # Example of retrieving roles
             user_profile.roles.clear()
             user_profile.roles.add(*role_objects)
