@@ -13,5 +13,5 @@ urlpatterns = [
     path('create_clause/', ClauseCreateView.as_view(), name='create_clause'),
     path('<int:clause_id>/add-qns/', Question_formset_view, name='add-qns'),
     path('newinfo/<int:nonconformity_id>/', additionalInfoForm, name='newinfo'),
-    path('checkist/', checklist, name='checklist'),
+    path('checklist/', checklist, name='checklist'),
 ]
