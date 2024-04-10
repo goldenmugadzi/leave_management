@@ -6,12 +6,18 @@ class DashboardFilter extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
+      allRegions: [],
+      allDistricts: [],
+      allSections: [],
+      allDepots: [],
       regions: [],
       districts: [],
       sections: [],
+      depots: [],
       region: "",
       district: "",
       section: "",
+      depot: "",
       selectedRegion: "",
       selectedDistrict: "",
       selectedSection: "",
@@ -32,31 +38,53 @@ class DashboardFilter extends React.Component {
 
       selectedRegion: "",
       selectedDistrict: "",
-      selectedSection: ""
+      selectedSection: "",
 
+      authUser: {}
     };
     this.inspectionPieChartRef = React.createRef();
     this.mmtPieChartRef = React.createRef();
     this.mmtBarChartRef = React.createRef();
+    this.onFilterSelectCenters = this.onFilterSelectCenters.bind(this);
   }
 
   componentDidMount() {
+    console.log("props: ", this.props.region, this.props.district, this.props.section, this.props.depot);
     this.setState({
       region: this.props.region,
       district: this.props.district,
       section: this.props.section,
+      depot: this.props.depot,
     });
     this.getRegions();
     this.getDashboardData();
   }
 
-  onFilterSelectCenters = (name_, event) => {
+  onFilterSelectCenters(name_, event) {
+    console.log("event: ", event)
     let { name, value } = event.target
-    console.log(name, value)
-    this.setState({
-      [name]: value,
-      [name_]: value
-    })
+    console.log("wtf: ", name, value)
+    console.log("name_: ", name_)
+    if(name_ === "region") {
+      console.log("region selected")
+      let dist = this.state.allDistricts.filter((_district) => _district.region_id === value)
+      console.log("new dists: ", dist)
+      this.setState({
+        districts: dist, 
+        selectedRegion: value 
+      });
+    } else if(name_ === "district") {
+      console.log("district selected")
+      let sect = this.state.allSections.filter((_section) => _section.district_id === value)
+      console.log("new dists: ", sect)
+      this.setState({
+        sections: sect, 
+        selectedDistrict: value 
+      });
+    } else if(name_ === "section") {
+      // get relevant dashboard
+    }
+    
   }
 
   initComponents = () => {
@@ -441,9 +469,14 @@ class DashboardFilter extends React.Component {
       .then((data) => {
         console.log(data);
         this.setState({
+          allRegions: data.regions,
+          allDistricts: data.districts,
+          allSections: data.sections,
+          allDepots: data.depots,
           regions: data.regions,
           districts: data.districts,
           sections: data.sections,
+          depots: data.depots,
           pbncs: data.pbncs,
           upos: data.upos,
           tds: data.tds,
@@ -456,7 +489,7 @@ class DashboardFilter extends React.Component {
       .then((response) => response.json())
       .then((data) => {
 
-        console.log("data: ", data, typeof data)
+        // console.log("data: ", data)
         let inspection_locations_ = JSON.parse(data.inspection_locations)
         let inspections_count_ = JSON.parse(data.inspections_count)
         let maintenance_locations_ = JSON.parse(data.maintenance_locations)
@@ -492,26 +525,6 @@ class DashboardFilter extends React.Component {
     });
   };
 
-  filter = (e) => {
-    const keyword = e //e.target.value;
-
-    if (keyword !== "") {
-      const results = this.state.services.filter((service) => {
-        return (
-          service.name.toLowerCase().startsWith(keyword.toLowerCase()) ||
-          service.branch.toLowerCase().startsWith(keyword.toLowerCase())
-        );
-        // Use the toLowerCase() method to make it case-insensitive
-      });
-      this.setState({
-        services: results,
-      });
-    } else {
-      this.getServices();
-      // If the text field is empty, show all users
-    }
-  };
-
   onInputChange = (event) => {
     console.log(event);
     const { name, value } = event.target;
@@ -524,7 +537,7 @@ class DashboardFilter extends React.Component {
   };
 
   render() {
-    const servicesList = this.state.services;
+
 
     return (
       <div>
@@ -1026,6 +1039,7 @@ const spid = domContainer.getAttribute("data-spid");
 const region = domContainer.getAttribute("data-region");
 const district = domContainer.getAttribute("data-district");
 const section = domContainer.getAttribute("data-section");
+const depot = domContainer.getAttribute("data-depot");
 ReactDOM.render(
   e(DashboardFilter, { spid, region, district, section }),
   domContainer

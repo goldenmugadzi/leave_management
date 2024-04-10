@@ -1,7 +1,5 @@
 "use strict";
 
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
-
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
@@ -23,17 +21,6 @@ var DashboardFilter = function (_React$Component) {
     _classCallCheck(this, DashboardFilter);
 
     var _this = _possibleConstructorReturn(this, (DashboardFilter.__proto__ || Object.getPrototypeOf(DashboardFilter)).call(this, props));
-
-    _this.onFilterSelectCenters = function (name_, event) {
-      var _this$setState;
-
-      var _event$target = event.target,
-          name = _event$target.name,
-          value = _event$target.value;
-
-      console.log(name, value);
-      _this.setState((_this$setState = {}, _defineProperty(_this$setState, name, value), _defineProperty(_this$setState, name_, value), _this$setState));
-    };
 
     _this.initComponents = function () {
       var baseColors = ["#f62c06", "#94834b", "#1288fe", "#c8a806", "#f02e0e", "#e118d5", "#0fb11c", "#3b3cf0", "#188350", "#c93986", "#90921e"];
@@ -284,9 +271,14 @@ var DashboardFilter = function (_React$Component) {
       }).then(function (data) {
         console.log(data);
         _this.setState({
+          allRegions: data.regions,
+          allDistricts: data.districts,
+          allSections: data.sections,
+          allDepots: data.depots,
           regions: data.regions,
           districts: data.districts,
           sections: data.sections,
+          depots: data.depots,
           pbncs: data.pbncs,
           upos: data.upos,
           tds: data.tds
@@ -299,7 +291,7 @@ var DashboardFilter = function (_React$Component) {
         return response.json();
       }).then(function (data) {
 
-        console.log("data: ", data, typeof data === "undefined" ? "undefined" : _typeof(data));
+        // console.log("data: ", data)
         var inspection_locations_ = JSON.parse(data.inspection_locations);
         var inspections_count_ = JSON.parse(data.inspections_count);
         var maintenance_locations_ = JSON.parse(data.maintenance_locations);
@@ -323,9 +315,9 @@ var DashboardFilter = function (_React$Component) {
 
     _this.onServiceSelected = function (event) {
       console.log(event);
-      var _event$target2 = event.target,
-          name = _event$target2.name,
-          checked = _event$target2.checked;
+      var _event$target = event.target,
+          name = _event$target.name,
+          checked = _event$target.checked;
 
       _this.setState({
         form: Object.assign({}, _this.state.form, {
@@ -334,28 +326,11 @@ var DashboardFilter = function (_React$Component) {
       });
     };
 
-    _this.filter = function (e) {
-      var keyword = e; //e.target.value;
-
-      if (keyword !== "") {
-        var results = _this.state.services.filter(function (service) {
-          return service.name.toLowerCase().startsWith(keyword.toLowerCase()) || service.branch.toLowerCase().startsWith(keyword.toLowerCase());
-          // Use the toLowerCase() method to make it case-insensitive
-        });
-        _this.setState({
-          services: results
-        });
-      } else {
-        _this.getServices();
-        // If the text field is empty, show all users
-      }
-    };
-
     _this.onInputChange = function (event) {
       console.log(event);
-      var _event$target3 = event.target,
-          name = _event$target3.name,
-          value = _event$target3.value;
+      var _event$target2 = event.target,
+          name = _event$target2.name,
+          value = _event$target2.value;
 
       _this.setState({
         form: Object.assign({}, _this.state.form, _defineProperty({}, name, value))
@@ -363,12 +338,18 @@ var DashboardFilter = function (_React$Component) {
     };
 
     _this.state = (_this$state = {
+      allRegions: [],
+      allDistricts: [],
+      allSections: [],
+      allDepots: [],
       regions: [],
       districts: [],
       sections: [],
+      depots: [],
       region: "",
       district: "",
       section: "",
+      depot: "",
       selectedRegion: "",
       selectedDistrict: "",
       selectedSection: "",
@@ -387,23 +368,60 @@ var DashboardFilter = function (_React$Component) {
       maintenance_count: [],
       mnt: {}
 
-    }, _defineProperty(_this$state, "selectedRegion", ""), _defineProperty(_this$state, "selectedDistrict", ""), _defineProperty(_this$state, "selectedSection", ""), _this$state);
+    }, _defineProperty(_this$state, "selectedRegion", ""), _defineProperty(_this$state, "selectedDistrict", ""), _defineProperty(_this$state, "selectedSection", ""), _defineProperty(_this$state, "authUser", {}), _this$state);
     _this.inspectionPieChartRef = React.createRef();
     _this.mmtPieChartRef = React.createRef();
     _this.mmtBarChartRef = React.createRef();
+    _this.onFilterSelectCenters = _this.onFilterSelectCenters.bind(_this);
     return _this;
   }
 
   _createClass(DashboardFilter, [{
     key: "componentDidMount",
     value: function componentDidMount() {
+      console.log("props: ", this.props.region, this.props.district, this.props.section, this.props.depot);
       this.setState({
         region: this.props.region,
         district: this.props.district,
-        section: this.props.section
+        section: this.props.section,
+        depot: this.props.depot
       });
       this.getRegions();
       this.getDashboardData();
+    }
+  }, {
+    key: "onFilterSelectCenters",
+    value: function onFilterSelectCenters(name_, event) {
+      console.log("event: ", event);
+      var _event$target3 = event.target,
+          name = _event$target3.name,
+          value = _event$target3.value;
+
+      console.log("wtf: ", name, value);
+      console.log("name_: ", name_);
+      if (name_ === "region") {
+        console.log("region selected");
+        var dist = this.state.allDistricts.filter(function (_district) {
+          return _district.region_id === value;
+        });
+        console.log("new dists: ", dist);
+        this.setState({
+          districts: dist,
+          selectedRegion: value
+        });
+      } else if (name_ === "district") {
+        console.log("district selected");
+        var sect = this.state.allSections.filter(function (_section) {
+          return _section.district_id === value;
+        });
+        console.log("new dists: ", sect);
+        this.setState({
+          sections: sect,
+          selectedDistrict: value
+        });
+      } else if (name_ === "section") {
+        // get relevant dashboard
+      }
     }
   }, {
     key: "onMaintenanceMonthSelected",
@@ -522,8 +540,6 @@ var DashboardFilter = function (_React$Component) {
     key: "render",
     value: function render() {
       var _this2 = this;
-
-      var servicesList = this.state.services;
 
       return React.createElement(
         "div",
@@ -1502,4 +1518,5 @@ var spid = domContainer.getAttribute("data-spid");
 var region = domContainer.getAttribute("data-region");
 var district = domContainer.getAttribute("data-district");
 var section = domContainer.getAttribute("data-section");
+var depot = domContainer.getAttribute("data-depot");
 ReactDOM.render(e(DashboardFilter, { spid: spid, region: region, district: district, section: section }), domContainer);

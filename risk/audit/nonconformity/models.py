@@ -37,6 +37,7 @@ class Nonconformity(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     attachment = models.FileField(upload_to='nonconformity_attachments/', blank=True, null=True, verbose_name='Attachment')
     plan_of_action = models.TextField(max_length=400, blank=True, null=True, verbose_name='Plan of Action')
+    findings = models.TextField(max_length=400, blank=True, null=True, verbose_name='Description')
     expected_completion_date = models.DateField(blank=True, null=True, verbose_name='Expected Completion Date')
     
     def __str__(self):
