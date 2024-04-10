@@ -164,8 +164,10 @@ def get_maintenance_linegraph(user, month_id):
     region_ = Regions.objects.filter(id=user.region.id).first() if user.region else None if user.region else None
     district = user.district if user.district else None
     depot = user.section if user.section else None
-    print(region_.region)
-    region = str(region_.region).split(" ")[0] if region_ else None
+    region = None
+    if region_:
+        print(region_.region)
+        region = str(region_.region).split(" ")[0] if region_ else None
     
     if any(role.role == 'fore_person' for role in user.roles.all()):
         if depot:
@@ -179,7 +181,7 @@ def get_maintenance_linegraph(user, month_id):
             maintenance_keys_list, maintenance_values_list = get_inspections_monthly(maintenances, month_id)
     if any(role.role == 'executive' for role in user.roles.all()):
         if region:
-            if region.id:
+            if region:
                 maintenances = Maintenance.objects.filter(region=region, created_at__month=month_id)
             maintenance_keys_list, maintenance_values_list = get_inspections_monthly(maintenances, month_id)
     return maintenance_keys_list, maintenance_values_list
