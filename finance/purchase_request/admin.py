@@ -2,7 +2,7 @@ from django.contrib import admin
 from .models import PurchaseRequest, Quotation, Item
 
 class PurchaseRequestAdmin(admin.ModelAdmin):
-    list_display = ('id', 'allocation_code_of_expenditure', 'scope_of_work', 'quantity', 'proc_ref', 'amount', 'payment_mode', 
+    list_display = ('id', 'allocation_code_of_expenditure', 'scope_of_work', 'proc_ref', 'payment_mode', 
     'requested_by', 'ace')
 
 class QuotationAdmin(admin.ModelAdmin):

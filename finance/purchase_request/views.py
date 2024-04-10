@@ -50,58 +50,47 @@ def purchase_request_detail(request, purchase_request_id):
 def create_purchase_request(request):
     if request.method == 'POST':
         form = PurchaseRequestForm(request.POST, request.FILES)
-        # formset = QuotationFormSet(request.POST, request.FILES)
-        # if form.is_valid() and formset.is_valid():
         if form.is_valid():
             purchase_request = form.save(commit=False)
             purchase_request.process = intiate(request, 'purchase request')
             purchase_request.requested_by = request.user
             purchase_request.save()
-
-            # for quotation_form in formset:
-            #     quotation = quotation_form.save(commit=False)
-            #     quotation.purchase_request = purchase_request
-            #     quotation.save()
-
             url = reverse('purchase_request:purchase_request_detail', args=[purchase_request.id])
             return redirect(url)
+        return render(request, 'finance/purchase_request/create_purchase_request.html', {'form': form})
     else:
         form = PurchaseRequestForm()
         formset = QuotationFormSet()
 
     return render(request, 'finance/purchase_request/create_purchase_request.html', {'form': form})
 
-class CreatePurchaseRequestView(CreateView):
-    model = PurchaseRequest
-    fields = '__all__'
-    template_name = 'finance/purchase_request/create_purchase_request.html'
-    success_url = reverse_lazy('purchase_requests')
-
 @login_required    
 def create_ace_purchase_request(request,ace_id):
-    ace = Ace.objects.get(Ace_id=ace_id)
-    form = acePurchaseRequestForm()
+    ace = Ace.objects.get(Ace_id2=ace_id)
     
     if request.method == 'POST':
-        form = acePurchaseRequestForm(request.POST, request.FILES)
-        formset = QuotationFormSet(request.POST, request.FILES)
-        if form.is_valid() and formset.is_valid():
+        form = acePurchaseRequestForm(request.POST, request.FILES )
+        if form.is_valid():
             purchase_request = form.save(commit=False)
-            purchase_request.process = intiate(request, 'purchase_request')
+            purchase_request.process = intiate(request, 'purchase request')
             purchase_request.requested_by = request.user
-            purchase_request.ace = ace
             purchase_request.save()
-            for quotation_form in formset:
-                quotation = quotation_form.save(commit=False)
-                quotation.purchase_request = purchase_request
-                quotation.save()
-
             url = reverse('purchase_request:purchase_request_detail', args=[purchase_request.id])
             return redirect(url)
+        return render(request, 'finance/purchase_request/create_purchase_request.html', {'form': form,'ace':ace})
     else:
-        formset = QuotationFormSet()
+        ace_data = {
+            'description': ace.details_of_expenditure,
+            'ace': ace.Ace_id,
+            'allocation_code_of_expenditure': ace.allocation_code_of_expenditure,
+            'quantity': int(ace.quantity),
+            'section': ace.section  ,
+        }
+        if ace.section:
+            ace_data['section'] = ace.section
+        form = acePurchaseRequestForm(initial=ace_data)
 
-    return render(request, 'finance/purchase_request/create_purchase_request.html', {'form': form, 'formset': formset,'ace':ace})
+    return render(request, 'finance/purchase_request/create_purchase_request.html', {'form': form,'ace':ace})
 @login_required
 def purchase_requests_awaiting_my_action(request):
     """
@@ -143,7 +132,6 @@ def quote_purchase_request(request, purchase_request_id):
             quotation = quote.save(commit=False)
             quotation.purchase_request = prq
             quotation.created_by = request.user
-            quotation.save()
             formset = itemFormset(request.POST, request.FILES, instance=Item(quotation=quotation))
             for form in formset:
                 if form.is_valid():
@@ -155,6 +143,7 @@ def quote_purchase_request(request, purchase_request_id):
                         pass
                 else:
                     return render(request, 'finance/purchase_request/create_quote.html', {'formset': formset, 'quote': quote})
+            quotation.save()
             return redirect('purchase_request:purchase_request_detail', purchase_request_id)
         else:
             return render(request, 'finance/purchase_request/create_quote.html', {'formset': formset, 'quote': quote})

@@ -9,10 +9,8 @@ class PurchaseRequest(models.Model):
     description = models.TextField(blank=True, null=True)
     allocation_code_of_expenditure = models.CharField(max_length=100, blank=True, null=True)
     scope_of_work = models.CharField(max_length=100, blank=True, null=True)
-    quantity = models.IntegerField(blank=True, null=True)
     proc_ref = models.CharField(max_length=100, blank=True, null=True)
-    amount = models.FloatField(blank=True, null=True)
-    PAYMENT_MODE_CHOICES = [('USD Cash', 'USD Cash'),('USD Swipe', 'USD Swipe'),('ZWL Cash', 'ZWL Cash'),('ZWL Transfer', 'ZWL Transfer'),]
+    PAYMENT_MODE_CHOICES = [('USD Cash', 'USD Cash'),('USD Swipe', 'USD Swipe'),('ZIG Cash', 'ZIG Cash'),('ZIG Transfer', 'ZIG Transfer'),]
     payment_mode = models.CharField(max_length=100, blank=True, null=True, choices=PAYMENT_MODE_CHOICES)
     requested_by = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True, blank=True, null=True)

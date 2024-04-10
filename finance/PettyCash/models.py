@@ -14,8 +14,8 @@ class Pettycash(models.Model):
     PAYMENT_MODE_CHOICES = [
         ('USD Cash', 'USD Cash'),
         ('USD Swipe', 'USD Swipe'),
-        ('ZWL Cash', 'ZWL Cash'),
-        ('ZWL Transfer', 'ZWL Transfer'),
+        ('ZIG Cash', 'ZIG Cash'),
+        ('ZIG Transfer', 'ZIG Transfer'),
     ]
 
     section = models.ForeignKey(Sections, on_delete=models.DO_NOTHING)
