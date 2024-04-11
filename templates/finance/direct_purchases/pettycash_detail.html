@@ -43,14 +43,14 @@
                 <div class="px-6 py-4">
                     <div class="card grid grid-cols-2 gap-2 mb-3">
                         <div class="card-body m-auto mb-5 bg-gradient-to-r from-gulf-blue-100 to-blue-500 ed p-3 border rounded   justify-content-center align-content-stretch container rounded  shadow-lg">
-                            <h1 class="text-center mb-4 font-bold text-xl  mb-2">Petty Cash Details</h1>
+                            <h1 class="text-center mb-4 font-bold text-xl  mb-2">Petty Cash  ggg Details</h1>
                             <p class="font-bold   mb-2"> Details of expenditure: {{ pettycash.details_of_expenditure }}</p>
-                            <p class="font-bold   mb-2"> allocation code of expenditure: {{ pettycash.section }}</p>
-                            <p class="font-bold   mb-2"> amount: {{ pettycash.amount }}</p>
+                            <p class="font-bold   mb-2"> Allocation code of expenditure: {{ pettycash.section }}</p>
+                            <p class="font-bold   mb-2"> Amount: {{ pettycash.amount }}</p>
                        {%   if pettycash.payment_mode != 'None'%}
-                            <p class="font-bold   mb-2"> payment mode: {{ pettycash.payment_mode }}</p>
+                            <p class="font-bold   mb-2"> Payment mode: {{ pettycash.payment_mode }}</p>
                         {% endif %}
-                            <p class="font-bold   mb-2"> requested by: 
+                            <p class="font-bold   mb-2"> Requested by:
                                 {% if request.user == pettycash.requested_by %}
                                                             You
                                                             {% elif pettycash.requested_by.get_full_name %}
@@ -58,8 +58,8 @@
                                                         {% elif request.user == pettycash.requested_by %}
                                                                 {{ pettycash.requested_by }}
                                                         {% endif %}</p>
-                            <p class="font-bold   mb-2"> created_at: {{ pettycash.date_created }}</p>
-                            <p class="font-bold   mb-2"> section: {{ pettycash.section }}</p>
+                            <p class="font-bold   mb-2"> Created At: {{ pettycash.date_created }}</p>
+                            <p class="font-bold   mb-2"> Section: {{ pettycash.section }}</p>
                             <p class="font-bold   mb-2"> Role : {{ pettycash_role }}</p>
                     </div>
 
