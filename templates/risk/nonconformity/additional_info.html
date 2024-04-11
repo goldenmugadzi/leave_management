@@ -3,13 +3,13 @@
 {% load custom_tags %}
 
 {% block content %}
-<div class="m-auto mt-5 justify-content-center">
+<div class="m-auto mt-5 ">
   <h1 class="text-center mb-4 font-bold">Nonconformity and Responses</h1>
-  <div class="m-auto   mt-5 justify-content-center">
+  <div class="m-auto   mt-5 ">
   
     <div class="card grid grid-cols-2 gap-2 mb-3">
       <div class="card-body m-2">
-        <div class="card-body m-auto mb-5 bg-gradient-to-r from-gulf-blue-100 to-blue-500 ed p-3 border rounded   justify-content-center align-content-stretch container rounded  shadow-lg">
+        <div class="card-body m-auto mb-5 bg-gradient-to-r from-gulf-blue-100 to-blue-500 ed p-3 border rounded    container rounded  shadow-lg">
             <div class="px-6 py-4">
               <div class="font-bold text-xl text-center mb-2">Nonconformity Details</div>
               
@@ -36,7 +36,7 @@
 </div>
 {% if request.user.username ==  nonconformity.recipient.username or request.user.username == nonconformity.created_by.username  %}
 
-  <form class="row rounded py-4 border bg-gulf-blue-100  col-6 m-auto p-3 justify-content-center align-content-stretch container" method="POST"  action="{% url 'nonconformity:newinfo' nonconformity_id=nonconformity.id %}" enctype="multipart/form-data">
+  <form class="row rounded py-4 border bg-gulf-blue-100  col-6 m-auto p-3  container" method="POST"  action="{% url 'nonconformity:newinfo' nonconformity_id=nonconformity.id %}" enctype="multipart/form-data">
     {% csrf_token %}
       {{ form.as_table }}
   <table>
@@ -51,7 +51,7 @@
       </tr>
     </table>
 
-    <div class="row rounded py-4 border  text-center  justify-content-center align-content-stretch container">
+    <div class="row rounded py-4 border  text-center   container">
         <input class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded" type="submit" value="Submit">
       </div>
     <input type="hidden" name='is_read' value='True'>
@@ -69,7 +69,7 @@
     <div style="max-height: 40rem; overflow-y: auto;">
       {% for response in nonconformity.response_set.all %}
         <div class="card-body bg-gulf-blue-200">
-            <div class="card mb-3 row rounded py-4 border p-3 m-auto  justify-content-center align-content-stretch container">
+            <div class="card mb-3 row rounded py-4 border p-3 m-auto   container">
               <div class="card-body">
                 <p class="card-text">{{ response.comment }}</p>
               </div>

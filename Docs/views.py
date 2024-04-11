@@ -17,7 +17,8 @@ def search_view(request):
             'q': query
         }
 
-        response = requests.get(url, params=params)
+        response = requests.get(url, params=params, auth=("elastic", "Password1234567890"))
+        print("response: ", response)
         
         # url = 'http://localhost:9200/_all/_search'
         # params = {'q': 'content:' + query}
@@ -26,8 +27,8 @@ def search_view(request):
         results = []
         if response.status_code == 200:
             data = response.json()
-
             hits = data.get('hits', {}).get('hits', [])
+            print("hits: ", hits)
             cleaned_hits = []
             for hit in hits:
                 file_path = hit['_source']['file']['url']
@@ -39,8 +40,8 @@ def search_view(request):
                 
                 cleaned_hit = {
                     'file': hit['_source']['file']['filename'][:-4],
-                    'author': hit['_source']['meta']['author'],
-                    'date_created': datetime.strptime(hit['_source']['meta']['created'], "%Y-%m-%dT%H:%M:%S.%f%z").strftime("%B %d, %Y %H:%M"),
+                    'author': hit['_source']['meta']['author'] if 'meta' in hit['_source'] else "",
+                    'date_created': datetime.strptime(hit['_source']['meta']['created'], "%Y-%m-%dT%H:%M:%S.%f%z").strftime("%B %d, %Y %H:%M") if 'meta' in hit['_source'] else "",
                     # 'url':url ,
                     'url':hit['_source']['path']['real'] ,
                 }

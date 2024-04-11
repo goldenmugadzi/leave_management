@@ -322,7 +322,11 @@ def bulk_create(request):
 
                     # Copy the file to the destination folder
                     try:
-                        shutil.copy2(filepath, destination_path)
+                        if not os.path.exists(destination_path):
+                            shutil.copy2(filepath, destination_path)
+                        else:
+                            print(f"File {filename} already exists in the destination folder.")
+                        # shutil.copy2(filepath, destination_path)
                     except shutil.Error as e:
                         print(f"Error occurred while copying file: {e}")
                     
@@ -1358,17 +1362,17 @@ def bulk_set_up(request):
 	# print("sub_categories: ", sub_categories)
 	# print("filetypes: ", filetypes)
  
-	# for _filetype in filetypes:
-	# 	filetype = File_Type(name=_filetype)
-	# 	filetype.save()
+	for _filetype in filetypes:
+		filetype = File_Type(name=_filetype)
+		filetype.save()
 	
-	# for department in departments_list:
-	# 	_filetype = File_Type.objects.filter(name=department['filetype']).first()
-	# 	dep = FileSubType(
-    #   		name=department['department'], 
-    #     	filetype_id=_filetype
-    #     )
-	# 	dep.save()
+	for department in departments_list:
+		_filetype = File_Type.objects.filter(name=department['filetype']).first()
+		dep = FileSubType(
+      		name=department['department'], 
+        	filetype_id=_filetype
+        )
+		dep.save()
   
 	print("sub_categories: ", sub_categories)
 	for sub_category in sub_categories:

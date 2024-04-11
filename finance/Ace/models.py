@@ -115,7 +115,6 @@ class Ace(models.Model):
     # approver1_date = models.DateField(null = True)
     # approver2_date = models.DateField(null = True)
     # approver3_date = models.DateField(null = True)
-
     def __str__(self):
         return self.Ace_id2
 

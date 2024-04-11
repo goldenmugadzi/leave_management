@@ -1,6 +1,6 @@
 {% extends 'admin_layout.html' %} {% comment %} {% extends
     'layouts/user-base.html' %} {% endcomment %} {% load static %} {% block content %}
-    <div class="flex-column align-items-center justify-content-center">
+    <div class="flex-column align-items-center ">
       <div class="flex-auto p-6">
         <form role="form" action="/dashboards/maintenance/upload" method="POST" enctype="multipart/form-data">
             {%csrf_token%}

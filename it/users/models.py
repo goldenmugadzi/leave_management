@@ -19,7 +19,15 @@ class UserManager(BaseUserManager):
         extra_fields.setdefault('is_superuser', True)
         return self.create_user(username, password, **extra_fields)
 
+class Regions(models.Model):
+    region = models.CharField(max_length=100)
+    code = models.CharField(max_length=100, blank=True)
 
+    def __str__(self):
+        return self.region
+
+    class Meta:
+        app_label = 'users'
 class Districts(models.Model):
     district = models.CharField(max_length=100)
     code = models.CharField(max_length=100)
@@ -48,22 +56,11 @@ class Sections(models.Model):
 class Depots(models.Model):
     depot = models.CharField(max_length=100)
     code = models.CharField(max_length=100)
-    district_id = models.CharField(max_length=100)
-    region_id = models.CharField(max_length=100)
+    district = models.ForeignKey(Districts, on_delete=models.CASCADE)
+    region = models.ForeignKey(Regions, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.depot
-
-    class Meta:
-        app_label = 'users'
-
-
-class Regions(models.Model):
-    region = models.CharField(max_length=100)
-    code = models.CharField(max_length=100, blank=True)
-
-    def __str__(self):
-        return self.region
 
     class Meta:
         app_label = 'users'
@@ -123,3 +120,15 @@ class Notification(models.Model):
 
     class Meta:
         app_label = 'users'
+
+class Supplier(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+    email = models.EmailField(blank=True, null=True)
+    phone = models.IntegerField(max_length=13, blank=True, null=True)
+    address = models.CharField(max_length=100, blank=True, null=True)
+
+    class Meta:
+        ordering = ['name']
+
+    def __str__(self):
+        return self.name
