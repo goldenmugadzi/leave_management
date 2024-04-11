@@ -60,20 +60,43 @@
                                                         {% endif %}</p>
                             <p class="font-bold   mb-2"> created_at: {{ pettycash.date_created }}</p>
                             <p class="font-bold   mb-2"> section: {{ pettycash.section }}</p>
+                            <p class="font-bold   mb-2"> Role : {{ pettycash_role }}</p>
                     </div>
 
                 
                  </div>
                     <h1 class="text-center mb-4 font-bold text-xl  mb-2">Workflow Details</h1>
                     <p class="font-bold  mb-2"> Workflow name : {{ pettycash.process.workflow }}</p>
-               
-               {% if approvalForm %}
+                {% if pettycash_role == "disburse" %}
+                <form class="row rounded py-4 border bg-gulf-blue-400 rounded-lg p-3 m-auto container" method="POST"
+                      action="{% url 'pettycash/pettycash_detail/' pettycash.petty_id %}" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class=" m-auto container  ">
+
+                        <div class="m-4 text-center">
+                            <label for="payment_mode">Payment mode</label>
+                            <select name="payment_mode" id="payment_mode" class="bg-gulf-blue-400 rounded-lg">
+                                <option value="Swipe_Rtgs">Swipe Rtgs</option>
+                                <option value="Rtgs_Cash">Cash</option>
+                                <option value="Swipe_Usd">Swipe Usd</option>
+                                <option value="Rtgs_Usd">Rtgs Usd</option>
+                            </select>
+                        </div>
+
+                        <div class="m-4 text-center">
+                            <button type="submit" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded" name="approved" value="Rejected">Reject</button>
+                            <button type="submit" class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded" name="approved" value="Approved"> {{ to }} </button>
+                        </div>
+                    </div>
+                </form>
+                {% endif %}
+
+
+                        {% if approvalForm %}
                     <form class="row rounded py-4 border bg-gulf-blue-400 rounded-lg p-3 m-auto container" method="POST" action="{% url 'approve:approve' pettycash.process.id %}" enctype="multipart/form-data">
                          {% csrf_token %}
                         <div class=" m-auto container  ">
                              {{approvalForm.comment}}
-
-
 
                                  <div class="m-4 text-center">
                                     <button type="submit" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded" name="approved" value="Rejected">Reject</button>

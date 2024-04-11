@@ -1,3 +1,6 @@
+from datetime import datetime
+from random import randrange
+
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
 from django.urls import reverse
@@ -5,13 +8,35 @@ from django.urls import reverse
 from approve.forms import ApprovalForm
 from approve.models import Step
 from approve.views import intiate
+from it.users.models import UserProfile, Roles
 from .forms import PettycashForm, QuotationFormSet
 from .models import Pettycash
 
 
 @login_required
 def pettyCash_detail(request, petty_id):
-    pettycash_item = Pettycash.objects.get(id=petty_id)
+    global payment_mode
+    user_id = request.user.id
+    user_profile = UserProfile.objects.filter(id=user_id).first()
+
+    user_groups = user_profile.groups.values_list('name', flat=True)
+
+    custom_user_roles = {
+        "pettycash": {},
+    }
+
+    roles_ = user_profile.roles.all()
+    for _role in roles_:
+        role = Roles.objects.filter(id=_role.id).first()
+
+        if role.application == "pettycash":
+            custom_user_roles["pettycash"] = role
+    pettycash_role = str(custom_user_roles["pettycash"])
+    print(pettycash_role)
+    if pettycash_role == "disburse":
+        payment_mode = request.POST.get('payment_mode')
+
+    pettycash_item = Pettycash.objects.get(petty_id=petty_id)
     approvalForm = None
     to = None
     user_roles = request.user.roles.all()  # Accessing the user's roles through the 'roles' attribute
@@ -29,14 +54,21 @@ def pettyCash_detail(request, petty_id):
         if newStep and request.user.section == pettycash_item.section and next_step == 1:
             approvalForm = ApprovalForm
             to = newStep.to
+            print(pettycash_role)
+            if pettycash_role == "disburse":
+                print(pettycash_role)
+                pettycash_item.payment_mode = payment_mode
+                pettycash_item.save()
         elif newStep:
             approvalForm = ApprovalForm
             to = newStep.to
     except Step.DoesNotExist:
         pass
+
     approved_steps = pettycash_item.process.approval_set.all().values_list('step__step', flat=True)
     return render(request, 'finance/pettycash/pettycash_detail.html',
-                  {'pettycash': pettycash_item, 'approved_steps': approved_steps, 'approvalForm': approvalForm, 'to': to})
+                  {'pettycash': pettycash_item, 'approved_steps': approved_steps, 'approvalForm': approvalForm,
+                   'to': to, 'pettycash_role': pettycash_role, 'user_groups': user_groups})
 
 
 @login_required
@@ -48,6 +80,14 @@ def create_pettycash(request):
             pettycash = form.save(commit=False)
             pettycash.process = intiate(request, 'pettycash')
             pettycash.requested_by = request.user
+
+            rand = randrange(1, 1000)
+            rand2 = str(rand)
+            date = datetime.now()
+            date = date.strftime("%Y%m%d")
+
+            petty_id = "PC" + date + rand2
+            pettycash.petty_id = petty_id
             pettycash.save()
 
             for quotation_form in formset:
@@ -55,7 +95,7 @@ def create_pettycash(request):
                 quotation.pettycash = pettycash
                 quotation.save()
 
-            url = reverse('pettycash:pettycash_detail', args=[pettycash.id])
+            url = reverse('pettycash:pettycash_detail', args=[pettycash.petty_id])
             return redirect(url)
     else:
         form = PettycashForm()
@@ -97,4 +137,3 @@ def pettycash_awaiting_my_action(request):
 def view_all_pettycashs(request):
     pettycashs = Pettycash.objects.all()
     return render(request, 'finance/rfq/view_all_pettycashs.html', {'pettycashs': pettycashs})
-

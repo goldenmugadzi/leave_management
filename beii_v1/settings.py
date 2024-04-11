@@ -123,7 +123,8 @@ INSTALLED_APPS = [
     'finance.Ace',
     'finance.rfq',
     'finance.PettyCash',
-    # 'finance.DirectPurchases',
+    'finance.Direct_purchases',
+
 
     'reports',
     'sweetify',
