@@ -25,9 +25,9 @@
         <thead>
           <tr>
             <tr>
-                <th>Description</th>
-                <th>Quantity</th>
-                <th>Proc Ref</th>
+                <th>Pettycash ID</th>
+                <th>Pettycash Details</th>
+                <th>Allocation Code of Expenditure</th>
                 <th>Amount</th>
                 <th>Payment Mode</th>
                 <th>Requested By</th>
@@ -38,7 +38,9 @@
         <tbody>
             {% for pettycash in pettycashs %}
             <tr class="h-1">
-                <td><a class="text-blue-500" href="/pettycash_detail/{{pettycash.petty_id}}">{{ pettycash.details_of_expenditure|default_if_none:'' }}</a></td>
+                <td><a class="text-blue-500" href="/pettycash/pettycash_detail/{{pettycash.petty_id}}">{{ pettycash.petty_id|default_if_none:'' }}</a></td>
+                <td>{{ pettycash.details_of_expenditure }}</td>
+                <td>{{ pettycash.section.code }}</td>
               <td>{{ pettycash.amount }}</td>
               <td>{{ pettycash.payment_mode }}</td>
             <td>{% if pettycash.requested_by == user %} You {% else %} {{pettycash.requested_by.get_full_name }} {% endif %}</td>

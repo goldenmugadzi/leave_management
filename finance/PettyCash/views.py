@@ -35,11 +35,14 @@ def pettyCash_detail(request, petty_id):
     print(pettycash_role)
     if pettycash_role == "disburse":
         payment_mode = request.POST.get('payment_mode')
+        # print(payment_mode)
 
     pettycash_item = Pettycash.objects.get(petty_id=petty_id)
     approvalForm = None
     to = None
     user_roles = request.user.roles.all()  # Accessing the user's roles through the 'roles' attribute
+    pettycash_item.payment_mode = payment_mode
+    pettycash_item.save()
 
     try:
         last_approved = pettycash_item.process.approval_set.last().step.step
@@ -55,10 +58,6 @@ def pettyCash_detail(request, petty_id):
             approvalForm = ApprovalForm
             to = newStep.to
             print(pettycash_role)
-            if pettycash_role == "disburse":
-                print(pettycash_role)
-                pettycash_item.payment_mode = payment_mode
-                pettycash_item.save()
         elif newStep:
             approvalForm = ApprovalForm
             to = newStep.to
@@ -136,4 +135,4 @@ def pettycash_awaiting_my_action(request):
 @login_required
 def view_all_pettycashs(request):
     pettycashs = Pettycash.objects.all()
-    return render(request, 'finance/rfq/view_all_pettycashs.html', {'pettycashs': pettycashs})
+    return render(request, 'finance/pettycash/view_all_pettycashs.html', {'pettycashs': pettycashs})
