@@ -25,6 +25,7 @@ class Document(models.Model):
     name = models.CharField(max_length=100, blank = True, null = True)
     region = models.ForeignKey(Regions, on_delete=models.CASCADE)
     section = models.ForeignKey(Sections, on_delete=models.CASCADE)
+    archive = models.BooleanField(default=False)
     file = models.FileField()
     created_by = models.ForeignKey(UserProfile, on_delete = models.DO_NOTHING, blank = True, null = True)
     created_at = models.DateTimeField(auto_now_add=True)

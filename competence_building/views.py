@@ -74,13 +74,13 @@ def download_file(request):
 
     file_id = request.GET['file_id']
     file_record = Document.objects.filter(id=file_id).first()
-    file_path = "media/" + file_record.name
+#     file_path = "media/" + file_record.file
 
     # search for file in system
     try:
-        base_directory_path = os.path.join(settings.BASE_DIR,file_path )
+        # base_directory_path = os.path.join(settings.BASE_DIR,file_path )
 
-        return FileResponse(open(base_directory_path, 'rb'), content_type='application/pdf')
+        return FileResponse(file_record.file, content_type='application/pdf')
     except Exception as ex:
         print(ex)
 
@@ -325,13 +325,14 @@ def view_files(request, category):
 
 def uploaded_jobs_view(request):
     # Fetches job descriptions and renders them in a table.
-    documents = Document.objects.all()  # Fetch all documents
+    documents = Document.objects.filter(archive=False).all()  # Fetch all documents
     files_list = []
     for file in documents:
         new_file = {
         "id":file.id,
         "region": file.region,
         "category": file.category,
+        "archive": file.archive,
         "section": file.section,
         "file": file.file,
         "name": file.name,
@@ -344,7 +345,43 @@ def uploaded_jobs_view(request):
 #     context = {'documents': documents}
     return render(request, 'competence_building/competence_index.html', {"context": context})
 
+def archived_documents(request):
+    # Fetches job descriptions and renders them in a table.
+    documents = Document.objects.filter(archive=True).all()  # Fetch all documents
+    files_list = []
+    for file in documents:
+        new_file = {
+        "id":file.id,
+        "region": file.region,
+        "category": file.category,
+        "archive": file.archive,
+        "section": file.section,
+        "file": file.file,
+        "name": file.name,
+        "created by": file.created_by,
+        "created at": file.created_at,
+        }
+        files_list.append(new_file)
+    
+    context = json.dumps(files_list, default=str)
+#     context = {'documents': documents}
+    return render(request, 'competence_building/competence_index.html', {"context": context})
 
+def archive_file(request, file_id):
+
+    um = Document.objects.filter(id=file_id).first()
+    um.archive=True
+    um.save()
+    
+    return redirect('/competence/competence_index')
+
+def unarchive_file(request, file_id):
+
+    um = Document.objects.filter(id=file_id).first()
+    um.archive=False
+    um.save()
+    
+    return redirect('/competence/archive')
 
 def edit_document(request, document_id):
     document = Document.objects.get(pk=document_id)
@@ -354,7 +391,7 @@ def edit_document(request, document_id):
 
         if form.is_valid():
             form.save()  
-            return redirect('document_list') 
+            return redirect('competence_index') 
 
     else:
         form = editDocumentForm(instance=document)
@@ -362,5 +399,13 @@ def edit_document(request, document_id):
     context = {'document': document, 'form': form}
     return render(request, 'competence_building/edit_document.html', context)
 
+
+def view_archived_documents(request):
+
+  if request.method == 'POST':
+    document.archived = True
+    document.save()
+  context = {'archive_document': archive_document}
+  return render(request, 'archive_document', context) 
 
 

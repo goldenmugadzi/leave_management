@@ -63,6 +63,10 @@ urlpatterns = [
     path('bulk', bulk_create, name='bulk_create'),
     path('download', download_file, name='download_file'),
     path('edit_document/<int:document_id>', edit_document, name='edit_document'),
+    path('archive_document/', view_archived_documents, name='archive_document'),
+    path('archive', archived_documents, name='archive'),
+    path('archive_file/<str:file_id>', archive_file, name='archive_file'),
+    path('unarchive_file/<str:file_id>', unarchive_file, name='unarchive_file'),
 
     
 
