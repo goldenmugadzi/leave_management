@@ -112,8 +112,45 @@ def pettycash_awaiting_my_action(request):
     """
     pettycashs_to_process = []
     user_roles = request.user.roles.all()
-    for pettycash in Pettycash.objects.all():
-        process = pettycash.process
+
+    user_id = request.user.id
+    user_profile = UserProfile.objects.filter(id=user_id).first()
+
+    user_groups = user_profile.groups.values_list('name', flat=True)
+
+    custom_user_roles = {
+        "pettycash": {},
+    }
+
+    roles_ = user_profile.roles.all()
+    for _role in roles_:
+        role = Roles.objects.filter(id=_role.id).first()
+
+        if role.application == "pettycash":
+            custom_user_roles["pettycash"] = role
+    pettycash_role = str(custom_user_roles["pettycash"])
+
+    if pettycash_role == "approve":
+        for pettycash in Pettycash.objects.filter(section=request.user.section):
+            process = pettycash.process
+
+            if process.approval_set.exists():
+                last_approval = process.approval_set.last()
+                current_step = last_approval.step.step
+            else:
+                current_step = 0
+
+            next_step = current_step + 1
+
+            workflow = process.workflow
+            step = workflow.step_set.filter(step=next_step, approver__in=user_roles).first()
+
+            if step:
+                pettycashs_to_process.append(pettycash)
+
+    else:
+        for pettycash in Pettycash.objects.all():
+            process = pettycash.process
 
         if process.approval_set.exists():
             last_approval = process.approval_set.last()
@@ -134,5 +171,29 @@ def pettycash_awaiting_my_action(request):
 
 @login_required
 def view_all_pettycashs(request):
-    pettycashs = Pettycash.objects.all()
+    user_roles = request.user.roles.all()
+
+    user_id = request.user.id
+    user_profile = UserProfile.objects.filter(id=user_id).first()
+
+    user_groups = user_profile.groups.values_list('name', flat=True)
+
+    custom_user_roles = {
+        "pettycash": {},
+    }
+
+    roles_ = user_profile.roles.all()
+    for _role in roles_:
+        role = Roles.objects.filter(id=_role.id).first()
+
+        if role.application == "pettycash":
+            custom_user_roles["pettycash"] = role
+    pettycash_role = str(custom_user_roles["pettycash"])
+
+    if pettycash_role == "create":
+        pettycashs = Pettycash.objects.filter(requested_by=request.user)
+    elif pettycash_role == "approve":
+        pettycashs = Pettycash.objects.filter(section=request.user.section)
+    else:
+        pettycashs = Pettycash.objects.all()
     return render(request, 'finance/pettycash/view_all_pettycashs.html', {'pettycashs': pettycashs})
