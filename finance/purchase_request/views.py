@@ -131,10 +131,12 @@ def quote_purchase_request(request, purchase_request_id):
             quotation = quote.save(commit=False)
             quotation.purchase_request = prq
             quotation.created_by = request.user
+            quotation.save()
             formset = itemFormset(request.POST, request.FILES, instance=Item(quotation=quotation))
             for form in formset:
                 if form.is_valid():
                     try:
+                        print(quotation.id)
                         item = form.save(commit=False)
                         item.quotation = quotation
                         item.save()
@@ -142,12 +144,10 @@ def quote_purchase_request(request, purchase_request_id):
                         pass
                 else:
                     return render(request, 'finance/purchase_request/create_quote.html', {'formset': formset, 'quote': quote})
-            quotation.save()
             return redirect('purchase_request:purchase_request_detail', purchase_request_id)
         else:
             return render(request, 'finance/purchase_request/create_quote.html', {'formset': formset, 'quote': quote})
     else:
-        print(request.method == 'POST'and not request.POST.get('quote'))
         quote = QuotationForm()
         itemFormset = inlineformset_factory(Quotation, Item, form=ItemForm, extra=int(request.POST.get('items')) , can_delete=False)
         # formset = ItemFormSet(instance=Quotation())

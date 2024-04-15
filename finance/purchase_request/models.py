@@ -31,15 +31,17 @@ class Quotation(models.Model):
     supplier = models.CharField(max_length=100, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True, blank=True, null=True)
     created_by = models.ForeignKey(UserProfile, on_delete=models.CASCADE,blank=True, null=True)   
+    vat = models.CharField(max_length=100, choices=[('inc','Inclusive'),('excl','Exclusive')],verbose_name='VAT',default='excl')
     def __str__(self):
         return f'{self.purchase_request} - {self.supplier}'
 class Item(models.Model):
     name = models.CharField(max_length=100)
-    description = models.CharField(max_length=100, blank=True, null=True)
-    unit_measure = models.CharField(max_length=100, blank=True, null=True)
-    price = models.DecimalField(max_digits=20, decimal_places=2)
-    quantity = models.IntegerField()
-    quotation = models.ForeignKey(Quotation, models.DO_NOTHING, blank=True, null=True)
+    description = models.CharField(max_length=300)
+    UNIT_CHOICES = [('Each','Each'),('KG', 'Kilogram'),('L', 'Liter'),('M', 'Meter'),('CM', 'Centimeter'),('MM', 'Millimeter'),('G', 'Gram'),]
+    unit_of_measurement = models.CharField(max_length=100, choices=UNIT_CHOICES)
+    unit_price = models.DecimalField(max_digits=40, decimal_places=2)
+    quantity = models.DecimalField(max_digits=40, decimal_places=2)
+    quotation = models.ForeignKey(Quotation, models.CASCADE, blank=True, null=True)
     def __str__(self):
         return str(self.pk)
 class Bid(models.Model):

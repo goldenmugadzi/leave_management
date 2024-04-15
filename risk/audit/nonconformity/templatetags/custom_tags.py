@@ -38,5 +38,5 @@ def total_price(quote_id):
     from finance.purchase_request.models import Quotation  # replace with your actual app and model name
 
     quote = Quotation.objects.get(id=quote_id)
-    total = sum(item.price * item.quantity for item in quote.item_set.all())
+    total = sum(float(item.unit_price) * float(item.quantity) for item in quote.item_set.all())
     return total if total else 0

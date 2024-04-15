@@ -125,7 +125,7 @@
                                 <div class="my-4 p-4 gap-2 grid grid-cols-5 mb-3 underline">
                                     <p class="font-bold mb-2">name</p>
                                     <p class="font-bold mb-2">description </p>
-                                    <p class="font-bold mb-2">unit measure </p>
+                                    <p class="font-bold mb-2">unit of measure </p>
                                     <p class="font-bold mb-2">price </p>
                                     <p class="font-bold mb-2">quantity </p>
                                 </div>
@@ -134,8 +134,8 @@
                                         <div class="m-4 gap-2 grid grid-cols-5 mb-3">
                                             <p class=" mb-2">{{ item.name |default_if_none:''}}</p>
                                             <p class=" mb-2">{{ item.description |default_if_none:''}}</p>
-                                            <p class=" mb-2">{{ item.unit_measure |default_if_none:''}}</p>
-                                            <p class=" mb-2">{{ item.price |default_if_none:''}}</p>
+                                            <p class=" mb-2">{{ item.unit_of_measurement |default_if_none:''}}</p>
+                                            <p class=" mb-2">{{ item.unit_price |default_if_none:''}}</p>
                                             <p class=" mb-2">{{ item.quantity |default_if_none:''}}</p>
                                         </div>
                                     {% endfor %}

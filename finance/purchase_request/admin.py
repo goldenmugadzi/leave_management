@@ -9,7 +9,7 @@ class QuotationAdmin(admin.ModelAdmin):
     list_display = ('purchase_request', 'file')
 
 class ItemAdmin(admin.ModelAdmin):
-    list_display = ('name', 'description', 'unit_measure', 'price', 'quantity', 'quotation')    
+    list_display =('name', 'description', 'unit_of_measurement','quantity', )
 
 admin.site.register(PurchaseRequest, PurchaseRequestAdmin)
 admin.site.register(Quotation, QuotationAdmin)
