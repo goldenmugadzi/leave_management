@@ -60,7 +60,6 @@ def create_purchase_request(request):
         return render(request, 'finance/purchase_request/create_purchase_request.html', {'form': form})
     else:
         form = PurchaseRequestForm()
-        formset = QuotationFormSet()
 
     return render(request, 'finance/purchase_request/create_purchase_request.html', {'form': form})
 

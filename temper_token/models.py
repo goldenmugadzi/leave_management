@@ -16,7 +16,7 @@ class Meter(models.Model):
 class Customer(models.Model):
     name = models.CharField(max_length=100)
     address = models.CharField(max_length=200)
-    contact_number = models.CharField(max_length=10, validators=[RegexValidator(r'^\d{3,10}$', 'Enter a numeric value up to 10 digits.')])
+    contact_number = models.CharField(max_length=10, validators=[RegexValidator(r'^\+?1?\d{9,15}$', 'Enter a valid phone number.')])
 
     def __str__(self):
         return self.name

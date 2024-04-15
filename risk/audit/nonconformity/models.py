@@ -30,13 +30,14 @@ class Question(models.Model):
 class Nonconformity(models.Model):
     created_by = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
     recipient = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='nonconformities_assigned_to', null=True, blank=True)
-    description = models.TextField(max_length=400, blank=True, null=True, verbose_name='Description')
-    root_cause = models.TextField(max_length=400, blank=True, null=True)
     violation_standard_reference = models.ForeignKey(Question,on_delete=models.SET_NULL ,  blank=True, null=True, verbose_name='Violation Standard Reference')
+    description = models.TextField(max_length=400, blank=True, null=True)
+    root_cause = models.TextField(max_length=400, blank=True, null=True)
+    findings = models.TextField(max_length=400, blank=True, null=True)
+    plan_of_action = models.TextField(max_length=400, blank=True, null=True, verbose_name='Plan of Action')
     recommended_corrective_action = models.CharField(max_length=300, blank=False, null=False, verbose_name='Recommended Corrective Action')
     created_at = models.DateTimeField(auto_now_add=True)
     attachment = models.FileField(upload_to='nonconformity_attachments/', blank=True, null=True, verbose_name='Attachment')
-    plan_of_action = models.TextField(max_length=400, blank=True, null=True, verbose_name='Plan of Action')
     expected_completion_date = models.DateField(blank=True, null=True, verbose_name='Expected Completion Date')
     
     def __str__(self):

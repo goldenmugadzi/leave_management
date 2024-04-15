@@ -12,6 +12,7 @@ def create_tempertoken(request):
         try: meter = Meter.objects.get(number=request.POST['number'])
         except Meter.DoesNotExist: meter = None 
         meter_form = MeterForm(request.POST, instance=meter)
+        pernalt_form = PernaltForm(request.POST,request.FILES )
 #         customer details from the database if the customer already exists and use its instance to upldate the customer details
         try: customer = Customer.objects.get(contact_number=request.POST['contact_number'])
         except Customer.DoesNotExist: customer = None
@@ -25,8 +26,12 @@ def create_tempertoken(request):
             elif request.POST['reason']=='recover': Recover.objects.create(**{'temper_token': temper_token,'description': request.POST['description'],})
             elif request.POST['reason']=='reconnection': Reconnection.objects.create(**{'temper_token': temper_token,'description': request.POST['description'],})
             # else: add a validation error
+            if pernalt_form.is_valid(): 
+                pernalt= pernalt_form.save(commit=False)
+                pernalt.temper_token=temper_token
+                pernalt.save()
             return redirect('/tempertokens/')
-        else: return render(request, 'temper_token/create_tempertoken.html', {'Customer': customer_form ,'reason':ReasonForm(request.POST) ,'Meter': meter_form })
+        else: return render(request, 'temper_token/create_tempertoken.html', {'Customer': customer_form ,'reason':ReasonForm(request.POST) ,'Meter': meter_form,'Pernalt':pernalt_form })
 
     return render(request, 'temper_token/create_tempertoken.html', {'Customer': CustomerForm, 'reason':ReasonForm ,'Meter': MeterForm ,'Pernalt':PernaltForm})
 
