@@ -36,13 +36,24 @@ def pettyCash_detail(request, petty_id):
     if pettycash_role == "disburse":
         payment_mode = request.POST.get('payment_mode')
         # print(payment_mode)
+        if payment_mode and payment_mode != '':
+            pettycash_item.payment_mode = payment_mode
+            pettycash_item.save()
 
     pettycash_item = Pettycash.objects.get(petty_id=petty_id)
+
+    if pettycash_role == "disburse":
+        payment_mode = request.POST.get('payment_mode')
+        # print(payment_mode)
+        if payment_mode and payment_mode != '':
+            pettycash_item.payment_mode = payment_mode
+            pettycash_item.save()
+
+
     approvalForm = None
     to = None
     user_roles = request.user.roles.all()  # Accessing the user's roles through the 'roles' attribute
-    pettycash_item.payment_mode = payment_mode
-    pettycash_item.save()
+
 
     try:
         last_approved = pettycash_item.process.approval_set.last().step.step
