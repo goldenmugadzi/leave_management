@@ -6,16 +6,15 @@ from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.contrib.auth.hashers import make_password
 
-from it.users.models import Roles, UserProfile, Depots, Districts, Regions, Designations, Sections
+from it.users.models import Application, Roles, UserProfile, Depots, Districts, Regions, Designations, Sections
 from it.users.forms import CustomUserCreationForm
 
 from utils.helper_functions import group_user_roles
 from django.contrib.auth.models import Group
-from .helpers import REGIONS, DISTRICTS, DEPOTS
+from .helpers import DESIGNATIONS, REGIONS, DISTRICTS, DEPOTS, ROLES, SECTIONS
 
 def add_centers(request):
     
-    # add regions
     # for region in REGIONS:
     #     _region = Regions(
     #         region=region['name'],
@@ -23,25 +22,64 @@ def add_centers(request):
     #     )
     #     _region.save()
     
-    for district in DISTRICTS:
-        region_id = Regions.objects.filter(code=district['parent_code']).first()
-        _district = Districts(
-            district=district['name'],
-            code=district['code'],
-            region_id=region_id.id
-        )
-        _district.save()
+    # for district in DISTRICTS:
+    #     region_id = Regions.objects.filter(code=district['parent_code']).first()
+    #     _district = Districts(
+    #         district=district['name'],
+    #         code=district['code'],
+    #         region_id=region_id.id
+    #     )
+    #     _district.save()
         
-    for depot in DEPOTS:
-        district_id=Districts.objects.filter(code=depot['district_code']).first()
-        region_id = Regions.objects.filter(code=depot['parent_code']).first()
-        _depot = Depots(
-            depot=depot['name'],
-            code=depot['code'],
-            district_id=district_id.id,
-            region_id=region_id.id
+    # for depot in DEPOTS:
+    #     district_id=Districts.objects.filter(code=depot['district_code']).first()
+    #     region_id = Regions.objects.filter(code=depot['parent_code']).first()
+    #     _depot = Depots(
+    #         depot=depot['name'],
+    #         code=depot['code'],
+    #         district_id=district_id.id,
+    #         region_id=region_id.id
+    #     )
+    #     _depot.save()
+        
+    # for designation in DESIGNATIONS:
+    #     _designation = Designations(
+    #         description=designation['description']
+    #     )
+    #     _designation.save()
+    
+    # for role in ROLES:
+    #     application_ = role['application']
+    #     app_id = Application.objects.filter(name=application_).first()
+    #     if app_id:
+    #         _role = Roles(
+    #             role=role['name'],
+    #             name=role['name'],
+    #             description=role['description'],
+    #             application=role['application'],
+    #             app_id=app_id
+    #         )
+    #         _role.save()
+    #     else:
+    #         new_app = Application(
+    #             name=application_
+    #         )
+    #         new_app.save()
+    #         _role = Roles(
+    #             role=role['name'],
+    #             name=role['name'],
+    #             description=role['description'],
+    #             application=role['application'],
+    #             app_id=new_app
+    #         )
+    #         _role.save()
+            
+    for section in SECTIONS:
+        _section = Sections(
+            section=section['name'],
+            code=section['code']
         )
-        _depot.save()
+        _section.save()
         
     return redirect('/users/users-index')
 
