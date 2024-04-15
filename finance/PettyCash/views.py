@@ -33,12 +33,6 @@ def pettyCash_detail(request, petty_id):
             custom_user_roles["pettycash"] = role
     pettycash_role = str(custom_user_roles["pettycash"])
     print(pettycash_role)
-    if pettycash_role == "disburse":
-        payment_mode = request.POST.get('payment_mode')
-        # print(payment_mode)
-        if payment_mode and payment_mode != '':
-            pettycash_item.payment_mode = payment_mode
-            pettycash_item.save()
 
     pettycash_item = Pettycash.objects.get(petty_id=petty_id)
 
