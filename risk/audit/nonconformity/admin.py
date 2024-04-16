@@ -18,3 +18,4 @@ class QuestionAdmin(admin.ModelAdmin):
 @admin.register(Topic)
 class TopicAdmin(admin.ModelAdmin):
     list_display = ('id', 'name', )
+    

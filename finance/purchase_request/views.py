@@ -15,8 +15,8 @@ from approve.models import Step
 from approve.views import intiate
 from finance.Ace.models import Ace
 from django.forms import inlineformset_factory
-from .forms import PurchaseRequestForm, QuotationFormSet,QuotationForm, acePurchaseRequestForm,formset_factory,ItemForm
-from .models import PurchaseRequest,Item,Quotation
+from .forms import *
+from .models import *
 
 
 @login_required
@@ -48,6 +48,7 @@ def purchase_request_detail(request, purchase_request_id):
     
 @login_required
 def create_purchase_request(request):
+    itemFormset = inlineformset_factory(PurchaseRequest, PrItem, form=PrItemForm, extra=int(request.POST.get('items') or 5) , can_delete=False)
     if request.method == 'POST':
         form = PurchaseRequestForm(request.POST, request.FILES)
         if form.is_valid():
@@ -55,14 +56,27 @@ def create_purchase_request(request):
             purchase_request.process = intiate(request, 'purchase request')
             purchase_request.requested_by = request.user
             purchase_request.save()
+
+            formset = itemFormset(request.POST, request.FILES)
+            for it in formset:
+                if it.is_valid():
+                    try:
+                        item = it.save(commit=False)
+                        item.purchase_request = purchase_request
+                        item.save()
+                    except: 
+                        pass
+                       
+                else:
+                    return render(request, 'finance/purchase_request/create_purchase_request.html', {'formset': formset, 'form': form})
+            
             url = reverse('purchase_request:purchase_request_detail', args=[purchase_request.id])
             return redirect(url)
-        return render(request, 'finance/purchase_request/create_purchase_request.html', {'form': form})
+        return render(request, 'finance/purchase_request/create_purchase_request.html', {'formset': formset, 'form': form})
     else:
         form = PurchaseRequestForm()
-
-    return render(request, 'finance/purchase_request/create_purchase_request.html', {'form': form})
-
+        return render(request, 'finance/purchase_request/create_purchase_request.html', {'formset': itemFormset(), 'form': form})
+    
 @login_required    
 def create_ace_purchase_request(request,ace_id):
     ace = Ace.objects.get(Ace_id2=ace_id)
@@ -124,15 +138,18 @@ def view_all_purchase_requests(request):
 @login_required
 def quote_purchase_request(request, purchase_request_id):
     prq = PurchaseRequest.objects.get(id=purchase_request_id)
+    pr_items = prq.pritem_set.all()
+    itemFormset = inlineformset_factory(Quotation, QuoteItem , form=QuoteItemForm, extra=len(pr_items) , can_delete=False)
+    initial_data = [{'pr_item': pr_item,  'quantity': pr_item.quantity} for pr_item in pr_items]
     if request.method == 'POST'and not request.POST.get('quote'):
-        itemFormset = inlineformset_factory(Quotation, Item, form=ItemForm, extra=5 , can_delete=False)
         quote = QuotationForm(request.POST, request.FILES, instance=Quotation(purchase_request=prq))
         if quote.is_valid():
             quotation = quote.save(commit=False)
             quotation.purchase_request = prq
             quotation.created_by = request.user
             quotation.save()
-            formset = itemFormset(request.POST, request.FILES, instance=Item(quotation=quotation))
+
+            formset = itemFormset(request.POST, request.FILES, instance=quotation, initial=initial_data)
             for form in formset:
                 if form.is_valid():
                     try:
@@ -149,7 +166,4 @@ def quote_purchase_request(request, purchase_request_id):
             return render(request, 'finance/purchase_request/create_quote.html', {'formset': formset, 'quote': quote})
     else:
         quote = QuotationForm()
-        itemFormset = inlineformset_factory(Quotation, Item, form=ItemForm, extra=int(request.POST.get('items')) , can_delete=False)
-        # formset = ItemFormSet(instance=Quotation())
-
-        return render(request, 'finance/purchase_request/create_quote.html', {'formset': itemFormset(), 'quote': quote})
+        return render(request, 'finance/purchase_request/create_quote.html', {'formset': itemFormset(initial=initial_data), 'quote': quote})
