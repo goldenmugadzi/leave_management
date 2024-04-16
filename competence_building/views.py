@@ -343,7 +343,7 @@ def uploaded_jobs_view(request):
     
     context = json.dumps(files_list, default=str)
 #     context = {'documents': documents}
-    return render(request, 'competence_building/competence_index.html', {"context": context})
+    return render(request, 'competence_building/competence_index.html', {"context": context, 'page':'competence_index'})
 
 def archived_documents(request):
     # Fetches job descriptions and renders them in a table.
