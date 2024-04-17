@@ -10,16 +10,16 @@ def get_inspections(user, month_id):
         depot = user.section if user.section else None
         if depot:
             if depot.id:
-                inspections = Inspections.objects.filter(depot=depot.section, created_at__month=month_id)
+                inspections = Inspections.objects.filter(depot=depot.id, created_at__month=month_id)
     if any(role.role == 'district_manager' for role in user.roles.all()):
         district = user.district if user.district else None
         if district and district:
-            inspections = Inspections.objects.filter(district=district.district, created_at__month=month_id)
+            inspections = Inspections.objects.filter(district=district.id, created_at__month=month_id)
     if any(role.role == 'executive' for role in user.roles.all()):
         region = user.region if user.region else None
         if region:
             if region.id:
-                inspections = Inspections.objects.filter(region=region.region, created_at__month=month_id)
+                inspections = Inspections.objects.filter(region=region.id, created_at__month=month_id)
     return inspections
 
 def get_inspections_bargraph(user, month_id):
@@ -28,18 +28,18 @@ def get_inspections_bargraph(user, month_id):
         depot = user.section if user.section else None
         if depot:
             if depot.id:
-                inspections = Inspections.objects.filter(depot=depot.section, created_at__month=month_id)
+                inspections = Inspections.objects.filter(depot=depot.id, created_at__month=month_id)
             keys_list, values_list = get_inspections_monthly(inspections, month_id)
     if any(role.role == 'district_manager' for role in user.roles.all()):
         district = user.district if user.district else None
         if district and district:
-            inspections = Inspections.objects.filter(district=district.district, created_at__month=month_id)
+            inspections = Inspections.objects.filter(district=district.id, created_at__month=month_id)
             keys_list, values_list = get_inspections_monthly(inspections, month_id)
     if any(role.role == 'executive' for role in user.roles.all()):
         region = user.region if user.region else None
         if region:
             if region.id:
-                inspections = Inspections.objects.filter(region=region.region, created_at__month=month_id)
+                inspections = Inspections.objects.filter(region=region.id, created_at__month=month_id)
             keys_list, values_list = get_inspections_monthly(inspections, month_id)
     return keys_list, values_list
 
@@ -65,16 +65,16 @@ def get_mmts(user, month_id):
         depot = user.section if user.section else None
         if depot:
             if depot.id:
-                maintenances = Maintenance.objects.filter(depot=depot.section, created_at__month=month_id)
+                maintenances = Maintenance.objects.filter(depot=depot.id, created_at__month=month_id)
     if any(role.role == 'district_manager' for role in user.roles.all()):
         district = user.district if user.district else None
         if district and district:
-            maintenances = Maintenance.objects.filter(district=district.district, created_at__month=month_id)
+            maintenances = Maintenance.objects.filter(district=district.id, created_at__month=month_id)
     if any(role.role == 'executive' for role in user.roles.all()):
         region = user.region if user.region else None
         if region:
             if region.id:
-                maintenances = Maintenance.objects.filter(region=region.region, created_at__month=month_id)
+                maintenances = Maintenance.objects.filter(region=region.id, created_at__month=month_id)
     return maintenances
 
 def get_mmt(user, month_id):
@@ -83,7 +83,7 @@ def get_mmt(user, month_id):
         depot = user.section if user.section else None
         if depot:
             if depot.id:
-                maintenance_december = Maintenance.objects.filter(depot=depot.section, created_at__month=month_id)
+                maintenance_december = Maintenance.objects.filter(depot=depot.id, created_at__month=month_id)
             maintenance_weekly_count = maintenance_december.annotate(week=ExtractWeek('created_at')).values('week').annotate(count=Count('id')).order_by('week')
 
             week_count = []
@@ -100,7 +100,7 @@ def get_mmt(user, month_id):
         district = user.district if user.district else None
         if district and district:
             for depot in depots:
-                maintenance_december = Maintenance.objects.filter(depot=depot.depot, district=district.district, created_at__month=month_id)
+                maintenance_december = Maintenance.objects.filter(depot=depot.depot, district=district.id, created_at__month=month_id)
                 maintenance_weekly_count = maintenance_december.annotate(week=ExtractWeek('created_at')).values('week').annotate(count=Count('id')).order_by('week')
 
                 week_count = []
@@ -117,7 +117,7 @@ def get_mmt(user, month_id):
         region = user.region if user.region else None
         if region and region:
             for depot in depots:
-                    maintenance_december = Maintenance.objects.filter(depot=depot.depot, region=region.region, created_at__month=month_id)
+                    maintenance_december = Maintenance.objects.filter(depot=depot.depot, region=region.id, created_at__month=month_id)
                     maintenance_weekly_count = maintenance_december.annotate(week=ExtractWeek('created_at')).values('week').annotate(count=Count('id')).order_by('week')
                     week_count = []
                     for i in range(4):
@@ -144,12 +144,12 @@ def get_maintenance_linegraph(user, month_id):
     if any(role.role == 'fore_person' for role in user.roles.all()):
         if depot:
             if depot.id:
-                maintenances = Maintenance.objects.filter(region=region, district=district.district, depot=depot.section, created_at__month=month_id)
+                maintenances = Maintenance.objects.filter(region=region, district=district.id, depot=depot.id, created_at__month=month_id)
             maintenance_keys_list, maintenance_values_list = get_inspections_monthly(maintenances, month_id)
     if any(role.role == 'district_manager' for role in user.roles.all()):
         print(district.district, region, month_id)
         if district and district:
-            maintenances = Maintenance.objects.filter(district=district.district, created_at__month=month_id)
+            maintenances = Maintenance.objects.filter(district=district.id, created_at__month=month_id)
             maintenance_keys_list, maintenance_values_list = get_inspections_monthly(maintenances, month_id)
     if any(role.role == 'executive' for role in user.roles.all()):
         if region:
@@ -173,6 +173,8 @@ def get_mmt_weekly(depots, month_id):
                 week_count.append(0)
                 
         mtn[depot.depot] = week_count
+    
+    return mtn
 
 def get_mmt_monthly(maintenances, month_id):
     maintenance_count = {}

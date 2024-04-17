@@ -49,7 +49,6 @@ class DashboardFilter extends React.Component {
   }
 
   componentDidMount() {
-    console.log("props: ", this.props.region, this.props.district, this.props.section, this.props.depot);
     this.setState({
       region: this.props.region,
       district: this.props.district,
@@ -61,31 +60,53 @@ class DashboardFilter extends React.Component {
   }
 
   onFilterSelectCenters(name_, event) {
-    console.log("event: ", event)
     let { name, value } = event.target
-    console.log("wtf: ", name, value)
-    console.log("name_: ", name_)
     if(name_ === "region") {
-      console.log("region selected")
       let dist = this.state.allDistricts.filter((_district) => _district.region_id === value)
-      console.log("new dists: ", dist)
       this.setState({
         districts: dist, 
         selectedRegion: value 
       });
     } else if(name_ === "district") {
-      console.log("district selected")
-      let sect = this.state.allSections.filter((_section) => _section.district_id === value)
-      console.log("new dists: ", sect)
+      console.log("district: ", value, this.state.allDepots)
+      let depos = this.state.allDepots.filter((_depot) => parseInt(_depot.district_id) === parseInt(value))
+      console.log("depots: ", depos)
       this.setState({
-        sections: sect, 
-        selectedDistrict: value 
+        depots: depos, 
+        selectedDepot: value 
       });
-    } else if(name_ === "section") {
-      // get relevant dashboard
     }
     
+    getFilterData()
+    
   }
+
+  getFilterData = () => {
+    fetch(`http://localhost:8000/dashboards/dashboard_data`)
+      .then((response) => response.json())
+      .then((data) => {
+
+        // console.log("data: ", data)
+        let inspection_locations_ = JSON.parse(data.inspection_locations)
+        let inspections_count_ = JSON.parse(data.inspections_count)
+        let maintenance_locations_ = JSON.parse(data.maintenance_locations)
+        let maintenance_count_ = JSON.parse(data.maintenance_count)
+        let mtn_ = data.mtn
+
+        this.setState({
+            inspection_locations: inspection_locations_,
+            inspections_count: inspections_count_,
+            maintenance_locations: maintenance_locations_,
+            maintenance_count: maintenance_count_,
+            mnt: mtn_,
+            pbncs: data.pbncs,
+            upos: data.upos,
+            tds: data.tds,
+        });
+
+        this.initComponents();
+      })
+  };
 
   initComponents = () => {
     const baseColors = [
@@ -587,16 +608,16 @@ class DashboardFilter extends React.Component {
                   <select
                     id="selectSection"
                     name="selectedSection"
-                    onChange={(event) => this.onFilterSelectCenters("section", event)}
+                    onChange={(event) => this.onFilterSelectCenters("depot", event)}
                     className="block w-full bg-gulf-blue-50 rounded-md border-0 px-2 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
                   >
-                    {this.state.section ? (
-                      <option>{this.state.section.section}</option>
+                    {this.state.depot ? (
+                      <option>{this.state.depot}</option>
                     ) : (
                       <option>Select section</option>
                     )}
-                    {this.state.sections? this.state.sections.map((section) => (
-                      <option value={section.id}>{section.section}</option>
+                    {this.state.depots? this.state.depots.map((depot) => (
+                      <option value={depot.id}>{depot.depot}</option>
                     )): null}
                   </select>
                 </div>

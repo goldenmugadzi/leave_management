@@ -22,6 +22,33 @@ var DashboardFilter = function (_React$Component) {
 
     var _this = _possibleConstructorReturn(this, (DashboardFilter.__proto__ || Object.getPrototypeOf(DashboardFilter)).call(this, props));
 
+    _this.getFilterData = function () {
+      fetch("http://localhost:8000/dashboards/dashboard_data").then(function (response) {
+        return response.json();
+      }).then(function (data) {
+
+        // console.log("data: ", data)
+        var inspection_locations_ = JSON.parse(data.inspection_locations);
+        var inspections_count_ = JSON.parse(data.inspections_count);
+        var maintenance_locations_ = JSON.parse(data.maintenance_locations);
+        var maintenance_count_ = JSON.parse(data.maintenance_count);
+        var mtn_ = data.mtn;
+
+        _this.setState({
+          inspection_locations: inspection_locations_,
+          inspections_count: inspections_count_,
+          maintenance_locations: maintenance_locations_,
+          maintenance_count: maintenance_count_,
+          mnt: mtn_,
+          pbncs: data.pbncs,
+          upos: data.upos,
+          tds: data.tds
+        });
+
+        _this.initComponents();
+      });
+    };
+
     _this.initComponents = function () {
       var baseColors = ["#f62c06", "#94834b", "#1288fe", "#c8a806", "#f02e0e", "#e118d5", "#0fb11c", "#3b3cf0", "#188350", "#c93986", "#90921e"];
 
@@ -379,7 +406,6 @@ var DashboardFilter = function (_React$Component) {
   _createClass(DashboardFilter, [{
     key: "componentDidMount",
     value: function componentDidMount() {
-      console.log("props: ", this.props.region, this.props.district, this.props.section, this.props.depot);
       this.setState({
         region: this.props.region,
         district: this.props.district,
@@ -392,36 +418,31 @@ var DashboardFilter = function (_React$Component) {
   }, {
     key: "onFilterSelectCenters",
     value: function onFilterSelectCenters(name_, event) {
-      console.log("event: ", event);
       var _event$target3 = event.target,
           name = _event$target3.name,
           value = _event$target3.value;
 
-      console.log("wtf: ", name, value);
-      console.log("name_: ", name_);
       if (name_ === "region") {
-        console.log("region selected");
         var dist = this.state.allDistricts.filter(function (_district) {
           return _district.region_id === value;
         });
-        console.log("new dists: ", dist);
         this.setState({
           districts: dist,
           selectedRegion: value
         });
       } else if (name_ === "district") {
-        console.log("district selected");
-        var sect = this.state.allSections.filter(function (_section) {
-          return _section.district_id === value;
+        console.log("district: ", value, this.state.allDepots);
+        var depos = this.state.allDepots.filter(function (_depot) {
+          return parseInt(_depot.district_id) === parseInt(value);
         });
-        console.log("new dists: ", sect);
+        console.log("depots: ", depos);
         this.setState({
-          sections: sect,
-          selectedDistrict: value
+          depots: depos,
+          selectedDepot: value
         });
-      } else if (name_ === "section") {
-        // get relevant dashboard
       }
+
+      getFilterData();
     }
   }, {
     key: "onMaintenanceMonthSelected",
@@ -635,24 +656,24 @@ var DashboardFilter = function (_React$Component) {
                       id: "selectSection",
                       name: "selectedSection",
                       onChange: function onChange(event) {
-                        return _this2.onFilterSelectCenters("section", event);
+                        return _this2.onFilterSelectCenters("depot", event);
                       },
                       className: "block w-full bg-gulf-blue-50 rounded-md border-0 px-2 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
                     },
-                    this.state.section ? React.createElement(
+                    this.state.depot ? React.createElement(
                       "option",
                       null,
-                      this.state.section.section
+                      this.state.depot
                     ) : React.createElement(
                       "option",
                       null,
                       "Select section"
                     ),
-                    this.state.sections ? this.state.sections.map(function (section) {
+                    this.state.depots ? this.state.depots.map(function (depot) {
                       return React.createElement(
                         "option",
-                        { value: section.id },
-                        section.section
+                        { value: depot.id },
+                        depot.depot
                       );
                     }) : null
                   )
