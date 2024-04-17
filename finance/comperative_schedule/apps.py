@@ -1,7 +1,6 @@
 from django.apps import AppConfig
 
 
-class ChecklistConfig(AppConfig):
+class ComperativeScheduleConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
-    name = 'risk.audit.checklist'
-    label = 'checklist'
+    name = 'comperative_schedule'

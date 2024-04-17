@@ -6,47 +6,51 @@
   <form class="row rounded py-4 border  bg-gulf-blue-100 p-3 m-auto  container" method="POST" action="" enctype="multipart/form-data">
     {% csrf_token %}
     <div class="m-auto text-center">
-      <h1 class="text-2xl font-bold ">Add Purchase Request For ACE</h1>
+      <h1 class="text-2xl font-bold ">New Purchase Request</h1>
     </div>
-   <div class=" m-auto container justify-content-stretch align-content-stretch ">
-    <div class="mx-10 my-3 d-flex col-span-4 ">
-      {% for field in form %}
-        <div class="rounded row text-center py-2 my-3 ">
+    <div class="m-auto container justify-content-stretch align-content-stretch">
+      <div class="mx-10 my-3 d-flex col-span-4 gap-2 m-auto bg-gulf-blue-200 grid grid-cols-2">
+        {% for field in form %}
+        <div class="rounded row text-center py-2 my-3">
           {% if field.is_hidden %}
-            {{ field }}
+          {{ field }}
           {% else %}
-            <div class="gap-4  m-auto grid grid-cols-3  "> 
-              {{ field.label_tag }}
-              {{ field }}
-              <div class="text-red-500">
-                {{ field.errors }}
-              </div>
+          <div class=" m-auto grid grid-cols-2 pr-5">
+            {{ field.label_tag }}
+            {{ field }}
+            <div class="text-red-500">
+              {{ field.errors }}
+            </div>
+          </div>
           {% endif %}
         </div>
-      {% endfor %}
-      </div>  
-    </div> 
+        {% endfor %}
+      </div>
+    </div>
+    <div class="m-auto text-center">
+      <h1 class="text-2xl font-bold ">Items</h1>
+    </div>
      <div class="m-10 justify-content-stretch align-content-stretch">
-            {{ formset.management_form }}
-            
-            {% for form in formset  %}
-            {% for field in form %}
-            <div class="rounded row py-2 my-3 ">
-              {% if field.is_hidden %}
-                {{ field }}
-              {% else %}
-                <div class="gap-4  m-auto grid grid-cols-3  "> 
-                  {{ field.label_tag }}
-                  {{ field }}
-                  <div class="text-red-500">
-                    {{ field.errors }}
-                  </div>
-              {% endif %}
+      {{ formset.management_form }}
+      
+      {% for form in formset  %}
+      <div class="rounded row rounded border bg-gulf-blue-200  p-2 my-3 gap-4  m-auto grid grid-cols-4">
+        {% for field in form %}
+        <div class=" "> 
+          {% if field.is_hidden %}
+          {{ field }}
+          {% else %}
+            {{ field.label_tag }}
+            {{ field }}
+            <div class="text-red-500">
+              {{ field.errors }}
             </div>
-          {% endfor %}
-            {% endfor %}
-              
+          {% endif %}
         </div>
+        {% endfor %}
+      </div>
+      {% endfor %}
+    </div>
      <br>
      <div class="m-auto justify-content-stretch text-center align-content-stretch">
       <input class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded" type="submit" value="Submit">

@@ -11,6 +11,8 @@ from it.users.models import UserProfile, Depots, Districts, Regions, Notificatio
 from django.contrib import messages
 from django.urls import reverse_lazy
 from django.forms import inlineformset_factory
+from django.core.mail import send_mail
+from django.conf import settings
 
 @login_required
 def create_nonconformity(request):
@@ -231,3 +233,14 @@ def Question_formset_view(request, clause_id):
     return render(request, 'risk/nonconformity/update_clause.html', {'formset': formset, 'clause': clause})
 def checklist(request):
     return render(request, 'risk/nonconformity/checklist.html',{'clauses':Clause.objects.all()}) 
+
+def notify(request):
+    send_mail(
+        subject='Hello from Django qwertyuio',
+        message='This is a test email.',
+        from_email='perseychinaka@gmail.com',
+        recipient_list=['perseychinaka1@gmail.com','pchinaka@zetdc.co.zw'],
+        fail_silently=False
+    )
+    return HttpResponse('Email sent successfully!')
+    # ['ruvheneko@zetdc.co.zw'],  # recipient list

@@ -30,7 +30,7 @@ SECRET_KEY = 'django-insecure-7per#nouy422m0!hn0!ecb7ltnq#!^#g!2r5&%^5c%v(!ivv&a
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', '172.16.8.97', '172.16.8.22', '127.0.0.1','172.16.8.98']
+ALLOWED_HOSTS = ['localhost', '172.16.8.97', '172.16.8.22', '127.0.0.1','172.16.8.98',]
 
 CORS_ALLOWED_ORIGINS = [
     "http://172.16.8.97",
@@ -109,8 +109,6 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'clearcache',
-    
-    'risk.audit.checklist',
     'risk.audit.nonconformity',
     'it.beii_auth',
     'it.users',
@@ -244,10 +242,18 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
 # https://docs.djangoproject.com/en/4.1/topics/i18n/
+# settings.py
 
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'perseychinaka@gmail.com'
+EMAIL_HOST_PASSWORD = 'apppassword'
+DEFAULT_FROM_EMAIL = "Zetdc Business Excellence "
+ 
 LANGUAGE_CODE = 'en-us'
 
 TIME_ZONE = 'Africa/Harare'
