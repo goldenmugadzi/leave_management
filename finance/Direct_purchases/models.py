@@ -3,14 +3,14 @@ from datetime import timezone
 from django.db import models
 
 from finance.Ace.models import Ace
-from it.users.models import UserProfile, Regions, Sections,Supplier
-from finance.rfq.models import RFQ
+from it.users.models import UserProfile, Regions, Sections, Supplier
+from finance.purchase_request.models import *
 from approve.models import Process
 
 
 # Create your models here.
 class Direct_purchase(models.Model):
-    id = models.CharField(primary_key=True, max_length=60)
+    Dp_id = models.CharField(primary_key=True, max_length=60)
     section = models.ForeignKey(Sections, models.DO_NOTHING, blank=True, null=True)
     process = models.OneToOneField(Process, on_delete=models.SET_NULL, blank=True, null=True)
     allocation_code_of_expenditure = models.CharField(max_length=100, blank=True, null=True)
@@ -18,7 +18,7 @@ class Direct_purchase(models.Model):
     amount = models.FloatField(blank=True, null=True)
     requested_by = models.ForeignKey(UserProfile, models.DO_NOTHING, blank=True, null=True)
     date_created = models.DateField(auto_now_add=True, blank=True, null=True)
-    rfq = models.ForeignKey(RFQ, models.CASCADE, blank=True, null=True)
+    purchase_request = models.ForeignKey(PurchaseRequest, models.CASCADE, blank=True, null=True)
     service_type = models.CharField(max_length=100, blank=True, null=True)
     region = models.ForeignKey(Regions, models.DO_NOTHING, blank=True, null=True)
     grn_delivery_status = models.CharField(max_length=100, blank=True, null=True)
@@ -39,9 +39,6 @@ class Direct_purchase(models.Model):
         super().save(*args, **kwargs)
 
 
-
-
-
 class Item(models.Model):
     name = models.CharField(max_length=100, blank=True, null=True)
     description = models.CharField(max_length=100, blank=True, null=True)
@@ -51,6 +48,7 @@ class Item(models.Model):
     total = models.FloatField(blank=True, null=True)
     supplier = models.ForeignKey(Supplier, models.DO_NOTHING)
     direct_purchase = models.ForeignKey(Direct_purchase, models.DO_NOTHING)
+    purchase_request = models.ForeignKey(PurchaseRequest, models.DO_NOTHING, blank=True, null=True)
 
     class Meta:
         ordering = ['name']

@@ -120,7 +120,9 @@ INSTALLED_APPS = [
     'process_risks.apps.ProcessRisksConfig',
     'finance.Ace',
     'finance.purchase_request',
-    # 'finance.DirectPurchases',
+    'finance.PettyCash',
+    'finance.Direct_purchases',
+
 
     'reports',
     'sweetify',

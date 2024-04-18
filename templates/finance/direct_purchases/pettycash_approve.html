@@ -101,11 +101,10 @@
                       value="{{ context.amount }}"
               />
           </div>
-          {% if pettycash_role == "disburse" %}
           <div class="form-group">
               <label for="payment_mode">Payment Mode</label>
               <input
-
+                      readonly
                       type="text"
                       class="form-control"
                       id="payment_mode"
@@ -114,22 +113,6 @@
                       value="{{ context.payment_mode }}"
               />
           </div>
-              {% else %}
-
-              <div class="form-group">
-                  <label for="payment_mode">Payment Mode</label>
-                  <input
-
-                          type="text"
-                          class="form-control"
-                          id="payment_mode"
-                          name="payment_mode"
-                          placeholder="payment mode"
-                          value="{{ context.payment_mode }}"
-                  />
-              </div>
-
-            {% endif %}
           <div class="form-group">
               <label for="payment_mode">Petty cash id</label>
               <input

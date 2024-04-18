@@ -1,6 +1,5 @@
 from django.db import models
 from django.db.models import fields
-from users.models import User
 import random
 import time
 from approve.models import Process
@@ -27,13 +26,6 @@ class Pettycash(models.Model):
     petty_id = models.CharField(max_length=60)
     pettycash_id = models.AutoField(primary_key=True)
     process = models.OneToOneField(Process, on_delete=models.SET_NULL, blank=True, null=True)
-
-    def save(self, *args, **kwargs):
-        if not self.petty_id:  # Generate rfq_id only if it doesn't exist
-            timestamp = str(int(time.time()))
-            random_number = str(random.randint(10000, 99999))
-            self.id = "PC" + timestamp + random_number
-        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.petty_id
