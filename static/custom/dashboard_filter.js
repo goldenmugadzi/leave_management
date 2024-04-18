@@ -43,9 +43,15 @@ class DashboardFilter extends React.Component {
       authUser: {}
     };
     this.inspectionPieChartRef = React.createRef();
+    this.inspectionBarChartRef = React.createRef();
     this.mmtPieChartRef = React.createRef();
     this.mmtBarChartRef = React.createRef();
     this.onFilterSelectCenters = this.onFilterSelectCenters.bind(this);
+    
+    this.inspectionChart = null;
+    this.inspectionBarChart = null;
+    this.mmtPieChart = null;
+    this.mmtBarChart = null;
   }
 
   componentDidMount() {
@@ -65,46 +71,102 @@ class DashboardFilter extends React.Component {
       let dist = this.state.allDistricts.filter((_district) => _district.region_id === value)
       this.setState({
         districts: dist, 
-        selectedRegion: value 
+        selectedRegion: value,
+        selectedDepot: "",
+        selectedDistrict: "",
       });
+      this.getFilterData(value, "", "")
     } else if(name_ === "district") {
       console.log("district: ", value, this.state.allDepots)
       let depos = this.state.allDepots.filter((_depot) => parseInt(_depot.district_id) === parseInt(value))
       console.log("depots: ", depos)
       this.setState({
         depots: depos, 
-        selectedDepot: value 
+        selectedDepot: "",
+        selectedDistrict: value,
+        selectedRegion: "",
       });
+      this.getFilterData("", value, "")
+    } else if(name_ === "depot"){
+      console.log("depot: ", value)
+      this.setState({
+        selectedDepot: value,
+        selectedDistrict: "",
+        selectedRegion: "",
+      })
+      this.getFilterData("", "", value)
     }
-    
-    getFilterData()
+
+    // Filter by depot, filter by month, filter combined
     
   }
 
-  getFilterData = () => {
-    fetch(`http://localhost:8000/dashboards/dashboard_data`)
+  getFilterData = (selectedRegion, selectedDistrict, selectedDepot) => {
+    fetch(`http://localhost:8000/dashboards/dashboard_filter`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": this.getCookie("csrftoken"),
+        },
+        body: JSON.stringify({
+          region: selectedRegion,
+          district: selectedDistrict,
+          depot: selectedDepot,
+        }),
+      })
       .then((response) => response.json())
       .then((data) => {
 
-        // console.log("data: ", data)
-        let inspection_locations_ = JSON.parse(data.inspection_locations)
-        let inspections_count_ = JSON.parse(data.inspections_count)
-        let maintenance_locations_ = JSON.parse(data.maintenance_locations)
-        let maintenance_count_ = JSON.parse(data.maintenance_count)
-        let mtn_ = data.mtn
+        console.log("data: ", data)
+        if(data){
+          console.log("running ...")
+          let inspection_locations_,inspections_count_,maintenance_locations_,maintenance_count_,mtn_;
+          try {
+            inspection_locations_ = JSON.parse(data.inspection_locations);
+          } catch (error) {
+            console.error("Error parsing inspection_locations:", error);
+            inspection_locations_ = []; // Set to empty array on error
+          }
+          try {
+            inspections_count_ = JSON.parse(data.inspections_count);
+          } catch (error) {
+            console.error("Error parsing inspections_count_:", error);
+            inspections_count_ = []; // Set to empty array on error
+          }
+          try {
+            maintenance_locations_ = JSON.parse(data.maintenance_locations);
+          } catch (error) {
+            console.error("Error parsing maintenance_locations_:", error);
+            maintenance_locations_ = []; // Set to empty array on error
+          }
+          try {
+            maintenance_count_ = JSON.parse(data.maintenance_count);
+          } catch (error) {
+            console.error("Error parsing maintenance_count_:", error);
+            maintenance_count_ = []; // Set to empty array on error
+          }
+          try {
+            mtn_ = data.mtn;
+          } catch (error) {
+            console.error("Error parsing mtn_:", error);
+            mtn_ = {}; // Set to empty dict on error
+          }
+          
 
-        this.setState({
-            inspection_locations: inspection_locations_,
-            inspections_count: inspections_count_,
-            maintenance_locations: maintenance_locations_,
-            maintenance_count: maintenance_count_,
-            mnt: mtn_,
-            pbncs: data.pbncs,
-            upos: data.upos,
-            tds: data.tds,
-        });
+          this.setState({
+              inspection_locations: inspection_locations_,
+              inspections_count: inspections_count_,
+              maintenance_locations: maintenance_locations_,
+              maintenance_count: maintenance_count_,
+              mnt: mtn_,
+              pbncs: data.pbncs,
+              upos: data.upos,
+              tds: data.tds,
+          });
 
-        this.initComponents();
+          this.initComponents();
+        }
       })
   };
 
@@ -122,6 +184,19 @@ class DashboardFilter extends React.Component {
       "#c93986",
       "#90921e",
     ];
+    // Destroy the previous Chart instance, if it exists
+    if (this.inspectionChart) {
+      this.inspectionChart.destroy();
+    }
+    if(this.inspectionBarChart) {
+      this.inspectionBarChart.destroy();
+    }
+    if(this.mmtPieChart){
+      this.mmtPieChart.destroy();
+    }
+    if(this.mmtBarChart){
+      this.mmtBarChart.destroy();
+    }
 
     var inspectionData = {
       labels: this.state.inspection_locations,
@@ -134,7 +209,7 @@ class DashboardFilter extends React.Component {
       ],
     };
 
-    var inspectionChart = new Chart(this.inspectionPieChartRef.current, {
+    this.inspectionChart = new Chart(this.inspectionPieChartRef.current, {
       type: "pie",
       data: inspectionData,
       options: {
@@ -145,10 +220,6 @@ class DashboardFilter extends React.Component {
         },
       },
     });
-
-    var inspectionBarCtx = document
-      .getElementById("inspectionBarChart")
-      .getContext("2d");
 
     var inspectionBarData = {
       labels: this.state.inspection_locations,
@@ -161,7 +232,7 @@ class DashboardFilter extends React.Component {
       ],
     };
 
-    var iChart = new Chart(inspectionBarCtx, {
+    this.inspectionBarChart = new Chart(this.inspectionBarChartRef.current, {
       type: "bar",
       data: inspectionBarData,
       options: {
@@ -224,10 +295,6 @@ class DashboardFilter extends React.Component {
       },
     });
 
-    var maintenanceCtx = document
-      .getElementById("Maintenance")
-      .getContext("2d");
-
     // Define the data for the pie chart (replace with your own data)
     var maintenanceData = {
       labels: this.state.maintenance_locations,
@@ -241,7 +308,7 @@ class DashboardFilter extends React.Component {
     };
 
     // Create the pie chart
-    var maintenanceChart = new Chart(maintenanceCtx, {
+    this.mmtPieChart = new Chart(this.mmtPieChartRef.current, {
       type: "pie",
       data: maintenanceData,
       options: {
@@ -254,10 +321,6 @@ class DashboardFilter extends React.Component {
     });
 
     var mnt = this.state.mnt;
-    var maintenanceBarCtx = document
-      .getElementById("maintenanceBarChart")
-      .getContext("2d");
-
     let maintenanceDataset = [];
 
     Object.keys(mnt).forEach((key) => {
@@ -279,7 +342,7 @@ class DashboardFilter extends React.Component {
       }),
     };
 
-    var mChart = new Chart(maintenanceBarCtx, {
+    this.mmtBarChart = new Chart(this.mmtBarChartRef.current, {
       type: "line",
       data: maintenanceBarData,
       options: {
@@ -510,7 +573,7 @@ class DashboardFilter extends React.Component {
       .then((response) => response.json())
       .then((data) => {
 
-        // console.log("data: ", data)
+        console.log("data: ", data)
         let inspection_locations_ = JSON.parse(data.inspection_locations)
         let inspections_count_ = JSON.parse(data.inspections_count)
         let maintenance_locations_ = JSON.parse(data.maintenance_locations)
@@ -606,15 +669,15 @@ class DashboardFilter extends React.Component {
               <div style={{flex: 0.25}} className="flex justify-center">
                 <div className="w-full">
                   <select
-                    id="selectSection"
-                    name="selectedSection"
+                    id="selectDepot"
+                    name="selectedDepot"
                     onChange={(event) => this.onFilterSelectCenters("depot", event)}
                     className="block w-full bg-gulf-blue-50 rounded-md border-0 px-2 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
                   >
                     {this.state.depot ? (
                       <option>{this.state.depot}</option>
                     ) : (
-                      <option>Select section</option>
+                      <option>Select Centre</option>
                     )}
                     {this.state.depots? this.state.depots.map((depot) => (
                       <option value={depot.id}>{depot.depot}</option>
@@ -953,7 +1016,7 @@ class DashboardFilter extends React.Component {
                 </div>
                 <div style={{height: "14rem"}} className="mt-2 h-20 overflow-auto">
                   <a href="#">
-                    <canvas id="Maintenance"></canvas>
+                    <canvas id="Maintenance" ref={this.mmtPieChartRef}></canvas>
                   </a>
                 </div>
               </div>
@@ -994,6 +1057,7 @@ class DashboardFilter extends React.Component {
                 <div>
                   <canvas
                     id="maintenanceBarChart"
+                    ref={this.mmtBarChartRef}
                     className="chart-canvas"
                     width="400"
                     height="400"
@@ -1041,6 +1105,7 @@ class DashboardFilter extends React.Component {
                 <div>
                   <canvas
                     id="inspectionBarChart"
+                    ref={this.inspectionBarChartRef}
                     className="chart-canvas"
                     width="400"
                     height="400"

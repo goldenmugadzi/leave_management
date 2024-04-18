@@ -1131,17 +1131,4 @@ SECTIONS = [
 {"id":"10","section":"Commercial","code":"525000","district_id":"","region_id":""},
 {"id":"11","section":"Risk Management","code":"526001","district_id":"","region_id":""},
 {"id":"12","section":"Information Technology","code":"527001","district_id":"","region_id":""},
-{"id":"13","section":"Mabelreign Depot","code":"524503","district_id":"2","region_id":"1"},
-{"id":"14","section":"Borrowdale Depot","code":"524703","district_id":"4","region_id":"1"},
-{"id":"15","section":"Glen View Depot","code":"524602","district_id":"3","region_id":"1"},
-{"id":"16","section":"Kuwadzana Depot","code":"524502","district_id":"2","region_id":"1"},
-{"id":"17","section":"Mabvuku Depot","code":"524704","district_id":"4","region_id":"1"},
-{"id":"18","section":"Ruwa Depot","code":"524705","district_id":"4","region_id":"1"},
-{"id":"19","section":"Southerton Depot","code":"524604","district_id":"3","region_id":"1"},
-{"id":"20","section":"Warren Park Depot","code":"524504","district_id":"2","region_id":"1"},
-{"id":"21","section":"Waterfalls Depot","code":"524603","district_id":"3","region_id":"1"},
-{"id":"22","section":"CBD Depot","code":"524702","district_id":"4","region_id":"1"},
-{"id":"23","section":"Makoni Depot","code":"524402","district_id":"1","region_id":"1"},
-{"id":"24","section":"Zengeza Depot","code":"524403","district_id":"1","region_id":"1"},
-{"id":"25","section":"Seke","code":"000000","district_id":"1","region_id":"1"}
 ]

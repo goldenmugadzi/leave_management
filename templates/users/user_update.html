@@ -1,6 +1,7 @@
 <!--users/templates/users/add_user.html-->
 
 {% extends 'admin_layout.html' %} {% block content %}
+{% load custom_filters %}
 <div class="content-wrapper">
   
   <div class="bg-gulf-blue-100 shadow shadow-gulf-blue-300 text-gulf-blue-900 rounded px-2 py-2">
@@ -163,10 +164,26 @@
                   {{ user.district.district }}
                 </option>
                 {% endif %}
-                  <option>Select District</option>
-                  {% for district in districts %}
-                  <option value="{{district.id}}">{{district.district}}</option>
-                  {% endfor %}
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label
+                for="depot"
+                class="block text-sm font-medium leading-6 text-gray-900"
+                >Depot</label
+              >
+              <div class="mt-2">
+                <select
+                  id="depot"
+                  name="depot"
+                  autocomplete="depot"
+                  class="block w-full rounded-md border-0 px-2 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+                >
+                {% if user.depot %}
+                <option value="{{user.depot.id}}" >{{user.depot.depot}}</option>
+                {% endif %}
                 </select>
               </div>
             </div>
@@ -208,267 +225,35 @@
 
           <div class="mt-10 grid grid-cols-3 gap-4">
 
+            {% for app in user_applications %}
             <div>
               <label
-                for="remittance_role"
+                for="{{app.name}}"
                 class="block text-sm font-medium leading-6 text-gray-900"
-                >Remittance Advice</label
+                >{{app.fullname}}</label
               >
               <div class="mt-2">
                 <select
-                  id="remittance_role"
-                  name="remittance_role"
-                  autocomplete="remittance_role"
-                  class="block w-full rounded-md border-0 px-2 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+                  id="{{app.name}}"
+                  name="{{app.name}}"
+                  autocomplete="{{app.name}}"
+                  class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 px-2 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
                 >
-                {% if user.roles.remittance_advice %}
-                <option value="{{user.roles.remittance_advice.id}}" selected>
-                  {{ user.roles.remittance_advice.name }}
-                </option>
-                {% endif %}
-                  <option>Select Role</option>
-                  {% for role in user_roles.remittance_advice %}
-                  <option value="{{role.id}}">{{role.name}}</option>
-                  {% endfor %}
-                </select>
-              </div>
-            </div>
-
-            <div>
-              <label
-                for="petty_cash_role"
-                class="block text-sm font-medium leading-6 text-gray-900"
-                >Petty Cash</label
-              >
-              <div class="mt-2">
-                <select
-                  id="petty_cash_role"
-                  name="petty_cash_role"
-                  autocomplete="petty_cash_role"
-                  class="block w-full rounded-md border-0 px-2 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
-                >
-                {% if user.roles.pettycash %}
-                <option value="{{ user.roles.pettycash.id }}" selected>
-                  {{ user.roles.pettycash.name }}
-                </option>
-                {% endif %}
-                <option>Select Role</option>
-                {% for role in user_roles.pettycash %}
-                <option value="{{role.id}}">{{role.name}}</option>
-                {% endfor %}
-                </select>
-              </div>
-            </div>
-
-            <div>
-              <label
-                for="direct_purchase_role"
-                class="block text-sm font-medium leading-6 text-gray-900"
-                >Direct Purchases/ Purchases Below $20k</label
-              >
-              <div class="mt-2">
-                <select
-                  id="direct_purchase_role"
-                  name="direct_purchase_role"
-                  autocomplete="direct_purchase_role"
-                  class="block w-full rounded-md border-0 px-2 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
-                >
-                {% if user.roles.adjudication %}
-                <option value="{{ user.roles.adjudication.id }}" selected>
-                  {{ user.roles.adjudication.name }}
-                </option>
-                {% endif %}
-                <option>Select Role</option>
-                {% for role in user_roles.adjudication %}
-                <option value="{{role.id}}">{{role.name}}</option>
-                {% endfor %}
-                </select>
-              </div>
-            </div>
-
-            <div>
-              <label
-                for="tokens_role"
-                class="block text-sm font-medium leading-6 text-gray-900"
-                >Tokens</label
-              >
-              <div class="mt-2">
-                <select
-                  id="tokens_role"
-                  name="tokens_role"
-                  autocomplete="tokens_role"
-                  class="block w-full rounded-md border-0 px-2 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
-                >
-                {% if user.roles.tokens %}
-                <option value="{{ user.roles.tokens.id }}" selected>
-                  {{ user.roles.tokens.name }}
-                </option>
-                {% endif %}
-                <option>Select Role</option>
-                {% for role in user_roles.tokens %}
-                <option value="{{role.id}}">{{role.name}}</option>
-                {% endfor %}
-                </select>
-              </div>
-            </div>
-
-            <div>
-              <label
-                for="tenders_role"
-                class="block text-sm font-medium leading-6 text-gray-900"
-                >RFQ/ Tender Management</label
-              >
-              <div class="mt-2">
-                <select
-                  id="tenders_role"
-                  name="tenders_role"
-                  autocomplete="tenders_role"
-                  class="block w-full rounded-md border-0 px-2 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
-                >
-                {% if user.roles.tenders %}
-                <option value="{{ user.roles.tenders.id }}" selected>
-                  {{ user.roles.tenders.name }}
-                </option>
-                {% endif %}
-                <option>Select Role</option>
-                {% for role in user_roles.tenders %}
-                  <option value="{{role.id}}">{{role.name}}</option>
-                {% endfor %}
-                </select>
-              </div>
-            </div>
-
-            <div>
-              <label
-                for="ace_role"
-                class="block text-sm font-medium leading-6 text-gray-900"
-                >ACE</label
-              >
-              <div class="mt-2">
-                <select
-                  id="ace_role"
-                  name="ace_role"
-                  autocomplete="ace_role"
-                  class="block w-full rounded-md border-0 px-2 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
-                >
-                {% if user.roles.ace %}
-                <option value="{{ user.roles.ace.id }}" selected>
-                  {{ user.roles.ace.name }}
-                </option>
-                {% endif %}
-                <option>Select Role</option>
-                {% for role in user_roles.ace %}
-                <option value="{{role.id}}">{{role.name}}</option>
-                {% endfor %}
-                </select>
-              </div>
-            </div>
-
-            <div>
-              <label
-                for="non_conformity_role"
-                class="block text-sm font-medium leading-6 text-gray-900"
-                >Non Conformity</label
-              >
-              <div class="mt-2">
-                <select
-                  id="non_conformity_role"
-                  name="non_conformity_role"
-                  autocomplete="non_conformity_role"
-                  class="block w-full rounded-md border-0 px-2 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
-                >
-                {% if user.roles.non_conformity %}
-                <option value="{{ user.roles.non_conformity.id }}" selected>
-                  {{ user.roles.non_conformity.name }}
-                </option>
-                {% endif %}
-                <option>Select Role</option>
-                {% for role in user_roles.non_conformity %}
-                <option value="{{role.id}}">{{role.name}}</option>
-                {% endfor %}
-                </select>
-              </div>
-            </div>
-
-            <div>
-              <label
-                for="users_role"
-                class="block text-sm font-medium leading-6 text-gray-900"
-                >Users</label
-              >
-              <div class="mt-2">
-                <select
-                  id="users_role"
-                  name="users_role"
-                  autocomplete="users_role"
-                  class="block w-full rounded-md border-0 px-2 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
-                >
-                {% if user.roles.users %}
-                <option value="{{ user.roles.users.id }}" selected>
-                  {{ user.roles.users.name }}
-                </option>
-                {% endif %}
-                <option>Select Role</option>
-                {% for role in user_roles.users %}
-                <option value="{{role.id}}">{{role.name}}</option>
-                {% endfor %}
-                </select>
-              </div>
-            </div>
-
-              <div>
-                  <label
-                          for="ace_role"
-                          class="block text-sm font-medium leading-6 text-gray-900"
-                  >RFQ</label
-                  >
-                  <div class="mt-2">
-                      <select
-                              id="rfq_role"
-                              name="rfq_role"
-                              autocomplete="rfq_role"
-                              class="block w-full rounded-md border-0 px-2 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
-                      >
-                          {% if user.roles.rfq %}
-                              <option value="{{ user.roles.rfq.id }}" selected>
-                                  {{ user.roles.rfq.name }}
-                              </option>
-                          {% endif %}
-                          <option>Select Role</option>
-                          {% for role in user_roles.rfq %}
-                              <option value="{{role.id}}">{{role.name}}</option>
-                          {% endfor %}
-                      </select>
-                  </div>
-              </div>
-
-              <div>
-                <label
-                  for="dashboards_role"
-                  class="block text-sm font-medium leading-6 text-gray-900"
-                  >Dashboards</label
-                >
-                <div class="mt-2">
-                  <select
-                    id="dashboards_role"
-                    name="dashboards_role"
-                    autocomplete="dashboards_role"
-                    class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 px-2 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
-                  >
-                  {% if user.roles.dashboards %}
-                      <option value="{{ user.roles.dashboards.id }}" selected>
-                          {{ user.roles.dashboards.name }}
-                      </option>
+                  {% if user.roles|get_value:app.name %}
+                  {% with app_role=user.roles|get_value:app.name %}
+                  <option value="{{ app_role.id }}">
+                      {{ app_role.name }}
+                  </option>
+                  {% endwith %}
                   {% endif %}
                   <option>Select Role</option>
-                  {% for role in user_roles.dashboards %}
+                  {% for role in user_roles|get_value:app.name %}
                   <option value="{{role.id}}">{{role.name}}</option>
                   {% endfor %}
-                  </select>
-                </div>
+                </select>
               </div>
-
-
+            </div>
+            {% endfor %}
 
           </div>
         </div>
@@ -498,4 +283,39 @@
     </form>
   </div>
 </div>
+{% endblock %}
+{% block scripts %}
+<script>
+  $(document).ready(() => {
+    const region = document.getElementById('region');
+    const district = document.getElementById('district');
+    const depot = document.getElementById('depot');
+
+    region.addEventListener('change', (e) => {
+      const regionId = e.target.value;
+      fetch(`http://localhost:8000/users/filtered_districts/${regionId}`)
+        .then((res) => res.json())
+        .then((data) => {
+          console.log("var: ", data);
+          district.innerHTML = '<option>Select District</option>';
+          data.forEach((_district) => {
+            district.innerHTML += `<option value="${_district.id}">${_district.district}</option>`;
+          });
+        });
+    });
+
+    district.addEventListener('change', (e) => {
+      const districtId = e.target.value;
+      fetch(`http://localhost:8000/users/filtered_depots/${districtId}`)
+        .then((res) => res.json())
+        .then((data) => {
+          console.log("depots: ", data);
+          depot.innerHTML = '<option>Select Depot</option>';
+          data.forEach((_depot) => {
+            depot.innerHTML += `<option value="${_depot.id}">${_depot.depot}</option>`;
+          });
+        });
+    });
+  });
+</script>
 {% endblock %}

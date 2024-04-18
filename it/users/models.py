@@ -66,6 +66,7 @@ class Depots(models.Model):
 
 class Application(models.Model):
     name = models.CharField(max_length=100, unique=True)
+    fullname = models.CharField(max_length=100, blank=True)
 
     def __str__(self):
         return self.name

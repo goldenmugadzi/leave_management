@@ -22,35 +22,92 @@ var DashboardFilter = function (_React$Component) {
 
     var _this = _possibleConstructorReturn(this, (DashboardFilter.__proto__ || Object.getPrototypeOf(DashboardFilter)).call(this, props));
 
-    _this.getFilterData = function () {
-      fetch("http://localhost:8000/dashboards/dashboard_data").then(function (response) {
+    _this.getFilterData = function (selectedRegion, selectedDistrict, selectedDepot) {
+      fetch("http://localhost:8000/dashboards/dashboard_filter", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": _this.getCookie("csrftoken")
+        },
+        body: JSON.stringify({
+          region: selectedRegion,
+          district: selectedDistrict,
+          depot: selectedDepot
+        })
+      }).then(function (response) {
         return response.json();
       }).then(function (data) {
 
-        // console.log("data: ", data)
-        var inspection_locations_ = JSON.parse(data.inspection_locations);
-        var inspections_count_ = JSON.parse(data.inspections_count);
-        var maintenance_locations_ = JSON.parse(data.maintenance_locations);
-        var maintenance_count_ = JSON.parse(data.maintenance_count);
-        var mtn_ = data.mtn;
+        console.log("data: ", data);
+        if (data) {
+          console.log("running ...");
+          var inspection_locations_ = void 0,
+              inspections_count_ = void 0,
+              maintenance_locations_ = void 0,
+              maintenance_count_ = void 0,
+              mtn_ = void 0;
+          try {
+            inspection_locations_ = JSON.parse(data.inspection_locations);
+          } catch (error) {
+            console.error("Error parsing inspection_locations:", error);
+            inspection_locations_ = []; // Set to empty array on error
+          }
+          try {
+            inspections_count_ = JSON.parse(data.inspections_count);
+          } catch (error) {
+            console.error("Error parsing inspections_count_:", error);
+            inspections_count_ = []; // Set to empty array on error
+          }
+          try {
+            maintenance_locations_ = JSON.parse(data.maintenance_locations);
+          } catch (error) {
+            console.error("Error parsing maintenance_locations_:", error);
+            maintenance_locations_ = []; // Set to empty array on error
+          }
+          try {
+            maintenance_count_ = JSON.parse(data.maintenance_count);
+          } catch (error) {
+            console.error("Error parsing maintenance_count_:", error);
+            maintenance_count_ = []; // Set to empty array on error
+          }
+          try {
+            mtn_ = data.mtn;
+          } catch (error) {
+            console.error("Error parsing mtn_:", error);
+            mtn_ = {}; // Set to empty dict on error
+          }
 
-        _this.setState({
-          inspection_locations: inspection_locations_,
-          inspections_count: inspections_count_,
-          maintenance_locations: maintenance_locations_,
-          maintenance_count: maintenance_count_,
-          mnt: mtn_,
-          pbncs: data.pbncs,
-          upos: data.upos,
-          tds: data.tds
-        });
+          _this.setState({
+            inspection_locations: inspection_locations_,
+            inspections_count: inspections_count_,
+            maintenance_locations: maintenance_locations_,
+            maintenance_count: maintenance_count_,
+            mnt: mtn_,
+            pbncs: data.pbncs,
+            upos: data.upos,
+            tds: data.tds
+          });
 
-        _this.initComponents();
+          _this.initComponents();
+        }
       });
     };
 
     _this.initComponents = function () {
       var baseColors = ["#f62c06", "#94834b", "#1288fe", "#c8a806", "#f02e0e", "#e118d5", "#0fb11c", "#3b3cf0", "#188350", "#c93986", "#90921e"];
+      // Destroy the previous Chart instance, if it exists
+      if (_this.inspectionChart) {
+        _this.inspectionChart.destroy();
+      }
+      if (_this.inspectionBarChart) {
+        _this.inspectionBarChart.destroy();
+      }
+      if (_this.mmtPieChart) {
+        _this.mmtPieChart.destroy();
+      }
+      if (_this.mmtBarChart) {
+        _this.mmtBarChart.destroy();
+      }
 
       var inspectionData = {
         labels: _this.state.inspection_locations,
@@ -61,7 +118,7 @@ var DashboardFilter = function (_React$Component) {
         }]
       };
 
-      var inspectionChart = new Chart(_this.inspectionPieChartRef.current, {
+      _this.inspectionChart = new Chart(_this.inspectionPieChartRef.current, {
         type: "pie",
         data: inspectionData,
         options: {
@@ -73,8 +130,6 @@ var DashboardFilter = function (_React$Component) {
         }
       });
 
-      var inspectionBarCtx = document.getElementById("inspectionBarChart").getContext("2d");
-
       var inspectionBarData = {
         labels: _this.state.inspection_locations,
         datasets: [{
@@ -84,7 +139,7 @@ var DashboardFilter = function (_React$Component) {
         }]
       };
 
-      var iChart = new Chart(inspectionBarCtx, {
+      _this.inspectionBarChart = new Chart(_this.inspectionBarChartRef.current, {
         type: "bar",
         data: inspectionBarData,
         options: {
@@ -147,8 +202,6 @@ var DashboardFilter = function (_React$Component) {
         }
       });
 
-      var maintenanceCtx = document.getElementById("Maintenance").getContext("2d");
-
       // Define the data for the pie chart (replace with your own data)
       var maintenanceData = {
         labels: _this.state.maintenance_locations,
@@ -160,7 +213,7 @@ var DashboardFilter = function (_React$Component) {
       };
 
       // Create the pie chart
-      var maintenanceChart = new Chart(maintenanceCtx, {
+      _this.mmtPieChart = new Chart(_this.mmtPieChartRef.current, {
         type: "pie",
         data: maintenanceData,
         options: {
@@ -173,8 +226,6 @@ var DashboardFilter = function (_React$Component) {
       });
 
       var mnt = _this.state.mnt;
-      var maintenanceBarCtx = document.getElementById("maintenanceBarChart").getContext("2d");
-
       var maintenanceDataset = [];
 
       Object.keys(mnt).forEach(function (key) {
@@ -196,7 +247,7 @@ var DashboardFilter = function (_React$Component) {
         })
       };
 
-      var mChart = new Chart(maintenanceBarCtx, {
+      _this.mmtBarChart = new Chart(_this.mmtBarChartRef.current, {
         type: "line",
         data: maintenanceBarData,
         options: {
@@ -318,7 +369,7 @@ var DashboardFilter = function (_React$Component) {
         return response.json();
       }).then(function (data) {
 
-        // console.log("data: ", data)
+        console.log("data: ", data);
         var inspection_locations_ = JSON.parse(data.inspection_locations);
         var inspections_count_ = JSON.parse(data.inspections_count);
         var maintenance_locations_ = JSON.parse(data.maintenance_locations);
@@ -397,9 +448,15 @@ var DashboardFilter = function (_React$Component) {
 
     }, _defineProperty(_this$state, "selectedRegion", ""), _defineProperty(_this$state, "selectedDistrict", ""), _defineProperty(_this$state, "selectedSection", ""), _defineProperty(_this$state, "authUser", {}), _this$state);
     _this.inspectionPieChartRef = React.createRef();
+    _this.inspectionBarChartRef = React.createRef();
     _this.mmtPieChartRef = React.createRef();
     _this.mmtBarChartRef = React.createRef();
     _this.onFilterSelectCenters = _this.onFilterSelectCenters.bind(_this);
+
+    _this.inspectionChart = null;
+    _this.inspectionBarChart = null;
+    _this.mmtPieChart = null;
+    _this.mmtBarChart = null;
     return _this;
   }
 
@@ -428,8 +485,11 @@ var DashboardFilter = function (_React$Component) {
         });
         this.setState({
           districts: dist,
-          selectedRegion: value
+          selectedRegion: value,
+          selectedDepot: "",
+          selectedDistrict: ""
         });
+        this.getFilterData(value, "", "");
       } else if (name_ === "district") {
         console.log("district: ", value, this.state.allDepots);
         var depos = this.state.allDepots.filter(function (_depot) {
@@ -438,11 +498,22 @@ var DashboardFilter = function (_React$Component) {
         console.log("depots: ", depos);
         this.setState({
           depots: depos,
-          selectedDepot: value
+          selectedDepot: "",
+          selectedDistrict: value,
+          selectedRegion: ""
         });
+        this.getFilterData("", value, "");
+      } else if (name_ === "depot") {
+        console.log("depot: ", value);
+        this.setState({
+          selectedDepot: value,
+          selectedDistrict: "",
+          selectedRegion: ""
+        });
+        this.getFilterData("", "", value);
       }
 
-      getFilterData();
+      // Filter by depot, filter by month, filter combined
     }
   }, {
     key: "onMaintenanceMonthSelected",
@@ -653,8 +724,8 @@ var DashboardFilter = function (_React$Component) {
                   React.createElement(
                     "select",
                     {
-                      id: "selectSection",
-                      name: "selectedSection",
+                      id: "selectDepot",
+                      name: "selectedDepot",
                       onChange: function onChange(event) {
                         return _this2.onFilterSelectCenters("depot", event);
                       },
@@ -667,7 +738,7 @@ var DashboardFilter = function (_React$Component) {
                     ) : React.createElement(
                       "option",
                       null,
-                      "Select section"
+                      "Select Centre"
                     ),
                     this.state.depots ? this.state.depots.map(function (depot) {
                       return React.createElement(
@@ -1304,7 +1375,7 @@ var DashboardFilter = function (_React$Component) {
                   React.createElement(
                     "a",
                     { href: "#" },
-                    React.createElement("canvas", { id: "Maintenance" })
+                    React.createElement("canvas", { id: "Maintenance", ref: this.mmtPieChartRef })
                   )
                 )
               )
@@ -1409,6 +1480,7 @@ var DashboardFilter = function (_React$Component) {
                   null,
                   React.createElement("canvas", {
                     id: "maintenanceBarChart",
+                    ref: this.mmtBarChartRef,
                     className: "chart-canvas",
                     width: "400",
                     height: "400"
@@ -1518,6 +1590,7 @@ var DashboardFilter = function (_React$Component) {
                   null,
                   React.createElement("canvas", {
                     id: "inspectionBarChart",
+                    ref: this.inspectionBarChartRef,
                     className: "chart-canvas",
                     width: "400",
                     height: "400"

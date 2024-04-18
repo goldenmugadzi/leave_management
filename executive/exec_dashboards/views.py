@@ -293,14 +293,14 @@ def setup_random_data(request):
     regions = regions_.values_list("region", flat=True)
     data = []
 
-    for _ in range(100):
+    for _ in range(1000):
         location = random.choice(locations)
         depot = random.choice(depots)
         district = random.choice(districts)
         region = random.choice(regions)
         
-        start_date = datetime(2023, 12, 1)
-        end_date = datetime(2024, 1, 9)
+        start_date = datetime(2024, 1, 1)
+        end_date = datetime(2024, 12, 30)
         random_date = get_random_date(start_date, end_date)
         created_at = random_date
         
@@ -352,6 +352,49 @@ def dashboard_data(request):
     
     # loop through maintences and foreach get record count from Files.
     maintenance_keys_list, maintenance_values_list = get_maintenance_linegraph(user_profile, month_id)
+    print("mmt: ", maintenance_keys_list, maintenance_values_list)
+
+    data = {
+            "pbncs": list(pbncs.values('id', 'name', 'amount', 'depot', 'district', 'region', 'created_at')),
+            "tds": list(tds.values('id', 'name', 'amount', 'depot', 'district', 'region', 'created_at')),
+            "upos": list(upos.values('id', 'description', 'depot', 'district', 'region', 'created_at')),
+            "inspection_locations": inspection_locations, 
+            "inspections_count": inspections_count,
+            "mtn": mtn, 
+            "maintenance_count": maintenance_values_list, 
+            "maintenance_locations": maintenance_keys_list
+        }
+
+    return JsonResponse(data, safe=False)
+
+
+def dashboard_filters(request):
+    
+    data = json.loads(request.body)
+    selected_region = data.get('region', None)
+    selected_district = data.get('district', None)
+    selected_depot = data.get('depot', None)
+    
+    user = request.user
+    user_profile = UserProfile.objects.filter(id=user.id).first()
+
+    # fetch pbnc data
+    pbncs = PBNC.objects.all().order_by('-amount')
+    tds = TD.objects.all().order_by('-amount')
+    upos = UPO.objects.all()
+    
+    month_id = datetime.now().month
+    mtn = get_mmt_filter(selected_region, selected_district, selected_depot, month_id, user_profile)
+    
+    keys_list, values_list = get_inspections_bargraph_filter(selected_region, selected_district, selected_depot, month_id, user_profile)
+
+    inspection_locations = keys_list
+    inspections_count = values_list
+    print("inspections_count: ", inspections_count)
+    
+    # loop through maintences and foreach get record count from Files.
+    maintenance_keys_list, maintenance_values_list = get_maintenance_linegraph_filter(selected_region, selected_district, selected_depot, month_id, user_profile)
+    # print("mmt: ", maintenance_keys_list, maintenance_values_list)
 
     data = {
             "pbncs": list(pbncs.values('id', 'name', 'amount', 'depot', 'district', 'region', 'created_at')),
@@ -396,22 +439,22 @@ def dashboard_index(request):
         "name": MONTHS[month_id-1]
     }
     
-    inspections = get_inspections(user_profile, month_id)
-    maintenance_ = get_mmts(user_profile, month_id)
-    mtn = get_mmt(user_profile, month_id)
-    print("mtn: ", mtn)
+    # inspections = get_inspections(user_profile, month_id)
+    # maintenance_ = get_mmts(user_profile, month_id)
+    # mtn = get_mmt(user_profile, month_id)
+    # print("mtn: ", mtn)
     
-    keys_list, values_list = get_inspections_bargraph(user_profile, month_id)
+    # keys_list, values_list = get_inspections_bargraph(user_profile, month_id)
 
-    inspection_locations = keys_list
-    inspections_count = values_list
+    # inspection_locations = keys_list
+    # inspections_count = values_list
     
-    # loop through maintences and foreach get record count from Files.
-    maintenance_keys_list, maintenance_values_list = get_maintenance_linegraph(user_profile, month_id)
+    # # loop through maintences and foreach get record count from Files.
+    # maintenance_keys_list, maintenance_values_list = get_maintenance_linegraph(user_profile, month_id)
     
-    regions_json = json.dumps(list(regions.values('id', 'region')))
-    districts_json = json.dumps(list(districts.values('id', 'district')))
-    sections_json = json.dumps(list(sections.values('id', 'section')))
+    # regions_json = json.dumps(list(regions.values('id', 'region')))
+    # districts_json = json.dumps(list(districts.values('id', 'district')))
+    # sections_json = json.dumps(list(sections.values('id', 'section')))
 
     return render(request, 
                   'dashboards/index.html', 
@@ -426,20 +469,10 @@ def dashboard_index(request):
                       "depot": depot,
                       "district": district,
                       "region": region,
-                    "regions_json": regions_json,
-                    "districts_json": districts_json,
-                    "sections_json": sections_json,
                       "current_month": current_month,
                       "pbncs": pbncs, 
                       "tds": tds, 
-                      "upos": upos, 
-                      "inspection_locations": inspection_locations, 
-                      "inspections_count": inspections_count,
-                      "mtn": json.dumps(mtn, default=str), 
-                      "maintenance_count": maintenance_values_list, 
-                      "maintenance_locations": maintenance_keys_list, 
-                      "maintenance_": serializers.serialize('json', maintenance_), 
-                      "inspections_": serializers.serialize('json', inspections) 
+                      "upos": upos
                   })
 
 def dashboard_filter(request, item):
