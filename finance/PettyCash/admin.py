@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 
-from finance.PettyCash.models import *
+from finance.Pettycash.models import *
 
 # Register your models here.
 admin.site.register(Pettycash)
