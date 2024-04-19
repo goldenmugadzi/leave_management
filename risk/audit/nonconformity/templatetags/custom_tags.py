@@ -45,3 +45,6 @@ def total_price(quote_id):
 @register.filter
 def get_extension(file_url):
     return os.path.splitext(file_url)[1]
+@register.filter
+def zip_lists(a, b):
+    return zip(a, b)

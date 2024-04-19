@@ -1,25 +1,9 @@
 from django.db import models
 from datetime import date
 from django.contrib.auth.models import AbstractUser
-from django.utils import timezone
-from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
-
-
-class UserManager(BaseUserManager):
-    def create_user(self, username, password=None, **extra_fields):
-        extra_fields.setdefault('is_staff', False)
-        extra_fields.setdefault('is_superuser', False)
-        user = self.model(username=username, **extra_fields)
-        user.set_password(password)
-        user.save(using=self._db)
-        return user
-
-    def create_superuser(self, username, password=None, **extra_fields):
-        extra_fields.setdefault('is_staff', True)
-        extra_fields.setdefault('is_superuser', True)
-        return self.create_user(username, password, **extra_fields)
-
-
+from django.core.validators import RegexValidator
+import random
+import time
 class Districts(models.Model):
     district = models.CharField(max_length=100)
     code = models.CharField(max_length=100)
@@ -125,10 +109,15 @@ class Notification(models.Model):
         app_label = 'users'
 
 class Supplier(models.Model):
+
+    phone_regex = RegexValidator(
+    regex=r'^\+?1?\d{9,15}$',
+    message="Phone number must be entered in the format: '+999999999'. Up to 15 digits allowed."
+    )
     id = models.CharField(primary_key=True, max_length=20, editable=False)
     name = models.CharField(max_length=100, unique=True, blank=True, null=True)
     email = models.EmailField(blank=True, null=True)
-    phone = models.IntegerField(max_length=13, blank=True, null=True)
+    phone = models.CharField(validators=[phone_regex], max_length=17, blank=True)  # validators should be a list
     address = models.CharField(max_length=100, blank=True, null=True)
 
     class Meta:

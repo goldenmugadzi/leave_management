@@ -56,8 +56,8 @@ class Order(models.Model):
         super().save(*args, **kwargs)
 
 class OrderItem(models.Model):
-    pr_item = models.ForeignKey(PrItem, models.CASCADE, blank=True, null=True)
-    bid = models.ForeignKey(Bid, models.CASCADE, blank=True, null=True)
+    bid_item = models.ForeignKey(BidItem, models.CASCADE, blank=True, null=True)
+    order = models.ForeignKey(Order, models.CASCADE, blank=True, null=True)
     quantity = models.DecimalField(max_digits=40, decimal_places=2)
     def __str__(self):
         return str(self.pk) 
