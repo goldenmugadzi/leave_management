@@ -1,0 +1,22 @@
+<!--users/templates/users/add_user.html-->
+
+{% extends 'admin_layout.html' %} {% load static %} {% block content %}
+<div class="content-wrapper">
+  <div
+    class="bg-gulf-blue-200 shadow shadow-nepal-200 text-gulf-blue-700 rounded px-2 py-2"
+  > 
+    <div id="create_comparative_schedule" ></div>
+  </div>
+</div>
+{% endblock %} {% block scripts %}
+<script
+  src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"
+  integrity="sha256-lSjKY0/srUM9BE3dPm+c4fBo1dky2v27Gdjm2uoZaL0="
+  crossorigin="anonymous"
+></script>
+<script src="{% static 'assets/cdn/react.development.js' %}"></script>
+<script src="{% static 'assets/cdn/react-dom.development.js' %}"></script>
+<script src="{% static 'assets/cdn/babel.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'custom/src/create_cs.js/create_cs.js' %}"></script>
+
+{% endblock scripts %}

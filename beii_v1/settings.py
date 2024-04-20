@@ -121,6 +121,7 @@ INSTALLED_APPS = [
     'finance.Ace',
     'finance.purchase_request',
     'finance.Pettycash',
+    'finance.comparative_schedules',
     'finance.Direct_purchases',
 
 
@@ -197,7 +198,7 @@ DATABASES = {
     # }
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'beii_test',
+        'NAME': 'beii_new',
         'USER': 'root',
         'PASSWORD': '',
         'HOST': 'localhost',
