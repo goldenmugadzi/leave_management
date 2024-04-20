@@ -36,7 +36,7 @@ class PrItem(models.Model):
     purchase_request = models.ForeignKey(PurchaseRequest, models.CASCADE, blank=True, null=True)
     ordered = models.DecimalField(max_digits=40, decimal_places=2,default=0)
     def __str__(self):
-        return f"{self.name}    -    {self.quantity}{self.unit_of_measurement}"
+        return f"{self.name}    {self.quantity} {self.unit_of_measurement}"
 
 
 

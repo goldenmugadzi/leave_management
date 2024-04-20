@@ -13,7 +13,7 @@ from django.db.models import Min
 from approve.forms import ApprovalForm
 from approve.models import Step
 from approve.views import intiate
-from django.forms import formset_factory
+from django.forms import inlineformset_factory
 from .forms import *
 from .models import *
 
@@ -83,40 +83,42 @@ def getsuggestions(request, purchase_request_id):
     return   (bids, purchase_request_items)
 @login_required
 def comperative_schedule(request, purchase_request_id):
+
+    if request.method == 'POST':
+        purchase_request = get_object_or_404(PurchaseRequest, id=purchase_request_id)
+        orders={}
+        purchase_request_items = purchase_request.pritem_set.all()
+        for item in purchase_request_items:
+            bid_item = BidItem.objects.get(id=request.POST.get('{}'.format(item.id)))
+            if bid_item.bid not in orders:
+                orders[bid_item.bid] = []
+            orders[bid_item.bid].append(bid_item)
+        print(orders)
+            # bid_item = # Retrieve the bid item using the bid_item_id
+            # quantity = item.quantity
+
+            # # Create the order and order item
+        for order, items in orders.items():
+            process= intiate(request, 'tenders')
+            order = Order.objects.create(process = process,bid =order)
+            for bid_item in items:
+                OrderItem.objects.create(bid_item=bid_item, order=order, quantity=bid_item.quantity)
+        return redirect('purchase_request:purchase_request_detail', purchase_request_id)
+        bids, purchase_request_items = getsuggestions(request, purchase_request_id)
+        return render(request, 'finance/comparative_schedule/comparative_schedule.html', {'bids': bids,  'purchase_request_items': purchase_request_items,'purchase_request_id': purchase_request_id})
     bids, purchase_request_items = getsuggestions(request, purchase_request_id)
-    BidItemFormSet = formset_factory(BidItemForm, extra=len(purchase_request_items))
-    choices_dict = {}
-    
-    # for bid in bids:
-    #     for offer in bid.biditem_set.all():
-    # #         print(offer)
-    # #         key = (offer.id, f"{offer.price} {offer.bid.supplier.name} {offer.pr_item}")
-    #         choices_dict[offer.id] = bid.biditem_set.all()
-    #         print(key)
-    print(len(bids))
-    choices = list(choices_dict.values())
-    print(len(choices))
-    formset = BidItemFormSet(form_kwargs={'choices': choices})
-    return render(request, 'finance/comparative_schedule/comparative_schedule.html', {'bids': bids, 'formset':formset, 'purchase_request_items': purchase_request_items,'purchase_request_id': purchase_request_id})
+    return render(request, 'finance/comparative_schedule/comparative_schedule.html', {'bids': bids,  'purchase_request_items': purchase_request_items,'purchase_request_id': purchase_request_id})
 
 @login_required
-def order_selected(request, purchase_request_id):
+def orders(request, purchase_request_id):
     purchase_request = get_object_or_404(PurchaseRequest, id=purchase_request_id)
-    bids = purchase_request.bid_set.all().order_by('supplier__name')
-    purchase_request_items = purchase_request.pritem_set.all()
-    print(purchase_request_items)
-    suppliers = {}
-    for pr_item in purchase_request_items:
-        pr_item.lowest_offer = pr_item.biditem_set.all().aggregate(Min('price'))['price__min']
-        for bid in bids:
-            if bid.biditem_set.filter(price=pr_item.lowest_offer).exists():
-                suppliers.setdefault(bid.supplier, []).append(bid.biditem_set.filter(price=pr_item.lowest_offer).first())
+    orders = Order.objects.filter(bid__purchase_request__id=purchase_request_id) #purchase_request.order_set.all()
 
-    sorted_suppliers = sorted(suppliers.items(), key=lambda x: len(x[1]), reverse=True)
-    selected_offers = [offer for supplier, offers in sorted_suppliers for offer in offers]
+    return render(request, 'finance/comparative_schedule/orders.html', {'orders': orders, 'purchase_request_id': purchase_request_id})
 
-    for pr_item in purchase_request_items:
-        pr_item.selected_offer = next((offer for offer in selected_offers if offer.pr_item == pr_item), None)
+@login_required
+def order(request, order_id):
+    order = get_object_or_404(Order, id=order_id)
+    order_items = order.orderitem_set.all()
 
-    return render(request, 'finance/comparative_schedule/order_selected.html', 
-                  {'bids': bids, 'purchase_request_items': purchase_request_items})
+    return render(request, 'finance/comparative_schedule/order.html', {'order': order, 'order_items': order_items})

@@ -38,15 +38,13 @@ class BidItem(models.Model):
     price = models.DecimalField(max_digits=40, decimal_places=2)  # Add a price field for the bid
 
     def __str__(self):
-        return str(self.pk)
+        return str(self.pr_item)
 
 
 class Order(models.Model):
     id = models.CharField(primary_key=True, max_length=20, editable=False)
-    purchase_request = models.ForeignKey(PurchaseRequest, on_delete=models.CASCADE)
+    process = models.ForeignKey(Process, on_delete=models.CASCADE)
     bid = models.ForeignKey(Bid, on_delete=models.CASCADE)
-    signed = models.BooleanField(default=False)
-    cancelled = models.BooleanField(default=False)
     def __str__(self):
         return str(self.pk)
     def save(self, *args, **kwargs):
@@ -60,7 +58,7 @@ class OrderItem(models.Model):
     order = models.ForeignKey(Order, models.CASCADE, blank=True, null=True)
     quantity = models.DecimalField(max_digits=40, decimal_places=2)
     def __str__(self):
-        return str(self.pk) 
+        return str(self.bid_item.pr_item.name) 
     
 
 
