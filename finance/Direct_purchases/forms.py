@@ -1,4 +1,5 @@
 from django import forms
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 
 from it.users.models import Roles
@@ -11,28 +12,11 @@ class DirectPurchaseForm(forms.ModelForm):
         model = Direct_purchase
         fields = '__all__'
         exclude = ['process', 'requested_by', 'date_created', 'payment_status', 'grn_date',
-                   'grn_delivery_status', 'payment_date']
+                   'grn_delivery_status', 'payment_date', 'Dp_id']
 
-    def __init__(self,request, *args, **kwargs):
+    @login_required
+    def __init__(self, request, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
-        user_id = request.user.id
-        user_profile = UserProfile.objects.filter(id=user_id).first()
-
-        user_groups = user_profile.groups.values_list('name', flat=True)
-        section_used = Sections.objects.filter(code=user_profile.section).first()
-
-        custom_user_roles = {
-            "rfq": {},
-        }
-
-        roles_ = user_profile.roles.all()
-        for _role in roles_:
-            role = Roles.objects.filter(id=_role.id).first()
-
-            if role.application == "rfq":
-                custom_user_roles["rfq"] = role
-        direct_purchase_role = str(custom_user_roles["rfq"])
 
         for field_name, field in self.fields.items():
             field.widget.attrs.update({
@@ -42,7 +26,7 @@ class DirectPurchaseForm(forms.ModelForm):
             })
 
             if field_name == 'region':
-                choices = [(region.id, region.name) for region in Regions.objects.all()]
+                choices = [(region.id, region.region) for region in Regions.objects.all()]
                 field.choices = choices
                 field.widget.attrs.update({'class': 'block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm '
                                                     'ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 '
@@ -50,7 +34,7 @@ class DirectPurchaseForm(forms.ModelForm):
                                                     'sm:leading-6'})
 
             if field_name == 'section':
-                choices = [(section.id, section.name) for section in Sections.objects.all()]
+                choices = [(section.id, section.section) for section in Sections.objects.all()]
                 field.choices = choices
                 field.widget.attrs.update({'class': 'block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm '
                                                     'ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 '
@@ -58,15 +42,7 @@ class DirectPurchaseForm(forms.ModelForm):
                                                     'sm:leading-6'})
 
             if field_name == 'ace':
-
-                if direct_purchase_role == 'create':
-                    choices = [(ace.id, ace.name) for ace in Ace.objects.all()]
-
-                elif direct_purchase_role == 'request':
-                    choices = [(ace.id, ace.name) for ace in Ace.objects.filter(section=section_used)]
-
-                else:
-                    choices = [(ace.id, ace.name) for ace in Ace.objects.all()]
+                choices = [(ace.Ace_id2, ace.details_of_expenditure) for ace in Ace.objects.all()]
 
                 field.choices = choices
                 field.widget.attrs.update({'class': 'block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm '

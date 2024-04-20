@@ -19,6 +19,7 @@ class UserManager(BaseUserManager):
         extra_fields.setdefault('is_superuser', True)
         return self.create_user(username, password, **extra_fields)
 
+
 class Regions(models.Model):
     region = models.CharField(max_length=100)
     code = models.CharField(max_length=100, blank=True)
@@ -28,6 +29,8 @@ class Regions(models.Model):
 
     class Meta:
         app_label = 'users'
+
+
 class Districts(models.Model):
     district = models.CharField(max_length=100)
     code = models.CharField(max_length=100)
@@ -107,7 +110,8 @@ class UserProfile(AbstractUser):
             return f"{self.first_name} {self.last_name}"
         else:
             return self.username
-   
+
+
 class Notification(models.Model):
     user = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
     message = models.TextField()
@@ -120,6 +124,7 @@ class Notification(models.Model):
 
     class Meta:
         app_label = 'users'
+
 
 class Supplier(models.Model):
     name = models.CharField(max_length=100, unique=True)

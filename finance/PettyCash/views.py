@@ -43,11 +43,9 @@ def pettyCash_detail(request, petty_id):
             pettycash_item.payment_mode = payment_mode
             pettycash_item.save()
 
-
     approvalForm = None
     to = None
     user_roles = request.user.roles.all()  # Accessing the user's roles through the 'roles' attribute
-
 
     try:
         last_approved = pettycash_item.process.approval_set.last().step.step
