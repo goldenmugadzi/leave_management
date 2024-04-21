@@ -124,6 +124,7 @@ INSTALLED_APPS = [
     'finance.comparative_schedules',
     'finance.Direct_purchases',
 
+    'finance.comperative_schedule',
 
     'reports',
     'sweetify',

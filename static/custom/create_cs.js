@@ -6,6 +6,7 @@ class CreateCS extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
+      cs_id: "",
       plan_ref: "",
       proc_plan: "",
       scope_of_work: "",
@@ -14,7 +15,7 @@ class CreateCS extends React.Component {
       pr_date: "",
       closing_date: "",
       closing_time_hour: "",
-      pr_date: "",
+      ref_date: "",
       date_tender_opened: "",
       tender_adjudication_committee_date: "",
       advert: null,
@@ -26,10 +27,18 @@ class CreateCS extends React.Component {
       cs_item_count: 0,
       addItemsModal: false,
 
+      complianceTable: false,
+      compliance: [],
+      complianceRemarks: [],
+
+      rankingTable: false,
+      rankings: [],
+
       pr_items: [],
       suppliers: [],
       procurement_plans: [],
       authUser: {},
+      username: "",
     };
     this.getCreateData = this.getCreateData.bind(this);
     this.onAddBid = this.onAddBid.bind(this);
@@ -37,12 +46,9 @@ class CreateCS extends React.Component {
   }
 
   componentDidMount() {
-    // this.setState({
-    //   region: this.props.region,
-    //   district: this.props.district,
-    //   section: this.props.section,
-    //   depot: this.props.depot,
-    // });
+    this.setState({
+      username: this.props.username,
+    });
     this.getCreateData();
   }
 
@@ -54,10 +60,14 @@ class CreateCS extends React.Component {
         let plans = data.proc_plans ? data.proc_plans : [];
         let suppliers = data.suppliers ? data.suppliers : [];
         let pr_items = data.pr_items ? data.pr_items : [];
+        let pr_id = data.pr_id ? data.pr_id : "";
+        let pr_date = data.pr_date ? data.pr_date : "";
         this.setState({
           procurement_plans: plans,
           suppliers: suppliers,
           pr_items: pr_items,
+          pr_number: pr_id,
+          pr_date: pr_date,
         });
       });
   };
@@ -120,8 +130,8 @@ class CreateCS extends React.Component {
     });
   };
 
-  onUpdateBidModal = (bid_no) => {
-    let bid = this.state.bids.find((bid) => bid.bid_no === bid_no);
+  onUpdateBidModal = (bid_count) => {
+    let bid = this.state.bids.find((bid) => bid.bid_count === bid_count);
     this.setState({
       ...this.state,
       addBidModal: !this.state.addBidModal,
@@ -130,10 +140,12 @@ class CreateCS extends React.Component {
   };
 
   onCloseCurrentBid = () => {
+    let bid_count = this.state.bid_count - 1;
     this.setState({
       ...this.state,
       currentBid: {},
       addBidModal: false,
+      bid_count: bid_count,
     });
   };
 
@@ -142,12 +154,12 @@ class CreateCS extends React.Component {
     if (name_ === "bid_document") {
       let bid_file = event.target.files[0];
       currentBid[name_] = bid_file;
-    } else if(name_ === "supplier"){
+    } else if (name_ === "supplier") {
       let { name, value } = event.target;
       console.log("value: ", value);
-      let id_name = value? value.split("-#-"): [];
-      currentBid[name_] = id_name.length > 0? id_name[0]: "";
-      currentBid["supplier_name"] = id_name.length >= 1? id_name[1]: "";
+      let id_name = value ? value.split("-#-") : [];
+      currentBid[name_] = id_name.length > 0 ? id_name[0] : "";
+      currentBid["supplier_name"] = id_name.length >= 1 ? id_name[1] : "";
     } else {
       let { name, value } = event.target;
       currentBid[name_] = value;
@@ -218,13 +230,23 @@ class CreateCS extends React.Component {
     let currentBid = this.state.currentBid;
     // check if current bid already exists
     if (currentBid.items) {
+      console.log("state bids found: ", this.state.bids);
       let bid = this.state.bids.find(
-        (bid) => bid.bid_no === currentBid.bid_no
+        (bid) => bid && bid.bid_count === currentBid.bid_count
       );
+      console.log("bid found: ", bid);
       if (bid) {
         // update bid
+        console.log("currentBid 1: ", currentBid);
+        let items = currentBid.items.map((item) => {
+          item.total_price = item.quantity * item.unit_price;
+          return item;
+        });
+        currentBid.items = items;
+        console.log("currentBid: ", currentBid);
+        this.onSaveBid(currentBid);
         let bids = this.state.bids.map((bid) => {
-          if (bid.bid_no === currentBid.bid_no) {
+          if (bid.bid_count === currentBid.bid_count) {
             return currentBid;
           }
           return bid;
@@ -236,47 +258,165 @@ class CreateCS extends React.Component {
           addBidModal: false,
         });
       } else {
-          // calculate total price for each item
-          let items = currentBid.items.map((item) => {
-            item.total_price = item.quantity * item.unit_price;
-            return item;
-          });
-          let bids = this.state.bids;
-          let bid = {
-            supplier: currentBid.supplier,
-            supplier_name: currentBid.supplier_name,
-            bid_date: currentBid.bid_date,
-            bid_no: currentBid.bid_count,
-            bid_document: currentBid.bid_document,
-            items: items,
-          };
-          bids.push(bid);
-          this.setState({
-            ...this.state,
-            bids: bids,
-            currentBid: {},
-            addBidModal: false,
-          });
+        // calculate total price for each item
+        let items = currentBid.items.map((item) => {
+          item.total_price = item.quantity * item.unit_price;
+          return item;
+        });
+        // update current bid items
+        currentBid.items = items;
+        this.onSaveBid(currentBid);
 
+        let bids = this.state.bids;
+        console.log("currentBid: ", currentBid);
+        bids.push(currentBid);
+        this.setState({
+          ...this.state,
+          bids: bids,
+          currentBid: {},
+          addBidModal: false,
+        });
       }
     } else {
       alert("Please add items to the bid");
     }
   };
 
-  onDeleteBidModal = (bid_no) => {
+  onSaveBid = (currentBid) => {
+    let form_data = new FormData();
+
+    // add enctype to form data
+    form_data.enctype = "multipart/form-data";
+    form_data.append("cs_id", this.state.cs_id);
+    form_data.append("bid_no", currentBid.bid_count);
+    form_data.append("supplier_id", currentBid.supplier);
+    form_data.append("supplier_name", currentBid.supplier_name);
+    form_data.append("bid_date", currentBid.bid_date);
+    form_data.append(
+      "json_data",
+      JSON.stringify({
+        bid_items: currentBid.items,
+      })
+    );
+    form_data.append("bid_document", currentBid.bid_document);
+    form_data.append("csrfmiddlewaretoken", this.getCookie("csrftoken"));
+
+    fetch(`http://localhost:8000/comparative_schedule/save_bid`, {
+      method: "POST",
+      headers: {
+        "X-CSRFToken": this.getCookie("csrftoken"),
+      },
+      body: form_data,
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        console.log("data: ", data);
+        if (data.success) {
+          alert("Bid saved successfully" + " " + data.bid_no);
+        } else {
+          alert("Error saving Bid");
+        }
+      });
+  };
+
+  onSaveSchedule = () => {
+    let form_data = new FormData();
+    // add enctype to form data
+    form_data.enctype = "multipart/form-data";
+    form_data.append("plan_ref", this.state.plan_ref);
+    form_data.append("proc_plan", this.state.proc_plan);
+    form_data.append("scope_of_work", this.state.scope_of_work);
+    form_data.append("pr_number", this.state.pr_number);
+    form_data.append("quantity", this.state.quantity);
+    form_data.append("pr_date", this.state.pr_date);
+    form_data.append("closing_date", this.state.closing_date);
+    form_data.append("ref_date", this.state.ref_date);
+    form_data.append("closing_time_hour", this.state.closing_time_hour);
+    form_data.append("date_tender_opened", this.state.date_tender_opened);
+    form_data.append("username", this.state.username);
+    form_data.append(
+      "tender_adjudication_committee_date",
+      this.state.tender_adjudication_committee_date
+    );
+    form_data.append("advert", this.state.advert);
+    form_data.append("csrfmiddlewaretoken", this.getCookie("csrftoken"));
+
+    fetch(`http://localhost:8000/comparative_schedule/save`, {
+      method: "POST",
+      headers: {
+        "X-CSRFToken": this.getCookie("csrftoken"),
+      },
+      body: form_data,
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        console.log("data: ", data);
+        if (data.success) {
+          alert("Comparative Schedule saved successfully" + " " + data.cs_id);
+          this.setState({
+            ...this.state,
+            cs_id: data.cs_id,
+          });
+        } else {
+          alert("Error saving Comparative Schedule");
+        }
+      });
+  };
+
+  onUpdateSchedule = () => {
+    let form_data = new FormData();
+    // add enctype to form data
+    form_data.enctype = "multipart/form-data";
+    form_data.append("cs_id", this.state.cs_id);
+    form_data.append("plan_ref", this.state.plan_ref);
+    form_data.append("proc_plan", this.state.proc_plan);
+    form_data.append("scope_of_work", this.state.scope_of_work);
+    form_data.append("pr_number", this.state.pr_number);
+    form_data.append("quantity", this.state.quantity);
+    form_data.append("pr_date", this.state.pr_date);
+    form_data.append("closing_date", this.state.closing_date);
+    form_data.append("ref_date", this.state.ref_date);
+    form_data.append("closing_time_hour", this.state.closing_time_hour);
+    form_data.append("date_tender_opened", this.state.date_tender_opened);
+    form_data.append("username", this.state.username);
+    form_data.append(
+      "tender_adjudication_committee_date",
+      this.state.tender_adjudication_committee_date
+    );
+    form_data.append("advert", this.state.advert);
+    form_data.append("csrfmiddlewaretoken", this.getCookie("csrftoken"));
+
+    fetch(`http://localhost:8000/comparative_schedule/update`, {
+      method: "POST",
+      headers: {
+        "X-CSRFToken": this.getCookie("csrftoken"),
+      },
+      body: form_data,
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        console.log("data: ", data);
+        if (data.success) {
+          alert("Comparative Schedule updated successfully" + " " + data.cs_id);
+        } else {
+          alert("Error updating Comparative Schedule");
+        }
+      });
+  };
+
+  onDeleteBidModal = (bid_count) => {
     // reset bid no index
-    let bid_count = this.state.bid_count - 1;
-    let bids = this.state.bids.filter((bid) => bid.bid_no !== bid_no);
-    // update bid_no index for all bids sequentially
+    let bid_count_ = this.state.bid_count - 1;
+    let bids = this.state.bids.filter((bid) => bid.bid_count !== bid_count);
+    // update bid_count index for all bids sequentially
     bids = bids.map((bid, index) => {
-      bid.bid_no = index + 1;
+      bid.bid_count = index + 1;
       return bid;
     });
     this.setState({
       ...this.state,
       bids: bids,
-      bid_count: bid_count,
+      bid_count: bid_count_,
     });
   };
 
@@ -290,7 +430,7 @@ class CreateCS extends React.Component {
         {
           supplier: "",
           bid_date: "",
-          bid_no: bid_count,
+          bid_count: bid_count,
           bid_document: null,
           items: [],
         },
@@ -481,9 +621,129 @@ class CreateCS extends React.Component {
     });
   };
 
+  onAddComplianceTable = () => {
+    // add bid compliance
+    let compliances = this.state.bids.map((bid) => {
+      return {
+      bid_count: bid.bid_count,
+      supplier: bid.supplier,
+      supplier_name: bid.supplier_name,
+      payment_terms: false,
+      bid_validity: false,
+      delivery_period: false,
+      technical_specifications: false,
+      valid_tax_clearance: false,
+      registered_with_praz: false,
+      tax_status: false,
+      site_visit_done: false,
+      samples_delivered: false,
+      decision: false,
+      reject: true,
+      remarks: "",
+      }
+    });
+
+    let complianceRemarks = this.state.bids.map((bid) => {
+      return {
+        bid_count: bid.bid_count,
+        supplier: bid.supplier,
+        supplier_name: bid.supplier_name,
+        remarks: "",
+      }
+    });
+
+
+    this.setState({
+      ...this.state,
+      compliance: compliances,
+      complianceRemarks: complianceRemarks,
+      complianceTable: !this.state.complianceTable,
+    });
+  };
+
+  onComplianceChange = (bid_count, event) => {
+    let { name, checked } = event.target;
+    console.log("name: ", name, "checked: ", checked);
+    let compliance = this.state.compliance;
+    let index = compliance.findIndex((item) => item.bid_count === bid_count);
+    compliance[index][name] = checked;
+    this.setState({
+      ...this.state,
+      compliance: compliance,
+    });
+  }
+
+  onComplianceRemarksChange = (bid_count, event) => {
+    let { name, value } = event.target;
+    let compliance = this.state.compliance;
+    let index = compliance.findIndex((item) => item.bid_count === bid_count);
+    compliance[index][name] = value;
+    this.setState({
+      ...this.state,
+      compliance: compliance,
+    });
+  }
+
+  onSaveCompliance = () => {
+    let form_data = new FormData();
+    form_data.append("cs_id", this.state.cs_id);
+    form_data.append("compliance", JSON.stringify({
+      compliance: this.state.compliance,
+    }));
+    form_data.append("csrfmiddlewaretoken", this.getCookie("csrftoken"));
+
+    fetch(`http://localhost:8000/comparative_schedule/save_compliance`, {
+      method: "POST",
+      headers: {
+        "X-CSRFToken": this.getCookie("csrftoken"),
+      },
+      body: form_data,
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        console.log("data: ", data);
+        if (data.success) {
+          alert("Compliance saved successfully");
+        } else {
+          alert("Error saving Compliance");
+        }
+      });
+  }
+
+  onCloseCS = () => {
+    let form_data = new FormData();
+    form_data.append("cs_id", this.state.cs_id);
+    form_data.append("csrfmiddlewaretoken", this.getCookie("csrftoken"));
+
+    fetch(`http://localhost:8000/comparative_schedule/close_compliance`, {
+      method: "POST",
+      headers: {
+        "X-CSRFToken": this.getCookie("csrftoken"),
+      },
+      body: form_data,
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        console.log("data: ", data);
+        if (data.success) {
+          let rankings = data.rankings;
+          this.setState({
+            ...this.state,
+            rankings: rankings,
+            rankingTable: true,
+          });
+          alert("Schedule closed successfully");
+        } else {
+          alert("Error saving Schedule");
+        }
+      });
+  }
+
   render() {
     var itemsModal = null;
     var bidsModal = null;
+    var complianceTable = null;
+    var rankingTable = null;
 
     if (this.state.addItemsModal) {
       itemsModal = (
@@ -592,17 +852,29 @@ class CreateCS extends React.Component {
                         onChange={(e) => this.onCurrentBidChange("supplier", e)}
                         className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
                       >
-                      {this.state.currentBid.supplier_name ? (
-                        <option value={this.state.currentBid.supplier + "-#-" + this.state.currentBid.supplier_name}>
-                          {this.state.currentBid.supplier_name}
-                        </option>
-                      ) : (
-                        ""
-                      )}
+                        {this.state.currentBid.supplier_name ? (
+                          <option
+                            value={
+                              this.state.currentBid.supplier +
+                              "-#-" +
+                              this.state.currentBid.supplier_name
+                            }
+                          >
+                            {this.state.currentBid.supplier_name}
+                          </option>
+                        ) : (
+                          ""
+                        )}
                         <option>Select Supplier</option>
-                        {this.state.suppliers? this.state.suppliers.map((supplier) => (
-                          <option value={supplier.id + "-#-" + supplier.name}>{supplier.name}</option>
-                        )): ""}
+                        {this.state.suppliers
+                          ? this.state.suppliers.map((supplier) => (
+                              <option
+                                value={supplier.id + "-#-" + supplier.name}
+                              >
+                                {supplier.name}
+                              </option>
+                            ))
+                          : ""}
                       </select>
                     </div>
                   </div>
@@ -771,13 +1043,11 @@ class CreateCS extends React.Component {
                               autoComplete="vat"
                               className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
                             >
-                            {item.vat ? (
-                              <option value={item.vat}>
-                                {item.vat}
-                              </option>
-                            ) : (
-                              ""
-                            )}
+                              {item.vat ? (
+                                <option value={item.vat}>{item.vat}</option>
+                              ) : (
+                                ""
+                              )}
                               <option value="Excl.">Excl.</option>
                               <option value="Incl.">Incl.</option>
                             </select>
@@ -839,23 +1109,377 @@ class CreateCS extends React.Component {
       );
     }
 
+    if (this.state.complianceTable) {
+      complianceTable = (
+        <div className="bg-gulf-blue-300 shadow shadow-nepal-300 text-gray-700 rounded px-2 py-2">
+          <div className="space-y-12 px-5 py-5">
+            <div className="px-4 sm:px-0 mt-6 border-t border-gray-100 border-gray-900/10">
+              <h2 className="text-base font-semibold leading-6 text-gray-900">
+                COMPLIANCE TABLE
+              </h2>
+              <p className="mt-1 max-w-2xl text-sm leading-6 text-gray-500">
+                Key: Comply/ Not Comply (Y/ N), Not Stated (NS)
+              </p>
+              <div className="flex justify-evenly mt-5 bg-gulf-blue-300 px-2 py-2 rounded-md">
+                <div className="flex-1 w-45">
+                  <label
+                    htmlFor="site_visit"
+                    className="block text-sm font-medium leading-6 text-gray-900"
+                  >
+                    Site visit required?
+                  </label>
+                  <div className="mt-2">
+                    <select
+                      id="site_visit"
+                      name="site_visit"
+                      autoComplete="site_visit"
+                      className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
+                    >
+                      <option value="">Select Option</option>
+                      <option value="yes">Yes</option>
+                      <option value="no">No</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="flex-1 w-45">
+                  <div>
+                    <label
+                      htmlFor="samples"
+                      className="block text-sm font-medium leading-6 text-gray-900"
+                    >
+                      Are Samples Required?
+                    </label>
+                    <div className="mt-2">
+                      <select
+                        id="samples"
+                        name="samples"
+                        autoComplete="samples"
+                        className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
+                      >
+                        <option value="">Select Option</option>
+                        <option value="yes">Yes</option>
+                        <option value="no">No</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="overflow-auto px-2 py-2 mt-5 rounded-md bg-gulf-blue-300">
+                <table className="table-auto w-full text-left">
+                  <thead>
+                    <tr className="text-gray-900">
+                      <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                        Bid No.
+                      </th>
+                      <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                        Name of Supplier
+                      </th>
+                      <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                        Payment <br />
+                        Terms
+                      </th>
+                      <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                        Bid <br />
+                        Validity
+                      </th>
+                      <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                        Delivery <br />
+                        Period
+                      </th>
+                      <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                        Technical <br />
+                        Specifications
+                      </th>
+                      <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                        Valid <br />
+                        Tax Clearance
+                      </th>
+                      <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                        Registered <br />
+                        with PRAZ?
+                      </th>
+                      <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                        Tax <br />
+                        Status
+                      </th>
+                      <th
+                        id="site_visit_header"
+                        className="hidden site-visit-header border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2"
+                      >
+                        Site Visit
+                        <br />
+                        Done?
+                      </th>
+                      <th
+                        id="samples_header"
+                        className="hidden samples-header border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2"
+                      >
+                        Samples <br />
+                        Delivered?
+                      </th>
+                      <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                        Accept
+                      </th>
+                      <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                        Reject
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {this.state.compliance.map((comp, key) => {
+                      return (
+                        <tr>
+                          <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                            {comp.bid_count}
+                          </td>
+                          <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                            {comp.supplier_name}
+                          </td>
+                          <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                            <input
+                              name="payment_terms"
+                              checked={comp.payment_terms? comp.payment_terms : false}
+                              onChange={(e) => this.onComplianceChange(comp.bid_count, e)}
+                              id="payment_terms"
+                              type="checkbox"
+                            />
+                          </td>
+                          <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                            <input
+                              name="bid_validity"
+                              checked={comp.bid_validity? comp.bid_validity : false}
+                              onChange={(e) => this.onComplianceChange(comp.bid_count, e)}
+                              id="bid_validity"
+                              type="checkbox"
+                            />
+                          </td>
+                          <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                            <input
+                              name="delivery_period"
+                              checked={comp.delivery_period? comp.delivery_period : false}
+                              onChange={(e) => this.onComplianceChange(comp.bid_count, e)}
+                              id="delivery_period"
+                              type="checkbox"
+                            />
+                          </td>
+                          <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                            <input
+                              name="technical_specifications"
+                              checked={comp.technical_specifications? comp.technical_specifications : false}
+                              onChange={(e) => this.onComplianceChange(comp.bid_count, e)}
+                              id="technical_specifications"
+                              type="checkbox"
+                            />
+                          </td>
+                          <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                            <input
+                              name="valid_tax_clearance"
+                              checked={comp.valid_tax_clearance? comp.valid_tax_clearance : false}
+                              onChange={(e) => this.onComplianceChange(comp.bid_count, e)}
+                              id="valid_tax_clearance"
+                              type="checkbox"
+                            />
+                          </td>
+                          <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                            <input
+                              name="registered_with_praz"
+                              checked={comp.registered_with_praz? comp.registered_with_praz : false}
+                              onChange={(e) => this.onComplianceChange(comp.bid_count, e)}
+                              id="registered_with_praz"
+                              type="checkbox"
+                            />
+                          </td>
+                          <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                            <input
+                              name="tax_status"
+                              checked={comp.tax_status? comp.tax_status : false}
+                              onChange={(e) => this.onComplianceChange(comp.bid_count, e)}
+                              id="tax_status"
+                              type="checkbox"
+                            />
+                          </td>
+                          <td
+                            id="site_visit_header"
+                            className="hidden site-visit-header border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2"
+                          >
+                            <input
+                              name="site_visit_done"
+                              checked={comp.site_visit_done? comp.site_visit_done : false}
+                              onChange={(e) => this.onComplianceChange(comp.bid_count, e)}
+                              id="site_visit_done"
+                              type="checkbox"
+                            />
+                          </td>
+                          <td
+                            id="samples_header"
+                            className="hidden samples-header border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2"
+                          >
+                            <input
+                              name="samples_delivered"
+                              checked={comp.samples_delivered? comp.samples_delivered : false}
+                              onChange={(e) => this.onComplianceChange(comp.bid_count, e)}
+                              id="samples_delivered"
+                              type="checkbox"
+                            />
+                          </td>
+                          <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                            <input
+                              name="decision"
+                              checked={comp.decision? comp.decision : false}
+                              onChange={(e) => this.onComplianceChange(comp.bid_count, e)}
+                              id="decision"
+                              type="checkbox"
+                            />
+                          </td>
+                          <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                            <input 
+                            name="reject" 
+                            checked={comp.reject? comp.reject : false}
+                            onChange={(e) => this.onComplianceChange(comp.bid_count, e)}
+                            id="reject" type="checkbox" />
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+              <div className="px-2 py-2 mt-5 rounded-sm bg-gulf-blue-300">
+                <table className="table-auto w-full text-left">
+                  <thead>
+                    <tr className="text-gray-900">
+                      <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                        Supplier
+                      </th>
+                      <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                        Remarks
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {this.state.compliance.map((bid, key) => {
+                      return (
+                        <tr>
+                          <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                            {bid.supplier_name}
+                          </td>
+                          <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                            <input
+                              name="remarks"
+                              onChange={(e) => this.onComplianceRemarksChange(bid.bid_count, e)}
+                              type="text"
+                              className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
+                            />
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex justify-center mt-5 px-3 py-3">
+            <div className="flex-1 m-2">
+              <button
+                style={{width: "100%"}}
+                onClick={this.onSaveCompliance}
+                name="save_next"
+                className="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+              >
+                SAVE COMPLIANCES
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    if (this.state.rankingTable) {
+      rankingTable = (
+        <div className="bg-gulf-blue-300 shadow shadow-nepal-300 text-gray-700 rounded px-2 py-2">
+          <div className="space-y-12 px-5 py-5">
+            <div className="px-4 sm:px-0 mt-6 border-t border-gray-100 border-gray-900/10">
+              <h2 className="text-base font-semibold leading-6 text-gray-900">
+                RANKING TABLE
+              </h2>
+
+              <div className="overflow-auto px-2 py-2 mt-5 rounded-md bg-gulf-blue-300">
+                <table className="table-auto w-full text-left">
+                  <thead>
+                    <tr className="text-gray-900">
+                      <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                        ID
+                      </th>
+                      <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                        Name of Supplier
+                      </th>
+                      <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                        Rank
+                      </th>
+                      <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                        Decision
+                      </th>
+                      <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                        Remarks
+                      </th>
+                      <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                        Total
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {this.state.rankings.map((rank, key) => {
+                      return (
+                        <tr className="text-gray-900">
+                          <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                            {rank.id}
+                          </td>
+                          <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                            {rank.supplier_name}
+                          </td>
+                          <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                            {rank.rank}
+                          </td>
+                          <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                            {rank.decision}
+                          </td>
+                          <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                            {rank.remarks}
+                          </td>
+                          <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                            {rank.total}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div>
         {itemsModal}
         {bidsModal}
-        <input type="hidden" name="item_count" id="item_count" value="1" />
         <div className="space-y-12 px-5 py-5">
           <div className="px-4 sm:px-0">
             <h3 className="text-base font-semibold leading-7 text-gray-900">
               COMPARATIVE SCHEDULE
             </h3>
             <p className="mt-1 max-w-2xl text-sm leading-6 text-gray-500">
-              TENDER
+              CS NO: {this.state.cs_id}
             </p>
           </div>
           <div className="px-4 sm:px-0 mt-6 bg-gulf-blue-300 rounded-md border-t border-gray-100 border-gray-900/10">
             <h2 className="text-base font-semibold leading-6 text-gray-900">
-              RFQ DETAILS
+              CS DETAILS
             </h2>
 
             <div className="flex justify-evenly mt-5 px-2 py-2">
@@ -870,8 +1494,7 @@ class CreateCS extends React.Component {
                   <input
                     name="plan_ref"
                     id="plan_ref"
-                    required="required"
-                    value={this.state.plan_ref}
+                    value={this.state.proc_ref}
                     readOnly
                     className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                   />
@@ -890,13 +1513,15 @@ class CreateCS extends React.Component {
                       id="proc_plan"
                       name="proc_plan"
                       autoComplete="proc_plan"
-                      onChange={(e) => this.onSelectChange("proc_plan", e)}
+                      onChange={(e) => this.onSelectChange("proc_ref", e)}
                       className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
                     >
                       <option>Select Procurement Plan Ref</option>
                       {this.state.procurement_plans
                         ? this.state.procurement_plans.map((plan) => (
-                            <option value={plan.id}>{plan.description}</option>
+                            <option value={plan.proc_ref}>
+                              {plan.description}
+                            </option>
                           ))
                         : ""}
                     </select>
@@ -1033,7 +1658,7 @@ class CreateCS extends React.Component {
                 <div className="mt-2">
                   <input
                     id="proc_plan_ref"
-                    value={this.state.proc_plan}
+                    value={this.state.proc_ref}
                     readOnly
                     className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                   />
@@ -1048,8 +1673,8 @@ class CreateCS extends React.Component {
                 </label>
                 <div className="mt-2">
                   <input
-                    name="pr_date"
-                    value={this.state.pr_date}
+                    name="ref_date"
+                    value={this.state.ref_date}
                     onChange={this.onInputChange}
                     type="date"
                     required="required"
@@ -1115,9 +1740,35 @@ class CreateCS extends React.Component {
                 </div>
               </div>
             </div>
+
+            <div className="flex justify-center mt-10 px-3 py-3">
+              {this.state.cs_id ? (
+                <div className="w-30 m-2">
+                  <button
+                    style={{ width: "100%" }}
+                    onClick={this.onUpdateSchedule}
+                    name="save_next"
+                    className="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                  >
+                    UPDATE SCHEDULE
+                  </button>
+                </div>
+              ) : (
+                <div className="w-30 m-2">
+                  <button
+                    style={{ width: "100%" }}
+                    onClick={this.onSaveSchedule}
+                    name="save_next"
+                    className="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                  >
+                    SAVE SCHEDULE
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
 
-          {this.state.bids.length === 0 ? (
+          {this.state.bids.length === 0 && this.state.cs_id && (
             <div className="m-2">
               <button
                 style={{ width: "100%" }}
@@ -1127,8 +1778,6 @@ class CreateCS extends React.Component {
                 ADD SCHEDULE ITEMS
               </button>
             </div>
-          ) : (
-            ""
           )}
 
           {this.state.bids.map((bid, index) => {
@@ -1169,7 +1818,7 @@ class CreateCS extends React.Component {
                         Bid No.
                       </label>
                       <div className="mt-2">
-                        <p>{bid.bid_no}</p>
+                        <p>{bid.bid_count}</p>
                       </div>
                     </div>
                     <div className="flex-1 w-40 ml-1">
@@ -1181,11 +1830,15 @@ class CreateCS extends React.Component {
                       </label>
                       <div className="mt-2">
                         <a
-                          href={bid.bid_document? URL.createObjectURL(bid.bid_document): ""}
+                          href={
+                            bid.bid_document
+                              ? URL.createObjectURL(bid.bid_document)
+                              : ""
+                          }
                           target="_blank"
                           rel="noopener noreferrer"
                         >
-                          {bid.bid_document? bid.bid_document.name: ""}
+                          {bid.bid_document ? bid.bid_document.name : ""}
                         </a>
                       </div>
                     </div>
@@ -1272,7 +1925,7 @@ class CreateCS extends React.Component {
                 <div className="flex justify-center mt-5 px-3 py-3">
                   <div className="m-2">
                     <button
-                      onClick={() => this.onUpdateBidModal(bid.bid_no)}
+                      onClick={() => this.onUpdateBidModal(bid.bid_count)}
                       className="rounded-md text-gray-50 text-sm bg-blue-925 hover:bg-blue-550 px-3 py-2 font-semibold leading-6"
                     >
                       UPDATE BID
@@ -1280,7 +1933,7 @@ class CreateCS extends React.Component {
                   </div>
                   <div className="m-2">
                     <button
-                      onClick={() => this.onDeleteBidModal(bid.bid_no)}
+                      onClick={() => this.onDeleteBidModal(bid.bid_count)}
                       type="submit"
                       className="rounded-md bg-red-danger hover:bg-orange-500 text-sm font-semibold px-3 py-2 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
                     >
@@ -1302,39 +1955,41 @@ class CreateCS extends React.Component {
                 ADD BID
               </button>
             </div>
-          ): ""}
+          ) : (
+            ""
+          )}
 
-        </div>
+          {this.state.bids.length > 0 ? (
+            <div className="m-2">
+              <button
+                style={{ width: "100%" }}
+                onClick={this.onAddComplianceTable}
+                className="rounded-md bg-nepal-950 hover:bg-nepal-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+              >
+                ADD COMPLIANCES
+              </button>
+            </div>
+          ) : (
+            ""
+          )}
 
-        <div className="flex mt-10 px-3 py-3">
-          <div className="flex-1 w-30 m-2">
-            <button
-              style={{ width: "100%" }}
-              className="rounded-md py-1.5 text-sm hover:bg-nepal-300 font-semibold leading-6 text-gray-900"
-            >
-              CANCEL
-            </button>
-          </div>
-          <div className="flex-1 w-30 m-2">
-            <button
-              style={{ width: "100%" }}
-              type="submit"
-              name="add_supplier"
-              className="rounded-md bg-nepal-950 hover:bg-nepal-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-            >
-              SAVE & ADD SUPPLIER
-            </button>
-          </div>
-          <div className="flex-1 w-30 m-2">
-            <button
-              style={{ width: "100%" }}
-              type="submit"
-              name="save_next"
-              className="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-            >
-              SAVE
-            </button>
-          </div>
+          {complianceTable}
+
+          {this.state.compliance.length > 0 ? (
+            <div className="m-2">
+              <button
+                style={{ width: "100%" }}
+                onClick={this.onCloseCS}
+                className="rounded-md bg-red-danger hover:bg-orange-500 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+              >
+                CLOSE SCHEDULE
+              </button>
+            </div>
+          ) : (
+            ""
+          )}
+
+          {rankingTable}
         </div>
       </div>
     );
@@ -1342,9 +1997,5 @@ class CreateCS extends React.Component {
 }
 
 const domContainer = document.querySelector("#create_comparative_schedule");
-const spid = domContainer.getAttribute("data-spid");
-const region = domContainer.getAttribute("data-region");
-const district = domContainer.getAttribute("data-district");
-const section = domContainer.getAttribute("data-section");
-const depot = domContainer.getAttribute("data-depot");
-ReactDOM.render(e(CreateCS, { spid, region, district, section }), domContainer);
+const username = domContainer.getAttribute("data-username");
+ReactDOM.render(e(CreateCS, { username }), domContainer);

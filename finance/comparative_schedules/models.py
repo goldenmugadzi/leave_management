@@ -18,8 +18,9 @@ class ComparativeSchedules(models.Model):
     cs_opened = models.DateField()
     tac_date = models.DateField()
     created_by = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
-    section = models.ForeignKey(Sections, on_delete=models.CASCADE)
-    region = models.ForeignKey(Regions, on_delete=models.CASCADE)
+    section = models.ForeignKey(Sections, on_delete=models.CASCADE, blank=True, null=True)
+    region = models.ForeignKey(Regions, on_delete=models.CASCADE, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
 
 class CSItems(models.Model):
     cs_id = models.ForeignKey(ComparativeSchedules, on_delete=models.CASCADE)
@@ -27,6 +28,7 @@ class CSItems(models.Model):
     item_name = models.CharField(max_length=300)
     quantity = models.CharField(max_length=50)
     unit_of_measurement = models.CharField(max_length=50)
+    created_at = models.DateTimeField(auto_now_add=True)
 
 class Bids(models.Model):
     cs_id = models.ForeignKey(ComparativeSchedules, on_delete=models.CASCADE)
@@ -39,20 +41,22 @@ class Bids(models.Model):
     quote_date = models.DateField()
     total = models.CharField(max_length=50)
     bid_document = models.CharField(max_length=400)
+    created_at = models.DateTimeField(auto_now_add=True)
     
 class CSCompliance(models.Model):
     cs_id = models.ForeignKey(ComparativeSchedules, on_delete=models.CASCADE)
     supplier_id = models.ForeignKey(Supplier, on_delete=models.CASCADE)
-    payment_terms = models.CharField(max_length=100)
-    bid_validity = models.CharField(max_length=100)
-    delivery_period = models.CharField(max_length=100)
-    technical_specifications = models.CharField(max_length=100)
-    valid_tax_clearance = models.CharField(max_length=100)
-    registered_with_praz = models.CharField(max_length=100)
-    site_visit_done = models.CharField(max_length=100)
-    samples_delivered = models.CharField(max_length=100)
-    decision = models.CharField(max_length=255)
+    payment_terms = models.BooleanField(default=False)
+    bid_validity = models.BooleanField(default=False)
+    delivery_period = models.BooleanField(default=False)
+    technical_specifications = models.BooleanField(default=False)
+    valid_tax_clearance = models.BooleanField(default=False)
+    registered_with_praz = models.BooleanField(default=False)
+    site_visit_done = models.BooleanField(default=False)
+    samples_delivered = models.BooleanField(default=False)
+    decision = models.BooleanField(default=False)
     remarks = models.CharField(max_length=255)
+    created_at = models.DateTimeField(auto_now_add=True)
     
 class Ranking(models.Model):
     cs_id = models.ForeignKey(ComparativeSchedules, on_delete=models.CASCADE)
@@ -60,6 +64,8 @@ class Ranking(models.Model):
     rank = models.CharField(max_length=100)
     remarks = models.CharField(max_length=255)
     decision = models.CharField(max_length=255)
+    total = models.CharField(max_length=50)
+    created_at = models.DateTimeField(auto_now_add=True)
     
 class Order(models.Model):
     cs_id = models.ForeignKey(ComparativeSchedules, on_delete=models.CASCADE)
@@ -70,6 +76,7 @@ class Order(models.Model):
     payment_status = models.CharField(max_length=100)
     site_visit_done = models.CharField(max_length=100)
     samples_delivered = models.CharField(max_length=100)
+    created_at = models.DateTimeField(auto_now_add=True)
     
 class ProcPlan(models.Model):
     proc_ref = models.CharField(max_length=100)

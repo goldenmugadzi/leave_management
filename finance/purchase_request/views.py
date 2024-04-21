@@ -17,33 +17,14 @@ from finance.Ace.models import Ace
 from django.forms import inlineformset_factory
 from .forms import *
 from .models import *
+from approve.decorators import ApprovalDetails
 
 
 @login_required
 def purchase_request_detail(request, purchase_request_id):
     purchase_request = PurchaseRequest.objects.get(id=purchase_request_id)
-    approvalForm=None
-    to=None
-    user_roles = request.user.roles.all()  # Accessing the user's roles through the 'roles' attribute
-    
-    try:
-        last_approved = purchase_request.process.approval_set.last().step.step
-    except AttributeError:
-        last_approved = 0
-    
-    next_step = last_approved + 1
-    
-    try:
-        newStep= Step.objects.get(step=next_step, workflow=purchase_request.process.workflow, approver__in=user_roles)
-        if newStep and request.user.section==purchase_request.section and next_step==1:
-            approvalForm = ApprovalForm 
-            to=newStep.to
-        elif newStep:
-            approvalForm = ApprovalForm
-            to=newStep.to
-    except Step.DoesNotExist:
-        pass
-    approved_steps = purchase_request.process.approval_set.all().values_list('step__step', flat=True)
+    approved_steps, approvalForm, to = ApprovalDetails(request, purchase_request)
+
     return render(request, 'finance/purchase_request/purchase_request_detail.html', {'purchase_request': purchase_request, 'approved_steps':approved_steps,'approvalForm': approvalForm,'to':to})
     
 @login_required
@@ -80,17 +61,31 @@ def create_purchase_request(request):
 @login_required    
 def create_ace_purchase_request(request,ace_id):
     ace = Ace.objects.get(Ace_id2=ace_id)
-    
+    itemFormset = inlineformset_factory(PurchaseRequest, PrItem, form=PrItemForm, extra=int(request.POST.get('items') or 5) , can_delete=False)
     if request.method == 'POST':
-        form = acePurchaseRequestForm(request.POST, request.FILES )
+        form = acePurchaseRequestForm(request.POST, request.FILES)
         if form.is_valid():
             purchase_request = form.save(commit=False)
             purchase_request.process = intiate(request, 'purchase request')
             purchase_request.requested_by = request.user
             purchase_request.save()
+
+            formset = itemFormset(request.POST, request.FILES)
+            for it in formset:
+                if it.is_valid():
+                    try:
+                        item = it.save(commit=False)
+                        item.purchase_request = purchase_request
+                        item.save()
+                    except: 
+                        pass
+                       
+                else:
+                    return render(request, 'finance/purchase_request/create_purchase_request.html', {'formset': formset, 'form': form})
+            
             url = reverse('purchase_request:purchase_request_detail', args=[purchase_request.id])
             return redirect(url)
-        return render(request, 'finance/purchase_request/create_purchase_request.html', {'form': form,'ace':ace})
+        return render(request, 'finance/purchase_request/create_purchase_request.html', {'formset': formset, 'form': form})
     else:
         ace_data = {
             'description': ace.details_of_expenditure,
@@ -102,8 +97,8 @@ def create_ace_purchase_request(request,ace_id):
         if ace.section:
             ace_data['section'] = ace.section
         form = acePurchaseRequestForm(initial=ace_data)
-
-    return render(request, 'finance/purchase_request/create_purchase_request.html', {'form': form,'ace':ace})
+        return render(request, 'finance/purchase_request/create_purchase_request.html', {'formset': itemFormset(), 'form': form})
+    
 @login_required
 def purchase_requests_awaiting_my_action(request):
     """

@@ -8,10 +8,10 @@ from it.users.models import UserProfile, Sections, Roles, Supplier
 
 class PurchaseRequest(models.Model):
     id = models.CharField(primary_key=True, max_length=20, editable=False)
-    description = models.TextField(blank=True, null=True)
-    allocation_code_of_expenditure = models.CharField(max_length=100, blank=True, null=True)
-    scope_of_work = models.CharField(max_length=100, blank=True, null=True)
-    proc_ref = models.CharField(max_length=100, blank=True, null=True)
+    description = models.TextField()
+    allocation_code_of_expenditure = models.CharField(max_length=100, blank=True, null=True,help_text='optional')
+    scope_of_work = models.CharField(max_length=100, blank=True, null=True,help_text='optional')
+    sap_pr_number = models.CharField(max_length=100)
     PAYMENT_MODE_CHOICES = [('USD Cash', 'USD Cash'),('USD Swipe', 'USD Swipe'),('ZIG Cash', 'ZIG Cash'),('ZIG Transfer', 'ZIG Transfer'),]
     payment_mode = models.CharField(max_length=100, blank=True, null=True, choices=PAYMENT_MODE_CHOICES)
     requested_by = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
@@ -36,7 +36,7 @@ class PrItem(models.Model):
     purchase_request = models.ForeignKey(PurchaseRequest, models.CASCADE, blank=True, null=True)
     ordered = models.DecimalField(max_digits=40, decimal_places=2,default=0)
     def __str__(self):
-        return f"{self.name}    -    {self.quantity}{self.unit_of_measurement}"
+        return f"{self.name}    {self.quantity} {self.unit_of_measurement}"
 
 
 
@@ -67,60 +67,3 @@ class QuoteItem(models.Model):
         return str(self.pk)
 
 
-
-class Bid(models.Model):
-    id = models.CharField(primary_key=True, max_length=20, editable=False)
-    purchase_request = models.ForeignKey(PurchaseRequest, on_delete=models.CASCADE)
-    response_received = models.BooleanField(default=False)
-    second_non_response = models.BooleanField(default=False)
-    Supplier = models.ForeignKey(Supplier, on_delete=models.CASCADE)
-    def __str__(self):
-        return str(self.pk)
-    def save(self, *args, **kwargs):
-        timestamp = str(int(time.time()))
-        random_number = str(random.randint(10000, 99999))
-        self.id = "BID" + timestamp + random_number
-        super().save(*args, **kwargs)
-class BidItem(models.Model):
-    pr_item = models.ForeignKey(PrItem, models.CASCADE, blank=True, null=True)
-    quantity = models.DecimalField(max_digits=40, decimal_places=2)
-    bid = models.ForeignKey(Bid, models.CASCADE, blank=True, null=True)
-    def __str__(self):
-        return str(self.pk)
-    
-
-
-class Order(models.Model):
-    id = models.CharField(primary_key=True, max_length=20, editable=False)
-    purchase_request = models.ForeignKey(PurchaseRequest, on_delete=models.CASCADE)
-    bid = models.ForeignKey(Bid, on_delete=models.CASCADE)
-    signed = models.BooleanField(default=False)
-    cancelled = models.BooleanField(default=False)
-    def __str__(self):
-        return str(self.pk)
-    def save(self, *args, **kwargs):
-        timestamp = str(int(time.time()))
-        random_number = str(random.randint(10000, 99999))
-        self.id = "ODR" + timestamp + random_number
-        super().save(*args, **kwargs)
-class OrderItem(models.Model):
-    pr_item = models.ForeignKey(PrItem, models.CASCADE, blank=True, null=True)
-    bid = models.ForeignKey(Bid, models.CASCADE, blank=True, null=True)
-    quantity = models.DecimalField(max_digits=40, decimal_places=2)
-    def __str__(self):
-        return str(self.pk) 
-    
-
-
-class SiteVisit(models.Model):
-    order = models.ForeignKey(Order, on_delete=models.CASCADE)
-    comment = models.TextField(blank=True, null=True)
-    scheduled = models.BooleanField(default=False)
-    completed = models.BooleanField(default=False)
-    def __str__(self):
-        return str(self.pk)
-class Delivery(models.Model):
-    order = models.ForeignKey(Order, on_delete=models.CASCADE)
-    able_to_deliver = models.BooleanField(default=False)
-    def __str__(self):
-        return str(self.pk)

@@ -2,11 +2,11 @@ from django.http import JsonResponse
 from django.shortcuts import redirect, render
 import json
 from datetime import datetime
+from django.db.models import Sum
 from .models import *
 from it.users.models import *
-from finance.purchase_request.models import *
-
-
+from finance.purchase_request.models import PurchaseRequest, PrItem
+from finance.comparative_schedules.models import *
 
 def save_file(f, file_path):
     if f:
@@ -22,10 +22,13 @@ def get_create_data(request):
     proc_plans = ProcPlan.objects.all()
     suppliers = Supplier.objects.all()
     
-    purchase_request = PurchaseRequest.objects.filter(id="PR171353283620877").first()
+    pr_id = "PR171353283620877" #request.GET.get('pr_id', None)
+    purchase_request = PurchaseRequest.objects.filter(id=pr_id).first()
     pr_items = PrItem.objects.filter(purchase_request=purchase_request).all()
 
     return JsonResponse({
+            "pr_id": pr_id,
+            "pr_date": purchase_request.created_at.strftime("%Y-%m-%d"),
             "pr_items": list(pr_items.values('id', 'name', 'description', 'quantity', 'unit_of_measurement', 'ordered')),
             "proc_plans": list(proc_plans.values('id', 'proc_ref', 'description')),
             "suppliers": list(suppliers.values('id', 'name'))
@@ -37,12 +40,14 @@ def create(request):
     if request.method == "GET":
         # get proc plans
         proc_plans = ProcPlan.objects.all()
+        username = request.user.username
         
         return render(request, 'finance/comparative_schedules/cs_create.html', {
             "proc_plans": proc_plans,
+            "username": username
         })
     elif request.method == "POST":
-        tender_id = "TD" + datetime.now().strftime("%Y%m%d%I%M%S")
+        tender_id = "CS" + datetime.now().strftime("%Y%m%d%I%M%S")
         advert_file = request.FILES['advert']
         bid_document_file = request.FILES['advert']
         item_count = request.POST['item_count']
@@ -152,8 +157,354 @@ def create(request):
             
         return render(request, 'finance/comparative_schedules/cs_create.html', {
             "proc_plans": proc_plans,
-            "suppliers": suppliers_json
         })
+        
+def save_comparative_schedule(request):
+
+    try:
+        
+        cs_id = "CS" + datetime.now().strftime("%Y%m%d%I%M%S")
+        advert_files = request.FILES.getlist("advert", None)
+        plan_ref = request.POST.get("plan_ref", "")
+        # proc_plan = data['proc_plan']
+        # proc_plan_ = ProcPlan.objects.filter(proc_ref=plan_ref).first()
+        scope_of_work = request.POST.get("scope_of_work", "")
+        pr_number = request.POST.get("pr_number", "")
+        pr_date = request.POST.get("pr_date", "")
+        # quantity = data['quantity']
+        closing_date = request.POST.get("closing_date", "")
+        closing_time = request.POST.get("closing_time", "")
+        date_tender_opened = request.POST.get("date_tender_opened", "")
+        tender_adjudication_committee_date = request.POST.get("tender_adjudication_committee_date", "")
+        username = request.POST.get("username", "")
+        
+        # save advert file
+        advert_path = ""
+        try:
+            if advert_files:
+                advert_file = advert_files[0]
+                advert_path = 'uploads/comparative/adverts/' + \
+                                datetime.now().strftime("%Y%m%d%I%M%S%p") + advert_file.name
+                print("Advert path: ", advert_path)
+                save_file(advert_file, advert_path)
+        except Exception as ex:
+            print("Error: ", ex)
+        
+        # save cs details
+        # fetch purchase request
+        pr = PurchaseRequest.objects.filter(id=pr_number).first()
+        print("PR: ", pr, pr_number, username)
+        # fetch user
+        user = UserProfile.objects.filter(username=username).first()
+        # region_ = Regions.objects.filter(region=pr.region).first() if 'region' in pr else None
+        # section = Sections.objects.filter(section=pr.section).first() if 'section' in pr else None
+        cs_query = ComparativeSchedules(
+            cs_id = cs_id,
+            pr_id_id = pr.id,
+            scope_of_work = scope_of_work,
+            closing_date = closing_date,
+            closing_time = closing_time,
+            advert = advert_path,
+            pr_number = pr_number,
+            pr_date = pr_date,
+            cs_opened = date_tender_opened,
+            tac_date = tender_adjudication_committee_date,
+            created_by_id = user.id,
+            section_id = None,
+            region_id = None,
+        )
+        cs_query.save()
+        
+        return JsonResponse({
+            "message": "Comparative Schedule saved successfully",
+            "success": True,
+            "cs_id": cs_id,
+            }, safe=False)
+    except Exception as ex:
+        print("Error: ", ex)
+        return JsonResponse({
+            "message": "Error saving Comparative Schedule",
+            "error": str(ex),
+            "success": False,
+            }, safe=False)
+   
+
+def update_comparative_schedule(request):
+
+    try:
+        
+        advert_files = request.FILES.getlist("advert", None)
+        cs_id = request.POST.get("cs_id", "")
+        plan_ref = request.POST.get("plan_ref", "")
+        # proc_plan = data['proc_plan']
+        # proc_plan_ = ProcPlan.objects.filter(proc_ref=plan_ref).first()
+        scope_of_work = request.POST.get("scope_of_work", "")
+        pr_number = request.POST.get("pr_number", "")
+        pr_date = request.POST.get("pr_date", "")
+        # quantity = data['quantity']
+        closing_date = request.POST.get("closing_date", "")
+        closing_time = request.POST.get("closing_time", "")
+        date_tender_opened = request.POST.get("date_tender_opened", "")
+        tender_adjudication_committee_date = request.POST.get("tender_adjudication_committee_date", "")
+        username = request.POST.get("username", "")
+        
+        # save advert file
+        advert_path = ""
+        try:
+            if advert_files:
+                advert_file = advert_files[0]
+                advert_path = 'uploads/comparative/adverts/' + \
+                                datetime.now().strftime("%Y%m%d%I%M%S%p") + advert_file.name
+                print("Advert path: ", advert_path)
+                save_file(advert_file, advert_path)
+        except Exception as ex:
+            print("Error: ", ex)
+        
+        # save cs details
+        # fetch purchase request
+        pr = PurchaseRequest.objects.filter(id=pr_number).first()
+        print("PR: ", pr, pr_number, username)
+        # fetch user
+        user = UserProfile.objects.filter(username=username).first()
+        # region_ = Regions.objects.filter(region=pr.region).first() if 'region' in pr else None
+        # section = Sections.objects.filter(section=pr.section).first() if 'section' in pr else None
+        cs_query = ComparativeSchedules.objects.filter(cs_id=cs_id).first()
+        cs_query.cs_id = cs_id
+        cs_query.pr_id_id = pr.id
+        cs_query.scope_of_work = scope_of_work
+        cs_query.closing_date = closing_date
+        cs_query.closing_time = closing_time
+        cs_query.advert = advert_path
+        cs_query.pr_number = pr_number
+        cs_query.pr_date = pr_date
+        cs_query.cs_opened = date_tender_opened
+        cs_query.tac_date = tender_adjudication_committee_date
+        cs_query.section_id = None
+        cs_query.region_id = None
+        
+        cs_query.save()
+        
+        return JsonResponse({
+            "message": "Comparative Schedule saved successfully",
+            "success": True,
+            "cs_id": cs_id,
+            }, safe=False)
+    except Exception as ex:
+        print("Error: ", ex)
+        return JsonResponse({
+            "message": "Error saving Comparative Schedule",
+            "error": str(ex),
+            "success": False,
+            }, safe=False)
+   
+    
+def save_cs_bid(request):
+
+    bid_docs = request.FILES.get("bid_document", None)
+    cs_id = request.POST.get("cs_id", "")
+    bid_no = request.POST.get("bid_no", "")
+    print("bid_no: ", bid_no)
+    bid_date = request.POST.get("bid_date", "")
+    supplier_id = request.POST.get("supplier_id", "")
+    supplier_name = request.POST.get("supplier_name", "")
+    # get items json
+    json_data = json.loads(request.POST.get("json_data", "{}"))
+    print("json_data: ", json_data)
+    items = json_data.get("bid_items", [])
+    print("items ", items, type(items))
+    
+    cs_query = ComparativeSchedules.objects.filter(cs_id=cs_id).first()
+    if not cs_query:
+        return JsonResponse({
+            "message": "Comparative Schedule not found",
+            "success": False,
+            }, safe=False)
+      
+    # check if bid exists
+    bid_query = Bids.objects.filter(cs_id=cs_query, sup_id=supplier_id, bid_no=bid_no).all()
+    if bid_query:
+        for bid in bid_query:
+            # delete item
+            item = CSItems.objects.filter(item_id=bid.item_id).first()
+            if item:
+                item.delete()
+            bid.delete()
+            
+    # save bids
+    bid_doc_path = ""
+    try:
+        if bid_docs:
+            bid_doc = bid_docs
+            bid_doc_path = 'uploads/comparative/adverts/' + \
+                            datetime.now().strftime("%Y%m%d%I%M%S%p") + bid_doc.name
+            print("Advert path: ", bid_doc_path)
+            save_file(bid_doc, bid_doc_path)
+    except Exception as ex:
+        print("Error: ", ex)
+        
+    supplier = Supplier.objects.filter(id=supplier_id).first()
+    if not supplier:
+        supplier_ = Supplier(
+            name = supplier_name
+        )
+        supplier_.save()
+        supplier = supplier_ 
+        
+    for item in items:
+        print("item: ", item)
+        item_id = "Item" + datetime.now().strftime("%Y%m%d%I%M%S%p")
+        item_query = CSItems(
+            cs_id = cs_query,
+            item_id = item_id,
+            item_name = item['description'],
+            quantity = item['quantity'],
+            unit_of_measurement = item['unit_of_measurement'],
+        )
+        item_query.save()    
+        
+        print("bid_no", bid_no)
+        bid = Bids(
+            cs_id = cs_query,
+            item_id = item_query,
+            sup_id = supplier,
+            unit_price = item['unit_price'],
+            vat = item['vat'],
+            quoted_qty = item['quantity'],
+            bid_no = bid_no,
+            quote_date = bid_date,
+            total = item['total_price'],
+            bid_document = bid_doc_path,
+        )
+        bid.save()
+        
+    return JsonResponse({
+        "message": "Bids saved successfully",
+        "success": True,
+    })
+  
+def save_cs_compliance(request):
+
+    cs_id = request.POST.get("cs_id", "")
+    json_data = json.loads(request.POST.get("compliance", "{}"))
+    print("json_data: ", json_data)
+    compliance = json_data.get("compliance", [])
+    print("items ", compliance, type(compliance))
+    json_data = json.loads(request.POST.get("compliance_remarks", "{}"))
+    print("json_data: ", json_data)
+    compliance_remarks = json_data.get("compliance_remarks", [])
+    print("items ", compliance_remarks, type(compliance_remarks))
+    
+    cs_query = ComparativeSchedules.objects.filter(cs_id=cs_id).first()
+    if not cs_query:
+        return JsonResponse({
+            "message": "Comparative Schedule not found",
+            "success": False,
+            }, safe=False)
+      
+    # check if compliance exists
+    compliance_query = CSCompliance.objects.filter(cs_id=cs_query).all()
+    if compliance_query:
+        for compliance in compliance_query:
+            compliance.delete()
+    
+    for comp in compliance:
+        print("comp: ", comp)
+        supplier_id = comp['supplier']
+        payment_terms = comp['payment_terms']
+        bid_validity = comp['bid_validity']
+        delivery_period = comp['delivery_period']
+        technical_specifications = comp['technical_specifications']
+        valid_tax_clearance = comp['valid_tax_clearance']
+        registered_with_praz = comp['registered_with_praz']
+        site_visit_done = comp['site_visit_done']
+        samples_delivered = comp['samples_delivered']
+        decision = comp['decision']
+        remarks = comp['remarks']
+        
+        supplier = Supplier.objects.filter(id=supplier_id).first()
+        compliance_query = CSCompliance(
+            cs_id = cs_query,
+            supplier_id = supplier,
+            payment_terms = payment_terms,
+            bid_validity = bid_validity,
+            delivery_period = delivery_period,
+            technical_specifications = technical_specifications,
+            valid_tax_clearance = valid_tax_clearance,
+            registered_with_praz = registered_with_praz,
+            site_visit_done = site_visit_done,
+            samples_delivered = samples_delivered,
+            decision = decision,
+            remarks = remarks,
+        )
+        compliance_query.save()
+        
+        
+    return JsonResponse({
+        "message": "Compliance saved successfully",
+        "success": True,
+    })
+    
+def save_cs_ranking(request):
+    cs_id = request.POST.get("cs_id", "")
+    cs_query = ComparativeSchedules.objects.filter(cs_id=cs_id).first()
+    if not cs_query:
+        return JsonResponse({
+            "message": "Comparative Schedule not found",
+            "success": False,
+            }, safe=False)
+    
+    # check if rankings exists
+    ranking_query = Ranking.objects.filter(cs_id=cs_query).all()
+    if ranking_query:
+        for ranking in ranking_query:
+            ranking.delete()
+    # get bids
+    bids = Bids.objects.filter(cs_id=cs_query).values('sup_id').annotate(total_sum=Sum('total'))
+    rankings = {bid['sup_id']: bid['total_sum'] for bid in bids}
+    print("rankings: ", rankings)
+    sorted_rankings = sorted(rankings.items(), key=lambda x: x[1])
+    print("sorted_rankings: ", sorted_rankings)
+    rank = 1
+    sorted_rankings_dict = dict(sorted_rankings)
+    for supplier_id, total in sorted_rankings_dict.items():
+        supplier = Supplier.objects.filter(id=supplier_id).first()
+        remarks = ""
+        decision = ""
+        if rank == 1:
+            decision = "Awarded"
+        ranking_query = Ranking(
+            cs_id = cs_query,
+            supplier_id = supplier,
+            rank = rank,
+            remarks = remarks,
+            decision = decision,
+            total = total,
+        )
+        ranking_query.save()
+        rank += 1
+        
+    # get rankings
+    rankings = Ranking.objects.filter(cs_id=cs_query).all()
+    custom_rankings = []
+    for ranking in rankings:
+        supplier = ranking.supplier_id
+        custom_rankings.append({
+            "id": ranking.id,
+            "supplier_name": supplier.name,
+            "rank": ranking.rank,
+            "remarks": ranking.remarks,
+            "decision": ranking.decision,
+            "total": ranking.total,
+        })
+        
+    return JsonResponse({
+        "message": "Ranking saved successfully",
+        "success": True,
+        "rankings": list(custom_rankings),
+    })
+    
+
+         
         
 def cs_add_supplier(request, cs_id):
     
@@ -173,7 +524,7 @@ def cs_add_supplier(request, cs_id):
             i = i + 1
             for bid in bids:
                 if int(bid.bid_no) == i:
-                    supplier = Suppliers.objects.filter(sup_id=bid.sup_id).first()
+                    supplier = Supplier.objects.filter(sup_id=bid.sup_id).first()
                     item = CSItems.objects.filter(item_id=bid.item_id).first()
 
                     if supplier:

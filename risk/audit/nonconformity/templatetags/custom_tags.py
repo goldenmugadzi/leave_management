@@ -45,3 +45,11 @@ def total_price(quote_id):
 @register.filter
 def get_extension(file_url):
     return os.path.splitext(file_url)[1]
+@register.filter
+def order_total_price(id):
+    from finance.comperative_schedule.models import Order  # replace with your actual app and model name
+
+    order = Order.objects.get(id=id)
+    
+    total = sum(float(item.bid_item.price) * float(item.quantity) for item in order.orderitem_set.all())
+    return total if total else 0
