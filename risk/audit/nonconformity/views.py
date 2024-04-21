@@ -144,9 +144,13 @@ def nonconformity_details(request, nonconformity_id):
             return HttpResponse("You are not authorized to edit this nonconformity.")
 
     else:  # GET request
+        nonconformity_accepted = False
+        if Response.objects.filter(nonconformity=nonconformity).exists():
+            if Response.objects.filter(nonconformity=nonconformity).latest('created_at').status == 'accepted':
+                nonconformity_accepted = True
         if request.user == nonconformity.recipient:
             form = NonconformityResponseForm(instance=response)
-        elif request.user == nonconformity.created_by:
+        elif request.user == nonconformity.created_by and not nonconformity_accepted:
             form = NonconformityForm(instance=nonconformity)
         else:
             form = None
@@ -172,9 +176,6 @@ def view_nonconformities(request):
     )
     #for each nonconformity in nonconformities, get the add a field section with the section name of the recipient
     for nonconformity in nonconformities:
-        # section = Sections.objects.get(id=nonconformity.recipient.section)
-        # nonconformity.section = section.section
-        # #also get the latest response status along with name of user who responded in this format P.Chinaka : accepted  for each nonconformity if no response exists, set status to 'created'
         try:
             response = Response.objects.filter(nonconformity=nonconformity).latest('created_at')
             nonconformity.status = f"{response.user.first_name[0]}. {response.user.last_name} : {response.status}"
