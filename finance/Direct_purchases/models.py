@@ -10,16 +10,17 @@ from approve.models import Process
 
 # Create your models here.
 class Direct_purchase(models.Model):
+    choices = 'Direct Purchase'
     Dp_id = models.CharField(primary_key=True, max_length=60)
     section = models.ForeignKey(Sections, models.DO_NOTHING, blank=True, null=True)
     process = models.OneToOneField(Process, on_delete=models.SET_NULL, blank=True, null=True)
-    allocation_code_of_expenditure = models.CharField(max_length=100, blank=True, null=True)
+    # allocation_code_of_expenditure = models.CharField(max_length=100, blank=True, null=True)
     details_of_expenditure = models.CharField(max_length=100, blank=True, null=True)
     amount = models.FloatField(blank=True, null=True)
     requested_by = models.ForeignKey(UserProfile, models.DO_NOTHING, blank=True, null=True)
     date_created = models.DateField(auto_now_add=True, blank=True, null=True)
     purchase_request = models.ForeignKey(PurchaseRequest, models.CASCADE, blank=True, null=True)
-    service_type = models.CharField(max_length=100, blank=True, null=True)
+    # service_type = models.CharField(max_length=100, blank=True, null=True)
     region = models.ForeignKey(Regions, models.DO_NOTHING, blank=True, null=True)
     grn_delivery_status = models.CharField(max_length=100, blank=True, null=True)
     grn_date = models.DateField(blank=True, null=True)

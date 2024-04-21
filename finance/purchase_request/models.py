@@ -19,9 +19,10 @@ class PurchaseRequest(models.Model):
     section = models.ForeignKey(Sections, on_delete=models.CASCADE)
     ace = models.ForeignKey(Ace, on_delete=models.SET_NULL, blank=True, null=True)
     process = models.ForeignKey(Process, on_delete=models.SET_NULL, blank=True, null=True)
+
     def __str__(self):
         return self.description
-    
+
     def save(self, *args, **kwargs):
         timestamp = str(int(time.time()))
         random_number = str(random.randint(10000, 99999))

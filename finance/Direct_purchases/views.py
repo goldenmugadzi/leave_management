@@ -8,6 +8,7 @@ from approve.views import intiate
 from it.users.models import Roles
 from .forms import *
 from .models import *
+from it.users.models import UserProfile, Regions, Sections, Supplier
 
 
 @login_required
@@ -50,7 +51,7 @@ def create_supplier(request):
             supplier.created_by = request.user
             supplier.save()
 
-            url = reverse('supplier:supplier_detail', args=[supplier.id])
+            url = reverse('direct_purchase:supplier_detail', args=[supplier.id])
             return redirect(url)
     else:
         form = SupplierForm()
@@ -60,50 +61,36 @@ def create_supplier(request):
 
 @login_required
 def create_direct_purchase(request):
-    user_id = request.user.id
-    user_profile = UserProfile.objects.filter(id=user_id).first()
-
-    user_groups = user_profile.groups.values_list('name', flat=True)
-
-    custom_user_roles = {
-        "rfq": {},
-    }
-
-    roles_ = user_profile.roles.all()
-    for _role in roles_:
-        role = Roles.objects.filter(id=_role.id).first()
-
-        if role.application == "rfq":
-            custom_user_roles["rfq"] = role
-    direct_purchase_role = str(custom_user_roles["rfq"])
     if request.method == 'POST':
         form = DirectPurchaseForm(request.POST, request.FILES)
-        formset = ItemForm(request.POST, request.FILES)
-        if form.is_valid() and formset.is_valid():
+        # formset = ItemForm(request.POST, request.FILES)
+        if form.is_valid():
+            # and formset.is_valid()):
             direct_purchase = form.save(commit=False)
             direct_purchase.requested_by = request.user
             direct_purchase.save()
 
-            for item_form in formset:
-                item = item_form.save(commit=False)
-                item.direct_purchase = direct_purchase
-                item.save()
+            # for item_form in formset:
+            #     item = item_form.save(commit=False)
+            #     item.direct_purchase = direct_purchase
+            #     item.save()
 
             url = reverse('direct_purchase:direct_purchase_detail', args=[direct_purchase.id])
             return redirect(url)
     else:
         form = DirectPurchaseForm()
+        # formset = ItemForm()
 
-    return render(request, 'finance/direct_purchases/create_direct_purchase.html', {'form': form
-        , 'direct_purchase_role': direct_purchase_role})
+    return render(request, 'finance/direct_purchases/create_direct_purchase.html',
+                  {'form': form})
 
 
 @login_required
 def direct_purchases_awaiting_my_action(request):
     """
     for each direct purchase.Process in the rfqs,  let current_step = the last direct purchase.process.approval if
-    any else 0 and let next_step =current_step+1 then check if  next_step=step.step for direct purchase.process.workflow.step_set
-    filtered by approver = user.roles.all.
+    any else 0 and let next_step =current_step+1 then check if  next_step=step.step for direct
+    purchase.process.workflow.step_set filtered by approver = user.roles.all.
     """
     DPs_to_process = []
     user_roles = request.user.roles.all()
