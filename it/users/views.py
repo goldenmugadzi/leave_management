@@ -49,31 +49,31 @@ def add_centers(request):
     #     )
     #     _designation.save()
     
-    # for role in ROLES:
-    #     application_ = role['application']
-    #     app_id = Application.objects.filter(name=application_).first()
-    #     if app_id:
-    #         _role = Roles(
-    #             role=role['role'],
-    #             name=role['name'],
-    #             description=role['description'],
-    #             application=role['application'],
-    #             app_id=app_id
-    #         )
-    #         _role.save()
-    #     else:
-    #         new_app = Application(
-    #             name=application_
-    #         )
-    #         new_app.save()
-    #         _role = Roles(
-    #             role=role['name'],
-    #             name=role['name'],
-    #             description=role['description'],
-    #             application=role['application'],
-    #             app_id=new_app
-    #         )
-    #         _role.save()
+    for role in ROLES:
+        application_ = role['application']
+        app_id = Application.objects.filter(name=application_).first()
+        if app_id:
+            _role = Roles(
+                role=role['role'],
+                name=role['name'],
+                description=role['description'],
+                application=role['application'],
+                app_id=app_id
+            )
+            _role.save()
+        else:
+            new_app = Application(
+                name=application_
+            )
+            new_app.save()
+            _role = Roles(
+                role=role['name'],
+                name=role['name'],
+                description=role['description'],
+                application=role['application'],
+                app_id=new_app
+            )
+            _role.save()
             
     # for section in SECTIONS:
     #     _section = Sections(
@@ -224,7 +224,9 @@ def update_user(request):
             roles_ = user_profile.roles.all()
             for _role in roles_:
                 role = Roles.objects.filter(id=_role.id).first()
-                active_roles[_role.app_id.name] = role
+                app = _role.app_id
+                if app:
+                    active_roles[app.name] = role
 
             region = Regions.objects.filter(id=user_profile.region.id).first() if user_profile.region else None
             district = Districts.objects.filter(id=user_profile.district.id).first() if user_profile.district else None

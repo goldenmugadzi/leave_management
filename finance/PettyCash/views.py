@@ -157,19 +157,19 @@ def pettycash_awaiting_my_action(request):
         for pettycash in Pettycash.objects.all():
             process = pettycash.process
 
-        if process.approval_set.exists():
-            last_approval = process.approval_set.last()
-            current_step = last_approval.step.step
-        else:
-            current_step = 0
+            if process.approval_set.exists():
+                last_approval = process.approval_set.last()
+                current_step = last_approval.step.step
+            else:
+                current_step = 0
 
-        next_step = current_step + 1
+            next_step = current_step + 1
 
-        workflow = process.workflow
-        step = workflow.step_set.filter(step=next_step, approver__in=user_roles).first()
+            workflow = process.workflow
+            step = workflow.step_set.filter(step=next_step, approver__in=user_roles).first()
 
-        if step:
-            pettycashs_to_process.append(pettycash)
+            if step:
+                pettycashs_to_process.append(pettycash)
 
     return render(request, 'finance/pettycash/view_all_pettycashs.html', {'pettycashs': pettycashs_to_process})
 
