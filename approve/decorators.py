@@ -1,6 +1,9 @@
 from django.contrib.auth.decorators import login_required
 from approve.models import Step
 from approve.forms import ApprovalForm
+from functools import wraps
+from django.contrib import messages
+from django.shortcuts import  redirect
 
 @login_required
 def ApprovalDetails(request, object):
@@ -31,3 +34,14 @@ def ApprovalDetails(request, object):
 def all_approved(object):
     print(object.process.approval_set.all().count())
     return object.process.approval_set.all().count() == object.process.workflow.step_set.all().count()
+
+def checklist_roles(view_func):
+    @wraps(view_func)
+    def _wrapped_view(request, *args, **kwargs):
+        user = request.user
+        if not any(role.application == 'non_conformity' and role.role == 'supervisor' for role in user.roles.all()):
+            messages.error(request, 'You must be a supervisor for nonconformity to edit this page.')
+            return redirect('nonconformity:checklist')
+
+        return view_func(request, *args, **kwargs)
+    return _wrapped_view

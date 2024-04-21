@@ -2,18 +2,15 @@
 from django.shortcuts import render, redirect,reverse,get_object_or_404,HttpResponse
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
-import json
-from django.views.generic import CreateView
+
 from .models import *
 from .forms import *
 # from it.users.models import Notification
-from it.users.models import UserProfile, Depots, Districts, Regions, Notification, Sections
+from it.users.models import Notification
 from django.contrib import messages
-from django.urls import reverse_lazy
-from django.forms import inlineformset_factory
-from django.core.mail import send_mail
-from django.conf import settings
-
+# from django.core.mail import send_mail
+# from django.conf import settings
+from approve.decorators import checklist_roles
 @login_required
 def create_nonconformity(request):
     if request.method == 'POST':
@@ -192,48 +189,96 @@ def my_nonconformities(request):
             Q(created_by=user) | Q(recipient=user)
         )
     return render(request, 'risk/nonconformity/mynonconformities.html', {'nonconformities': nonconformities})
-#create clause and its questions using generic view 
-class ClauseCreateView(CreateView):
-    form_class = ClauseForm
-    template_name = 'risk/nonconformity/create_clause.html'
-    extra_qns = None
-    
-    def form_valid(self, form):
-        self.extra_qns = form.cleaned_data['number_of_iso_requirements']
-        return super().form_valid(form)
-    
-    def get_success_url(self):
-        return f'/{self.object.id}/add-qns?extra={self.extra_qns}'
+#create clause and its questions using generic view it must redirect to the checklist view
+def check_roles(request):
+    """to edit checklist user must have a role with application= non_conformity and role=supervisor """
+    user = request.user
+    return any(role.application == 'non_conformity' and role.role == 'supervisor' for role in user.roles.all())
 
-
-def Question_formset_view(request, clause_id):
-    clause = Clause.objects.get(id=clause_id)
-    extra_qns = int(request.GET.get('extra', 5))  # Default value of 5 if no 'extra' parameter is provided
-    formset_class = inlineformset_factory(Clause, Question, form=QuestionForm, extra=extra_qns)
-    existing_qns = Question.objects.filter(clause_id=clause_id)
-
+@login_required
+@checklist_roles
+def create_clause(request):
     if request.method == 'POST':
-        formset = formset_class(request.POST, instance=clause)
-        if existing_qns.exists():
-            # Show a pop-up message if there are existing questions
-            messages.warning(request, 'There are existing questions for this clause.')
-            url = reverse('nonconformity:nonconformities')
-            return redirect(url)
-        elif formset.is_valid():
-            instances = formset.save(commit=False)
-            for index, instance in enumerate(instances):
-                instance.clause = clause
-                instance.save()
-            url = reverse('nonconformity:nonconformities')
-            return redirect(url)
-        else:
-            return render(request, 'risk/nonconformity/update_clause.html', {'formset': formset, 'clause': clause})
+        form = ClauseForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('nonconformity:checklist')
     else:
-        formset = formset_class(instance=clause)
-
-    return render(request, 'risk/nonconformity/update_clause.html', {'formset': formset, 'clause': clause})
+        form = ClauseForm()
+    return render(request, 'risk/nonconformity/create_edit_checklist.html', {'form': form})
+@login_required
+@checklist_roles
+def create_topic(request, clause):
+    clause = Clause.objects.get(id=clause)
+    if request.method == 'POST':
+        form = TopicForm(request.POST)
+        if form.is_valid():
+            topic = form.save(commit=False)
+            topic.clause = clause
+            topic.save()
+            return redirect('nonconformity:checklist')
+    else:
+        form = TopicForm()
+    return render(request, 'risk/nonconformity/create_edit_checklist.html', {'form': form})
+@login_required
+@checklist_roles
+def create_iso_req(request, topic):
+    topic = Topic.objects.get(id=topic)
+    if request.method == 'POST':
+        form = QuestionForm(request.POST)
+        if form.is_valid():
+            iso_req = form.save(commit=False)
+            iso_req.topic = topic
+            iso_req.save()
+            return redirect('nonconformity:checklist')
+    else:
+        form = QuestionForm()
+    return render(request, 'risk/nonconformity/create_edit_checklist.html', {'form': form})
+@login_required
 def checklist(request):
     return render(request, 'risk/nonconformity/checklist.html',{'clauses':Clause.objects.all()}) 
+@login_required
+@checklist_roles
+def editable_checklist(request):
+    return render(request, 'risk/nonconformity/editable_checklist.html',{'clauses':Clause.objects.all()})
+
+@login_required
+@checklist_roles
+def edit_clause(request, clause):
+    clause = Clause.objects.get(id=clause)
+    if request.method == 'POST':
+        form = ClauseForm(request.POST, instance=clause)
+        if form.is_valid():
+            form.save()
+            return redirect('nonconformity:checklist')
+    else:
+        form = ClauseForm(instance=clause)
+    return render(request, 'risk/nonconformity/create_edit_checklist.html', {'form': form})
+
+@login_required
+@checklist_roles
+def edit_topic(request, topic):
+    topic = Topic.objects.get(id=topic)
+    if request.method == 'POST':
+        form = TopicForm(request.POST, instance=topic)
+        if form.is_valid():
+            form.save()
+            return redirect('nonconformity:checklist')
+    else:
+        form = TopicForm(instance=topic)
+    return render(request, 'risk/nonconformity/create_edit_checklist.html', {'form': form})
+@login_required
+@checklist_roles
+def edit_iso_req(request, iso_req):
+    iso_req = Question.objects.get(id=iso_req)
+    if request.method == 'POST':
+        form = QuestionForm(request.POST, instance=iso_req)
+        if form.is_valid():
+            form.save()
+            return redirect('nonconformity:checklist')
+    else:
+        form = QuestionForm(instance=iso_req)
+    return render(request, 'risk/nonconformity/create_edit_checklist.html', {'form': form})
 
 def notify(request):
     send_mail(

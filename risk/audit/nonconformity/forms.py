@@ -1,11 +1,9 @@
 from django import forms
 from .models import *
 from django.utils import timezone
-from django.core.exceptions import ValidationError
 import os
 from django.forms.widgets import ClearableFileInput
 class ClauseForm(forms.ModelForm):
-    number_of_iso_requirements = forms.IntegerField(widget=forms.NumberInput(attrs={'class': 'rounded bg-white form-control'}))
     class Meta:
         model = Clause
         fields = '__all__'
@@ -17,14 +15,25 @@ class ClauseForm(forms.ModelForm):
                 'class': "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6",
             })
 
-            field.label = field.label or field_name.replace('_', ' ').capitalize()
-            field.label_attrs = {'class': 'block text-sm font-medium text-gray-900'}
+         
+class TopicForm(forms.ModelForm):
+    class Meta:
+        model = Topic
+        fields = ['name']
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
+        for field_name, field in self.fields.items():
+            field.widget.attrs.update({
+                'class': "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6",
+            })
+
+          
 class QuestionForm(forms.ModelForm):
     class Meta:
         model = Question
         fields = '__all__'
-
+        exclude = ['topic']
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -35,8 +44,7 @@ class QuestionForm(forms.ModelForm):
 
             if isinstance(field.widget, forms.Textarea):
                 field.widget.attrs.update({'rows': '3'})
-            field.label = field.label or field_name.replace('_', ' ').capitalize()
-            field.label_attrs = {'class': 'block text-sm font-medium text-gray-900'}
+         
 class CustomClearableFileInput(ClearableFileInput):
     def get_context(self, name, value, attrs):
         context = super().get_context(name, value, attrs)

@@ -6,7 +6,7 @@ from django.core.exceptions import ValidationError
 from it.users.models import UserProfile
 
 class Clause(models.Model):
-    id = models.CharField(max_length=4, blank=False, null=False,primary_key=True, verbose_name='Clause')
+    id = models.CharField(max_length=4, blank=False, null=False,primary_key=True, verbose_name='Clause number')
     name = models.CharField(max_length=200, blank=True, null=True, verbose_name='Name')
     def __str__(self):
         return self.id
@@ -17,9 +17,8 @@ class Topic(models.Model):
         return self.name
 
 class Question(models.Model):
-    clause = models.ForeignKey(Clause, on_delete=models.CASCADE, blank=True, null=True)
     topic = models.ForeignKey(Topic, on_delete=models.CASCADE, blank=True, null=True)
-    id = models.CharField(max_length=200, blank=False, null=False, primary_key=True, verbose_name='Clause')
+    id = models.CharField(max_length=200, blank=False, null=False, primary_key=True, verbose_name='ISO Requirement number')
     description = models.TextField(max_length=400, blank=True, null=True, verbose_name='ISO: Requirements')
     maintained_info = models.CharField(max_length=200, blank=True, null=True, verbose_name='Maintained Info', help_text='“Maintained” Documented information')
     retained_info = models.CharField(max_length=200, blank=True, null=True, verbose_name='Retained Info', help_text='“Retained” Documented information')
