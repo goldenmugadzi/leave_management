@@ -66,10 +66,8 @@
                                     <p class="m-4 flex flex-row-reverse gap-2 mb-3">
                                         <a href="{% url 'purchase_request:quote_purchase_request' purchase_request.id %}"
                                            class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded">Quote</a>
-                                           <a href="{% url 'comperative_schedule:comperative_schedule' purchase_request.id %}"
-                                           class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded">Comparative Schedule</a>
+                                       
                                     </p>
-                              
                                 </div>
                                 {% if purchase_request.ace %}
                                     <div class="card-body m-auto mb-5 bg-gulf-blue-200 ed p-3 border rounded    container rounded  shadow-lg">
@@ -160,12 +158,15 @@
                                                 <p class="font-bold mb-2">name</p>
                                                 <p class="font-bold mb-2">description</p>
                                                 <p class="font-bold mb-2">unit of measure</p>
-                                                <p class="font-bold mb-2">quantity<br/> </p>
+                                                <p class="font-bold mb-2">
+                                                    quantity
+                                                    <br />
+                                                </p>
                                                 <p class="font-bold mb-2">price</p>
                                             </div>
-                                            <div class="m-4"> 
+                                            <div class="m-4">
                                                 {% for item in quote.quoteitem_set.all %}
-                                                <div class="m-4 gap-2 grid grid-cols-5 mb-3">
+                                                    <div class="m-4 gap-2 grid grid-cols-5 mb-3">
                                                         <p class=" mb-2">{{ item.pr_item.name |default_if_none:'' }}</p>
                                                         <p class=" mb-2">{{ item.pr_item.description |default_if_none:'' }}</p>
                                                         <p class=" mb-2">{{ item.pr_item.unit_of_measurement |default_if_none:'' }}</p>
@@ -203,48 +204,64 @@
                             </form>
                         {% endif %}
                         <div class="card grid grid-cols-5 gap-4">
+                            <div class="px-2 mb-5  border rounded ">
+                                <div class="card-body   bg-gradient-to-r from-gulf-blue-100 to-green-700  ed  border rounded  container rounded">
+                                    <div class="p-4 font-bold rounded-lg">Created</div>
+                                    <div class=" grid grid-cols-2 text-center">
+                                        <span class="inline-block rounded-full text-sm">By:
+                                            {% if request.user == purchase_request.requested_by %}
+                                                You
+                                            {% elif purchase_request.requested_by.get_full_name %}
+                                                {{ purchase_request.requested_by.get_full_name }}
+                                            {% elif request.user == purchase_request.requested_by %}
+                                                {{ purchase_request.requested_by }}
+                                            {% endif %}
+                                        </span>
+                                    </div>
+                                </div>
+                                   <h1 class="text-center  font-bold text-xl text-blue-500 ">=></h1>
+                            </div>
                             {% for step in purchase_request.process.workflow.step_set.all %}
-                                {% if purchase_request.process.workflow.step_set.first == step %}
-                                    <div class="px-2 mb-5  bg-gradient-to-r from-gulf-blue-100 to-green-700 border rounded ">
-                                        <div class="p-4 font-bold rounded-lg">Start</div>
-                                        <span class="inline-block rounded-full text-sm">requested by {{ purchase_request.requested_by }}</span>
-                                    </div>
-                                {% elif step.step in approved_steps %}
-                                    {% for approval in purchase_request.process.approval_set.all %}
-                                        {% if step == approval.step %}
-                                            <div class="card-body m-auto arrow arrow-step mb-5 bg-gradient-to-r from-gulf-blue-100 to-green-700 ed p-3 border rounded  container rounded shadow-lg">
-                                                <div class="p-4 rounded-lg" title="Comment : {{ approval.comment }}">
-                                                    <p class="font-bold">{{ step |default_if_none:'' }}</p>
-                                                    <br>
+                                <div class="px-2 mb-5  border rounded ">
+                                    {% if step.step in approved_steps %}
+                                        {% for approval in purchase_request.process.approval_set.all %}
+                                            {% if step == approval.step %}
+                                                <div class="card-body   bg-gradient-to-r from-gulf-blue-100 to-green-700  ed  border rounded  container rounded">
+                                                    <div class=" rounded-lg" title="{{ approval.comment }}">
+                                                        <p class="font-bold">{{ step |default_if_none:'' }}</p>
+                                                        <br>
+                                                    </div>
+                                                    <div class=" grid grid-cols-2 text-center">
+                                                        <span class="inline-block rounded-full text-sm">{{ approval.approved }}</span>
+                                                        <span class="inline-block rounded-full text-sm">By:
+                                                            {% if request.user == approval.user %}
+                                                                You
+                                                            {% elif approval.user.get_full_name %}
+                                                                {{ approval.user.get_full_name }}
+                                                            {% elif request.user == approval.user %}
+                                                                {{ approval.user }}
+                                                            {% endif %}
+                                                        </span>
+                                                    </div>
                                                 </div>
-                                                <div class=" grid grid-cols-2 text-center">
-                                                    <span class="inline-block rounded-full text-sm">{{ approval.approved }}</span>
-                                                    <span class="inline-block rounded-full text-sm">By:
-                                                        {% if request.user == approval.user %}
-                                                            You
-                                                        {% elif approval.user.get_full_name %}
-                                                            {{ approval.user.get_full_name }}
-                                                        {% elif request.user == approval.user %}
-                                                            {{ approval.user }}
-                                                        {% endif %}
-                                                    </span>
-                                                </div>
+                                                {% if step == purchase_request.process.workflow.step_set.last %}
+                                                <a href="{% url 'comperative_schedule:comperative_schedule' purchase_request.id %}"
+                                                class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded">Comparative Schedule</a>
+                                                {% endif %}
+                                            {% endif %}
+                                        {% endfor %}
+                                    {% else %}
+                                        <div class="card-body  bg-gradient-to-r from-gulf-blue-100 to-blue-500 ed  border rounded  container rounded ">
+                                            <div class=" rounded-lg" title="{{ approval.comment }}">
+                                                <p class="font-bold">{{ step |default_if_none:'' }}</p>
+                                                <br>
+                                                {% if step.to %}<span class="inline-block rounded-full text-sm">To {{ step.to|default_if_none:'' }}</span>{% endif %}
                                             </div>
-                                        {% endif %}
-                                    {% endfor %}
-                                {% else %}
-                                    <div class="card-body m-auto arrow arrow-step mb-5 bg-gradient-to-r from-gulf-blue-100 to-blue-500 ed p-3 border rounded  container rounded shadow-lg">
-                                        <div class="p-4 rounded-lg" title="{{ approval.comment }}">
-                                            <p class="font-bold">{{ step |default_if_none:'' }}</p>
-                                            <br>
-                                            {% if step.to %}<span class="inline-block rounded-full text-sm">To {{ step.to|default_if_none:'' }}</span>{% endif %}
                                         </div>
-                                    </div>
-                                {% endif %}
+                                    {% endif %}
+                                    <h1 class="text-center  font-bold text-xl text-blue-500 mb-0 ">=></h1>
+                                </div>
                             {% endfor %}
-                            {% comment %} <div class="mb-5 bg-blue-500 border rounded">
-                                <div class="p-4 font-bold rounded-lg">Complete</div>
-                            </div> {% endcomment %}
                         </div>
                     </div>
                 </div>

@@ -1,8 +1,7 @@
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, permission_required
 from it.users.models import *
 from approve.views import intiate
-from approve.models import Step
-from approve.forms import ApprovalForm
+from approve.decorators import ApprovalDetails, all_approved
 from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.contrib import messages
@@ -10,17 +9,13 @@ from django.contrib import messages
 from django.shortcuts import get_object_or_404
 from django.db.models import Min
 
-from approve.forms import ApprovalForm
-from approve.models import Step
-from approve.views import intiate
 from django.forms import inlineformset_factory
 from .forms import *
 from .models import *
 
 
-
-
 @login_required
+
 def bid_on_pr(request, purchase_request_id):
     prq = PurchaseRequest.objects.get(id=purchase_request_id)
     pr_items = prq.pritem_set.all()
@@ -82,10 +77,10 @@ def getsuggestions(request, purchase_request_id):
         pr_item.selected_offer = next((offer for offer in selected_offers if offer.pr_item == pr_item), None)
     return   (bids, purchase_request_items)
 @login_required
-def comperative_schedule(request, purchase_request_id):
 
+def comperative_schedule(request, purchase_request_id):
+    purchase_request = get_object_or_404(PurchaseRequest, id=purchase_request_id)
     if request.method == 'POST':
-        purchase_request = get_object_or_404(PurchaseRequest, id=purchase_request_id)
         orders={}
         purchase_request_items = purchase_request.pritem_set.all()
         for item in purchase_request_items:
@@ -93,20 +88,25 @@ def comperative_schedule(request, purchase_request_id):
             if bid_item.bid not in orders:
                 orders[bid_item.bid] = []
             orders[bid_item.bid].append(bid_item)
-        print(orders)
-            # bid_item = # Retrieve the bid item using the bid_item_id
-            # quantity = item.quantity
 
-            # # Create the order and order item
-        for order, items in orders.items():
-            process= intiate(request, 'tenders')
-            order = Order.objects.create(process = process,bid =order)
-            for bid_item in items:
-                OrderItem.objects.create(bid_item=bid_item, order=order, quantity=bid_item.quantity)
+        for bid, items in orders.items():
+            """if not exist create order for this bid and add the items to the order"""
+            is_order = Order.objects.filter(bid=bid).first()
+            if not is_order:
+                process= intiate(request, 'tenders')
+                order = Order.objects.create(process = process,bid =bid)
+                for bid_item in items:
+                    OrderItem.objects.create(bid_item=bid_item, order=order, quantity=bid_item.quantity)
+            else:
+                messages.error(request, 'This Purchase Request already has an order')
+                return redirect('comperative_schedule:order', is_order.id)
+        return redirect('comperative_schedule:order', order.id)
+    if not all_approved(purchase_request):
+        messages.warningsss(request, 'You must approve the Purchase Request before proceeding.')
         return redirect('purchase_request:purchase_request_detail', purchase_request_id)
+    else:
         bids, purchase_request_items = getsuggestions(request, purchase_request_id)
-        return render(request, 'finance/comparative_schedule/comparative_schedule.html', {'bids': bids,  'purchase_request_items': purchase_request_items,'purchase_request_id': purchase_request_id})
-    bids, purchase_request_items = getsuggestions(request, purchase_request_id)
+
     return render(request, 'finance/comparative_schedule/comparative_schedule.html', {'bids': bids,  'purchase_request_items': purchase_request_items,'purchase_request_id': purchase_request_id})
 
 @login_required

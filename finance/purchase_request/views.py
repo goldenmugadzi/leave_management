@@ -17,33 +17,14 @@ from finance.Ace.models import Ace
 from django.forms import inlineformset_factory
 from .forms import *
 from .models import *
+from approve.decorators import ApprovalDetails
 
 
 @login_required
 def purchase_request_detail(request, purchase_request_id):
     purchase_request = PurchaseRequest.objects.get(id=purchase_request_id)
-    approvalForm=None
-    to=None
-    user_roles = request.user.roles.all()  # Accessing the user's roles through the 'roles' attribute
-    
-    try:
-        last_approved = purchase_request.process.approval_set.last().step.step
-    except AttributeError:
-        last_approved = 0
-    
-    next_step = last_approved + 1
-    
-    try:
-        newStep= Step.objects.get(step=next_step, workflow=purchase_request.process.workflow, approver__in=user_roles)
-        if newStep and request.user.section==purchase_request.section and next_step==1:
-            approvalForm = ApprovalForm 
-            to=newStep.to
-        elif newStep:
-            approvalForm = ApprovalForm
-            to=newStep.to
-    except Step.DoesNotExist:
-        pass
-    approved_steps = purchase_request.process.approval_set.all().values_list('step__step', flat=True)
+    approved_steps, approvalForm, to = ApprovalDetails(request, purchase_request)
+
     return render(request, 'finance/purchase_request/purchase_request_detail.html', {'purchase_request': purchase_request, 'approved_steps':approved_steps,'approvalForm': approvalForm,'to':to})
     
 @login_required
