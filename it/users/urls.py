@@ -11,4 +11,5 @@ urlpatterns = [
     path('user/reset', views.reset_user_password, name='user_reset'),
     path('user/change-password', views.change_user_password, name='change_user_password'),
     path('user/add_centers', views.add_centers, name='add_centers'),
+    path('import', views.import_users, name='import_users'),
 ]

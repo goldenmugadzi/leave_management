@@ -1,20 +1,31 @@
 # users/views.py
 
 import json
+import csv
 from django.contrib.auth import login
+from django.contrib.auth.decorators import login_required
+from django.contrib.sites import requests
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.contrib.auth.hashers import make_password
+from django.views.decorators.csrf import csrf_exempt
+from openpyxl.reader.excel import load_workbook
+from rest_framework.decorators import api_view, parser_classes
+from rest_framework.parsers import JSONParser
+
 
 from it.users.models import Roles, UserProfile, Depots, Districts, Regions, Designations, Sections
 from it.users.forms import CustomUserCreationForm
+from scr import csvfile
 
 from utils.helper_functions import group_user_roles
-from django.contrib.auth.models import Group
+from django.contrib.auth.models import Group, User
 from .helpers import REGIONS, DISTRICTS, DEPOTS
 
+BASE_URL = "http://172.16.8.98:9300"
+
+
 def add_centers(request):
-    
     # add regions
     # for region in REGIONS:
     #     _region = Regions(
@@ -22,7 +33,7 @@ def add_centers(request):
     #         code=region['code'],
     #     )
     #     _region.save()
-    
+
     for district in DISTRICTS:
         region_id = Regions.objects.filter(code=district['parent_code']).first()
         _district = Districts(
@@ -31,9 +42,9 @@ def add_centers(request):
             region_id=region_id.id
         )
         _district.save()
-        
+
     for depot in DEPOTS:
-        district_id=Districts.objects.filter(code=depot['district_code']).first()
+        district_id = Districts.objects.filter(code=depot['district_code']).first()
         region_id = Regions.objects.filter(code=depot['parent_code']).first()
         _depot = Depots(
             depot=depot['name'],
@@ -42,8 +53,9 @@ def add_centers(request):
             region_id=region_id.id
         )
         _depot.save()
-        
+
     return redirect('/users/users-index')
+
 
 def add_user(request):
     if request.method == "GET":
@@ -51,11 +63,11 @@ def add_user(request):
         user_title = request.user.get_full_name()
         l = request.user.groups.values_list('name', flat=True)  # QuerySet Object
         user_groups = list(l)
-        
+
         # get roles
         user_roles = Roles.objects.all()
         grouped_user_roles = group_user_roles(user_roles)
-        
+
         # get designations
         user_designations = Designations.objects.all()
         sections = Sections.objects.all()
@@ -88,7 +100,7 @@ def add_user(request):
             region_ = request.POST['region']
             password1 = request.POST['password1']
             password2 = request.POST['password2']
-            
+
             remittance_role = request.POST['remittance_role']
             pettycash = request.POST['petty_cash_role']
             tenders = request.POST['tenders_role']
@@ -99,13 +111,13 @@ def add_user(request):
             dashboards = request.POST['dashboards_role']
             non_conformity = request.POST['non_conformity_role']
             users_role = request.POST['users_role']
-            
+
             region = Regions.objects.filter(id=region_).first()
             district = Districts.objects.filter(code=district_).first()
             section = Sections.objects.filter(code=section_).first()
             designation = Designations.objects.filter(id=designation_).first()
             print("section: ", section)
-            
+
             roles = []
             if remittance_role and remittance_role != "":
                 roles.append(remittance_role)
@@ -117,7 +129,7 @@ def add_user(request):
                 roles.append(tokens)
             if ace and ace != "":
                 roles.append(ace)
-            if rfq and rfq!="":
+            if rfq and rfq != "":
                 roles.append(rfq)
             if non_conformity and non_conformity:
                 roles.append(non_conformity)
@@ -127,7 +139,7 @@ def add_user(request):
                 roles.append(adjudication)
             if dashboards and dashboards != "":
                 roles.append(dashboards)
-            
+
             if password1 == password2:
                 user = UserProfile(
                     username=username,
@@ -140,19 +152,20 @@ def add_user(request):
                     region=region,
                     status="active"
                 )
-                
+
                 user.save()
-                
+
                 # Get actual Role objects:
                 role_objects = Roles.objects.filter(id__in=roles)  # Example of retrieving roles
                 user.roles.add(*role_objects)
                 user.set_password(password1)
                 user.save()
-                
+
         except Exception as ex:
             print("save user error", ex)
 
         return redirect("/users/users-index")
+
 
 def get_user_records(request):
     records = UserProfile.objects.order_by('-date_joined').all()
@@ -187,12 +200,13 @@ def get_user_records(request):
 
         })
 
+
 def update_user(request):
     if request.method == "GET":
 
         id = request.GET['i']
         user_profile = UserProfile.objects.get(id=id)
-        
+
         user_groups = user_profile.groups.values_list('name', flat=True)
 
         custom_user_roles = {
@@ -206,7 +220,7 @@ def update_user(request):
             "users": {},
             "rfq": {},
             "dashboards": {},
-            
+
         }
 
         new_user = None
@@ -222,19 +236,19 @@ def update_user(request):
 
                 if role.application == "users":
                     custom_user_roles["users"] = role
-                
+
                 if role.application == "non_conformity":
                     custom_user_roles["non_conformity"] = role
-                    
+
                 if role.application == "remittance_advice":
                     custom_user_roles["remittance_advice"] = role
-                
+
                 if role.application == "pettycash":
                     custom_user_roles["pettycash"] = role
 
                 if role.application == "adjudication":
                     custom_user_roles["adjudication"] = role
-                    
+
                 if role.application == "tokens":
                     custom_user_roles["tokens"] = role
 
@@ -254,7 +268,8 @@ def update_user(request):
             district = Districts.objects.filter(id=user_profile.district.id).first() if user_profile.district else None
             depot = Depots.objects.filter(code=user_profile.depot).first() if user_profile.depot else None
             section = Sections.objects.filter(id=user_profile.section.id).first() if user_profile.section else None
-            user_designation = Designations.objects.filter(id=user_profile.designation.id).first() if user_profile.designation else None
+            user_designation = Designations.objects.filter(
+                id=user_profile.designation.id).first() if user_profile.designation else None
 
         new_user = {
             "id": user_profile.pk,
@@ -273,14 +288,14 @@ def update_user(request):
         user_title = request.user.get_full_name()
         l = request.user.groups.values_list('name', flat=True)  # QuerySet Object
         user_groups = list(l)
-        
+
         # get roles
         user_roles = Roles.objects.all()
         # rfq_role = Roles.objects.filter(application="rfq").all()
         # print("user_roles: ", rfq_role)
         grouped_user_roles = group_user_roles(user_roles)
         # print("grouped_user_roles: ", grouped_user_roles)
-        
+
         # get designations
         user_designations = Designations.objects.all()
         sections = Sections.objects.all()
@@ -313,7 +328,7 @@ def update_user(request):
             district_ = request.POST['district']
             region_ = request.POST['region']
             designation_ = request.POST['designation']
-            
+
             remittance_role = request.POST['remittance_role']
             pettycash = request.POST['petty_cash_role']
             tenders = request.POST['tenders_role']
@@ -324,12 +339,13 @@ def update_user(request):
             dashboards = request.POST['dashboards_role']
             non_conformity = request.POST['non_conformity_role']
             users_role = request.POST['users_role']
-                
 
             region = Regions.objects.filter(id=region_).first()
-            district = Districts.objects.filter(id=district_).first() if (district_ != "Select District" or "") else None
+            district = Districts.objects.filter(id=district_).first() if (
+                    district_ != "Select District" or "") else None
             section = Sections.objects.filter(code=section_).first()
-            designation = Designations.objects.filter(id=designation_).first() if (designation_ != "Select Designation" or "") else None
+            designation = Designations.objects.filter(id=designation_).first() if (
+                    designation_ != "Select Designation" or "") else None
 
             user_profile = UserProfile.objects.filter(id=id).first()
             if firstnames:
@@ -348,9 +364,9 @@ def update_user(request):
                 user_profile.section = section
             if designation:
                 user_profile.designation = designation
-            
-            user_profile.save() 
-            
+
+            user_profile.save()
+
             roles = []
             if remittance_role and remittance_role != "Select Role":
                 roles.append(remittance_role)
@@ -378,11 +394,12 @@ def update_user(request):
             role_objects = Roles.objects.filter(id__in=roles)  # Example of retrieving roles
             user_profile.roles.clear()
             user_profile.roles.add(*role_objects)
-            
+
         except Exception as ex:
             print("save user error", ex)
 
         return redirect("/users/users-index")
+
 
 def reset_user_password(request):
     if request.method == "POST":
@@ -417,6 +434,7 @@ def reset_user_password(request):
             })
 
     return redirect('/users/users-index')
+
 
 def change_user_password(request):
     if request.method == "POST":
@@ -454,6 +472,7 @@ def change_user_password(request):
 
     return redirect('/dashboards/overview')
 
+
 def delete_user(request):
     if request.method == "GET":
         id = request.GET['i']
@@ -462,17 +481,17 @@ def delete_user(request):
 
     return redirect('/users/users-index')
 
+
 # Manage groups
 def get_user_all_groups(request):
-    
     if request.method == "GET":
         user_title = request.user.get_full_name()
         l = request.user.groups.values_list('name', flat=True)  # QuerySet Object
         user_groups = list(l)
-        
+
         user_id = request.GET['i']
         user = UserProfile.objects.filter(id=user_id).first()
-        
+
         user = UserProfile.objects.filter(id=user_id).first()
         all_groups = Group.objects.all()
 
@@ -480,7 +499,7 @@ def get_user_all_groups(request):
         if user:
             groups = user.groups.all()
             group_names = [group.name for group in groups]
-            
+
             roles = {
                 "engineering": [],
                 "finance": [],
@@ -489,9 +508,9 @@ def get_user_all_groups(request):
                 "it": [],
                 "user_id": user_id
             }
-            
+
             for group_name in group_names:
-                
+
                 if group_name and group_name.startswith("engineering"):
                     # Do something if the string starts with "engineering"
                     if group_name and group_name.startswith("engineering"):
@@ -509,7 +528,7 @@ def get_user_all_groups(request):
                     if group_name and group_name.startswith("commercial"):
                         # Do something if the string starts with "commercial"
                         roles["commercial"].append(group_name)
-                            
+
                 if group_name and group_name.startswith("ops"):
                     # Do something if the string starts with "ops"
                     if group_name and group_name.startswith("ops"):
@@ -520,18 +539,19 @@ def get_user_all_groups(request):
                     # Do something if the string starts with "it"
                     if group_name and group_name.startswith("it"):
                         # Do something if the string starts with "it"
-                        roles["it"].append(group_name)       
-        
+                        roles["it"].append(group_name)
+
         print(roles)
         return render(
-                request,
-                "users/user_groups.html",
-                {
-                    "user_title": user_title,
-                    "user_groups": user_groups,
-                    "roles": roles,
-                }
-            )
+            request,
+            "users/user_groups.html",
+            {
+                "user_title": user_title,
+                "user_groups": user_groups,
+                "roles": roles,
+            }
+        )
+
 
 def add_user_to_group(request, user_id, group_name):
     user = UserProfile.objects.filter(id=user_id).first()
@@ -540,17 +560,19 @@ def add_user_to_group(request, user_id, group_name):
         group.user_set.add(user)
     else:
         print("User not found")
-        
+
+
 def add_user_to_groups(request, user_id, group_names):
     user = UserProfile.objects.filter(id=user_id).first()
     if user:
-        
+
         for group_name in group_names:
             group = Group.objects.get(name=group_name)
             group.user_set.add(user)
-            
+
     else:
         print("User not found")
+
 
 def remove_user_from_group(request, user_id, group_name):
     user = UserProfile.objects.filter(id=user_id).first()
@@ -559,11 +581,12 @@ def remove_user_from_group(request, user_id, group_name):
         group.user_set.remove(user)
     else:
         print("User not found")
-        
+
+
 def remove_user_from_groups(request, user_id, group_names):
     user = UserProfile.objects.filter(id=user_id).first()
     if user:
-        
+
         for group_name in group_names:
             group = Group.objects.get(name=group_name)
             group.user_set.remove(user)
@@ -571,11 +594,109 @@ def remove_user_from_groups(request, user_id, group_names):
         print("User not found")
 
 
+@login_required
+def import_users(request):
+    if request.method == "POST":
+        file = request.FILES['file']
+        if file:
+            file_name = file.name
+            if file_name.endswith('.csv'):
+                decoded_file = file.read().decode('cp1252').splitlines()
+                reader = csv.DictReader(decoded_file)
+                for row in reader:
+                    # (username, Designation, centre, descr, surname, firstname, initials, status, section, email, phone,
+                    #  extension, section_code, createdon, region) = row
+                    username = row['username'].replace(" ", "")
+                    Designation = row['Designation'].replace(" ", "")
+                    centre = row['centre'].replace(" ", "")
+                    descr = row['descr'].replace(" ", "")
+                    surname = row['surname'].replace(" ", "")
+                    firstname = row['firstname'].replace(" ", "")
+                    initials = row['initials'].replace(" ", "")
+                    status = row['status'].replace(" ", "")
+                    section = row['section'].replace(" ", "")
+                    email = row['email'].replace(" ", "")
+                    phone = row['phone'].replace(" ", "")
+                    extension = row['extension'].replace(" ", "")
+                    section_code = row['section_code'].replace(" ", "")
+                    createdon = row['createdon'].replace(" ", "")
+                    region = row['region'].replace(" ", "")
+
+                    section = Sections.objects.filter(code=section).first()
+                    # search designation by description if not found create a new one
+                    designation = Designations.objects.filter(description=Designation).first()
+                    if not designation:
+                        designation = Designations(
+                            identifier=Designation,
+                            description=Designation,
+                            chk=Designation
+                        )
+                        designation.save()
+                        print("Created new designation")
+                    # search region by name if not found create a new one
+                    if region!="":
+                        Region = Regions.objects.filter(region=region).first()
+                        if not Region:
+                            Region = Regions(
+                                region=region,
+                                code=region
+                            )
+                            Region.save()
+                            print("Created new region")
+                    # check if user exists if not create a new one
+                    check_user = UserProfile.objects.filter(username=username).first()
+                    if check_user:
+                        print("User already exists")
+                    else:
+                        userprof = UserProfile(
+                            username=username,
+                            first_name=firstname,
+                            last_name=surname,
+                            designation=designation,
+                            section=section if section!="" else None,
+                            region=Region if region!="" else None,
+                            email=email,
+                            password=make_password("password"),
+                            # date_joined=createdon,
+                            status="active"
+                        )
+                        # user.set_password("password")
+                        userprof.save()
+                        # user.save()
+                        print("Users created")
+
+                        # Get actual Role objects:
+                        role_objects = Roles.objects.filter(name=Designation)
+
+                    # scheduled_date = str(scheduled_date).split(" ")[0]
+                return redirect('/users/users-index')
+            elif file_name.endswith('.xls'):
+                return render(request, 'users/import_users.html')
+
+            elif file_name.endswith('.xlsx'):
+                return render(request, 'users/import_users.html')
+            else:
+                print("Invalid file format")
+                return render(request, 'users/import_users.html')
+        else:
+            print("No file uploaded")
+            return render(request, 'users/import_users.html')
+    else:
+        return render(request, 'users/import_users.html')
 
 
-
-        
-
-
-
-
+# @csrf_exempt
+# @api_view(['POST'])
+# @parser_classes([JSONParser])
+# def create_user(request):
+#     print(request.data)
+#     serializer = UserSerializer(request.data)
+#     area = serializer.create(serializer.data)
+#     area.save()
+#
+#     return Response({
+#         "status": "success",
+#         "message": "Successfully created area",
+#         "code": 201,
+#         "data": serializer.data
+#     })
