@@ -106,8 +106,8 @@ def approve_step(request, process_id):
                 return redirect('rfq:rfq_detail', process.rfq.id)
             elif process.workflow.name == 'tokens':
                 return redirect('tempertoken:tempertoken', process.tempertoken_set.last().id)
-            elif process.workflow.name == 'pettycash':
-                return redirect('pettycash:pettycash_detail', process.pettycash_set.last().id)
+            # elif process.workflow.name == 'pettycash':
+            #     return redirect('pettycash:pettycash_detail', process.pettycash_set.last().id)
 
             else:
                 return redirect('approve:workflow_detail', process.workflow.id)
