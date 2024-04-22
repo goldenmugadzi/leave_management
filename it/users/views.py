@@ -28,71 +28,71 @@ BASE_URL = "http://172.16.8.98:9300"
 
 def add_centers(request):
     
-    # for region in REGIONS:
-    #     _region = Regions(
-    #         region=region['name'],
-    #         code=region['code'],
-    #     )
-    #     _region.save()
+    for region in REGIONS:
+        _region = Regions(
+            region=region['name'],
+            code=region['code'],
+        )
+        _region.save()
     
-    # for district in DISTRICTS:
-    #     region_id = Regions.objects.filter(code=district['parent_code']).first()
-    #     _district = Districts(
-    #         district=district['name'],
-    #         code=district['code'],
-    #         region_id=region_id.id
-    #     )
-    #     _district.save()
+    for district in DISTRICTS:
+        region_id = Regions.objects.filter(code=district['parent_code']).first()
+        _district = Districts(
+            district=district['name'],
+            code=district['code'],
+            region_id=region_id.id
+        )
+        _district.save()
         
-    # for depot in DEPOTS:
-    #     district_id=Districts.objects.filter(code=depot['district_code']).first()
-    #     region_id = Regions.objects.filter(code=depot['parent_code']).first()
-    #     _depot = Depots(
-    #         depot=depot['name'],
-    #         code=depot['code'],
-    #         district_id=district_id.id,
-    #         region_id=region_id.id
-    #     )
-    #     _depot.save()
+    for depot in DEPOTS:
+        district_id=Districts.objects.filter(code=depot['district_code']).first()
+        region_id = Regions.objects.filter(code=depot['parent_code']).first()
+        _depot = Depots(
+            depot=depot['name'],
+            code=depot['code'],
+            district_id=district_id.id,
+            region_id=region_id.id
+        )
+        _depot.save()
         
-    # for designation in DESIGNATIONS:
-    #     _designation = Designations(
-    #         description=designation['description']
-    #     )
-    #     _designation.save()
+    for designation in DESIGNATIONS:
+        _designation = Designations(
+            description=designation['description']
+        )
+        _designation.save()
     
-    # for role in ROLES:
-    #     application_ = role['application']
-    #     app_id = Application.objects.filter(name=application_).first()
-    #     if app_id:
-    #         _role = Roles(
-    #             role=role['role'],
-    #             name=role['name'],
-    #             description=role['description'],
-    #             application=role['application'],
-    #             app_id=app_id
-    #         )
-    #         _role.save()
-    #     else:
-    #         new_app = Application(
-    #             name=application_
-    #         )
-    #         new_app.save()
-    #         _role = Roles(
-    #             role=role['name'],
-    #             name=role['name'],
-    #             description=role['description'],
-    #             application=role['application'],
-    #             app_id=new_app
-    #         )
-    #         _role.save()
+    for role in ROLES:
+        application_ = role['application']
+        app_id = Application.objects.filter(name=application_).first()
+        if app_id:
+            _role = Roles(
+                role=role['role'],
+                name=role['name'],
+                description=role['description'],
+                application=role['application'],
+                app_id=app_id
+            )
+            _role.save()
+        else:
+            new_app = Application(
+                name=application_
+            )
+            new_app.save()
+            _role = Roles(
+                role=role['name'],
+                name=role['name'],
+                description=role['description'],
+                application=role['application'],
+                app_id=new_app
+            )
+            _role.save()
             
-    # for section in SECTIONS:
-    #     _section = Sections(
-    #         section=section['section'],
-    #         code=section['code']
-    #     )
-    #     _section.save()
+    for section in SECTIONS:
+        _section = Sections(
+            section=section['section'],
+            code=section['code']
+        )
+        _section.save()
         
     return redirect('/users/users-index')
 
@@ -217,8 +217,69 @@ def get_user_records(request):
 
         })
 
-
 def update_user(request):
+    if request.method == "GET":
+        user_profile = UserProfile.objects.get(id=request.GET['i'])
+        active_roles = {role.app_id.name: role for role in user_profile.roles.all() if role.app_id}
+
+        new_user = {
+            "id": user_profile.pk,
+            "username": user_profile.username,
+            "firstname": user_profile.first_name,
+            "lastname": user_profile.last_name,
+            "email": user_profile.email,
+            "section": Sections.objects.filter(id=user_profile.section.id).first() if user_profile.section else None,
+            "depot": Depots.objects.filter(id=user_profile.depot.id).first() if user_profile.depot else None,
+            "district": Districts.objects.filter(id=user_profile.district.id).first() if user_profile.district else None,
+            "region": Regions.objects.filter(id=user_profile.region.id).first() if user_profile.region else None,
+            "roles": active_roles,
+            "designation": Designations.objects.filter(id=user_profile.designation.id).first() if user_profile.designation else None,
+        }
+
+        all_roles = {app.name: Roles.objects.filter(app_id=app.id).all() for app in Application.objects.all()}
+
+        return render(
+            request,
+            "users/user_update.html",
+            {
+                "form": CustomUserCreationForm,
+                "user_roles": all_roles,
+                "user_applications": Application.objects.all(),
+                "user_designations": Designations.objects.all(),
+                "sections": Sections.objects.all(),
+                "districts": Districts.objects.all(),
+                "regions": Regions.objects.all(),
+                "user_title": request.user.get_full_name(),
+                "user_groups": list(request.user.groups.values_list('name', flat=True)),
+                "user": new_user
+            }
+        )
+    elif request.method == "POST":
+        user_profile = UserProfile.objects.filter(id=request.POST['user_id']).first()
+        user_data = {
+            'first_name': request.POST['firstname'],
+            'last_name': request.POST['lastname'],
+            'username': request.POST['username'],
+            'email': request.POST['email'],
+            'region': Regions.objects.filter(id=request.POST['region']).first(),
+            'district': Districts.objects.filter(id=request.POST['district']).first() if request.POST['district'] not in ["Select District", ""] else None,
+            'depot': Depots.objects.filter(id=request.POST['depot']).first() if request.POST['depot'] not in ["Select Depot", ""] else None,
+            'section': Sections.objects.filter(code=request.POST['section']).first(),
+            'designation': Designations.objects.filter(id=request.POST['designation']).first() if request.POST['designation'] not in ["Select Designation", ""] else None
+        }
+
+        for field, value in user_data.items():
+            if value:
+                setattr(user_profile, field, value)
+
+        user_profile.save()
+
+        roles = [role for role in [request.POST.get(app.name) for app in Application.objects.all() if request.POST.get(app.name) != 'Select Role'] if role and role != ""]
+        user_profile.roles.clear()
+        user_profile.roles.add(*Roles.objects.filter(id__in=roles))
+
+        return redirect("/users/users-index")
+def update_userx(request):
     if request.method == "GET":
 
         id = request.GET['i']
@@ -296,14 +357,15 @@ def update_user(request):
             }
         )
     elif request.method == "POST":
-        try:
+        # try:
             id = request.POST['user_id']
             firstnames = request.POST['firstname']
             lastnames = request.POST['lastname']
             username = request.POST['username']
             email = request.POST['email']
             section_ = request.POST['section']
-            depot_ = request.POST['depot']
+            print("depot",request.POST['depot'] or None)
+            depot_ = request.POST['depot'] or None
             district_ = request.POST['district']
             region_ = request.POST['region']
             designation_ = request.POST['designation']
@@ -336,16 +398,17 @@ def update_user(request):
             
             # Get actual Role objects:
             user_applications = Application.objects.all()
-            roles = [role for role in [request.POST.get(app.name) for app in user_applications if request.POST.get(app.name) != ""] if role and role != ""]  
+            roles = [role for role in [request.POST.get(app.name) for app in user_applications if request.POST.get(app.name) != 'Select Role'] if role and role != ""]  
             print("roles: ", roles)
+            
             role_objects = Roles.objects.filter(id__in=roles)  # Example of retrieving roles
             user_profile.roles.clear()
             user_profile.roles.add(*role_objects)
 
-        except Exception as ex:
-            print("save user error", ex)
+        # except Exception as ex:
+        #     print("save user error", ex)
 
-        return redirect("/users/users-index")
+            return redirect("/users/users-index")
 
 
 def reset_user_password(request):

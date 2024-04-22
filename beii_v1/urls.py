@@ -46,7 +46,7 @@ urlpatterns = [
 
     path('ace/', include('finance.Ace.urls')),
     path('direct_purchases/', include('finance.Direct_purchases.urls')),
-    path('pettycash/', include('finance.Pettycash.urls')),
+    path('pettycash/', include('finance.PettyCash.urls')),
     path('comparative_schedule/', include('finance.comparative_schedules.urls')),
     path('reports/', include('reports.urls')),
 

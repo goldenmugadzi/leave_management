@@ -32,13 +32,14 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['localhost', '172.16.8.97', '172.16.8.22', '127.0.0.1','172.16.8.98',]
 
-CORS_ALLOWED_ORIGINS = [
-    "http://172.16.8.97",
-    "http://172.16.8.98",
-    "http://172.16.8.97:3200",
-    "http://localhost:3000",
-    "http://172.16.8.98:9300"
-]
+# CORS_ALLOWED_ORIGINS = [
+#     "http://172.16.8.97",
+#     "http://172.16.8.98",
+#     "http://172.16.8.97:3200",
+#     "http://localhost:3000",
+#     "http://172.16.8.98:9300"
+# ]
+CORS_ALLOW_ALL_ORIGINS = True
 
 CSRF_TRUSTED_ORIGINS = ['http://172.16.8.97', "http://172.16.8.97:3200","http://172.16.8.98","http://172.16.8.98:9300"]
 
@@ -120,7 +121,7 @@ INSTALLED_APPS = [
     'process_risks.apps.ProcessRisksConfig',
     'finance.Ace',
     'finance.purchase_request',
-    'finance.Pettycash',
+    'finance.PettyCash',
     'finance.comparative_schedules',
     'finance.Direct_purchases',
 
@@ -132,16 +133,6 @@ INSTALLED_APPS = [
     'temper_token',
     'commecial.tempertockens',
     'competence_building.apps.CompetenceBuildingConfig'
-
-    # 'finance.tenders.apps.TendersConfig',
-    # 'engineering.reticulations.apps.ReticulationsConfig',
-    # 'commercials.connections.apps.ConnectionsConfig',
-    # 'Pettycash.apps.PettyCashConfig',
-    # 'hr.okr.apps.OkrConfig',
-    # 'reports.beii_reports.apps.BeiiReportsConfig',
-    # 'api.ops_maintenance.safety_operations.apps.SafetyOperationsConfig',
-
-    # 'miscellaneous.knowledge_center.apps.KnowledgeCenterConfig'
 ]
 
 AUTH_USER_MODEL = 'users.UserProfile'
