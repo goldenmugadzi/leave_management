@@ -49,31 +49,31 @@ def add_centers(request):
     #     )
     #     _designation.save()
     
-    for role in ROLES:
-        application_ = role['application']
-        app_id = Application.objects.filter(name=application_).first()
-        if app_id:
-            _role = Roles(
-                role=role['role'],
-                name=role['name'],
-                description=role['description'],
-                application=role['application'],
-                app_id=app_id
-            )
-            _role.save()
-        else:
-            new_app = Application(
-                name=application_
-            )
-            new_app.save()
-            _role = Roles(
-                role=role['name'],
-                name=role['name'],
-                description=role['description'],
-                application=role['application'],
-                app_id=new_app
-            )
-            _role.save()
+    # for role in ROLES:
+    #     application_ = role['application']
+    #     app_id = Application.objects.filter(name=application_).first()
+    #     if app_id:
+    #         _role = Roles(
+    #             role=role['role'],
+    #             name=role['name'],
+    #             description=role['description'],
+    #             application=role['application'],
+    #             app_id=app_id
+    #         )
+    #         _role.save()
+    #     else:
+    #         new_app = Application(
+    #             name=application_
+    #         )
+    #         new_app.save()
+    #         _role = Roles(
+    #             role=role['name'],
+    #             name=role['name'],
+    #             description=role['description'],
+    #             application=role['application'],
+    #             app_id=new_app
+    #         )
+    #         _role.save()
             
     # for section in SECTIONS:
     #     _section = Sections(

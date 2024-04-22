@@ -2,239 +2,51 @@
 
 <div class="content-wrapper flex flex-wrap p-2 m-px">
   <div class="grid grid-cols-3 gap-4">
+    {% for app in apps %}
     <div
       class="w-auto shadow shadow-nepal-300 bg-nepal-50 text-gray-700 rounded px-10 py-2"
     >
-    <a href="/ace/">
-      <div class="sm:flex lg:items-center lg:justify-between">
-        <div class="min-w-0 flex-1">
-          <div class="">
-            <div class="mx-auto">
-              <div class="group relative">
-                <div
-                  class="aspect-h-1 aspect-w-1 w-full overflow-hidden rounded-md lg:aspect-none group-hover:opacity-50 lg:h-40"
-                >
-                  <img
-                    src="{% static 'assets/images/capital.png' %}"
-                    alt=""
-                    class="h-full w-full object-contain lg:h-full lg:w-full"
-                  />
-                </div>
-                <div class="mt-4 flex justify-center">
-                  <div class="w-full">
-                    <div
-                      class="dropdown-group inline-block w-full text-blue-900"
-                    >
+      <a href="{{app.url}}">
+        <div class="sm:flex lg:items-center lg:justify-between">
+          <div class="min-w-0 flex-1">
+            <div class="">
+              <div class="mx-auto">
+                <div class="group relative">
+                  <div
+                    class="aspect-h-1 aspect-w-1 w-full overflow-hidden rounded-md lg:aspect-none group-hover:opacity-50 lg:h-40"
+                  >
+                    <img
+                      src="{% static app.iconUrl %}"
+                      alt=""
+                      class="h-full w-full object-contain lg:h-full lg:w-full"
+                    />
+                  </div>
+                  <div class="mt-4 flex justify-center">
+                    <div class="w-full">
+                      <div
+                        class="dropdown-group inline-block w-full text-blue-900"
+                      >
                         <button
                           class="w-full outline-none focus:outline-none px-3 py-1 rounded flex items-center"
                         >
                           <span class="pr-1 font-semibold flex-1 text-blue-900"
-                            >ACE</span
+                            >{{app.title}}</span
                           >
                           <span class="text-blue-900"> </span>
                         </button>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- More products... -->
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </a>
-    </div>
-
-    <div
-      class="w-auto shadow shadow-nepal-300 bg-nepal-50 text-gray-700 rounded px-10 py-2"
-    >
-    <a href="/nonconformities/">
-      <div class="sm:flex lg:items-center lg:justify-between">
-        <div class="min-w-0 flex-1">
-          <div class="">
-            <div class="mx-auto">
-              <div class="group relative">
-                <div
-                  class="aspect-h-1 aspect-w-1 w-full overflow-hidden rounded-md lg:aspect-none group-hover:opacity-75 lg:h-40"
-                >
-                
-                  <img
-                    src="{% static 'assets/images/non-conforming.png' %}"
-                    alt=""
-                    class="h-full w-full object-contain lg:h-full lg:w-full"
-                  />
-                </div>
-                <div class="mt-4 flex justify-center">
-                  <div class="w-full">
-                    <div
-                      class="dropdown-group inline-block w-full text-blue-900"
-                    >
-                        <button
-                          class="w-full outline-none focus:outline-none px-3 py-1 rounded flex items-center"
-                        >
-                          <span class="pr-1 font-semibold flex-1 text-blue-900"
-                            >Non Conformity</span
-                          >
-                          <span class="text-blue-900"> </span>
-                        </button>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- More products... -->
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </a>
-    </div>
-
-    <div
-      class="w-auto shadow shadow-nepal-300 bg-nepal-50 text-gray-700 rounded px-10 py-2"
-    >
-    <a href="/users/users-index">
-      <div class="sm:flex lg:items-center lg:justify-between">
-        <div class="min-w-0 flex-1">
-          <div class="">
-            <div class="mx-auto">
-              <div class="group relative">
-                <div
-                  class="aspect-h-1 aspect-w-1 w-full overflow-hidden rounded-md lg:aspect-none group-hover:opacity-75 lg:h-40"
-                >
-                  <img
-                    src="{% static 'assets/images/management.png' %}"
-                    alt=""
-                    class="h-full w-full object-contain lg:h-full lg:w-full"
-                  />
-                </div>
-                <div class="mt-4 flex justify-center">
-                  <div class="w-full">
-                    <div
-                      class="dropdown-group inline-block w-full text-blue-900"
-                    >
-                        <button
-                          class="w-full outline-none focus:outline-none px-3 py-1 rounded flex items-center"
-                        >
-                          <span class="pr-1 font-semibold flex-1 text-blue-900"
-                            >Users</span
-                          >
-                          <span class="text-blue-900">
-                            {% comment %}
-                            <svg
-                              class="fill-current h-4 w-4 transform group-hover:-rotate-180 transition duration-150 ease-in-out"
-                              xmlns="http://www.w3.org/2000/svg"
-                              viewBox="0 0 20 20"
-                            >
-                              <path
-                                d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"></path>
-                            </svg>
-                            {% endcomment %}
-                          </span>
-                        </button>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- More products... -->
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </a>
-    </div>
-
-    <div
-      class="w-auto shadow shadow-nepal-300 bg-nepal-50 text-gray-700 rounded px-10 py-2"
-    >
-    <a href="/rfqs/">
-      <div class="sm:flex lg:items-center lg:justify-between">
-        <div class="min-w-0 flex-1">
-          <div class="">
-            <div class="mx-auto">
-              <div class="group relative">
-                <div
-                  class="aspect-h-1 aspect-w-1 w-full overflow-hidden rounded-md lg:aspect-none group-hover:opacity-75 lg:h-40"
-                >
-                  <img
-                    src="{% static 'assets/images/quotation.png' %}"
-                    alt=""
-                    class="h-full w-full object-contain lg:h-full lg:w-full"
-                  />
-                </div>
-                <div class="mt-4 flex justify-center">
-                  <div class="w-full">
-                    <div
-                      class="dropdown-group inline-block w-full text-blue-900"
-                    >
-                        <button
-                          class="w-full outline-none focus:outline-none px-3 py-1 rounded flex items-center"
-                        >
-                          <span class="pr-1 font-semibold flex-1 text-blue-900"
-                            >RFQ</span
-                          >
-                          <span class="text-blue-900">
-                          </span>
-                        </button>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- More products... -->
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </a>
-    </div>
-
-      <div
-              class="w-auto shadow shadow-nepal-300 bg-nepal-50 text-gray-700 rounded px-10 py-2"
-      >
-          <a href="/pettycash/pettycashs_awaiting_my_action">
-              <div class="sm:flex lg:items-center lg:justify-between">
-                  <div class="min-w-0 flex-1">
-                      <div class="">
-                          <div class="mx-auto">
-                              <div class="group relative">
-                                  <div
-                                          class="aspect-h-1 aspect-w-1 w-full overflow-hidden rounded-md lg:aspect-none group-hover:opacity-75 lg:h-40"
-                                  >
-                                      <img
-                                              src="{% static 'assets/images/pettycash.png' %}"
-                                              alt=""
-                                              class="h-full w-full object-contain lg:h-full lg:w-full"
-                                      />
-                                  </div>
-                                  <div class="mt-4 flex justify-center">
-                                      <div class="w-full">
-                                          <div
-                                                  class="dropdown-group inline-block w-full text-blue-900"
-                                          >
-                                              <button
-                                                      class="w-full outline-none focus:outline-none px-3 py-1 rounded flex items-center"
-                                              >
-                          <span class="pr-1 font-semibold flex-1 text-blue-900"
-                          >Petty Cash</span
-                          >
-                                                  <span class="text-blue-900">
-                          </span>
-                                              </button>
-                                          </div>
-                                      </div>
-                                  </div>
-
-                                  <!-- More products... -->
-                              </div>
-                          </div>
                       </div>
+                    </div>
                   </div>
+
+                  <!-- More products... -->
+                </div>
               </div>
-          </a>
-      </div>
+            </div>
+          </div>
+        </div>
+      </a>
+    </div>
+    {% endfor %}
   </div>
 </div>
 

@@ -28,7 +28,7 @@ APPLICATIONS = [
     {
         "name": "Tamper Token",
         "title": "Tamper Tokens",
-        "iconUrl": "assets/images/tamper.png",
+        "iconUrl": "assets/images/token.png",
         "url": "/tempertokens/"
     },
     {
@@ -46,8 +46,14 @@ APPLICATIONS = [
     {
         "name": "comperative_schedule",
         "title": "Comperative Schedule",
-        "iconUrl": "assets/images/comperative.png",
+        "iconUrl": "assets/images/bid.png",
         "url": "/comparative_schedule/create_schedule/"
+    },
+    {
+        "name": "direct_purchases",
+        "title": "Direct Purchases",
+        "iconUrl": "assets/images/direct-marketing.png",
+        "url": "#"
     }
 ]
 
@@ -250,7 +256,8 @@ def business_applications(request):
             "user_title": user_title,
             "url_path": url_path,
             "page_title": "Business Applications", 
-            "user_groups": user_groups
+            "user_groups": user_groups,
+            "apps": APPLICATIONS
         })
 
 def app_logout(request):
