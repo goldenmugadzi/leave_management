@@ -96,7 +96,7 @@
                 </form>
                 {% endif %}
 
-            {% if pettycash.payment_mode != None %}
+{#            {% if pettycash.payment_mode != None %}#}
                         {% if approvalForm %}
                     <form class="row rounded py-4 border bg-gulf-blue-400 rounded-lg p-3 m-auto container" method="POST" action="{% url 'approve:approve' pettycash.process.id %}" enctype="multipart/form-data">
                          {% csrf_token %}
@@ -110,7 +110,7 @@
                         </div>
                     </form>
                {% endif %}
-            {% endif %}
+{#            {% endif %}#}
 
                     <div class="card grid grid-cols-5 gap-4">
 
