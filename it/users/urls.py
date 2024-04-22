@@ -14,4 +14,5 @@ urlpatterns = [
     
     path('filtered_districts/<str:region_id>', views.get_filtered_districts, name='filtered_regions'),
     path('filtered_depots/<str:district_id>', views.get_filtered_depots, name='filtered_depots'),
+    path('import', views.import_users, name='import_users'),
 ]

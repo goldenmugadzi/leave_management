@@ -8,4 +8,5 @@ urlpatterns = [
     path('pettycash_detail/<str:petty_id>/', pettyCash_detail, name='pettycash_detail'),
     path('pettycashs', view_all_pettycashs, name='view_all_pettycashs'),
     path('pettycashs_awaiting_my_action', pettycash_awaiting_my_action, name='pettycashs_awaiting_my_action'),
+    path('import_pettycash', import_pettycash, name='import_pettycash'),
 ]

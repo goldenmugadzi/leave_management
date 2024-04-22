@@ -118,3 +118,5 @@ def direct_purchases_awaiting_my_action(request):
 def view_all_DPs(request):
     DPs = Direct_purchase.objects.all()
     return render(request, 'finance/rfq/view_all_DPs.html', {'DPs': DPs})
+
+
