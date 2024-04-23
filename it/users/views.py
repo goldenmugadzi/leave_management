@@ -9,16 +9,10 @@ from django.contrib.sites import requests
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.contrib.auth.hashers import make_password
-from django.views.decorators.csrf import csrf_exempt
-from openpyxl.reader.excel import load_workbook
-from rest_framework.decorators import api_view, parser_classes
-from rest_framework.parsers import JSONParser
-
 
 from it.users.models import Application, Roles, UserProfile, Depots, Districts, Regions, Designations, Sections
 from it.users.forms import CustomUserCreationForm
 
-from utils.helper_functions import group_user_roles
 from django.contrib.auth.models import Group
 from .helpers import DESIGNATIONS, REGIONS, DISTRICTS, DEPOTS, ROLES, SECTIONS
 
