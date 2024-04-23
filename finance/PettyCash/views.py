@@ -2,6 +2,7 @@ from datetime import datetime
 from random import randrange
 import csv
 
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
 from django.urls import reverse
@@ -208,20 +209,20 @@ def view_all_pettycashs(request):
 def import_pettycash(request):
     if request.method == 'POST':
         file = request.FILES['file']
-        # file2 = request.FILES['file2']
+        file2 = request.FILES['file2']
         # if file there filter based on file type
-        if file:
+        if file and file2:
             file_name = file.name
-            # file_name2 = file2.name
-            if file_name.endswith('.csv'):
+            file_name2 = file2.name
+            if file_name.endswith('.csv') and file_name2.endswith('.csv'):
                 # if file_name.endswith('.csv') or file_name2.endswith('.csv'):
                 # read the csv file
-                print('csv file')
+                print('csv file2 uploaded')
 
                 decoded_file = file.read().decode('cp1252').splitlines()
-                # decoded_file2 = file2.read().decode('cp1252').splitlines()
+                decoded_file2 = file2.read().decode('cp1252').splitlines()
                 reader = csv.DictReader(decoded_file)
-                # reader2 = csv.DictReader(decoded_file2)
+                reader2 = csv.DictReader(decoded_file2)
                 for row in reader:
                     petty_id = row['voucher_id']
                     department = row['department']
@@ -361,27 +362,41 @@ def import_pettycash(request):
                     pettycash.date_created = update_date1
 
                     process = Pettycash.objects.filter(petty_id=voucher_id).first().process
-                    approval = Approval.objects.filter(process=process).first()
                     # this is the first step of the approval
 
-                    if update_user2 != '':
-                        approval.created_at = update_date1
-                        step = Step.objects.filter(workflow=process.workflow).first()
-                        step.to = "Approve"
-                        Role = Role.objects.filter(id=8).first()
-                        step.approver = UserProfile.objects.filter(username=update_user2).first()
-                        step.step = 1
-                        approval.step = step
-                        step.save()
-                        approval.save()
+                    if update_user2 != '' and status_1 == 1:
+                        # remove the leading and trailing whitespaces and  if the field isntr empty then pass the
+                        # required parameters to the approve_step function and check if the approval was successful
+                        update_user2 = update_user2.strip()
                         user = UserProfile.objects.filter(username=update_user2).first()
+                        if user and status_1 == 1:
+                            if approve_step(process.id, user.id, update_date1):
+                                print('approved as sh', pettycash)
+                            else:
+                                print('not approved')
 
-
-                    approval.user = user
-                    approval.process = process
-                    approval.step = step
-
-                    approval.save()
+                        if update_user3 != '' and status_2 == 2:
+                            update_user3 = update_user3.strip()
+                            user = UserProfile.objects.filter(username=update_user3).first()
+                            if user:
+                                if approve_step(process.id, user.id, update_date2):
+                                    print('approved as petty Authoriser', pettycash)
+                                else:
+                                    print('not approved')
+                            else:
+                                print('user not found')
+                        if update_user5 != '' and status_3 == 3 and status_7 == 7:
+                            update_user5 = update_user5.strip()
+                            user = UserProfile.objects.filter(username=update_user5).first()
+                            if user:
+                                if approve_step(process.id, user.id, update_date3):
+                                    print('approved as Disburser', pettycash)
+                                else:
+                                    print('not approved')
+                            else:
+                                print('user not found')
+                    pettycash.payment_mode = payment_method
+                    pettycash.currency = 'ZWL'
                     pettycash.save()
 
                 print('done')
@@ -398,3 +413,32 @@ def import_pettycash(request):
         return render(request, 'finance/pettycash/import_pettycash.html')
     else:
         return render(request, 'finance/pettycash/import_pettycash.html')
+
+
+def approve_step(process_id, user_id, date_approved):
+    process = Process.objects.get(id=process_id)
+    user = UserProfile.objects.get(id=user_id)
+    try:
+        latest_approval = process.approval_set.last()
+        if latest_approval is not None:
+            next_step = latest_approval.step.step + 1
+        else:
+            next_step = 1
+    except Step.DoesNotExist:
+        next_step = 1
+    try:
+        step = Step.objects.get(workflow=process.workflow, step=next_step)
+    except Step.DoesNotExist:
+        print('doesnt exist')
+        return False
+    approval = Approval(
+        step=step,
+        user=user,
+        process=process,
+        approved='Approved',
+        # if parameter date_approved is not passed, the default value is the current date and time
+        approved_at=date_approved or datetime.now()
+    )
+    approval.save()
+    print('approved')
+    return True
