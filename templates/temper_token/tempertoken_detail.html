@@ -4,35 +4,32 @@
 {% block content %}
     <head>
         <style>
-      .arrow {
-          position: relative;
-      }
-
-      .arrow::after {
-          content: "";
-          position: absolute;
-          top: 50%;
-          transform: translateY(-50%);
-          width: 0;
-          height: 0;
-          border-top: 15px solid transparent;
-          border-bottom: 15px solid transparent;
-          border-left: 10px solid #3B82F6; /* Adjust arrow color here */
-          left: -10px;
-      }
-
-      .arrow-step::before {
-          content: "";
-          position: absolute;
-          top: 50%;
-          right: -20px;
-          transform: translateY(-50%);
-          width: 0;
-          height: 0;
-          border-top: 10px solid transparent;
-          border-bottom: 10px solid transparent;
-          border-left: 20px solid #3B82F6; /* Adjust arrow color here */
-      }
+    .arrow, .arrow-step {
+        position: relative;
+        {% comment %} margin-left: 5px; /* Adjust this to move the arrows left or right */ {% endcomment %}
+    }
+    
+    .arrow::before, .arrow::after, .arrow-step::before, .arrow-step::after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        width: 0;
+        height: 0;
+        border-top: 15px solid transparent;
+        border-bottom: 15px solid transparent;
+    }
+    
+    .arrow::before, .arrow-step::before {
+        left: 100%;
+        transform: translateY(-50%);
+        border-left: 20px solid #28a745; /* Adjust arrow color here */
+    }
+    
+    .arrow::after, .arrow-step::after {
+        left: 104%;
+        transform: translateY(-50%);
+        border-left: 20px solid #28a745; /* Adjust arrow color here */
+    }
         </style>
     </head>
     <div class="m-auto mt-5 justify-content-center">
@@ -42,42 +39,44 @@
                     <div class="px-6 py-4">
                         <div class="card bg-gradient-to-r from-gulf-blue-100 to-blue-500 mb-3">
                             <h1 class="text-center mb-4 font-bold text-xl  mb-2">Details</h1>
-                            <div class="card-body grid grid-cols-2 gap-2  m-auto mb-5 ed p-3     justify-content-center align-content-stretch container rounded  shadow-lg">
+                            <div class="card-body grid grid-cols-3 gap-2  m-auto mb-5 ed p-3     justify-content-center align-content-stretch container rounded  shadow-lg">
                                 <div class=" text-center">
                                     <p class="font-bold mb-2">Customer</p>
-                                    <p class="font-bold mb-2">Phone Number</p>
+                                    <p class="mb-2 font-normal">{{ tempertoken.customer.name|default_if_none:'' }}</p>
                                     <p class="font-bold mb-2">Address</p>
-                                    <p class="font-bold mb-2">Created at</p>
-                                    <p class="font-bold mb-2">Created By</p>
+                                    <p class="mb-2 font-normal">{{ tempertoken.customer.address|default_if_none:'' }}</p>
                                 </div>
                                 <div>
-                                    <p class="mb-2 font-normal">{{ tempertoken.customer.name|default_if_none:'' }}</p>
+                                    <p class="font-bold mb-2">Phone Number</p>
                                     <p class="mb-2 font-normal">{{ tempertoken.customer.contact_number|default_if_none:'' }}</p>
-                                    <p class="mb-2 font-normal">{{ tempertoken.customer.address|default_if_none:'' }}</p>
-                                    <p class="mb-2 font-normal">{{ tempertoken.created_at|default_if_none:'' }}</p>
-                                    <p class="mb-2 font-normal">
-                                        {% if request.user == tempertoken.created_by %}
-                                            You
-                                        {% elif  tempertoken.created_by.get_full_name %}
-                                            {{ tempertoken.created_by.get_full_name }}
-                                        {% elif request.user == tempertoken.created_by %}
-                                            {{ tempertoken.created_by }}
-                                        {% endif %}
-                                    </p>
-                                </div>
-                                {% if tempertoken.fault_set.first %}
-                                    <p class="font-bold text-center mb-2">Fault :</p>
-                                    <p class="mb-2 font-normal">{{ tempertoken.fault_set.first.description|default_if_none:'' }}</p>
-                                {% endif %}
-                                {% if tempertoken.recover_set.first %}
-                                    <p class="font-bold text-center mb-2">Recovery :</p>
-                                    <p class="mb-2 font-normal">{{ tempertoken.recover_set.first.description|default_if_none:'' }}</p>
-                                {% endif %}
-                                {% if tempertoken.reconnection_set.first %}
-                                    <p class="font-bold text-center mb-2">
-                                        Reconnection:
-                                        <p class="mb-2 font-normal">{{ tempertoken.reconnection_set.first.description|default_if_none:'' }}</p>
+                                    {% if tempertoken.fault_set.first %}
+                                        <p class="font-bold mb-2">Fault :</p>
+                                        <p class="mb-2 font-normal">{{ tempertoken.fault_set.first.description|default_if_none:'' }}</p>
                                     {% endif %}
+                                    {% if tempertoken.recover_set.first %}
+                                        <p class="font-bold text-center mb-2">Recovery :</p>
+                                        <p class="mb-2 font-normal">{{ tempertoken.recover_set.first.description|default_if_none:'' }}</p>
+                                    {% endif %}
+                                    {% if tempertoken.reconnection_set.first %}
+                                        <p class="font-bold text-center mb-2">
+                                            Reconnection:</p>
+                                            <p class="mb-2 font-normal">{{ tempertoken.reconnection_set.first.description|default_if_none:'' }}</p>
+                                        {% endif %}
+                                    </div>
+                                    <div>
+                                        <p class="font-bold mb-2">Created By</p>
+                                        <p class="mb-2 font-normal">
+                                            {% if request.user == tempertoken.created_by %}
+                                                You
+                                            {% elif  tempertoken.created_by.get_full_name %}
+                                                {{ tempertoken.created_by.get_full_name }}
+                                            {% elif request.user == tempertoken.created_by %}
+                                                {{ tempertoken.created_by }}
+                                            {% endif %}
+                                        </p>
+                                        <p class="font-bold mb-2">Created at</p>
+                                        <p class="mb-2 font-normal">{{ tempertoken.created_at|default_if_none:'' }}</p>
+                                    </div>
                                 </div>
                             </div>
                             <h1 class="text-center mb-4 font-bold text-xl  mb-2">Workflow Details</h1>
@@ -107,30 +106,30 @@
                                     </div>
                                 </form>
                             {% endif %}
-                            <div class="card grid grid-cols-5 gap-4">
-                                <div class="px-2 mb-5  border rounded ">
-                                    <div class="card-body   bg-gradient-to-r from-gulf-blue-100 to-green-700  ed  border rounded  container rounded">
-                                        <div class="p-4 font-bold rounded-lg">Created</div>
+                            <div class="card grid grid-cols-5 gap-5">
+                                <div class="  rounded ">
+                                <div class="card-body  arrow bg-gradient-to-r from-gulf-blue-100 to-green-700 ed border rounded container rounded">
+                                        <div class="p-3 font-bold rounded-lg">Created</div>
                                         <div class=" grid grid-cols-2 text-center">
                                             <span class="inline-block rounded-full text-sm">By:
-                                                {% if request.user == tempertoken.created_by %}
+                                                {% if request.user == tempertoken.requested_by %}
                                                     You
-                                                {% elif tempertoken.created_by.get_full_name %}
-                                                    {{ tempertoken.created_by.get_full_name }}
-                                                {% elif request.user == tempertoken.created_by %}
-                                                    {{ tempertoken.created_by }}
+                                                {% elif tempertoken.requested_by.get_full_name %}
+                                                    {{ tempertoken.requested_by.get_full_name }}
+                                                {% elif request.user == tempertoken.requested_by %}
+                                                    {{ tempertoken.requested_by }}
                                                 {% endif %}
                                             </span>
                                         </div>
                                     </div>
-                                       <h1 class="text-center  font-bold text-xl text-blue-500 ">=></h1>
                                 </div>
-                                {% for step in tempertoken.process.workflow.step_set.all %}
-                                    <div class="px-2 mb-5  border rounded ">
+                              
+                                    {% for step in tempertoken.process.workflow.step_set.all %}
+                                    <div class=" mx-3 rounded ">
                                         {% if step.step in approved_steps %}
                                             {% for approval in tempertoken.process.approval_set.all %}
                                                 {% if step == approval.step %}
-                                                    <div class="card-body   bg-gradient-to-r from-gulf-blue-100 to-green-700  ed  border rounded  container rounded">
+                                                    <div class="card-body px-2 arrow bg-gradient-to-r from-gulf-green-100 to-green-700 ed border rounded container rounded">
                                                         <div class=" rounded-lg" title="{{ approval.comment }}">
                                                             <p class="font-bold">{{ step |default_if_none:'' }}</p>
                                                             <br>
@@ -151,7 +150,7 @@
                                                 {% endif %}
                                             {% endfor %}
                                         {% else %}
-                                            <div class="card-body  bg-gradient-to-r from-gulf-blue-100 to-blue-500 ed  border rounded  container rounded ">
+                                        <div class="card-body px-2 arrow bg-gradient-to-r from-gulf-blue-100 to-blue-700 ed border rounded container rounded">
                                                 <div class=" rounded-lg" title="{{ approval.comment }}">
                                                     <p class="font-bold">{{ step |default_if_none:'' }}</p>
                                                     <br>
@@ -159,8 +158,14 @@
                                                 </div>
                                             </div>
                                         {% endif %}
-                                        <h1 class="text-center  font-bold text-xl text-blue-500 mb-0 ">=></h1>
                                     </div>
+                                    {% if step == tempertoken.process.workflow.step_set.last and step == tempertoken.process.approval_set.last.step %}
+                                        <div class="flex justify-center items-center  rounded ">
+                                            <div class="flex justify-center rounded-lg" title="{{ approval.comment }}">
+                                                Compmleted
+                                            </div>
+                                        </div>
+                                    {% endif %}
                                 {% endfor %}
                             </div>
                         </div>
