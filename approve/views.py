@@ -107,7 +107,7 @@ def approve_step(request, process_id):
                 return redirect('purchase_request:purchase_request_detail', process.purchaserequest_set.last().id)
            
             if process.workflow.name == 'tokens':
-                return redirect('tempertoken:tempertoken', process.tempertoken_set.last().id)
+                return redirect('tokens:token', process.token_set.last().id)
             elif process.workflow.name == 'pettycash':
                 return redirect('pettycash:pettycash_detail', process.pettycash_set.last().id)
 

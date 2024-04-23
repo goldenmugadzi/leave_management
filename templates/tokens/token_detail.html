@@ -38,53 +38,53 @@
                 <div class="card-body m-auto mb-5 p-3      container rounded  shadow-lg">
                     <div class="px-6 py-4">
                         <div class="card bg-gradient-to-r from-gulf-blue-100 to-blue-500 mb-3">
-                            <h1 class="text-center mb-4 font-bold text-xl  mb-2">Details</h1>
+                            <h1 class="text-center mb-4 font-bold text-xl  mb-2">{{ token.kind|default_if_none:'' }} TOKEN </h1>
                             <div class="card-body grid grid-cols-3 gap-2  m-auto mb-5 ed p-3     justify-content-center align-content-stretch container rounded  shadow-lg">
                                 <div class=" text-center">
                                     <p class="font-bold mb-2">Customer</p>
-                                    <p class="mb-2 font-normal">{{ tempertoken.customer.name|default_if_none:'' }}</p>
+                                    <p class="mb-2 font-normal">{{ token.customer.name|default_if_none:'' }}</p>
                                     <p class="font-bold mb-2">Address</p>
-                                    <p class="mb-2 font-normal">{{ tempertoken.customer.address|default_if_none:'' }}</p>
+                                    <p class="mb-2 font-normal">{{ token.customer.address|default_if_none:'' }}</p>
                                 </div>
                                 <div>
                                     <p class="font-bold mb-2">Phone Number</p>
-                                    <p class="mb-2 font-normal">{{ tempertoken.customer.contact_number|default_if_none:'' }}</p>
-                                    {% if tempertoken.fault_set.first %}
+                                    <p class="mb-2 font-normal">{{ token.customer.contact_number|default_if_none:'' }}</p>
+                                    {% if token.fault_set.first %}
                                         <p class="font-bold mb-2">Fault :</p>
-                                        <p class="mb-2 font-normal">{{ tempertoken.fault_set.first.description|default_if_none:'' }}</p>
+                                        <p class="mb-2 font-normal">{{ token.fault_set.first.description|default_if_none:'' }}</p>
                                     {% endif %}
-                                    {% if tempertoken.recover_set.first %}
+                                    {% if token.recover_set.first %}
                                         <p class="font-bold text-center mb-2">Recovery :</p>
-                                        <p class="mb-2 font-normal">{{ tempertoken.recover_set.first.description|default_if_none:'' }}</p>
+                                        <p class="mb-2 font-normal">{{ token.recover_set.first.description|default_if_none:'' }}</p>
                                     {% endif %}
-                                    {% if tempertoken.reconnection_set.first %}
+                                    {% if token.reconnection_set.first %}
                                         <p class="font-bold text-center mb-2">
                                             Reconnection:</p>
-                                            <p class="mb-2 font-normal">{{ tempertoken.reconnection_set.first.description|default_if_none:'' }}</p>
+                                            <p class="mb-2 font-normal">{{ token.reconnection_set.first.description|default_if_none:'' }}</p>
                                         {% endif %}
                                     </div>
-                                    <div>
+                                    <div >
                                         <p class="font-bold mb-2">Created By</p>
                                         <p class="mb-2 font-normal">
-                                            {% if request.user == tempertoken.created_by %}
+                                            {% if request.user == token.created_by %}
                                                 You
-                                            {% elif  tempertoken.created_by.get_full_name %}
-                                                {{ tempertoken.created_by.get_full_name }}
-                                            {% elif request.user == tempertoken.created_by %}
-                                                {{ tempertoken.created_by }}
+                                            {% elif  token.created_by.get_full_name %}
+                                                {{ token.created_by.get_full_name }}
+                                            {% elif request.user == token.created_by %}
+                                                {{ token.created_by }}
                                             {% endif %}
                                         </p>
                                         <p class="font-bold mb-2">Created at</p>
-                                        <p class="mb-2 font-normal">{{ tempertoken.created_at|default_if_none:'' }}</p>
+                                        <p class="mb-2 font-normal">{{ token.created_at|default_if_none:'' }}</p>
                                     </div>
                                 </div>
                             </div>
                             <h1 class="text-center mb-4 font-bold text-xl  mb-2">Workflow Details</h1>
-                            <p class="font-bold  mb-2">Workflow name : {{ tempertoken.process.workflow }}</p>
+                            <p class="font-bold  mb-2">Workflow name : {{ token.process.workflow }}</p>
                             {% if approvalForm %}
                                 <form class="row rounded py-4 border  rounded-lg p-3 m-auto container"
                                       method="POST"
-                                      action="{% url 'approve:approve' tempertoken.process.id %}"
+                                      action="{% url 'approve:approve' token.process.id %}"
                                       enctype="multipart/form-data">
                                     {% csrf_token %}
                                     <div class=" m-auto container  ">
@@ -109,28 +109,28 @@
                             <div class="card grid grid-cols-5 gap-5">
                                 <div class="  rounded ">
                                 <div class="card-body  arrow bg-gradient-to-r from-gulf-blue-100 to-green-700 ed border rounded container rounded">
-                                        <div class="p-3 font-bold rounded-lg">Created</div>
+                                            <div class="p-3 font-bold rounded-lg">Created</div>
                                         <div class=" grid grid-cols-2 text-center">
                                             <span class="inline-block rounded-full text-sm">By:
-                                                {% if request.user == tempertoken.requested_by %}
+                                                {% if request.user == token.requested_by %}
                                                     You
-                                                {% elif tempertoken.requested_by.get_full_name %}
-                                                    {{ tempertoken.requested_by.get_full_name }}
-                                                {% elif request.user == tempertoken.requested_by %}
-                                                    {{ tempertoken.requested_by }}
-                                                {% endif %}
+                                                {% elif token.requested_by.get_full_name %}
+                                                    {{ token.requested_by.get_full_name }}
+                                                {% elif request.user == token.requested_by %}
+                                                    {{ token.requested_by }}
+                                                {% endif %} <i class="fas fa-check-circle text-green-500">  </i> 
                                             </span>
                                         </div>
                                     </div>
                                 </div>
                               
-                                    {% for step in tempertoken.process.workflow.step_set.all %}
+                                    {% for step in token.process.workflow.step_set.all %}
                                     <div class=" mx-3 rounded ">
                                         {% if step.step in approved_steps %}
-                                            {% for approval in tempertoken.process.approval_set.all %}
+                                            {% for approval in token.process.approval_set.all %}
                                                 {% if step == approval.step %}
-                                                    <div class="card-body px-2 arrow bg-gradient-to-r from-gulf-green-100 to-green-700 ed border rounded container rounded">
-                                                        <div class=" rounded-lg" title="{{ approval.comment }}">
+                                                    <div class="card-body px-2 arrow bg-gradient-to-r from-gulf-blue-100 to-green-700 ed border rounded container rounded">
+                                           <div class=" rounded-lg" title="{{ approval.comment }}">
                                                             <p class="font-bold">{{ step |default_if_none:'' }}</p>
                                                             <br>
                                                         </div>
@@ -143,9 +143,10 @@
                                                                     {{ approval.user.get_full_name }}
                                                                 {% elif request.user == approval.user %}
                                                                     {{ approval.user }}
-                                                                {% endif %}
+                                                                {% endif %} <i class="fas fa-check-circle text-green-500">  </i> 
                                                             </span>
                                                         </div>
+                                            
                                                     </div>
                                                 {% endif %}
                                             {% endfor %}
@@ -154,15 +155,16 @@
                                                 <div class=" rounded-lg" title="{{ approval.comment }}">
                                                     <p class="font-bold">{{ step |default_if_none:'' }}</p>
                                                     <br>
-                                                    {% if step.to %}<span class="inline-block rounded-full text-sm">To {{ step.to|default_if_none:'' }}</span>{% endif %}
+                                                    {% if step.to %}<span class="inline-block rounded-full text-sm">To {{ step.to|default_if_none:'' }}  <i class="fas fa-circle-notch fa-spin text-blue-500"></i>  </span>{% endif %}
                                                 </div>
                                             </div>
                                         {% endif %}
                                     </div>
-                                    {% if step == tempertoken.process.workflow.step_set.last and step == tempertoken.process.approval_set.last.step %}
+                                    {% if step == token.process.workflow.step_set.last and step == token.process.approval_set.last.step %}
                                         <div class="flex justify-center items-center  rounded ">
                                             <div class="flex justify-center rounded-lg" title="{{ approval.comment }}">
-                                                Compmleted
+                                                Completed
+                                                <i class="fas fa-check-circle text-green-500"></i>
                                             </div>
                                         </div>
                                     {% endif %}
