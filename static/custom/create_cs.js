@@ -34,6 +34,9 @@ class CreateCS extends React.Component {
       rankingTable: false,
       rankings: [],
 
+      committeeTable: false,
+      committee: [],
+
       pr_items: [],
       suppliers: [],
       procurement_plans: [],
@@ -46,14 +49,19 @@ class CreateCS extends React.Component {
   }
 
   componentDidMount() {
+    console.log("props: ", this.props);
     this.setState({
       username: this.props.username,
+      pr_number: this.props.prid,
     });
-    this.getCreateData();
+    this.getCreateData(this.props.prid);
   }
 
-  getCreateData = () => {
-    fetch(`http://localhost:8000/comparative_schedule/create_data`)
+  getCreateData = (pr_id) => {
+    
+    console.log("cs pr_id: ", pr_id);
+
+    fetch(`http://localhost:8000/comparative_schedule/create_data/${pr_id}`)
       .then((response) => response.json())
       .then((data) => {
         console.log("data: ", data);
@@ -744,6 +752,7 @@ class CreateCS extends React.Component {
     var bidsModal = null;
     var complianceTable = null;
     var rankingTable = null;
+
 
     if (this.state.addItemsModal) {
       itemsModal = (
@@ -1998,4 +2007,5 @@ class CreateCS extends React.Component {
 
 const domContainer = document.querySelector("#create_comparative_schedule");
 const username = domContainer.getAttribute("data-username");
-ReactDOM.render(e(CreateCS, { username }), domContainer);
+const prid = domContainer.getAttribute("data-prid");
+ReactDOM.render(e(CreateCS, { username, prid }), domContainer);

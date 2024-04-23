@@ -22,8 +22,11 @@ var CreateCS = function (_React$Component) {
 
     var _this = _possibleConstructorReturn(this, (CreateCS.__proto__ || Object.getPrototypeOf(CreateCS)).call(this, props));
 
-    _this.getCreateData = function () {
-      fetch("http://localhost:8000/comparative_schedule/create_data").then(function (response) {
+    _this.getCreateData = function (pr_id) {
+
+      console.log("cs pr_id: ", pr_id);
+
+      fetch("http://localhost:8000/comparative_schedule/create_data/" + pr_id).then(function (response) {
         return response.json();
       }).then(function (data) {
         console.log("data: ", data);
@@ -673,6 +676,9 @@ var CreateCS = function (_React$Component) {
       rankingTable: false,
       rankings: [],
 
+      committeeTable: false,
+      committee: [],
+
       pr_items: [],
       suppliers: [],
       procurement_plans: [],
@@ -688,10 +694,12 @@ var CreateCS = function (_React$Component) {
   _createClass(CreateCS, [{
     key: "componentDidMount",
     value: function componentDidMount() {
+      console.log("props: ", this.props);
       this.setState({
-        username: this.props.username
+        username: this.props.username,
+        pr_number: this.props.prid
       });
-      this.getCreateData();
+      this.getCreateData(this.props.prid);
     }
   }, {
     key: "onSelectChange",
@@ -2642,4 +2650,5 @@ var CreateCS = function (_React$Component) {
 
 var domContainer = document.querySelector("#create_comparative_schedule");
 var username = domContainer.getAttribute("data-username");
-ReactDOM.render(e(CreateCS, { username: username }), domContainer);
+var prid = domContainer.getAttribute("data-prid");
+ReactDOM.render(e(CreateCS, { username: username, prid: prid }), domContainer);

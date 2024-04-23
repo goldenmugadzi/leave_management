@@ -17,12 +17,11 @@ def save_file(f, file_path):
     else:
         return False
     
-def get_create_data(request):
+def get_create_data(request, pr_id):
 
     proc_plans = ProcPlan.objects.all()
     suppliers = Supplier.objects.all()
-    
-    pr_id = "PR171353283620877" #request.GET.get('pr_id', None)
+
     purchase_request = PurchaseRequest.objects.filter(id=pr_id).first()
     pr_items = PrItem.objects.filter(purchase_request=purchase_request).all()
 
@@ -34,19 +33,22 @@ def get_create_data(request):
             "suppliers": list(suppliers.values('id', 'name'))
         }, safe=False)
 
-# Create your views here.
-def create(request):
+def get_create_cs(request, pr_id):
+
+    print("get_create_cs pr_id: ", pr_id)
+    # get proc plans
+    proc_plans = ProcPlan.objects.all()
+    username = request.user.username
     
-    if request.method == "GET":
-        # get proc plans
-        proc_plans = ProcPlan.objects.all()
-        username = request.user.username
-        
-        return render(request, 'finance/comparative_schedules/cs_create.html', {
-            "proc_plans": proc_plans,
-            "username": username
-        })
-    elif request.method == "POST":
+    return render(request, 'finance/comparative_schedules/cs_create.html', {
+        "proc_plans": proc_plans,
+        "username": username,
+        "pr_id": pr_id,
+    })
+
+def create(request):
+
+    if request.method == "POST":
         tender_id = "CS" + datetime.now().strftime("%Y%m%d%I%M%S")
         advert_file = request.FILES['advert']
         bid_document_file = request.FILES['advert']
@@ -156,7 +158,7 @@ def create(request):
             return redirect('add_supplier', tender_id=tender_id)
             
         return render(request, 'finance/comparative_schedules/cs_create.html', {
-            "proc_plans": proc_plans,
+            "proc_plans": None,
         })
         
 def save_comparative_schedule(request):
@@ -228,7 +230,6 @@ def save_comparative_schedule(request):
             "success": False,
             }, safe=False)
    
-
 def update_comparative_schedule(request):
 
     try:

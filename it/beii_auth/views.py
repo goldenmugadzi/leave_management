@@ -43,18 +43,18 @@ APPLICATIONS = [
         "iconUrl": "assets/images/quotation.png",
         "url": "/purchase_requests"
     },
-    {
-        "name": "comperative_schedule",
-        "title": "Comperative Schedule",
-        "iconUrl": "assets/images/bid.png",
-        "url": "/comparative_schedule/create_schedule/"
-    },
-    {
-        "name": "direct_purchases",
-        "title": "Direct Purchases",
-        "iconUrl": "assets/images/direct-marketing.png",
-        "url": "#"
-    }
+    # {
+    #     "name": "comperative_schedule",
+    #     "title": "Comperative Schedule",
+    #     "iconUrl": "assets/images/bid.png",
+    #     "url": "/comparative_schedule/create_schedule/"
+    # },
+    # {
+    #     "name": "direct_purchases",
+    #     "title": "Direct Purchases",
+    #     "iconUrl": "assets/images/direct-marketing.png",
+    #     "url": "#"
+    # }
 ]
 
 # Create your views here.
