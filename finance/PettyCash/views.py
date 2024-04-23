@@ -359,7 +359,12 @@ def import_pettycash(request):
                     print("now dealing with approvals")
                     # add the date created to the pettycash process
                     pettycash = Pettycash.objects.filter(petty_id=voucher_id).first()
-                    pettycash.date_created = update_date1
+                    # if pettycash exists then update the pettycash process with the date created modify the date created
+                    # to the date created in the pettycash modify update_date1 to form a date object yyyy-mm-dd
+                    if pettycash and update_date1 != '0000-00-00 00:00:00':
+                        update_date1 = datetime.strptime(update_date1, '%Y-%m-%d')
+                        pettycash.date_created = update_date1
+                        print('date created', pettycash.date_created)
 
                     process = Pettycash.objects.filter(petty_id=voucher_id).first().process
                     # this is the first step of the approval
@@ -418,6 +423,11 @@ def import_pettycash(request):
 def approve_step(process_id, user_id, date_approved):
     process = Process.objects.get(id=process_id)
     user = UserProfile.objects.get(id=user_id)
+    # parse the date into year, month and day
+    if date_approved != '0000-00-00 00:00:00':
+        date_approved = datetime.strptime(date_approved, '%Y-%m-%d')
+    else:
+        date_approved = datetime.now()
     try:
         latest_approval = process.approval_set.last()
         if latest_approval is not None:
