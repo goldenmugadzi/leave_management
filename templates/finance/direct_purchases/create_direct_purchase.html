@@ -1,0 +1,57 @@
+{% extends "admin_layout.html" %}{% load static %}
+
+{% block content %}
+
+<div class=" m-auto mt-5  ">
+  <form class="row rounded py-4 border  bg-gulf-blue-100 p-3 m-auto  container" method="POST" action="" enctype="multipart/form-data">
+    {% csrf_token %}
+   <div class=" m-auto container justify-content-stretch align-content-stretch ">
+    <div class="mx-10 my-3 d-flex col-span-4 ">
+      {% for field in form %}
+        <div class="rounded row py-2 my-3 ">
+          {% if field.is_hidden %}
+            {{ field }}
+          {% else %}
+            <div class="gap-4  m-auto grid grid-cols-3  "> 
+              {{ field.label_tag }}
+              {{ field }}
+              <div class="text-red-500">
+                {{ field.errors }}
+              </div>
+          {% endif %}
+        </div>
+      {% endfor %}
+      </div>  
+    </div> 
+     <div class="m-10 justify-content-stretch align-content-stretch">
+            {{ formset.management_form }}
+            
+            {% for form in formset  %}
+            {% for field in form %}
+            <div class="rounded row py-2 my-3 ">
+              {% if field.is_hidden %}
+                {{ field }}
+              {% else %}
+                <div class="gap-4  m-auto grid grid-cols-3  "> 
+                  {{ field.label_tag }}
+                  {{ field }}
+                  <div class="text-red-500">
+                    {{ field.errors }}
+                  </div>
+              {% endif %}
+            </div>
+          {% endfor %}
+            {% endfor %}
+              
+        </div>
+     <br>
+     <div class="m-auto justify-content-stretch text-center align-content-stretch">
+      <a class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded" href="/dashboard">Back</a>
+      <input class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded" type="submit" value="Submit">
+  </div>
+  </form>
+</div>
+
+
+
+{% endblock %}

@@ -14,7 +14,8 @@ class ClauseAdmin(admin.ModelAdmin):
     list_display = ('id', 'name', )
 @admin.register(Question)
 class QuestionAdmin(admin.ModelAdmin):
-    list_display = ('clause', 'id', 'description', 'maintained_info', 'retained_info', )
+    list_display = ( 'id', 'description', 'maintained_info', 'retained_info', )
 @admin.register(Topic)
 class TopicAdmin(admin.ModelAdmin):
     list_display = ('id', 'name', )
+    

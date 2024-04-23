@@ -2,8 +2,7 @@ from django.db import models
 from datetime import date
 from django.contrib.auth.models import AbstractUser
 from django.utils import timezone
-from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
-
+from django.contrib.auth.models import BaseUserManager
 
 class UserManager(BaseUserManager):
     def create_user(self, username, password=None, **extra_fields):
@@ -19,6 +18,7 @@ class UserManager(BaseUserManager):
         extra_fields.setdefault('is_superuser', True)
         return self.create_user(username, password, **extra_fields)
 
+
 class Regions(models.Model):
     region = models.CharField(max_length=100)
     code = models.CharField(max_length=100, blank=True)
@@ -28,6 +28,8 @@ class Regions(models.Model):
 
     class Meta:
         app_label = 'users'
+
+
 class Districts(models.Model):
     district = models.CharField(max_length=100)
     code = models.CharField(max_length=100)
@@ -65,12 +67,19 @@ class Depots(models.Model):
     class Meta:
         app_label = 'users'
 
+class Application(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+    fullname = models.CharField(max_length=100, blank=True)
+
+    def __str__(self):
+        return self.name
 
 class Roles(models.Model):
     role = models.CharField(max_length=100)
     name = models.CharField(max_length=100)
     description = models.CharField(max_length=400)
     application = models.CharField(max_length=100)
+    app_id = models.ForeignKey(Application, on_delete=models.DO_NOTHING, blank=True, null=True)
 
     def __str__(self):
         return self.role
@@ -83,13 +92,12 @@ class Designations(models.Model):
     identifier = models.CharField(max_length=100, blank=True)
     description = models.CharField(max_length=100, blank=True)
     chk = models.CharField(max_length=100, blank=True)
-
+    section = models.ForeignKey(Sections, on_delete=models.DO_NOTHING, blank=True, null=True)
     def __str__(self):
         return self.identifier
 
     class Meta:
         app_label = 'users'
-
 
 class UserProfile(AbstractUser):
     username = models.CharField(max_length=15, unique=True, verbose_name='EC Number')
@@ -107,7 +115,8 @@ class UserProfile(AbstractUser):
             return f"{self.first_name} {self.last_name}"
         else:
             return self.username
-   
+
+
 class Notification(models.Model):
     user = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
     message = models.TextField()
@@ -120,6 +129,7 @@ class Notification(models.Model):
 
     class Meta:
         app_label = 'users'
+
 
 class Supplier(models.Model):
     name = models.CharField(max_length=100, unique=True)

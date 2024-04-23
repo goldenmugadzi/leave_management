@@ -1,5 +1,6 @@
 import csv
-from datetime import datetime
+import random
+from datetime import datetime, timedelta
 import json
 import simplejson as jsons
 from django.core import serializers
@@ -12,6 +13,7 @@ from .models import PBNC, TD, UPO, Inspections, Maintenance
 from django.core import serializers
 from django.db.models import Count
 from django.db.models.functions import ExtractWeek
+from django.db.models import Q  # Import Q object for complex filtering
 from django.contrib.auth.decorators import login_required
 
 from it.users.models import Sections, UserProfile, Depots, Districts, Regions
@@ -19,6 +21,300 @@ from it.users.models import Sections, UserProfile, Depots, Districts, Regions
 MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
 
 # Create your views here.
+def get_random_date(start_date, end_date):
+    """
+    Returns a random date between start_date and end_date (inclusive).
+    """
+    days_between = (end_date - start_date).days
+    random_days = random.randint(0, days_between)
+    random_date = start_date + timedelta(days=random_days)
+    return random_date.strftime("%Y-%m-%d")
+
+
+def setup_random_data(request):
+    regions_ = Regions.objects.all()
+    districts_ = Districts.objects.all()
+    depots_ = Depots.objects.all()
+    locations = [
+        "Alex Park - Part",
+        "Alex Park - Part",
+        "Amalinda",
+        "Amalinda Farm",
+        "Ambleside",
+        "Amby",
+        "Arbour Cres",
+        "Art Farm",
+        "Ashbritle",
+        "Ashdown Park",
+        "Athlone",
+        "Athlone - Part",
+        "Avenues",
+        "Avondale",
+        "Avondale West",
+        "Avonlea - Part",
+        "Avonlea West",
+        "Ballantyne Park",
+        "Bannockburn",
+        "Barrington Rd Area",
+        "Belgravia",
+        "Belvedere",
+        "Borrowdale",
+        "Borrowdale Brook",
+        "Borrowdale N",
+        "Bothashof",
+        "Budiriro",
+        "Carrick",
+        "Chadcombe",
+        "Chedgelow",
+        "Chikurubi",
+        "Chiltern Hill",
+        "Chishawasha",
+        "Chishawasha",
+        "Chisipite",
+        "Colne Valley",
+        "Colne Valley",
+        "Colray",
+        "Colray",
+        "Coronation Park",
+        "Glen Norah",
+        "Glen Norah A - Part",
+        "Glen Wood",
+        "Glenview",
+        "Glenview - Part",
+        "Greendale - Part",
+        "Greendale - Part",
+        "Greendale - Part",
+        "Greendcroft",
+        "Greengrove",
+        "Greystone Park",
+        "Grobbie Park",
+        "Groombridge",
+        "Guildform Estate",
+        "Gunhill",
+        "Haig Park",
+        "Harare Rd W",
+        "Harava Dam",
+        "Hatcliffe",
+        "Hatfield West",
+        "Hat-Twentydales -Part",
+        "Hatlands Farm",
+        "Helensvale",
+        "Helensvale S",
+        "Highfield",
+        "Highlands - Part",
+        "Highlands - Part",
+        "Highlands - Part",
+        "Hillside",
+        "Hopley",
+        "Hunyani Poort",
+        "Induna",
+        "Ingwe Farm",
+        "Jerusalem",
+        "Kambuzuma",
+        "Kambuzuma",
+        "Kambuzuma South",
+        "Kensington",
+        "Kensington",
+        "Kingsmead",
+        "Mabvuku",
+        "Machipisa",
+        "Malvern",
+        "Mandalay Park",
+        "Mandara",
+        "Marimba Park",
+        "Marlborough",
+        "Mayfield Park",
+        "Mbare",
+        "Merwede",
+        "Meyrick Park",
+        "Midlands",
+        "Milton Park",
+        "Monavale",
+        "Msasa Park",
+        "Mt Pleasant & Heights",
+        "Mt Hampden",
+        "Matidoda",
+        "Mufakose",
+        "Mutare Rd",
+        "Newlands",
+        "Newlands East",
+        "Northwood",
+        "Old Highfields",
+        "Pangula",
+        "Paradise Park",
+        "Park Meadowlands",
+        "Parkridge",
+        "Parkridge Estate",
+        "Parktown",
+        "Pension Farm",
+        "Pension Farm",
+        "Pomona",
+        "Prospect East",
+        "Prospect West",
+        "Queensdale",
+        "Quinnington",
+        "Quinnington S",
+        "Rambabvu",
+        "Reiforntein",
+        "Sherwood Park - Part",
+        "Somerby Area",
+        "Spring Heights",
+        "Stanbury Park",
+        "Startmore Farm",
+        "Stoneridge Rd",
+        "Strathaven",
+        "Sunridge",
+        "Tafara",
+        "The Grange",
+        "Thornpark",
+        "Twentydales Ext.",
+        "Tynwald North",
+        "Tynwald South",
+        "Umwinsidale",
+        "Uplands",
+        "Upper Mt Hampden",
+        "Upper Reaches Rd",
+        "Vainona",
+        "Valencedene",
+        "Waldon Area",
+        "Warren Park",
+        "Warren Park - Part",
+        "Warren Park - Part",
+        "Warren Park E",
+        "Waterfalls",
+        "Westlea",
+        "Westwood",
+        "Widdecombe",
+        "Wilmington Park",
+        "Winchdon",
+        "Southlea Park",
+        "Rydale Ridge",
+        "Whitecliffe",
+        "Southerton Residential",
+        "Cotswold Hills",
+        "Cranborne Park",
+        "Creagh",
+        "Crowborough",
+        "Crowborough Estate",
+        "Crowhill",
+        "Draycot",
+        "Dzivaresekwa",
+        "Eastlea",
+        "Eastlea",
+        "Emerald Hill",
+        "Epworth",
+        "Getwyn",
+        "Glen Lorne",
+        "Glen Lorne West",
+        "Zengeza 1, 2,3, 4 & 5",
+        "Zengeza 5 Ext",
+        "Guzha",
+        "Unit J",
+        "St Mary’s",
+        "Manyame Park",
+        "Kintyre",
+        "Komani",
+        "Kutsaga",
+        "Kuwadzana",
+        "Lake Chivero",
+        "Langford Farm",
+        "Lewisam",
+        "Lincoln Green",
+        "Little Norfolk",
+        "Logan Park",
+        "Lonchinvar",
+        "Luna",
+        "Lusaka",
+        "Mabelreign",
+        "Mabelreign N",
+        "Reiforntein - Part",
+        "Rhodesville",
+        "Ridgeview",
+        "Rolf Valley South",
+        "Rolf Valley N",
+        "Ruwa",
+        "Ruwa",
+        "S Mazorodze Areas",
+        "Safron Area",
+        "San Souci Rd Area",
+        "San Souci Rd Area",
+        "Seki Rd Area",
+        "Seki Rd N",
+        "Sentosa",
+        "Sherwood Park - Part",
+        "Seke Unit A, B, C, D, E",
+        "Seke Unit F, G Old",
+        "Seke Unit K, L, M",
+        "Town Centre",
+        "Seke Unit B, Makoni",
+        "Seke Unit M,N, O, P",
+        "Police Flats, Unit B",
+        "Murisa T/Ship, Dema",
+        "Manyame Park",
+        "St Mary’s",
+        "Mayambara",
+        "GDC",
+        "Jaggers, Chibuku, DMB",
+        "Southern Granite",
+        "Sewage Works",
+        "Surface Investments",
+        "Parts of Unit K",
+        "22 Miles",
+        "3 Brigade",
+        "3-2 Battalion",
+        "4 Brigade",
+        "Adams Barracks",
+        "Africa University",
+        "All of Masvingo Province",
+        "Anderson school",
+        "Arda Transau",
+        "Avila",
+        "Bangala",
+        "Bangazani Dam",
+        "Bannockburn",
+        "Bende",
+        "Bikita",
+        "Bikita Minerals",
+        "Bikita Village",
+        "Birchenough Bridge",
+        "Birthday Mine",
+        "BNR",
+        "Bonda",
+        "Bonda Irrigation",
+        "Bordervale",
+        "Buffalo Range",
+        "Buhera",
+        "Bumba",
+        "Burma Valley"
+    ]
+
+    depots = depots_.values_list("depot", flat=True)
+    districts = districts_.values_list("district", flat=True)
+    regions = regions_.values_list("region", flat=True)
+    data = []
+
+    for _ in range(1000):
+        location = random.choice(locations)
+        depot = random.choice(depots)
+        district = random.choice(districts)
+        region = random.choice(regions)
+        
+        start_date = datetime(2024, 1, 1)
+        end_date = datetime(2024, 12, 30)
+        random_date = get_random_date(start_date, end_date)
+        created_at = random_date
+        
+        data.append([location, depot, district, region, created_at])
+
+    # Save the data as a CSV file
+    filename = "maintenance_data.csv"
+    with open(filename, "w", newline="") as file:
+        writer = csv.writer(file)
+        writer.writerow(["location", "depot", "district", "region", "created_at"])  # Write header
+        writer.writerows(data)
+
+    print(f"Data has been saved as {filename}")
+
 def get_regions(request):
     regions = Regions.objects.all()
     districts = Districts.objects.all()
@@ -56,6 +352,49 @@ def dashboard_data(request):
     
     # loop through maintences and foreach get record count from Files.
     maintenance_keys_list, maintenance_values_list = get_maintenance_linegraph(user_profile, month_id)
+    print("mmt: ", maintenance_keys_list, maintenance_values_list)
+
+    data = {
+            "pbncs": list(pbncs.values('id', 'name', 'amount', 'depot', 'district', 'region', 'created_at')),
+            "tds": list(tds.values('id', 'name', 'amount', 'depot', 'district', 'region', 'created_at')),
+            "upos": list(upos.values('id', 'description', 'depot', 'district', 'region', 'created_at')),
+            "inspection_locations": inspection_locations, 
+            "inspections_count": inspections_count,
+            "mtn": mtn, 
+            "maintenance_count": maintenance_values_list, 
+            "maintenance_locations": maintenance_keys_list
+        }
+
+    return JsonResponse(data, safe=False)
+
+
+def dashboard_filters(request):
+    
+    data = json.loads(request.body)
+    selected_region = data.get('region', None)
+    selected_district = data.get('district', None)
+    selected_depot = data.get('depot', None)
+    
+    user = request.user
+    user_profile = UserProfile.objects.filter(id=user.id).first()
+
+    # fetch pbnc data
+    pbncs = PBNC.objects.all().order_by('-amount')
+    tds = TD.objects.all().order_by('-amount')
+    upos = UPO.objects.all()
+    
+    month_id = datetime.now().month
+    mtn = get_mmt_filter(selected_region, selected_district, selected_depot, month_id, user_profile)
+    
+    keys_list, values_list = get_inspections_bargraph_filter(selected_region, selected_district, selected_depot, month_id, user_profile)
+
+    inspection_locations = keys_list
+    inspections_count = values_list
+    print("inspections_count: ", inspections_count)
+    
+    # loop through maintences and foreach get record count from Files.
+    maintenance_keys_list, maintenance_values_list = get_maintenance_linegraph_filter(selected_region, selected_district, selected_depot, month_id, user_profile)
+    # print("mmt: ", maintenance_keys_list, maintenance_values_list)
 
     data = {
             "pbncs": list(pbncs.values('id', 'name', 'amount', 'depot', 'district', 'region', 'created_at')),
@@ -100,22 +439,22 @@ def dashboard_index(request):
         "name": MONTHS[month_id-1]
     }
     
-    inspections = get_inspections(user_profile, month_id)
-    maintenance_ = get_mmts(user_profile, month_id)
-    mtn = get_mmt(user_profile, month_id)
-    print("mtn: ", mtn)
+    # inspections = get_inspections(user_profile, month_id)
+    # maintenance_ = get_mmts(user_profile, month_id)
+    # mtn = get_mmt(user_profile, month_id)
+    # print("mtn: ", mtn)
     
-    keys_list, values_list = get_inspections_bargraph(user_profile, month_id)
+    # keys_list, values_list = get_inspections_bargraph(user_profile, month_id)
 
-    inspection_locations = keys_list
-    inspections_count = values_list
+    # inspection_locations = keys_list
+    # inspections_count = values_list
     
-    # loop through maintences and foreach get record count from Files.
-    maintenance_keys_list, maintenance_values_list = get_maintenance_linegraph(user_profile, month_id)
+    # # loop through maintences and foreach get record count from Files.
+    # maintenance_keys_list, maintenance_values_list = get_maintenance_linegraph(user_profile, month_id)
     
-    regions_json = json.dumps(list(regions.values('id', 'region')))
-    districts_json = json.dumps(list(districts.values('id', 'district')))
-    sections_json = json.dumps(list(sections.values('id', 'section')))
+    # regions_json = json.dumps(list(regions.values('id', 'region')))
+    # districts_json = json.dumps(list(districts.values('id', 'district')))
+    # sections_json = json.dumps(list(sections.values('id', 'section')))
 
     return render(request, 
                   'dashboards/index.html', 
@@ -130,20 +469,10 @@ def dashboard_index(request):
                       "depot": depot,
                       "district": district,
                       "region": region,
-                    "regions_json": regions_json,
-                    "districts_json": districts_json,
-                    "sections_json": sections_json,
                       "current_month": current_month,
                       "pbncs": pbncs, 
                       "tds": tds, 
-                      "upos": upos, 
-                      "inspection_locations": inspection_locations, 
-                      "inspections_count": inspections_count,
-                      "mtn": json.dumps(mtn, default=str), 
-                      "maintenance_count": maintenance_values_list, 
-                      "maintenance_locations": maintenance_keys_list, 
-                      "maintenance_": serializers.serialize('json', maintenance_), 
-                      "inspections_": serializers.serialize('json', inspections) 
+                      "upos": upos
                   })
 
 def dashboard_filter(request, item):
@@ -172,7 +501,7 @@ def dashboard_filter(request, item):
         district_ = district_query
         district = district_query.district
         page_title = district
-        pbncs = PBNC.objects.filter(district=district).all().order_by('-amount')
+        pbncs = PBNC.objects.filter(region=region_query, district=district_query, depot=depot_query).all().order_by('-amount')
         tds = TD.objects.filter(district=district).all().order_by('-amount')
         upos = UPO.objects.filter(district=district).all()
         inpections = Inspections.objects.filter(district=district).all()
@@ -275,6 +604,54 @@ def dashboard_filter(request, item):
                       "inspections_": serializers.serialize('json', inpections) 
                   })
 
+def on_filter(request, item):
+
+    month_id = datetime.now().month
+    current_month = {
+        "id": month_id,
+        "name": MONTHS[month_id-1]
+    }
+
+
+    region_id = request.POST['selectedRegion']
+    district_id = request.POST['selectedDistrict']
+    depot_id = request.POST['selectedDepot']
+    
+    region_query = Regions.objects.filter(id=region_id).first()
+    district_query = Districts.objects.filter(id=district_id).first()
+    depot_query = Depots.objects.filter(id=depot_id).first()
+    
+    pbncs = PBNC.objects.filter(region=region_query, district=district_query, depot=depot_query).all().order_by('-amount')
+    tds = TD.objects.filter(region=region_query, district=district_query, depot=depot_query).all().order_by('-amount')
+    upos = UPO.objects.filter(region=region_query, district=district_query, depot=depot_query).all()
+    inpections = Inspections.objects.filter(region=region_query, district=district_query, depot=depot_query).all()
+    maintenance_ = Maintenance.objects.filter(region=region_query, district=district_query, depot=depot_query).all()
+    # here
+    depots = Depots.objects.filter(region_id=region_query, district_id=district_query).all()
+
+    keys_list, values_list = get_inspections_monthly(inpections, month_id)
+    
+    # loop through maintences and foreach get record count from Files.
+    maintenance_keys_list, maintenance_values_list = get_mmt_monthly(maintenance_, month_id)
+    
+    mtn = get_mmt_weekly(depots, month_id)
+    
+    inspection_locations = keys_list
+    inspections_count = values_list
+
+    data = {
+            "pbncs": list(pbncs.values('id', 'name', 'amount', 'depot', 'district', 'region', 'created_at')),
+            "tds": list(tds.values('id', 'name', 'amount', 'depot', 'district', 'region', 'created_at')),
+            "upos": list(upos.values('id', 'description', 'depot', 'district', 'region', 'created_at')),
+            "inspection_locations": inspection_locations, 
+            "inspections_count": inspections_count,
+            "mtn": mtn, 
+            "maintenance_count": maintenance_values_list, 
+            "maintenance_locations": maintenance_keys_list
+        }
+
+    return JsonResponse(data, safe=False)
+
 @csrf_exempt
 def dashboards_maintenance_ajax(request):
     month = request.GET['month']
@@ -312,12 +689,17 @@ def pbnc_upload(request):
         for row in reader:        
             date = datetime.strptime(row['created_at'], "%Y-%m-%d")
             formatted_date = date.strftime("%Y-%m-%d")
+
+            district = Districts.objects.filter(district=row['district']).first()
+            depot = Depots.objects.filter(depot=row['depot']).first()
+            region = Regions.objects.filter(region=row['region']).first()
+            
             new_pbnc = PBNC(
                 name=row['name'],
                 amount=row['amount'],
-                depot=row['depot'],
-                district=row['district'],
-                region=row['region'],
+                depot=depot,
+                district=district,
+                region=region,
                 created_at=formatted_date
             )
             new_pbnc.save()
@@ -337,12 +719,17 @@ def td_upload(request):
         for row in reader:
             date = datetime.strptime(row['created_at'], "%Y-%m-%d")
             formatted_date = date.strftime("%Y-%m-%d")
+            
+            district = Districts.objects.filter(district=row['district']).first()
+            depot = Depots.objects.filter(depot=row['depot']).first()
+            region = Regions.objects.filter(region=row['region']).first()
+            
             new_td = TD(
                 name=row['name'],
                 amount=row['amount'],
-                depot=row['depot'],
-                district=row['district'],
-                region=row['region'],
+                depot=depot,
+                district=district,
+                region=region,
                 created_at=formatted_date
             )
             new_td.save()
@@ -362,11 +749,16 @@ def upo_upload(request):
         for row in reader:
             date = datetime.strptime(row['created_at'], "%Y-%m-%d")
             formatted_date = date.strftime("%Y-%m-%d")
+                        
+            district = Districts.objects.filter(district=row['district']).first()
+            depot = Depots.objects.filter(depot=row['depot']).first()
+            region = Regions.objects.filter(region=row['region']).first()
+            
             new_upo = UPO(
             description=row['description'],
-            depot=row['depot'],
-            district=row['district'],
-            region=row['region'],
+            depot=depot,
+            district=district,
+            region=region,
             created_at=formatted_date
              
             )
@@ -387,12 +779,15 @@ def inspections_upload(request):
         for row in reader:
             date = datetime.strptime(row['created_at'], "%Y-%m-%d")
             formatted_date = date.strftime("%Y-%m-%d")
+            district = Districts.objects.filter(district=row['district']).first()
+            depot = Depots.objects.filter(depot=row['depot']).first()
+            region = Regions.objects.filter(region=row['region']).first()
             
             new_inps = Inspections(
                 location=row['location'],
-                depot=row['depot'],
-                district=row['district'],
-                region=row['region'],
+                depot=depot,
+                district=district,
+                region=region,
                 created_at=formatted_date
             )
             new_inps.save()
@@ -412,11 +807,14 @@ def maintenance_upload(request):
         for row in reader:
             date = datetime.strptime(row['created_at'], "%Y-%m-%d")
             formatted_date = date.strftime("%Y-%m-%d")
+            district = Districts.objects.filter(district=row['district']).first()
+            depot = Depots.objects.filter(depot=row['depot']).first()
+            region = Regions.objects.filter(region=row['region']).first()
             new_maintenance = Maintenance(
                 location=row['location'],
-                depot=row['depot'],
-                district=row['district'],
-                region=row['region'],
+                depot=depot,
+                district=district,
+                region=region,
                 created_at=formatted_date
             )
             new_maintenance.save()

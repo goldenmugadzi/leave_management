@@ -219,24 +219,6 @@
           }
       }
     });
-  });
-{% comment %} function updateSelectOptions(category_id, Categories, file_type, searchTerm) {
-  $.ajax({
-      url: '/user_manual/get-files/' + Categories + '/' + file_type + '/',
-      type: 'GET',
-      success: function(data) {
-          var selectElement = document.getElementById(selectElementId);
-          // Clear existing options
-          selectElement.options.length = 0;
-
-          // Add new options based on data
-          for (var option of data.options) {
-              var opt = new Option(option, option);
-              selectElement.add(opt);
-          }
-      }
-  });
-} {% endcomment %}
 </script>
 <script>
   $("#department").change(function() {
@@ -261,5 +243,3 @@
 
 </script>
 {% endblock scripts %}
-
-

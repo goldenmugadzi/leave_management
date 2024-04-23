@@ -1,9 +1,9 @@
 from django.contrib import admin
 
-from finance import PettyCash
-from finance.PettyCash.models import Quotation
+
+from .models import *
 
 # Register your models here.
-admin.site.register(PettyCash)
+admin.site.register(Pettycash)
 admin.site.register(Quotation)
 

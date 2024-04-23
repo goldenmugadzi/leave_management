@@ -7,18 +7,20 @@ from django.views.generic.detail import DetailView
 from django.shortcuts import render, redirect, HttpResponse
 from django.urls import reverse
 
+
 class WorkflowCreateView(CreateView):
     form_class = WorkflowCreateForm
     template_name = 'approve/create_workflow.html'
     extra_steps = None
-    
+
     def form_valid(self, form):
         self.extra_steps = form.cleaned_data['number_of_steps']
         return super().form_valid(form)
-    
+
     def get_success_url(self):
         workflow_id = self.object.id
         return f'/workflow/{workflow_id}/add-steps?extra={self.extra_steps}'
+
 
 def step_formset_view(request, workflow_id):
     workflow = Workflow.objects.get(id=workflow_id)
@@ -50,6 +52,7 @@ def step_formset_view(request, workflow_id):
 
     return render(request, 'approve/update_workflow.html', {'formset': formset, 'workflow': workflow})
 
+
 class WorkflowDetailView(DetailView):
     model = Workflow
     template_name = 'approve/workflow_detail.html'
@@ -61,11 +64,13 @@ class WorkflowDetailView(DetailView):
         context['steps'] = workflow.step_set.all()
         return context
 
+
 def intiate(request, app):
     app = Workflow.objects.get(name__iexact=app)
     process = Process.objects.create(workflow=app)
     process.save()
     return process
+
 
 def approve_step(request, process_id):
     """
@@ -82,30 +87,31 @@ def approve_step(request, process_id):
             next_step = latest_approval.step.step + 1
         else:
             next_step = 1
-    except Step.DoesNotExist :
+    except Step.DoesNotExist:
         next_step = 1
     try:
         step = Step.objects.get(workflow=process.workflow, step=next_step, approver__in=request.user.roles.all())
     except Step.DoesNotExist:
-        message= messages.info(request, 'This process was completed')
+        message = messages.info(request, 'This process was completed')
         return redirect('approve:workflow_detail', process.workflow.id, message)
-    if request.method == 'POST' :
-        form=ApprovalForm(request.POST)
+    if request.method == 'POST':
+        form = ApprovalForm(request.POST)
         if form.is_valid():
             approval = ApprovalForm(request.POST).save(commit=False)
             approval.user = request.user
             approval.process = process
             approval.step = step
             approval.save()
-            if process.workflow.name=='rfq':
-                return redirect('rfq:rfq_detail', process.rfq.id)
-            elif process.workflow.name=='tokens':
+            if process.workflow.name == 'rfq':
+                return redirect('purchase_request:purchase_request_detail', process.rfq.id)
+            elif process.workflow.name == 'tokens':
                 return redirect('tempertoken:tempertoken', process.tempertoken_set.last().id)
-          
+            elif process.workflow.name == 'pettycash':
+                return redirect('pettycash:pettycash_detail', process.pettycash.id)
+
             else:
                 return redirect('approve:workflow_detail', process.workflow.id)
         else:
 
             return HttpResponse('A comment must be provided for rejection.')
     return HttpResponse('You are not allowed to approve')
-            

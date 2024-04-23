@@ -2,6 +2,8 @@ from django.db import models
 from it.users.models import UserProfile
 from approve.models import Process
 from django.core.validators import RegexValidator
+import random
+import time
 
 
 class Meter(models.Model):
@@ -16,12 +18,13 @@ class Meter(models.Model):
 class Customer(models.Model):
     name = models.CharField(max_length=100)
     address = models.CharField(max_length=200)
-    contact_number = models.CharField(max_length=10, validators=[RegexValidator(r'^\d{3,10}$', 'Enter a numeric value up to 10 digits.')])
+    contact_number = models.CharField(max_length=10, validators=[RegexValidator(r'^\+?1?\d{9,15}$', 'Enter a valid phone number.')])
 
     def __str__(self):
         return self.name
 
 class TemperToken(models.Model):
+    id = models.CharField(primary_key=True, max_length=20, editable=False)
     meter = models.ForeignKey(Meter, on_delete=models.CASCADE)
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
     created_by = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
@@ -30,6 +33,12 @@ class TemperToken(models.Model):
 
     def __str__(self):
         return str(self.meter.meter_number)
+    def save(self, *args, **kwargs):
+        timestamp = str(int(time.time()))
+        random_number = str(random.randint(10000, 99999))
+        self.id = "TMP" + timestamp + random_number
+        super().save(*args, **kwargs)
+
 
 class Fault(models.Model):
     temper_token = models.ForeignKey(TemperToken, on_delete=models.CASCADE, blank=True, null=True)

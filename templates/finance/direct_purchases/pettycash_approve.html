@@ -1,0 +1,316 @@
+<!--users/templates/users/add_user.html-->
+{% extends 'admin_layout.html' %}
+{% block styles %}
+
+{% endblock styles %}
+{% block content %}
+<div class="content-wrapper">
+  <div class="page-header">
+    <h3 class="page-title">
+      <span class="page-title-icon bg-primary text-white me-2">
+        <i class="menu-icon">
+            <span class="material-symbols-outlined mt-1">
+                straighten
+            </span>
+          </i>
+      </span>
+      Pettycash
+    </h3>
+    <nav aria-label="breadcrumb">
+      <ul class="breadcrumb">
+        <li class="breadcrumb-item active" aria-current="page">
+        <a href="/pettycash/list" class="text-decoration-none">
+          <span></span>Back
+          <i
+            class="icon-sm text-primary align-middle"
+          >
+          <span class="material-symbols-outlined">
+            arrow_back
+          </span>
+        </i>
+    </a>
+        </li>
+      </ul>
+    </nav>
+</div>
+<div class="col-12 grid-margin stretch-card">
+
+  <div class="card">
+    <div class="card-body">
+      <h4 class="card-title">Approve Pettycash</h4>
+      <p class="card-description">Fill all required fields</p>
+      <form action="/pettycash/final_approve" method="post" enctype="multipart/form-data" class="forms-sample">
+        {% csrf_token %}
+        <div class="form-group">
+          <label for="department">Department</label>
+          <input
+            type="text"
+            class="form-control"
+            id="department"
+            name="department"
+            placeholder="Department"
+            value="{{ context.Department }}"
+            readonly
+          />
+        </div>
+        <div class="form-group">
+          <label for="location">Location</label>
+          <input
+                  readonly
+            type="text"
+            class="form-control"
+            id="location"
+            name="location"
+            placeholder="Location"
+            value="{{ context.location }}"
+          />
+        </div>
+        <div class="form-group">
+            <label for="section">Section</label>
+            <input
+                    readonly
+              type="text"
+              class="form-control"
+              id="section"
+              name="section"
+              placeholder="Section"
+              value="{{ context.section }}"
+            />
+          </div>
+          <div class="form-group">
+              <label for="details_of_expenditure">Details</label>
+              <input
+                      readonly
+                      type="text"
+                      class="form-control"
+                      id="details_of_expenditure"
+                      name="details_of_expenditure"
+                      placeholder="Details"
+                      value="{{ context.details_of_expenditure }}"
+              />
+          </div>
+          <div class="form-group">
+              <label for="amount">Amount</label>
+              <input
+                      readonly
+                      type="number"
+                      class="form-control"
+                      id="amount"
+                      name="amount"
+                      placeholder="amount"
+                      value="{{ context.amount }}"
+              />
+          </div>
+          <div class="form-group">
+              <label for="payment_mode">Payment Mode</label>
+              <input
+                      readonly
+                      type="text"
+                      class="form-control"
+                      id="payment_mode"
+                      name="payment_mode"
+                      placeholder="payment mode"
+                      value="{{ context.payment_mode }}"
+              />
+          </div>
+          <div class="form-group">
+              <label for="payment_mode">Petty cash id</label>
+              <input
+                      readonly
+                      type="text"
+                      class="form-control"
+                      id="petty_id"
+                      name="petty_id"
+                      placeholder="petty_id"
+                      value="{{ context.petty_id }}"
+              />
+          </div>
+          <div class="form-group">
+              <label for="allocation_code_of_expenditure">allocation code of expenditure</label>
+              <input
+                      readonly
+                      type="text"
+                      class="form-control"
+                      id="allocation_code_of_expenditure"
+                      name="allocation_code_of_expenditure"
+                      placeholder="allocation code of expenditure"
+                      value="{{ context.allocation_code_of_expenditure }}"
+              />
+          </div>
+          <div class="form-group">
+              <label for="allocation_code_of_expenditure">Approval Status</label>
+              <input
+                      readonly
+                      type="text"
+                      class="form-control"
+                      id="approval_status"
+                      name="approval_status"
+                      placeholder="approval_status"
+                      value="{{ context.approval_status }}"
+              />
+          </div>
+        <div class="mb-3">
+            <label for="quotation1" class="form-label">Quotation 1</label>
+{#            <input name="quotation1" class="form-control" type="file" id="quotation1"#}
+{#            value="{{ context.quotation1 }}" readonly>#}
+            <a class="btn btn-link" href='/pettycash/quotation_download?f=${{ context.quotation1 }}' >
+                Download quote 1
+            </a>
+        </div>
+        <div class="mb-3">
+            <label for="quotation2" class="form-label">Quotation 2</label>
+{#            <input name="quotation2" class="form-control" type="file" id="quotation2"#}
+{#            value="{{ context.quotation2 }}" readonly>#}
+            <a class="btn btn-link" href='/pettycash/quotation_download?f=${{ context.quotation2 }}' >
+                Download quote 2
+            </a>
+        </div>
+        <div class="mb-3">
+            <label for="quotation3" class="form-label">Quotation 3</label>
+{#            <input name="quotation3" class="form-control" type="file" id="quotation3"#}
+{#            value="{{ context.quotation3 }}"#}
+{#            readonly>#}
+            <a class="btn btn-link" href='/pettycash/quotation_download?f=${{ context.quotation3 }}' >
+                Download quote 3
+            </a>
+        </div>
+          <div class="row">
+              <div class="col-6">
+                  <a href="/pettycash/final_reject?f={{ context.petty_id }}" class="btn btn-light w-100">Reject</a>
+              </div>
+            <div class="col-6">
+                <button type="submit" class="btn btn-info me-2 w-100">
+                    Approve
+                </button>
+            </div>
+              <div class="col-6">
+                  <a href="/pettycash" class="btn btn-light w-100">Cancel</a>
+              </div>
+          </div>
+      </form>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% endblock scripts %}
+<script src="https://code.jquery.com/jquery-3.5.1.js"></script>
+<script src="https://cdn.datatables.net/1.12.1/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.12.1/js/dataTables.bootstrap5.min.js"></script>
+{#<script>#}
+{#    var objs = JSON.parse("{{context|escapejs}}");#}
+{##}
+{#    //var isCreator = "{{is_creator|escapejs}}";#}
+{##}
+{#    let list = [];#}
+{#    objs.forEach((element, index) => {#}
+{#        let o = {#}
+{#            petty_id: element.fields.petty_id,#}
+{#            Department: element.fields.Department,#}
+{#            location: element.fields.location,#}
+{#            section: element.fields.section,#}
+{#            allocation_code_of_expenditure: element.fields.allocation_code_of_expenditure,#}
+{#            details_of_expenditure: element.fields.details_of_expenditure,#}
+{#            amount: element.fields.amount,#}
+{#            quotation1: element.fields.quotation1,#}
+{#            quotation2: element.fields.quotation2,#}
+{#            quotation3: element.fields.quotation3,#}
+{#            payment_mode: element.fields.payment_mode,#}
+{#            requested_by: element.fields.requested_by,#}
+{#            date_created: element.fields.date_created,#}
+{#        };#}
+{##}
+{#        list.push(o);#}
+{#    });#}
+{##}
+{#    console.log(list);#}
+{#    $(document).ready(function () {#}
+{#        $('#pettycash').DataTable(#}
+{#            {#}
+{#                data: list,#}
+{#                scrollX:true,#}
+{#                columns: [#}
+{#                    {#}
+{#                        data: "petty_id",#}
+{#                    },#}
+{#                    {#}
+{#                        data: "Department",#}
+{#                        // width: 200,#}
+{#                    },#}
+{#                    {#}
+{#                        data: "location",#}
+{#                    },#}
+{#                    {#}
+{#                        data: "section",#}
+{#                    },#}
+{#                    {#}
+{#                        data: "allocation_code_of_expenditure",#}
+{#                    },#}
+{#                    {#}
+{#                        data: "details_of_expenditure",#}
+{#                    },#}
+{#                    {#}
+{#                        data: "amount",#}
+{#                    },#}
+{#                    {#}
+{#                        data: "quotation1",#}
+{#                        render: function (data, type, row, meta) {#}
+{#                            let component;#}
+{#                            if(data){#}
+{#                                component = `#}
+{#                    <a class="btn btn-link" href='/pettycash/quotation_download?f=${data}' >#}
+{#                      Download quote1#}
+{#                    </a>`#}
+{#                            } else {#}
+{#                                component = 'None'#}
+{#                            }#}
+{#                            return component;#}
+{#                        },#}
+{#                    },#}
+{#                    {#}
+{#                        data: "quotation2",#}
+{#                        render: function (data, type, row, meta) {#}
+{#                            let component;#}
+{#                            if(data){#}
+{#                                component = `#}
+{#                    <a class="btn btn-link" href='/pettycash/quotation_download?f=${data}' >#}
+{#                      Download quote2#}
+{#                    </a>`#}
+{#                            } else {#}
+{#                                component = 'None'#}
+{#                            }#}
+{#                            return component;#}
+{#                        },#}
+{#                    },#}
+{#                    {#}
+{#                        data: "quotation3",#}
+{#                        render: function (data, type, row, meta) {#}
+{#                            let component;#}
+{#                            if(data){#}
+{#                                component = `#}
+{#                    <a class="btn btn-link" href='/pettycash/quotation_download?f=${data}' >#}
+{#                      Download quote2#}
+{#                    </a>`#}
+{#                            } else {#}
+{#                                component = 'None'#}
+{#                            }#}
+{#                            return component;#}
+{#                        },#}
+{#                    },#}
+{#                    {#}
+{#                        data: "payment_mode",#}
+{#                    },#}
+{#                    {#}
+{#                        data: "requested_by",#}
+{#                    },#}
+{#                    {#}
+{#                        data: "date_created",#}
+{#                    },#}
+{#                ],#}
+{#            }#}
+{#        );#}
+{#    });#}
+{#</script>#}
+{#{% endblock scripts %}#}

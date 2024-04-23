@@ -1,0 +1,36 @@
+{% extends 'admin_layout.html' %}  
+{% load static %}
+
+{% block content %}
+
+<div>
+    <strong>EDIT FILE</strong>
+  </div>
+
+<form class="row rounded py-4 border bg-gulf-blue-100 p-3 m-auto justify-content-center 
+align-content-stretch container" method="POST" action="" enctype="multipart/form-data"> 
+     {% csrf_token %}  
+     <div class="m-auto container ">
+        <div class="mt-10 grid grid-cols-2  gap-2">
+            {% for field in form %}
+            <div class="rounded  mb-2 ">
+                {% if field.is_hidden %}
+                {{ field }}
+              {% else %}
+                <div class="col-span-4">
+                  {{ field.label_tag }}
+                  <div class="text-red-500">
+                    {{ field.errors }}
+                  </div>
+                  {{ field }}
+                </div>
+              {% endif %}
+            </div>
+            {% endfor %}
+              <!-- {{ form.as_table }} -->
+        </div>
+     <div class="text-center my-4 "> <button class="bg-gulf-blue-600 text-white font-bold py-2 px-4 rounded" type="submit">Save Changes</button>
+     </div>
+    </form>
+
+{% endblock %}

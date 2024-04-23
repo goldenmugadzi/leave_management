@@ -9,7 +9,7 @@
       <h1 class="text-2xl font-bold">Add Quote</h1>
     </div>
     <div class="m-auto container justify-content-stretch align-content-stretch">
-      <div class="mx-10 my-3 d-flex col-span-4 gap-4 m-auto bg-gulf-blue-200 grid grid-cols-2">
+      <div class="mx-10 my-3 d-flex col-span-4 gap-4 m-auto bg-gulf-blue-200 grid grid-cols-3">
         {% for field in quote %}
         <div class="rounded row text-center py-2 my-3">
           {% if field.is_hidden %}
@@ -31,7 +31,7 @@
       {{ formset.management_form }}
       
       {% for form in formset  %}
-      <div class="rounded row rounded border bg-gulf-blue-200  p-2 my-3 gap-4  m-auto grid grid-cols-5">
+      <div class="rounded row rounded border bg-gulf-blue-200  p-2 my-3 gap-4  m-auto grid grid-cols-3">
         {% for field in form %}
         <div class=" "> 
           {% if field.is_hidden %}
