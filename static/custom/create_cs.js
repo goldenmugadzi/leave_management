@@ -1,6 +1,8 @@
 "use strict";
 
 const e = React.createElement;
+// const BASE_URL = "http://localhost:8000";
+const BASE_URL = "http://172.16.8.98:9300";
 
 class CreateCS extends React.Component {
   constructor(props) {
@@ -61,7 +63,7 @@ class CreateCS extends React.Component {
     
     console.log("cs pr_id: ", pr_id);
 
-    fetch(`http://localhost:8000/comparative_schedule/create_data/${pr_id}`)
+    fetch(`${BASE_URL}/comparative_schedule/create_data/${pr_id}`)
       .then((response) => response.json())
       .then((data) => {
         console.log("data: ", data);
@@ -309,7 +311,7 @@ class CreateCS extends React.Component {
     form_data.append("bid_document", currentBid.bid_document);
     form_data.append("csrfmiddlewaretoken", this.getCookie("csrftoken"));
 
-    fetch(`http://localhost:8000/comparative_schedule/save_bid`, {
+    fetch(`${BASE_URL}/comparative_schedule/save_bid`, {
       method: "POST",
       headers: {
         "X-CSRFToken": this.getCookie("csrftoken"),
@@ -349,7 +351,7 @@ class CreateCS extends React.Component {
     form_data.append("advert", this.state.advert);
     form_data.append("csrfmiddlewaretoken", this.getCookie("csrftoken"));
 
-    fetch(`http://localhost:8000/comparative_schedule/save`, {
+    fetch(`${BASE_URL}/comparative_schedule/save`, {
       method: "POST",
       headers: {
         "X-CSRFToken": this.getCookie("csrftoken"),
@@ -394,7 +396,7 @@ class CreateCS extends React.Component {
     form_data.append("advert", this.state.advert);
     form_data.append("csrfmiddlewaretoken", this.getCookie("csrftoken"));
 
-    fetch(`http://localhost:8000/comparative_schedule/update`, {
+    fetch(`${BASE_URL}/comparative_schedule/update`, {
       method: "POST",
       headers: {
         "X-CSRFToken": this.getCookie("csrftoken"),
@@ -502,7 +504,7 @@ class CreateCS extends React.Component {
   }
 
   getFilterData = (selectedRegion, selectedDistrict, selectedDepot) => {
-    fetch(`http://localhost:8000/dashboards/dashboard_filter`, {
+    fetch(`${BASE_URL}/dashboards/dashboard_filter`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -587,7 +589,7 @@ class CreateCS extends React.Component {
   }
 
   getDashboardData = () => {
-    fetch(`http://localhost:8000/dashboards/dashboard_data`)
+    fetch(`${BASE_URL}/dashboards/dashboard_data`)
       .then((response) => response.json())
       .then((data) => {
         console.log("data: ", data);
@@ -700,7 +702,7 @@ class CreateCS extends React.Component {
     }));
     form_data.append("csrfmiddlewaretoken", this.getCookie("csrftoken"));
 
-    fetch(`http://localhost:8000/comparative_schedule/save_compliance`, {
+    fetch(`${BASE_URL}/comparative_schedule/save_compliance`, {
       method: "POST",
       headers: {
         "X-CSRFToken": this.getCookie("csrftoken"),
@@ -723,7 +725,7 @@ class CreateCS extends React.Component {
     form_data.append("cs_id", this.state.cs_id);
     form_data.append("csrfmiddlewaretoken", this.getCookie("csrftoken"));
 
-    fetch(`http://localhost:8000/comparative_schedule/close_compliance`, {
+    fetch(`${BASE_URL}/comparative_schedule/close_compliance`, {
       method: "POST",
       headers: {
         "X-CSRFToken": this.getCookie("csrftoken"),

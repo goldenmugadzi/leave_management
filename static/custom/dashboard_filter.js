@@ -1,6 +1,8 @@
 "use strict";
 
 const e = React.createElement;
+// const BASE_URL = "http://localhost:8000";
+const BASE_URL = "http://172.16.8.98:9300";
 
 class DashboardFilter extends React.Component {
   constructor(props) {
@@ -102,7 +104,7 @@ class DashboardFilter extends React.Component {
   }
 
   getFilterData = (selectedRegion, selectedDistrict, selectedDepot) => {
-    fetch(`http://localhost:8000/dashboards/dashboard_filter`,
+    fetch(`${BASE_URL}/dashboards/dashboard_filter`,
       {
         method: "POST",
         headers: {
