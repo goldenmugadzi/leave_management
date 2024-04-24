@@ -23,45 +23,45 @@ class Customer(models.Model):
     def __str__(self):
         return self.name
 
-class TemperToken(models.Model):
+class Token(models.Model):
     id = models.CharField(primary_key=True, max_length=20, editable=False)
-    meter = models.ForeignKey(Meter, on_delete=models.CASCADE)
-    customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
-    created_by = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
+    meter = models.ForeignKey(Meter, on_delete=models.CASCADE, blank=True, null=True)
+    customer = models.ForeignKey(Customer, on_delete=models.CASCADE, blank=True, null=True)
+    created_by = models.ForeignKey(UserProfile, on_delete=models.CASCADE, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True, blank=True, null=True)
     process=models.ForeignKey(Process, on_delete=models.CASCADE, blank=True, null=True)
-
+    choices = [('REIMBURSEMENT', 'REIMBURSEMENT'), ('CLEAR CREDIT', 'CLEAR CREDIT'), ('TAMPER TOKEN', 'TAMPER TOKEN')]
+    kind = models.CharField(max_length=100, blank=True, null=True, choices=choices)
     def __str__(self):
         return str(self.meter.meter_number)
     def save(self, *args, **kwargs):
         timestamp = str(int(time.time()))
         random_number = str(random.randint(10000, 99999))
-        self.id = "TMP" + timestamp + random_number
+        self.id = "TKN" + timestamp + random_number
         super().save(*args, **kwargs)
 
-
 class Fault(models.Model):
-    temper_token = models.ForeignKey(TemperToken, on_delete=models.CASCADE, blank=True, null=True)
+    token = models.ForeignKey(Token, on_delete=models.CASCADE, blank=True, null=True)
     description = models.TextField(max_length=400)
 
     def __str__(self):
         return f"Fault: {self.temper_token}"
 class Pernalt(models.Model):
     amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-    receipt = models.FileField(upload_to='uploads/Tokens/TemperToken/receipt', blank=True, null=True)
+    receipt = models.FileField(upload_to='uploads/Tokens/Token/receipt', blank=True, null=True)
     
     def __str__(self):
         return str(self.amount)
 
 class Reconnection(models.Model):
-    temper_token = models.ForeignKey(TemperToken, on_delete=models.CASCADE, blank=True, null=True)
+    token = models.ForeignKey(Token, on_delete=models.CASCADE, blank=True, null=True)
     description = models.TextField(max_length=400)
 
     def __str__(self):
-        return f"Reconnection: {self.temper_token}"
+        return f"Re-Imbursement: {self.temper_token}"
 
 class Recover(models.Model):
-    temper_token = models.ForeignKey(TemperToken, on_delete=models.CASCADE, blank=True, null=True)
+    token = models.ForeignKey(Token, on_delete=models.CASCADE, blank=True, null=True)
     description = models.TextField(max_length=400)
 
     def __str__(self):

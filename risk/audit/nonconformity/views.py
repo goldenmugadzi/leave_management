@@ -202,7 +202,7 @@ def create_clause(request):
         form = ClauseForm(request.POST)
         if form.is_valid():
             form.save()
-            return redirect('nonconformity:checklist')
+            return redirect('nonconformity:editable_checklist')
     else:
         form = ClauseForm()
     return render(request, 'risk/nonconformity/create_edit_checklist.html', {'form': form})
@@ -216,7 +216,7 @@ def create_topic(request, clause):
             topic = form.save(commit=False)
             topic.clause = clause
             topic.save()
-            return redirect('nonconformity:checklist')
+            return redirect('nonconformity:editable_checklist')
     else:
         form = TopicForm()
     return render(request, 'risk/nonconformity/create_edit_checklist.html', {'form': form})
@@ -230,7 +230,7 @@ def create_iso_req(request, topic):
             iso_req = form.save(commit=False)
             iso_req.topic = topic
             iso_req.save()
-            return redirect('nonconformity:checklist')
+            return redirect('nonconformity:editable_checklist')
     else:
         form = QuestionForm()
     return render(request, 'risk/nonconformity/create_edit_checklist.html', {'form': form})
@@ -250,7 +250,7 @@ def edit_clause(request, clause):
         form = ClauseForm(request.POST, instance=clause)
         if form.is_valid():
             form.save()
-            return redirect('nonconformity:checklist')
+            return redirect('nonconformity:editable_checklist')
     else:
         form = ClauseForm(instance=clause)
     return render(request, 'risk/nonconformity/create_edit_checklist.html', {'form': form})
@@ -263,7 +263,7 @@ def edit_topic(request, topic):
         form = TopicForm(request.POST, instance=topic)
         if form.is_valid():
             form.save()
-            return redirect('nonconformity:checklist')
+            return redirect('nonconformity:editable_checklist')
     else:
         form = TopicForm(instance=topic)
     return render(request, 'risk/nonconformity/create_edit_checklist.html', {'form': form})
@@ -275,7 +275,7 @@ def edit_iso_req(request, iso_req):
         form = QuestionForm(request.POST, instance=iso_req)
         if form.is_valid():
             form.save()
-            return redirect('nonconformity:checklist')
+            return redirect('nonconformity:editable_checklist')
     else:
         form = QuestionForm(instance=iso_req)
     return render(request, 'risk/nonconformity/create_edit_checklist.html', {'form': form})
