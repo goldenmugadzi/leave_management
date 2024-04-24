@@ -1,12 +1,12 @@
 from django.db import models
-from it.users.models import Roles, UserProfile
+from it.users.models import Roles, UserProfile,Application
 
 
-class Application(models.Model):
-    name = models.CharField(max_length=100, unique=True)
+# class Application(models.Model):
+#     name = models.CharField(max_length=100, unique=True)
 
-    def __str__(self):
-        return self.name
+#     def __str__(self):
+#         return self.name
 
 
 class Workflow(models.Model):

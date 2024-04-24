@@ -83,18 +83,16 @@
       </div>
     </div>
 
-    <div id="dashboard_filters" data-region="{{region}}" data-section={{section}} data-district="{{district}}" data-district="{{depot}}"></div>
+    <div id="dashboard_filters" data-region="{{region}}" data-section={{section}} data-district="{{district}}" data-depot="{{depot}}"></div>
     
   </div>
 </div>
 
 {% endblock content %} {% block scripts %}
-<script src="
-https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js
-"></script>
-<script src="https://unpkg.com/react@17/umd/react.development.js" crossorigin></script>
-<script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js" crossorigin></script>
-<script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+<script src="{% static 'assets/cdn/chart.umd.min.js' %}"></script>
+<script src="{% static 'assets/cdn/react.development.js' %}"></script>
+<script src="{% static 'assets/cdn/react-dom.development.js' %}"></script>
+<script src="{% static 'assets/cdn/babel.min.js' %}"></script>
 <script type="text/javascript" src="{% static 'custom/src/dashboard_filter.js/dashboard_filter.js' %}"></script>
 <script>
 </script>

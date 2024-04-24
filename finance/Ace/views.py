@@ -79,23 +79,33 @@ def index(request):
         if role.application == "ace":
             custom_user_roles["ace"] = role
 
-    Ace_role = custom_user_roles["ace"].role
-    print(Ace_role)
+    # get user ace role
+    user_ace_role = None
+    for role in user_profile.roles.all():
+        print("role id:", role.id)
+        user_ace_role_ = Roles.objects.filter(id=role.id).first() if role.id else None
+        print("role application:", user_ace_role_.application)
+        if user_ace_role_.application == "ace":
+            user_ace_role = user_ace_role_
+        
+    if user_ace_role:
+        Ace_role = user_ace_role.role
+        print(Ace_role)
 
-    if str(Ace_role) == "pass":
-        return redirect('/ace/list_section_head')
-    if str(Ace_role) == "create":
-        return redirect('/ace/list_requester')
-    if str(Ace_role) == "process":
-        return redirect('/ace/list_accounting_officer')
-    if str(Ace_role) == "sanction":
-        return redirect('/ace/list_fm')
-    if str(Ace_role) == "approve":
-        return redirect('/ace/list_gm')
-    else:
-        messages.error(request, 'you need to contact it to get a role in the ACE')
-        sweetify.success(request, 'you need to contact it to get a role in the ACE')
-        return redirect("/")
+        if str(Ace_role) == "pass":
+            return redirect('/ace/list_section_head')
+        if str(Ace_role) == "create":
+            return redirect('/ace/list_requester')
+        if str(Ace_role) == "process":
+            return redirect('/ace/list_accounting_officer')
+        if str(Ace_role) == "sanction":
+            return redirect('/ace/list_fm')
+        if str(Ace_role) == "approve":
+            return redirect('/ace/list_gm')
+        else:
+            messages.error(request, 'you need to contact it to get a role in the ACE')
+            sweetify.success(request, 'you need to contact it to get a role in the ACE')
+            return redirect("/")
 
     return redirect("/")
 

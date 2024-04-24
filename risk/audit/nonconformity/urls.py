@@ -10,8 +10,17 @@ urlpatterns = [
     path('nonconformities/', view_nonconformities, name='nonconformities'),
     path('my_nonconformities/', my_nonconformities, name='my_nonconformities'),
     path('nonconformity/<int:nonconformity_id>/', nonconformity_details, name='nonconformity'),
-    path('create_clause/', ClauseCreateView.as_view(), name='create_clause'),
-    path('<int:clause_id>/add-qns/', Question_formset_view, name='add-qns'),
+    
+    path('create_clause/', create_clause, name='create_clause'),
+    path('create_topic/<str:clause>', create_topic, name='create_topic'),
+    path('create_iso_req/<str:topic>', create_iso_req, name='create_iso_req'),
+
+    path('edit_clause/<str:clause>', edit_clause, name='edit_clause'),
+    path('edit_topic/<str:topic>', edit_topic, name='edit_topic'),
+    path('edit_iso_req/<str:iso_req>', edit_iso_req, name='edit_iso_req'),
+
     path('newinfo/<int:nonconformity_id>/', additionalInfoForm, name='newinfo'),
-    path('checkist/', checklist, name='checklist'),
+    path('notify/', notify, name='notify'),
+    path('checklist/', checklist, name='checklist'),
+    path('editable_checklist/', editable_checklist, name='editable_checklist'),
 ]

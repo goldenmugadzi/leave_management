@@ -7,28 +7,37 @@
 
    <div class="m-auto container">
     <div class="mt-10 grid grid-cols-1 gap-4">
+        <div class=" flex flex-row-reverse">
+            <a href="{% url 'nonconformity:create_clause' %}"
+               title="Add Clause"
+               class=" inline-block rounded-full  border text-center bg-blue-600 text-white py-2 px-4 rounded shadow-lg">
+                <i class="fas font-bold fa-edit "></i>
+            </a>
+        </div>
      
         {% for clause in clauses %}
-        <div>
-            <h1 class="font-bold "><p class="text-lg" >{{ clause.id }} . {{ clause.name }}</p></h1>
+            <details>
+                <summary class="text-2xl font-bold text-blue-500">{{ clause.id }} . {{ clause.name }}</summary>
+
+                <p class="text-lg">{{ clause.description }}</p>
             {% if clause.topic_set.all %}
-            <div class="grid grid-cols-4 gap-2 border border-blue-500 rounded">
+                 {% for topic in clause.topic_set.all %}
+                    <div class="text-center text-lg font-bold p-5" >{{topic.name}} </div>
+  <div class="grid grid-cols-4 gap-2 border border-blue-500 rounded">
                 <div class="text-center font-bold border-r border-blue-500">Clause</div>
                 <div class="text-center font-bold border-r border-blue-500">ISO: Requirements</div>
                 <div class="text-center font-bold border-r border-blue-500">“Maintained” Documented information</div>
                 <div class="text-center font-bold">“Retained” Documented information/What to look for</div>
               </div>
-                    {% for topic in clause.topic_set.all %}
-                    <div class="text-center text-lg font-bold p-5" >{{topic.name}} </div>
-
+             
                     {% if topic.question_set.all %}
                         {% for question in topic.question_set.all %}
                             <hr class="text-center  border-blue-500" />
                             <div class="grid grid-cols-4 gap-2" >
-                                <div class="text-center border-l border-r border-blue-500">{{question.id}} </div>
-                                <a href="{% url 'nonconformity:create_nonconformity_from_checklist' question.id %}" class="text-center text-blue-500 border-r border-blue-500">{{ question.description }}</a>
-                                <div class="text-center border-r border-blue-500">{{question.maintained_info}} </div>
-                                <div class="text-center border-r border-blue-500">{{question.retained_info}} </div>
+                                <div class="text-center border-l border-r border-blue-500">{{question.id|default_if_none:''}} </div>
+                                <a href="{% url 'nonconformity:create_nonconformity_from_checklist' question.id %}" class="text-center text-blue-500 border-r border-blue-500">{{ question.description|default_if_none:'' }}</a>
+                                <div class="text-center border-r border-blue-500">{{question.maintained_info|default_if_none:''}} </div>
+                                <div class="text-center border-r border-blue-500">{{question.retained_info|default_if_none:''}} </div>
                             </div>                          
                         {% endfor %}
                         
@@ -39,7 +48,7 @@
                 
             {% else %}
             {% endif %}
-        </div>
+        </details>
         {% endfor %}
     
     </div>
