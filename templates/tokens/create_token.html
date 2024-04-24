@@ -6,7 +6,7 @@
 <div class="m-auto mt-5 justify-content-center">
   <form class="row rounded py-4 border bg-gulf-blue-100 p-3 m-auto  container" method="POST" action="{{url}}" enctype="multipart/form-data">
     {% csrf_token %}
-    <h3 class="font-bold my-4 text-center">Temper Tocken</h3>
+    <h3 class="font-bold my-4 text-center">Token</h3>
     <div class="rounded d-flex justify-content-center align-items-center p-3 gap-4  m-auto grid grid-cols-2">
             
         <div class="rounded">
@@ -44,6 +44,19 @@
     <div class="rounded  ">
     <h3 class="font-bold my-4 text-center">Reason</h3>
     {% for field in reason %}
+            {% if field.is_hidden %}
+              {{ field }}
+            {% else %}
+              <div class="col-span-4">
+                {{ field.label_tag }}
+                <div class="text-red-500">
+                  {{ field.errors }}
+                </div>
+                {{ field }}
+              </div>
+            {% endif %}
+          {% endfor %}
+          {% for field in token %}
             {% if field.is_hidden %}
               {{ field }}
             {% else %}

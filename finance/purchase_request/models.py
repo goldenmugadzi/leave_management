@@ -3,7 +3,7 @@ import time
 from django.db import models
 from approve.models import Process
 from finance.Ace.models import Ace
-from it.users.models import UserProfile, Sections, Roles, Supplier
+from it.users.models import UserProfile, Sections
 
 
 class PurchaseRequest(models.Model):

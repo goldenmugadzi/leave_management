@@ -110,54 +110,68 @@
                         </div>
                     </form>
                {% endif %}
-{#            {% endif %}#}
-
-                    <div class="card grid grid-cols-5 gap-4">
-
-                        <div class="px-2 mb-5  bg-gradient-to-r from-gulf-blue-100 to-green-700 border rounded ">
-                            <div class="p-4 font-bold rounded-lg">Start</div>
-                            <span class="inline-block rounded-full text-sm">  requested by {{pettycash.requested_by}}</span>
-                            </div>
-                            {% for step in pettycash.process.workflow.step_set.all %}
-                                    {% if step.step in approved_steps %}
-                                        {% for approval in pettycash.process.approval_set.all %}
-                                           {% if step == approval.step %}
-                                                <div class="card-body m-auto arrow arrow-step mb-5 bg-gradient-to-r from-gulf-blue-100 to-green-700 ed p-3 border rounded  container rounded shadow-lg">
-                                                    <div class="p-4 rounded-lg" title="Comment : {{ approval.comment }}" >
-                                                        <p class="font-bold">{{ step }}</p> <br>
-                                                    </div>
-                                                    <div class=" grid grid-cols-2 text-center">
-                                                        <span class="inline-block rounded-full text-sm"> {{ approval.approved }}</span>
-                                                        <span class="inline-block rounded-full text-sm">By: 
-                                                        {% if request.user == approval.user %}
-                                                            You
-                                                            {% elif  approval.user.get_full_name %}
-                                                                {{approval.user.get_full_name}}
-                                                        {% elif request.user == approval.user %}
-                                                                {{ approval.user  }}
-                                                        {% endif %}</span>
-                                                    </div> 
-                                                </div>
-                                                {% endif %}
-                                            {% endfor %}
-
-                                        {% else %}
-                                            <div class="card-body m-auto arrow arrow-step mb-5 bg-gradient-to-r from-gulf-blue-100 to-blue-500 ed p-3 border rounded  container rounded shadow-lg">
-                                                <div class="p-4 rounded-lg" title="{{ approval.comment }}" >
-                                                    <p class="font-bold">{{ step }}</p> <br>
-                                                    {% if step.to %}
-                                                        <span class="inline-block rounded-full text-sm">To {{ step.to|default_if_none:'' }}</span>
-                                                    {% endif %}
-                                                </div>
-                                            </div>
-                                        
-                                    {% endif %}
-                                {% endfor %}
-                            <div class="mb-5 bg-blue-500 border rounded">
-                                <div class="p-4 font-bold rounded-lg">Completed</div>
-                            </div>
+               <div class="card grid grid-cols-5 gap-5">
+                <div class="  rounded ">
+                <div class="card-body  arrow bg-gradient-to-r from-gulf-blue-100 to-green-700 ed border rounded container rounded">
+                        <div class="p-3 font-bold rounded-lg">Created</div>
+                        <div class=" grid grid-cols-2 text-center">
+                            <span class="inline-block rounded-full text-sm">By:
+                                {% if request.user == pettycash.requested_by %}
+                                    You
+                                {% elif pettycash.requested_by.get_full_name %}
+                                    {{ pettycash.requested_by.get_full_name }}
+                                {% elif request.user == pettycash.requested_by %}
+                                    {{ pettycash.requested_by }}
+                                {% endif %}
+                            </span>
                         </div>
                     </div>
+                </div>
+              
+                    {% for step in pettycash.process.workflow.step_set.all %}
+                    <div class="   rounded ">
+                        {% if step.step in approved_steps %}
+                            {% for approval in pettycash.process.approval_set.all %}
+                                {% if step == approval.step %}
+                                    <div class="card-body px-2 mx-4 arrow bg-gradient-to-r from-gulf-green-100 to-green-700 ed border rounded container rounded">
+                                        <div class=" rounded-lg" title="{{ approval.comment }}">
+                                            <p class="font-bold">{{ step |default_if_none:'' }}</p>
+                                            <br>
+                                        </div>
+                                        <div class=" grid grid-cols-2 text-center">
+                                            <span class="inline-block rounded-full text-sm">{{ approval.approved }}</span>
+                                            <span class="inline-block rounded-full text-sm">By:
+                                                {% if request.user == approval.user %}
+                                                    You
+                                                {% elif approval.user.get_full_name %}
+                                                    {{ approval.user.get_full_name }}
+                                                {% elif request.user == approval.user %}
+                                                    {{ approval.user }}
+                                                {% endif %}
+                                            </span>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
+                        {% else %}
+                        <div class="card-body px-2 mx-4 arrow bg-gradient-to-r from-gulf-blue-100 to-blue-700 ed border rounded container rounded">
+                                <div class=" rounded-lg" title="{{ approval.comment }}">
+                                    <p class="font-bold">{{ step |default_if_none:'' }}</p>
+                                    <br>
+                                    {% if step.to %}<span class="inline-block rounded-full text-sm">To {{ step.to|default_if_none:'' }}</span>{% endif %}
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                    {% if step == pettycash.process.workflow.step_set.last and step == pettycash.process.approval_set.last.step %}
+                        <div class="flex justify-center items-center  rounded ">
+                            <div class="flex justify-center rounded-lg" title="{{ approval.comment }}">
+                                Compmleted
+                            </div>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
                 </div>    
             </div>    
         </div>    
