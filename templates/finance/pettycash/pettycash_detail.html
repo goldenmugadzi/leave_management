@@ -1,10 +1,9 @@
 {% extends "admin_layout.html" %}
 {% load static %}
 {% load custom_tags %}
-
 {% block content %}
-<head>
-  <style>
+    <head>
+        <style>
       .arrow {
           position: relative;
       }
@@ -34,147 +33,163 @@
           border-bottom: 10px solid transparent;
           border-left: 20px solid #3B82F6; /* Adjust arrow color here */
       }
-  </style>
-</head>
-<div class="m-auto mt-5 ">
-    <div class="card grid grid-cols-1 gap-2 mb-3">
-        <div class="card-body m-2">
-            <div class="card-body m-auto mb-5 p-3 border rounded    container rounded  shadow-lg">
-                <div class="px-6 py-4">
-                    <div class="card grid grid-cols-2 gap-2 mb-3">
-                        <div class="card-body m-auto mb-5 bg-gradient-to-r from-gulf-blue-100 to-blue-500 ed p-3
-                        border rounded   justify-content-center align-content-stretch container rounded  shadow-lg">
-                            <h1 class="text-center mb-4 font-bold text-xl  mb-2">Petty Cash Details</h1>
-                            <p class="font-bold   mb-2"> Details of expenditure: {{ pettycash.details_of_expenditure }}</p>
-                            <p class="font-bold   mb-2"> Allocation code of expenditure: {{ pettycash.section }}</p>
-                            <p class="font-bold   mb-2"> Amount: {{ pettycash.amount }}</p>
-                       {%   if pettycash.payment_mode == None %}
-                            <p class="font-bold   mb-2 bg-red-600"> Payment mode: Not yet Added By Cashier</p>
-                       {% else %}
-                            <p class="font-bold   mb-2"> Payment mode: {{ pettycash.payment_mode }}</p>
-                        {% endif %}
-                            <p class="font-bold   mb-2"> Requested by:
-                                {% if request.user == pettycash.requested_by %}
-                                                            You
-                                                            {% elif pettycash.requested_by.get_full_name %}
-                                                                {{pettycash.requested_by.get_full_name}}
-                                                        {% elif request.user == pettycash.requested_by %}
-                                                                {{ pettycash.requested_by }}
-                                                        {% endif %}</p>
-                            <p class="font-bold   mb-2"> Created At: {{ pettycash.date_created }}</p>
-                            <p class="font-bold   mb-2"> Section: {{ pettycash.section }}</p>
-{#                            <p class="font-bold   mb-2"> Role : {{ pettycash_role }}</p>#}
-                    </div>
-
-                
-                 </div>
-                    <h1 class="text-center mb-4 font-bold text-xl  mb-2">Workflow Details</h1>
-                    <p class="font-bold  mb-2"> Workflow name : {{ pettycash.process.workflow }}</p>
-                {% if pettycash_role == "disburse" and pettycash.payment_mode == None %}
-                <form class="row rounded py-4 border  rounded-lg p-3 m-auto container" method="POST"
-                      action="/pettycash/pettycash_detail/{{ pettycash.petty_id  }}/" enctype="multipart/form-data">
-                    {% csrf_token %}
-                    <div class=" m-auto container  ">
-                        <h4 class="text-center mb-4 font-bold text-xl  mb-2">Add Payment Mode</h4>
-
-                        <div class="m-4 text-center">
-{#                            <label for="payment_mode">Payment mode</label>#}
-                            <select name="payment_mode" id="payment_mode" required>
-                                <option value="">Add Payment Mode</option>
-                                <option value="ZIG_SWIPE">Swipe ZIG</option>
-                                <option value="ZIG_CASH">Cash ZIG</option>
-                                <option value="SWIPE_USD">Swipe Usd</option>
-                                <option value="CASH_USD">Rtgs Usd</option>
-                            </select>
-                        </div>
-
-                        <div class="m-4 text-center">
-{#                            <button type="submit" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded" name="approved" value="Rejected">Reject</button>#}
-                            <button type="submit" class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded" name="submit" value="submit"> Add </button>
-                        </div>
-                    </div>
-                </form>
-                {% endif %}
-
-{#            {% if pettycash.payment_mode != None %}#}
-                        {% if approvalForm %}
-                    <form class="row rounded py-4 border bg-gulf-blue-400 rounded-lg p-3 m-auto container" method="POST" action="{% url 'approve:approve' pettycash.process.id %}" enctype="multipart/form-data">
-                         {% csrf_token %}
-                        <div class=" m-auto container  ">
-                             {{approvalForm.comment}}
-
-                                 <div class="m-4 text-center">
-                                    <button type="submit" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded" name="approved" value="Rejected">Reject</button>
-                                    <button type="submit" class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded" name="approved" value="Approved"> {{ to }} </button>
-                              </div>
-                        </div>
-                    </form>
-               {% endif %}
-               <div class="card grid grid-cols-5 gap-5">
-                <div class="  rounded ">
-                <div class="card-body  arrow bg-gradient-to-r from-gulf-blue-100 to-green-700 ed border rounded container rounded">
-                        <div class="p-3 font-bold rounded-lg">Created</div>
-                        <div class=" grid grid-cols-2 text-center">
-                            <span class="inline-block rounded-full text-sm">By:
-                                {% if request.user == pettycash.requested_by %}
-                                    You
-                                {% elif pettycash.requested_by.get_full_name %}
-                                    {{ pettycash.requested_by.get_full_name }}
-                                {% elif request.user == pettycash.requested_by %}
-                                    {{ pettycash.requested_by }}
+        </style>
+    </head>
+    <div class="m-auto mt-5 ">
+        <div class="card grid grid-cols-1 gap-2 mb-3">
+            <div class="card-body m-2">
+                <div class="card-body m-auto mb-5 p-3 border rounded    container rounded  shadow-lg">
+                    <div class="px-6 py-4">
+                        <div class="card grid grid-cols-2 gap-2 mb-3">
+                            <div class="card-body m-auto mb-5 bg-gradient-to-r from-gulf-blue-100 to-blue-500 ed p-3 border rounded   justify-content-center align-content-stretch container rounded  shadow-lg">
+                                <h1 class="text-center mb-4 font-bold text-xl  mb-2">Petty Cash Details</h1>
+                                <p class="font-bold   mb-2">Details of expenditure: {{ pettycash.details_of_expenditure }}</p>
+                                <p class="font-bold   mb-2">Allocation code of expenditure: {{ pettycash.section }}</p>
+                                <p class="font-bold   mb-2">Amount: {{ pettycash.amount }}</p>
+                                {% if pettycash.payment_mode == None %}
+                                    <p class="font-bold   mb-2 bg-red-600">Payment mode: Not yet Added By Cashier</p>
+                                {% else %}
+                                    <p class="font-bold   mb-2">Payment mode: {{ pettycash.payment_mode }}</p>
                                 {% endif %}
-                            </span>
+                                <p class="font-bold   mb-2">
+                                    Requested by:
+                                    {% if request.user == pettycash.requested_by %}
+                                        You
+                                    {% elif pettycash.requested_by.get_full_name %}
+                                        {{ pettycash.requested_by.get_full_name }}
+                                    {% elif request.user == pettycash.requested_by %}
+                                        {{ pettycash.requested_by }}
+                                    {% endif %}
+                                </p>
+                                <p class="font-bold   mb-2">Created At: {{ pettycash.date_created }}</p>
+                                <p class="font-bold   mb-2">Section: {{ pettycash.section }}</p>
+                                {#                            <p class="font-bold   mb-2"> Role : {{ pettycash_role }}</p>#}
+                            </div>
                         </div>
-                    </div>
-                </div>
-              
-                    {% for step in pettycash.process.workflow.step_set.all %}
-                    <div class="   rounded ">
-                        {% if step.step in approved_steps %}
-                            {% for approval in pettycash.process.approval_set.all %}
-                                {% if step == approval.step %}
-                                    <div class="card-body px-2 mx-4 arrow bg-gradient-to-r from-gulf-green-100 to-green-700 ed border rounded container rounded">
-                                        <div class=" rounded-lg" title="{{ approval.comment }}">
-                                            <p class="font-bold">{{ step |default_if_none:'' }}</p>
-                                            <br>
-                                        </div>
-                                        <div class=" grid grid-cols-2 text-center">
-                                            <span class="inline-block rounded-full text-sm">{{ approval.approved }}</span>
-                                            <span class="inline-block rounded-full text-sm">By:
-                                                {% if request.user == approval.user %}
-                                                    You
-                                                {% elif approval.user.get_full_name %}
-                                                    {{ approval.user.get_full_name }}
-                                                {% elif request.user == approval.user %}
-                                                    {{ approval.user }}
+                        <h1 class="text-center mb-4 font-bold text-xl  mb-2">Workflow Details</h1>
+                        <p class="font-bold  mb-2">Workflow name : {{ pettycash.process.workflow }}</p>
+                        {% if pettycash_role == "disburse" and pettycash.payment_mode == None %}
+                            <form class="row rounded py-4 border  rounded-lg p-3 m-auto container"
+                                  method="POST"
+                                  action="/pettycash/pettycash_detail/{{ pettycash.petty_id }}/"
+                                  enctype="multipart/form-data">
+                                {% csrf_token %}
+                                <div class=" m-auto container  ">
+                                    <h4 class="text-center mb-4 font-bold text-xl  mb-2">Add Payment Mode</h4>
+                                    <div class="m-4 text-center">
+                                        {#                            <label for="payment_mode">Payment mode</label>#}
+                                        <select name="payment_mode" id="payment_mode" required>
+                                            <option value="">Add Payment Mode</option>
+                                            <option value="ZIG_SWIPE">Swipe ZIG</option>
+                                            <option value="ZIG_CASH">Cash ZIG</option>
+                                            <option value="SWIPE_USD">Swipe Usd</option>
+                                            <option value="CASH_USD">Rtgs Usd</option>
+                                        </select>
+                                    </div>
+                                    <div class="m-4 text-center">
+                                        {#                            <button type="submit"
+                                    class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded"
+                                    name="approved"
+                                    value="Rejected">Reject</button>#}
+                                        <button type="submit"
+                                                class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded"
+                                                name="submit"
+                                                value="submit">Add</button>
+                                    </div>
+                                </div>
+                            </form>
+                        {% endif %}
+                        {#            {% if pettycash.payment_mode != None %}#}
+                        {% if approvalForm %}
+                            <form class="row rounded py-4 border bg-gulf-blue-400 rounded-lg p-3 m-auto container"
+                                  method="POST"
+                                  action="{% url 'approve:approve' pettycash.process.id %}"
+                                  enctype="multipart/form-data">
+                                {% csrf_token %}
+                                <div class=" m-auto container  ">
+                                    {{ approvalForm.comment }}
+                                    <div class="m-4 text-center">
+                                        <button type="submit"
+                                                class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded"
+                                                name="approved"
+                                                value="Rejected">Reject</button>
+                                        <button type="submit"
+                                                class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded"
+                                                name="approved"
+                                                value="Approved">{{ to }}</button>
+                                    </div>
+                                </div>
+                            </form>
+                        {% endif %}
+                        <div class="card grid grid-cols-5 gap-5">
+                            <div class="  rounded ">
+                                <div class="card-body  arrow bg-gradient-to-r from-gulf-blue-100 to-green-700 ed border rounded container rounded">
+                                    <div class="p-3 font-bold rounded-lg">Created</div>
+                                    <div class=" grid grid-cols-2 text-center">
+                                        <span class="inline-block rounded-full text-sm">By:
+                                            {% if request.user == pettycash.requested_by %}
+                                                You
+                                            {% elif pettycash.requested_by.get_full_name %}
+                                                {{ pettycash.requested_by.get_full_name }}
+                                            {% elif request.user == pettycash.requested_by %}
+                                                {{ pettycash.requested_by }}
+                                            {% endif %}
+                                            <i class="fas fa-check-circle text-green-500">  </i>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            {% for step in pettycash.process.workflow.step_set.all %}
+                                <div class=" mx-3 rounded ">
+                                    {% if step.step in approved_steps %}
+                                        {% for approval in pettycash.process.approval_set.all %}
+                                            {% if step == approval.step %}
+                                                <div class="card-body px-2 arrow bg-gradient-to-r from-gulf-blue-100 to-green-700 ed border rounded container rounded">
+                                                    <div class=" rounded-lg" title="{{ approval.comment }}">
+                                                        <p class="font-bold">{{ step |default_if_none:'' }}</p>
+                                                        <br>
+                                                    </div>
+                                                    <div class=" grid grid-cols-2 text-center">
+                                                        <span class="inline-block rounded-full text-sm">{{ approval.approved }}</span>
+                                                        <span class="inline-block rounded-full text-sm">By:
+                                                            {% if request.user == approval.user %}
+                                                                You
+                                                            {% elif approval.user.get_full_name %}
+                                                                {{ approval.user.get_full_name }}
+                                                            {% elif request.user == approval.user %}
+                                                                {{ approval.user }}
+                                                            {% endif %}
+                                                            <i class="fas fa-check-circle text-green-500">  </i>
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            {% endif %}
+                                        {% endfor %}
+                                    {% else %}
+                                        <div class="card-body px-2 arrow bg-gradient-to-r from-gulf-blue-100 to-blue-700 ed border rounded container rounded">
+                                            <div class=" rounded-lg" title="{{ approval.comment }}">
+                                                <p class="font-bold">{{ step |default_if_none:'' }}</p>
+                                                <br>
+                                                {% if step.to %}
+                                                    <span class="inline-block rounded-full text-sm">To {{ step.to|default_if_none:'' }}  <i class="fas fa-circle-notch fa-spin text-blue-500"></i>  </span>
                                                 {% endif %}
-                                            </span>
+                                            </div>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                {% if step == pettycash.process.workflow.step_set.last and step == pettycash.process.approval_set.last.step %}
+                                    <div class="flex justify-center items-center  rounded ">
+                                        <div class="flex justify-center rounded-lg" title="{{ approval.comment }}">
+                                            Completed
+                                            <i class="fas fa-check-circle text-green-500"></i>
                                         </div>
                                     </div>
                                 {% endif %}
                             {% endfor %}
-                        {% else %}
-                        <div class="card-body px-2 mx-4 arrow bg-gradient-to-r from-gulf-blue-100 to-blue-700 ed border rounded container rounded">
-                                <div class=" rounded-lg" title="{{ approval.comment }}">
-                                    <p class="font-bold">{{ step |default_if_none:'' }}</p>
-                                    <br>
-                                    {% if step.to %}<span class="inline-block rounded-full text-sm">To {{ step.to|default_if_none:'' }}</span>{% endif %}
-                                </div>
-                            </div>
-                        {% endif %}
-                    </div>
-                    {% if step == pettycash.process.workflow.step_set.last and step == pettycash.process.approval_set.last.step %}
-                        <div class="flex justify-center items-center  rounded ">
-                            <div class="flex justify-center rounded-lg" title="{{ approval.comment }}">
-                                Compmleted
-                            </div>
                         </div>
-                    {% endif %}
-                {% endfor %}
+                    </div>
+                </div>
             </div>
-                </div>    
-            </div>    
-        </div>    
+        </div>
     </div>
-</div>
 {% endblock %}
