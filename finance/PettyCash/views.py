@@ -35,9 +35,12 @@ def pettyCash_detail(request, petty_id):
         if role.application == "pettycash":
             custom_user_roles["pettycash"] = role
     pettycash_role = str(custom_user_roles["pettycash"])
-    print(pettycash_role)
+    # print(pettycash_role)
 
     pettycash_item = Pettycash.objects.get(petty_id=petty_id)
+
+    quotations = Quotation.objects.filter(pettycash=pettycash_item).all()
+    print(quotations.count())
 
     if pettycash_role == "disburse":
         payment_mode = request.POST.get('payment_mode')
@@ -73,7 +76,7 @@ def pettyCash_detail(request, petty_id):
     approved_steps = pettycash_item.process.approval_set.all().values_list('step__step', flat=True)
     return render(request, 'finance/pettycash/pettycash_detail.html',
                   {'pettycash': pettycash_item, 'approved_steps': approved_steps, 'approvalForm': approvalForm,
-                   'to': to, 'pettycash_role': pettycash_role, 'user_groups': user_groups})
+                   'to': to, 'pettycash_role': pettycash_role, 'user_groups': user_groups, 'qoutations': quotations})
 
 
 @login_required
@@ -361,7 +364,8 @@ def import_pettycash(request):
                     pettycash = Pettycash.objects.filter(petty_id=voucher_id).first()
                     # if pettycash exists then update the pettycash process with the date created modify the date created
                     # to the date created in the pettycash modify update_date1 to form a date object yyyy-mm-dd
-                    if pettycash and update_date1 != '0000-00-00 00:00:00':
+                    if pettycash and update_date1 != '0000-00-00 00:00:00' and pettycash.date_created != datetime.strptime(
+                            update_date1, '%Y-%m-%d'):
                         update_date1 = datetime.strptime(update_date1, '%Y-%m-%d')
                         pettycash.date_created = update_date1
                         print('date created', pettycash.date_created)

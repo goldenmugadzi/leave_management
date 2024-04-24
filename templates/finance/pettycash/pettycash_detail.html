@@ -46,8 +46,18 @@
                         border rounded   justify-content-center align-content-stretch container rounded  shadow-lg">
                             <h1 class="text-center mb-4 font-bold text-xl  mb-2">Petty Cash Details</h1>
                             <p class="font-bold   mb-2"> Details of expenditure: {{ pettycash.details_of_expenditure }}</p>
+                            <p class="font-bold   mb-2"> Currency: {{ pettycash.currency }}</p>
                             <p class="font-bold   mb-2"> Allocation code of expenditure: {{ pettycash.section }}</p>
                             <p class="font-bold   mb-2"> Amount: {{ pettycash.amount }}</p>
+                        {%   if quotations %}
+                        {% for quotation in quotations %}
+                            {% if quotation.quotation_file == '' %}
+                                <p class="font-bold   mb-2"> Quotation: not available</p>
+                            {% else %}
+                                <p class="font-bold   mb-2"> Quotation: {{ quotation }}<a href="/pettycash/qoutes/{{ quotation.quotation_file }}"></a></p>
+                            {% endif %}
+                        {% endfor %}
+                        {% endif %}
                        {%   if pettycash.payment_mode == None %}
                             <p class="font-bold   mb-2 bg-red-600"> Payment mode: Not yet Added By Cashier</p>
                        {% else %}
