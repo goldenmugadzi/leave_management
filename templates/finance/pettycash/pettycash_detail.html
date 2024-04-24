@@ -2,38 +2,36 @@
 {% load static %}
 {% load custom_tags %}
 {% block content %}
-    <head>
-        <style>
-      .arrow {
-          position: relative;
-      }
+<head>
+    <style>
+.arrow, .arrow-step {
+    position: relative;
+    {% comment %} margin-left: 5px; /* Adjust this to move the arrows left or right */ {% endcomment %}
+}
 
-      .arrow::after {
-          content: "";
-          position: absolute;
-          top: 50%;
-          transform: translateY(-50%);
-          width: 0;
-          height: 0;
-          border-top: 15px solid transparent;
-          border-bottom: 15px solid transparent;
-          border-left: 10px solid #3B82F6; /* Adjust arrow color here */
-          left: -10px;
-      }
+.arrow::before, .arrow::after, .arrow-step::before, .arrow-step::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    width: 0;
+    height: 0;
+    border-top: 15px solid transparent;
+    border-bottom: 15px solid transparent;
+}
 
-      .arrow-step::before {
-          content: "";
-          position: absolute;
-          top: 50%;
-          right: -20px;
-          transform: translateY(-50%);
-          width: 0;
-          height: 0;
-          border-top: 10px solid transparent;
-          border-bottom: 10px solid transparent;
-          border-left: 20px solid #3B82F6; /* Adjust arrow color here */
-      }
-        </style>
+.arrow::before, .arrow-step::before {
+    left: 100%;
+    transform: translateY(-50%);
+    border-left: 20px solid #28a745; /* Adjust arrow color here */
+}
+
+.arrow::after, .arrow-step::after {
+    left: 104%;
+    transform: translateY(-50%);
+    border-left: 20px solid #28a745; /* Adjust arrow color here */
+}
+    </style>
+</head>>
     </head>
     <div class="m-auto mt-5 ">
         <div class="card grid grid-cols-1 gap-2 mb-3">
