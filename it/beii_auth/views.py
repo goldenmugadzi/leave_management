@@ -29,7 +29,7 @@ APPLICATIONS = [
         "name": "Tamper Token",
         "title": "Tamper Tokens",
         "iconUrl": "assets/images/token.png",
-        "url": "/tempertokens/"
+        "url": "/tokens/"
     },
     {
         "name": "petty_cash",
