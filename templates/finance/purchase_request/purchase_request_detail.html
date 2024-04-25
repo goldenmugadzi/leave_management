@@ -222,7 +222,7 @@
                                     {% if step.step in approved_steps %}
                                         {% for approval in purchase_request.process.approval_set.all %}
                                             {% if step == approval.step %}
-                                                <div class="card-body px-2 mx-4 arrow bg-gradient-to-r from-gulf-green-100 to-green-700 ed border rounded container rounded">
+                                                <div class="card-body px-2 mx-4 arrow bg-gradient-to-r from-gulf-blue-100 to-green-700 ed border rounded container rounded">
                                                     <div class=" rounded-lg" title="{{ approval.comment }}">
                                                         <p class="font-bold">{{ step |default_if_none:'' }}</p>
                                                         <br>
