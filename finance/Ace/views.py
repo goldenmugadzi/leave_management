@@ -878,7 +878,7 @@ def get_to_approve_Ace(request):
                 budget.balance = budget.balance - amount
                 budget.to_be_withdrawn = budget.to_be_withdrawn - amount
                 budget.withdrawn = budget.withdrawn + amount
-                budget.withdrawal_date = date.today
+                budget.withdrawal_date = date.today()
                 budget.save()
                 print("approved")
                 return redirect("/ace")

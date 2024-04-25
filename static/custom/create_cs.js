@@ -38,6 +38,7 @@ class CreateCS extends React.Component {
       committeeMembers: [],
       member: {
         memberName: "",
+        memberFullName: "",
         memberPosition: "",
       },
       users: [],
@@ -51,16 +52,81 @@ class CreateCS extends React.Component {
     this.getCreateData = this.getCreateData.bind(this);
     this.onAddBid = this.onAddBid.bind(this);
     this.onAddItemsModal = this.onAddItemsModal.bind(this);
+    this.onCommitteeChange = this.onCommitteeChange.bind(this);
   }
 
   componentDidMount() {
     console.log("props: ", this.props);
-    this.setState({
-      username: this.props.username,
-      pr_number: this.props.prid,
-    });
-    this.getCreateData(this.props.prid);
+    if(this.props.csid !== ""){
+      this.setState({
+        cs_id: this.props.csid,
+      });
+      this.getCSData(this.props.csid);
+    } else {
+
+      this.setState({
+        username: this.props.username,
+        pr_number: this.props.prid,
+      });
+      this.getCreateData(this.props.prid);
+    }
   }
+
+  getCSData = (cs_id) => {
+    fetch(`http://localhost:8000/comparative_schedule/cs_data/${cs_id}`)
+      .then((response) => response.json())
+      .then((data_) => {
+        let data = JSON.parse(data_);
+        console.log("cs data: ", data, typeof data);
+        let cs_id = data.cs_id ? data.cs : {};
+        let bids = data.bids ? data.bids : [];
+        let items = data.items ? data.items : [];
+        let compliance = data.compliance ? data.compliance : [];
+        let rankings = data.rankings ? data.rankings : [];
+        let committee = data.committee ? data.committee : [];
+        let pr_items = data.pr_items ? data.pr_items : [];
+        let pr_date = data.pr_date ? data.pr_date : "";
+        let plan_ref = data.plan_ref ? data.plan_ref : "";
+        let proc_plan = data.proc_plan ? data.proc_plan : "";
+        let scope_of_work = data.scope_of_work ? data.scope_of_work : "";
+        let pr_number = data.pr_number ? data.pr_number : "";
+        let quantity = data.quantity ? data.quantity : "";
+        let closing_date = data.closing_date ? data.closing_date : "";
+        let ref_date = data.ref_date ? data.ref_date : "";
+        let closing_time = data.closing_time? data.closing_time : "";
+        let date_tender_opened = data.date_tender_opened ? data.date_tender_opened : "";
+        let tender_adjudication_committee_date = data.tac_date ? data.tac_date : "";
+        let advert = data.advert ? data.advert : null;
+        let cs_opened = data.cs_opened ? data.cs_opened : false;
+
+
+        this.setState({
+          ...this.state,
+          cs_id: cs_id,
+          date_tender_opened: cs_opened,
+          ref_date: ref_date,
+          proc_ref: plan_ref,
+          proc_plan: proc_plan,
+          scope_of_work: scope_of_work,
+          pr_number: pr_number,
+          quantity: quantity,
+          pr_date: pr_date,
+          closing_date: closing_date,
+          closing_time_hour: closing_time,
+          ref_date: ref_date,
+          date_tender_opened: date_tender_opened,
+          tender_adjudication_committee_date: tender_adjudication_committee_date,
+          advert: advert,
+          bids: bids,
+          cs_items: items,
+          compliance: compliance,
+          rankings: rankings,
+          committeeMembers: committee,
+          pr_items: pr_items,
+        });
+      });
+  };
+
 
   getCreateData = (pr_id) => {
     console.log("cs pr_id: ", pr_id);
@@ -86,8 +152,10 @@ class CreateCS extends React.Component {
       });
   };
 
-  onCommiteeChange = (name_, value) => {
-
+  onCommitteeChange = (name_, event) => {
+    
+    let { name, value } = event.target;
+    console.log("name: ", name_, "value: ", value);
     let member = this.state.member;
     member[name_] = value;
     this.setState({
@@ -1599,7 +1667,7 @@ class CreateCS extends React.Component {
       );
     }
 
-    if (this.state.rankingTable) {
+    if (true) {
       committeeTable = (
         <div className="bg-gulf-blue-300 shadow shadow-nepal-300 text-gray-700 rounded px-2 py-2">
           <div className="space-y-12 px-5 py-5">
@@ -1622,7 +1690,7 @@ class CreateCS extends React.Component {
                           </label>
                           <div className="mt-2">
                             <select
-                              onChange={(text) => this.onCommitteeChange("role", text)}
+                              onChange={(text) => this.onCommitteeChange("memberPosition", text)}
                               id="memberPosition"
                               name="memberPosition"
                               autoComplete="memberPosition"
@@ -1648,7 +1716,7 @@ class CreateCS extends React.Component {
                           </label>
                           <div className="mt-2">
                             <select
-                              onChange={(text) => this.onCommiteeChange("memberName", text)}
+                              onChange={(text) => this.onCommitteeChange("memberName", text)}
                               id="memberName"
                               name="memberName"
                               autoComplete="memberName"
@@ -1666,7 +1734,7 @@ class CreateCS extends React.Component {
                         <div className="w-30">
                           <button
                             style={{ width: "100%" }}
-                            onClick={this.onAddCommitteeMember}
+                            onClick={this.onAddCommitteeMembers}
                             name="save_next"
                             className="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
                           >
@@ -1679,7 +1747,7 @@ class CreateCS extends React.Component {
                       return (
                         <tr className="text-gray-900">
                           <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                            {member.role}
+                            {member.memberPosition}
                           </td>
                           <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
                             {member.memberName}
@@ -2257,4 +2325,5 @@ class CreateCS extends React.Component {
 const domContainer = document.querySelector("#create_comparative_schedule");
 const username = domContainer.getAttribute("data-username");
 const prid = domContainer.getAttribute("data-prid");
-ReactDOM.render(e(CreateCS, { username, prid }), domContainer);
+const csid = domContainer.getAttribute("data-csid");
+ReactDOM.render(e(CreateCS, { username, prid, csid }), domContainer);

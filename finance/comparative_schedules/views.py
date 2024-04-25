@@ -8,6 +8,153 @@ from it.users.models import *
 from finance.purchase_request.models import PurchaseRequest, PrItem
 from finance.comparative_schedules.models import *
 
+def get_comperative_schedules(request):
+    cs = ComparativeSchedules.objects.all()
+    cs_list = []
+    for c in cs:
+        pr = PurchaseRequest.objects.filter(id=c.pr_id_id).first()
+        user = UserProfile.objects.filter(id=c.created_by_id).first()
+        region = Regions.objects.filter(id=c.region_id).first()
+        section = Sections.objects.filter(id=c.section_id).first()
+        cs_list.append({
+            "cs_id": c.cs_id,
+            "pr_id": pr.id,
+            "pr_number": c.pr_number,
+            "pr_date": c.pr_date,
+            "scope_of_work": c.scope_of_work,
+            "closing_date": c.closing_date,
+            "closing_time": c.closing_time,
+            "advert": c.advert,
+            "pr_number": c.pr_number,
+            "pr_date": c.pr_date,
+            "cs_opened": c.cs_opened,
+            "tac_date": c.tac_date,
+            "created_by": user.username,
+            "section": section.section if section else "",
+            "region": region.region if region else "",
+            "created_at": c.created_at,
+        })
+        
+    context = json.dumps(cs_list, default=str)
+    user_page = 'finance/comparative_schedules/cs_schedules.html'
+    return render(request, user_page, {"cs": context})
+
+def get_comperative_schedule(request, cs_id):
+    
+    username = request.user.username
+    return render(request, 'finance/comparative_schedules/cs_create.html', {
+        "cs_id": cs_id,
+        "username": username,
+    })
+
+def get_comperative_schedule_data(request, cs_id):
+    cs = ComparativeSchedules.objects.filter(cs_id=cs_id).first()
+    pr = PurchaseRequest.objects.filter(id=cs.pr_id_id).first()
+    user = UserProfile.objects.filter(id=cs.created_by_id).first()
+    region = Regions.objects.filter(id=cs.region_id).first()
+    section = Sections.objects.filter(id=cs.section_id).first()
+    items = CSItems.objects.filter(cs_id=cs).all()
+    bids = Bids.objects.filter(cs_id=cs).all()
+    compliance = CSCompliance.objects.filter(cs_id=cs).all()
+    rankings = Ranking.objects.filter(cs_id=cs).all()
+    committee = Committee.objects.filter(cs_id=cs).all()
+    
+    items_list = []
+    for item in items:
+        items_list.append({
+            "item_id": item.item_id,
+            "item_name": item.item_name,
+            "quantity": item.quantity,
+            "unit_of_measurement": item.unit_of_measurement,
+            "created_at": item.created_at,
+        })
+        
+    bids_list = []
+    for bid in bids:
+        supplier = Supplier.objects.filter(id=bid.sup_id.id).first()
+        print("bid.item_id.id: ", bid.item_id.id)
+        item = CSItems.objects.filter(id=bid.item_id.id).all()
+        bids_list.append({
+            "bid_id": bid.id,
+            "supplier": supplier.name if supplier else "",
+            "unit_price": bid.unit_price,
+            "vat": bid.vat,
+            "quoted_qty": bid.quoted_qty,
+            "bid_no": bid.bid_no,
+            "quote_date": bid.quote_date,
+            "total": bid.total,
+            "bid_document": bid.bid_document,
+            "created_at": bid.created_at,
+            "items": list(item.values('item_id', 'item_name', 'quantity', 'unit_of_measurement')),
+        })
+        
+    compliance_list = []
+    for comp in compliance:
+        supplier = Supplier.objects.filter(id=comp.supplier_id).first()
+        compliance_list.append({
+            "supplier": supplier.name if supplier else "",
+            "payment_terms": comp.payment_terms,
+            "bid_validity": comp.bid_validity,
+            "delivery_period": comp.delivery_period,
+            "technical_specifications": comp.technical_specifications,
+            "valid_tax_clearance": comp.valid_tax_clearance,
+            "registered_with_praz": comp.registered_with_praz,
+            "site_visit_done": comp.site_visit_done,
+            "samples_delivered": comp.samples_delivered,
+            "decision": comp.decision,
+            "remarks": comp.remarks,
+            "created_at": comp.created_at,
+        })
+        
+    rankings_list = []
+    for rank in rankings:
+        supplier = Supplier.objects.filter(id=rank.supplier_id.id).first()
+        rankings_list.append({
+            "supplier": supplier.name if supplier else "",
+            "rank": rank.rank,
+            "remarks": rank.remarks,
+            "decision": rank.decision,
+            "total": rank.total,
+            "created_at": rank.created_at,
+        })
+        
+    committee_list = []
+    for member in committee:
+        committee_list.append({
+            "committee_username": member.committee_username,
+            "committee_name": member.committee_name,
+            "committee_position": member.committee_position,
+            "committee_date": member.committee_date,
+        })
+        
+    context = {
+        "cs_id": cs.cs_id,
+        "pr_id": pr.id,
+        "pr_number": cs.pr_number,
+        "pr_date": cs.pr_date,
+        "scope_of_work": cs.scope_of_work,
+        "closing_date": cs.closing_date,
+        "closing_time": cs.closing_time,
+        "advert": cs.advert,
+        "pr_number": cs.pr_number,
+        "pr_date": cs.pr_date,
+        "cs_opened": cs.cs_opened,
+        "tac_date": cs.tac_date,
+        "created_by": user.username,
+        "section": section.section if section else "",
+        "region": region.region if region else "",
+        "created_at": cs.created_at,
+        "items": items_list,
+        "bids": bids_list,
+        "compliance": compliance_list,
+        "rankings": rankings_list,
+        "committee": committee_list,
+    }
+    
+    context = json.dumps(context, default=str)
+    
+    return JsonResponse(context, safe=False)
+
 def save_file(f, file_path):
     if f:
         with open(file_path, 'wb+') as destination:
@@ -521,9 +668,10 @@ def save_cs_committee(request):
     for member in committee:
         committee_query = Committee(
             cs_id = cs_query,
-            committee_username = member['username'],
-            committee_name = member['name'],
-            committee_position = member['position'],
+            committee_username = member['memberName'],
+            committee_name = "",
+            committee_position = member['memberPosition'],
+            committee_date = datetime.now(),
         )
         committee_query.save()
         

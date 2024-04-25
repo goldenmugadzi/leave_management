@@ -1,10 +1,12 @@
 "use strict";
 
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
-
 function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -21,6 +23,51 @@ var CreateCS = function (_React$Component) {
     _classCallCheck(this, CreateCS);
 
     var _this = _possibleConstructorReturn(this, (CreateCS.__proto__ || Object.getPrototypeOf(CreateCS)).call(this, props));
+
+    _this.getCSData = function (cs_id) {
+      fetch("http://localhost:8000/comparative_schedule/cs_data/" + cs_id).then(function (response) {
+        return response.json();
+      }).then(function (data_) {
+        var _Object$assign;
+
+        var data = JSON.parse(data_);
+        console.log("cs data: ", data, typeof data === "undefined" ? "undefined" : _typeof(data));
+        var cs_id = data.cs_id ? data.cs : {};
+        var bids = data.bids ? data.bids : [];
+        var items = data.items ? data.items : [];
+        var compliance = data.compliance ? data.compliance : [];
+        var rankings = data.rankings ? data.rankings : [];
+        var committee = data.committee ? data.committee : [];
+        var pr_items = data.pr_items ? data.pr_items : [];
+        var pr_date = data.pr_date ? data.pr_date : "";
+        var plan_ref = data.plan_ref ? data.plan_ref : "";
+        var proc_plan = data.proc_plan ? data.proc_plan : "";
+        var scope_of_work = data.scope_of_work ? data.scope_of_work : "";
+        var pr_number = data.pr_number ? data.pr_number : "";
+        var quantity = data.quantity ? data.quantity : "";
+        var closing_date = data.closing_date ? data.closing_date : "";
+        var ref_date = data.ref_date ? data.ref_date : "";
+        var closing_time = data.closing_time ? data.closing_time : "";
+        var date_tender_opened = data.date_tender_opened ? data.date_tender_opened : "";
+        var tender_adjudication_committee_date = data.tac_date ? data.tac_date : "";
+        var advert = data.advert ? data.advert : null;
+        var cs_opened = data.cs_opened ? data.cs_opened : false;
+
+        _this.setState(Object.assign({}, _this.state, (_Object$assign = {
+          cs_id: cs_id,
+          date_tender_opened: cs_opened,
+          ref_date: ref_date,
+          proc_ref: plan_ref,
+          proc_plan: proc_plan,
+          scope_of_work: scope_of_work,
+          pr_number: pr_number,
+          quantity: quantity,
+          pr_date: pr_date,
+          closing_date: closing_date,
+          closing_time_hour: closing_time
+        }, _defineProperty(_Object$assign, "ref_date", ref_date), _defineProperty(_Object$assign, "date_tender_opened", date_tender_opened), _defineProperty(_Object$assign, "tender_adjudication_committee_date", tender_adjudication_committee_date), _defineProperty(_Object$assign, "advert", advert), _defineProperty(_Object$assign, "bids", bids), _defineProperty(_Object$assign, "cs_items", items), _defineProperty(_Object$assign, "compliance", compliance), _defineProperty(_Object$assign, "rankings", rankings), _defineProperty(_Object$assign, "committeeMembers", committee), _defineProperty(_Object$assign, "pr_items", pr_items), _Object$assign)));
+      });
+    };
 
     _this.getCreateData = function (pr_id) {
       console.log("cs pr_id: ", pr_id);
@@ -46,8 +93,12 @@ var CreateCS = function (_React$Component) {
       });
     };
 
-    _this.onCommiteeChange = function (name_, value) {
+    _this.onCommitteeChange = function (name_, event) {
+      var _event$target = event.target,
+          name = _event$target.name,
+          value = _event$target.value;
 
+      console.log("name: ", name_, "value: ", value);
       var member = _this.state.member;
       member[name_] = value;
       _this.setState(Object.assign({}, _this.state, {
@@ -188,18 +239,18 @@ var CreateCS = function (_React$Component) {
         var bid_file = event.target.files[0];
         currentBid[name_] = bid_file;
       } else if (name_ === "supplier") {
-        var _event$target = event.target,
-            name = _event$target.name,
-            value = _event$target.value;
+        var _event$target2 = event.target,
+            name = _event$target2.name,
+            value = _event$target2.value;
 
         console.log("value: ", value);
         var id_name = value ? value.split("-#-") : [];
         currentBid[name_] = id_name.length > 0 ? id_name[0] : "";
         currentBid["supplier_name"] = id_name.length >= 1 ? id_name[1] : "";
       } else {
-        var _event$target2 = event.target,
-            _name = _event$target2.name,
-            _value = _event$target2.value;
+        var _event$target3 = event.target,
+            _name = _event$target3.name,
+            _value = _event$target3.value;
 
         currentBid[name_] = _value;
       }
@@ -216,9 +267,9 @@ var CreateCS = function (_React$Component) {
       console.log("item: ", item);
       // if item exists update item
       if (item) {
-        var _event$target3 = event.target,
-            name = _event$target3.name,
-            value = _event$target3.value;
+        var _event$target4 = event.target,
+            name = _event$target4.name,
+            value = _event$target4.value;
 
         item[name_] = value;
         // update item in current bid
@@ -569,9 +620,9 @@ var CreateCS = function (_React$Component) {
 
     _this.onInputChange = function (event) {
       console.log(event);
-      var _event$target4 = event.target,
-          name = _event$target4.name,
-          value = _event$target4.value;
+      var _event$target5 = event.target,
+          name = _event$target5.name,
+          value = _event$target5.value;
 
       _this.setState(Object.assign({}, _this.state, _defineProperty({}, name, value)));
     };
@@ -620,9 +671,9 @@ var CreateCS = function (_React$Component) {
     };
 
     _this.onComplianceChange = function (bid_count, event) {
-      var _event$target5 = event.target,
-          name = _event$target5.name,
-          checked = _event$target5.checked;
+      var _event$target6 = event.target,
+          name = _event$target6.name,
+          checked = _event$target6.checked;
 
       console.log("name: ", name, "checked: ", checked);
       var compliance = _this.state.compliance;
@@ -636,9 +687,9 @@ var CreateCS = function (_React$Component) {
     };
 
     _this.onComplianceRemarksChange = function (bid_count, event) {
-      var _event$target6 = event.target,
-          name = _event$target6.name,
-          value = _event$target6.value;
+      var _event$target7 = event.target,
+          name = _event$target7.name,
+          value = _event$target7.value;
 
       var compliance = _this.state.compliance;
       var index = compliance.findIndex(function (item) {
@@ -737,6 +788,7 @@ var CreateCS = function (_React$Component) {
       committeeMembers: [],
       member: {
         memberName: "",
+        memberFullName: "",
         memberPosition: ""
       },
       users: [],
@@ -750,6 +802,7 @@ var CreateCS = function (_React$Component) {
     _this.getCreateData = _this.getCreateData.bind(_this);
     _this.onAddBid = _this.onAddBid.bind(_this);
     _this.onAddItemsModal = _this.onAddItemsModal.bind(_this);
+    _this.onCommitteeChange = _this.onCommitteeChange.bind(_this);
     return _this;
   }
 
@@ -757,27 +810,35 @@ var CreateCS = function (_React$Component) {
     key: "componentDidMount",
     value: function componentDidMount() {
       console.log("props: ", this.props);
-      this.setState({
-        username: this.props.username,
-        pr_number: this.props.prid
-      });
-      this.getCreateData(this.props.prid);
+      if (this.props.csid !== "") {
+        this.setState({
+          cs_id: this.props.csid
+        });
+        this.getCSData(this.props.csid);
+      } else {
+
+        this.setState({
+          username: this.props.username,
+          pr_number: this.props.prid
+        });
+        this.getCreateData(this.props.prid);
+      }
     }
   }, {
     key: "onSelectChange",
     value: function onSelectChange(name_, event) {
-      var _event$target7 = event.target,
-          name = _event$target7.name,
-          value = _event$target7.value;
+      var _event$target8 = event.target,
+          name = _event$target8.name,
+          value = _event$target8.value;
 
       this.setState(Object.assign({}, this.state, _defineProperty({}, name_, value)));
     }
   }, {
     key: "onFilterSelectCenters",
     value: function onFilterSelectCenters(name_, event) {
-      var _event$target8 = event.target,
-          name = _event$target8.name,
-          value = _event$target8.value;
+      var _event$target9 = event.target,
+          name = _event$target9.name,
+          value = _event$target9.value;
 
       if (name_ === "region") {
         var dist = this.state.allDistricts.filter(function (_district) {
@@ -1938,7 +1999,7 @@ var CreateCS = function (_React$Component) {
         );
       }
 
-      if (this.state.rankingTable) {
+      if (true) {
         committeeTable = React.createElement(
           "div",
           { className: "bg-gulf-blue-300 shadow shadow-nepal-300 text-gray-700 rounded px-2 py-2" },
@@ -1986,7 +2047,7 @@ var CreateCS = function (_React$Component) {
                               "select",
                               {
                                 onChange: function onChange(text) {
-                                  return _this2.onCommitteeChange("role", text);
+                                  return _this2.onCommitteeChange("memberPosition", text);
                                 },
                                 id: "memberPosition",
                                 name: "memberPosition",
@@ -2048,7 +2109,7 @@ var CreateCS = function (_React$Component) {
                               "select",
                               {
                                 onChange: function onChange(text) {
-                                  return _this2.onCommiteeChange("memberName", text);
+                                  return _this2.onCommitteeChange("memberName", text);
                                 },
                                 id: "memberName",
                                 name: "memberName",
@@ -2076,7 +2137,7 @@ var CreateCS = function (_React$Component) {
                             "button",
                             {
                               style: { width: "100%" },
-                              onClick: this.onAddCommitteeMember,
+                              onClick: this.onAddCommitteeMembers,
                               name: "save_next",
                               className: "rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
                             },
@@ -2092,7 +2153,7 @@ var CreateCS = function (_React$Component) {
                         React.createElement(
                           "td",
                           { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
-                          member.role
+                          member.memberPosition
                         ),
                         React.createElement(
                           "td",
@@ -2920,4 +2981,5 @@ var CreateCS = function (_React$Component) {
 var domContainer = document.querySelector("#create_comparative_schedule");
 var username = domContainer.getAttribute("data-username");
 var prid = domContainer.getAttribute("data-prid");
-ReactDOM.render(e(CreateCS, { username: username, prid: prid }), domContainer);
+var csid = domContainer.getAttribute("data-csid");
+ReactDOM.render(e(CreateCS, { username: username, prid: prid, csid: csid }), domContainer);
