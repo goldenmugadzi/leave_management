@@ -699,7 +699,7 @@ def get_Ace_records_requester(request):
     # user_id = request.user.id
     # user = UserProfile.objects.filter(user_id=user_id).first()
     # secction = user.section
-    if str(Ace_role) == "Requester":
+    if str(Ace_role) == "Requester" or str(Ace_role) == "create":
         records = Ace.objects.filter(requested_by=requested_by).all()
         context = serializers.serialize('json', records)
     elif Ace_role == "order":
