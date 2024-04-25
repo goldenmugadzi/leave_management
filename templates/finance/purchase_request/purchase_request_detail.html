@@ -61,9 +61,15 @@
                                     <p class="font-bold   mb-2">created_at: {{ purchase_request.created_at |default_if_none:'' }}</p>
                                     <p class="font-bold   mb-2">section: {{ purchase_request.section |default_if_none:'' }}</p>
                                     <p class="m-4 flex flex-row-reverse gap-2 mb-3">
+                                        <a href="{% url 'comperative_schedule:bid_on_pr'  purchase_request.id %}"
+                                        class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded">Bid</a>
                                         <a href="{% url 'purchase_request:quote_purchase_request' purchase_request.id %}"
-                                           class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded">Quote</a>
-                                    </p>
+                                        class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded">Quote</a>
+                                </p>
+                                    <p class="m-4 flex  gap-2 mb-3">
+                                        <a href="{% url 'purchase_request:purchase_request_update' purchase_request.id %}"
+                                        class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded">Edit</a>
+                                      </p>
                                 </div>
                                 {% if purchase_request.ace %}
                                     <div class="card-body m-auto mb-5 bg-gulf-blue-200 ed p-3 border rounded    container rounded  shadow-lg">
