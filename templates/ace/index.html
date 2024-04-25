@@ -135,11 +135,12 @@
         <tr>
             <th>Approve</th>
             <th>Reject</th>
+            <th>Ace ID</th>
             <th>Date Created</th>
 
 {#          <th>Department</th>#}
-            <th>Region</th>
-          <th>Location</th>
+{#            <th>Region</th>#}
+{#          <th>Location</th>#}
           <th>Section</th>
 {#          <th>Allocation code</th>#}
           <th>Details of expenditure</th>
@@ -149,14 +150,14 @@
 {#            <th>Quotation 3</th>#}
             <th>Requested By</th>
 
-            <th>Ace Id</th>
+
             <th>Approval Status</th>
-            <th>Approved By</th>
-            <th>Rejected By</th>
+{#            <th>Approved By</th>#}
+{#            <th>Rejected By</th>#}
 {#            <th>Date Approved</th>#}
 {#            <th>Date Rejected</th>#}
 {#            <th>Rejection Reason</th>#}
-            <th>Asset Number</th>
+{#            <th>Asset Number</th>#}
 {#            <th>Capital Estimated</th>#}
 {#            <th>Budget</th>#}
 {#            <th>Region</th>#}
@@ -169,7 +170,7 @@
 {#            <th>Labour</th>#}
 {#            <th>Transport</th>#}
 {#            <th>Total Connection Fee</th>#}
-            <th>Designation</th>
+{#            <th>Designation</th>#}
 {#          <th>ACTION</th>#}
         </tr>
       </thead>
@@ -179,10 +180,11 @@
 
             <th>Approve</th>
             <th>Reject</th>
+            <th>Ace ID</th>
             <th>Date Created</th>
 {#            <th>Department</th>#}
-            <th>Region</th>
-            <th>Location</th>
+{#            <th>Region</th>#}
+{#            <th>Location</th>#}
             <th>Section</th>
 {#            <th>Allocation code</th>#}
             <th>Details of expenditure</th>
@@ -192,14 +194,14 @@
 {#            <th>Quotation 3</th>#}
             <th>Requested By</th>
 
-            <th>Ace Id</th>
+
             <th>Approval Status</th>
-            <th>Approved By</th>
-            <th>Rejected By</th>
+{#            <th>Approved By</th>#}
+{#            <th>Rejected By</th>#}
             {#            <th>Date Approved</th>#}
             {#            <th>Date Rejected</th>#}
             {#            <th>Rejection Reason</th>#}
-            <th>Asset Number</th>
+{#            <th>Asset Number</th>#}
 {#            <th>Capital Estimated</th>#}
 {#            <th>Budget</th>#}
 {#            <th>Region</th>#}
@@ -212,7 +214,7 @@
 {#            <th>Labour</th>#}
 {#            <th>Transport</th>#}
 {#            <th>Total Connection Fee</th>#}
-            <th>Designation</th>
+{#            <th>Designation</th>#}
 {#            <th>ACTION</th>#}
         </tr>
       </tfoot>
@@ -229,7 +231,8 @@
   objs.forEach((element, index) => {
       let o = {
           {#Department: element.fields.Department,#}
-          location: element.fields.location,
+          {#location: element.fields.location,#}
+          Ace_id2: element.fields.Ace_id2,
           section: element.fields.section,
           {#allocation_code_of_expenditure: element.fields.allocation_code_of_expenditure,#}
           details_of_expenditure: element.fields.details_of_expenditure,
@@ -239,14 +242,14 @@
           {#quotation3: element.fields.quotation3,#}
           requested_by: element.fields.requested_by,
           date_created: element.fields.date_created,
-          Ace_id2: element.fields.Ace_id2,
+
           approval_status: element.fields.approval_status,
-          approved_by: element.fields.approved_by,
-          rejected_by: element.fields.rejected_by,
-          asset_number: element.fields.asset_number,
+          {#approved_by: element.fields.approved_by,#}
+          {#rejected_by: element.fields.rejected_by,#}
+          {#asset_number: element.fields.asset_number,#}
           {#capital_estimated: element.fields.capital_estimated,#}
           {#budget_id: element.fields.budget_id,#}
-          region: element.fields.region,
+          {#region: element.fields.region,#}
           {#classification: element.fields.classification,#}
           {#present_tariff: element.fields.present_tariff,#}
           {#present_fmc: element.fields.present_fmc,#}
@@ -256,7 +259,7 @@
           {#labour: element.fields.labour,#}
           {#transport: element.fields.transport,#}
           {#total_connection_fee: element.fields.total_connection_fee,#}
-          designation: element.fields.designation,
+          {#designation: element.fields.designation,#}
       };
 
       list.push(o);
@@ -295,17 +298,20 @@
               },
           },
           {
+              data: "Ace_id2",
+          },
+          {
               data: "date_created",
           },
         {#{#}
         {#  data: "Department",#}
         {#},#}
-          {
-              data: "region",
-          },
-        {
-          data: "location",
-        },
+        {#  {#}
+        {#      data: "region",#}
+        {#  },#}
+        {#{#}
+        {#  data: "location",#}
+        {#},#}
         {
           data: "section",
         },
@@ -331,21 +337,19 @@
               data: "requested_by",
           },
 
-          {
-              data: "Ace_id2",
-          },
+
           {
               data: "approval_status",
           },
-          {
-              data: "approved_by",
-          },
-          {
-              data: "rejected_by",
-          },
-          {
-              data: "asset_number",
-          },
+          {#{#}
+          {#    data: "approved_by",#}
+          {#},#}
+          {#{#}
+          {#    data: "rejected_by",#}
+          {#},#}
+          {#{#}
+          {#    data: "asset_number",#}
+          {#},#}
           {#{#}
           {#    data: "capital_estimated",#}
           {#},#}
@@ -380,9 +384,9 @@
           {#{#}
           {#    data: "total_connection_fee",#}
           {#},#}
-          {
-              data: "designation",
-          },
+          {#{#}
+          {#    data: "designation",#}
+          {#},#}
 
         {#{#}
         {#  data: null,#}
