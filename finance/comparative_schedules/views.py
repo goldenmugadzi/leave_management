@@ -69,22 +69,31 @@ def get_comperative_schedule_data(request, cs_id):
             "created_at": item.created_at,
         })
         
-    bids_list = []
+    grouped_by_bid = {}
+    grouped_data = {}
     for bid in bids:
-        supplier = Supplier.objects.filter(id=bid.sup_id.id).first()
-        print("bid.item_id.id: ", bid.item_id.id)
-        item = CSItems.objects.filter(id=bid.item_id.id, cs_id=cs).all()
-        bids_list.append({
-            "bid_count": bid.bid_no,
-            "supplier_name": supplier.name if supplier else "",
-            "unit_price": bid.unit_price,
-            "vat": bid.vat,
-            "bid_no": bid.bid_no,
-            "bid_date": bid.quote_date,
-            "bid_document": bid.bid_document,
-            "created_at": bid.created_at,
-            "items": list(item.values('item_id', 'item_name', 'quantity', 'unit_of_measurement')),
+        bid_no = bid.bid_no
+        if bid_no not in grouped_data:
+            grouped_data[bid_no] = {
+                'bid_count': bid.bid_no,
+                'supplier_name': bid.sup_id.name,
+                'bid_no': bid.bid_no,
+                'bid_date': bid.quote_date,
+                'bid_document': bid.bid_document,
+                'items': []
+            }
+        grouped_data[bid_no]['items'].append({
+            'item_id': bid.item_id.item_id,
+            'description': bid.item_id.item_name,  # assume this is constant
+            'quantity': bid.item_id.quantity,
+            'unit_of_measurement': bid.item_id.unit_of_measurement,
+            'unit_price': bid.unit_price,
+            'vat': bid.vat,
+            'total_price': bid.total,
         })
+
+    result = list(grouped_data.values())
+    print(result)
         
     compliance_list = []
     for comp in compliance:
@@ -120,8 +129,8 @@ def get_comperative_schedule_data(request, cs_id):
     for member in committee:
         committee_list.append({
             "committee_username": member.committee_username,
-            "committee_name": member.committee_name,
-            "committee_position": member.committee_position,
+            "memberName": member.committee_username,
+            "memberPosition": member.committee_position,
             "committee_date": member.committee_date,
         })
         
@@ -143,7 +152,7 @@ def get_comperative_schedule_data(request, cs_id):
         "region": region.region if region else "",
         "created_at": cs.created_at,
         "items": items_list,
-        "bids": bids_list,
+        "bids": result,
         "compliance": compliance_list,
         "rankings": rankings_list,
         "committee": committee_list,

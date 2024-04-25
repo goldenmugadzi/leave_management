@@ -79,7 +79,9 @@ class CreateCS extends React.Component {
         let data = JSON.parse(data_);
         console.log("cs data: ", data, typeof data);
         let cs_id = data.cs_id ? data.cs : {};
-        let bids = data.bids ? data.bids : [];
+        let bids_object = data.bids ? data.bids : [];
+        let bids = Object.keys(bids_object).map((key) => bids_object[key]);
+
         let items = data.items ? data.items : [];
         let compliance = data.compliance ? data.compliance : [];
         let rankings = data.rankings ? data.rankings : [];

@@ -33,7 +33,11 @@ var CreateCS = function (_React$Component) {
         var data = JSON.parse(data_);
         console.log("cs data: ", data, typeof data === "undefined" ? "undefined" : _typeof(data));
         var cs_id = data.cs_id ? data.cs : {};
-        var bids = data.bids ? data.bids : [];
+        var bids_object = data.bids ? data.bids : [];
+        var bids = Object.keys(bids_object).map(function (key) {
+          return bids_object[key];
+        });
+
         var items = data.items ? data.items : [];
         var compliance = data.compliance ? data.compliance : [];
         var rankings = data.rankings ? data.rankings : [];
