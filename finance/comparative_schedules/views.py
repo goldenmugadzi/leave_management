@@ -73,16 +73,14 @@ def get_comperative_schedule_data(request, cs_id):
     for bid in bids:
         supplier = Supplier.objects.filter(id=bid.sup_id.id).first()
         print("bid.item_id.id: ", bid.item_id.id)
-        item = CSItems.objects.filter(id=bid.item_id.id).all()
+        item = CSItems.objects.filter(id=bid.item_id.id, cs_id=cs).all()
         bids_list.append({
-            "bid_id": bid.id,
-            "supplier": supplier.name if supplier else "",
+            "bid_count": bid.bid_no,
+            "supplier_name": supplier.name if supplier else "",
             "unit_price": bid.unit_price,
             "vat": bid.vat,
-            "quoted_qty": bid.quoted_qty,
             "bid_no": bid.bid_no,
-            "quote_date": bid.quote_date,
-            "total": bid.total,
+            "bid_date": bid.quote_date,
             "bid_document": bid.bid_document,
             "created_at": bid.created_at,
             "items": list(item.values('item_id', 'item_name', 'quantity', 'unit_of_measurement')),
