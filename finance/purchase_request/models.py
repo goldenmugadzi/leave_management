@@ -24,9 +24,10 @@ class PurchaseRequest(models.Model):
         return self.description
 
     def save(self, *args, **kwargs):
-        timestamp = str(int(time.time()))
-        random_number = str(random.randint(10000, 99999))
-        self.id = "PR" + timestamp + random_number
+        if not self.id: 
+            timestamp = str(int(time.time()))
+            random_number = str(random.randint(10000, 99999))
+            self.id = "PR" + timestamp + random_number
         super().save(*args, **kwargs)
 class PrItem(models.Model):
     name = models.CharField(max_length=100)
