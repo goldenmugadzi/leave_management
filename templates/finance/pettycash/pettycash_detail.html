@@ -19,77 +19,46 @@
     border-bottom: 15px solid transparent;
 }
 
-.arrow::before, .arrow-step::before {
-    left: 100%;
-    transform: translateY(-50%);
-    border-left: 20px solid #28a745; /* Adjust arrow color here */
-}
-
-.arrow::after, .arrow-step::after {
-    left: 104%;
-    transform: translateY(-50%);
-    border-left: 20px solid #28a745; /* Adjust arrow color here */
-}
-        </style>
-    </head>
-    <div class="m-auto mt-5 ">
-        <div class="card grid grid-cols-1 gap-2 mb-3">
-            <div class="card-body m-2">
-                <div class="card-body m-auto mb-5 p-3 border rounded    container rounded  shadow-lg">
-                    <div class="px-6 py-4">
-                        <div class="card grid grid-cols-2 gap-2 mb-3">
-                            <div class="card-body m-auto mb-5 bg-gradient-to-r from-gulf-blue-100 to-blue-500 ed p-3 border rounded   justify-content-center align-content-stretch container rounded  shadow-lg">
-                                <h1 class="text-center mb-4 font-bold text-xl  mb-2">Petty Cash Details</h1>
-                                <p class="font-bold   mb-2">Details of expenditure: {{ pettycash.details_of_expenditure }}</p>
-                                <p class="font-bold   mb-2">Allocation code of expenditure: {{ pettycash.section }}</p>
-                                <p class="font-bold   mb-2">Amount: {{ pettycash.amount }}</p>
-                                {% if pettycash.payment_mode == None %}
-                                    <p class="font-bold   mb-2 bg-red-600">Payment mode: Not yet Added By Cashier</p>
-                                {% else %}
-                                    <p class="font-bold   mb-2">Payment mode: {{ pettycash.payment_mode }}</p>
-                                {% endif %}
-                                <p class="font-bold   mb-2">
-                                    Requested by:
-                                    {% if request.user == pettycash.requested_by %}
-                                        You
-                                    {% elif pettycash.requested_by.get_full_name %}
-                                        {{ pettycash.requested_by.get_full_name }}
-                                    {% elif request.user == pettycash.requested_by %}
-                                        {{ pettycash.requested_by }}
-                                    {% endif %}
-                                </p>
-                                <p class="font-bold   mb-2">Created At: {{ pettycash.date_created }}</p>
-                                <p class="font-bold   mb-2">Section: {{ pettycash.section }}</p>
-                                {#                            <p class="font-bold   mb-2"> Role : {{ pettycash_role }}</p>#}
-                            </div>
-                        </div>
-                        <h1 class="text-center mb-4 font-bold text-xl  mb-2">Workflow Details</h1>
-                        <p class="font-bold  mb-2">Workflow name : {{ pettycash.process.workflow }}</p>
-                        {% if pettycash_role == "disburse" and pettycash.payment_mode == None %}
-                            <form class="row rounded py-4 border  rounded-lg p-3 m-auto container"
-                                  method="POST"
-                                  action="/pettycash/pettycash_detail/{{ pettycash.petty_id }}/"
-                                  enctype="multipart/form-data">
-                                {% csrf_token %}
-                                <div class=" m-auto container  ">
-                                    <h4 class="text-center mb-4 font-bold text-xl  mb-2">Add Payment Mode</h4>
-                                    <div class="m-4 text-center">
-                                        <select name="payment_mode" id="payment_mode" required>
-                                            <option value="">Add Payment Mode</option>
-                                            <option value="ZIG_SWIPE">Swipe ZIG</option>
-                                            <option value="ZIG_CASH">Cash ZIG</option>
-                                            <option value="SWIPE_USD">Swipe Usd</option>
-                                            <option value="CASH_USD">Rtgs Usd</option>
-                                        </select>
-                                    </div>
-                                    <div class="m-4 text-center">
-                                        <button type="submit"
-                                                class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded"
-                                                name="submit"
-                                                value="submit">Add</button>
-                                    </div>
-                                </div>
-                            </form>
+      .arrow-step::before {
+          content: "";
+          position: absolute;
+          top: 50%;
+          right: -20px;
+          transform: translateY(-50%);
+          width: 0;
+          height: 0;
+          border-top: 10px solid transparent;
+          border-bottom: 10px solid transparent;
+          border-left: 20px solid #3B82F6; /* Adjust arrow color here */
+      }
+  </style>
+</head>
+<div class="m-auto mt-5 ">
+    <div class="card grid grid-cols-1 gap-2 mb-3">
+        <div class="card-body m-2">
+            <div class="card-body m-auto mb-5 p-3 border rounded    container rounded  shadow-lg">
+                <div class="px-6 py-4">
+                    <div class="card grid grid-cols-2 gap-2 mb-3">
+                        <div class="card-body m-auto mb-5 bg-gradient-to-r from-gulf-blue-100 to-blue-500 ed p-3
+                        border rounded   justify-content-center align-content-stretch container rounded  shadow-lg">
+                            <h1 class="text-center mb-4 font-bold text-xl  mb-2">Petty Cash Details</h1>
+                            <p class="font-bold   mb-2"> Details of expenditure: {{ pettycash.details_of_expenditure }}</p>
+                            <p class="font-bold   mb-2"> Currency: {{ pettycash.currency }}</p>
+                            <p class="font-bold   mb-2"> Allocation code of expenditure: {{ pettycash.section }}</p>
+                            <p class="font-bold   mb-2"> Amount: {{ pettycash.amount }}</p>
+                        {%   if quotations %}
+                        {% for quotation in quotations %}
+                            {% if quotation.quotation_file == '' %}
+                                <p class="font-bold   mb-2"> Quotation: not available</p>
+                            {% else %}
+                                <p class="font-bold   mb-2"> Quotation: {{ quotation }}<a href="/pettycash/qoutes/{{ quotation.quotation_file }}"></a></p>
+                            {% endif %}
+                        {% endfor %}
+                        {% endif %}
+                       {%   if pettycash.payment_mode == None %}
+                            <p class="font-bold   mb-2 bg-red-600"> Payment mode: Not yet Added By Cashier</p>
+                       {% else %}
+                            <p class="font-bold   mb-2"> Payment mode: {{ pettycash.payment_mode }}</p>
                         {% endif %}
                         {#            {% if pettycash.payment_mode != None %}#}
                         {% if approvalForm %}

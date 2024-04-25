@@ -37,8 +37,8 @@
       <thead>
         <tr>
             <th>Action</th>
-          <th>Department</th>
-          <th>Location</th>
+{#          <th>Department</th>#}
+{#          <th>Location</th>#}
           <th>Section</th>
 {#          <th>Allocation code</th>#}
           <th>Details of expenditure</th>
@@ -55,9 +55,9 @@
 {#            <th>Date Approved</th>#}
 {#            <th>Date Rejected</th>#}
 {#            <th>Rejection Reason</th>#}
-            <th>Asset Number</th>
-            <th>Capital Estimated</th>
-            <th>Budget</th>
+{#            <th>Asset Number</th>#}
+{#            <th>Capital Estimated</th>#}
+{#            <th>Budget</th>#}
             <th>Region</th>
             <th>Classification</th>
 {#            <th>Present Tariff</th>#}
@@ -68,7 +68,7 @@
 {#            <th>Labour</th>#}
 {#            <th>Transport</th>#}
 {#            <th>Total Connection Fee</th>#}
-            <th>Designation</th>
+{#            <th>Designation</th>#}
 {#          <th>ACTION</th>#}
         </tr>
       </thead>
@@ -76,8 +76,8 @@
       <tfoot>
         <tr>
             <th>Action</th>
-            <th>Department</th>
-            <th>Location</th>
+{#            <th>Department</th>#}
+{#            <th>Location</th>#}
             <th>Section</th>
 {#            <th>Allocation code</th>#}
             <th>Details of expenditure</th>
@@ -94,9 +94,9 @@
             {#            <th>Date Approved</th>#}
             {#            <th>Date Rejected</th>#}
             {#            <th>Rejection Reason</th>#}
-            <th>Asset Number</th>
-            <th>Capital Estimated</th>
-            <th>Budget</th>
+{#            <th>Asset Number</th>#}
+{#            <th>Capital Estimated</th>#}
+{#            <th>Budget</th>#}
             <th>Region</th>
             <th>Classification</th>
 {#            <th>Present Tariff</th>#}
@@ -107,7 +107,7 @@
 {#            <th>Labour</th>#}
 {#            <th>Transport</th>#}
 {#            <th>Total Connection Fee</th>#}
-            <th>Designation</th>
+{#            <th>Designation</th>#}
 {#            <th>ACTION</th>#}
         </tr>
       </tfoot>
@@ -123,8 +123,8 @@
   let list = [];
   objs.forEach((element, index) => {
       let o = {
-          Department: element.fields.Department,
-          location: element.fields.location,
+          {#Department: element.fields.Department,#}
+          {#location: element.fields.location,#}
           section: element.fields.section,
           {#allocation_code_of_expenditure: element.fields.allocation_code_of_expenditure,#}
           details_of_expenditure: element.fields.details_of_expenditure,
@@ -138,10 +138,10 @@
           approval_status: element.fields.approval_status,
           approved_by: element.fields.approved_by,
           rejected_by: element.fields.rejected_by,
-          asset_number: element.fields.asset_number,
-          capital_estimated: element.fields.capital_estimated,
-          budget_id: element.fields.budget_id,
-          region: element.fields.requested_by,
+          {#asset_number: element.fields.asset_number,#}
+          {#capital_estimated: element.fields.capital_estimated,#}
+          {#budget_id: element.fields.budget_id,#}
+          region: element.fields.region,
           classification: element.fields.classification,
           {#present_tariff: element.fields.present_tariff,#}
           {#present_fmc: element.fields.present_fmc,#}
@@ -151,7 +151,7 @@
           {#labour: element.fields.labour,#}
           {#transport: element.fields.transport,#}
           {#total_connection_fee: element.fields.total_connection_fee,#}
-          designation: element.fields.designation,
+          {#designation: element.fields.designation,#}
       };
 
       list.push(o);
@@ -176,12 +176,12 @@
                     </a>`;
               },
           },
-        {
-          data: "Department",
-        },
-        {
-          data: "location",
-        },
+        {#{#}
+        {#  data: "Department",#}
+        {#},#}
+        {#{#}
+        {#  data: "location",#}
+        {#},#}
         {
           data: "section",
         },
@@ -221,15 +221,15 @@
           {
               data: "rejected_by",
           },
-          {
-              data: "asset_number",
-          },
-          {
-              data: "capital_estimated",
-          },
-          {
-              data: "budget_id",
-          },
+          {#{#}
+          {#    data: "asset_number",#}
+          {#},#}
+          {#{#}
+          {#    data: "capital_estimated",#}
+          {#},#}
+          {#{#}
+          {#    data: "budget_id",#}
+          {#},#}
           {
               data: "region",
           },
@@ -260,9 +260,9 @@
           {#{#}
           {#    data: "total_connection_fee",#}
           {#},#}
-          {
-              data: "designation",
-          },
+          {#{#}
+          {#    data: "designation",#}
+          {#},#}
 
         {#{#}
         {#  data: null,#}
