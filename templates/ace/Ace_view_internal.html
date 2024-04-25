@@ -12,55 +12,40 @@
 
             {% if context.approval_status == "approved by General Manager" %}
                 <h1 class="text-2xl font-semibold leading-7 text-gray-900">
-                    <a href="/rfq/create_rfq_from_ace?i={{ context.Ace_id2 }}"
-                       target="_blank"
-                       rel="noopener noreferrer"
-                       class="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                       name="{{ context.Ace_id2 }}"
-                    >Create RFQ for ACE {{ context.Ace_id2 }}</a>
+                    <a href="{% url 'purchase_request:create_ace_purchase_request' context.Ace_id2 %}" class="bg-gray-500 hover:bg-gray-700
+                     inline-block rounded-full mx-3 text-white py-2 px-4 rounded">Create Purchase Request </a>
+{#                    <a href="/rfq/create_rfq_from_ace?i={{ context.Ace_id2 }}"#}
+{#                       target="_blank"#}
+{#                       rel="noopener noreferrer"#}
+{#                       class="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"#}
+{#                       name="{{ context.Ace_id2 }}"#}
+{#                    >Create RFQ for ACE {{ context.Ace_id2 }}</a>#}
                 </h1>
             {% endif %}
 
             <div class="mt-10 grid grid-cols-3 gap-4">
 
+                {% if context.location %}
 {#                <div>#}
 {#                    <label#}
-{#                            for="department"#}
+{#                            for="location"#}
 {#                            class="block text-sm font-medium leading-6 text-gray-900"#}
-{#                    >Department</label#}
+{#                    >Location</label#}
 {#                    >#}
-{#                    <input#}
-{#                            readonly#}
-{#                            id="department"#}
-{#                            name="department"#}
-{#                            autocomplete="department"#}
-{#                            value="{{ context.Department }}"#}
-{#                            class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"#}
-{#                    />#}
-{#                    <input readonly hidden="hidden" value="{{ context.Ace_id2 }}" name="Ace_id2"/>#}
+{#                    <div class="mt-2">#}
+{#                        <input#}
+{#                                readonly#}
+{#                                value="{{ context.location }}"#}
+{#                                id="location"#}
+{#                                name="section"#}
+{#                                autocomplete="section"#}
+{#                                class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"#}
+{##}
+{#                        />#}
+{#                    </div>#}
 {#                </div>#}
- {#                <div>#}
-                {% if context %}
-                <div>
-                    <label
-                            for="location"
-                            class="block text-sm font-medium leading-6 text-gray-900"
-                    >Location</label
-                    >
-                    <div class="mt-2">
-                        <input
-                                readonly
-                                value="{{ context.location }}"
-                                id="location"
-                                name="section"
-                                autocomplete="section"
-                                class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
-
-                        />
-                    </div>
-                </div>
                 {% endif %}
-            {% endblock %}
+
 
                 <div>
                     <label
@@ -218,6 +203,8 @@
                     </div>
                 </div>
 
+            {% if context.approval_status == "approved by section head" %}
+
                 <div>
                     <label
                             for="approved_by"
@@ -237,6 +224,8 @@
                     </div>
                 </div>
 
+                {% if context.rejected_by != None %}
+
                 <div>
                     <label
                             for="rejected_by"
@@ -255,6 +244,7 @@
                         />
                     </div>
                 </div>
+                {% endif %}
 
                 <div>
                     <label
@@ -275,25 +265,29 @@
                     </div>
                 </div>
 
+                {% if context.date_rejected == "None" %}
 
-                <div>
-                    <label
-                            for="date_rejected"
-                            class="block text-sm font-medium leading-6 text-gray-900"
-                    >Date Rejected</label
-                    >
-                    <div class="mt-2">
-                        <input
-                                readonly
-                                value="{{ context.date_rejected }}"
-                                id="date_rejected"
-                                name="date_rejected"
-                                autocomplete="date_rejected"
-                                class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
 
-                        />
+                {% else %}
+                    <div>
+                        <label
+                                for="date_rejected"
+                                class="block text-sm font-medium leading-6 text-gray-900"
+                        >Date Rejected</label
+                        >
+                        <div class="mt-2">
+                            <input
+                                    readonly
+                                    value="{{ context.date_rejected }}"
+                                    id="date_rejected"
+                                    name="date_rejected"
+                                    autocomplete="date_rejected"
+                                    class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+
+                            />
+                        </div>
                     </div>
-                </div>
+                {% endif %}
 
                 <div>
                     <label
@@ -313,8 +307,9 @@
                         />
                     </div>
                 </div>
+            {% endif %}
 
-                {% if context.section_head == None %}
+                {% if context.section_head != 'None' %}
                     {% else %}
                     <div>
                         <label
@@ -647,11 +642,13 @@
                 </div>
             {% endif %}
 
+            {% if context.asset_number != None %}
+
                 <div>
                     <label
                             for="asset_number"
                             class="block text-sm font-medium leading-6 text-gray-900"
-                    >Asset Number</label
+                    >Asset Number or (s)</label
                     >
                     <div class="mt-2">
                         <input
@@ -665,25 +662,9 @@
                         />
                     </div>
                 </div>
+            {% endif %}
 
-{#                <div>#}
-{#                    <label#}
-{#                            for="section"#}
-{#                            class="block text-sm font-medium leading-6 text-gray-900"#}
-{#                    >Section</label#}
-{#                    >#}
-{#                    <div class="mt-2">#}
-{#                        <input#}
-{#                                readonly#}
-{#                                value="{{ context.section }}"#}
-{#                                id="section"#}
-{#                                name="section"#}
-{#                                autocomplete="section"#}
-{#                                class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"#}
-{##}
-{#                        />#}
-{#                    </div>#}
-{#                </div>#}
+
 
 
 
@@ -754,179 +735,6 @@
                     />
                 </div>
             </div>
-{#            <div id="internal">#}
-{#                <div>#}
-{#                    <label#}
-{#                            for="capital_estimated"#}
-{#                            class="block text-sm font-medium leading-6 text-gray-900"#}
-{#                    >Amount</label#}
-{#                    >#}
-{#                    <div class="mt-2">#}
-{#                        <input#}
-{#                                readonly#}
-{#                                value="{{ context.amount }}"#}
-{#                                id="capital_estimated"#}
-{#                                name="capital_estimated"#}
-{#                                type="number"#}
-{#                                autocomplete="capital_estimated"#}
-{#                                class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"#}
-{#                        />#}
-{#                    </div>#}
-{#                </div>#}
-{#            </div>#}
-
-
-{#            <div id="project">#}
-{#                <div>#}
-{#                    <label#}
-{#                            for="capital_estimated"#}
-{#                            class="block text-sm font-medium leading-6 text-gray-900"#}
-{#                    >Amount($)</label#}
-{#                    >#}
-{#                    <div class="mt-2">#}
-{#                        <input#}
-{#                                id="capital_estimated"#}
-{#                                name="capital_estimated"#}
-{#                                type="number"#}
-{#                                autocomplete="capital_estimated"#}
-{#                                class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"#}
-{#                        />#}
-{#                    </div>#}
-{#                </div>#}
-
-{#                <div>#}
-{#                    <label#}
-{#                            for="present_tariff"#}
-{#                            class="block text-sm font-medium leading-6 text-gray-900"#}
-{#                    >Present Tariff($)</label#}
-{#                    >#}
-{#                    <div class="mt-2">#}
-{#                        <input#}
-{#                                readonly#}
-{#                                value="{{ context.present_tariff }}"#}
-{#                                id="present_tariff"#}
-{#                                name="present_tariff"#}
-{#                                type="number"#}
-{#                                autocomplete="present_tariff"#}
-{#                                class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"#}
-{#                        />#}
-{#                    </div>#}
-{#                </div>#}
-{##}
-{#                <div>#}
-{#                    <label#}
-{#                            for="present_fmc"#}
-{#                            class="block text-sm font-medium leading-6 text-gray-900"#}
-{#                    >Present Fmc</label#}
-{#                    >#}
-{#                    <div class="mt-2">#}
-{#                        <input#}
-{#                                readonly#}
-{#                                value="{{ context.present_fmc }}"#}
-{#                                id="present_fmc"#}
-{#                                name="present_fmc"#}
-{#                                type="text"#}
-{#                                autocomplete="N/A"#}
-{#                                class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"#}
-{#                        />#}
-{#                    </div>#}
-{#                </div>#}
-{##}
-{#                <div>#}
-{#                    <label#}
-{#                            for="capital_contribution"#}
-{#                            class="block text-sm font-medium leading-6 text-gray-900"#}
-{#                    >Capital Contribution($)</label#}
-{#                    >#}
-{#                    <div class="mt-2">#}
-{#                        <input#}
-{#                                readonly#}
-{#                                value="{{ context.capital_contribution }}"#}
-{#                                id="capital_contribution"#}
-{#                                name="capital_contribution"#}
-{#                                type="number"#}
-{#                                autocomplete="N/A"#}
-{#                                class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"#}
-{#                        />#}
-{#                    </div>#}
-{#                </div>#}
-{##}
-{#                <div>#}
-{#                    <label#}
-{#                            for="materials"#}
-{#                            class="block text-sm font-medium leading-6 text-gray-900"#}
-{#                    >Materials($)</label#}
-{#                    >#}
-{#                    <div class="mt-2">#}
-{#                        <input#}
-{#                                readonly#}
-{#                                value="{{ context.materials }}"#}
-{#                                id="materials"#}
-{#                                name="materials"#}
-{#                                type="number"#}
-{#                                autocomplete="materials"#}
-{#                                class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"#}
-{#                        />#}
-{#                    </div>#}
-{#                </div>#}
-{##}
-{#                <div>#}
-{#                    <label#}
-{#                            for="connection_fee"#}
-{#                            class="block text-sm font-medium leading-6 text-gray-900"#}
-{#                    >Connection Fee($)</label#}
-{#                    >#}
-{#                    <div class="mt-2">#}
-{#                        <input#}
-{#                                readonly#}
-{#                                value="{{ context.connection_fee }}"#}
-{#                                id="connection_fee"#}
-{#                                name="connection_fee"#}
-{#                                type="number"#}
-{#                                autocomplete="connection_fee"#}
-{#                                class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"#}
-{#                        />#}
-{#                    </div>#}
-{#                </div>#}
-{##}
-{#                <div>#}
-{#                    <label#}
-{#                            for="labour"#}
-{#                            class="block text-sm font-medium leading-6 text-gray-900"#}
-{#                    >Labour($)</label#}
-{#                    >#}
-{#                    <div class="mt-2">#}
-{#                        <input#}
-{#                                readonly#}
-{#                                value="{{ context.labour }}"#}
-{#                                id="labour"#}
-{#                                name="labour"#}
-{#                                type="number"#}
-{#                                autocomplete="labour"#}
-{#                                class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"#}
-{#                        />#}
-{#                    </div>#}
-{#                </div>#}
-{##}
-{#                <div>#}
-{#                    <label#}
-{#                            for="transport"#}
-{#                            class="block text-sm font-medium leading-6 text-gray-900"#}
-{#                    >Transport($)</label#}
-{#                    >#}
-{#                    <div class="mt-2">#}
-{#                        <input#}
-{#                                readonly#}
-{#                                value="{{ context.transport }}"#}
-{#                                id="transport"#}
-{#                                name="transport"#}
-{#                                type="text"#}
-{#                                autocomplete="N/A"#}
-{#                                class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"#}
-{#                        />#}
-{#                    </div>#}
-{#                </div>#}
-{#            </div>#}
 
             <div class="flex mt-10 px-3 py-3">
                 <div style="width: 50%;">

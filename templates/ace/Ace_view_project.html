@@ -12,7 +12,8 @@
        {% if context.approval_status == "approved by General Manager" %}
            <div style="text-align: center;">
            <h1 class="text-2xl font-semibold leading-7 text-gray-900" j>
-               <a href="/rfq/create_rfq_from_ace?i={{ context.Ace_id2 }}">Create RFQ for ACE {{ context.Ace_id2 }}</a>
+               <a href="{% url 'purchase_request:create_ace_purchase_request' context.Ace_id2 %}" class="bg-gray-500 hover:bg-gray-700
+                     inline-block rounded-full mx-3 text-white py-2 px-4 rounded">Create Purchase Request </a>
             </h1>
            </div>
         {% endif %}
@@ -626,7 +627,7 @@
                     <label
                             for="asset_number"
                             class="block text-sm font-medium leading-6 text-gray-900"
-                    >Asset Number</label
+                    >Asset Number or (s)</label
                     >
                     <div class="mt-2">
                         <input
