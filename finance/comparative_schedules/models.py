@@ -89,3 +89,11 @@ class ProcPlan(models.Model):
     sprc = models.CharField(max_length=3)
     region = models.CharField(max_length=100)
 
+class Committee(models.Model):
+    cs_id = models.ForeignKey(ComparativeSchedules, on_delete=models.CASCADE)
+    committee_username = models.CharField(max_length=100, null=True, blank=True)
+    committee_name = models.CharField(max_length=100, null=True, blank=True)
+    committee_position = models.CharField(max_length=100, null=True, blank=True)
+    committee_status = models.BooleanField(default=False, null=True, blank=True)
+    committee_date = models.DateField()
+    created_at = models.DateTimeField(auto_now_add=True)

@@ -24,13 +24,15 @@ def get_create_data(request, pr_id):
 
     purchase_request = PurchaseRequest.objects.filter(id=pr_id).first()
     pr_items = PrItem.objects.filter(purchase_request=purchase_request).all()
-
+    users = UserProfile.objects.all()
+    
     return JsonResponse({
             "pr_id": pr_id,
             "pr_date": purchase_request.created_at.strftime("%Y-%m-%d"),
             "pr_items": list(pr_items.values('id', 'name', 'description', 'quantity', 'unit_of_measurement', 'ordered')),
             "proc_plans": list(proc_plans.values('id', 'proc_ref', 'description')),
-            "suppliers": list(suppliers.values('id', 'name'))
+            "suppliers": list(suppliers.values('id', 'name')),
+            "users": list(users.values('id', 'username', 'first_name', 'last_name')),
         }, safe=False)
 
 def get_create_cs(request, pr_id):
@@ -472,7 +474,7 @@ def save_cs_ranking(request):
         remarks = ""
         decision = ""
         if rank == 1:
-            decision = "Awarded"
+            decision = "Awarded " + supplier.name + " being the lowest bidder having complied with all the requirements is recommended to provide the goods/service at a total cost of ZIG" + str(total) + " excluding VAT."
         ranking_query = Ranking(
             cs_id = cs_query,
             supplier_id = supplier,
@@ -504,8 +506,58 @@ def save_cs_ranking(request):
         "rankings": list(custom_rankings),
     })
     
-
-         
+def save_cs_committee(request):
+    cs_id = request.POST.get("cs_id", "")
+    json_data = json.loads(request.POST.get("committee", "{}"))
+    committee = json_data.get("committee", [])
+    cs_query = ComparativeSchedules.objects.filter(cs_id=cs_id).first()
+    if not cs_query:
+        return JsonResponse({
+            "message": "Comparative Schedule not found",
+            "success": False,
+            }, safe=False)
+    
+    # check if committee exists
+    for member in committee:
+        committee_query = Committee(
+            cs_id = cs_query,
+            committee_username = member['username'],
+            committee_name = member['name'],
+            committee_position = member['position'],
+        )
+        committee_query.save()
+        
+    return JsonResponse({
+        "message": "Committee saved successfully",
+        "success": True,
+    })
+    
+def save_cs_decision(request):
+    cs_id = request.POST.get("cs_id", "")
+    committee_id = request.POST.get("committee_id", "")
+    committee_decision = request.POST.get("committee_decision", "")
+    cs_query = ComparativeSchedules.objects.filter(cs_id=cs_id).first()
+    if not cs_query:
+        return JsonResponse({
+            "message": "Comparative Schedule not found",
+            "success": False,
+            }, safe=False)
+    
+    committee_query = Committee.objects.filter(cs_id=cs_query, id=committee_id).first()
+    if committee_query:
+        if committee_decision == "approve":
+            committee_query.committee_status = True
+            committee_query.committee_date = datetime.now()
+            committee_query.save()
+        elif committee_decision == "reject":
+            committee_query.committee_status = False
+            committee_query.committee_date = datetime.now()
+            committee_query.save() 
+            
+    return JsonResponse({
+        "message": "Committee decision saved successfully",
+        "success": True,
+    })   
         
 def cs_add_supplier(request, cs_id):
     

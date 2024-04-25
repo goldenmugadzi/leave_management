@@ -17,5 +17,7 @@ urlpatterns = [
     path('save_compliance', save_cs_compliance, name='save_compliance'),
     
     path('close_compliance', save_cs_ranking, name='save_cs_ranking'),
+    path('save_committee', save_cs_committee, name='save_cs_committee'),
+    path('save_decision', save_cs_decision, name='save_cs_decision'),
     
 ]

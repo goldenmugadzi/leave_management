@@ -23,7 +23,6 @@ var CreateCS = function (_React$Component) {
     var _this = _possibleConstructorReturn(this, (CreateCS.__proto__ || Object.getPrototypeOf(CreateCS)).call(this, props));
 
     _this.getCreateData = function (pr_id) {
-
       console.log("cs pr_id: ", pr_id);
 
       fetch("http://localhost:8000/comparative_schedule/create_data/" + pr_id).then(function (response) {
@@ -35,13 +34,71 @@ var CreateCS = function (_React$Component) {
         var pr_items = data.pr_items ? data.pr_items : [];
         var pr_id = data.pr_id ? data.pr_id : "";
         var pr_date = data.pr_date ? data.pr_date : "";
+        var users = data.users ? data.users : [];
         _this.setState({
           procurement_plans: plans,
           suppliers: suppliers,
           pr_items: pr_items,
           pr_number: pr_id,
-          pr_date: pr_date
+          pr_date: pr_date,
+          users: users
         });
+      });
+    };
+
+    _this.onCommiteeChange = function (name_, value) {
+
+      var member = _this.state.member;
+      member[name_] = value;
+      _this.setState(Object.assign({}, _this.state, {
+        member: member
+      }));
+    };
+
+    _this.onAddCommitteeMembers = function () {
+      var members = _this.state.committeeMembers;
+      members.push(_this.state.member);
+      _this.setState(Object.assign({}, _this.state, {
+        committeeMembers: members,
+        member: {
+          memberName: "",
+          memberPosition: ""
+        }
+      }));
+    };
+
+    _this.onRemoveCommitteeMember = function (index) {
+      var members = _this.state.committeeMembers.filter(function (member, _index) {
+        return _index !== index;
+      });
+      _this.setState(Object.assign({}, _this.state, {
+        committeeMembers: members
+      }));
+    };
+
+    _this.onSubmitCommitee = function () {
+      var form_data = new FormData();
+      form_data.append("cs_id", _this.state.cs_id);
+      form_data.append("committee", JSON.stringify({
+        committee: _this.state.committeeMembers
+      }));
+      form_data.append("csrfmiddlewaretoken", _this.getCookie("csrftoken"));
+
+      fetch("http://localhost:8000/comparative_schedule/save_committee", {
+        method: "POST",
+        headers: {
+          "X-CSRFToken": _this.getCookie("csrftoken")
+        },
+        body: form_data
+      }).then(function (response) {
+        return response.json();
+      }).then(function (data) {
+        console.log("data: ", data);
+        if (data.success) {
+          alert("Committee saved successfully");
+        } else {
+          alert("Error saving Committee");
+        }
       });
     };
 
@@ -677,7 +734,12 @@ var CreateCS = function (_React$Component) {
       rankings: [],
 
       committeeTable: false,
-      committee: [],
+      committeeMembers: [],
+      member: {
+        memberName: "",
+        memberPosition: ""
+      },
+      users: [],
 
       pr_items: [],
       suppliers: [],
@@ -778,6 +840,7 @@ var CreateCS = function (_React$Component) {
       var bidsModal = null;
       var complianceTable = null;
       var rankingTable = null;
+      var committeeTable = null;
 
       if (this.state.addItemsModal) {
         itemsModal = React.createElement(
@@ -1684,7 +1747,9 @@ var CreateCS = function (_React$Component) {
                             onChange: function onChange(e) {
                               return _this2.onComplianceChange(comp.bid_count, e);
                             },
-                            id: "reject", type: "checkbox" })
+                            id: "reject",
+                            type: "checkbox"
+                          })
                         )
                       );
                     })
@@ -1862,6 +1927,196 @@ var CreateCS = function (_React$Component) {
                           "td",
                           { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
                           rank.total
+                        )
+                      );
+                    })
+                  )
+                )
+              )
+            )
+          )
+        );
+      }
+
+      if (this.state.rankingTable) {
+        committeeTable = React.createElement(
+          "div",
+          { className: "bg-gulf-blue-300 shadow shadow-nepal-300 text-gray-700 rounded px-2 py-2" },
+          React.createElement(
+            "div",
+            { className: "space-y-12 px-5 py-5" },
+            React.createElement(
+              "div",
+              { className: "px-4 sm:px-0 mt-6 border-t border-gray-100 border-gray-900/10" },
+              React.createElement(
+                "h2",
+                { className: "text-base font-semibold leading-6 text-gray-900" },
+                "Committee Members"
+              ),
+              React.createElement(
+                "div",
+                { className: "overflow-auto px-2 py-2 mt-5 rounded-md bg-gulf-blue-300" },
+                React.createElement(
+                  "table",
+                  { className: "table-auto w-full text-left" },
+                  React.createElement(
+                    "tbody",
+                    null,
+                    React.createElement(
+                      "tr",
+                      { className: "text-gray-900" },
+                      React.createElement(
+                        "td",
+                        { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                        React.createElement(
+                          "div",
+                          null,
+                          React.createElement(
+                            "label",
+                            {
+                              htmlFor: "memberPosition",
+                              className: "block text-sm font-medium leading-6 text-gray-900"
+                            },
+                            "Member Position"
+                          ),
+                          React.createElement(
+                            "div",
+                            { className: "mt-2" },
+                            React.createElement(
+                              "select",
+                              {
+                                onChange: function onChange(text) {
+                                  return _this2.onCommitteeChange("role", text);
+                                },
+                                id: "memberPosition",
+                                name: "memberPosition",
+                                autoComplete: "memberPosition",
+                                className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
+                              },
+                              React.createElement(
+                                "option",
+                                { value: "" },
+                                "Select Option"
+                              ),
+                              React.createElement(
+                                "option",
+                                { value: "chairman" },
+                                "Chairman"
+                              ),
+                              React.createElement(
+                                "option",
+                                { value: "finance" },
+                                "Finance"
+                              ),
+                              React.createElement(
+                                "option",
+                                { value: "procurement" },
+                                "Procurement"
+                              ),
+                              React.createElement(
+                                "option",
+                                { value: "user" },
+                                "User"
+                              ),
+                              React.createElement(
+                                "option",
+                                { value: "other" },
+                                "Other"
+                              )
+                            )
+                          )
+                        )
+                      ),
+                      React.createElement(
+                        "td",
+                        { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                        React.createElement(
+                          "div",
+                          null,
+                          React.createElement(
+                            "label",
+                            {
+                              htmlFor: "memberName",
+                              className: "block text-sm font-medium leading-6 text-gray-900"
+                            },
+                            "Select User"
+                          ),
+                          React.createElement(
+                            "div",
+                            { className: "mt-2" },
+                            React.createElement(
+                              "select",
+                              {
+                                onChange: function onChange(text) {
+                                  return _this2.onCommiteeChange("memberName", text);
+                                },
+                                id: "memberName",
+                                name: "memberName",
+                                autoComplete: "memberName",
+                                className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
+                              },
+                              this.state.users ? this.state.users.map(function (user) {
+                                return React.createElement(
+                                  "option",
+                                  { value: user.username },
+                                  user.first_name + " " + user.last_name
+                                );
+                              }) : ""
+                            )
+                          )
+                        )
+                      ),
+                      React.createElement(
+                        "td",
+                        { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                        React.createElement(
+                          "div",
+                          { className: "w-30" },
+                          React.createElement(
+                            "button",
+                            {
+                              style: { width: "100%" },
+                              onClick: this.onAddCommitteeMember,
+                              name: "save_next",
+                              className: "rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                            },
+                            "ADD MEMBER"
+                          )
+                        )
+                      )
+                    ),
+                    this.state.committeeMembers.map(function (member, key) {
+                      return React.createElement(
+                        "tr",
+                        { className: "text-gray-900" },
+                        React.createElement(
+                          "td",
+                          { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                          member.role
+                        ),
+                        React.createElement(
+                          "td",
+                          { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                          member.memberName
+                        ),
+                        React.createElement(
+                          "td",
+                          { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                          React.createElement(
+                            "div",
+                            { className: "w-30 m-2" },
+                            React.createElement(
+                              "button",
+                              {
+                                onClick: function onClick() {
+                                  return _this2.onRemoveCommitteeMember(key);
+                                },
+                                name: "save_next",
+                                className: "rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                              },
+                              "REMOVE"
+                            )
+                          )
                         )
                       );
                     })
@@ -2634,12 +2889,26 @@ var CreateCS = function (_React$Component) {
               {
                 style: { width: "100%" },
                 onClick: this.onCloseCS,
-                className: "rounded-md bg-red-danger hover:bg-orange-500 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                className: "rounded-md bg-nepal-950 hover:bg-nepal-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
               },
               "CLOSE SCHEDULE"
             )
           ) : "",
-          rankingTable
+          rankingTable,
+          committeeTable,
+          this.state.committeeMembers.length > 0 ? React.createElement(
+            "div",
+            { className: "m-2" },
+            React.createElement(
+              "button",
+              {
+                style: { width: "100%" },
+                onClick: this.onSubmitCommitee,
+                className: "rounded-md bg-nepal-950 hover:bg-nepal-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+              },
+              "SUBMIT COMMITTEE"
+            )
+          ) : ""
         )
       );
     }
