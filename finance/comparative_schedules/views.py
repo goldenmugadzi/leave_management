@@ -8,6 +8,160 @@ from it.users.models import *
 from finance.purchase_request.models import PurchaseRequest, PrItem
 from finance.comparative_schedules.models import *
 
+def get_comperative_schedules(request):
+    cs = ComparativeSchedules.objects.all()
+    cs_list = []
+    for c in cs:
+        pr = PurchaseRequest.objects.filter(id=c.pr_id_id).first()
+        user = UserProfile.objects.filter(id=c.created_by_id).first()
+        region = Regions.objects.filter(id=c.region_id).first()
+        section = Sections.objects.filter(id=c.section_id).first()
+        cs_list.append({
+            "cs_id": c.cs_id,
+            "pr_id": pr.id,
+            "pr_number": c.pr_number,
+            "pr_date": c.pr_date,
+            "scope_of_work": c.scope_of_work,
+            "closing_date": c.closing_date,
+            "closing_time": c.closing_time,
+            "advert": c.advert,
+            "pr_number": c.pr_number,
+            "pr_date": c.pr_date,
+            "cs_opened": c.cs_opened,
+            "tac_date": c.tac_date,
+            "created_by": user.username,
+            "section": section.section if section else "",
+            "region": region.region if region else "",
+            "created_at": c.created_at,
+        })
+        
+    context = json.dumps(cs_list, default=str)
+    user_page = 'finance/comparative_schedules/cs_schedules.html'
+    return render(request, user_page, {"cs": context})
+
+def get_comperative_schedule(request, cs_id):
+    
+    username = request.user.username
+    return render(request, 'finance/comparative_schedules/cs_create.html', {
+        "cs_id": cs_id,
+        "username": username,
+    })
+
+def get_comperative_schedule_data(request, cs_id):
+    cs = ComparativeSchedules.objects.filter(cs_id=cs_id).first()
+    pr = PurchaseRequest.objects.filter(id=cs.pr_id_id).first()
+    user = UserProfile.objects.filter(id=cs.created_by_id).first()
+    region = Regions.objects.filter(id=cs.region_id).first()
+    section = Sections.objects.filter(id=cs.section_id).first()
+    items = CSItems.objects.filter(cs_id=cs).all()
+    bids = Bids.objects.filter(cs_id=cs).all()
+    compliance = CSCompliance.objects.filter(cs_id=cs).all()
+    rankings = Ranking.objects.filter(cs_id=cs).all()
+    committee = Committee.objects.filter(cs_id=cs).all()
+    
+    items_list = []
+    for item in items:
+        items_list.append({
+            "item_id": item.item_id,
+            "item_name": item.item_name,
+            "quantity": item.quantity,
+            "unit_of_measurement": item.unit_of_measurement,
+            "created_at": item.created_at,
+        })
+        
+    grouped_by_bid = {}
+    grouped_data = {}
+    for bid in bids:
+        bid_no = bid.bid_no
+        if bid_no not in grouped_data:
+            grouped_data[bid_no] = {
+                'bid_count': bid.bid_no,
+                'supplier_name': bid.sup_id.name,
+                'bid_no': bid.bid_no,
+                'bid_date': bid.quote_date,
+                'bid_document': bid.bid_document,
+                'items': []
+            }
+        grouped_data[bid_no]['items'].append({
+            'item_id': bid.item_id.item_id,
+            'description': bid.item_id.item_name,  # assume this is constant
+            'quantity': bid.item_id.quantity,
+            'unit_of_measurement': bid.item_id.unit_of_measurement,
+            'unit_price': bid.unit_price,
+            'vat': bid.vat,
+            'total_price': bid.total,
+        })
+
+    result = list(grouped_data.values())
+    print(result)
+        
+    compliance_list = []
+    for comp in compliance:
+        supplier = Supplier.objects.filter(id=comp.supplier_id).first()
+        compliance_list.append({
+            "supplier": supplier.name if supplier else "",
+            "payment_terms": comp.payment_terms,
+            "bid_validity": comp.bid_validity,
+            "delivery_period": comp.delivery_period,
+            "technical_specifications": comp.technical_specifications,
+            "valid_tax_clearance": comp.valid_tax_clearance,
+            "registered_with_praz": comp.registered_with_praz,
+            "site_visit_done": comp.site_visit_done,
+            "samples_delivered": comp.samples_delivered,
+            "decision": comp.decision,
+            "remarks": comp.remarks,
+            "created_at": comp.created_at,
+        })
+        
+    rankings_list = []
+    for rank in rankings:
+        supplier = Supplier.objects.filter(id=rank.supplier_id.id).first()
+        rankings_list.append({
+            "supplier": supplier.name if supplier else "",
+            "rank": rank.rank,
+            "remarks": rank.remarks,
+            "decision": rank.decision,
+            "total": rank.total,
+            "created_at": rank.created_at,
+        })
+        
+    committee_list = []
+    for member in committee:
+        committee_list.append({
+            "committee_username": member.committee_username,
+            "memberName": member.committee_username,
+            "memberPosition": member.committee_position,
+            "committee_date": member.committee_date,
+        })
+        
+    context = {
+        "cs_id": cs.cs_id,
+        "pr_id": pr.id,
+        "pr_number": cs.pr_number,
+        "pr_date": cs.pr_date,
+        "scope_of_work": cs.scope_of_work,
+        "closing_date": cs.closing_date,
+        "closing_time": cs.closing_time,
+        "advert": cs.advert,
+        "pr_number": cs.pr_number,
+        "pr_date": cs.pr_date,
+        "cs_opened": cs.cs_opened,
+        "tac_date": cs.tac_date,
+        "created_by": user.username,
+        "section": section.section if section else "",
+        "region": region.region if region else "",
+        "created_at": cs.created_at,
+        "items": items_list,
+        "bids": result,
+        "compliance": compliance_list,
+        "rankings": rankings_list,
+        "committee": committee_list,
+    }
+    
+    context = json.dumps(context, default=str)
+    
+    return JsonResponse(context, safe=False)
+
 def save_file(f, file_path):
     if f:
         with open(file_path, 'wb+') as destination:
@@ -24,13 +178,15 @@ def get_create_data(request, pr_id):
 
     purchase_request = PurchaseRequest.objects.filter(id=pr_id).first()
     pr_items = PrItem.objects.filter(purchase_request=purchase_request).all()
-
+    users = UserProfile.objects.all()
+    
     return JsonResponse({
             "pr_id": pr_id,
             "pr_date": purchase_request.created_at.strftime("%Y-%m-%d"),
             "pr_items": list(pr_items.values('id', 'name', 'description', 'quantity', 'unit_of_measurement', 'ordered')),
             "proc_plans": list(proc_plans.values('id', 'proc_ref', 'description')),
-            "suppliers": list(suppliers.values('id', 'name'))
+            "suppliers": list(suppliers.values('id', 'name')),
+            "users": list(users.values('id', 'username', 'first_name', 'last_name')),
         }, safe=False)
 
 def get_create_cs(request, pr_id):
@@ -472,7 +628,7 @@ def save_cs_ranking(request):
         remarks = ""
         decision = ""
         if rank == 1:
-            decision = "Awarded"
+            decision = "Awarded " + supplier.name + " being the lowest bidder having complied with all the requirements is recommended to provide the goods/service at a total cost of ZIG" + str(total) + " excluding VAT."
         ranking_query = Ranking(
             cs_id = cs_query,
             supplier_id = supplier,
@@ -504,8 +660,59 @@ def save_cs_ranking(request):
         "rankings": list(custom_rankings),
     })
     
-
-         
+def save_cs_committee(request):
+    cs_id = request.POST.get("cs_id", "")
+    json_data = json.loads(request.POST.get("committee", "{}"))
+    committee = json_data.get("committee", [])
+    cs_query = ComparativeSchedules.objects.filter(cs_id=cs_id).first()
+    if not cs_query:
+        return JsonResponse({
+            "message": "Comparative Schedule not found",
+            "success": False,
+            }, safe=False)
+    
+    # check if committee exists
+    for member in committee:
+        committee_query = Committee(
+            cs_id = cs_query,
+            committee_username = member['memberName'],
+            committee_name = "",
+            committee_position = member['memberPosition'],
+            committee_date = datetime.now(),
+        )
+        committee_query.save()
+        
+    return JsonResponse({
+        "message": "Committee saved successfully",
+        "success": True,
+    })
+    
+def save_cs_decision(request):
+    cs_id = request.POST.get("cs_id", "")
+    committee_id = request.POST.get("committee_id", "")
+    committee_decision = request.POST.get("committee_decision", "")
+    cs_query = ComparativeSchedules.objects.filter(cs_id=cs_id).first()
+    if not cs_query:
+        return JsonResponse({
+            "message": "Comparative Schedule not found",
+            "success": False,
+            }, safe=False)
+    
+    committee_query = Committee.objects.filter(cs_id=cs_query, id=committee_id).first()
+    if committee_query:
+        if committee_decision == "approve":
+            committee_query.committee_status = True
+            committee_query.committee_date = datetime.now()
+            committee_query.save()
+        elif committee_decision == "reject":
+            committee_query.committee_status = False
+            committee_query.committee_date = datetime.now()
+            committee_query.save() 
+            
+    return JsonResponse({
+        "message": "Committee decision saved successfully",
+        "success": True,
+    })   
         
 def cs_add_supplier(request, cs_id):
     

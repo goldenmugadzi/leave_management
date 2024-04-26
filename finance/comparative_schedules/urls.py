@@ -17,5 +17,11 @@ urlpatterns = [
     path('save_compliance', save_cs_compliance, name='save_compliance'),
     
     path('close_compliance', save_cs_ranking, name='save_cs_ranking'),
+    path('save_committee', save_cs_committee, name='save_cs_committee'),
+    path('save_decision', save_cs_decision, name='save_cs_decision'),
+    
+    path('comperative_schedules', get_comperative_schedules, name='get_comperative_schedules'),
+    path('comperative_schedule/<str:cs_id>', get_comperative_schedule, name='get_comperative_schedule'),
+    path('cs_data/<str:cs_id>', get_comperative_schedule_data, name='get_comperative_schedule_data'),
     
 ]

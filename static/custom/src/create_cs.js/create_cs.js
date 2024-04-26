@@ -1,10 +1,12 @@
 "use strict";
 
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
-
 function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -22,8 +24,56 @@ var CreateCS = function (_React$Component) {
 
     var _this = _possibleConstructorReturn(this, (CreateCS.__proto__ || Object.getPrototypeOf(CreateCS)).call(this, props));
 
-    _this.getCreateData = function (pr_id) {
+    _this.getCSData = function (cs_id) {
+      fetch("http://localhost:8000/comparative_schedule/cs_data/" + cs_id).then(function (response) {
+        return response.json();
+      }).then(function (data_) {
+        var _Object$assign;
 
+        var data = JSON.parse(data_);
+        console.log("cs data: ", data, typeof data === "undefined" ? "undefined" : _typeof(data));
+        var cs_id = data.cs_id ? data.cs : {};
+        var bids_object = data.bids ? data.bids : [];
+        var bids = Object.keys(bids_object).map(function (key) {
+          return bids_object[key];
+        });
+
+        var items = data.items ? data.items : [];
+        var compliance = data.compliance ? data.compliance : [];
+        var rankings = data.rankings ? data.rankings : [];
+        var committee = data.committee ? data.committee : [];
+        var pr_items = data.pr_items ? data.pr_items : [];
+        var pr_date = data.pr_date ? data.pr_date : "";
+        var plan_ref = data.plan_ref ? data.plan_ref : "";
+        var proc_plan = data.proc_plan ? data.proc_plan : "";
+        var scope_of_work = data.scope_of_work ? data.scope_of_work : "";
+        var pr_number = data.pr_number ? data.pr_number : "";
+        var quantity = data.quantity ? data.quantity : "";
+        var closing_date = data.closing_date ? data.closing_date : "";
+        var ref_date = data.ref_date ? data.ref_date : "";
+        var closing_time = data.closing_time ? data.closing_time : "";
+        var date_tender_opened = data.date_tender_opened ? data.date_tender_opened : "";
+        var tender_adjudication_committee_date = data.tac_date ? data.tac_date : "";
+        var advert = data.advert ? data.advert : null;
+        var cs_opened = data.cs_opened ? data.cs_opened : false;
+
+        _this.setState(Object.assign({}, _this.state, (_Object$assign = {
+          cs_id: cs_id,
+          date_tender_opened: cs_opened,
+          ref_date: ref_date,
+          proc_ref: plan_ref,
+          proc_plan: proc_plan,
+          scope_of_work: scope_of_work,
+          pr_number: pr_number,
+          quantity: quantity,
+          pr_date: pr_date,
+          closing_date: closing_date,
+          closing_time_hour: closing_time
+        }, _defineProperty(_Object$assign, "ref_date", ref_date), _defineProperty(_Object$assign, "date_tender_opened", date_tender_opened), _defineProperty(_Object$assign, "tender_adjudication_committee_date", tender_adjudication_committee_date), _defineProperty(_Object$assign, "advert", advert), _defineProperty(_Object$assign, "bids", bids), _defineProperty(_Object$assign, "cs_items", items), _defineProperty(_Object$assign, "compliance", compliance), _defineProperty(_Object$assign, "rankings", rankings), _defineProperty(_Object$assign, "committeeMembers", committee), _defineProperty(_Object$assign, "pr_items", pr_items), _Object$assign)));
+      });
+    };
+
+    _this.getCreateData = function (pr_id) {
       console.log("cs pr_id: ", pr_id);
 
       fetch("http://localhost:8000/comparative_schedule/create_data/" + pr_id).then(function (response) {
@@ -35,13 +85,75 @@ var CreateCS = function (_React$Component) {
         var pr_items = data.pr_items ? data.pr_items : [];
         var pr_id = data.pr_id ? data.pr_id : "";
         var pr_date = data.pr_date ? data.pr_date : "";
+        var users = data.users ? data.users : [];
         _this.setState({
           procurement_plans: plans,
           suppliers: suppliers,
           pr_items: pr_items,
           pr_number: pr_id,
-          pr_date: pr_date
+          pr_date: pr_date,
+          users: users
         });
+      });
+    };
+
+    _this.onCommitteeChange = function (name_, event) {
+      var _event$target = event.target,
+          name = _event$target.name,
+          value = _event$target.value;
+
+      console.log("name: ", name_, "value: ", value);
+      var member = _this.state.member;
+      member[name_] = value;
+      _this.setState(Object.assign({}, _this.state, {
+        member: member
+      }));
+    };
+
+    _this.onAddCommitteeMembers = function () {
+      var members = _this.state.committeeMembers;
+      members.push(_this.state.member);
+      _this.setState(Object.assign({}, _this.state, {
+        committeeMembers: members,
+        member: {
+          memberName: "",
+          memberPosition: ""
+        }
+      }));
+    };
+
+    _this.onRemoveCommitteeMember = function (index) {
+      var members = _this.state.committeeMembers.filter(function (member, _index) {
+        return _index !== index;
+      });
+      _this.setState(Object.assign({}, _this.state, {
+        committeeMembers: members
+      }));
+    };
+
+    _this.onSubmitCommitee = function () {
+      var form_data = new FormData();
+      form_data.append("cs_id", _this.state.cs_id);
+      form_data.append("committee", JSON.stringify({
+        committee: _this.state.committeeMembers
+      }));
+      form_data.append("csrfmiddlewaretoken", _this.getCookie("csrftoken"));
+
+      fetch("http://localhost:8000/comparative_schedule/save_committee", {
+        method: "POST",
+        headers: {
+          "X-CSRFToken": _this.getCookie("csrftoken")
+        },
+        body: form_data
+      }).then(function (response) {
+        return response.json();
+      }).then(function (data) {
+        console.log("data: ", data);
+        if (data.success) {
+          alert("Committee saved successfully");
+        } else {
+          alert("Error saving Committee");
+        }
       });
     };
 
@@ -131,18 +243,18 @@ var CreateCS = function (_React$Component) {
         var bid_file = event.target.files[0];
         currentBid[name_] = bid_file;
       } else if (name_ === "supplier") {
-        var _event$target = event.target,
-            name = _event$target.name,
-            value = _event$target.value;
+        var _event$target2 = event.target,
+            name = _event$target2.name,
+            value = _event$target2.value;
 
         console.log("value: ", value);
         var id_name = value ? value.split("-#-") : [];
         currentBid[name_] = id_name.length > 0 ? id_name[0] : "";
         currentBid["supplier_name"] = id_name.length >= 1 ? id_name[1] : "";
       } else {
-        var _event$target2 = event.target,
-            _name = _event$target2.name,
-            _value = _event$target2.value;
+        var _event$target3 = event.target,
+            _name = _event$target3.name,
+            _value = _event$target3.value;
 
         currentBid[name_] = _value;
       }
@@ -159,9 +271,9 @@ var CreateCS = function (_React$Component) {
       console.log("item: ", item);
       // if item exists update item
       if (item) {
-        var _event$target3 = event.target,
-            name = _event$target3.name,
-            value = _event$target3.value;
+        var _event$target4 = event.target,
+            name = _event$target4.name,
+            value = _event$target4.value;
 
         item[name_] = value;
         // update item in current bid
@@ -512,9 +624,9 @@ var CreateCS = function (_React$Component) {
 
     _this.onInputChange = function (event) {
       console.log(event);
-      var _event$target4 = event.target,
-          name = _event$target4.name,
-          value = _event$target4.value;
+      var _event$target5 = event.target,
+          name = _event$target5.name,
+          value = _event$target5.value;
 
       _this.setState(Object.assign({}, _this.state, _defineProperty({}, name, value)));
     };
@@ -563,9 +675,9 @@ var CreateCS = function (_React$Component) {
     };
 
     _this.onComplianceChange = function (bid_count, event) {
-      var _event$target5 = event.target,
-          name = _event$target5.name,
-          checked = _event$target5.checked;
+      var _event$target6 = event.target,
+          name = _event$target6.name,
+          checked = _event$target6.checked;
 
       console.log("name: ", name, "checked: ", checked);
       var compliance = _this.state.compliance;
@@ -579,9 +691,9 @@ var CreateCS = function (_React$Component) {
     };
 
     _this.onComplianceRemarksChange = function (bid_count, event) {
-      var _event$target6 = event.target,
-          name = _event$target6.name,
-          value = _event$target6.value;
+      var _event$target7 = event.target,
+          name = _event$target7.name,
+          value = _event$target7.value;
 
       var compliance = _this.state.compliance;
       var index = compliance.findIndex(function (item) {
@@ -677,7 +789,13 @@ var CreateCS = function (_React$Component) {
       rankings: [],
 
       committeeTable: false,
-      committee: [],
+      committeeMembers: [],
+      member: {
+        memberName: "",
+        memberFullName: "",
+        memberPosition: ""
+      },
+      users: [],
 
       pr_items: [],
       suppliers: [],
@@ -688,6 +806,7 @@ var CreateCS = function (_React$Component) {
     _this.getCreateData = _this.getCreateData.bind(_this);
     _this.onAddBid = _this.onAddBid.bind(_this);
     _this.onAddItemsModal = _this.onAddItemsModal.bind(_this);
+    _this.onCommitteeChange = _this.onCommitteeChange.bind(_this);
     return _this;
   }
 
@@ -695,27 +814,35 @@ var CreateCS = function (_React$Component) {
     key: "componentDidMount",
     value: function componentDidMount() {
       console.log("props: ", this.props);
-      this.setState({
-        username: this.props.username,
-        pr_number: this.props.prid
-      });
-      this.getCreateData(this.props.prid);
+      if (this.props.csid !== "") {
+        this.setState({
+          cs_id: this.props.csid
+        });
+        this.getCSData(this.props.csid);
+      } else {
+
+        this.setState({
+          username: this.props.username,
+          pr_number: this.props.prid
+        });
+        this.getCreateData(this.props.prid);
+      }
     }
   }, {
     key: "onSelectChange",
     value: function onSelectChange(name_, event) {
-      var _event$target7 = event.target,
-          name = _event$target7.name,
-          value = _event$target7.value;
+      var _event$target8 = event.target,
+          name = _event$target8.name,
+          value = _event$target8.value;
 
       this.setState(Object.assign({}, this.state, _defineProperty({}, name_, value)));
     }
   }, {
     key: "onFilterSelectCenters",
     value: function onFilterSelectCenters(name_, event) {
-      var _event$target8 = event.target,
-          name = _event$target8.name,
-          value = _event$target8.value;
+      var _event$target9 = event.target,
+          name = _event$target9.name,
+          value = _event$target9.value;
 
       if (name_ === "region") {
         var dist = this.state.allDistricts.filter(function (_district) {
@@ -778,6 +905,7 @@ var CreateCS = function (_React$Component) {
       var bidsModal = null;
       var complianceTable = null;
       var rankingTable = null;
+      var committeeTable = null;
 
       if (this.state.addItemsModal) {
         itemsModal = React.createElement(
@@ -1684,7 +1812,9 @@ var CreateCS = function (_React$Component) {
                             onChange: function onChange(e) {
                               return _this2.onComplianceChange(comp.bid_count, e);
                             },
-                            id: "reject", type: "checkbox" })
+                            id: "reject",
+                            type: "checkbox"
+                          })
                         )
                       );
                     })
@@ -1862,6 +1992,196 @@ var CreateCS = function (_React$Component) {
                           "td",
                           { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
                           rank.total
+                        )
+                      );
+                    })
+                  )
+                )
+              )
+            )
+          )
+        );
+      }
+
+      if (true) {
+        committeeTable = React.createElement(
+          "div",
+          { className: "bg-gulf-blue-300 shadow shadow-nepal-300 text-gray-700 rounded px-2 py-2" },
+          React.createElement(
+            "div",
+            { className: "space-y-12 px-5 py-5" },
+            React.createElement(
+              "div",
+              { className: "px-4 sm:px-0 mt-6 border-t border-gray-100 border-gray-900/10" },
+              React.createElement(
+                "h2",
+                { className: "text-base font-semibold leading-6 text-gray-900" },
+                "Committee Members"
+              ),
+              React.createElement(
+                "div",
+                { className: "overflow-auto px-2 py-2 mt-5 rounded-md bg-gulf-blue-300" },
+                React.createElement(
+                  "table",
+                  { className: "table-auto w-full text-left" },
+                  React.createElement(
+                    "tbody",
+                    null,
+                    React.createElement(
+                      "tr",
+                      { className: "text-gray-900" },
+                      React.createElement(
+                        "td",
+                        { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                        React.createElement(
+                          "div",
+                          null,
+                          React.createElement(
+                            "label",
+                            {
+                              htmlFor: "memberPosition",
+                              className: "block text-sm font-medium leading-6 text-gray-900"
+                            },
+                            "Member Position"
+                          ),
+                          React.createElement(
+                            "div",
+                            { className: "mt-2" },
+                            React.createElement(
+                              "select",
+                              {
+                                onChange: function onChange(text) {
+                                  return _this2.onCommitteeChange("memberPosition", text);
+                                },
+                                id: "memberPosition",
+                                name: "memberPosition",
+                                autoComplete: "memberPosition",
+                                className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
+                              },
+                              React.createElement(
+                                "option",
+                                { value: "" },
+                                "Select Option"
+                              ),
+                              React.createElement(
+                                "option",
+                                { value: "chairman" },
+                                "Chairman"
+                              ),
+                              React.createElement(
+                                "option",
+                                { value: "finance" },
+                                "Finance"
+                              ),
+                              React.createElement(
+                                "option",
+                                { value: "procurement" },
+                                "Procurement"
+                              ),
+                              React.createElement(
+                                "option",
+                                { value: "user" },
+                                "User"
+                              ),
+                              React.createElement(
+                                "option",
+                                { value: "other" },
+                                "Other"
+                              )
+                            )
+                          )
+                        )
+                      ),
+                      React.createElement(
+                        "td",
+                        { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                        React.createElement(
+                          "div",
+                          null,
+                          React.createElement(
+                            "label",
+                            {
+                              htmlFor: "memberName",
+                              className: "block text-sm font-medium leading-6 text-gray-900"
+                            },
+                            "Select User"
+                          ),
+                          React.createElement(
+                            "div",
+                            { className: "mt-2" },
+                            React.createElement(
+                              "select",
+                              {
+                                onChange: function onChange(text) {
+                                  return _this2.onCommitteeChange("memberName", text);
+                                },
+                                id: "memberName",
+                                name: "memberName",
+                                autoComplete: "memberName",
+                                className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
+                              },
+                              this.state.users ? this.state.users.map(function (user) {
+                                return React.createElement(
+                                  "option",
+                                  { value: user.username },
+                                  user.first_name + " " + user.last_name
+                                );
+                              }) : ""
+                            )
+                          )
+                        )
+                      ),
+                      React.createElement(
+                        "td",
+                        { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                        React.createElement(
+                          "div",
+                          { className: "w-30" },
+                          React.createElement(
+                            "button",
+                            {
+                              style: { width: "100%" },
+                              onClick: this.onAddCommitteeMembers,
+                              name: "save_next",
+                              className: "rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                            },
+                            "ADD MEMBER"
+                          )
+                        )
+                      )
+                    ),
+                    this.state.committeeMembers.map(function (member, key) {
+                      return React.createElement(
+                        "tr",
+                        { className: "text-gray-900" },
+                        React.createElement(
+                          "td",
+                          { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                          member.memberPosition
+                        ),
+                        React.createElement(
+                          "td",
+                          { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                          member.memberName
+                        ),
+                        React.createElement(
+                          "td",
+                          { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                          React.createElement(
+                            "div",
+                            { className: "w-30 m-2" },
+                            React.createElement(
+                              "button",
+                              {
+                                onClick: function onClick() {
+                                  return _this2.onRemoveCommitteeMember(key);
+                                },
+                                name: "save_next",
+                                className: "rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                              },
+                              "REMOVE"
+                            )
+                          )
                         )
                       );
                     })
@@ -2634,12 +2954,26 @@ var CreateCS = function (_React$Component) {
               {
                 style: { width: "100%" },
                 onClick: this.onCloseCS,
-                className: "rounded-md bg-red-danger hover:bg-orange-500 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                className: "rounded-md bg-nepal-950 hover:bg-nepal-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
               },
               "CLOSE SCHEDULE"
             )
           ) : "",
-          rankingTable
+          rankingTable,
+          committeeTable,
+          this.state.committeeMembers.length > 0 ? React.createElement(
+            "div",
+            { className: "m-2" },
+            React.createElement(
+              "button",
+              {
+                style: { width: "100%" },
+                onClick: this.onSubmitCommitee,
+                className: "rounded-md bg-nepal-950 hover:bg-nepal-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+              },
+              "SUBMIT COMMITTEE"
+            )
+          ) : ""
         )
       );
     }
@@ -2651,4 +2985,5 @@ var CreateCS = function (_React$Component) {
 var domContainer = document.querySelector("#create_comparative_schedule");
 var username = domContainer.getAttribute("data-username");
 var prid = domContainer.getAttribute("data-prid");
-ReactDOM.render(e(CreateCS, { username: username, prid: prid }), domContainer);
+var csid = domContainer.getAttribute("data-csid");
+ReactDOM.render(e(CreateCS, { username: username, prid: prid, csid: csid }), domContainer);

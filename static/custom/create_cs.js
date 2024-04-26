@@ -35,7 +35,13 @@ class CreateCS extends React.Component {
       rankings: [],
 
       committeeTable: false,
-      committee: [],
+      committeeMembers: [],
+      member: {
+        memberName: "",
+        memberFullName: "",
+        memberPosition: "",
+      },
+      users: [],
 
       pr_items: [],
       suppliers: [],
@@ -46,19 +52,85 @@ class CreateCS extends React.Component {
     this.getCreateData = this.getCreateData.bind(this);
     this.onAddBid = this.onAddBid.bind(this);
     this.onAddItemsModal = this.onAddItemsModal.bind(this);
+    this.onCommitteeChange = this.onCommitteeChange.bind(this);
   }
 
   componentDidMount() {
     console.log("props: ", this.props);
-    this.setState({
-      username: this.props.username,
-      pr_number: this.props.prid,
-    });
-    this.getCreateData(this.props.prid);
+    if(this.props.csid !== ""){
+      this.setState({
+        cs_id: this.props.csid,
+      });
+      this.getCSData(this.props.csid);
+    } else {
+
+      this.setState({
+        username: this.props.username,
+        pr_number: this.props.prid,
+      });
+      this.getCreateData(this.props.prid);
+    }
   }
 
+  getCSData = (cs_id) => {
+    fetch(`http://localhost:8000/comparative_schedule/cs_data/${cs_id}`)
+      .then((response) => response.json())
+      .then((data_) => {
+        let data = JSON.parse(data_);
+        console.log("cs data: ", data, typeof data);
+        let cs_id = data.cs_id ? data.cs : {};
+        let bids_object = data.bids ? data.bids : [];
+        let bids = Object.keys(bids_object).map((key) => bids_object[key]);
+
+        let items = data.items ? data.items : [];
+        let compliance = data.compliance ? data.compliance : [];
+        let rankings = data.rankings ? data.rankings : [];
+        let committee = data.committee ? data.committee : [];
+        let pr_items = data.pr_items ? data.pr_items : [];
+        let pr_date = data.pr_date ? data.pr_date : "";
+        let plan_ref = data.plan_ref ? data.plan_ref : "";
+        let proc_plan = data.proc_plan ? data.proc_plan : "";
+        let scope_of_work = data.scope_of_work ? data.scope_of_work : "";
+        let pr_number = data.pr_number ? data.pr_number : "";
+        let quantity = data.quantity ? data.quantity : "";
+        let closing_date = data.closing_date ? data.closing_date : "";
+        let ref_date = data.ref_date ? data.ref_date : "";
+        let closing_time = data.closing_time? data.closing_time : "";
+        let date_tender_opened = data.date_tender_opened ? data.date_tender_opened : "";
+        let tender_adjudication_committee_date = data.tac_date ? data.tac_date : "";
+        let advert = data.advert ? data.advert : null;
+        let cs_opened = data.cs_opened ? data.cs_opened : false;
+
+
+        this.setState({
+          ...this.state,
+          cs_id: cs_id,
+          date_tender_opened: cs_opened,
+          ref_date: ref_date,
+          proc_ref: plan_ref,
+          proc_plan: proc_plan,
+          scope_of_work: scope_of_work,
+          pr_number: pr_number,
+          quantity: quantity,
+          pr_date: pr_date,
+          closing_date: closing_date,
+          closing_time_hour: closing_time,
+          ref_date: ref_date,
+          date_tender_opened: date_tender_opened,
+          tender_adjudication_committee_date: tender_adjudication_committee_date,
+          advert: advert,
+          bids: bids,
+          cs_items: items,
+          compliance: compliance,
+          rankings: rankings,
+          committeeMembers: committee,
+          pr_items: pr_items,
+        });
+      });
+  };
+
+
   getCreateData = (pr_id) => {
-    
     console.log("cs pr_id: ", pr_id);
 
     fetch(`http://localhost:8000/comparative_schedule/create_data/${pr_id}`)
@@ -70,15 +142,81 @@ class CreateCS extends React.Component {
         let pr_items = data.pr_items ? data.pr_items : [];
         let pr_id = data.pr_id ? data.pr_id : "";
         let pr_date = data.pr_date ? data.pr_date : "";
+        let users = data.users ? data.users : [];
         this.setState({
           procurement_plans: plans,
           suppliers: suppliers,
           pr_items: pr_items,
           pr_number: pr_id,
           pr_date: pr_date,
+          users: users,
         });
       });
   };
+
+  onCommitteeChange = (name_, event) => {
+    
+    let { name, value } = event.target;
+    console.log("name: ", name_, "value: ", value);
+    let member = this.state.member;
+    member[name_] = value;
+    this.setState({
+      ...this.state,
+      member: member,
+    });
+  };
+
+  onAddCommitteeMembers = () => {
+    let members = this.state.committeeMembers;
+    members.push(this.state.member);
+    this.setState({
+      ...this.state,
+      committeeMembers: members,
+      member: {
+        memberName: "",
+        memberPosition: "",
+      },
+    });
+  };
+
+  onRemoveCommitteeMember = (index) => {
+    let members = this.state.committeeMembers.filter(
+      (member, _index) => _index !== index
+    );
+    this.setState({
+      ...this.state,
+      committeeMembers: members,
+    });
+  };
+  
+  onSubmitCommitee = () => {
+    let form_data = new FormData();
+    form_data.append("cs_id", this.state.cs_id);
+    form_data.append(
+      "committee",
+      JSON.stringify({
+        committee: this.state.committeeMembers,
+      })
+    );
+    form_data.append("csrfmiddlewaretoken", this.getCookie("csrftoken"));
+    
+    fetch(`http://localhost:8000/comparative_schedule/save_committee`, {
+      method: "POST",
+      headers: {
+        "X-CSRFToken": this.getCookie("csrftoken"),
+      },
+      body: form_data,
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        console.log("data: ", data);
+        if (data.success) {
+          alert("Committee saved successfully");
+        } else {
+          alert("Error saving Committee");
+        }
+      });
+  }
 
   onAddCSItem = (item_id) => {
     // check is item already added
@@ -633,22 +771,22 @@ class CreateCS extends React.Component {
     // add bid compliance
     let compliances = this.state.bids.map((bid) => {
       return {
-      bid_count: bid.bid_count,
-      supplier: bid.supplier,
-      supplier_name: bid.supplier_name,
-      payment_terms: false,
-      bid_validity: false,
-      delivery_period: false,
-      technical_specifications: false,
-      valid_tax_clearance: false,
-      registered_with_praz: false,
-      tax_status: false,
-      site_visit_done: false,
-      samples_delivered: false,
-      decision: false,
-      reject: true,
-      remarks: "",
-      }
+        bid_count: bid.bid_count,
+        supplier: bid.supplier,
+        supplier_name: bid.supplier_name,
+        payment_terms: false,
+        bid_validity: false,
+        delivery_period: false,
+        technical_specifications: false,
+        valid_tax_clearance: false,
+        registered_with_praz: false,
+        tax_status: false,
+        site_visit_done: false,
+        samples_delivered: false,
+        decision: false,
+        reject: true,
+        remarks: "",
+      };
     });
 
     let complianceRemarks = this.state.bids.map((bid) => {
@@ -657,9 +795,8 @@ class CreateCS extends React.Component {
         supplier: bid.supplier,
         supplier_name: bid.supplier_name,
         remarks: "",
-      }
+      };
     });
-
 
     this.setState({
       ...this.state,
@@ -679,7 +816,7 @@ class CreateCS extends React.Component {
       ...this.state,
       compliance: compliance,
     });
-  }
+  };
 
   onComplianceRemarksChange = (bid_count, event) => {
     let { name, value } = event.target;
@@ -690,14 +827,17 @@ class CreateCS extends React.Component {
       ...this.state,
       compliance: compliance,
     });
-  }
+  };
 
   onSaveCompliance = () => {
     let form_data = new FormData();
     form_data.append("cs_id", this.state.cs_id);
-    form_data.append("compliance", JSON.stringify({
-      compliance: this.state.compliance,
-    }));
+    form_data.append(
+      "compliance",
+      JSON.stringify({
+        compliance: this.state.compliance,
+      })
+    );
     form_data.append("csrfmiddlewaretoken", this.getCookie("csrftoken"));
 
     fetch(`http://localhost:8000/comparative_schedule/save_compliance`, {
@@ -716,7 +856,7 @@ class CreateCS extends React.Component {
           alert("Error saving Compliance");
         }
       });
-  }
+  };
 
   onCloseCS = () => {
     let form_data = new FormData();
@@ -745,14 +885,14 @@ class CreateCS extends React.Component {
           alert("Error saving Schedule");
         }
       });
-  }
+  };
 
   render() {
     var itemsModal = null;
     var bidsModal = null;
     var complianceTable = null;
     var rankingTable = null;
-
+    var committeeTable = null;
 
     if (this.state.addItemsModal) {
       itemsModal = (
@@ -1248,8 +1388,12 @@ class CreateCS extends React.Component {
                           <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
                             <input
                               name="payment_terms"
-                              checked={comp.payment_terms? comp.payment_terms : false}
-                              onChange={(e) => this.onComplianceChange(comp.bid_count, e)}
+                              checked={
+                                comp.payment_terms ? comp.payment_terms : false
+                              }
+                              onChange={(e) =>
+                                this.onComplianceChange(comp.bid_count, e)
+                              }
                               id="payment_terms"
                               type="checkbox"
                             />
@@ -1257,8 +1401,12 @@ class CreateCS extends React.Component {
                           <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
                             <input
                               name="bid_validity"
-                              checked={comp.bid_validity? comp.bid_validity : false}
-                              onChange={(e) => this.onComplianceChange(comp.bid_count, e)}
+                              checked={
+                                comp.bid_validity ? comp.bid_validity : false
+                              }
+                              onChange={(e) =>
+                                this.onComplianceChange(comp.bid_count, e)
+                              }
                               id="bid_validity"
                               type="checkbox"
                             />
@@ -1266,8 +1414,14 @@ class CreateCS extends React.Component {
                           <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
                             <input
                               name="delivery_period"
-                              checked={comp.delivery_period? comp.delivery_period : false}
-                              onChange={(e) => this.onComplianceChange(comp.bid_count, e)}
+                              checked={
+                                comp.delivery_period
+                                  ? comp.delivery_period
+                                  : false
+                              }
+                              onChange={(e) =>
+                                this.onComplianceChange(comp.bid_count, e)
+                              }
                               id="delivery_period"
                               type="checkbox"
                             />
@@ -1275,8 +1429,14 @@ class CreateCS extends React.Component {
                           <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
                             <input
                               name="technical_specifications"
-                              checked={comp.technical_specifications? comp.technical_specifications : false}
-                              onChange={(e) => this.onComplianceChange(comp.bid_count, e)}
+                              checked={
+                                comp.technical_specifications
+                                  ? comp.technical_specifications
+                                  : false
+                              }
+                              onChange={(e) =>
+                                this.onComplianceChange(comp.bid_count, e)
+                              }
                               id="technical_specifications"
                               type="checkbox"
                             />
@@ -1284,8 +1444,14 @@ class CreateCS extends React.Component {
                           <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
                             <input
                               name="valid_tax_clearance"
-                              checked={comp.valid_tax_clearance? comp.valid_tax_clearance : false}
-                              onChange={(e) => this.onComplianceChange(comp.bid_count, e)}
+                              checked={
+                                comp.valid_tax_clearance
+                                  ? comp.valid_tax_clearance
+                                  : false
+                              }
+                              onChange={(e) =>
+                                this.onComplianceChange(comp.bid_count, e)
+                              }
                               id="valid_tax_clearance"
                               type="checkbox"
                             />
@@ -1293,8 +1459,14 @@ class CreateCS extends React.Component {
                           <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
                             <input
                               name="registered_with_praz"
-                              checked={comp.registered_with_praz? comp.registered_with_praz : false}
-                              onChange={(e) => this.onComplianceChange(comp.bid_count, e)}
+                              checked={
+                                comp.registered_with_praz
+                                  ? comp.registered_with_praz
+                                  : false
+                              }
+                              onChange={(e) =>
+                                this.onComplianceChange(comp.bid_count, e)
+                              }
                               id="registered_with_praz"
                               type="checkbox"
                             />
@@ -1302,8 +1474,12 @@ class CreateCS extends React.Component {
                           <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
                             <input
                               name="tax_status"
-                              checked={comp.tax_status? comp.tax_status : false}
-                              onChange={(e) => this.onComplianceChange(comp.bid_count, e)}
+                              checked={
+                                comp.tax_status ? comp.tax_status : false
+                              }
+                              onChange={(e) =>
+                                this.onComplianceChange(comp.bid_count, e)
+                              }
                               id="tax_status"
                               type="checkbox"
                             />
@@ -1314,8 +1490,14 @@ class CreateCS extends React.Component {
                           >
                             <input
                               name="site_visit_done"
-                              checked={comp.site_visit_done? comp.site_visit_done : false}
-                              onChange={(e) => this.onComplianceChange(comp.bid_count, e)}
+                              checked={
+                                comp.site_visit_done
+                                  ? comp.site_visit_done
+                                  : false
+                              }
+                              onChange={(e) =>
+                                this.onComplianceChange(comp.bid_count, e)
+                              }
                               id="site_visit_done"
                               type="checkbox"
                             />
@@ -1326,8 +1508,14 @@ class CreateCS extends React.Component {
                           >
                             <input
                               name="samples_delivered"
-                              checked={comp.samples_delivered? comp.samples_delivered : false}
-                              onChange={(e) => this.onComplianceChange(comp.bid_count, e)}
+                              checked={
+                                comp.samples_delivered
+                                  ? comp.samples_delivered
+                                  : false
+                              }
+                              onChange={(e) =>
+                                this.onComplianceChange(comp.bid_count, e)
+                              }
                               id="samples_delivered"
                               type="checkbox"
                             />
@@ -1335,18 +1523,24 @@ class CreateCS extends React.Component {
                           <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
                             <input
                               name="decision"
-                              checked={comp.decision? comp.decision : false}
-                              onChange={(e) => this.onComplianceChange(comp.bid_count, e)}
+                              checked={comp.decision ? comp.decision : false}
+                              onChange={(e) =>
+                                this.onComplianceChange(comp.bid_count, e)
+                              }
                               id="decision"
                               type="checkbox"
                             />
                           </td>
                           <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                            <input 
-                            name="reject" 
-                            checked={comp.reject? comp.reject : false}
-                            onChange={(e) => this.onComplianceChange(comp.bid_count, e)}
-                            id="reject" type="checkbox" />
+                            <input
+                              name="reject"
+                              checked={comp.reject ? comp.reject : false}
+                              onChange={(e) =>
+                                this.onComplianceChange(comp.bid_count, e)
+                              }
+                              id="reject"
+                              type="checkbox"
+                            />
                           </td>
                         </tr>
                       );
@@ -1376,7 +1570,9 @@ class CreateCS extends React.Component {
                           <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
                             <input
                               name="remarks"
-                              onChange={(e) => this.onComplianceRemarksChange(bid.bid_count, e)}
+                              onChange={(e) =>
+                                this.onComplianceRemarksChange(bid.bid_count, e)
+                              }
                               type="text"
                               className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
                             />
@@ -1393,7 +1589,7 @@ class CreateCS extends React.Component {
           <div className="flex justify-center mt-5 px-3 py-3">
             <div className="flex-1 m-2">
               <button
-                style={{width: "100%"}}
+                style={{ width: "100%" }}
                 onClick={this.onSaveCompliance}
                 name="save_next"
                 className="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
@@ -1461,6 +1657,114 @@ class CreateCS extends React.Component {
                           <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
                             {rank.total}
                           </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    if (true) {
+      committeeTable = (
+        <div className="bg-gulf-blue-300 shadow shadow-nepal-300 text-gray-700 rounded px-2 py-2">
+          <div className="space-y-12 px-5 py-5">
+            <div className="px-4 sm:px-0 mt-6 border-t border-gray-100 border-gray-900/10">
+              <h2 className="text-base font-semibold leading-6 text-gray-900">
+                Committee Members
+              </h2>
+
+              <div className="overflow-auto px-2 py-2 mt-5 rounded-md bg-gulf-blue-300">
+                <table className="table-auto w-full text-left">
+                  <tbody>
+                    <tr className="text-gray-900">
+                      <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                        <div>
+                          <label
+                            htmlFor="memberPosition"
+                            className="block text-sm font-medium leading-6 text-gray-900"
+                          >
+                            Member Position
+                          </label>
+                          <div className="mt-2">
+                            <select
+                              onChange={(text) => this.onCommitteeChange("memberPosition", text)}
+                              id="memberPosition"
+                              name="memberPosition"
+                              autoComplete="memberPosition"
+                              className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
+                            >
+                              <option value="">Select Option</option>
+                              <option value="chairman">Chairman</option>
+                              <option value="finance">Finance</option>
+                              <option value="procurement">Procurement</option>
+                              <option value="user">User</option>
+                              <option value="other">Other</option>
+                            </select>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                        <div>
+                          <label
+                            htmlFor="memberName"
+                            className="block text-sm font-medium leading-6 text-gray-900"
+                          >
+                            Select User
+                          </label>
+                          <div className="mt-2">
+                            <select
+                              onChange={(text) => this.onCommitteeChange("memberName", text)}
+                              id="memberName"
+                              name="memberName"
+                              autoComplete="memberName"
+                              className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
+                            >
+                              {this.state.users ? this.state.users.map((user) => (
+                                <option value={user.username}>{user.first_name + " " + user.last_name}</option>
+                              )) : ""}
+                            </select>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                        
+                        <div className="w-30">
+                          <button
+                            style={{ width: "100%" }}
+                            onClick={this.onAddCommitteeMembers}
+                            name="save_next"
+                            className="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                          >
+                            ADD MEMBER
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                    {this.state.committeeMembers.map((member, key) => {
+                      return (
+                        <tr className="text-gray-900">
+                          <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                            {member.memberPosition}
+                          </td>
+                          <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                            {member.memberName}
+                          </td>
+                            <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                              <div className="w-30 m-2">
+                                <button
+                                  onClick={() => this.onRemoveCommitteeMember(key)}
+                                  name="save_next"
+                                  className="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                                >
+                                  REMOVE
+                                </button>
+                              </div>
+                            </td>
                         </tr>
                       );
                     })}
@@ -1989,7 +2293,7 @@ class CreateCS extends React.Component {
               <button
                 style={{ width: "100%" }}
                 onClick={this.onCloseCS}
-                className="rounded-md bg-red-danger hover:bg-orange-500 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                className="rounded-md bg-nepal-950 hover:bg-nepal-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
               >
                 CLOSE SCHEDULE
               </button>
@@ -1999,6 +2303,21 @@ class CreateCS extends React.Component {
           )}
 
           {rankingTable}
+          {committeeTable}
+
+          {this.state.committeeMembers.length > 0 ? (
+            <div className="m-2">
+              <button
+                style={{ width: "100%" }}
+                onClick={this.onSubmitCommitee}
+                className="rounded-md bg-nepal-950 hover:bg-nepal-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+              >
+                SUBMIT COMMITTEE
+              </button>
+            </div>
+          ) : (
+            ""
+          )}
         </div>
       </div>
     );
@@ -2008,4 +2327,5 @@ class CreateCS extends React.Component {
 const domContainer = document.querySelector("#create_comparative_schedule");
 const username = domContainer.getAttribute("data-username");
 const prid = domContainer.getAttribute("data-prid");
-ReactDOM.render(e(CreateCS, { username, prid }), domContainer);
+const csid = domContainer.getAttribute("data-csid");
+ReactDOM.render(e(CreateCS, { username, prid, csid }), domContainer);
