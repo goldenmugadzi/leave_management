@@ -3,22 +3,20 @@ import time
 from django.db import models
 from approve.models import Process
 from finance.Ace.models import Ace
-from it.users.models import UserProfile, Sections
+from it.users.models import UserProfile, Sections, Regions, Districts, Depots
 
 
 class PurchaseRequest(models.Model):
     id = models.CharField(primary_key=True, max_length=20, editable=False)
-    description = models.TextField()
-    allocation_code_of_expenditure = models.CharField(max_length=100, blank=True, null=True,help_text='optional')
-    scope_of_work = models.CharField(max_length=100, blank=True, null=True,help_text='optional')
-    sap_pr_number = models.CharField(max_length=100)
-    PAYMENT_MODE_CHOICES = [('USD Cash', 'USD Cash'),('USD Swipe', 'USD Swipe'),('ZIG Cash', 'ZIG Cash'),('ZIG Transfer', 'ZIG Transfer'),]
-    payment_mode = models.CharField(max_length=100, blank=True, null=True, choices=PAYMENT_MODE_CHOICES)
+    scope_of_work = models.TextField(blank=True, null=True)
+    section = models.ForeignKey(Sections, on_delete=models.CASCADE,blank=True, null=True)
+    # cost_centre = models.ForeignKey(CostCentre, on_delete=models.CASCADE,blank=True, null=True)
+    pr_no = models.CharField(max_length=100)
     requested_by = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True, blank=True, null=True)
-    section = models.ForeignKey(Sections, on_delete=models.CASCADE)
     ace = models.ForeignKey(Ace, on_delete=models.SET_NULL, blank=True, null=True)
     process = models.ForeignKey(Process, on_delete=models.SET_NULL, blank=True, null=True)
+    attachments = models.FileField(upload_to='uploads/purchase_request', blank=True, null=True)
 
     def __str__(self):
         return self.description
@@ -29,16 +27,42 @@ class PurchaseRequest(models.Model):
             random_number = str(random.randint(10000, 99999))
             self.id = "PR" + timestamp + random_number
         super().save(*args, **kwargs)
-class PrItem(models.Model):
-    name = models.CharField(max_length=100)
-    description = models.CharField(max_length=300)
-    UNIT_CHOICES = [('Each','Each'),('KG', 'Kilogram'),('L', 'Liter'),('M', 'Meter'),('CM', 'Centimeter'),('MM', 'Millimeter'),('G', 'Gram'),]
-    unit_of_measurement = models.CharField(max_length=100, choices=UNIT_CHOICES)
-    quantity = models.DecimalField(max_digits=40, decimal_places=2)
-    purchase_request = models.ForeignKey(PurchaseRequest, models.CASCADE, blank=True, null=True)
-    ordered = models.DecimalField(max_digits=40, decimal_places=2,default=0)
+class CostCentre(models.Model):
+    id = models.CharField(primary_key=True, max_length=20, editable=False)
+    name = models.CharField(max_length=100, unique=True)
+    section = models.ForeignKey(Sections, on_delete=models.CASCADE)
+    depot = models.ForeignKey(Depots, on_delete=models.CASCADE)
+    district = models.ForeignKey(Districts, on_delete=models.CASCADE)
+    region = models.ForeignKey(Regions, on_delete=models.CASCADE)
+
     def __str__(self):
-        return f"{self.name}    {self.quantity} {self.unit_of_measurement}"
+        return self.name
+
+    def save(self, *args, **kwargs):
+        if not self.id:
+            timestamp = str(int(time.time()))
+            random_number = str(random.randint(10000, 99999))
+            self.id = "CC" + timestamp + random_number
+        super().save(*args, **kwargs)
+
+    class Meta:
+        ordering = ['name']
+        app_label = 'users'
+class UnitOfMeasurement(models.Model):
+    unit = models.CharField(max_length=5, primary_key=True, editable=False)
+    name = models.CharField(max_length=50, blank=True)
+
+    def __str__(self):
+        return self.unit
+
+class PrItem(models.Model):
+    item_required = models.CharField(max_length=100)
+    unit_of_measurement = models.ForeignKey(UnitOfMeasurement, on_delete=models.CASCADE,blank=True, null=True)
+    quantity = models.IntegerField(max_length=40)
+    purchase_request = models.ForeignKey(PurchaseRequest, models.CASCADE, blank=True, null=True)
+    ordered = models.IntegerField(max_length=40, default=0)
+    def __str__(self):
+        return f"{self.item_required}  {self.quantity} {self.unit_of_measurement}"
 
 
 
@@ -67,5 +91,3 @@ class QuoteItem(models.Model):
     quotation = models.ForeignKey(Quotation, models.CASCADE, blank=True, null=True)
     def __str__(self):
         return str(self.pk)
-
-

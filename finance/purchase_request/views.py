@@ -29,7 +29,7 @@ def purchase_request_detail(request, purchase_request_id):
     
 @login_required
 def create_purchase_request(request):
-    itemFormset = inlineformset_factory(PurchaseRequest, PrItem, form=PrItemForm, extra=int(request.POST.get('items') or 5) , can_delete=False)
+    itemFormset = inlineformset_factory(PurchaseRequest, PrItem, form=PrItemForm, extra=int(request.POST.get('items') or 1) , can_delete=False)
     if request.method == 'POST':
         form = PurchaseRequestForm(request.POST, request.FILES)
         if form.is_valid():
@@ -61,7 +61,7 @@ def create_purchase_request(request):
 @login_required    
 def create_ace_purchase_request(request,ace_id):
     ace = Ace.objects.get(Ace_id2=ace_id)
-    itemFormset = inlineformset_factory(PurchaseRequest, PrItem, form=PrItemForm, extra=int(request.POST.get('items') or 5) , can_delete=False)
+    itemFormset = inlineformset_factory(PurchaseRequest, PrItem, form=PrItemForm, extra=int(request.POST.get('items') or 1) , can_delete=False)
     if request.method == 'POST':
         form = acePurchaseRequestForm(request.POST, request.FILES)
         if form.is_valid():
@@ -69,7 +69,6 @@ def create_ace_purchase_request(request,ace_id):
             purchase_request.process = intiate(request, 'purchase request')
             purchase_request.requested_by = request.user
             purchase_request.save()
-
             formset = itemFormset(request.POST, request.FILES)
             for it in formset:
                 if it.is_valid():
@@ -79,7 +78,6 @@ def create_ace_purchase_request(request,ace_id):
                         item.save()
                     except: 
                         pass
-                       
                 else:
                     return render(request, 'finance/purchase_request/create_purchase_request.html', {'formset': formset, 'form': form})
             
@@ -92,7 +90,7 @@ def create_ace_purchase_request(request,ace_id):
             'ace': ace.Ace_id,
             'allocation_code_of_expenditure': ace.allocation_code_of_expenditure,
             'quantity': int(ace.quantity),
-            'section': ace.section  ,
+            'section': ace.section,
         }
         if ace.section:
             ace_data['section'] = ace.section
@@ -114,7 +112,8 @@ def purchase_request_update(request, purchase_request_id):
             purchase_request_form.requested_by = purchase_request.requested_by
             purchase_request_form.save()
             formset = itemFormset(request.POST, request.FILES, instance=purchase_request)
-            
+            """ remove all approvals for the purchase request"""
+            purchase_request.process.approval_set.all().delete()
             if formset.is_valid():
                 for it in formset:
                     try:
