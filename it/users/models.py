@@ -136,7 +136,7 @@ class Supplier(models.Model):
     id = models.CharField(primary_key=True, max_length=20, editable=False)
     name = models.CharField(max_length=100, unique=True,blank=True, null=True)
     email = models.EmailField(blank=True, null=True)
-    phone = models.IntegerField(max_length=13, blank=True, null=True)
+    phone = models.IntegerField( blank=True, null=True)
     address = models.CharField(max_length=100, blank=True, null=True)
 
     class Meta:

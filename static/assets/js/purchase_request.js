@@ -1,17 +1,17 @@
-$(document).ready(function () {
-  $("#add-item-button").click(function () {
-    var formIdx = $("#id_pritem_set-TOTAL_FORMS").val();
-    var num = parseInt(formIdx) + 1;
-    alert(num);
-   var clonedElement = $("#formset-container").children().eq(-2).clone();
-   
-    $("#formset-container").children().eq(-2).after(clonedElement);
+document.getElementById('add-form-button').addEventListener('click', function () {
+    const container = document.getElementById('formset-container');
+    const totalForms = document.getElementById('id_pritem_set-TOTAL_FORMS');
+    const emptyFormHtml = document.getElementById('blankForm').innerHTML;
+    const newFormHtml = emptyFormHtml.replace(/__prefix__/g, container.children.length);
 
-    var newElement = $("#formset-container").children().eq(-2).next();
+    // Create a new div element to contain the form
+    const newFormDiv = document.createElement('div');
+    newFormDiv.classList.add('rounded', 'row', 'rounded', 'border', 'bg-gulf-blue-200', 'px-2', 'my-3', 'gap-4', 'm-auto', 'grid', 'grid-cols-3');
+    newFormDiv.innerHTML = newFormHtml;
 
-    const regex = new RegExp('__prefix__', 'g')
-    newElement.innerHTML = newElement.innerHTML.replace(regex, num)
-        
-    $("#id_pritem_set-TOTAL_FORMS").val(parseInt(formIdx) + 1);
-  });
+    // Append the new form to the formset-container
+    container.appendChild(newFormDiv);
+
+    // Update the TOTAL_FORMS field
+    totalForms.value = parseInt(totalForms.value) + 1;
 });

@@ -1,6 +1,8 @@
 {% extends "admin_layout.html" %}
 {% load static %}
-{% block title %}Create Purchase Request{% endblock %}
+{% block title %}
+  Create Purchase Request
+{% endblock title %}
 {% block content %}
   <div class=" m-auto mt-5  ">
     <form class="row rounded py-4 border  bg-gulf-blue-100 p-3 m-auto  container"
@@ -26,6 +28,14 @@
               {% endif %}
             </div>
           {% endfor %}
+          <div class=" m-auto grid grid-cols-2 pr-5">
+            <label>Attachments</label>
+            <input required
+                   name="attachments"
+                   type="file"
+                   multiple
+                   class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset form-control-file">
+          </div>
         </div>
       </div>
       <div class="m-auto text-center">
@@ -33,28 +43,42 @@
       </div>
       <div class="m-10 justify-content-stretch align-content-stretch">
         {{ formset.management_form }}
-        {% for form in formset %}
-          <div class="rounded row rounded border bg-gulf-blue-200  px-2  my-3 gap-4  m-auto grid grid-cols-3">
-            {% for field in form %}
-              <div class=" ">
-                {% if field.is_hidden %}
-                  {{ field }}
-                {% else %}
-                  {{ field.label_tag }}
-                  {{ field }}
-                  <div class="text-red-500">{{ field.errors }}</div>
-                {% endif %}
-              </div>
-            {% endfor %}
+        <div id= "formset-container">
+          {% for form in formset %}
+            <div class="rounded row rounded border bg-gulf-blue-200  px-2  my-3 gap-4  m-auto grid grid-cols-3">
+              {% for field in form %}
+                <div class=" ">
+                  {% if field.is_hidden %}
+                    {{ field }}
+                  {% else %}
+                    {{ field.label_tag }}
+                    {{ field }}
+                    <div class="text-red-500">{{ field.errors }}</div>
+                  {% endif %}
+                </div>
+              {% endfor %}
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+      <div id="blankForm" class="hidden">
+        {% for field in formset.empty_form %}
+          <div class=" ">
+            {% if field.is_hidden %}
+              {{ field }}
+            {% else %}
+              {{ field.label_tag }}
+              {{ field }}
+              <div class="text-red-500">{{ field.errors }}</div>
+            {% endif %}
           </div>
         {% endfor %}
-        <input class=" bg-blue-500 text-white px-3 p-1  rounded-full font-bold flex justify-center text-2xl  hover:bg-blue-600"
-               title="add line item"
-               id="add-item-button"
-               type="button"
-               value="+">
       </div>
-      <br>
+      <input class=" bg-blue-500 text-white px-3 p-1  rounded-full font-bold flex justify-center text-2xl  hover:bg-blue-600"
+             title="add line item"
+             id="add-form-button"
+             type="button"
+             value="+">
       <div class="m-auto justify-content-stretch text-center align-content-stretch">
         <input class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold text-2xl py-2 px-4 rounded"
                type="submit"
