@@ -1,11 +1,12 @@
-document.getElementById('add-form-button').addEventListener('click', function () {
+document.getElementById('add-form-button').addEventListener('click', () => {
     const container = document.getElementById('formset-container');
     const totalForms = document.getElementById('id_pritem_set-TOTAL_FORMS');
-    const emptyFormHtml = document.getElementById('blankForm').innerHTML;
-    container.appendChild(document.createElement('div').classList.add('rounded', 'row', 'rounded', 'border', 'bg-gulf-blue-200', 'px-2', 'my-3', 'gap-4', 'm-auto', 'grid', 'grid-cols-3').innerHTML = emptyFormHtml.replace(/__prefix__/g, container.children.length));
-    totalForms.value = parseInt(totalForms.value)+1;
+    const newFormHtml = document.getElementById('blankForm').innerHTML.replace(/__prefix__/g, container.children.length);
+
+    const newFormDiv = document.createElement('div');
+    newFormDiv.className = 'rounded row border bg-gulf-blue-200 px-2 my-3 gap-4 m-auto grid grid-cols-3';
+    newFormDiv.innerHTML = newFormHtml;
+
+    container.appendChild(newFormDiv);
+    totalForms.value = parseInt(totalForms.value) + 1;
 });
-// $(function(){$('#purchase-request-form').submit(function(e){e.preventDefault();$.ajax({url:$(this).attr('action'),type:$(this).attr('method'),data:new FormData(this),processData:false,contentType:false,
-// success:function(e){
-//     console.log(e);alert('Success!');
-// },error:function(e,t,n){console.log(e.status+": "+e.responseText);}});});$('#add-form-button').click(function(){var e=document.getElementById('formset-container'),t=document.getElementById('id_pritem_set-TOTAL_FORMS'),n=document.getElementById('blankForm').innerHTML.replace(/__prefix__/g,e.children.length),a=document.createElement('div');a.classList.add('rounded','row','rounded','border','bg-gulf-blue-200','px-2','my-3','gap-4','m-auto','grid','grid-cols-3'),a.innerHTML=n,e.appendChild(a),t.value=parseInt(t.value)+1;});});
