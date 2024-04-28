@@ -3,7 +3,7 @@ from .views import *
 app_name ='comparative_schedules'
 
 urlpatterns = [
-    path('schedule/<str:pr_id>', get_create_cs, name='create_schedule'),
+    path('schedule/<str:pr_id>', get_create_cs, name='adopt_schedule'),
     path('create_schedule/', create, name='create_schedule'),
     path('add_supplier/<str:tender_id>', cs_add_supplier, name='add_supplier'),
     path('compliance/<str:tender_id>', cs_compliance_table, name="tender_compliance"),
@@ -17,5 +17,15 @@ urlpatterns = [
     path('save_compliance', save_cs_compliance, name='save_compliance'),
     
     path('close_compliance', save_cs_ranking, name='save_cs_ranking'),
+    path('save_committee', save_cs_committee, name='save_cs_committee'),
+    path('delete_committee_member', delete_cs_committee_member, name='delete_cs_committee_member'),
+    path('committee_approve', approve_cs_committee, name='approve_cs_committee'),
+    path('save_decision', save_cs_decision, name='save_cs_decision'),
+    
+    path('comperative_schedules', get_comperative_schedules, name='get_comperative_schedules'),
+    path('comperative_schedule/<str:cs_id>', get_comperative_schedule, name='get_comperative_schedule'),
+    path('cs_data/<str:cs_id>', get_comperative_schedule_data, name='get_comperative_schedule_data'),
+    
+    path('update_pritem_ordered', update_pritem_ordered, name='update_pritem_ordered'),
     
 ]

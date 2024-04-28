@@ -17,8 +17,8 @@ class PettycashForm(forms.ModelForm):
     class Meta:
         model = Pettycash
         fields = '__all__'
-        exclude = ['process', 'ace', 'requested_by', 'pettycash_id', 'date_created', 'petty_id', 'payment_mode',
-                   'old_version']
+        exclude = ['process', 'requested_by', 'pettycash_id', 'date_created', 'petty_id', 'payment_mode',
+                   'amount_disbursed', 'receipt_file', 'old_version', 'amount_used']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
