@@ -369,10 +369,37 @@ class CreateCS extends React.Component {
         cs_items: [...this.state.cs_items, item],
         pr_items: pr_items,
       });
-      console.log("cs_items: ", this.state.cs_items);
-      console.log("pr_items: ", this.state.pr_items);
     }
   };
+
+  onSubmitCSItems = () => {
+    let form_data = new FormData();
+    form_data.append("pr_id", this.state.pr_number);
+    form_data.append(
+      "json_data",
+      JSON.stringify({
+        cs_items: this.state.cs_items,
+      })
+    );
+    form_data.append("csrfmiddlewaretoken", this.getCookie("csrftoken"));
+
+    fetch(`http://localhost:8000/comperative_schedule/update_pritem_ordered`, {
+      method: "POST",
+      headers: {
+        "X-CSRFToken": this.getCookie("csrftoken"),
+      },
+      body: form_data,
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        console.log("data: ", data);
+        if (data.success) {
+          alert("Items saved successfully");
+        } else {
+          alert("Error saving Items");
+        }
+      });
+  }
 
   onAddBidModal = () => {
     let bid_count = this.state.bid_count + 1;
@@ -973,8 +1000,8 @@ class CreateCS extends React.Component {
               >
                 <thead>
                   <tr>
-                    <th>Add Item</th>
-                    <th>Item Description</th>
+                    <th>Select</th>
+                    <th>Item</th>
                     <th>Quantity</th>
                   </tr>
                 </thead>
@@ -996,6 +1023,17 @@ class CreateCS extends React.Component {
                   })}
                 </tbody>
               </table>
+              
+              <div className="flex justify-center mt-5 px-3 py-3">
+                <div className="m-2">
+                  <button
+                    onClick={this.onSubmitCSItems}
+                    className="rounded-md text-gray-50 text-sm bg-blue-925 hover:bg-blue-550 px-3 py-2 font-semibold leading-6"
+                  >
+                    <span className="ml-2">SAVE BID</span>
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>

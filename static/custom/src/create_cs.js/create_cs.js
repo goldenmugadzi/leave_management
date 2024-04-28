@@ -301,9 +301,33 @@ var CreateCS = function (_React$Component) {
           cs_items: [].concat(_toConsumableArray(_this.state.cs_items), [_item2]),
           pr_items: _pr_items
         }));
-        console.log("cs_items: ", _this.state.cs_items);
-        console.log("pr_items: ", _this.state.pr_items);
       }
+    };
+
+    _this.onSubmitCSItems = function () {
+      var form_data = new FormData();
+      form_data.append("pr_id", _this.state.pr_number);
+      form_data.append("json_data", JSON.stringify({
+        cs_items: _this.state.cs_items
+      }));
+      form_data.append("csrfmiddlewaretoken", _this.getCookie("csrftoken"));
+
+      fetch("http://localhost:8000/comperative_schedule/update_pritem_ordered", {
+        method: "POST",
+        headers: {
+          "X-CSRFToken": _this.getCookie("csrftoken")
+        },
+        body: form_data
+      }).then(function (response) {
+        return response.json();
+      }).then(function (data) {
+        console.log("data: ", data);
+        if (data.success) {
+          alert("Items saved successfully");
+        } else {
+          alert("Error saving Items");
+        }
+      });
     };
 
     _this.onAddBidModal = function () {
@@ -1008,12 +1032,12 @@ var CreateCS = function (_React$Component) {
                     React.createElement(
                       "th",
                       null,
-                      "Add Item"
+                      "Select"
                     ),
                     React.createElement(
                       "th",
                       null,
-                      "Item Description"
+                      "Item"
                     ),
                     React.createElement(
                       "th",
@@ -1052,6 +1076,26 @@ var CreateCS = function (_React$Component) {
                       )
                     );
                   })
+                )
+              ),
+              React.createElement(
+                "div",
+                { className: "flex justify-center mt-5 px-3 py-3" },
+                React.createElement(
+                  "div",
+                  { className: "m-2" },
+                  React.createElement(
+                    "button",
+                    {
+                      onClick: this.onSubmitCSItems,
+                      className: "rounded-md text-gray-50 text-sm bg-blue-925 hover:bg-blue-550 px-3 py-2 font-semibold leading-6"
+                    },
+                    React.createElement(
+                      "span",
+                      { className: "ml-2" },
+                      "SAVE BID"
+                    )
+                  )
                 )
               )
             )

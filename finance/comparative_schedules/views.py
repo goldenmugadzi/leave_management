@@ -215,7 +215,7 @@ def get_create_data(request, pr_id):
     suppliers = Supplier.objects.all()
 
     purchase_request = PurchaseRequest.objects.filter(id=pr_id).first()
-    pr_items = PrItem.objects.filter(purchase_request=purchase_request).all()
+    pr_items = PrItem.objects.filter(purchase_request=purchase_request, ordered=False).all()
     users = UserProfile.objects.all()
     
     return JsonResponse({
@@ -521,7 +521,32 @@ def update_comparative_schedule(request):
             "error": str(ex),
             "success": False,
             }, safe=False)
-   
+
+def update_pritem_ordered(request):
+    pr_item_id = request.POST.get("pr_id", "")
+    csitems_data = json.loads(request.POST.get("json_data", "{}"))
+    print("csitems_data: ", csitems_data)
+    items = csitems_data.get("cs_items", [])
+    print("items ", items, type(items))
+    print("pr_item_id: ", pr_item_id)
+    purchase_request = PurchaseRequest.objects.filter(id=pr_item_id).first()
+    print("purchase request: ", purchase_request)
+    
+    for item in items:
+        print("item: ", item)
+        pr_item = PrItem.objects.filter(id=item['id'], purchase_request=purchase_request).first()
+        if pr_item:
+            pr_item.ordered = True
+            pr_item.save()
+        else:
+            return JsonResponse({
+                "message": "PR Item not found",
+                "success": False,
+                }, safe=False)
+    return JsonResponse({
+        "message": "PR Item updated successfully",
+        "success": True,
+        }, safe=False)
     
 def save_cs_bid(request):
 
