@@ -1,4 +1,5 @@
 {% extends "admin_layout.html" %}
+{% load custom_tags %}
 {% load static %}
 {% block title %}
   Create Purchase Request
@@ -32,26 +33,34 @@
               {% endif %}
             </div>
           {% endfor %}
-          <div class=" pt-1 bg-blue-200  grid grid-cols-5 pr-5">
-            
-            </div>
-          <div class="  bg-blue-200   rounded grid grid-cols-2 pr-5">
-            <div >
+          <div class="rounded grid grid-cols-2 pr-5">
+            <div>
               <p class="text-center ">Attach files</p>
             </div>
-            <input required
-                     name="attachments"
-                     type="file"
-                     multiple
-                     class="block w-full rounded-md border-0 py-1.5 mb-3 flex justify-center items-align-center text-gray-900 shadow-sm ring-1 ring-inset form-control-file">
+            <input name="attachments"
+                   type="file"
+                   multiple
+                   class="block w-full rounded-md border-0 py-1.5 mb-3 flex justify-center items-align-center text-gray-900 shadow-sm ring-1 ring-inset form-control-file">
           </div>
+        </div>
+        <div class=" pt-1 mx-5 grid grid-cols-5 px-5">
+          {% csrf_token %}
+          {% for attachment in attachments %}
+            <div class="rounded  bg-gulf-blue-200 border border-1 shadow-lg  row text-center py-2 m-2">
+              <a href="{{ attachment.file.url }}"
+                 class=" text-center text-blue-600  p-3 sm "
+                 name>{{ attachment.file.name|basename }}</a>
+              <a href="{% url 'purchase_request:del_file' attachment.id %}"
+                 class="fas fa-trash-alt text-red-500 p-3 2xl font-bold rounded-full bg-white"></a>
+            </div>
+          {% endfor %}
         </div>
         <div class="m-auto text-center">
           <h1 class="text-2xl font-bold ">Items</h1>
         </div>
         <div class="m-10 justify-content-stretch align-content-stretch">
           {{ formset.management_form }}
-          <div id= "formset-container">
+          <div id="formset-container">
             {% for form in formset %}
               <div class="rounded row rounded border bg-gulf-blue-200  px-2  my-3 gap-4  m-auto grid grid-cols-3">
                 {% for field in form %}
@@ -94,7 +103,8 @@
         </div>
       </form>
     </div>
-  {% endblock %}
-  {% block scripts %}
-    <script src="{% static 'assets/js/purchase_request.js' %}"></script>
-  {% endblock scripts %}
+  </div>
+{% endblock content %}
+{% block scripts %}
+  <script src="{% static 'assets/js/purchase_request.js' %}"></script>
+{% endblock scripts %}

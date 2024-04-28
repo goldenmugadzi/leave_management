@@ -22,7 +22,7 @@ class PurchaseRequest(models.Model):
     requested_by = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True, blank=True, null=True)
     ace = models.ForeignKey(Ace, on_delete=models.SET_NULL, blank=True, null=True)
-    process = models.ForeignKey(Process, on_delete=models.SET_NULL, blank=True, null=True)
+    # process = models.ForeignKey(Process, on_delete=models.SET_NULL, blank=True, null=True)
     scope_of_work = models.TextField(blank=True, null=True, help_text="Description for the purchase request")
     def __str__(self):
         return self.pr_no
