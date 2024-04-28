@@ -47,11 +47,10 @@ def create_purchase_request(request):
             if formset.is_valid():
                 formset.save()
             else:
-                return render(request, 'finance/purchase_request/create_purchase_request.html', {'formset': itemFormset, 'form': form})
-            
-            url = reverse('purchase_request:purchase_request_detail', args=[purchase_request.id])
-            return redirect(url)
-        return render(request, 'finance/purchase_request/create_purchase_request.html', {'formset': itemFormset, 'form': form})
+                from django.http import JsonResponse 
+                return JsonResponse( {'formset': itemFormset, 'form': form})
+            return JsonResponse( {'formset': itemFormset, 'form': form})
+        return JsonResponse( {'formset': itemFormset, 'form': form})
     else:
         form = PurchaseRequestForm()
         return render(request, 'finance/purchase_request/create_purchase_request.html', {'formset': itemFormset(), 'form': form})
@@ -163,24 +162,24 @@ def view_all_purchase_requests(request):
     return render(request, 'finance/purchase_request/view_all_purchase_requests.html', {'purchase_requests': purchase_requests})
 def uploaduuom(request):
     """upload unit of measurement data to the database"""
-    # xl = pd.ExcelFile('finance/purchase_request/uom.xlsx')
-    # df = xl.parse('units')
-    # data_dict = df.to_dict('records')
-    # print(data_dict)
-    # for data in data_dict:
-    #     print(data)
-    #     unit = UnitOfMeasurement(unit=data['UM'], name=data['MUT'])
-    #     unit.save()
+    xl = pd.ExcelFile('finance/purchase_request/uom.xlsx')
+    df = xl.parse('units')
+    data_dict = df.to_dict('records')
+    print(data_dict)
+    for data in data_dict:
+        print(data)
+        unit = UnitOfMeasurement(unit=data['UM'], name=data['MUT'])
+        unit.save()
     """upload procurement Plan References data to the database"""
-    # from .grn import data
-    # procurementPlanReferences= data 
-    # for procurementPlanReference in procurementPlanReferences:
-    #     print(procurementPlanReference)
-    #     try:
-    #         unit = ProcurementPlanReference(id=procurementPlanReference['id'], name=procurementPlanReference['name'])
-    #         unit.save()
-    #     except:
-    #         pass
+    from .grn import data
+    procurementPlanReferences= data 
+    for procurementPlanReference in procurementPlanReferences:
+        print(procurementPlanReference)
+        try:
+            unit = ProcurementPlanReference(id=procurementPlanReference['id'], name=procurementPlanReference['name'])
+            unit.save()
+        except:
+            pass
     return render(request, 'finance/purchase_request/add_uom.html')
 
 class AddUOM(CreateView):

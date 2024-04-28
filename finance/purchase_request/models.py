@@ -12,9 +12,6 @@ class ProcurementPlanReference(models.Model):
     def __str__(self):
         return f"{self.id} - {self.name}"
 
-class Attachment(models.Model):
-    file = models.FileField(upload_to='uploads/purchase_request')
-
 class PurchaseRequest(models.Model):
     id = models.CharField(primary_key=True, max_length=20, editable=False)
     section = models.ForeignKey(Sections, on_delete=models.CASCADE,blank=True, null=True)
@@ -28,7 +25,7 @@ class PurchaseRequest(models.Model):
     process = models.ForeignKey(Process, on_delete=models.SET_NULL, blank=True, null=True)
     scope_of_work = models.TextField(blank=True, null=True, help_text="Description for the purchase request")
     def __str__(self):
-        return self.description
+        return self.pr_no
 
     def save(self, *args, **kwargs):
         if not self.id: 
