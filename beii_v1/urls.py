@@ -43,6 +43,7 @@ urlpatterns = [
     path('competence/', include('competence_building.urls')),
     path('admin/', admin.site.urls),
     path('accounts/', include('django.contrib.auth.urls')),
+    path('acee/', include('ACE2.urls')),
 
     path('ace/', include('finance.Ace.urls')),
     path('direct_purchases/', include('finance.Direct_purchases.urls')),

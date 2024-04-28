@@ -39,14 +39,20 @@ def pettyCash_detail(request, petty_id):
 
     pettycash_item = Pettycash.objects.get(petty_id=petty_id)
 
+    # return validation to clear
+    # validation = pettycash_item.process.approval_set.filter(approved='Approved', step__approver__in=user_profile.roles.all()).exists())
+    # print(validation)
+
     quotations = Quotation.objects.filter(pettycash=pettycash_item).all()
     print(quotations.count())
 
     if pettycash_role == "disburse":
         payment_mode = request.POST.get('payment_mode')
+        amount_disbursed = request.POST.get('amount_disbursed')
         # print(payment_mode)
         if payment_mode and payment_mode != '':
             pettycash_item.payment_mode = payment_mode
+            pettycash_item.amount_disbursed = amount_disbursed
             pettycash_item.save()
 
     approvalForm = None
@@ -456,3 +462,19 @@ def approve_step(process_id, user_id, date_approved):
     approval.save()
     print('approved')
     return True
+
+
+def receipt(request):
+    if request.method == 'POST':
+        receipt_file = request.FILES['file-input']
+        print(receipt_file)
+        disbursed_amount = request.POST['disbursed']
+        pettycash = request.POST['petty_id']
+        pettycash = Pettycash.objects.filter(petty_id=pettycash).first()
+        pettycash.receipt_file = receipt_file
+        pettycash.amount_disbursed = disbursed_amount
+        pettycash.save()
+        messages.success(request, 'Receipt uploaded successfully')
+        return redirect('pettycash:pettycash_detail', petty_id=pettycash.petty_id)
+    else:
+        return redirect('/pettycash/pettycashs')
