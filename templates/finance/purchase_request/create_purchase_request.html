@@ -5,8 +5,9 @@
 {% endblock title %}
 {% block content %}
   <div class=" m-auto mt-5  ">
-    <form class="row rounded py-4 border  bg-gulf-blue-100 p-3 m-auto  container"
-          method="POST"
+    <form id="purchase-request-form"
+          class="row rounded py-4 border  bg-gulf-blue-100 p-3 m-auto  container"
+          method="post"
           action=""
           enctype="multipart/form-data">
       {% csrf_token %}
@@ -21,72 +22,79 @@
                 {{ field }}
               {% else %}
                 <div class=" m-auto grid grid-cols-2 pr-5">
-                  {{ field.label_tag }}
+                  <div>
+                    {{ field.label }}
+                    <div class="text-blue-500">{{ field.help_text }}</div>
+                    <div class="text-red-500">{{ field.errors }}</div>
+                  </div>
                   {{ field }}
-                  <div class="text-red-500">{{ field.errors }}</div>
                 </div>
               {% endif %}
             </div>
           {% endfor %}
-          <div class=" m-auto grid grid-cols-2 pr-5">
-            <label>Attachments</label>
+          <div class=" pt-1 bg-blue-200  grid grid-cols-5 pr-5">
+            
+            </div>
+          <div class="  bg-blue-200   rounded grid grid-cols-2 pr-5">
+            <div >
+              <p class="text-center ">Attach files</p>
+            </div>
             <input required
-                   name="attachments"
-                   type="file"
-                   multiple
-                   class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset form-control-file">
+                     name="attachments"
+                     type="file"
+                     multiple
+                     class="block w-full rounded-md border-0 py-1.5 mb-3 flex justify-center items-align-center text-gray-900 shadow-sm ring-1 ring-inset form-control-file">
           </div>
         </div>
-      </div>
-      <div class="m-auto text-center">
-        <h1 class="text-2xl font-bold ">Items</h1>
-      </div>
-      <div class="m-10 justify-content-stretch align-content-stretch">
-        {{ formset.management_form }}
-        <div id= "formset-container">
-          {% for form in formset %}
-            <div class="rounded row rounded border bg-gulf-blue-200  px-2  my-3 gap-4  m-auto grid grid-cols-3">
-              {% for field in form %}
-                <div class=" ">
-                  {% if field.is_hidden %}
-                    {{ field }}
-                  {% else %}
-                    {{ field.label_tag }}
-                    {{ field }}
-                    <div class="text-red-500">{{ field.errors }}</div>
-                  {% endif %}
-                </div>
-              {% endfor %}
+        <div class="m-auto text-center">
+          <h1 class="text-2xl font-bold ">Items</h1>
+        </div>
+        <div class="m-10 justify-content-stretch align-content-stretch">
+          {{ formset.management_form }}
+          <div id= "formset-container">
+            {% for form in formset %}
+              <div class="rounded row rounded border bg-gulf-blue-200  px-2  my-3 gap-4  m-auto grid grid-cols-3">
+                {% for field in form %}
+                  <div class=" ">
+                    {% if field.is_hidden %}
+                      {{ field }}
+                    {% else %}
+                      {{ field.label_tag }}
+                      {{ field }}
+                      <div class="text-red-500">{{ field.errors }}</div>
+                    {% endif %}
+                  </div>
+                {% endfor %}
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+        <div id="blankForm" class="hidden">
+          {% for field in formset.empty_form %}
+            <div class=" ">
+              {% if field.is_hidden %}
+                {{ field }}
+              {% else %}
+                {{ field.label_tag }}
+                {{ field }}
+                <div class="text-red-500">{{ field.errors }}</div>
+              {% endif %}
             </div>
           {% endfor %}
         </div>
-      </div>
-      <div id="blankForm" class="hidden">
-        {% for field in formset.empty_form %}
-          <div class=" ">
-            {% if field.is_hidden %}
-              {{ field }}
-            {% else %}
-              {{ field.label_tag }}
-              {{ field }}
-              <div class="text-red-500">{{ field.errors }}</div>
-            {% endif %}
-          </div>
-        {% endfor %}
-      </div>
-      <input class=" bg-blue-500 text-white px-3 p-1  rounded-full font-bold flex justify-center text-2xl  hover:bg-blue-600"
-             title="add line item"
-             id="add-form-button"
-             type="button"
-             value="+">
-      <div class="m-auto justify-content-stretch text-center align-content-stretch">
-        <input class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold text-2xl py-2 px-4 rounded"
-               type="submit"
-               value="Submit">
-      </div>
-    </form>
-  </div>
-{% endblock %}
-{% block scripts %}
-  <script src="{% static 'assets/js/purchase_request.js' %}"></script>
-{% endblock scripts %}
+        <input class=" bg-blue-500 text-white px-3 p-1  rounded-full font-bold flex justify-center text-2xl  hover:bg-blue-600"
+               title="add line item"
+               id="add-form-button"
+               type="button"
+               value="+">
+        <div class="m-auto justify-content-stretch text-center align-content-stretch">
+          <input class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold text-2xl py-2 px-4 rounded"
+                 type="submit"
+                 value="Submit">
+        </div>
+      </form>
+    </div>
+  {% endblock %}
+  {% block scripts %}
+    <script src="{% static 'assets/js/purchase_request.js' %}"></script>
+  {% endblock scripts %}

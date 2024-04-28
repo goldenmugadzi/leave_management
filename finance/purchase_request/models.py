@@ -17,7 +17,6 @@ class Attachment(models.Model):
 
 class PurchaseRequest(models.Model):
     id = models.CharField(primary_key=True, max_length=20, editable=False)
-    scope_of_work = models.TextField(blank=True, null=True)
     section = models.ForeignKey(Sections, on_delete=models.CASCADE,blank=True, null=True)
     # cost_centre = models.ForeignKey(CostCentre, on_delete=models.CASCADE,blank=True, null=True)
     pr_no = models.CharField(max_length=100)
@@ -27,6 +26,7 @@ class PurchaseRequest(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, blank=True, null=True)
     ace = models.ForeignKey(Ace, on_delete=models.SET_NULL, blank=True, null=True)
     process = models.ForeignKey(Process, on_delete=models.SET_NULL, blank=True, null=True)
+    scope_of_work = models.TextField(blank=True, null=True, help_text="Description for the purchase request")
     def __str__(self):
         return self.description
 
