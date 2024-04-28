@@ -18,6 +18,8 @@ urlpatterns = [
     
     path('close_compliance', save_cs_ranking, name='save_cs_ranking'),
     path('save_committee', save_cs_committee, name='save_cs_committee'),
+    path('delete_committee_member', delete_cs_committee_member, name='delete_cs_committee_member'),
+    path('committee_approve', approve_cs_committee, name='approve_cs_committee'),
     path('save_decision', save_cs_decision, name='save_cs_decision'),
     
     path('comperative_schedules', get_comperative_schedules, name='get_comperative_schedules'),

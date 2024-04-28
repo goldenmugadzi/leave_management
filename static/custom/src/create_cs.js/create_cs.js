@@ -24,27 +24,45 @@ var CreateCS = function (_React$Component) {
 
     var _this = _possibleConstructorReturn(this, (CreateCS.__proto__ || Object.getPrototypeOf(CreateCS)).call(this, props));
 
+    _this.onGetFileObjectUrl = function (fileData) {
+
+      if (typeof fileData === "string") {
+        var decodedFileData = atob(fileData);
+        var uint8Array = new Uint8Array(decodedFileData.length);
+        for (var i = 0; i < decodedFileData.length; i++) {
+          uint8Array[i] = decodedFileData.charCodeAt(i);
+        }
+
+        var file = new Blob([uint8Array], { type: "application/pdf" });
+        console.log("file: ", file);
+
+        return URL.createObjectURL(file);
+      } else {
+        console.log("fileData: ", fileData);
+        return URL.createObjectURL(fileData);
+      }
+    };
+
     _this.getCSData = function (cs_id) {
-      fetch("http://localhost:8000/comparative_schedule/cs_data/" + cs_id).then(function (response) {
+      fetch("http://localhost:8000/comperative_schedule/cs_data/" + cs_id).then(function (response) {
         return response.json();
       }).then(function (data_) {
         var _Object$assign;
 
         var data = JSON.parse(data_);
         console.log("cs data: ", data, typeof data === "undefined" ? "undefined" : _typeof(data));
-        var cs_id = data.cs_id ? data.cs : {};
         var bids_object = data.bids ? data.bids : [];
         var bids = Object.keys(bids_object).map(function (key) {
-          return bids_object[key];
+          var new_obj = bids_object[key];
+          return Object.assign({}, new_obj, {
+            bid_document_url: _this.onGetFileObjectUrl(new_obj.bid_document)
+          });
         });
 
-        var items = data.items ? data.items : [];
         var compliance = data.compliance ? data.compliance : [];
         var rankings = data.rankings ? data.rankings : [];
         var committee = data.committee ? data.committee : [];
-        var pr_items = data.pr_items ? data.pr_items : [];
         var pr_date = data.pr_date ? data.pr_date : "";
-        var plan_ref = data.plan_ref ? data.plan_ref : "";
         var proc_plan = data.proc_plan ? data.proc_plan : "";
         var scope_of_work = data.scope_of_work ? data.scope_of_work : "";
         var pr_number = data.pr_number ? data.pr_number : "";
@@ -52,16 +70,26 @@ var CreateCS = function (_React$Component) {
         var closing_date = data.closing_date ? data.closing_date : "";
         var ref_date = data.ref_date ? data.ref_date : "";
         var closing_time = data.closing_time ? data.closing_time : "";
-        var date_tender_opened = data.date_tender_opened ? data.date_tender_opened : "";
         var tender_adjudication_committee_date = data.tac_date ? data.tac_date : "";
-        var advert = data.advert ? data.advert : null;
         var cs_opened = data.cs_opened ? data.cs_opened : false;
 
+        var proc_plans = data.proc_plans ? data.proc_plans : [];
+        var suppliers = data.suppliers ? data.suppliers : [];
+        var pr_items = data.pr_items ? data.pr_items : [];
+        var users = data.users ? data.users : [];
+        var cs_owner = data.cs_owner ? data.cs_owner : "";
+
+        var advert_url = _this.onGetFileObjectUrl(data.advert);
+        console.log("advert file", advert, typeof advert === "undefined" ? "undefined" : _typeof(advert));
         _this.setState(Object.assign({}, _this.state, (_Object$assign = {
-          cs_id: cs_id,
+          cs_owner: cs_owner,
+          proc_plans: proc_plans,
+          suppliers: suppliers,
+          users: users,
+
           date_tender_opened: cs_opened,
           ref_date: ref_date,
-          proc_ref: plan_ref,
+          proc_ref: proc_plan.proc_ref,
           proc_plan: proc_plan,
           scope_of_work: scope_of_work,
           pr_number: pr_number,
@@ -69,14 +97,14 @@ var CreateCS = function (_React$Component) {
           pr_date: pr_date,
           closing_date: closing_date,
           closing_time_hour: closing_time
-        }, _defineProperty(_Object$assign, "ref_date", ref_date), _defineProperty(_Object$assign, "date_tender_opened", date_tender_opened), _defineProperty(_Object$assign, "tender_adjudication_committee_date", tender_adjudication_committee_date), _defineProperty(_Object$assign, "advert", advert), _defineProperty(_Object$assign, "bids", bids), _defineProperty(_Object$assign, "cs_items", items), _defineProperty(_Object$assign, "compliance", compliance), _defineProperty(_Object$assign, "rankings", rankings), _defineProperty(_Object$assign, "committeeMembers", committee), _defineProperty(_Object$assign, "pr_items", pr_items), _Object$assign)));
+        }, _defineProperty(_Object$assign, "ref_date", ref_date), _defineProperty(_Object$assign, "tender_adjudication_committee_date", tender_adjudication_committee_date), _defineProperty(_Object$assign, "advert", advert), _defineProperty(_Object$assign, "advert_url", advert_url), _defineProperty(_Object$assign, "bids", bids), _defineProperty(_Object$assign, "cs_items", pr_items), _defineProperty(_Object$assign, "compliance", compliance), _defineProperty(_Object$assign, "rankings", rankings), _defineProperty(_Object$assign, "committeeMembers", committee), _defineProperty(_Object$assign, "pr_items", pr_items), _Object$assign)));
       });
     };
 
     _this.getCreateData = function (pr_id) {
       console.log("cs pr_id: ", pr_id);
 
-      fetch("http://localhost:8000/comparative_schedule/create_data/" + pr_id).then(function (response) {
+      fetch("http://localhost:8000/comperative_schedule/create_data/" + pr_id).then(function (response) {
         return response.json();
       }).then(function (data) {
         console.log("data: ", data);
@@ -87,7 +115,7 @@ var CreateCS = function (_React$Component) {
         var pr_date = data.pr_date ? data.pr_date : "";
         var users = data.users ? data.users : [];
         _this.setState({
-          procurement_plans: plans,
+          proc_plans: plans,
           suppliers: suppliers,
           pr_items: pr_items,
           pr_number: pr_id,
@@ -112,23 +140,90 @@ var CreateCS = function (_React$Component) {
 
     _this.onAddCommitteeMembers = function () {
       var members = _this.state.committeeMembers;
+      // check if memberUserName exists
+      // let memberExist =  
       members.push(_this.state.member);
       _this.setState(Object.assign({}, _this.state, {
         committeeMembers: members,
         member: {
+          memberUserName: "",
           memberName: "",
           memberPosition: ""
         }
       }));
     };
 
-    _this.onRemoveCommitteeMember = function (index) {
+    _this.onRemoveCommitteeMember = function (index, username) {
       var members = _this.state.committeeMembers.filter(function (member, _index) {
         return _index !== index;
       });
-      _this.setState(Object.assign({}, _this.state, {
-        committeeMembers: members
-      }));
+      if (members.length < _this.state.committeeMembers.length) {
+        _this.setState(Object.assign({}, _this.state, {
+          committeeMembers: members
+        }));
+      }
+      _this.deleteCommitteeMember(username);
+    };
+
+    _this.deleteCommitteeMember = function (username) {
+      var form_data = new FormData();
+      form_data.append("cs_id", _this.state.cs_id);
+      form_data.append("username", username);
+      form_data.append("csrfmiddlewaretoken", _this.getCookie("csrftoken"));
+
+      fetch("http://localhost:8000/comperative_schedule/delete_committee_member", {
+        method: "POST",
+        headers: {
+          "X-CSRFToken": _this.getCookie("csrftoken")
+        },
+        body: form_data
+      }).then(function (response) {
+        return response.json();
+      }).then(function (data) {
+        console.log("data: ", data);
+        if (data.success) {
+          alert("Committee member deleted successfully");
+        } else {
+          alert("Error deleting Committee member");
+        }
+      });
+    };
+
+    _this.onCommitteeApprove = function (username) {
+      var form_data = new FormData();
+      form_data.append("cs_id", _this.state.cs_id);
+      form_data.append("username", username);
+      form_data.append("csrfmiddlewaretoken", _this.getCookie("csrftoken"));
+
+      fetch("http://localhost:8000/comperative_schedule/committee_approve", {
+        method: "POST",
+        headers: {
+          "X-CSRFToken": _this.getCookie("csrftoken")
+        },
+        body: form_data
+      }).then(function (response) {
+        return response.json();
+      }).then(function (data) {
+        console.log("data: ", data);
+        if (data.success) {
+          var committeeDate = data.committee_date;
+          var committeeStatus = data.committe_status;
+          var members = _this.state.committeeMembers.map(function (member) {
+            if (member.memberUserName === username) {
+              member.approved = true;
+              member.committee_date = committeeDate;
+              member.committe_status = committeeStatus;
+            }
+            return member;
+          });
+          _this.setState(Object.assign({}, _this.state, {
+            committeeMembers: members
+          }));
+          alert("Committee member approved successfully");
+        } else {
+          alert("Error approving Committee");
+        }
+      });
     };
 
     _this.onSubmitCommitee = function () {
@@ -139,7 +234,7 @@ var CreateCS = function (_React$Component) {
       }));
       form_data.append("csrfmiddlewaretoken", _this.getCookie("csrftoken"));
 
-      fetch("http://localhost:8000/comparative_schedule/save_committee", {
+      fetch("http://localhost:8000/comperative_schedule/save_committee", {
         method: "POST",
         headers: {
           "X-CSRFToken": _this.getCookie("csrftoken")
@@ -241,7 +336,9 @@ var CreateCS = function (_React$Component) {
       var currentBid = _this.state.currentBid;
       if (name_ === "bid_document") {
         var bid_file = event.target.files[0];
+        var bid_document_url = _this.onGetFileObjectUrl(event.target.files[0]);
         currentBid[name_] = bid_file;
+        currentBid.bid_document_url = bid_document_url;
       } else if (name_ === "supplier") {
         var _event$target2 = event.target,
             name = _event$target2.name,
@@ -263,10 +360,10 @@ var CreateCS = function (_React$Component) {
       }));
     };
 
-    _this.onCurrentBidItemChange = function (item_id, name_, event) {
+    _this.onCurrentBidItemChange = function (description, name_, event) {
       // check if item exists in current bid
       var item = _this.state.currentBid.items ? _this.state.currentBid.items.find(function (item) {
-        return item.id === item_id;
+        return item.description === description;
       }) : null;
       console.log("item: ", item);
       // if item exists update item
@@ -278,7 +375,7 @@ var CreateCS = function (_React$Component) {
         item[name_] = value;
         // update item in current bid
         var items = _this.state.currentBid.items.map(function (_item) {
-          if (_item.id === item_id) {
+          if (_item.description === description) {
             return item;
           }
           return _item;
@@ -293,11 +390,10 @@ var CreateCS = function (_React$Component) {
       } else {
         // find item in cs_items
         var _item3 = _this.state.cs_items.find(function (item) {
-          return item.id === item_id;
+          return item.description === description;
         });
         // create new item
         var new_item = {
-          id: _item3.id,
           description: _item3.description,
           quantity: _item3.quantity,
           unit_of_measurement: _item3.unit_of_measurement,
@@ -392,7 +488,7 @@ var CreateCS = function (_React$Component) {
       form_data.append("bid_document", currentBid.bid_document);
       form_data.append("csrfmiddlewaretoken", _this.getCookie("csrftoken"));
 
-      fetch("http://localhost:8000/comparative_schedule/save_bid", {
+      fetch("http://localhost:8000/comperative_schedule/save_bid", {
         method: "POST",
         headers: {
           "X-CSRFToken": _this.getCookie("csrftoken")
@@ -414,8 +510,7 @@ var CreateCS = function (_React$Component) {
       var form_data = new FormData();
       // add enctype to form data
       form_data.enctype = "multipart/form-data";
-      form_data.append("plan_ref", _this.state.plan_ref);
-      form_data.append("proc_plan", _this.state.proc_plan);
+      form_data.append("proc_ref", _this.state.proc_ref);
       form_data.append("scope_of_work", _this.state.scope_of_work);
       form_data.append("pr_number", _this.state.pr_number);
       form_data.append("quantity", _this.state.quantity);
@@ -429,7 +524,7 @@ var CreateCS = function (_React$Component) {
       form_data.append("advert", _this.state.advert);
       form_data.append("csrfmiddlewaretoken", _this.getCookie("csrftoken"));
 
-      fetch("http://localhost:8000/comparative_schedule/save", {
+      fetch("http://localhost:8000/comperative_schedule/save", {
         method: "POST",
         headers: {
           "X-CSRFToken": _this.getCookie("csrftoken")
@@ -438,11 +533,12 @@ var CreateCS = function (_React$Component) {
       }).then(function (response) {
         return response.json();
       }).then(function (data) {
-        console.log("data: ", data);
+        console.log("comperative schedule saved data: ", data);
         if (data.success) {
           alert("Comparative Schedule saved successfully" + " " + data.cs_id);
           _this.setState(Object.assign({}, _this.state, {
-            cs_id: data.cs_id
+            cs_id: data.cs_id,
+            cs_owner: data.cs_owner
           }));
         } else {
           alert("Error saving Comparative Schedule");
@@ -455,8 +551,7 @@ var CreateCS = function (_React$Component) {
       // add enctype to form data
       form_data.enctype = "multipart/form-data";
       form_data.append("cs_id", _this.state.cs_id);
-      form_data.append("plan_ref", _this.state.plan_ref);
-      form_data.append("proc_plan", _this.state.proc_plan);
+      form_data.append("proc_ref", _this.state.proc_ref);
       form_data.append("scope_of_work", _this.state.scope_of_work);
       form_data.append("pr_number", _this.state.pr_number);
       form_data.append("quantity", _this.state.quantity);
@@ -470,7 +565,7 @@ var CreateCS = function (_React$Component) {
       form_data.append("advert", _this.state.advert);
       form_data.append("csrfmiddlewaretoken", _this.getCookie("csrftoken"));
 
-      fetch("http://localhost:8000/comparative_schedule/update", {
+      fetch("http://localhost:8000/comperative_schedule/update", {
         method: "POST",
         headers: {
           "X-CSRFToken": _this.getCookie("csrftoken")
@@ -526,102 +621,6 @@ var CreateCS = function (_React$Component) {
       }));
     };
 
-    _this.getFilterData = function (selectedRegion, selectedDistrict, selectedDepot) {
-      fetch("http://localhost:8000/dashboards/dashboard_filter", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRFToken": _this.getCookie("csrftoken")
-        },
-        body: JSON.stringify({
-          region: selectedRegion,
-          district: selectedDistrict,
-          depot: selectedDepot
-        })
-      }).then(function (response) {
-        return response.json();
-      }).then(function (data) {
-        console.log("data: ", data);
-        if (data) {
-          console.log("running ...");
-          var inspection_locations_ = void 0,
-              inspections_count_ = void 0,
-              maintenance_locations_ = void 0,
-              maintenance_count_ = void 0,
-              mtn_ = void 0;
-          try {
-            inspection_locations_ = JSON.parse(data.inspection_locations);
-          } catch (error) {
-            console.error("Error parsing inspection_locations:", error);
-            inspection_locations_ = []; // Set to empty array on error
-          }
-          try {
-            inspections_count_ = JSON.parse(data.inspections_count);
-          } catch (error) {
-            console.error("Error parsing inspections_count_:", error);
-            inspections_count_ = []; // Set to empty array on error
-          }
-          try {
-            maintenance_locations_ = JSON.parse(data.maintenance_locations);
-          } catch (error) {
-            console.error("Error parsing maintenance_locations_:", error);
-            maintenance_locations_ = []; // Set to empty array on error
-          }
-          try {
-            maintenance_count_ = JSON.parse(data.maintenance_count);
-          } catch (error) {
-            console.error("Error parsing maintenance_count_:", error);
-            maintenance_count_ = []; // Set to empty array on error
-          }
-          try {
-            mtn_ = data.mtn;
-          } catch (error) {
-            console.error("Error parsing mtn_:", error);
-            mtn_ = {}; // Set to empty dict on error
-          }
-
-          _this.setState({
-            inspection_locations: inspection_locations_,
-            inspections_count: inspections_count_,
-            maintenance_locations: maintenance_locations_,
-            maintenance_count: maintenance_count_,
-            mnt: mtn_,
-            pbncs: data.pbncs,
-            upos: data.upos,
-            tds: data.tds
-          });
-
-          _this.initComponents();
-        }
-      });
-    };
-
-    _this.getDashboardData = function () {
-      fetch("http://localhost:8000/dashboards/dashboard_data").then(function (response) {
-        return response.json();
-      }).then(function (data) {
-        console.log("data: ", data);
-        var inspection_locations_ = JSON.parse(data.inspection_locations);
-        var inspections_count_ = JSON.parse(data.inspections_count);
-        var maintenance_locations_ = JSON.parse(data.maintenance_locations);
-        var maintenance_count_ = JSON.parse(data.maintenance_count);
-        var mtn_ = data.mtn;
-
-        _this.setState({
-          inspection_locations: inspection_locations_,
-          inspections_count: inspections_count_,
-          maintenance_locations: maintenance_locations_,
-          maintenance_count: maintenance_count_,
-          mnt: mtn_,
-          pbncs: data.pbncs,
-          upos: data.upos,
-          tds: data.tds
-        });
-
-        _this.initComponents();
-      });
-    };
-
     _this.onInputChange = function (event) {
       console.log(event);
       var _event$target5 = event.target,
@@ -632,8 +631,12 @@ var CreateCS = function (_React$Component) {
     };
 
     _this.onFileInputChange = function (name_, event) {
+      var _Object$assign3;
+
       console.log(event);
-      _this.setState(Object.assign({}, _this.state, _defineProperty({}, name_, event.target.files[0])));
+      var file = event.target.files[0];
+      var fileUrl = _this.onGetFileObjectUrl(file);
+      _this.setState(Object.assign({}, _this.state, (_Object$assign3 = {}, _defineProperty(_Object$assign3, name_, file), _defineProperty(_Object$assign3, "advert_url", fileUrl), _Object$assign3)));
     };
 
     _this.onAddComplianceTable = function () {
@@ -650,8 +653,8 @@ var CreateCS = function (_React$Component) {
           valid_tax_clearance: false,
           registered_with_praz: false,
           tax_status: false,
-          site_visit_done: false,
-          samples_delivered: false,
+          site_visit: false,
+          samples_required: false,
           decision: false,
           reject: true,
           remarks: ""
@@ -674,26 +677,55 @@ var CreateCS = function (_React$Component) {
       }));
     };
 
-    _this.onComplianceChange = function (bid_count, event) {
+    _this.onComplianceItemsChange = function (name_, event) {
+      console.log("name and value: ", name_, event);
       var _event$target6 = event.target,
           name = _event$target6.name,
-          checked = _event$target6.checked;
+          value = _event$target6.value;
+
+      _this.setState(Object.assign({}, _this.state, _defineProperty({}, name_, value)));
+    };
+
+    _this.onComplianceChange = function (index, event) {
+      var _event$target7 = event.target,
+          name = _event$target7.name,
+          checked = _event$target7.checked;
 
       console.log("name: ", name, "checked: ", checked);
       var compliance = _this.state.compliance;
-      var index = compliance.findIndex(function (item) {
-        return item.bid_count === bid_count;
-      });
+      // let index = compliance.findIndex((item) => item.bid_count === bid_count);
       compliance[index][name] = checked;
+      // filter decision and reject from list
+      var _compliance = {
+        payment_terms: compliance[index].payment_terms,
+        bid_validity: compliance[index].bid_validity,
+        delivery_period: compliance[index].delivery_period,
+        technical_specifications: compliance[index].technical_specifications,
+        valid_tax_clearance: compliance[index].valid_tax_clearance,
+        registered_with_praz: compliance[index].registered_with_praz,
+        tax_status: compliance[index].tax_status,
+        site_visit: compliance[index].site_visit,
+        samples_required: compliance[index].samples_required
+      };
+
+      // set compliance[index]['decision'] to true if all compliance are true
+      var compliance_values = Object.values(_compliance);
+      console.log("compliances: ", compliance_values);
+      var decision = compliance_values.every(function (value) {
+        return value === true;
+      });
+      compliance[index]["decision"] = decision;
+      compliance[index]["reject"] = !decision;
+
       _this.setState(Object.assign({}, _this.state, {
         compliance: compliance
       }));
     };
 
     _this.onComplianceRemarksChange = function (bid_count, event) {
-      var _event$target7 = event.target,
-          name = _event$target7.name,
-          value = _event$target7.value;
+      var _event$target8 = event.target,
+          name = _event$target8.name,
+          value = _event$target8.value;
 
       var compliance = _this.state.compliance;
       var index = compliance.findIndex(function (item) {
@@ -713,7 +745,7 @@ var CreateCS = function (_React$Component) {
       }));
       form_data.append("csrfmiddlewaretoken", _this.getCookie("csrftoken"));
 
-      fetch("http://localhost:8000/comparative_schedule/save_compliance", {
+      fetch("http://localhost:8000/comperative_schedule/save_compliance", {
         method: "POST",
         headers: {
           "X-CSRFToken": _this.getCookie("csrftoken")
@@ -736,7 +768,7 @@ var CreateCS = function (_React$Component) {
       form_data.append("cs_id", _this.state.cs_id);
       form_data.append("csrfmiddlewaretoken", _this.getCookie("csrftoken"));
 
-      fetch("http://localhost:8000/comparative_schedule/close_compliance", {
+      fetch("http://localhost:8000/comperative_schedule/close_compliance", {
         method: "POST",
         headers: {
           "X-CSRFToken": _this.getCookie("csrftoken")
@@ -761,8 +793,9 @@ var CreateCS = function (_React$Component) {
 
     _this.state = {
       cs_id: "",
+      cs_owner: "",
       plan_ref: "",
-      proc_plan: "",
+      proc_plan: null,
       scope_of_work: "",
       pr_number: "",
       quantity: "",
@@ -773,6 +806,7 @@ var CreateCS = function (_React$Component) {
       date_tender_opened: "",
       tender_adjudication_committee_date: "",
       advert: null,
+      advert_url: null,
       bid_count: 0,
       currentBid: {},
       bids: [],
@@ -784,6 +818,8 @@ var CreateCS = function (_React$Component) {
       complianceTable: false,
       compliance: [],
       complianceRemarks: [],
+      showSamples: "",
+      showSiteVisit: "",
 
       rankingTable: false,
       rankings: [],
@@ -792,14 +828,14 @@ var CreateCS = function (_React$Component) {
       committeeMembers: [],
       member: {
         memberName: "",
-        memberFullName: "",
+        memberUserName: "",
         memberPosition: ""
       },
       users: [],
 
       pr_items: [],
       suppliers: [],
-      procurement_plans: [],
+      proc_plans: [],
       authUser: {},
       username: ""
     };
@@ -807,6 +843,9 @@ var CreateCS = function (_React$Component) {
     _this.onAddBid = _this.onAddBid.bind(_this);
     _this.onAddItemsModal = _this.onAddItemsModal.bind(_this);
     _this.onCommitteeChange = _this.onCommitteeChange.bind(_this);
+    _this.onGetFileObjectUrl = _this.onGetFileObjectUrl.bind(_this);
+    _this.onComplianceItemsChange = _this.onComplianceItemsChange.bind(_this);
+    _this.onCommitteeApprove = _this.onCommitteeApprove.bind(_this);
     return _this;
   }
 
@@ -816,6 +855,7 @@ var CreateCS = function (_React$Component) {
       console.log("props: ", this.props);
       if (this.props.csid !== "") {
         this.setState({
+          username: this.props.username,
           cs_id: this.props.csid
         });
         this.getCSData(this.props.csid);
@@ -831,18 +871,18 @@ var CreateCS = function (_React$Component) {
   }, {
     key: "onSelectChange",
     value: function onSelectChange(name_, event) {
-      var _event$target8 = event.target,
-          name = _event$target8.name,
-          value = _event$target8.value;
+      var _event$target9 = event.target,
+          name = _event$target9.name,
+          value = _event$target9.value;
 
       this.setState(Object.assign({}, this.state, _defineProperty({}, name_, value)));
     }
   }, {
     key: "onFilterSelectCenters",
     value: function onFilterSelectCenters(name_, event) {
-      var _event$target9 = event.target,
-          name = _event$target9.name,
-          value = _event$target9.value;
+      var _event$target10 = event.target,
+          name = _event$target10.name,
+          value = _event$target10.value;
 
       if (name_ === "region") {
         var dist = this.state.allDistricts.filter(function (_district) {
@@ -1211,7 +1251,7 @@ var CreateCS = function (_React$Component) {
                           name: "item_description",
                           defaultValue: item.description,
                           onChange: function onChange(e) {
-                            return _this2.onCurrentBidItemChange(item.id, "description", e);
+                            return _this2.onCurrentBidItemChange(item.description, "description", e);
                           },
                           id: "item_description",
                           required: "required",
@@ -1237,7 +1277,7 @@ var CreateCS = function (_React$Component) {
                           name: "quantity",
                           defaultValue: item.quantity,
                           onChange: function onChange(e) {
-                            return _this2.onCurrentBidItemChange(item.id, "quantity", e);
+                            return _this2.onCurrentBidItemChange(item.description, "quantity", e);
                           },
                           type: "number",
                           id: "quantity",
@@ -1267,7 +1307,7 @@ var CreateCS = function (_React$Component) {
                             {
                               id: "unit_of_measurement",
                               onChange: function onChange(e) {
-                                return _this2.onCurrentBidItemChange(item.id, "unit_of_measurement", e);
+                                return _this2.onCurrentBidItemChange(item.description, "unit_of_measurement", e);
                               },
                               autoComplete: "unit_of_measurement",
                               className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
@@ -1343,7 +1383,7 @@ var CreateCS = function (_React$Component) {
                             {
                               id: "vat",
                               onChange: function onChange(e) {
-                                return _this2.onCurrentBidItemChange(item.id, "vat", e);
+                                return _this2.onCurrentBidItemChange(item.description, "vat", e);
                               },
                               autoComplete: "vat",
                               className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
@@ -1385,7 +1425,7 @@ var CreateCS = function (_React$Component) {
                           name: "unit_price",
                           defaultValue: item.unit_price,
                           onChange: function onChange(e) {
-                            return _this2.onCurrentBidItemChange(item.id, "unit_price", e);
+                            return _this2.onCurrentBidItemChange(item.description, "unit_price", e);
                           },
                           type: "text",
                           id: "unit_price",
@@ -1439,39 +1479,84 @@ var CreateCS = function (_React$Component) {
         );
       }
 
-      if (this.state.complianceTable) {
-        complianceTable = React.createElement(
+      complianceTable = React.createElement(
+        "div",
+        { className: "bg-gulf-blue-300 shadow shadow-nepal-300 text-gray-700 rounded px-2 py-2" },
+        React.createElement(
           "div",
-          { className: "bg-gulf-blue-300 shadow shadow-nepal-300 text-gray-700 rounded px-2 py-2" },
+          { className: "space-y-12 px-5 py-5" },
           React.createElement(
             "div",
-            { className: "space-y-12 px-5 py-5" },
+            { className: "px-4 sm:px-0 mt-6 border-t border-gray-100 border-gray-900/10" },
+            React.createElement(
+              "h2",
+              { className: "text-base font-semibold leading-6 text-gray-900" },
+              "COMPLIANCE TABLE"
+            ),
+            React.createElement(
+              "p",
+              { className: "mt-1 max-w-2xl text-sm leading-6 text-gray-500" },
+              "Key: Comply/ Not Comply (Y/ N), Not Stated (NS)"
+            ),
             React.createElement(
               "div",
-              { className: "px-4 sm:px-0 mt-6 border-t border-gray-100 border-gray-900/10" },
+              { className: "flex justify-evenly mt-5 bg-gulf-blue-300 px-2 py-2 rounded-md" },
               React.createElement(
-                "h2",
-                { className: "text-base font-semibold leading-6 text-gray-900" },
-                "COMPLIANCE TABLE"
-              ),
-              React.createElement(
-                "p",
-                { className: "mt-1 max-w-2xl text-sm leading-6 text-gray-500" },
-                "Key: Comply/ Not Comply (Y/ N), Not Stated (NS)"
+                "div",
+                { className: "flex-1 w-45" },
+                React.createElement(
+                  "label",
+                  {
+                    htmlFor: "site_visit",
+                    className: "block text-sm font-medium leading-6 text-gray-900"
+                  },
+                  "Site visit required?"
+                ),
+                React.createElement(
+                  "div",
+                  { className: "mt-2" },
+                  React.createElement(
+                    "select",
+                    {
+                      id: "site_visit",
+                      name: "showSiteVisit",
+                      onChange: function onChange(e) {
+                        return _this2.onComplianceItemsChange("showSiteVisit", e);
+                      },
+                      autoComplete: "site_visit",
+                      className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
+                    },
+                    React.createElement(
+                      "option",
+                      { value: "" },
+                      "Select Option"
+                    ),
+                    React.createElement(
+                      "option",
+                      { value: "yes" },
+                      "Yes"
+                    ),
+                    React.createElement(
+                      "option",
+                      { value: "no" },
+                      "No"
+                    )
+                  )
+                )
               ),
               React.createElement(
                 "div",
-                { className: "flex justify-evenly mt-5 bg-gulf-blue-300 px-2 py-2 rounded-md" },
+                { className: "flex-1 w-45" },
                 React.createElement(
                   "div",
-                  { className: "flex-1 w-45" },
+                  null,
                   React.createElement(
                     "label",
                     {
-                      htmlFor: "site_visit",
+                      htmlFor: "samples",
                       className: "block text-sm font-medium leading-6 text-gray-900"
                     },
-                    "Site visit required?"
+                    "Are Samples Required?"
                   ),
                   React.createElement(
                     "div",
@@ -1479,9 +1564,12 @@ var CreateCS = function (_React$Component) {
                     React.createElement(
                       "select",
                       {
-                        id: "site_visit",
-                        name: "site_visit",
-                        autoComplete: "site_visit",
+                        id: "samples",
+                        name: "showSamples",
+                        onChange: function onChange(e) {
+                          return _this2.onComplianceItemsChange("showSamples", e);
+                        },
+                        autoComplete: "samples",
                         className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
                       },
                       React.createElement(
@@ -1501,697 +1589,672 @@ var CreateCS = function (_React$Component) {
                       )
                     )
                   )
+                )
+              )
+            ),
+            React.createElement(
+              "div",
+              { className: "overflow-auto px-2 py-2 mt-5 rounded-md bg-gulf-blue-300" },
+              React.createElement(
+                "table",
+                { className: "table-auto w-full text-left" },
+                React.createElement(
+                  "thead",
+                  null,
+                  React.createElement(
+                    "tr",
+                    { className: "text-gray-900" },
+                    React.createElement(
+                      "th",
+                      { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                      "Bid No."
+                    ),
+                    React.createElement(
+                      "th",
+                      { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                      "Name of Supplier"
+                    ),
+                    React.createElement(
+                      "th",
+                      { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                      "Payment ",
+                      React.createElement("br", null),
+                      "Terms"
+                    ),
+                    React.createElement(
+                      "th",
+                      { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                      "Bid ",
+                      React.createElement("br", null),
+                      "Validity"
+                    ),
+                    React.createElement(
+                      "th",
+                      { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                      "Delivery ",
+                      React.createElement("br", null),
+                      "Period"
+                    ),
+                    React.createElement(
+                      "th",
+                      { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                      "Technical ",
+                      React.createElement("br", null),
+                      "Specifications"
+                    ),
+                    React.createElement(
+                      "th",
+                      { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                      "Valid ",
+                      React.createElement("br", null),
+                      "Tax Clearance"
+                    ),
+                    React.createElement(
+                      "th",
+                      { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                      "Registered ",
+                      React.createElement("br", null),
+                      "with PRAZ?"
+                    ),
+                    React.createElement(
+                      "th",
+                      { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                      "Tax ",
+                      React.createElement("br", null),
+                      "Status"
+                    ),
+                    this.state.showSiteVisit === "yes" ? React.createElement(
+                      "th",
+                      {
+                        id: "site_visit_header",
+                        className: "site-visit-header border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2"
+                      },
+                      "Site Visit",
+                      React.createElement("br", null),
+                      "Done?"
+                    ) : "",
+                    this.state.showSamples === "yes" ? React.createElement(
+                      "th",
+                      { id: "samples_header", className: "samples-header border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                      "Samples ",
+                      React.createElement("br", null),
+                      "Delivered?"
+                    ) : "",
+                    React.createElement(
+                      "th",
+                      { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                      "Accept"
+                    ),
+                    React.createElement(
+                      "th",
+                      { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                      "Reject"
+                    )
+                  )
                 ),
                 React.createElement(
-                  "div",
-                  { className: "flex-1 w-45" },
-                  React.createElement(
-                    "div",
-                    null,
-                    React.createElement(
-                      "label",
-                      {
-                        htmlFor: "samples",
-                        className: "block text-sm font-medium leading-6 text-gray-900"
-                      },
-                      "Are Samples Required?"
-                    ),
-                    React.createElement(
-                      "div",
-                      { className: "mt-2" },
-                      React.createElement(
-                        "select",
-                        {
-                          id: "samples",
-                          name: "samples",
-                          autoComplete: "samples",
-                          className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
-                        },
-                        React.createElement(
-                          "option",
-                          { value: "" },
-                          "Select Option"
-                        ),
-                        React.createElement(
-                          "option",
-                          { value: "yes" },
-                          "Yes"
-                        ),
-                        React.createElement(
-                          "option",
-                          { value: "no" },
-                          "No"
-                        )
-                      )
-                    )
-                  )
-                )
-              ),
-              React.createElement(
-                "div",
-                { className: "overflow-auto px-2 py-2 mt-5 rounded-md bg-gulf-blue-300" },
-                React.createElement(
-                  "table",
-                  { className: "table-auto w-full text-left" },
-                  React.createElement(
-                    "thead",
-                    null,
-                    React.createElement(
+                  "tbody",
+                  null,
+                  this.state.compliance.map(function (comp, key) {
+                    return React.createElement(
                       "tr",
-                      { className: "text-gray-900" },
+                      null,
                       React.createElement(
-                        "th",
+                        "td",
                         { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
-                        "Bid No."
+                        key + 1
                       ),
                       React.createElement(
-                        "th",
+                        "td",
                         { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
-                        "Name of Supplier"
+                        comp.supplier_name
                       ),
                       React.createElement(
-                        "th",
+                        "td",
                         { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
-                        "Payment ",
-                        React.createElement("br", null),
-                        "Terms"
+                        React.createElement("input", {
+                          name: "payment_terms",
+                          checked: comp.payment_terms ? comp.payment_terms : false,
+                          onChange: function onChange(e) {
+                            return _this2.onComplianceChange(key, e);
+                          },
+                          id: "payment_terms",
+                          type: "checkbox"
+                        })
                       ),
                       React.createElement(
-                        "th",
+                        "td",
                         { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
-                        "Bid ",
-                        React.createElement("br", null),
-                        "Validity"
+                        React.createElement("input", {
+                          name: "bid_validity",
+                          checked: comp.bid_validity ? comp.bid_validity : false,
+                          onChange: function onChange(e) {
+                            return _this2.onComplianceChange(key, e);
+                          },
+                          id: "bid_validity",
+                          type: "checkbox"
+                        })
                       ),
                       React.createElement(
-                        "th",
+                        "td",
                         { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
-                        "Delivery ",
-                        React.createElement("br", null),
-                        "Period"
+                        React.createElement("input", {
+                          name: "delivery_period",
+                          checked: comp.delivery_period ? comp.delivery_period : false,
+                          onChange: function onChange(e) {
+                            return _this2.onComplianceChange(key, e);
+                          },
+                          id: "delivery_period",
+                          type: "checkbox"
+                        })
                       ),
                       React.createElement(
-                        "th",
+                        "td",
                         { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
-                        "Technical ",
-                        React.createElement("br", null),
-                        "Specifications"
+                        React.createElement("input", {
+                          name: "technical_specifications",
+                          checked: comp.technical_specifications ? comp.technical_specifications : false,
+                          onChange: function onChange(e) {
+                            return _this2.onComplianceChange(key, e);
+                          },
+                          id: "technical_specifications",
+                          type: "checkbox"
+                        })
                       ),
                       React.createElement(
-                        "th",
+                        "td",
                         { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
-                        "Valid ",
-                        React.createElement("br", null),
-                        "Tax Clearance"
+                        React.createElement("input", {
+                          name: "valid_tax_clearance",
+                          checked: comp.valid_tax_clearance ? comp.valid_tax_clearance : false,
+                          onChange: function onChange(e) {
+                            return _this2.onComplianceChange(key, e);
+                          },
+                          id: "valid_tax_clearance",
+                          type: "checkbox"
+                        })
                       ),
                       React.createElement(
-                        "th",
+                        "td",
                         { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
-                        "Registered ",
-                        React.createElement("br", null),
-                        "with PRAZ?"
+                        React.createElement("input", {
+                          name: "registered_with_praz",
+                          checked: comp.registered_with_praz ? comp.registered_with_praz : false,
+                          onChange: function onChange(e) {
+                            return _this2.onComplianceChange(key, e);
+                          },
+                          id: "registered_with_praz",
+                          type: "checkbox"
+                        })
                       ),
                       React.createElement(
-                        "th",
+                        "td",
                         { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
-                        "Tax ",
-                        React.createElement("br", null),
-                        "Status"
+                        React.createElement("input", {
+                          name: "tax_status",
+                          checked: comp.tax_status ? comp.tax_status : false,
+                          onChange: function onChange(e) {
+                            return _this2.onComplianceChange(key, e);
+                          },
+                          id: "tax_status",
+                          type: "checkbox"
+                        })
                       ),
-                      React.createElement(
-                        "th",
+                      _this2.state.showSiteVisit === "yes" ? React.createElement(
+                        "td",
                         {
                           id: "site_visit_header",
-                          className: "hidden site-visit-header border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2"
+                          className: "site-visit-header border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2"
                         },
-                        "Site Visit",
-                        React.createElement("br", null),
-                        "Done?"
-                      ),
-                      React.createElement(
-                        "th",
+                        React.createElement("input", {
+                          name: "site_visit",
+                          checked: comp.site_visit ? comp.site_visit : false,
+                          onChange: function onChange(e) {
+                            return _this2.onComplianceChange(key, e);
+                          },
+                          id: "site_visit",
+                          type: "checkbox"
+                        })
+                      ) : "",
+                      _this2.state.showSamples === "yes" ? React.createElement(
+                        "td",
                         {
                           id: "samples_header",
-                          className: "hidden samples-header border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2"
+                          className: "samples-header border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2"
                         },
-                        "Samples ",
-                        React.createElement("br", null),
-                        "Delivered?"
-                      ),
-                      React.createElement(
-                        "th",
-                        { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
-                        "Accept"
-                      ),
-                      React.createElement(
-                        "th",
-                        { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
-                        "Reject"
-                      )
-                    )
-                  ),
-                  React.createElement(
-                    "tbody",
-                    null,
-                    this.state.compliance.map(function (comp, key) {
-                      return React.createElement(
-                        "tr",
-                        null,
-                        React.createElement(
-                          "td",
-                          { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
-                          comp.bid_count
-                        ),
-                        React.createElement(
-                          "td",
-                          { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
-                          comp.supplier_name
-                        ),
-                        React.createElement(
-                          "td",
-                          { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
-                          React.createElement("input", {
-                            name: "payment_terms",
-                            checked: comp.payment_terms ? comp.payment_terms : false,
-                            onChange: function onChange(e) {
-                              return _this2.onComplianceChange(comp.bid_count, e);
-                            },
-                            id: "payment_terms",
-                            type: "checkbox"
-                          })
-                        ),
-                        React.createElement(
-                          "td",
-                          { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
-                          React.createElement("input", {
-                            name: "bid_validity",
-                            checked: comp.bid_validity ? comp.bid_validity : false,
-                            onChange: function onChange(e) {
-                              return _this2.onComplianceChange(comp.bid_count, e);
-                            },
-                            id: "bid_validity",
-                            type: "checkbox"
-                          })
-                        ),
-                        React.createElement(
-                          "td",
-                          { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
-                          React.createElement("input", {
-                            name: "delivery_period",
-                            checked: comp.delivery_period ? comp.delivery_period : false,
-                            onChange: function onChange(e) {
-                              return _this2.onComplianceChange(comp.bid_count, e);
-                            },
-                            id: "delivery_period",
-                            type: "checkbox"
-                          })
-                        ),
-                        React.createElement(
-                          "td",
-                          { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
-                          React.createElement("input", {
-                            name: "technical_specifications",
-                            checked: comp.technical_specifications ? comp.technical_specifications : false,
-                            onChange: function onChange(e) {
-                              return _this2.onComplianceChange(comp.bid_count, e);
-                            },
-                            id: "technical_specifications",
-                            type: "checkbox"
-                          })
-                        ),
-                        React.createElement(
-                          "td",
-                          { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
-                          React.createElement("input", {
-                            name: "valid_tax_clearance",
-                            checked: comp.valid_tax_clearance ? comp.valid_tax_clearance : false,
-                            onChange: function onChange(e) {
-                              return _this2.onComplianceChange(comp.bid_count, e);
-                            },
-                            id: "valid_tax_clearance",
-                            type: "checkbox"
-                          })
-                        ),
-                        React.createElement(
-                          "td",
-                          { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
-                          React.createElement("input", {
-                            name: "registered_with_praz",
-                            checked: comp.registered_with_praz ? comp.registered_with_praz : false,
-                            onChange: function onChange(e) {
-                              return _this2.onComplianceChange(comp.bid_count, e);
-                            },
-                            id: "registered_with_praz",
-                            type: "checkbox"
-                          })
-                        ),
-                        React.createElement(
-                          "td",
-                          { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
-                          React.createElement("input", {
-                            name: "tax_status",
-                            checked: comp.tax_status ? comp.tax_status : false,
-                            onChange: function onChange(e) {
-                              return _this2.onComplianceChange(comp.bid_count, e);
-                            },
-                            id: "tax_status",
-                            type: "checkbox"
-                          })
-                        ),
-                        React.createElement(
-                          "td",
-                          {
-                            id: "site_visit_header",
-                            className: "hidden site-visit-header border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2"
+                        React.createElement("input", {
+                          name: "samples_required",
+                          checked: comp.samples_required ? comp.samples_required : false,
+                          onChange: function onChange(e) {
+                            return _this2.onComplianceChange(key, e);
                           },
-                          React.createElement("input", {
-                            name: "site_visit_done",
-                            checked: comp.site_visit_done ? comp.site_visit_done : false,
-                            onChange: function onChange(e) {
-                              return _this2.onComplianceChange(comp.bid_count, e);
-                            },
-                            id: "site_visit_done",
-                            type: "checkbox"
-                          })
-                        ),
-                        React.createElement(
-                          "td",
-                          {
-                            id: "samples_header",
-                            className: "hidden samples-header border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2"
-                          },
-                          React.createElement("input", {
-                            name: "samples_delivered",
-                            checked: comp.samples_delivered ? comp.samples_delivered : false,
-                            onChange: function onChange(e) {
-                              return _this2.onComplianceChange(comp.bid_count, e);
-                            },
-                            id: "samples_delivered",
-                            type: "checkbox"
-                          })
-                        ),
-                        React.createElement(
-                          "td",
-                          { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
-                          React.createElement("input", {
-                            name: "decision",
-                            checked: comp.decision ? comp.decision : false,
-                            onChange: function onChange(e) {
-                              return _this2.onComplianceChange(comp.bid_count, e);
-                            },
-                            id: "decision",
-                            type: "checkbox"
-                          })
-                        ),
-                        React.createElement(
-                          "td",
-                          { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
-                          React.createElement("input", {
-                            name: "reject",
-                            checked: comp.reject ? comp.reject : false,
-                            onChange: function onChange(e) {
-                              return _this2.onComplianceChange(comp.bid_count, e);
-                            },
-                            id: "reject",
-                            type: "checkbox"
-                          })
-                        )
-                      );
-                    })
-                  )
-                )
-              ),
-              React.createElement(
-                "div",
-                { className: "px-2 py-2 mt-5 rounded-sm bg-gulf-blue-300" },
-                React.createElement(
-                  "table",
-                  { className: "table-auto w-full text-left" },
-                  React.createElement(
-                    "thead",
-                    null,
-                    React.createElement(
-                      "tr",
-                      { className: "text-gray-900" },
+                          id: "samples_required",
+                          type: "checkbox"
+                        })
+                      ) : "",
                       React.createElement(
-                        "th",
+                        "td",
                         { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
-                        "Supplier"
-                      ),
-                      React.createElement(
-                        "th",
-                        { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
-                        "Remarks"
-                      )
-                    )
-                  ),
-                  React.createElement(
-                    "tbody",
-                    null,
-                    this.state.compliance.map(function (bid, key) {
-                      return React.createElement(
-                        "tr",
-                        null,
-                        React.createElement(
-                          "td",
-                          { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
-                          bid.supplier_name
-                        ),
-                        React.createElement(
-                          "td",
-                          { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
-                          React.createElement("input", {
-                            name: "remarks",
-                            onChange: function onChange(e) {
-                              return _this2.onComplianceRemarksChange(bid.bid_count, e);
-                            },
-                            type: "text",
-                            className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
-                          })
-                        )
-                      );
-                    })
-                  )
-                )
-              )
-            )
-          ),
-          React.createElement(
-            "div",
-            { className: "flex justify-center mt-5 px-3 py-3" },
-            React.createElement(
-              "div",
-              { className: "flex-1 m-2" },
-              React.createElement(
-                "button",
-                {
-                  style: { width: "100%" },
-                  onClick: this.onSaveCompliance,
-                  name: "save_next",
-                  className: "rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                },
-                "SAVE COMPLIANCES"
-              )
-            )
-          )
-        );
-      }
+                        React.createElement("input", {
+                          name: "decision",
 
-      if (this.state.rankingTable) {
-        rankingTable = React.createElement(
-          "div",
-          { className: "bg-gulf-blue-300 shadow shadow-nepal-300 text-gray-700 rounded px-2 py-2" },
-          React.createElement(
-            "div",
-            { className: "space-y-12 px-5 py-5" },
+                          checked: comp.decision ? comp.decision : false,
+                          onChange: function onChange(e) {
+                            return _this2.onComplianceChange(key, e);
+                          },
+                          id: "decision",
+                          type: "checkbox"
+                        })
+                      ),
+                      React.createElement(
+                        "td",
+                        { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                        React.createElement("input", {
+                          name: "reject",
+                          checked: comp.reject ? comp.reject : false,
+                          onChange: function onChange(e) {
+                            return _this2.onComplianceChange(key, e);
+                          },
+                          id: "reject",
+                          type: "checkbox"
+                        })
+                      )
+                    );
+                  })
+                )
+              )
+            ),
             React.createElement(
               "div",
-              { className: "px-4 sm:px-0 mt-6 border-t border-gray-100 border-gray-900/10" },
+              { className: "px-2 py-2 mt-5 rounded-sm bg-gulf-blue-300" },
               React.createElement(
-                "h2",
-                { className: "text-base font-semibold leading-6 text-gray-900" },
-                "RANKING TABLE"
-              ),
-              React.createElement(
-                "div",
-                { className: "overflow-auto px-2 py-2 mt-5 rounded-md bg-gulf-blue-300" },
+                "table",
+                { className: "table-auto w-full text-left" },
                 React.createElement(
-                  "table",
-                  { className: "table-auto w-full text-left" },
+                  "thead",
+                  null,
                   React.createElement(
-                    "thead",
-                    null,
+                    "tr",
+                    { className: "text-gray-900" },
                     React.createElement(
-                      "tr",
-                      { className: "text-gray-900" },
-                      React.createElement(
-                        "th",
-                        { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
-                        "ID"
-                      ),
-                      React.createElement(
-                        "th",
-                        { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
-                        "Name of Supplier"
-                      ),
-                      React.createElement(
-                        "th",
-                        { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
-                        "Rank"
-                      ),
-                      React.createElement(
-                        "th",
-                        { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
-                        "Decision"
-                      ),
-                      React.createElement(
-                        "th",
-                        { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
-                        "Remarks"
-                      ),
-                      React.createElement(
-                        "th",
-                        { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
-                        "Total"
-                      )
+                      "th",
+                      { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                      "Supplier"
+                    ),
+                    React.createElement(
+                      "th",
+                      { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                      "Remarks"
                     )
-                  ),
-                  React.createElement(
-                    "tbody",
-                    null,
-                    this.state.rankings.map(function (rank, key) {
-                      return React.createElement(
-                        "tr",
-                        { className: "text-gray-900" },
-                        React.createElement(
-                          "td",
-                          { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
-                          rank.id
-                        ),
-                        React.createElement(
-                          "td",
-                          { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
-                          rank.supplier_name
-                        ),
-                        React.createElement(
-                          "td",
-                          { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
-                          rank.rank
-                        ),
-                        React.createElement(
-                          "td",
-                          { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
-                          rank.decision
-                        ),
-                        React.createElement(
-                          "td",
-                          { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
-                          rank.remarks
-                        ),
-                        React.createElement(
-                          "td",
-                          { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
-                          rank.total
-                        )
-                      );
-                    })
                   )
+                ),
+                React.createElement(
+                  "tbody",
+                  null,
+                  this.state.compliance.map(function (bid, key) {
+                    return React.createElement(
+                      "tr",
+                      null,
+                      React.createElement(
+                        "td",
+                        { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                        bid.supplier_name
+                      ),
+                      React.createElement(
+                        "td",
+                        { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                        React.createElement("input", {
+                          name: "remarks",
+                          onChange: function onChange(e) {
+                            return _this2.onComplianceRemarksChange(bid.bid_count, e);
+                          },
+                          type: "text",
+                          className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
+                        })
+                      )
+                    );
+                  })
                 )
               )
             )
           )
-        );
-      }
-
-      if (true) {
-        committeeTable = React.createElement(
+        ),
+        React.createElement(
           "div",
-          { className: "bg-gulf-blue-300 shadow shadow-nepal-300 text-gray-700 rounded px-2 py-2" },
+          { className: "flex justify-center mt-5 px-3 py-3" },
           React.createElement(
             "div",
-            { className: "space-y-12 px-5 py-5" },
+            { className: "flex-1 m-2" },
+            React.createElement(
+              "button",
+              {
+                style: { width: "100%" },
+                onClick: this.onSaveCompliance,
+                name: "save_next",
+                className: "rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+              },
+              "SAVE COMPLIANCES"
+            )
+          )
+        )
+      );
+
+      rankingTable = React.createElement(
+        "div",
+        { className: "bg-gulf-blue-300 shadow shadow-nepal-300 text-gray-700 rounded px-2 py-2" },
+        React.createElement(
+          "div",
+          { className: "space-y-12 px-5 py-5" },
+          React.createElement(
+            "div",
+            { className: "px-4 sm:px-0 mt-6 border-t border-gray-100 border-gray-900/10" },
+            React.createElement(
+              "h2",
+              { className: "text-base font-semibold leading-6 text-gray-900" },
+              "RANKING TABLE"
+            ),
             React.createElement(
               "div",
-              { className: "px-4 sm:px-0 mt-6 border-t border-gray-100 border-gray-900/10" },
+              { className: "overflow-auto px-2 py-2 mt-5 rounded-md bg-gulf-blue-300" },
               React.createElement(
-                "h2",
-                { className: "text-base font-semibold leading-6 text-gray-900" },
-                "Committee Members"
-              ),
-              React.createElement(
-                "div",
-                { className: "overflow-auto px-2 py-2 mt-5 rounded-md bg-gulf-blue-300" },
+                "table",
+                { className: "table-auto w-full text-left" },
                 React.createElement(
-                  "table",
-                  { className: "table-auto w-full text-left" },
+                  "thead",
+                  null,
                   React.createElement(
-                    "tbody",
-                    null,
+                    "tr",
+                    { className: "text-gray-900" },
                     React.createElement(
+                      "th",
+                      { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                      "ID"
+                    ),
+                    React.createElement(
+                      "th",
+                      { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                      "Name of Supplier"
+                    ),
+                    React.createElement(
+                      "th",
+                      { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                      "Rank"
+                    ),
+                    React.createElement(
+                      "th",
+                      { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                      "Decision"
+                    ),
+                    React.createElement(
+                      "th",
+                      { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                      "Remarks"
+                    ),
+                    React.createElement(
+                      "th",
+                      { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                      "Total"
+                    )
+                  )
+                ),
+                React.createElement(
+                  "tbody",
+                  null,
+                  this.state.rankings.map(function (rank, key) {
+                    return React.createElement(
                       "tr",
                       { className: "text-gray-900" },
                       React.createElement(
                         "td",
                         { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
-                        React.createElement(
-                          "div",
-                          null,
-                          React.createElement(
-                            "label",
-                            {
-                              htmlFor: "memberPosition",
-                              className: "block text-sm font-medium leading-6 text-gray-900"
-                            },
-                            "Member Position"
-                          ),
-                          React.createElement(
-                            "div",
-                            { className: "mt-2" },
-                            React.createElement(
-                              "select",
-                              {
-                                onChange: function onChange(text) {
-                                  return _this2.onCommitteeChange("memberPosition", text);
-                                },
-                                id: "memberPosition",
-                                name: "memberPosition",
-                                autoComplete: "memberPosition",
-                                className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
-                              },
-                              React.createElement(
-                                "option",
-                                { value: "" },
-                                "Select Option"
-                              ),
-                              React.createElement(
-                                "option",
-                                { value: "chairman" },
-                                "Chairman"
-                              ),
-                              React.createElement(
-                                "option",
-                                { value: "finance" },
-                                "Finance"
-                              ),
-                              React.createElement(
-                                "option",
-                                { value: "procurement" },
-                                "Procurement"
-                              ),
-                              React.createElement(
-                                "option",
-                                { value: "user" },
-                                "User"
-                              ),
-                              React.createElement(
-                                "option",
-                                { value: "other" },
-                                "Other"
-                              )
-                            )
-                          )
-                        )
+                        key + 1
                       ),
                       React.createElement(
                         "td",
                         { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
-                        React.createElement(
-                          "div",
-                          null,
-                          React.createElement(
-                            "label",
-                            {
-                              htmlFor: "memberName",
-                              className: "block text-sm font-medium leading-6 text-gray-900"
-                            },
-                            "Select User"
-                          ),
-                          React.createElement(
-                            "div",
-                            { className: "mt-2" },
-                            React.createElement(
-                              "select",
-                              {
-                                onChange: function onChange(text) {
-                                  return _this2.onCommitteeChange("memberName", text);
-                                },
-                                id: "memberName",
-                                name: "memberName",
-                                autoComplete: "memberName",
-                                className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
-                              },
-                              this.state.users ? this.state.users.map(function (user) {
-                                return React.createElement(
-                                  "option",
-                                  { value: user.username },
-                                  user.first_name + " " + user.last_name
-                                );
-                              }) : ""
-                            )
-                          )
-                        )
+                        rank.supplier_name
                       ),
                       React.createElement(
                         "td",
                         { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                        rank.rank
+                      ),
+                      React.createElement(
+                        "td",
+                        { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                        rank.decision
+                      ),
+                      React.createElement(
+                        "td",
+                        { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                        rank.remarks
+                      ),
+                      React.createElement(
+                        "td",
+                        { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                        rank.total
+                      )
+                    );
+                  })
+                )
+              )
+            )
+          )
+        )
+      );
+
+      committeeTable = React.createElement(
+        "div",
+        { className: "bg-gulf-blue-300 shadow shadow-nepal-300 text-gray-700 rounded px-2 py-2" },
+        React.createElement(
+          "div",
+          { className: "space-y-12 px-5 py-5" },
+          React.createElement(
+            "div",
+            { className: "px-4 sm:px-0 mt-6 border-t border-gray-100 border-gray-900/10" },
+            React.createElement(
+              "h2",
+              { className: "text-base font-semibold leading-6 text-gray-900" },
+              "Committee Members"
+            ),
+            React.createElement(
+              "div",
+              { className: "overflow-auto px-2 py-2 mt-5 rounded-md bg-gulf-blue-300" },
+              React.createElement(
+                "table",
+                { className: "table-auto w-full text-left" },
+                React.createElement(
+                  "tbody",
+                  null,
+                  React.createElement(
+                    "tr",
+                    { className: "text-gray-900" },
+                    React.createElement(
+                      "td",
+                      { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                      React.createElement(
+                        "div",
+                        null,
+                        React.createElement(
+                          "label",
+                          {
+                            htmlFor: "memberPosition",
+                            className: "block text-sm font-medium leading-6 text-gray-900"
+                          },
+                          "Member Position"
+                        ),
                         React.createElement(
                           "div",
-                          { className: "w-30" },
+                          { className: "mt-2" },
                           React.createElement(
-                            "button",
+                            "select",
                             {
-                              style: { width: "100%" },
-                              onClick: this.onAddCommitteeMembers,
-                              name: "save_next",
-                              className: "rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                              onChange: function onChange(text) {
+                                return _this2.onCommitteeChange("memberPosition", text);
+                              },
+                              id: "memberPosition",
+                              name: "memberPosition",
+                              autoComplete: "memberPosition",
+                              className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
                             },
-                            "ADD MEMBER"
+                            React.createElement(
+                              "option",
+                              { value: "" },
+                              "Select Option"
+                            ),
+                            React.createElement(
+                              "option",
+                              { value: "chairman" },
+                              "Chairman"
+                            ),
+                            React.createElement(
+                              "option",
+                              { value: "finance" },
+                              "Finance"
+                            ),
+                            React.createElement(
+                              "option",
+                              { value: "procurement" },
+                              "Procurement"
+                            ),
+                            React.createElement(
+                              "option",
+                              { value: "user" },
+                              "User"
+                            ),
+                            React.createElement(
+                              "option",
+                              { value: "other" },
+                              "Other"
+                            )
                           )
                         )
                       )
                     ),
-                    this.state.committeeMembers.map(function (member, key) {
-                      return React.createElement(
-                        "tr",
-                        { className: "text-gray-900" },
+                    React.createElement(
+                      "td",
+                      { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                      React.createElement(
+                        "div",
+                        null,
                         React.createElement(
-                          "td",
-                          { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
-                          member.memberPosition
+                          "label",
+                          {
+                            htmlFor: "memberUserName",
+                            className: "block text-sm font-medium leading-6 text-gray-900"
+                          },
+                          "Select User"
                         ),
                         React.createElement(
-                          "td",
-                          { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
-                          member.memberName
-                        ),
-                        React.createElement(
-                          "td",
-                          { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                          "div",
+                          { className: "mt-2" },
                           React.createElement(
+                            "select",
+                            {
+                              onChange: function onChange(text) {
+                                return _this2.onCommitteeChange("memberUserName", text);
+                              },
+                              id: "memberUserName",
+                              name: "memberUserName",
+                              autoComplete: "memberUserName",
+                              className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
+                            },
+                            this.state.users ? this.state.users.map(function (user) {
+                              return React.createElement(
+                                "option",
+                                { value: user.username },
+                                user.first_name + " " + user.last_name
+                              );
+                            }) : ""
+                          )
+                        )
+                      )
+                    ),
+                    React.createElement("td", { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" }),
+                    React.createElement(
+                      "td",
+                      { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                      this.state.username === this.state.cs_owner ? React.createElement(
+                        "div",
+                        { className: "w-30" },
+                        React.createElement(
+                          "button",
+                          {
+                            style: { width: "100%" },
+                            onClick: this.onAddCommitteeMembers,
+                            name: "save_next",
+                            className: "rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                          },
+                          "ADD MEMBER"
+                        )
+                      ) : ""
+                    )
+                  ),
+                  this.state.committeeMembers.map(function (member, key) {
+                    return React.createElement(
+                      "tr",
+                      { className: member.committeeStatus ? "text-gray-900 bg-apple-200 rounded-md" : "text-gray-900" },
+                      React.createElement(
+                        "td",
+                        { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                        member.memberPosition
+                      ),
+                      React.createElement(
+                        "td",
+                        { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                        member.memberName ? member.memberName : member.memberUserName
+                      ),
+                      React.createElement(
+                        "td",
+                        { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                        member.committeeDate
+                      ),
+                      React.createElement(
+                        "td",
+                        { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                        React.createElement(
+                          "div",
+                          { className: "flex justify-content-evenly" },
+                          _this2.state.username === _this2.state.cs_owner ? React.createElement(
                             "div",
-                            { className: "w-30 m-2" },
+                            { className: "m-2" },
                             React.createElement(
                               "button",
                               {
                                 onClick: function onClick() {
-                                  return _this2.onRemoveCommitteeMember(key);
+                                  return _this2.onRemoveCommitteeMember(key, member.memberUserName);
                                 },
                                 name: "save_next",
                                 className: "rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
                               },
                               "REMOVE"
                             )
-                          )
+                          ) : "",
+                          _this2.state.username === member.memberUserName ? React.createElement(
+                            "div",
+                            { className: "m-2" },
+                            React.createElement(
+                              "button",
+                              {
+                                onClick: function onClick() {
+                                  return _this2.onCommitteeApprove(member.memberUserName);
+                                },
+                                name: "save_next",
+                                className: "rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                              },
+                              member.committeeStatus ? "REJECT" : "APPROVE"
+                            )
+                          ) : ""
                         )
-                      );
-                    })
-                  )
+                      )
+                    );
+                  })
                 )
               )
             )
           )
-        );
-      }
+        )
+      );
 
       return React.createElement(
         "div",
@@ -2283,7 +2346,12 @@ var CreateCS = function (_React$Component) {
                         null,
                         "Select Procurement Plan Ref"
                       ),
-                      this.state.procurement_plans ? this.state.procurement_plans.map(function (plan) {
+                      this.state.proc_plan ? React.createElement(
+                        "option",
+                        { value: this.state.proc_plan.proc_ref },
+                        this.state.proc_plan.description
+                      ) : "",
+                      this.state.proc_plans ? this.state.proc_plans.map(function (plan) {
                         return React.createElement(
                           "option",
                           { value: plan.proc_ref },
@@ -2451,6 +2519,11 @@ var CreateCS = function (_React$Component) {
                           },
                           className: "rounded-md block border-none w-full py-1.5 text-gray-900 sm:max-w-xs sm:text-sm sm:leading-6"
                         },
+                        this.state.closing_time_hour ? React.createElement(
+                          "option",
+                          { value: this.state.closing_time_hour },
+                          this.state.closing_time_hour
+                        ) : "",
                         React.createElement(
                           "option",
                           { value: "10:00" },
@@ -2594,6 +2667,30 @@ var CreateCS = function (_React$Component) {
                     className: "block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                   })
                 )
+              ),
+              React.createElement(
+                "div",
+                { className: "flex-1 w-40 ml-2" },
+                React.createElement(
+                  "label",
+                  {
+                    htmlFor: "bid_document",
+                    className: "block text-sm font-medium leading-6 text-gray-900"
+                  },
+                  "Advert Document"
+                ),
+                React.createElement(
+                  "div",
+                  { className: "mt-2" },
+                  React.createElement(
+                    "a",
+                    {
+                      href: this.state.advert_url,
+                      rel: "noopener noreferrer"
+                    },
+                    "View Advert Document"
+                  )
+                )
               )
             ),
             React.createElement(
@@ -2628,7 +2725,7 @@ var CreateCS = function (_React$Component) {
               )
             )
           ),
-          this.state.bids.length === 0 && this.state.cs_id && React.createElement(
+          this.state.bids.length < 1 ? React.createElement(
             "div",
             { className: "m-2" },
             React.createElement(
@@ -2640,7 +2737,7 @@ var CreateCS = function (_React$Component) {
               },
               "ADD SCHEDULE ITEMS"
             )
-          ),
+          ) : "",
           this.state.bids.map(function (bid, index) {
             return React.createElement(
               "div",
@@ -2734,11 +2831,11 @@ var CreateCS = function (_React$Component) {
                       React.createElement(
                         "a",
                         {
-                          href: bid.bid_document ? URL.createObjectURL(bid.bid_document) : "",
+                          href: bid.bid_document_url,
                           target: "_blank",
                           rel: "noopener noreferrer"
                         },
-                        bid.bid_document ? bid.bid_document.name : ""
+                        "View Document"
                       )
                     )
                   )
@@ -2932,7 +3029,7 @@ var CreateCS = function (_React$Component) {
               "ADD BID"
             )
           ) : "",
-          this.state.bids.length > 0 ? React.createElement(
+          this.state.bids.length > 0 && this.state.compliance.length < 1 ? React.createElement(
             "div",
             { className: "m-2" },
             React.createElement(
@@ -2945,7 +3042,7 @@ var CreateCS = function (_React$Component) {
               "ADD COMPLIANCES"
             )
           ) : "",
-          complianceTable,
+          this.state.compliance.length > 0 ? complianceTable : "",
           this.state.compliance.length > 0 ? React.createElement(
             "div",
             { className: "m-2" },
@@ -2956,11 +3053,11 @@ var CreateCS = function (_React$Component) {
                 onClick: this.onCloseCS,
                 className: "rounded-md bg-nepal-950 hover:bg-nepal-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
               },
-              "CLOSE SCHEDULE"
+              "RANK BIDS"
             )
           ) : "",
-          rankingTable,
-          committeeTable,
+          this.state.rankings.length > 0 ? rankingTable : "",
+          this.state.rankings.length > 0 ? committeeTable : "",
           this.state.committeeMembers.length > 0 ? React.createElement(
             "div",
             { className: "m-2" },

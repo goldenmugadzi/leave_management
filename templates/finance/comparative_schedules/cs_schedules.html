@@ -60,6 +60,12 @@
       columns: [
         {
           data: "cs_id",
+          render: function (data, type, row, meta) {
+            return `
+              <a type="button" class="btn btn-info" href='/comperative_schedule/comperative_schedule/${row.cs_id}' >
+                ${data}              
+              </a>`;
+          },
         },
         {
           data: "scope_of_work",

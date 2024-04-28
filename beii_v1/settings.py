@@ -189,6 +189,9 @@ DATABASES = {
     #     'HOST': 'localhost'
     # }
     'default': {
+        'OPTIONS': {
+            'sql_mode': 'NO_BACKSLASH_ESCAPES',
+        },
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'beii_new',
         'USER': 'root',
