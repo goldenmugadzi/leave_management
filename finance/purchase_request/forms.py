@@ -1,15 +1,13 @@
 from django import forms
-from django.contrib.auth.models import User
 from .models import *
 from django.forms import formset_factory
+# class QuotationForm(forms.ModelForm):
+#     class Meta:
+#         model = Quotation
+#         fields = ['file']
 
-class QuotationForm(forms.ModelForm):
-    class Meta:
-        model = Quotation
-        fields = ['file']
 
-
-QuotationFormSet = formset_factory(QuotationForm, extra=0, min_num=3, validate_min=True)
+# QuotationFormSet = formset_factory(QuotationForm, extra=0, min_num=3, validate_min=True)
 
 
 class PurchaseRequestForm(forms.ModelForm):
@@ -48,32 +46,32 @@ class PrItemForm(forms.ModelForm):
             if isinstance(field.widget, forms.Textarea):
                 field.widget.attrs.update({'rows': '3'})
 
-# PrItemFormSet = formset_factory(PrItemForm, extra=0, validate_min=True)
 
+# class QuoteItemForm(forms.ModelForm):
+#     class Meta:
+#         model = QuoteItem
+#         fields = '__all__'
+#         exclude = [ 'quotation']
 
-class QuoteItemForm(forms.ModelForm):
-    class Meta:
-        model = QuoteItem
-        fields = '__all__'
-        exclude = [ 'quotation']
+#     def __init__(self, *args, **kwargs):
+#         super().__init__(*args, **kwargs)
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+#         for field_name, field in self.fields.items():
+#             field.widget.attrs.update({
+#                 'class': "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6",
+#             })
+#             # if field_name == 'pr_item':field.widget.attrs.update({'disabled': 'disabled'})    
 
-        for field_name, field in self.fields.items():
-            field.widget.attrs.update({
-                'class': "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6",
-            })
-            # if field_name == 'pr_item':field.widget.attrs.update({'disabled': 'disabled'})    
+#     def clean_quantity(self):
+#         quantity = self.cleaned_data.get('quantity')
+#         initial_quantity = self.initial.get('quantity')
 
-    def clean_quantity(self):
-        quantity = self.cleaned_data.get('quantity')
-        initial_quantity = self.initial.get('quantity')
+#         if quantity > initial_quantity:
+#             raise forms.ValidationError(f"The quantity cannot be more than {initial_quantity}")
 
-        if quantity > initial_quantity:
-            raise forms.ValidationError(f"The quantity cannot be more than {initial_quantity}")
-
-        return quantity
+#         return quantity
+    
+    
 class acePurchaseRequestForm(forms.ModelForm):
     class Meta:
         model = PurchaseRequest
@@ -120,20 +118,35 @@ class acePurchaseRequestForm(forms.ModelForm):
         return cleaned_data
 
 
-class QuotationForm(forms.ModelForm):
+# class QuotationForm(forms.ModelForm):
+#     class Meta:
+#         model = Quotation
+#         fields = '__all__'
+#         exclude = ['purchase_request', 'created_by']
+
+#     def __init__(self, *args, **kwargs):
+#         super().__init__(*args, **kwargs)
+#         for field_name, field in self.fields.items():
+#             field.widget.attrs.update({
+#                 'class': "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset "
+#                          "ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 "
+#                          "sm:text-sm sm:leading-6",
+#             })
+
+#             if isinstance(field.widget, forms.Textarea):
+#                 field.widget.attrs.update({'rows': '3'})
+
+class UnitOfMeasurementForm(forms.ModelForm):
     class Meta:
-        model = Quotation
-        fields = '__all__'
-        exclude = ['purchase_request', 'created_by']
+        model = UnitOfMeasurement
+        fields = ['name', 'unit']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
         for field_name, field in self.fields.items():
             field.widget.attrs.update({
                 'class': "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset "
                          "ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 "
                          "sm:text-sm sm:leading-6",
             })
-
-            if isinstance(field.widget, forms.Textarea):
-                field.widget.attrs.update({'rows': '3'})

@@ -7,8 +7,9 @@ class CreateCS extends React.Component {
     super(props);
     this.state = {
       cs_id: "",
+      cs_owner: "",
       plan_ref: "",
-      proc_plan: "",
+      proc_plan: null,
       scope_of_work: "",
       pr_number: "",
       quantity: "",
@@ -19,6 +20,7 @@ class CreateCS extends React.Component {
       date_tender_opened: "",
       tender_adjudication_committee_date: "",
       advert: null,
+      advert_url: null,
       bid_count: 0,
       currentBid: {},
       bids: [],
@@ -30,55 +32,301 @@ class CreateCS extends React.Component {
       complianceTable: false,
       compliance: [],
       complianceRemarks: [],
+      showSamples: "",
+      showSiteVisit: "",
 
       rankingTable: false,
       rankings: [],
 
       committeeTable: false,
-      committee: [],
+      committeeMembers: [],
+      member: {
+        memberName: "",
+        memberUserName: "",
+        memberPosition: "",
+      },
+      users: [],
 
       pr_items: [],
       suppliers: [],
-      procurement_plans: [],
+      proc_plans: [],
       authUser: {},
       username: "",
     };
     this.getCreateData = this.getCreateData.bind(this);
     this.onAddBid = this.onAddBid.bind(this);
     this.onAddItemsModal = this.onAddItemsModal.bind(this);
+    this.onCommitteeChange = this.onCommitteeChange.bind(this);
+    this.onGetFileObjectUrl = this.onGetFileObjectUrl.bind(this);
+    this.onComplianceItemsChange = this.onComplianceItemsChange.bind(this);
+    this.onCommitteeApprove = this.onCommitteeApprove.bind(this);
   }
 
   componentDidMount() {
     console.log("props: ", this.props);
-    this.setState({
-      username: this.props.username,
-      pr_number: this.props.prid,
-    });
-    this.getCreateData(this.props.prid);
+    if(this.props.csid !== ""){
+      this.setState({
+        username: this.props.username,
+        cs_id: this.props.csid,
+      });
+      this.getCSData(this.props.csid);
+    } else {
+
+      this.setState({
+        username: this.props.username,
+        pr_number: this.props.prid,
+      });
+      this.getCreateData(this.props.prid);
+    }
   }
 
+  onGetFileObjectUrl = (fileData) => {
+
+    if(typeof fileData === "string"){
+      const decodedFileData = atob(fileData);
+      const uint8Array = new Uint8Array(decodedFileData.length);
+      for (let i = 0; i < decodedFileData.length; i++) {
+          uint8Array[i] = decodedFileData.charCodeAt(i);
+      }
+  
+      const file = new Blob([uint8Array], { type: "application/pdf" });
+      console.log("file: ", file);
+      
+      return URL.createObjectURL(file);
+    } else {
+      console.log("fileData: ", fileData);
+      return URL.createObjectURL(fileData);
+    }
+  }
+
+  getCSData = (cs_id) => {
+    fetch(`http://localhost:8000/comperative_schedule/cs_data/${cs_id}`)
+      .then((response) => response.json())
+      .then((data_) => {
+        let data = JSON.parse(data_);
+        console.log("cs data: ", data, typeof data);
+        let bids_object = data.bids ? data.bids : [];
+        let bids = Object.keys(bids_object).map((key) => {
+          let new_obj = bids_object[key]
+          return {
+            ...new_obj,
+            bid_document_url: this.onGetFileObjectUrl(new_obj.bid_document)
+          }
+        });
+
+        let compliance = data.compliance ? data.compliance : [];
+        let rankings = data.rankings ? data.rankings : [];
+        let committee = data.committee ? data.committee : [];
+        let pr_date = data.pr_date ? data.pr_date : "";
+        let proc_plan = data.proc_plan ? data.proc_plan : "";
+        let scope_of_work = data.scope_of_work ? data.scope_of_work : "";
+        let pr_number = data.pr_number ? data.pr_number : "";
+        let quantity = data.quantity ? data.quantity : "";
+        let closing_date = data.closing_date ? data.closing_date : "";
+        let ref_date = data.ref_date ? data.ref_date : "";
+        let closing_time = data.closing_time? data.closing_time : "";
+        let tender_adjudication_committee_date = data.tac_date ? data.tac_date : "";
+        let cs_opened = data.cs_opened ? data.cs_opened : false;
+
+        let proc_plans = data.proc_plans ? data.proc_plans : [];
+        let suppliers = data.suppliers ? data.suppliers : [];
+        let pr_items = data.pr_items ? data.pr_items : [];
+        let users = data.users ? data.users : [];
+        let cs_owner = data.cs_owner ? data.cs_owner : "";
+
+        let advert_url = this.onGetFileObjectUrl(data.advert);
+        console.log("advert file", advert, typeof advert);
+        this.setState({
+          ...this.state,
+          cs_owner: cs_owner,
+          proc_plans: proc_plans,
+          suppliers: suppliers,
+          users: users,
+
+          date_tender_opened: cs_opened,
+          ref_date: ref_date,
+          proc_ref: proc_plan.proc_ref,
+          proc_plan: proc_plan,
+          scope_of_work: scope_of_work,
+          pr_number: pr_number,
+          quantity: quantity,
+          pr_date: pr_date,
+          closing_date: closing_date,
+          closing_time_hour: closing_time,
+          ref_date: ref_date,
+          tender_adjudication_committee_date: tender_adjudication_committee_date,
+          advert: advert,
+          advert_url: advert_url,
+          bids: bids,
+          cs_items: pr_items,
+          compliance: compliance,
+          rankings: rankings,
+          committeeMembers: committee,
+          pr_items: pr_items,
+        });
+      });
+  };
+
+
   getCreateData = (pr_id) => {
-    
     console.log("cs pr_id: ", pr_id);
 
-    fetch(`http://localhost:8000/comparative_schedule/create_data/${pr_id}`)
+    fetch(`http://localhost:8000/comperative_schedule/create_data/${pr_id}`)
       .then((response) => response.json())
       .then((data) => {
         console.log("data: ", data);
+        let scope_of_work = data.scope_of_work ? data.scope_of_work : "";
+        let proc_ref = data.proc_ref? data.proc_ref: ""
         let plans = data.proc_plans ? data.proc_plans : [];
         let suppliers = data.suppliers ? data.suppliers : [];
         let pr_items = data.pr_items ? data.pr_items : [];
         let pr_id = data.pr_id ? data.pr_id : "";
         let pr_date = data.pr_date ? data.pr_date : "";
+        let users = data.users ? data.users : [];
         this.setState({
-          procurement_plans: plans,
+          scope_of_work: scope_of_work,
+          plan_ref: proc_ref,
+          proc_plans: plans,
           suppliers: suppliers,
           pr_items: pr_items,
           pr_number: pr_id,
           pr_date: pr_date,
+          users: users,
         });
       });
   };
+
+  onCommitteeChange = (name_, event) => {
+    
+    let { name, value } = event.target;
+    console.log("name: ", name_, "value: ", value);
+    let member = this.state.member;
+    member[name_] = value;
+    this.setState({
+      ...this.state,
+      member: member,
+    });
+  };
+
+  onAddCommitteeMembers = () => {
+    let members = this.state.committeeMembers;
+    // check if memberUserName exists
+    // let memberExist =  
+    members.push(this.state.member);
+    this.setState({
+      ...this.state,
+      committeeMembers: members,
+      member: {
+        memberUserName: "",
+        memberName: "",
+        memberPosition: "",
+      },
+    });
+  };
+
+  onRemoveCommitteeMember = (index, username) => {
+    let members = this.state.committeeMembers.filter(
+      (member, _index) => _index !== index
+    );
+    if (members.length < this.state.committeeMembers.length) {
+      this.setState({
+        ...this.state,
+        committeeMembers: members,
+      });
+    }
+    this.deleteCommitteeMember(username);
+  };
+
+  deleteCommitteeMember = (username) => {
+    let form_data = new FormData();
+    form_data.append("cs_id", this.state.cs_id);
+    form_data.append("username", username);
+    form_data.append("csrfmiddlewaretoken", this.getCookie("csrftoken"));
+
+    fetch(`http://localhost:8000/comperative_schedule/delete_committee_member`, {
+      method: "POST",
+      headers: {
+        "X-CSRFToken": this.getCookie("csrftoken"),
+      },
+      body: form_data,
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        console.log("data: ", data);
+        if (data.success) {
+          alert("Committee member deleted successfully");
+        } else {
+          alert("Error deleting Committee member");
+        }
+      });
+  }
+
+  onCommitteeApprove = (username) => {
+    let form_data = new FormData();
+    form_data.append("cs_id", this.state.cs_id);
+    form_data.append("username", username);
+    form_data.append("csrfmiddlewaretoken", this.getCookie("csrftoken"));
+
+    fetch(`http://localhost:8000/comperative_schedule/committee_approve`, {
+      method: "POST",
+      headers: {
+        "X-CSRFToken": this.getCookie("csrftoken"),
+      },
+      body: form_data,
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        console.log("data: ", data);
+        if (data.success) {
+          let committeeDate = data.committee_date;
+          let committeeStatus = data.committe_status;
+          let members = this.state.committeeMembers.map((member) => {
+            if (member.memberUserName === username) {
+              member.approved = true;
+              member.committee_date = committeeDate;
+              member.committe_status = committeeStatus;
+            }
+            return member;
+          });
+          this.setState({
+            ...this.state,
+            committeeMembers: members,
+          })
+          alert("Committee member approved successfully");
+        } else {
+          alert("Error approving Committee");
+        }
+      });
+  }
+  
+  onSubmitCommitee = () => {
+    let form_data = new FormData();
+    form_data.append("cs_id", this.state.cs_id);
+    form_data.append(
+      "committee",
+      JSON.stringify({
+        committee: this.state.committeeMembers,
+      })
+    );
+    form_data.append("csrfmiddlewaretoken", this.getCookie("csrftoken"));
+    
+    fetch(`http://localhost:8000/comperative_schedule/save_committee`, {
+      method: "POST",
+      headers: {
+        "X-CSRFToken": this.getCookie("csrftoken"),
+      },
+      body: form_data,
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        console.log("data: ", data);
+        if (data.success) {
+          alert("Committee saved successfully");
+        } else {
+          alert("Error saving Committee");
+        }
+      });
+  }
 
   onAddCSItem = (item_id) => {
     // check is item already added
@@ -161,7 +409,9 @@ class CreateCS extends React.Component {
     let currentBid = this.state.currentBid;
     if (name_ === "bid_document") {
       let bid_file = event.target.files[0];
+      let bid_document_url = this.onGetFileObjectUrl(event.target.files[0]);
       currentBid[name_] = bid_file;
+      currentBid.bid_document_url = bid_document_url
     } else if (name_ === "supplier") {
       let { name, value } = event.target;
       console.log("value: ", value);
@@ -178,10 +428,10 @@ class CreateCS extends React.Component {
     });
   };
 
-  onCurrentBidItemChange = (item_id, name_, event) => {
+  onCurrentBidItemChange = (description, name_, event) => {
     // check if item exists in current bid
     let item = this.state.currentBid.items
-      ? this.state.currentBid.items.find((item) => item.id === item_id)
+      ? this.state.currentBid.items.find((item) => item.item_required === description)
       : null;
     console.log("item: ", item);
     // if item exists update item
@@ -190,7 +440,7 @@ class CreateCS extends React.Component {
       item[name_] = value;
       // update item in current bid
       let items = this.state.currentBid.items.map((_item) => {
-        if (_item.id === item_id) {
+        if (_item.item_required === description) {
           return item;
         }
         return _item;
@@ -205,11 +455,10 @@ class CreateCS extends React.Component {
       });
     } else {
       // find item in cs_items
-      let item = this.state.cs_items.find((item) => item.id === item_id);
+      let item = this.state.cs_items.find((item) => item.item_required === description);
       // create new item
       let new_item = {
-        id: item.id,
-        description: item.description,
+        item_required: item.item_required,
         quantity: item.quantity,
         unit_of_measurement: item.unit_of_measurement,
         vat: item.vat,
@@ -309,7 +558,7 @@ class CreateCS extends React.Component {
     form_data.append("bid_document", currentBid.bid_document);
     form_data.append("csrfmiddlewaretoken", this.getCookie("csrftoken"));
 
-    fetch(`http://localhost:8000/comparative_schedule/save_bid`, {
+    fetch(`http://localhost:8000/comperative_schedule/save_bid`, {
       method: "POST",
       headers: {
         "X-CSRFToken": this.getCookie("csrftoken"),
@@ -331,8 +580,7 @@ class CreateCS extends React.Component {
     let form_data = new FormData();
     // add enctype to form data
     form_data.enctype = "multipart/form-data";
-    form_data.append("plan_ref", this.state.plan_ref);
-    form_data.append("proc_plan", this.state.proc_plan);
+    form_data.append("proc_ref", this.state.proc_ref);
     form_data.append("scope_of_work", this.state.scope_of_work);
     form_data.append("pr_number", this.state.pr_number);
     form_data.append("quantity", this.state.quantity);
@@ -349,7 +597,7 @@ class CreateCS extends React.Component {
     form_data.append("advert", this.state.advert);
     form_data.append("csrfmiddlewaretoken", this.getCookie("csrftoken"));
 
-    fetch(`http://localhost:8000/comparative_schedule/save`, {
+    fetch(`http://localhost:8000/comperative_schedule/save`, {
       method: "POST",
       headers: {
         "X-CSRFToken": this.getCookie("csrftoken"),
@@ -358,12 +606,13 @@ class CreateCS extends React.Component {
     })
       .then((response) => response.json())
       .then((data) => {
-        console.log("data: ", data);
+        console.log("comperative schedule saved data: ", data);
         if (data.success) {
           alert("Comparative Schedule saved successfully" + " " + data.cs_id);
           this.setState({
             ...this.state,
             cs_id: data.cs_id,
+            cs_owner: data.cs_owner,
           });
         } else {
           alert("Error saving Comparative Schedule");
@@ -376,8 +625,7 @@ class CreateCS extends React.Component {
     // add enctype to form data
     form_data.enctype = "multipart/form-data";
     form_data.append("cs_id", this.state.cs_id);
-    form_data.append("plan_ref", this.state.plan_ref);
-    form_data.append("proc_plan", this.state.proc_plan);
+    form_data.append("proc_ref", this.state.proc_ref);
     form_data.append("scope_of_work", this.state.scope_of_work);
     form_data.append("pr_number", this.state.pr_number);
     form_data.append("quantity", this.state.quantity);
@@ -394,7 +642,7 @@ class CreateCS extends React.Component {
     form_data.append("advert", this.state.advert);
     form_data.append("csrfmiddlewaretoken", this.getCookie("csrftoken"));
 
-    fetch(`http://localhost:8000/comparative_schedule/update`, {
+    fetch(`http://localhost:8000/comperative_schedule/update`, {
       method: "POST",
       headers: {
         "X-CSRFToken": this.getCookie("csrftoken"),
@@ -501,76 +749,6 @@ class CreateCS extends React.Component {
     // Filter by depot, filter by month, filter combined
   }
 
-  getFilterData = (selectedRegion, selectedDistrict, selectedDepot) => {
-    fetch(`http://localhost:8000/dashboards/dashboard_filter`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRFToken": this.getCookie("csrftoken"),
-      },
-      body: JSON.stringify({
-        region: selectedRegion,
-        district: selectedDistrict,
-        depot: selectedDepot,
-      }),
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        console.log("data: ", data);
-        if (data) {
-          console.log("running ...");
-          let inspection_locations_,
-            inspections_count_,
-            maintenance_locations_,
-            maintenance_count_,
-            mtn_;
-          try {
-            inspection_locations_ = JSON.parse(data.inspection_locations);
-          } catch (error) {
-            console.error("Error parsing inspection_locations:", error);
-            inspection_locations_ = []; // Set to empty array on error
-          }
-          try {
-            inspections_count_ = JSON.parse(data.inspections_count);
-          } catch (error) {
-            console.error("Error parsing inspections_count_:", error);
-            inspections_count_ = []; // Set to empty array on error
-          }
-          try {
-            maintenance_locations_ = JSON.parse(data.maintenance_locations);
-          } catch (error) {
-            console.error("Error parsing maintenance_locations_:", error);
-            maintenance_locations_ = []; // Set to empty array on error
-          }
-          try {
-            maintenance_count_ = JSON.parse(data.maintenance_count);
-          } catch (error) {
-            console.error("Error parsing maintenance_count_:", error);
-            maintenance_count_ = []; // Set to empty array on error
-          }
-          try {
-            mtn_ = data.mtn;
-          } catch (error) {
-            console.error("Error parsing mtn_:", error);
-            mtn_ = {}; // Set to empty dict on error
-          }
-
-          this.setState({
-            inspection_locations: inspection_locations_,
-            inspections_count: inspections_count_,
-            maintenance_locations: maintenance_locations_,
-            maintenance_count: maintenance_count_,
-            mnt: mtn_,
-            pbncs: data.pbncs,
-            upos: data.upos,
-            tds: data.tds,
-          });
-
-          this.initComponents();
-        }
-      });
-  };
-
   getCookie(name) {
     let cookieValue = null;
     if (document.cookie && document.cookie !== "") {
@@ -586,32 +764,6 @@ class CreateCS extends React.Component {
     return cookieValue;
   }
 
-  getDashboardData = () => {
-    fetch(`http://localhost:8000/dashboards/dashboard_data`)
-      .then((response) => response.json())
-      .then((data) => {
-        console.log("data: ", data);
-        let inspection_locations_ = JSON.parse(data.inspection_locations);
-        let inspections_count_ = JSON.parse(data.inspections_count);
-        let maintenance_locations_ = JSON.parse(data.maintenance_locations);
-        let maintenance_count_ = JSON.parse(data.maintenance_count);
-        let mtn_ = data.mtn;
-
-        this.setState({
-          inspection_locations: inspection_locations_,
-          inspections_count: inspections_count_,
-          maintenance_locations: maintenance_locations_,
-          maintenance_count: maintenance_count_,
-          mnt: mtn_,
-          pbncs: data.pbncs,
-          upos: data.upos,
-          tds: data.tds,
-        });
-
-        this.initComponents();
-      });
-  };
-
   onInputChange = (event) => {
     console.log(event);
     const { name, value } = event.target;
@@ -623,9 +775,12 @@ class CreateCS extends React.Component {
 
   onFileInputChange = (name_, event) => {
     console.log(event);
+    let file = event.target.files[0]
+    let fileUrl = this.onGetFileObjectUrl(file)
     this.setState({
       ...this.state,
-      [name_]: event.target.files[0],
+      [name_]: file,
+      advert_url: fileUrl,
     });
   };
 
@@ -633,22 +788,22 @@ class CreateCS extends React.Component {
     // add bid compliance
     let compliances = this.state.bids.map((bid) => {
       return {
-      bid_count: bid.bid_count,
-      supplier: bid.supplier,
-      supplier_name: bid.supplier_name,
-      payment_terms: false,
-      bid_validity: false,
-      delivery_period: false,
-      technical_specifications: false,
-      valid_tax_clearance: false,
-      registered_with_praz: false,
-      tax_status: false,
-      site_visit_done: false,
-      samples_delivered: false,
-      decision: false,
-      reject: true,
-      remarks: "",
-      }
+        bid_count: bid.bid_count,
+        supplier: bid.supplier,
+        supplier_name: bid.supplier_name,
+        payment_terms: false,
+        bid_validity: false,
+        delivery_period: false,
+        technical_specifications: false,
+        valid_tax_clearance: false,
+        registered_with_praz: false,
+        tax_status: false,
+        site_visit: false,
+        samples_required: false,
+        decision: false,
+        reject: true,
+        remarks: "",
+      };
     });
 
     let complianceRemarks = this.state.bids.map((bid) => {
@@ -657,9 +812,8 @@ class CreateCS extends React.Component {
         supplier: bid.supplier,
         supplier_name: bid.supplier_name,
         remarks: "",
-      }
+      };
     });
-
 
     this.setState({
       ...this.state,
@@ -669,17 +823,46 @@ class CreateCS extends React.Component {
     });
   };
 
-  onComplianceChange = (bid_count, event) => {
+  onComplianceItemsChange = (name_, event) => {
+    console.log("name and value: ", name_, event)
+    let { name, value } = event.target;
+    this.setState({
+      ...this.state,
+      [name_]: value,
+    });
+  }
+
+  onComplianceChange = (index, event) => {
     let { name, checked } = event.target;
     console.log("name: ", name, "checked: ", checked);
     let compliance = this.state.compliance;
-    let index = compliance.findIndex((item) => item.bid_count === bid_count);
+    // let index = compliance.findIndex((item) => item.bid_count === bid_count);
     compliance[index][name] = checked;
+    // filter decision and reject from list
+    let _compliance = {
+        payment_terms: compliance[index].payment_terms,
+        bid_validity: compliance[index].bid_validity,
+        delivery_period: compliance[index].delivery_period,
+        technical_specifications: compliance[index].technical_specifications,
+        valid_tax_clearance: compliance[index].valid_tax_clearance,
+        registered_with_praz: compliance[index].registered_with_praz,
+        tax_status: compliance[index].tax_status,
+        site_visit: compliance[index].site_visit,
+        samples_required: compliance[index].samples_required,
+    };
+
+    // set compliance[index]['decision'] to true if all compliance are true
+    let compliance_values = Object.values(_compliance);
+    console.log("compliances: ", compliance_values)
+    let decision = compliance_values.every((value) => value === true);
+    compliance[index]["decision"] = decision;
+    compliance[index]["reject"] = !decision;
+
     this.setState({
       ...this.state,
       compliance: compliance,
     });
-  }
+  };
 
   onComplianceRemarksChange = (bid_count, event) => {
     let { name, value } = event.target;
@@ -690,17 +873,20 @@ class CreateCS extends React.Component {
       ...this.state,
       compliance: compliance,
     });
-  }
+  };
 
   onSaveCompliance = () => {
     let form_data = new FormData();
     form_data.append("cs_id", this.state.cs_id);
-    form_data.append("compliance", JSON.stringify({
-      compliance: this.state.compliance,
-    }));
+    form_data.append(
+      "compliance",
+      JSON.stringify({
+        compliance: this.state.compliance,
+      })
+    );
     form_data.append("csrfmiddlewaretoken", this.getCookie("csrftoken"));
 
-    fetch(`http://localhost:8000/comparative_schedule/save_compliance`, {
+    fetch(`http://localhost:8000/comperative_schedule/save_compliance`, {
       method: "POST",
       headers: {
         "X-CSRFToken": this.getCookie("csrftoken"),
@@ -716,14 +902,14 @@ class CreateCS extends React.Component {
           alert("Error saving Compliance");
         }
       });
-  }
+  };
 
   onCloseCS = () => {
     let form_data = new FormData();
     form_data.append("cs_id", this.state.cs_id);
     form_data.append("csrfmiddlewaretoken", this.getCookie("csrftoken"));
 
-    fetch(`http://localhost:8000/comparative_schedule/close_compliance`, {
+    fetch(`http://localhost:8000/comperative_schedule/close_compliance`, {
       method: "POST",
       headers: {
         "X-CSRFToken": this.getCookie("csrftoken"),
@@ -745,14 +931,14 @@ class CreateCS extends React.Component {
           alert("Error saving Schedule");
         }
       });
-  }
+  };
 
   render() {
     var itemsModal = null;
     var bidsModal = null;
     var complianceTable = null;
     var rankingTable = null;
-
+    var committeeTable = null;
 
     if (this.state.addItemsModal) {
       itemsModal = (
@@ -803,7 +989,7 @@ class CreateCS extends React.Component {
                             onChange={() => this.onAddCSItem(item.id)}
                           />
                         </td>
-                        <td>{item.description}</td>
+                        <td>{item.item_required}</td>
                         <td>{item.quantity}</td>
                       </tr>
                     );
@@ -957,11 +1143,11 @@ class CreateCS extends React.Component {
                         <div className="mt-2">
                           <input
                             name="item_description"
-                            defaultValue={item.description}
+                            defaultValue={item.item_required}
                             onChange={(e) =>
                               this.onCurrentBidItemChange(
-                                item.id,
-                                "description",
+                                item.item_required,
+                                "item_required",
                                 e
                               )
                             }
@@ -984,7 +1170,7 @@ class CreateCS extends React.Component {
                             defaultValue={item.quantity}
                             onChange={(e) =>
                               this.onCurrentBidItemChange(
-                                item.id,
+                                item.item_required,
                                 "quantity",
                                 e
                               )
@@ -1008,7 +1194,7 @@ class CreateCS extends React.Component {
                               id="unit_of_measurement"
                               onChange={(e) =>
                                 this.onCurrentBidItemChange(
-                                  item.id,
+                                  item.item_required,
                                   "unit_of_measurement",
                                   e
                                 )
@@ -1047,7 +1233,7 @@ class CreateCS extends React.Component {
                             <select
                               id="vat"
                               onChange={(e) =>
-                                this.onCurrentBidItemChange(item.id, "vat", e)
+                                this.onCurrentBidItemChange(item.item_required, "vat", e)
                               }
                               autoComplete="vat"
                               className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
@@ -1076,7 +1262,7 @@ class CreateCS extends React.Component {
                             defaultValue={item.unit_price}
                             onChange={(e) =>
                               this.onCurrentBidItemChange(
-                                item.id,
+                                item.item_required,
                                 "unit_price",
                                 e
                               )
@@ -1118,30 +1304,52 @@ class CreateCS extends React.Component {
       );
     }
 
-    if (this.state.complianceTable) {
-      complianceTable = (
-        <div className="bg-gulf-blue-300 shadow shadow-nepal-300 text-gray-700 rounded px-2 py-2">
-          <div className="space-y-12 px-5 py-5">
-            <div className="px-4 sm:px-0 mt-6 border-t border-gray-100 border-gray-900/10">
-              <h2 className="text-base font-semibold leading-6 text-gray-900">
-                COMPLIANCE TABLE
-              </h2>
-              <p className="mt-1 max-w-2xl text-sm leading-6 text-gray-500">
-                Key: Comply/ Not Comply (Y/ N), Not Stated (NS)
-              </p>
-              <div className="flex justify-evenly mt-5 bg-gulf-blue-300 px-2 py-2 rounded-md">
-                <div className="flex-1 w-45">
+    complianceTable = (
+      <div className="bg-gulf-blue-300 shadow shadow-nepal-300 text-gray-700 rounded px-2 py-2">
+        <div className="space-y-12 px-5 py-5">
+          <div className="px-4 sm:px-0 mt-6 border-t border-gray-100 border-gray-900/10">
+            <h2 className="text-base font-semibold leading-6 text-gray-900">
+              COMPLIANCE TABLE
+            </h2>
+            <p className="mt-1 max-w-2xl text-sm leading-6 text-gray-500">
+              Key: Comply/ Not Comply (Y/ N), Not Stated (NS)
+            </p>
+            <div className="flex justify-evenly mt-5 bg-gulf-blue-300 px-2 py-2 rounded-md">
+              <div className="flex-1 w-45">
+                <label
+                  htmlFor="site_visit"
+                  className="block text-sm font-medium leading-6 text-gray-900"
+                >
+                  Site visit required?
+                </label>
+                <div className="mt-2">
+                  <select
+                    id="site_visit"
+                    name="showSiteVisit"
+                    onChange={(e) => this.onComplianceItemsChange("showSiteVisit", e)}
+                    autoComplete="site_visit"
+                    className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
+                  >
+                    <option value="">Select Option</option>
+                    <option value="yes">Yes</option>
+                    <option value="no">No</option>
+                  </select>
+                </div>
+              </div>
+              <div className="flex-1 w-45">
+                <div>
                   <label
-                    htmlFor="site_visit"
+                    htmlFor="samples"
                     className="block text-sm font-medium leading-6 text-gray-900"
                   >
-                    Site visit required?
+                    Are Samples Required?
                   </label>
                   <div className="mt-2">
                     <select
-                      id="site_visit"
-                      name="site_visit"
-                      autoComplete="site_visit"
+                      id="samples"
+                      name="showSamples"
+                      onChange={(e) => this.onComplianceItemsChange("showSamples", e)}
+                      autoComplete="samples"
                       className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
                     >
                       <option value="">Select Option</option>
@@ -1150,328 +1358,500 @@ class CreateCS extends React.Component {
                     </select>
                   </div>
                 </div>
-                <div className="flex-1 w-45">
-                  <div>
-                    <label
-                      htmlFor="samples"
-                      className="block text-sm font-medium leading-6 text-gray-900"
-                    >
-                      Are Samples Required?
-                    </label>
-                    <div className="mt-2">
-                      <select
-                        id="samples"
-                        name="samples"
-                        autoComplete="samples"
-                        className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
-                      >
-                        <option value="">Select Option</option>
-                        <option value="yes">Yes</option>
-                        <option value="no">No</option>
-                      </select>
-                    </div>
-                  </div>
-                </div>
               </div>
+            </div>
 
-              <div className="overflow-auto px-2 py-2 mt-5 rounded-md bg-gulf-blue-300">
-                <table className="table-auto w-full text-left">
-                  <thead>
-                    <tr className="text-gray-900">
-                      <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                        Bid No.
-                      </th>
-                      <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                        Name of Supplier
-                      </th>
-                      <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                        Payment <br />
-                        Terms
-                      </th>
-                      <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                        Bid <br />
-                        Validity
-                      </th>
-                      <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                        Delivery <br />
-                        Period
-                      </th>
-                      <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                        Technical <br />
-                        Specifications
-                      </th>
-                      <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                        Valid <br />
-                        Tax Clearance
-                      </th>
-                      <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                        Registered <br />
-                        with PRAZ?
-                      </th>
-                      <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                        Tax <br />
-                        Status
-                      </th>
+            <div className="overflow-auto px-2 py-2 mt-5 rounded-md bg-gulf-blue-300">
+              <table className="table-auto w-full text-left">
+                <thead>
+                  <tr className="text-gray-900">
+                    <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                      Bid No.
+                    </th>
+                    <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                      Name of Supplier
+                    </th>
+                    <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                      Payment <br />
+                      Terms
+                    </th>
+                    <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                      Bid <br />
+                      Validity
+                    </th>
+                    <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                      Delivery <br />
+                      Period
+                    </th>
+                    <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                      Technical <br />
+                      Specifications
+                    </th>
+                    <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                      Valid <br />
+                      Tax Clearance
+                    </th>
+                    <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                      Registered <br />
+                      with PRAZ?
+                    </th>
+                    <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                      Tax <br />
+                      Status
+                    </th>
+                    {this.state.showSiteVisit === "yes" ? (
                       <th
                         id="site_visit_header"
-                        className="hidden site-visit-header border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2"
+                        className="site-visit-header border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2"
                       >
                         Site Visit
                         <br />
                         Done?
                       </th>
-                      <th
-                        id="samples_header"
-                        className="hidden samples-header border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2"
-                      >
-                        Samples <br />
-                        Delivered?
-                      </th>
-                      <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                        Accept
-                      </th>
-                      <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                        Reject
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {this.state.compliance.map((comp, key) => {
-                      return (
-                        <tr>
-                          <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                            {comp.bid_count}
-                          </td>
-                          <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                            {comp.supplier_name}
-                          </td>
-                          <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                            <input
-                              name="payment_terms"
-                              checked={comp.payment_terms? comp.payment_terms : false}
-                              onChange={(e) => this.onComplianceChange(comp.bid_count, e)}
-                              id="payment_terms"
-                              type="checkbox"
-                            />
-                          </td>
-                          <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                            <input
-                              name="bid_validity"
-                              checked={comp.bid_validity? comp.bid_validity : false}
-                              onChange={(e) => this.onComplianceChange(comp.bid_count, e)}
-                              id="bid_validity"
-                              type="checkbox"
-                            />
-                          </td>
-                          <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                            <input
-                              name="delivery_period"
-                              checked={comp.delivery_period? comp.delivery_period : false}
-                              onChange={(e) => this.onComplianceChange(comp.bid_count, e)}
-                              id="delivery_period"
-                              type="checkbox"
-                            />
-                          </td>
-                          <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                            <input
-                              name="technical_specifications"
-                              checked={comp.technical_specifications? comp.technical_specifications : false}
-                              onChange={(e) => this.onComplianceChange(comp.bid_count, e)}
-                              id="technical_specifications"
-                              type="checkbox"
-                            />
-                          </td>
-                          <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                            <input
-                              name="valid_tax_clearance"
-                              checked={comp.valid_tax_clearance? comp.valid_tax_clearance : false}
-                              onChange={(e) => this.onComplianceChange(comp.bid_count, e)}
-                              id="valid_tax_clearance"
-                              type="checkbox"
-                            />
-                          </td>
-                          <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                            <input
-                              name="registered_with_praz"
-                              checked={comp.registered_with_praz? comp.registered_with_praz : false}
-                              onChange={(e) => this.onComplianceChange(comp.bid_count, e)}
-                              id="registered_with_praz"
-                              type="checkbox"
-                            />
-                          </td>
-                          <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                            <input
-                              name="tax_status"
-                              checked={comp.tax_status? comp.tax_status : false}
-                              onChange={(e) => this.onComplianceChange(comp.bid_count, e)}
-                              id="tax_status"
-                              type="checkbox"
-                            />
-                          </td>
+                    ) : (
+                      ""
+                    )}
+                    {this.state.showSamples === "yes" ? (
+                      <th id="samples_header" className="samples-header border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                      Samples <br />
+                      Delivered?
+                    </th>
+                      ): ""}
+                    
+                    <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                      Accept
+                    </th>
+                    <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                      Reject
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {this.state.compliance.map((comp, key) => {
+                    return (
+                      <tr>
+                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                          {key+1}
+                        </td>
+                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                          {comp.supplier_name}
+                        </td>
+                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                          <input
+                            name="payment_terms"
+                            checked={
+                              comp.payment_terms ? comp.payment_terms : false
+                            }
+                            onChange={(e) =>
+                              this.onComplianceChange(key, e)
+                            }
+                            id="payment_terms"
+                            type="checkbox"
+                          />
+                        </td>
+                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                          <input
+                            name="bid_validity"
+                            checked={
+                              comp.bid_validity ? comp.bid_validity : false
+                            }
+                            onChange={(e) =>
+                              this.onComplianceChange(key, e)
+                            }
+                            id="bid_validity"
+                            type="checkbox"
+                          />
+                        </td>
+                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                          <input
+                            name="delivery_period"
+                            checked={
+                              comp.delivery_period
+                                ? comp.delivery_period
+                                : false
+                            }
+                            onChange={(e) =>
+                              this.onComplianceChange(key, e)
+                            }
+                            id="delivery_period"
+                            type="checkbox"
+                          />
+                        </td>
+                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                          <input
+                            name="technical_specifications"
+                            checked={
+                              comp.technical_specifications
+                                ? comp.technical_specifications
+                                : false
+                            }
+                            onChange={(e) =>
+                              this.onComplianceChange(key, e)
+                            }
+                            id="technical_specifications"
+                            type="checkbox"
+                          />
+                        </td>
+                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                          <input
+                            name="valid_tax_clearance"
+                            checked={
+                              comp.valid_tax_clearance
+                                ? comp.valid_tax_clearance
+                                : false
+                            }
+                            onChange={(e) =>
+                              this.onComplianceChange(key, e)
+                            }
+                            id="valid_tax_clearance"
+                            type="checkbox"
+                          />
+                        </td>
+                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                          <input
+                            name="registered_with_praz"
+                            checked={
+                              comp.registered_with_praz
+                                ? comp.registered_with_praz
+                                : false
+                            }
+                            onChange={(e) =>
+                              this.onComplianceChange(key, e)
+                            }
+                            id="registered_with_praz"
+                            type="checkbox"
+                          />
+                        </td>
+                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                          <input
+                            name="tax_status"
+                            checked={
+                              comp.tax_status ? comp.tax_status : false
+                            }
+                            onChange={(e) =>
+                              this.onComplianceChange(key, e)
+                            }
+                            id="tax_status"
+                            type="checkbox"
+                          />
+                        </td>
+                        {this.state.showSiteVisit === "yes" ? (
                           <td
                             id="site_visit_header"
-                            className="hidden site-visit-header border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2"
+                            className="site-visit-header border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2"
                           >
                             <input
-                              name="site_visit_done"
-                              checked={comp.site_visit_done? comp.site_visit_done : false}
-                              onChange={(e) => this.onComplianceChange(comp.bid_count, e)}
-                              id="site_visit_done"
+                              name="site_visit"
+                              checked={
+                                comp.site_visit
+                                  ? comp.site_visit
+                                  : false
+                              }
+                              onChange={(e) =>
+                                this.onComplianceChange(key, e)
+                              }
+                              id="site_visit"
                               type="checkbox"
                             />
                           </td>
+                        ) : (
+                          ""
+                        )}
+                        {this.state.showSamples === "yes" ? (
                           <td
                             id="samples_header"
-                            className="hidden samples-header border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2"
+                            className="samples-header border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2"
                           >
                             <input
-                              name="samples_delivered"
-                              checked={comp.samples_delivered? comp.samples_delivered : false}
-                              onChange={(e) => this.onComplianceChange(comp.bid_count, e)}
-                              id="samples_delivered"
+                              name="samples_required"
+                              checked={
+                                comp.samples_required
+                                  ? comp.samples_required
+                                  : false
+                              }
+                              onChange={(e) =>
+                                this.onComplianceChange(key, e)
+                              }
+                              id="samples_required"
                               type="checkbox"
                             />
                           </td>
-                          <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                            <input
-                              name="decision"
-                              checked={comp.decision? comp.decision : false}
-                              onChange={(e) => this.onComplianceChange(comp.bid_count, e)}
-                              id="decision"
-                              type="checkbox"
-                            />
-                          </td>
-                          <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                            <input 
-                            name="reject" 
-                            checked={comp.reject? comp.reject : false}
-                            onChange={(e) => this.onComplianceChange(comp.bid_count, e)}
-                            id="reject" type="checkbox" />
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-              <div className="px-2 py-2 mt-5 rounded-sm bg-gulf-blue-300">
-                <table className="table-auto w-full text-left">
-                  <thead>
-                    <tr className="text-gray-900">
-                      <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                        Supplier
-                      </th>
-                      <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                        Remarks
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {this.state.compliance.map((bid, key) => {
-                      return (
-                        <tr>
-                          <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                            {bid.supplier_name}
-                          </td>
-                          <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                            <input
-                              name="remarks"
-                              onChange={(e) => this.onComplianceRemarksChange(bid.bid_count, e)}
-                              type="text"
-                              className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
-                            />
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
+                        ) : (
+                          ""
+                        )}
+                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                          <input
+                            name="decision"
+                            
+                            checked={comp.decision ? comp.decision : false}
+                            onChange={(e) =>
+                              this.onComplianceChange(key, e)
+                            }
+                            id="decision"
+                            type="checkbox"
+                          />
+                        </td>
+                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                          <input
+                            name="reject"
+                            checked={comp.reject ? comp.reject : false}
+                            onChange={(e) =>
+                              this.onComplianceChange(key, e)
+                            }
+                            id="reject"
+                            type="checkbox"
+                          />
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
-          </div>
-
-          <div className="flex justify-center mt-5 px-3 py-3">
-            <div className="flex-1 m-2">
-              <button
-                style={{width: "100%"}}
-                onClick={this.onSaveCompliance}
-                name="save_next"
-                className="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-              >
-                SAVE COMPLIANCES
-              </button>
-            </div>
-          </div>
-        </div>
-      );
-    }
-
-    if (this.state.rankingTable) {
-      rankingTable = (
-        <div className="bg-gulf-blue-300 shadow shadow-nepal-300 text-gray-700 rounded px-2 py-2">
-          <div className="space-y-12 px-5 py-5">
-            <div className="px-4 sm:px-0 mt-6 border-t border-gray-100 border-gray-900/10">
-              <h2 className="text-base font-semibold leading-6 text-gray-900">
-                RANKING TABLE
-              </h2>
-
-              <div className="overflow-auto px-2 py-2 mt-5 rounded-md bg-gulf-blue-300">
-                <table className="table-auto w-full text-left">
-                  <thead>
-                    <tr className="text-gray-900">
-                      <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                        ID
-                      </th>
-                      <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                        Name of Supplier
-                      </th>
-                      <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                        Rank
-                      </th>
-                      <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                        Decision
-                      </th>
-                      <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                        Remarks
-                      </th>
-                      <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                        Total
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {this.state.rankings.map((rank, key) => {
-                      return (
-                        <tr className="text-gray-900">
-                          <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                            {rank.id}
-                          </td>
-                          <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                            {rank.supplier_name}
-                          </td>
-                          <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                            {rank.rank}
-                          </td>
-                          <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                            {rank.decision}
-                          </td>
-                          <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                            {rank.remarks}
-                          </td>
-                          <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                            {rank.total}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
+            <div className="px-2 py-2 mt-5 rounded-sm bg-gulf-blue-300">
+              <table className="table-auto w-full text-left">
+                <thead>
+                  <tr className="text-gray-900">
+                    <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                      Supplier
+                    </th>
+                    <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                      Remarks
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {this.state.compliance.map((bid, key) => {
+                    return (
+                      <tr>
+                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                          {bid.supplier_name}
+                        </td>
+                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                          <input
+                            name="remarks"
+                            onChange={(e) =>
+                              this.onComplianceRemarksChange(bid.bid_count, e)
+                            }
+                            type="text"
+                            className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
+                          />
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
-      );
-    }
+
+        <div className="flex justify-center mt-5 px-3 py-3">
+          <div className="flex-1 m-2">
+            <button
+              style={{ width: "100%" }}
+              onClick={this.onSaveCompliance}
+              name="save_next"
+              className="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+            >
+              SAVE COMPLIANCES
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+
+    rankingTable = (
+      <div className="bg-gulf-blue-300 shadow shadow-nepal-300 text-gray-700 rounded px-2 py-2">
+        <div className="space-y-12 px-5 py-5">
+          <div className="px-4 sm:px-0 mt-6 border-t border-gray-100 border-gray-900/10">
+            <h2 className="text-base font-semibold leading-6 text-gray-900">
+              RANKING TABLE
+            </h2>
+
+            <div className="overflow-auto px-2 py-2 mt-5 rounded-md bg-gulf-blue-300">
+              <table className="table-auto w-full text-left">
+                <thead>
+                  <tr className="text-gray-900">
+                    <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                      ID
+                    </th>
+                    <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                      Name of Supplier
+                    </th>
+                    <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                      Rank
+                    </th>
+                    <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                      Decision
+                    </th>
+                    <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                      Remarks
+                    </th>
+                    <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                      Total
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {this.state.rankings.map((rank, key) => {
+                    return (
+                      <tr className="text-gray-900">
+                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                          {key+1}
+                        </td>
+                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                          {rank.supplier_name}
+                        </td>
+                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                          {rank.rank}
+                        </td>
+                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                          {rank.decision}
+                        </td>
+                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                          {rank.remarks}
+                        </td>
+                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                          {rank.total}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+
+    committeeTable = (
+      <div className="bg-gulf-blue-300 shadow shadow-nepal-300 text-gray-700 rounded px-2 py-2">
+        <div className="space-y-12 px-5 py-5">
+          <div className="px-4 sm:px-0 mt-6 border-t border-gray-100 border-gray-900/10">
+            <h2 className="text-base font-semibold leading-6 text-gray-900">
+              Committee Members
+            </h2>
+
+            <div className="overflow-auto px-2 py-2 mt-5 rounded-md bg-gulf-blue-300">
+              <table className="table-auto w-full text-left">
+                <tbody>
+                  <tr className="text-gray-900">
+                    <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                      <div>
+                        <label
+                          htmlFor="memberPosition"
+                          className="block text-sm font-medium leading-6 text-gray-900"
+                        >
+                          Member Position
+                        </label>
+                        <div className="mt-2">
+                          <select
+                            onChange={(text) => this.onCommitteeChange("memberPosition", text)}
+                            id="memberPosition"
+                            name="memberPosition"
+                            autoComplete="memberPosition"
+                            className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
+                          >
+                            <option value="">Select Option</option>
+                            <option value="chairman">Chairman</option>
+                            <option value="finance">Finance</option>
+                            <option value="procurement">Procurement</option>
+                            <option value="user">User</option>
+                            <option value="other">Other</option>
+                          </select>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                      <div>
+                        <label
+                          htmlFor="memberUserName"
+                          className="block text-sm font-medium leading-6 text-gray-900"
+                        >
+                          Select User
+                        </label>
+                        <div className="mt-2">
+                          <select
+                            onChange={(text) => this.onCommitteeChange("memberUserName", text)}
+                            id="memberUserName"
+                            name="memberUserName"
+                            autoComplete="memberUserName"
+                            className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
+                          >
+                            {this.state.users ? this.state.users.map((user) => (
+                              <option value={user.username}>{user.first_name + " " + user.last_name}</option>
+                            )) : ""}
+                          </select>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2"></td>
+                    <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                      {this.state.username === this.state.cs_owner ? (
+                        <div className="w-30">
+                          <button
+                            style={{ width: "100%" }}
+                            onClick={this.onAddCommitteeMembers}
+                            name="save_next"
+                            className="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                          >
+                            ADD MEMBER
+                          </button>
+                        </div>
+                      ): ""}
+                    </td>
+                  </tr>
+                  {this.state.committeeMembers.map((member, key) => {
+                    return (
+                      <tr className={member.committeeStatus? "text-gray-900 bg-apple-200 rounded-md": "text-gray-900"}>
+                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                          {member.memberPosition}
+                        </td>
+                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                          {member.memberName? member.memberName: member.memberUserName}
+                        </td>
+                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                          {member.committeeDate}
+                        </td>
+                          <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                          <div className="flex justify-content-evenly">
+                          {this.state.username === this.state.cs_owner ? (
+                            <div className="m-2">
+                              <button
+                                onClick={() => this.onRemoveCommitteeMember(key, member.memberUserName)}
+                                name="save_next"
+                                className="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                              >
+                                REMOVE
+                              </button>
+                            </div> 
+                            ): ""}
+                            {this.state.username === member.memberUserName ? (
+                            <div className="m-2">
+                              <button
+                                onClick={() => this.onCommitteeApprove(member.memberUserName)}
+                                name="save_next"
+                                className="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                              >
+                                {member.committeeStatus? "REJECT": "APPROVE"}
+                              </button>
+                            </div>
+                            ): ""}
+                            </div>
+                          </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+
 
     return (
       <div>
@@ -1526,8 +1906,9 @@ class CreateCS extends React.Component {
                       className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
                     >
                       <option>Select Procurement Plan Ref</option>
-                      {this.state.procurement_plans
-                        ? this.state.procurement_plans.map((plan) => (
+                      {this.state.proc_plan ? (<option value={this.state.proc_plan.proc_ref}>{this.state.proc_plan.description}</option>): ""}
+                      {this.state.proc_plans
+                        ? this.state.proc_plans.map((plan) => (
                             <option value={plan.proc_ref}>
                               {plan.description}
                             </option>
@@ -1648,6 +2029,7 @@ class CreateCS extends React.Component {
                         }
                         className="rounded-md block border-none w-full py-1.5 text-gray-900 sm:max-w-xs sm:text-sm sm:leading-6"
                       >
+                        {this.state.closing_time_hour? (<option value={this.state.closing_time_hour}>{this.state.closing_time_hour}</option>): ""}
                         <option value="10:00">10:00</option>
                         <option value="14:00">14:00</option>
                       </select>
@@ -1748,6 +2130,22 @@ class CreateCS extends React.Component {
                   />
                 </div>
               </div>
+              <div className="flex-1 w-40 ml-2">
+                <label
+                    htmlFor="bid_document"
+                    className="block text-sm font-medium leading-6 text-gray-900"
+                  >
+                    Advert Document
+                  </label>
+                  <div className="mt-2">
+                    <a
+                      href={this.state.advert_url}
+                      rel="noopener noreferrer"
+                    >
+                      View Advert Document
+                    </a>
+                  </div>
+                </div>
             </div>
 
             <div className="flex justify-center mt-10 px-3 py-3">
@@ -1777,7 +2175,7 @@ class CreateCS extends React.Component {
             </div>
           </div>
 
-          {this.state.bids.length === 0 && this.state.cs_id && (
+          {this.state.bids.length < 1? (
             <div className="m-2">
               <button
                 style={{ width: "100%" }}
@@ -1787,7 +2185,7 @@ class CreateCS extends React.Component {
                 ADD SCHEDULE ITEMS
               </button>
             </div>
-          )}
+          ): ""}
 
           {this.state.bids.map((bid, index) => {
             return (
@@ -1839,15 +2237,11 @@ class CreateCS extends React.Component {
                       </label>
                       <div className="mt-2">
                         <a
-                          href={
-                            bid.bid_document
-                              ? URL.createObjectURL(bid.bid_document)
-                              : ""
-                          }
+                          href={bid.bid_document_url}
                           target="_blank"
                           rel="noopener noreferrer"
                         >
-                          {bid.bid_document ? bid.bid_document.name : ""}
+                          View Document
                         </a>
                       </div>
                     </div>
@@ -1864,7 +2258,7 @@ class CreateCS extends React.Component {
                             Item Description
                           </label>
                           <div className="mt-2">
-                            <p>{item.description}</p>
+                            <p>{item.item_required}</p>
                           </div>
                         </div>
                         <div className="flex-1 w-15 ml-1">
@@ -1968,7 +2362,7 @@ class CreateCS extends React.Component {
             ""
           )}
 
-          {this.state.bids.length > 0 ? (
+          {(this.state.bids.length > 0) && (this.state.compliance.length < 1) ? (
             <div className="m-2">
               <button
                 style={{ width: "100%" }}
@@ -1982,23 +2376,39 @@ class CreateCS extends React.Component {
             ""
           )}
 
-          {complianceTable}
+          {this.state.compliance.length > 0 ? (complianceTable): ""}
 
-          {this.state.compliance.length > 0 ? (
+          {(this.state.compliance.length > 0) ? (
             <div className="m-2">
               <button
                 style={{ width: "100%" }}
                 onClick={this.onCloseCS}
-                className="rounded-md bg-red-danger hover:bg-orange-500 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                className="rounded-md bg-nepal-950 hover:bg-nepal-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
               >
-                CLOSE SCHEDULE
+                RANK BIDS
               </button>
             </div>
           ) : (
             ""
           )}
 
-          {rankingTable}
+          {(this.state.rankings.length > 0) ? (rankingTable): ""}
+
+          {(this.state.rankings.length > 0) ? (committeeTable): ""}
+
+          {this.state.committeeMembers.length > 0 ? (
+            <div className="m-2">
+              <button
+                style={{ width: "100%" }}
+                onClick={this.onSubmitCommitee}
+                className="rounded-md bg-nepal-950 hover:bg-nepal-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+              >
+                SUBMIT COMMITTEE
+              </button>
+            </div>
+          ) : (
+            ""
+          )}
         </div>
       </div>
     );
@@ -2008,4 +2418,5 @@ class CreateCS extends React.Component {
 const domContainer = document.querySelector("#create_comparative_schedule");
 const username = domContainer.getAttribute("data-username");
 const prid = domContainer.getAttribute("data-prid");
-ReactDOM.render(e(CreateCS, { username, prid }), domContainer);
+const csid = domContainer.getAttribute("data-csid");
+ReactDOM.render(e(CreateCS, { username, prid, csid }), domContainer);

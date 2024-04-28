@@ -127,7 +127,6 @@ INSTALLED_APPS = [
     'finance.comparative_schedules',
     'finance.Direct_purchases',
     'ACE2',
-    'crispy_forms',
 
     'finance.comperative_schedule',
 
@@ -192,6 +191,9 @@ DATABASES = {
     #     'HOST': 'localhost'
     # }
     'default': {
+        'OPTIONS': {
+            'sql_mode': 'NO_BACKSLASH_ESCAPES',
+        },
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'beii_test',
         'USER': 'root',
