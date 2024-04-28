@@ -4,6 +4,7 @@ from django.contrib.auth.models import AbstractUser
 from django.utils import timezone
 from django.contrib.auth.models import BaseUserManager
 
+
 class UserManager(BaseUserManager):
     def create_user(self, username, password=None, **extra_fields):
         extra_fields.setdefault('is_staff', False)
@@ -67,12 +68,14 @@ class Depots(models.Model):
     class Meta:
         app_label = 'users'
 
+
 class Application(models.Model):
     name = models.CharField(max_length=100, unique=True)
     fullname = models.CharField(max_length=100, blank=True)
 
     def __str__(self):
         return self.name
+
 
 class Roles(models.Model):
     role = models.CharField(max_length=100)
@@ -93,11 +96,13 @@ class Designations(models.Model):
     description = models.CharField(max_length=100, blank=True)
     chk = models.CharField(max_length=100, blank=True)
     section = models.ForeignKey(Sections, on_delete=models.DO_NOTHING, blank=True, null=True)
+
     def __str__(self):
         return self.identifier
 
     class Meta:
         app_label = 'users'
+
 
 class UserProfile(AbstractUser):
     username = models.CharField(max_length=15, unique=True, verbose_name='EC Number')

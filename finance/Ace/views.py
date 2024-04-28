@@ -1489,6 +1489,16 @@ def create_budget(request):
                                                           "section_budget": section_budget,
                                                           "sections": sections})
 
+# receive receipt file posted from form submission
+def receipt(request):
+    if request.method == 'POST':
+        receipt_file = request.FILES['receipt_file']
+        disbursed_amount = request.POST['disbursed_amount']
+        pettycash = request.POST['pettycash']
+        pettycash = Pettycash.objects.filter(petty_id=pettycash).first()
+
+    return render(request, 'Ace/receipt.html', {'form': form})
+
 
 @login_required(login_url='/accounts/login/')
 def list_budgets(request):
