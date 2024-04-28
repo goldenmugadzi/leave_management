@@ -175,6 +175,8 @@ class CreateCS extends React.Component {
       .then((response) => response.json())
       .then((data) => {
         console.log("data: ", data);
+        let scope_of_work = data.scope_of_work ? data.scope_of_work : "";
+        let proc_ref = data.proc_ref? data.proc_ref: ""
         let plans = data.proc_plans ? data.proc_plans : [];
         let suppliers = data.suppliers ? data.suppliers : [];
         let pr_items = data.pr_items ? data.pr_items : [];
@@ -182,6 +184,8 @@ class CreateCS extends React.Component {
         let pr_date = data.pr_date ? data.pr_date : "";
         let users = data.users ? data.users : [];
         this.setState({
+          scope_of_work: scope_of_work,
+          plan_ref: proc_ref,
           proc_plans: plans,
           suppliers: suppliers,
           pr_items: pr_items,
@@ -427,7 +431,7 @@ class CreateCS extends React.Component {
   onCurrentBidItemChange = (description, name_, event) => {
     // check if item exists in current bid
     let item = this.state.currentBid.items
-      ? this.state.currentBid.items.find((item) => item.description === description)
+      ? this.state.currentBid.items.find((item) => item.item_required === description)
       : null;
     console.log("item: ", item);
     // if item exists update item
@@ -436,7 +440,7 @@ class CreateCS extends React.Component {
       item[name_] = value;
       // update item in current bid
       let items = this.state.currentBid.items.map((_item) => {
-        if (_item.description === description) {
+        if (_item.item_required === description) {
           return item;
         }
         return _item;
@@ -451,10 +455,10 @@ class CreateCS extends React.Component {
       });
     } else {
       // find item in cs_items
-      let item = this.state.cs_items.find((item) => item.description === description);
+      let item = this.state.cs_items.find((item) => item.item_required === description);
       // create new item
       let new_item = {
-        description: item.description,
+        item_required: item.item_required,
         quantity: item.quantity,
         unit_of_measurement: item.unit_of_measurement,
         vat: item.vat,
@@ -985,7 +989,7 @@ class CreateCS extends React.Component {
                             onChange={() => this.onAddCSItem(item.id)}
                           />
                         </td>
-                        <td>{item.description}</td>
+                        <td>{item.item_required}</td>
                         <td>{item.quantity}</td>
                       </tr>
                     );
@@ -1139,11 +1143,11 @@ class CreateCS extends React.Component {
                         <div className="mt-2">
                           <input
                             name="item_description"
-                            defaultValue={item.description}
+                            defaultValue={item.item_required}
                             onChange={(e) =>
                               this.onCurrentBidItemChange(
-                                item.description,
-                                "description",
+                                item.item_required,
+                                "item_required",
                                 e
                               )
                             }
@@ -1166,7 +1170,7 @@ class CreateCS extends React.Component {
                             defaultValue={item.quantity}
                             onChange={(e) =>
                               this.onCurrentBidItemChange(
-                                item.description,
+                                item.item_required,
                                 "quantity",
                                 e
                               )
@@ -1190,7 +1194,7 @@ class CreateCS extends React.Component {
                               id="unit_of_measurement"
                               onChange={(e) =>
                                 this.onCurrentBidItemChange(
-                                  item.description,
+                                  item.item_required,
                                   "unit_of_measurement",
                                   e
                                 )
@@ -1229,7 +1233,7 @@ class CreateCS extends React.Component {
                             <select
                               id="vat"
                               onChange={(e) =>
-                                this.onCurrentBidItemChange(item.description, "vat", e)
+                                this.onCurrentBidItemChange(item.item_required, "vat", e)
                               }
                               autoComplete="vat"
                               className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
@@ -1258,7 +1262,7 @@ class CreateCS extends React.Component {
                             defaultValue={item.unit_price}
                             onChange={(e) =>
                               this.onCurrentBidItemChange(
-                                item.description,
+                                item.item_required,
                                 "unit_price",
                                 e
                               )
@@ -2254,7 +2258,7 @@ class CreateCS extends React.Component {
                             Item Description
                           </label>
                           <div className="mt-2">
-                            <p>{item.description}</p>
+                            <p>{item.item_required}</p>
                           </div>
                         </div>
                         <div className="flex-1 w-15 ml-1">

@@ -136,7 +136,7 @@ class Supplier(models.Model):
     id = models.CharField(primary_key=True, max_length=20, editable=False)
     name = models.CharField(max_length=100, unique=True,blank=True, null=True)
     email = models.EmailField(blank=True, null=True)
-    phone = models.IntegerField(max_length=13, blank=True, null=True)
+    phone = models.IntegerField( blank=True, null=True)
     address = models.CharField(max_length=100, blank=True, null=True)
 
     class Meta:
@@ -145,7 +145,8 @@ class Supplier(models.Model):
     def __str__(self):
         return self.name
     def save(self, *args, **kwargs):
-        timestamp = str(int(time.time()))
-        random_number = str(random.randint(10000, 99999))
-        self.id = "splr" + timestamp + random_number
+        if not self.id:
+            timestamp = str(int(time.time()))
+            random_number = str(random.randint(10000, 99999))
+            self.id = "splr" + timestamp + random_number
         super().save(*args, **kwargs)

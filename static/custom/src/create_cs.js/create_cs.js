@@ -108,6 +108,8 @@ var CreateCS = function (_React$Component) {
         return response.json();
       }).then(function (data) {
         console.log("data: ", data);
+        var scope_of_work = data.scope_of_work ? data.scope_of_work : "";
+        var proc_ref = data.proc_ref ? data.proc_ref : "";
         var plans = data.proc_plans ? data.proc_plans : [];
         var suppliers = data.suppliers ? data.suppliers : [];
         var pr_items = data.pr_items ? data.pr_items : [];
@@ -115,6 +117,8 @@ var CreateCS = function (_React$Component) {
         var pr_date = data.pr_date ? data.pr_date : "";
         var users = data.users ? data.users : [];
         _this.setState({
+          scope_of_work: scope_of_work,
+          plan_ref: proc_ref,
           proc_plans: plans,
           suppliers: suppliers,
           pr_items: pr_items,
@@ -363,7 +367,7 @@ var CreateCS = function (_React$Component) {
     _this.onCurrentBidItemChange = function (description, name_, event) {
       // check if item exists in current bid
       var item = _this.state.currentBid.items ? _this.state.currentBid.items.find(function (item) {
-        return item.description === description;
+        return item.item_required === description;
       }) : null;
       console.log("item: ", item);
       // if item exists update item
@@ -375,7 +379,7 @@ var CreateCS = function (_React$Component) {
         item[name_] = value;
         // update item in current bid
         var items = _this.state.currentBid.items.map(function (_item) {
-          if (_item.description === description) {
+          if (_item.item_required === description) {
             return item;
           }
           return _item;
@@ -390,11 +394,11 @@ var CreateCS = function (_React$Component) {
       } else {
         // find item in cs_items
         var _item3 = _this.state.cs_items.find(function (item) {
-          return item.description === description;
+          return item.item_required === description;
         });
         // create new item
         var new_item = {
-          description: _item3.description,
+          item_required: _item3.item_required,
           quantity: _item3.quantity,
           unit_of_measurement: _item3.unit_of_measurement,
           vat: _item3.vat,
@@ -1039,7 +1043,7 @@ var CreateCS = function (_React$Component) {
                       React.createElement(
                         "td",
                         null,
-                        item.description
+                        item.item_required
                       ),
                       React.createElement(
                         "td",
@@ -1249,9 +1253,9 @@ var CreateCS = function (_React$Component) {
                         { className: "mt-2" },
                         React.createElement("input", {
                           name: "item_description",
-                          defaultValue: item.description,
+                          defaultValue: item.item_required,
                           onChange: function onChange(e) {
-                            return _this2.onCurrentBidItemChange(item.description, "description", e);
+                            return _this2.onCurrentBidItemChange(item.item_required, "item_required", e);
                           },
                           id: "item_description",
                           required: "required",
@@ -1277,7 +1281,7 @@ var CreateCS = function (_React$Component) {
                           name: "quantity",
                           defaultValue: item.quantity,
                           onChange: function onChange(e) {
-                            return _this2.onCurrentBidItemChange(item.description, "quantity", e);
+                            return _this2.onCurrentBidItemChange(item.item_required, "quantity", e);
                           },
                           type: "number",
                           id: "quantity",
@@ -1307,7 +1311,7 @@ var CreateCS = function (_React$Component) {
                             {
                               id: "unit_of_measurement",
                               onChange: function onChange(e) {
-                                return _this2.onCurrentBidItemChange(item.description, "unit_of_measurement", e);
+                                return _this2.onCurrentBidItemChange(item.item_required, "unit_of_measurement", e);
                               },
                               autoComplete: "unit_of_measurement",
                               className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
@@ -1383,7 +1387,7 @@ var CreateCS = function (_React$Component) {
                             {
                               id: "vat",
                               onChange: function onChange(e) {
-                                return _this2.onCurrentBidItemChange(item.description, "vat", e);
+                                return _this2.onCurrentBidItemChange(item.item_required, "vat", e);
                               },
                               autoComplete: "vat",
                               className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
@@ -1425,7 +1429,7 @@ var CreateCS = function (_React$Component) {
                           name: "unit_price",
                           defaultValue: item.unit_price,
                           onChange: function onChange(e) {
-                            return _this2.onCurrentBidItemChange(item.description, "unit_price", e);
+                            return _this2.onCurrentBidItemChange(item.item_required, "unit_price", e);
                           },
                           type: "text",
                           id: "unit_price",
@@ -2861,7 +2865,7 @@ var CreateCS = function (_React$Component) {
                         React.createElement(
                           "p",
                           null,
-                          item.description
+                          item.item_required
                         )
                       )
                     ),

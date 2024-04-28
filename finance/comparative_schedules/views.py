@@ -67,7 +67,7 @@ def get_comperative_schedule_data(request, cs_id):
     committee = Committee.objects.filter(cs_id=cs).all()
     
     suppliers = Supplier.objects.all()
-    pr_items = PrItem.objects.filter(purchase_request=cs.pr_id_id, used=True).all()
+    pr_items = PrItem.objects.filter(purchase_request=cs.pr_id_id, ordered=False).all()
     users = UserProfile.objects.all()
     
     items_list = []
@@ -190,7 +190,7 @@ def get_comperative_schedule_data(request, cs_id):
         "rankings": rankings_list,
         "committee": committee_list,
         
-        "pr_items": list(pr_items.values('id', 'name', 'description', 'quantity', 'unit_of_measurement', 'ordered')),
+        "pr_items": list(pr_items.values('id', 'item_required', 'quantity', 'unit_of_measurement', 'ordered')),
         "proc_plans": list(proc_plans.values('id', 'proc_ref', 'description')),
         "suppliers": list(suppliers.values('id', 'name')),
         "users": list(users.values('id', 'username', 'first_name', 'last_name')),
@@ -220,8 +220,10 @@ def get_create_data(request, pr_id):
     
     return JsonResponse({
             "pr_id": pr_id,
+            "scope_of_work": purchase_request.scope_of_work,
+            "proc_ref": purchase_request.procurement_plan_reference.id if purchase_request.procurement_plan_reference else "",
             "pr_date": purchase_request.created_at.strftime("%Y-%m-%d"),
-            "pr_items": list(pr_items.values('id', 'name', 'description', 'quantity', 'unit_of_measurement', 'ordered')),
+            "pr_items": list(pr_items.values('id', 'item_required', 'quantity', 'unit_of_measurement', 'ordered')),
             "proc_plans": list(proc_plans.values('id', 'proc_ref', 'description')),
             "suppliers": list(suppliers.values('id', 'name')),
             "users": list(users.values('id', 'username', 'first_name', 'last_name')),
@@ -390,7 +392,8 @@ def save_comparative_schedule(request):
         
         # save cs details
         # fetch purchase request
-        pr = PurchaseRequest.objects.filter(id=pr_number).first()
+        print("pr number: ", pr_number)
+        pr = PurchaseRequest.objects.get(id=pr_number)
         print("PR: ", pr, pr_number, username)
         # fetch user
         user = UserProfile.objects.filter(username=username).first()
@@ -579,7 +582,7 @@ def save_cs_bid(request):
         item_query = CSItems(
             cs_id = cs_query,
             item_id = item_id,
-            item_name = item['description'],
+            item_name = item['item_required'],
             quantity = item['quantity'],
             unit_of_measurement = item['unit_of_measurement'],
         )

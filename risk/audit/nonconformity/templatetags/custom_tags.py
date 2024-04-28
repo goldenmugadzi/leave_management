@@ -25,6 +25,9 @@ def get_nonconformity(nonconformity_id):
 def split_and_get_last(value, delimiter):
     return value.split(delimiter)[-1]
 
+@register.filter
+def basename(value):return str( os.path.basename(value).replace('_', ' '))
+   
 @register.simple_tag(takes_context=True)
 def get_filtered_notifications(context):
      
