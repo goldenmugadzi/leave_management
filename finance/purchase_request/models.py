@@ -78,7 +78,7 @@ class PrItem(models.Model):
     unit_of_measurement = models.ForeignKey(UnitOfMeasurement, on_delete=models.CASCADE,blank=True, null=True)
     quantity = models.IntegerField(default=1)
     purchase_request = models.ForeignKey(PurchaseRequest, models.CASCADE, blank=True, null=True)
-    ordered = models.IntegerField( blank=True, null=True)
+    ordered = models.BooleanField(default=False)
     def __str__(self):
         return f"{self.item_required}  {self.quantity} {self.unit_of_measurement}"
 
