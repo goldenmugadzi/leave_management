@@ -307,7 +307,7 @@ def setup_random_data(request):
         data.append([location, depot, district, region, created_at])
 
     # Save the data as a CSV file
-    filename = "maintenance_data.csv"
+    filename = "inspection_data.csv"
     with open(filename, "w", newline="") as file:
         writer = csv.writer(file)
         writer.writerow(["location", "depot", "district", "region", "created_at"])  # Write header

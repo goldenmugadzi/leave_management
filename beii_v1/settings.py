@@ -134,7 +134,7 @@ INSTALLED_APPS = [
     'reports',
     'sweetify',
     'mathfilters',
-    'temper_token',
+    'tokens',
     'commecial.tempertockens',
     'competence_building.apps.CompetenceBuildingConfig'
 ]
@@ -193,7 +193,7 @@ DATABASES = {
     # }
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'beii_test',
+        'NAME': 'beii_new',
         'USER': 'root',
         'PASSWORD': '',
         'HOST': 'localhost',

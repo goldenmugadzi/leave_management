@@ -2,39 +2,36 @@
 {% load static %}
 {% load custom_tags %}
 {% block content %}
-    <head>
-        <style>
-        .arrow {
-            position: relative;
-        }
+<head>
+<style>
+.arrow, .arrow-step {
+    position: relative;
+    {% comment %} margin-left: 5px; /* Adjust this to move the arrows left or right */ {% endcomment %}
+}
 
-        .arrow::after {
-            content: "";
-            position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 0;
-            height: 0;
-            border-top: 15px solid transparent;
-            border-bottom: 15px solid transparent;
-            border-left: 10px solid #3B82F6; /* Adjust arrow color here */
-            left: -10px;
-        }
+.arrow::before, .arrow::after, .arrow-step::before, .arrow-step::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    width: 0;
+    height: 0;
+    border-top: 15px solid transparent;
+    border-bottom: 15px solid transparent;
+}
 
-        .arrow-step::before {
-            content: "";
-            position: absolute;
-            top: 50%;
-            right: -20px;
-            transform: translateY(-50%);
-            width: 0;
-            height: 0;
-            border-top: 10px solid transparent;
-            border-bottom: 10px solid transparent;
-            border-left: 20px solid #3B82F6; /* Adjust arrow color here */
-        }
-        </style>
-    </head>
+.arrow::before, .arrow-step::before {
+    left: 100%;
+    transform: translateY(-50%);
+    border-left: 20px solid #28a745; /* Adjust arrow color here */
+}
+
+.arrow::after, .arrow-step::after {
+    left: 104%;
+    transform: translateY(-50%);
+    border-left: 20px solid #28a745; /* Adjust arrow color here */
+}
+</style>
+</head>
     <div class="m-auto mt-5 ">
         <div class="card grid grid-cols-1 gap-2 mb-3">
             <div class="card-body m-2">
@@ -64,10 +61,15 @@
                                     <p class="font-bold   mb-2">created_at: {{ purchase_request.created_at |default_if_none:'' }}</p>
                                     <p class="font-bold   mb-2">section: {{ purchase_request.section |default_if_none:'' }}</p>
                                     <p class="m-4 flex flex-row-reverse gap-2 mb-3">
+                                        <a href="{% url 'comperative_schedule:bid_on_pr'  purchase_request.id %}"
+                                        class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded">Bid</a>
                                         <a href="{% url 'purchase_request:quote_purchase_request' purchase_request.id %}"
-                                           class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded">Quote</a>
-                                       
-                                    </p>
+                                        class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded">Quote</a>
+                                </p>
+                                    <p class="m-4 flex  gap-2 mb-3">
+                                        <a href="{% url 'purchase_request:purchase_request_update' purchase_request.id %}"
+                                        class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded">Edit</a>
+                                      </p>
                                 </div>
                                 {% if purchase_request.ace %}
                                     <div class="card-body m-auto mb-5 bg-gulf-blue-200 ed p-3 border rounded    container rounded  shadow-lg">
@@ -183,7 +185,7 @@
                         <h1 class="text-center mb-4 font-bold text-xl  mb-2">Approval Workflow Details</h1>
                         <p class="font-bold  mb-2">Workflow name : {{ purchase_request.process.workflow |default_if_none:'' }}</p>
                         {% if approvalForm %}
-                            <form class="row rounded py-4 border bg-gulf-blue-400 rounded-lg p-3 m-auto container"
+                            <form class="row rounded py-4   rounded-lg p-3 m-auto container"
                                   method="post"
                                   action="{% url 'approve:approve' purchase_request.process.id %}"
                                   enctype="multipart/form-data">
@@ -203,10 +205,10 @@
                                 </div>
                             </form>
                         {% endif %}
-                        <div class="card grid grid-cols-5 gap-4">
-                            <div class="px-2 mb-5  border rounded ">
-                                <div class="card-body   bg-gradient-to-r from-gulf-blue-100 to-green-700  ed  border rounded  container rounded">
-                                    <div class="p-4 font-bold rounded-lg">Created</div>
+                        <div class="card grid grid-cols-5 gap-5">
+                            <div class="  rounded ">
+                            <div class="card-body  arrow bg-gradient-to-r from-gulf-blue-100 to-green-700 ed border rounded container rounded">
+                                    <div class="p-3 font-bold rounded-lg">Created</div>
                                     <div class=" grid grid-cols-2 text-center">
                                         <span class="inline-block rounded-full text-sm">By:
                                             {% if request.user == purchase_request.requested_by %}
@@ -219,14 +221,14 @@
                                         </span>
                                     </div>
                                 </div>
-                                   <h1 class="text-center  font-bold text-xl text-blue-500 ">=></h1>
                             </div>
-                            {% for step in purchase_request.process.workflow.step_set.all %}
-                                <div class="px-2 mb-5  border rounded ">
+                          
+                                {% for step in purchase_request.process.workflow.step_set.all %}
+                                <div class="   rounded ">
                                     {% if step.step in approved_steps %}
                                         {% for approval in purchase_request.process.approval_set.all %}
                                             {% if step == approval.step %}
-                                                <div class="card-body   bg-gradient-to-r from-gulf-blue-100 to-green-700  ed  border rounded  container rounded">
+                                                <div class="card-body px-2 mx-4 arrow bg-gradient-to-r from-gulf-blue-100 to-green-700 ed border rounded container rounded">
                                                     <div class=" rounded-lg" title="{{ approval.comment }}">
                                                         <p class="font-bold">{{ step |default_if_none:'' }}</p>
                                                         <br>
@@ -244,14 +246,14 @@
                                                         </span>
                                                     </div>
                                                 </div>
-                                                {% if step == purchase_request.process.workflow.step_set.last %}
+                                                {% comment %} {% if step == purchase_request.process.workflow.step_set.last %}
                                                 <a href="/comparative_schedule/schedule/{{ purchase_request.id }}"
                                                 class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded">Comparative Schedule</a>
-                                                {% endif %}
+                                                {% endif %} {% endcomment %}
                                             {% endif %}
                                         {% endfor %}
                                     {% else %}
-                                        <div class="card-body  bg-gradient-to-r from-gulf-blue-100 to-blue-500 ed  border rounded  container rounded ">
+                                    <div class="card-body px-2 mx-4 arrow bg-gradient-to-r from-gulf-blue-100 to-blue-700 ed border rounded container rounded">
                                             <div class=" rounded-lg" title="{{ approval.comment }}">
                                                 <p class="font-bold">{{ step |default_if_none:'' }}</p>
                                                 <br>
@@ -259,8 +261,15 @@
                                             </div>
                                         </div>
                                     {% endif %}
-                                    <h1 class="text-center  font-bold text-xl text-blue-500 mb-0 ">=></h1>
                                 </div>
+                                {% if step == purchase_request.process.workflow.step_set.last and step == purchase_request.process.approval_set.last.step %}
+                                    <div class="flex justify-center items-center  rounded ">
+                                        <div class="flex justify-center rounded-lg" title="{{ approval.comment }}">
+                                            <a href="{% url 'comperative_schedule:comperative_schedule' purchase_request.id %}"
+                                               class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 p-4 rounded">Comparative Schedule</a>
+                                        </div>
+                                    </div>
+                                {% endif %}
                             {% endfor %}
                         </div>
                     </div>

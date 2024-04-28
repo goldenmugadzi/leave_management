@@ -98,7 +98,41 @@ def create_ace_purchase_request(request,ace_id):
             ace_data['section'] = ace.section
         form = acePurchaseRequestForm(initial=ace_data)
         return render(request, 'finance/purchase_request/create_purchase_request.html', {'formset': itemFormset(), 'form': form})
-    
+def purchase_request_update(request, purchase_request_id):
+    purchase_request = PurchaseRequest.objects.get(id=purchase_request_id)
+    pr_items = purchase_request.pritem_set.all()
+    itemFormset = inlineformset_factory(PurchaseRequest, PrItem, form=PrItemForm, extra=len(pr_items)+5 , can_delete=False)
+  
+    if request.method == 'POST':
+        form = PurchaseRequestForm(request.POST, request.FILES, instance=PurchaseRequest(id=purchase_request_id))
+        if form.is_valid():
+            print('form is valid')
+            purchase_request_form = form.save(commit=False)
+            purchase_request_form.process = purchase_request.process
+            purchase_request_form.id = purchase_request.id
+            purchase_request_form.created_at = purchase_request.created_at  
+            purchase_request_form.requested_by = purchase_request.requested_by
+            purchase_request_form.save()
+            formset = itemFormset(request.POST, request.FILES, instance=purchase_request)
+            
+            if formset.is_valid():
+                for it in formset:
+                    try:
+                        item = it.save(commit=False)
+                        item.purchase_request = purchase_request
+                        item.save()
+                    except: 
+                        pass
+                url = reverse('purchase_request:purchase_request_detail', args=[purchase_request.id])
+                return redirect(url)
+            else:
+                return render(request, 'finance/purchase_request/create_purchase_request.html', {'formset': formset, 'form': form})
+        else:
+            return render(request, 'finance/purchase_request/create_purchase_request.html', {'formset': itemFormset(instance=purchase_request), 'form': form})
+    else:
+        form = PurchaseRequestForm(instance=purchase_request)
+        return render(request, 'finance/purchase_request/create_purchase_request.html', {'formset': itemFormset(instance=purchase_request), 'form': form})
+        
 @login_required
 def purchase_requests_awaiting_my_action(request):
     """

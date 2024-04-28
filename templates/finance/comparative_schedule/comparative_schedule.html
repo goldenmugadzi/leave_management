@@ -28,7 +28,7 @@
                         <thead>
                             <tr>
                                 <th class="text-center">Item Name</th>
-                                {% for bid in bids %}<th>{{ bid.supplier }}</th>{% endfor %}
+                             {% if bids %}{% for bid in bids %}<th>{{ bid.supplier }}</th>{% endfor %}{% endif %}
                             </tr>
                         </thead>
                         <tbody>
@@ -40,7 +40,7 @@
                                            href="{% url 'purchase_request:purchase_request_detail' pr_item.purchase_request.id %}">
                                         {{ pr_item.name|default_if_none:'' }}</a>
                                     </td>
-                                    {% for offer in pr_item.biditem_set.all %}
+                                  {% if bids %} {% for offer in pr_item.biditem_set.all %}
                                         <td>
                                             <div>
                                                 {% if pr_item.selected_offer.bid.supplier.name == offer.bid.supplier.name and pr_item.selected_offer.price == offer.price %}
@@ -62,7 +62,7 @@
                                                 {% endif %}
                                             </div>
                                         </td>
-                                    {% endfor %}
+                                    {% endfor %}{% endif %} 
                                 </tr>
                             {% endfor %}
                         </tbody>
