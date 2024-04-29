@@ -23,9 +23,12 @@ import pandas as pd
 @login_required
 def purchase_request_detail(request, purchase_request_id):
     purchase_request = PurchaseRequest.objects.get(id=purchase_request_id)
-    approved_steps, approvalForm, to = ApprovalDetails(request, purchase_request)
-
-    return render(request, 'finance/purchase_request/purchase_request_detail.html', {'purchase_request': purchase_request, 'approved_steps':approved_steps,'approvalForm': approvalForm,'to':to})
+    # approved_steps, approvalForm, to = ApprovalDetails(request, purchase_request)
+    can_cs= False
+    for role in request.user.roles.all():
+        if role.name=="Procurement Officer":
+            can_cs = True
+    return render(request, 'finance/purchase_request/purchase_request_detail.html', {'purchase_request': purchase_request, 'can_cs':can_cs })#, 'approved_steps':approved_steps,'approvalForm': approvalForm,'to':to})
     
 @login_required
 def create_purchase_request(request):
@@ -36,7 +39,7 @@ def create_purchase_request(request):
         if form.is_valid():
             print('Form is valid')
             purchase_request = form.save(commit=False)
-            purchase_request.process = intiate(request, 'purchase request')
+            # purchase_request.process = intiate(request, 'purchase request')
             purchase_request.requested_by = request.user
             purchase_request.save()
             for attachment in attachments:
@@ -49,7 +52,7 @@ def create_purchase_request(request):
             else:
                 return render(request, 'finance/purchase_request/create_purchase_request.html', {'formset': itemFormset, 'form': form})
             
-            url = reverse('purchase_request:purchase_request_detail', args=[purchase_request.id])
+            url = reverse('purchase_request:purchase_request_update', args=[purchase_request.id])
             return redirect(url)
         return render(request, 'finance/purchase_request/create_purchase_request.html', {'formset': itemFormset, 'form': form})
     else:
@@ -96,23 +99,31 @@ def create_ace_purchase_request(request,ace_id):
             ace_data['section'] = ace.section
         form = acePurchaseRequestForm(initial=ace_data)
         return render(request, 'finance/purchase_request/create_purchase_request.html', {'formset': itemFormset(), 'form': form})
+@login_required
 def purchase_request_update(request, purchase_request_id):
     purchase_request = PurchaseRequest.objects.get(id=purchase_request_id)
-    pr_items = purchase_request.pritem_set.all()
     itemFormset = inlineformset_factory(PurchaseRequest, PrItem, form=PrItemForm, extra=0 , can_delete=False)
-  
-    if request.method == 'POST':
-        form = PurchaseRequestForm(request.POST, request.FILES, instance=PurchaseRequest(id=purchase_request_id))
+    if purchase_request.is_processed:
+        form = PurchaseRequestForm(instance=purchase_request)
+        return render(request, 'finance/purchase_request/create_purchase_request.html', {"attachments":purchase_request.attachment_set.all(),'formset': itemFormset(instance=purchase_request), 'form': form})
+    elif request.method == 'POST':
+        form = PurchaseRequestForm(request.POST, instance=PurchaseRequest(id=purchase_request_id))
+        attachments = request.FILES.getlist('attachments')
+        action = request.POST.get("action")
         if form.is_valid():
             purchase_request_form = form.save(commit=False)
-            purchase_request_form.process = purchase_request.process
+            # purchase_request_form.process = purchase_request.process
             purchase_request_form.id = purchase_request.id
             purchase_request_form.created_at = purchase_request.created_at  
             purchase_request_form.requested_by = purchase_request.requested_by
             purchase_request_form.save()
-            formset = itemFormset(request.POST, request.FILES, instance=purchase_request)
+            formset = itemFormset(request.POST, instance=purchase_request)
             """ remove all approvals for the purchase request"""
-            purchase_request.process.approval_set.all().delete()
+            # purchase_request.process.approval_set.all().delete()
+            for attachment in attachments:
+                attachment = Attachment(file=attachment, purchase_request=purchase_request)
+                attachment.save()
+
             if formset.is_valid():
                 for it in formset:
                     try:
@@ -121,15 +132,17 @@ def purchase_request_update(request, purchase_request_id):
                         item.save()
                     except: 
                         pass
-                url = reverse('purchase_request:purchase_request_detail', args=[purchase_request.id])
-                return redirect(url)
+                if action:
+                    return render(request, 'finance/purchase_request/create_purchase_request.html', {"attachments":purchase_request.attachment_set.all(),'formset': itemFormset(instance=purchase_request), 'form': form})
+                else:
+                    return redirect(reverse('purchase_request:purchase_request_detail', args=[purchase_request.id]))
             else:
                 return render(request, 'finance/purchase_request/create_purchase_request.html', {'formset': formset, 'form': form})
         else:
-            return render(request, 'finance/purchase_request/create_purchase_request.html', {'formset': itemFormset(instance=purchase_request), 'form': form})
+            return render(request, 'finance/purchase_request/create_purchase_request.html', {"attachments":purchase_request.attachment_set.all(),'formset': itemFormset(instance=purchase_request), 'form': form})
     else:
         form = PurchaseRequestForm(instance=purchase_request)
-        return render(request, 'finance/purchase_request/create_purchase_request.html', {'formset': itemFormset(instance=purchase_request), 'form': form})
+        return render(request, 'finance/purchase_request/create_purchase_request.html', {"attachments":purchase_request.attachment_set.all(),'formset': itemFormset(instance=purchase_request), 'form': form})
         
 @login_required
 def purchase_requests_awaiting_my_action(request):
@@ -161,6 +174,7 @@ def purchase_requests_awaiting_my_action(request):
 def view_all_purchase_requests(request):
     purchase_requests = PurchaseRequest.objects.all()
     return render(request, 'finance/purchase_request/view_all_purchase_requests.html', {'purchase_requests': purchase_requests})
+@login_required
 def uploaduuom(request):
     """upload unit of measurement data to the database"""
     xl = pd.ExcelFile('finance/purchase_request/uom.xlsx')
@@ -182,7 +196,12 @@ def uploaduuom(request):
         except:
             pass
     return render(request, 'finance/purchase_request/add_uom.html')
-
+@login_required
+def del_file(request, id):
+    attachment = Attachment.objects.get(id=id)
+    purchase_request = attachment.purchase_request
+    attachment.delete()
+    return redirect('purchase_request:purchase_request_update', purchase_request.id)
 class AddUOM(CreateView):
     model = UnitOfMeasurement
     form_class = UnitOfMeasurementForm
