@@ -109,6 +109,7 @@ def purchase_request_update(request, purchase_request_id):
     elif request.method == 'POST':
         form = PurchaseRequestForm(request.POST, instance=PurchaseRequest(id=purchase_request_id))
         attachments = request.FILES.getlist('attachments')
+        
         action = request.POST.get("action")
         if form.is_valid():
             purchase_request_form = form.save(commit=False)
@@ -120,6 +121,15 @@ def purchase_request_update(request, purchase_request_id):
             formset = itemFormset(request.POST, instance=purchase_request)
             """ remove all approvals for the purchase request"""
             # purchase_request.process.approval_set.all().delete()
+            try:
+                items_from_sap = pd.ExcelFile(request.FILES.get('upload'))
+                if items_from_sap:
+                    df = items_from_sap.parse('Sheet1')
+                    data_dict = df.to_dict('records')
+                    for data in data_dict:
+                        item = PrItem(item_required=data['Short Text'],purchase_request=purchase_request,quantity=data['Quantity requested'],unit_of_measurement=UnitOfMeasurement.objects.get(unit=data['Unit of Measure']) )
+                        item.save()
+            except:pass
             for attachment in attachments:
                 attachment = Attachment(file=attachment, purchase_request=purchase_request)
                 attachment.save()
