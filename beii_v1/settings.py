@@ -195,7 +195,7 @@ DATABASES = {
             'sql_mode': 'NO_BACKSLASH_ESCAPES',
         },
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'beii_new',
+        'NAME': 'beii_test',
         'USER': 'root',
         'PASSWORD': '',
         'HOST': 'localhost',

@@ -91,6 +91,7 @@
                             <h1 class="text-center mb-4 font-bold text-xl  mb-2">Ace Details</h1>
                             <p class="font-bold   mb-2"> Details of expenditure: {{ ace.details_of_expenditure }}</p>
                             <p class="font-bold mb-2"> Region: {{ ace.region}}</p>
+                            <p class="font-bold   mb-2"> Section: {{ ace.section }}</p>
                             <p class="font-bold   mb-2"> Requested By: {{ ace.requested_by }}</p>
                             <p class="font-bold   mb-2"> Date Created: {{ ace.date_created }}</p>
                             <p class="font-bold   mb-2"> Asset Number or (s): {{ ace.asset_number }}</p>
@@ -98,7 +99,7 @@
                             <p class="font-bold   mb-2"> Allocation code of expenditure: {{ ace.allocation_code_of_expenditure }}</p>
                             <p class="font-bold   mb-2"> Amount($) : {{ ace.amount }}</p>
                             <p class="font-bold   mb-2"> Quantity : {{ ace.quantity }}</p>
-                            <p class="font-bold   mb-2"> Designation :{{ ace.designation.name }}</p>
+                            <p class="font-bold   mb-2"> Designation :{{ ace.designation }}</p>
                             <p class="font-bold   mb-2"> Classification :{{ ace.classification }}</p>
                             {% if ace.classification == 'Project' %}
                                 <p class="font-bold   mb-2"> Present Tariff :{{ ace.project_name }}</p>
@@ -129,10 +130,9 @@
                                                                 {{ ace.requested_by }}
                                                         {% endif %}</p>
                             <p class="font-bold   mb-2"> Created At: {{ ace.date_created }}</p>
-                            <p class="font-bold   mb-2"> Section: {{ ace.section.name }}</p>
 {#                            <p class="font-bold   mb-2"> Role : {{ ace_role }}</p>#}
                             {%   if ace.payment_mode == None %}
-                                <p class="font-bold   mb-2 bg-red-600"> Payment mode: Not yet Added By Cashier</p>
+{#                                <p class="font-bold   mb-2 bg-red-600"> Payment mode: Not yet Added By Cashier</p>#}
                             {% else %}
                                 <p class="font-bold   mb-2"> Payment mode: {{ ace.payment_mode }}</p>
                                 {% if ace.receipt_file == '' or ace.receipt_file == None and request.user == approval.user %}
@@ -164,9 +164,7 @@
 
 
                                 {% else %}
-                                    <p class="font-bold   mb-2"> Receipt: {{ ace.receipt_file }}</p>
-                                    <p class="font-bold   mb-2"> Disbursed Amount($): {{ ace.amount_disbursed }}</p>
-                                    <p class="font-bold   mb-2"> Amount Used($): {{ ace.amount_used }}</p>
+
                                     {#                               #input and post receipt file #}
                                 {% endif %}
 
@@ -179,37 +177,37 @@
                  </div>
                     <h1 class="text-center mb-4 font-bold text-xl  mb-2">Workflow Details</h1>
                     <p class="font-bold  mb-2"> Workflow name : {{ ace.process.workflow }}</p>
-                {% if ace_role == "disburse" and ace.payment_mode == None %}
-                <form class="row rounded py-4 border  rounded-lg p-3 m-auto container" method="POST"
-                      action="/ace/ace_detail/{{ ace.petty_id  }}/" enctype="multipart/form-data">
-                    {% csrf_token %}
-                    <div class=" m-auto container  ">
-                        <h4 class="text-center mb-4 font-bold text-xl  mb-2">Add Payment Mode</h4>
-
-                        <div class="m-4 text-center">
+{#                {% if ace_role == "disburse" and ace.payment_mode == None %}#}
+{#                <form class="row rounded py-4 border  rounded-lg p-3 m-auto container" method="POST"#}
+{#                      action="/ace/ace_detail/{{ ace.petty_id  }}/" enctype="multipart/form-data">#}
+{#                    {% csrf_token %}#}
+{#                    <div class=" m-auto container  ">#}
+{#                        <h4 class="text-center mb-4 font-bold text-xl  mb-2">Add Payment Mode</h4>#}
+{##}
+{#                        <div class="m-4 text-center">#}
 {#                            <label for="payment_mode">Payment mode</label>#}
-                            <select name="payment_mode" id="payment_mode" required>
-                                <option value="">Add Payment Mode</option>
-                                <option value="ZIG_SWIPE">Swipe ZIG</option>
-                                <option value="ZIG_CASH">Cash ZIG</option>
-                                <option value="SWIPE_USD">Swipe Usd</option>
-                                <option value="CASH_USD">Rtgs Usd</option>
-                            </select>
-                        </div>
-
-                        <div class="m-4 text-center">
-                            <label for="amount_disbursed">Amount Disbursed</label>
-                            <input type="number" name="amount_disbursed" required>
-                        </div>
-
-
-                        <div class="m-4 text-center">
+{#                            <select name="payment_mode" id="payment_mode" required>#}
+{#                                <option value="">Add Payment Mode</option>#}
+{#                                <option value="ZIG_SWIPE">Swipe ZIG</option>#}
+{#                                <option value="ZIG_CASH">Cash ZIG</option>#}
+{#                                <option value="SWIPE_USD">Swipe Usd</option>#}
+{#                                <option value="CASH_USD">Rtgs Usd</option>#}
+{#                            </select>#}
+{#                        </div>#}
+{##}
+{#                        <div class="m-4 text-center">#}
+{#                            <label for="amount_disbursed">Amount Disbursed</label>#}
+{#                            <input type="number" name="amount_disbursed" required>#}
+{#                        </div>#}
+{##}
+{##}
+{#                        <div class="m-4 text-center">#}
 {#                            <button type="submit" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded" name="approved" value="Rejected">Reject</button>#}
-                            <button type="submit" class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded" name="submit" value="submit"> Add </button>
-                        </div>
-                    </div>
-                </form>
-                {% endif %}
+{#                            <button type="submit" class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded" name="submit" value="submit"> Add </button>#}
+{#                        </div>#}
+{#                    </div>#}
+{#                </form>#}
+{#                {% endif %}#}
 
 {#            {% if ace.payment_mode != None %}#}
                         {% if approvalForm %}

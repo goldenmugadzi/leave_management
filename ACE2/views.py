@@ -232,8 +232,18 @@ def add_project_details(request, Ace_id2):
         form = ProjectDetailForm(request.POST, request.FILES)
         if form.is_valid():
             project_details = form.save(commit=False)
+            # add items from form to already existing ace object
+            total_connection_fee = project_details.present_tariff + project_details.present_fmc + project_details.capital_contribution+ project_details.materials + project_details.labour + project_details.transport
+
+
             ace = Ace2.objects.filter(Ace_id2=Ace_id2).first()
-            project_details.ace = ace
+            ace.present_tariff = project_details.present_tariff
+            ace.present_fmc = project_details.present_fmc
+            ace.capital_contribution = project_details.capital_contribution
+            ace.materials = project_details.materials
+            ace.labour = project_details.labour
+            ace.transport = project_details.transport
+            ace.total_connection_fee = total_connection_fee
             ace.save()
             url = reverse('Ace:ace_detail', args=[ace.Ace_id2])
             return redirect(url)
