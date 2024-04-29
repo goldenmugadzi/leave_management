@@ -25,6 +25,7 @@ class CreateCS extends React.Component {
       currentBid: {},
       bids: [],
       addBidModal: false,
+      updateBidModal: false,
       cs_items: [],
       cs_item_count: 0,
       addItemsModal: false,
@@ -55,6 +56,7 @@ class CreateCS extends React.Component {
     };
     this.getCreateData = this.getCreateData.bind(this);
     this.onAddBid = this.onAddBid.bind(this);
+    this.onUpdateBidModal = this.onUpdateBidModal.bind(this);
     this.onAddItemsModal = this.onAddItemsModal.bind(this);
     this.onCommitteeChange = this.onCommitteeChange.bind(this);
     this.onGetFileObjectUrl = this.onGetFileObjectUrl.bind(this);
@@ -435,18 +437,27 @@ class CreateCS extends React.Component {
     let bid = this.state.bids.find((bid) => bid.bid_count === bid_count);
     this.setState({
       ...this.state,
-      addBidModal: !this.state.addBidModal,
+      updateBidModal: !this.state.updateBidModal,
       currentBid: bid,
     });
   };
 
   onCloseCurrentBid = () => {
-    let bid_count = this.state.bid_count - 1;
+    let bid_count = this.state.bids.length - 1;
     this.setState({
       ...this.state,
       currentBid: {},
       addBidModal: false,
+      updateBidModal: false,
       bid_count: bid_count,
+    });
+  };
+
+  onCloseUpdateBidBid = () => {
+    this.setState({
+      ...this.state,
+      currentBid: {},
+      updateBidModal: false
     });
   };
 
@@ -1072,6 +1083,7 @@ class CreateCS extends React.Component {
   render() {
     var itemsModal = null;
     var bidsModal = null;
+    var updateBidModal = null;
     var complianceTable = null;
     var rankingTable = null;
     var committeeTable = null;
@@ -1291,6 +1303,308 @@ class CreateCS extends React.Component {
                           <input
                             name="item_description"
                             defaultValue={item.item_name}
+                            onChange={(e) =>
+                              this.onCurrentBidItemChange(
+                                item.item_name,
+                                "item_required",
+                                e
+                              )
+                            }
+                            id="item_description"
+                            required="required"
+                            className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                          />
+                        </div>
+                      </div>
+                      <div className="flex-1 w-15 ml-1">
+                        <label
+                          htmlFor="quantity"
+                          className="block text-sm font-medium leading-6 text-gray-900"
+                        >
+                          Quantity
+                        </label>
+                        <div className="mt-2">
+                          <input
+                            name="quantity"
+                            defaultValue={item.quantity}
+                            onChange={(e) =>
+                              this.onCurrentBidItemChange(
+                                item.item_name,
+                                "quantity",
+                                e
+                              )
+                            }
+                            type="number"
+                            id="quantity"
+                            className="block inpt w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                          />
+                        </div>
+                      </div>
+                      <div className="flex-1 w-15 ml-3">
+                        <div>
+                          <label
+                            htmlFor="unit_of_measurement"
+                            className="block text-sm font-medium leading-6 text-gray-900"
+                          >
+                            UOM
+                          </label>
+                          <div className="mt-2">
+                            <select
+                              id="unit_of_measurement"
+                              onChange={(e) =>
+                                this.onCurrentBidItemChange(
+                                  item.item_name,
+                                  "unit_of_measurement",
+                                  e
+                                )
+                              }
+                              autoComplete="unit_of_measurement"
+                              className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+                            >
+                              {item.unit_of_measurement ? (
+                                <option value={item.unit_of_measurement}>
+                                  {item.unit_of_measurement}
+                                </option>
+                              ) : (
+                                ""
+                              )}
+                              <option value="Each">Each</option>
+                              <option value="Kgs">Kg`s</option>
+                              <option value="Grammes">Grammes</option>
+                              <option value="Litres">Litres</option>
+                              <option value="Metres">Metres</option>
+                              <option value="Bags">Bags</option>
+                              <option value="Packets">Packets</option>
+                              <option value="Cartons">Cartons</option>
+                            </select>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex-1 w-15 ml-3">
+                        <div>
+                          <label
+                            htmlFor="vat"
+                            className="block text-sm font-medium leading-6 text-gray-900"
+                          >
+                            VAT
+                          </label>
+                          <div className="mt-2">
+                            <select
+                              id="vat"
+                              onChange={(e) =>
+                                this.onCurrentBidItemChange(item.item_name, "vat", e)
+                              }
+                              autoComplete="vat"
+                              className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+                            >
+                              {item.vat ? (
+                                <option value={item.vat}>{item.vat}</option>
+                              ) : (
+                                ""
+                              )}
+                              <option value="Excl.">Excl.</option>
+                              <option value="Incl.">Incl.</option>
+                            </select>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex-1 w-15 ml-1">
+                        <label
+                          htmlFor="unit_price"
+                          className="block text-sm font-medium leading-6 text-gray-900"
+                        >
+                          Unit Price
+                        </label>
+                        <div className="mt-2">
+                          <input
+                            name="unit_price"
+                            defaultValue={item.unit_price}
+                            onChange={(e) =>
+                              this.onCurrentBidItemChange(
+                                item.item_name,
+                                "unit_price",
+                                e
+                              )
+                            }
+                            type="text"
+                            id="unit_price"
+                            required
+                            className="block inpt w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="flex justify-center mt-5 px-3 py-3">
+                <div className="m-2">
+                  <button
+                    onClick={this.onCurrentBidSave}
+                    className="rounded-md text-gray-50 text-sm bg-blue-925 hover:bg-blue-550 px-3 py-2 font-semibold leading-6"
+                  >
+                    <span className="ml-2">SAVE BID</span>
+                  </button>
+                </div>
+                <div className="m-2">
+                  <button
+                    onClick={this.onCloseCurrentBid}
+                    type="submit"
+                    className="rounded-md bg-red-danger hover:bg-orange-500 text-sm font-semibold px-3 py-2 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                  >
+                    <span className="ml-2">CANCEL</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    if (this.state.updateBidModal) {
+      updateBidModal = (
+        <div
+          id={"bid-" + this.state.currentBid}
+          className="fixed inset-0 flex items-center justify-center z-50 pt-10 pb-20"
+        >
+          <div className="bg-white rounded-lg shadow-lg p-6 max-h-screen min-w-max overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-medium">Modal Title</h3>
+              <button
+                type="button"
+                className="text-gray-400 hover:text-gray-500 focus:outline-none"
+                onClick={this.onCloseUpdateBidBid}
+              >
+                <svg
+                  className="h-6 w-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+            <div className="px-4 sm:px-0 mt-6 bg-gulf-blue-300 rounded-md border-t border-gray-100 border-b border-gray-900/10 pb-12">
+              <div id="bid_container" className=" rounded-md">
+                <div className="flex justify-evenly mt-5  px-2 py-2 rounded-md">
+                  <div className="flex-1 w-20 ml-1">
+                    <label
+                      htmlFor="supplier_name"
+                      className="block text-sm font-medium leading-6 text-gray-900"
+                    >
+                      Supplier
+                    </label>
+                    <div className="mt-2">
+                      <select
+                        id="supplier"
+                        onChange={(e) => this.onCurrentBidChange("supplier", e)}
+                        className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
+                      >
+                        {this.state.currentBid.supplier_name ? (
+                          <option
+                            value={
+                              this.state.currentBid.supplier +
+                              "-#-" +
+                              this.state.currentBid.supplier_name
+                            }
+                          >
+                            {this.state.currentBid.supplier_name}
+                          </option>
+                        ) : (
+                          ""
+                        )}
+                        <option>Select Supplier</option>
+                        {this.state.suppliers
+                          ? this.state.suppliers.map((supplier) => (
+                              <option
+                                value={supplier.id + "-#-" + supplier.name}
+                              >
+                                {supplier.name}
+                              </option>
+                            ))
+                          : ""}
+                      </select>
+                    </div>
+                  </div>
+                  <div className="flex-1 w-20 ml-1">
+                    <label
+                      htmlFor="bid_date"
+                      className="block text-sm font-medium leading-6 text-gray-900"
+                    >
+                      Bid Date
+                    </label>
+                    <div className="mt-2">
+                      <input
+                        name="bid_date"
+                        value={this.state.currentBid.bid_date}
+                        onChange={(e) => this.onCurrentBidChange("bid_date", e)}
+                        type="date"
+                        required="required"
+                        className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex-1 w-20 ml-1">
+                    <label
+                      htmlFor="supplier[bid][0]"
+                      className="block text-sm font-medium leading-6 text-gray-900"
+                    >
+                      Bid No.
+                    </label>
+                    <div className="mt-2">
+                      <input
+                        name="supplier[bid][0]"
+                        type="number"
+                        value="1"
+                        id="bid"
+                        required="required"
+                        readOnly
+                        className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex-1 w-40 ml-1">
+                    <label
+                      htmlFor="bid_document"
+                      className="block text-sm font-medium leading-6 text-gray-900"
+                    >
+                      Bid Documents
+                    </label>
+                    <div className="mt-2">
+                      <input
+                        name="bid_document"
+                        type="file"
+                        onChange={(e) =>
+                          this.onCurrentBidChange("bid_document", e)
+                        }
+                        className="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {this.state.currentBid.items.map((item, index) => {
+                  return (
+                    <div className="flex justify-evenly mt-5  px-2 py-2 rounded-md">
+                      <div className="flex-1 w-15 ml-1">
+                        <label
+                          htmlFor="item_name"
+                          className="block text-sm font-medium leading-6 text-gray-900"
+                        >
+                          Item Description
+                        </label>
+                        <div className="mt-2">
+                          <input
+                            name="item_description"
+                            defaultValue={item.description}
                             onChange={(e) =>
                               this.onCurrentBidItemChange(
                                 item.item_name,
@@ -2012,6 +2326,7 @@ class CreateCS extends React.Component {
       <div>
         {itemsModal}
         {bidsModal}
+        {updateBidModal}
         <div className="space-y-12 px-5 py-5">
           <div className="px-4 sm:px-0">
             <h3 className="text-base font-semibold leading-7 text-gray-900">

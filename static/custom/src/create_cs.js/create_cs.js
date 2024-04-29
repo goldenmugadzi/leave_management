@@ -363,17 +363,25 @@ var CreateCS = function (_React$Component) {
         return bid.bid_count === bid_count;
       });
       _this.setState(Object.assign({}, _this.state, {
-        addBidModal: !_this.state.addBidModal,
+        updateBidModal: !_this.state.updateBidModal,
         currentBid: bid
       }));
     };
 
     _this.onCloseCurrentBid = function () {
-      var bid_count = _this.state.bid_count - 1;
+      var bid_count = _this.state.bids.length - 1;
       _this.setState(Object.assign({}, _this.state, {
         currentBid: {},
         addBidModal: false,
+        updateBidModal: false,
         bid_count: bid_count
+      }));
+    };
+
+    _this.onCloseUpdateBidBid = function () {
+      _this.setState(Object.assign({}, _this.state, {
+        currentBid: {},
+        updateBidModal: false
       }));
     };
 
@@ -939,6 +947,7 @@ var CreateCS = function (_React$Component) {
       currentBid: {},
       bids: [],
       addBidModal: false,
+      updateBidModal: false,
       cs_items: [],
       cs_item_count: 0,
       addItemsModal: false,
@@ -969,6 +978,7 @@ var CreateCS = function (_React$Component) {
     };
     _this.getCreateData = _this.getCreateData.bind(_this);
     _this.onAddBid = _this.onAddBid.bind(_this);
+    _this.onUpdateBidModal = _this.onUpdateBidModal.bind(_this);
     _this.onAddItemsModal = _this.onAddItemsModal.bind(_this);
     _this.onCommitteeChange = _this.onCommitteeChange.bind(_this);
     _this.onGetFileObjectUrl = _this.onGetFileObjectUrl.bind(_this);
@@ -1072,6 +1082,7 @@ var CreateCS = function (_React$Component) {
 
       var itemsModal = null;
       var bidsModal = null;
+      var updateBidModal = null;
       var complianceTable = null;
       var rankingTable = null;
       var committeeTable = null;
@@ -1399,6 +1410,430 @@ var CreateCS = function (_React$Component) {
                         React.createElement("input", {
                           name: "item_description",
                           defaultValue: item.item_name,
+                          onChange: function onChange(e) {
+                            return _this2.onCurrentBidItemChange(item.item_name, "item_required", e);
+                          },
+                          id: "item_description",
+                          required: "required",
+                          className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                        })
+                      )
+                    ),
+                    React.createElement(
+                      "div",
+                      { className: "flex-1 w-15 ml-1" },
+                      React.createElement(
+                        "label",
+                        {
+                          htmlFor: "quantity",
+                          className: "block text-sm font-medium leading-6 text-gray-900"
+                        },
+                        "Quantity"
+                      ),
+                      React.createElement(
+                        "div",
+                        { className: "mt-2" },
+                        React.createElement("input", {
+                          name: "quantity",
+                          defaultValue: item.quantity,
+                          onChange: function onChange(e) {
+                            return _this2.onCurrentBidItemChange(item.item_name, "quantity", e);
+                          },
+                          type: "number",
+                          id: "quantity",
+                          className: "block inpt w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                        })
+                      )
+                    ),
+                    React.createElement(
+                      "div",
+                      { className: "flex-1 w-15 ml-3" },
+                      React.createElement(
+                        "div",
+                        null,
+                        React.createElement(
+                          "label",
+                          {
+                            htmlFor: "unit_of_measurement",
+                            className: "block text-sm font-medium leading-6 text-gray-900"
+                          },
+                          "UOM"
+                        ),
+                        React.createElement(
+                          "div",
+                          { className: "mt-2" },
+                          React.createElement(
+                            "select",
+                            {
+                              id: "unit_of_measurement",
+                              onChange: function onChange(e) {
+                                return _this2.onCurrentBidItemChange(item.item_name, "unit_of_measurement", e);
+                              },
+                              autoComplete: "unit_of_measurement",
+                              className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+                            },
+                            item.unit_of_measurement ? React.createElement(
+                              "option",
+                              { value: item.unit_of_measurement },
+                              item.unit_of_measurement
+                            ) : "",
+                            React.createElement(
+                              "option",
+                              { value: "Each" },
+                              "Each"
+                            ),
+                            React.createElement(
+                              "option",
+                              { value: "Kgs" },
+                              "Kg`s"
+                            ),
+                            React.createElement(
+                              "option",
+                              { value: "Grammes" },
+                              "Grammes"
+                            ),
+                            React.createElement(
+                              "option",
+                              { value: "Litres" },
+                              "Litres"
+                            ),
+                            React.createElement(
+                              "option",
+                              { value: "Metres" },
+                              "Metres"
+                            ),
+                            React.createElement(
+                              "option",
+                              { value: "Bags" },
+                              "Bags"
+                            ),
+                            React.createElement(
+                              "option",
+                              { value: "Packets" },
+                              "Packets"
+                            ),
+                            React.createElement(
+                              "option",
+                              { value: "Cartons" },
+                              "Cartons"
+                            )
+                          )
+                        )
+                      )
+                    ),
+                    React.createElement(
+                      "div",
+                      { className: "flex-1 w-15 ml-3" },
+                      React.createElement(
+                        "div",
+                        null,
+                        React.createElement(
+                          "label",
+                          {
+                            htmlFor: "vat",
+                            className: "block text-sm font-medium leading-6 text-gray-900"
+                          },
+                          "VAT"
+                        ),
+                        React.createElement(
+                          "div",
+                          { className: "mt-2" },
+                          React.createElement(
+                            "select",
+                            {
+                              id: "vat",
+                              onChange: function onChange(e) {
+                                return _this2.onCurrentBidItemChange(item.item_name, "vat", e);
+                              },
+                              autoComplete: "vat",
+                              className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+                            },
+                            item.vat ? React.createElement(
+                              "option",
+                              { value: item.vat },
+                              item.vat
+                            ) : "",
+                            React.createElement(
+                              "option",
+                              { value: "Excl." },
+                              "Excl."
+                            ),
+                            React.createElement(
+                              "option",
+                              { value: "Incl." },
+                              "Incl."
+                            )
+                          )
+                        )
+                      )
+                    ),
+                    React.createElement(
+                      "div",
+                      { className: "flex-1 w-15 ml-1" },
+                      React.createElement(
+                        "label",
+                        {
+                          htmlFor: "unit_price",
+                          className: "block text-sm font-medium leading-6 text-gray-900"
+                        },
+                        "Unit Price"
+                      ),
+                      React.createElement(
+                        "div",
+                        { className: "mt-2" },
+                        React.createElement("input", {
+                          name: "unit_price",
+                          defaultValue: item.unit_price,
+                          onChange: function onChange(e) {
+                            return _this2.onCurrentBidItemChange(item.item_name, "unit_price", e);
+                          },
+                          type: "text",
+                          id: "unit_price",
+                          required: true,
+                          className: "block inpt w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                        })
+                      )
+                    )
+                  );
+                })
+              ),
+              React.createElement(
+                "div",
+                { className: "flex justify-center mt-5 px-3 py-3" },
+                React.createElement(
+                  "div",
+                  { className: "m-2" },
+                  React.createElement(
+                    "button",
+                    {
+                      onClick: this.onCurrentBidSave,
+                      className: "rounded-md text-gray-50 text-sm bg-blue-925 hover:bg-blue-550 px-3 py-2 font-semibold leading-6"
+                    },
+                    React.createElement(
+                      "span",
+                      { className: "ml-2" },
+                      "SAVE BID"
+                    )
+                  )
+                ),
+                React.createElement(
+                  "div",
+                  { className: "m-2" },
+                  React.createElement(
+                    "button",
+                    {
+                      onClick: this.onCloseCurrentBid,
+                      type: "submit",
+                      className: "rounded-md bg-red-danger hover:bg-orange-500 text-sm font-semibold px-3 py-2 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                    },
+                    React.createElement(
+                      "span",
+                      { className: "ml-2" },
+                      "CANCEL"
+                    )
+                  )
+                )
+              )
+            )
+          )
+        );
+      }
+
+      if (this.state.updateBidModal) {
+        updateBidModal = React.createElement(
+          "div",
+          {
+            id: "bid-" + this.state.currentBid,
+            className: "fixed inset-0 flex items-center justify-center z-50 pt-10 pb-20"
+          },
+          React.createElement(
+            "div",
+            { className: "bg-white rounded-lg shadow-lg p-6 max-h-screen min-w-max overflow-y-auto" },
+            React.createElement(
+              "div",
+              { className: "flex justify-between items-center mb-4" },
+              React.createElement(
+                "h3",
+                { className: "text-lg font-medium" },
+                "Modal Title"
+              ),
+              React.createElement(
+                "button",
+                {
+                  type: "button",
+                  className: "text-gray-400 hover:text-gray-500 focus:outline-none",
+                  onClick: this.onCloseUpdateBidBid
+                },
+                React.createElement(
+                  "svg",
+                  {
+                    className: "h-6 w-6",
+                    fill: "none",
+                    stroke: "currentColor",
+                    viewBox: "0 0 24 24"
+                  },
+                  React.createElement("path", {
+                    strokeLinecap: "round",
+                    strokeLinejoin: "round",
+                    strokeWidth: "2",
+                    d: "M6 18L18 6M6 6l12 12"
+                  })
+                )
+              )
+            ),
+            React.createElement(
+              "div",
+              { className: "px-4 sm:px-0 mt-6 bg-gulf-blue-300 rounded-md border-t border-gray-100 border-b border-gray-900/10 pb-12" },
+              React.createElement(
+                "div",
+                { id: "bid_container", className: " rounded-md" },
+                React.createElement(
+                  "div",
+                  { className: "flex justify-evenly mt-5  px-2 py-2 rounded-md" },
+                  React.createElement(
+                    "div",
+                    { className: "flex-1 w-20 ml-1" },
+                    React.createElement(
+                      "label",
+                      {
+                        htmlFor: "supplier_name",
+                        className: "block text-sm font-medium leading-6 text-gray-900"
+                      },
+                      "Supplier"
+                    ),
+                    React.createElement(
+                      "div",
+                      { className: "mt-2" },
+                      React.createElement(
+                        "select",
+                        {
+                          id: "supplier",
+                          onChange: function onChange(e) {
+                            return _this2.onCurrentBidChange("supplier", e);
+                          },
+                          className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
+                        },
+                        this.state.currentBid.supplier_name ? React.createElement(
+                          "option",
+                          {
+                            value: this.state.currentBid.supplier + "-#-" + this.state.currentBid.supplier_name
+                          },
+                          this.state.currentBid.supplier_name
+                        ) : "",
+                        React.createElement(
+                          "option",
+                          null,
+                          "Select Supplier"
+                        ),
+                        this.state.suppliers ? this.state.suppliers.map(function (supplier) {
+                          return React.createElement(
+                            "option",
+                            {
+                              value: supplier.id + "-#-" + supplier.name
+                            },
+                            supplier.name
+                          );
+                        }) : ""
+                      )
+                    )
+                  ),
+                  React.createElement(
+                    "div",
+                    { className: "flex-1 w-20 ml-1" },
+                    React.createElement(
+                      "label",
+                      {
+                        htmlFor: "bid_date",
+                        className: "block text-sm font-medium leading-6 text-gray-900"
+                      },
+                      "Bid Date"
+                    ),
+                    React.createElement(
+                      "div",
+                      { className: "mt-2" },
+                      React.createElement("input", {
+                        name: "bid_date",
+                        value: this.state.currentBid.bid_date,
+                        onChange: function onChange(e) {
+                          return _this2.onCurrentBidChange("bid_date", e);
+                        },
+                        type: "date",
+                        required: "required",
+                        className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                      })
+                    )
+                  ),
+                  React.createElement(
+                    "div",
+                    { className: "flex-1 w-20 ml-1" },
+                    React.createElement(
+                      "label",
+                      {
+                        htmlFor: "supplier[bid][0]",
+                        className: "block text-sm font-medium leading-6 text-gray-900"
+                      },
+                      "Bid No."
+                    ),
+                    React.createElement(
+                      "div",
+                      { className: "mt-2" },
+                      React.createElement("input", {
+                        name: "supplier[bid][0]",
+                        type: "number",
+                        value: "1",
+                        id: "bid",
+                        required: "required",
+                        readOnly: true,
+                        className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                      })
+                    )
+                  ),
+                  React.createElement(
+                    "div",
+                    { className: "flex-1 w-40 ml-1" },
+                    React.createElement(
+                      "label",
+                      {
+                        htmlFor: "bid_document",
+                        className: "block text-sm font-medium leading-6 text-gray-900"
+                      },
+                      "Bid Documents"
+                    ),
+                    React.createElement(
+                      "div",
+                      { className: "mt-2" },
+                      React.createElement("input", {
+                        name: "bid_document",
+                        type: "file",
+                        onChange: function onChange(e) {
+                          return _this2.onCurrentBidChange("bid_document", e);
+                        },
+                        className: "block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                      })
+                    )
+                  )
+                ),
+                this.state.currentBid.items.map(function (item, index) {
+                  return React.createElement(
+                    "div",
+                    { className: "flex justify-evenly mt-5  px-2 py-2 rounded-md" },
+                    React.createElement(
+                      "div",
+                      { className: "flex-1 w-15 ml-1" },
+                      React.createElement(
+                        "label",
+                        {
+                          htmlFor: "item_name",
+                          className: "block text-sm font-medium leading-6 text-gray-900"
+                        },
+                        "Item Description"
+                      ),
+                      React.createElement(
+                        "div",
+                        { className: "mt-2" },
+                        React.createElement("input", {
+                          name: "item_description",
+                          defaultValue: item.description,
                           onChange: function onChange(e) {
                             return _this2.onCurrentBidItemChange(item.item_name, "item_required", e);
                           },
@@ -2411,6 +2846,7 @@ var CreateCS = function (_React$Component) {
         null,
         itemsModal,
         bidsModal,
+        updateBidModal,
         React.createElement(
           "div",
           { className: "space-y-12 px-5 py-5" },
