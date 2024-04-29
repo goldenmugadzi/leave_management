@@ -60,6 +60,7 @@ var CreateCS = function (_React$Component) {
         });
 
         var compliance = data.compliance ? data.compliance : [];
+        var compliance_remarks = data.compliance_remarks ? data.compliance : [];
         var rankings = data.rankings ? data.rankings : [];
         var committee = data.committee ? data.committee : [];
         var pr_date = data.pr_date ? data.pr_date : "";
@@ -76,6 +77,7 @@ var CreateCS = function (_React$Component) {
         var proc_plans = data.proc_plans ? data.proc_plans : [];
         var suppliers = data.suppliers ? data.suppliers : [];
         var pr_items = data.pr_items ? data.pr_items : [];
+        var cs_items = data.cs_items ? data.cs_items : [];
         var users = data.users ? data.users : [];
         var cs_owner = data.cs_owner ? data.cs_owner : "";
 
@@ -97,7 +99,7 @@ var CreateCS = function (_React$Component) {
           pr_date: pr_date,
           closing_date: closing_date,
           closing_time_hour: closing_time
-        }, _defineProperty(_Object$assign, "ref_date", ref_date), _defineProperty(_Object$assign, "tender_adjudication_committee_date", tender_adjudication_committee_date), _defineProperty(_Object$assign, "advert", advert), _defineProperty(_Object$assign, "advert_url", advert_url), _defineProperty(_Object$assign, "bids", bids), _defineProperty(_Object$assign, "cs_items", pr_items), _defineProperty(_Object$assign, "compliance", compliance), _defineProperty(_Object$assign, "rankings", rankings), _defineProperty(_Object$assign, "committeeMembers", committee), _defineProperty(_Object$assign, "pr_items", pr_items), _Object$assign)));
+        }, _defineProperty(_Object$assign, "ref_date", ref_date), _defineProperty(_Object$assign, "tender_adjudication_committee_date", tender_adjudication_committee_date), _defineProperty(_Object$assign, "advert", advert), _defineProperty(_Object$assign, "advert_url", advert_url), _defineProperty(_Object$assign, "bids", bids), _defineProperty(_Object$assign, "cs_items", cs_items), _defineProperty(_Object$assign, "compliance", compliance), _defineProperty(_Object$assign, "complianceRemarks", compliance_remarks), _defineProperty(_Object$assign, "rankings", rankings), _defineProperty(_Object$assign, "committeeMembers", committee), _defineProperty(_Object$assign, "pr_items", pr_items), _Object$assign)));
       });
     };
 
@@ -145,16 +147,26 @@ var CreateCS = function (_React$Component) {
     _this.onAddCommitteeMembers = function () {
       var members = _this.state.committeeMembers;
       // check if memberUserName exists
-      // let memberExist =  
-      members.push(_this.state.member);
-      _this.setState(Object.assign({}, _this.state, {
-        committeeMembers: members,
-        member: {
-          memberUserName: "",
-          memberName: "",
-          memberPosition: ""
-        }
-      }));
+      var member = members.find(function (_member) {
+        return _member.memberUserName === _this.state.member.memberUserName;
+      });
+      // check if memberUserName is the one creating
+      var currentUserFlag = _this.state.member.memberUserName === _this.state.username;
+      if (member) {
+        alert('Committee Member already added.');
+      } else if (currentUserFlag) {
+        alert('You cannot add yourself. Please choose another user.');
+      } else {
+        members.push(_this.state.member);
+        _this.setState(Object.assign({}, _this.state, {
+          committeeMembers: members,
+          member: {
+            memberUserName: "",
+            memberName: "",
+            memberPosition: ""
+          }
+        }));
+      }
     };
 
     _this.onRemoveCommitteeMember = function (index, username) {
@@ -256,7 +268,7 @@ var CreateCS = function (_React$Component) {
       });
     };
 
-    _this.onAddCSItem = function (item_id) {
+    _this.onAddCSItem = function (item_id, ordered) {
       // check is item already added
       var item = _this.state.cs_items.find(function (item) {
         return item.id === item_id;
@@ -264,7 +276,7 @@ var CreateCS = function (_React$Component) {
       console.log("item: ", item);
       if (item) {
         // update item selected to false
-        item.selected = false;
+        item.ordered = false;
         // update pr_items
         var pr_items = _this.state.pr_items.map(function (_item) {
           if (_item.id === item_id) {
@@ -286,7 +298,8 @@ var CreateCS = function (_React$Component) {
           return item.id === item_id;
         });
         // update pr_item selected to added
-        _item2.selected = true;
+        _item2.ordered = true;
+        _item2.item_name = _item2.item_required;
         // update pr_items
         var _pr_items = _this.state.pr_items.map(function (_item) {
           if (_item.id === item_id) {
@@ -306,6 +319,7 @@ var CreateCS = function (_React$Component) {
 
     _this.onSubmitCSItems = function () {
       var form_data = new FormData();
+      form_data.append("cs_id", _this.state.cs_id);
       form_data.append("pr_id", _this.state.pr_number);
       form_data.append("json_data", JSON.stringify({
         cs_items: _this.state.cs_items
@@ -328,10 +342,13 @@ var CreateCS = function (_React$Component) {
           alert("Error saving Items");
         }
       });
+      _this.setState(Object.assign({}, _this.state, {
+        addItemsModal: false
+      }));
     };
 
     _this.onAddBidModal = function () {
-      var bid_count = _this.state.bid_count + 1;
+      var bid_count = _this.state.bids.length + 1;
       _this.setState(Object.assign({}, _this.state, {
         addBidModal: !_this.state.addBidModal,
         bid_count: bid_count,
@@ -390,6 +407,7 @@ var CreateCS = function (_React$Component) {
 
     _this.onCurrentBidItemChange = function (description, name_, event) {
       // check if item exists in current bid
+      console.log("description: ", description);
       var item = _this.state.currentBid.items ? _this.state.currentBid.items.find(function (item) {
         return item.item_required === description;
       }) : null;
@@ -418,11 +436,11 @@ var CreateCS = function (_React$Component) {
       } else {
         // find item in cs_items
         var _item3 = _this.state.cs_items.find(function (item) {
-          return item.item_required === description;
+          return item.item_name === description;
         });
         // create new item
         var new_item = {
-          item_required: _item3.item_required,
+          item_required: _item3.item_name,
           quantity: _item3.quantity,
           unit_of_measurement: _item3.unit_of_measurement,
           vat: _item3.vat,
@@ -448,55 +466,63 @@ var CreateCS = function (_React$Component) {
 
     _this.onCurrentBidSave = function () {
       var currentBid = _this.state.currentBid;
-      // check if current bid already exists
-      if (currentBid.items) {
-        console.log("state bids found: ", _this.state.bids);
-        var bid = _this.state.bids.find(function (bid) {
-          return bid && bid.bid_count === currentBid.bid_count;
-        });
-        console.log("bid found: ", bid);
-        if (bid) {
-          // update bid
-          console.log("currentBid 1: ", currentBid);
-          var items = currentBid.items.map(function (item) {
-            item.total_price = item.quantity * item.unit_price;
-            return item;
-          });
-          currentBid.items = items;
-          console.log("currentBid: ", currentBid);
-          _this.onSaveBid(currentBid);
-          var bids = _this.state.bids.map(function (bid) {
-            if (bid.bid_count === currentBid.bid_count) {
-              return currentBid;
-            }
-            return bid;
-          });
-          _this.setState(Object.assign({}, _this.state, {
-            bids: bids,
-            currentBid: {},
-            addBidModal: false
-          }));
-        } else {
-          // calculate total price for each item
-          var _items2 = currentBid.items.map(function (item) {
-            item.total_price = item.quantity * item.unit_price;
-            return item;
-          });
-          // update current bid items
-          currentBid.items = _items2;
-          _this.onSaveBid(currentBid);
-
-          var _bids = _this.state.bids;
-          console.log("currentBid: ", currentBid);
-          _bids.push(currentBid);
-          _this.setState(Object.assign({}, _this.state, {
-            bids: _bids,
-            currentBid: {},
-            addBidModal: false
-          }));
-        }
+      if (currentBid.supplier_name === "" || currentBid.supplier_name === undefined) {
+        alert("Please select a supplier");
+        return;
+      } else if (currentBid.bid_date === "" || currentBid.bid_date === undefined) {
+        alert("Please select a bid date");
+        return;
       } else {
-        alert("Please add items to the bid");
+        // check if current bid already exists
+        if (currentBid.items) {
+          console.log("state bids found: ", _this.state.bids);
+          var bid = _this.state.bids.find(function (bid) {
+            return bid && bid.bid_count === currentBid.bid_count;
+          });
+          console.log("bid found: ", bid);
+          if (bid) {
+            // update bid
+            console.log("currentBid 1: ", currentBid);
+            var items = currentBid.items.map(function (item) {
+              item.total_price = item.quantity * item.unit_price;
+              return item;
+            });
+            currentBid.items = items;
+            console.log("currentBid: ", currentBid);
+            _this.onSaveBid(currentBid);
+            var bids = _this.state.bids.map(function (bid) {
+              if (bid.bid_count === currentBid.bid_count) {
+                return currentBid;
+              }
+              return bid;
+            });
+            _this.setState(Object.assign({}, _this.state, {
+              bids: bids,
+              currentBid: {},
+              addBidModal: false
+            }));
+          } else {
+            // calculate total price for each item
+            var _items2 = currentBid.items.map(function (item) {
+              item.total_price = item.quantity * item.unit_price;
+              return item;
+            });
+            // update current bid items
+            currentBid.items = _items2;
+            _this.onSaveBid(currentBid);
+
+            var _bids = _this.state.bids;
+            console.log("currentBid: ", currentBid);
+            _bids.push(currentBid);
+            _this.setState(Object.assign({}, _this.state, {
+              bids: _bids,
+              currentBid: {},
+              addBidModal: false
+            }));
+          }
+        } else {
+          alert("Please add items to the bid");
+        }
       }
     };
 
@@ -611,7 +637,7 @@ var CreateCS = function (_React$Component) {
       });
     };
 
-    _this.onDeleteBidModal = function (bid_count) {
+    _this.onDeleteBidModal = function (bid_count, supplier_name) {
       // reset bid no index
       var bid_count_ = _this.state.bid_count - 1;
       var bids = _this.state.bids.filter(function (bid) {
@@ -626,6 +652,32 @@ var CreateCS = function (_React$Component) {
         bids: bids,
         bid_count: bid_count_
       }));
+      _this.deleteBid(bid_count, supplier_name);
+    };
+
+    _this.deleteBid = function (bid_count, supplier_name) {
+      var form_data = new FormData();
+      form_data.append("cs_id", _this.state.cs_id);
+      form_data.append("bid_count", bid_count);
+      form_data.append("supplier_name", supplier_name);
+      form_data.append("csrfmiddlewaretoken", _this.getCookie("csrftoken"));
+
+      fetch("http://localhost:8000/comperative_schedule/delete_bid", {
+        method: "POST",
+        headers: {
+          "X-CSRFToken": _this.getCookie("csrftoken")
+        },
+        body: form_data
+      }).then(function (response) {
+        return response.json();
+      }).then(function (data) {
+        console.log("data: ", data);
+        if (data.success) {
+          alert("Bid deleted successfully");
+        } else {
+          alert("Error deleting Bid");
+        }
+      });
     };
 
     _this.onAddBid = function () {
@@ -721,20 +773,54 @@ var CreateCS = function (_React$Component) {
 
       console.log("name: ", name, "checked: ", checked);
       var compliance = _this.state.compliance;
-      // let index = compliance.findIndex((item) => item.bid_count === bid_count);
       compliance[index][name] = checked;
       // filter decision and reject from list
-      var _compliance = {
-        payment_terms: compliance[index].payment_terms,
-        bid_validity: compliance[index].bid_validity,
-        delivery_period: compliance[index].delivery_period,
-        technical_specifications: compliance[index].technical_specifications,
-        valid_tax_clearance: compliance[index].valid_tax_clearance,
-        registered_with_praz: compliance[index].registered_with_praz,
-        tax_status: compliance[index].tax_status,
-        site_visit: compliance[index].site_visit,
-        samples_required: compliance[index].samples_required
-      };
+      var _compliance = {};
+      if (_this.state.showSamples && _this.state.showSiteVisit) {
+        _compliance = {
+          payment_terms: compliance[index].payment_terms,
+          bid_validity: compliance[index].bid_validity,
+          delivery_period: compliance[index].delivery_period,
+          technical_specifications: compliance[index].technical_specifications,
+          valid_tax_clearance: compliance[index].valid_tax_clearance,
+          registered_with_praz: compliance[index].registered_with_praz,
+          tax_status: compliance[index].tax_status,
+          site_visit: compliance[index].site_visit,
+          samples_required: compliance[index].samples_required
+        };
+      } else if (_this.state.showSamples && !_this.state.showSiteVisit) {
+        _compliance = {
+          payment_terms: compliance[index].payment_terms,
+          bid_validity: compliance[index].bid_validity,
+          delivery_period: compliance[index].delivery_period,
+          technical_specifications: compliance[index].technical_specifications,
+          valid_tax_clearance: compliance[index].valid_tax_clearance,
+          registered_with_praz: compliance[index].registered_with_praz,
+          tax_status: compliance[index].tax_status,
+          samples_required: compliance[index].samples_required
+        };
+      } else if (!_this.state.showSamples && _this.state.showSiteVisit) {
+        _compliance = {
+          payment_terms: compliance[index].payment_terms,
+          bid_validity: compliance[index].bid_validity,
+          delivery_period: compliance[index].delivery_period,
+          technical_specifications: compliance[index].technical_specifications,
+          valid_tax_clearance: compliance[index].valid_tax_clearance,
+          registered_with_praz: compliance[index].registered_with_praz,
+          tax_status: compliance[index].tax_status,
+          site_visit: compliance[index].site_visit
+        };
+      } else {
+        _compliance = {
+          payment_terms: compliance[index].payment_terms,
+          bid_validity: compliance[index].bid_validity,
+          delivery_period: compliance[index].delivery_period,
+          technical_specifications: compliance[index].technical_specifications,
+          valid_tax_clearance: compliance[index].valid_tax_clearance,
+          registered_with_praz: compliance[index].registered_with_praz,
+          tax_status: compliance[index].tax_status
+        };
+      }
 
       // set compliance[index]['decision'] to true if all compliance are true
       var compliance_values = Object.values(_compliance);
@@ -750,19 +836,30 @@ var CreateCS = function (_React$Component) {
       }));
     };
 
-    _this.onComplianceRemarksChange = function (bid_count, event) {
+    _this.onComplianceRemarksChange = function (supplier_name, event) {
       var _event$target8 = event.target,
           name = _event$target8.name,
           value = _event$target8.value;
 
-      var compliance = _this.state.compliance;
-      var index = compliance.findIndex(function (item) {
-        return item.bid_count === bid_count;
+      console.log("name: ", name, "value: ", value, "supplier_name: ", supplier_name);
+      var complianceRemarks = _this.state.complianceRemarks;
+      var index = complianceRemarks.findIndex(function (item) {
+        return item.supplier_name === supplier_name;
       });
-      compliance[index][name] = value;
-      _this.setState(Object.assign({}, _this.state, {
-        compliance: compliance
-      }));
+      if (index !== -1) {
+        complianceRemarks[index]['remarks'] = value;
+        _this.setState(Object.assign({}, _this.state, {
+          complianceRemarks: complianceRemarks
+        }));
+      } else {
+        complianceRemarks.push({
+          supplier_name: supplier_name,
+          remarks: value
+        });
+        _this.setState(Object.assign({}, _this.state, {
+          complianceRemarks: complianceRemarks
+        }));
+      }
     };
 
     _this.onSaveCompliance = function () {
@@ -770,6 +867,9 @@ var CreateCS = function (_React$Component) {
       form_data.append("cs_id", _this.state.cs_id);
       form_data.append("compliance", JSON.stringify({
         compliance: _this.state.compliance
+      }));
+      form_data.append("complianceRemarks", JSON.stringify({
+        complianceRemarks: _this.state.complianceRemarks
       }));
       form_data.append("csrfmiddlewaretoken", _this.getCookie("csrftoken"));
 
@@ -873,6 +973,7 @@ var CreateCS = function (_React$Component) {
     _this.onCommitteeChange = _this.onCommitteeChange.bind(_this);
     _this.onGetFileObjectUrl = _this.onGetFileObjectUrl.bind(_this);
     _this.onComplianceItemsChange = _this.onComplianceItemsChange.bind(_this);
+    _this.onComplianceRemarksChange = _this.onComplianceRemarksChange.bind(_this);
     _this.onCommitteeApprove = _this.onCommitteeApprove.bind(_this);
     return _this;
   }
@@ -1058,9 +1159,9 @@ var CreateCS = function (_React$Component) {
                         null,
                         React.createElement("input", {
                           type: "checkbox",
-                          checked: item.selected ? item.selected : false,
+                          checked: item.ordered ? item.ordered : false,
                           onChange: function onChange() {
-                            return _this2.onAddCSItem(item.id);
+                            return _this2.onAddCSItem(item.id, item.ordered);
                           }
                         })
                       ),
@@ -1093,7 +1194,7 @@ var CreateCS = function (_React$Component) {
                     React.createElement(
                       "span",
                       { className: "ml-2" },
-                      "SAVE BID"
+                      "SAVE SCHEDULE ITEMS"
                     )
                   )
                 )
@@ -1297,9 +1398,9 @@ var CreateCS = function (_React$Component) {
                         { className: "mt-2" },
                         React.createElement("input", {
                           name: "item_description",
-                          defaultValue: item.item_required,
+                          defaultValue: item.item_name,
                           onChange: function onChange(e) {
-                            return _this2.onCurrentBidItemChange(item.item_required, "item_required", e);
+                            return _this2.onCurrentBidItemChange(item.item_name, "item_required", e);
                           },
                           id: "item_description",
                           required: "required",
@@ -1325,7 +1426,7 @@ var CreateCS = function (_React$Component) {
                           name: "quantity",
                           defaultValue: item.quantity,
                           onChange: function onChange(e) {
-                            return _this2.onCurrentBidItemChange(item.item_required, "quantity", e);
+                            return _this2.onCurrentBidItemChange(item.item_name, "quantity", e);
                           },
                           type: "number",
                           id: "quantity",
@@ -1355,7 +1456,7 @@ var CreateCS = function (_React$Component) {
                             {
                               id: "unit_of_measurement",
                               onChange: function onChange(e) {
-                                return _this2.onCurrentBidItemChange(item.item_required, "unit_of_measurement", e);
+                                return _this2.onCurrentBidItemChange(item.item_name, "unit_of_measurement", e);
                               },
                               autoComplete: "unit_of_measurement",
                               className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
@@ -1431,7 +1532,7 @@ var CreateCS = function (_React$Component) {
                             {
                               id: "vat",
                               onChange: function onChange(e) {
-                                return _this2.onCurrentBidItemChange(item.item_required, "vat", e);
+                                return _this2.onCurrentBidItemChange(item.item_name, "vat", e);
                               },
                               autoComplete: "vat",
                               className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
@@ -1473,7 +1574,7 @@ var CreateCS = function (_React$Component) {
                           name: "unit_price",
                           defaultValue: item.unit_price,
                           onChange: function onChange(e) {
-                            return _this2.onCurrentBidItemChange(item.item_required, "unit_price", e);
+                            return _this2.onCurrentBidItemChange(item.item_name, "unit_price", e);
                           },
                           type: "text",
                           id: "unit_price",
@@ -1953,8 +2054,9 @@ var CreateCS = function (_React$Component) {
                         { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
                         React.createElement("input", {
                           name: "remarks",
+                          defaultValue: bid.remarks,
                           onChange: function onChange(e) {
-                            return _this2.onComplianceRemarksChange(bid.bid_count, e);
+                            return _this2.onComplianceRemarksChange(bid.supplier_name, e);
                           },
                           type: "text",
                           className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
@@ -1967,7 +2069,7 @@ var CreateCS = function (_React$Component) {
             )
           )
         ),
-        React.createElement(
+        this.state.username === this.state.cs_owner ? React.createElement(
           "div",
           { className: "flex justify-center mt-5 px-3 py-3" },
           React.createElement(
@@ -1984,7 +2086,7 @@ var CreateCS = function (_React$Component) {
               "SAVE COMPLIANCES"
             )
           )
-        )
+        ) : ""
       );
 
       rankingTable = React.createElement(
@@ -2134,7 +2236,7 @@ var CreateCS = function (_React$Component) {
                         React.createElement(
                           "div",
                           { className: "mt-2" },
-                          React.createElement(
+                          this.state.username === this.state.cs_owner ? React.createElement(
                             "select",
                             {
                               onChange: function onChange(text) {
@@ -2175,7 +2277,7 @@ var CreateCS = function (_React$Component) {
                               { value: "other" },
                               "Other"
                             )
-                          )
+                          ) : ""
                         )
                       )
                     ),
@@ -2196,7 +2298,7 @@ var CreateCS = function (_React$Component) {
                         React.createElement(
                           "div",
                           { className: "mt-2" },
-                          React.createElement(
+                          this.state.username === this.state.cs_owner ? React.createElement(
                             "select",
                             {
                               onChange: function onChange(text) {
@@ -2214,7 +2316,7 @@ var CreateCS = function (_React$Component) {
                                 user.first_name + " " + user.last_name
                               );
                             }) : ""
-                          )
+                          ) : ""
                         )
                       )
                     ),
@@ -2741,7 +2843,7 @@ var CreateCS = function (_React$Component) {
                 )
               )
             ),
-            React.createElement(
+            this.state.username === this.state.cs_owner || !this.state.cs_id ? React.createElement(
               "div",
               { className: "flex justify-center mt-10 px-3 py-3" },
               this.state.cs_id ? React.createElement(
@@ -2771,9 +2873,9 @@ var CreateCS = function (_React$Component) {
                   "SAVE SCHEDULE"
                 )
               )
-            )
+            ) : ""
           ),
-          this.state.bids.length < 1 ? React.createElement(
+          this.state.bids.length < 1 && this.state.username === this.state.cs_owner ? React.createElement(
             "div",
             { className: "m-2" },
             React.createElement(
@@ -2909,7 +3011,7 @@ var CreateCS = function (_React$Component) {
                         React.createElement(
                           "p",
                           null,
-                          item.item_required
+                          item.item_required ? item.item_required : item.description
                         )
                       )
                     ),
@@ -3029,7 +3131,7 @@ var CreateCS = function (_React$Component) {
                   );
                 })
               ),
-              React.createElement(
+              _this2.state.username === _this2.state.cs_owner ? React.createElement(
                 "div",
                 { className: "flex justify-center mt-5 px-3 py-3" },
                 React.createElement(
@@ -3053,7 +3155,7 @@ var CreateCS = function (_React$Component) {
                     "button",
                     {
                       onClick: function onClick() {
-                        return _this2.onDeleteBidModal(bid.bid_count);
+                        return _this2.onDeleteBidModal(bid.bid_count, bid.supplier_name);
                       },
                       type: "submit",
                       className: "rounded-md bg-red-danger hover:bg-orange-500 text-sm font-semibold px-3 py-2 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
@@ -3061,10 +3163,10 @@ var CreateCS = function (_React$Component) {
                     "DELETE BID"
                   )
                 )
-              )
+              ) : ""
             );
           }),
-          this.state.cs_items.length > 0 ? React.createElement(
+          this.state.cs_items.length > 0 && this.state.username === this.state.cs_owner ? React.createElement(
             "div",
             { className: "m-2" },
             React.createElement(
@@ -3077,7 +3179,7 @@ var CreateCS = function (_React$Component) {
               "ADD BID"
             )
           ) : "",
-          this.state.bids.length > 0 && this.state.compliance.length < 1 ? React.createElement(
+          this.state.bids.length > 0 && this.state.compliance.length < 1 && this.state.username === this.state.cs_owner ? React.createElement(
             "div",
             { className: "m-2" },
             React.createElement(
@@ -3091,7 +3193,7 @@ var CreateCS = function (_React$Component) {
             )
           ) : "",
           this.state.compliance.length > 0 ? complianceTable : "",
-          this.state.compliance.length > 0 ? React.createElement(
+          this.state.compliance.length > 0 && this.state.username === this.state.cs_owner ? React.createElement(
             "div",
             { className: "m-2" },
             React.createElement(
@@ -3106,7 +3208,7 @@ var CreateCS = function (_React$Component) {
           ) : "",
           this.state.rankings.length > 0 ? rankingTable : "",
           this.state.rankings.length > 0 ? committeeTable : "",
-          this.state.committeeMembers.length > 0 ? React.createElement(
+          this.state.committeeMembers.length > 0 && this.state.username === this.state.cs_owner ? React.createElement(
             "div",
             { className: "m-2" },
             React.createElement(

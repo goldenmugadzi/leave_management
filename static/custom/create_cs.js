@@ -59,6 +59,7 @@ class CreateCS extends React.Component {
     this.onCommitteeChange = this.onCommitteeChange.bind(this);
     this.onGetFileObjectUrl = this.onGetFileObjectUrl.bind(this);
     this.onComplianceItemsChange = this.onComplianceItemsChange.bind(this);
+    this.onComplianceRemarksChange = this.onComplianceRemarksChange.bind(this);
     this.onCommitteeApprove = this.onCommitteeApprove.bind(this);
   }
 
@@ -115,6 +116,7 @@ class CreateCS extends React.Component {
         });
 
         let compliance = data.compliance ? data.compliance : [];
+        let compliance_remarks = data.compliance_remarks ? data.compliance: [];
         let rankings = data.rankings ? data.rankings : [];
         let committee = data.committee ? data.committee : [];
         let pr_date = data.pr_date ? data.pr_date : "";
@@ -131,6 +133,7 @@ class CreateCS extends React.Component {
         let proc_plans = data.proc_plans ? data.proc_plans : [];
         let suppliers = data.suppliers ? data.suppliers : [];
         let pr_items = data.pr_items ? data.pr_items : [];
+        let cs_items = data.cs_items ? data.cs_items : [];
         let users = data.users ? data.users : [];
         let cs_owner = data.cs_owner ? data.cs_owner : "";
 
@@ -158,8 +161,9 @@ class CreateCS extends React.Component {
           advert: advert,
           advert_url: advert_url,
           bids: bids,
-          cs_items: pr_items,
+          cs_items: cs_items,
           compliance: compliance,
+          complianceRemarks: compliance_remarks,
           rankings: rankings,
           committeeMembers: committee,
           pr_items: pr_items,
@@ -211,17 +215,25 @@ class CreateCS extends React.Component {
   onAddCommitteeMembers = () => {
     let members = this.state.committeeMembers;
     // check if memberUserName exists
-    // let memberExist =  
-    members.push(this.state.member);
-    this.setState({
-      ...this.state,
-      committeeMembers: members,
-      member: {
-        memberUserName: "",
-        memberName: "",
-        memberPosition: "",
-      },
-    });
+    let member = members.find((_member) => _member.memberUserName === this.state.member.memberUserName);
+    // check if memberUserName is the one creating
+    let currentUserFlag = this.state.member.memberUserName === this.state.username
+    if (member){
+      alert('Committee Member already added.')
+    } else if (currentUserFlag) {
+      alert('You cannot add yourself. Please choose another user.')
+    } else {
+      members.push(this.state.member);
+      this.setState({
+        ...this.state,
+        committeeMembers: members,
+        member: {
+          memberUserName: "",
+          memberName: "",
+          memberPosition: "",
+        },
+      });
+    }
   };
 
   onRemoveCommitteeMember = (index, username) => {
@@ -328,13 +340,13 @@ class CreateCS extends React.Component {
       });
   }
 
-  onAddCSItem = (item_id) => {
+  onAddCSItem = (item_id, ordered) => {
     // check is item already added
     let item = this.state.cs_items.find((item) => item.id === item_id);
     console.log("item: ", item);
     if (item) {
       // update item selected to false
-      item.selected = false;
+      item.ordered = false;
       // update pr_items
       let pr_items = this.state.pr_items.map((_item) => {
         if (_item.id === item_id) {
@@ -343,7 +355,7 @@ class CreateCS extends React.Component {
         return _item;
       });
       // remove item
-      let items = this.state.cs_items.filter((item) => item.id !== item_id);
+      let items = this.state.cs_items.filter((item) => (item.id !== item_id));
       this.setState({
         ...this.state,
         cs_items: items,
@@ -353,7 +365,8 @@ class CreateCS extends React.Component {
       // find item in pr_items
       let item = this.state.pr_items.find((item) => item.id === item_id);
       // update pr_item selected to added
-      item.selected = true;
+      item.ordered = true;
+      item.item_name = item.item_required;
       // update pr_items
       let pr_items = this.state.pr_items.map((_item) => {
         if (_item.id === item_id) {
@@ -374,6 +387,7 @@ class CreateCS extends React.Component {
 
   onSubmitCSItems = () => {
     let form_data = new FormData();
+    form_data.append("cs_id", this.state.cs_id);
     form_data.append("pr_id", this.state.pr_number);
     form_data.append(
       "json_data",
@@ -399,10 +413,14 @@ class CreateCS extends React.Component {
           alert("Error saving Items");
         }
       });
+    this.setState({
+      ...this.state,
+      addItemsModal: false,
+    });
   }
 
   onAddBidModal = () => {
-    let bid_count = this.state.bid_count + 1;
+    let bid_count = this.state.bids.length + 1;
     this.setState({
       ...this.state,
       addBidModal: !this.state.addBidModal,
@@ -457,6 +475,7 @@ class CreateCS extends React.Component {
 
   onCurrentBidItemChange = (description, name_, event) => {
     // check if item exists in current bid
+    console.log("description: ", description);
     let item = this.state.currentBid.items
       ? this.state.currentBid.items.find((item) => item.item_required === description)
       : null;
@@ -482,10 +501,10 @@ class CreateCS extends React.Component {
       });
     } else {
       // find item in cs_items
-      let item = this.state.cs_items.find((item) => item.item_required === description);
+      let item = this.state.cs_items.find((item) => item.item_name === description);
       // create new item
       let new_item = {
-        item_required: item.item_required,
+        item_required: item.item_name,
         quantity: item.quantity,
         unit_of_measurement: item.unit_of_measurement,
         vat: item.vat,
@@ -512,58 +531,67 @@ class CreateCS extends React.Component {
 
   onCurrentBidSave = () => {
     let currentBid = this.state.currentBid;
-    // check if current bid already exists
-    if (currentBid.items) {
-      console.log("state bids found: ", this.state.bids);
-      let bid = this.state.bids.find(
-        (bid) => bid && bid.bid_count === currentBid.bid_count
-      );
-      console.log("bid found: ", bid);
-      if (bid) {
-        // update bid
-        console.log("currentBid 1: ", currentBid);
-        let items = currentBid.items.map((item) => {
-          item.total_price = item.quantity * item.unit_price;
-          return item;
-        });
-        currentBid.items = items;
-        console.log("currentBid: ", currentBid);
-        this.onSaveBid(currentBid);
-        let bids = this.state.bids.map((bid) => {
-          if (bid.bid_count === currentBid.bid_count) {
-            return currentBid;
-          }
-          return bid;
-        });
-        this.setState({
-          ...this.state,
-          bids: bids,
-          currentBid: {},
-          addBidModal: false,
-        });
-      } else {
-        // calculate total price for each item
-        let items = currentBid.items.map((item) => {
-          item.total_price = item.quantity * item.unit_price;
-          return item;
-        });
-        // update current bid items
-        currentBid.items = items;
-        this.onSaveBid(currentBid);
-
-        let bids = this.state.bids;
-        console.log("currentBid: ", currentBid);
-        bids.push(currentBid);
-        this.setState({
-          ...this.state,
-          bids: bids,
-          currentBid: {},
-          addBidModal: false,
-        });
-      }
+    if (currentBid.supplier_name === "" || currentBid.supplier_name === undefined) {
+      alert("Please select a supplier");
+      return;
+    } else if (currentBid.bid_date === "" || currentBid.bid_date === undefined) {
+      alert("Please select a bid date");
+      return;
     } else {
-      alert("Please add items to the bid");
+        // check if current bid already exists
+        if (currentBid.items) {
+          console.log("state bids found: ", this.state.bids);
+          let bid = this.state.bids.find(
+            (bid) => bid && bid.bid_count === currentBid.bid_count
+          );
+          console.log("bid found: ", bid);
+          if (bid) {
+            // update bid
+            console.log("currentBid 1: ", currentBid);
+            let items = currentBid.items.map((item) => {
+              item.total_price = item.quantity * item.unit_price;
+              return item;
+            });
+            currentBid.items = items;
+            console.log("currentBid: ", currentBid);
+            this.onSaveBid(currentBid);
+            let bids = this.state.bids.map((bid) => {
+              if (bid.bid_count === currentBid.bid_count) {
+                return currentBid;
+              }
+              return bid;
+            });
+            this.setState({
+              ...this.state,
+              bids: bids,
+              currentBid: {},
+              addBidModal: false,
+            });
+          } else {
+            // calculate total price for each item
+            let items = currentBid.items.map((item) => {
+              item.total_price = item.quantity * item.unit_price;
+              return item;
+            });
+            // update current bid items
+            currentBid.items = items;
+            this.onSaveBid(currentBid);
+
+            let bids = this.state.bids;
+            console.log("currentBid: ", currentBid);
+            bids.push(currentBid);
+            this.setState({
+              ...this.state,
+              bids: bids,
+              currentBid: {},
+              addBidModal: false,
+            });
+          }
+        } else {
+          alert("Please add items to the bid");
+        }
     }
+    
   };
 
   onSaveBid = (currentBid) => {
@@ -687,7 +715,7 @@ class CreateCS extends React.Component {
       });
   };
 
-  onDeleteBidModal = (bid_count) => {
+  onDeleteBidModal = (bid_count, supplier_name) => {
     // reset bid no index
     let bid_count_ = this.state.bid_count - 1;
     let bids = this.state.bids.filter((bid) => bid.bid_count !== bid_count);
@@ -701,6 +729,32 @@ class CreateCS extends React.Component {
       bids: bids,
       bid_count: bid_count_,
     });
+    this.deleteBid(bid_count, supplier_name);
+  };
+
+  deleteBid = (bid_count, supplier_name) => {
+    let form_data = new FormData();
+    form_data.append("cs_id", this.state.cs_id);
+    form_data.append("bid_count", bid_count);
+    form_data.append("supplier_name", supplier_name);
+    form_data.append("csrfmiddlewaretoken", this.getCookie("csrftoken"));
+
+    fetch(`http://localhost:8000/comperative_schedule/delete_bid`, {
+      method: "POST",
+      headers: {
+        "X-CSRFToken": this.getCookie("csrftoken"),
+      },
+      body: form_data,
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        console.log("data: ", data);
+        if (data.success) {
+          alert("Bid deleted successfully");
+        } else {
+          alert("Error deleting Bid");
+        }
+      });
   };
 
   onAddBid = () => {
@@ -863,20 +917,57 @@ class CreateCS extends React.Component {
     let { name, checked } = event.target;
     console.log("name: ", name, "checked: ", checked);
     let compliance = this.state.compliance;
-    // let index = compliance.findIndex((item) => item.bid_count === bid_count);
     compliance[index][name] = checked;
     // filter decision and reject from list
-    let _compliance = {
-        payment_terms: compliance[index].payment_terms,
-        bid_validity: compliance[index].bid_validity,
-        delivery_period: compliance[index].delivery_period,
-        technical_specifications: compliance[index].technical_specifications,
-        valid_tax_clearance: compliance[index].valid_tax_clearance,
-        registered_with_praz: compliance[index].registered_with_praz,
-        tax_status: compliance[index].tax_status,
-        site_visit: compliance[index].site_visit,
-        samples_required: compliance[index].samples_required,
-    };
+    let _compliance = {}
+    if(this.state.showSamples && this.state.showSiteVisit){
+      _compliance = {
+          payment_terms: compliance[index].payment_terms,
+          bid_validity: compliance[index].bid_validity,
+          delivery_period: compliance[index].delivery_period,
+          technical_specifications: compliance[index].technical_specifications,
+          valid_tax_clearance: compliance[index].valid_tax_clearance,
+          registered_with_praz: compliance[index].registered_with_praz,
+          tax_status: compliance[index].tax_status,
+          site_visit: compliance[index].site_visit,
+          samples_required: compliance[index].samples_required,
+      };
+    } else if(this.state.showSamples && !this.state.showSiteVisit) {
+      _compliance = {
+          payment_terms: compliance[index].payment_terms,
+          bid_validity: compliance[index].bid_validity,
+          delivery_period: compliance[index].delivery_period,
+          technical_specifications: compliance[index].technical_specifications,
+          valid_tax_clearance: compliance[index].valid_tax_clearance,
+          registered_with_praz: compliance[index].registered_with_praz,
+          tax_status: compliance[index].tax_status,
+          samples_required: compliance[index].samples_required,
+      };
+      
+    } else if(!this.state.showSamples && this.state.showSiteVisit) {
+      _compliance = {
+          payment_terms: compliance[index].payment_terms,
+          bid_validity: compliance[index].bid_validity,
+          delivery_period: compliance[index].delivery_period,
+          technical_specifications: compliance[index].technical_specifications,
+          valid_tax_clearance: compliance[index].valid_tax_clearance,
+          registered_with_praz: compliance[index].registered_with_praz,
+          tax_status: compliance[index].tax_status,
+          site_visit: compliance[index].site_visit,
+      };
+      
+    } else {
+      _compliance = {
+          payment_terms: compliance[index].payment_terms,
+          bid_validity: compliance[index].bid_validity,
+          delivery_period: compliance[index].delivery_period,
+          technical_specifications: compliance[index].technical_specifications,
+          valid_tax_clearance: compliance[index].valid_tax_clearance,
+          registered_with_praz: compliance[index].registered_with_praz,
+          tax_status: compliance[index].tax_status
+      };
+      
+    }
 
     // set compliance[index]['decision'] to true if all compliance are true
     let compliance_values = Object.values(_compliance);
@@ -891,15 +982,27 @@ class CreateCS extends React.Component {
     });
   };
 
-  onComplianceRemarksChange = (bid_count, event) => {
+  onComplianceRemarksChange = (supplier_name, event) => {
     let { name, value } = event.target;
-    let compliance = this.state.compliance;
-    let index = compliance.findIndex((item) => item.bid_count === bid_count);
-    compliance[index][name] = value;
-    this.setState({
-      ...this.state,
-      compliance: compliance,
-    });
+    console.log("name: ", name, "value: ", value, "supplier_name: ", supplier_name)
+    let complianceRemarks = this.state.complianceRemarks;
+    let index = complianceRemarks.findIndex((item) => item.supplier_name === supplier_name);
+    if(index !== -1){
+      complianceRemarks[index]['remarks'] = value;
+      this.setState({
+        ...this.state,
+        complianceRemarks: complianceRemarks,
+      });
+    } else {
+      complianceRemarks.push({
+        supplier_name: supplier_name,
+        remarks: value,
+      });
+      this.setState({
+        ...this.state,
+        complianceRemarks: complianceRemarks,
+      });
+    }
   };
 
   onSaveCompliance = () => {
@@ -909,6 +1012,12 @@ class CreateCS extends React.Component {
       "compliance",
       JSON.stringify({
         compliance: this.state.compliance,
+      })
+    );
+    form_data.append(
+      "complianceRemarks",
+      JSON.stringify({
+        complianceRemarks: this.state.complianceRemarks,
       })
     );
     form_data.append("csrfmiddlewaretoken", this.getCookie("csrftoken"));
@@ -1012,8 +1121,8 @@ class CreateCS extends React.Component {
                         <td>
                           <input
                             type="checkbox"
-                            checked={item.selected ? item.selected : false}
-                            onChange={() => this.onAddCSItem(item.id)}
+                            checked={item.ordered ? item.ordered : false}
+                            onChange={() => this.onAddCSItem(item.id, item.ordered)}
                           />
                         </td>
                         <td>{item.item_required}</td>
@@ -1030,7 +1139,7 @@ class CreateCS extends React.Component {
                     onClick={this.onSubmitCSItems}
                     className="rounded-md text-gray-50 text-sm bg-blue-925 hover:bg-blue-550 px-3 py-2 font-semibold leading-6"
                   >
-                    <span className="ml-2">SAVE BID</span>
+                    <span className="ml-2">SAVE SCHEDULE ITEMS</span>
                   </button>
                 </div>
               </div>
@@ -1181,10 +1290,10 @@ class CreateCS extends React.Component {
                         <div className="mt-2">
                           <input
                             name="item_description"
-                            defaultValue={item.item_required}
+                            defaultValue={item.item_name}
                             onChange={(e) =>
                               this.onCurrentBidItemChange(
-                                item.item_required,
+                                item.item_name,
                                 "item_required",
                                 e
                               )
@@ -1208,7 +1317,7 @@ class CreateCS extends React.Component {
                             defaultValue={item.quantity}
                             onChange={(e) =>
                               this.onCurrentBidItemChange(
-                                item.item_required,
+                                item.item_name,
                                 "quantity",
                                 e
                               )
@@ -1232,7 +1341,7 @@ class CreateCS extends React.Component {
                               id="unit_of_measurement"
                               onChange={(e) =>
                                 this.onCurrentBidItemChange(
-                                  item.item_required,
+                                  item.item_name,
                                   "unit_of_measurement",
                                   e
                                 )
@@ -1271,7 +1380,7 @@ class CreateCS extends React.Component {
                             <select
                               id="vat"
                               onChange={(e) =>
-                                this.onCurrentBidItemChange(item.item_required, "vat", e)
+                                this.onCurrentBidItemChange(item.item_name, "vat", e)
                               }
                               autoComplete="vat"
                               className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
@@ -1300,7 +1409,7 @@ class CreateCS extends React.Component {
                             defaultValue={item.unit_price}
                             onChange={(e) =>
                               this.onCurrentBidItemChange(
-                                item.item_required,
+                                item.item_name,
                                 "unit_price",
                                 e
                               )
@@ -1668,8 +1777,9 @@ class CreateCS extends React.Component {
                         <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
                           <input
                             name="remarks"
+                            defaultValue={bid.remarks}
                             onChange={(e) =>
-                              this.onComplianceRemarksChange(bid.bid_count, e)
+                              this.onComplianceRemarksChange(bid.supplier_name, e)
                             }
                             type="text"
                             className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
@@ -1684,18 +1794,21 @@ class CreateCS extends React.Component {
           </div>
         </div>
 
-        <div className="flex justify-center mt-5 px-3 py-3">
-          <div className="flex-1 m-2">
-            <button
-              style={{ width: "100%" }}
-              onClick={this.onSaveCompliance}
-              name="save_next"
-              className="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-            >
-              SAVE COMPLIANCES
-            </button>
-          </div>
-        </div>
+        {this.state.username === this.state.cs_owner ? (
+                  <div className="flex justify-center mt-5 px-3 py-3">
+                  <div className="flex-1 m-2">
+                    <button
+                      style={{ width: "100%" }}
+                      onClick={this.onSaveCompliance}
+                      name="save_next"
+                      className="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                    >
+                      SAVE COMPLIANCES
+                    </button>
+                  </div>
+                </div>
+        ) : ""}
+
       </div>
     );
 
@@ -1785,20 +1898,22 @@ class CreateCS extends React.Component {
                           Member Position
                         </label>
                         <div className="mt-2">
-                          <select
-                            onChange={(text) => this.onCommitteeChange("memberPosition", text)}
-                            id="memberPosition"
-                            name="memberPosition"
-                            autoComplete="memberPosition"
-                            className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
-                          >
-                            <option value="">Select Option</option>
-                            <option value="chairman">Chairman</option>
-                            <option value="finance">Finance</option>
-                            <option value="procurement">Procurement</option>
-                            <option value="user">User</option>
-                            <option value="other">Other</option>
-                          </select>
+                          {this.state.username === this.state.cs_owner ? (
+                                                      <select
+                                                      onChange={(text) => this.onCommitteeChange("memberPosition", text)}
+                                                      id="memberPosition"
+                                                      name="memberPosition"
+                                                      autoComplete="memberPosition"
+                                                      className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
+                                                    >
+                                                      <option value="">Select Option</option>
+                                                      <option value="chairman">Chairman</option>
+                                                      <option value="finance">Finance</option>
+                                                      <option value="procurement">Procurement</option>
+                                                      <option value="user">User</option>
+                                                      <option value="other">Other</option>
+                                                    </select>
+                          ): ""}
                         </div>
                       </div>
                     </td>
@@ -1811,17 +1926,19 @@ class CreateCS extends React.Component {
                           Select User
                         </label>
                         <div className="mt-2">
-                          <select
-                            onChange={(text) => this.onCommitteeChange("memberUserName", text)}
-                            id="memberUserName"
-                            name="memberUserName"
-                            autoComplete="memberUserName"
-                            className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
-                          >
-                            {this.state.users ? this.state.users.map((user) => (
-                              <option value={user.username}>{user.first_name + " " + user.last_name}</option>
-                            )) : ""}
-                          </select>
+                          {this.state.username === this.state.cs_owner ? (
+                                                      <select
+                                                      onChange={(text) => this.onCommitteeChange("memberUserName", text)}
+                                                      id="memberUserName"
+                                                      name="memberUserName"
+                                                      autoComplete="memberUserName"
+                                                      className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
+                                                    >
+                                                      {this.state.users ? this.state.users.map((user) => (
+                                                        <option value={user.username}>{user.first_name + " " + user.last_name}</option>
+                                                      )) : ""}
+                                                    </select>
+                          ): ""}
                         </div>
                       </div>
                     </td>
@@ -2186,34 +2303,36 @@ class CreateCS extends React.Component {
                 </div>
             </div>
 
-            <div className="flex justify-center mt-10 px-3 py-3">
-              {this.state.cs_id ? (
-                <div className="w-30 m-2">
-                  <button
-                    style={{ width: "100%" }}
-                    onClick={this.onUpdateSchedule}
-                    name="save_next"
-                    className="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                  >
-                    UPDATE SCHEDULE
-                  </button>
-                </div>
-              ) : (
-                <div className="w-30 m-2">
-                  <button
-                    style={{ width: "100%" }}
-                    onClick={this.onSaveSchedule}
-                    name="save_next"
-                    className="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                  >
-                    SAVE SCHEDULE
-                  </button>
-                </div>
-              )}
-            </div>
+            {(this.state.username === this.state.cs_owner) || !(this.state.cs_id) ? (
+                          <div className="flex justify-center mt-10 px-3 py-3">
+                          {this.state.cs_id ? (
+                            <div className="w-30 m-2">
+                              <button
+                                style={{ width: "100%" }}
+                                onClick={this.onUpdateSchedule}
+                                name="save_next"
+                                className="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                              >
+                                UPDATE SCHEDULE
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="w-30 m-2">
+                              <button
+                                style={{ width: "100%" }}
+                                onClick={this.onSaveSchedule}
+                                name="save_next"
+                                className="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                              >
+                                SAVE SCHEDULE
+                              </button>
+                            </div>
+                          )}
+                        </div>
+            ): ""}
           </div>
 
-          {this.state.bids.length < 1? (
+          {(this.state.bids.length < 1) && (this.state.username === this.state.cs_owner) ? (
             <div className="m-2">
               <button
                 style={{ width: "100%" }}
@@ -2296,7 +2415,7 @@ class CreateCS extends React.Component {
                             Item Description
                           </label>
                           <div className="mt-2">
-                            <p>{item.item_required}</p>
+                            <p>{item.item_required? item.item_required: item.description}</p>
                           </div>
                         </div>
                         <div className="flex-1 w-15 ml-1">
@@ -2363,30 +2482,32 @@ class CreateCS extends React.Component {
                   })}
                 </div>
 
-                <div className="flex justify-center mt-5 px-3 py-3">
-                  <div className="m-2">
-                    <button
-                      onClick={() => this.onUpdateBidModal(bid.bid_count)}
-                      className="rounded-md text-gray-50 text-sm bg-blue-925 hover:bg-blue-550 px-3 py-2 font-semibold leading-6"
-                    >
-                      UPDATE BID
-                    </button>
-                  </div>
-                  <div className="m-2">
-                    <button
-                      onClick={() => this.onDeleteBidModal(bid.bid_count)}
-                      type="submit"
-                      className="rounded-md bg-red-danger hover:bg-orange-500 text-sm font-semibold px-3 py-2 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                    >
-                      DELETE BID
-                    </button>
-                  </div>
-                </div>
+                {(this.state.username === this.state.cs_owner)? (
+                                  <div className="flex justify-center mt-5 px-3 py-3">
+                                  <div className="m-2">
+                                    <button
+                                      onClick={() => this.onUpdateBidModal(bid.bid_count)}
+                                      className="rounded-md text-gray-50 text-sm bg-blue-925 hover:bg-blue-550 px-3 py-2 font-semibold leading-6"
+                                    >
+                                      UPDATE BID
+                                    </button>
+                                  </div>
+                                  <div className="m-2">
+                                    <button
+                                      onClick={() => this.onDeleteBidModal(bid.bid_count, bid.supplier_name)}
+                                      type="submit"
+                                      className="rounded-md bg-red-danger hover:bg-orange-500 text-sm font-semibold px-3 py-2 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                                    >
+                                      DELETE BID
+                                    </button>
+                                  </div>
+                                </div>
+                ): ""}
               </div>
             );
           })}
 
-          {this.state.cs_items.length > 0 ? (
+          {(this.state.cs_items.length > 0) && (this.state.username === this.state.cs_owner) ? (
             <div className="m-2">
               <button
                 style={{ width: "100%" }}
@@ -2400,7 +2521,7 @@ class CreateCS extends React.Component {
             ""
           )}
 
-          {(this.state.bids.length > 0) && (this.state.compliance.length < 1) ? (
+          {(this.state.bids.length > 0) && (this.state.compliance.length < 1) && (this.state.username === this.state.cs_owner) ? (
             <div className="m-2">
               <button
                 style={{ width: "100%" }}
@@ -2416,7 +2537,7 @@ class CreateCS extends React.Component {
 
           {this.state.compliance.length > 0 ? (complianceTable): ""}
 
-          {(this.state.compliance.length > 0) ? (
+          {(this.state.compliance.length > 0) && (this.state.username === this.state.cs_owner) ? (
             <div className="m-2">
               <button
                 style={{ width: "100%" }}
@@ -2434,7 +2555,7 @@ class CreateCS extends React.Component {
 
           {(this.state.rankings.length > 0) ? (committeeTable): ""}
 
-          {this.state.committeeMembers.length > 0 ? (
+          {(this.state.committeeMembers.length > 0) && (this.state.username === this.state.cs_owner) ? (
             <div className="m-2">
               <button
                 style={{ width: "100%" }}

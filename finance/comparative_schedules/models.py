@@ -34,6 +34,14 @@ class ComparativeSchedules(models.Model):
     region = models.ForeignKey(Regions, on_delete=models.CASCADE, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
+class CSRequiredItems(models.Model):
+    cs_id = models.ForeignKey(ComparativeSchedules, on_delete=models.CASCADE)
+    item_id = models.CharField(max_length=100)
+    item_name = models.CharField(max_length=300)
+    quantity = models.CharField(max_length=50)
+    unit_of_measurement = models.CharField(max_length=50)
+    created_at = models.DateTimeField(auto_now_add=True)
+
 class CSItems(models.Model):
     cs_id = models.ForeignKey(ComparativeSchedules, on_delete=models.CASCADE)
     item_id = models.CharField(max_length=100)
@@ -69,6 +77,11 @@ class CSCompliance(models.Model):
     decision = models.BooleanField(default=False)
     remarks = models.CharField(max_length=255)
     created_at = models.DateTimeField(auto_now_add=True)
+
+class CSComplianceRemarks(models.Model):
+    cs_id = models.ForeignKey(ComparativeSchedules, on_delete=models.CASCADE)
+    supplier_id = models.ForeignKey(Supplier, on_delete=models.CASCADE)
+    remarks = models.CharField(max_length=255)
     
 class Ranking(models.Model):
     cs_id = models.ForeignKey(ComparativeSchedules, on_delete=models.CASCADE)

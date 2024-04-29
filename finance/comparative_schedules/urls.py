@@ -13,6 +13,7 @@ urlpatterns = [
     path('update', update_comparative_schedule, name='update_schedule'),
     
     path('save_bid', save_cs_bid, name='save_bid'),
+    path('delete_bid', delete_cs_bid, name='delete_cs_bid'),
     
     path('save_compliance', save_cs_compliance, name='save_compliance'),
     
