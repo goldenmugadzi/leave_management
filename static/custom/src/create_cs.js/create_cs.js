@@ -108,7 +108,7 @@ var CreateCS = function (_React$Component) {
     _this.getCreateData = function (pr_id) {
       console.log("cs pr_id: ", pr_id);
 
-      fetch(BASE_URL + "/comparative_schedule/create_data/" + pr_id).then(function (response) {
+      fetch(BASE_URL + "/comperative_schedule/create_data/" + pr_id).then(function (response) {
         return response.json();
       }).then(function (data) {
         console.log("data: ", data);
