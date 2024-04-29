@@ -132,13 +132,13 @@ def create_Ace(request):
 
 
 @login_required
-def pettycash_awaiting_my_action(request):
+def ace_awaiting_my_action(request):
     """
     for each pettycash.Process in the rfqs,  let current_step = the last pettycash.process.approval if any else 0 and
     let next_step =current_step+1 then check if  next_step=step.step for rfq.process.workflow.step_set filtered by
     approver = user.roles.all.
     """
-    pettycashs_to_process = []
+    aces_to_process = []
     user_roles = request.user.roles.all()
 
     user_id = request.user.id
@@ -147,20 +147,20 @@ def pettycash_awaiting_my_action(request):
     user_groups = user_profile.groups.values_list('name', flat=True)
 
     custom_user_roles = {
-        "pettycash": {},
+        "ace": {},
     }
 
     roles_ = user_profile.roles.all()
     for _role in roles_:
         role = Roles.objects.filter(id=_role.id).first()
 
-        if role.application == "pettycash":
-            custom_user_roles["pettycash"] = role
-    ace_role = str(custom_user_roles["pettycash"])
+        if role.application == "ace":
+            custom_user_roles["ace"] = role
+    ace_role = str(custom_user_roles["ace"])
 
     if ace_role == "approve":
-        for pettycash in Pettycash.objects.filter(section=request.user.section):
-            process = pettycash.process
+        for ace in Ace2.objects.filter(section=request.user.section):
+            process = ace.process
 
             if process.approval_set.exists():
                 last_approval = process.approval_set.last()
@@ -174,11 +174,11 @@ def pettycash_awaiting_my_action(request):
             step = workflow.step_set.filter(step=next_step, approver__in=user_roles).first()
 
             if step:
-                pettycashs_to_process.append(pettycash)
+                aces_to_process.append(ace)
 
     else:
-        for pettycash in Pettycash.objects.all():
-            process = pettycash.process
+        for ace in Ace2.objects.all():
+            process = ace.process
 
             if process.approval_set.exists():
                 last_approval = process.approval_set.last()
@@ -192,9 +192,9 @@ def pettycash_awaiting_my_action(request):
             step = workflow.step_set.filter(step=next_step, approver__in=user_roles).first()
 
             if step:
-                pettycashs_to_process.append(pettycash)
+                aces_to_process.append(ace)
 
-    return render(request, 'finance/pettycash/view_all_pettycashs.html', {'pettycashs': pettycashs_to_process})
+    return render(request, 'finance/ace2/view_all_aces.html', {'aces': aces_to_process})
 
 
 @login_required
@@ -224,7 +224,7 @@ def view_all_aces(request):
         aces = Ace2.objects.filter(section=request.user.section)
     else:
         aces = Ace2.objects.all()
-    return render(request, 'finance/pettycash/view_all_pettycashs.html', {'pettycashs': aces})
+    return render(request, 'finance/ace2/view_all_aces.html', {'aces': aces})
 
 
 def add_project_details(request, Ace_id2):
