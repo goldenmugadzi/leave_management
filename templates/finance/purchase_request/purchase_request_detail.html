@@ -64,10 +64,15 @@
                                     <p class="font-bold   mb-2">Created at: {{ purchase_request.created_at |default_if_none:'' }}</p>
                                     <p class="font-bold   mb-2">Section: {{ purchase_request.section |default_if_none:'' }}</p>
                                     <p class="m-4 flex flex-row gap-2 mb-3">
-                                        {% for attachment in purchase_request.attachment_set.all %}
-                                            <a href="{{ attachment.url }}"
-                                               class="text-white rounded border border-1 p-2 bg-gulf-blue-400 sm ">{{ attachment.file.name|basename }}</a>
-                                        {% endfor %}
+                                        <div class=" pt-1 mx-5 grid grid-cols-5 px-5">
+                                            {% for attachment in purchase_request.attachment_set.all %}
+                                                <div class="rounded  bg-white border border-1 shadow-lg  row text-center m-2">
+                                                    <a href="{{ attachment.file.url }}"
+                                                       class=" text-center text-blue-600  p-3 sm "
+                                                       name>{{ attachment.file.name|basename }}</a>
+                                                </div>
+                                            {% endfor %}
+                                        </div>
                                     </p>
                                 </div>
                                 {% if purchase_request.ace %}
@@ -115,10 +120,12 @@
             </div>
         </div>
     </div>
-    {% if request.user == purchase_request.requested_by %}
+    {% if can_cs %}
         <div class="fixed bottom-4 right-4">
-            <a href="{% url 'purchase_request:purchase_request_update' purchase_request.id %}" title="edit" class="bg-blue-500  text-2xl px-3 p-2 text-white w-14 h-14 rounded-full hover:bg-blue-400 active:shadow-lg mouse shadow transition ease-in duration-200 focus:outline-none">
-              <i class="fas fa-edit text-2xl m-auto"></i>
+            <a href="{% url 'comparative_schedules:adopt_schedule' purchase_request.id %}"
+               title="edit"
+               class="bg-blue-500  text-2xl px-3 p-2 text-white w-14 h-14 rounded-full hover:bg-blue-400 active:shadow-lg mouse shadow transition ease-in duration-200 focus:outline-none">
+                <i class="fas fa-edit text-2xl m-auto"></i> Comparative Schedule
             </a>
         </div>
     {% endif %}
