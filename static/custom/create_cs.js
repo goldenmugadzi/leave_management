@@ -1,6 +1,8 @@
 "use strict";
 
 const e = React.createElement;
+const BASE_URL = "http://localhost:8000";
+// const BASE_URL = "http://172.16.8.98:9300";
 
 class CreateCS extends React.Component {
   constructor(props) {
@@ -103,7 +105,7 @@ class CreateCS extends React.Component {
   }
 
   getCSData = (cs_id) => {
-    fetch(`http://localhost:8000/comperative_schedule/cs_data/${cs_id}`)
+    fetch(`${BASE_URL}/comperative_schedule/cs_data/${cs_id}`)
       .then((response) => response.json())
       .then((data_) => {
         let data = JSON.parse(data_);
@@ -177,7 +179,7 @@ class CreateCS extends React.Component {
   getCreateData = (pr_id) => {
     console.log("cs pr_id: ", pr_id);
 
-    fetch(`http://localhost:8000/comperative_schedule/create_data/${pr_id}`)
+    fetch(`${BASE_URL}/comperative_schedule/create_data/${pr_id}`)
       .then((response) => response.json())
       .then((data) => {
         console.log("data: ", data);
@@ -257,7 +259,7 @@ class CreateCS extends React.Component {
     form_data.append("username", username);
     form_data.append("csrfmiddlewaretoken", this.getCookie("csrftoken"));
 
-    fetch(`http://localhost:8000/comperative_schedule/delete_committee_member`, {
+    fetch(`${BASE_URL}/comperative_schedule/delete_committee_member`, {
       method: "POST",
       headers: {
         "X-CSRFToken": this.getCookie("csrftoken"),
@@ -281,7 +283,7 @@ class CreateCS extends React.Component {
     form_data.append("username", username);
     form_data.append("csrfmiddlewaretoken", this.getCookie("csrftoken"));
 
-    fetch(`http://localhost:8000/comperative_schedule/committee_approve`, {
+    fetch(`${BASE_URL}/comperative_schedule/committee_approve`, {
       method: "POST",
       headers: {
         "X-CSRFToken": this.getCookie("csrftoken"),
@@ -324,7 +326,7 @@ class CreateCS extends React.Component {
     );
     form_data.append("csrfmiddlewaretoken", this.getCookie("csrftoken"));
     
-    fetch(`http://localhost:8000/comperative_schedule/save_committee`, {
+    fetch(`${BASE_URL}/comperative_schedule/save_committee`, {
       method: "POST",
       headers: {
         "X-CSRFToken": this.getCookie("csrftoken"),
@@ -399,7 +401,7 @@ class CreateCS extends React.Component {
     );
     form_data.append("csrfmiddlewaretoken", this.getCookie("csrftoken"));
 
-    fetch(`http://localhost:8000/comperative_schedule/update_pritem_ordered`, {
+    fetch(`${BASE_URL}/comperative_schedule/update_pritem_ordered`, {
       method: "POST",
       headers: {
         "X-CSRFToken": this.getCookie("csrftoken"),
@@ -624,7 +626,7 @@ class CreateCS extends React.Component {
     form_data.append("bid_document", currentBid.bid_document);
     form_data.append("csrfmiddlewaretoken", this.getCookie("csrftoken"));
 
-    fetch(`http://localhost:8000/comperative_schedule/save_bid`, {
+    fetch(`${BASE_URL}/comperative_schedule/save_bid`, {
       method: "POST",
       headers: {
         "X-CSRFToken": this.getCookie("csrftoken"),
@@ -663,7 +665,7 @@ class CreateCS extends React.Component {
     form_data.append("advert", this.state.advert);
     form_data.append("csrfmiddlewaretoken", this.getCookie("csrftoken"));
 
-    fetch(`http://localhost:8000/comperative_schedule/save`, {
+    fetch(`${BASE_URL}/comperative_schedule/save`, {
       method: "POST",
       headers: {
         "X-CSRFToken": this.getCookie("csrftoken"),
@@ -708,7 +710,7 @@ class CreateCS extends React.Component {
     form_data.append("advert", this.state.advert);
     form_data.append("csrfmiddlewaretoken", this.getCookie("csrftoken"));
 
-    fetch(`http://localhost:8000/comperative_schedule/update`, {
+    fetch(`${BASE_URL}/comperative_schedule/update`, {
       method: "POST",
       headers: {
         "X-CSRFToken": this.getCookie("csrftoken"),
@@ -750,7 +752,7 @@ class CreateCS extends React.Component {
     form_data.append("supplier_name", supplier_name);
     form_data.append("csrfmiddlewaretoken", this.getCookie("csrftoken"));
 
-    fetch(`http://localhost:8000/comperative_schedule/delete_bid`, {
+    fetch(`${BASE_URL}/comperative_schedule/delete_bid`, {
       method: "POST",
       headers: {
         "X-CSRFToken": this.getCookie("csrftoken"),
@@ -1033,7 +1035,7 @@ class CreateCS extends React.Component {
     );
     form_data.append("csrfmiddlewaretoken", this.getCookie("csrftoken"));
 
-    fetch(`http://localhost:8000/comperative_schedule/save_compliance`, {
+    fetch(`${BASE_URL}/comperative_schedule/save_compliance`, {
       method: "POST",
       headers: {
         "X-CSRFToken": this.getCookie("csrftoken"),
@@ -1056,7 +1058,7 @@ class CreateCS extends React.Component {
     form_data.append("cs_id", this.state.cs_id);
     form_data.append("csrfmiddlewaretoken", this.getCookie("csrftoken"));
 
-    fetch(`http://localhost:8000/comperative_schedule/close_compliance`, {
+    fetch(`${BASE_URL}/comperative_schedule/close_compliance`, {
       method: "POST",
       headers: {
         "X-CSRFToken": this.getCookie("csrftoken"),
