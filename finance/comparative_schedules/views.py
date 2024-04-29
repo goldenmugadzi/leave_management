@@ -59,8 +59,11 @@ def get_comperative_schedule_data(request, cs_id):
     region = Regions.objects.filter(id=cs.region_id).first()
     section = Sections.objects.filter(id=cs.section_id).first()
     items = CSItems.objects.filter(cs_id=cs).all()
+    cs_items = CSRequiredItems.objects.filter(cs_id=cs).all()
     bids = Bids.objects.filter(cs_id=cs).all()
     compliance = CSCompliance.objects.filter(cs_id=cs).all()
+    complianceRemarks = CSComplianceRemarks.objects.filter(cs_id=cs).all()
+    print("compliance remarks: ", complianceRemarks)
     # compliance remarks
     
     rankings = Ranking.objects.filter(cs_id=cs).all()
@@ -128,6 +131,14 @@ def get_comperative_schedule_data(request, cs_id):
             "remarks": comp.remarks,
             "created_at": comp.created_at,
         })
+    
+    compliance_remarks = []
+    for remark in complianceRemarks:
+        compliance_remarks.append({
+        "supplier": remark.supplier_id.id,
+        "supplier_name": remark.supplier_id.name,
+        "remarks": remark.remarks,
+        })
         
     rankings_list = []
     for rank in rankings:
@@ -187,10 +198,12 @@ def get_comperative_schedule_data(request, cs_id):
         "items": items_list,
         "bids": result,
         "compliance": compliance_list,
+        "complianceRemarks": compliance_remarks,
         "rankings": rankings_list,
         "committee": committee_list,
         
         "pr_items": list(pr_items.values('id', 'item_required', 'quantity', 'unit_of_measurement', 'ordered')),
+        "cs_items": list(cs_items.values('id', 'item_name', 'quantity', 'unit_of_measurement')),
         "proc_plans": list(proc_plans.values('id', 'proc_ref', 'description')),
         "suppliers": list(suppliers.values('id', 'name')),
         "users": list(users.values('id', 'username', 'first_name', 'last_name')),
@@ -523,30 +536,62 @@ def update_comparative_schedule(request):
             }, safe=False)
 
 def update_pritem_ordered(request):
-    pr_item_id = request.POST.get("pr_id", "")
-    csitems_data = json.loads(request.POST.get("json_data", "{}"))
-    print("csitems_data: ", csitems_data)
-    items = csitems_data.get("cs_items", [])
-    print("items ", items, type(items))
-    print("pr_item_id: ", pr_item_id)
-    purchase_request = PurchaseRequest.objects.filter(id=pr_item_id).first()
-    print("purchase request: ", purchase_request)
     
-    for item in items:
-        print("item: ", item)
-        pr_item = PrItem.objects.filter(id=item['id'], purchase_request=purchase_request).first()
-        if pr_item:
-            pr_item.ordered = True
-            pr_item.save()
-        else:
-            return JsonResponse({
-                "message": "PR Item not found",
-                "success": False,
-                }, safe=False)
-    return JsonResponse({
-        "message": "PR Item updated successfully",
-        "success": True,
-        }, safe=False)
+    cs_id = request.POST.get("cs_id", "")
+    cs_query = ComparativeSchedules.objects.filter(cs_id=cs_id).first()
+    
+    if cs_query:
+        pr_item_id = request.POST.get("pr_id", "")
+        csitems_data = json.loads(request.POST.get("json_data", "{}"))
+        print("csitems_data: ", csitems_data)
+        items = csitems_data.get("cs_items", [])
+        print("items ", items, type(items))
+        print("pr_item_id: ", pr_item_id)
+        purchase_request = PurchaseRequest.objects.filter(id=pr_item_id).first()
+        print("purchase request: ", purchase_request)
+
+        for item in items:
+            # check if item exists
+            cs_item = CSItems.objects.filter(item_id=item['id'], cs_id=cs_query).first()
+            if cs_item:
+                cs_item.item_name = item['item_name']
+                cs_item.quantity = item['quantity']
+                cs_item.unit_of_measurement = item['unit_of_measurement']
+                cs_item.save()
+            else:
+                cs_required_items = CSRequiredItems(
+                    cs_id = cs_query,
+                    item_id = item['id'],
+                    item_name = item['item_name'],
+                    quantity = item['quantity'],
+                    unit_of_measurement = item['unit_of_measurement'],
+                )
+                cs_required_items.save()
+
+        
+        # set all items to ordered
+        for item in items:
+            print("item: ", item)
+            pr_item = PrItem.objects.filter(item_required=item['item_name'], purchase_request=purchase_request).first()
+            if pr_item:
+                pr_item.ordered = True
+                pr_item.save()
+            else:
+                return JsonResponse({
+                    "message": "PR Item not found",
+                    "success": False,
+                    }, safe=False)
+        
+
+        return JsonResponse({
+            "message": "PR Item updated successfully",
+            "success": True,
+            }, safe=False)
+    else:
+        return JsonResponse({
+            "message": "Comparative Schedule not found",
+            "success": False,
+            }, safe=False)
     
 def save_cs_bid(request):
 
@@ -632,7 +677,40 @@ def save_cs_bid(request):
         "message": "Bids saved successfully",
         "success": True,
     })
-  
+
+def delete_cs_bid(request):
+    cs_id = request.POST.get("cs_id", "")
+    supplier_name = request.POST.get("supplier_name", "")
+    bid_no = request.POST.get("bid_count", "")
+    cs_query = ComparativeSchedules.objects.filter(cs_id=cs_id).first()
+    if not cs_query:
+        return JsonResponse({
+            "message": "Comparative Schedule not found",
+            "success": False,
+            }, safe=False)
+    
+    supplier = Supplier.objects.filter(name=supplier_name).first()
+    if not supplier:
+        return JsonResponse({
+            "message": "Supplier not found",
+            "success": False,
+            }, safe=False)
+    
+    # check if bid exists
+    bid_query = Bids.objects.filter(cs_id=cs_query, sup_id=supplier).all()
+    if bid_query:
+        for bid in bid_query:
+            # delete item
+            item = CSItems.objects.filter(item_id=bid.item_id).first()
+            if item:
+                item.delete()
+            bid.delete()
+            
+    return JsonResponse({
+        "message": "Bid deleted successfully",
+        "success": True,
+    })
+
 def save_cs_compliance(request):
 
     cs_id = request.POST.get("cs_id", "")
@@ -640,10 +718,10 @@ def save_cs_compliance(request):
     print("json_data: ", json_data)
     compliances = json_data.get("compliance", [])
     print("items ", compliances, type(compliances))
-    json_data_ = json.loads(request.POST.get("compliance_remarks", "{}"))
+    json_data_ = json.loads(request.POST.get("complianceRemarks", "{}"))
     print("json_data_: ", json_data_)
-    compliance_remarks = json_data_.get("compliance_remarks", [])
-    print("items ", compliance_remarks, type(compliance_remarks))
+    compliance_remarks = json_data_.get("complianceRemarks", [])
+    print("compliance_remarks ", compliance_remarks, type(compliance_remarks))
     
     cs_query = ComparativeSchedules.objects.filter(cs_id=cs_id).first()
     if not cs_query:
@@ -688,7 +766,24 @@ def save_cs_compliance(request):
             remarks = remarks,
         )
         compliance_query.save()
-        
+    
+    # check if compliance remarks exists
+    compliance_remarks_query = CSComplianceRemarks.objects.filter(cs_id=cs_query).all()
+    if compliance_remarks_query:
+        for remark in compliance_remarks_query:
+            remark.delete()
+            
+    for remark in compliance_remarks:
+        supplier_name = remark['supplier_name'] if 'supplier_name' in remark else ""
+        print("supplier_name: ", supplier_name, cs_query)
+        supplier = Supplier.objects.filter(name=supplier_name).first()
+        print("supplier: ", supplier)
+        _remark = CSComplianceRemarks(
+            cs_id = cs_query,
+            supplier_id = supplier,
+            remarks = remark['remarks'] if 'remarks' in remark else "",
+        )  
+        _remark.save()
         
     return JsonResponse({
         "message": "Compliance saved successfully",

@@ -58,6 +58,8 @@ def pettyCash_detail(request, petty_id):
     approvalForm = None
     to = None
     user_roles = request.user.roles.all()  # Accessing the user's roles through the 'roles' attribute
+    clear = False
+    clear_minus = False
 
     try:
         last_approved = pettycash_item.process.approval_set.last().step.step
@@ -69,20 +71,20 @@ def pettyCash_detail(request, petty_id):
     try:
         newStep = Step.objects.get(step=next_step, workflow=pettycash_item.process.workflow,
                                    approver__in=user_roles)
-        if newStep and request.user.section == pettycash_item.section and next_step == 1:
+        if newStep and request.user.section == pettycash_item.section:
             approvalForm = ApprovalForm
             to = newStep.to
-            print(pettycash_role)
-        elif newStep:
-            approvalForm = ApprovalForm
-            to = newStep.to
+            if newStep.step == len(pettycash_item.process.workflow.step_set.all()):
+                clear = True
+            if newStep.step == len(pettycash_item.process.workflow.step_set.all()) - 1:
+                clear_minus = True
     except Step.DoesNotExist:
         pass
-
     approved_steps = pettycash_item.process.approval_set.all().values_list('step__step', flat=True)
     return render(request, 'finance/pettycash/pettycash_detail.html',
                   {'pettycash': pettycash_item, 'approved_steps': approved_steps, 'approvalForm': approvalForm,
-                   'to': to, 'pettycash_role': pettycash_role, 'user_groups': user_groups, 'qoutations': quotations})
+                   'to': to, 'pettycash_role': pettycash_role, 'user_groups': user_groups, 'quotations': quotations
+                      , 'clear': clear, "clear_minus": clear_minus})
 
 
 @login_required
@@ -468,11 +470,11 @@ def receipt(request):
     if request.method == 'POST':
         receipt_file = request.FILES['file-input']
         print(receipt_file)
-        disbursed_amount = request.POST['disbursed']
+        used = request.POST['disbursed']
         pettycash = request.POST['petty_id']
         pettycash = Pettycash.objects.filter(petty_id=pettycash).first()
         pettycash.receipt_file = receipt_file
-        pettycash.amount_disbursed = disbursed_amount
+        pettycash.amount_used = used
         pettycash.save()
         messages.success(request, 'Receipt uploaded successfully')
         return redirect('pettycash:pettycash_detail', petty_id=pettycash.petty_id)
