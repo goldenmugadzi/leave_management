@@ -175,11 +175,10 @@ class CreateCS extends React.Component {
       });
   };
 
-
   getCreateData = (pr_id) => {
     console.log("cs pr_id: ", pr_id);
 
-    fetch(`${BASE_URL}/comparative_schedule/create_data/${pr_id}`)
+    fetch(`${BASE_URL}/comperative_schedule/create_data/${pr_id}`)
       .then((response) => response.json())
       .then((data) => {
         console.log("data: ", data);
