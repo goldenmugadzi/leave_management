@@ -24,8 +24,11 @@ import pandas as pd
 def purchase_request_detail(request, purchase_request_id):
     purchase_request = PurchaseRequest.objects.get(id=purchase_request_id)
     # approved_steps, approvalForm, to = ApprovalDetails(request, purchase_request)
-
-    return render(request, 'finance/purchase_request/purchase_request_detail.html', {'purchase_request': purchase_request})#, 'approved_steps':approved_steps,'approvalForm': approvalForm,'to':to})
+    can_cs= False
+    for role in request.user.roles.all():
+        if role.name=="Procurement Officer":
+            can_cs = True
+    return render(request, 'finance/purchase_request/purchase_request_detail.html', {'purchase_request': purchase_request, 'can_cs':can_cs })#, 'approved_steps':approved_steps,'approvalForm': approvalForm,'to':to})
     
 @login_required
 def create_purchase_request(request):
@@ -99,12 +102,14 @@ def create_ace_purchase_request(request,ace_id):
 @login_required
 def purchase_request_update(request, purchase_request_id):
     purchase_request = PurchaseRequest.objects.get(id=purchase_request_id)
-    pr_items = purchase_request.pritem_set.all()
     itemFormset = inlineformset_factory(PurchaseRequest, PrItem, form=PrItemForm, extra=0 , can_delete=False)
-  
-    if request.method == 'POST':
+    if purchase_request.is_processed:
+        form = PurchaseRequestForm(instance=purchase_request)
+        return render(request, 'finance/purchase_request/create_purchase_request.html', {"attachments":purchase_request.attachment_set.all(),'formset': itemFormset(instance=purchase_request), 'form': form})
+    elif request.method == 'POST':
         form = PurchaseRequestForm(request.POST, instance=PurchaseRequest(id=purchase_request_id))
         attachments = request.FILES.getlist('attachments')
+        action = request.POST.get("action")
         if form.is_valid():
             purchase_request_form = form.save(commit=False)
             # purchase_request_form.process = purchase_request.process
@@ -127,7 +132,10 @@ def purchase_request_update(request, purchase_request_id):
                         item.save()
                     except: 
                         pass
-                return render(request, 'finance/purchase_request/create_purchase_request.html', {"attachments":purchase_request.attachment_set.all(),'formset': itemFormset(instance=purchase_request), 'form': form})
+                if action:
+                    return render(request, 'finance/purchase_request/create_purchase_request.html', {"attachments":purchase_request.attachment_set.all(),'formset': itemFormset(instance=purchase_request), 'form': form})
+                else:
+                    return redirect(reverse('purchase_request:purchase_request_detail', args=[purchase_request.id]))
             else:
                 return render(request, 'finance/purchase_request/create_purchase_request.html', {'formset': formset, 'form': form})
         else:
