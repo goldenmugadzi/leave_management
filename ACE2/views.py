@@ -1,6 +1,8 @@
 from datetime import datetime
 from random import randrange
 
+import sweetify
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
 from django.urls import reverse
@@ -82,48 +84,71 @@ def create_Ace(request):
         formset = QuotationFormSet(request.POST, request.FILES)
         if form.is_valid() and formset.is_valid():
             ace = form.save(commit=False)
-            ace.process = intiate(request, 'ace')
-            ace.requested_by = request.user
+            budget = AssetBudget.objects.filter(budget_id=ace.budget).first()
+            if ace.amount <= budget.balance:
+                ace.process = intiate(request, 'ace')
+                ace.requested_by = request.user
 
-            user_id = request.user.id
-            user_profile = UserProfile.objects.filter(id=user_id).first()
+                user_id = request.user.id
+                user_profile = UserProfile.objects.filter(id=user_id).first()
 
-            user_designation = Designations.objects.filter(id=user_profile.designation.id).first()
-            user_region = Regions.objects.filter(id=user_profile.region.id).first()
-            designation = user_designation
-            print(designation)
-            region = user_region
+                user_designation = Designations.objects.filter(id=user_profile.designation.id).first()
+                user_region = Regions.objects.filter(id=user_profile.region.id).first()
+                designation = user_designation
+                print(designation)
+                region = user_region
 
-            rand = randrange(1, 1000)
-            rand2 = str(rand)
-            date = datetime.now()
-            date = date.strftime("%Y%m%d")
+                rand = randrange(1, 1000)
+                rand2 = str(rand)
+                date = datetime.now()
+                date = date.strftime("%Y%m%d")
 
-            ace_id2 = "ACE" + date + rand2
-            ace.Ace_id2 = ace_id2
-            ace.designation = designation
-            ace.region = region
-            ace.date_created = date
-            ace.save()
+                ace_id2 = "ACE" + date + rand2
+                ace.Ace_id2 = ace_id2
+                ace.designation = designation
+                ace.region = region
+                ace.date_created = date
+                ace.save()
 
-            ace_code = ace.section
-            section = Sections.objects.filter(section=ace_code).first()
-            print(ace_code)
-            # code = section.code
-            # ace.allocation_code_of_expenditure = code
-            ace.save()
+                ace_code = ace.section
+                section = Sections.objects.filter(section=ace_code).first()
+                print(ace_code)
+                # code = section.code
+                # ace.allocation_code_of_expenditure = code
+                ace.save()
 
-            for quotation_form in formset:
-                quotation = quotation_form.save(commit=False)
-                quotation.ace2 = ace
-                quotation.save()
-            if str(ace.classification) == "Project":
-                # the idea is that if its ace of type project there need to be added other project details
-                url = reverse('Ace:ace_detail_project', args=[ace.Ace_id2])
-                return redirect(url)
+                # initialise transaction and budget deductions
+                transaction = Transactions.objects.create(
+                    Ace_id2=ace.Ace_id2,
+                    details_of_expenditure=ace.details_of_expenditure,
+                    approval_status="created",
+                    region=region,
+                    amount=ace.amount,
+                    budget=ace.budget,
+                )
+                transaction.save()
+
+                budget = AssetBudget.objects.filter(budget_id=ace.budget).first()
+                budget.to_be_withdrawn = budget.to_be_withdrawn + ace.amount
+                budget.withdrawal_date = ace.date_created
+                budget.save()
+
+                for quotation_form in formset:
+                    quotation = quotation_form.save(commit=False)
+                    quotation.ace2 = ace
+                    quotation.save()
+                if str(ace.classification) == "Project":
+                    # the idea is that if its ace of type project there need to be added other project details
+                    url = reverse('Ace:ace_detail_project', args=[ace.Ace_id2])
+                    return redirect(url)
+                else:
+                    url = reverse('Ace:ace_detail', args=[ace.Ace_id2])
+                    return redirect(url)
             else:
-                url = reverse('Ace:ace_detail', args=[ace.Ace_id2])
-                return redirect(url)
+                messages.error(request, "the ace requires more than the current budget")
+                sweetify.error(request, "the ace requires more than the current budget")
+                return render(request, 'finance/ace2/create_ace.html',
+                              {'form': form, 'formset': formset, 'error_message': "Insufficient Balance"})
     else:
         form = AceForm()
         formset = QuotationFormSet()
@@ -233,8 +258,7 @@ def add_project_details(request, Ace_id2):
         if form.is_valid():
             project_details = form.save(commit=False)
             # add items from form to already existing ace object
-            total_connection_fee = project_details.present_tariff + project_details.present_fmc + project_details.capital_contribution+ project_details.materials + project_details.labour + project_details.transport
-
+            total_connection_fee = project_details.present_tariff + project_details.present_fmc + project_details.capital_contribution + project_details.materials + project_details.labour + project_details.transport
 
             ace = Ace2.objects.filter(Ace_id2=Ace_id2).first()
             ace.present_tariff = project_details.present_tariff

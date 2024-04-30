@@ -27,12 +27,13 @@
           <tr>
             <tr>
                 <th>ACE ID</th>
-                <th>Pettycash Details</th>
+                <th>ACE Details</th>
                 <th>Amount</th>
                 
                 <th>Requested By</th>
                 <th>Created At</th>
                 <th>Section</th>
+              <th>Allocation Code of Expenditure</th>
           </tr>
         </thead>
         <tbody>
@@ -44,7 +45,8 @@
 
             <td>{% if ace.requested_by == user %} You {% else %} {{ace.requested_by.get_full_name }} {% endif %}</td>
               <td>{{ ace.date_created }}</td>
-              <td>{{ ace.section.name }}</td>
+              <td>{{ ace.section }}</td>
+            <td>{{ ace.section.code }}</td>
               {% comment %} <td>{{ ace.process }}</td> {% endcomment %}
             </tr>
           {% endfor %}

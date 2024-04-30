@@ -40,7 +40,7 @@ class Ace2(models.Model):
     ]
 
     # ace_type = models.CharField(max_length=15, blank=True, null=True)
-    section = models.ForeignKey(Sections, on_delete=models.DO_NOTHING, blank=True, null=True),
+    section = models.ForeignKey(Sections, on_delete=models.DO_NOTHING),
     region = models.ForeignKey(Regions, on_delete=models.DO_NOTHING, blank=True, null=True)
     allocation_code_of_expenditure = models.CharField(max_length=100, blank=True, null=True)
     details_of_expenditure = models.CharField(max_length=100, blank=True, null=True)
@@ -85,9 +85,8 @@ class Transactions(models.Model):
     details_of_expenditure = models.CharField(blank=True, null=True, max_length=120)
     approval_status = models.CharField(blank=True, null=True, max_length=120)
     transaction_id = models.AutoField(primary_key=True)
-    region = models.CharField(blank=True, null=True, max_length=120)
+    region = models.ForeignKey(Regions, on_delete=models.DO_NOTHING)
     amount = models.FloatField(blank=True, null=True, max_length=120)
-    ace2 = models.CharField(blank=True, null=True, max_length=120)
     budget = models.ForeignKey(AssetBudget, on_delete=models.CASCADE)
 
     # quotation = models.ForeignKey(Ace, on_delete=models.CASCADE)

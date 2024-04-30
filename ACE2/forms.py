@@ -54,6 +54,8 @@ class AceForm(forms.ModelForm):
                 })
                 quotation_form.fields['quotation_file'].label = self.get_quotation_label(i + 1)
 
+            # if field is budget display the balnce and name
+
     def humanize_field_name(self, field_name):
         words = field_name.split('_')
         capitalized_words = [word.capitalize() for word in words]

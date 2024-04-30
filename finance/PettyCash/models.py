@@ -9,7 +9,6 @@ from it.users.models import *
 # Create your models here.
 
 class Pettycash(models.Model):
-
     PAYMENT_MODE_CHOICES = [
         ('USD Cash', 'USD Cash'),
         ('USD Swipe', 'USD Swipe'),
@@ -27,7 +26,7 @@ class Pettycash(models.Model):
     details_of_expenditure = models.CharField(max_length=100, blank=True, null=True)
     amount = models.FloatField(blank=True, null=True)
     payment_mode = models.CharField(max_length=100, blank=True, null=True, choices=PAYMENT_MODE_CHOICES)
-    requested_by = models.ForeignKey(UserProfile, on_delete=models.DO_NOTHING ,blank=True, null=True)
+    requested_by = models.ForeignKey(UserProfile, on_delete=models.DO_NOTHING, blank=True, null=True)
     date_created = models.DateField(auto_now_add=True, blank=True, null=True)
     petty_id = models.CharField(max_length=60)
     pettycash_id = models.AutoField(primary_key=True)
