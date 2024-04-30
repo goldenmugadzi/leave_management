@@ -1,10 +1,9 @@
 import random
 import time
 from django.db import models
-from approve.models import Process
+from django.core.exceptions import ValidationError
 from finance.Ace.models import Ace
 from it.users.models import UserProfile, Sections, Regions, Districts, Depots
-from django.core.validators import MinLengthValidator
 class ProcurementPlanReference(models.Model):
     id = models.CharField(primary_key=True, max_length=10)
     name = models.CharField(max_length=100)
@@ -13,27 +12,23 @@ class ProcurementPlanReference(models.Model):
     def __str__(self):
         return f"{self.id} - {self.name}"
 
-  
+def validate_id(value):
+    if not value.isdigit() or len(value) != 8:
+        raise ValidationError("PR Number must be exactly 8 digits")
+
 class PurchaseRequest(models.Model):
-    id = models.CharField(primary_key=True, max_length=20, editable=False)
-    section = models.ForeignKey(Sections, on_delete=models.CASCADE,blank=True, null=True)
-    # cost_centre = models.ForeignKey(CostCentre, on_delete=models.CASCADE,blank=True, null=True)
-    pr_no = models.CharField( max_length=12, unique=True, validators=[MinLengthValidator(12)] )
-    procurement_plan_reference = models.ForeignKey(ProcurementPlanReference, on_delete=models.CASCADE,blank=True, null=True)
+    id = models.CharField(primary_key=True, max_length=8, verbose_name="PR Number", validators=[validate_id])
+    section = models.ForeignKey(Sections, on_delete=models.CASCADE, blank=True, null=True)
+    procurement_plan_reference = models.ForeignKey(ProcurementPlanReference, on_delete=models.CASCADE, blank=True, null=True)
     requested_by = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True, blank=True, null=True)
     ace = models.ForeignKey(Ace, on_delete=models.SET_NULL, blank=True, null=True)
-    is_processed = models.BooleanField(default=False, editable=False) 
+    is_processed = models.BooleanField(default=False, editable=False)
     scope_of_work = models.TextField(blank=True, null=True, help_text="Description for the purchase request")
-    def __str__(self):
-        return self.pr_no
 
-    def save(self, *args, **kwargs):
-        if not self.id: 
-            timestamp = str(int(time.time()))
-            random_number = str(random.randint(10000, 99999))
-            self.id = "PR" + timestamp + random_number
-        super().save(*args, **kwargs)
+    def __str__(self):
+        return self.id
+
 class Attachment(models.Model):
     file = models.FileField(upload_to='uploads/purchase_request')
     purchase_request = models.ForeignKey(PurchaseRequest, on_delete=models.CASCADE,blank=True, null=True)

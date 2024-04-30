@@ -1,7 +1,7 @@
 from django.db import models
 from ..purchase_request.models import *
 from it.users.models import Supplier
-
+from approve.models import Process
 # Create your models here.
 
 class Compare(models.Model):

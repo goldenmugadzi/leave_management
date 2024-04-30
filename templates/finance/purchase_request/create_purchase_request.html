@@ -5,6 +5,11 @@
   Create Purchase Request
 {% endblock title %}
 {% block content %}
+{% if not form %}
+<div id="loading-screen" class="loading-screen fixed inset-0 flex items-center justify-center bg-black bg-opacity-75 text-white text-2xl" style="display: none;">
+  Loading...
+</div>
+{% endif %}
   <div class=" m-auto mt-5  ">
     <form id="purchase-request-form"
           class="row rounded py-4 border  bg-gulf-blue-100 p-3 m-auto  container"
@@ -26,7 +31,7 @@
                   <div>
                     {{ field.label }}
                     <div class="text-blue-500">{{ field.help_text }}</div>
-                    <div class="text-red-500">{{ field.errors }}</div>
+                    <div class="text-red-500 text-red-500 ">{{ field.errors }}</div>
                   </div>
                   {{ field }}
                 </div>

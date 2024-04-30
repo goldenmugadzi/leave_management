@@ -4,13 +4,9 @@
 {% load custom_tags %}
 {% block styles %}
   <link rel="stylesheet"
-        href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" />
-  <style>
-  .dataTables_wrapper .dataTables_length select {
-    width: 4rem;
-  }
-  </style>
-{% endblock %}
+        href="{% static 'assets/cdn/jquery.dataTables.min.css' %}">
+  <style>.dataTables_wrapper .dataTables_length select {    width: 4rem;  }</style>
+{% endblock styles %}
 {% block content %}
   <div class="content-wrapper">
     <div class="grid grid-cols-1">
@@ -26,50 +22,49 @@
         <br>
         <table id="nonconformity" class="table table-striped stripe table-bordered">
           <thead>
-            
-              <tr >
-                <th>ID</th>
-                <th>Dated</th>
-                <th>Scope of Work</th>
-                <th>Requested By</th>
-                <th>Section</th>
-                <th> Code of Expenditure</th>
-                <th>Proc Plan Ref</th>
-                <th>ACE</th>
+            <tr>
+              <th>ID</th>
+              <th>Dated</th>
+              <th>Scope of Work</th>
+              <th>Requested By</th>
+              <th>Section</th>
+              <th>Code of Expenditure</th>
+              <th>Proc Plan Ref</th>
+              <th>ACE</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for purchase_request in purchase_requests %}
+              <tr class="h-1">
+                <td>
+                  <a class="text-blue-500"
+                     href="{% url "purchase_request:purchase_request_detail" purchase_request.id %}">{{ purchase_request.id|default_if_none:'' }}</a>
+                </td>
+                <td>{{ purchase_request.created_at|date }}</td>
+                <td>{{ purchase_request.scope_of_work|default_if_none:'' }}</td>
+                <td>
+                  {% if purchase_request.requested_by == user %}
+                    You
+                  {% else %}
+                    {{ purchase_request.requested_by.get_full_name }}
+                  {% endif %}
+                </td>
+                <td>{{ purchase_request.section|default_if_none:'' }}</td>
+                <td>{{ purchase_request.allocation_code_of_expenditure |default_if_none:'' }}</td>
+                <td>{{ purchase_request.procurement_plan_reference|default_if_none:'' }}</td>
+                <td>{{ purchase_request.ace|default_if_none:'' }}</td>
               </tr>
-            </thead>
-            <tbody>
-              {% for purchase_request in purchase_requests %}
-                <tr class="h-1">
-                  <td>
-                    <a class="text-blue-500"
-                       href="/purchase_request_detail/{{ purchase_request.id }}">{{ purchase_request.id|default_if_none:'' }}</a>
-                  </td>
-                  <td>{{ purchase_request.created_at|date  }}</td>
-                  <td>{{ purchase_request.scope_of_work|default_if_none:'' }}</td>
-                  <td>
-                    {% if purchase_request.requested_by == user %}
-                      You
-                    {% else %}
-                      {{ purchase_request.requested_by.get_full_name }}
-                    {% endif %}
-                  </td>
-                  <td>{{ purchase_request.section|default_if_none:'' }}</td>
-                  <td>{{ purchase_request.allocation_code_of_expenditure |default_if_none:'' }}</td>
-                  <td>{{ purchase_request.procurement_plan_reference|default_if_none:'' }}</td>
-                  <td>{{ purchase_request.ace|default_if_none:'' }}</td>
-                </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
+            {% endfor %}
+          </tbody>
+        </table>
       </div>
     </div>
-  {% endblock %}
-  {% block scripts %}
-    <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
-    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-    <script>
+  </div>
+{% endblock content %}
+{% block scripts %}
+<script src="{% static 'assets/cdn/jquery-3.7.0.js' %}"></script>
+<script src="{% static 'assets/cdn/jquery.dataTables.min.js' %}"></script>
+  <script>
   $(document).ready(function () {
     // Initialize the DataTable with options and Tailwind CSS classes
     $("#nonconformity").DataTable({
@@ -90,5 +85,5 @@
      
     });
   });
-    </script>
-  {% endblock %}
+  </script>
+{% endblock scripts %}
