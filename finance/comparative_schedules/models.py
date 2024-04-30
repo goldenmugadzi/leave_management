@@ -109,5 +109,16 @@ class Committee(models.Model):
     committee_name = models.CharField(max_length=100, null=True, blank=True)
     committee_position = models.CharField(max_length=100, null=True, blank=True)
     committee_status = models.BooleanField(default=False, null=True, blank=True)
+    committee_approval = models.CharField(max_length=100, null=True, blank=True) # Approved, Rejected
+    justification = models.CharField(max_length=255, null=True, blank=True)
     committee_date = models.DateField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+class CSApproval(models.Model):
+    cs_id = models.ForeignKey(ComparativeSchedules, on_delete=models.CASCADE)
+    user = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
+    approver_role = models.CharField(max_length=100, null=True, blank=True) # General Manager, Finance Manager
+    approval = models.CharField(max_length=100, null=True, blank=True) # Approved, Rejected
+    justification = models.CharField(max_length=255, null=True, blank=True)
+    approval_date = models.DateField()
     created_at = models.DateTimeField(auto_now_add=True)
