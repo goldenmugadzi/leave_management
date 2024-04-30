@@ -66,7 +66,11 @@ def get_comperative_schedule_data(request, cs_id):
     cs = ComparativeSchedules.objects.filter(cs_id=cs_id).first()
     pr = PurchaseRequest.objects.filter(id=cs.pr_id_id).first()
     proc_plans = ProcPlan.objects.all()
-    proc_plan = cs.proc_plan if cs.proc_plan else ""
+    proc_plan = ""
+    try:
+        proc_plan = cs.proc_plan if cs.proc_plan else ""
+    except Exception as ex:
+        print("Error: ", ex)
     user = UserProfile.objects.filter(id=cs.created_by_id).first()
     region = Regions.objects.filter(id=cs.region_id).first()
     section = Sections.objects.filter(id=cs.section_id).first()
