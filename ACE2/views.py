@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, date
 from random import randrange
 
 import sweetify
@@ -65,6 +65,21 @@ def Ace_detail(request, Ace_id2):
             approvalForm = ApprovalForm
             to = newStep.to
             print(ace_role)
+            if newStep.step == len(ace_item.process.workflow.step_set.all()):
+                clear = True
+                # budget calculations
+                budget = ace_item.budget
+                budget = Budget.objects.get(budget_id=budget)
+                budget.balance = budget.balance - ace_item.amount
+                budget.to_be_withdrawn = budget.to_be_withdrawn + ace_item.amount
+                budget.withdrawal_date = date.today()
+                budget.withdrawn = budget.withdrawn + ace_item.amount
+                budget.save()
+
+                # transaction
+                transaction = Transactions.objects.filter(transaction_id=ace_item.transaction).first()
+                transaction.approval_status = "approved by General Manager"
+                transaction.save()
         elif newStep:
             approvalForm = ApprovalForm
             to = newStep.to
