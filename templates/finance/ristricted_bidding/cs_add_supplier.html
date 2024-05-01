@@ -1,0 +1,957 @@
+<!--users/templates/users/add_user.html-->
+
+{% extends 'admin_layout.html' %} {% load static %} {% block content %}
+<div class="content-wrapper">
+  <div
+    class="bg-gray-200 shadow shadow-nepal-300 text-gray-700 rounded px-2 py-2"
+  >
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      <input type="hidden" name="item_count" id="item_count" value="1" />
+      <input type="hidden" name="tender_id" value="{{tender.document_id}}" />
+      <div class="space-y-12 px-5 py-5">
+        <div class="px-4 sm:px-0">
+          <h3 class="text-base font-semibold leading-7 text-gray-900">
+            COMPARATIVE SCHEDULE
+          </h3>
+          <p class="mt-1 max-w-2xl text-sm leading-6 text-gray-500">TENDERS</p>
+        </div>
+        <div
+          class="px-4 sm:px-0 mt-6 border-t border-gray-100 border-gray-900/10"
+        >
+          <h2 class="text-base font-semibold leading-6 text-gray-900">
+            RFQ DETAILS
+          </h2>
+
+          <div class="bg-nepal-500 rounded-md">
+            <div class="flex justify-evenly mt-5 px-2 py-2 rounded-md">
+              <div class="flex-1 w-40">
+                <label
+                  for="rfq_id"
+                  class="block text-sm font-medium leading-6 text-gray-900"
+                  >RFQ ID</label
+                >
+                <div class="mt-2">
+                  <input
+                    name="rfq_id"
+                    value="{{tender.pr_number}}"
+                    id="rfq_id"
+                    readonly
+                    class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                  />
+                </div>
+              </div>
+              <div class="flex-1 w-40 ml-3">
+                <div>
+                  <label
+                    for="designation"
+                    class="block text-sm font-medium leading-6 text-gray-900"
+                    >Procurement Plan</label
+                  >
+                  <div class="mt-2">
+                    <select
+                      id="rfqno"
+                      name="rfqno"
+                      autocomplete="rfqno"
+                      onChange="java_script_:selected_rfq(this.options[this.selectedIndex].value)"
+                      class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
+                    >
+                      {% if proc_plan != None %}
+                      <option value="{{proc_plan.proc_ref}}" selected>
+                        {{proc_plan.description}}
+                      </option>
+                      {% endif %}
+                      <option>Select Procurement Plan Ref</option>
+                      {% for plan in proc_plans %}
+                      <option value="{{plan.proc_ref}}">
+                        {{plan.proc_ref}} - {{plan.description}}
+                      </option>
+                      {% endfor %}
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="flex justify-evenly mt-2 px-2 py-2 rounded-md">
+              <div class="flex-1 w-100">
+                <label
+                  for="scope"
+                  class="block text-sm font-medium leading-6 text-gray-900"
+                  >Scope of Work</label
+                >
+                <div class="mt-2">
+                  <textarea
+                    id="scope"
+                    name="scope_of_work"
+                    type="scope"
+                    class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                  >
+{{tender.scope_of_work}}</textarea
+                  >
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-nepal-500 rounded-md">
+            <div class="flex justify-evenly mt-5 px-2 py-2 rounded-md">
+              <div class="flex-1 w-20 ml-1">
+                <label
+                  for="rfq"
+                  class="block text-sm font-medium leading-6 text-gray-900"
+                  >RFQ No.</label
+                >
+                <div class="mt-2">
+                  <input
+                    name="rfq"
+                    value="{{tender.rfq_no}}"
+                    id="rfq"
+                    class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                  />
+                </div>
+              </div>
+              <div class="flex-1 w-20 ml-1">
+                <label
+                  for="quantity"
+                  class="block text-sm font-medium leading-6 text-gray-900"
+                  >Quantity</label
+                >
+                <div class="mt-2">
+                  <input
+                    name="quantity"
+                    type="number"
+                    class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                  />
+                </div>
+              </div>
+              <div class="flex-1 w-20 ml-1">
+                <label
+                  for="rfq_date"
+                  class="block text-sm font-medium leading-6 text-gray-900"
+                  >RFQ Date</label
+                >
+                <div class="mt-2">
+                  {% include "components/datepicker.html" with input_name="rfq_date" input_value=tender.rfq_date %}
+                </div>
+              </div>
+              <div class="flex-1 w-20 ml-1">
+                <label
+                  for="closing_date"
+                  class="block text-sm font-medium leading-6 text-gray-900"
+                  >Closing Date</label
+                >
+                <div class="mt-2">
+                  {% include "components/datepicker.html" with input_name="closing_date" input_value=tender.closing_date %}
+                </div>
+              </div>
+              <div class="flex-1 w-20 ml-1">
+                <div>
+                  <label
+                    for="closing_time"
+                    class="block text-sm font-medium leading-6 text-gray-900"
+                    >Closing Time</label
+                  >
+                  <div class="mt-2 text-gray-900">
+                    <div class="flex px-1">
+                      <select
+                        name="closing_time_hour"
+                        class="rounded-md block border-none w-full py-1.5 text-gray-900 sm:max-w-xs sm:text-sm sm:leading-6"
+                      >
+                        {% if tender.closing_time != None %}
+                        <option value="{{tender.closing_time}}">
+                          {{tender.closing_time}}
+                        </option>
+                        {% endif %}
+                        <option value="10:00">10:00</option>
+                        <option value="14:00">14:00</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="flex justify-evenly mt-2 px-2 py-2 rounded-md">
+              <div class="flex-1 w-20 ml-1">
+                <label
+                  for="pr_number"
+                  class="block text-sm font-medium leading-6 text-gray-900"
+                  >Procurement Plan Ref</label
+                >
+                <div class="mt-2">
+                  <input
+                    name="pr_number"
+                    value="{{tender.pr_number}}"
+                    id="pr_number"
+                    required="required"
+                    readonly
+                    class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                  />
+                </div>
+              </div>
+              <div class="flex-1 w-20 ml-1">
+                <label
+                  for="pr_date"
+                  class="block text-sm font-medium leading-6 text-gray-900"
+                  >Ref Date</label
+                >
+                <div class="mt-2">
+                  {% include "components/datepicker.html" with input_name="pr_date" input_value=tender.pr_date %}
+                </div>
+              </div>
+              <div class="flex-1 w-20 ml-1">
+                <label
+                  for="date_tender_opened"
+                  class="block text-sm font-medium leading-6 text-gray-900"
+                  >Tender Box Opened On</label
+                >
+                <div class="mt-2">
+                  {% include "components/datepicker.html" with input_name="date_tender_opened" input_value=tender.tender_opened %}
+                </div>
+              </div>
+              <div class="flex-1 w-40 ml-1">
+                <label
+                  for="tender_adjudication_committee_date"
+                  class="block text-sm font-medium leading-6 text-gray-900"
+                  >Tender Committee Date</label
+                >
+                <div class="mt-2">
+                  {% include "components/datepicker.html" with input_name="tender_adjudication_committee_date" input_value=tender.tac_date %}
+                </div>
+              </div>
+            </div>
+            <div class="flex justify-evenly mt-2 px-2 py-2 rounded-md">
+              <div class="flex-1 w-full ml-1">
+                <label
+                  for="advert"
+                  class="block text-sm font-medium leading-6 text-gray-900"
+                  >Tender Advert</label
+                >
+                <div class="mt-2">
+                  <input
+                    name="advert"
+                    type="file"
+                    id="advert"
+                    required="required"
+                    readonly
+                    class="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div
+          id="opening_rfq"
+          class="px-4 sm:px-0 mt-6 border-t border-gray-100 border-b border-gray-900/10 pb-12"
+        >
+          <h2 class="text-base font-semibold leading-6 text-gray-900">
+            OPENING RFQ PRICE
+          </h2>
+
+          {% for key, bid in bids_items.items %}
+          {% if bid.0.supplier_name %}
+          <div class="bg-nepal-500 rounded-md">
+            <div class="flex justify-evenly mt-5 px-2 py-2 rounded-md">
+              <div class="flex-1 w-20 ml-1">
+                <label
+                  for="supplier_name"
+                  class="block text-sm font-medium leading-6 text-gray-900"
+                  >Supplier</label
+                >
+                <div class="mt-2">
+                  <input
+                    value="{{bid.0.supplier_name}}"
+                    type="text"
+                    class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                    readonly
+                  />
+                </div>
+              </div>
+              <div class="flex-1 w-20 ml-1">
+                <label
+                  for="bid_date"
+                  class="block text-sm font-medium leading-6 text-gray-900"
+                  >Bid Date</label
+                >
+                <div class="mt-2">
+                  {% include "components/datepicker.html" with input_name="bid_date" input_value=bid.0.bid.quote_date %}
+                </div>
+              </div>
+              <div class="flex-1 w-20 ml-1">
+                <label
+                  for="supplier[bid][0]"
+                  class="block text-sm font-medium leading-6 text-gray-900"
+                  >Bid No.</label
+                >
+                <div class="mt-2">
+                  <input
+                    type="number"
+                    value="{{bid.0.bid_no}}"
+                    required="required"
+                    readonly
+                    class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                  />
+                </div>
+              </div>
+              <div class="flex-1 w-40 ml-1">
+                <label
+                  for="bid_document"
+                  class="block text-sm font-medium leading-6 text-gray-900"
+                  >Bid Documents</label
+                >
+                <div class="mt-2">
+                  <input
+                    type="file"
+                    required="required"
+                    readonly
+                    class="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {% for item in bid %}
+            <div class="flex border-t border-gray-100 border-gray-900/10 justify-evenly mt-2 px-2 py-2 rounded-md">
+              <div class="flex-1 w-15 ml-1">
+                <label
+                  for="item_name"
+                  class="block text-sm font-medium leading-6 text-gray-900"
+                  >Item Description</label
+                >
+                <div class="mt-2">
+                  <input
+                    value="{{item.item.item}}"
+                    readonly
+                    class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                  />
+                </div>
+              </div>
+              <div class="flex-1 w-15 ml-1">
+                <label
+                  for="quantity"
+                  class="block text-sm font-medium leading-6 text-gray-900"
+                  >Quantity</label
+                >
+                <div class="mt-2">
+                  <input
+                    value="{{item.bid.quoted_qty}}"
+                    readonly
+                    class="block inpt w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                  />
+                </div>
+              </div>
+              <div class="flex-1 w-15 ml-3">
+                <div>
+                  <label
+                    for="unit_of_measurement"
+                    class="block text-sm font-medium leading-6 text-gray-900"
+                    >UOM</label
+                  >
+                  <div class="mt-2">
+                    <select
+                      readonly
+                      class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+                    >
+                      {% if item.item.unit_of_measurement != None %}
+                      <option value="{{item.item.unit_of_measurement}}">
+                        {{item.item.unit_of_measurement}}
+                      </option>
+                      {% endif %}
+                    </select>
+                  </div>
+                </div>
+              </div>
+              <div class="flex-1 w-15 ml-3">
+                <div>
+                  <label
+                    for="vat"
+                    class="block text-sm font-medium leading-6 text-gray-900"
+                    >VAT</label
+                  >
+                  <div class="mt-2">
+                    <select
+                      readonly
+                      class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+                    >
+                      {% if item.bid.vat != None %}
+                      <option value="{{item.bid.vat}}">{{item.bid.vat}}</option>
+                      {% endif %}
+                    </select>
+                  </div>
+                </div>
+              </div>
+              <div class="flex-1 w-15 ml-1">
+                <label
+                  for="unit_price"
+                  class="block text-sm font-medium leading-6 text-gray-900"
+                  >Unit Price</label
+                >
+                <div class="mt-2">
+                  <input
+                    value="{{item.bid.unit_price}}"
+                    readonly
+                    class="block inpt w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                  />
+                </div>
+              </div>
+              <div class="flex-1 w-15 ml-1">
+                <label
+                  for="total_price"
+                  class="block text-sm font-medium leading-6 text-gray-900"
+                  >Total Price</label
+                >
+                <div class="mt-2">
+                  <input
+                    value="{{item.bid.total}}"
+                    readonly
+                    class="block inpt w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                  />
+                </div>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+          {% endif %}
+          {% endfor %}
+
+          <div id="bid_container" class="bg-nepal-500 rounded-md">
+            <div class="flex  justify-evenly mt-5 px-2 py-2 rounded-md">
+              <div class="flex-1 w-20 ml-1">
+                <label
+                  for="supplier_name"
+                  class="block text-sm font-medium leading-6 text-gray-900"
+                  >Supplier</label
+                >
+                <div class="mt-2">
+                  <div
+                    class="relative text-black"
+                    x-data="selectmenu(datalist())"
+                    @click.away="close()"
+                  >
+                    <input
+                      type="text"
+                      x-model="selectedkey"
+                      name="supplier_key"
+                      id="supplier_key"
+                      class="hidden"
+                    />
+                    <input
+                    type="text"
+                    x-model="selectedLabel"
+                    name="supplier_name"
+                    id="supplier_name"
+                    class="hidden"
+                  />
+                    <span
+                      class="inline-block w-full rounded-md shadow-sm"
+                      @click="toggle(); $nextTick(() => $refs.filterinput.focus());"
+                    >
+                      <button
+                        class="relative z-0 w-full px-2 py-2 pl-3 pr-10 text-left transition duration-150 ease-in-out bg-white border border-gray-300 rounded-md cursor-default focus:outline-none focus:shadow-outline-blue focus:border-blue-300 sm:text-sm sm:leading-5"
+                      >
+                        <span
+                          class="block truncate"
+                          x-text="selectedlabel ?? 'Please Select'"
+                        ></span>
+
+                        <span
+                          class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none"
+                        >
+                          <svg
+                            class="w-5 h-5 text-gray-400"
+                            viewBox="0 0 20 20"
+                            fill="none"
+                            stroke="currentColor"
+                          >
+                            <path
+                              d="M7 7l3-3 3 3m0 6l-3 3-3-3"
+                              stroke-width="1.5"
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                            />
+                          </svg>
+                        </span>
+                      </button>
+                    </span>
+
+                    <div
+                      x-show="state"
+                      class="absolute z-10 w-full mt-1 bg-white rounded-md shadow-lg p-2"
+                    >
+                      <input
+                        id="search_supplier_input"
+                        type="text"
+                        class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                        x-model="filter"
+                        x-ref="filterinput"
+                      />
+                      <ul
+                        class="py-1 overflow-auto text-base leading-6 rounded-md shadow-xs max-h-60 focus:outline-none sm:text-sm sm:leading-5"
+                      >
+                        <li
+                          style="background-color: gray"
+                          @click="select('NEW SUPPLIER', 'new')"
+                          class="relative py-1 pl-3 px-3 mb-1 text-gray-50 select-none pr-9 hover:bg-gray-100 cursor-pointer rounded-md"
+                        >
+                          <span class="block font-normal truncate"
+                            >NEW SUPPLIER</span
+                          >
+
+                          <span
+                            x-show="isselected('new')"
+                            class="absolute inset-y-0 right-0 flex items-center pr-4 text-gray-700"
+                          >
+                            <svg
+                              class="h-4 w-4"
+                              viewBox="0 0 20 20"
+                              fill="currentColor"
+                            >
+                              <path
+                                fill-rule="evenodd"
+                                d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                clip-rule="evenodd"
+                              />
+                            </svg>
+                          </span>
+                        </li>
+                        <template x-for="(value, key) in getlist()" :key="key">
+                          <li
+                            @click="select(value, key)"
+                            :class="{'bg-gray-100': isselected(key)}"
+                            class="relative py-1 pl-3 mb-1 text-gray-900 select-none pr-9 hover:bg-gray-100 cursor-pointer rounded-md"
+                          >
+                            <span
+                              x-text="value"
+                              class="block font-normal truncate"
+                            ></span>
+
+                            <span
+                              x-show="isselected(key)"
+                              class="absolute inset-y-0 right-0 flex items-center pr-4 text-gray-700"
+                            >
+                              <svg
+                                class="h-4 w-4"
+                                viewBox="0 0 20 20"
+                                fill="currentColor"
+                              >
+                                <path
+                                  fill-rule="evenodd"
+                                  d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                  clip-rule="evenodd"
+                                />
+                              </svg>
+                            </span>
+                          </li>
+                        </template>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="flex-1 w-20 ml-1">
+                <label
+                  for="bid_date"
+                  class="block text-sm font-medium leading-6 text-gray-900"
+                  >Bid Date</label
+                >
+                <div class="mt-2">
+                  {% include "components/datepicker.html" with input_name="bid_date" %}
+                </div>
+              </div>
+              <div class="flex-1 w-20 ml-1">
+                <label
+                  for="supplier[bid][0]"
+                  class="block text-sm font-medium leading-6 text-gray-900"
+                  >Bid No.</label
+                >
+                <div class="mt-2">
+                  <input
+                    name="supplier[bid][0]"
+                    type="number"
+                    value="{{next_bid}}"
+                    id="bid"
+                    required="required"
+                    readonly
+                    class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                  />
+                </div>
+              </div>
+              <div class="flex-1 w-40 ml-1">
+                <label
+                  for="bid_document"
+                  class="block text-sm font-medium leading-6 text-gray-900"
+                  >Bid Documents</label
+                >
+                <div class="mt-2">
+                  <input
+                    name="bid_document"
+                    type="file"
+                    id="bid_document"
+                    required="required"
+                    readonly
+                    class="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div class="flex border-t border-gray-100 border-gray-900/10 justify-evenly mt-2 px-2 py-2 rounded-md">
+              <div class="flex-1 w-15 ml-1">
+                <label
+                  for="item_name"
+                  class="block text-sm font-medium leading-6 text-gray-900"
+                  >Item Description</label
+                >
+                <div class="mt-2">
+                  <input
+                    name="supplier[item_name][0]"
+                    id="item_name"
+                    required="required"
+                    class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                  />
+                </div>
+              </div>
+              <div class="flex-1 w-15 ml-1">
+                <label
+                  for="quantity"
+                  class="block text-sm font-medium leading-6 text-gray-900"
+                  >Quantity</label
+                >
+                <div class="mt-2">
+                  <input
+                    name="supplier[quantity][0]"
+                    type="number"
+                    id="quantity"
+                    minimum="0.00"
+                    step="0.01"
+                    oninput="priceTotal()"
+                    required
+                    class="block inpt w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                  />
+                </div>
+              </div>
+              <div class="flex-1 w-15 ml-3">
+                <div>
+                  <label
+                    for="unit_of_measurement"
+                    class="block text-sm font-medium leading-6 text-gray-900"
+                    >UOM</label
+                  >
+                  <div class="mt-2">
+                    <select
+                      id="unit_of_measurement"
+                      name="supplier[unit_of_measurement][0]"
+                      autocomplete="unit_of_measurement"
+                      class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+                    >
+                      <option value="each">Each</option>
+                      <option value="kgs">Kg`s</option>
+                      <option value="grammes">Grammes</option>
+                      <option value="litres">Litres</option>
+                      <option value="metres">Metres</option>
+                      <option value="bags">Bags</option>
+                      <option value="packets">Packets</option>
+                      <option value="cartons">Cartons</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+              <div class="flex-1 w-15 ml-3">
+                <div>
+                  <label
+                    for="vat"
+                    class="block text-sm font-medium leading-6 text-gray-900"
+                    >VAT</label
+                  >
+                  <div class="mt-2">
+                    <select
+                      id="vat"
+                      name="supplier[vat][0]"
+                      autocomplete="vat"
+                      class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+                    >
+                      <option value="excl">Excl.</option>
+                      <option value="incl">Incl.</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+              <div class="flex-1 w-15 ml-1">
+                <label
+                  for="unit_price"
+                  class="block text-sm font-medium leading-6 text-gray-900"
+                  >Unit Price</label
+                >
+                <div class="mt-2">
+                  <input
+                    name="supplier[unit_price][0]"
+                    type="number"
+                    minimum="0.00"
+                    step="0.01"
+                    oninput="priceTotal();this.value.toFixed(2)"
+                    oninput="this.value = Math.abs(this.value)"
+                    id="unit_price"
+                    required
+                    class="block inpt w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                  />
+                </div>
+              </div>
+              <div class="flex-1 w-15 ml-1">
+                <label
+                  for="total_price"
+                  class="block text-sm font-medium leading-6 text-gray-900"
+                  >Total Price</label
+                >
+                <div class="mt-2">
+                  <input
+                    name="supplier[total_price][0]"
+                    type="number"
+                    minimum="0.00"
+                    step="0.01"
+                    id="total_price"
+                    oninput="this.value = Math.abs(this.value)"
+                    required="required"
+                    class="block inpt w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="flex justify-center mt-5 px-3 py-3">
+            <div class="m-2">
+              <button
+                onclick="event.preventDefault();countClicks();addRow()"
+                class="rounded-md text-gray-50 text-sm bg-blue-925 hover:bg-blue-550 px-3 py-2 font-semibold leading-6"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke-width="1.5"
+                  stroke="currentColor"
+                  class="w-6 h-6"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M12 9v6m3-3H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+              </button>
+            </div>
+            <div class="m-2">
+              <button
+                onclick="event.preventDefault();countDeleteClicks();deleteRow()"
+                type="submit"
+                class="rounded-md bg-red-danger hover:bg-orange-500 text-sm font-semibold px-3 py-2 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke-width="1.5"
+                  stroke="currentColor"
+                  class="w-6 h-6"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex mt-10 px-3 py-3">
+        <div class="flex-1 w-30 m-2">
+          <button
+            style="width: 100%"
+            class="rounded-md py-1.5 text-sm hover:bg-nepal-300 font-semibold leading-6 text-gray-900"
+          >
+            CANCEL
+          </button>
+        </div>
+        <div class="flex-1 w-30 m-2">
+          <button
+            style="width: 100%"
+            type="submit"
+            name="add_supplier"
+            class="rounded-md bg-nepal-950 hover:bg-nepal-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+          >
+            SAVE & ADD SUPPLIER
+          </button>
+        </div>
+        <div class="flex-1 w-30 m-2">
+          <button
+            style="width: 100%"
+            type="submit"
+            name="save_next"
+            class="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+          >
+            SAVE & NEXT
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %} {% block scripts %}
+<script
+  type="text/javascript"
+  src="{% static 'assets/js/tender.js' %}"
+></script>
+<script
+  src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"
+  integrity="sha256-lSjKY0/srUM9BE3dPm+c4fBo1dky2v27Gdjm2uoZaL0="
+  crossorigin="anonymous"
+></script>
+<script>
+  function priceTotal() {
+    var qty = document.getElementById("quantity").value;
+    console.log("qty: ", qty);
+    var up = document.getElementById("unit_price").value;
+    console.log("up: ", up);
+    var total = parseFloat(qty * up).toFixed(2);
+    console.log("total, qty, up: ", total, qty, up);
+    document.getElementById("total_price").value = total;
+  }
+
+  function prNumber() {
+    var prField = document.getElementById("rfq").value;
+    if (prField == "") {
+      alert("Please enter the RFQ number.");
+      e.preventDefault();
+    } else if (prField.length < 8) {
+      alert(
+        "You have entered less than 8 digits for the RFQ number. Please rectify."
+      );
+      e.preventDefault();
+    } else if (prField.length > 11) {
+      alert(
+        "You have entered more than 8 digits for the RFQ number. Please rectify."
+      );
+      e.preventDefault();
+    }
+  }
+</script>
+
+<script>
+  function selected_rfq() {
+    var rfq = document.getElementById("rfqno").value;
+    document.getElementById("rfq_id").value = rfq;
+  }
+</script>
+
+<script>
+  $(document).ready(function () {
+    $("#rfqno").change(function () {
+      var rfqid = $("#rfqno option:selected").val();
+      $.ajax({
+        type: "POST",
+        url: "rfq_details.php",
+        data: { search: rfqid },
+      }).done(function (data) {
+        $("#rfqdetail").html(data);
+      });
+    });
+  });
+</script>
+
+<script type="text/javascript">
+  $(function () {
+    $("#supplier_name").autocomplete({
+      source: function (request, response) {
+        $.ajax({
+          url: "fetchSupplier.php",
+          type: "post",
+          dataType: "json",
+          data: {
+            search: request.term,
+          },
+          success: function (data) {
+            response(data);
+          },
+        });
+      },
+      select: function (event, ui) {
+        $("#supplier_name").val(ui.item.label); // display the selected text
+        return false;
+      },
+    });
+  });
+
+  $("#rfqno").change(function () {
+    let proc_ref = $("#rfq_id").val();
+    $("#pr_number").val(proc_ref);
+  });
+
+  function selectmenu(datalist) {
+    return {
+      state: false,
+      filter: "",
+      list: datalist,
+      selectedkey: null,
+      selectedlabel: null,
+      toggle: function () {
+        this.state = !this.state;
+        this.filter = "";
+      },
+      close: function () {
+        this.state = false;
+      },
+      select: function (value, key) {
+        if (this.selectedkey == key) {
+          this.selectedlabel = null;
+          this.selectedkey = null;
+        } else if (key == "new") {
+          this.selectedlabel = document.getElementById(
+            "search_supplier_input"
+          ).value;
+          this.selectedkey = document.getElementById(
+            "search_supplier_input"
+          ).value;
+        } else {
+          this.selectedlabel = value;
+          this.selectedkey = key;
+          this.state = false;
+        }
+      },
+      isselected: function (key) {
+        return this.selectedkey == key;
+      },
+      getlist: function () {
+        if (this.filter == "") {
+          return this.list;
+        }
+        var filtered = Object.entries(this.list).filter(([key, value]) =>
+          value.toLowerCase().includes(this.filter.toLowerCase())
+        );
+
+        var result;
+        if (Object.keys(filtered).length > 0) {
+          result = Object.fromEntries(filtered);
+        } else {
+          result = {
+            new: value,
+          };
+        }
+
+        //var result = Object.fromEntries(filtered);
+        return result;
+      },
+    };
+  }
+
+  function datalist() {
+    var supplier_list = JSON.parse("{{suppliers|escapejs}}");
+    console.log(supplier_list);
+
+    return { ...supplier_list };
+  }
+</script>
+
+{% endblock scripts %}

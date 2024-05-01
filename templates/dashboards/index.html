@@ -89,7 +89,8 @@
 </div>
 
 {% endblock content %} {% block scripts %}
-<script src="{% static 'assets/cdn/chart.umd.min.js' %}"></script>
+{% comment %} <script src="{% static 'assets/cdn/chart.umd.min.js' %}"></script> {% endcomment %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js" integrity="sha512-CQBWl4fJHWbryGE+Pc7UAxWMUMNMWzWxF4SQo9CgkJIN1kx6djDQZjh3Y8SZ1d+6I+1zze6Z7kHXO7q3UyZAWw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script src="{% static 'assets/cdn/react.development.js' %}"></script>
 <script src="{% static 'assets/cdn/react-dom.development.js' %}"></script>
 <script src="{% static 'assets/cdn/babel.min.js' %}"></script>

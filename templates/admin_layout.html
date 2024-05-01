@@ -21,42 +21,7 @@
     <link type="text/css"
           href="{% static 'assets/cdn/tailwind.min.css' %}"
           rel="stylesheet" />
-    <script defer
-            src="{% static 'assets/cdn/alphine-cdn.min.js' %}"></script>
       <script src="{% static 'assets/classification.js' %}"></script>
-  <script>
-      document.getElementById('id_classification').addEventListener('change', function() {
-          const selectedValue = this.value;
-          // project fields
-          const field1 = document.getElementById('id_present_tariff');
-          const field2 = document.getElementById('id_present_fmc');
-          const field3 = document.getElementById('id_capital_contribution');
-          const field4 = document.getElementById('id_materials');
-          const field5 = document.getElementById('id_connection_fee');
-          const field6 = document.getElementById('id_labour');
-          const field7 = document.getElementById('id_transport');
-
-          // hide these fields if the value Internal is selected
-          if (selectedValue === 'Internal') {
-              field1.style.display = 'none';
-              field2.style.display = 'none';
-              field3.style.display = 'none';
-              field4.style.display = 'none';
-              field5.style.display = 'none';
-              field6.style.display = 'none';
-              field7.style.display = 'none';
-          } else {
-              field1.style.display = 'block';
-              field2.style.display = 'block';
-              field3.style.display = 'block';
-              field4.style.display = 'block';
-              field5.style.display = 'block';
-              field6.style.display = 'block';
-              field7.style.display = 'block';
-          }
-      });
-
-  </script>
     {% block styles %}
     {% endblock styles %}
   </head>
@@ -433,8 +398,11 @@
     </main>
     {% load sweetify %}
     {% sweetify %}
-    <script type="text/javascript" src="{% static 'assets/cdn/alphine-scr-cdn.min.js' %}"></script>
+    <script defer
+    src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script type="text/javascript" src="{% static 'assets/cdn/jquery-3.7.1.min.js' %}" ></script>
+    {% block scripts %}
+    {% endblock scripts %}
     <script>
       const textElement = document.querySelector("#scrolling-text");
       let textWidth = textElement.scrollWidth; // Get text width
@@ -448,6 +416,40 @@
         }
       }, 50);
     </script>
+    
+  <script>
+    document.getElementById('id_classification').addEventListener('change', function() {
+        const selectedValue = this.value;
+        // project fields
+        const field1 = document.getElementById('id_present_tariff');
+        const field2 = document.getElementById('id_present_fmc');
+        const field3 = document.getElementById('id_capital_contribution');
+        const field4 = document.getElementById('id_materials');
+        const field5 = document.getElementById('id_connection_fee');
+        const field6 = document.getElementById('id_labour');
+        const field7 = document.getElementById('id_transport');
+
+        // hide these fields if the value Internal is selected
+        if (selectedValue === 'Internal') {
+            field1.style.display = 'none';
+            field2.style.display = 'none';
+            field3.style.display = 'none';
+            field4.style.display = 'none';
+            field5.style.display = 'none';
+            field6.style.display = 'none';
+            field7.style.display = 'none';
+        } else {
+            field1.style.display = 'block';
+            field2.style.display = 'block';
+            field3.style.display = 'block';
+            field4.style.display = 'block';
+            field5.style.display = 'block';
+            field6.style.display = 'block';
+            field7.style.display = 'block';
+        }
+    });
+
+</script>
     <script>
       /*      const containerElement = document.querySelector("#scrolling-container");
       let containerWidth = containerElement.scrollWidth;
@@ -483,8 +485,6 @@
           });
       };*/
     </script>
-    {% block scripts %}
-    {% endblock scripts %}
   </body>
 </html>
 {% comment %}
