@@ -10,3 +10,9 @@ document.getElementById('add-form-button').addEventListener('click', () => {
     container.appendChild(newFormDiv);
     totalForms.value = parseInt(totalForms.value) + 1;
 });
+const fileInput = document.getElementById('upload');
+const form = document.getElementById('purchase-request-form');
+
+fileInput.addEventListener('change', () => {
+  form.submit();
+});

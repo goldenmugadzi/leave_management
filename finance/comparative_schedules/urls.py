@@ -4,6 +4,7 @@ app_name ='comparative_schedules'
 
 urlpatterns = [
     path('schedule/<str:pr_id>', get_create_cs, name='adopt_schedule'),
+    path('create_comperative_schedule/', create_comperative_schedule, name='create_comperative_schedule'),
     path('create_schedule/', create, name='create_schedule'),
     path('add_supplier/<str:tender_id>', cs_add_supplier, name='add_supplier'),
     path('compliance/<str:tender_id>', cs_compliance_table, name="tender_compliance"),
@@ -22,6 +23,8 @@ urlpatterns = [
     path('delete_committee_member', delete_cs_committee_member, name='delete_cs_committee_member'),
     path('committee_approve', approve_cs_committee, name='approve_cs_committee'),
     path('save_decision', save_cs_decision, name='save_cs_decision'),
+    
+    path('approval_approve', approve_cs, name='approve_cs'),
     
     path('comperative_schedules', get_comperative_schedules, name='get_comperative_schedules'),
     path('comperative_schedule/<str:cs_id>', get_comperative_schedule, name='get_comperative_schedule'),

@@ -35,25 +35,32 @@ def create_purchase_request(request):
     itemFormset = inlineformset_factory(PurchaseRequest, PrItem, form=PrItemForm, extra=int(request.POST.get('items') or 1) , can_delete=False)
     if request.method == 'POST':
         form = PurchaseRequestForm(request.POST)
-        attachments = request.FILES.getlist('attachments')
         if form.is_valid():
             print('Form is valid')
             purchase_request = form.save(commit=False)
             # purchase_request.process = intiate(request, 'purchase request')
             purchase_request.requested_by = request.user
             purchase_request.save()
+            attachments = request.FILES.getlist('attachments')
             for attachment in attachments:
                 attachment = Attachment(file=attachment, purchase_request=purchase_request)
                 attachment.save()
-
+            try:
+                items_from_sap = pd.ExcelFile(request.FILES.get('upload'))
+                if items_from_sap:
+                    df = items_from_sap.parse('Sheet1')
+                    data_dict = df.to_dict('records')
+                    for data in data_dict:
+                        item = PrItem(item_required=data['Short Text'],purchase_request=purchase_request,quantity=data['Quantity requested'],unit_of_measurement=UnitOfMeasurement.objects.get(unit=data['Unit of Measure']) )
+                        item.save()
+            except:pass
             formset = itemFormset(request.POST,instance=purchase_request)
             if formset.is_valid():
                 formset.save()
             else:
                 return render(request, 'finance/purchase_request/create_purchase_request.html', {'formset': itemFormset, 'form': form})
             
-            url = reverse('purchase_request:purchase_request_update', args=[purchase_request.id])
-            return redirect(url)
+            return redirect(reverse('purchase_request:purchase_request_update',  args=[purchase_request.id]))
         return render(request, 'finance/purchase_request/create_purchase_request.html', {'formset': itemFormset, 'form': form})
     else:
         form = PurchaseRequestForm()
@@ -70,8 +77,15 @@ def create_ace_purchase_request(request,ace_id):
             purchase_request.process = intiate(request, 'purchase request')
             purchase_request.requested_by = request.user
             purchase_request.save()
-
-          
+            try:
+                items_from_sap = pd.ExcelFile(request.FILES.get('upload'))
+                if items_from_sap:
+                    df = items_from_sap.parse('Sheet1')
+                    data_dict = df.to_dict('records')
+                    for data in data_dict:
+                        item = PrItem(item_required=data['Short Text'],purchase_request=purchase_request,quantity=data['Quantity requested'],unit_of_measurement=UnitOfMeasurement.objects.get(unit=data['Unit of Measure']) )
+                        item.save()
+            except:pass
             formset = itemFormset(request.POST, request.FILES)
             for it in formset:
                 if it.is_valid():
@@ -109,6 +123,7 @@ def purchase_request_update(request, purchase_request_id):
     elif request.method == 'POST':
         form = PurchaseRequestForm(request.POST, instance=PurchaseRequest(id=purchase_request_id))
         attachments = request.FILES.getlist('attachments')
+        
         action = request.POST.get("action")
         if form.is_valid():
             purchase_request_form = form.save(commit=False)
@@ -120,6 +135,15 @@ def purchase_request_update(request, purchase_request_id):
             formset = itemFormset(request.POST, instance=purchase_request)
             """ remove all approvals for the purchase request"""
             # purchase_request.process.approval_set.all().delete()
+            try:
+                items_from_sap = pd.ExcelFile(request.FILES.get('upload'))
+                if items_from_sap:
+                    df = items_from_sap.parse('Sheet1')
+                    data_dict = df.to_dict('records')
+                    for data in data_dict:
+                        item = PrItem(item_required=data['Short Text'],purchase_request=purchase_request,quantity=data['Quantity requested'],unit_of_measurement=UnitOfMeasurement.objects.get(unit=data['Unit of Measure']) )
+                        item.save()
+            except:pass
             for attachment in attachments:
                 attachment = Attachment(file=attachment, purchase_request=purchase_request)
                 attachment.save()
