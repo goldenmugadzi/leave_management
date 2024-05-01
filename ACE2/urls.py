@@ -13,6 +13,7 @@ urlpatterns = [
     path('attachment/<str:attachment_id>', download_attachment, name='attachment'),
 
     path('aces_awaiting_my_action', ace_awaiting_my_action, name='aces_awaiting_my_action'),
+    path('budgets', list_budgets, name='view_all_budgets')
     # path('import_pettycash', import_pettycash, name='import_pettycash'),
     # path('receipt', receipt, name='receipt'),
 ]
