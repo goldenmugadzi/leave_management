@@ -45,16 +45,22 @@ APPLICATIONS = [
     },
     {
         "name": "comperative_schedule",
-        "title": "Comperative Schedule",
-        "iconUrl": "assets/images/bid.png",
+        "title": "RFQ",
+        "iconUrl": "assets/images/ristricted_bid.png",
         "url": "/comperative_schedule/comperative_schedules"
     },
-    # {
-    #     "name": "direct_purchases",
-    #     "title": "Direct Purchases",
-    #     "iconUrl": "assets/images/direct-marketing.png",
-    #     "url": "#"
-    # }
+    {
+        "name": "ristricted_bidding",
+        "title": "Ristricted Biddings",
+        "iconUrl": "assets/images/direct_bid.png",
+        "url": "/ristricted_bidding/comperative_schedules"
+    },
+    {
+        "name": "direct_purchases",
+        "title": "Direct Purchases",
+        "iconUrl": "assets/images/bid.png",
+        "url": "#"
+    }
 ]
 
 # Create your views here.

@@ -12,7 +12,7 @@ from finance.ristricted_bidding.models import *
 
 def get_comperative_schedules(request):
     
-    cs = ComparativeSchedules.objects.all()
+    cs = RistricedBiddings.objects.all()
 
     cs_list = []
     for c in cs:
@@ -46,7 +46,7 @@ def get_comperative_schedules(request):
 def get_comperative_schedule(request, cs_id):
     
     username = request.user.username
-    return render(request, 'finance/ristricted_bidding/cs_create.html', {
+    return render(request, 'finance/ristricted_bidding/rb_create.html', {
         "cs_id": cs_id,
         "username": username,
     })
@@ -54,7 +54,7 @@ def get_comperative_schedule(request, cs_id):
 def create_comperative_schedule(request):
 
     username = request.user.username
-    return render(request, 'finance/ristricted_bidding/cs_create.html', {
+    return render(request, 'finance/ristricted_bidding/rb_create.html', {
         "username": username,
     })
 
@@ -71,9 +71,9 @@ def get_comperative_schedule_data(request, cs_id):
         if user_ace_role_.application == "comparative_schedule":
             user_comparative_schedule_role = user_ace_role_
             
-    cs = ComparativeSchedules.objects.filter(cs_id=cs_id).first()
+    cs = RistricedBiddings.objects.filter(cs_id=cs_id).first()
     pr = PurchaseRequest.objects.filter(id=cs.pr_id_id).first()
-    proc_plans = ProcPlan.objects.all()
+    proc_plans = RBProcPlan.objects.all()
     proc_plan = ""
     try:
         proc_plan = cs.proc_plan if cs.proc_plan else ""
@@ -82,18 +82,18 @@ def get_comperative_schedule_data(request, cs_id):
     user = UserProfile.objects.filter(id=cs.created_by_id).first()
     region = Regions.objects.filter(id=cs.region_id).first()
     section = Sections.objects.filter(id=cs.section_id).first()
-    items = CSItems.objects.filter(cs_id=cs).all()
-    cs_items = CSRequiredItems.objects.filter(cs_id=cs).all()
-    bids = Bids.objects.filter(cs_id=cs).all()
-    compliance = CSCompliance.objects.filter(cs_id=cs).all()
-    complianceRemarks = CSComplianceRemarks.objects.filter(cs_id=cs).all()
+    items = RBItems.objects.filter(cs_id=cs).all()
+    cs_items = RBRequiredItems.objects.filter(cs_id=cs).all()
+    bids = RBBids.objects.filter(cs_id=cs).all()
+    compliance = RBCompliance.objects.filter(cs_id=cs).all()
+    complianceRemarks = RBComplianceRemarks.objects.filter(cs_id=cs).all()
     print("compliance remarks: ", complianceRemarks)
     # compliance remarks
     
-    rankings = Ranking.objects.filter(cs_id=cs).all()
-    committee = Committee.objects.filter(cs_id=cs).all()
-    gm_approval = CSApproval.objects.filter(cs_id=cs, approver_role="general_manager").first()
-    fm_approval = CSApproval.objects.filter(cs_id=cs, approver_role="finance_manager").first()
+    rankings = RBRanking.objects.filter(cs_id=cs).all()
+    committee = RBCommittee.objects.filter(cs_id=cs).all()
+    gm_approval = RBApproval.objects.filter(cs_id=cs, approver_role="general_manager").first()
+    fm_approval = RBApproval.objects.filter(cs_id=cs, approver_role="finance_manager").first()
     
     suppliers = Supplier.objects.all()
     pr_items = PrItem.objects.filter(purchase_request=cs.pr_id_id, ordered=False).all()
@@ -304,7 +304,7 @@ def get_create_data(request, pr_id):
 
     purchase_request = PurchaseRequest.objects.filter(id=pr_id).first()
     if purchase_request:
-        proc_plans = ProcPlan.objects.all()
+        proc_plans = RBProcPlan.objects.all()
         suppliers = Supplier.objects.all()
         users = UserProfile.objects.all()
         uom = UnitOfMeasurement.objects.all()
@@ -364,10 +364,10 @@ def get_create_cs(request, pr_id):
 
     print("get_create_cs pr_id: ", pr_id)
     # get proc plans
-    proc_plans = ProcPlan.objects.all()
+    proc_plans = RBProcPlan.objects.all()
     username = request.user.username
     
-    return render(request, 'finance/ristricted_bidding/cs_create.html', {
+    return render(request, 'finance/ristricted_bidding/rb_create.html', {
         "proc_plans": proc_plans,
         "username": username,
         "pr_id": pr_id,
@@ -424,7 +424,7 @@ def create(request):
             unit_price = request.POST['supplier[unit_price]['+str(i)+']']
             total_price = request.POST['supplier[total_price]['+str(i)+']']
             
-            item = CSItems(
+            item = RBItems(
                 cd_id = tender_id,
                 item_id = item_id,
                 item = description,
@@ -444,7 +444,7 @@ def create(request):
             )
             supplier_query.save()
             
-            bid = Bids(
+            bid = RBBids(
                 document_id = tender_id,
                 item_id = item_id,
                 sup_id = supplier_id,
@@ -459,7 +459,7 @@ def create(request):
             )
             bid.save()
         
-        cs_query = ComparativeSchedules(
+        cs_query = RistricedBiddings(
             document_id = tender_id,
             rfq_date = rfq_date,
             scope_of_work = scope,
@@ -484,7 +484,7 @@ def create(request):
         if 'add_supplier' in request.POST:
             return redirect('add_supplier', tender_id=tender_id)
             
-        return render(request, 'finance/ristricted_bidding/cs_create.html', {
+        return render(request, 'finance/ristricted_bidding/rb_create.html', {
             "proc_plans": None,
         })
         
@@ -492,7 +492,7 @@ def save_comparative_schedule(request):
 
     try:
         
-        cs_id = "CS" + datetime.now().strftime("%Y%m%d%I%M%S")
+        cs_id = "RB" + datetime.now().strftime("%Y%m%d%I%M%S")
         advert_files = request.FILES.getlist("advert", None)
         proc_ref = request.POST.get("proc_ref", "")
         print("proc plan: ", proc_ref)
@@ -501,7 +501,7 @@ def save_comparative_schedule(request):
             temp_proc_ref = "acc" + proc_ref
             proc_ref = temp_proc_ref
             
-        proc_plan = ProcPlan.objects.filter(proc_ref=proc_ref).first()
+        proc_plan = RBProcPlan.objects.filter(proc_ref=proc_ref).first()
         print("proc_plan: ", proc_plan)
         scope_of_work = request.POST.get("scope_of_work", "")
         pr_number = request.POST.get("pr_number", "")
@@ -535,7 +535,7 @@ def save_comparative_schedule(request):
         user = UserProfile.objects.filter(username=username).first()
         # region_ = Regions.objects.filter(region=pr.region).first() if 'region' in pr else None
         # section = Sections.objects.filter(section=pr.section).first() if 'section' in pr else None
-        cs_query = ComparativeSchedules(
+        cs_query = RistricedBiddings(
             cs_id = cs_id,
             pr_id_id = pr.id,
             scope_of_work = scope_of_work,
@@ -576,7 +576,7 @@ def update_comparative_schedule(request):
         cs_id = request.POST.get("cs_id", "")
         plan_ref = request.POST.get("proc_ref", "")
         # proc_plan = data['proc_plan']
-        proc_plan_ = ProcPlan.objects.filter(proc_ref=plan_ref).first()
+        proc_plan_ = RBProcPlan.objects.filter(proc_ref=plan_ref).first()
         scope_of_work = request.POST.get("scope_of_work", "")
         pr_number = request.POST.get("pr_number", "")
         pr_date = request.POST.get("pr_date", "")
@@ -608,7 +608,7 @@ def update_comparative_schedule(request):
         user = UserProfile.objects.filter(username=username).first()
         # region_ = Regions.objects.filter(region=pr.region).first() if 'region' in pr else None
         # section = Sections.objects.filter(section=pr.section).first() if 'section' in pr else None
-        cs_query = ComparativeSchedules.objects.filter(cs_id=cs_id).first()
+        cs_query = RistricedBiddings.objects.filter(cs_id=cs_id).first()
 
         if cs_query:
             print(scope_of_work)
@@ -661,13 +661,13 @@ def update_comparative_schedule(request):
 def update_pritem_ordered(request):
     
     cs_id = request.POST.get("cs_id", "")
-    cs_query = ComparativeSchedules.objects.filter(cs_id=cs_id).first()
+    cs_query = RistricedBiddings.objects.filter(cs_id=cs_id).first()
     
     if cs_query:
         pr_item_id = request.POST.get("pr_id", "")
-        csitems_data = json.loads(request.POST.get("json_data", "{}"))
-        print("csitems_data: ", csitems_data)
-        items = csitems_data.get("cs_items", [])
+        RBitems_data = json.loads(request.POST.get("json_data", "{}"))
+        print("RBitems_data: ", RBitems_data)
+        items = RBitems_data.get("cs_items", [])
         print("items ", items, type(items))
         print("pr_item_id: ", pr_item_id)
         purchase_request = PurchaseRequest.objects.filter(id=pr_item_id).first()
@@ -675,14 +675,14 @@ def update_pritem_ordered(request):
 
         for item in items:
             # check if item exists
-            cs_item = CSItems.objects.filter(item_id=item['id'], cs_id=cs_query).first()
+            cs_item = RBItems.objects.filter(item_id=item['id'], cs_id=cs_query).first()
             if cs_item:
                 cs_item.item_name = item['item_name']
                 cs_item.quantity = item['quantity']
                 cs_item.unit_of_measurement = item['unit_of_measurement']
                 cs_item.save()
             else:
-                cs_required_items = CSRequiredItems(
+                cs_required_items = RBRequiredItems(
                     cs_id = cs_query,
                     item_id = item['id'],
                     item_name = item['item_name'],
@@ -732,7 +732,7 @@ def save_cs_bid(request):
     items = json_data.get("bid_items", [])
     print("items ", items, type(items))
     
-    cs_query = ComparativeSchedules.objects.filter(cs_id=cs_id).first()
+    cs_query = RistricedBiddings.objects.filter(cs_id=cs_id).first()
     if not cs_query:
         return JsonResponse({
             "message": "Comparative Schedule not found",
@@ -748,11 +748,11 @@ def save_cs_bid(request):
         supplier = supplier_   
         
     # check if bid exists
-    bid_query = Bids.objects.filter(cs_id=cs_query, sup_id=supplier, bid_no=bid_no).all()
+    bid_query = RBBids.objects.filter(cs_id=cs_query, sup_id=supplier, bid_no=bid_no).all()
     if bid_query:
         for bid in bid_query:
             # delete item
-            item = CSItems.objects.filter(item_id=bid.item_id).first()
+            item = RBItems.objects.filter(item_id=bid.item_id).first()
             if item:
                 item.delete()
             bid.delete()
@@ -772,7 +772,7 @@ def save_cs_bid(request):
     for item in items:
         print("item: ", item)
         item_id = "Item" + datetime.now().strftime("%Y%m%d%I%M%S%p")
-        item_query = CSItems(
+        item_query = RBItems(
             cs_id = cs_query,
             item_id = item_id,
             item_name = item['item_required'],
@@ -782,7 +782,7 @@ def save_cs_bid(request):
         item_query.save()    
         
         print("bid_no", bid_no)
-        bid = Bids(
+        bid = RBBids(
             cs_id = cs_query,
             item_id = item_query,
             sup_id = supplier,
@@ -805,7 +805,7 @@ def delete_cs_bid(request):
     cs_id = request.POST.get("cs_id", "")
     supplier_name = request.POST.get("supplier_name", "")
     bid_no = request.POST.get("bid_count", "")
-    cs_query = ComparativeSchedules.objects.filter(cs_id=cs_id).first()
+    cs_query = RistricedBiddings.objects.filter(cs_id=cs_id).first()
     if not cs_query:
         return JsonResponse({
             "message": "Comparative Schedule not found",
@@ -820,11 +820,11 @@ def delete_cs_bid(request):
             }, safe=False)
     
     # check if bid exists
-    bid_query = Bids.objects.filter(cs_id=cs_query, sup_id=supplier).all()
+    bid_query = RBBids.objects.filter(cs_id=cs_query, sup_id=supplier).all()
     if bid_query:
         for bid in bid_query:
             # delete item
-            item = CSItems.objects.filter(item_id=bid.item_id).first()
+            item = RBItems.objects.filter(item_id=bid.item_id).first()
             if item:
                 item.delete()
             bid.delete()
@@ -846,7 +846,7 @@ def save_cs_compliance(request):
     compliance_remarks = json_data_.get("complianceRemarks", [])
     print("compliance_remarks ", compliance_remarks, type(compliance_remarks))
     
-    cs_query = ComparativeSchedules.objects.filter(cs_id=cs_id).first()
+    cs_query = RistricedBiddings.objects.filter(cs_id=cs_id).first()
     if not cs_query:
         return JsonResponse({
             "message": "Comparative Schedule not found",
@@ -854,7 +854,7 @@ def save_cs_compliance(request):
             }, safe=False)
       
     # check if compliance exists
-    compliance_query = CSCompliance.objects.filter(cs_id=cs_query).all()
+    compliance_query = RBCompliance.objects.filter(cs_id=cs_query).all()
     if compliance_query:
         for compliance in compliance_query:
             compliance.delete()
@@ -874,7 +874,7 @@ def save_cs_compliance(request):
         remarks = comp['remarks'] if 'remarks' in comp else False
         
         supplier = Supplier.objects.filter(name=supplier_name).first()
-        compliance_query = CSCompliance(
+        compliance_query = RBCompliance(
             cs_id = cs_query,
             supplier_id = supplier,
             payment_terms = payment_terms,
@@ -891,7 +891,7 @@ def save_cs_compliance(request):
         compliance_query.save()
     
     # check if compliance remarks exists
-    compliance_remarks_query = CSComplianceRemarks.objects.filter(cs_id=cs_query).all()
+    compliance_remarks_query = RBComplianceRemarks.objects.filter(cs_id=cs_query).all()
     if compliance_remarks_query:
         for remark in compliance_remarks_query:
             remark.delete()
@@ -901,7 +901,7 @@ def save_cs_compliance(request):
         print("supplier_name: ", supplier_name, cs_query)
         supplier = Supplier.objects.filter(name=supplier_name).first()
         print("supplier: ", supplier)
-        _remark = CSComplianceRemarks(
+        _remark = RBComplianceRemarks(
             cs_id = cs_query,
             supplier_id = supplier,
             remarks = remark['remarks'] if 'remarks' in remark else "",
@@ -915,7 +915,7 @@ def save_cs_compliance(request):
     
 def save_cs_ranking(request):
     cs_id = request.POST.get("cs_id", "")
-    cs_query = ComparativeSchedules.objects.filter(cs_id=cs_id).first()
+    cs_query = RistricedBiddings.objects.filter(cs_id=cs_id).first()
     if not cs_query:
         return JsonResponse({
             "message": "Comparative Schedule not found",
@@ -923,12 +923,12 @@ def save_cs_ranking(request):
             }, safe=False)
     
     # check if rankings exists
-    ranking_query = Ranking.objects.filter(cs_id=cs_query).all()
+    ranking_query = RBRanking.objects.filter(cs_id=cs_query).all()
     if ranking_query:
         for ranking in ranking_query:
             ranking.delete()
     # get bids
-    bids = Bids.objects.filter(cs_id=cs_query).values('sup_id').annotate(total_sum=Sum('total'))
+    bids = RBBids.objects.filter(cs_id=cs_query).values('sup_id').annotate(total_sum=Sum('total'))
     rankings = {bid['sup_id']: bid['total_sum'] for bid in bids}
     print("rankings: ", rankings)
     sorted_rankings = sorted(rankings.items(), key=lambda x: x[1])
@@ -941,7 +941,7 @@ def save_cs_ranking(request):
         decision = ""
         if rank == 1:
             decision = "Awarded " + supplier.name + " being the lowest bidder having complied with all the requirements is recommended to provide the goods/service at a total cost of ZIG" + str(total) + " excluding VAT."
-        ranking_query = Ranking(
+        ranking_query = RBRanking(
             cs_id = cs_query,
             supplier_id = supplier,
             rank = rank,
@@ -953,7 +953,7 @@ def save_cs_ranking(request):
         rank += 1
         
     # get rankings
-    rankings = Ranking.objects.filter(cs_id=cs_query).all()
+    rankings = RBRanking.objects.filter(cs_id=cs_query).all()
     custom_rankings = []
     for ranking in rankings:
         supplier = ranking.supplier_id
@@ -976,7 +976,7 @@ def save_cs_committee(request):
     cs_id = request.POST.get("cs_id", "")
     json_data = json.loads(request.POST.get("committee", "{}"))
     committee = json_data.get("committee", [])
-    cs_query = ComparativeSchedules.objects.filter(cs_id=cs_id).first()
+    cs_query = RistricedBiddings.objects.filter(cs_id=cs_id).first()
     if not cs_query:
         return JsonResponse({
             "message": "Comparative Schedule not found",
@@ -989,13 +989,13 @@ def save_cs_committee(request):
         # get member user profile
         member_profile = UserProfile.objects.filter(username=member['memberUserName']).first()
         if member_profile:
-            committee_query = Committee.objects.filter(cs_id=cs_query, user=member_profile).first()
+            committee_query = RBCommittee.objects.filter(cs_id=cs_query, user=member_profile).first()
             if committee_query:
                 committee_query.committee_position = member['memberPosition']
                 committee_query.committee_date = datetime.now()
                 committee_query.save()
             else:
-                committee_query = Committee(
+                committee_query = RBCommittee(
                     cs_id = cs_query,
                     user = member_profile,
                     committee_name = member['memberUserName'],
@@ -1013,7 +1013,7 @@ def delete_cs_committee_member(request):
     cs_id = request.POST.get("cs_id", "")
     username = request.POST.get("username", "")
     print("username: ", username)
-    cs_query = ComparativeSchedules.objects.filter(cs_id=cs_id).first()
+    cs_query = RistricedBiddings.objects.filter(cs_id=cs_id).first()
     if not cs_query:
         return JsonResponse({
             "message": "Comparative Schedule not found",
@@ -1022,7 +1022,7 @@ def delete_cs_committee_member(request):
     
     member_profile = UserProfile.objects.filter(username=username).first()
     if member_profile:
-        committee_query = Committee.objects.filter(cs_id=cs_query, user=member_profile).first()
+        committee_query = RBCommittee.objects.filter(cs_id=cs_query, user=member_profile).first()
         print("committee_query: ", committee_query)
         if committee_query:
             committee_query.delete()
@@ -1046,7 +1046,7 @@ def approve_cs_committee(request):
     username = request.POST.get("username", "")
     print("username: ", username)
     approval = request.POST.get("approval", "")
-    cs_query = ComparativeSchedules.objects.filter(cs_id=cs_id).first()
+    cs_query = RistricedBiddings.objects.filter(cs_id=cs_id).first()
     if not cs_query:
         return JsonResponse({
             "message": "Comparative Schedule not found",
@@ -1055,7 +1055,7 @@ def approve_cs_committee(request):
     
     member_profile = UserProfile.objects.filter(username=username).first()
     if member_profile:
-        committee_query = Committee.objects.filter(cs_id=cs_query, user=member_profile).first()
+        committee_query = RBCommittee.objects.filter(cs_id=cs_query, user=member_profile).first()
         if committee_query:
             committee_query.committee_approval = approval
             committee_query.committee_date = datetime.now()
@@ -1086,7 +1086,7 @@ def approve_cs(request):
     approval = request.POST.get("approval", "")
     justification = request.POST.get("justification", "")
     role = request.POST.get("role", "")
-    cs_query = ComparativeSchedules.objects.filter(cs_id=cs_id).first()
+    cs_query = RistricedBiddings.objects.filter(cs_id=cs_id).first()
     if not cs_query:
         return JsonResponse({
             "message": "Comparative Schedule not found",
@@ -1164,14 +1164,14 @@ def save_cs_decision(request):
     cs_id = request.POST.get("cs_id", "")
     committee_id = request.POST.get("committee_id", "")
     committee_decision = request.POST.get("committee_decision", "")
-    cs_query = ComparativeSchedules.objects.filter(cs_id=cs_id).first()
+    cs_query = RistricedBiddings.objects.filter(cs_id=cs_id).first()
     if not cs_query:
         return JsonResponse({
             "message": "Comparative Schedule not found",
             "success": False,
             }, safe=False)
     
-    committee_query = Committee.objects.filter(cs_id=cs_query, id=committee_id).first()
+    committee_query = RBCommittee.objects.filter(cs_id=cs_query, id=committee_id).first()
     if committee_query:
         if committee_decision == "approve":
             committee_query.committee_status = True
@@ -1193,9 +1193,9 @@ def cs_add_supplier(request, cs_id):
         
         # tender_id = request.GET['tender_id']
         # get tender bids supplier items
-        tender = ComparativeSchedules.objects.filter(document_id=tender_id).first()
-        proc_plan = ProcPlan.objects.filter(proc_ref=tender.pr_number).first()
-        bids = Bids.objects.filter(document_id=tender_id).order_by('bid_no').all()
+        tender = RistricedBiddings.objects.filter(document_id=tender_id).first()
+        proc_plan = RBProcPlan.objects.filter(proc_ref=tender.pr_number).first()
+        bids = RBBids.objects.filter(document_id=tender_id).order_by('bid_no').all()
 
         bids_dict = {}
         for bid in bids:
@@ -1206,7 +1206,7 @@ def cs_add_supplier(request, cs_id):
             for bid in bids:
                 if int(bid.bid_no) == i:
                     supplier = Supplier.objects.filter(sup_id=bid.sup_id).first()
-                    item = CSItems.objects.filter(item_id=bid.item_id).first()
+                    item = RBItems.objects.filter(item_id=bid.item_id).first()
 
                     if supplier:
                         print(supplier, supplier.supplier, supplier.sup_id)
@@ -1221,7 +1221,7 @@ def cs_add_supplier(request, cs_id):
                         })
                 
         # get proc plans
-        proc_plans = ProcPlan.objects.all()
+        proc_plans = RBProcPlan.objects.all()
         suppliers = Suppliers.objects.all()
         supplier_list = {}
         for supplier in suppliers:
@@ -1270,7 +1270,7 @@ def cs_add_supplier(request, cs_id):
             unit_price = request.POST['supplier[unit_price]['+str(i)+']']
             total_price = request.POST['supplier[total_price]['+str(i)+']']
             
-            item = CSItems(
+            item = RBItems(
                 document_id = tender_id,
                 item_id = item_id,
                 item = description,
@@ -1291,7 +1291,7 @@ def cs_add_supplier(request, cs_id):
             )
             supplier_query.save()
             
-            bid = Bids(
+            bid = RBBids(
                 document_id = tender_id,
                 item_id = item_id,
                 sup_id = supplier_id,
@@ -1318,8 +1318,8 @@ def cs_compliance_table(request, cs_id):
     
     if request.method == 'GET':
         tender_id = tender_id
-        tender = ComparativeSchedules.objects.filter(document_id=tender_id).first()
-        bids = Bids.objects.filter(document_id=tender_id).order_by('bid_no').all()
+        tender = RistricedBiddings.objects.filter(document_id=tender_id).first()
+        bids = RBBids.objects.filter(document_id=tender_id).order_by('bid_no').all()
 
         bids_dict = {}
         for bid in bids:
@@ -1330,7 +1330,7 @@ def cs_compliance_table(request, cs_id):
             for bid in bids:
                 if int(bid.bid_no) == i:
                     supplier = Suppliers.objects.filter(sup_id=bid.sup_id).first()
-                    item = CSItems.objects.filter(item_id=bid.item_id).first()
+                    item = RBItems.objects.filter(item_id=bid.item_id).first()
                     
                     print(supplier, supplier.supplier, supplier.sup_id)
                     supplier_id = supplier.sup_id
@@ -1361,7 +1361,7 @@ def cs_compliance_table(request, cs_id):
             remarks = request.POST['remarks'+i+'']
             
             # insert into compliance table
-            tender_compliance = CSCompliance(
+            tender_compliance = RBCompliance(
                 document_id = document_id,
                 supplier_id = supplier_id,
                 rfq_no = rfq_no,
