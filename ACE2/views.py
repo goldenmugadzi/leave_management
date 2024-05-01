@@ -2,8 +2,10 @@ from datetime import datetime, date
 from random import randrange
 
 import sweetify
+import csv
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, redirect
 from django.urls import reverse
 
@@ -94,12 +96,16 @@ def Ace_detail(request, Ace_id2):
 
 @login_required
 def create_Ace(request):
+    formset = QuotationFormSet()
     if request.method == 'POST':
         form = AceForm(request.POST, request.FILES)
         formset = QuotationFormSet(request.POST, request.FILES)
-        if form.is_valid() and formset.is_valid():
+
+        if form.is_valid():
             ace = form.save(commit=False)
-            budget = AssetBudget.objects.filter(budget_id=ace.budget).first()
+            # print(ace.budget_id)
+            budget = AssetBudget.objects.filter(budget_name=ace.budget_id).first()
+            # print(budget)
             if ace.amount <= budget.balance:
                 ace.process = intiate(request, 'ace')
                 ace.requested_by = request.user
@@ -110,7 +116,7 @@ def create_Ace(request):
                 user_designation = Designations.objects.filter(id=user_profile.designation.id).first()
                 user_region = Regions.objects.filter(id=user_profile.region.id).first()
                 designation = user_designation
-                print(designation)
+                # print(designation)
                 region = user_region
 
                 rand = randrange(1, 1000)
@@ -126,32 +132,42 @@ def create_Ace(request):
                 ace.save()
 
                 ace_code = ace.section
-                section = Sections.objects.filter(section=ace_code).first()
                 print(ace_code)
+                section = Sections.objects.filter(section=ace_code).first()
+                print(section)
+                # print(ace_code)
                 # code = section.code
                 # ace.allocation_code_of_expenditure = code
                 ace.save()
+                attachments = request.FILES.getlist('attachments')
+                for attachment in attachments:
+                    attachment = Quotation(quotation_file=attachment,
+                                           ace2=ace)
+                    attachment.save()
 
                 # initialise transaction and budget deductions
                 transaction = Transactions.objects.create(
-                    Ace_id2=ace.Ace_id2,
+                    Ace_id2=ace,
                     details_of_expenditure=ace.details_of_expenditure,
                     approval_status="created",
                     region=region,
                     amount=ace.amount,
-                    budget=ace.budget,
+                    budget=ace.budget_id,
+                    section=section
                 )
+                transaction.section = section
                 transaction.save()
 
-                budget = AssetBudget.objects.filter(budget_id=ace.budget).first()
+                budget = AssetBudget.objects.filter(budget_name=ace.budget_id).first()
                 budget.to_be_withdrawn = budget.to_be_withdrawn + ace.amount
                 budget.withdrawal_date = ace.date_created
                 budget.save()
 
-                for quotation_form in formset:
-                    quotation = quotation_form.save(commit=False)
-                    quotation.ace2 = ace
-                    quotation.save()
+                # for quotation_form in formset:
+                #     quotation = quotation_form.save(commit=False)
+                #     quotation.ace2 = ace
+                #     quotation.save()
+
                 if str(ace.classification) == "Project":
                     # the idea is that if its ace of type project there need to be added other project details
                     url = reverse('Ace:ace_detail_project', args=[ace.Ace_id2])
@@ -168,7 +184,7 @@ def create_Ace(request):
         form = AceForm()
         formset = QuotationFormSet()
 
-    return render(request, 'finance/pettycash/create_pettycash.html', {'form': form, 'formset': formset})
+    return render(request, 'finance/ace2/create_ace.html', {'form': form, 'formset': formset})
 
 
 @login_required
@@ -290,3 +306,85 @@ def add_project_details(request, Ace_id2):
         form = ProjectDetailForm()
 
     return render(request, 'finance/ace2/add_project_details.html', {'form': form})
+
+
+def upload_budgets(request):
+    user_title = request.user.get_full_name()
+    user_id = request.user.id
+    user_profile = UserProfile.objects.filter(id=user_id).first()
+    print("in view upload")
+
+    user_groups = user_profile.groups.values_list('name', flat=True)
+    if request.method == 'POST':
+        csvfile = request.FILES['file']  # file as key
+
+        decoded_file = csvfile.read().decode('cp1252').splitlines()
+        reader = csv.DictReader(decoded_file)
+
+        for row in reader:
+            print("row: ", row)
+            section_code = row['section_code']
+            section = row['section']
+            budget_name = row['budget']
+            allocated = row['allocated']
+            withdrawn = row['withdrawn']
+            balance = row['balance']
+
+            withdrawal_date = row['withdrawal_date']
+            withdrawal_date = withdrawal_date.strip().split(" ")[0]
+            if withdrawal_date != "null":
+
+                withdrawal_date = datetime.strptime(withdrawal_date, "%Y-%m-%d")
+            else:
+                withdrawal_date = None
+
+            awaiting_sanctioning = row['awaiting_sanctioning']
+            period = int(row['period'])
+            region = row['region']
+            created_date = date.today()
+
+            # withdrawal_date = datetime.strptime(row['withdrawal_date'], "%Y/%m/%d").strftime("%Y-%m-%d")
+            # areas = row['area'].split(',')
+            check_budget = Budget.objects.filter(budget_name=budget_name, period=period).first()
+            budget_note = csvfile
+
+            if check_budget:
+                print("duplicate record ....")
+            else:
+                AssetBudget.objects.create(section_code=section_code,
+                                           section=section,
+                                           budget_name=budget_name,
+                                           allocated=allocated,
+                                           withdrawn=withdrawn,
+                                           balance=balance,
+                                           withdrawal_date=withdrawal_date,
+                                           awaiting_sanctioning=awaiting_sanctioning,
+                                           period=period,
+                                           region=region,
+                                           created_date=created_date,
+                                           budget_note=budget_note),
+                print("record created")
+        redirect("/ace/budgets")
+        try:
+            # ... view logic ...
+            return HttpResponse("Budget uploaded successfully"), redirect('/ace/budgets')
+        except Exception as e:
+            return HttpResponse("Error: {}".format(e))
+            return redirect("/ace/budgets")
+
+    else:
+        return render(request, 'ace/upload_budget.html',
+                      {"title": "Upload budgets",
+                       "user_title": user_title,
+                       "user_groups": user_groups}
+                      )
+
+
+@login_required
+def get_budget_balance(request, budget_id):
+    print(f"budget_id: {budget_id}")
+    try:
+        budget = AssetBudget.objects.get(pk=budget_id)
+        return JsonResponse({'balance': budget.balance, 'withdrawn': budget.withdrawn, 'name': budget.budget_name})
+    except Budget.DoesNotExist:
+        return JsonResponse({'error': 'Budget not found'}, status=404)

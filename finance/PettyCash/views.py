@@ -480,3 +480,5 @@ def receipt(request):
         return redirect('pettycash:pettycash_detail', petty_id=pettycash.petty_id)
     else:
         return redirect('/pettycash/pettycashs')
+
+
