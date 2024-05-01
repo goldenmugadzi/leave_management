@@ -126,6 +126,7 @@ INSTALLED_APPS = [
     'finance.PettyCash',
     'finance.comparative_schedules',
     'finance.ristricted_bidding',
+    'finance.direct_purchase',
     'finance.Direct_purchases',
     'ACE2',
 

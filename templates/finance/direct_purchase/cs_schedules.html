@@ -1,0 +1,95 @@
+<!--users/templates/quotations/index.html-->
+{% extends 'admin_layout.html' %} {% block styles %}
+<link
+  rel="stylesheet"
+  href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css"
+/>
+<style>
+  .dataTables_wrapper .dataTables_length select {
+    width: 4rem;
+  }
+</style>
+{% endblock styles %} {% block content %}
+<div class="content-wrapper">
+  <div
+    class="bg-gulf-blue-100 shadow shadow-gulf-blue-300 text-gulf-blue-900 rounded px-2 py-2"
+  >
+    <div class="flex justify-between items-center mb-5">
+      <span class="text-lg font-semibold">Direct Purchases</span>
+      <a
+        href="/direct_purchase/create_comperative_schedule/"
+        class="bg-gulf-blue-600 hover:bg-gulf-blue-800 text-white font-bold py-2 px-4 rounded"
+        >
+        Create Schedule
+      </a>
+    </div>
+    <table id="users_index" class="display" style="width: 100%">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Scope</th>
+          <th>Closing Date</th>
+          <th>Opened On</th>
+          <th>Committee Date</th>
+          <th>ACTION</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+      <tfoot>
+        <tr>
+            <th>ID</th>
+            <th>Scope</th>
+            <th>Closing Date</th>
+            <th>Opened On</th>
+            <th>Committee Date</th>
+            <th>ACTION</th>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+</div>
+{% endblock %} {% block scripts %}
+<script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script>
+  var objs = JSON.parse("{{cs|escapejs}}");
+
+  $(document).ready(function () {
+    $("#users_index").DataTable({
+      data: objs,
+      columns: [
+        {
+          data: "cs_id",
+          render: function (data, type, row, meta) {
+            return `
+              <a type="button" class="btn btn-info" href='/direct_purchase/comperative_schedule/${row.cs_id}' >
+                ${data}              
+              </a>`;
+          },
+        },
+        {
+          data: "scope_of_work",
+        },
+        {
+          data: "closing_date",
+        },
+        {
+          data: "cs_opened",
+        },
+        {
+          data: "tac_date",
+        },
+        {
+          data: null,
+          render: function (data, type, row, meta) {
+            return `
+              <a type="button" class="btn btn-info" href='#' >
+                View              
+              </a>`;
+          },
+        },
+      ],
+    });
+  });
+</script>
+{% endblock scripts %}

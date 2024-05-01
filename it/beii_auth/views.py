@@ -59,7 +59,7 @@ APPLICATIONS = [
         "name": "direct_purchases",
         "title": "Direct Purchases",
         "iconUrl": "assets/images/bid.png",
-        "url": "#"
+        "url": "/direct_purchase/comperative_schedules"
     }
 ]
 
