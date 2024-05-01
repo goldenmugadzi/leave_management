@@ -49,6 +49,7 @@ urlpatterns = [
     path('pettycash/', include('finance.PettyCash.urls')),
     path('comperative_schedule/', include('finance.comparative_schedules.urls')),
     path('ristricted_bidding/', include('finance.ristricted_bidding.urls')),
+    path('direct_purchase/', include('finance.direct_purchase.urls')),
     path('reports/', include('reports.urls')),
 
     # AUTH ENDPOINTS
