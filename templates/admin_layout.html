@@ -433,11 +433,8 @@
     </main>
     {% load sweetify %}
     {% sweetify %}
-    <script defer
-            src="{% static 'assets/cdn/alphine-scr-cdn.min.js' %}"></script>
-    <script src="{% static 'assets/cdn/jquery-3.7.1.min.js' %}"
-            integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo="
-            crossorigin="anonymous"></script>
+    <script type="text/javascript" src="{% static 'assets/cdn/alphine-scr-cdn.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'assets/cdn/jquery-3.7.1.min.js' %}" ></script>
     <script>
       const textElement = document.querySelector("#scrolling-text");
       let textWidth = textElement.scrollWidth; // Get text width
