@@ -31,7 +31,6 @@ urlpatterns = [
     path('', include('tokens.urls')),
     path('', include('risk.audit.nonconformity.urls')),
     path('', include('finance.purchase_request.urls')),
-    path('', include('finance.comperative_schedule.urls')),
     path('', include('approve.urls')),
     path('meter/', include('commecial.tempertockens.urls')),
     path('users/', include('it.users.urls')),

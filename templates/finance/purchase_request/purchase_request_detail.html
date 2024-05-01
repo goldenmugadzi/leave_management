@@ -103,7 +103,7 @@
                                     <div class="m-4 gap-2 grid grid-cols-3 mb-3">
                                         <p class=" mb-2">{{ item.item_required |default_if_none:'' }}</p>
                                         <p class=" mb-2">{{ item.unit_of_measurement |default_if_none:'' }}</p>
-                                        <p class=" mb-2">{{ item.quantity |default_if_none:'' }}</p>
+                                        <p class=" mb-2">{{ item.quantity|default_if_none:'' }}</p>
                                     </div>
                                 {% endfor %}
                                 {% comment %} </div>  {% endcomment %}
