@@ -1,4 +1,5 @@
 import base64
+import os
 from django.http import JsonResponse
 from django.shortcuts import redirect, render
 import json
@@ -6,7 +7,7 @@ from datetime import datetime
 from django.db.models import Sum
 from .models import *
 from it.users.models import *
-from finance.purchase_request.models import PurchaseRequest, PrItem
+from finance.purchase_request.models import PurchaseRequest, PrItem, Attachment, UnitOfMeasurement
 from finance.comparative_schedules.models import *
 
 def get_comperative_schedules(request):
@@ -47,6 +48,13 @@ def get_comperative_schedule(request, cs_id):
     username = request.user.username
     return render(request, 'finance/comparative_schedules/cs_create.html', {
         "cs_id": cs_id,
+        "username": username,
+    })
+
+def create_comperative_schedule(request):
+
+    username = request.user.username
+    return render(request, 'finance/comparative_schedules/cs_create.html', {
         "username": username,
     })
 
@@ -193,6 +201,33 @@ def get_comperative_schedule_data(request, cs_id):
         print("Error: ", ex)
         
     cs_owner = UserProfile.objects.filter(id=cs.created_by_id).first()
+    pr_item_list = []
+    for pr_item in pr_items:
+        pr_item_list.append({
+            "id": pr_item.id,
+            "item_required": pr_item.item_required,
+            "quantity": pr_item.quantity,
+            "unit_of_measurement": pr_item.unit_of_measurement.name if pr_item.unit_of_measurement else "",
+            "ordered": pr_item.ordered,
+        })
+        
+    pr_attachments = Attachment.objects.filter(purchase_request=pr).all()
+    
+    pr_at_list = []
+    for at in pr_attachments:
+        encoded_file_data = ""
+        if at.file:
+            try:
+                file_data = at.file.read()
+                encoded_file_data = base64.b64encode(file_data).decode('utf-8')
+                pr_at_list.append({
+                    "id": at.id,
+                    "file": encoded_file_data,
+                    "name": os.path.basename(at.file.name),
+                })
+            except Exception as ex:
+                print("Error: ", ex)
+
     context = {
         "requester_role": user_comparative_schedule_role.role if user_comparative_schedule_role else "",
         "cs_id": cs.cs_id,
@@ -244,7 +279,8 @@ def get_comperative_schedule_data(request, cs_id):
             "approval_date": fm_approval.approval_date,
             } if fm_approval else {},
         
-        "pr_items": list(pr_items.values('id', 'item_required', 'quantity', 'unit_of_measurement', 'ordered')),
+        "pr_items": pr_item_list,
+        "pr_attachments": pr_at_list,
         "cs_items": list(cs_items.values('id', 'item_name', 'quantity', 'unit_of_measurement')),
         "proc_plans": list(proc_plans.values('id', 'proc_ref', 'description')),
         "suppliers": list(suppliers.values('id', 'name')),
@@ -266,22 +302,62 @@ def save_file(f, file_path):
     
 def get_create_data(request, pr_id):
 
-    proc_plans = ProcPlan.objects.all()
-    suppliers = Supplier.objects.all()
-
     purchase_request = PurchaseRequest.objects.filter(id=pr_id).first()
-    pr_items = PrItem.objects.filter(purchase_request=purchase_request, ordered=False).all()
-    users = UserProfile.objects.all()
-    
-    return JsonResponse({
-            "pr_id": pr_id,
-            "scope_of_work": purchase_request.scope_of_work,
-            "proc_ref": purchase_request.procurement_plan_reference.id if purchase_request.procurement_plan_reference else "",
-            "pr_date": purchase_request.created_at.strftime("%Y-%m-%d"),
-            "pr_items": list(pr_items.values('id', 'item_required', 'quantity', 'unit_of_measurement', 'ordered')),
-            "proc_plans": list(proc_plans.values('id', 'proc_ref', 'description')),
-            "suppliers": list(suppliers.values('id', 'name')),
-            "users": list(users.values('id', 'username', 'first_name', 'last_name')),
+    if purchase_request:
+        proc_plans = ProcPlan.objects.all()
+        suppliers = Supplier.objects.all()
+        users = UserProfile.objects.all()
+        uom = UnitOfMeasurement.objects.all()
+        pr_items = PrItem.objects.filter(purchase_request=purchase_request, ordered=False).all()
+        pr_attachments = Attachment.objects.filter(purchase_request=purchase_request).all()
+        
+        pr_at_list = []
+        for at in pr_attachments:
+            encoded_file_data = ""
+            if at.file:
+                try:
+                    file_data = at.file.read()
+                    encoded_file_data = base64.b64encode(file_data).decode('utf-8')
+                    pr_at_list.append({
+                        "id": at.id,
+                        "file": encoded_file_data,
+                        "name": os.path.basename(at.file.name),
+                    })
+                except Exception as ex:
+                    print("Error: ", ex)
+
+        pr_item_list = []
+        for pr_item in pr_items:
+            pr_item_list.append({
+                "id": pr_item.id,
+                "item_required": pr_item.item_required,
+                "quantity": pr_item.quantity,
+                "unit_of_measurement": pr_item.unit_of_measurement.name if pr_item.unit_of_measurement else "",
+                "ordered": pr_item.ordered,
+            })
+        
+        return JsonResponse({
+                "success": True,
+                "message": "PR details retrieved successfully",
+                "pr_id": pr_id,
+                "scope_of_work": purchase_request.scope_of_work,
+                "proc_ref": purchase_request.procurement_plan_reference.id if purchase_request.procurement_plan_reference else "",
+                "proc_plan": {
+                    "id": purchase_request.procurement_plan_reference.id if purchase_request.procurement_plan_reference else "",
+                    "name": purchase_request.procurement_plan_reference.name if purchase_request.procurement_plan_reference else ""
+                } if purchase_request.procurement_plan_reference else {},
+                "pr_date": purchase_request.created_at.strftime("%Y-%m-%d"),
+                "pr_items": pr_item_list,
+                "pr_attachments": pr_at_list,
+                "proc_plans": list(proc_plans.values('id', 'proc_ref', 'description')),
+                "uom": list(uom.values('unit', 'name')),
+                "suppliers": list(suppliers.values('id', 'name')),
+                "users": list(users.values('id', 'username', 'first_name', 'last_name')),
+            }, safe=False)
+    else:
+        return JsonResponse({
+            "success": False,
+            "message": "PR not found",
         }, safe=False)
 
 def get_create_cs(request, pr_id):
@@ -710,12 +786,12 @@ def save_cs_bid(request):
             cs_id = cs_query,
             item_id = item_query,
             sup_id = supplier,
-            unit_price = item['unit_price'],
-            vat = item['vat'],
-            quoted_qty = item['quantity'],
+            unit_price = item['unit_price'] if 'unit_price' in item else "",
+            vat = item['vat'] if 'vat' in item else "",
+            quoted_qty = item['quantity'] if 'quantity' in item else "",
             bid_no = bid_no,
             quote_date = bid_date,
-            total = item['total_price'],
+            total = item['total_price'] if 'total_price' in item else "",
             bid_document = bid_doc_path,
         )
         bid.save()

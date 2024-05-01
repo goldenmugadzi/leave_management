@@ -79,18 +79,27 @@ var CreateCS = function (_React$Component) {
         var cs_opened = data.cs_opened ? data.cs_opened : false;
 
         var proc_plans = data.proc_plans ? data.proc_plans : [];
+        var uom = data.uom ? data.uom : [];
         var suppliers = data.suppliers ? data.suppliers : [];
         var pr_items = data.pr_items ? data.pr_items : [];
+        var pr_attachments = data.pr_attachments ? data.pr_attachments : [];
         var cs_items = data.cs_items ? data.cs_items : [];
         var users = data.users ? data.users : [];
         var cs_owner = data.cs_owner ? data.cs_owner : "";
 
         var advert_url = _this.onGetFileObjectUrl(data.advert);
+
+        var pr_at_list = pr_attachments.map(function (pr_attachment) {
+          return Object.assign({}, pr_attachment, {
+            attachment_url: _this.onGetFileObjectUrl(pr_attachment.file)
+          });
+        });
         console.log("advert file", advert, typeof advert === "undefined" ? "undefined" : _typeof(advert));
         _this.setState(Object.assign({}, _this.state, (_Object$assign = {
           requester_role: requester_role,
           cs_owner: cs_owner,
           proc_plans: proc_plans,
+          uom: uom,
           suppliers: suppliers,
           users: users,
 
@@ -104,7 +113,7 @@ var CreateCS = function (_React$Component) {
           pr_date: pr_date,
           closing_date: closing_date,
           closing_time_hour: closing_time
-        }, _defineProperty(_Object$assign, "ref_date", ref_date), _defineProperty(_Object$assign, "tender_adjudication_committee_date", tender_adjudication_committee_date), _defineProperty(_Object$assign, "advert", advert), _defineProperty(_Object$assign, "advert_url", advert_url), _defineProperty(_Object$assign, "bids", bids), _defineProperty(_Object$assign, "cs_items", cs_items), _defineProperty(_Object$assign, "compliance", compliance), _defineProperty(_Object$assign, "complianceRemarks", complianceRemarks), _defineProperty(_Object$assign, "rankings", rankings), _defineProperty(_Object$assign, "committeeMembers", committee), _defineProperty(_Object$assign, "gmApproval", gm_approval), _defineProperty(_Object$assign, "fmApproval", fm_approval), _defineProperty(_Object$assign, "pr_items", pr_items), _Object$assign)));
+        }, _defineProperty(_Object$assign, "ref_date", ref_date), _defineProperty(_Object$assign, "tender_adjudication_committee_date", tender_adjudication_committee_date), _defineProperty(_Object$assign, "advert", advert), _defineProperty(_Object$assign, "advert_url", advert_url), _defineProperty(_Object$assign, "bids", bids), _defineProperty(_Object$assign, "cs_items", cs_items), _defineProperty(_Object$assign, "compliance", compliance), _defineProperty(_Object$assign, "complianceRemarks", complianceRemarks), _defineProperty(_Object$assign, "rankings", rankings), _defineProperty(_Object$assign, "committeeMembers", committee), _defineProperty(_Object$assign, "gmApproval", gm_approval), _defineProperty(_Object$assign, "fmApproval", fm_approval), _defineProperty(_Object$assign, "pr_items", pr_items), _defineProperty(_Object$assign, "pr_attachments", pr_at_list), _Object$assign)));
       });
     };
 
@@ -118,17 +127,27 @@ var CreateCS = function (_React$Component) {
         var scope_of_work = data.scope_of_work ? data.scope_of_work : "";
         var proc_ref = data.proc_ref ? data.proc_ref : "";
         var plans = data.proc_plans ? data.proc_plans : [];
+        var uom = data.uom ? data.uom : [];
         var suppliers = data.suppliers ? data.suppliers : [];
         var pr_items = data.pr_items ? data.pr_items : [];
+        var pr_attachments = data.pr_attachments ? data.pr_attachments : [];
         var pr_id = data.pr_id ? data.pr_id : "";
         var pr_date = data.pr_date ? data.pr_date : "";
         var users = data.users ? data.users : [];
+
+        var pr_at_list = pr_attachments.map(function (pr_attachment) {
+          return Object.assign({}, pr_attachment, {
+            attachment_url: _this.onGetFileObjectUrl(pr_attachment.file)
+          });
+        });
         _this.setState({
           scope_of_work: scope_of_work,
           proc_ref: proc_ref,
           proc_plans: plans,
+          uom: uom,
           suppliers: suppliers,
           pr_items: pr_items,
+          pr_attachments: pr_at_list,
           pr_number: pr_id,
           pr_date: pr_date,
           users: users
@@ -136,10 +155,67 @@ var CreateCS = function (_React$Component) {
       });
     };
 
-    _this.onCommitteeChange = function (name_, event) {
+    _this.onFetchPR = function (pr_id) {
+      console.log("cs pr_id: ", pr_id);
+
+      fetch(BASE_URL + "/comperative_schedule/create_data/" + pr_id).then(function (response) {
+        return response.json();
+      }).then(function (data) {
+        console.log("data: ", data);
+        if (data && data.success) {
+          var scope_of_work = data.scope_of_work ? data.scope_of_work : "";
+          var proc_ref = data.proc_ref ? data.proc_ref : "";
+          var proc_plan = data.proc_plan ? data.proc_plan : null;
+          var plans = data.proc_plans ? data.proc_plans : [];
+          var uom = data.uom ? data.uom : "";
+          var suppliers = data.suppliers ? data.suppliers : [];
+          var pr_items = data.pr_items ? data.pr_items : [];
+          var pr_attachments = data.pr_attachments ? data.pr_attachments : [];
+          var _pr_id = data.pr_id ? data.pr_id : "";
+          var pr_date = data.pr_date ? data.pr_date : "";
+          var users = data.users ? data.users : [];
+
+          var pr_at_list = pr_attachments.map(function (pr_attachment) {
+            return Object.assign({}, pr_attachment, {
+              attachment_url: _this.onGetFileObjectUrl(pr_attachment.file)
+            });
+          });
+          _this.setState({
+            scope_of_work: scope_of_work,
+            proc_ref: proc_ref,
+            proc_plan: proc_plan,
+            proc_plans: plans,
+            uom: uom,
+            suppliers: suppliers,
+            pr_items: pr_items,
+            pr_attachments: pr_at_list,
+            pr_number: _pr_id,
+            pr_date: pr_date,
+            users: users,
+            fetchPR: false
+          });
+
+          alert("PR fetched successfully");
+        } else {
+          alert("PR Number not found");
+        }
+      });
+    };
+
+    _this.onFetchPrNumberChange = function (event) {
       var _event$target = event.target,
           name = _event$target.name,
           value = _event$target.value;
+
+      _this.setState(Object.assign({}, _this.state, {
+        pr_number: value
+      }));
+    };
+
+    _this.onCommitteeChange = function (name_, event) {
+      var _event$target2 = event.target,
+          name = _event$target2.name,
+          value = _event$target2.value;
 
       console.log("name: ", name_, "value: ", value);
       var member = _this.state.member;
@@ -222,9 +298,9 @@ var CreateCS = function (_React$Component) {
     };
 
     _this.onCommitteeJustificationChange = function (event) {
-      var _event$target2 = event.target,
-          name = _event$target2.name,
-          value = _event$target2.value;
+      var _event$target3 = event.target,
+          name = _event$target3.name,
+          value = _event$target3.value;
 
       var currentApprover = _this.state.currentApprover;
       currentApprover[name] = value;
@@ -364,9 +440,9 @@ var CreateCS = function (_React$Component) {
     };
 
     _this.onApprovalJustificationChange = function (name_, event) {
-      var _event$target3 = event.target,
-          name = _event$target3.name,
-          value = _event$target3.value;
+      var _event$target4 = event.target,
+          name = _event$target4.name,
+          value = _event$target4.value;
 
       var currentApprover = _this.state.currentApprover;
       currentApprover[name] = value;
@@ -500,18 +576,18 @@ var CreateCS = function (_React$Component) {
         currentBid[name_] = bid_file;
         currentBid.bid_document_url = bid_document_url;
       } else if (name_ === "supplier") {
-        var _event$target4 = event.target,
-            name = _event$target4.name,
-            value = _event$target4.value;
+        var _event$target5 = event.target,
+            name = _event$target5.name,
+            value = _event$target5.value;
 
         console.log("value: ", value);
         var id_name = value ? value.split("-#-") : [];
         currentBid[name_] = id_name.length > 0 ? id_name[0] : "";
         currentBid["supplier_name"] = id_name.length >= 1 ? id_name[1] : "";
       } else {
-        var _event$target5 = event.target,
-            _name = _event$target5.name,
-            _value = _event$target5.value;
+        var _event$target6 = event.target,
+            _name = _event$target6.name,
+            _value = _event$target6.value;
 
         currentBid[name_] = _value;
       }
@@ -529,9 +605,9 @@ var CreateCS = function (_React$Component) {
       console.log("item: ", item);
       // if item exists update item
       if (item) {
-        var _event$target6 = event.target,
-            name = _event$target6.name,
-            value = _event$target6.value;
+        var _event$target7 = event.target,
+            name = _event$target7.name,
+            value = _event$target7.value;
 
         item[name_] = value;
         // update item in current bid
@@ -668,7 +744,7 @@ var CreateCS = function (_React$Component) {
       }).then(function (data) {
         console.log("data: ", data);
         if (data.success) {
-          alert("Bid saved successfully" + " " + data.bid_no);
+          alert("Bid saved successfully");
         } else {
           alert("Error saving Bid");
         }
@@ -818,9 +894,9 @@ var CreateCS = function (_React$Component) {
 
     _this.onInputChange = function (event) {
       console.log(event);
-      var _event$target7 = event.target,
-          name = _event$target7.name,
-          value = _event$target7.value;
+      var _event$target8 = event.target,
+          name = _event$target8.name,
+          value = _event$target8.value;
 
       _this.setState(Object.assign({}, _this.state, _defineProperty({}, name, value)));
     };
@@ -874,17 +950,17 @@ var CreateCS = function (_React$Component) {
 
     _this.onComplianceItemsChange = function (name_, event) {
       console.log("name and value: ", name_, event);
-      var _event$target8 = event.target,
-          name = _event$target8.name,
-          value = _event$target8.value;
+      var _event$target9 = event.target,
+          name = _event$target9.name,
+          value = _event$target9.value;
 
       _this.setState(Object.assign({}, _this.state, _defineProperty({}, name_, value)));
     };
 
     _this.onComplianceChange = function (index, event) {
-      var _event$target9 = event.target,
-          name = _event$target9.name,
-          checked = _event$target9.checked;
+      var _event$target10 = event.target,
+          name = _event$target10.name,
+          checked = _event$target10.checked;
 
       console.log("name: ", name, "checked: ", checked);
       var compliance = _this.state.compliance;
@@ -952,9 +1028,9 @@ var CreateCS = function (_React$Component) {
     };
 
     _this.onComplianceRemarksChange = function (supplier_name, event) {
-      var _event$target10 = event.target,
-          name = _event$target10.name,
-          value = _event$target10.value;
+      var _event$target11 = event.target,
+          name = _event$target11.name,
+          value = _event$target11.value;
 
       console.log("name: ", name, "value: ", value, "supplier_name: ", supplier_name);
       var complianceRemarks = _this.state.complianceRemarks;
@@ -1043,6 +1119,7 @@ var CreateCS = function (_React$Component) {
       proc_plan: null,
       scope_of_work: "",
       pr_number: "",
+      pr_attachments: [],
       quantity: "",
       pr_date: "",
       closing_date: "",
@@ -1092,8 +1169,11 @@ var CreateCS = function (_React$Component) {
       pr_items: [],
       suppliers: [],
       proc_plans: [],
+      uom: null,
       authUser: {},
-      username: ""
+      username: "",
+
+      fetchPR: false
     };
     _this.getCreateData = _this.getCreateData.bind(_this);
     _this.onAddBid = _this.onAddBid.bind(_this);
@@ -1121,29 +1201,34 @@ var CreateCS = function (_React$Component) {
           cs_id: this.props.csid
         });
         this.getCSData(this.props.csid);
-      } else {
+      } else if (this.props.prid !== "") {
         this.setState({
           username: this.props.username,
           pr_number: this.props.prid
         });
         this.getCreateData(this.props.prid);
+      } else {
+        this.setState({
+          username: this.props.username,
+          fetchPR: true
+        });
       }
     }
   }, {
     key: "onSelectChange",
     value: function onSelectChange(name_, event) {
-      var _event$target11 = event.target,
-          name = _event$target11.name,
-          value = _event$target11.value;
+      var _event$target12 = event.target,
+          name = _event$target12.name,
+          value = _event$target12.value;
 
       this.setState(Object.assign({}, this.state, _defineProperty({}, name_, value)));
     }
   }, {
     key: "onFilterSelectCenters",
     value: function onFilterSelectCenters(name_, event) {
-      var _event$target12 = event.target,
-          name = _event$target12.name,
-          value = _event$target12.value;
+      var _event$target13 = event.target,
+          name = _event$target13.name,
+          value = _event$target13.value;
 
       if (name_ === "region") {
         var dist = this.state.allDistricts.filter(function (_district) {
@@ -1830,45 +1915,16 @@ var CreateCS = function (_React$Component) {
                               { value: item.unit_of_measurement },
                               item.unit_of_measurement
                             ) : "",
-                            React.createElement(
+                            _this2.state.uom ? _this2.state.uom.map(function (uom) {
+                              return React.createElement(
+                                "option",
+                                { value: uom.name },
+                                uom.name
+                              );
+                            }) : React.createElement(
                               "option",
-                              { value: "Each" },
-                              "Each"
-                            ),
-                            React.createElement(
-                              "option",
-                              { value: "Kgs" },
-                              "Kg`s"
-                            ),
-                            React.createElement(
-                              "option",
-                              { value: "Grammes" },
-                              "Grammes"
-                            ),
-                            React.createElement(
-                              "option",
-                              { value: "Litres" },
-                              "Litres"
-                            ),
-                            React.createElement(
-                              "option",
-                              { value: "Metres" },
-                              "Metres"
-                            ),
-                            React.createElement(
-                              "option",
-                              { value: "Bags" },
-                              "Bags"
-                            ),
-                            React.createElement(
-                              "option",
-                              { value: "Packets" },
-                              "Packets"
-                            ),
-                            React.createElement(
-                              "option",
-                              { value: "Cartons" },
-                              "Cartons"
+                              null,
+                              "No Units"
                             )
                           )
                         )
@@ -3319,7 +3375,7 @@ var CreateCS = function (_React$Component) {
                       React.createElement(
                         "div",
                         { className: "flex justify-content-evenly" },
-                        this.state.requester_role === 'approve' && Object.keys(this.state.gmApproval).length === 0 ? React.createElement(
+                        this.state.fmApproval && this.state.fmApproval.approval === "Approved" && this.state.requester_role === 'approve' && Object.keys(this.state.gmApproval).length === 0 ? React.createElement(
                           "div",
                           { className: "flex justify-content-evenly" },
                           React.createElement(
@@ -3373,6 +3429,392 @@ var CreateCS = function (_React$Component) {
         )
       );
 
+      var csDetailsView = React.createElement(
+        "div",
+        { className: "px-4 sm:px-0 mt-6 bg-gulf-blue-300 rounded-md border-t border-gray-100 border-gray-900/10" },
+        React.createElement(
+          "h2",
+          { className: "text-base font-semibold leading-6 text-gray-900" },
+          "COMPERATIVE SCHEDULE DETAILS"
+        ),
+        React.createElement(
+          "div",
+          { className: "flex justify-evenly mt-5  px-2 py-2 rounded-md" },
+          React.createElement(
+            "div",
+            { className: "flex-1 w-100" },
+            React.createElement(
+              "label",
+              {
+                htmlFor: "scope",
+                className: "block text-sm font-medium leading-6 text-gray-900"
+              },
+              "Scope of Work"
+            ),
+            React.createElement(
+              "div",
+              { className: "mt-2" },
+              React.createElement("textarea", {
+                id: "scope",
+                name: "scope_of_work",
+                type: "scope",
+                value: this.state.scope_of_work,
+                onChange: this.onInputChange,
+                className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+              })
+            )
+          )
+        ),
+        React.createElement(
+          "div",
+          { className: "flex justify-evenly mt-5  px-2 py-2 rounded-md" },
+          React.createElement(
+            "div",
+            { className: "flex-1 w-20 ml-1" },
+            React.createElement(
+              "label",
+              {
+                htmlFor: "pr_number",
+                className: "block text-sm font-medium leading-6 text-gray-900"
+              },
+              "PR No."
+            ),
+            React.createElement(
+              "div",
+              { className: "mt-2" },
+              React.createElement("input", {
+                name: "pr_number",
+                value: this.state.pr_number,
+                onChange: this.onInputChange,
+                id: "pr_number",
+                required: "required",
+                className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+              })
+            )
+          ),
+          React.createElement(
+            "div",
+            { className: "flex-1 w-20 ml-1" },
+            React.createElement(
+              "label",
+              {
+                htmlFor: "pr_date",
+                className: "block text-sm font-medium leading-6 text-gray-900"
+              },
+              "PR Date"
+            ),
+            React.createElement(
+              "div",
+              { className: "mt-2" },
+              React.createElement("input", {
+                name: "pr_date",
+                value: this.state.pr_date,
+                onChange: this.onInputChange,
+                type: "date",
+                required: "required",
+                className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+              })
+            )
+          ),
+          React.createElement(
+            "div",
+            { className: "flex-1 w-20 ml-1" },
+            React.createElement(
+              "label",
+              {
+                htmlFor: "closing_date",
+                className: "block text-sm font-medium leading-6 text-gray-900"
+              },
+              "Closing Date"
+            ),
+            React.createElement(
+              "div",
+              { className: "mt-2" },
+              React.createElement("input", {
+                name: "closing_date",
+                value: this.state.closing_date,
+                onChange: this.onInputChange,
+                type: "date",
+                required: "required",
+                className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+              })
+            )
+          ),
+          React.createElement(
+            "div",
+            { className: "flex-1 w-20 ml-1" },
+            React.createElement(
+              "div",
+              null,
+              React.createElement(
+                "label",
+                {
+                  htmlFor: "closing_time",
+                  className: "block text-sm font-medium leading-6 text-gray-900"
+                },
+                "Closing Time"
+              ),
+              React.createElement(
+                "div",
+                { className: "mt-2 text-gray-900" },
+                React.createElement(
+                  "div",
+                  { className: "flex px-1" },
+                  React.createElement(
+                    "select",
+                    {
+                      name: "closing_time_hour",
+                      onChange: function onChange(e) {
+                        return _this2.onSelectChange("closing_time_hour", e);
+                      },
+                      className: "rounded-md block border-none w-full py-1.5 text-gray-900 sm:max-w-xs sm:text-sm sm:leading-6"
+                    },
+                    this.state.closing_time_hour ? React.createElement(
+                      "option",
+                      { value: this.state.closing_time_hour },
+                      this.state.closing_time_hour
+                    ) : "",
+                    React.createElement(
+                      "option",
+                      { value: "10:00" },
+                      "10:00"
+                    ),
+                    React.createElement(
+                      "option",
+                      { value: "14:00" },
+                      "14:00"
+                    )
+                  )
+                )
+              )
+            )
+          )
+        ),
+        React.createElement(
+          "div",
+          { className: "flex justify-evenly mt-5  px-2 py-2 rounded-md" },
+          React.createElement(
+            "div",
+            { className: "flex-1 w-20 ml-1" },
+            React.createElement(
+              "label",
+              {
+                htmlFor: "designation",
+                className: "block text-sm font-medium leading-6 text-gray-900"
+              },
+              "Procurement Plan"
+            ),
+            React.createElement(
+              "div",
+              { className: "mt-2" },
+              React.createElement(
+                "select",
+                {
+                  id: "proc_plan",
+                  name: "proc_plan",
+                  autoComplete: "proc_plan",
+                  onChange: function onChange(e) {
+                    return _this2.onSelectChange("proc_ref", e);
+                  },
+                  className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
+                },
+                this.state.proc_plan ? React.createElement(
+                  "option",
+                  { value: this.state.proc_plan.id },
+                  this.state.proc_plan.name
+                ) : "",
+                this.state.proc_plans ? this.state.proc_plans.map(function (plan) {
+                  return React.createElement(
+                    "option",
+                    { value: plan.proc_ref },
+                    plan.description
+                  );
+                }) : ""
+              )
+            )
+          ),
+          React.createElement(
+            "div",
+            { className: "flex-1 w-20 ml-1" },
+            React.createElement(
+              "label",
+              {
+                htmlFor: "pr_date",
+                className: "block text-sm font-medium leading-6 text-gray-900"
+              },
+              "Ref Date"
+            ),
+            React.createElement(
+              "div",
+              { className: "mt-2" },
+              React.createElement("input", {
+                name: "ref_date",
+                value: this.state.ref_date,
+                onChange: this.onInputChange,
+                type: "date",
+                required: "required",
+                className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+              })
+            )
+          ),
+          React.createElement(
+            "div",
+            { className: "flex-1 w-20 ml-1" },
+            React.createElement(
+              "label",
+              {
+                htmlFor: "date_tender_opened",
+                className: "block text-sm font-medium leading-6 text-gray-900"
+              },
+              "Tender Box Opened On"
+            ),
+            React.createElement(
+              "div",
+              { className: "mt-2" },
+              React.createElement("input", {
+                name: "date_tender_opened",
+                value: this.state.date_tender_opened,
+                onChange: this.onInputChange,
+                type: "date",
+                required: "required",
+                className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+              })
+            )
+          ),
+          React.createElement(
+            "div",
+            { className: "flex-1 w-40 ml-1" },
+            React.createElement(
+              "label",
+              {
+                htmlFor: "tender_adjudication_committee_date",
+                className: "block text-sm font-medium leading-6 text-gray-900"
+              },
+              "Tender Committee Date"
+            ),
+            React.createElement(
+              "div",
+              { className: "mt-2" },
+              React.createElement("input", {
+                name: "tender_adjudication_committee_date",
+                value: this.state.tender_adjudication_committee_date,
+                onChange: this.onInputChange,
+                type: "date",
+                required: "required",
+                className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+              })
+            )
+          )
+        ),
+        React.createElement(
+          "div",
+          { className: "flex justify-evenly mt-5  px-2 py-2 rounded-md" },
+          React.createElement(
+            "div",
+            { className: "flex-1 w-full ml-1" },
+            React.createElement(
+              "label",
+              {
+                htmlFor: "advert",
+                className: "block text-sm font-medium leading-6 text-gray-900"
+              },
+              "Tender Advert"
+            ),
+            React.createElement(
+              "div",
+              { className: "mt-2" },
+              React.createElement("input", {
+                name: "advert",
+                onChange: function onChange(e) {
+                  return _this2.onFileInputChange("advert", e);
+                },
+                type: "file",
+                id: "advert",
+                required: "required",
+                readOnly: true,
+                className: "block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+              })
+            )
+          ),
+          React.createElement(
+            "div",
+            { className: "flex-1 w-40 ml-2" },
+            React.createElement(
+              "label",
+              {
+                htmlFor: "bid_document",
+                className: "block text-sm font-medium leading-6 text-gray-900"
+              },
+              "Advert Document"
+            ),
+            React.createElement(
+              "div",
+              { className: "mt-2" },
+              React.createElement(
+                "a",
+                { href: this.state.advert_url, rel: "noopener noreferrer" },
+                "View Advert Document"
+              )
+            )
+          )
+        ),
+        React.createElement(
+          "div",
+          { className: "flex justify-evenly mt-5  px-2 py-2 rounded-md" },
+          this.state.pr_attachments.length > 0 && this.state.pr_attachments.map(function (attachment, key) {
+            return React.createElement(
+              "div",
+              { className: "flex-1 w-20 ml-1" },
+              React.createElement(
+                "div",
+                { className: "mt-2" },
+                React.createElement(
+                  "div",
+                  { className: "rounded bg-white border border-1 shadow-lg text-center m-2" },
+                  React.createElement(
+                    "a",
+                    { href: attachment.attachment_url,
+                      className: "text-center text-blue-600  p-3 sm whitespace-normal max-w-full" },
+                    attachment.name
+                  )
+                )
+              )
+            );
+          })
+        ),
+        this.state.username === this.state.cs_owner || !this.state.cs_id ? React.createElement(
+          "div",
+          { className: "flex justify-center mt-10 px-3 py-3" },
+          this.state.cs_id ? React.createElement(
+            "div",
+            { className: "w-30 m-2" },
+            React.createElement(
+              "button",
+              {
+                style: { width: "100%" },
+                onClick: this.onUpdateSchedule,
+                name: "save_next",
+                className: "rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+              },
+              "UPDATE SCHEDULE"
+            )
+          ) : React.createElement(
+            "div",
+            { className: "w-30 m-2" },
+            React.createElement(
+              "button",
+              {
+                style: { width: "100%" },
+                onClick: this.onSaveSchedule,
+                name: "save_next",
+                className: "rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+              },
+              "SAVE SCHEDULE"
+            )
+          )
+        ) : ""
+      );
+
       return React.createElement(
         "div",
         null,
@@ -3397,426 +3839,55 @@ var CreateCS = function (_React$Component) {
               { className: "mt-1 max-w-2xl text-sm leading-6 text-gray-500" },
               "CS NO: ",
               this.state.cs_id
-            )
-          ),
-          React.createElement(
-            "div",
-            { className: "px-4 sm:px-0 mt-6 bg-gulf-blue-300 rounded-md border-t border-gray-100 border-gray-900/10" },
-            React.createElement(
-              "h2",
-              { className: "text-base font-semibold leading-6 text-gray-900" },
-              "CS DETAILS"
             ),
-            React.createElement(
+            this.state.fetchPR && React.createElement(
               "div",
-              { className: "flex justify-evenly mt-5 px-2 py-2" },
+              { className: "flex justify-evenly items-end mt-5 px-2 py-2" },
               React.createElement(
                 "div",
                 { className: "flex-1 w-40" },
                 React.createElement(
                   "label",
                   {
-                    htmlFor: "plan_ref",
-                    className: "block text-sm font-medium leading-6 text-gray-900"
-                  },
-                  "Plan Ref"
-                ),
-                React.createElement(
-                  "div",
-                  { className: "mt-2" },
-                  React.createElement("input", {
-                    name: "plan_ref",
-                    id: "plan_ref",
-                    value: this.state.proc_ref,
-                    readOnly: true,
-                    className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                  })
-                )
-              ),
-              React.createElement(
-                "div",
-                { className: "flex-1 w-40 ml-3" },
-                React.createElement(
-                  "div",
-                  null,
-                  React.createElement(
-                    "label",
-                    {
-                      htmlFor: "designation",
-                      className: "block text-sm font-medium leading-6 text-gray-900"
-                    },
-                    "Procurement Plan"
-                  ),
-                  React.createElement(
-                    "div",
-                    { className: "mt-2" },
-                    React.createElement(
-                      "select",
-                      {
-                        id: "proc_plan",
-                        name: "proc_plan",
-                        autoComplete: "proc_plan",
-                        onChange: function onChange(e) {
-                          return _this2.onSelectChange("proc_ref", e);
-                        },
-                        className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
-                      },
-                      React.createElement(
-                        "option",
-                        null,
-                        "Select Procurement Plan Ref"
-                      ),
-                      this.state.proc_plan ? React.createElement(
-                        "option",
-                        { value: this.state.proc_plan.proc_ref },
-                        this.state.proc_plan.description
-                      ) : "",
-                      this.state.proc_plans ? this.state.proc_plans.map(function (plan) {
-                        return React.createElement(
-                          "option",
-                          { value: plan.proc_ref },
-                          plan.description
-                        );
-                      }) : ""
-                    )
-                  )
-                )
-              )
-            ),
-            React.createElement(
-              "div",
-              { className: "flex justify-evenly mt-5  px-2 py-2 rounded-md" },
-              React.createElement(
-                "div",
-                { className: "flex-1 w-100" },
-                React.createElement(
-                  "label",
-                  {
-                    htmlFor: "scope",
-                    className: "block text-sm font-medium leading-6 text-gray-900"
-                  },
-                  "Scope of Work"
-                ),
-                React.createElement(
-                  "div",
-                  { className: "mt-2" },
-                  React.createElement("textarea", {
-                    id: "scope",
-                    name: "scope_of_work",
-                    type: "scope",
-                    value: this.state.scope_of_work,
-                    onChange: this.onInputChange,
-                    className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                  })
-                )
-              )
-            ),
-            React.createElement(
-              "div",
-              { className: "flex justify-evenly mt-5  px-2 py-2 rounded-md" },
-              React.createElement(
-                "div",
-                { className: "flex-1 w-20 ml-1" },
-                React.createElement(
-                  "label",
-                  {
                     htmlFor: "pr_number",
                     className: "block text-sm font-medium leading-6 text-gray-900"
                   },
-                  "PR No."
+                  "Enter PR Number"
                 ),
                 React.createElement(
                   "div",
                   { className: "mt-2" },
                   React.createElement("input", {
                     name: "pr_number",
-                    value: this.state.pr_number,
-                    onChange: this.onInputChange,
                     id: "pr_number",
-                    required: "required",
+                    onChange: this.onFetchPrNumberChange,
+                    defaultValue: this.state.pr_number,
                     className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                   })
                 )
               ),
               React.createElement(
                 "div",
-                { className: "flex-1 w-20 ml-1" },
-                React.createElement(
-                  "label",
-                  {
-                    htmlFor: "pr_date",
-                    className: "block text-sm font-medium leading-6 text-gray-900"
-                  },
-                  "PR Date"
-                ),
+                { className: "flex-1 ml-2 w-40" },
                 React.createElement(
                   "div",
-                  { className: "mt-2" },
-                  React.createElement("input", {
-                    name: "pr_date",
-                    value: this.state.pr_date,
-                    onChange: this.onInputChange,
-                    type: "date",
-                    required: "required",
-                    className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                  })
-                )
-              ),
-              React.createElement(
-                "div",
-                { className: "flex-1 w-20 ml-1" },
-                React.createElement(
-                  "label",
-                  {
-                    htmlFor: "closing_date",
-                    className: "block text-sm font-medium leading-6 text-gray-900"
-                  },
-                  "Closing Date"
-                ),
-                React.createElement(
-                  "div",
-                  { className: "mt-2" },
-                  React.createElement("input", {
-                    name: "closing_date",
-                    value: this.state.closing_date,
-                    onChange: this.onInputChange,
-                    type: "date",
-                    required: "required",
-                    className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                  })
-                )
-              ),
-              React.createElement(
-                "div",
-                { className: "flex-1 w-20 ml-1" },
-                React.createElement(
-                  "div",
-                  null,
+                  { className: "w-30" },
                   React.createElement(
-                    "label",
+                    "button",
                     {
-                      htmlFor: "closing_time",
-                      className: "block text-sm font-medium leading-6 text-gray-900"
+                      style: { width: "100%" },
+                      onClick: function onClick() {
+                        return _this2.onFetchPR(_this2.state.pr_number);
+                      },
+                      name: "save_next",
+                      className: "rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
                     },
-                    "Closing Time"
-                  ),
-                  React.createElement(
-                    "div",
-                    { className: "mt-2 text-gray-900" },
-                    React.createElement(
-                      "div",
-                      { className: "flex px-1" },
-                      React.createElement(
-                        "select",
-                        {
-                          name: "closing_time_hour",
-                          onChange: function onChange(e) {
-                            return _this2.onSelectChange("closing_time_hour", e);
-                          },
-                          className: "rounded-md block border-none w-full py-1.5 text-gray-900 sm:max-w-xs sm:text-sm sm:leading-6"
-                        },
-                        this.state.closing_time_hour ? React.createElement(
-                          "option",
-                          { value: this.state.closing_time_hour },
-                          this.state.closing_time_hour
-                        ) : "",
-                        React.createElement(
-                          "option",
-                          { value: "10:00" },
-                          "10:00"
-                        ),
-                        React.createElement(
-                          "option",
-                          { value: "14:00" },
-                          "14:00"
-                        )
-                      )
-                    )
+                    "FETCH PR"
                   )
                 )
               )
             ),
-            React.createElement(
-              "div",
-              { className: "flex justify-evenly mt-5  px-2 py-2 rounded-md" },
-              React.createElement(
-                "div",
-                { className: "flex-1 w-20 ml-1" },
-                React.createElement(
-                  "label",
-                  {
-                    htmlFor: "proc_plan_ref",
-                    className: "block text-sm font-medium leading-6 text-gray-900"
-                  },
-                  "Procurement Plan Ref"
-                ),
-                React.createElement(
-                  "div",
-                  { className: "mt-2" },
-                  React.createElement("input", {
-                    id: "proc_plan_ref",
-                    value: this.state.proc_ref,
-                    readOnly: true,
-                    className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                  })
-                )
-              ),
-              React.createElement(
-                "div",
-                { className: "flex-1 w-20 ml-1" },
-                React.createElement(
-                  "label",
-                  {
-                    htmlFor: "pr_date",
-                    className: "block text-sm font-medium leading-6 text-gray-900"
-                  },
-                  "Ref Date"
-                ),
-                React.createElement(
-                  "div",
-                  { className: "mt-2" },
-                  React.createElement("input", {
-                    name: "ref_date",
-                    value: this.state.ref_date,
-                    onChange: this.onInputChange,
-                    type: "date",
-                    required: "required",
-                    className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                  })
-                )
-              ),
-              React.createElement(
-                "div",
-                { className: "flex-1 w-20 ml-1" },
-                React.createElement(
-                  "label",
-                  {
-                    htmlFor: "date_tender_opened",
-                    className: "block text-sm font-medium leading-6 text-gray-900"
-                  },
-                  "Tender Box Opened On"
-                ),
-                React.createElement(
-                  "div",
-                  { className: "mt-2" },
-                  React.createElement("input", {
-                    name: "date_tender_opened",
-                    value: this.state.date_tender_opened,
-                    onChange: this.onInputChange,
-                    type: "date",
-                    required: "required",
-                    className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                  })
-                )
-              ),
-              React.createElement(
-                "div",
-                { className: "flex-1 w-40 ml-1" },
-                React.createElement(
-                  "label",
-                  {
-                    htmlFor: "tender_adjudication_committee_date",
-                    className: "block text-sm font-medium leading-6 text-gray-900"
-                  },
-                  "Tender Committee Date"
-                ),
-                React.createElement(
-                  "div",
-                  { className: "mt-2" },
-                  React.createElement("input", {
-                    name: "tender_adjudication_committee_date",
-                    value: this.state.tender_adjudication_committee_date,
-                    onChange: this.onInputChange,
-                    type: "date",
-                    required: "required",
-                    className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                  })
-                )
-              )
-            ),
-            React.createElement(
-              "div",
-              { className: "flex justify-evenly mt-5  px-2 py-2 rounded-md" },
-              React.createElement(
-                "div",
-                { className: "flex-1 w-full ml-1" },
-                React.createElement(
-                  "label",
-                  {
-                    htmlFor: "advert",
-                    className: "block text-sm font-medium leading-6 text-gray-900"
-                  },
-                  "Tender Advert"
-                ),
-                React.createElement(
-                  "div",
-                  { className: "mt-2" },
-                  React.createElement("input", {
-                    name: "advert",
-                    onChange: function onChange(e) {
-                      return _this2.onFileInputChange("advert", e);
-                    },
-                    type: "file",
-                    id: "advert",
-                    required: "required",
-                    readOnly: true,
-                    className: "block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                  })
-                )
-              ),
-              React.createElement(
-                "div",
-                { className: "flex-1 w-40 ml-2" },
-                React.createElement(
-                  "label",
-                  {
-                    htmlFor: "bid_document",
-                    className: "block text-sm font-medium leading-6 text-gray-900"
-                  },
-                  "Advert Document"
-                ),
-                React.createElement(
-                  "div",
-                  { className: "mt-2" },
-                  React.createElement(
-                    "a",
-                    { href: this.state.advert_url, rel: "noopener noreferrer" },
-                    "View Advert Document"
-                  )
-                )
-              )
-            ),
-            this.state.username === this.state.cs_owner || !this.state.cs_id ? React.createElement(
-              "div",
-              { className: "flex justify-center mt-10 px-3 py-3" },
-              this.state.cs_id ? React.createElement(
-                "div",
-                { className: "w-30 m-2" },
-                React.createElement(
-                  "button",
-                  {
-                    style: { width: "100%" },
-                    onClick: this.onUpdateSchedule,
-                    name: "save_next",
-                    className: "rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                  },
-                  "UPDATE SCHEDULE"
-                )
-              ) : React.createElement(
-                "div",
-                { className: "w-30 m-2" },
-                React.createElement(
-                  "button",
-                  {
-                    style: { width: "100%" },
-                    onClick: this.onSaveSchedule,
-                    name: "save_next",
-                    className: "rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                  },
-                  "SAVE SCHEDULE"
-                )
-              )
-            ) : ""
+            csDetailsView
           ),
           this.state.bids.length < 1 && this.state.username === this.state.cs_owner ? React.createElement(
             "div",

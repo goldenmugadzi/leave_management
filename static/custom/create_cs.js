@@ -16,6 +16,7 @@ class CreateCS extends React.Component {
       proc_plan: null,
       scope_of_work: "",
       pr_number: "",
+      pr_attachments: [],
       quantity: "",
       pr_date: "",
       closing_date: "",
@@ -65,8 +66,11 @@ class CreateCS extends React.Component {
       pr_items: [],
       suppliers: [],
       proc_plans: [],
+      uom: null,
       authUser: {},
       username: "",
+
+      fetchPR: false,
     };
     this.getCreateData = this.getCreateData.bind(this);
     this.onAddBid = this.onAddBid.bind(this);
@@ -93,12 +97,17 @@ class CreateCS extends React.Component {
         cs_id: this.props.csid,
       });
       this.getCSData(this.props.csid);
-    } else {
+    } else if(this.props.prid !== "") {
       this.setState({
         username: this.props.username,
         pr_number: this.props.prid,
       });
       this.getCreateData(this.props.prid);
+    } else {
+      this.setState({
+        username: this.props.username,
+        fetchPR: true,
+      });
     }
   }
 
@@ -158,19 +167,29 @@ class CreateCS extends React.Component {
         let cs_opened = data.cs_opened ? data.cs_opened : false;
 
         let proc_plans = data.proc_plans ? data.proc_plans : [];
+        let uom = data.uom ? data.uom : [];
         let suppliers = data.suppliers ? data.suppliers : [];
         let pr_items = data.pr_items ? data.pr_items : [];
+        let pr_attachments = data.pr_attachments ? data.pr_attachments : [];
         let cs_items = data.cs_items ? data.cs_items : [];
         let users = data.users ? data.users : [];
         let cs_owner = data.cs_owner ? data.cs_owner : "";
 
         let advert_url = this.onGetFileObjectUrl(data.advert);
+        
+        let pr_at_list = pr_attachments.map((pr_attachment) => {
+          return {
+            ...pr_attachment,
+            attachment_url: this.onGetFileObjectUrl(pr_attachment.file),
+          };
+        });
         console.log("advert file", advert, typeof advert);
         this.setState({
           ...this.state,
           requester_role: requester_role,
           cs_owner: cs_owner,
           proc_plans: proc_plans,
+          uom: uom,
           suppliers: suppliers,
           users: users,
 
@@ -198,6 +217,7 @@ class CreateCS extends React.Component {
           gmApproval: gm_approval,
           fmApproval: fm_approval,
           pr_items: pr_items,
+          pr_attachments: pr_at_list,
         });
       });
   };
@@ -212,23 +232,90 @@ class CreateCS extends React.Component {
         let scope_of_work = data.scope_of_work ? data.scope_of_work : "";
         let proc_ref = data.proc_ref ? data.proc_ref : "";
         let plans = data.proc_plans ? data.proc_plans : [];
+        let uom = data.uom ? data.uom : [];
         let suppliers = data.suppliers ? data.suppliers : [];
         let pr_items = data.pr_items ? data.pr_items : [];
+        let pr_attachments = data.pr_attachments ? data.pr_attachments : [];
         let pr_id = data.pr_id ? data.pr_id : "";
         let pr_date = data.pr_date ? data.pr_date : "";
         let users = data.users ? data.users : [];
+
+        let pr_at_list = pr_attachments.map((pr_attachment) => {
+          return {
+            ...pr_attachment,
+            attachment_url: this.onGetFileObjectUrl(pr_attachment.file),
+          };
+        });
         this.setState({
           scope_of_work: scope_of_work,
           proc_ref: proc_ref,
           proc_plans: plans,
+          uom: uom,
           suppliers: suppliers,
           pr_items: pr_items,
+          pr_attachments: pr_at_list,
           pr_number: pr_id,
           pr_date: pr_date,
           users: users,
         });
       });
   };
+
+  onFetchPR = (pr_id) => {
+    console.log("cs pr_id: ", pr_id);
+
+    fetch(`${BASE_URL}/comperative_schedule/create_data/${pr_id}`)
+      .then((response) => response.json())
+      .then((data) => {
+        console.log("data: ", data);
+        if(data && data.success) {
+          let scope_of_work = data.scope_of_work ? data.scope_of_work : "";
+          let proc_ref = data.proc_ref ? data.proc_ref : "";
+          let proc_plan = data.proc_plan ? data.proc_plan : null;
+          let plans = data.proc_plans ? data.proc_plans : [];
+          let uom = data.uom ? data.uom : "";
+          let suppliers = data.suppliers ? data.suppliers : [];
+          let pr_items = data.pr_items ? data.pr_items : [];
+          let pr_attachments = data.pr_attachments ? data.pr_attachments : [];
+          let pr_id = data.pr_id ? data.pr_id : "";
+          let pr_date = data.pr_date ? data.pr_date : "";
+          let users = data.users ? data.users : [];
+
+          let pr_at_list = pr_attachments.map((pr_attachment) => {
+            return {
+              ...pr_attachment,
+              attachment_url: this.onGetFileObjectUrl(pr_attachment.file),
+            };
+          });
+          this.setState({
+            scope_of_work: scope_of_work,
+            proc_ref: proc_ref,
+            proc_plan: proc_plan,
+            proc_plans: plans,
+            uom: uom,
+            suppliers: suppliers,
+            pr_items: pr_items,
+            pr_attachments: pr_at_list,
+            pr_number: pr_id,
+            pr_date: pr_date,
+            users: users,
+            fetchPR: false,
+          });
+      
+          alert("PR fetched successfully");
+        } else {
+          alert("PR Number not found");
+        }
+      });
+  };
+
+  onFetchPrNumberChange = (event) => {
+    let { name, value } = event.target;
+    this.setState({
+      ...this.state,
+      pr_number: value,
+    });
+  }
 
   onCommitteeChange = (name_, event) => {
     let { name, value } = event.target;
@@ -774,7 +861,7 @@ class CreateCS extends React.Component {
       .then((data) => {
         console.log("data: ", data);
         if (data.success) {
-          alert("Bid saved successfully" + " " + data.bid_no);
+          alert("Bid saved successfully");
         } else {
           alert("Error saving Bid");
         }
@@ -1226,6 +1313,7 @@ class CreateCS extends React.Component {
   };
 
   render() {
+
     var itemsModal = null;
     var bidsModal = null;
     var updateBidModal = null;
@@ -1687,14 +1775,9 @@ class CreateCS extends React.Component {
                               ) : (
                                 ""
                               )}
-                              <option value="Each">Each</option>
-                              <option value="Kgs">Kg`s</option>
-                              <option value="Grammes">Grammes</option>
-                              <option value="Litres">Litres</option>
-                              <option value="Metres">Metres</option>
-                              <option value="Bags">Bags</option>
-                              <option value="Packets">Packets</option>
-                              <option value="Cartons">Cartons</option>
+                              {this.state.uom ? this.state.uom.map((uom) => (
+                                <option value={uom.name}>{uom.name}</option>
+                              )): <option>No Units</option>}
                             </select>
                           </div>
                         </div>
@@ -2755,7 +2838,7 @@ class CreateCS extends React.Component {
                       {this.state.gmApproval && this.state.gmApproval.approval === "Rejected" && "REJECTED"}
                       {(
                             <div className="flex justify-content-evenly">
-                              {(this.state.requester_role === 'approve') && Object.keys(this.state.gmApproval).length === 0 ? (
+                              {(this.state.fmApproval) && (this.state.fmApproval.approval === "Approved") && (this.state.requester_role === 'approve') && Object.keys(this.state.gmApproval).length === 0 ? (
                                 <div className="flex justify-content-evenly">
                                   <div className="m-2">
                                     <button
@@ -2807,6 +2890,290 @@ class CreateCS extends React.Component {
       </div>
     );
 
+    var csDetailsView = (  
+    <div className="px-4 sm:px-0 mt-6 bg-gulf-blue-300 rounded-md border-t border-gray-100 border-gray-900/10">
+      <h2 className="text-base font-semibold leading-6 text-gray-900">
+        COMPERATIVE SCHEDULE DETAILS
+      </h2>
+
+      <div className="flex justify-evenly mt-5  px-2 py-2 rounded-md">
+        <div className="flex-1 w-100">
+          <label
+            htmlFor="scope"
+            className="block text-sm font-medium leading-6 text-gray-900"
+          >
+            Scope of Work
+          </label>
+          <div className="mt-2">
+            <textarea
+              id="scope"
+              name="scope_of_work"
+              type="scope"
+              value={this.state.scope_of_work}
+              onChange={this.onInputChange}
+              className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+            ></textarea>
+          </div>
+        </div>
+      </div>
+      <div className="flex justify-evenly mt-5  px-2 py-2 rounded-md">
+        <div className="flex-1 w-20 ml-1">
+          <label
+            htmlFor="pr_number"
+            className="block text-sm font-medium leading-6 text-gray-900"
+          >
+            PR No.
+          </label>
+          <div className="mt-2">
+            <input
+              name="pr_number"
+              value={this.state.pr_number}
+              onChange={this.onInputChange}
+              id="pr_number"
+              required="required"
+              className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+            />
+          </div>
+        </div>
+        <div className="flex-1 w-20 ml-1">
+          <label
+            htmlFor="pr_date"
+            className="block text-sm font-medium leading-6 text-gray-900"
+          >
+            PR Date
+          </label>
+          <div className="mt-2">
+            <input
+              name="pr_date"
+              value={this.state.pr_date}
+              onChange={this.onInputChange}
+              type="date"
+              required="required"
+              className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+            />
+          </div>
+        </div>
+        <div className="flex-1 w-20 ml-1">
+          <label
+            htmlFor="closing_date"
+            className="block text-sm font-medium leading-6 text-gray-900"
+          >
+            Closing Date
+          </label>
+          <div className="mt-2">
+            <input
+              name="closing_date"
+              value={this.state.closing_date}
+              onChange={this.onInputChange}
+              type="date"
+              required="required"
+              className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+            />
+          </div>
+        </div>
+        <div className="flex-1 w-20 ml-1">
+          <div>
+            <label
+              htmlFor="closing_time"
+              className="block text-sm font-medium leading-6 text-gray-900"
+            >
+              Closing Time
+            </label>
+            <div className="mt-2 text-gray-900">
+              <div className="flex px-1">
+                <select
+                  name="closing_time_hour"
+                  onChange={(e) =>
+                    this.onSelectChange("closing_time_hour", e)
+                  }
+                  className="rounded-md block border-none w-full py-1.5 text-gray-900 sm:max-w-xs sm:text-sm sm:leading-6"
+                >
+                  {this.state.closing_time_hour ? (
+                    <option value={this.state.closing_time_hour}>
+                      {this.state.closing_time_hour}
+                    </option>
+                  ) : (
+                    ""
+                  )}
+                  <option value="10:00">10:00</option>
+                  <option value="14:00">14:00</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className="flex justify-evenly mt-5  px-2 py-2 rounded-md">
+        <div className="flex-1 w-20 ml-1">
+            <label
+              htmlFor="designation"
+              className="block text-sm font-medium leading-6 text-gray-900"
+            >
+              Procurement Plan
+            </label>
+            <div className="mt-2">
+              <select
+                id="proc_plan"
+                name="proc_plan"
+                autoComplete="proc_plan"
+                onChange={(e) => this.onSelectChange("proc_ref", e)}
+                className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
+              >
+                {this.state.proc_plan ? (
+                  <option value={this.state.proc_plan.id}>
+                    {this.state.proc_plan.name}
+                  </option>
+                ) : (
+                  ""
+                )}
+                {this.state.proc_plans
+                  ? this.state.proc_plans.map((plan) => (
+                      <option value={plan.proc_ref}>
+                        {plan.description}
+                      </option>
+                    ))
+                  : ""}
+              </select>
+            </div>
+        </div>
+        <div className="flex-1 w-20 ml-1">
+          <label
+            htmlFor="pr_date"
+            className="block text-sm font-medium leading-6 text-gray-900"
+          >
+            Ref Date
+          </label>
+          <div className="mt-2">
+            <input
+              name="ref_date"
+              value={this.state.ref_date}
+              onChange={this.onInputChange}
+              type="date"
+              required="required"
+              className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+            />
+          </div>
+        </div>
+        <div className="flex-1 w-20 ml-1">
+          <label
+            htmlFor="date_tender_opened"
+            className="block text-sm font-medium leading-6 text-gray-900"
+          >
+            Tender Box Opened On
+          </label>
+          <div className="mt-2">
+            <input
+              name="date_tender_opened"
+              value={this.state.date_tender_opened}
+              onChange={this.onInputChange}
+              type="date"
+              required="required"
+              className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+            />
+          </div>
+        </div>
+        <div className="flex-1 w-40 ml-1">
+          <label
+            htmlFor="tender_adjudication_committee_date"
+            className="block text-sm font-medium leading-6 text-gray-900"
+          >
+            Tender Committee Date
+          </label>
+          <div className="mt-2">
+            <input
+              name="tender_adjudication_committee_date"
+              value={this.state.tender_adjudication_committee_date}
+              onChange={this.onInputChange}
+              type="date"
+              required="required"
+              className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+            />
+          </div>
+        </div>
+      </div>
+      <div className="flex justify-evenly mt-5  px-2 py-2 rounded-md">
+        <div className="flex-1 w-full ml-1">
+          <label
+            htmlFor="advert"
+            className="block text-sm font-medium leading-6 text-gray-900"
+          >
+            Tender Advert
+          </label>
+          <div className="mt-2">
+            <input
+              name="advert"
+              onChange={(e) => this.onFileInputChange("advert", e)}
+              type="file"
+              id="advert"
+              required="required"
+              readOnly
+              className="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+            />
+          </div>
+        </div>
+        <div className="flex-1 w-40 ml-2">
+          <label
+            htmlFor="bid_document"
+            className="block text-sm font-medium leading-6 text-gray-900"
+          >
+            Advert Document
+          </label>
+          <div className="mt-2">
+            <a href={this.state.advert_url} rel="noopener noreferrer">
+              View Advert Document
+            </a>
+          </div>
+        </div>
+      </div>
+      <div className="flex justify-evenly mt-5  px-2 py-2 rounded-md">
+        {(this.state.pr_attachments.length > 0) && this.state.pr_attachments.map((attachment, key) => {
+          return (
+            <div className="flex-1 w-20 ml-1">
+              <div className="mt-2">
+                <div className="rounded bg-white border border-1 shadow-lg text-center m-2">
+                    <a href={attachment.attachment_url}
+                        className="text-center text-blue-600  p-3 sm whitespace-normal max-w-full">{ attachment.name }</a>
+                </div>
+              </div>
+            </div>
+          )
+        })
+        }
+      </div>
+      
+      {this.state.username === this.state.cs_owner ||
+      !this.state.cs_id ? (
+        <div className="flex justify-center mt-10 px-3 py-3">
+          {this.state.cs_id ? (
+            <div className="w-30 m-2">
+              <button
+                style={{ width: "100%" }}
+                onClick={this.onUpdateSchedule}
+                name="save_next"
+                className="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+              >
+                UPDATE SCHEDULE
+              </button>
+            </div>
+          ) : (
+            <div className="w-30 m-2">
+              <button
+                style={{ width: "100%" }}
+                onClick={this.onSaveSchedule}
+                name="save_next"
+                className="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+              >
+                SAVE SCHEDULE
+              </button>
+            </div>
+          )}
+        </div>
+      ) : (
+        ""
+      )}
+    </div>
+    )
+
     return (
       <div>
         {itemsModal}
@@ -2822,310 +3189,41 @@ class CreateCS extends React.Component {
             <p className="mt-1 max-w-2xl text-sm leading-6 text-gray-500">
               CS NO: {this.state.cs_id}
             </p>
-          </div>
-          <div className="px-4 sm:px-0 mt-6 bg-gulf-blue-300 rounded-md border-t border-gray-100 border-gray-900/10">
-            <h2 className="text-base font-semibold leading-6 text-gray-900">
-              CS DETAILS
-            </h2>
-
-            <div className="flex justify-evenly mt-5 px-2 py-2">
+            
+      {this.state.fetchPR && (
+              <div className="flex justify-evenly items-end mt-5 px-2 py-2">
               <div className="flex-1 w-40">
-                <label
-                  htmlFor="plan_ref"
-                  className="block text-sm font-medium leading-6 text-gray-900"
-                >
-                  Plan Ref
-                </label>
-                <div className="mt-2">
-                  <input
-                    name="plan_ref"
-                    id="plan_ref"
-                    value={this.state.proc_ref}
-                    readOnly
-                    className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                  />
-                </div>
-              </div>
-              <div className="flex-1 w-40 ml-3">
-                <div>
-                  <label
-                    htmlFor="designation"
-                    className="block text-sm font-medium leading-6 text-gray-900"
-                  >
-                    Procurement Plan
-                  </label>
-                  <div className="mt-2">
-                    <select
-                      id="proc_plan"
-                      name="proc_plan"
-                      autoComplete="proc_plan"
-                      onChange={(e) => this.onSelectChange("proc_ref", e)}
-                      className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
-                    >
-                      <option>Select Procurement Plan Ref</option>
-                      {this.state.proc_plan ? (
-                        <option value={this.state.proc_plan.proc_ref}>
-                          {this.state.proc_plan.description}
-                        </option>
-                      ) : (
-                        ""
-                      )}
-                      {this.state.proc_plans
-                        ? this.state.proc_plans.map((plan) => (
-                            <option value={plan.proc_ref}>
-                              {plan.description}
-                            </option>
-                          ))
-                        : ""}
-                    </select>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="flex justify-evenly mt-5  px-2 py-2 rounded-md">
-              <div className="flex-1 w-100">
-                <label
-                  htmlFor="scope"
-                  className="block text-sm font-medium leading-6 text-gray-900"
-                >
-                  Scope of Work
-                </label>
-                <div className="mt-2">
-                  <textarea
-                    id="scope"
-                    name="scope_of_work"
-                    type="scope"
-                    value={this.state.scope_of_work}
-                    onChange={this.onInputChange}
-                    className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                  ></textarea>
-                </div>
-              </div>
-            </div>
-            <div className="flex justify-evenly mt-5  px-2 py-2 rounded-md">
-              <div className="flex-1 w-20 ml-1">
                 <label
                   htmlFor="pr_number"
                   className="block text-sm font-medium leading-6 text-gray-900"
                 >
-                  PR No.
+                  Enter PR Number
                 </label>
                 <div className="mt-2">
                   <input
                     name="pr_number"
-                    value={this.state.pr_number}
-                    onChange={this.onInputChange}
                     id="pr_number"
-                    required="required"
+                    onChange={this.onFetchPrNumberChange}
+                    defaultValue={this.state.pr_number}
                     className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                   />
                 </div>
               </div>
-              <div className="flex-1 w-20 ml-1">
-                <label
-                  htmlFor="pr_date"
-                  className="block text-sm font-medium leading-6 text-gray-900"
-                >
-                  PR Date
-                </label>
-                <div className="mt-2">
-                  <input
-                    name="pr_date"
-                    value={this.state.pr_date}
-                    onChange={this.onInputChange}
-                    type="date"
-                    required="required"
-                    className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                  />
-                </div>
-              </div>
-              <div className="flex-1 w-20 ml-1">
-                <label
-                  htmlFor="closing_date"
-                  className="block text-sm font-medium leading-6 text-gray-900"
-                >
-                  Closing Date
-                </label>
-                <div className="mt-2">
-                  <input
-                    name="closing_date"
-                    value={this.state.closing_date}
-                    onChange={this.onInputChange}
-                    type="date"
-                    required="required"
-                    className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                  />
-                </div>
-              </div>
-              <div className="flex-1 w-20 ml-1">
-                <div>
-                  <label
-                    htmlFor="closing_time"
-                    className="block text-sm font-medium leading-6 text-gray-900"
+              <div className="flex-1 ml-2 w-40">
+                <div className="w-30">
+                  <button
+                    style={{ width: "100%" }}
+                    onClick={() => this.onFetchPR(this.state.pr_number)}
+                    name="save_next"
+                    className="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
                   >
-                    Closing Time
-                  </label>
-                  <div className="mt-2 text-gray-900">
-                    <div className="flex px-1">
-                      <select
-                        name="closing_time_hour"
-                        onChange={(e) =>
-                          this.onSelectChange("closing_time_hour", e)
-                        }
-                        className="rounded-md block border-none w-full py-1.5 text-gray-900 sm:max-w-xs sm:text-sm sm:leading-6"
-                      >
-                        {this.state.closing_time_hour ? (
-                          <option value={this.state.closing_time_hour}>
-                            {this.state.closing_time_hour}
-                          </option>
-                        ) : (
-                          ""
-                        )}
-                        <option value="10:00">10:00</option>
-                        <option value="14:00">14:00</option>
-                      </select>
-                    </div>
-                  </div>
+                    FETCH PR
+                  </button>
                 </div>
               </div>
             </div>
-            <div className="flex justify-evenly mt-5  px-2 py-2 rounded-md">
-              <div className="flex-1 w-20 ml-1">
-                <label
-                  htmlFor="proc_plan_ref"
-                  className="block text-sm font-medium leading-6 text-gray-900"
-                >
-                  Procurement Plan Ref
-                </label>
-                <div className="mt-2">
-                  <input
-                    id="proc_plan_ref"
-                    value={this.state.proc_ref}
-                    readOnly
-                    className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                  />
-                </div>
-              </div>
-              <div className="flex-1 w-20 ml-1">
-                <label
-                  htmlFor="pr_date"
-                  className="block text-sm font-medium leading-6 text-gray-900"
-                >
-                  Ref Date
-                </label>
-                <div className="mt-2">
-                  <input
-                    name="ref_date"
-                    value={this.state.ref_date}
-                    onChange={this.onInputChange}
-                    type="date"
-                    required="required"
-                    className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                  />
-                </div>
-              </div>
-              <div className="flex-1 w-20 ml-1">
-                <label
-                  htmlFor="date_tender_opened"
-                  className="block text-sm font-medium leading-6 text-gray-900"
-                >
-                  Tender Box Opened On
-                </label>
-                <div className="mt-2">
-                  <input
-                    name="date_tender_opened"
-                    value={this.state.date_tender_opened}
-                    onChange={this.onInputChange}
-                    type="date"
-                    required="required"
-                    className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                  />
-                </div>
-              </div>
-              <div className="flex-1 w-40 ml-1">
-                <label
-                  htmlFor="tender_adjudication_committee_date"
-                  className="block text-sm font-medium leading-6 text-gray-900"
-                >
-                  Tender Committee Date
-                </label>
-                <div className="mt-2">
-                  <input
-                    name="tender_adjudication_committee_date"
-                    value={this.state.tender_adjudication_committee_date}
-                    onChange={this.onInputChange}
-                    type="date"
-                    required="required"
-                    className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                  />
-                </div>
-              </div>
-            </div>
-            <div className="flex justify-evenly mt-5  px-2 py-2 rounded-md">
-              <div className="flex-1 w-full ml-1">
-                <label
-                  htmlFor="advert"
-                  className="block text-sm font-medium leading-6 text-gray-900"
-                >
-                  Tender Advert
-                </label>
-                <div className="mt-2">
-                  <input
-                    name="advert"
-                    onChange={(e) => this.onFileInputChange("advert", e)}
-                    type="file"
-                    id="advert"
-                    required="required"
-                    readOnly
-                    className="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                  />
-                </div>
-              </div>
-              <div className="flex-1 w-40 ml-2">
-                <label
-                  htmlFor="bid_document"
-                  className="block text-sm font-medium leading-6 text-gray-900"
-                >
-                  Advert Document
-                </label>
-                <div className="mt-2">
-                  <a href={this.state.advert_url} rel="noopener noreferrer">
-                    View Advert Document
-                  </a>
-                </div>
-              </div>
-            </div>
-
-            {this.state.username === this.state.cs_owner ||
-            !this.state.cs_id ? (
-              <div className="flex justify-center mt-10 px-3 py-3">
-                {this.state.cs_id ? (
-                  <div className="w-30 m-2">
-                    <button
-                      style={{ width: "100%" }}
-                      onClick={this.onUpdateSchedule}
-                      name="save_next"
-                      className="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                    >
-                      UPDATE SCHEDULE
-                    </button>
-                  </div>
-                ) : (
-                  <div className="w-30 m-2">
-                    <button
-                      style={{ width: "100%" }}
-                      onClick={this.onSaveSchedule}
-                      name="save_next"
-                      className="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                    >
-                      SAVE SCHEDULE
-                    </button>
-                  </div>
-                )}
-              </div>
-            ) : (
-              ""
-            )}
+      ) }
+            {csDetailsView}
           </div>
 
           {this.state.bids.length < 1 &&
