@@ -10,4 +10,6 @@ urlpatterns = [
     path('pettycashs_awaiting_my_action', pettycash_awaiting_my_action, name='pettycashs_awaiting_my_action'),
     path('import_pettycash', import_pettycash, name='import_pettycash'),
     path('receipt', receipt, name='receipt'),
+    path('attachment/<str:filename>/', download_file, name='attachment'),
+    path('attachments/<str:attachment_id>', download_attachment, name='attachments'),
 ]

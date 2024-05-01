@@ -1273,31 +1273,6 @@ def get_Ace_records_disburser(request):
 
 
 @login_required(login_url='/accounts/login/')
-def disburse(request):
-    global pettyc1
-    user_title = request.user.get_full_name()
-    l = request.user.groups.values_list('name', flat=True)
-
-    # QuerySet Object
-    user_groups = list(l)
-    user_id = request.user.id
-    user = UserProfile.objects.filter(id=user_id).first()
-
-    if request.method == "GET":
-        Ace_id = request.GET['f']
-
-        pettyc1 = Ace.objects.filter(petty_id=Ace_id).first()
-        # print(pettyc1)
-
-    user_page = 'ace/disburse.html'
-
-    return render(request, user_page, {"title": "All Records",
-                                       "context": pettyc1,
-                                       "user_title": user_title,
-                                       "user_groups": user_groups})
-
-
-@login_required(login_url='/accounts/login/')
 def disburse_final(request):
     global pettyc1
     user_title = request.user.get_full_name()
@@ -1489,6 +1464,7 @@ def create_budget(request):
                                                           "section_budget": section_budget,
                                                           "sections": sections})
 
+
 # receive receipt file posted from form submission
 def receipt(request):
     if request.method == 'POST':
@@ -1644,10 +1620,10 @@ def upload_budgets(request):
         redirect("/ace/budgets")
         try:
             # ... view logic ...
-            return HttpResponse("Budget uploaded successfully")
+            return HttpResponse("Budget uploaded successfully"), redirect('/ace/budgets')
         except Exception as e:
             return HttpResponse("Error: {}".format(e))
-        return redirect("/ace/budgets")
+            return redirect("/ace/budgets")
 
     else:
         return render(request, 'ace/upload_budget.html',

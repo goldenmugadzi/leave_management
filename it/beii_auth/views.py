@@ -17,7 +17,7 @@ APPLICATIONS = [
         "name": "ace",
         "title": "ACE",
         "iconUrl": "assets/images/capital.png",
-        "url": "/ace/"
+        "url": "/acee/aces"
     },
     {
         "users": "users",
