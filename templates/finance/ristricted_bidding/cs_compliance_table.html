@@ -1,0 +1,2973 @@
+<!--users/templates/users/add_user.html-->
+
+{% extends 'admin_layout.html' %} {% load static %} {% load tenders_filters %}
+{% block content %}
+<div class="content-wrapper">
+  <div
+    class="bg-gray-200 shadow shadow-nepal-300 text-gray-700 rounded px-2 py-2"
+  >
+    <form method="post">
+      {% csrf_token %}
+      <div class="space-y-12 px-5 py-5">
+        <div class="px-4 sm:px-0">
+          <h3 class="text-base font-semibold leading-7 text-gray-900">
+            COMPARATIVE SCHEDULE
+          </h3>
+          <p class="mt-1 max-w-2xl text-sm leading-6 text-gray-500">TENDERS</p>
+        </div>
+        <div
+          class="px-4 sm:px-0 mt-6 border-t border-gray-100 border-gray-900/10"
+        >
+          <h2 class="text-base font-semibold leading-6 text-gray-900">
+            COMPLIANCE TABLE
+          </h2>
+          <p class="mt-1 max-w-2xl text-sm leading-6 text-gray-500">
+          Key: Comply/ Not Comply (Y/ N), Not Stated (NS)
+          </p>
+          <div
+          class="flex justify-evenly mt-5 bg-nepal-500 px-2 py-2 rounded-md"
+        >
+          <div class="flex-1 w-45">
+            <label
+              for="site_visit"
+              class="block text-sm font-medium leading-6 text-gray-900"
+              >Site visit required?</label
+            >
+            <div class="mt-2">
+              <select
+              id="site_visit"
+              name="site_visit"
+              autocomplete="site_visit"
+              class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
+            >
+            <option value="">Select Option</option>
+            <option value="yes">Yes</option>
+            <option value="no">No</option>
+            </select>
+            </div>
+          </div>
+          <div class="flex-1 w-45">
+            <div>
+              <label
+                for="samples"
+                class="block text-sm font-medium leading-6 text-gray-900"
+                >Are Samples Required?</label
+              >
+              <div class="mt-2">
+                <select
+                  id="samples"
+                  name="samples"
+                  autocomplete="samples"
+                  class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
+                >
+                <option value="">Select Option</option>
+                <option value="yes">Yes</option>
+                <option value="no">No</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+          <div class="overflow-auto px-2 py-2 mt-5 rounded-md bg-nepal-500">
+            <table class="table-auto w-full text-left">
+              <thead>
+                <tr class="text-gray-900">
+                  <th
+                    class="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2"
+                  >
+                    Bid No.
+                  </th>
+                  <th
+                    class="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2"
+                  >
+                    Name of Supplier
+                  </th>
+                  <th
+                    class="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2"
+                  >
+                    Payment <br />Terms
+                  </th>
+                  <th
+                    class="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2"
+                  >
+                    Bid <br />Validity
+                  </th>
+                  <th
+                    class="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2"
+                  >
+                    Delivery <br />Period
+                  </th>
+                  <th
+                    class="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2"
+                  >
+                    Technical <br />Specifications
+                  </th>
+                  <th
+                    class="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2"
+                  >
+                    Valid <br />Tax Clearance
+                  </th>
+                  <th
+                    class="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2"
+                  >
+                    Registered <br />with PRAZ?
+                  </th>
+                  <th
+                    class="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2"
+                  >
+                    Tax <br />Status
+                  </th>
+                  <th
+                    id="site_visit_header"
+                    class="hidden site-visit-header border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2"
+                  >
+                    Site Visit<br />
+                    Done?
+                  </th>
+                  <th
+                    id="samples_header"
+                    class="hidden samples-header border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2"
+                  >
+                    Samples <br />Delivered?
+                  </th>
+                  <th
+                    class="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2"
+                  >
+                    Accept
+                  </th>
+                  <th
+                    class="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2"
+                  >
+                    Reject
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for key, bid in bids_items.items %}
+                <tr>
+                  <td
+                    class="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2"
+                  >
+                    {{key}}
+                    {% with field_index="bid_no"|concat_string:key %}
+                    <input name="{{field_index}}" value="{{key}}" type="hidden" />
+                    {% endwith %}
+                  </td>
+                  <td
+                    class="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2"
+                  >
+                    {{bid.0.supplier_name}}
+                    {% with field_index="supplier_id"|concat_string:key %}
+                    <input
+                      name="{{field_index}}"
+                      value="{{bid.0.supplier_id}}"
+                      type="hidden"
+                    />
+                    {% endwith %}
+                  </td>
+                  <td
+                    class="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2"
+                  >
+                    {% with field_index="payment_terms"|concat_string:key %}
+                    <input
+                      name="{{field_index}}"
+                      id="{{field_index}}"
+                      type="checkbox"
+                    />
+                    {% endwith %}
+                  </td>
+                  <td
+                    class="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2"
+                  >
+                    {% with field_index="bid_validity"|concat_string:key %}
+                    <input
+                      name="{{field_index}}"
+                      id="{{field_index}}"
+                      type="checkbox"
+                    />
+                    {% endwith %}
+                  </td>
+                  <td
+                    class="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2"
+                  >
+                    {% with field_index="delivery_period"|concat_string:key %}
+                    <input
+                      name="{{field_index}}"
+                      id="{{field_index}}"
+                      type="checkbox"
+                    />
+                    {% endwith %}
+                  </td>
+                  <td
+                    class="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2"
+                  >
+                    {% with field_index="technical_specifications"|concat_string:key %}
+                    <input
+                      name="{{field_index}}"
+                      id="{{field_index}}"
+                      type="checkbox"
+                    />
+                    {% endwith %}
+                  </td>
+                  <td
+                    class="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2"
+                  >
+                    {% with field_index="valid_tax_clearance"|concat_string:key %}
+                    <input
+                      name="{{field_index}}"
+                      id="{{field_index}}"
+                      type="checkbox"
+                    />
+                    {% endwith %}
+                  </td>
+                  <td
+                    class="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2"
+                  >
+                    {% with field_index="registered_with_praz"|concat_string:key %}
+                    <input
+                      name="{{field_index}}"
+                      id="{{field_index}}"
+                      type="checkbox"
+                    />
+                    {% endwith %}
+                  </td>
+                  <td
+                    class="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2"
+                  >
+                    {% with field_index="tax_status"|concat_string:key %}
+                    <input
+                      name="{{field_index}}"
+                      id="{{field_index}}"
+                      type="checkbox"
+                    />
+                    {% endwith %}
+                  </td>
+                  <td
+                    id="site_visit_header"
+                    class="hidden site-visit-header border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2"
+                  >
+                    {% with field_index="site_visit_done"|concat_string:key %}
+                    <input
+                      name="{{field_index}}"
+                      id="{{field_index}}"
+                      type="checkbox"
+                    />
+                    {% endwith %}
+                  </td>
+                  <td
+                    id="samples_header"
+                    class="hidden samples-header border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2"
+                  >
+                    {% with field_index="samples_delivered"|concat_string:key %}
+                    <input
+                      name="{{field_index}}"
+                      id="{{field_index}}"
+                      type="checkbox"
+                    />
+                    {% endwith %}
+                  </td>
+                  <td
+                    class="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2"
+                  >
+                    {% with field_index="decision"|concat_string:key %}
+                    <input
+                      name="{{field_index}}"
+                      id="{{field_index}}"
+                      type="checkbox"
+                    />
+                    {% endwith %}
+                  </td>
+                  <td
+                    class="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2"
+                  >
+                    {% with field_index="reject"|concat_string:key %}
+                    <input
+                      name="{{field_index}}"
+                      id="{{field_index}}"
+                      type="checkbox"
+                    />
+                    {% endwith %}
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          <div class="px-2 py-2 mt-5 rounded-sm bg-nepal-500">
+            <table class="table-auto w-full text-left">
+              <thead>
+                <tr class="text-gray-900">
+                  <th
+                    class="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2"
+                  >
+                    Supplier
+                  </th>
+                  <th
+                    class="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2"
+                  >
+                    Remarks
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for key, bid in bids_items.items %}
+                <tr>
+                  <td
+                    class="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2"
+                  >
+                  {{bid.0.supplier_name}}
+                  {% with field_index="remark_supplier_id"|concat_string:key %}
+                  <input
+                    name="{{field_index}}"
+                    value="{{bid.0.supplier_id}}"
+                    type="hidden"
+                  />
+                  {% endwith %}
+                  </td>
+                  <td
+                    class="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2"
+                  >
+                  {% with field_index="remarks"|concat_string:key %}
+                  <input
+                    name="{{field_index}}"
+                    type="text"
+                    class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
+                  />
+                  {% endwith %}
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex justify-center mt-5 px-3 py-3">
+        <div class="flex-1 m-2">
+          <button
+            style="width: 100%"
+            type="submit"
+            name="save_next"
+            class="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+          >
+            SAVE & PROCEED
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %} {% block scripts %}
+<script>
+  $(document).ready(function () {
+    $("#site_visit").change(function () {
+      let selectedOption = $(this).children("option:selected").val();
+      if (selectedOption === "yes") {
+        $(".site-visit-header").removeClass("hidden");
+        $(".site-visit-data").removeClass("hidden");
+      } else if (selectedOption === "no") {
+        $(".site-visit-header").addClass("hidden");
+        $(".site-visit-data").addClass("hidden");
+      }
+    });
+
+    $("#samples").change(function () {
+      let selectedOption = $(this).children("option:selected").val();
+      if (selectedOption === "yes") {
+        $(".samples-header").removeClass("hidden");
+        $(".samples-data").removeClass("hidden");
+      } else if (selectedOption === "no") {
+        $(".samples-header").addClass("hidden");
+        $(".samples-data").addClass("hidden");
+      }
+    });
+  });
+
+  $(document).ready(function () {
+    $('input[type="checkbox"]').click(function () {
+      let site_visit_value = $("#site_visit option:selected").val();
+      let samples_value = $("#samples option:selected").val();
+
+      if (site_visit_value === "yes" && samples_value === "yes") {
+        if (
+          $("#payment_terms1").is(":checked") &&
+          $("#bid_validity1").is(":checked") &&
+          $("#delivery_period1").is(":checked") &&
+          $("#technical_specifications1").is(":checked") &&
+          $("#valid_tax_clearance1").is(":checked") &&
+          $("#registered_with_praz1").is(":checked") &&
+          $("#tax_status1").is(":checked") &&
+          $("#site_visit_done1").is(":checked") &&
+          $("#samples_delivered1").is(":checked")
+        ) {
+          $("#decision1").prop("checked", true);
+          $("#reject1").prop("checked", false);
+        } else {
+          $("#decision1").prop("checked", false);
+          $("#reject1").prop("checked", true);
+        }
+      } else if (
+        site_visit_value === "yes" &&
+        (samples_value === "no" || samples_value === "" || samples_value === "")
+      ) {
+        if (
+          $("#payment_terms1").is(":checked") &&
+          $("#bid_validity1").is(":checked") &&
+          $("#delivery_period1").is(":checked") &&
+          $("#technical_specifications1").is(":checked") &&
+          $("#valid_tax_clearance1").is(":checked") &&
+          $("#registered_with_praz1").is(":checked") &&
+          $("#tax_status1").is(":checked") &&
+          $("#site_visit_done1").is(":checked")
+        ) {
+          $("#decision1").prop("checked", true);
+          $("#reject1").prop("checked", false);
+        } else {
+          $("#decision1").prop("checked", false);
+          $("#reject1").prop("checked", true);
+        }
+      } else if (
+        (site_visit_value === "no" ||
+          site_visit_value === "" ||
+          site_visit_value === "") &&
+        (samples_value === "no" || samples_value === "" || samples_value === "")
+      ) {
+        if (
+          $("#payment_terms1").is(":checked") &&
+          $("#bid_validity1").is(":checked") &&
+          $("#delivery_period1").is(":checked") &&
+          $("#technical_specifications1").is(":checked") &&
+          $("#valid_tax_clearance1").is(":checked") &&
+          $("#registered_with_praz1").is(":checked") &&
+          $("#tax_status1").is(":checked")
+        ) {
+          $("#decision1").prop("checked", true);
+          $("#reject1").prop("checked", false);
+        } else {
+          $("#decision1").prop("checked", false);
+          $("#reject1").prop("checked", true);
+        }
+      } else if (
+        (site_visit_value === "no" ||
+          site_visit_value === "" ||
+          site_visit_value === "") &&
+        samples_value === "yes"
+      ) {
+        if (
+          $("#payment_terms1").is(":checked") &&
+          $("#bid_validity1").is(":checked") &&
+          $("#delivery_period1").is(":checked") &&
+          $("#technical_specifications1").is(":checked") &&
+          $("#valid_tax_clearance1").is(":checked") &&
+          $("#registered_with_praz1").is(":checked") &&
+          $("#tax_status1").is(":checked") &&
+          $("#samples_delivered1").is(":checked")
+        ) {
+          $("#decision1").prop("checked", true);
+          $("#reject1").prop("checked", false);
+        } else {
+          $("#decision1").prop("checked", false);
+          $("#reject1").prop("checked", true);
+        }
+      }
+    });
+  });
+
+  $(document).ready(function () {
+    $('input[type="checkbox"]').click(function () {
+      let site_visit_value = $("#site_visit option:selected").val();
+      let samples_value = $("#samples option:selected").val();
+
+      if (site_visit_value === "yes" && samples_value === "yes") {
+        if (
+          $("#payment_terms2").is(":checked") &&
+          $("#bid_validity2").is(":checked") &&
+          $("#delivery_period2").is(":checked") &&
+          $("#technical_specifications2").is(":checked") &&
+          $("#valid_tax_clearance2").is(":checked") &&
+          $("#registered_with_praz2").is(":checked") &&
+          $("#tax_status2").is(":checked") &&
+          $("#site_visit_done2").is(":checked") &&
+          $("#samples_delivered2").is(":checked")
+        ) {
+          $("#decision2").prop("checked", true);
+          $("#reject2").prop("checked", false);
+        } else {
+          $("#decision2").prop("checked", false);
+          $("#reject2").prop("checked", true);
+        }
+      } else if (
+        site_visit_value === "yes" &&
+        (samples_value === "no" || samples_value === "" || samples_value === "")
+      ) {
+        if (
+          $("#payment_terms2").is(":checked") &&
+          $("#bid_validity2").is(":checked") &&
+          $("#delivery_period2").is(":checked") &&
+          $("#technical_specifications2").is(":checked") &&
+          $("#valid_tax_clearance2").is(":checked") &&
+          $("#registered_with_praz2").is(":checked") &&
+          $("#tax_status2").is(":checked") &&
+          $("#site_visit_done2").is(":checked")
+        ) {
+          $("#decision2").prop("checked", true);
+          $("#reject2").prop("checked", false);
+        } else {
+          $("#decision2").prop("checked", false);
+          $("#reject2").prop("checked", true);
+        }
+      } else if (
+        (site_visit_value === "no" ||
+          site_visit_value === "" ||
+          site_visit_value === "") &&
+        (samples_value === "no" || samples_value === "" || samples_value === "")
+      ) {
+        if (
+          $("#payment_terms2").is(":checked") &&
+          $("#bid_validity2").is(":checked") &&
+          $("#delivery_period2").is(":checked") &&
+          $("#technical_specifications2").is(":checked") &&
+          $("#valid_tax_clearance2").is(":checked") &&
+          $("#registered_with_praz2").is(":checked") &&
+          $("#tax_status2").is(":checked")
+        ) {
+          $("#decision2").prop("checked", true);
+          $("#reject2").prop("checked", false);
+        } else {
+          $("#decision2").prop("checked", false);
+          $("#reject2").prop("checked", true);
+        }
+      } else if (
+        (site_visit_value === "no" ||
+          site_visit_value === "" ||
+          site_visit_value === "") &&
+        samples_value === "yes"
+      ) {
+        if (
+          $("#payment_terms2").is(":checked") &&
+          $("#bid_validity2").is(":checked") &&
+          $("#delivery_period2").is(":checked") &&
+          $("#technical_specifications2").is(":checked") &&
+          $("#valid_tax_clearance2").is(":checked") &&
+          $("#registered_with_praz2").is(":checked") &&
+          $("#tax_status2").is(":checked") &&
+          $("#samples_delivered2").is(":checked")
+        ) {
+          $("#decision2").prop("checked", true);
+          $("#reject2").prop("checked", false);
+        } else {
+          $("#decision2").prop("checked", false);
+          $("#reject2").prop("checked", true);
+        }
+      }
+    });
+  });
+
+  $(document).ready(function () {
+    $('input[type="checkbox"]').click(function () {
+      let site_visit_value = $("#site_visit option:selected").val();
+      let samples_value = $("#samples option:selected").val();
+
+      if (site_visit_value === "yes" && samples_value === "yes") {
+        if (
+          $("#payment_terms3").is(":checked") &&
+          $("#bid_validity3").is(":checked") &&
+          $("#delivery_period3").is(":checked") &&
+          $("#technical_specifications3").is(":checked") &&
+          $("#valid_tax_clearance3").is(":checked") &&
+          $("#registered_with_praz3").is(":checked") &&
+          $("#tax_status3").is(":checked") &&
+          $("#site_visit_done3").is(":checked") &&
+          $("#samples_delivered3").is(":checked")
+        ) {
+          $("#decision3").prop("checked", true);
+          $("#reject3").prop("checked", false);
+        } else {
+          $("#decision3").prop("checked", false);
+          $("#reject3").prop("checked", true);
+        }
+      } else if (
+        site_visit_value === "yes" &&
+        (samples_value === "no" || samples_value === "" || samples_value === "")
+      ) {
+        if (
+          $("#payment_terms3").is(":checked") &&
+          $("#bid_validity3").is(":checked") &&
+          $("#delivery_period3").is(":checked") &&
+          $("#technical_specifications3").is(":checked") &&
+          $("#valid_tax_clearance3").is(":checked") &&
+          $("#registered_with_praz3").is(":checked") &&
+          $("#tax_status3").is(":checked") &&
+          $("#site_visit_done3").is(":checked")
+        ) {
+          $("#decision3").prop("checked", true);
+          $("#reject3").prop("checked", false);
+        } else {
+          $("#decision3").prop("checked", false);
+          $("#reject3").prop("checked", true);
+        }
+      } else if (
+        (site_visit_value === "no" || site_visit_value === "") &&
+        (samples_value === "no" || samples_value === "" || samples_value === "")
+      ) {
+        if (
+          $("#payment_terms3").is(":checked") &&
+          $("#bid_validity3").is(":checked") &&
+          $("#delivery_period3").is(":checked") &&
+          $("#technical_specifications3").is(":checked") &&
+          $("#valid_tax_clearance3").is(":checked") &&
+          $("#registered_with_praz3").is(":checked") &&
+          $("#tax_status3").is(":checked")
+        ) {
+          $("#decision3").prop("checked", true);
+          $("#reject3").prop("checked", false);
+        } else {
+          $("#decision3").prop("checked", false);
+          $("#reject3").prop("checked", true);
+        }
+      } else if (
+        (site_visit_value === "no" || site_visit_value === "") &&
+        samples_value === "yes"
+      ) {
+        if (
+          $("#payment_terms3").is(":checked") &&
+          $("#bid_validity3").is(":checked") &&
+          $("#delivery_period3").is(":checked") &&
+          $("#technical_specifications3").is(":checked") &&
+          $("#valid_tax_clearance3").is(":checked") &&
+          $("#registered_with_praz3").is(":checked") &&
+          $("#tax_status3").is(":checked") &&
+          $("#samples_delivered3").is(":checked")
+        ) {
+          $("#decision3").prop("checked", true);
+          $("#reject3").prop("checked", false);
+        } else {
+          $("#decision3").prop("checked", false);
+          $("#reject3").prop("checked", true);
+        }
+      }
+    });
+  });
+
+  $(document).ready(function () {
+    $('input[type="checkbox"]').click(function () {
+      let site_visit_value = $("#site_visit option:selected").val();
+      let samples_value = $("#samples option:selected").val();
+
+      if (site_visit_value === "yes" && samples_value === "yes") {
+        if (
+          $("#payment_terms4").is(":checked") &&
+          $("#bid_validity4").is(":checked") &&
+          $("#delivery_period4").is(":checked") &&
+          $("#technical_specifications4").is(":checked") &&
+          $("#valid_tax_clearance4").is(":checked") &&
+          $("#registered_with_praz4").is(":checked") &&
+          $("#tax_status4").is(":checked") &&
+          $("#site_visit_done4").is(":checked") &&
+          $("#samples_delivered4").is(":checked")
+        ) {
+          $("#decision4").prop("checked", true);
+          $("#reject4").prop("checked", false);
+        } else {
+          $("#decision4").prop("checked", false);
+          $("#reject4").prop("checked", true);
+        }
+      } else if (
+        site_visit_value === "yes" &&
+        (samples_value === "no" || samples_value === "")
+      ) {
+        if (
+          $("#payment_terms4").is(":checked") &&
+          $("#bid_validity4").is(":checked") &&
+          $("#delivery_period4").is(":checked") &&
+          $("#technical_specifications4").is(":checked") &&
+          $("#valid_tax_clearance4").is(":checked") &&
+          $("#registered_with_praz4").is(":checked") &&
+          $("#tax_status4").is(":checked") &&
+          $("#site_visit_done4").is(":checked")
+        ) {
+          $("#decision4").prop("checked", true);
+          $("#reject4").prop("checked", false);
+        } else {
+          $("#decision4").prop("checked", false);
+          $("#reject4").prop("checked", true);
+        }
+      } else if (
+        (site_visit_value === "no" || site_visit_value === "") &&
+        (samples_value === "no" || samples_value === "")
+      ) {
+        if (
+          $("#payment_terms4").is(":checked") &&
+          $("#bid_validity4").is(":checked") &&
+          $("#delivery_period4").is(":checked") &&
+          $("#technical_specifications4").is(":checked") &&
+          $("#valid_tax_clearance4").is(":checked") &&
+          $("#registered_with_praz4").is(":checked") &&
+          $("#tax_status4").is(":checked")
+        ) {
+          $("#decision4").prop("checked", true);
+          $("#reject4").prop("checked", false);
+        } else {
+          $("#decision4").prop("checked", false);
+          $("#reject4").prop("checked", true);
+        }
+      } else if (
+        (site_visit_value === "no" || site_visit_value === "") &&
+        samples_value === "yes"
+      ) {
+        if (
+          $("#payment_terms4").is(":checked") &&
+          $("#bid_validity4").is(":checked") &&
+          $("#delivery_period4").is(":checked") &&
+          $("#technical_specifications4").is(":checked") &&
+          $("#valid_tax_clearance4").is(":checked") &&
+          $("#registered_with_praz4").is(":checked") &&
+          $("#tax_status4").is(":checked") &&
+          $("#samples_delivered4").is(":checked")
+        ) {
+          $("#decision4").prop("checked", true);
+          $("#reject4").prop("checked", false);
+        } else {
+          $("#decision4").prop("checked", false);
+          $("#reject4").prop("checked", true);
+        }
+      }
+    });
+  });
+
+  $(document).ready(function () {
+    $('input[type="checkbox"]').click(function () {
+      let site_visit_value = $("#site_visit option:selected").val();
+      let samples_value = $("#samples option:selected").val();
+
+      if (site_visit_value === "yes" && samples_value === "yes") {
+        if (
+          $("#payment_terms5").is(":checked") &&
+          $("#bid_validity5").is(":checked") &&
+          $("#delivery_period5").is(":checked") &&
+          $("#technical_specifications5").is(":checked") &&
+          $("#valid_tax_clearance5").is(":checked") &&
+          $("#registered_with_praz5").is(":checked") &&
+          $("#tax_status5").is(":checked") &&
+          $("#site_visit_done5").is(":checked") &&
+          $("#samples_delivered5").is(":checked")
+        ) {
+          $("#decision5").prop("checked", true);
+          $("#reject5").prop("checked", false);
+        } else {
+          $("#decision5").prop("checked", false);
+          $("#reject5").prop("checked", true);
+        }
+      } else if (
+        site_visit_value === "yes" &&
+        (samples_value === "no" || samples_value === "")
+      ) {
+        if (
+          $("#payment_terms5").is(":checked") &&
+          $("#bid_validity5").is(":checked") &&
+          $("#delivery_period5").is(":checked") &&
+          $("#technical_specifications5").is(":checked") &&
+          $("#valid_tax_clearance5").is(":checked") &&
+          $("#registered_with_praz5").is(":checked") &&
+          $("#tax_status5").is(":checked") &&
+          $("#site_visit_done5").is(":checked")
+        ) {
+          $("#decision5").prop("checked", true);
+          $("#reject5").prop("checked", false);
+        } else {
+          $("#decision5").prop("checked", false);
+          $("#reject5").prop("checked", true);
+        }
+      } else if (
+        (site_visit_value === "no" || site_visit_value === "") &&
+        (samples_value === "no" || samples_value === "")
+      ) {
+        if (
+          $("#payment_terms5").is(":checked") &&
+          $("#bid_validity5").is(":checked") &&
+          $("#delivery_period5").is(":checked") &&
+          $("#technical_specifications5").is(":checked") &&
+          $("#valid_tax_clearance5").is(":checked") &&
+          $("#registered_with_praz5").is(":checked") &&
+          $("#tax_status5").is(":checked")
+        ) {
+          $("#decision5").prop("checked", true);
+          $("#reject5").prop("checked", false);
+        } else {
+          $("#decision5").prop("checked", false);
+          $("#reject5").prop("checked", true);
+        }
+      } else if (
+        (site_visit_value === "no" || site_visit_value === "") &&
+        samples_value === "yes"
+      ) {
+        if (
+          $("#payment_terms5").is(":checked") &&
+          $("#bid_validity5").is(":checked") &&
+          $("#delivery_period5").is(":checked") &&
+          $("#technical_specifications5").is(":checked") &&
+          $("#valid_tax_clearance5").is(":checked") &&
+          $("#registered_with_praz5").is(":checked") &&
+          $("#tax_status5").is(":checked") &&
+          $("#samples_delivered5").is(":checked")
+        ) {
+          $("#decision5").prop("checked", true);
+          $("#reject5").prop("checked", false);
+        } else {
+          $("#decision5").prop("checked", false);
+          $("#reject5").prop("checked", true);
+        }
+      }
+    });
+  });
+
+  $(document).ready(function () {
+    $('input[type="checkbox"]').click(function () {
+      let site_visit_value = $("#site_visit option:selected").val();
+      let samples_value = $("#samples option:selected").val();
+
+      if (site_visit_value === "yes" && samples_value === "yes") {
+        if (
+          $("#payment_terms6").is(":checked") &&
+          $("#bid_validity6").is(":checked") &&
+          $("#delivery_period6").is(":checked") &&
+          $("#technical_specifications6").is(":checked") &&
+          $("#valid_tax_clearance6").is(":checked") &&
+          $("#registered_with_praz6").is(":checked") &&
+          $("#tax_status6").is(":checked") &&
+          $("#site_visit_done6").is(":checked") &&
+          $("#samples_delivered6").is(":checked")
+        ) {
+          $("#decision6").prop("checked", true);
+          $("#reject6").prop("checked", false);
+        } else {
+          $("#decision6").prop("checked", false);
+          $("#reject6").prop("checked", true);
+        }
+      } else if (
+        site_visit_value === "yes" &&
+        (samples_value === "no" || samples_value === "")
+      ) {
+        if (
+          $("#payment_terms6").is(":checked") &&
+          $("#bid_validity6").is(":checked") &&
+          $("#delivery_period6").is(":checked") &&
+          $("#technical_specifications6").is(":checked") &&
+          $("#valid_tax_clearance6").is(":checked") &&
+          $("#registered_with_praz6").is(":checked") &&
+          $("#tax_status6").is(":checked") &&
+          $("#site_visit_done6").is(":checked")
+        ) {
+          $("#decision6").prop("checked", true);
+          $("#reject6").prop("checked", false);
+        } else {
+          $("#decision6").prop("checked", false);
+          $("#reject6").prop("checked", true);
+        }
+      } else if (
+        (site_visit_value === "no" || site_visit_value === "") &&
+        (samples_value === "no" || samples_value === "")
+      ) {
+        if (
+          $("#payment_terms6").is(":checked") &&
+          $("#bid_validity6").is(":checked") &&
+          $("#delivery_period6").is(":checked") &&
+          $("#technical_specifications6").is(":checked") &&
+          $("#valid_tax_clearance6").is(":checked") &&
+          $("#registered_with_praz6").is(":checked") &&
+          $("#tax_status6").is(":checked")
+        ) {
+          $("#decision6").prop("checked", true);
+          $("#reject6").prop("checked", false);
+        } else {
+          $("#decision6").prop("checked", false);
+          $("#reject6").prop("checked", true);
+        }
+      } else if (
+        (site_visit_value === "no" || site_visit_value === "") &&
+        samples_value === "yes"
+      ) {
+        if (
+          $("#payment_terms6").is(":checked") &&
+          $("#bid_validity6").is(":checked") &&
+          $("#delivery_period6").is(":checked") &&
+          $("#technical_specifications6").is(":checked") &&
+          $("#valid_tax_clearance6").is(":checked") &&
+          $("#registered_with_praz6").is(":checked") &&
+          $("#tax_status6").is(":checked") &&
+          $("#samples_delivered6").is(":checked")
+        ) {
+          $("#decision6").prop("checked", true);
+          $("#reject6").prop("checked", false);
+        } else {
+          $("#decision6").prop("checked", false);
+          $("#reject6").prop("checked", true);
+        }
+      }
+    });
+  });
+
+  $(document).ready(function () {
+    $('input[type="checkbox"]').click(function () {
+      let site_visit_value = $("#site_visit option:selected").val();
+      let samples_value = $("#samples option:selected").val();
+
+      if (site_visit_value === "yes" && samples_value === "yes") {
+        if (
+          $("#payment_terms7").is(":checked") &&
+          $("#bid_validity7").is(":checked") &&
+          $("#delivery_period7").is(":checked") &&
+          $("#technical_specifications7").is(":checked") &&
+          $("#valid_tax_clearance7").is(":checked") &&
+          $("#registered_with_praz7").is(":checked") &&
+          $("#tax_status7").is(":checked") &&
+          $("#site_visit_done7").is(":checked") &&
+          $("#samples_delivered7").is(":checked")
+        ) {
+          $("#decision7").prop("checked", true);
+          $("#reject7").prop("checked", false);
+        } else {
+          $("#decision7").prop("checked", false);
+          $("#reject7").prop("checked", true);
+        }
+      } else if (
+        site_visit_value === "yes" &&
+        (samples_value === "no" || samples_value === "")
+      ) {
+        if (
+          $("#payment_terms7").is(":checked") &&
+          $("#bid_validity7").is(":checked") &&
+          $("#delivery_period7").is(":checked") &&
+          $("#technical_specifications7").is(":checked") &&
+          $("#valid_tax_clearance7").is(":checked") &&
+          $("#registered_with_praz7").is(":checked") &&
+          $("#tax_status7").is(":checked") &&
+          $("#site_visit_done7").is(":checked")
+        ) {
+          $("#decision7").prop("checked", true);
+          $("#reject7").prop("checked", false);
+        } else {
+          $("#decision7").prop("checked", false);
+          $("#reject7").prop("checked", true);
+        }
+      } else if (
+        (site_visit_value === "no" || site_visit_value === "") &&
+        (samples_value === "no" || samples_value === "")
+      ) {
+        if (
+          $("#payment_terms7").is(":checked") &&
+          $("#bid_validity7").is(":checked") &&
+          $("#delivery_period7").is(":checked") &&
+          $("#technical_specifications7").is(":checked") &&
+          $("#valid_tax_clearance7").is(":checked") &&
+          $("#registered_with_praz7").is(":checked") &&
+          $("#tax_status7").is(":checked")
+        ) {
+          $("#decision7").prop("checked", true);
+          $("#reject7").prop("checked", false);
+        } else {
+          $("#decision7").prop("checked", false);
+          $("#reject7").prop("checked", true);
+        }
+      } else if (
+        (site_visit_value === "no" || site_visit_value === "") &&
+        samples_value === "yes"
+      ) {
+        if (
+          $("#payment_terms7").is(":checked") &&
+          $("#bid_validity7").is(":checked") &&
+          $("#delivery_period7").is(":checked") &&
+          $("#technical_specifications7").is(":checked") &&
+          $("#valid_tax_clearance7").is(":checked") &&
+          $("#registered_with_praz7").is(":checked") &&
+          $("#tax_status7").is(":checked") &&
+          $("#samples_delivered7").is(":checked")
+        ) {
+          $("#decision7").prop("checked", true);
+          $("#reject7").prop("checked", false);
+        } else {
+          $("#decision7").prop("checked", false);
+          $("#reject7").prop("checked", true);
+        }
+      }
+    });
+  });
+
+  $(document).ready(function () {
+    $('input[type="checkbox"]').click(function () {
+      let site_visit_value = $("#site_visit option:selected").val();
+      let samples_value = $("#samples option:selected").val();
+
+      if (site_visit_value === "yes" && samples_value === "yes") {
+        if (
+          $("#payment_terms8").is(":checked") &&
+          $("#bid_validity8").is(":checked") &&
+          $("#delivery_period8").is(":checked") &&
+          $("#technical_specifications8").is(":checked") &&
+          $("#valid_tax_clearance8").is(":checked") &&
+          $("#registered_with_praz8").is(":checked") &&
+          $("#tax_status8").is(":checked") &&
+          $("#site_visit_done8").is(":checked") &&
+          $("#samples_delivered8").is(":checked")
+        ) {
+          $("#decision8").prop("checked", true);
+          $("#reject8").prop("checked", false);
+        } else {
+          $("#decision8").prop("checked", false);
+          $("#reject8").prop("checked", true);
+        }
+      } else if (
+        site_visit_value === "yes" &&
+        (samples_value === "no" || samples_value === "")
+      ) {
+        if (
+          $("#payment_terms8").is(":checked") &&
+          $("#bid_validity8").is(":checked") &&
+          $("#delivery_period8").is(":checked") &&
+          $("#technical_specifications8").is(":checked") &&
+          $("#valid_tax_clearance8").is(":checked") &&
+          $("#registered_with_praz8").is(":checked") &&
+          $("#tax_status8").is(":checked") &&
+          $("#site_visit_done8").is(":checked")
+        ) {
+          $("#decision8").prop("checked", true);
+          $("#reject8").prop("checked", false);
+        } else {
+          $("#decision8").prop("checked", false);
+          $("#reject8").prop("checked", true);
+        }
+      } else if (
+        (site_visit_value === "no" || site_visit_value === "") &&
+        (samples_value === "no" || samples_value === "")
+      ) {
+        if (
+          $("#payment_terms8").is(":checked") &&
+          $("#bid_validity8").is(":checked") &&
+          $("#delivery_period8").is(":checked") &&
+          $("#technical_specifications8").is(":checked") &&
+          $("#valid_tax_clearance8").is(":checked") &&
+          $("#registered_with_praz8").is(":checked") &&
+          $("#tax_status8").is(":checked")
+        ) {
+          $("#decision8").prop("checked", true);
+          $("#reject8").prop("checked", false);
+        } else {
+          $("#decision8").prop("checked", false);
+          $("#reject8").prop("checked", true);
+        }
+      } else if (
+        (site_visit_value === "no" || site_visit_value === "") &&
+        samples_value === "yes"
+      ) {
+        if (
+          $("#payment_terms8").is(":checked") &&
+          $("#bid_validity8").is(":checked") &&
+          $("#delivery_period8").is(":checked") &&
+          $("#technical_specifications8").is(":checked") &&
+          $("#valid_tax_clearance8").is(":checked") &&
+          $("#registered_with_praz8").is(":checked") &&
+          $("#tax_status8").is(":checked") &&
+          $("#samples_delivered8").is(":checked")
+        ) {
+          $("#decision8").prop("checked", true);
+          $("#reject8").prop("checked", false);
+        } else {
+          $("#decision8").prop("checked", false);
+          $("#reject8").prop("checked", true);
+        }
+      }
+    });
+  });
+
+  $(document).ready(function () {
+    $('input[type="checkbox"]').click(function () {
+      let site_visit_value = $("#site_visit option:selected").val();
+      let samples_value = $("#samples option:selected").val();
+
+      if (site_visit_value === "yes" && samples_value === "yes") {
+        if (
+          $("#payment_terms9").is(":checked") &&
+          $("#bid_validity9").is(":checked") &&
+          $("#delivery_period9").is(":checked") &&
+          $("#technical_specifications9").is(":checked") &&
+          $("#valid_tax_clearance9").is(":checked") &&
+          $("#registered_with_praz9").is(":checked") &&
+          $("#tax_status9").is(":checked") &&
+          $("#site_visit_done9").is(":checked") &&
+          $("#samples_delivered9").is(":checked")
+        ) {
+          $("#decision9").prop("checked", true);
+          $("#reject9").prop("checked", false);
+        } else {
+          $("#decision9").prop("checked", false);
+          $("#reject9").prop("checked", true);
+        }
+      } else if (
+        site_visit_value === "yes" &&
+        (samples_value === "no" || samples_value === "")
+      ) {
+        if (
+          $("#payment_terms9").is(":checked") &&
+          $("#bid_validity9").is(":checked") &&
+          $("#delivery_period9").is(":checked") &&
+          $("#technical_specifications9").is(":checked") &&
+          $("#valid_tax_clearance9").is(":checked") &&
+          $("#registered_with_praz9").is(":checked") &&
+          $("#tax_status9").is(":checked") &&
+          $("#site_visit_done9").is(":checked")
+        ) {
+          $("#decision9").prop("checked", true);
+          $("#reject9").prop("checked", false);
+        } else {
+          $("#decision9").prop("checked", false);
+          $("#reject9").prop("checked", true);
+        }
+      } else if (
+        (site_visit_value === "no" || site_visit_value === "") &&
+        (samples_value === "no" || samples_value === "")
+      ) {
+        if (
+          $("#payment_terms9").is(":checked") &&
+          $("#bid_validity9").is(":checked") &&
+          $("#delivery_period9").is(":checked") &&
+          $("#technical_specifications9").is(":checked") &&
+          $("#valid_tax_clearance9").is(":checked") &&
+          $("#registered_with_praz9").is(":checked") &&
+          $("#tax_status9").is(":checked")
+        ) {
+          $("#decision9").prop("checked", true);
+          $("#reject9").prop("checked", false);
+        } else {
+          $("#decision9").prop("checked", false);
+          $("#reject9").prop("checked", true);
+        }
+      } else if (
+        (site_visit_value === "no" || site_visit_value === "") &&
+        samples_value === "yes"
+      ) {
+        if (
+          $("#payment_terms9").is(":checked") &&
+          $("#bid_validity9").is(":checked") &&
+          $("#delivery_period9").is(":checked") &&
+          $("#technical_specifications9").is(":checked") &&
+          $("#valid_tax_clearance9").is(":checked") &&
+          $("#registered_with_praz9").is(":checked") &&
+          $("#tax_status9").is(":checked") &&
+          $("#samples_delivered9").is(":checked")
+        ) {
+          $("#decision9").prop("checked", true);
+          $("#reject9").prop("checked", false);
+        } else {
+          $("#decision9").prop("checked", false);
+          $("#reject9").prop("checked", true);
+        }
+      }
+    });
+  });
+
+  $(document).ready(function () {
+    $('input[type="checkbox"]').click(function () {
+      let site_visit_value = $("#site_visit option:selected").val();
+      let samples_value = $("#samples option:selected").val();
+
+      if (site_visit_value === "yes" && samples_value === "yes") {
+        if (
+          $("#payment_terms10").is(":checked") &&
+          $("#bid_validity10").is(":checked") &&
+          $("#delivery_period10").is(":checked") &&
+          $("#technical_specifications10").is(":checked") &&
+          $("#valid_tax_clearance10").is(":checked") &&
+          $("#registered_with_praz10").is(":checked") &&
+          $("#tax_status10").is(":checked") &&
+          $("#site_visit_done10").is(":checked") &&
+          $("#samples_delivered10").is(":checked")
+        ) {
+          $("#decision10").prop("checked", true);
+          $("#reject10").prop("checked", false);
+        } else {
+          $("#decision10").prop("checked", false);
+          $("#reject10").prop("checked", true);
+        }
+      } else if (
+        site_visit_value === "yes" &&
+        (samples_value === "no" || samples_value === "")
+      ) {
+        if (
+          $("#payment_terms10").is(":checked") &&
+          $("#bid_validity10").is(":checked") &&
+          $("#delivery_period10").is(":checked") &&
+          $("#technical_specifications10").is(":checked") &&
+          $("#valid_tax_clearance10").is(":checked") &&
+          $("#registered_with_praz10").is(":checked") &&
+          $("#tax_status10").is(":checked") &&
+          $("#site_visit_done10").is(":checked")
+        ) {
+          $("#decision10").prop("checked", true);
+          $("#reject10").prop("checked", false);
+        } else {
+          $("#decision10").prop("checked", false);
+          $("#reject10").prop("checked", true);
+        }
+      } else if (
+        (site_visit_value === "no" || site_visit_value === "") &&
+        (samples_value === "no" || samples_value === "")
+      ) {
+        if (
+          $("#payment_terms10").is(":checked") &&
+          $("#bid_validity10").is(":checked") &&
+          $("#delivery_period10").is(":checked") &&
+          $("#technical_specifications10").is(":checked") &&
+          $("#valid_tax_clearance10").is(":checked") &&
+          $("#registered_with_praz10").is(":checked") &&
+          $("#tax_status10").is(":checked")
+        ) {
+          $("#decision10").prop("checked", true);
+          $("#reject10").prop("checked", false);
+        } else {
+          $("#decision10").prop("checked", false);
+          $("#reject10").prop("checked", true);
+        }
+      } else if (
+        (site_visit_value === "no" || site_visit_value === "") &&
+        samples_value === "yes"
+      ) {
+        if (
+          $("#payment_terms10").is(":checked") &&
+          $("#bid_validity10").is(":checked") &&
+          $("#delivery_period10").is(":checked") &&
+          $("#technical_specifications10").is(":checked") &&
+          $("#valid_tax_clearance10").is(":checked") &&
+          $("#registered_with_praz10").is(":checked") &&
+          $("#tax_status10").is(":checked") &&
+          $("#samples_delivered10").is(":checked")
+        ) {
+          $("#decision10").prop("checked", true);
+          $("#reject10").prop("checked", false);
+        } else {
+          $("#decision10").prop("checked", false);
+          $("#reject10").prop("checked", true);
+        }
+      }
+    });
+  });
+
+  $(document).ready(function () {
+    $('input[type="checkbox"]').click(function () {
+      let site_visit_value = $("#site_visit option:selected").val();
+      let samples_value = $("#samples option:selected").val();
+
+      if (site_visit_value === "yes" && samples_value === "yes") {
+        if (
+          $("#payment_terms11").is(":checked") &&
+          $("#bid_validity11").is(":checked") &&
+          $("#delivery_period11").is(":checked") &&
+          $("#technical_specifications11").is(":checked") &&
+          $("#valid_tax_clearance11").is(":checked") &&
+          $("#registered_with_praz11").is(":checked") &&
+          $("#tax_status11").is(":checked") &&
+          $("#site_visit_done11").is(":checked") &&
+          $("#samples_delivered11").is(":checked")
+        ) {
+          $("#decision11").prop("checked", true);
+          $("#reject11").prop("checked", false);
+        } else {
+          $("#decision11").prop("checked", false);
+          $("#reject11").prop("checked", true);
+        }
+      } else if (
+        site_visit_value === "yes" &&
+        (samples_value === "no" || samples_value === "")
+      ) {
+        if (
+          $("#payment_terms11").is(":checked") &&
+          $("#bid_validity11").is(":checked") &&
+          $("#delivery_period11").is(":checked") &&
+          $("#technical_specifications11").is(":checked") &&
+          $("#valid_tax_clearance11").is(":checked") &&
+          $("#registered_with_praz11").is(":checked") &&
+          $("#tax_status11").is(":checked") &&
+          $("#site_visit_done11").is(":checked")
+        ) {
+          $("#decision11").prop("checked", true);
+          $("#reject11").prop("checked", false);
+        } else {
+          $("#decision11").prop("checked", false);
+          $("#reject11").prop("checked", true);
+        }
+      } else if (
+        (site_visit_value === "no" || site_visit_value === "") &&
+        (samples_value === "no" || samples_value === "")
+      ) {
+        if (
+          $("#payment_terms11").is(":checked") &&
+          $("#bid_validity11").is(":checked") &&
+          $("#delivery_period11").is(":checked") &&
+          $("#technical_specifications11").is(":checked") &&
+          $("#valid_tax_clearance11").is(":checked") &&
+          $("#registered_with_praz11").is(":checked") &&
+          $("#tax_status11").is(":checked")
+        ) {
+          $("#decision11").prop("checked", true);
+          $("#reject11").prop("checked", false);
+        } else {
+          $("#decision11").prop("checked", false);
+          $("#reject11").prop("checked", true);
+        }
+      } else if (
+        (site_visit_value === "no" || site_visit_value === "") &&
+        samples_value === "yes"
+      ) {
+        if (
+          $("#payment_terms11").is(":checked") &&
+          $("#bid_validity11").is(":checked") &&
+          $("#delivery_period11").is(":checked") &&
+          $("#technical_specifications11").is(":checked") &&
+          $("#valid_tax_clearance11").is(":checked") &&
+          $("#registered_with_praz11").is(":checked") &&
+          $("#tax_status11").is(":checked") &&
+          $("#samples_delivered11").is(":checked")
+        ) {
+          $("#decision11").prop("checked", true);
+          $("#reject11").prop("checked", false);
+        } else {
+          $("#decision11").prop("checked", false);
+          $("#reject11").prop("checked", true);
+        }
+      }
+    });
+  });
+
+  $(document).ready(function () {
+    $('input[type="checkbox"]').click(function () {
+      let site_visit_value = $("#site_visit option:selected").val();
+      let samples_value = $("#samples option:selected").val();
+
+      if (site_visit_value === "yes" && samples_value === "yes") {
+        if (
+          $("#payment_terms12").is(":checked") &&
+          $("#bid_validity12").is(":checked") &&
+          $("#delivery_period12").is(":checked") &&
+          $("#technical_specifications12").is(":checked") &&
+          $("#valid_tax_clearance12").is(":checked") &&
+          $("#registered_with_praz12").is(":checked") &&
+          $("#tax_status12").is(":checked") &&
+          $("#site_visit_done12").is(":checked") &&
+          $("#samples_delivered12").is(":checked")
+        ) {
+          $("#decision12").prop("checked", true);
+          $("#reject12").prop("checked", false);
+        } else {
+          $("#decision12").prop("checked", false);
+          $("#reject12").prop("checked", true);
+        }
+      } else if (
+        site_visit_value === "yes" &&
+        (samples_value === "no" || samples_value === "")
+      ) {
+        if (
+          $("#payment_terms12").is(":checked") &&
+          $("#bid_validity12").is(":checked") &&
+          $("#delivery_period12").is(":checked") &&
+          $("#technical_specifications12").is(":checked") &&
+          $("#valid_tax_clearance12").is(":checked") &&
+          $("#registered_with_praz12").is(":checked") &&
+          $("#tax_status12").is(":checked") &&
+          $("#site_visit_done12").is(":checked")
+        ) {
+          $("#decision12").prop("checked", true);
+          $("#reject12").prop("checked", false);
+        } else {
+          $("#decision12").prop("checked", false);
+          $("#reject12").prop("checked", true);
+        }
+      } else if (
+        (site_visit_value === "no" || site_visit_value === "") &&
+        (samples_value === "no" || samples_value === "")
+      ) {
+        if (
+          $("#payment_terms12").is(":checked") &&
+          $("#bid_validity12").is(":checked") &&
+          $("#delivery_period12").is(":checked") &&
+          $("#technical_specifications12").is(":checked") &&
+          $("#valid_tax_clearance12").is(":checked") &&
+          $("#registered_with_praz12").is(":checked") &&
+          $("#tax_status12").is(":checked")
+        ) {
+          $("#decision12").prop("checked", true);
+          $("#reject12").prop("checked", false);
+        } else {
+          $("#decision12").prop("checked", false);
+          $("#reject12").prop("checked", true);
+        }
+      } else if (
+        (site_visit_value === "no" || site_visit_value === "") &&
+        samples_value === "yes"
+      ) {
+        if (
+          $("#payment_terms12").is(":checked") &&
+          $("#bid_validity12").is(":checked") &&
+          $("#delivery_period12").is(":checked") &&
+          $("#technical_specifications12").is(":checked") &&
+          $("#valid_tax_clearance12").is(":checked") &&
+          $("#registered_with_praz12").is(":checked") &&
+          $("#tax_status12").is(":checked") &&
+          $("#samples_delivered12").is(":checked")
+        ) {
+          $("#decision12").prop("checked", true);
+          $("#reject12").prop("checked", false);
+        } else {
+          $("#decision12").prop("checked", false);
+          $("#reject12").prop("checked", true);
+        }
+      }
+    });
+  });
+
+  $(document).ready(function () {
+    $('input[type="checkbox"]').click(function () {
+      let site_visit_value = $("#site_visit option:selected").val();
+      let samples_value = $("#samples option:selected").val();
+
+      if (site_visit_value === "yes" && samples_value === "yes") {
+        if (
+          $("#payment_terms13").is(":checked") &&
+          $("#bid_validity13").is(":checked") &&
+          $("#delivery_period13").is(":checked") &&
+          $("#technical_specifications13").is(":checked") &&
+          $("#valid_tax_clearance13").is(":checked") &&
+          $("#registered_with_praz13").is(":checked") &&
+          $("#tax_status13").is(":checked") &&
+          $("#site_visit_done13").is(":checked") &&
+          $("#samples_delivered13").is(":checked")
+        ) {
+          $("#decision13").prop("checked", true);
+          $("#reject13").prop("checked", false);
+        } else {
+          $("#decision13").prop("checked", false);
+          $("#reject13").prop("checked", true);
+        }
+      } else if (
+        site_visit_value === "yes" &&
+        (samples_value === "no" || samples_value === "")
+      ) {
+        if (
+          $("#payment_terms13").is(":checked") &&
+          $("#bid_validity13").is(":checked") &&
+          $("#delivery_period13").is(":checked") &&
+          $("#technical_specifications13").is(":checked") &&
+          $("#valid_tax_clearance13").is(":checked") &&
+          $("#registered_with_praz13").is(":checked") &&
+          $("#tax_status13").is(":checked") &&
+          $("#site_visit_done13").is(":checked")
+        ) {
+          $("#decision13").prop("checked", true);
+          $("#reject13").prop("checked", false);
+        } else {
+          $("#decision13").prop("checked", false);
+          $("#reject13").prop("checked", true);
+        }
+      } else if (
+        (site_visit_value === "no" || site_visit_value === "") &&
+        (samples_value === "no" || samples_value === "")
+      ) {
+        if (
+          $("#payment_terms13").is(":checked") &&
+          $("#bid_validity13").is(":checked") &&
+          $("#delivery_period13").is(":checked") &&
+          $("#technical_specifications13").is(":checked") &&
+          $("#valid_tax_clearance13").is(":checked") &&
+          $("#registered_with_praz13").is(":checked") &&
+          $("#tax_status13").is(":checked")
+        ) {
+          $("#decision13").prop("checked", true);
+          $("#reject13").prop("checked", false);
+        } else {
+          $("#decision13").prop("checked", false);
+          $("#reject13").prop("checked", true);
+        }
+      } else if (
+        (site_visit_value === "no" || site_visit_value === "") &&
+        samples_value === "yes"
+      ) {
+        if (
+          $("#payment_terms13").is(":checked") &&
+          $("#bid_validity13").is(":checked") &&
+          $("#delivery_period13").is(":checked") &&
+          $("#technical_specifications13").is(":checked") &&
+          $("#valid_tax_clearance13").is(":checked") &&
+          $("#registered_with_praz13").is(":checked") &&
+          $("#tax_status13").is(":checked") &&
+          $("#samples_delivered13").is(":checked")
+        ) {
+          $("#decision13").prop("checked", true);
+          $("#reject13").prop("checked", false);
+        } else {
+          $("#decision13").prop("checked", false);
+          $("#reject13").prop("checked", true);
+        }
+      }
+    });
+  });
+
+  $(document).ready(function () {
+    $('input[type="checkbox"]').click(function () {
+      let site_visit_value = $("#site_visit option:selected").val();
+      let samples_value = $("#samples option:selected").val();
+
+      if (site_visit_value === "yes" && samples_value === "yes") {
+        if (
+          $("#payment_terms14").is(":checked") &&
+          $("#bid_validity14").is(":checked") &&
+          $("#delivery_period14").is(":checked") &&
+          $("#technical_specifications14").is(":checked") &&
+          $("#valid_tax_clearance14").is(":checked") &&
+          $("#registered_with_praz14").is(":checked") &&
+          $("#tax_status14").is(":checked") &&
+          $("#site_visit_done14").is(":checked") &&
+          $("#samples_delivered14").is(":checked")
+        ) {
+          $("#decision14").prop("checked", true);
+          $("#reject14").prop("checked", false);
+        } else {
+          $("#decision14").prop("checked", false);
+          $("#reject14").prop("checked", true);
+        }
+      } else if (
+        site_visit_value === "yes" &&
+        (samples_value === "no" || samples_value === "")
+      ) {
+        if (
+          $("#payment_terms14").is(":checked") &&
+          $("#bid_validity14").is(":checked") &&
+          $("#delivery_period14").is(":checked") &&
+          $("#technical_specifications14").is(":checked") &&
+          $("#valid_tax_clearance14").is(":checked") &&
+          $("#registered_with_praz14").is(":checked") &&
+          $("#tax_status14").is(":checked") &&
+          $("#site_visit_done14").is(":checked")
+        ) {
+          $("#decision14").prop("checked", true);
+          $("#reject14").prop("checked", false);
+        } else {
+          $("#decision14").prop("checked", false);
+          $("#reject14").prop("checked", true);
+        }
+      } else if (
+        (site_visit_value === "no" || site_visit_value === "") &&
+        (samples_value === "no" || samples_value === "")
+      ) {
+        if (
+          $("#payment_terms14").is(":checked") &&
+          $("#bid_validity14").is(":checked") &&
+          $("#delivery_period14").is(":checked") &&
+          $("#technical_specifications14").is(":checked") &&
+          $("#valid_tax_clearance14").is(":checked") &&
+          $("#registered_with_praz14").is(":checked") &&
+          $("#tax_status14").is(":checked")
+        ) {
+          $("#decision14").prop("checked", true);
+          $("#reject14").prop("checked", false);
+        } else {
+          $("#decision14").prop("checked", false);
+          $("#reject14").prop("checked", true);
+        }
+      } else if (
+        (site_visit_value === "no" || site_visit_value === "") &&
+        samples_value === "yes"
+      ) {
+        if (
+          $("#payment_terms14").is(":checked") &&
+          $("#bid_validity14").is(":checked") &&
+          $("#delivery_period14").is(":checked") &&
+          $("#technical_specifications14").is(":checked") &&
+          $("#valid_tax_clearance14").is(":checked") &&
+          $("#registered_with_praz14").is(":checked") &&
+          $("#tax_status14").is(":checked") &&
+          $("#samples_delivered14").is(":checked")
+        ) {
+          $("#decision14").prop("checked", true);
+          $("#reject14").prop("checked", false);
+        } else {
+          $("#decision14").prop("checked", false);
+          $("#reject14").prop("checked", true);
+        }
+      }
+    });
+  });
+
+  $(document).ready(function () {
+    $('input[type="checkbox"]').click(function () {
+      let site_visit_value = $("#site_visit option:selected").val();
+      let samples_value = $("#samples option:selected").val();
+
+      if (site_visit_value === "yes" && samples_value === "yes") {
+        if (
+          $("#payment_terms15").is(":checked") &&
+          $("#bid_validity15").is(":checked") &&
+          $("#delivery_period15").is(":checked") &&
+          $("#technical_specifications15").is(":checked") &&
+          $("#valid_tax_clearance15").is(":checked") &&
+          $("#registered_with_praz15").is(":checked") &&
+          $("#tax_status15").is(":checked") &&
+          $("#site_visit_done15").is(":checked") &&
+          $("#samples_delivered15").is(":checked")
+        ) {
+          $("#decision15").prop("checked", true);
+          $("#reject15").prop("checked", false);
+        } else {
+          $("#decision15").prop("checked", false);
+          $("#reject15").prop("checked", true);
+        }
+      } else if (
+        site_visit_value === "yes" &&
+        (samples_value === "no" || samples_value === "")
+      ) {
+        if (
+          $("#payment_terms15").is(":checked") &&
+          $("#bid_validity15").is(":checked") &&
+          $("#delivery_period15").is(":checked") &&
+          $("#technical_specifications15").is(":checked") &&
+          $("#valid_tax_clearance15").is(":checked") &&
+          $("#registered_with_praz15").is(":checked") &&
+          $("#tax_status15").is(":checked") &&
+          $("#site_visit_done15").is(":checked")
+        ) {
+          $("#decision15").prop("checked", true);
+          $("#reject15").prop("checked", false);
+        } else {
+          $("#decision15").prop("checked", false);
+          $("#reject15").prop("checked", true);
+        }
+      } else if (
+        (site_visit_value === "no" || site_visit_value === "") &&
+        (samples_value === "no" || samples_value === "")
+      ) {
+        if (
+          $("#payment_terms15").is(":checked") &&
+          $("#bid_validity15").is(":checked") &&
+          $("#delivery_period15").is(":checked") &&
+          $("#technical_specifications15").is(":checked") &&
+          $("#valid_tax_clearance15").is(":checked") &&
+          $("#registered_with_praz15").is(":checked")
+        ) {
+          $("#decision15").prop("checked", true);
+          $("#reject15").prop("checked", false);
+        } else {
+          $("#decision15").prop("checked", false);
+          $("#reject15").prop("checked", true);
+        }
+      } else if (
+        (site_visit_value === "no" || site_visit_value === "") &&
+        samples_value === "yes"
+      ) {
+        if (
+          $("#payment_terms15").is(":checked") &&
+          $("#bid_validity15").is(":checked") &&
+          $("#delivery_period15").is(":checked") &&
+          $("#technical_specifications15").is(":checked") &&
+          $("#valid_tax_clearance15").is(":checked") &&
+          $("#registered_with_praz15").is(":checked") &&
+          $("#tax_status15").is(":checked") &&
+          $("#samples_delivered15").is(":checked")
+        ) {
+          $("#decision15").prop("checked", true);
+          $("#reject15").prop("checked", false);
+        } else {
+          $("#decision15").prop("checked", false);
+          $("#reject15").prop("checked", true);
+        }
+      }
+    });
+  });
+
+  $(document).ready(function () {
+    $('input[type="checkbox"]').click(function () {
+      let site_visit_value = $("#site_visit option:selected").val();
+      let samples_value = $("#samples option:selected").val();
+
+      if (site_visit_value === "yes" && samples_value === "yes") {
+        if (
+          $("#payment_terms16").is(":checked") &&
+          $("#bid_validity16").is(":checked") &&
+          $("#delivery_period16").is(":checked") &&
+          $("#technical_specifications16").is(":checked") &&
+          $("#valid_tax_clearance16").is(":checked") &&
+          $("#registered_with_praz16").is(":checked") &&
+          $("#tax_status16").is(":checked") &&
+          $("#site_visit_done16").is(":checked") &&
+          $("#samples_delivered16").is(":checked")
+        ) {
+          $("#decision16").prop("checked", true);
+          $("#reject16").prop("checked", false);
+        } else {
+          $("#decision16").prop("checked", false);
+          $("#reject16").prop("checked", true);
+        }
+      } else if (
+        site_visit_value === "yes" &&
+        (samples_value === "no" || samples_value === "")
+      ) {
+        if (
+          $("#payment_terms16").is(":checked") &&
+          $("#bid_validity16").is(":checked") &&
+          $("#delivery_period16").is(":checked") &&
+          $("#technical_specifications16").is(":checked") &&
+          $("#valid_tax_clearance16").is(":checked") &&
+          $("#registered_with_praz16").is(":checked") &&
+          $("#tax_status16").is(":checked") &&
+          $("#site_visit_done16").is(":checked")
+        ) {
+          $("#decision16").prop("checked", true);
+          $("#reject16").prop("checked", false);
+        } else {
+          $("#decision16").prop("checked", false);
+          $("#reject16").prop("checked", true);
+        }
+      } else if (
+        (site_visit_value === "no" || site_visit_value === "") &&
+        (samples_value === "no" || samples_value === "")
+      ) {
+        if (
+          $("#payment_terms16").is(":checked") &&
+          $("#bid_validity16").is(":checked") &&
+          $("#delivery_period16").is(":checked") &&
+          $("#technical_specifications16").is(":checked") &&
+          $("#valid_tax_clearance16").is(":checked") &&
+          $("#registered_with_praz16").is(":checked") &&
+          $("#tax_status16").is(":checked")
+        ) {
+          $("#decision16").prop("checked", true);
+          $("#reject16").prop("checked", false);
+        } else {
+          $("#decision16").prop("checked", false);
+          $("#reject16").prop("checked", true);
+        }
+      } else if (
+        (site_visit_value === "no" || site_visit_value === "") &&
+        samples_value === "yes"
+      ) {
+        if (
+          $("#payment_terms16").is(":checked") &&
+          $("#bid_validity16").is(":checked") &&
+          $("#delivery_period16").is(":checked") &&
+          $("#technical_specifications16").is(":checked") &&
+          $("#valid_tax_clearance16").is(":checked") &&
+          $("#registered_with_praz16").is(":checked") &&
+          $("#tax_status16").is(":checked") &&
+          $("#samples_delivered16").is(":checked")
+        ) {
+          $("#decision16").prop("checked", true);
+          $("#reject16").prop("checked", false);
+        } else {
+          $("#decision16").prop("checked", false);
+          $("#reject16").prop("checked", true);
+        }
+      }
+    });
+  });
+
+  $(document).ready(function () {
+    $('input[type="checkbox"]').click(function () {
+      let site_visit_value = $("#site_visit option:selected").val();
+      let samples_value = $("#samples option:selected").val();
+
+      if (site_visit_value === "yes" && samples_value === "yes") {
+        if (
+          $("#payment_terms17").is(":checked") &&
+          $("#bid_validity17").is(":checked") &&
+          $("#delivery_period17").is(":checked") &&
+          $("#technical_specifications17").is(":checked") &&
+          $("#valid_tax_clearance17").is(":checked") &&
+          $("#registered_with_praz17").is(":checked") &&
+          $("#tax_status17").is(":checked") &&
+          $("#site_visit_done17").is(":checked") &&
+          $("#samples_delivered17").is(":checked")
+        ) {
+          $("#decision17").prop("checked", true);
+          $("#reject17").prop("checked", false);
+        } else {
+          $("#decision17").prop("checked", false);
+          $("#reject17").prop("checked", true);
+        }
+      } else if (
+        site_visit_value === "yes" &&
+        (samples_value === "no" || samples_value === "")
+      ) {
+        if (
+          $("#payment_terms17").is(":checked") &&
+          $("#bid_validity17").is(":checked") &&
+          $("#delivery_period17").is(":checked") &&
+          $("#technical_specifications17").is(":checked") &&
+          $("#valid_tax_clearance17").is(":checked") &&
+          $("#registered_with_praz17").is(":checked") &&
+          $("#tax_status17").is(":checked") &&
+          $("#site_visit_done17").is(":checked")
+        ) {
+          $("#decision17").prop("checked", true);
+          $("#reject17").prop("checked", false);
+        } else {
+          $("#decision17").prop("checked", false);
+          $("#reject17").prop("checked", true);
+        }
+      } else if (
+        (site_visit_value === "no" || site_visit_value === "") &&
+        (samples_value === "no" || samples_value === "")
+      ) {
+        if (
+          $("#payment_terms17").is(":checked") &&
+          $("#bid_validity17").is(":checked") &&
+          $("#delivery_period17").is(":checked") &&
+          $("#technical_specifications17").is(":checked") &&
+          $("#valid_tax_clearance17").is(":checked") &&
+          $("#registered_with_praz17").is(":checked") &&
+          $("#tax_status17").is(":checked")
+        ) {
+          $("#decision17").prop("checked", true);
+          $("#reject17").prop("checked", false);
+        } else {
+          $("#decision17").prop("checked", false);
+          $("#reject17").prop("checked", true);
+        }
+      } else if (
+        (site_visit_value === "no" || site_visit_value === "") &&
+        samples_value === "yes"
+      ) {
+        if (
+          $("#payment_terms17").is(":checked") &&
+          $("#bid_validity17").is(":checked") &&
+          $("#delivery_period17").is(":checked") &&
+          $("#technical_specifications17").is(":checked") &&
+          $("#valid_tax_clearance17").is(":checked") &&
+          $("#registered_with_praz17").is(":checked") &&
+          $("#tax_status17").is(":checked") &&
+          $("#samples_delivered17").is(":checked")
+        ) {
+          $("#decision17").prop("checked", true);
+          $("#reject17").prop("checked", false);
+        } else {
+          $("#decision17").prop("checked", false);
+          $("#reject17").prop("checked", true);
+        }
+      }
+    });
+  });
+
+  $(document).ready(function () {
+    $('input[type="checkbox"]').click(function () {
+      let site_visit_value = $("#site_visit option:selected").val();
+      let samples_value = $("#samples option:selected").val();
+
+      if (site_visit_value === "yes" && samples_value === "yes") {
+        if (
+          $("#payment_terms18").is(":checked") &&
+          $("#bid_validity18").is(":checked") &&
+          $("#delivery_period18").is(":checked") &&
+          $("#technical_specifications18").is(":checked") &&
+          $("#valid_tax_clearance18").is(":checked") &&
+          $("#registered_with_praz18").is(":checked") &&
+          $("#tax_status18").is(":checked") &&
+          $("#site_visit_done18").is(":checked") &&
+          $("#samples_delivered18").is(":checked")
+        ) {
+          $("#decision18").prop("checked", true);
+          $("#reject18").prop("checked", false);
+        } else {
+          $("#decision18").prop("checked", false);
+          $("#reject18").prop("checked", true);
+        }
+      } else if (
+        site_visit_value === "yes" &&
+        (samples_value === "no" || samples_value === "")
+      ) {
+        if (
+          $("#payment_terms18").is(":checked") &&
+          $("#bid_validity18").is(":checked") &&
+          $("#delivery_period18").is(":checked") &&
+          $("#technical_specifications18").is(":checked") &&
+          $("#valid_tax_clearance18").is(":checked") &&
+          $("#registered_with_praz18").is(":checked") &&
+          $("#tax_status18").is(":checked") &&
+          $("#site_visit_done18").is(":checked")
+        ) {
+          $("#decision18").prop("checked", true);
+          $("#reject18").prop("checked", false);
+        } else {
+          $("#decision18").prop("checked", false);
+          $("#reject18").prop("checked", true);
+        }
+      } else if (
+        (site_visit_value === "no" || site_visit_value === "") &&
+        (samples_value === "no" || samples_value === "")
+      ) {
+        if (
+          $("#payment_terms18").is(":checked") &&
+          $("#bid_validity18").is(":checked") &&
+          $("#delivery_period18").is(":checked") &&
+          $("#technical_specifications18").is(":checked") &&
+          $("#valid_tax_clearance18").is(":checked") &&
+          $("#registered_with_praz18").is(":checked") &&
+          $("#tax_status18").is(":checked")
+        ) {
+          $("#decision18").prop("checked", true);
+          $("#reject18").prop("checked", false);
+        } else {
+          $("#decision18").prop("checked", false);
+          $("#reject18").prop("checked", true);
+        }
+      } else if (
+        (site_visit_value === "no" || site_visit_value === "") &&
+        samples_value === "yes"
+      ) {
+        if (
+          $("#payment_terms18").is(":checked") &&
+          $("#bid_validity18").is(":checked") &&
+          $("#delivery_period18").is(":checked") &&
+          $("#technical_specifications18").is(":checked") &&
+          $("#valid_tax_clearance18").is(":checked") &&
+          $("#registered_with_praz18").is(":checked") &&
+          $("#tax_status18").is(":checked") &&
+          $("#samples_delivered18").is(":checked")
+        ) {
+          $("#decision18").prop("checked", true);
+          $("#reject18").prop("checked", false);
+        } else {
+          $("#decision18").prop("checked", false);
+          $("#reject18").prop("checked", true);
+        }
+      }
+    });
+  });
+
+  $(document).ready(function () {
+    $('input[type="checkbox"]').click(function () {
+      let site_visit_value = $("#site_visit option:selected").val();
+      let samples_value = $("#samples option:selected").val();
+
+      if (site_visit_value === "yes" && samples_value === "yes") {
+        if (
+          $("#payment_terms19").is(":checked") &&
+          $("#bid_validity19").is(":checked") &&
+          $("#delivery_period19").is(":checked") &&
+          $("#technical_specifications19").is(":checked") &&
+          $("#valid_tax_clearance19").is(":checked") &&
+          $("#registered_with_praz19").is(":checked") &&
+          $("#tax_status19").is(":checked") &&
+          $("#site_visit_done19").is(":checked") &&
+          $("#samples_delivered19").is(":checked")
+        ) {
+          $("#decision19").prop("checked", true);
+          $("#reject19").prop("checked", false);
+        } else {
+          $("#decision19").prop("checked", false);
+          $("#reject19").prop("checked", true);
+        }
+      } else if (
+        site_visit_value === "yes" &&
+        (samples_value === "no" || samples_value === "")
+      ) {
+        if (
+          $("#payment_terms19").is(":checked") &&
+          $("#bid_validity19").is(":checked") &&
+          $("#delivery_period19").is(":checked") &&
+          $("#technical_specifications19").is(":checked") &&
+          $("#valid_tax_clearance19").is(":checked") &&
+          $("#registered_with_praz19").is(":checked") &&
+          $("#tax_status19").is(":checked") &&
+          $("#site_visit_done19").is(":checked")
+        ) {
+          $("#decision19").prop("checked", true);
+          $("#reject19").prop("checked", false);
+        } else {
+          $("#decision19").prop("checked", false);
+          $("#reject19").prop("checked", true);
+        }
+      } else if (
+        (site_visit_value === "no" || site_visit_value === "") &&
+        (samples_value === "no" || samples_value === "")
+      ) {
+        if (
+          $("#payment_terms19").is(":checked") &&
+          $("#bid_validity19").is(":checked") &&
+          $("#delivery_period19").is(":checked") &&
+          $("#technical_specifications19").is(":checked") &&
+          $("#valid_tax_clearance19").is(":checked") &&
+          $("#registered_with_praz19").is(":checked") &&
+          $("#tax_status19").is(":checked")
+        ) {
+          $("#decision19").prop("checked", true);
+          $("#reject19").prop("checked", false);
+        } else {
+          $("#decision19").prop("checked", false);
+          $("#reject19").prop("checked", true);
+        }
+      } else if (
+        (site_visit_value === "no" || site_visit_value === "") &&
+        samples_value === "yes"
+      ) {
+        if (
+          $("#payment_terms19").is(":checked") &&
+          $("#bid_validity19").is(":checked") &&
+          $("#delivery_period19").is(":checked") &&
+          $("#technical_specifications19").is(":checked") &&
+          $("#valid_tax_clearance19").is(":checked") &&
+          $("#registered_with_praz19").is(":checked") &&
+          $("#tax_status19").is(":checked") &&
+          $("#samples_delivered19").is(":checked")
+        ) {
+          $("#decision19").prop("checked", true);
+          $("#reject19").prop("checked", false);
+        } else {
+          $("#decision19").prop("checked", false);
+          $("#reject19").prop("checked", true);
+        }
+      }
+    });
+  });
+
+  $(document).ready(function () {
+    $('input[type="checkbox"]').click(function () {
+      let site_visit_value = $("#site_visit option:selected").val();
+      let samples_value = $("#samples option:selected").val();
+
+      if (site_visit_value === "yes" && samples_value === "yes") {
+        if (
+          $("#payment_terms20").is(":checked") &&
+          $("#bid_validity20").is(":checked") &&
+          $("#delivery_period20").is(":checked") &&
+          $("#technical_specifications20").is(":checked") &&
+          $("#valid_tax_clearance20").is(":checked") &&
+          $("#registered_with_praz20").is(":checked") &&
+          $("#tax_status20").is(":checked") &&
+          $("#site_visit_done20").is(":checked") &&
+          $("#samples_delivered20").is(":checked")
+        ) {
+          $("#decision20").prop("checked", true);
+          $("#reject20").prop("checked", false);
+        } else {
+          $("#decision20").prop("checked", false);
+          $("#reject20").prop("checked", true);
+        }
+      } else if (
+        site_visit_value === "yes" &&
+        (samples_value === "no" || samples_value === "")
+      ) {
+        if (
+          $("#payment_terms20").is(":checked") &&
+          $("#bid_validity20").is(":checked") &&
+          $("#delivery_period20").is(":checked") &&
+          $("#technical_specifications20").is(":checked") &&
+          $("#valid_tax_clearance20").is(":checked") &&
+          $("#registered_with_praz20").is(":checked") &&
+          $("#tax_status20").is(":checked") &&
+          $("#site_visit_done20").is(":checked")
+        ) {
+          $("#decision20").prop("checked", true);
+          $("#reject20").prop("checked", false);
+        } else {
+          $("#decision20").prop("checked", false);
+          $("#reject20").prop("checked", true);
+        }
+      } else if (
+        (site_visit_value === "no" || site_visit_value === "") &&
+        (samples_value === "no" || samples_value === "")
+      ) {
+        if (
+          $("#payment_terms20").is(":checked") &&
+          $("#bid_validity20").is(":checked") &&
+          $("#delivery_period20").is(":checked") &&
+          $("#technical_specifications20").is(":checked") &&
+          $("#valid_tax_clearance20").is(":checked") &&
+          $("#registered_with_praz20").is(":checked") &&
+          $("#tax_status20").is(":checked")
+        ) {
+          $("#decision20").prop("checked", true);
+          $("#reject20").prop("checked", false);
+        } else {
+          $("#decision20").prop("checked", false);
+          $("#reject20").prop("checked", true);
+        }
+      } else if (
+        (site_visit_value === "no" || site_visit_value === "") &&
+        samples_value === "yes"
+      ) {
+        if (
+          $("#payment_terms20").is(":checked") &&
+          $("#bid_validity20").is(":checked") &&
+          $("#delivery_period20").is(":checked") &&
+          $("#technical_specifications20").is(":checked") &&
+          $("#valid_tax_clearance20").is(":checked") &&
+          $("#registered_with_praz20").is(":checked") &&
+          $("#tax_status20").is(":checked") &&
+          $("#samples_delivered20").is(":checked")
+        ) {
+          $("#decision20").prop("checked", true);
+          $("#reject20").prop("checked", false);
+        } else {
+          $("#decision20").prop("checked", false);
+          $("#reject20").prop("checked", true);
+        }
+      }
+    });
+  });
+  $(document).ready(function () {
+    $('input[type="checkbox"]').click(function () {
+      let site_visit_value = $("#site_visit option:selected").val();
+      let samples_value = $("#samples option:selected").val();
+
+      if (site_visit_value === "yes" && samples_value === "yes") {
+        if (
+          $("#payment_terms21").is(":checked") &&
+          $("#bid_validity21").is(":checked") &&
+          $("#delivery_period21").is(":checked") &&
+          $("#technical_specifications21").is(":checked") &&
+          $("#valid_tax_clearance21").is(":checked") &&
+          $("#registered_with_praz21").is(":checked") &&
+          $("#tax_status21").is(":checked") &&
+          $("#site_visit_done21").is(":checked") &&
+          $("#samples_delivered21").is(":checked")
+        ) {
+          $("#decision21").prop("checked", true);
+          $("#reject21").prop("checked", false);
+        } else {
+          $("#decision21").prop("checked", false);
+          $("#reject21").prop("checked", true);
+        }
+      } else if (
+        site_visit_value === "yes" &&
+        (samples_value === "no" || samples_value === "")
+      ) {
+        if (
+          $("#payment_terms21").is(":checked") &&
+          $("#bid_validity21").is(":checked") &&
+          $("#delivery_period21").is(":checked") &&
+          $("#technical_specifications21").is(":checked") &&
+          $("#valid_tax_clearance21").is(":checked") &&
+          $("#registered_with_praz21").is(":checked") &&
+          $("#tax_status21").is(":checked") &&
+          $("#site_visit_done21").is(":checked")
+        ) {
+          $("#decision21").prop("checked", true);
+          $("#reject21").prop("checked", false);
+        } else {
+          $("#decision21").prop("checked", false);
+          $("#reject21").prop("checked", true);
+        }
+      } else if (
+        (site_visit_value === "no" || site_visit_value === "") &&
+        (samples_value === "no" || samples_value === "")
+      ) {
+        if (
+          $("#payment_terms21").is(":checked") &&
+          $("#bid_validity21").is(":checked") &&
+          $("#delivery_period21").is(":checked") &&
+          $("#technical_specifications21").is(":checked") &&
+          $("#valid_tax_clearance21").is(":checked") &&
+          $("#registered_with_praz21").is(":checked") &&
+          $("#tax_status21").is(":checked")
+        ) {
+          $("#decision21").prop("checked", true);
+          $("#reject21").prop("checked", false);
+        } else {
+          $("#decision21").prop("checked", false);
+          $("#reject21").prop("checked", true);
+        }
+      } else if (
+        (site_visit_value === "no" || site_visit_value === "") &&
+        samples_value === "yes"
+      ) {
+        if (
+          $("#payment_terms21").is(":checked") &&
+          $("#bid_validity21").is(":checked") &&
+          $("#delivery_period21").is(":checked") &&
+          $("#technical_specifications21").is(":checked") &&
+          $("#valid_tax_clearance21").is(":checked") &&
+          $("#registered_with_praz21").is(":checked") &&
+          $("#tax_status21").is(":checked") &&
+          $("#samples_delivered21").is(":checked")
+        ) {
+          $("#decision21").prop("checked", true);
+          $("#reject21").prop("checked", false);
+        } else {
+          $("#decision21").prop("checked", false);
+          $("#reject21").prop("checked", true);
+        }
+      }
+    });
+  });
+  $(document).ready(function () {
+    $('input[type="checkbox"]').click(function () {
+      let site_visit_value = $("#site_visit option:selected").val();
+      let samples_value = $("#samples option:selected").val();
+
+      if (site_visit_value === "yes" && samples_value === "yes") {
+        if (
+          $("#payment_terms22").is(":checked") &&
+          $("#bid_validity22").is(":checked") &&
+          $("#delivery_period22").is(":checked") &&
+          $("#technical_specifications22").is(":checked") &&
+          $("#valid_tax_clearance22").is(":checked") &&
+          $("#registered_with_praz22").is(":checked") &&
+          $("#tax_status22").is(":checked") &&
+          $("#site_visit_done22").is(":checked") &&
+          $("#samples_delivered22").is(":checked")
+        ) {
+          $("#decision22").prop("checked", true);
+          $("#reject22").prop("checked", false);
+        } else {
+          $("#decision22").prop("checked", false);
+          $("#reject22").prop("checked", true);
+        }
+      } else if (
+        site_visit_value === "yes" &&
+        (samples_value === "no" || samples_value === "")
+      ) {
+        if (
+          $("#payment_terms22").is(":checked") &&
+          $("#bid_validity22").is(":checked") &&
+          $("#delivery_period22").is(":checked") &&
+          $("#technical_specifications22").is(":checked") &&
+          $("#valid_tax_clearance22").is(":checked") &&
+          $("#registered_with_praz22").is(":checked") &&
+          $("#tax_status22").is(":checked") &&
+          $("#site_visit_done22").is(":checked")
+        ) {
+          $("#decision22").prop("checked", true);
+          $("#reject22").prop("checked", false);
+        } else {
+          $("#decision22").prop("checked", false);
+          $("#reject22").prop("checked", true);
+        }
+      } else if (
+        (site_visit_value === "no" || site_visit_value === "") &&
+        (samples_value === "no" || samples_value === "")
+      ) {
+        if (
+          $("#payment_terms22").is(":checked") &&
+          $("#bid_validity22").is(":checked") &&
+          $("#delivery_period22").is(":checked") &&
+          $("#technical_specifications22").is(":checked") &&
+          $("#valid_tax_clearance22").is(":checked") &&
+          $("#registered_with_praz22").is(":checked") &&
+          $("#tax_status22").is(":checked")
+        ) {
+          $("#decision22").prop("checked", true);
+          $("#reject22").prop("checked", false);
+        } else {
+          $("#decision22").prop("checked", false);
+          $("#reject22").prop("checked", true);
+        }
+      } else if (
+        (site_visit_value === "no" || site_visit_value === "") &&
+        samples_value === "yes"
+      ) {
+        if (
+          $("#payment_terms22").is(":checked") &&
+          $("#bid_validity22").is(":checked") &&
+          $("#delivery_period22").is(":checked") &&
+          $("#technical_specifications22").is(":checked") &&
+          $("#valid_tax_clearance22").is(":checked") &&
+          $("#registered_with_praz22").is(":checked") &&
+          $("#tax_status22").is(":checked") &&
+          $("#samples_delivered22").is(":checked")
+        ) {
+          $("#decision22").prop("checked", true);
+          $("#reject22").prop("checked", false);
+        } else {
+          $("#decision22").prop("checked", false);
+          $("#reject22").prop("checked", true);
+        }
+      }
+    });
+  });
+  $(document).ready(function () {
+    $('input[type="checkbox"]').click(function () {
+      let site_visit_value = $("#site_visit option:selected").val();
+      let samples_value = $("#samples option:selected").val();
+
+      if (site_visit_value === "yes" && samples_value === "yes") {
+        if (
+          $("#payment_terms23").is(":checked") &&
+          $("#bid_validity23").is(":checked") &&
+          $("#delivery_period23").is(":checked") &&
+          $("#technical_specifications23").is(":checked") &&
+          $("#valid_tax_clearance23").is(":checked") &&
+          $("#registered_with_praz23").is(":checked") &&
+          $("#tax_status23").is(":checked") &&
+          $("#site_visit_done23").is(":checked") &&
+          $("#samples_delivered23").is(":checked")
+        ) {
+          $("#decision23").prop("checked", true);
+          $("#reject23").prop("checked", false);
+        } else {
+          $("#decision23").prop("checked", false);
+          $("#reject23").prop("checked", true);
+        }
+      } else if (
+        site_visit_value === "yes" &&
+        (samples_value === "no" || samples_value === "")
+      ) {
+        if (
+          $("#payment_terms23").is(":checked") &&
+          $("#bid_validity23").is(":checked") &&
+          $("#delivery_period23").is(":checked") &&
+          $("#technical_specifications23").is(":checked") &&
+          $("#valid_tax_clearance23").is(":checked") &&
+          $("#registered_with_praz23").is(":checked") &&
+          $("#tax_status23").is(":checked") &&
+          $("#site_visit_done23").is(":checked")
+        ) {
+          $("#decision23").prop("checked", true);
+          $("#reject23").prop("checked", false);
+        } else {
+          $("#decision23").prop("checked", false);
+          $("#reject23").prop("checked", true);
+        }
+      } else if (
+        (site_visit_value === "no" || site_visit_value === "") &&
+        (samples_value === "no" || samples_value === "")
+      ) {
+        if (
+          $("#payment_terms23").is(":checked") &&
+          $("#bid_validity23").is(":checked") &&
+          $("#delivery_period23").is(":checked") &&
+          $("#technical_specifications23").is(":checked") &&
+          $("#valid_tax_clearance23").is(":checked") &&
+          $("#registered_with_praz23").is(":checked") &&
+          $("#tax_status23").is(":checked")
+        ) {
+          $("#decision23").prop("checked", true);
+          $("#reject23").prop("checked", false);
+        } else {
+          $("#decision23").prop("checked", false);
+          $("#reject23").prop("checked", true);
+        }
+      } else if (
+        (site_visit_value === "no" || site_visit_value === "") &&
+        samples_value === "yes"
+      ) {
+        if (
+          $("#payment_terms23").is(":checked") &&
+          $("#bid_validity23").is(":checked") &&
+          $("#delivery_period23").is(":checked") &&
+          $("#technical_specifications23").is(":checked") &&
+          $("#valid_tax_clearance23").is(":checked") &&
+          $("#registered_with_praz23").is(":checked") &&
+          $("#tax_status23").is(":checked") &&
+          $("#samples_delivered23").is(":checked")
+        ) {
+          $("#decision23").prop("checked", true);
+          $("#reject23").prop("checked", false);
+        } else {
+          $("#decision23").prop("checked", false);
+          $("#reject23").prop("checked", true);
+        }
+      }
+    });
+  });
+  $(document).ready(function () {
+    $('input[type="checkbox"]').click(function () {
+      let site_visit_value = $("#site_visit option:selected").val();
+      let samples_value = $("#samples option:selected").val();
+
+      if (site_visit_value === "yes" && samples_value === "yes") {
+        if (
+          $("#payment_terms24").is(":checked") &&
+          $("#bid_validity24").is(":checked") &&
+          $("#delivery_period24").is(":checked") &&
+          $("#technical_specifications24").is(":checked") &&
+          $("#valid_tax_clearance24").is(":checked") &&
+          $("#registered_with_praz24").is(":checked") &&
+          $("#tax_status24").is(":checked") &&
+          $("#site_visit_done24").is(":checked") &&
+          $("#samples_delivered24").is(":checked")
+        ) {
+          $("#decision24").prop("checked", true);
+          $("#reject24").prop("checked", false);
+        } else {
+          $("#decision24").prop("checked", false);
+          $("#reject24").prop("checked", true);
+        }
+      } else if (
+        site_visit_value === "yes" &&
+        (samples_value === "no" || samples_value === "")
+      ) {
+        if (
+          $("#payment_terms24").is(":checked") &&
+          $("#bid_validity24").is(":checked") &&
+          $("#delivery_period24").is(":checked") &&
+          $("#technical_specifications24").is(":checked") &&
+          $("#valid_tax_clearance24").is(":checked") &&
+          $("#registered_with_praz24").is(":checked") &&
+          $("#tax_status24").is(":checked") &&
+          $("#site_visit_done24").is(":checked")
+        ) {
+          $("#decision24").prop("checked", true);
+          $("#reject24").prop("checked", false);
+        } else {
+          $("#decision24").prop("checked", false);
+          $("#reject24").prop("checked", true);
+        }
+      } else if (
+        (site_visit_value === "no" || site_visit_value === "") &&
+        (samples_value === "no" || samples_value === "")
+      ) {
+        if (
+          $("#payment_terms24").is(":checked") &&
+          $("#bid_validity24").is(":checked") &&
+          $("#delivery_period24").is(":checked") &&
+          $("#technical_specifications24").is(":checked") &&
+          $("#valid_tax_clearance24").is(":checked") &&
+          $("#registered_with_praz24").is(":checked") &&
+          $("#tax_status24").is(":checked")
+        ) {
+          $("#decision24").prop("checked", true);
+          $("#reject24").prop("checked", false);
+        } else {
+          $("#decision24").prop("checked", false);
+          $("#reject24").prop("checked", true);
+        }
+      } else if (
+        (site_visit_value === "no" || site_visit_value === "") &&
+        samples_value === "yes"
+      ) {
+        if (
+          $("#payment_terms24").is(":checked") &&
+          $("#bid_validity24").is(":checked") &&
+          $("#delivery_period24").is(":checked") &&
+          $("#technical_specifications24").is(":checked") &&
+          $("#valid_tax_clearance24").is(":checked") &&
+          $("#registered_with_praz24").is(":checked") &&
+          $("#tax_status24").is(":checked") &&
+          $("#samples_delivered24").is(":checked")
+        ) {
+          $("#decision24").prop("checked", true);
+          $("#reject24").prop("checked", false);
+        } else {
+          $("#decision24").prop("checked", false);
+          $("#reject24").prop("checked", true);
+        }
+      }
+    });
+  });
+  $(document).ready(function () {
+    $('input[type="checkbox"]').click(function () {
+      let site_visit_value = $("#site_visit option:selected").val();
+      let samples_value = $("#samples option:selected").val();
+
+      if (site_visit_value === "yes" && samples_value === "yes") {
+        if (
+          $("#payment_terms25").is(":checked") &&
+          $("#bid_validity25").is(":checked") &&
+          $("#delivery_period25").is(":checked") &&
+          $("#technical_specifications25").is(":checked") &&
+          $("#valid_tax_clearance25").is(":checked") &&
+          $("#registered_with_praz25").is(":checked") &&
+          $("#tax_status25").is(":checked") &&
+          $("#site_visit_done25").is(":checked") &&
+          $("#samples_delivered25").is(":checked")
+        ) {
+          $("#decision25").prop("checked", true);
+          $("#reject25").prop("checked", false);
+        } else {
+          $("#decision25").prop("checked", false);
+          $("#reject25").prop("checked", true);
+        }
+      } else if (
+        site_visit_value === "yes" &&
+        (samples_value === "no" || samples_value === "")
+      ) {
+        if (
+          $("#payment_terms25").is(":checked") &&
+          $("#bid_validity25").is(":checked") &&
+          $("#delivery_period25").is(":checked") &&
+          $("#technical_specifications25").is(":checked") &&
+          $("#valid_tax_clearance25").is(":checked") &&
+          $("#registered_with_praz25").is(":checked") &&
+          $("#tax_status25").is(":checked") &&
+          $("#site_visit_done25").is(":checked")
+        ) {
+          $("#decision25").prop("checked", true);
+          $("#reject25").prop("checked", false);
+        } else {
+          $("#decision25").prop("checked", false);
+          $("#reject25").prop("checked", true);
+        }
+      } else if (
+        (site_visit_value === "no" || site_visit_value === "") &&
+        (samples_value === "no" || samples_value === "")
+      ) {
+        if (
+          $("#payment_terms25").is(":checked") &&
+          $("#bid_validity25").is(":checked") &&
+          $("#delivery_period25").is(":checked") &&
+          $("#technical_specifications25").is(":checked") &&
+          $("#valid_tax_clearance25").is(":checked") &&
+          $("#registered_with_praz25").is(":checked") &&
+          $("#tax_status25").is(":checked")
+        ) {
+          $("#decision25").prop("checked", true);
+          $("#reject25").prop("checked", false);
+        } else {
+          $("#decision25").prop("checked", false);
+          $("#reject25").prop("checked", true);
+        }
+      } else if (
+        (site_visit_value === "no" || site_visit_value === "") &&
+        samples_value === "yes"
+      ) {
+        if (
+          $("#payment_terms25").is(":checked") &&
+          $("#bid_validity25").is(":checked") &&
+          $("#delivery_period25").is(":checked") &&
+          $("#technical_specifications25").is(":checked") &&
+          $("#valid_tax_clearance25").is(":checked") &&
+          $("#registered_with_praz25").is(":checked") &&
+          $("#tax_status25").is(":checked") &&
+          $("#samples_delivered25").is(":checked")
+        ) {
+          $("#decision25").prop("checked", true);
+          $("#reject25").prop("checked", false);
+        } else {
+          $("#decision25").prop("checked", false);
+          $("#reject25").prop("checked", true);
+        }
+      }
+    });
+  });
+  $(document).ready(function () {
+    $('input[type="checkbox"]').click(function () {
+      let site_visit_value = $("#site_visit option:selected").val();
+      let samples_value = $("#samples option:selected").val();
+
+      if (site_visit_value === "yes" && samples_value === "yes") {
+        if (
+          $("#payment_terms26").is(":checked") &&
+          $("#bid_validity26").is(":checked") &&
+          $("#delivery_period26").is(":checked") &&
+          $("#technical_specifications26").is(":checked") &&
+          $("#valid_tax_clearance26").is(":checked") &&
+          $("#registered_with_praz26").is(":checked") &&
+          $("#tax_status26").is(":checked") &&
+          $("#site_visit_done26").is(":checked") &&
+          $("#samples_delivered26").is(":checked")
+        ) {
+          $("#decision26").prop("checked", true);
+          $("#reject26").prop("checked", false);
+        } else {
+          $("#decision26").prop("checked", false);
+          $("#reject26").prop("checked", true);
+        }
+      } else if (
+        site_visit_value === "yes" &&
+        (samples_value === "no" || samples_value === "")
+      ) {
+        if (
+          $("#payment_terms26").is(":checked") &&
+          $("#bid_validity26").is(":checked") &&
+          $("#delivery_period26").is(":checked") &&
+          $("#technical_specifications26").is(":checked") &&
+          $("#valid_tax_clearance26").is(":checked") &&
+          $("#registered_with_praz26").is(":checked") &&
+          $("#tax_status26").is(":checked") &&
+          $("#site_visit_done26").is(":checked")
+        ) {
+          $("#decision26").prop("checked", true);
+          $("#reject26").prop("checked", false);
+        } else {
+          $("#decision26").prop("checked", false);
+          $("#reject26").prop("checked", true);
+        }
+      } else if (
+        (site_visit_value === "no" || site_visit_value === "") &&
+        (samples_value === "no" || samples_value === "")
+      ) {
+        if (
+          $("#payment_terms26").is(":checked") &&
+          $("#bid_validity26").is(":checked") &&
+          $("#delivery_period26").is(":checked") &&
+          $("#technical_specifications26").is(":checked") &&
+          $("#valid_tax_clearance26").is(":checked") &&
+          $("#registered_with_praz26").is(":checked") &&
+          $("#tax_status26").is(":checked")
+        ) {
+          $("#decision26").prop("checked", true);
+          $("#reject26").prop("checked", false);
+        } else {
+          $("#decision26").prop("checked", false);
+          $("#reject26").prop("checked", true);
+        }
+      } else if (
+        (site_visit_value === "no" || site_visit_value === "") &&
+        samples_value === "yes"
+      ) {
+        if (
+          $("#payment_terms26").is(":checked") &&
+          $("#bid_validity26").is(":checked") &&
+          $("#delivery_period26").is(":checked") &&
+          $("#technical_specifications26").is(":checked") &&
+          $("#valid_tax_clearance26").is(":checked") &&
+          $("#registered_with_praz26").is(":checked") &&
+          $("#tax_status26").is(":checked") &&
+          $("#samples_delivered26").is(":checked")
+        ) {
+          $("#decision26").prop("checked", true);
+          $("#reject26").prop("checked", false);
+        } else {
+          $("#decision26").prop("checked", false);
+          $("#reject26").prop("checked", true);
+        }
+      }
+    });
+  });
+  $(document).ready(function () {
+    $('input[type="checkbox"]').click(function () {
+      let site_visit_value = $("#site_visit option:selected").val();
+      let samples_value = $("#samples option:selected").val();
+
+      if (site_visit_value === "yes" && samples_value === "yes") {
+        if (
+          $("#payment_terms27").is(":checked") &&
+          $("#bid_validity27").is(":checked") &&
+          $("#delivery_period27").is(":checked") &&
+          $("#technical_specifications27").is(":checked") &&
+          $("#valid_tax_clearance27").is(":checked") &&
+          $("#registered_with_praz27").is(":checked") &&
+          $("#tax_status27").is(":checked") &&
+          $("#site_visit_done27").is(":checked") &&
+          $("#samples_delivered27").is(":checked")
+        ) {
+          $("#decision27").prop("checked", true);
+          $("#reject27").prop("checked", false);
+        } else {
+          $("#decision27").prop("checked", false);
+          $("#reject27").prop("checked", true);
+        }
+      } else if (
+        site_visit_value === "yes" &&
+        (samples_value === "no" || samples_value === "")
+      ) {
+        if (
+          $("#payment_terms27").is(":checked") &&
+          $("#bid_validity27").is(":checked") &&
+          $("#delivery_period27").is(":checked") &&
+          $("#technical_specifications27").is(":checked") &&
+          $("#valid_tax_clearance27").is(":checked") &&
+          $("#registered_with_praz27").is(":checked") &&
+          $("#tax_status27").is(":checked") &&
+          $("#site_visit_done27").is(":checked")
+        ) {
+          $("#decision27").prop("checked", true);
+          $("#reject27").prop("checked", false);
+        } else {
+          $("#decision27").prop("checked", false);
+          $("#reject27").prop("checked", true);
+        }
+      } else if (
+        (site_visit_value === "no" || site_visit_value === "") &&
+        (samples_value === "no" || samples_value === "")
+      ) {
+        if (
+          $("#payment_terms27").is(":checked") &&
+          $("#bid_validity27").is(":checked") &&
+          $("#delivery_period27").is(":checked") &&
+          $("#technical_specifications27").is(":checked") &&
+          $("#valid_tax_clearance27").is(":checked") &&
+          $("#registered_with_praz27").is(":checked") &&
+          $("#tax_status27").is(":checked")
+        ) {
+          $("#decision27").prop("checked", true);
+          $("#reject27").prop("checked", false);
+        } else {
+          $("#decision27").prop("checked", false);
+          $("#reject27").prop("checked", true);
+        }
+      } else if (
+        (site_visit_value === "no" || site_visit_value === "") &&
+        samples_value === "yes"
+      ) {
+        if (
+          $("#payment_terms27").is(":checked") &&
+          $("#bid_validity27").is(":checked") &&
+          $("#delivery_period27").is(":checked") &&
+          $("#technical_specifications27").is(":checked") &&
+          $("#valid_tax_clearance27").is(":checked") &&
+          $("#registered_with_praz27").is(":checked") &&
+          $("#tax_status27").is(":checked") &&
+          $("#samples_delivered27").is(":checked")
+        ) {
+          $("#decision27").prop("checked", true);
+          $("#reject27").prop("checked", false);
+        } else {
+          $("#decision27").prop("checked", false);
+          $("#reject27").prop("checked", true);
+        }
+      }
+    });
+  });
+  $(document).ready(function () {
+    $('input[type="checkbox"]').click(function () {
+      let site_visit_value = $("#site_visit option:selected").val();
+      let samples_value = $("#samples option:selected").val();
+
+      if (site_visit_value === "yes" && samples_value === "yes") {
+        if (
+          $("#payment_terms28").is(":checked") &&
+          $("#bid_validity28").is(":checked") &&
+          $("#delivery_period28").is(":checked") &&
+          $("#technical_specifications28").is(":checked") &&
+          $("#valid_tax_clearance28").is(":checked") &&
+          $("#registered_with_praz28").is(":checked") &&
+          $("#tax_status28").is(":checked") &&
+          $("#site_visit_done28").is(":checked") &&
+          $("#samples_delivered28").is(":checked")
+        ) {
+          $("#decision28").prop("checked", true);
+          $("#reject28").prop("checked", false);
+        } else {
+          $("#decision28").prop("checked", false);
+          $("#reject28").prop("checked", true);
+        }
+      } else if (
+        site_visit_value === "yes" &&
+        (samples_value === "no" || samples_value === "")
+      ) {
+        if (
+          $("#payment_terms28").is(":checked") &&
+          $("#bid_validity28").is(":checked") &&
+          $("#delivery_period28").is(":checked") &&
+          $("#technical_specifications28").is(":checked") &&
+          $("#valid_tax_clearance28").is(":checked") &&
+          $("#registered_with_praz28").is(":checked") &&
+          $("#tax_status28").is(":checked") &&
+          $("#site_visit_done28").is(":checked")
+        ) {
+          $("#decision28").prop("checked", true);
+          $("#reject28").prop("checked", false);
+        } else {
+          $("#decision28").prop("checked", false);
+          $("#reject28").prop("checked", true);
+        }
+      } else if (
+        (site_visit_value === "no" || site_visit_value === "") &&
+        (samples_value === "no" || samples_value === "")
+      ) {
+        if (
+          $("#payment_terms28").is(":checked") &&
+          $("#bid_validity28").is(":checked") &&
+          $("#delivery_period28").is(":checked") &&
+          $("#technical_specifications28").is(":checked") &&
+          $("#valid_tax_clearance28").is(":checked") &&
+          $("#registered_with_praz28").is(":checked") &&
+          $("#tax_status28").is(":checked")
+        ) {
+          $("#decision28").prop("checked", true);
+          $("#reject28").prop("checked", false);
+        } else {
+          $("#decision28").prop("checked", false);
+          $("#reject28").prop("checked", true);
+        }
+      } else if (
+        (site_visit_value === "no" || site_visit_value === "") &&
+        samples_value === "yes"
+      ) {
+        if (
+          $("#payment_terms28").is(":checked") &&
+          $("#bid_validity28").is(":checked") &&
+          $("#delivery_period28").is(":checked") &&
+          $("#technical_specifications28").is(":checked") &&
+          $("#valid_tax_clearance28").is(":checked") &&
+          $("#registered_with_praz28").is(":checked") &&
+          $("#tax_status28").is(":checked") &&
+          $("#samples_delivered28").is(":checked")
+        ) {
+          $("#decision28").prop("checked", true);
+          $("#reject28").prop("checked", false);
+        } else {
+          $("#decision28").prop("checked", false);
+          $("#reject28").prop("checked", true);
+        }
+      }
+    });
+  });
+  $(document).ready(function () {
+    $('input[type="checkbox"]').click(function () {
+      let site_visit_value = $("#site_visit option:selected").val();
+      let samples_value = $("#samples option:selected").val();
+
+      if (site_visit_value === "yes" && samples_value === "yes") {
+        if (
+          $("#payment_terms29").is(":checked") &&
+          $("#bid_validity29").is(":checked") &&
+          $("#delivery_period29").is(":checked") &&
+          $("#technical_specifications29").is(":checked") &&
+          $("#valid_tax_clearance29").is(":checked") &&
+          $("#registered_with_praz29").is(":checked") &&
+          $("#tax_status29").is(":checked") &&
+          $("#site_visit_done29").is(":checked") &&
+          $("#samples_delivered29").is(":checked")
+        ) {
+          $("#decision29").prop("checked", true);
+          $("#reject29").prop("checked", false);
+        } else {
+          $("#decision29").prop("checked", false);
+          $("#reject29").prop("checked", true);
+        }
+      } else if (
+        site_visit_value === "yes" &&
+        (samples_value === "no" || samples_value === "")
+      ) {
+        if (
+          $("#payment_terms29").is(":checked") &&
+          $("#bid_validity29").is(":checked") &&
+          $("#delivery_period29").is(":checked") &&
+          $("#technical_specifications29").is(":checked") &&
+          $("#valid_tax_clearance29").is(":checked") &&
+          $("#registered_with_praz29").is(":checked") &&
+          $("#tax_status29").is(":checked") &&
+          $("#site_visit_done29").is(":checked")
+        ) {
+          $("#decision29").prop("checked", true);
+          $("#reject29").prop("checked", false);
+        } else {
+          $("#decision29").prop("checked", false);
+          $("#reject29").prop("checked", true);
+        }
+      } else if (
+        (site_visit_value === "no" || site_visit_value === "") &&
+        (samples_value === "no" || samples_value === "")
+      ) {
+        if (
+          $("#payment_terms29").is(":checked") &&
+          $("#bid_validity29").is(":checked") &&
+          $("#delivery_period29").is(":checked") &&
+          $("#technical_specifications29").is(":checked") &&
+          $("#valid_tax_clearance29").is(":checked") &&
+          $("#registered_with_praz29").is(":checked") &&
+          $("#tax_status29").is(":checked")
+        ) {
+          $("#decision29").prop("checked", true);
+          $("#reject29").prop("checked", false);
+        } else {
+          $("#decision29").prop("checked", false);
+          $("#reject29").prop("checked", true);
+        }
+      } else if (
+        (site_visit_value === "no" || site_visit_value === "") &&
+        samples_value === "yes"
+      ) {
+        if (
+          $("#payment_terms29").is(":checked") &&
+          $("#bid_validity29").is(":checked") &&
+          $("#delivery_period29").is(":checked") &&
+          $("#technical_specifications29").is(":checked") &&
+          $("#valid_tax_clearance29").is(":checked") &&
+          $("#registered_with_praz29").is(":checked") &&
+          $("#tax_status29").is(":checked") &&
+          $("#samples_delivered29").is(":checked")
+        ) {
+          $("#decision29").prop("checked", true);
+          $("#reject29").prop("checked", false);
+        } else {
+          $("#decision29").prop("checked", false);
+          $("#reject29").prop("checked", true);
+        }
+      }
+    });
+  });
+  $(document).ready(function () {
+    $('input[type="checkbox"]').click(function () {
+      let site_visit_value = $("#site_visit option:selected").val();
+      let samples_value = $("#samples option:selected").val();
+
+      if (site_visit_value === "yes" && samples_value === "yes") {
+        if (
+          $("#payment_terms30").is(":checked") &&
+          $("#bid_validity30").is(":checked") &&
+          $("#delivery_period30").is(":checked") &&
+          $("#technical_specifications30").is(":checked") &&
+          $("#valid_tax_clearance30").is(":checked") &&
+          $("#registered_with_praz30").is(":checked") &&
+          $("#tax_status30").is(":checked") &&
+          $("#site_visit_done30").is(":checked") &&
+          $("#samples_delivered30").is(":checked")
+        ) {
+          $("#decision30").prop("checked", true);
+          $("#reject30").prop("checked", false);
+        } else {
+          $("#decision30").prop("checked", false);
+          $("#reject30").prop("checked", true);
+        }
+      } else if (
+        site_visit_value === "yes" &&
+        (samples_value === "no" || samples_value === "")
+      ) {
+        if (
+          $("#payment_terms30").is(":checked") &&
+          $("#bid_validity30").is(":checked") &&
+          $("#delivery_period30").is(":checked") &&
+          $("#technical_specifications30").is(":checked") &&
+          $("#valid_tax_clearance30").is(":checked") &&
+          $("#registered_with_praz30").is(":checked") &&
+          $("#tax_status30").is(":checked") &&
+          $("#site_visit_done30").is(":checked")
+        ) {
+          $("#decision30").prop("checked", true);
+          $("#reject30").prop("checked", false);
+        } else {
+          $("#decision30").prop("checked", false);
+          $("#reject30").prop("checked", true);
+        }
+      } else if (
+        (site_visit_value === "no" || site_visit_value === "") &&
+        (samples_value === "no" || samples_value === "")
+      ) {
+        if (
+          $("#payment_terms30").is(":checked") &&
+          $("#bid_validity30").is(":checked") &&
+          $("#delivery_period30").is(":checked") &&
+          $("#technical_specifications30").is(":checked") &&
+          $("#valid_tax_clearance30").is(":checked") &&
+          $("#registered_with_praz30").is(":checked") &&
+          $("#tax_status30").is(":checked")
+        ) {
+          $("#decision30").prop("checked", true);
+          $("#reject30").prop("checked", false);
+        } else {
+          $("#decision30").prop("checked", false);
+          $("#reject30").prop("checked", true);
+        }
+      } else if (
+        (site_visit_value === "no" || site_visit_value === "") &&
+        samples_value === "yes"
+      ) {
+        if (
+          $("#payment_terms30").is(":checked") &&
+          $("#bid_validity30").is(":checked") &&
+          $("#delivery_period30").is(":checked") &&
+          $("#technical_specifications30").is(":checked") &&
+          $("#valid_tax_clearance30").is(":checked") &&
+          $("#registered_with_praz30").is(":checked") &&
+          $("#tax_status30").is(":checked") &&
+          $("#samples_delivered30").is(":checked")
+        ) {
+          $("#decision30").prop("checked", true);
+          $("#reject30").prop("checked", false);
+        } else {
+          $("#decision30").prop("checked", false);
+          $("#reject30").prop("checked", true);
+        }
+      }
+    });
+  });
+
+  var count = 0;
+  function countClicks() {
+    count = parseInt(count) + 1;
+    if (count > 1) {
+      event.preventDefault();
+    }
+  }
+</script>
+{% endblock scripts %}
