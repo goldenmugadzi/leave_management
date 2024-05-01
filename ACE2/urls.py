@@ -9,9 +9,10 @@ urlpatterns = [
     path('ace_detail_project/<str:Ace_id2>', add_project_details, name='ace_detail_project'),
     path('aces', view_all_aces, name='view_all_aces'),
     path('upload_budget', upload_budgets, name='upload budget'),
-    path('balance/<str:budget_id>', get_budget_balance, name='balance>')
+    path('balance/<str:budget_id>', get_budget_balance, name='balance>'),
+    path('attachment/<str:attachment_id>', download_attachment, name='attachment'),
 
-    # path('pettycashs_awaiting_my_action', pettycash_awaiting_my_action, name='pettycashs_awaiting_my_action'),
+    path('aces_awaiting_my_action', ace_awaiting_my_action, name='aces_awaiting_my_action'),
     # path('import_pettycash', import_pettycash, name='import_pettycash'),
     # path('receipt', receipt, name='receipt'),
 ]

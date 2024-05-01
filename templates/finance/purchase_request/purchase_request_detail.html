@@ -65,7 +65,7 @@
                                     <p class="font-bold   mb-2">Section: {{ purchase_request.section |default_if_none:'' }}</p>
                                     <p class="m-4 flex flex-row gap-2 mb-3">
                                         {% for attachment in purchase_request.attachment_set.all %}
-                                            <a href="{{ attachment.url }}"
+                                            <a href="{% url %}"
                                                class="text-white rounded border border-1 p-2 bg-gulf-blue-400 sm ">{{ attachment.file.name|basename }}</a>
                                         {% endfor %}
                                     </p>

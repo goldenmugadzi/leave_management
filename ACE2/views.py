@@ -1,11 +1,12 @@
 from datetime import datetime, date
+from os.path import basename
 from random import randrange
 
 import sweetify
 import csv
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse, JsonResponse, HttpResponseNotFound, FileResponse
 from django.shortcuts import render, redirect
 from django.urls import reverse
 
@@ -190,7 +191,7 @@ def create_Ace(request):
 @login_required
 def ace_awaiting_my_action(request):
     """
-    for each pettycash.Process in the rfqs,  let current_step = the last pettycash.process.approval if any else 0 and
+    for each ace2.Process ,  let current_step = the last pettycash.process.approval if any else 0 and
     let next_step =current_step+1 then check if  next_step=step.step for rfq.process.workflow.step_set filtered by
     approver = user.roles.all.
     """
@@ -213,8 +214,9 @@ def ace_awaiting_my_action(request):
         if role.application == "ace":
             custom_user_roles["ace"] = role
     ace_role = str(custom_user_roles["ace"])
+    print(ace_role)
 
-    if ace_role == "approve":
+    if ace_role == "pass":
         for ace in Ace2.objects.filter(section=request.user.section):
             process = ace.process
 
@@ -288,8 +290,10 @@ def add_project_details(request, Ace_id2):
         form = ProjectDetailForm(request.POST, request.FILES)
         if form.is_valid():
             project_details = form.save(commit=False)
-            # add items from form to already existing ace object
-            total_connection_fee = project_details.present_tariff + project_details.present_fmc + project_details.capital_contribution + project_details.materials + project_details.labour + project_details.transport
+            # add items from form to already existing ace object and convert to float before saving
+            total_connection_fee = (float(project_details.present_tariff) + float(project_details.present_fmc) +
+                                    float(project_details.capital_contribution) + float(project_details.materials) +
+                                    float(project_details.labour) + float(project_details.transport))
 
             ace = Ace2.objects.filter(Ace_id2=Ace_id2).first()
             ace.present_tariff = project_details.present_tariff
@@ -388,3 +392,14 @@ def get_budget_balance(request, budget_id):
         return JsonResponse({'balance': budget.balance, 'withdrawn': budget.withdrawn, 'name': budget.budget_name})
     except Budget.DoesNotExist:
         return JsonResponse({'error': 'Budget not found'}, status=404)
+
+
+def download_attachment(request, attachment_id):
+    try:
+        attachment = Quotation.objects.get(pk=attachment_id)
+    except Quotation.DoesNotExist:
+        return HttpResponseNotFound('Attachment not found')
+
+    response = FileResponse(attachment.quotation_file, content_type='application/octet-stream')
+    response['Content-Disposition'] = f'attachment; filename="{attachment.quotation_file}"'
+    return response

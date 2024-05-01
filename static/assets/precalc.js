@@ -25,7 +25,7 @@ window.addEventListener("DOMContentLoaded", () => {
                 const modalBody = document.getElementById('modal-body-content');
 
                 // Update modal content
-                modalBody.textContent = `The remaining balance after this transaction would be:$ ${remainingBalance} The amount already withdrawn from the ${budgetName} budget is: $${withdrawnAmount}`;
+                modalBody.textContent = `The remaining balance after this transaction would be: $ ${remainingBalance} The amount already withdrawn from the ${budgetName} budget is: $${withdrawnAmount}`;
 
                 // Show modal
                 $('#resultModal').modal('show');

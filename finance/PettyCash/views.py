@@ -1,9 +1,12 @@
 from datetime import datetime
+from mimetypes import guess_type
 from random import randrange
 import csv
 
+import sweetify
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.http import HttpResponseNotFound, FileResponse, HttpResponse
 from django.shortcuts import render, redirect
 from django.urls import reverse
 
@@ -46,10 +49,10 @@ def pettyCash_detail(request, petty_id):
     quotations = Quotation.objects.filter(pettycash=pettycash_item).all()
     print(quotations.count())
 
-    if pettycash_role == "disburse":
+    if pettycash_role == "disburse" and request.method == 'POST':
         payment_mode = request.POST.get('payment_mode')
         amount_disbursed = request.POST.get('amount_disbursed')
-        # print(payment_mode)
+        print(payment_mode)
         if payment_mode and payment_mode != '':
             pettycash_item.payment_mode = payment_mode
             pettycash_item.amount_disbursed = amount_disbursed
@@ -482,3 +485,28 @@ def receipt(request):
         return redirect('/pettycash/pettycashs')
 
 
+def download_attachment(request, attachment_id):
+    try:
+        attachment = Quotation.objects.get(pk=attachment_id)
+    except Quotation.DoesNotExist:
+        return HttpResponseNotFound('Attachment not found')
+
+    response = FileResponse(attachment.quotation_file, content_type='application/octet-stream')
+    response['Content-Disposition'] = f'attachment; filename="{attachment.quotation_file}"'
+    return response
+
+
+def download_file(request, filename):
+    # Open the file for reading (replace 'path/to/file' with the actual path)
+    filepath = f'uploads/pettycash/{filename}'
+    try:
+        with open(filepath, 'rb') as f:
+            mime_type, _ = guess_type(filepath)
+            response = HttpResponse(f.read(), content_type=mime_type)
+            response['Content-Disposition'] = f"attachment; filename={filename}"
+        return response
+    except FileNotFoundError:
+        # Handle file not found error (return 404 or a custom message)
+        sweetify.error(request, 'File not found')
+
+        return HttpResponseNotFound('The requested file does not exist.')
