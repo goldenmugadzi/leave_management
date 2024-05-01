@@ -56,9 +56,7 @@
               {% endif %}
             </td>
         <td>
-              {% for response in nonconformity.response_set.all|slice:"-1" %}
-                {{ response.status }}
-              {% endfor %}
+                {{ nonconformity.response_set.last.status }}
             </td>
           </tr>
           {% endfor %}

@@ -38,6 +38,7 @@ class Nonconformity(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     attachment = models.FileField(upload_to='nonconformity_attachments/', blank=True, null=True, verbose_name='Attachment')
     expected_completion_date = models.DateField(blank=True, null=True, verbose_name='Expected Completion Date')
+    status = models.BooleanField( choices=((True, 'Created'),(False, 'Resolved')), default= True)
     
     def __str__(self):
         return self.description
@@ -50,7 +51,7 @@ class Response(models.Model):
     nonconformity = models.ForeignKey(Nonconformity, on_delete=models.CASCADE)
     comment = models.TextField(max_length=400, blank=True, null=True)
     created_at = models.DateTimeField(auto_now=True)
-    status = models.CharField(max_length=20, choices=(('created', 'Created'),('accepted', 'Accepted'),('rejected', 'Rejected'), ('resolved', 'Resolved'),), default='created')
+    status = models.BooleanField( choices=((True, 'Accepted'),(False, 'Rejected')))
     
  
     def __str__(self):
