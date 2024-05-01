@@ -90,31 +90,40 @@
                             <p class="font-bold   mb-2"> Currency: {{ pettycash.currency }}</p>
                             <p class="font-bold   mb-2"> Allocation code of expenditure: {{ pettycash.section }}</p>
                             <p class="font-bold   mb-2"> Amount: {{ pettycash.amount }}</p>
+                            <p class="font-bold mb-2">Attachments:
+                                {% for attachment in pettycash.quotation_set.all %}
+                                    <a href="/pettycash/attachments/ {{attachment}}"><button class="bg-red-500 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded"
+                                                                                       href="/pettycash/attachment/ {{attachment}}">
+                                        {{ attachment.quotation_file.name|basename }}
+                                    </button>
+                                    </a>
+                                {% endfor %}
+                            </p>
                         {% if clear %}
                             <br>
                         <p class="font-bold   mb-2 bg-red-600"> Clearance status:Pending</p>
-{#                            <button id="open-modal" class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded">Clear pettycash</button>#}
-{#                            <div id="modal" class="modal">#}
-{#                                <div class="modal-content">#}
-{#                                    <form id="upload-form" enctype="multipart/form-data">#}
-{#                                        {% csrf_token %}#}
-{#                                        <div class="form-group">#}
-{#                                            <label for="file-input">Receipt:</label>#}
-{#                                            <br>#}
-{#                                            <input type="file" id="file-input" name="file-input">#}
-{#                                        </div>#}
-{#                                        <div class="form-group">#}
-{#                                            <label for="disbursed">Amount used($):</label>#}
-{#                                            <br>#}
-{#                                            <input type="number" id="disbursed" name="disbursed">#}
-{#                                            <input type="hidden" name="petty_id" value="{{ pettycash.petty_id }}">#}
-{#                                        </div>#}
-{#                                        <button type="submit" class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded">Submit</button>#}
-{#                                    </form>#}
-{#                                    <br>#}
-{#                                    <button id="close-modal" class="bg-red-500 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded">Close</button>#}
-{#                                </div>#}
-{#                            </div>#}
+                            <button id="open-modal" class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded">Clear pettycash</button>
+                            <div id="modal" class="modal">
+                                <div class="modal-content">
+                                    <form id="upload-form" enctype="multipart/form-data">
+                                        {% csrf_token %}
+                                        <div class="form-group">
+                                            <label for="file-input">Receipt:</label>
+                                            <br>
+                                            <input type="file" id="file-input" name="file-input">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="disbursed">Amount used($):</label>
+                                            <br>
+                                            <input type="number" id="disbursed" name="disbursed">
+                                            <input type="hidden" name="petty_id" value="{{ pettycash.petty_id }}">
+                                        </div>
+                                        <button type="submit" class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded">Submit</button>
+                                    </form>
+                                    <br>
+                                    <button id="close-modal" class="bg-red-500 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded">Close</button>
+                                </div>
+                            </div>
                             <br>
                             <br>
                         {% else %}
@@ -145,13 +154,16 @@
                                 <p class="font-bold   mb-2 bg-red-600"> Payment mode: Not yet Added By Cashier</p>
                             {% else %}
                                 <p class="font-bold   mb-2"> Payment mode: {{ pettycash.payment_mode }}</p>
+                                <p class="font-bold   mb-2"> Disbursed Amount($): {{ pettycash.amount_disbursed }}</p>
                                 {% if pettycash.receipt_file == '' or pettycash.receipt_file == None and request.user == approval.user %}
                                     <p class="font-bold   mb-2"> Receipt: Not yet Receipted</p>
 
 
                                 {% else %}
-                                    <p class="font-bold   mb-2"> Receipt: {{ pettycash.receipt_file }}</p>
-                                    <p class="font-bold   mb-2"> Disbursed Amount($): {{ pettycash.amount_disbursed }}</p>
+                                    <p class="font-bold   mb-2"> Receipt:  <a href="/pettycash/attachment/{{pettycash.receipt_file.name|basename}}/"><button class="bg-red-500 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded">
+                                        {{ pettycash.receipt_file.name|basename }}
+                                    </button>
+                                    </a></p>
                                     <p class="font-bold   mb-2"> Amount Used($): {{ pettycash.amount_used }}</p>
                                     {#                               #input and post receipt file #}
                                 {% endif %}
@@ -165,7 +177,7 @@
                  </div>
                     <h1 class="text-center mb-4 font-bold text-xl  mb-2">Workflow Details</h1>
                     <p class="font-bold  mb-2"> Workflow name : {{ pettycash.process.workflow }}</p>
-                {% if clear_minus %}
+                {% if clear_minus and pettycash.payment_mode == None %}
                 <form class="row rounded py-4 border  rounded-lg p-3 m-auto container" method="POST"
                       action="/pettycash/pettycash_detail/{{ pettycash.petty_id  }}/" enctype="multipart/form-data">
                     {% csrf_token %}

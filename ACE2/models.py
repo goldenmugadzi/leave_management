@@ -40,7 +40,7 @@ class Ace2(models.Model):
     ]
 
     # ace_type = models.CharField(max_length=15, blank=True, null=True)
-    section = models.ForeignKey(Sections, on_delete=models.DO_NOTHING, blank=True, null=True),
+
     region = models.ForeignKey(Regions, on_delete=models.DO_NOTHING, blank=True, null=True)
     allocation_code_of_expenditure = models.CharField(max_length=100, blank=True, null=True)
     details_of_expenditure = models.CharField(max_length=100, blank=True, null=True)
@@ -54,7 +54,7 @@ class Ace2(models.Model):
     asset_number = models.TextField(max_length=1000, blank=True, null=True)
     capital_estimated = models.FloatField(blank=True, null=True)
     capital_sanctioned = models.FloatField(blank=True, null=True)
-    budget_id = models.ForeignKey(Budget, on_delete=models.DO_NOTHING, default=1)
+    budget_id = models.ForeignKey(AssetBudget, on_delete=models.DO_NOTHING, default=1)
     # budget_name = models.ForeignKey(assetBudget, on_delete=models.CASCADE)
 
     # project items
@@ -75,6 +75,8 @@ class Ace2(models.Model):
     quantity = models.IntegerField(null=True, max_length=20)
 
     process = models.OneToOneField(Process, on_delete=models.SET_NULL, blank=True, null=True)
+    section = models.ForeignKey(Sections, on_delete=models.DO_NOTHING, blank=True)
+    # dummy = models.CharField(null=True, max_length=120, blank=True)
 
     def __str__(self):
         return self.Ace_id2
@@ -85,9 +87,9 @@ class Transactions(models.Model):
     details_of_expenditure = models.CharField(blank=True, null=True, max_length=120)
     approval_status = models.CharField(blank=True, null=True, max_length=120)
     transaction_id = models.AutoField(primary_key=True)
-    region = models.CharField(blank=True, null=True, max_length=120)
+    region = models.ForeignKey(Regions, on_delete=models.DO_NOTHING)
+    section = models.ForeignKey(Sections, on_delete=models.DO_NOTHING)
     amount = models.FloatField(blank=True, null=True, max_length=120)
-    ace2 = models.CharField(blank=True, null=True, max_length=120)
     budget = models.ForeignKey(AssetBudget, on_delete=models.CASCADE)
 
     # quotation = models.ForeignKey(Ace, on_delete=models.CASCADE)

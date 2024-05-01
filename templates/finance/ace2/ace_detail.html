@@ -92,6 +92,15 @@
                             <p class="font-bold   mb-2"> Details of expenditure: {{ ace.details_of_expenditure }}</p>
                             <p class="font-bold mb-2"> Region: {{ ace.region}}</p>
                             <p class="font-bold   mb-2"> Section: {{ ace.section }}</p>
+                        <p class="font-bold mb-2">
+                            {% for attachment in ace.quotation_set.all %}
+                                <a href="/acee/attachment/ {{attachment}}"><button class="bg-red-500 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded"
+                                        href="/acee/attachment/ {{attachment}}">
+                                    {{ attachment.quotation_file.name|basename }}
+                                </button>
+                                </a>
+                            {% endfor %}
+                        </p>
                             <p class="font-bold   mb-2"> Requested By: {{ ace.requested_by }}</p>
                             <p class="font-bold   mb-2"> Date Created: {{ ace.date_created }}</p>
                             <p class="font-bold   mb-2"> Asset Number or (s): {{ ace.asset_number }}</p>
