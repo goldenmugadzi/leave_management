@@ -221,15 +221,49 @@ def uploaduuom(request):
         unit = UnitOfMeasurement(unit=data['UM'], name=data['MUT'])
         unit.save()
     """upload procurement Plan References data to the database"""
-    # from .grn import data
-    # procurementPlanReferences= data 
-    # for procurementPlanReference in procurementPlanReferences:
-    #     print(procurementPlanReference)
-    #     try:
-    #         unit = ProcurementPlanReference(id=procurementPlanReference['id'], name=procurementPlanReference['name'])
-    #         unit.save()
-    #     except:
-    #         pass
+    from .grn import data
+    procurementPlanReferences= data 
+    for procurementPlanReference in procurementPlanReferences:
+        print(procurementPlanReference)
+        try:
+            unit = ProcurementPlanReference(id=procurementPlanReference['id'], name=procurementPlanReference['name'])
+            unit.save()
+        except:
+            pass
+    """upload rfq data to the database"""
+    import mysql.connector 
+
+    # Connect to the MySQL database
+    cnx = mysql.connector.connect(
+        host="172.16.8.22",
+        user="root",
+        password="",
+        database="dms"
+    )
+
+    # Create a cursor object
+    cursor = cnx.cursor()
+
+    # Execute the SQL query
+    sql_query = """
+        SELECT rfq.rfq_number, rfq.rfq_date, rfq.scope_of_work, 
+            rfq.date_created, rfq.specifications, rfq.created_by, rfq.section_code, 
+            rfq.ace, rfq.ace_spec, rfq.proc_ref, rfq.region, required_items.*
+        FROM required_items
+        JOIN rfq ON required_items.document_id = rfq.document_id
+        ORDER BY rfq.id ASC
+    """
+    cursor.execute(sql_query)
+
+    # Fetch all the results
+    results = cursor.fetchall()
+    for item_dict in results:
+        item = dict(zip(cursor.column_names, item_dict))
+        try:
+            unit = ProcurementPlanReference(id=procurementPlanReference['id'], name=procurementPlanReference['name'])
+            unit.save()
+        except:
+            pass
     """upload rfq data to the database"""
     import mysql.connector 
 

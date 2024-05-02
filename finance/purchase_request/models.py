@@ -36,9 +36,10 @@ class PurchaseRequest(models.Model):
         return self.id
    
     def save(self, *args, **kwargs):
-        if not self.id:
-            self.id = "PR" + self.pr_no
+        if not self.id and not self.pk:
+            self.id = "PR" + str(self.pr_no)
         super().save(*args, **kwargs)
+
 class Attachment(models.Model):
     file = models.FileField(upload_to='uploads/purchase_request')
     purchase_request = models.ForeignKey(PurchaseRequest, on_delete=models.CASCADE,blank=True, null=True)
