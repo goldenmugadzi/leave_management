@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect
-from .forms import  MeterForm, CustomerForm,ReasonForm,PernaltForm,TokenForm
+from .forms import  *
 from .models import *
 from django.contrib import messages
 from approve.views import intiate
@@ -45,7 +45,8 @@ def create_token(request):
                 return render(request, 'tokens/create_token.html', {'Customer': customer_form ,'token':TokenForm,'reason':ReasonForm(request.POST) ,'Meter': meter_form,'Pernalt':pernalt_form })
         else: return render(request, 'tokens/create_token.html', {'Customer': customer_form ,'reason':ReasonForm(request.POST) ,'Meter': meter_form,'Pernalt':pernalt_form })
 
-    return render(request, 'tokens/create_token.html', {'Customer': CustomerForm, 'reason':ReasonForm ,'token':TokenForm ,'Meter': MeterForm ,'Pernalt':PernaltForm})
+    forms = { 'meter_form': MeterForm(), 'customer_form': CustomerForm(), 'token_form': TokenForm(), 'reimbursement_form': ReimbursementForm(), 'clear_credit_form': ClearCreditForm(), 'tamper_token_form': TamperTokenForm(), 'old_token_form': OldTokenForm(), 'fault_meter_form': FaultMeterForm(), 'recovered_meter_form': RecoveredMeterForm(), 'fault_maintanance_form': FaultMaintananceForm(), 'reconnection_form': ReconnectionForm(), }
+    return render(request, 'tokens/create_token.html', forms)
 
 @login_required
 def token_details(request, token_id):

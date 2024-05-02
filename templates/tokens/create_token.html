@@ -12,7 +12,7 @@
         <div class="rounded">
            
     <h3 class="font-bold my-4 text-center">Meter</h3>
-    {% for field in Meter %}
+    {% for field in meter_form %}
           {% if field.is_hidden %}
             {{ field }}
           {% else %}
@@ -27,7 +27,7 @@
         {% endfor %}
 
     <h3 class="font-bold my-4 text-center">Customer</h3>
-         {% for field in Customer %}
+         {% for field in customer_form %}
             {% if field.is_hidden %}
               {{ field }}
             {% else %}
@@ -42,20 +42,8 @@
           {% endfor %}
         </div>
     <div class="rounded  ">
-    <h3 class="font-bold my-4 text-center">Reason</h3>
-    {% for field in reason %}
-            {% if field.is_hidden %}
-              {{ field }}
-            {% else %}
-              <div class="col-span-4">
-                {{ field.label_tag }}
-                <div class="text-red-500">
-                  {{ field.errors }}
-                </div>
-                {{ field }}
-              </div>
-            {% endif %}
-          {% endfor %}
+    <h3 class="font-bold my-4 text-center">Token</h3>
+     
           {% for field in token %}
             {% if field.is_hidden %}
               {{ field }}
@@ -95,4 +83,7 @@
   </form>
 </div>
 
-{% endblock %}
+{% endblock content %}
+{% block scripts %}
+<script src="{% static 'assets/js/token.js' %}"></script>
+{% endblock scripts %}
