@@ -99,7 +99,7 @@
                                     </a>
                                 {% endfor %}
                             </p>
-                        {% if clear %}
+                        {% if clear == False and requestor != None %}
                             <br>
                         <p class="font-bold   mb-2 bg-red-600"> Clearance status:Pending</p>
                             <button id="open-modal" class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded">Clear pettycash</button>
@@ -126,7 +126,8 @@
                             </div>
                             <br>
                             <br>
-                        {% else %}
+                        {% endif%}
+                        {% if clear == True %}
                             <p class="font-bold   mb-2"> Clearance status:Cleared</p>
                         {% endif %}
 

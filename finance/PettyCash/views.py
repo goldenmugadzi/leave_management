@@ -47,7 +47,7 @@ def pettyCash_detail(request, petty_id):
     # print(validation)
 
     quotations = Quotation.objects.filter(pettycash=pettycash_item).all()
-    print(quotations.count())
+    # print(quotations.count())
 
     if pettycash_role == "disburse" and request.method == 'POST':
         payment_mode = request.POST.get('payment_mode')
@@ -70,24 +70,39 @@ def pettyCash_detail(request, petty_id):
         last_approved = 0
 
     next_step = last_approved + 1
+    print("cleating")
+    if len(pettycash_item.process.approval_set.all()) == len(pettycash_item.process.workflow.step_set.all()):
+        print('approval set')
+        clear = True
+    if len(pettycash_item.process.approval_set.all()) == len(pettycash_item.process.workflow.step_set.all())-1:
+        print('approval set ...')
+        clear_minus = True
 
     try:
         newStep = Step.objects.get(step=next_step, workflow=pettycash_item.process.workflow,
                                    approver__in=user_roles)
         if newStep and request.user.section == pettycash_item.section:
             approvalForm = ApprovalForm
+            print("newstep", newStep.step)
+            print(len(pettycash_item.process.workflow.step_set.all()))
+
             to = newStep.to
-            if newStep.step == len(pettycash_item.process.workflow.step_set.all()):
-                clear = True
-            if newStep.step == len(pettycash_item.process.workflow.step_set.all()) - 1:
-                clear_minus = True
+
     except Step.DoesNotExist:
         pass
     approved_steps = pettycash_item.process.approval_set.all().values_list('step__step', flat=True)
+
+    if pettycash_role == "create":
+        requestor = pettycash_role
+    else:
+        print(pettycash_role)
+        requestor = None
+
+    print(pettycash_role, clear, requestor)
     return render(request, 'finance/pettycash/pettycash_detail.html',
                   {'pettycash': pettycash_item, 'approved_steps': approved_steps, 'approvalForm': approvalForm,
                    'to': to, 'pettycash_role': pettycash_role, 'user_groups': user_groups, 'quotations': quotations
-                      , 'clear': clear, "clear_minus": clear_minus})
+                      , 'clear': clear, "clear_minus": clear_minus, 'requestor': requestor})
 
 
 @login_required
