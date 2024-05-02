@@ -69,36 +69,40 @@ def pettyCash_detail(request, petty_id):
     except AttributeError:
         last_approved = 0
 
-    next_step = last_approved + 1
-    print("cleating")
-    if len(pettycash_item.process.approval_set.all()) == len(pettycash_item.process.workflow.step_set.all()):
-        print('approval set')
-        clear = True
-    if len(pettycash_item.process.approval_set.all()) == len(pettycash_item.process.workflow.step_set.all()) - 2:
-        print('approval set ...')
-        clear_minus = True
+    approval_status = pettycash_item.process.approval_set.last().approved if pettycash_item.process.approval_set.last() else ""
+    print("last approved", approval_status)
+    if approval_status != "Rejected":
+        next_step = last_approved + 1
+        print("cleating")
+        if len(pettycash_item.process.approval_set.all()) == len(pettycash_item.process.workflow.step_set.all()):
+            print('approval set')
+            clear = True
+        if len(pettycash_item.process.approval_set.all()) == len(pettycash_item.process.workflow.step_set.all()) - 2:
+            print('approval set ...')
+            clear_minus = True
 
-    try:
-        newStep = Step.objects.get(step=next_step, workflow=pettycash_item.process.workflow,
-                                   approver__in=user_roles)
+        try:
+            newStep = Step.objects.get(step=next_step, workflow=pettycash_item.process.workflow,
+                                    approver__in=user_roles)
 
-        # check if section head
-        if pettycash_role == "approve":
-            if newStep and request.user.section == pettycash_item.section:
+            # check if section head
+            if pettycash_role == "approve":
+                if newStep and request.user.section == pettycash_item.section:
+                    approvalForm = ApprovalForm
+                    print("newstep", newStep.step)
+                    print(len(pettycash_item.process.workflow.step_set.all()))
+
+                    to = newStep.to
+            else:
                 approvalForm = ApprovalForm
                 print("newstep", newStep.step)
                 print(len(pettycash_item.process.workflow.step_set.all()))
 
                 to = newStep.to
-        else:
-            approvalForm = ApprovalForm
-            print("newstep", newStep.step)
-            print(len(pettycash_item.process.workflow.step_set.all()))
 
-            to = newStep.to
-
-    except Step.DoesNotExist:
-        pass
+        except Step.DoesNotExist:
+            pass
+    
     approved_steps = pettycash_item.process.approval_set.all().values_list('step__step', flat=True)
 
     if pettycash_role == "create":
