@@ -98,15 +98,15 @@
             </div>
           {% endfor %}
         </div>
-        <input type="radio" name="action" value="Save" id="saveRadio" hidden>
+        <input type="radio" name="action" class="hidden" value="Save" id="saveRadio" >
         <div class="flex">
-          <input class="bg-blue-500 text-white px-3  m-1 p-1 rounded-full font-bold flex justify-center text-2xl hover:bg-blue-600"
+          <input class="bg-blue-500 text-white px-3 p-2 mb-3 m-1 p-1 rounded-full font-bold flex justify-center  hover:bg-blue-600"
                  title="add line item"
                  id="add-form-button"
                  type="button"
                  value="+">
                  <label for="upload"
-                 class="text-blue-500 px-3  pl-0  rounded-full font-bold flex justify-center items-center hover:bg-blue-600">
+                 class="text-blue-500 px-3  pl-0  rounded-full font-bold flex justify-center mb-3  items-center hover:bg-gray-300">
                  <i class="bg-blue-500  text-white fa fa-upload p-2 m-1 border rounded-full" aria-hidden="true"></i>  Import Items from Excel
               <input id="upload" name="upload" type="file" class="">
           </label>

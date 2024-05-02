@@ -9,7 +9,7 @@ from approve.models import Step
 from approve.forms import ApprovalForm
 from django.shortcuts import render, redirect
 from django.urls import reverse
-
+from django.db.models import Q
 from approve.forms import ApprovalForm
 from approve.models import Step
 from approve.views import intiate
@@ -204,9 +204,7 @@ def uploaduuom(request):
     xl = pd.ExcelFile('finance/purchase_request/uom.xlsx')
     df = xl.parse('units')
     data_dict = df.to_dict('records')
-    print(data_dict)
     for data in data_dict:
-        print(data)
         unit = UnitOfMeasurement(unit=data['UM'], name=data['MUT'])
         unit.save()
     """upload procurement Plan References data to the database"""
@@ -219,6 +217,64 @@ def uploaduuom(request):
             unit.save()
         except:
             pass
+    """upload rfq data to the database"""
+    import mysql.connector 
+
+    # Connect to the MySQL database
+    cnx = mysql.connector.connect(
+        host="172.16.8.22",
+        user="root",
+        password="",
+        database="dms"
+    )
+
+    # Create a cursor object
+    cursor = cnx.cursor()
+
+    # Execute the SQL query
+    sql_query = """
+        SELECT rfq.rfq_number, rfq.rfq_date, rfq.scope_of_work, 
+            rfq.date_created, rfq.specifications, rfq.created_by, rfq.section_code, 
+            rfq.ace, rfq.ace_spec, rfq.proc_ref, rfq.region, required_items.*
+        FROM required_items
+        JOIN rfq ON required_items.document_id = rfq.document_id
+        ORDER BY rfq.id ASC
+    """
+    cursor.execute(sql_query)
+
+    # Fetch all the results
+    results = cursor.fetchall()
+    for item_dict in results:
+        item = dict(zip(cursor.column_names, item_dict))
+        try:
+            created_by = UserProfile.objects.get(username=item['created_by'])
+        except :
+            created_by= request.user
+
+        section_code = item.get('section_code')
+        if section_code:
+            defaults = {
+                # 'section': Sections.objects.get(code=section_code) or Sections.objects.get(id=1),
+                'procurement_plan_reference': ProcurementPlanReference.objects.get(id=item['proc_ref'][3:]),
+                'requested_by': created_by,
+                # 'created_at': item['date_created'] if "#" not in item['date_created'] else None,
+                # 'ace': item['ace'],
+                'scope_of_work': item['scope_of_work'],
+            }
+        purchase_request, created = PurchaseRequest.objects.get_or_create(pr_no=item['rfq_number'], defaults=defaults)
+        print(item,"\n\n\n\n\n\n\npritem\n\n", item['uom'])
+        try:pritem = PrItem(item_required=item['item_required'],
+                        unit_of_measurement = UnitOfMeasurement.objects.get(Q(unit__iexact=item['uom']) | Q(name__iexact=item['uom'])),
+                        quantity=item['qty'],
+                        purchase_request=purchase_request,
+                        ) 
+        except: print(item['uom'],"failed")
+    # Close the cursor and database connection
+    cursor.close()
+    cnx.close()
+    # unit = PurchaseRequest(unit=data['document_id'], name=data['MUT'])
+    #     unit.save()
+    
     return render(request, 'finance/purchase_request/add_uom.html')
 @login_required
 def del_file(request, id):
