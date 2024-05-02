@@ -16,7 +16,7 @@ from rest_framework.parsers import JSONParser
 
 from it.users.models import Roles, UserProfile, Depots, Districts, Regions, Designations, Sections
 from it.users.forms import CustomUserCreationForm
-from scr import csvfile
+# from scr import csvfile
 
 from utils.helper_functions import group_user_roles
 from django.contrib.auth.models import Group, User
