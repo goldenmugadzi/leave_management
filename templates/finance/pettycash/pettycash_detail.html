@@ -99,7 +99,7 @@
                                     </a>
                                 {% endfor %}
                             </p>
-                        {% if clear %}
+                        {% if clear == False and requestor != None %}
                             <br>
                         <p class="font-bold   mb-2 bg-red-600"> Clearance status:Pending</p>
                             <button id="open-modal" class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded">Clear pettycash</button>
@@ -126,7 +126,8 @@
                             </div>
                             <br>
                             <br>
-                        {% else %}
+                        {% endif%}
+                        {% if clear == True %}
                             <p class="font-bold   mb-2"> Clearance status:Cleared</p>
                         {% endif %}
 
@@ -177,7 +178,7 @@
                  </div>
                     <h1 class="text-center mb-4 font-bold text-xl  mb-2">Workflow Details</h1>
                     <p class="font-bold  mb-2"> Workflow name : {{ pettycash.process.workflow }}</p>
-                {% if clear_minus and pettycash.payment_mode == None %}
+                {% if clear_minus and pettycash.payment_mode == None and cashier != None %}
                 <form class="row rounded py-4 border  rounded-lg p-3 m-auto container" method="POST"
                       action="/pettycash/pettycash_detail/{{ pettycash.petty_id  }}/" enctype="multipart/form-data">
                     {% csrf_token %}
@@ -189,9 +190,11 @@
                             <select name="payment_mode" id="payment_mode" required>
                                 <option value="">Add Payment Mode</option>
                                 <option value="ZIG_SWIPE">Swipe ZIG</option>
-                                <option value="ZIG_CASH">Cash ZIG</option>
                                 <option value="SWIPE_USD">Swipe Usd</option>
-                                <option value="CASH_USD">Rtgs Usd</option>
+                                <option value="CASH_USD">Cash Usd</option>
+                                <option value="ZIG_CASH">Cash ZIG</option>
+                                <option value="CASH_USD">(transfer) Usd</option>
+                                <option value="CASH_ZIG">(transfer) ZIG</option>
                             </select>
                         </div>
 

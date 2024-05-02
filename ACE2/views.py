@@ -6,6 +6,7 @@ import sweetify
 import csv
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core import serializers
 from django.http import HttpResponse, JsonResponse, HttpResponseNotFound, FileResponse
 from django.shortcuts import render, redirect
 from django.urls import reverse
@@ -14,7 +15,7 @@ from ACE2.forms import *
 from approve.forms import ApprovalForm
 from approve.models import Step
 from approve.views import intiate
-from it.users.models import UserProfile, Roles, Designations
+from it.users.models import UserProfile, Roles, Designations, Districts, Depots
 
 
 # Create your views here.
@@ -22,6 +23,8 @@ from it.users.models import UserProfile, Roles, Designations
 def Ace_detail(request, Ace_id2):
     user_id = request.user.id
     user_profile = UserProfile.objects.filter(id=user_id).first()
+    clear = False
+    clear_minus = False
 
     user_groups = user_profile.groups.values_list('name', flat=True)
 
@@ -83,6 +86,11 @@ def Ace_detail(request, Ace_id2):
                 transaction = Transactions.objects.filter(transaction_id=ace_item.transaction).first()
                 transaction.approval_status = "approved by General Manager"
                 transaction.save()
+                if newStep.step == len(ace_item.process.workflow.step_set.all()):
+                    clear = True
+            if newStep.step == len(ace_item.process.workflow.step_set.all()) - 1:
+                clear_minus = True
+            print(clear)
         elif newStep:
             approvalForm = ApprovalForm
             to = newStep.to
@@ -92,7 +100,8 @@ def Ace_detail(request, Ace_id2):
     approved_steps = ace_item.process.approval_set.all().values_list('step__step', flat=True)
     return render(request, 'finance/ace2/ace_detail.html',
                   {'ace': ace_item, 'approved_steps': approved_steps, 'approvalForm': approvalForm,
-                   'to': to, 'ace_role': ace_role, 'user_groups': user_groups, 'qoutations': quotations})
+                   'to': to, 'ace_role': ace_role, 'user_groups': user_groups, 'qoutations': quotations,
+                   'clear': clear, 'clear_minus': clear_minus})
 
 
 @login_required
@@ -329,14 +338,14 @@ def upload_budgets(request):
             print("row: ", row)
             section_code = row['section_code']
             section = row['section']
-            budget_name = row['budget']
+            budget_name = row['budget_name']
             allocated = row['allocated']
             withdrawn = row['withdrawn']
             balance = row['balance']
 
             withdrawal_date = row['withdrawal_date']
             withdrawal_date = withdrawal_date.strip().split(" ")[0]
-            if withdrawal_date != "null":
+            if withdrawal_date != "NULL":
 
                 withdrawal_date = datetime.strptime(withdrawal_date, "%Y-%m-%d")
             else:
@@ -368,7 +377,7 @@ def upload_budgets(request):
                                            created_date=created_date,
                                            budget_note=budget_note),
                 print("record created")
-        redirect("/ace/budgets")
+        return redirect("/ace/budgets")
         try:
             # ... view logic ...
             return HttpResponse("Budget uploaded successfully"), redirect('/ace/budgets')
@@ -377,7 +386,7 @@ def upload_budgets(request):
             return redirect("/ace/budgets")
 
     else:
-        return render(request, 'ace/upload_budget.html',
+        return render(request, 'finance/ace2/upload_budget.html',
                       {"title": "Upload budgets",
                        "user_title": user_title,
                        "user_groups": user_groups}
@@ -403,3 +412,160 @@ def download_attachment(request, attachment_id):
     response = FileResponse(attachment.quotation_file, content_type='application/octet-stream')
     response['Content-Disposition'] = f'attachment; filename="{attachment.quotation_file}"'
     return response
+
+
+@login_required(login_url='/accounts/login/')
+def list_budgets(request):
+    user_id = request.user.id
+    user_profile = UserProfile.objects.filter(id=user_id).first()
+
+    user_groups = user_profile.groups.values_list('name', flat=True)
+
+    custom_user_roles = {
+        "non_conformity": {},
+        "remittance_advice": {},
+        "pettycash": {},
+        "adjudication": {},
+        "tokens": {},
+        "tenders": {},
+        "ace": {},
+        "users": {},
+    }
+
+    roles_ = user_profile.roles.all()
+    for _role in roles_:
+        role = Roles.objects.filter(id=_role.id).first()
+
+        if role.application == "users":
+            custom_user_roles["users"] = role
+
+        if role.application == "non_conformity":
+            custom_user_roles["non_conformity"] = role
+
+        if role.application == "remittance_advice":
+            custom_user_roles["remittance_advice"] = role
+
+        if role.application == "pettycash":
+            custom_user_roles["pettycash"] = role
+
+        if role.application == "adjudication":
+            custom_user_roles["adjudication"] = role
+
+        if role.application == "tokens":
+            custom_user_roles["tokens"] = role
+
+        if role.application == "tenders":
+            custom_user_roles["tenders"] = role
+
+        if role.application == "ace":
+            custom_user_roles["ace"] = role
+
+    region = Regions.objects.filter(id=user_profile.region.id).first()
+    district = Districts.objects.filter(code=user_profile.district).first()
+    depot = Depots.objects.filter(code=user_profile.depot).first()
+    section_used = Sections.objects.filter(code=user_profile.section).first()
+    user_designation = Designations.objects.filter(
+        id=user_profile.designation.id).first() if user_profile.designation else None
+
+    new_user = {
+        "id": user_profile.pk,
+        "username": user_profile.username,
+        "firstname": user_profile.first_name,
+        "lastname": user_profile.last_name,
+        "email": user_profile.email,
+        "section": section_used,
+        "depot": depot,
+        "district": district,
+        "region": region,
+        "roles": custom_user_roles,
+        "designation": user_designation,
+    }
+    user_title = request.user.get_full_name()
+    print(section_used)
+    section_budget = Budget.objects.all()
+    # print(section_budget)
+    user_title = request.user.get_full_name()
+    l = request.user.groups.values_list('name', flat=True)
+
+    # QuerySet Object
+    context = serializers.serialize('json', section_budget)
+
+    user_page = 'ace/budgets_index.html'
+    print(context)
+
+    return render(request, user_page, {"title": "All Records",
+                                       "context": context,
+                                       "user_title": user_title,
+                                       "user_groups": user_groups})
+
+
+def upload_budgets(request):
+    user_title = request.user.get_full_name()
+    user_id = request.user.id
+    user_profile = UserProfile.objects.filter(id=user_id).first()
+    print("in view upload")
+
+    user_groups = user_profile.groups.values_list('name', flat=True)
+    if request.method == 'POST':
+        csvfile = request.FILES['file']  # file as key
+
+        decoded_file = csvfile.read().decode('cp1252').splitlines()
+        reader = csv.DictReader(decoded_file)
+
+        for row in reader:
+            print("row: ", row)
+            section_code = row['section_code']
+            section = row['section']
+            budget_name = row['budget']
+            allocated = row['allocated']
+            withdrawn = row['withdrawn']
+            balance = row['balance']
+
+            withdrawal_date = row['withdrawal_date']
+            withdrawal_date = withdrawal_date.strip().split(" ")[0]
+            if withdrawal_date != "null":
+
+                withdrawal_date = datetime.strptime(withdrawal_date, "%Y-%m-%d")
+            else:
+                withdrawal_date = None
+
+            awaiting_sanctioning = row['awaiting_sanctioning']
+            period = int(row['period'])
+            region = row['region']
+            created_date = date.today()
+
+            # withdrawal_date = datetime.strptime(row['withdrawal_date'], "%Y/%m/%d").strftime("%Y-%m-%d")
+            # areas = row['area'].split(',')
+            check_budget = Budget.objects.filter(budget_name=budget_name, period=period).first()
+            budget_note = csvfile
+
+            if check_budget:
+                print("duplicate record ....")
+            else:
+                Budget.objects.create(section_code=section_code,
+                                      section=section,
+                                      budget_name=budget_name,
+                                      allocated=allocated,
+                                      withdrawn=withdrawn,
+                                      balance=balance,
+                                      withdrawal_date=withdrawal_date,
+                                      awaiting_sanctioning=awaiting_sanctioning,
+                                      period=period,
+                                      region=region,
+                                      created_date=created_date,
+                                      budget_note=budget_note),
+                print("record created")
+        redirect("/ace/budgets")
+        try:
+            # ... view logic ...
+            return HttpResponse("Budget uploaded successfully"), redirect('/ace/budgets')
+        except Exception as e:
+            return HttpResponse("Error: {}".format(e))
+            return redirect("/ace/budgets")
+
+    else:
+        return render(request, 'ace/upload_budget.html',
+                      {"title": "Upload budgets",
+                       "user_title": user_title,
+                       "user_groups": user_groups}
+                      )
