@@ -73,7 +73,6 @@ def pettyCash_detail(request, petty_id):
     print("last approved", approval_status)
     if approval_status != "Rejected":
         next_step = last_approved + 1
-        print("cleating")
         if len(pettycash_item.process.approval_set.all()) == len(pettycash_item.process.workflow.step_set.all()):
             print('approval set')
             clear = True
