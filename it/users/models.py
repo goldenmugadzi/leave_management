@@ -1,8 +1,9 @@
 from django.db import models
 from datetime import date
+import random
+import time
 from django.contrib.auth.models import AbstractUser
-from django.utils import timezone
-from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
+from django.contrib.auth.models import BaseUserManager
 
 
 class UserManager(BaseUserManager):
@@ -69,11 +70,20 @@ class Depots(models.Model):
         app_label = 'users'
 
 
+class Application(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+    fullname = models.CharField(max_length=100, blank=True)
+
+    def __str__(self):
+        return self.name
+
+
 class Roles(models.Model):
     role = models.CharField(max_length=100)
     name = models.CharField(max_length=100)
     description = models.CharField(max_length=400)
     application = models.CharField(max_length=100)
+    app_id = models.ForeignKey(Application, on_delete=models.DO_NOTHING, blank=True, null=True)
 
     def __str__(self):
         return self.role
@@ -86,6 +96,7 @@ class Designations(models.Model):
     identifier = models.CharField(max_length=100, blank=True)
     description = models.CharField(max_length=100, blank=True)
     chk = models.CharField(max_length=100, blank=True)
+    section = models.ForeignKey(Sections, on_delete=models.DO_NOTHING, blank=True, null=True)
 
     def __str__(self):
         return self.identifier
@@ -127,9 +138,10 @@ class Notification(models.Model):
 
 
 class Supplier(models.Model):
-    name = models.CharField(max_length=100, unique=True)
+    id = models.CharField(primary_key=True, max_length=20, editable=False)
+    name = models.CharField(max_length=100, unique=True,blank=True, null=True)
     email = models.EmailField(blank=True, null=True)
-    phone = models.IntegerField(max_length=13, blank=True, null=True)
+    phone = models.IntegerField( blank=True, null=True)
     address = models.CharField(max_length=100, blank=True, null=True)
 
     class Meta:
@@ -137,3 +149,9 @@ class Supplier(models.Model):
 
     def __str__(self):
         return self.name
+    def save(self, *args, **kwargs):
+        if not self.id:
+            timestamp = str(int(time.time()))
+            random_number = str(random.randint(10000, 99999))
+            self.id = "splr" + timestamp + random_number
+        super().save(*args, **kwargs)

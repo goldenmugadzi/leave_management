@@ -1,0 +1,85 @@
+{% extends "admin_layout.html" %}
+{% load static %}
+{% load humanize %}
+{% load custom_tags %}
+{% block styles %}
+  <link rel="stylesheet"
+        href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" />
+  <style>.dataTables_wrapper .dataTables_length select { width: 4rem; }</style>
+{% endblock %}
+{% block content %}
+  <div class="content-wrapper">
+    <div class="grid grid-cols-1">
+      <div class="bg-gulf-blue-100 shadow-lg rounded-lg p-6">
+        <h3 class="text-center font-bold mb-4">Tokens</h3>
+        <div class=" grid grid-cols-4 container text-center ">
+          <a href="{% url 'tokens:create_token' %}"
+             class="bg-blue-500 hover:bg-blue-700 inline-block rounded-full mx-3 text-white py-2 px-4 rounded"> New Request</a>
+          {% comment %} <a href="{% url 'nonconformity:checklist' %}" class="bg-blue-500 hover:bg-blue-700 inline-block rounded-full mx-3 text-white py-2 px-4 rounded">Create from checklist</a> {% endcomment %}
+          {% comment %} <a href="{% url 'tokens:my_tokens' %}" class="bg-gray-500 hover:bg-gray-700 inline-block rounded-full mx-3 text-white py-2 px-4 rounded">Review </a> {% endcomment %}
+        </div>
+        <br>
+        <table id="tokens" class="table table-striped stripe table-bordered">
+          <thead>
+            <tr>
+              <th>Description</th>
+              <th>Reason</th>
+              <th>Kind</th>
+              <th>Date</th>
+              <th>Customer</th>
+              <th>Meter number</th>
+              <th>Address</th>
+              <th>Phone Number</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for token in tokens %}
+              <tr class="h-1">
+                {% if token.fault_set.first %}
+                  <td>
+                    <a class="text-blue-500" href="{% url 'tokens:token' token.id %}">{{ token.fault_set.first.description|default_if_none:'' }}</a>
+                  </td>
+                  <td>Fault</td>
+                {% endif %}
+                {% if token.recover_set.first %}
+                  <td>
+                    <a class="text-blue-500" href="{% url 'tokens:token' token.id %}">{{ token.recover_set.first.description|default_if_none:'' }}</a>
+                  </td>
+                  <td>Recover</td>
+                {% endif %}
+                {% if token.reconnection_set.first %}
+                  <td>
+                    <a class="text-blue-500" href="{% url 'tokens:token' token.id %}">{{ token.reconnection_set.first.description|default_if_none:'' }}</a>
+                  </td>
+                  <td>Reconnection</td>
+                {% endif %}
+                <td>{{ token.kind|default_if_none:'' }}</td>
+                <td>{{ token.created_at|date:'d/m/Y' }}</td>
+                <td>{{ token.customer.name|default_if_none:'' }}</td>
+                <td>
+                  <span title="{{ token.meter.meter_type }}">{{ token.meter.number }}</span>
+                </td>
+                <td>{{ token.customer.address|default_if_none:'' }}</td>
+                <td>{{ token.customer.contact_number|default_if_none:'' }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+{% block scripts %}
+  <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+  <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+  <script>
+  $(document).ready(function () {
+    $("#tokens").DataTable({
+      "pageLength": 10,
+      "columnDefs": [{ "orderable": true, "targets": [0, 1, 2] }],
+      "searching": true,
+      "responsive": true,
+    });
+  });
+  </script>
+{% endblock %}

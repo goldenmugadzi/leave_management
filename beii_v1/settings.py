@@ -14,6 +14,7 @@ from pathlib import Path
 import sys, os
 from datetime import timedelta
 from django.contrib.messages import constants as messages
+
 MESSAGE_TAGS = {
     messages.ERROR: 'danger'
 }
@@ -30,17 +31,19 @@ SECRET_KEY = 'django-insecure-7per#nouy422m0!hn0!ecb7ltnq#!^#g!2r5&%^5c%v(!ivv&a
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', '172.16.8.97', '172.16.8.22', '127.0.0.1','172.16.8.98']
+ALLOWED_HOSTS = ['localhost', '172.16.8.97', '172.16.8.22', '127.0.0.1', '172.16.8.98', ]
 
-CORS_ALLOWED_ORIGINS = [
-    "http://172.16.8.97",
-    "http://172.16.8.98",
-    "http://172.16.8.97:3200",
-    "http://localhost:3000",
-    "http://172.16.8.98:9300"
-]
+# CORS_ALLOWED_ORIGINS = [
+#     "http://172.16.8.97",
+#     "http://172.16.8.98",
+#     "http://172.16.8.97:3200",
+#     "http://localhost:3000",
+#     "http://172.16.8.98:9300"
+# ]
+CORS_ALLOW_ALL_ORIGINS = True
 
-CSRF_TRUSTED_ORIGINS = ['http://172.16.8.97', "http://172.16.8.97:3200","http://172.16.8.98","http://172.16.8.98:9300"]
+CSRF_TRUSTED_ORIGINS = ['http://172.16.8.97', "http://172.16.8.97:3200", "http://172.16.8.98",
+                        "http://172.16.8.98:9300"]
 
 CORS_ALLOW_HEADERS = ('content-disposition', 'accept-encoding',
                       'content-type', 'accept', 'origin', 'authorization')
@@ -109,8 +112,6 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'clearcache',
-    
-    'risk.audit.checklist',
     'risk.audit.nonconformity',
     'it.beii_auth',
     'it.users',
@@ -123,25 +124,18 @@ INSTALLED_APPS = [
     'finance.Ace',
     'finance.purchase_request',
     'finance.PettyCash',
+    'finance.comparative_schedules',
     'finance.Direct_purchases',
+    'ACE2',
 
+    'finance.comperative_schedule',
 
     'reports',
     'sweetify',
     'mathfilters',
-    'temper_token',
+    'tokens',
     'commecial.tempertockens',
     'competence_building.apps.CompetenceBuildingConfig'
-
-    # 'finance.tenders.apps.TendersConfig',
-    # 'engineering.reticulations.apps.ReticulationsConfig',
-    # 'commercials.connections.apps.ConnectionsConfig',
-    # 'Pettycash.apps.PettyCashConfig',
-    # 'hr.okr.apps.OkrConfig',
-    # 'reports.beii_reports.apps.BeiiReportsConfig',
-    # 'api.ops_maintenance.safety_operations.apps.SafetyOperationsConfig',
-
-    # 'miscellaneous.knowledge_center.apps.KnowledgeCenterConfig'
 ]
 
 AUTH_USER_MODEL = 'users.UserProfile'
@@ -177,7 +171,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'beii_v1.wsgi.application'
 
-
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
 
@@ -198,8 +191,11 @@ DATABASES = {
     #     'HOST': 'localhost'
     # }
     'default': {
+        'OPTIONS': {
+            'sql_mode': 'NO_BACKSLASH_ESCAPES',
+        },
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'beii_test',
+        'NAME': 'beii_new',
         'USER': 'root',
         'PASSWORD': '',
         'HOST': 'localhost',
@@ -246,9 +242,17 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
 # https://docs.djangoproject.com/en/4.1/topics/i18n/
+# settings.py
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'perseychinaka@gmail.com'
+EMAIL_HOST_PASSWORD = 'apppassword'
+DEFAULT_FROM_EMAIL = "Zetdc Business Excellence "
 
 LANGUAGE_CODE = 'en-us'
 
@@ -257,16 +261,16 @@ TIME_ZONE = 'Africa/Harare'
 USE_I18N = True
 
 USE_TZ = True
-LOGIN_REDIRECT_URL='/'
+LOGIN_REDIRECT_URL = '/'
 LOGIN_URL = '/accounts/login'
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
 
 STATIC_URL = 'static/'
-STATICFILES_DIRS = [BASE_DIR / "static",BASE_DIR / "uploads",]
+STATICFILES_DIRS = [BASE_DIR / "static", BASE_DIR / "uploads", ]
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-MEDIA_URL  = '/media/'
+MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # Default primary key field type

@@ -1,0 +1,96 @@
+{% extends "admin_layout.html" %}
+{% load static %}
+{% load humanize %}
+{% load custom_tags %}
+
+{% block styles %}
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" />
+    <style>
+        .dataTables_wrapper .dataTables_length select {
+            width: 4rem;
+        }
+    </style>
+{% endblock styles %}
+
+{% block content %}
+    <div class="content-wrapper">
+        <div class="grid grid-cols-1">
+            <div class="bg-gulf-blue-100 shadow-lg rounded-lg p-6">
+                <h3 class="text-center font-bold mb-4">Orders</h3>
+                    <!-- Removed the commented-out code -->
+                    <br>
+                    <table id="order" class="table table-striped stripe table-bordered">
+                        <thead>
+                            <tr>
+                                <th class="px-4 py-2">Order</th>
+                                <th class="px-4 py-2">Items</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for order in orders %}
+                                <tr class="h-1">
+                                    <td class="px-4 py-2">
+                                        <a class="text-blue-500"
+                                           title="{{ order }}"
+                                           href="{% url 'comperative_schedule:order' order.id %}">
+                                           {{ order.bid.purchase_request.description|default_if_none:'' }}
+                                            </a>
+                                    </td>
+                                    <td>
+                                        <table class="table-auto w-full">
+                                            <thead >
+                                                <tr>
+                                                    <th class="px-4 py-2">Item</th>
+                                                    <th class="px-4 py-2">Quantity</th>
+                                                    <th class="px-4 py-2">Unit Price</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for item in order.orderitem_set.all %}
+                                                    <tr class="bg-white">
+                                                        <td class="px-4 py-2">{{ item }}</td>
+                                                        <td class="px-4 py-2">{{ item.quantity }}</td>
+                                                        <td class="px-4 py-2">{{ item.bid_item.price }}</td>
+                                                    </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="2"></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+            </div>
+        </div>
+    </div>
+{% endblock content %}
+
+{% block scripts %}
+    <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            // Initialize the DataTable with options and Tailwind CSS classes
+            $("#order").DataTable({
+                // Set the number of rows to display per page
+                "pageLength": 10,
+
+                // Enable sorting on the specified columns
+                "columnDefs": [
+                    { "orderable": true, "targets": [0, 1] }
+                ],
+
+                // Enable searching within the table
+                "searching": true,
+
+                // Display the DataTable in a responsive manner
+                "responsive": true,
+            });
+        });
+    </script>
+{% endblock scripts %}

@@ -1,7 +1,6 @@
 import random
 import time
 from django.db import models
-from django.core.exceptions import ValidationError
 from finance.Ace.models import Ace
 from it.users.models import UserProfile, Sections, Regions, Districts, Depots
 class ProcurementPlanReference(models.Model):
@@ -40,7 +39,6 @@ class PurchaseRequest(models.Model):
             self.id = "PR" + self.pr_no
         super().save(*args, **kwargs)
 
-class Attachment(models.Model):
     file = models.FileField(upload_to='uploads/purchase_request')
     purchase_request = models.ForeignKey(PurchaseRequest, on_delete=models.CASCADE,blank=True, null=True)
     

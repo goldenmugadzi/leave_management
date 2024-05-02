@@ -28,9 +28,10 @@ from rest_framework_simplejwt.views import (
 urlpatterns = [
     path('', include('it.beii_auth.urls')),
     path('', include('Docs.urls')),
-    path('', include('temper_token.urls')),
+    path('', include('tokens.urls')),
     path('', include('risk.audit.nonconformity.urls')),
     path('', include('finance.purchase_request.urls')),
+    path('', include('finance.comperative_schedule.urls')),
     path('', include('approve.urls')),
     path('meter/', include('commecial.tempertockens.urls')),
     path('users/', include('it.users.urls')),
@@ -42,10 +43,12 @@ urlpatterns = [
     path('competence/', include('competence_building.urls')),
     path('admin/', admin.site.urls),
     path('accounts/', include('django.contrib.auth.urls')),
+    path('acee/', include('ACE2.urls')),
 
     path('ace/', include('finance.Ace.urls')),
     path('direct_purchases/', include('finance.Direct_purchases.urls')),
     path('pettycash/', include('finance.PettyCash.urls')),
+    path('comperative_schedule/', include('finance.comparative_schedules.urls')),
     path('reports/', include('reports.urls')),
 
     # AUTH ENDPOINTS

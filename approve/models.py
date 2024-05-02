@@ -1,12 +1,12 @@
 from django.db import models
-from it.users.models import Roles, UserProfile
+from it.users.models import Roles, UserProfile,Application
 
 
-class Application(models.Model):
-    name = models.CharField(max_length=100, unique=True)
+# class Application(models.Model):
+#     name = models.CharField(max_length=100, unique=True)
 
-    def __str__(self):
-        return self.name
+#     def __str__(self):
+#         return self.name
 
 
 class Workflow(models.Model):
@@ -49,6 +49,7 @@ class Approval(models.Model):
     process = models.ForeignKey(Process, on_delete=models.CASCADE)
     comment = models.TextField(max_length=200, blank=True, null=True)
     approved = models.CharField(max_length=8, choices=APPROVAL_CHOICES, blank=True, null=True)
+    approved_at = models.DateTimeField(auto_now_add=True, blank=True, null=True)
 
     def __str__(self):
         return f"Approval for step {self.step} by {self.user}"

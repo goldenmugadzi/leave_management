@@ -6,6 +6,57 @@ from django.contrib.auth import logout
 
 from it.users.models import UserProfile, Depots, Districts, Regions, Designations, Sections, Roles
 
+APPLICATIONS = [
+    {
+        "name": "non_conformity",
+        "title": "Non-Conformity",
+        "iconUrl": "assets/images/non-conforming.png",
+        "url": "/nonconformities/"
+    },
+    {
+        "name": "ace",
+        "title": "ACE",
+        "iconUrl": "assets/images/capital.png",
+        "url": "/ace/"
+    },
+    {
+        "users": "users",
+        "title": "Users",
+        "iconUrl": "assets/images/management.png",
+        "url": "/users/users-index"
+    },
+    {
+        "name": "Tamper Token",
+        "title": "Tamper Tokens",
+        "iconUrl": "assets/images/token.png",
+        "url": "/tokens/"
+    },
+    {
+        "name": "petty_cash",
+        "title": "Petty Cash",
+        "iconUrl": "assets/images/pettycash.png",
+        "url": "/pettycash/pettycashs_awaiting_my_action"
+    },
+    {
+        "name": "purchase_request",
+        "title": "Purchase Request",
+        "iconUrl": "assets/images/quotation.png",
+        "url": "/purchase_requests"
+    },
+    {
+        "name": "comperative_schedule",
+        "title": "Comperative Schedule",
+        "iconUrl": "assets/images/bid.png",
+        "url": "/comperative_schedule/comperative_schedules"
+    },
+    # {
+    #     "name": "direct_purchases",
+    #     "title": "Direct Purchases",
+    #     "iconUrl": "assets/images/direct-marketing.png",
+    #     "url": "#"
+    # }
+]
+
 # Create your views here.
 def index(request):
     
@@ -197,7 +248,6 @@ def business_applications(request):
     l = request.user.groups.values_list('name',flat = True) # QuerySet Object
     user_groups = list(l)  
 
-
     url_path = request.path.split("/")
     return render(
         request, 
@@ -206,7 +256,8 @@ def business_applications(request):
             "user_title": user_title,
             "url_path": url_path,
             "page_title": "Business Applications", 
-            "user_groups": user_groups
+            "user_groups": user_groups,
+            "apps": APPLICATIONS
         })
 
 def app_logout(request):

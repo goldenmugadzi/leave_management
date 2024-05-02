@@ -1,0 +1,105 @@
+{% extends "admin_layout.html" %}
+{% load static %}
+{% load humanize %}
+{% load custom_tags %}
+{% block styles %}
+    <link rel="stylesheet"
+          href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" />
+    <style>
+  .dataTables_wrapper .dataTables_length select {
+    width: 4rem;
+  }
+    </style>
+{% endblock %}
+{% block content %}
+    <div class="content-wrapper">
+        <div class="grid grid-cols-1">
+            <div class="bg-gulf-blue-100 shadow-lg rounded-lg p-6">
+                <h3 class="text-center font-bold  mb-4">Purchase Requests</h3>
+                <div class=" grid grid-cols-4 container text-center ">
+                    <a href="{% url 'comperative_schedule:bid_on_pr' purchase_request_id %}"
+                       class="bg-blue-500 hover:bg-blue-700 inline-block rounded-full mx-3 text-white py-2 px-4 rounded">Create New Bid</a>
+                </div>
+                <br>
+                <form method="post" action="">
+                    {% csrf_token %}
+                    <table id="comperative_schedule"
+                           class="table table-striped stripe table-bordered">
+                        <thead>
+                            <tr>
+                                <th class="text-center">Item Name</th>
+                             {% if bids %}{% for bid in bids %}<th>{{ bid.supplier }}</th>{% endfor %}{% endif %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for pr_item in purchase_request_items %}
+                                <tr class="h-1">
+                                    <td>
+                                        <a class="text-blue-500"
+                                           title="{{ pr_item }}"
+                                           href="{% url 'purchase_request:purchase_request_detail' pr_item.purchase_request.id %}">
+                                        {{ pr_item.name|default_if_none:'' }}</a>
+                                    </td>
+                                  {% if bids %} {% for offer in pr_item.biditem_set.all %}
+                                        <td>
+                                            <div>
+                                                {% if pr_item.selected_offer.bid.supplier.name == offer.bid.supplier.name and pr_item.selected_offer.price == offer.price %}
+                                                    <input type="radio"
+                                                           id="{{ offer.id }}"
+                                                           checked
+                                                           name="{{ pr_item.id }}"
+                                                           value="{{ offer.id }}">
+                                                {% else %}
+                                                    <input type="radio"
+                                                           id="{{ offer.id }}"
+                                                           name="{{ pr_item.id }}"
+                                                           value="{{ offer.id }}">
+                                                {% endif %}
+                                                {% if offer.price == pr_item.lowest_offer %}
+                                                    <label class="underline " for="offer{{ offer.id }}">{{ offer.price|default_if_none:'' }}</label>
+                                                {% else %}
+                                                    <label for="offer{{ offer.id }}">{{ offer.price|default_if_none:'' }}</label>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                    {% endfor %}{% endif %} 
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    <div class="text-center">
+                        <input type="submit"
+                               class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded-full"
+                               value="Order selected items">
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock content %}
+{% block scripts %}
+    <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script>
+  $(document).ready(function () {
+    // Initialize the DataTable with options and Tailwind CSS classes
+    $("#comperative_schedule").DataTable({
+      // Set the number of rows to display per page
+      "pageLength": 10,
+  
+      // Enable sorting on the specified columns
+      "columnDefs": [
+        { "orderable": true, "targets": [0, 1, 2] }
+      ],
+  
+      // Enable searching within the table
+      "searching": true,
+  
+      // Display the DataTable in a responsive manner
+      "responsive": true,
+  
+     
+    });
+  });
+    </script>
+{% endblock %}
