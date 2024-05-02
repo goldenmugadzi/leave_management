@@ -178,7 +178,7 @@
                  </div>
                     <h1 class="text-center mb-4 font-bold text-xl  mb-2">Workflow Details</h1>
                     <p class="font-bold  mb-2"> Workflow name : {{ pettycash.process.workflow }}</p>
-                {% if clear_minus and pettycash.payment_mode == None %}
+                {% if clear_minus and pettycash.payment_mode == None and cashier != None %}
                 <form class="row rounded py-4 border  rounded-lg p-3 m-auto container" method="POST"
                       action="/pettycash/pettycash_detail/{{ pettycash.petty_id  }}/" enctype="multipart/form-data">
                     {% csrf_token %}
