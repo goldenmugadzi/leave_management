@@ -1,24 +1,37 @@
 client_fullname,depot,district,region,created_at,amount
-Client 1,Waterfalls Depot,Chitungwiza District,East,2023-12-05,$60
-Client 2,Southerton Depot,Chitungwiza District,Harare,2023-12-22,$98
-Client 3,Ruwa Depot,Chitungwiza District,West,2023-12-07,$86
-Client 4,Warren Park Depot,South District,Harare,2023-12-07,$72
-Client 5,Glen View Depot,Chitungwiza District,East,2023-12-30,$93
-Client 6,Seke,North District,Harare,2023-12-16,$35
-Client 7,Zengeza Depot,North District,East,2023-12-04,$40
-Client 8,Waterfalls Depot,Chitungwiza District,South,2023-12-19,$16
-Client 9,Kuwadzana Depot,East District,South,2023-12-29,$60
-Client 10,Glen View Depot,South District,Harare,2024-01-05,$37
-Client 11,CBD Depot,South District,South,2024-01-04,$17
-Client 12,Mabelreign Depot,Chitungwiza District,South,2023-12-15,$64
-Client 13,Glen View Depot,North District,East,2023-12-15,$90
-Client 14,Glen View Depot,North District,West,2024-01-09,$29
-Client 15,Warren Park Depot,South District,East,2023-12-13,$88
-Client 16,Seke,Chitungwiza District,South,2023-12-23,$62
-Client 17,Ruwa Depot,Chitungwiza District,West,2023-12-10,$60
-Client 18,Kuwadzana Depot,East District,Harare,2023-12-22,$17
-Client 19,Makoni Depot,South District,East,2023-12-30,$3
-Client 20,CBD Depot,East District,East,2023-12-10,$58
-Client 21,Seke,North District,East,2023-12-16,$85
-Client 22,Borrowdale Depot,South District,Harare,2023-12-28,$81
-Client 23,Warren Park Depot,North District,South,2023-12-17,$2
+Client 1,Makoni Depot,Chitungwiza District,East,2023-12-31,$9
+Client 2,Zengeza Depot,East District,Harare,2024-01-05,$59
+Client 3,Mabelreign Depot,East District,Harare,2024-01-04,$8
+Client 4,Glen View Depot,South District,West,2023-12-03,$69
+Client 5,Makoni Depot,South District,West,2023-12-12,$27
+Client 6,Mabelreign Depot,South District,West,2023-12-29,$94
+Client 7,Glen View Depot,North District,West,2023-12-23,$80
+Client 8,Makoni Depot,North District,East,2023-12-22,$63
+Client 9,Kuwadzana Depot,East District,Harare,2023-12-22,$38
+Client 10,CBD Depot,East District,East,2023-12-28,$55
+Client 11,Southerton Depot,North District,East,2023-12-22,$9
+Client 12,Seke,North District,Harare,2023-12-29,$70
+Client 13,Seke,Chitungwiza District,South,2023-12-08,$88
+Client 14,Borrowdale Depot,North District,South,2023-12-24,$1
+Client 15,Mabelreign Depot,South District,Harare,2024-01-09,$80
+Client 16,Waterfalls Depot,Chitungwiza District,East,2023-12-21,$6
+Client 17,Zengeza Depot,North District,East,2024-01-02,$30
+Client 18,Seke,South District,West,2023-12-18,$53
+Client 19,Borrowdale Depot,North District,South,2023-12-26,$83
+Client 20,Warren Park Depot,North District,West,2023-12-24,$80
+Client 21,Glen View Depot,East District,East,2024-01-05,$82
+Client 22,Ruwa Depot,Chitungwiza District,Harare,2023-12-17,$48
+Client 23,Mabelreign Depot,Chitungwiza District,Harare,2023-12-06,$98
+Client 24,Glen View Depot,North District,West,2023-12-22,$35
+Client 25,Makoni Depot,North District,Harare,2023-12-12,$18
+Client 26,Makoni Depot,East District,West,2023-12-10,$21
+Client 27,Glen View Depot,East District,West,2023-12-23,$80
+Client 28,Southerton Depot,North District,Harare,2023-12-10,$77
+Client 29,Mabvuku Depot,Chitungwiza District,Harare,2023-12-23,$89
+Client 30,Borrowdale Depot,East District,South,2023-12-16,$77
+Client 31,Glen View Depot,North District,Harare,2023-12-26,$24
+Client 32,CBD Depot,Chitungwiza District,East,2024-01-07,$43
+Client 33,Mabelreign Depot,South District,West,2023-12-09,$87
+Client 34,Mabelreign Depot,Chitungwiza District,West,2023-12-24,$47
+Client 35,Kuwadzana Depot,South District,South,2023-12-14,$10
+Client 36,Waterfalls Depot,Chitungwiza District,Harare,2023-12-20,$49

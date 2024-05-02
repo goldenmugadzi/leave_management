@@ -40,11 +40,11 @@
             <td>{% if nonconformity.recipient == user %} You {% else %} {{nonconformity.recipient.get_full_name }} {% endif %}</td>
             <td>{{ nonconformity.created_at|date:'Y-m-d H:i' }}</td>
             <td>{% if nonconformity.created_by == user %} You {% else %} {{nonconformity.created_by.get_full_name }} {% endif %}</td>
-            <td><a class="text-blue-500" href="/nonconformity/{{nonconformity.id}}">{{ nonconformity.description|default_if_none:'' }}</a></td>
+            <td><a class="text-blue-500" href="{% url 'nonconformity:nonconformity' nonconformity.id %}">{{ nonconformity.description|default_if_none:'' }}</a></td>
             <td>{{ nonconformity.violation_standard_reference|default_if_none:''}}</td>
             <td>{{nonconformity.recommended_corrective_action|default_if_none:''}}</td>
             <td>{{nonconformity.recipient.section|default_if_none:''}}</td>
-            <td>{{nonconformity.status}}</td>
+            <td>{{ nonconformity.response_set.last|default_if_none:'' }}</td>
           </tr>
           {% endfor %}
         </tbody>

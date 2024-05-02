@@ -81,7 +81,7 @@
                 <div class="card-body bg-gulf-blue-200">
                   <div class="card mb-3 row rounded py-4 border p-3 m-auto   container">
                     <div class="card-body">
-                      <p class="card-text">{{ response.comment }}</p>
+                      <p class="card-text">Comment : {{ response.comment }}</p>
                     </div>
                     <br>
                     <div class="card-footer flex  justify-between items-end"
@@ -94,7 +94,7 @@
                           {{ response.user.username }}
                         {% endif %}
                       </span>
-                      <span class="text-sm text-right">{{ response.created_at }} {{ response.status }}</span>
+                      <span class="text-sm text-right">{{ response }} @ {{ response.created_at }} </span>
                     </div>
                   </div>
                 </div>

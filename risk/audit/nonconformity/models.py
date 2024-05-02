@@ -53,7 +53,5 @@ class Response(models.Model):
     created_at = models.DateTimeField(auto_now=True)
     status = models.BooleanField( choices=((True, 'Accepted'),(False, 'Rejected')))
     
- 
     def __str__(self):
-        return f"Response by {self.user.username} on {self.nonconformity.description}"
-
+        return 'Accepted' if self.status else 'Rejected'
