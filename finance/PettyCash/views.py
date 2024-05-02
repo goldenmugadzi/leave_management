@@ -74,14 +74,23 @@ def pettyCash_detail(request, petty_id):
     if len(pettycash_item.process.approval_set.all()) == len(pettycash_item.process.workflow.step_set.all()):
         print('approval set')
         clear = True
-    if len(pettycash_item.process.approval_set.all()) == len(pettycash_item.process.workflow.step_set.all())-2:
+    if len(pettycash_item.process.approval_set.all()) == len(pettycash_item.process.workflow.step_set.all()) - 2:
         print('approval set ...')
         clear_minus = True
 
     try:
         newStep = Step.objects.get(step=next_step, workflow=pettycash_item.process.workflow,
                                    approver__in=user_roles)
-        if newStep and request.user.section == pettycash_item.section:
+
+        # check if section head
+        if pettycash_role == "approve":
+            if newStep and request.user.section == pettycash_item.section:
+                approvalForm = ApprovalForm
+                print("newstep", newStep.step)
+                print(len(pettycash_item.process.workflow.step_set.all()))
+
+                to = newStep.to
+        else:
             approvalForm = ApprovalForm
             print("newstep", newStep.step)
             print(len(pettycash_item.process.workflow.step_set.all()))
@@ -98,7 +107,7 @@ def pettyCash_detail(request, petty_id):
         print(pettycash_role)
         requestor = None
 
-    print(pettycash_role, clear, requestor,clear_minus)
+    print(pettycash_role, clear, requestor, clear_minus)
     return render(request, 'finance/pettycash/pettycash_detail.html',
                   {'pettycash': pettycash_item, 'approved_steps': approved_steps, 'approvalForm': approvalForm,
                    'to': to, 'pettycash_role': pettycash_role, 'user_groups': user_groups, 'quotations': quotations
