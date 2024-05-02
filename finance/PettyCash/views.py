@@ -74,7 +74,7 @@ def pettyCash_detail(request, petty_id):
     if len(pettycash_item.process.approval_set.all()) == len(pettycash_item.process.workflow.step_set.all()):
         print('approval set')
         clear = True
-    if len(pettycash_item.process.approval_set.all()) == len(pettycash_item.process.workflow.step_set.all())-1:
+    if len(pettycash_item.process.approval_set.all()) == len(pettycash_item.process.workflow.step_set.all())-2:
         print('approval set ...')
         clear_minus = True
 
@@ -98,7 +98,7 @@ def pettyCash_detail(request, petty_id):
         print(pettycash_role)
         requestor = None
 
-    print(pettycash_role, clear, requestor)
+    print(pettycash_role, clear, requestor,clear_minus)
     return render(request, 'finance/pettycash/pettycash_detail.html',
                   {'pettycash': pettycash_item, 'approved_steps': approved_steps, 'approvalForm': approvalForm,
                    'to': to, 'pettycash_role': pettycash_role, 'user_groups': user_groups, 'quotations': quotations
