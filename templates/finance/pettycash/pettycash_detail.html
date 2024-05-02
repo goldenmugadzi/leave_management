@@ -99,10 +99,10 @@
                                     </a>
                                 {% endfor %}
                             </p>
-                        {% if clear == False and requestor != None %}
+                        {% if clear == False and requestor != None and cashier_approved == True %}
                             <br>
                         <p class="font-bold   mb-2 bg-red-600"> Clearance status:Pending</p>
-                            <button id="open-modal" class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded">Clear pettycash</button>
+                            <button id="open-modal" class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded">Clear Pettycash</button>
                             <div id="modal" class="modal">
                                 <div class="modal-content">
                                     <form id="upload-form" enctype="multipart/form-data">
@@ -212,7 +212,7 @@
                 </form>
 {#                {% elif pettycash_role=='create' and pettycash.amount_used is None and clear %}#}
                     {% elif clear and pettycash.receipt_file is None %}
-                    <button id="open-modal" class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded">Clear pettycash</button>
+                    {% comment %} <button id="open-modal" class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded">Clear pettycash</button>
                     <div id="modal" class="modal">
                         <div class="modal-content">
                             <form id="upload-form" enctype="multipart/form-data">
@@ -233,7 +233,7 @@
                             <br>
                             <button id="close-modal" class="bg-red-500 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded">Close</button>
                         </div>
-                    </div>
+                    </div> {% endcomment %}
 
                 {% else %}
                     {% if approvalForm %}
@@ -338,4 +338,3 @@
 {% block scripts %}
     <script src="{% static 'assets/disbursemodal.js' %}"></script>
 {% endblock %}
-

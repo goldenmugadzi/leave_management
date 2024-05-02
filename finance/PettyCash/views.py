@@ -68,10 +68,14 @@ def pettyCash_detail(request, petty_id):
         last_approved = pettycash_item.process.approval_set.last().step.step
     except AttributeError:
         last_approved = 0
+    
+    cashier_approved = False
+    if pettycash_item.process.approval_set.filter(step__step=3).exists():
+        cashier_approved = True
 
     approval_status = pettycash_item.process.approval_set.last().approved if pettycash_item.process.approval_set.last() else ""
     print("last approved", approval_status)
-    if approval_status != "Rejected":
+    if True:
         next_step = last_approved + 1
         print("cleating")
         if len(pettycash_item.process.approval_set.all()) == len(pettycash_item.process.workflow.step_set.all()):
@@ -116,11 +120,11 @@ def pettyCash_detail(request, petty_id):
     else:
         cashier = None
 
-    print(pettycash_role, clear, requestor, clear_minus)
+    print(pettycash_role, clear, requestor, clear_minus, cashier_approved)
     return render(request, 'finance/pettycash/pettycash_detail.html',
                   {'pettycash': pettycash_item, 'approved_steps': approved_steps, 'approvalForm': approvalForm,
                    'to': to, 'pettycash_role': pettycash_role, 'user_groups': user_groups, 'quotations': quotations
-                      , 'clear': clear, "clear_minus": clear_minus, 'requestor': requestor, 'cashier': cashier})
+                      , 'clear': clear, "clear_minus": clear_minus, 'requestor': requestor, 'cashier': cashier, 'cashier_approved': cashier_approved})
 
 
 @login_required
