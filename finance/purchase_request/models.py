@@ -12,12 +12,18 @@ class ProcurementPlanReference(models.Model):
     def __str__(self):
         return f"{self.id} - {self.name}"
 
-def validate_id(value):
-    if not value.isdigit() or len(value) != 8:
+def validate_pr_no(value):
+    if not value.isdigit():
+        if value.startswith("PR"):
+            value = value[2:]
+        else:
+            raise ValidationError("PR Number must have exactly 8 digits")
+    if len(value) != 8:
         raise ValidationError("PR Number must be exactly 8 digits")
-
+    return "PR" + value
 class PurchaseRequest(models.Model):
-    id = models.CharField(primary_key=True, max_length=8, verbose_name="PR Number", validators=[validate_id])
+    id = models.CharField(primary_key=True, max_length=20, editable=False)
+    pr_no = models.CharField( max_length=10, verbose_name="PR Number", validators=[validate_pr_no])
     section = models.ForeignKey(Sections, on_delete=models.CASCADE, blank=True, null=True)
     procurement_plan_reference = models.ForeignKey(ProcurementPlanReference, on_delete=models.CASCADE, blank=True, null=True)
     requested_by = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
@@ -28,7 +34,11 @@ class PurchaseRequest(models.Model):
 
     def __str__(self):
         return self.id
-
+   
+    def save(self, *args, **kwargs):
+        if not self.id:
+            self.id = "PR" + self.pr_no
+        super().save(*args, **kwargs)
 class Attachment(models.Model):
     file = models.FileField(upload_to='uploads/purchase_request')
     purchase_request = models.ForeignKey(PurchaseRequest, on_delete=models.CASCADE,blank=True, null=True)
@@ -37,7 +47,6 @@ class Attachment(models.Model):
         return self.file.name
     
 class CostCentre(models.Model):
-    id = models.CharField(primary_key=True, max_length=20, editable=False)
     name = models.CharField(max_length=100, unique=True)
     section = models.ForeignKey(Sections, on_delete=models.CASCADE)
     depot = models.ForeignKey(Depots, on_delete=models.CASCADE)
