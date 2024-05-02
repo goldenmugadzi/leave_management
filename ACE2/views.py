@@ -23,6 +23,8 @@ from it.users.models import UserProfile, Roles, Designations, Districts, Depots
 def Ace_detail(request, Ace_id2):
     user_id = request.user.id
     user_profile = UserProfile.objects.filter(id=user_id).first()
+    clear = False
+    clear_minus = False
 
     user_groups = user_profile.groups.values_list('name', flat=True)
 
@@ -84,6 +86,11 @@ def Ace_detail(request, Ace_id2):
                 transaction = Transactions.objects.filter(transaction_id=ace_item.transaction).first()
                 transaction.approval_status = "approved by General Manager"
                 transaction.save()
+                if newStep.step == len(ace_item.process.workflow.step_set.all()):
+                    clear = True
+            if newStep.step == len(ace_item.process.workflow.step_set.all()) - 1:
+                clear_minus = True
+            print(clear)
         elif newStep:
             approvalForm = ApprovalForm
             to = newStep.to
@@ -93,7 +100,8 @@ def Ace_detail(request, Ace_id2):
     approved_steps = ace_item.process.approval_set.all().values_list('step__step', flat=True)
     return render(request, 'finance/ace2/ace_detail.html',
                   {'ace': ace_item, 'approved_steps': approved_steps, 'approvalForm': approvalForm,
-                   'to': to, 'ace_role': ace_role, 'user_groups': user_groups, 'qoutations': quotations})
+                   'to': to, 'ace_role': ace_role, 'user_groups': user_groups, 'qoutations': quotations,
+                   'clear': clear, 'clear_minus': clear_minus})
 
 
 @login_required
