@@ -142,99 +142,122 @@ def Ace_detail(request, Ace_id2):
 
 @login_required
 def create_Ace(request):
+    QuotationFormSet()
+    form = AceForm()
     formset = QuotationFormSet()
     if request.method == 'POST':
         form = AceForm(request.POST, request.FILES)
         formset = QuotationFormSet(request.POST, request.FILES)
+        user_id = request.user.id
+        user_profile = UserProfile.objects.filter(id=user_id).first()
 
-        if form.is_valid():
-            ace = form.save(commit=False)
-            # print(ace.budget_id)
-            budget = AssetBudget.objects.filter(budget_name=ace.budget_id).first()
-            # print(budget)
-            if ace.amount <= budget.balance and budget.to_be_withdrawn <= budget.balance:
-                ace.process = intiate(request, 'ace')
-                ace.requested_by = request.user
+        user_groups = user_profile.groups.values_list('name', flat=True)
 
-                user_id = request.user.id
-                user_profile = UserProfile.objects.filter(id=user_id).first()
+        custom_user_roles = {
+            "ace": {},
+        }
 
-                user_designation = Designations.objects.filter(id=user_profile.designation.id).first()
-                user_region = Regions.objects.filter(id=user_profile.region.id).first()
-                designation = user_designation
-                # print(designation)
-                region = user_region
+        roles_ = user_profile.roles.all()
+        for _role in roles_:
+            role = Roles.objects.filter(id=_role.id).first()
 
-                rand = randrange(1, 1000)
-                rand2 = str(rand)
-                date = datetime.now()
-                date = date.strftime("%Y%m%d")
+        if role.application == "ace":
+            custom_user_roles["ace"] = role
+        ace_role = str(custom_user_roles["ace"])
 
-                ace_id2 = "ACE" + date + rand2
-                ace.Ace_id2 = ace_id2
-                if designation:
-                    ace.designation = designation
-                else:
-                    sweetify.error(request, "Please get your designation from It")
-                if region:
-                    ace.region = region
-                else:
-                    sweetify.error(request, "Please get region from It")
-                ace.date_created = date
-                ace.save()
-
-                ace_code = ace.section
-                print(ace_code)
-                section = Sections.objects.filter(section=ace_code).first()
-                print(section)
-                # print(ace_code)
-                # code = section.code
-                # ace.allocation_code_of_expenditure = code
-                ace.save()
-                attachments = request.FILES.getlist('attachments')
-                for attachment in attachments:
-                    attachment = Quotation(quotation_file=attachment,
-                                           ace2=ace)
-                    attachment.save()
-
-                # initialise transaction and budget deductions
-                transaction = Transactions.objects.create(
-                    Ace_id2=ace,
-                    details_of_expenditure=ace.details_of_expenditure,
-                    approval_status="created",
-                    region=region,
-                    amount=ace.amount,
-                    budget=ace.budget_id,
-                    section=section
-                )
-                transaction.section = section
-                transaction.save()
-
+        if ace_role == "create":
+            if form.is_valid():
+                ace = form.save(commit=False)
+                # print(ace.budget_id)
                 budget = AssetBudget.objects.filter(budget_name=ace.budget_id).first()
-                budget.to_be_withdrawn = budget.to_be_withdrawn + ace.amount
-                budget.withdrawal_date = ace.date_created
-                budget.save()
+                # print(budget)
+                if ace.amount <= budget.balance and budget.to_be_withdrawn <= budget.balance:
+                    ace.process = intiate(request, 'ace')
+                    ace.requested_by = request.user
 
-                # for quotation_form in formset:
-                #     quotation = quotation_form.save(commit=False)
-                #     quotation.ace2 = ace
-                #     quotation.save()
+                    user_id = request.user.id
+                    user_profile = UserProfile.objects.filter(id=user_id).first()
 
-                if str(ace.classification) == "Project":
-                    # the idea is that if its ace of type project there need to be added other project details
-                    url = reverse('Ace:ace_detail_project', args=[ace.Ace_id2])
-                    return redirect(url)
+                    user_designation = Designations.objects.filter(id=user_profile.designation.id).first()
+                    user_region = Regions.objects.filter(id=user_profile.region.id).first()
+                    designation = user_designation
+                    # print(designation)
+                    region = user_region
+
+                    rand = randrange(1, 1000)
+                    rand2 = str(rand)
+                    date = datetime.now()
+                    date = date.strftime("%Y%m%d")
+
+                    ace_id2 = "ACE" + date + rand2
+                    ace.Ace_id2 = ace_id2
+                    if designation:
+                        ace.designation = designation
+                    else:
+                        sweetify.error(request, "Please get your designation from It")
+                    if region:
+                        ace.region = region
+                    else:
+                        sweetify.error(request, "Please get region from It")
+                    ace.date_created = date
+                    ace.save()
+
+                    ace_code = ace.section
+                    print(ace_code)
+                    section = Sections.objects.filter(section=ace_code).first()
+                    print(section)
+                    # print(ace_code)
+                    # code = section.code
+                    # ace.allocation_code_of_expenditure = code
+                    ace.save()
+                    attachments = request.FILES.getlist('attachments')
+                    for attachment in attachments:
+                        attachment = Quotation(quotation_file=attachment,
+                                               ace2=ace)
+                        attachment.save()
+
+                    # initialise transaction and budget deductions
+                    transaction = Transactions.objects.create(
+                        Ace_id2=ace,
+                        details_of_expenditure=ace.details_of_expenditure,
+                        approval_status="created",
+                        region=region,
+                        amount=ace.amount,
+                        budget=ace.budget_id,
+                        section=section
+                    )
+                    transaction.section = section
+                    transaction.save()
+
+                    budget = AssetBudget.objects.filter(budget_name=ace.budget_id).first()
+                    budget.to_be_withdrawn = budget.to_be_withdrawn + ace.amount
+                    budget.withdrawal_date = ace.date_created
+                    budget.save()
+
+                    # for quotation_form in formset:
+                    #     quotation = quotation_form.save(commit=False)
+                    #     quotation.ace2 = ace
+                    #     quotation.save()
+
+                    if str(ace.classification) == "Project":
+                        # the idea is that if its ace of type project there need to be added other project details
+                        url = reverse('Ace:ace_detail_project', args=[ace.Ace_id2])
+                        return redirect(url)
+                    else:
+                        url = reverse('Ace:ace_detail', args=[ace.Ace_id2])
+                        return redirect(url)
                 else:
-                    url = reverse('Ace:ace_detail', args=[ace.Ace_id2])
-                    return redirect(url)
+                    messages.error(request, "the ace requires more than the current budget")
+                    sweetify.error(request, "the ace requires more than the current budget")
+                    return render(request, 'finance/ace2/create_ace.html',
+                                  {'form': form, 'formset': formset, 'error_message': "Insufficient Balance"})
             else:
-                messages.error(request, "the ace requires more than the current budget")
-                sweetify.error(request, "the ace requires more than the current budget")
-                return render(request, 'finance/ace2/create_ace.html',
-                              {'form': form, 'formset': formset, 'error_message': "Insufficient Balance"})
-    else:
-        form = AceForm()
-        formset = QuotationFormSet()
+                form = AceForm()
+                formset = QuotationFormSet()
+        else:
+            sweetify.error(request, "You are not allowed to create Ace")
+            url = reverse('/acee/aces')
+            return redirect(url)
 
     return render(request, 'finance/ace2/create_ace.html', {'form': form, 'formset': formset})
 
@@ -265,6 +288,8 @@ def ace_awaiting_my_action(request):
         if role.application == "ace":
             custom_user_roles["ace"] = role
     ace_role = str(custom_user_roles["ace"])
+    requester = "create"
+
     print(ace_role)
 
     if ace_role == "pass":
@@ -303,7 +328,9 @@ def ace_awaiting_my_action(request):
             if step:
                 aces_to_process.append(ace)
 
-    return render(request, 'finance/ace2/view_all_aces.html', {'aces': aces_to_process})
+    return render(request, 'finance/ace2/view_all_aces.html', {'aces': aces_to_process,
+                                                               'ace_role': ace_role,
+                                                               'requester': requester})
 
 
 @login_required
@@ -326,6 +353,7 @@ def view_all_aces(request):
         if role.application == "ace":
             custom_user_roles["ace"] = role
     ace_role = str(custom_user_roles["ace"])
+    requester = "create"
 
     if ace_role == "create":
         aces = Ace2.objects.filter(requested_by=request.user)
@@ -333,7 +361,8 @@ def view_all_aces(request):
         aces = Ace2.objects.filter(section=request.user.section)
     else:
         aces = Ace2.objects.all()
-    return render(request, 'finance/ace2/view_all_aces.html', {'aces': aces})
+    return render(request, 'finance/ace2/view_all_aces.html', {'aces': aces,
+                                                               'requester': requester})
 
 
 def add_project_details(request, Ace_id2):
