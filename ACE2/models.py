@@ -74,7 +74,7 @@ class Ace2(models.Model):
 
     quantity = models.IntegerField(null=True, max_length=20)
 
-    process = models.OneToOneField(Process, on_delete=models.SET_NULL, blank=True, null=True)
+    process = models.ForeignKey(Process, on_delete=models.SET_NULL, blank=True, null=True)
     section = models.ForeignKey(Sections, on_delete=models.DO_NOTHING, blank=True)
     # dummy = models.CharField(null=True, max_length=120, blank=True)
 
