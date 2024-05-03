@@ -152,7 +152,7 @@ def create_Ace(request):
             # print(ace.budget_id)
             budget = AssetBudget.objects.filter(budget_name=ace.budget_id).first()
             # print(budget)
-            if ace.amount <= budget.balance and budget.to_be_withdrawn<=budget.balance:
+            if ace.amount <= budget.balance and budget.to_be_withdrawn <= budget.balance:
                 ace.process = intiate(request, 'ace')
                 ace.requested_by = request.user
 
@@ -174,7 +174,12 @@ def create_Ace(request):
                 ace.Ace_id2 = ace_id2
                 if designation:
                     ace.designation = designation
-                ace.region = region
+                else:
+                    sweetify.error(request, "Please get your designation from It")
+                if region:
+                    ace.region = region
+                else:
+                    sweetify.error(request, "Please get region from It")
                 ace.date_created = date
                 ace.save()
 
