@@ -11,6 +11,7 @@ class CreateDP extends React.Component {
       requester_role: "",
       cs_id: "",
       cs_owner: "",
+      committeeApprovalComplete: false,
       plan_ref: "",
       proc_ref: "",
       proc_plan: null,
@@ -71,6 +72,13 @@ class CreateDP extends React.Component {
       username: "",
 
       fetchPR: false,
+      onAddSupplier: false,
+      newSupplier: {
+        supplier_name: "",
+        supplier_contact: "",
+        supplier_email: "",
+        supplier_address: "",
+      },
     };
     this.getCreateData = this.getCreateData.bind(this);
     this.onAddBid = this.onAddBid.bind(this);
@@ -183,11 +191,17 @@ class CreateDP extends React.Component {
             attachment_url: this.onGetFileObjectUrl(pr_attachment.file),
           };
         });
+        
+        let committeeApprovalComplete = committee.filter(
+          (member) => (member.memberApproval === "" || member.memberApproval === null || member.memberApproval === undefined || member.memberApproval === "Rejected")
+        ).length === 0;
+
         console.log("advert file", advert, typeof advert);
         this.setState({
           ...this.state,
           requester_role: requester_role,
           cs_owner: cs_owner,
+          committeeApprovalComplete: committeeApprovalComplete,
           proc_plans: proc_plans,
           uom: uom,
           suppliers: suppliers,
@@ -330,6 +344,10 @@ class CreateDP extends React.Component {
 
   onAddCommitteeMembers = () => {
     let members = this.state.committeeMembers;
+    let member_ = this.state.member;
+    if (member_.memberUserName === "") {
+      alert("Please select a user");
+    }
     // check if memberUserName exists
     let member = members.find(
       (_member) => _member.memberUserName === this.state.member.memberUserName
@@ -549,6 +567,39 @@ class CreateDP extends React.Component {
     });
   };
 
+  onSaveSupplier = () => {
+    let form_data = new FormData();
+    form_data.append("supplier_name", this.state.newSupplier.supplier_name);
+    form_data.append("csrfmiddlewaretoken", this.getCookie("csrftoken"));
+
+    fetch(`${BASE_URL}/save_supplier`, {
+      method: "POST",
+      headers: {
+        "X-CSRFToken": this.getCookie("csrftoken"),
+      },
+      body: form_data,
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        console.log("data: ", data);
+        if (data.success) {
+          alert("Supplier saved successfully");
+          this.setState({
+            ...this.state,
+            onAddSupplier: false,
+            newSupplier: {
+              supplier_name: "",
+              supplier_contact: "",
+              supplier_email: "",
+              supplier_address: "",
+            },
+          });
+        } else {
+          alert("Error saving Supplier");
+        }
+      });
+  };
+
   onApprovalJustificationChange = (name_, event) => {
     let { name, value } = event.target;
     let currentApprover = this.state.currentApprover;
@@ -635,6 +686,25 @@ class CreateDP extends React.Component {
     this.setState({
       ...this.state,
       addItemsModal: false,
+    });
+  };
+
+  onAddSuppliersModal = () => {
+    this.setState({
+      ...this.state,
+      onAddSupplier: !this.state.onAddSupplier,
+    });
+  };
+
+  onSupplierChange = (name_, event) => {
+    let { name, value } = event.target;
+
+    this.setState({
+      ...this.state,
+      newSupplier: {
+        ...this.state.newSupplier,
+        [name]: value,
+      },
     });
   };
 
@@ -818,12 +888,58 @@ class CreateDP extends React.Component {
           let bids = this.state.bids;
           console.log("currentBid: ", currentBid);
           bids.push(currentBid);
+          // check if compliance for supplier exists
+          let compliances = this.state.compliance;
+          let compliance = compliances.find(
+            (compliance) => compliance.supplier_name === currentBid.supplier_name
+          );
+          let compliance_ = {};
+          if (!compliance) {
+            compliance_ = {
+              bid_no: currentBid.bid_count,
+              supplier: currentBid.supplier,
+              supplier_name: currentBid.supplier_name,
+              payment_terms: false,
+              bid_validity: false,
+              delivery_period: false,
+              technical_specifications: false,
+              valid_tax_clearance: false,
+              registered_with_praz: false,
+              tax_status: false,
+              site_visit: false,
+              samples_required: false,
+              decision: false,
+              reject: true,
+              remarks: "",
+            };
+            compliances.push(compliance_);
+          }
+  
+          let complianceRemarks = this.state.complianceRemarks;
+          let complianceRemark = complianceRemarks.find(
+            (complianceRemark) =>
+              complianceRemark.supplier_name === currentBid.supplier_name
+          );
+  
+          if (!complianceRemark) {
+            let complianceRemark_ = {
+              bid_count: currentBid.bid_count,
+              supplier: currentBid.supplier,
+              supplier_name: currentBid.supplier_name,
+              remarks: "",
+            };
+            complianceRemarks.push(complianceRemark_);
+          }
+  
           this.setState({
             ...this.state,
             bids: bids,
             currentBid: {},
             addBidModal: false,
+            compliance: compliances,
+            complianceRemarks: complianceRemarks,
           });
+
         }
       } else {
         alert("Please add items to the bid");
@@ -1144,9 +1260,68 @@ class CreateDP extends React.Component {
   onComplianceItemsChange = (name_, event) => {
     console.log("name and value: ", name_, event);
     let { name, value } = event.target;
+    let compliance = this.state.compliance;
+    let updatedComplianceList = compliance.map((compliance_, index) => {
+      let _compliance = {};
+      if (this.state.showSamples && this.state.showSiteVisit) {
+        _compliance = {
+          payment_terms: compliance_.payment_terms,
+          bid_validity: compliance_.bid_validity,
+          delivery_period: compliance_.delivery_period,
+          technical_specifications: compliance_.technical_specifications,
+          valid_tax_clearance: compliance_.valid_tax_clearance,
+          registered_with_praz: compliance_.registered_with_praz,
+          tax_status: compliance_.tax_status,
+          site_visit: compliance_.site_visit,
+          samples_required: compliance_.samples_required,
+        };
+      } else if (this.state.showSamples && !this.state.showSiteVisit) {
+        _compliance = {
+          payment_terms: compliance_.payment_terms,
+          bid_validity: compliance_.bid_validity,
+          delivery_period: compliance_.delivery_period,
+          technical_specifications: compliance_.technical_specifications,
+          valid_tax_clearance: compliance_.valid_tax_clearance,
+          registered_with_praz: compliance_.registered_with_praz,
+          tax_status: compliance_.tax_status,
+          samples_required: compliance_.samples_required,
+        };
+      } else if (!this.state.showSamples && this.state.showSiteVisit) {
+        _compliance = {
+          payment_terms: compliance_.payment_terms,
+          bid_validity: compliance_.bid_validity,
+          delivery_period: compliance_.delivery_period,
+          technical_specifications: compliance_.technical_specifications,
+          valid_tax_clearance: compliance_.valid_tax_clearance,
+          registered_with_praz: compliance_.registered_with_praz,
+          tax_status: compliance_.tax_status,
+          site_visit: compliance_.site_visit,
+        };
+      } else {
+        _compliance = {
+          payment_terms: compliance_.payment_terms,
+          bid_validity: compliance_.bid_validity,
+          delivery_period: compliance_.delivery_period,
+          technical_specifications: compliance_.technical_specifications,
+          valid_tax_clearance: compliance_.valid_tax_clearance,
+          registered_with_praz: compliance_.registered_with_praz,
+          tax_status: compliance_.tax_status,
+        };
+      }
+
+      // set compliance_['decision'] to true if all compliance are true
+      let compliance_values = Object.values(_compliance);
+      console.log("compliances: ", compliance_values);
+      let decision = compliance_values.every((value) => value === true);
+      compliance_["decision"] = decision;
+      compliance_["reject"] = !decision;
+
+      return compliance_;
+    });
     this.setState({
       ...this.state,
       [name_]: value,
+      compliance: updatedComplianceList,
     });
   };
 
@@ -1311,7 +1486,7 @@ class CreateDP extends React.Component {
         }
       });
   };
-
+  
   render() {
 
     var itemsModal = null;
@@ -1323,6 +1498,80 @@ class CreateDP extends React.Component {
     var rejectJustification = null;
     var approvalsTable = null;
     var rejectApprovalJustification = null;
+    var supplierModal = null;
+
+    if (this.state.onAddSupplier) {
+      supplierModal = (
+        <div className="fixed inset-0 flex items-center justify-center z-50 pt-10 pb-20">
+          <div className="bg-gulf-blue-100 rounded-lg shadow-lg p-6 max-h-screen overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-medium">ADD SUPPLIER</h3>
+              <button
+                type="button"
+                className="text-gray-400 hover:text-gray-500 focus:outline-none"
+                onClick={this.onAddSuppliersModal}
+              >
+                <svg
+                  className="h-6 w-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+            <div className="overflow-auto px-2 py-2 mt-5 rounded-md bg-gulf-blue-300">
+              <div>
+                <div className="flex-1 w-full ml-1">
+                  <label
+                    htmlFor="supplier_name"
+                    className="block text-sm font-medium leading-6 text-gray-900"
+                  >
+                    Supplier Name
+                  </label>
+                  <div className="mt-2">
+                    <input
+                      name="supplier_name"
+                      onChange={(e) =>
+                        this.onSupplierChange("supplier_name", e)
+                      }
+                      type="text"
+                      required="required"
+                      className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-center mt-5 px-3 py-3">
+                <div className="m-2">
+                  <button
+                    onClick={this.onAddSuppliersModal}
+                    className="rounded-md text-gray-50 text-sm bg-gray-300 hover:bg-blue-550 px-3 py-2 font-semibold leading-6"
+                  >
+                    <span className="ml-2">CANCEL</span>
+                  </button>
+                </div>
+                <div className="m-2">
+                  <button
+                    onClick={this.onSaveSupplier}
+                    className="rounded-md text-gray-50 text-sm bg-blue-925 hover:bg-blue-550 px-3 py-2 font-semibold leading-6"
+                  >
+                    <span className="ml-2">SAVE SUPPLIER</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
 
     if (this.state.approvalsJustificationModal) {
       rejectApprovalJustification = (
@@ -1574,9 +1823,9 @@ class CreateDP extends React.Component {
           id={"bid-" + this.state.currentBid}
           className="fixed inset-0 flex items-center justify-center z-50 pt-10 pb-20"
         >
-          <div className="bg-white rounded-lg shadow-lg p-6 max-h-screen min-w-max overflow-y-auto">
+          <div className="bg-gulf-blue-100 rounded-lg shadow-lg p-6 max-h-screen min-w-max overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-medium">Modal Title</h3>
+              <h3 className="text-lg font-medium">ADD BID DETAILS</h3>
               <button
                 type="button"
                 className="text-gray-400 hover:text-gray-500 focus:outline-none"
@@ -1709,10 +1958,10 @@ class CreateDP extends React.Component {
                         <div className="mt-2">
                           <input
                             name="item_description"
-                            defaultValue={item.item_name}
+                            defaultValue={item.item_required}
                             onChange={(e) =>
                               this.onCurrentBidItemChange(
-                                item.item_name,
+                                item.item_required,
                                 "item_required",
                                 e
                               )
@@ -1736,7 +1985,7 @@ class CreateDP extends React.Component {
                             defaultValue={item.quantity}
                             onChange={(e) =>
                               this.onCurrentBidItemChange(
-                                item.item_name,
+                                item.item_required,
                                 "quantity",
                                 e
                               )
@@ -1760,7 +2009,7 @@ class CreateDP extends React.Component {
                               id="unit_of_measurement"
                               onChange={(e) =>
                                 this.onCurrentBidItemChange(
-                                  item.item_name,
+                                  item.item_required,
                                   "unit_of_measurement",
                                   e
                                 )
@@ -1793,9 +2042,10 @@ class CreateDP extends React.Component {
                           <div className="mt-2">
                             <select
                               id="vat"
+                              defaultValue={item.vat}
                               onChange={(e) =>
                                 this.onCurrentBidItemChange(
-                                  item.item_name,
+                                  item.item_required,
                                   "vat",
                                   e
                                 )
@@ -1808,6 +2058,7 @@ class CreateDP extends React.Component {
                               ) : (
                                 ""
                               )}
+                              <option>Select Vat</option>
                               <option value="Excl.">Excl.</option>
                               <option value="Incl.">Incl.</option>
                             </select>
@@ -1827,7 +2078,7 @@ class CreateDP extends React.Component {
                             defaultValue={item.unit_price}
                             onChange={(e) =>
                               this.onCurrentBidItemChange(
-                                item.item_name,
+                                item.item_required,
                                 "unit_price",
                                 e
                               )
@@ -2010,10 +2261,10 @@ class CreateDP extends React.Component {
                         <div className="mt-2">
                           <input
                             name="item_description"
-                            defaultValue={item.description}
+                            defaultValue={item.item_required}
                             onChange={(e) =>
                               this.onCurrentBidItemChange(
-                                item.item_name,
+                                item.item_required,
                                 "item_required",
                                 e
                               )
@@ -2037,7 +2288,7 @@ class CreateDP extends React.Component {
                             defaultValue={item.quantity}
                             onChange={(e) =>
                               this.onCurrentBidItemChange(
-                                item.item_name,
+                                item.item_required,
                                 "quantity",
                                 e
                               )
@@ -2059,9 +2310,10 @@ class CreateDP extends React.Component {
                           <div className="mt-2">
                             <select
                               id="unit_of_measurement"
+                              defaultValue={item.unit_of_measurement}
                               onChange={(e) =>
                                 this.onCurrentBidItemChange(
-                                  item.item_name,
+                                  item.item_required,
                                   "unit_of_measurement",
                                   e
                                 )
@@ -2076,14 +2328,9 @@ class CreateDP extends React.Component {
                               ) : (
                                 ""
                               )}
-                              <option value="Each">Each</option>
-                              <option value="Kgs">Kg`s</option>
-                              <option value="Grammes">Grammes</option>
-                              <option value="Litres">Litres</option>
-                              <option value="Metres">Metres</option>
-                              <option value="Bags">Bags</option>
-                              <option value="Packets">Packets</option>
-                              <option value="Cartons">Cartons</option>
+                              {this.state.uom ? this.state.uom.map((uom) => (
+                                <option value={uom.name}>{uom.name}</option>
+                              )): <option>No Units</option>}
                             </select>
                           </div>
                         </div>
@@ -2099,9 +2346,10 @@ class CreateDP extends React.Component {
                           <div className="mt-2">
                             <select
                               id="vat"
+                              defaultValue={item.vat}
                               onChange={(e) =>
                                 this.onCurrentBidItemChange(
-                                  item.item_name,
+                                  item.item_required,
                                   "vat",
                                   e
                                 )
@@ -2133,7 +2381,7 @@ class CreateDP extends React.Component {
                             defaultValue={item.unit_price}
                             onChange={(e) =>
                               this.onCurrentBidItemChange(
-                                item.item_name,
+                                item.item_required,
                                 "unit_price",
                                 e
                               )
@@ -2697,9 +2945,9 @@ class CreateDP extends React.Component {
                           {member.committeeDate}
                         </td>
                         <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                          {member.committeeApproval === "Approved" && "APPROVED"}
-                          {member.committeeApproval === "Rejected" && "REJECTED"}
-                          {(member.committeeApproval === "") && (
+                          {member.memberApproval === "Approved" && "APPROVED"}
+                          {member.memberApproval === "Rejected" && "REJECTED"}
+                          {(member.memberApproval === "" || member.memberApproval === null) && (
                             <div className="flex justify-content-evenly">
                               {this.state.username === this.state.cs_owner ? (
                                 <div className="m-2">
@@ -2783,44 +3031,44 @@ class CreateDP extends React.Component {
                     <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
                       {this.state.fmApproval && this.state.fmApproval.approval === "Approved" && "APPROVED"}
                       {this.state.fmApproval && this.state.fmApproval.approval === "Rejected" && "REJECTED"}
-                      {(
-                            <div className="flex justify-content-evenly">
-                              {(this.state.requester_role === 'check') && Object.keys(this.state.fmApproval).length === 0 ? (
-                                <div className="flex justify-content-evenly">
-                                  <div className="m-2">
-                                    <button
-                                      onClick={() =>
-                                        this.onApprovalApprove(
-                                          "finance_manager",
-                                          this.state.username,
-                                          "Approved",
-                                          ""
-                                        )
-                                      }
-                                      name="save_next"
-                                      className="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                                    >
-                                      APPROVE
-                                    </button>
-                                  </div>
-                                  <div className="m-2">
-                                    <button
-                                      onClick={() =>
-                                        this.onApprovalJustificationModal(this.state.username, "finance_manager")
-                                      }
-                                      name="save_next"
-                                      className="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                                    >
-                                      REJECT
-                                    </button>
-                                  </div>
+                      {this.state.committeeApprovalComplete && (
+                          <div className="flex justify-content-evenly">
+                            {(this.state.requester_role === 'check') && Object.keys(this.state.fmApproval).length === 0 ? (
+                              <div className="flex justify-content-evenly">
+                                <div className="m-2">
+                                  <button
+                                    onClick={() =>
+                                      this.onApprovalApprove(
+                                        "finance_manager",
+                                        this.state.username,
+                                        "Approved",
+                                        ""
+                                      )
+                                    }
+                                    name="save_next"
+                                    className="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                                  >
+                                    APPROVE
+                                  </button>
                                 </div>
-                              ) : (
-                                ""
-                              )}
-                            </div>
-                          )
-                    }
+                                <div className="m-2">
+                                  <button
+                                    onClick={() =>
+                                      this.onApprovalJustificationModal(this.state.username, "finance_manager")
+                                    }
+                                    name="save_next"
+                                    className="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                                  >
+                                    REJECT
+                                  </button>
+                                </div>
+                              </div>
+                            ) : (
+                              ""
+                            )}
+                          </div>
+                        )
+                      }
                     </td>
                     <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
                       {this.state.fmApproval && this.state.fmApproval.justification}
@@ -3178,6 +3426,7 @@ class CreateDP extends React.Component {
       <div>
         {itemsModal}
         {bidsModal}
+        {supplierModal}
         {updateBidModal}
         {rejectJustification}
         {rejectApprovalJustification}
@@ -3190,7 +3439,7 @@ class CreateDP extends React.Component {
               CS NO: {this.state.cs_id}
             </p>
             
-      {this.state.fetchPR && (
+            {this.state.fetchPR && (
               <div className="flex justify-evenly items-end mt-5 px-2 py-2">
               <div className="flex-1 w-40">
                 <label
@@ -3226,16 +3475,28 @@ class CreateDP extends React.Component {
             {csDetailsView}
           </div>
 
-          {this.state.bids.length < 1 &&
-          this.state.username === this.state.cs_owner ? (
-            <div className="m-2">
-              <button
-                style={{ width: "100%" }}
-                onClick={this.onAddItemsModal}
-                className="rounded-md bg-nepal-950 hover:bg-nepal-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-              >
-                ADD SCHEDULE ITEMS
-              </button>
+          {this.state.username === this.state.cs_owner ? (
+            <div style={{width: "100%"}} className="flex justify-content-evenly mt-5 px-3 py-3">
+              <div className="m-2">
+                <button
+                  style={{ width: "100%" }}
+                  onClick={this.onAddSuppliersModal}
+                  className="rounded-md bg-nepal-950 hover:bg-nepal-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                >
+                  ADD SUPPLIERS
+                </button>
+              </div>
+              {this.state.bids.length < 1 ? (
+                <div className="m-2">
+                  <button
+                    style={{ width: "100%" }}
+                    onClick={this.onAddItemsModal}
+                    className="rounded-md bg-nepal-950 hover:bg-nepal-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                  >
+                    ADD SCHEDULE ITEMS
+                  </button>
+                </div>
+              ) : ""}
             </div>
           ) : (
             ""
@@ -3313,9 +3574,7 @@ class CreateDP extends React.Component {
                           </label>
                           <div className="mt-2">
                             <p>
-                              {item.item_required
-                                ? item.item_required
-                                : item.description}
+                              {item.item_required}
                             </p>
                           </div>
                         </div>
