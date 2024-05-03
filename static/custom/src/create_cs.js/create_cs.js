@@ -3740,7 +3740,7 @@ var CreateCS = function (_React$Component) {
                 id: "scope",
                 name: "scope_of_work",
                 type: "scope",
-                disabled: this.state.username === this.state.cs_owner ? false : true,
+                disabled: this.state.username === this.state.cs_owner || this.state.cs_owner === "" ? false : true,
                 value: this.state.scope_of_work,
                 onChange: this.onInputChange,
                 className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
@@ -3769,7 +3769,7 @@ var CreateCS = function (_React$Component) {
                 name: "pr_number",
                 value: this.state.pr_number,
                 onChange: this.onInputChange,
-                disabled: this.state.username === this.state.cs_owner ? false : true,
+                disabled: this.state.username === this.state.cs_owner || this.state.cs_owner === "" ? false : true,
                 id: "pr_number",
                 required: "required",
                 className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
@@ -3794,7 +3794,7 @@ var CreateCS = function (_React$Component) {
                 name: "pr_date",
                 value: this.state.pr_date,
                 onChange: this.onInputChange,
-                disabled: this.state.username === this.state.cs_owner ? false : true,
+                disabled: this.state.username === this.state.cs_owner || this.state.cs_owner === "" ? false : true,
                 type: "date",
                 required: "required",
                 className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
@@ -3819,7 +3819,7 @@ var CreateCS = function (_React$Component) {
                 name: "closing_date",
                 value: this.state.closing_date,
                 onChange: this.onInputChange,
-                disabled: this.state.username === this.state.cs_owner ? false : true,
+                disabled: this.state.username === this.state.cs_owner || this.state.cs_owner === "" ? false : true,
                 type: "date",
                 required: "required",
                 className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
@@ -3850,7 +3850,7 @@ var CreateCS = function (_React$Component) {
                     "select",
                     {
                       name: "closing_time_hour",
-                      disabled: this.state.username === this.state.cs_owner ? false : true,
+                      disabled: this.state.username === this.state.cs_owner || this.state.cs_owner === "" ? false : true,
                       onChange: function onChange(e) {
                         return _this2.onSelectChange("closing_time_hour", e);
                       },
@@ -3900,7 +3900,7 @@ var CreateCS = function (_React$Component) {
                   id: "proc_plan",
                   name: "proc_plan",
                   autoComplete: "proc_plan",
-                  disabled: this.state.username === this.state.cs_owner ? false : true,
+                  disabled: this.state.username === this.state.cs_owner || this.state.cs_owner === "" ? false : true,
                   onChange: function onChange(e) {
                     return _this2.onSelectChange("proc_ref", e);
                   },
@@ -3939,7 +3939,7 @@ var CreateCS = function (_React$Component) {
                 name: "ref_date",
                 value: this.state.ref_date,
                 onChange: this.onInputChange,
-                disabled: this.state.username === this.state.cs_owner ? false : true,
+                disabled: this.state.username === this.state.cs_owner || this.state.cs_owner === "" ? false : true,
                 type: "date",
                 required: "required",
                 className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
@@ -3964,7 +3964,7 @@ var CreateCS = function (_React$Component) {
                 name: "date_tender_opened",
                 value: this.state.date_tender_opened,
                 onChange: this.onInputChange,
-                disabled: this.state.username === this.state.cs_owner ? false : true,
+                disabled: this.state.username === this.state.cs_owner || this.state.cs_owner === "" ? false : true,
                 type: "date",
                 required: "required",
                 className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
@@ -3989,7 +3989,7 @@ var CreateCS = function (_React$Component) {
                 name: "tender_adjudication_committee_date",
                 value: this.state.tender_adjudication_committee_date,
                 onChange: this.onInputChange,
-                disabled: this.state.username === this.state.cs_owner ? false : true,
+                disabled: this.state.username === this.state.cs_owner || this.state.cs_owner === "" ? false : true,
                 type: "date",
                 required: "required",
                 className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
@@ -4019,7 +4019,7 @@ var CreateCS = function (_React$Component) {
                 onChange: function onChange(e) {
                   return _this2.onFileInputChange("advert", e);
                 },
-                disabled: this.state.username === this.state.cs_owner ? false : true,
+                disabled: this.state.username === this.state.cs_owner || this.state.cs_owner === "" ? false : true,
                 type: "file",
                 id: "advert",
                 required: "required",

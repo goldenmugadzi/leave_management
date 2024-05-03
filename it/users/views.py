@@ -9,6 +9,10 @@ from django.contrib.sites import requests
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.contrib.auth.hashers import make_password
+# from django.views.decorators.csrf import csrf_exempt
+# from openpyxl.reader.excel import load_workbook
+# from rest_framework.decorators import api_view, parser_classes
+# from rest_framework.parsers import JSONParser
 
 from it.users.models import Application, Roles, UserProfile, Depots, Districts, Regions, Designations, Sections
 from it.users.forms import CustomUserCreationForm
@@ -55,31 +59,31 @@ def add_centers(request):
     #     )
     #     _designation.save()
     #
-    for role in ROLES:
-        application_ = role['application']
-        app_id = Application.objects.filter(name=application_).first()
-        if app_id:
-            _role = Roles(
-                role=role['role'],
-                name=role['name'],
-                description=role['description'],
-                application=role['application'],
-                app_id=app_id
-            )
-            _role.save()
-        else:
-            new_app = Application(
-                name=application_
-            )
-            new_app.save()
-            _role = Roles(
-                role=role['name'],
-                name=role['name'],
-                description=role['description'],
-                application=role['application'],
-                app_id=new_app
-            )
-            _role.save()
+    # for role in ROLES:
+    #     application_ = role['application']
+    #     app_id = Application.objects.filter(name=application_).first()
+    #     if app_id:
+    #         _role = Roles(
+    #             role=role['role'],
+    #             name=role['name'],
+    #             description=role['description'],
+    #             application=role['application'],
+    #             app_id=app_id
+    #         )
+    #         _role.save()
+    #     else:
+    #         new_app = Application(
+    #             name=application_
+    #         )
+    #         new_app.save()
+    #         _role = Roles(
+    #             role=role['name'],
+    #             name=role['name'],
+    #             description=role['description'],
+    #             application=role['application'],
+    #             app_id=new_app
+    #         )
+    #         _role.save()
             
     # for section in SECTIONS:
     #     _section = Sections(
