@@ -103,7 +103,7 @@ def get_comperative_schedule_data(request, cs_id):
     for item in items:
         items_list.append({
             "item_id": item.item_id,
-            "item_name": item.item_name,
+            "item_required": item.item_name,
             "quantity": item.quantity,
             "unit_of_measurement": item.unit_of_measurement,
             "created_at": item.created_at,
@@ -130,7 +130,7 @@ def get_comperative_schedule_data(request, cs_id):
             }
         grouped_data[bid_no]['items'].append({
             'item_id': bid.item_id.item_id,
-            'description': bid.item_id.item_name,  # assume this is constant
+            'item_required': bid.item_id.item_name,  # assume this is constant
             'quantity': bid.item_id.quantity,
             'unit_of_measurement': bid.item_id.unit_of_measurement,
             'unit_price': bid.unit_price,
@@ -186,7 +186,7 @@ def get_comperative_schedule_data(request, cs_id):
                 "memberName": member.user.first_name + " " + member.user.last_name if member.user else "",
                 "memberPosition": member.committee_position,
                 "committeeStatus": member.committee_status,
-                "committeeApproval": member.committee_approval if member.committee_approval else "",
+                "memberApproval": member.committee_approval if member.committee_approval else "",
                 "committeeJustification": member.justification,
                 "committeeDate": member.committee_date,
             }) 
@@ -227,6 +227,15 @@ def get_comperative_schedule_data(request, cs_id):
                 })
             except Exception as ex:
                 print("Error: ", ex)
+                
+    cs_item_list = []
+    for cs_item in cs_items:
+        cs_item_list.append({
+            "id": cs_item.id,
+            "item_required": cs_item.item_name,
+            "quantity": cs_item.quantity,
+            "unit_of_measurement": cs_item.unit_of_measurement,
+        })
 
     context = {
         "requester_role": user_comparative_schedule_role.role if user_comparative_schedule_role else "",
@@ -281,7 +290,7 @@ def get_comperative_schedule_data(request, cs_id):
         
         "pr_items": pr_item_list,
         "pr_attachments": pr_at_list,
-        "cs_items": list(cs_items.values('id', 'item_name', 'quantity', 'unit_of_measurement')),
+        "cs_items": cs_item_list,
         "proc_plans": list(proc_plans.values('id', 'proc_ref', 'description')),
         "suppliers": list(suppliers.values('id', 'name')),
         "users": list(users.values('id', 'username', 'first_name', 'last_name')),
@@ -340,13 +349,13 @@ def get_create_data(request, pr_id):
                 "success": True,
                 "message": "PR details retrieved successfully",
                 "pr_id": pr_id,
-                "scope_of_work": purchase_request.scope_of_work,
+                "scope_of_work": purchase_request.scope_of_work if purchase_request.scope_of_work else "",
                 "proc_ref": purchase_request.procurement_plan_reference.id if purchase_request.procurement_plan_reference else "",
                 "proc_plan": {
                     "id": purchase_request.procurement_plan_reference.id if purchase_request.procurement_plan_reference else "",
                     "name": purchase_request.procurement_plan_reference.name if purchase_request.procurement_plan_reference else ""
                 } if purchase_request.procurement_plan_reference else {},
-                "pr_date": purchase_request.created_at.strftime("%Y-%m-%d"),
+                "pr_date": purchase_request.created_at.strftime("%Y-%m-%d") if purchase_request.created_at else "",
                 "pr_items": pr_item_list,
                 "pr_attachments": pr_at_list,
                 "proc_plans": list(proc_plans.values('id', 'proc_ref', 'description')),
@@ -677,7 +686,7 @@ def update_pritem_ordered(request):
             # check if item exists
             cs_item = CSItems.objects.filter(item_id=item['id'], cs_id=cs_query).first()
             if cs_item:
-                cs_item.item_name = item['item_name']
+                cs_item.item_name = item['item_required']
                 cs_item.quantity = item['quantity']
                 cs_item.unit_of_measurement = item['unit_of_measurement']
                 cs_item.save()
@@ -685,7 +694,7 @@ def update_pritem_ordered(request):
                 cs_required_items = CSRequiredItems(
                     cs_id = cs_query,
                     item_id = item['id'],
-                    item_name = item['item_name'],
+                    item_name = item['item_required'],
                     quantity = item['quantity'],
                     unit_of_measurement = item['unit_of_measurement'],
                 )
@@ -695,7 +704,7 @@ def update_pritem_ordered(request):
         # set all items to ordered
         for item in items:
             print("item: ", item)
-            pr_item = PrItem.objects.filter(item_required=item['item_name'], purchase_request=purchase_request).first()
+            pr_item = PrItem.objects.filter(item_required=item['item_required'], purchase_request=purchase_request).first()
             if pr_item:
                 pr_item.ordered = True
                 pr_item.save()
@@ -913,6 +922,23 @@ def save_cs_compliance(request):
         "success": True,
     })
     
+def save_supplier(request):
+
+    supplier_name = request.POST.get("supplier_name", "")
+    
+    supplier_query = Supplier.objects.filter(name=supplier_name).first()
+    if not supplier_query:
+        supplier_query = Supplier(
+            name = supplier_name
+        )
+        supplier_query.save()
+        
+    return JsonResponse({
+        "message": "Supplier saved successfully",
+        "success": True,
+    })
+    
+    
 def save_cs_ranking(request):
     cs_id = request.POST.get("cs_id", "")
     cs_query = ComparativeSchedules.objects.filter(cs_id=cs_id).first()
@@ -929,7 +955,13 @@ def save_cs_ranking(request):
             ranking.delete()
     # get bids
     bids = Bids.objects.filter(cs_id=cs_query).values('sup_id').annotate(total_sum=Sum('total'))
-    rankings = {bid['sup_id']: bid['total_sum'] for bid in bids}
+    compliant_bids = []
+    for bid in bids:
+        supplier = Supplier.objects.filter(id=bid['sup_id']).first()
+        _compliance = CSCompliance.objects.filter(cs_id=cs_query, supplier_id=supplier, decision=True).first()
+        if _compliance:
+            compliant_bids.append(bid)
+    rankings = {bid['sup_id']: bid['total_sum'] for bid in compliant_bids}
     print("rankings: ", rankings)
     sorted_rankings = sorted(rankings.items(), key=lambda x: x[1])
     print("sorted_rankings: ", sorted_rankings)
