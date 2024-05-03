@@ -172,7 +172,8 @@ def create_Ace(request):
 
                 ace_id2 = "ACE" + date + rand2
                 ace.Ace_id2 = ace_id2
-                ace.designation = designation
+                if designation:
+                    ace.designation = designation
                 ace.region = region
                 ace.date_created = date
                 ace.save()
