@@ -94,10 +94,14 @@ var CreateCS = function (_React$Component) {
             attachment_url: _this.onGetFileObjectUrl(pr_attachment.file)
           });
         });
-        console.log("advert file", advert, typeof advert === "undefined" ? "undefined" : _typeof(advert));
+        var committeeApprovalComplete = committee.filter(function (member) {
+          return member.memberApproval === "" || member.memberApproval === null || member.memberApproval === undefined || member.memberApproval === "Rejected";
+        }).length === 0;
+
         _this.setState(Object.assign({}, _this.state, (_Object$assign = {
           requester_role: requester_role,
           cs_owner: cs_owner,
+          committeeApprovalComplete: committeeApprovalComplete,
           proc_plans: proc_plans,
           uom: uom,
           suppliers: suppliers,
@@ -227,6 +231,10 @@ var CreateCS = function (_React$Component) {
 
     _this.onAddCommitteeMembers = function () {
       var members = _this.state.committeeMembers;
+      var member_ = _this.state.member;
+      if (member_.memberUserName === "") {
+        alert("Please select a user");
+      }
       // check if memberUserName exists
       var member = members.find(function (_member) {
         return _member.memberUserName === _this.state.member.memberUserName;
@@ -439,6 +447,38 @@ var CreateCS = function (_React$Component) {
       }));
     };
 
+    _this.onSaveSupplier = function () {
+      var form_data = new FormData();
+      form_data.append("supplier_name", _this.state.newSupplier.supplier_name);
+      form_data.append("csrfmiddlewaretoken", _this.getCookie("csrftoken"));
+
+      fetch(BASE_URL + "/comperative_schedule/save_supplier", {
+        method: "POST",
+        headers: {
+          "X-CSRFToken": _this.getCookie("csrftoken")
+        },
+        body: form_data
+      }).then(function (response) {
+        return response.json();
+      }).then(function (data) {
+        console.log("data: ", data);
+        if (data.success) {
+          alert("Supplier saved successfully");
+          _this.setState(Object.assign({}, _this.state, {
+            onAddSupplier: false,
+            newSupplier: {
+              supplier_name: "",
+              supplier_contact: "",
+              supplier_email: "",
+              supplier_address: ""
+            }
+          }));
+        } else {
+          alert("Error saving Supplier");
+        }
+      });
+    };
+
     _this.onApprovalJustificationChange = function (name_, event) {
       var _event$target4 = event.target,
           name = _event$target4.name,
@@ -482,7 +522,7 @@ var CreateCS = function (_React$Component) {
         });
         // update pr_item selected to added
         _item2.ordered = true;
-        _item2.item_name = _item2.item_required;
+        _item2.item_required = _item2.item_required;
         // update pr_items
         var _pr_items = _this.state.pr_items.map(function (_item) {
           if (_item.id === item_id) {
@@ -527,6 +567,23 @@ var CreateCS = function (_React$Component) {
       });
       _this.setState(Object.assign({}, _this.state, {
         addItemsModal: false
+      }));
+    };
+
+    _this.onAddSuppliersModal = function () {
+      _this.setState(Object.assign({}, _this.state, {
+        onAddSupplier: !_this.state.onAddSupplier
+      }));
+    };
+
+    _this.onSupplierChange = function (name_, event) {
+      var _event$target5 = event.target,
+          name = _event$target5.name,
+          value = _event$target5.value;
+
+
+      _this.setState(Object.assign({}, _this.state, {
+        newSupplier: Object.assign({}, _this.state.newSupplier, _defineProperty({}, name, value))
       }));
     };
 
@@ -576,18 +633,18 @@ var CreateCS = function (_React$Component) {
         currentBid[name_] = bid_file;
         currentBid.bid_document_url = bid_document_url;
       } else if (name_ === "supplier") {
-        var _event$target5 = event.target,
-            name = _event$target5.name,
-            value = _event$target5.value;
+        var _event$target6 = event.target,
+            name = _event$target6.name,
+            value = _event$target6.value;
 
         console.log("value: ", value);
         var id_name = value ? value.split("-#-") : [];
         currentBid[name_] = id_name.length > 0 ? id_name[0] : "";
         currentBid["supplier_name"] = id_name.length >= 1 ? id_name[1] : "";
       } else {
-        var _event$target6 = event.target,
-            _name = _event$target6.name,
-            _value = _event$target6.value;
+        var _event$target7 = event.target,
+            _name = _event$target7.name,
+            _value = _event$target7.value;
 
         currentBid[name_] = _value;
       }
@@ -605,9 +662,9 @@ var CreateCS = function (_React$Component) {
       console.log("item: ", item);
       // if item exists update item
       if (item) {
-        var _event$target7 = event.target,
-            name = _event$target7.name,
-            value = _event$target7.value;
+        var _event$target8 = event.target,
+            name = _event$target8.name,
+            value = _event$target8.value;
 
         item[name_] = value;
         // update item in current bid
@@ -627,11 +684,11 @@ var CreateCS = function (_React$Component) {
       } else {
         // find item in cs_items
         var _item3 = _this.state.cs_items.find(function (item) {
-          return item.item_name === description;
+          return item.item_required === description;
         });
         // create new item
         var new_item = {
-          item_required: _item3.item_name,
+          item_required: _item3.item_required,
           quantity: _item3.quantity,
           unit_of_measurement: _item3.unit_of_measurement,
           vat: _item3.vat,
@@ -657,6 +714,8 @@ var CreateCS = function (_React$Component) {
 
     _this.onCurrentBidSave = function () {
       var currentBid = _this.state.currentBid;
+      // console.log currentBid item details
+      console.log("currentBid: ", currentBid);
       if (currentBid.supplier_name === "" || currentBid.supplier_name === undefined) {
         alert("Please select a supplier");
         return;
@@ -687,10 +746,11 @@ var CreateCS = function (_React$Component) {
               }
               return bid;
             });
+
             _this.setState(Object.assign({}, _this.state, {
               bids: bids,
               currentBid: {},
-              addBidModal: false
+              updateBidModal: false
             }));
           } else {
             // calculate total price for each item
@@ -705,10 +765,54 @@ var CreateCS = function (_React$Component) {
             var _bids = _this.state.bids;
             console.log("currentBid: ", currentBid);
             _bids.push(currentBid);
+            // check if compliance for supplier exists
+            var compliances = _this.state.compliance;
+            var compliance = compliances.find(function (compliance) {
+              return compliance.supplier_name === currentBid.supplier_name;
+            });
+            var compliance_ = {};
+            if (!compliance) {
+              compliance_ = {
+                bid_no: currentBid.bid_count,
+                supplier: currentBid.supplier,
+                supplier_name: currentBid.supplier_name,
+                payment_terms: false,
+                bid_validity: false,
+                delivery_period: false,
+                technical_specifications: false,
+                valid_tax_clearance: false,
+                registered_with_praz: false,
+                tax_status: false,
+                site_visit: false,
+                samples_required: false,
+                decision: false,
+                reject: true,
+                remarks: ""
+              };
+              compliances.push(compliance_);
+            }
+
+            var complianceRemarks = _this.state.complianceRemarks;
+            var complianceRemark = complianceRemarks.find(function (complianceRemark) {
+              return complianceRemark.supplier_name === currentBid.supplier_name;
+            });
+
+            if (!complianceRemark) {
+              var complianceRemark_ = {
+                bid_count: currentBid.bid_count,
+                supplier: currentBid.supplier,
+                supplier_name: currentBid.supplier_name,
+                remarks: ""
+              };
+              complianceRemarks.push(complianceRemark_);
+            }
+
             _this.setState(Object.assign({}, _this.state, {
               bids: _bids,
               currentBid: {},
-              addBidModal: false
+              addBidModal: false,
+              compliance: compliances,
+              complianceRemarks: complianceRemarks
             }));
           }
         } else {
@@ -894,27 +998,27 @@ var CreateCS = function (_React$Component) {
 
     _this.onInputChange = function (event) {
       console.log(event);
-      var _event$target8 = event.target,
-          name = _event$target8.name,
-          value = _event$target8.value;
+      var _event$target9 = event.target,
+          name = _event$target9.name,
+          value = _event$target9.value;
 
       _this.setState(Object.assign({}, _this.state, _defineProperty({}, name, value)));
     };
 
     _this.onFileInputChange = function (name_, event) {
-      var _Object$assign3;
+      var _Object$assign4;
 
       console.log(event);
       var file = event.target.files[0];
       var fileUrl = _this.onGetFileObjectUrl(file);
-      _this.setState(Object.assign({}, _this.state, (_Object$assign3 = {}, _defineProperty(_Object$assign3, name_, file), _defineProperty(_Object$assign3, "advert_url", fileUrl), _Object$assign3)));
+      _this.setState(Object.assign({}, _this.state, (_Object$assign4 = {}, _defineProperty(_Object$assign4, name_, file), _defineProperty(_Object$assign4, "advert_url", fileUrl), _Object$assign4)));
     };
 
     _this.onAddComplianceTable = function () {
       // add bid compliance
       var compliances = _this.state.bids.map(function (bid) {
         return {
-          bid_count: bid.bid_count,
+          bid_no: bid.bid_count,
           supplier: bid.supplier,
           supplier_name: bid.supplier_name,
           payment_terms: false,
@@ -950,17 +1054,80 @@ var CreateCS = function (_React$Component) {
 
     _this.onComplianceItemsChange = function (name_, event) {
       console.log("name and value: ", name_, event);
-      var _event$target9 = event.target,
-          name = _event$target9.name,
-          value = _event$target9.value;
+      var _event$target10 = event.target,
+          name = _event$target10.name,
+          value = _event$target10.value;
 
-      _this.setState(Object.assign({}, _this.state, _defineProperty({}, name_, value)));
+      var compliance = _this.state.compliance;
+      var updatedComplianceList = compliance.map(function (compliance_, index) {
+        var _compliance = {};
+        if (_this.state.showSamples && _this.state.showSiteVisit) {
+          _compliance = {
+            payment_terms: compliance_.payment_terms,
+            bid_validity: compliance_.bid_validity,
+            delivery_period: compliance_.delivery_period,
+            technical_specifications: compliance_.technical_specifications,
+            valid_tax_clearance: compliance_.valid_tax_clearance,
+            registered_with_praz: compliance_.registered_with_praz,
+            tax_status: compliance_.tax_status,
+            site_visit: compliance_.site_visit,
+            samples_required: compliance_.samples_required
+          };
+        } else if (_this.state.showSamples && !_this.state.showSiteVisit) {
+          _compliance = {
+            payment_terms: compliance_.payment_terms,
+            bid_validity: compliance_.bid_validity,
+            delivery_period: compliance_.delivery_period,
+            technical_specifications: compliance_.technical_specifications,
+            valid_tax_clearance: compliance_.valid_tax_clearance,
+            registered_with_praz: compliance_.registered_with_praz,
+            tax_status: compliance_.tax_status,
+            samples_required: compliance_.samples_required
+          };
+        } else if (!_this.state.showSamples && _this.state.showSiteVisit) {
+          _compliance = {
+            payment_terms: compliance_.payment_terms,
+            bid_validity: compliance_.bid_validity,
+            delivery_period: compliance_.delivery_period,
+            technical_specifications: compliance_.technical_specifications,
+            valid_tax_clearance: compliance_.valid_tax_clearance,
+            registered_with_praz: compliance_.registered_with_praz,
+            tax_status: compliance_.tax_status,
+            site_visit: compliance_.site_visit
+          };
+        } else {
+          _compliance = {
+            payment_terms: compliance_.payment_terms,
+            bid_validity: compliance_.bid_validity,
+            delivery_period: compliance_.delivery_period,
+            technical_specifications: compliance_.technical_specifications,
+            valid_tax_clearance: compliance_.valid_tax_clearance,
+            registered_with_praz: compliance_.registered_with_praz,
+            tax_status: compliance_.tax_status
+          };
+        }
+
+        // set compliance_['decision'] to true if all compliance are true
+        var compliance_values = Object.values(_compliance);
+        console.log("compliances: ", compliance_values);
+        var decision = compliance_values.every(function (value) {
+          return value === true;
+        });
+        compliance_["decision"] = decision;
+        compliance_["reject"] = !decision;
+
+        return compliance_;
+      });
+
+      _this.setState(Object.assign({}, _this.state, _defineProperty({
+        compliance: updatedComplianceList
+      }, name_, value)));
     };
 
     _this.onComplianceChange = function (index, event) {
-      var _event$target10 = event.target,
-          name = _event$target10.name,
-          checked = _event$target10.checked;
+      var _event$target11 = event.target,
+          name = _event$target11.name,
+          checked = _event$target11.checked;
 
       console.log("name: ", name, "checked: ", checked);
       var compliance = _this.state.compliance;
@@ -1028,9 +1195,9 @@ var CreateCS = function (_React$Component) {
     };
 
     _this.onComplianceRemarksChange = function (supplier_name, event) {
-      var _event$target11 = event.target,
-          name = _event$target11.name,
-          value = _event$target11.value;
+      var _event$target12 = event.target,
+          name = _event$target12.name,
+          value = _event$target12.value;
 
       console.log("name: ", name, "value: ", value, "supplier_name: ", supplier_name);
       var complianceRemarks = _this.state.complianceRemarks;
@@ -1114,6 +1281,7 @@ var CreateCS = function (_React$Component) {
       requester_role: "",
       cs_id: "",
       cs_owner: "",
+      committeeApprovalComplete: false,
       plan_ref: "",
       proc_ref: "",
       proc_plan: null,
@@ -1173,7 +1341,14 @@ var CreateCS = function (_React$Component) {
       authUser: {},
       username: "",
 
-      fetchPR: false
+      fetchPR: false,
+      onAddSupplier: false,
+      newSupplier: {
+        supplier_name: "",
+        supplier_contact: "",
+        supplier_email: "",
+        supplier_address: ""
+      }
     };
     _this.getCreateData = _this.getCreateData.bind(_this);
     _this.onAddBid = _this.onAddBid.bind(_this);
@@ -1188,6 +1363,7 @@ var CreateCS = function (_React$Component) {
     _this.onCommitteeJustificationModal = _this.onCommitteeJustificationModal.bind(_this);
     _this.onApprovalJustificationModal = _this.onApprovalJustificationModal.bind(_this);
     _this.onApprovalJustificationChange = _this.onApprovalJustificationChange.bind(_this);
+    _this.onSupplierChange = _this.onSupplierChange.bind(_this);
     return _this;
   }
 
@@ -1217,18 +1393,18 @@ var CreateCS = function (_React$Component) {
   }, {
     key: "onSelectChange",
     value: function onSelectChange(name_, event) {
-      var _event$target12 = event.target,
-          name = _event$target12.name,
-          value = _event$target12.value;
+      var _event$target13 = event.target,
+          name = _event$target13.name,
+          value = _event$target13.value;
 
       this.setState(Object.assign({}, this.state, _defineProperty({}, name_, value)));
     }
   }, {
     key: "onFilterSelectCenters",
     value: function onFilterSelectCenters(name_, event) {
-      var _event$target13 = event.target,
-          name = _event$target13.name,
-          value = _event$target13.value;
+      var _event$target14 = event.target,
+          name = _event$target14.name,
+          value = _event$target14.value;
 
       if (name_ === "region") {
         var dist = this.state.allDistricts.filter(function (_district) {
@@ -1296,6 +1472,119 @@ var CreateCS = function (_React$Component) {
       var rejectJustification = null;
       var approvalsTable = null;
       var rejectApprovalJustification = null;
+      var supplierModal = null;
+
+      if (this.state.onAddSupplier) {
+        supplierModal = React.createElement(
+          "div",
+          { className: "fixed inset-0 flex items-center justify-center z-50 pt-10 pb-20" },
+          React.createElement(
+            "div",
+            { className: "bg-gulf-blue-100 rounded-lg shadow-lg p-6 max-h-screen overflow-y-auto" },
+            React.createElement(
+              "div",
+              { className: "flex justify-between items-center mb-4" },
+              React.createElement(
+                "h3",
+                { className: "text-lg font-medium" },
+                "ADD SUPPLIER"
+              ),
+              React.createElement(
+                "button",
+                {
+                  type: "button",
+                  className: "text-gray-400 hover:text-gray-500 focus:outline-none",
+                  onClick: this.onAddSuppliersModal
+                },
+                React.createElement(
+                  "svg",
+                  {
+                    className: "h-6 w-6",
+                    fill: "none",
+                    stroke: "currentColor",
+                    viewBox: "0 0 24 24"
+                  },
+                  React.createElement("path", {
+                    strokeLinecap: "round",
+                    strokeLinejoin: "round",
+                    strokeWidth: "2",
+                    d: "M6 18L18 6M6 6l12 12"
+                  })
+                )
+              )
+            ),
+            React.createElement(
+              "div",
+              { className: "overflow-auto px-2 py-2 mt-5 rounded-md bg-gulf-blue-300" },
+              React.createElement(
+                "div",
+                null,
+                React.createElement(
+                  "div",
+                  { className: "flex-1 w-full ml-1" },
+                  React.createElement(
+                    "label",
+                    {
+                      htmlFor: "supplier_name",
+                      className: "block text-sm font-medium leading-6 text-gray-900"
+                    },
+                    "Supplier Name"
+                  ),
+                  React.createElement(
+                    "div",
+                    { className: "mt-2" },
+                    React.createElement("input", {
+                      name: "supplier_name",
+                      onChange: function onChange(e) {
+                        return _this2.onSupplierChange("supplier_name", e);
+                      },
+                      type: "text",
+                      required: "required",
+                      className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                    })
+                  )
+                )
+              ),
+              React.createElement(
+                "div",
+                { className: "flex justify-center mt-5 px-3 py-3" },
+                React.createElement(
+                  "div",
+                  { className: "m-2" },
+                  React.createElement(
+                    "button",
+                    {
+                      onClick: this.onAddSuppliersModal,
+                      className: "rounded-md text-gray-50 text-sm bg-gray-300 hover:bg-blue-550 px-3 py-2 font-semibold leading-6"
+                    },
+                    React.createElement(
+                      "span",
+                      { className: "ml-2" },
+                      "CANCEL"
+                    )
+                  )
+                ),
+                React.createElement(
+                  "div",
+                  { className: "m-2" },
+                  React.createElement(
+                    "button",
+                    {
+                      onClick: this.onSaveSupplier,
+                      className: "rounded-md text-gray-50 text-sm bg-blue-925 hover:bg-blue-550 px-3 py-2 font-semibold leading-6"
+                    },
+                    React.createElement(
+                      "span",
+                      { className: "ml-2" },
+                      "SAVE SUPPLIER"
+                    )
+                  )
+                )
+              )
+            )
+          )
+        );
+      }
 
       if (this.state.approvalsJustificationModal) {
         rejectApprovalJustification = React.createElement(
@@ -1662,14 +1951,14 @@ var CreateCS = function (_React$Component) {
           },
           React.createElement(
             "div",
-            { className: "bg-white rounded-lg shadow-lg p-6 max-h-screen min-w-max overflow-y-auto" },
+            { className: "bg-gulf-blue-100 rounded-lg shadow-lg p-6 max-h-screen min-w-max overflow-y-auto" },
             React.createElement(
               "div",
               { className: "flex justify-between items-center mb-4" },
               React.createElement(
                 "h3",
                 { className: "text-lg font-medium" },
-                "Modal Title"
+                "ADD BID DETAILS"
               ),
               React.createElement(
                 "button",
@@ -1847,9 +2136,9 @@ var CreateCS = function (_React$Component) {
                         { className: "mt-2" },
                         React.createElement("input", {
                           name: "item_description",
-                          defaultValue: item.item_name,
+                          defaultValue: item.item_required,
                           onChange: function onChange(e) {
-                            return _this2.onCurrentBidItemChange(item.item_name, "item_required", e);
+                            return _this2.onCurrentBidItemChange(item.item_required, "item_required", e);
                           },
                           id: "item_description",
                           required: "required",
@@ -1875,7 +2164,7 @@ var CreateCS = function (_React$Component) {
                           name: "quantity",
                           defaultValue: item.quantity,
                           onChange: function onChange(e) {
-                            return _this2.onCurrentBidItemChange(item.item_name, "quantity", e);
+                            return _this2.onCurrentBidItemChange(item.item_required, "quantity", e);
                           },
                           type: "number",
                           id: "quantity",
@@ -1905,7 +2194,7 @@ var CreateCS = function (_React$Component) {
                             {
                               id: "unit_of_measurement",
                               onChange: function onChange(e) {
-                                return _this2.onCurrentBidItemChange(item.item_name, "unit_of_measurement", e);
+                                return _this2.onCurrentBidItemChange(item.item_required, "unit_of_measurement", e);
                               },
                               autoComplete: "unit_of_measurement",
                               className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
@@ -1951,8 +2240,9 @@ var CreateCS = function (_React$Component) {
                             "select",
                             {
                               id: "vat",
+                              defaultValue: item.vat,
                               onChange: function onChange(e) {
-                                return _this2.onCurrentBidItemChange(item.item_name, "vat", e);
+                                return _this2.onCurrentBidItemChange(item.item_required, "vat", e);
                               },
                               autoComplete: "vat",
                               className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
@@ -1962,6 +2252,11 @@ var CreateCS = function (_React$Component) {
                               { value: item.vat },
                               item.vat
                             ) : "",
+                            React.createElement(
+                              "option",
+                              null,
+                              "Select Vat"
+                            ),
                             React.createElement(
                               "option",
                               { value: "Excl." },
@@ -1994,7 +2289,7 @@ var CreateCS = function (_React$Component) {
                           name: "unit_price",
                           defaultValue: item.unit_price,
                           onChange: function onChange(e) {
-                            return _this2.onCurrentBidItemChange(item.item_name, "unit_price", e);
+                            return _this2.onCurrentBidItemChange(item.item_required, "unit_price", e);
                           },
                           type: "text",
                           id: "unit_price",
@@ -2242,9 +2537,9 @@ var CreateCS = function (_React$Component) {
                         { className: "mt-2" },
                         React.createElement("input", {
                           name: "item_description",
-                          defaultValue: item.description,
+                          defaultValue: item.item_required,
                           onChange: function onChange(e) {
-                            return _this2.onCurrentBidItemChange(item.item_name, "item_required", e);
+                            return _this2.onCurrentBidItemChange(item.item_required, "item_required", e);
                           },
                           id: "item_description",
                           required: "required",
@@ -2270,7 +2565,7 @@ var CreateCS = function (_React$Component) {
                           name: "quantity",
                           defaultValue: item.quantity,
                           onChange: function onChange(e) {
-                            return _this2.onCurrentBidItemChange(item.item_name, "quantity", e);
+                            return _this2.onCurrentBidItemChange(item.item_required, "quantity", e);
                           },
                           type: "number",
                           id: "quantity",
@@ -2299,8 +2594,9 @@ var CreateCS = function (_React$Component) {
                             "select",
                             {
                               id: "unit_of_measurement",
+                              defaultValue: item.unit_of_measurement,
                               onChange: function onChange(e) {
-                                return _this2.onCurrentBidItemChange(item.item_name, "unit_of_measurement", e);
+                                return _this2.onCurrentBidItemChange(item.item_required, "unit_of_measurement", e);
                               },
                               autoComplete: "unit_of_measurement",
                               className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
@@ -2310,45 +2606,16 @@ var CreateCS = function (_React$Component) {
                               { value: item.unit_of_measurement },
                               item.unit_of_measurement
                             ) : "",
-                            React.createElement(
+                            _this2.state.uom ? _this2.state.uom.map(function (uom) {
+                              return React.createElement(
+                                "option",
+                                { value: uom.name },
+                                uom.name
+                              );
+                            }) : React.createElement(
                               "option",
-                              { value: "Each" },
-                              "Each"
-                            ),
-                            React.createElement(
-                              "option",
-                              { value: "Kgs" },
-                              "Kg`s"
-                            ),
-                            React.createElement(
-                              "option",
-                              { value: "Grammes" },
-                              "Grammes"
-                            ),
-                            React.createElement(
-                              "option",
-                              { value: "Litres" },
-                              "Litres"
-                            ),
-                            React.createElement(
-                              "option",
-                              { value: "Metres" },
-                              "Metres"
-                            ),
-                            React.createElement(
-                              "option",
-                              { value: "Bags" },
-                              "Bags"
-                            ),
-                            React.createElement(
-                              "option",
-                              { value: "Packets" },
-                              "Packets"
-                            ),
-                            React.createElement(
-                              "option",
-                              { value: "Cartons" },
-                              "Cartons"
+                              null,
+                              "No Units"
                             )
                           )
                         )
@@ -2375,8 +2642,9 @@ var CreateCS = function (_React$Component) {
                             "select",
                             {
                               id: "vat",
+                              defaultValue: item.vat,
                               onChange: function onChange(e) {
-                                return _this2.onCurrentBidItemChange(item.item_name, "vat", e);
+                                return _this2.onCurrentBidItemChange(item.item_required, "vat", e);
                               },
                               autoComplete: "vat",
                               className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
@@ -2418,7 +2686,7 @@ var CreateCS = function (_React$Component) {
                           name: "unit_price",
                           defaultValue: item.unit_price,
                           onChange: function onChange(e) {
-                            return _this2.onCurrentBidItemChange(item.item_name, "unit_price", e);
+                            return _this2.onCurrentBidItemChange(item.item_required, "unit_price", e);
                           },
                           type: "text",
                           id: "unit_price",
@@ -3208,9 +3476,9 @@ var CreateCS = function (_React$Component) {
                       React.createElement(
                         "td",
                         { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
-                        member.committeeApproval === "Approved" && "APPROVED",
-                        member.committeeApproval === "Rejected" && "REJECTED",
-                        (member.committeeApproval === "" || member.committeeApproval === null) && React.createElement(
+                        member.memberApproval === "Approved" && "APPROVED",
+                        member.memberApproval === "Rejected" && "REJECTED",
+                        (member.memberApproval === "" || member.memberApproval === null) && React.createElement(
                           "div",
                           { className: "flex justify-content-evenly" },
                           _this2.state.username === _this2.state.cs_owner ? React.createElement(
@@ -3309,7 +3577,7 @@ var CreateCS = function (_React$Component) {
                       { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
                       this.state.fmApproval && this.state.fmApproval.approval === "Approved" && "APPROVED",
                       this.state.fmApproval && this.state.fmApproval.approval === "Rejected" && "REJECTED",
-                      React.createElement(
+                      this.state.committeeApprovalComplete && React.createElement(
                         "div",
                         { className: "flex justify-content-evenly" },
                         this.state.requester_role === 'check' && Object.keys(this.state.fmApproval).length === 0 ? React.createElement(
@@ -3820,6 +4088,7 @@ var CreateCS = function (_React$Component) {
         null,
         itemsModal,
         bidsModal,
+        supplierModal,
         updateBidModal,
         rejectJustification,
         rejectApprovalJustification,
@@ -3889,18 +4158,35 @@ var CreateCS = function (_React$Component) {
             ),
             csDetailsView
           ),
-          this.state.bids.length < 1 && this.state.username === this.state.cs_owner ? React.createElement(
+          this.state.username === this.state.cs_owner ? React.createElement(
             "div",
-            { className: "m-2" },
+            { style: { width: "100%" }, className: "flex justify-content-evenly mt-5 px-3 py-3" },
             React.createElement(
-              "button",
-              {
-                style: { width: "100%" },
-                onClick: this.onAddItemsModal,
-                className: "rounded-md bg-nepal-950 hover:bg-nepal-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-              },
-              "ADD SCHEDULE ITEMS"
-            )
+              "div",
+              { className: "m-2" },
+              React.createElement(
+                "button",
+                {
+                  style: { width: "100%" },
+                  onClick: this.onAddSuppliersModal,
+                  className: "rounded-md bg-nepal-950 hover:bg-nepal-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                },
+                "ADD SUPPLIERS"
+              )
+            ),
+            this.state.bids.length < 1 ? React.createElement(
+              "div",
+              { className: "m-2" },
+              React.createElement(
+                "button",
+                {
+                  style: { width: "100%" },
+                  onClick: this.onAddItemsModal,
+                  className: "rounded-md bg-nepal-950 hover:bg-nepal-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                },
+                "ADD SCHEDULE ITEMS"
+              )
+            ) : ""
           ) : "",
           this.state.bids.map(function (bid, index) {
             return React.createElement(
@@ -4025,7 +4311,7 @@ var CreateCS = function (_React$Component) {
                         React.createElement(
                           "p",
                           null,
-                          item.item_required ? item.item_required : item.description
+                          item.item_required
                         )
                       )
                     ),
