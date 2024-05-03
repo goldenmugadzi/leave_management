@@ -195,10 +195,12 @@ def create_Ace(request):
                         ace.designation = designation
                     else:
                         sweetify.error(request, "Please get your designation from It")
+                        messages.error(request,'Please get your designation from It')
                     if region:
                         ace.region = region
                     else:
                         sweetify.error(request, "Please get region from It")
+                        messages.error(request, 'Please get region from It')
                     ace.date_created = date
                     ace.save()
 
@@ -256,6 +258,7 @@ def create_Ace(request):
                 formset = QuotationFormSet()
         else:
             sweetify.error(request, "You are not allowed to create Ace")
+            messages.error(request, "You are not allowed to create")
             url = reverse('/acee/aces')
             return redirect(url)
 
@@ -655,6 +658,7 @@ def add_asset_number(request):
         ace.save()
         messages.success(request, 'asset numbers added')
         sweetify.success(request, 'asset numbers added')
+        messages.success(request, 'asset numbers added')
         return redirect('Ace:ace_detail', Ace_id2=ace.Ace_id2)
     else:
         return redirect('/ace/aces')

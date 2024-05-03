@@ -166,7 +166,8 @@ def create_pettycash(request):
                 form = PettycashForm()
                 formset = QuotationFormSet()
         else:
-            sweetify.error(request,"You are not authorized to create a new pettycash")
+            sweetify.error(request, "You are not authorized to create a new pettycash")
+            messages.error(request, "You are not authorized to create a new pettycash")
             return redirect('/pettycash/pettycashs')
 
     else:
@@ -567,5 +568,6 @@ def download_file(request, filename):
     except FileNotFoundError:
         # Handle file not found error (return 404 or a custom message)
         sweetify.error(request, 'File not found')
+        messages.error(request, 'File not found')
 
         return HttpResponseNotFound('The requested file does not exist.')
