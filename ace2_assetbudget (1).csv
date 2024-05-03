@@ -1,0 +1,122 @@
+budget_id,section_code,section,budget_name,allocated,awaiting_sanctioning,withdrawn,to_be_withdrawn,balance,withdrawal_date,period,region,created_date
+1,521001,GM,GM-computer,194333420,0,0,194903809,194333420,2024-05-01,2024,harare,28/2/2024
+2,521001,GM,GM-office &furniture equip,206105670,0,0,0,206105670,NULL,2024,harare,28/2/2024
+3,521001,GM,GM-motor vehicles,240250000,0,0,120090,240250000,2024-04-30,2024,harare,28/2/2024
+4,522001,Finance,Finance- T&E,127548725,0,0,0,127548725,NULL,2024,harare,28/2/2024
+5,522001,Finance,Finance-computer,194333420,0,0,0,194333420,NULL,2024,harare,28/2/2024
+6,522001,Finance,Finance-office &furniture equip,206105670,0,0,0,206105670,NULL,2024,harare,28/2/2024
+7,522001,Finance,Finance-motor vehicles,480500000,0,0,0,480500000,NULL,2024,harare,28/2/2024
+8,523001,Human Resources,HR-computer,194333420,0,0,0,194333420,NULL,2024,harare,28/2/2024
+9,523001,Human Resources,HR-office &furniture equip,206105670,0,0,0,206105670,NULL,2024,harare,28/2/2024
+10,523001,Human Resources,HR-motor vehicles,480500000,0,0,0,480500000,NULL,2024,harare,28/2/2024
+11,523001,Human Resources,HR-L&B,4723449600,700000000,0,0,4723449600,NULL,2024,harare,28/2/2024
+12,524001,EM,EM-computer,194333420,0,0,0,194333420,NULL,2024,harare,28/2/2024
+13,524001,EM,EM-office &furniture equip,206105670,0,0,24,206105670,2024-05-01,2024,harare,28/2/2024
+14,524001,EM,EM-motor vehicles,240250000,0,0,0,240250000,NULL,2024,harare,28/2/2024
+15,524101,Network Development,Projects-T&E,127548725,0,0,0,127548725,NULL,2024,harare,28/2/2024
+16,524101,Network Development,Projects-computers,194333420,0,0,200333420,194333420,2024-04-24,2024,harare,28/2/2024
+17,524101,Network Development,Projects-office &furniture equip,206105670,0,0,212105670,206105670,2024-04-25,2024,harare,28/2/2024
+18,524101,Network Development,Projects-motor vehicles,1441500000,0,0,0,1441500000,NULL,2024,harare,28/2/2024
+19,524101,Network Development,Projects-Category 1,50510764800,0,0,0,50510764800,NULL,2024,harare,28/2/2024
+20,524101,Network Development,Projects-Category 3,1.28E+11,0,0,0,1.28E+11,NULL,2024,harare,28/2/2024
+21,524301,Operation and Maintenance,OPS- T&E,819956144.2,0,0,0,819956144.2,2024-01-17,2024,harare,28/2/2024
+22,524301,Operation and Maintenance,OPS-computer,194333420,0,0,0,194333420,NULL,2024,harare,28/2/2024
+23,524301,Operation and Maintenance,OPS-office &furniture equip,206105670,0,0,0,206105670,NULL,2024,harare,28/2/2024
+24,524301,Operation and Maintenance,OPS-motor vehicles,2306400000,0,0,0,2306400000,NULL,2024,harare,28/2/2024
+25,524401,Chitungwiza,Zengeza- T&E,409978072.1,0,0,0,409978072.1,NULL,2024,harare,28/2/2024
+26,524401,Chitungwiza,Zengeza-computer,194333420,0,0,0,194333420,NULL,2024,harare,28/2/2024
+27,524401,Chitungwiza,Zengeza-office &furniture equip,206105670,0,0,0,206105670,NULL,2024,harare,28/2/2024
+28,524401,Chitungwiza,Zengeza-motor vehicles,1729800000,0,0,0,1729800000,NULL,2024,harare,28/2/2024
+29,524401,Chitungwiza,Zengeza-Category 2,1368000000,0,0,0,1368000000,NULL,2024,harare,28/2/2024
+30,524401,Chitungwiza,Zengeza-Major Distribution Maintenace Equipment,4713430656,0,0,0,4713430656,NULL,2024,harare,28/2/2024
+31,524401,Chitungwiza,Seke- T&E,409978072.1,7000000,0,0,409978072.1,NULL,2024,harare,28/2/2024
+32,524401,Chitungwiza,Seke-computer,194333420,0,0,0,194333420,2024-01-17,2024,harare,28/2/2024
+33,524401,Chitungwiza,Seke-office &furniture equip,206105670,0,0,0,206105670,NULL,2024,harare,28/2/2024
+34,524401,Chitungwiza,Seke-motor vehicles,1729800000,0,0,0,1729800000,NULL,2024,harare,28/2/2024
+35,524401,Chitungwiza,Seke-Category 1,2928000000,0,0,0,2928000000,NULL,2024,harare,28/2/2024
+36,524401,Chitungwiza,Seke-Category 2,4488000000,0,0,0,4488000000,NULL,2024,harare,28/2/2024
+37,524401,Chitungwiza,Seke-Major Distribution Maintenace Equipment,4713430656,0,0,0,4713430656,NULL,2024,harare,28/2/2024
+38,524401,Chitungwiza,District Office -Motor  vehicle,240250000,0,0,0,240250000,NULL,2024,harare,28/2/2024
+39,524401,Chitungwiza,District Office- computers,194333420,40000000,0,0,194333420,NULL,2024,harare,28/2/2024
+40,524401,Chitungwiza,District Office -office &furniture,206105670,0,0,0,206105670,NULL,2024,harare,28/2/2024
+41,524501,Warren Park,Warren Park -T&E,409978072.1,0,33000000,0,376978072.1,2024-01-15,2024,harare,28/2/2024
+42,524501,Warren Park,Warren Park -computers,194333420,0,0,200333420,194333420,2024-04-24,2024,harare,28/2/2024
+43,524501,Warren Park,Warren Park -office &equipment,206105670,0,0,0,206105670,NULL,2024,harare,28/2/2024
+44,524501,Warren Park,Warren Park-motor vehicles,1729800000,0,0,0,1729800000,NULL,2024,harare,28/2/2024
+45,524501,Warren Park,Warren Park-Category 1,8745600000,0,0,0,8745600000,NULL,2024,harare,28/2/2024
+46,524501,Warren Park,Warren Park-Category 2,5755680000,0,0,0,5755680000,NULL,2024,harare,28/2/2024
+47,524501,Warren Park,Warren Park-Major Distribution Maintenace Equipment,3949777280,0,0,0,3949777280,NULL,2024,harare,28/2/2024
+48,524501,Kuwadzana,Kuwadzana-T&E,409978072.1,0,123500000,0,286478072.1,2024-01-15,2024,harare,28/2/2024
+49,524501,Kuwadzana,Kuwadzana -computers,194333420,0,0,0,194333420,NULL,2024,harare,28/2/2024
+50,524501,Kuwadzana,Kuwadzana-office &furniture equp,206105670,0,0,0,206105670,NULL,2024,harare,28/2/2024
+51,524501,Kuwadzana,Kuwadzana-motor vehicles,1729800000,0,0,0,1729800000,NULL,2024,harare,28/2/2024
+52,524501,Kuwadzana,Kuwadzana-Category 1,32544000000,0,0,0,32544000000,NULL,2024,harare,28/2/2024
+53,524501,Kuwadzana,Kuwadzana-Category 2,12131382036,0,0,0,12131382036,NULL,2024,harare,28/2/2024
+54,524501,Kuwadzana,Kuwadzana-Major Distribution Maintenace Equipment,3949777280,0,0,0,3949777280,NULL,2024,harare,28/2/2024
+55,524501,Mabelreign,Mabelreign-T&E,409978072.1,0,123500000,0,286478072.1,2024-01-15,2024,harare,28/2/2024
+56,524501,Mabelreign,Mabelreign -computers,194333420,0,0,0,194333420,NULL,2024,harare,28/2/2024
+57,524501,Mabelreign,Mabelreign -office &furniture equip,206105670,0,0,0,206105670,NULL,2024,harare,28/2/2024
+58,524501,Mabelreign,Mabelreign-motor vehicles,1729800000,0,0,0,1729800000,NULL,2024,harare,28/2/2024
+59,524501,Mabelreign,Mabelreign-Category 1,2880000000,0,0,0,2880000000,NULL,2024,harare,28/2/2024
+60,524501,Mabelreign,Mabelreign-Category 2,3700800000,0,0,0,3700800000,NULL,2024,harare,28/2/2024
+61,524501,Mabelreign,Mabelreign-Major Distribution Maintenace Equipment,3949777280,0,0,0,3949777280,NULL,2024,harare,28/2/2024
+62,524601,Southerton,Southerton-T&E,409978072.1,70000000,0,0,409978072.1,NULL,2024,harare,28/2/2024
+63,524601,Southerton,Southerton-computers,194333420,0,0,0,194333420,NULL,2024,harare,28/2/2024
+64,524601,Southerton,Southerton-office &furniture equip,206105670,0,0,0,206105670,NULL,2024,harare,28/2/2024
+65,524601,Southerton,Southerton-motor vehicles,1729800000,0,0,0,1729800000,NULL,2024,harare,28/2/2024
+66,524601,Southerton,Southerton-Category 2,6432000000,0,0,0,6432000000,NULL,2024,harare,28/2/2024
+67,524601,Southerton,Southerton-Major Distribution Maintenace Equipment,4951139360,0,0,0,4951139360,NULL,2024,harare,28/2/2024
+68,524601,Glen View,Glen View-T&E,409978072.1,109000000,0,0,409978072.1,NULL,2024,harare,28/2/2024
+69,524601,Glen View,Glen View-computer,194333420,0,0,0,194333420,NULL,2024,harare,28/2/2024
+70,524601,Glen View,Glen View -office &furniture equip,206105670,28000000,0,0,206105670,NULL,2024,harare,28/2/2024
+71,524601,Glen View,Glen View-motor vehicles,1729800000,0,0,0,1729800000,NULL,2024,harare,28/2/2024
+72,524601,Glen View,Glen View-Category 1,5184000000,0,0,0,5184000000,NULL,2024,harare,28/2/2024
+73,524601,Glen View,Glen View-Category 2,27568800000,0,0,0,27568800000,NULL,2024,harare,28/2/2024
+74,524601,Glen View,Glen View-Major Distribution Maintenace Equipment,4951139360,0,0,0,4951139360,NULL,2024,harare,28/2/2024
+75,524601,Waterfalls,Waterfalls- T&E,409978072.1,176000000,0,0,409978072.1,NULL,2024,harare,28/2/2024
+76,524601,Waterfalls,Waterfalls-computer,194333420,0,0,0,194333420,NULL,2024,harare,28/2/2024
+77,524601,Waterfalls,Waterfalls-office &furniture equip,206105670,0,0,0,206105670,NULL,2024,harare,28/2/2024
+78,524601,Waterfalls,Waterfalls-motor vehicles,1729800000,0,0,0,1729800000,NULL,2024,harare,28/2/2024
+79,524601,Waterfalls,Waterfalls-Category 1,2016000000,0,0,0,2016000000,NULL,2024,harare,28/2/2024
+80,524601,Waterfalls,Waterfalls-Category 2,37906996800,0,0,0,37906996800,NULL,2024,harare,28/2/2024
+81,524601,Waterfalls,Waterfalls-Major Distribution Maintenace Equipment,4951139360,0,0,0,4951139360,NULL,2024,harare,28/2/2024
+82,524701,Borrowdale,Borrowdale-T&E,409978072.1,0,0,0,409978072.1,NULL,2024,harare,28/2/2024
+83,524701,Borrowdale,Borrowdale-computers,194333420,0,0,0,194333420,NULL,2024,harare,28/2/2024
+84,524701,Borrowdale,Borrowdale-office and equipments,206105670,0,0,0,206105670,NULL,2024,harare,28/2/2024
+85,524701,Borrowdale,Borrowdale-motor vehicles,1729800000,0,0,0,1729800000,NULL,2024,harare,28/2/2024
+86,524701,Borrowdale,Borrowdale-Category 1,4162428160,0,0,0,4162428160,NULL,2024,harare,28/2/2024
+87,524701,Borrowdale,Borrowdale-Category 2,32463222592,0,0,0,32463222592,NULL,2024,harare,28/2/2024
+88,524701,Borrowdale,Borrowdale-Major Distribution Maintenace Equipment,3782776800,0,0,0,3782776800,NULL,2024,harare,28/2/2024
+89,524701,CBD,CBD-T&E,409978072.1,0,169990000,0,239988072.1,2024-01-17,2024,harare,28/2/2024
+90,524701,CBD,CBD-computers,194333420,0,0,0,194333420,NULL,2024,harare,28/2/2024
+91,524701,CBD,CBD-office and equipments,206105670,0,0,0,206105670,NULL,2024,harare,28/2/2024
+92,524701,CBD,CBD-motor vehicles,1729800000,0,0,0,1729800000,NULL,2024,harare,28/2/2024
+93,524701,CBD,CBD-Category 1,3312000000,0,0,0,3312000000,NULL,2024,harare,28/2/2024
+94,524701,CBD,CBD-Category 2,11052800000,0,0,0,11052800000,NULL,2024,harare,28/2/2024
+95,524701,CBD,CBD-Major Distribution Maintenace Equipment,3782776800,0,0,0,3782776800,NULL,2024,harare,28/2/2024
+96,524701,Mabvuku,Mabvuku -T&E,409978072.1,0,0,0,409978072.1,NULL,2024,harare,28/2/2024
+97,524701,Mabvuku,Mabvuku -computers,194333420,0,0,0,194333420,NULL,2024,harare,28/2/2024
+98,524701,Mabvuku,Mabvuku -office &equipment,206105670,0,0,0,206105670,NULL,2024,harare,28/2/2024
+99,524701,Mabvuku,Mabvuku-motor vehicles,1729800000,0,0,0,1729800000,NULL,2024,harare,28/2/2024
+100,524701,Mabvuku,Mabvuku-Category 1,518769600,0,0,0,518769600,NULL,2024,harare,28/2/2024
+101,524701,Mabvuku,Mabvuku-Category 2,13379520000,0,0,0,13379520000,NULL,2024,harare,28/2/2024
+102,524701,Mabvuku,Mabvuku-Major Distribution Maintenace Equipment,3782776800,0,0,0,3782776800,NULL,2024,harare,28/2/2024
+103,524701,Ruwa,Ruwa -T&E,409978072.1,0,0,0,409978072.1,NULL,2024,harare,28/2/2024
+104,524701,Ruwa,Ruwa -computers,194333420,0,0,0,194333420,NULL,2024,harare,28/2/2024
+105,524701,Ruwa,Ruwa -office &equipment,206105670,1500000,0,0,206105670,NULL,2024,harare,28/2/2024
+106,524701,Ruwa,Ruwa -motor vehicles,1729800000,0,0,0,1729800000,NULL,2024,harare,28/2/2024
+107,524701,Ruwa,Ruwa -Category 1,77698277568,0,0,0,77698277568,NULL,2024,harare,28/2/2024
+108,524701,Ruwa,Ruwa -Category 2,32813939808,0,0,0,32813939808,NULL,2024,harare,28/2/2024
+109,524701,Ruwa,Ruwa -Major Distribution Maintenace Equipment,3782776800,0,0,0,3782776800,NULL,2024,harare,28/2/2024
+110,525000,Commercial,Commercial- T&E,127548725,0,0,0,127548725,NULL,2024,harare,28/2/2024
+111,525000,Commercial,Commercial-computer,194333420,0,0,0,194333420,NULL,2024,harare,28/2/2024
+112,525000,Commercial,Commercial-office &furniture equip,206105670,27000000,0,0,206105670,NULL,2024,harare,28/2/2024
+113,525000,Commercial,Commercial-motor vehicles,720750000,0,0,0,720750000,NULL,2024,harare,28/2/2024
+114,526001,Risk,Risk-computer,194333420,5000000,14999999.99,0,179333420,2024-01-17,2024,harare,28/2/2024
+115,526001,Risk,Risk-office &furniture equip,206105670,0,0,0,206105670,NULL,2024,harare,28/2/2024
+116,526001,Risk,Risk-motor vehicles,480500000,0,0,0,480500000,NULL,2024,harare,28/2/2024
+117,526001,Risk,Risk-Category 3,17600000000,0,0,0,17600000000,2024-01-15,2024,harare,28/2/2024
+118,527001,IT,IT- T&E,127548725,0,0,0,127548725,NULL,2024,harare,28/2/2024
+119,527001,IT,IT-computer,194333420,0,0,200333420,194333420,2024-04-24,2024,harare,28/2/2024
+120,527001,IT,IT-office &furniture equip,206105670,0,0,0,206105670,NULL,2024,harare,28/2/2024
+121,527001,IT,IT-motor vehicles,480500000,0,0,0,480500000,NULL,2024,harare,28/2/2024
