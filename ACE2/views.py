@@ -25,6 +25,7 @@ def Ace_detail(request, Ace_id2):
     user_profile = UserProfile.objects.filter(id=user_id).first()
     clear = False
     clear_minus = False
+    approve_now = False
 
     user_groups = user_profile.groups.values_list('name', flat=True)
 
@@ -61,47 +62,82 @@ def Ace_detail(request, Ace_id2):
         last_approved = ace_item.process.approval_set.last().step.step
     except AttributeError:
         last_approved = 0
+    if ace_role == "create" or ace_role == "order":
+        if len(ace_item.process.approval_set.all()) == len(ace_item.process.workflow.step_set.all()):
+            clear = True
+    accounting_officer_role = None
+    if ace_role == "process":
+        accounting_officer_role = ace_role
 
-    next_step = last_approved + 1
+    approval_status = ace_item.process.approval_set.last().approved if ace_item.process.approval_set.last() else ""
+    if approval_status != "Rejected":
 
-    try:
-        newStep = Step.objects.get(step=next_step, workflow=ace_item.process.workflow,
-                                   approver__in=user_roles)
-        if newStep and request.user.section == ace_item.section and next_step == 1:
-            approvalForm = ApprovalForm
-            to = newStep.to
-            print(ace_role)
-            if newStep.step == len(ace_item.process.workflow.step_set.all()):
-                clear = True
-                # budget calculations
-                budget = ace_item.budget
-                budget = Budget.objects.get(budget_id=budget)
-                budget.balance = budget.balance - ace_item.amount
-                budget.to_be_withdrawn = budget.to_be_withdrawn + ace_item.amount
-                budget.withdrawal_date = date.today()
-                budget.withdrawn = budget.withdrawn + ace_item.amount
-                budget.save()
+        next_step = last_approved + 1
+        if len(ace_item.process.approval_set.all()) == len(ace_item.process.workflow.step_set.all()):
+            approve_now = True
 
-                # transaction
-                transaction = Transactions.objects.filter(transaction_id=ace_item.transaction).first()
-                transaction.approval_status = "approved by General Manager"
-                transaction.save()
-                if newStep.step == len(ace_item.process.workflow.step_set.all()):
-                    clear = True
-            if newStep.step == len(ace_item.process.workflow.step_set.all()) - 1:
-                clear_minus = True
-            print(clear)
-        elif newStep:
-            approvalForm = ApprovalForm
-            to = newStep.to
-    except Step.DoesNotExist:
-        pass
+        try:
+            newStep = Step.objects.get(step=next_step, workflow=ace_item.process.workflow,
+                                       approver__in=user_roles)
 
+            if ace_role == "pass":
+
+                if newStep and request.user.section == ace_item.section and next_step == 1:
+                    approvalForm = ApprovalForm
+                    to = newStep.to
+                    print(ace_role)
+                    if newStep.step == len(ace_item.process.workflow.step_set.all()):
+                        clear = True
+                    if newStep.step == len(ace_item.process.workflow.step_set.all()) - 1:
+                        clear_minus = True
+                    print(clear)
+                elif newStep:
+                    approvalForm = ApprovalForm
+                    to = newStep.to
+            else:
+                approvalForm = ApprovalForm
+                to = newStep.to
+                print(ace_role)
+                print(approve_now)
+                if approve_now:
+                    if newStep.step == len(ace_item.process.workflow.step_set.all()):
+                        clear = True
+                    if newStep.step == len(ace_item.process.workflow.step_set.all()) - 1:
+                        clear_minus = True
+                print(clear)
+        except Step.DoesNotExist:
+            pass
+
+    print(approve_now)
+    if approve_now:
+        # budget calculations
+        budget = ace_item.budget_id.budget_id
+        budget = AssetBudget.objects.get(budget_id=budget)
+        print("ace: ", ace_item.Ace_id)
+        transaction = Transactions.objects.filter(Ace_id2=str(ace_item.Ace_id)).first()
+        # print("transaction: ", transaction)
+        print("transaction: ", str(transaction.approval_status))
+
+        if transaction.approval_status != "approved by General Manager":
+            budget.balance = budget.balance - ace_item.amount
+            budget.to_be_withdrawn = budget.to_be_withdrawn - ace_item.amount
+            budget.withdrawal_date = date.today()
+            budget.withdrawn = budget.withdrawn + ace_item.amount
+            budget.save()
+
+            # transaction
+
+            transaction.approval_status = "approved by General Manager"
+            transaction.save()
+            print("transaction: ", str(transaction.approval_status))
+
+    ace_quantity = range(ace_item.quantity)
     approved_steps = ace_item.process.approval_set.all().values_list('step__step', flat=True)
     return render(request, 'finance/ace2/ace_detail.html',
                   {'ace': ace_item, 'approved_steps': approved_steps, 'approvalForm': approvalForm,
                    'to': to, 'ace_role': ace_role, 'user_groups': user_groups, 'qoutations': quotations,
-                   'clear': clear, 'clear_minus': clear_minus})
+                   'ace_quantity': ace_quantity,
+                   'clear': clear, 'clear_minus': clear_minus, 'accounting_officer_role': accounting_officer_role})
 
 
 @login_required
@@ -116,7 +152,7 @@ def create_Ace(request):
             # print(ace.budget_id)
             budget = AssetBudget.objects.filter(budget_name=ace.budget_id).first()
             # print(budget)
-            if ace.amount <= budget.balance:
+            if ace.amount <= budget.balance and budget.to_be_withdrawn<=budget.balance:
                 ace.process = intiate(request, 'ace')
                 ace.requested_by = request.user
 
@@ -499,73 +535,91 @@ def list_budgets(request):
                                        "user_groups": user_groups})
 
 
-def upload_budgets(request):
-    user_title = request.user.get_full_name()
-    user_id = request.user.id
-    user_profile = UserProfile.objects.filter(id=user_id).first()
-    print("in view upload")
+# def upload_budgets(request):
+#     user_title = request.user.get_full_name()
+#     user_id = request.user.id
+#     user_profile = UserProfile.objects.filter(id=user_id).first()
+#     print("in view upload")
+#
+#     user_groups = user_profile.groups.values_list('name', flat=True)
+#     if request.method == 'POST':
+#         csvfile = request.FILES['file']  # file as key
+#
+#         decoded_file = csvfile.read().decode('cp1252').splitlines()
+#         reader = csv.DictReader(decoded_file)
+#
+#         for row in reader:
+#             print("row: ", row)
+#             section_code = row['section_code']
+#             section = row['section']
+#             budget_name = row['budget']
+#             allocated = row['allocated']
+#             withdrawn = row['withdrawn']
+#             balance = row['balance']
+#
+#             withdrawal_date = row['withdrawal_date']
+#             withdrawal_date = withdrawal_date.strip().split(" ")[0]
+#             if withdrawal_date != "null":
+#
+#                 withdrawal_date = datetime.strptime(withdrawal_date, "%Y-%m-%d")
+#             else:
+#                 withdrawal_date = None
+#
+#             awaiting_sanctioning = row['awaiting_sanctioning']
+#             period = int(row['period'])
+#             region = row['region']
+#             created_date = date.today()
+#
+#             # withdrawal_date = datetime.strptime(row['withdrawal_date'], "%Y/%m/%d").strftime("%Y-%m-%d")
+#             # areas = row['area'].split(',')
+#             check_budget = Budget.objects.filter(budget_name=budget_name, period=period).first()
+#             budget_note = csvfile
+#
+#             if check_budget:
+#                 print("duplicate record ....")
+#             else:
+#                 Budget.objects.create(section_code=section_code,
+#                                       section=section,
+#                                       budget_name=budget_name,
+#                                       allocated=allocated,
+#                                       withdrawn=withdrawn,
+#                                       balance=balance,
+#                                       withdrawal_date=withdrawal_date,
+#                                       awaiting_sanctioning=awaiting_sanctioning,
+#                                       period=period,
+#                                       region=region,
+#                                       created_date=created_date,
+#                                       budget_note=budget_note),
+#                 print("record created")
+#         redirect("/ace/budgets")
+#         try:
+#             # ... view logic ...
+#             return HttpResponse("Budget uploaded successfully"), redirect('/ace/budgets')
+#         except Exception as e:
+#             return HttpResponse("Error: {}".format(e))
+#             return redirect("/ace/budgets")
+#
+#     else:
+#         return render(request, 'ace/upload_budget.html',
+#                       {"title": "Upload budgets",
+#                        "user_title": user_title,
+#                        "user_groups": user_groups}
+#                       )
 
-    user_groups = user_profile.groups.values_list('name', flat=True)
+
+@login_required
+def add_asset_number(request):
     if request.method == 'POST':
-        csvfile = request.FILES['file']  # file as key
-
-        decoded_file = csvfile.read().decode('cp1252').splitlines()
-        reader = csv.DictReader(decoded_file)
-
-        for row in reader:
-            print("row: ", row)
-            section_code = row['section_code']
-            section = row['section']
-            budget_name = row['budget']
-            allocated = row['allocated']
-            withdrawn = row['withdrawn']
-            balance = row['balance']
-
-            withdrawal_date = row['withdrawal_date']
-            withdrawal_date = withdrawal_date.strip().split(" ")[0]
-            if withdrawal_date != "null":
-
-                withdrawal_date = datetime.strptime(withdrawal_date, "%Y-%m-%d")
-            else:
-                withdrawal_date = None
-
-            awaiting_sanctioning = row['awaiting_sanctioning']
-            period = int(row['period'])
-            region = row['region']
-            created_date = date.today()
-
-            # withdrawal_date = datetime.strptime(row['withdrawal_date'], "%Y/%m/%d").strftime("%Y-%m-%d")
-            # areas = row['area'].split(',')
-            check_budget = Budget.objects.filter(budget_name=budget_name, period=period).first()
-            budget_note = csvfile
-
-            if check_budget:
-                print("duplicate record ....")
-            else:
-                Budget.objects.create(section_code=section_code,
-                                      section=section,
-                                      budget_name=budget_name,
-                                      allocated=allocated,
-                                      withdrawn=withdrawn,
-                                      balance=balance,
-                                      withdrawal_date=withdrawal_date,
-                                      awaiting_sanctioning=awaiting_sanctioning,
-                                      period=period,
-                                      region=region,
-                                      created_date=created_date,
-                                      budget_note=budget_note),
-                print("record created")
-        redirect("/ace/budgets")
-        try:
-            # ... view logic ...
-            return HttpResponse("Budget uploaded successfully"), redirect('/ace/budgets')
-        except Exception as e:
-            return HttpResponse("Error: {}".format(e))
-            return redirect("/ace/budgets")
-
+        print(request.POST)
+        ace_id = request.POST['ace_id']
+        ace_quantity = request.POST['quantity']
+        ace_items = request.POST.getlist('asset_number[]')
+        print(ace_items)
+        ace = Ace2.objects.filter(Ace_id2=ace_id).first()
+        ace.asset_number = ','.join(ace_items)
+        ace.save()
+        messages.success(request, 'asset numbers added')
+        sweetify.success(request, 'asset numbers added')
+        return redirect('Ace:ace_detail', Ace_id2=ace.Ace_id2)
     else:
-        return render(request, 'ace/upload_budget.html',
-                      {"title": "Upload budgets",
-                       "user_title": user_title,
-                       "user_groups": user_groups}
-                      )
+        return redirect('/ace/aces')
