@@ -2452,6 +2452,7 @@ class CreateCS extends React.Component {
                     onChange={(e) =>
                       this.onComplianceItemsChange("showSiteVisit", e)
                     }
+                    disabled={this.state.username === this.state.cs_owner ? false : true}
                     autoComplete="site_visit"
                     className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
                   >
@@ -2476,6 +2477,7 @@ class CreateCS extends React.Component {
                       onChange={(e) =>
                         this.onComplianceItemsChange("showSamples", e)
                       }
+                      disabled={this.state.username === this.state.cs_owner ? false : true}
                       autoComplete="samples"
                       className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
                     >
@@ -2575,6 +2577,7 @@ class CreateCS extends React.Component {
                               comp.payment_terms ? comp.payment_terms : false
                             }
                             onChange={(e) => this.onComplianceChange(key, e)}
+                            disabled={this.state.username === this.state.cs_owner ? false : true}
                             id="payment_terms"
                             type="checkbox"
                           />
@@ -2586,6 +2589,7 @@ class CreateCS extends React.Component {
                               comp.bid_validity ? comp.bid_validity : false
                             }
                             onChange={(e) => this.onComplianceChange(key, e)}
+                            disabled={this.state.username === this.state.cs_owner ? false : true}
                             id="bid_validity"
                             type="checkbox"
                           />
@@ -2599,6 +2603,7 @@ class CreateCS extends React.Component {
                                 : false
                             }
                             onChange={(e) => this.onComplianceChange(key, e)}
+                            disabled={this.state.username === this.state.cs_owner ? false : true}
                             id="delivery_period"
                             type="checkbox"
                           />
@@ -2612,6 +2617,7 @@ class CreateCS extends React.Component {
                                 : false
                             }
                             onChange={(e) => this.onComplianceChange(key, e)}
+                            disabled={this.state.username === this.state.cs_owner ? false : true}
                             id="technical_specifications"
                             type="checkbox"
                           />
@@ -2625,6 +2631,7 @@ class CreateCS extends React.Component {
                                 : false
                             }
                             onChange={(e) => this.onComplianceChange(key, e)}
+                            disabled={this.state.username === this.state.cs_owner ? false : true}
                             id="valid_tax_clearance"
                             type="checkbox"
                           />
@@ -2638,6 +2645,7 @@ class CreateCS extends React.Component {
                                 : false
                             }
                             onChange={(e) => this.onComplianceChange(key, e)}
+                            disabled={this.state.username === this.state.cs_owner ? false : true}
                             id="registered_with_praz"
                             type="checkbox"
                           />
@@ -2647,6 +2655,7 @@ class CreateCS extends React.Component {
                             name="tax_status"
                             checked={comp.tax_status ? comp.tax_status : false}
                             onChange={(e) => this.onComplianceChange(key, e)}
+                            disabled={this.state.username === this.state.cs_owner ? false : true}
                             id="tax_status"
                             type="checkbox"
                           />
@@ -2662,6 +2671,7 @@ class CreateCS extends React.Component {
                                 comp.site_visit ? comp.site_visit : false
                               }
                               onChange={(e) => this.onComplianceChange(key, e)}
+                              disabled={this.state.username === this.state.cs_owner ? false : true}
                               id="site_visit"
                               type="checkbox"
                             />
@@ -2682,6 +2692,7 @@ class CreateCS extends React.Component {
                                   : false
                               }
                               onChange={(e) => this.onComplianceChange(key, e)}
+                              disabled={this.state.username === this.state.cs_owner ? false : true}
                               id="samples_required"
                               type="checkbox"
                             />
@@ -2694,6 +2705,7 @@ class CreateCS extends React.Component {
                             name="decision"
                             checked={comp.decision ? comp.decision : false}
                             onChange={(e) => this.onComplianceChange(key, e)}
+                            disabled={this.state.username === this.state.cs_owner ? false : true}
                             id="decision"
                             type="checkbox"
                           />
@@ -2703,6 +2715,7 @@ class CreateCS extends React.Component {
                             name="reject"
                             checked={comp.reject ? comp.reject : false}
                             onChange={(e) => this.onComplianceChange(key, e)}
+                            disabled={this.state.username === this.state.cs_owner ? false : true}
                             id="reject"
                             type="checkbox"
                           />
@@ -2742,6 +2755,7 @@ class CreateCS extends React.Component {
                                 e
                               )
                             }
+                            disabled={this.state.username === this.state.cs_owner ? false : true}
                             type="text"
                             className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
                           />
@@ -3161,6 +3175,7 @@ class CreateCS extends React.Component {
               id="scope"
               name="scope_of_work"
               type="scope"
+              disabled={this.state.username === this.state.cs_owner ? false : true}
               value={this.state.scope_of_work}
               onChange={this.onInputChange}
               className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
@@ -3181,6 +3196,7 @@ class CreateCS extends React.Component {
               name="pr_number"
               value={this.state.pr_number}
               onChange={this.onInputChange}
+              disabled={this.state.username === this.state.cs_owner ? false : true}
               id="pr_number"
               required="required"
               className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
@@ -3199,6 +3215,7 @@ class CreateCS extends React.Component {
               name="pr_date"
               value={this.state.pr_date}
               onChange={this.onInputChange}
+              disabled={this.state.username === this.state.cs_owner ? false : true}
               type="date"
               required="required"
               className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
@@ -3217,6 +3234,7 @@ class CreateCS extends React.Component {
               name="closing_date"
               value={this.state.closing_date}
               onChange={this.onInputChange}
+              disabled={this.state.username === this.state.cs_owner ? false : true}
               type="date"
               required="required"
               className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
@@ -3235,6 +3253,7 @@ class CreateCS extends React.Component {
               <div className="flex px-1">
                 <select
                   name="closing_time_hour"
+                  disabled={this.state.username === this.state.cs_owner ? false : true}
                   onChange={(e) =>
                     this.onSelectChange("closing_time_hour", e)
                   }
@@ -3268,6 +3287,7 @@ class CreateCS extends React.Component {
                 id="proc_plan"
                 name="proc_plan"
                 autoComplete="proc_plan"
+                disabled={this.state.username === this.state.cs_owner ? false : true}
                 onChange={(e) => this.onSelectChange("proc_ref", e)}
                 className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
               >
@@ -3300,6 +3320,7 @@ class CreateCS extends React.Component {
               name="ref_date"
               value={this.state.ref_date}
               onChange={this.onInputChange}
+              disabled={this.state.username === this.state.cs_owner ? false : true}
               type="date"
               required="required"
               className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
@@ -3318,6 +3339,7 @@ class CreateCS extends React.Component {
               name="date_tender_opened"
               value={this.state.date_tender_opened}
               onChange={this.onInputChange}
+              disabled={this.state.username === this.state.cs_owner ? false : true}
               type="date"
               required="required"
               className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
@@ -3336,6 +3358,7 @@ class CreateCS extends React.Component {
               name="tender_adjudication_committee_date"
               value={this.state.tender_adjudication_committee_date}
               onChange={this.onInputChange}
+              disabled={this.state.username === this.state.cs_owner ? false : true}
               type="date"
               required="required"
               className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
@@ -3355,6 +3378,7 @@ class CreateCS extends React.Component {
             <input
               name="advert"
               onChange={(e) => this.onFileInputChange("advert", e)}
+              disabled={this.state.username === this.state.cs_owner ? false : true}
               type="file"
               id="advert"
               required="required"
