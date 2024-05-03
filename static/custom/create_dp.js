@@ -3158,6 +3158,7 @@ class CreateDP extends React.Component {
               name="scope_of_work"
               type="scope"
               value={this.state.scope_of_work}
+              disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
               onChange={this.onInputChange}
               className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
             ></textarea>
@@ -3177,6 +3178,7 @@ class CreateDP extends React.Component {
               name="pr_number"
               value={this.state.pr_number}
               onChange={this.onInputChange}
+              disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
               id="pr_number"
               required="required"
               className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
@@ -3195,6 +3197,7 @@ class CreateDP extends React.Component {
               name="pr_date"
               value={this.state.pr_date}
               onChange={this.onInputChange}
+              disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
               type="date"
               required="required"
               className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
@@ -3213,6 +3216,7 @@ class CreateDP extends React.Component {
               name="closing_date"
               value={this.state.closing_date}
               onChange={this.onInputChange}
+              disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
               type="date"
               required="required"
               className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
@@ -3234,6 +3238,7 @@ class CreateDP extends React.Component {
                   onChange={(e) =>
                     this.onSelectChange("closing_time_hour", e)
                   }
+                  disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
                   className="rounded-md block border-none w-full py-1.5 text-gray-900 sm:max-w-xs sm:text-sm sm:leading-6"
                 >
                   {this.state.closing_time_hour ? (
@@ -3265,6 +3270,7 @@ class CreateDP extends React.Component {
                 name="proc_plan"
                 autoComplete="proc_plan"
                 onChange={(e) => this.onSelectChange("proc_ref", e)}
+                disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
                 className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
               >
                 {this.state.proc_plan ? (
@@ -3296,6 +3302,7 @@ class CreateDP extends React.Component {
               name="ref_date"
               value={this.state.ref_date}
               onChange={this.onInputChange}
+              disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
               type="date"
               required="required"
               className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
@@ -3314,6 +3321,7 @@ class CreateDP extends React.Component {
               name="date_tender_opened"
               value={this.state.date_tender_opened}
               onChange={this.onInputChange}
+              disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
               type="date"
               required="required"
               className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
@@ -3332,6 +3340,7 @@ class CreateDP extends React.Component {
               name="tender_adjudication_committee_date"
               value={this.state.tender_adjudication_committee_date}
               onChange={this.onInputChange}
+              disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
               type="date"
               required="required"
               className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
@@ -3351,6 +3360,7 @@ class CreateDP extends React.Component {
             <input
               name="advert"
               onChange={(e) => this.onFileInputChange("advert", e)}
+              disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
               type="file"
               id="advert"
               required="required"
