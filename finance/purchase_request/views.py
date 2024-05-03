@@ -262,7 +262,6 @@ def uploaduuom(request):
                 'scope_of_work': item['scope_of_work'],
             }
         purchase_request, created = PurchaseRequest.objects.get_or_create(pr_no=item['rfq_number'], defaults=defaults)
-        print(item,"\n\n\n\n\n\n\npritem\n\n", item['uom'])
         try:pritem = PrItem(item_required=item['item_required'],
                         unit_of_measurement = UnitOfMeasurement.objects.get(Q(unit__iexact=item['uom']) | Q(name__iexact=item['uom'])),
                         quantity=item['qty'],

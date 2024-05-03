@@ -3,76 +3,43 @@
 
 {% block content %}
 
-<div class="m-auto mt-5 justify-content-center">
-  <form class="row rounded py-4 border bg-gulf-blue-100 p-3 m-auto  container" method="POST" action="{{url}}" enctype="multipart/form-data">
+  <form class="row rounded py-4 border bg-gulf-blue-100 p-3 m-auto  container" method="post" action="{{ url }}" enctype="multipart/form-data">
     {% csrf_token %}
+    <div class="rounded d-flex justify-content-center align-items-center p-3 gap-4  m-auto grid grid-cols-3">
+      <div>
     <h3 class="font-bold my-4 text-center">Token</h3>
-    <div class="rounded d-flex justify-content-center align-items-center p-3 gap-4  m-auto grid grid-cols-2">
-            
-        <div class="rounded">
-           
-    <h3 class="font-bold my-4 text-center">Meter</h3>
-    {% for field in meter_form %}
-          {% if field.is_hidden %}
-            {{ field }}
-          {% else %}
-            <div class="col-span-4">
-              {{ field.label_tag }}
-              <div class="text-red-500">
-                {{ field.errors }}
-              </div>
-              {{ field }}
-            </div>
-          {% endif %}
-        {% endfor %}
-
+          {% for field in token_form %} {% if field.is_hidden %} {{ field }} {% else %} <div class="col-span-4"> {{ field.label_tag }} <div class="text-red-500"> {{ field.errors }} </div> {{ field }} </div> {% endif %} {% endfor %}
+        </div><div>
+        <h3 class="font-bold my-4 text-center">Meter</h3>
+    {% for field in meter_form %} {% if field.is_hidden %} {{ field }} {% else %} <div class="col-span-4"> {{ field.label_tag }} <div class="text-red-500"> {{ field.errors }} </div> {{ field }} </div> {% endif %} {% endfor %}
+    </div><div>
     <h3 class="font-bold my-4 text-center">Customer</h3>
-         {% for field in customer_form %}
-            {% if field.is_hidden %}
-              {{ field }}
-            {% else %}
-              <div class="col-span-4">
-                {{ field.label_tag }}
-                <div class="text-red-500">
-                  {{ field.errors }}
-                </div>
-                {{ field }}
-              </div>
-            {% endif %}
-          {% endfor %}
+         {% for field in customer_form %} {% if field.is_hidden %} {{ field }} {% else %} <div class="col-span-4"> {{ field.label_tag }} <div class="text-red-500"> {{ field.errors }} </div> {{ field }} </div> {% endif %} {% endfor %}
         </div>
-    <div class="rounded  ">
-    <h3 class="font-bold my-4 text-center">Token</h3>
-     
-          {% for field in token %}
-            {% if field.is_hidden %}
-              {{ field }}
-            {% else %}
-              <div class="col-span-4">
-                {{ field.label_tag }}
-                <div class="text-red-500">
-                  {{ field.errors }}
-                </div>
-                {{ field }}
-              </div>
-            {% endif %}
-          {% endfor %}
-    <h3 class="font-bold my-4 text-center">Pernalt</h3>
-
-          {% for field in Pernalt %}
-          {% if field.is_hidden %}
-            {{ field }}
-          {% else %}
-            <div class="col-span-4">
-              {{ field.label_tag }}
-              <div class="text-red-500">
-                {{ field.errors }}
-              </div>
-              {{ field }}
-            </div>
-          {% endif %}
-        {% endfor %}
-          </div>     
+    <div id="reimbursement_form" class="hidden" >
+      {% for field in reimbursement_form %} {% if field.is_hidden %} {{ field }} {% else %} <div class="col-span-4"> {{ field.label_tag }} <div class="text-red-500"> {{ field.errors }} </div> {{ field }} </div> {% endif %} {% endfor %}
+    </div>
+    <div id="clear_credit_form" class="hidden" >
+      {% for field in clear_credit_form %} {% if field.is_hidden %} {{ field }} {% else %} <div class="col-span-4"> {{ field.label_tag }} <div class="text-red-500"> {{ field.errors }} </div> {{ field }} </div> {% endif %} {% endfor %}
+    </div>
+    <div id="tamper_token_form" class="hidden" >
+      {% for field in tamper_token_form %} {% if field.is_hidden %} {{ field }} {% else %} <div class="col-span-4"> {{ field.label_tag }} <div class="text-red-500"> {{ field.errors }} </div> {{ field }} </div> {% endif %} {% endfor %}
+    </div>
+      <div id="fault_meter_form" class="hidden" >
+      {% for field in fault_meter_form %} {% if field.is_hidden %} {{ field }} {% else %} <div class="col-span-4"> {{ field.label_tag }} <div class="text-red-500"> {{ field.errors }} </div> {{ field }} </div> {% endif %} {% endfor %}
+    </div>
+    <div id="recovered_meter_form" class="hidden" >
+      {% for field in recovered_meter_form %} {% if field.is_hidden %} {{ field }} {% else %} <div class="col-span-4"> {{ field.label_tag }} <div class="text-red-500"> {{ field.errors }} </div> {{ field }} </div> {% endif %} {% endfor %}
+    </div>
+    <div id="old_token_form" class="hidden" >
+      {% for field in old_token_form %} {% if field.is_hidden %} {{ field }} {% else %} <div class="col-span-4"> {{ field.label_tag }} <div class="text-red-500"> {{ field.errors }} </div> {{ field }} </div> {% endif %} {% endfor %}
+    </div>
+    
+    <div id="fault_maintanance_form" class="hidden" >
+      {% for field in fault_maintanance_form %} {% if field.is_hidden %} {{ field }} {% else %} <div class="col-span-4"> {{ field.label_tag }} <div class="text-red-500"> {{ field.errors }} </div> {{ field }} </div> {% endif %} {% endfor %}
+    </div> 
+    <div id="reconnection_form" class="hidden" >
+      {{ reconnection_form }}{% for field in reconnection_form %} {% if field.is_hidden %} {{ field }} {% else %} <div class="col-span-4"> {{ field.label_tag }} <div class="text-red-500"> {{ field.errors }} </div> {{ field }} </div> {% endif %} {% endfor %}
     </div>
     <br>
 

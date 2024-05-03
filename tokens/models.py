@@ -31,7 +31,7 @@ class Token(models.Model):
     created_by = models.ForeignKey(UserProfile, on_delete=models.CASCADE, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True, blank=True, null=True)
     process=models.ForeignKey(Process, on_delete=models.CASCADE, blank=True, null=True)
-    choices = [('REIMBURSEMENT', 'REIMBURSEMENT'), ('CLEAR CREDIT', 'CLEAR CREDIT'), ('TAMPER TOKEN', 'TAMPER TOKEN')]
+    choices = [('REIMBURSEMENT', 'REIMBURSEMENT'), ('CLEAR CREDIT', 'CLEAR CREDIT'), ('TEMPER TOKEN', 'TEMPER TOKEN')]
     type = models.CharField(max_length=100, blank=True, null=True, choices=choices)
     def __str__(self):
         return str(self.meter.meter_number)
@@ -48,7 +48,7 @@ class REIMBURSEMENT(models.Model):
     def __str__(self):
         return f"Fault: {self.token}"
 class CLEARCREDIT(models.Model):
-    penalty = models.CharField(max_length=3, default="No", choices=[ ('No', 'No'), ('Yes', 'Yes'), ])
+    token = models.ForeignKey(Token, on_delete=models.CASCADE, blank=True, null=True)
     amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     receipt = models.FileField(upload_to='uploads/Tokens/Token/receipt', blank=True, null=True)
     def __str__(self):
@@ -56,26 +56,28 @@ class CLEARCREDIT(models.Model):
 
 class TAMPERTOKEN(models.Model):
     token = models.ForeignKey(Token, on_delete=models.CASCADE, blank=True, null=True)
-    purpose = models.CharField(max_length=15, choices=[('Fauty Meter', 'Fauty Meter'),('Recovered Meter', 'Recovered Meter'),("Old Token","Old Token" ),])
+    is_for = models.CharField(max_length=25, choices=[('Fauty Maintanance', 'Fauty Maintanance'),('Recovered Meter', 'Recovered Meter'),("Reconnection","Reconnection" ),])
     def __str__(self):
         return f"TAMPERTOKEN: {self.token}"
 
 class OldToken(models.Model):
     old_token = models.ImageField(upload_to='uploads/Tokens/oldToken', blank=True, null=True)
-    reimbursement = models.ForeignKey(REIMBURSEMENT, on_delete=models.CASCADE, blank=True, null=True)
+    token = models.ForeignKey(Token, on_delete=models.CASCADE, blank=True, null=True)
     def __str__(self):
         return f"OldToken: {self.old_token}"
 class FaultMeter(models.Model):
-    reimbursement = models.ForeignKey(REIMBURSEMENT, on_delete=models.CASCADE, blank=True, null=True)
+    token = models.ForeignKey(Token, on_delete=models.CASCADE, blank=True, null=True)
     units = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     photo= models.ImageField(upload_to='uploads/Tokens/faultMeter', blank=True, null=True)
 
 class RecoveredMeter(models.Model):
     token = models.ForeignKey(Token, on_delete=models.CASCADE, blank=True, null=True)
     photo= models.ImageField(upload_to='uploads/Tokens/RecoveredMeter', blank=True, null=True)
-class FaultMaintanance(models.Model):
-    photo = models.FileField(upload_to='uploads/Tokens/FaultMaintanance', blank=True, null=True)
-    units = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+class FaultMaintanance(models.Model): 
+    token = models.ForeignKey(Token, on_delete=models.CASCADE, blank=True, null=True)
+    number = models.CharField(max_length=11, blank=True,null=True , validators=[RegexValidator(r'\d{11}$', 'Enter a valid Meter number.')])
+
 class Reconnection(models.Model):
+    token = models.ForeignKey(Token, on_delete=models.CASCADE, blank=True, null=True)
     invoice = models.FileField(upload_to='uploads/Tokens/Reconnection/Invoice', blank=True, null=True)
     proof_of_payment = models.FileField(upload_to='uploads/Tokens/Reconnection/ProofOfPayment', blank=True, null=True)

@@ -47,7 +47,8 @@ class ReimbursementForm(forms.ModelForm):
 class ClearCreditForm(forms.ModelForm):
     class Meta:
         model = CLEARCREDIT
-        fields = "__all__"
+        fields ="__all__"
+        exclude=['token']
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for field_name, field in self.fields.items():
@@ -57,17 +58,18 @@ class ClearCreditForm(forms.ModelForm):
 class TamperTokenForm(forms.ModelForm):
     class Meta:
         model = TAMPERTOKEN
-        fields = ['token', 'purpose']
+        fields = "__all__"
+        exclude=['token']
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for field_name, field in self.fields.items():
             field.widget.attrs.update({'class': "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6",})
             if isinstance(field.widget, forms.Textarea):field.widget.attrs.update({'rows': '3'})
-
 class OldTokenForm(forms.ModelForm):
     class Meta:
         model = OldToken
-        fields = ['old_token', 'reimbursement']
+        fields = "__all__"
+        exclude=['token']
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for field_name, field in self.fields.items():
@@ -77,12 +79,19 @@ class OldTokenForm(forms.ModelForm):
 class FaultMeterForm(forms.ModelForm):
     class Meta:
         model = FaultMeter
-        fields = ['reimbursement', 'units', 'photo']
+        fields = "__all__"
+        exclude=['token']
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field_name, field in self.fields.items():
+            field.widget.attrs.update({'class': "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6",})
+            if isinstance(field.widget, forms.Textarea):field.widget.attrs.update({'rows': '3'})
 
 class RecoveredMeterForm(forms.ModelForm):
     class Meta:
         model = RecoveredMeter
-        fields = ['token', 'photo']
+        fields ="__all__"
+        exclude=['token']
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for field_name, field in self.fields.items():
@@ -92,7 +101,8 @@ class RecoveredMeterForm(forms.ModelForm):
 class FaultMaintananceForm(forms.ModelForm):
     class Meta:
         model = FaultMaintanance
-        fields = ['photo', 'units']
+        fields ="__all__"
+        exclude=['token']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -102,7 +112,9 @@ class FaultMaintananceForm(forms.ModelForm):
 class ReconnectionForm(forms.ModelForm):
     class Meta:
         model = Reconnection
-        fields = ['invoice', 'proof_of_payment']
+        fields ="__all__"
+        exclude=['token']
+        
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for field_name, field in self.fields.items():
