@@ -31,7 +31,7 @@ class PettycashForm(forms.ModelForm):
             })
 
             if field_name == 'currency':
-                choices = [(currency, currency) for currency in ['ZIG', 'USD']]
+                choices = [(currency, currency) for currency in ['ZIG']]
                 field.choices = choices
                 field.widget.attrs.update({'class': 'block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm '
                                                     'ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 '
