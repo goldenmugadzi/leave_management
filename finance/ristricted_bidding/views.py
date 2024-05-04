@@ -10,6 +10,33 @@ from it.users.models import *
 from finance.purchase_request.models import PurchaseRequest, PrItem, Attachment, UnitOfMeasurement
 from finance.ristricted_bidding.models import *
 
+def clear_approvals(cs_id):
+
+    cs_query = RistricedBiddings.objects.filter(cs_id=cs_id).first()
+    if not cs_query:
+        return JsonResponse({
+            "message": "Comparative Schedule not found",
+            "success": False,
+            }, safe=False)
+        
+    committee = RBCommittee.objects.filter(cs_id=cs_query).all()
+    if committee:
+        for member in committee:
+            member.committee_approval = ""
+            member.committee_status = ""
+            member.committee_date = None
+            member.save()
+    
+    approvals = RBApproval.objects.filter(cs_id=cs_query).all()
+    if approvals:
+        for approval in approvals:
+            approval.approval = ""
+            approval.justification = ""
+            approval.approval_date = None
+            approval.save()
+            
+    return True
+
 def get_comperative_schedules(request):
     
     cs = RistricedBiddings.objects.all()
@@ -227,6 +254,15 @@ def get_comperative_schedule_data(request, cs_id):
                 })
             except Exception as ex:
                 print("Error: ", ex)
+   
+    cs_item_list = []
+    for cs_item in cs_items:
+        cs_item_list.append({
+            "id": cs_item.id,
+            "item_required": cs_item.item_name,
+            "quantity": cs_item.quantity,
+            "unit_of_measurement": cs_item.unit_of_measurement,
+        })
 
     context = {
         "requester_role": user_comparative_schedule_role.role if user_comparative_schedule_role else "",
@@ -346,7 +382,7 @@ def get_create_data(request, pr_id):
                     "id": purchase_request.procurement_plan_reference.id if purchase_request.procurement_plan_reference else "",
                     "name": purchase_request.procurement_plan_reference.name if purchase_request.procurement_plan_reference else ""
                 } if purchase_request.procurement_plan_reference else {},
-                "pr_date": purchase_request.created_at.strftime("%Y-%m-%d"),
+                "pr_date": purchase_request.created_at.strftime("%Y-%m-%d") if purchase_request.created_at else "",
                 "pr_items": pr_item_list,
                 "pr_attachments": pr_at_list,
                 "proc_plans": list(proc_plans.values('id', 'proc_ref', 'description')),
@@ -611,6 +647,7 @@ def update_comparative_schedule(request):
         cs_query = RistricedBiddings.objects.filter(cs_id=cs_id).first()
 
         if cs_query:
+            clear_approvals(cs_id)
             print(scope_of_work)
             if scope_of_work:
                 cs_query.scope_of_work = scope_of_work 
@@ -750,6 +787,7 @@ def save_cs_bid(request):
     # check if bid exists
     bid_query = RBBids.objects.filter(cs_id=cs_query, sup_id=supplier, bid_no=bid_no).all()
     if bid_query:
+        clear_approvals(cs_id)
         for bid in bid_query:
             # delete item
             item = RBItems.objects.filter(item_id=bid.item_id).first()
@@ -822,6 +860,7 @@ def delete_cs_bid(request):
     # check if bid exists
     bid_query = RBBids.objects.filter(cs_id=cs_query, sup_id=supplier).all()
     if bid_query:
+        clear_approvals(cs_id)
         for bid in bid_query:
             # delete item
             item = RBItems.objects.filter(item_id=bid.item_id).first()
@@ -856,6 +895,7 @@ def save_cs_compliance(request):
     # check if compliance exists
     compliance_query = RBCompliance.objects.filter(cs_id=cs_query).all()
     if compliance_query:
+        clear_approvals(cs_id)
         for compliance in compliance_query:
             compliance.delete()
     
@@ -912,7 +952,23 @@ def save_cs_compliance(request):
         "message": "Compliance saved successfully",
         "success": True,
     })
+   
+def save_supplier(request):
+
+    supplier_name = request.POST.get("supplier_name", "")
     
+    supplier_query = Supplier.objects.filter(name=supplier_name).first()
+    if not supplier_query:
+        supplier_query = Supplier(
+            name = supplier_name
+        )
+        supplier_query.save()
+        
+    return JsonResponse({
+        "message": "Supplier saved successfully",
+        "success": True,
+    })
+     
 def save_cs_ranking(request):
     cs_id = request.POST.get("cs_id", "")
     cs_query = RistricedBiddings.objects.filter(cs_id=cs_id).first()
@@ -925,6 +981,7 @@ def save_cs_ranking(request):
     # check if rankings exists
     ranking_query = RBRanking.objects.filter(cs_id=cs_query).all()
     if ranking_query:
+        clear_approvals(cs_id)
         for ranking in ranking_query:
             ranking.delete()
     # get bids
@@ -991,6 +1048,7 @@ def save_cs_committee(request):
         if member_profile:
             committee_query = RBCommittee.objects.filter(cs_id=cs_query, user=member_profile).first()
             if committee_query:
+                clear_approvals(cs_id)
                 committee_query.committee_position = member['memberPosition']
                 committee_query.committee_date = datetime.now()
                 committee_query.save()
@@ -1025,6 +1083,7 @@ def delete_cs_committee_member(request):
         committee_query = RBCommittee.objects.filter(cs_id=cs_query, user=member_profile).first()
         print("committee_query: ", committee_query)
         if committee_query:
+            clear_approvals(cs_id)
             committee_query.delete()
             return JsonResponse({
                 "message": "Committee member deleted successfully",

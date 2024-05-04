@@ -6,87 +6,97 @@ const BASE_URL = "http://172.16.8.98:9300/ristricted_bidding";
 
 class CreateRB extends React.Component {
   constructor(props) {
-    super(props);
-    this.state = {
-      requester_role: "",
-      cs_id: "",
-      cs_owner: "",
-      plan_ref: "",
-      proc_ref: "",
-      proc_plan: null,
-      scope_of_work: "",
-      pr_number: "",
-      pr_attachments: [],
-      quantity: "",
-      pr_date: "",
-      closing_date: "",
-      closing_time_hour: "",
-      ref_date: "",
-      date_tender_opened: "",
-      tender_adjudication_committee_date: "",
-      advert: null,
-      advert_url: null,
-      bid_count: 0,
-      currentBid: {},
-      bids: [],
-      addBidModal: false,
-      updateBidModal: false,
-      cs_items: [],
-      cs_item_count: 0,
-      addItemsModal: false,
-
-      complianceTable: false,
-      compliance: [],
-      complianceRemarks: [],
-      showSamples: "",
-      showSiteVisit: "",
-
-      rankingTable: false,
-      rankings: [],
-
-      committeeTable: false,
-      committeeMembers: [],
-      committeeJustificationModal: false,
-      member: {
-        memberName: "",
-        memberUserName: "",
-        memberPosition: "",
-        memberApproval: "",
-      },
-      gmApproval: null,
-      fmApproval: null,
-      approvalsJustificationModal: false,
-      users: [],
-      currentApprover: {
+      super(props);
+      this.state = {
+        requester_role: "",
+        cs_id: "",
+        cs_owner: "",
+        committeeApprovalComplete: false,
+        plan_ref: "",
+        proc_ref: "",
+        proc_plan: null,
+        scope_of_work: "",
+        pr_number: "",
+        pr_attachments: [],
+        quantity: "",
+        pr_date: "",
+        closing_date: "",
+        closing_time_hour: "",
+        ref_date: "",
+        date_tender_opened: "",
+        tender_adjudication_committee_date: "",
+        advert: null,
+        advert_url: null,
+        bid_count: 0,
+        currentBid: {},
+        bids: [],
+        addBidModal: false,
+        updateBidModal: false,
+        cs_items: [],
+        cs_item_count: 0,
+        addItemsModal: false,
+  
+        complianceTable: false,
+        compliance: [],
+        complianceRemarks: [],
+        showSamples: "",
+        showSiteVisit: "",
+  
+        rankingTable: false,
+        rankings: [],
+  
+        committeeTable: false,
+        committeeMembers: [],
+        committeeJustificationModal: false,
+        member: {
+          memberName: "",
+          memberUserName: "",
+          memberPosition: "",
+          memberApproval: "",
+        },
+        gmApproval: null,
+        fmApproval: null,
+        approvalsComplete: false,
+        approvalsJustificationModal: false,
+        users: [],
+        currentApprover: {
+          username: "",
+          justification: "",
+          role: "",
+        },
+  
+        pr_items: [],
+        suppliers: [],
+        proc_plans: [],
+        uom: null,
+        authUser: {},
         username: "",
-        justification: "",
-        role: "",
-      },
-
-      pr_items: [],
-      suppliers: [],
-      proc_plans: [],
-      uom: null,
-      authUser: {},
-      username: "",
-
-      fetchPR: false,
-    };
-    this.getCreateData = this.getCreateData.bind(this);
-    this.onAddBid = this.onAddBid.bind(this);
-    this.onUpdateBidModal = this.onUpdateBidModal.bind(this);
-    this.onAddItemsModal = this.onAddItemsModal.bind(this);
-    this.onCommitteeChange = this.onCommitteeChange.bind(this);
-    this.onGetFileObjectUrl = this.onGetFileObjectUrl.bind(this);
-    this.onComplianceItemsChange = this.onComplianceItemsChange.bind(this);
-    this.onComplianceRemarksChange = this.onComplianceRemarksChange.bind(this);
-    this.onCommitteeApprove = this.onCommitteeApprove.bind(this);
-    this.onCommitteeJustificationChange =
-      this.onCommitteeJustificationChange.bind(this);
-    this.onCommitteeJustificationModal =
-      this.onCommitteeJustificationModal.bind(this);
-    this.onApprovalJustificationModal = this.onApprovalJustificationModal.bind(this);
-    this.onApprovalJustificationChange = this.onApprovalJustificationChange.bind(this);
+  
+        fetchPR: false,
+        onAddSupplier: false,
+        newSupplier: {
+          supplier_name: "",
+          supplier_contact: "",
+          supplier_email: "",
+          supplier_address: "",
+        },
+      };
+      this.getCreateData = this.getCreateData.bind(this);
+      this.onAddBid = this.onAddBid.bind(this);
+      this.onUpdateBidModal = this.onUpdateBidModal.bind(this);
+      this.onAddItemsModal = this.onAddItemsModal.bind(this);
+      this.onCommitteeChange = this.onCommitteeChange.bind(this);
+      this.onGetFileObjectUrl = this.onGetFileObjectUrl.bind(this);
+      this.onComplianceItemsChange = this.onComplianceItemsChange.bind(this);
+      this.onComplianceRemarksChange = this.onComplianceRemarksChange.bind(this);
+      this.onCommitteeApprove = this.onCommitteeApprove.bind(this);
+      this.onCommitteeJustificationChange =
+        this.onCommitteeJustificationChange.bind(this);
+      this.onCommitteeJustificationModal =
+        this.onCommitteeJustificationModal.bind(this);
+      this.onApprovalJustificationModal = this.onApprovalJustificationModal.bind(this);
+      this.onApprovalJustificationChange = this.onApprovalJustificationChange.bind(this);
+      this.onSupplierChange = this.onSupplierChange.bind(this);
   }
 
   componentDidMount() {
@@ -183,11 +193,20 @@ class CreateRB extends React.Component {
             attachment_url: this.onGetFileObjectUrl(pr_attachment.file),
           };
         });
-        console.log("advert file", advert, typeof advert);
+
+        let committeeApprovalComplete = committee.filter(
+          (member) => (member.memberApproval === "" || member.memberApproval === null || member.memberApproval === undefined || member.memberApproval === "Rejected")
+        ).length === 0;
+        
+        console.log("gm_approval: ", gm_approval, fm_approval, gm_approval.approval, fm_approval.approval);
+        let approvalsComplete = gm_approval.approval !== "" && fm_approval.approval !== "" && gm_approval.approval !== undefined && fm_approval.approval !== undefined;
+
         this.setState({
           ...this.state,
           requester_role: requester_role,
           cs_owner: cs_owner,
+          committeeApprovalComplete: committeeApprovalComplete,
+          approvalsComplete: approvalsComplete,
           proc_plans: proc_plans,
           uom: uom,
           suppliers: suppliers,
@@ -290,7 +309,11 @@ class CreateRB extends React.Component {
           this.setState({
             scope_of_work: scope_of_work,
             proc_ref: proc_ref,
-            proc_plan: proc_plan,
+            proc_plan: {
+              description: proc_plan.name,
+              id: proc_plan.id,
+              proc_ref: proc_plan.proc_ref,
+            },
             proc_plans: plans,
             uom: uom,
             suppliers: suppliers,
@@ -321,7 +344,13 @@ class CreateRB extends React.Component {
     let { name, value } = event.target;
     console.log("name: ", name_, "value: ", value);
     let member = this.state.member;
-    member[name_] = value;
+    if (name_ === "memberUserName") {
+      let user = this.state.users.find((user) => user.username === value);
+      member.memberName = user.first_name + " " + user.last_name;
+      member[name_] = value;
+    } else{
+      member[name_] = value;
+    }
     this.setState({
       ...this.state,
       member: member,
@@ -330,6 +359,10 @@ class CreateRB extends React.Component {
 
   onAddCommitteeMembers = () => {
     let members = this.state.committeeMembers;
+    let member_ = this.state.member;
+    if (member_.memberUserName === "" || member_.memberPosition === "") {
+      alert("Please select a user");
+    }
     // check if memberUserName exists
     let member = members.find(
       (_member) => _member.memberUserName === this.state.member.memberUserName
@@ -404,10 +437,11 @@ class CreateRB extends React.Component {
     });
   };
 
-  onCommitteeJustificationChange = (event) => {
-    let { name, value } = event.target;
+  onCommitteeJustificationChange = (name_, event) => {
+    console.log("event: ", event);
+    let { value } = event.target;
     let currentApprover = this.state.currentApprover;
-    currentApprover[name] = value;
+    currentApprover[name_] = value;
     this.setState({
       ...this.state,
       currentApprover: currentApprover,
@@ -416,6 +450,11 @@ class CreateRB extends React.Component {
 
   onCommitteeApprove = (username, approval, justification) => {
     let form_data = new FormData();
+    console.log("approval: ", approval, justification);
+    if (approval === "Rejected" && justification === "") {
+      alert("Please enter justification");
+      return;
+    }
     form_data.append("cs_id", this.state.cs_id);
     form_data.append("username", username);
     form_data.append("approval", approval);
@@ -439,7 +478,7 @@ class CreateRB extends React.Component {
           let members = this.state.committeeMembers.map((member) => {
             if (member.memberUserName === username) {
               member.committee_date = committeeDate;
-              member.memberApproval = committeeApproval;
+              member.member_approval = committeeApproval;
             }
             return member;
           });
@@ -448,11 +487,11 @@ class CreateRB extends React.Component {
             committeeMembers: members,
           });
           if (committeeApproval === "Approved") {
-            alert("Committee approved successfully by " + memberName);
+            alert("Committee approved successfully");
             // reload page
             window.location.reload();
           } else {
-            alert("Committee rejected successfully by " + memberName);
+            alert("Committee rejected successfully");
             window.location.reload();
           }
         } else {
@@ -491,6 +530,11 @@ class CreateRB extends React.Component {
   };
 
   onApprovalApprove = (role, username, approval, justification) => {
+    console.log("approval: ", approval, justification);
+    if(approval === "Rejected" && justification === "") {
+      alert("Please enter justification");
+      return;
+    }
     let form_data = new FormData();
     form_data.append("cs_id", this.state.cs_id);
     form_data.append("role", role);
@@ -549,10 +593,44 @@ class CreateRB extends React.Component {
     });
   };
 
+  onSaveSupplier = () => {
+    let form_data = new FormData();
+    form_data.append("supplier_name", this.state.newSupplier.supplier_name);
+    form_data.append("csrfmiddlewaretoken", this.getCookie("csrftoken"));
+
+    fetch(`${BASE_URL}/save_supplier`, {
+      method: "POST",
+      headers: {
+        "X-CSRFToken": this.getCookie("csrftoken"),
+      },
+      body: form_data,
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        console.log("data: ", data);
+        if (data.success) {
+          alert("Supplier saved successfully");
+          this.setState({
+            ...this.state,
+            onAddSupplier: false,
+            newSupplier: {
+              supplier_name: "",
+              supplier_contact: "",
+              supplier_email: "",
+              supplier_address: "",
+            },
+          });
+        } else {
+          alert("Error saving Supplier");
+        }
+      });
+  };
+
   onApprovalJustificationChange = (name_, event) => {
-    let { name, value } = event.target;
+    console.log("event: ", event);
+    let { value } = event.target;
     let currentApprover = this.state.currentApprover;
-    currentApprover[name] = value;
+    currentApprover[name_] = value;
     this.setState({
       ...this.state,
       currentApprover: currentApprover,
@@ -585,7 +663,7 @@ class CreateRB extends React.Component {
       let item = this.state.pr_items.find((item) => item.id === item_id);
       // update pr_item selected to added
       item.ordered = true;
-      item.item_name = item.item_required;
+      item.item_required = item.item_required;
       // update pr_items
       let pr_items = this.state.pr_items.map((_item) => {
         if (_item.id === item_id) {
@@ -605,6 +683,10 @@ class CreateRB extends React.Component {
   };
 
   onSubmitCSItems = () => {
+    if (this.state.cs_items.length === 0) {
+      alert("Please add items to the Comparative Schedule");
+      return;
+    }
     let form_data = new FormData();
     form_data.append("cs_id", this.state.cs_id);
     form_data.append("pr_id", this.state.pr_number);
@@ -635,6 +717,25 @@ class CreateRB extends React.Component {
     this.setState({
       ...this.state,
       addItemsModal: false,
+    });
+  };
+
+  onAddSuppliersModal = () => {
+    this.setState({
+      ...this.state,
+      onAddSupplier: !this.state.onAddSupplier,
+    });
+  };
+
+  onSupplierChange = (name_, event) => {
+    let { name, value } = event.target;
+
+    this.setState({
+      ...this.state,
+      newSupplier: {
+        ...this.state.newSupplier,
+        [name]: value,
+      },
     });
   };
 
@@ -732,11 +833,11 @@ class CreateRB extends React.Component {
     } else {
       // find item in cs_items
       let item = this.state.cs_items.find(
-        (item) => item.item_name === description
+        (item) => item.item_required === description
       );
       // create new item
       let new_item = {
-        item_required: item.item_name,
+        item_required: item.item_required,
         quantity: item.quantity,
         unit_of_measurement: item.unit_of_measurement,
         vat: item.vat,
@@ -818,12 +919,58 @@ class CreateRB extends React.Component {
           let bids = this.state.bids;
           console.log("currentBid: ", currentBid);
           bids.push(currentBid);
+          // check if compliance for supplier exists
+          let compliances = this.state.compliance;
+          let compliance = compliances.find(
+            (compliance) => compliance.supplier_name === currentBid.supplier_name
+          );
+          let compliance_ = {};
+          if (!compliance) {
+            compliance_ = {
+              bid_no: currentBid.bid_count,
+              supplier: currentBid.supplier,
+              supplier_name: currentBid.supplier_name,
+              payment_terms: false,
+              bid_validity: false,
+              delivery_period: false,
+              technical_specifications: false,
+              valid_tax_clearance: false,
+              registered_with_praz: false,
+              tax_status: false,
+              site_visit: false,
+              samples_required: false,
+              decision: false,
+              reject: true,
+              remarks: "",
+            };
+            compliances.push(compliance_);
+          }
+  
+          let complianceRemarks = this.state.complianceRemarks;
+          let complianceRemark = complianceRemarks.find(
+            (complianceRemark) =>
+              complianceRemark.supplier_name === currentBid.supplier_name
+          );
+  
+          if (!complianceRemark) {
+            let complianceRemark_ = {
+              bid_count: currentBid.bid_count,
+              supplier: currentBid.supplier,
+              supplier_name: currentBid.supplier_name,
+              remarks: "",
+            };
+            complianceRemarks.push(complianceRemark_);
+          }
+  
           this.setState({
             ...this.state,
             bids: bids,
             currentBid: {},
             addBidModal: false,
+            compliance: compliances,
+            complianceRemarks: complianceRemarks,
           });
+
         }
       } else {
         alert("Please add items to the bid");
@@ -869,6 +1016,11 @@ class CreateRB extends React.Component {
   };
 
   onSaveSchedule = () => {
+
+    if(!this.state.proc_ref || !this.state.scope_of_work || !this.state.pr_number || !this.state.pr_date || !this.state.closing_date || !this.state.ref_date || !this.state.closing_time_hour || !this.state.date_tender_opened || !this.state.tender_adjudication_committee_date) {
+      alert("Please fill in all required fields");
+      return;
+    }
     let form_data = new FormData();
     // add enctype to form data
     form_data.enctype = "multipart/form-data";
@@ -913,6 +1065,10 @@ class CreateRB extends React.Component {
   };
 
   onUpdateSchedule = () => {
+    if(!this.state.proc_ref || !this.state.scope_of_work || !this.state.pr_number || !this.state.pr_date || !this.state.closing_date || !this.state.ref_date || !this.state.closing_time_hour || !this.state.date_tender_opened || !this.state.tender_adjudication_committee_date) {
+      alert("Please fill in all required fields");
+      return;
+    }
     let form_data = new FormData();
     // add enctype to form data
     form_data.enctype = "multipart/form-data";
@@ -1144,9 +1300,68 @@ class CreateRB extends React.Component {
   onComplianceItemsChange = (name_, event) => {
     console.log("name and value: ", name_, event);
     let { name, value } = event.target;
+    let compliance = this.state.compliance;
+    let updatedComplianceList = compliance.map((compliance_, index) => {
+      let _compliance = {};
+      if (this.state.showSamples && this.state.showSiteVisit) {
+        _compliance = {
+          payment_terms: compliance_.payment_terms,
+          bid_validity: compliance_.bid_validity,
+          delivery_period: compliance_.delivery_period,
+          technical_specifications: compliance_.technical_specifications,
+          valid_tax_clearance: compliance_.valid_tax_clearance,
+          registered_with_praz: compliance_.registered_with_praz,
+          tax_status: compliance_.tax_status,
+          site_visit: compliance_.site_visit,
+          samples_required: compliance_.samples_required,
+        };
+      } else if (this.state.showSamples && !this.state.showSiteVisit) {
+        _compliance = {
+          payment_terms: compliance_.payment_terms,
+          bid_validity: compliance_.bid_validity,
+          delivery_period: compliance_.delivery_period,
+          technical_specifications: compliance_.technical_specifications,
+          valid_tax_clearance: compliance_.valid_tax_clearance,
+          registered_with_praz: compliance_.registered_with_praz,
+          tax_status: compliance_.tax_status,
+          samples_required: compliance_.samples_required,
+        };
+      } else if (!this.state.showSamples && this.state.showSiteVisit) {
+        _compliance = {
+          payment_terms: compliance_.payment_terms,
+          bid_validity: compliance_.bid_validity,
+          delivery_period: compliance_.delivery_period,
+          technical_specifications: compliance_.technical_specifications,
+          valid_tax_clearance: compliance_.valid_tax_clearance,
+          registered_with_praz: compliance_.registered_with_praz,
+          tax_status: compliance_.tax_status,
+          site_visit: compliance_.site_visit,
+        };
+      } else {
+        _compliance = {
+          payment_terms: compliance_.payment_terms,
+          bid_validity: compliance_.bid_validity,
+          delivery_period: compliance_.delivery_period,
+          technical_specifications: compliance_.technical_specifications,
+          valid_tax_clearance: compliance_.valid_tax_clearance,
+          registered_with_praz: compliance_.registered_with_praz,
+          tax_status: compliance_.tax_status,
+        };
+      }
+
+      // set compliance_['decision'] to true if all compliance are true
+      let compliance_values = Object.values(_compliance);
+      console.log("compliances: ", compliance_values);
+      let decision = compliance_values.every((value) => value === true);
+      compliance_["decision"] = decision;
+      compliance_["reject"] = !decision;
+
+      return compliance_;
+    });
     this.setState({
       ...this.state,
       [name_]: value,
+      compliance: updatedComplianceList,
     });
   };
 
@@ -1323,6 +1538,80 @@ class CreateRB extends React.Component {
     var rejectJustification = null;
     var approvalsTable = null;
     var rejectApprovalJustification = null;
+    var supplierModal = null;
+
+    if (this.state.onAddSupplier) {
+      supplierModal = (
+        <div className="fixed inset-0 flex items-center justify-center z-50 pt-10 pb-20">
+          <div className="bg-gulf-blue-100 rounded-lg shadow-lg p-6 max-h-screen overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-medium">ADD SUPPLIER</h3>
+              <button
+                type="button"
+                className="text-gray-400 hover:text-gray-500 focus:outline-none"
+                onClick={this.onAddSuppliersModal}
+              >
+                <svg
+                  className="h-6 w-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+            <div className="overflow-auto px-2 py-2 mt-5 rounded-md bg-gulf-blue-300">
+              <div>
+                <div className="flex-1 w-full ml-1">
+                  <label
+                    htmlFor="supplier_name"
+                    className="block text-sm font-medium leading-6 text-gray-900"
+                  >
+                    Supplier Name
+                  </label>
+                  <div className="mt-2">
+                    <input
+                      name="supplier_name"
+                      onChange={(e) =>
+                        this.onSupplierChange("supplier_name", e)
+                      }
+                      type="text"
+                      required="required"
+                      className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-center mt-5 px-3 py-3">
+                <div className="m-2">
+                  <button
+                    onClick={this.onAddSuppliersModal}
+                    className="rounded-md text-gray-50 text-sm bg-gray-300 hover:bg-blue-550 px-3 py-2 font-semibold leading-6"
+                  >
+                    <span className="ml-2">CANCEL</span>
+                  </button>
+                </div>
+                <div className="m-2">
+                  <button
+                    onClick={this.onSaveSupplier}
+                    className="rounded-md text-gray-50 text-sm bg-blue-925 hover:bg-blue-550 px-3 py-2 font-semibold leading-6"
+                  >
+                    <span className="ml-2">SAVE SUPPLIER</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
 
     if (this.state.approvalsJustificationModal) {
       rejectApprovalJustification = (
@@ -1574,9 +1863,9 @@ class CreateRB extends React.Component {
           id={"bid-" + this.state.currentBid}
           className="fixed inset-0 flex items-center justify-center z-50 pt-10 pb-20"
         >
-          <div className="bg-white rounded-lg shadow-lg p-6 max-h-screen min-w-max overflow-y-auto">
+          <div className="bg-gulf-blue-100 rounded-lg shadow-lg p-6 max-h-screen min-w-max overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-medium">Modal Title</h3>
+              <h3 className="text-lg font-medium">ADD BID DETAILS</h3>
               <button
                 type="button"
                 className="text-gray-400 hover:text-gray-500 focus:outline-none"
@@ -1709,10 +1998,10 @@ class CreateRB extends React.Component {
                         <div className="mt-2">
                           <input
                             name="item_description"
-                            defaultValue={item.item_name}
+                            defaultValue={item.item_required}
                             onChange={(e) =>
                               this.onCurrentBidItemChange(
-                                item.item_name,
+                                item.item_required,
                                 "item_required",
                                 e
                               )
@@ -1736,7 +2025,7 @@ class CreateRB extends React.Component {
                             defaultValue={item.quantity}
                             onChange={(e) =>
                               this.onCurrentBidItemChange(
-                                item.item_name,
+                                item.item_required,
                                 "quantity",
                                 e
                               )
@@ -1760,7 +2049,7 @@ class CreateRB extends React.Component {
                               id="unit_of_measurement"
                               onChange={(e) =>
                                 this.onCurrentBidItemChange(
-                                  item.item_name,
+                                  item.item_required,
                                   "unit_of_measurement",
                                   e
                                 )
@@ -1795,7 +2084,7 @@ class CreateRB extends React.Component {
                               id="vat"
                               onChange={(e) =>
                                 this.onCurrentBidItemChange(
-                                  item.item_name,
+                                  item.item_required,
                                   "vat",
                                   e
                                 )
@@ -1808,6 +2097,7 @@ class CreateRB extends React.Component {
                               ) : (
                                 ""
                               )}
+                              <option value="">Select VAT</option>
                               <option value="Excl.">Excl.</option>
                               <option value="Incl.">Incl.</option>
                             </select>
@@ -1827,7 +2117,7 @@ class CreateRB extends React.Component {
                             defaultValue={item.unit_price}
                             onChange={(e) =>
                               this.onCurrentBidItemChange(
-                                item.item_name,
+                                item.item_required,
                                 "unit_price",
                                 e
                               )
@@ -2010,10 +2300,10 @@ class CreateRB extends React.Component {
                         <div className="mt-2">
                           <input
                             name="item_description"
-                            defaultValue={item.description}
+                            defaultValue={item.item_required}
                             onChange={(e) =>
                               this.onCurrentBidItemChange(
-                                item.item_name,
+                                item.item_required,
                                 "item_required",
                                 e
                               )
@@ -2037,7 +2327,7 @@ class CreateRB extends React.Component {
                             defaultValue={item.quantity}
                             onChange={(e) =>
                               this.onCurrentBidItemChange(
-                                item.item_name,
+                                item.item_required,
                                 "quantity",
                                 e
                               )
@@ -2059,9 +2349,10 @@ class CreateRB extends React.Component {
                           <div className="mt-2">
                             <select
                               id="unit_of_measurement"
+                              defaultValue={item.unit_of_measurement}
                               onChange={(e) =>
                                 this.onCurrentBidItemChange(
-                                  item.item_name,
+                                  item.item_required,
                                   "unit_of_measurement",
                                   e
                                 )
@@ -2076,14 +2367,9 @@ class CreateRB extends React.Component {
                               ) : (
                                 ""
                               )}
-                              <option value="Each">Each</option>
-                              <option value="Kgs">Kg`s</option>
-                              <option value="Grammes">Grammes</option>
-                              <option value="Litres">Litres</option>
-                              <option value="Metres">Metres</option>
-                              <option value="Bags">Bags</option>
-                              <option value="Packets">Packets</option>
-                              <option value="Cartons">Cartons</option>
+                              {this.state.uom ? this.state.uom.map((uom) => (
+                                <option value={uom.name}>{uom.name}</option>
+                              )): <option>No Units</option>}
                             </select>
                           </div>
                         </div>
@@ -2099,9 +2385,10 @@ class CreateRB extends React.Component {
                           <div className="mt-2">
                             <select
                               id="vat"
+                              defaultValue={item.vat}
                               onChange={(e) =>
                                 this.onCurrentBidItemChange(
-                                  item.item_name,
+                                  item.item_required,
                                   "vat",
                                   e
                                 )
@@ -2133,7 +2420,7 @@ class CreateRB extends React.Component {
                             defaultValue={item.unit_price}
                             onChange={(e) =>
                               this.onCurrentBidItemChange(
-                                item.item_name,
+                                item.item_required,
                                 "unit_price",
                                 e
                               )
@@ -2200,6 +2487,7 @@ class CreateRB extends React.Component {
                     onChange={(e) =>
                       this.onComplianceItemsChange("showSiteVisit", e)
                     }
+                    disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
                     autoComplete="site_visit"
                     className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
                   >
@@ -2224,6 +2512,7 @@ class CreateRB extends React.Component {
                       onChange={(e) =>
                         this.onComplianceItemsChange("showSamples", e)
                       }
+                      disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
                       autoComplete="samples"
                       className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
                     >
@@ -2323,6 +2612,7 @@ class CreateRB extends React.Component {
                               comp.payment_terms ? comp.payment_terms : false
                             }
                             onChange={(e) => this.onComplianceChange(key, e)}
+                            disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
                             id="payment_terms"
                             type="checkbox"
                           />
@@ -2334,6 +2624,7 @@ class CreateRB extends React.Component {
                               comp.bid_validity ? comp.bid_validity : false
                             }
                             onChange={(e) => this.onComplianceChange(key, e)}
+                            disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
                             id="bid_validity"
                             type="checkbox"
                           />
@@ -2347,6 +2638,7 @@ class CreateRB extends React.Component {
                                 : false
                             }
                             onChange={(e) => this.onComplianceChange(key, e)}
+                            disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
                             id="delivery_period"
                             type="checkbox"
                           />
@@ -2360,6 +2652,7 @@ class CreateRB extends React.Component {
                                 : false
                             }
                             onChange={(e) => this.onComplianceChange(key, e)}
+                            disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
                             id="technical_specifications"
                             type="checkbox"
                           />
@@ -2373,6 +2666,7 @@ class CreateRB extends React.Component {
                                 : false
                             }
                             onChange={(e) => this.onComplianceChange(key, e)}
+                            disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
                             id="valid_tax_clearance"
                             type="checkbox"
                           />
@@ -2386,6 +2680,7 @@ class CreateRB extends React.Component {
                                 : false
                             }
                             onChange={(e) => this.onComplianceChange(key, e)}
+                            disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
                             id="registered_with_praz"
                             type="checkbox"
                           />
@@ -2395,6 +2690,7 @@ class CreateRB extends React.Component {
                             name="tax_status"
                             checked={comp.tax_status ? comp.tax_status : false}
                             onChange={(e) => this.onComplianceChange(key, e)}
+                            disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
                             id="tax_status"
                             type="checkbox"
                           />
@@ -2410,6 +2706,7 @@ class CreateRB extends React.Component {
                                 comp.site_visit ? comp.site_visit : false
                               }
                               onChange={(e) => this.onComplianceChange(key, e)}
+                              disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
                               id="site_visit"
                               type="checkbox"
                             />
@@ -2430,6 +2727,7 @@ class CreateRB extends React.Component {
                                   : false
                               }
                               onChange={(e) => this.onComplianceChange(key, e)}
+                              disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
                               id="samples_required"
                               type="checkbox"
                             />
@@ -2442,6 +2740,7 @@ class CreateRB extends React.Component {
                             name="decision"
                             checked={comp.decision ? comp.decision : false}
                             onChange={(e) => this.onComplianceChange(key, e)}
+                            disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
                             id="decision"
                             type="checkbox"
                           />
@@ -2451,6 +2750,7 @@ class CreateRB extends React.Component {
                             name="reject"
                             checked={comp.reject ? comp.reject : false}
                             onChange={(e) => this.onComplianceChange(key, e)}
+                            disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
                             id="reject"
                             type="checkbox"
                           />
@@ -2490,6 +2790,7 @@ class CreateRB extends React.Component {
                                 e
                               )
                             }
+                            disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
                             type="text"
                             className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
                           />
@@ -2503,7 +2804,7 @@ class CreateRB extends React.Component {
           </div>
         </div>
 
-        {this.state.username === this.state.cs_owner ? (
+        {this.state.username === this.state.cs_owner && !this.state.approvalsComplete ? (
           <div className="flex justify-center mt-5 px-3 py-3">
             <div className="flex-1 m-2">
               <button
@@ -2601,12 +2902,6 @@ class CreateRB extends React.Component {
                   <tr className="text-gray-900">
                     <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
                       <div>
-                        <label
-                          htmlFor="memberPosition"
-                          className="block text-sm font-medium leading-6 text-gray-900"
-                        >
-                          Member Position
-                        </label>
                         <div className="mt-2">
                           {this.state.username === this.state.cs_owner ? (
                             <select
@@ -2618,7 +2913,7 @@ class CreateRB extends React.Component {
                               autoComplete="memberPosition"
                               className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
                             >
-                              <option value="">Select Option</option>
+                              <option value="">Select Member Position</option>
                               <option value="chairman">Chairman</option>
                               <option value="finance">Finance</option>
                               <option value="procurement">Procurement</option>
@@ -2633,12 +2928,6 @@ class CreateRB extends React.Component {
                     </td>
                     <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
                       <div>
-                        <label
-                          htmlFor="memberUserName"
-                          className="block text-sm font-medium leading-6 text-gray-900"
-                        >
-                          Select User
-                        </label>
                         <div className="mt-2">
                           {this.state.username === this.state.cs_owner ? (
                             <select
@@ -2650,13 +2939,15 @@ class CreateRB extends React.Component {
                               autoComplete="memberUserName"
                               className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
                             >
+                              <option value="">Select User</option>
                               {this.state.users
                                 ? this.state.users.map((user) => (
                                     <option value={user.username}>
                                       {user.first_name + " " + user.last_name}
                                     </option>
                                   ))
-                                : ""}
+                                : <option value="">No Users</option>}
+
                             </select>
                           ) : (
                             ""
@@ -2666,7 +2957,7 @@ class CreateRB extends React.Component {
                     </td>
                     <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2"></td>
                     <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                      {this.state.username === this.state.cs_owner ? (
+                      {this.state.username === this.state.cs_owner && !this.state.approvalsComplete && this.state.member.memberPosition !== "" && this.state.member.memberUserName !== "" ? (
                         <div className="w-30">
                           <button
                             style={{ width: "100%" }}
@@ -2697,11 +2988,11 @@ class CreateRB extends React.Component {
                           {member.committeeDate}
                         </td>
                         <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                          {member.committeeApproval === "Approved" && "APPROVED"}
-                          {member.committeeApproval === "Rejected" && "REJECTED"}
-                          {(member.committeeApproval === "" || member.committeeApproval === null) && (
+                          {member.memberApproval === "Approved" && "APPROVED"}
+                          {member.memberApproval === "Rejected" && "REJECTED"}
+                          {(member.memberApproval === "" || member.memberApproval === null) && (
                             <div className="flex justify-content-evenly">
-                              {this.state.username === this.state.cs_owner ? (
+                              {this.state.username === this.state.cs_owner && !this.state.approvalsComplete ? (
                                 <div className="m-2">
                                   <button
                                     onClick={() =>
@@ -2783,44 +3074,44 @@ class CreateRB extends React.Component {
                     <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
                       {this.state.fmApproval && this.state.fmApproval.approval === "Approved" && "APPROVED"}
                       {this.state.fmApproval && this.state.fmApproval.approval === "Rejected" && "REJECTED"}
-                      {(
-                            <div className="flex justify-content-evenly">
-                              {(this.state.requester_role === 'check') && Object.keys(this.state.fmApproval).length === 0 ? (
-                                <div className="flex justify-content-evenly">
-                                  <div className="m-2">
-                                    <button
-                                      onClick={() =>
-                                        this.onApprovalApprove(
-                                          "finance_manager",
-                                          this.state.username,
-                                          "Approved",
-                                          ""
-                                        )
-                                      }
-                                      name="save_next"
-                                      className="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                                    >
-                                      APPROVE
-                                    </button>
-                                  </div>
-                                  <div className="m-2">
-                                    <button
-                                      onClick={() =>
-                                        this.onApprovalJustificationModal(this.state.username, "finance_manager")
-                                      }
-                                      name="save_next"
-                                      className="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                                    >
-                                      REJECT
-                                    </button>
-                                  </div>
+                      {this.state.committeeApprovalComplete && (
+                          <div className="flex justify-content-evenly">
+                            {(this.state.requester_role === 'check') && Object.keys(this.state.fmApproval).length === 0 ? (
+                              <div className="flex justify-content-evenly">
+                                <div className="m-2">
+                                  <button
+                                    onClick={() =>
+                                      this.onApprovalApprove(
+                                        "finance_manager",
+                                        this.state.username,
+                                        "Approved",
+                                        ""
+                                      )
+                                    }
+                                    name="save_next"
+                                    className="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                                  >
+                                    APPROVE
+                                  </button>
                                 </div>
-                              ) : (
-                                ""
-                              )}
-                            </div>
-                          )
-                    }
+                                <div className="m-2">
+                                  <button
+                                    onClick={() =>
+                                      this.onApprovalJustificationModal(this.state.username, "finance_manager")
+                                    }
+                                    name="save_next"
+                                    className="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                                  >
+                                    REJECT
+                                  </button>
+                                </div>
+                              </div>
+                            ) : (
+                              ""
+                            )}
+                          </div>
+                        )
+                      }
                     </td>
                     <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
                       {this.state.fmApproval && this.state.fmApproval.justification}
@@ -2910,6 +3201,7 @@ class CreateRB extends React.Component {
               name="scope_of_work"
               type="scope"
               value={this.state.scope_of_work}
+              disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
               onChange={this.onInputChange}
               className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
             ></textarea>
@@ -2929,6 +3221,7 @@ class CreateRB extends React.Component {
               name="pr_number"
               value={this.state.pr_number}
               onChange={this.onInputChange}
+              disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
               id="pr_number"
               required="required"
               className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
@@ -2947,6 +3240,7 @@ class CreateRB extends React.Component {
               name="pr_date"
               value={this.state.pr_date}
               onChange={this.onInputChange}
+              disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
               type="date"
               required="required"
               className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
@@ -2965,6 +3259,7 @@ class CreateRB extends React.Component {
               name="closing_date"
               value={this.state.closing_date}
               onChange={this.onInputChange}
+              disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
               type="date"
               required="required"
               className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
@@ -2986,6 +3281,7 @@ class CreateRB extends React.Component {
                   onChange={(e) =>
                     this.onSelectChange("closing_time_hour", e)
                   }
+                  disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
                   className="rounded-md block border-none w-full py-1.5 text-gray-900 sm:max-w-xs sm:text-sm sm:leading-6"
                 >
                   {this.state.closing_time_hour ? (
@@ -2995,6 +3291,7 @@ class CreateRB extends React.Component {
                   ) : (
                     ""
                   )}
+                  <option value="">Select Closing Time</option>
                   <option value="10:00">10:00</option>
                   <option value="14:00">14:00</option>
                 </select>
@@ -3017,11 +3314,12 @@ class CreateRB extends React.Component {
                 name="proc_plan"
                 autoComplete="proc_plan"
                 onChange={(e) => this.onSelectChange("proc_ref", e)}
+                disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
                 className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
               >
                 {this.state.proc_plan ? (
-                  <option value={this.state.proc_plan.id}>
-                    {this.state.proc_plan.name}
+                  <option value={this.state.proc_plan.proc_ref}>
+                    {this.state.proc_plan.description}
                   </option>
                 ) : (
                   ""
@@ -3048,6 +3346,7 @@ class CreateRB extends React.Component {
               name="ref_date"
               value={this.state.ref_date}
               onChange={this.onInputChange}
+              disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
               type="date"
               required="required"
               className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
@@ -3066,6 +3365,7 @@ class CreateRB extends React.Component {
               name="date_tender_opened"
               value={this.state.date_tender_opened}
               onChange={this.onInputChange}
+              disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
               type="date"
               required="required"
               className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
@@ -3084,6 +3384,7 @@ class CreateRB extends React.Component {
               name="tender_adjudication_committee_date"
               value={this.state.tender_adjudication_committee_date}
               onChange={this.onInputChange}
+              disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
               type="date"
               required="required"
               className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
@@ -3103,6 +3404,7 @@ class CreateRB extends React.Component {
             <input
               name="advert"
               onChange={(e) => this.onFileInputChange("advert", e)}
+              disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
               type="file"
               id="advert"
               required="required"
@@ -3141,8 +3443,8 @@ class CreateRB extends React.Component {
         }
       </div>
       
-      {this.state.username === this.state.cs_owner ||
-      !this.state.cs_id ? (
+      {(this.state.username === this.state.cs_owner ||
+      !this.state.cs_id) && !this.state.approvalsComplete ? (
         <div className="flex justify-center mt-10 px-3 py-3">
           {this.state.cs_id ? (
             <div className="w-30 m-2">
@@ -3178,6 +3480,7 @@ class CreateRB extends React.Component {
       <div>
         {itemsModal}
         {bidsModal}
+        {supplierModal}
         {updateBidModal}
         {rejectJustification}
         {rejectApprovalJustification}
@@ -3189,9 +3492,19 @@ class CreateRB extends React.Component {
             <p className="mt-1 max-w-2xl text-sm leading-6 text-gray-500">
               CS NO: {this.state.cs_id}
             </p>
-            
-      {this.state.fetchPR && (
+            {this.state.fetchPR && (
+              <div>
+              <div className="m-2">
+            <button
+              style={{ width: "100%" }}
+              onClick={this.onAddSuppliersModal}
+              className="rounded-md bg-nepal-950 hover:bg-nepal-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+            >
+              ADD NEW SUPPLIER
+            </button>
+          </div>
               <div className="flex justify-evenly items-end mt-5 px-2 py-2">
+              
               <div className="flex-1 w-40">
                 <label
                   htmlFor="pr_number"
@@ -3222,12 +3535,14 @@ class CreateRB extends React.Component {
                 </div>
               </div>
             </div>
+            </div>
+            
+            
       ) }
             {csDetailsView}
           </div>
 
-          {this.state.bids.length < 1 &&
-          this.state.username === this.state.cs_owner ? (
+          {this.state.username === this.state.cs_owner && this.state.bids.length < 1 ? (
             <div className="m-2">
               <button
                 style={{ width: "100%" }}
@@ -3313,9 +3628,7 @@ class CreateRB extends React.Component {
                           </label>
                           <div className="mt-2">
                             <p>
-                              {item.item_required
-                                ? item.item_required
-                                : item.description}
+                              {item.item_required}
                             </p>
                           </div>
                         </div>
@@ -3383,7 +3696,7 @@ class CreateRB extends React.Component {
                   })}
                 </div>
 
-                {this.state.username === this.state.cs_owner ? (
+                {this.state.username === this.state.cs_owner && !this.state.approvalsComplete ? (
                   <div className="flex justify-center mt-5 px-3 py-3">
                     <div className="m-2">
                       <button
@@ -3416,7 +3729,7 @@ class CreateRB extends React.Component {
           })}
 
           {this.state.cs_items.length > 0 &&
-          this.state.username === this.state.cs_owner ? (
+          this.state.username === this.state.cs_owner && !this.state.approvalsComplete ? (
             <div className="m-2">
               <button
                 style={{ width: "100%" }}
@@ -3432,7 +3745,7 @@ class CreateRB extends React.Component {
 
           {this.state.bids.length > 0 &&
           this.state.compliance.length < 1 &&
-          this.state.username === this.state.cs_owner ? (
+          this.state.username === this.state.cs_owner && !this.state.approvalsComplete ? (
             <div className="m-2">
               <button
                 style={{ width: "100%" }}
@@ -3449,7 +3762,7 @@ class CreateRB extends React.Component {
           {this.state.compliance.length > 0 ? complianceTable : ""}
 
           {this.state.compliance.length > 0 &&
-          this.state.username === this.state.cs_owner ? (
+          this.state.username === this.state.cs_owner && !this.state.approvalsComplete ? (
             <div className="m-2">
               <button
                 style={{ width: "100%" }}
@@ -3468,7 +3781,7 @@ class CreateRB extends React.Component {
           {this.state.rankings.length > 0 ? committeeTable : ""}
 
           {this.state.committeeMembers.length > 0 &&
-          this.state.username === this.state.cs_owner ? (
+          this.state.username === this.state.cs_owner && !this.state.approvalsComplete ? (
             <div className="m-2">
               <button
                 style={{ width: "100%" }}
@@ -3482,6 +3795,19 @@ class CreateRB extends React.Component {
             ""
           )}
           {this.state.committeeMembers.length > 2 ? approvalsTable : ""}
+
+          <div className="m-2">
+              <button
+                style={{ width: "100%" }}
+                onClick={() => {
+                  console.log("going back ...")
+                  window.history.back();
+                }}
+                className="rounded-md bg-nepal-950 hover:bg-nepal-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+              >
+                GO BACK TO SCHEDULES
+              </button>
+            </div>
         </div>
       </div>
     );

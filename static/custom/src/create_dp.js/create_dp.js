@@ -102,7 +102,6 @@ var CreateDP = function (_React$Component) {
         console.log("gm_approval: ", gm_approval, fm_approval, gm_approval.approval, fm_approval.approval);
         var approvalsComplete = gm_approval.approval !== "" && fm_approval.approval !== "" && gm_approval.approval !== undefined && fm_approval.approval !== undefined;
 
-        console.log("advert file", advert, typeof advert === "undefined" ? "undefined" : _typeof(advert));
         _this.setState(Object.assign({}, _this.state, (_Object$assign = {
           requester_role: requester_role,
           cs_owner: cs_owner,
@@ -928,6 +927,10 @@ var CreateDP = function (_React$Component) {
     };
 
     _this.onUpdateSchedule = function () {
+      if (!_this.state.proc_ref || !_this.state.scope_of_work || !_this.state.pr_number || !_this.state.pr_date || !_this.state.closing_date || !_this.state.ref_date || !_this.state.closing_time_hour || !_this.state.date_tender_opened || !_this.state.tender_adjudication_committee_date) {
+        alert("Please fill in all required fields");
+        return;
+      }
       var form_data = new FormData();
       // add enctype to form data
       form_data.enctype = "multipart/form-data";
@@ -1395,6 +1398,7 @@ var CreateDP = function (_React$Component) {
     _this.onCommitteeJustificationModal = _this.onCommitteeJustificationModal.bind(_this);
     _this.onApprovalJustificationModal = _this.onApprovalJustificationModal.bind(_this);
     _this.onApprovalJustificationChange = _this.onApprovalJustificationChange.bind(_this);
+    _this.onSupplierChange = _this.onSupplierChange.bind(_this);
     return _this;
   }
 
