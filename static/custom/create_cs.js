@@ -56,6 +56,7 @@ class CreateCS extends React.Component {
       },
       gmApproval: null,
       fmApproval: null,
+      approvalsComplete: false,
       approvalsJustificationModal: false,
       users: [],
       currentApprover: {
@@ -192,15 +193,20 @@ class CreateCS extends React.Component {
             attachment_url: this.onGetFileObjectUrl(pr_attachment.file),
           };
         });
+
         let committeeApprovalComplete = committee.filter(
           (member) => (member.memberApproval === "" || member.memberApproval === null || member.memberApproval === undefined || member.memberApproval === "Rejected")
         ).length === 0;
+        
+        console.log("gm_approval: ", gm_approval, fm_approval, gm_approval.approval, fm_approval.approval);
+        let approvalsComplete = gm_approval.approval !== "" && fm_approval.approval !== "" && gm_approval.approval !== undefined && fm_approval.approval !== undefined;
 
         this.setState({
           ...this.state,
           requester_role: requester_role,
           cs_owner: cs_owner,
           committeeApprovalComplete: committeeApprovalComplete,
+          approvalsComplete: approvalsComplete,
           proc_plans: proc_plans,
           uom: uom,
           suppliers: suppliers,
@@ -303,7 +309,11 @@ class CreateCS extends React.Component {
           this.setState({
             scope_of_work: scope_of_work,
             proc_ref: proc_ref,
-            proc_plan: proc_plan,
+            proc_plan: {
+              description: proc_plan.name,
+              id: proc_plan.id,
+              proc_ref: proc_plan.proc_ref,
+            },
             proc_plans: plans,
             uom: uom,
             suppliers: suppliers,
@@ -334,7 +344,13 @@ class CreateCS extends React.Component {
     let { name, value } = event.target;
     console.log("name: ", name_, "value: ", value);
     let member = this.state.member;
-    member[name_] = value;
+    if (name_ === "memberUserName") {
+      let user = this.state.users.find((user) => user.username === value);
+      member.memberName = user.first_name + " " + user.last_name;
+      member[name_] = value;
+    } else{
+      member[name_] = value;
+    }
     this.setState({
       ...this.state,
       member: member,
@@ -344,7 +360,7 @@ class CreateCS extends React.Component {
   onAddCommitteeMembers = () => {
     let members = this.state.committeeMembers;
     let member_ = this.state.member;
-    if (member_.memberUserName === "") {
+    if (member_.memberUserName === "" || member_.memberPosition === "") {
       alert("Please select a user");
     }
     // check if memberUserName exists
@@ -421,10 +437,11 @@ class CreateCS extends React.Component {
     });
   };
 
-  onCommitteeJustificationChange = (event) => {
-    let { name, value } = event.target;
+  onCommitteeJustificationChange = (name_, event) => {
+    console.log("event: ", event);
+    let { value } = event.target;
     let currentApprover = this.state.currentApprover;
-    currentApprover[name] = value;
+    currentApprover[name_] = value;
     this.setState({
       ...this.state,
       currentApprover: currentApprover,
@@ -433,6 +450,11 @@ class CreateCS extends React.Component {
 
   onCommitteeApprove = (username, approval, justification) => {
     let form_data = new FormData();
+    console.log("approval: ", approval, justification);
+    if (approval === "Rejected" && justification === "") {
+      alert("Please enter justification");
+      return;
+    }
     form_data.append("cs_id", this.state.cs_id);
     form_data.append("username", username);
     form_data.append("approval", approval);
@@ -465,11 +487,11 @@ class CreateCS extends React.Component {
             committeeMembers: members,
           });
           if (committeeApproval === "Approved") {
-            alert("Committee approved successfully by " + memberName);
+            alert("Committee approved successfully");
             // reload page
             window.location.reload();
           } else {
-            alert("Committee rejected successfully by " + memberName);
+            alert("Committee rejected successfully");
             window.location.reload();
           }
         } else {
@@ -508,6 +530,11 @@ class CreateCS extends React.Component {
   };
 
   onApprovalApprove = (role, username, approval, justification) => {
+    console.log("approval: ", approval, justification);
+    if(approval === "Rejected" && justification === "") {
+      alert("Please enter justification");
+      return;
+    }
     let form_data = new FormData();
     form_data.append("cs_id", this.state.cs_id);
     form_data.append("role", role);
@@ -599,11 +626,11 @@ class CreateCS extends React.Component {
       });
   };
 
-
   onApprovalJustificationChange = (name_, event) => {
-    let { name, value } = event.target;
+    console.log("event: ", event);
+    let { value } = event.target;
     let currentApprover = this.state.currentApprover;
-    currentApprover[name] = value;
+    currentApprover[name_] = value;
     this.setState({
       ...this.state,
       currentApprover: currentApprover,
@@ -656,6 +683,10 @@ class CreateCS extends React.Component {
   };
 
   onSubmitCSItems = () => {
+    if (this.state.cs_items.length === 0) {
+      alert("Please add items to the Comparative Schedule");
+      return;
+    }
     let form_data = new FormData();
     form_data.append("cs_id", this.state.cs_id);
     form_data.append("pr_id", this.state.pr_number);
@@ -833,8 +864,6 @@ class CreateCS extends React.Component {
 
   onCurrentBidSave = () => {
     let currentBid = this.state.currentBid;
-    // console.log currentBid item details
-    console.log("currentBid: ", currentBid);
     if (
       currentBid.supplier_name === "" ||
       currentBid.supplier_name === undefined
@@ -871,12 +900,11 @@ class CreateCS extends React.Component {
             }
             return bid;
           });
-
           this.setState({
             ...this.state,
             bids: bids,
             currentBid: {},
-            updateBidModal: false
+            addBidModal: false,
           });
         } else {
           // calculate total price for each item
@@ -942,8 +970,8 @@ class CreateCS extends React.Component {
             compliance: compliances,
             complianceRemarks: complianceRemarks,
           });
+
         }
-        
       } else {
         alert("Please add items to the bid");
       }
@@ -988,6 +1016,11 @@ class CreateCS extends React.Component {
   };
 
   onSaveSchedule = () => {
+
+    if(!this.state.proc_ref || !this.state.scope_of_work || !this.state.pr_number || !this.state.pr_date || !this.state.closing_date || !this.state.ref_date || !this.state.closing_time_hour || !this.state.date_tender_opened || !this.state.tender_adjudication_committee_date) {
+      alert("Please fill in all required fields");
+      return;
+    }
     let form_data = new FormData();
     // add enctype to form data
     form_data.enctype = "multipart/form-data";
@@ -1032,6 +1065,10 @@ class CreateCS extends React.Component {
   };
 
   onUpdateSchedule = () => {
+    if(!this.state.proc_ref || !this.state.scope_of_work || !this.state.pr_number || !this.state.pr_date || !this.state.closing_date || !this.state.ref_date || !this.state.closing_time_hour || !this.state.date_tender_opened || !this.state.tender_adjudication_committee_date) {
+      alert("Please fill in all required fields");
+      return;
+    }
     let form_data = new FormData();
     // add enctype to form data
     form_data.enctype = "multipart/form-data";
@@ -1053,7 +1090,7 @@ class CreateCS extends React.Component {
     form_data.append("advert", this.state.advert);
     form_data.append("csrfmiddlewaretoken", this.getCookie("csrftoken"));
 
-    fetch(`${BASE_URL}/comperative_schedule/update`, {
+    fetch(`${BASE_URL}/update`, {
       method: "POST",
       headers: {
         "X-CSRFToken": this.getCookie("csrftoken"),
@@ -1321,11 +1358,10 @@ class CreateCS extends React.Component {
 
       return compliance_;
     });
-
     this.setState({
       ...this.state,
-      compliance: updatedComplianceList,
       [name_]: value,
+      compliance: updatedComplianceList,
     });
   };
 
@@ -2046,7 +2082,6 @@ class CreateCS extends React.Component {
                           <div className="mt-2">
                             <select
                               id="vat"
-                              defaultValue={item.vat}
                               onChange={(e) =>
                                 this.onCurrentBidItemChange(
                                   item.item_required,
@@ -2062,7 +2097,7 @@ class CreateCS extends React.Component {
                               ) : (
                                 ""
                               )}
-                              <option>Select Vat</option>
+                              <option value="">Select VAT</option>
                               <option value="Excl.">Excl.</option>
                               <option value="Incl.">Incl.</option>
                             </select>
@@ -2452,7 +2487,7 @@ class CreateCS extends React.Component {
                     onChange={(e) =>
                       this.onComplianceItemsChange("showSiteVisit", e)
                     }
-                    disabled={this.state.username === this.state.cs_owner ? false : true}
+                    disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
                     autoComplete="site_visit"
                     className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
                   >
@@ -2477,7 +2512,7 @@ class CreateCS extends React.Component {
                       onChange={(e) =>
                         this.onComplianceItemsChange("showSamples", e)
                       }
-                      disabled={this.state.username === this.state.cs_owner ? false : true}
+                      disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
                       autoComplete="samples"
                       className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
                     >
@@ -2577,7 +2612,7 @@ class CreateCS extends React.Component {
                               comp.payment_terms ? comp.payment_terms : false
                             }
                             onChange={(e) => this.onComplianceChange(key, e)}
-                            disabled={this.state.username === this.state.cs_owner ? false : true}
+                            disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
                             id="payment_terms"
                             type="checkbox"
                           />
@@ -2589,7 +2624,7 @@ class CreateCS extends React.Component {
                               comp.bid_validity ? comp.bid_validity : false
                             }
                             onChange={(e) => this.onComplianceChange(key, e)}
-                            disabled={this.state.username === this.state.cs_owner ? false : true}
+                            disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
                             id="bid_validity"
                             type="checkbox"
                           />
@@ -2603,7 +2638,7 @@ class CreateCS extends React.Component {
                                 : false
                             }
                             onChange={(e) => this.onComplianceChange(key, e)}
-                            disabled={this.state.username === this.state.cs_owner ? false : true}
+                            disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
                             id="delivery_period"
                             type="checkbox"
                           />
@@ -2617,7 +2652,7 @@ class CreateCS extends React.Component {
                                 : false
                             }
                             onChange={(e) => this.onComplianceChange(key, e)}
-                            disabled={this.state.username === this.state.cs_owner ? false : true}
+                            disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
                             id="technical_specifications"
                             type="checkbox"
                           />
@@ -2631,7 +2666,7 @@ class CreateCS extends React.Component {
                                 : false
                             }
                             onChange={(e) => this.onComplianceChange(key, e)}
-                            disabled={this.state.username === this.state.cs_owner ? false : true}
+                            disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
                             id="valid_tax_clearance"
                             type="checkbox"
                           />
@@ -2645,7 +2680,7 @@ class CreateCS extends React.Component {
                                 : false
                             }
                             onChange={(e) => this.onComplianceChange(key, e)}
-                            disabled={this.state.username === this.state.cs_owner ? false : true}
+                            disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
                             id="registered_with_praz"
                             type="checkbox"
                           />
@@ -2655,7 +2690,7 @@ class CreateCS extends React.Component {
                             name="tax_status"
                             checked={comp.tax_status ? comp.tax_status : false}
                             onChange={(e) => this.onComplianceChange(key, e)}
-                            disabled={this.state.username === this.state.cs_owner ? false : true}
+                            disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
                             id="tax_status"
                             type="checkbox"
                           />
@@ -2671,7 +2706,7 @@ class CreateCS extends React.Component {
                                 comp.site_visit ? comp.site_visit : false
                               }
                               onChange={(e) => this.onComplianceChange(key, e)}
-                              disabled={this.state.username === this.state.cs_owner ? false : true}
+                              disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
                               id="site_visit"
                               type="checkbox"
                             />
@@ -2692,7 +2727,7 @@ class CreateCS extends React.Component {
                                   : false
                               }
                               onChange={(e) => this.onComplianceChange(key, e)}
-                              disabled={this.state.username === this.state.cs_owner ? false : true}
+                              disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
                               id="samples_required"
                               type="checkbox"
                             />
@@ -2705,7 +2740,7 @@ class CreateCS extends React.Component {
                             name="decision"
                             checked={comp.decision ? comp.decision : false}
                             onChange={(e) => this.onComplianceChange(key, e)}
-                            disabled={this.state.username === this.state.cs_owner ? false : true}
+                            disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
                             id="decision"
                             type="checkbox"
                           />
@@ -2715,7 +2750,7 @@ class CreateCS extends React.Component {
                             name="reject"
                             checked={comp.reject ? comp.reject : false}
                             onChange={(e) => this.onComplianceChange(key, e)}
-                            disabled={this.state.username === this.state.cs_owner ? false : true}
+                            disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
                             id="reject"
                             type="checkbox"
                           />
@@ -2755,7 +2790,7 @@ class CreateCS extends React.Component {
                                 e
                               )
                             }
-                            disabled={this.state.username === this.state.cs_owner ? false : true}
+                            disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
                             type="text"
                             className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
                           />
@@ -2769,7 +2804,7 @@ class CreateCS extends React.Component {
           </div>
         </div>
 
-        {this.state.username === this.state.cs_owner ? (
+        {this.state.username === this.state.cs_owner && !this.state.approvalsComplete ? (
           <div className="flex justify-center mt-5 px-3 py-3">
             <div className="flex-1 m-2">
               <button
@@ -2867,12 +2902,6 @@ class CreateCS extends React.Component {
                   <tr className="text-gray-900">
                     <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
                       <div>
-                        <label
-                          htmlFor="memberPosition"
-                          className="block text-sm font-medium leading-6 text-gray-900"
-                        >
-                          Member Position
-                        </label>
                         <div className="mt-2">
                           {this.state.username === this.state.cs_owner ? (
                             <select
@@ -2884,7 +2913,7 @@ class CreateCS extends React.Component {
                               autoComplete="memberPosition"
                               className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
                             >
-                              <option value="">Select Option</option>
+                              <option value="">Select Member Position</option>
                               <option value="chairman">Chairman</option>
                               <option value="finance">Finance</option>
                               <option value="procurement">Procurement</option>
@@ -2899,12 +2928,6 @@ class CreateCS extends React.Component {
                     </td>
                     <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
                       <div>
-                        <label
-                          htmlFor="memberUserName"
-                          className="block text-sm font-medium leading-6 text-gray-900"
-                        >
-                          Select User
-                        </label>
                         <div className="mt-2">
                           {this.state.username === this.state.cs_owner ? (
                             <select
@@ -2916,13 +2939,15 @@ class CreateCS extends React.Component {
                               autoComplete="memberUserName"
                               className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
                             >
+                              <option value="">Select User</option>
                               {this.state.users
                                 ? this.state.users.map((user) => (
                                     <option value={user.username}>
                                       {user.first_name + " " + user.last_name}
                                     </option>
                                   ))
-                                : ""}
+                                : <option value="">No Users</option>}
+
                             </select>
                           ) : (
                             ""
@@ -2932,7 +2957,7 @@ class CreateCS extends React.Component {
                     </td>
                     <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2"></td>
                     <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                      {this.state.username === this.state.cs_owner ? (
+                      {this.state.username === this.state.cs_owner && !this.state.approvalsComplete && this.state.member.memberPosition !== "" && this.state.member.memberUserName !== "" ? (
                         <div className="w-30">
                           <button
                             style={{ width: "100%" }}
@@ -2967,7 +2992,7 @@ class CreateCS extends React.Component {
                           {member.memberApproval === "Rejected" && "REJECTED"}
                           {(member.memberApproval === "" || member.memberApproval === null) && (
                             <div className="flex justify-content-evenly">
-                              {this.state.username === this.state.cs_owner ? (
+                              {this.state.username === this.state.cs_owner && !this.state.approvalsComplete ? (
                                 <div className="m-2">
                                   <button
                                     onClick={() =>
@@ -3175,8 +3200,8 @@ class CreateCS extends React.Component {
               id="scope"
               name="scope_of_work"
               type="scope"
-              disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
               value={this.state.scope_of_work}
+              disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
               onChange={this.onInputChange}
               className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
             ></textarea>
@@ -3253,10 +3278,10 @@ class CreateCS extends React.Component {
               <div className="flex px-1">
                 <select
                   name="closing_time_hour"
-                  disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
                   onChange={(e) =>
                     this.onSelectChange("closing_time_hour", e)
                   }
+                  disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
                   className="rounded-md block border-none w-full py-1.5 text-gray-900 sm:max-w-xs sm:text-sm sm:leading-6"
                 >
                   {this.state.closing_time_hour ? (
@@ -3266,6 +3291,7 @@ class CreateCS extends React.Component {
                   ) : (
                     ""
                   )}
+                  <option value="">Select Closing Time</option>
                   <option value="10:00">10:00</option>
                   <option value="14:00">14:00</option>
                 </select>
@@ -3287,13 +3313,13 @@ class CreateCS extends React.Component {
                 id="proc_plan"
                 name="proc_plan"
                 autoComplete="proc_plan"
-                disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
                 onChange={(e) => this.onSelectChange("proc_ref", e)}
+                disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
                 className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
               >
                 {this.state.proc_plan ? (
-                  <option value={this.state.proc_plan.id}>
-                    {this.state.proc_plan.name}
+                  <option value={this.state.proc_plan.proc_ref}>
+                    {this.state.proc_plan.description}
                   </option>
                 ) : (
                   ""
@@ -3417,8 +3443,8 @@ class CreateCS extends React.Component {
         }
       </div>
       
-      {this.state.username === this.state.cs_owner ||
-      !this.state.cs_id ? (
+      {(this.state.username === this.state.cs_owner ||
+      !this.state.cs_id) && !this.state.approvalsComplete ? (
         <div className="flex justify-center mt-10 px-3 py-3">
           {this.state.cs_id ? (
             <div className="w-30 m-2">
@@ -3466,9 +3492,19 @@ class CreateCS extends React.Component {
             <p className="mt-1 max-w-2xl text-sm leading-6 text-gray-500">
               CS NO: {this.state.cs_id}
             </p>
-            
             {this.state.fetchPR && (
+              <div>
+              <div className="m-2">
+            <button
+              style={{ width: "100%" }}
+              onClick={this.onAddSuppliersModal}
+              className="rounded-md bg-nepal-950 hover:bg-nepal-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+            >
+              ADD NEW SUPPLIER
+            </button>
+          </div>
               <div className="flex justify-evenly items-end mt-5 px-2 py-2">
+              
               <div className="flex-1 w-40">
                 <label
                   htmlFor="pr_number"
@@ -3499,32 +3535,22 @@ class CreateCS extends React.Component {
                 </div>
               </div>
             </div>
+            </div>
+            
+            
       ) }
             {csDetailsView}
           </div>
 
-          {this.state.username === this.state.cs_owner ? (
-            <div style={{width: "100%"}} className="flex justify-content-evenly mt-5 px-3 py-3">
-              <div className="m-2">
-                <button
-                  style={{ width: "100%" }}
-                  onClick={this.onAddSuppliersModal}
-                  className="rounded-md bg-nepal-950 hover:bg-nepal-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                >
-                  ADD SUPPLIERS
-                </button>
-              </div>
-              {this.state.bids.length < 1 ? (
-                <div className="m-2">
-                  <button
-                    style={{ width: "100%" }}
-                    onClick={this.onAddItemsModal}
-                    className="rounded-md bg-nepal-950 hover:bg-nepal-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                  >
-                    ADD SCHEDULE ITEMS
-                  </button>
-                </div>
-              ) : ""}
+          {this.state.username === this.state.cs_owner && this.state.bids.length < 1 ? (
+            <div className="m-2">
+              <button
+                style={{ width: "100%" }}
+                onClick={this.onAddItemsModal}
+                className="rounded-md bg-nepal-950 hover:bg-nepal-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+              >
+                ADD SCHEDULE ITEMS
+              </button>
             </div>
           ) : (
             ""
@@ -3670,7 +3696,7 @@ class CreateCS extends React.Component {
                   })}
                 </div>
 
-                {this.state.username === this.state.cs_owner ? (
+                {this.state.username === this.state.cs_owner && !this.state.approvalsComplete ? (
                   <div className="flex justify-center mt-5 px-3 py-3">
                     <div className="m-2">
                       <button
@@ -3703,7 +3729,7 @@ class CreateCS extends React.Component {
           })}
 
           {this.state.cs_items.length > 0 &&
-          this.state.username === this.state.cs_owner ? (
+          this.state.username === this.state.cs_owner && !this.state.approvalsComplete ? (
             <div className="m-2">
               <button
                 style={{ width: "100%" }}
@@ -3719,7 +3745,7 @@ class CreateCS extends React.Component {
 
           {this.state.bids.length > 0 &&
           this.state.compliance.length < 1 &&
-          this.state.username === this.state.cs_owner ? (
+          this.state.username === this.state.cs_owner && !this.state.approvalsComplete ? (
             <div className="m-2">
               <button
                 style={{ width: "100%" }}
@@ -3736,7 +3762,7 @@ class CreateCS extends React.Component {
           {this.state.compliance.length > 0 ? complianceTable : ""}
 
           {this.state.compliance.length > 0 &&
-          this.state.username === this.state.cs_owner ? (
+          this.state.username === this.state.cs_owner && !this.state.approvalsComplete ? (
             <div className="m-2">
               <button
                 style={{ width: "100%" }}
@@ -3755,7 +3781,7 @@ class CreateCS extends React.Component {
           {this.state.rankings.length > 0 ? committeeTable : ""}
 
           {this.state.committeeMembers.length > 0 &&
-          this.state.username === this.state.cs_owner ? (
+          this.state.username === this.state.cs_owner && !this.state.approvalsComplete ? (
             <div className="m-2">
               <button
                 style={{ width: "100%" }}
@@ -3769,6 +3795,19 @@ class CreateCS extends React.Component {
             ""
           )}
           {this.state.committeeMembers.length > 2 ? approvalsTable : ""}
+
+          <div className="m-2">
+              <button
+                style={{ width: "100%" }}
+                onClick={() => {
+                  console.log("going back ...")
+                  window.history.back();
+                }}
+                className="rounded-md bg-nepal-950 hover:bg-nepal-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+              >
+                GO BACK TO SCHEDULES
+              </button>
+            </div>
         </div>
       </div>
     );

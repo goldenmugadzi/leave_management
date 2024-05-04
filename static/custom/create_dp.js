@@ -96,6 +96,7 @@ class CreateDP extends React.Component {
       this.onCommitteeJustificationModal.bind(this);
     this.onApprovalJustificationModal = this.onApprovalJustificationModal.bind(this);
     this.onApprovalJustificationChange = this.onApprovalJustificationChange.bind(this);
+    this.onSupplierChange = this.onSupplierChange.bind(this);
   }
 
   componentDidMount() {
@@ -200,7 +201,6 @@ class CreateDP extends React.Component {
         console.log("gm_approval: ", gm_approval, fm_approval, gm_approval.approval, fm_approval.approval);
         let approvalsComplete = gm_approval.approval !== "" && fm_approval.approval !== "" && gm_approval.approval !== undefined && fm_approval.approval !== undefined;
 
-        console.log("advert file", advert, typeof advert);
         this.setState({
           ...this.state,
           requester_role: requester_role,
@@ -1065,6 +1065,10 @@ class CreateDP extends React.Component {
   };
 
   onUpdateSchedule = () => {
+    if(!this.state.proc_ref || !this.state.scope_of_work || !this.state.pr_number || !this.state.pr_date || !this.state.closing_date || !this.state.ref_date || !this.state.closing_time_hour || !this.state.date_tender_opened || !this.state.tender_adjudication_committee_date) {
+      alert("Please fill in all required fields");
+      return;
+    }
     let form_data = new FormData();
     // add enctype to form data
     form_data.enctype = "multipart/form-data";
