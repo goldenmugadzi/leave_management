@@ -6,6 +6,11 @@ class MeterForm(forms.ModelForm):
         model = Meter
         fields = "__all__"
         # fields = ['number', 'kilowatt_hours', 'phase']
+    def clean_number(self):
+        number = self.cleaned_data['number']
+        if len(number) != 11 or not number.isdigit():
+            raise forms.ValidationError('Enter a valid Meter number.')
+        return number
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for field_name, field in self.fields.items():

@@ -7,88 +7,109 @@ from approve.models import Step
 from approve.forms import ApprovalForm
 from django.contrib.auth.decorators import login_required
 
-
+@login_required
 def create_token(request):
     if request.method == "POST":
         # meter details from the database if the meter number already exists and use its instance to upldate the meter details
         try:
             meter = Meter.objects.get(number=request.POST["number"])
-        except Meter.DoesNotExist:
-            meter = None
-        meter_form = MeterForm(request.POST, instance=meter)
-        pernalt_form = PernaltForm(request.POST, request.FILES)
+            meter_form = MeterForm(request.POST, instance=meter)
+        except Meter.DoesNotExist:meter_form = MeterForm(request.POST)
+
         #         customer details from the database if the customer already exists and use its instance to upldate the customer details
         try:
-            customer = Customer.objects.get(
-                contact_number=request.POST["contact_number"]
-            )
-        except Customer.DoesNotExist:
-            customer = None
-        customer_form = CustomerForm(request.POST, instance=customer)
-        if meter_form.is_valid() and customer_form.is_valid():
+            customer = Customer.objects.get( contact_number=request.POST["contact_number"] )
+            customer_form = CustomerForm(request.POST, instance=customer)
+        except Customer.DoesNotExist:customer_form = CustomerForm(request.POST)
+        print('number=',request.POST["number"])
+        token_form = TokenForm(request.POST, request.FILES)
+        reimbursement_form = ReimbursementForm(request.POST, request.FILES)
+        clear_credit_form = ClearCreditForm(request.POST, request.FILES)
+        tamper_token_form = TamperTokenForm(request.POST, request.FILES)
+        old_token_form = OldTokenForm(request.POST, request.FILES)
+        faulty_meter_form = FaultMeterForm(request.POST, request.FILES)
+        recovered_meter_form = RecoveredMeterForm(request.POST, request.FILES)
+        fault_maintanance_form = FaultMaintananceForm(request.POST, request.FILES)
+        reconnection_form = ReconnectionForm(request.POST, request.FILES)
+        forms = {
+                "meter_form": meter_form,
+                "customer_form": customer_form,
+                "token_form": token_form,
+                "reimbursement_form": reimbursement_form,
+                "clear_credit_form": clear_credit_form,
+                "tamper_token_form": tamper_token_form,
+                "old_token_form": old_token_form,
+                "faulty_meter_form": faulty_meter_form,
+                "recovered_meter_form": recovered_meter_form,
+                "fault_maintanance_form": fault_maintanance_form,
+                "reconnection_form": reconnection_form,
+            }
+        
+        if meter_form.is_valid() and customer_form.is_valid() and token_form.is_valid():
+            process = intiate(request, "tokens")
             meter = meter_form.save()
             customer = customer_form.save()
-            process = intiate(request, "tokens")
-            token = TokenForm(request.POST)
-            if token.is_valid():
-                token = token.save(commit=False)
-                token.meter = meter
-                token.customer = customer
-                token.process = process
-                token.created_by = request.user
-                token.save()
+            token = token_form.save(commit=False)
+            token.meter = meter
+            token.customer = customer
+            token.process = process
+            token.created_by = request.user
+            token.save()
+            type=token.type
+            if type == 'TEMPER' and tamper_token_form.is_valid:
+                tamper_token=tamper_token_form.save(commit=False)
+                tamper_token.token = token
+                tamper_token.save()
+                if tamper_token.is_for == 'Fauty Maintanance' and fault_maintanance_form.is_valid():
+                    fault_maintanance = fault_maintanance_form.save(commit=False)
+                    fault_maintanance.token = token
+                    fault_maintanance.save()
+                    messages.info(request,"token request saved successfully")
+                elif tamper_token.is_for == 'Recovered Meter' and recovered_meter_form.is_valid():
+                    recovered_meter = recovered_meter_form.save(commit=False)
+                    recovered_meter.token = token
+                    recovered_meter.save()
+                    messages.info(request,"token request saved successfully")
+                elif tamper_token.is_for == 'Reconnection' and reconnection_form.is_valid():
+                    reconnection = reconnection_form.save(commit=False)
+                    reconnection.token = token
+                    reconnection.save()
+                    messages.info(request,"token request saved successfully")
+                else:return render(request, "tokens/create_token.html", forms)
+            elif type == 'REIMBURSEMENT' and reimbursement_form.is_valid:
+                reimbursement = reimbursement_form.save(commit=False)
+                reimbursement.token = token
+                reimbursement.save()
+                if reimbursement.purpose == 'Faulty Meter' and faulty_meter_form.is_valid():
+                    faulty_meter = faulty_meter_form.save(commit=False)
+                    faulty_meter.token = token
+                    faulty_meter.save()
+                    messages.info(request,"token request saved successfully")
+                elif reimbursement.purpose == 'Recovered Meter' and recovered_meter_form.is_valid():
+                    recovered_meter = recovered_meter_form.save(commit=False)
+                    recovered_meter.token = token
+                    recovered_meter.save()
+                    messages.info(request,"token request saved successfully")
+                elif reimbursement.purpose == 'Old Token' and old_token_form.is_valid() and request.FILES.get("old_token") :
+                    old_token = old_token_form.save(commit=False)
+                    old_token.token = token
+                    old_token.save()
+                    messages.info(request,"token request saved successfully")
+                else:return render(request, "tokens/create_token.html", forms)
 
-                if request.POST["reason"] == "fault":
-                    Fault.objects.create(
-                        **{
-                            "token": token,
-                            "description": request.POST["description"],
-                        }
-                    )
-                elif request.POST["reason"] == "recover":
-                    Recover.objects.create(
-                        **{
-                            "token": token,
-                            "description": request.POST["description"],
-                        }
-                    )
-                elif request.POST["reason"] == "reconnection":
-                    Reconnection.objects.create(
-                        **{
-                            "token": token,
-                            "description": request.POST["description"],
-                        }
-                    )
-                # else: add a validation error
-                if pernalt_form.is_valid():
-                    pernalt = pernalt_form.save(commit=False)
-                    pernalt.token = token
-                    pernalt.save()
-                return redirect("/tokens/")
-            else:
-                messages.error(request, "Invalid token details")
-                return render(
-                    request,
-                    "tokens/create_token.html",
-                    {
-                        "Customer": customer_form,
-                        "token": TokenForm,
-                        "reason": ReasonForm(request.POST),
-                        "Meter": meter_form,
-                        "Pernalt": pernalt_form,
-                    },
-                )
+            elif type == 'CLEAR CREDIT' and clear_credit_form.is_valid:
+                clear_credit = clear_credit_form.save(commit=False)
+                clear_credit.token=token
+                clear_credit.save()
+                messages.info(request,"token request saved successfully")
+            else:return render(request, "tokens/create_token.html", forms)
+
+            return redirect('tokens:tokens')
+           
         else:
-            return render(
-                request,
-                "tokens/create_token.html",
-                {
-                    "Customer": customer_form,
-                    "reason": ReasonForm(request.POST),
-                    "Meter": meter_form,
-                    "Pernalt": pernalt_form,
-                },
-            )
+           
+            return render(request, "tokens/create_token.html", forms)
+
 
     forms = {
         "meter_form": MeterForm(),
@@ -98,7 +119,7 @@ def create_token(request):
         "clear_credit_form": ClearCreditForm(),
         "tamper_token_form": TamperTokenForm(),
         "old_token_form": OldTokenForm(),
-        "fault_meter_form": FaultMeterForm(),
+        "faulty_meter_form": FaultMeterForm(),
         "recovered_meter_form": RecoveredMeterForm(),
         "fault_maintanance_form": FaultMaintananceForm(),
         "reconnection_form": ReconnectionForm(),

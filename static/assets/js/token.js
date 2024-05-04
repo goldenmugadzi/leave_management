@@ -1,37 +1,56 @@
 $(document).on('change', '#id_type', function() {
   var selectedValue = $(this).val();
-  if (selectedValue === 'CLEAR CREDIT') {
-    $('#clear_credit_form').show();
-    $('#tamper_token_form').hide();
-    $('#reimbursement_form').hide();
-  }
-  else if (selectedValue === 'REIMBURSEMENT') {
-    $('#reimbursement_form').show();
-    $('#clear_credit_form').hide();
-    $('#tamper_token_form').hide();
-  }
-  else if (selectedValue ==='TEMPER TOKEN') {
-    $('#tamper_token_form').show();
-    $('#clear_credit_form').hide();
-    $('#reimbursement_form').hide();
-    // $('#id_pernalty').hide();
+  $('#clear_credit_form').hide();
+  $('#tamper_token_form').hide();
+  $('#reimbursement_form').hide();
+
+  switch (selectedValue) {
+    case 'CLEAR CREDIT':
+      $('#clear_credit_form').show();
+      break;
+    case 'REIMBURSEMENT':
+      $('#reimbursement_form').show();
+      break;
+    case 'TEMPER':
+      $('#tamper_token_form').show();
+      break;
   }
 });
+
 $(document).on('change', '#id_is_for', function() {
   var selectedValue = $(this).val();
-  if (selectedValue === 'Fauty Maintanance') {
-    $('#fault_maintanance_form').show();
-    $('#recovered_meter_form').hide();
-    $('reconnection_form').hide();
+  $('#fault_maintanance_form').hide();
+  $('#reconnection_form').hide();
+  $('#faulty_meter_form').hide();
+  $('#recovered_meter_form').hide();
+  $('#old_token_form').hide();
+  switch (selectedValue) {
+    case 'Fauty Maintanance':
+      $('#fault_maintanance_form').show();
+      break;
+    case 'Recovered Meter':
+      $('#recovered_meter_form').show();
+      break;
+    case 'Reconnection':
+      $('#reconnection_form').show();
+      break;
   }
-  else if (selectedValue === 'Recovered Meter') {
-    $('#fault_maintanance_form').hide();
-    $('#recovered_meter_form').show();
-    $('reconnection_form').hide();
-  }
-  else if (selectedValue === 'Reconnection') {
-    $('#fault_maintanance_form').hide();
-    $('#recovered_meter_form').hide();
-    $('reconnection_form').show();
+});$(document).on('change', '#id_purpose', function() {
+  var selectedValue = $(this).val();
+  $('#fault_maintanance_form').hide();
+  $('#reconnection_form').hide();
+  $('#faulty_meter_form').hide();
+  $('#recovered_meter_form').hide();
+  $('#old_token_form').hide();
+  switch (selectedValue) {
+    case 'Faulty Meter':
+      $('#faulty_meter_form').show();
+      break;
+    case 'Recovered Meter':
+      $('#recovered_meter_form').show();
+      break;
+    case 'Old Token':
+      $('#old_token_form').show();
+      break;
   }
 });
