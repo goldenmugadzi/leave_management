@@ -18,7 +18,7 @@ class AceForm(forms.ModelForm):
         model = Ace2
         fields = '__all__'
         exclude = ['process', 'allocation_code_of_expenditure', 'requested_by', 'date_created'
-            , 'Ace_id2', 'Ace_id', 'asset_number', 'designation','region'
+            , 'Ace_id2', 'Ace_id', 'asset_number', 'designation', 'region'
                    # exclude the project items
             , 'capital_estimated', 'capital_sanctioned', 'capital_contribution', 'materials', 'labour',
                    'connection_fee', 'transport', 'present_tariff', 'present_fmc', 'total_connection_fee'

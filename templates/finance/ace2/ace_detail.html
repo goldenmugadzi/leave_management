@@ -122,7 +122,7 @@
                                         <div class="form-group">
                                             <label for="asset_number">Asset Number {{ index }}:</label>
                                             <br>
-                                            <input type="text" id="asset_number" name="asset_number[]">
+                                            <input required="required" type="text" id="asset_number" name="asset_number[]">
                                         </div>
                                         {% endfor %}
                                             <input type="hidden" name="ace_id" value="{{ ace.Ace_id2 }}">
