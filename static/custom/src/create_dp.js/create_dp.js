@@ -99,8 +99,8 @@ var CreateDP = function (_React$Component) {
           return member.memberApproval === "" || member.memberApproval === null || member.memberApproval === undefined || member.memberApproval === "Rejected";
         }).length === 0;
 
-        console.log("gm_approval: ", gm_approval, fm_approval);
-        var approvalsComplete = gm_approval.approval !== "" && fm_approval.approval !== "";
+        console.log("gm_approval: ", gm_approval, fm_approval, gm_approval.approval, fm_approval.approval);
+        var approvalsComplete = gm_approval.approval !== "" && fm_approval.approval !== "" && gm_approval.approval !== undefined && fm_approval.approval !== undefined;
 
         console.log("advert file", advert, typeof advert === "undefined" ? "undefined" : _typeof(advert));
         _this.setState(Object.assign({}, _this.state, (_Object$assign = {
@@ -233,7 +233,15 @@ var CreateDP = function (_React$Component) {
 
       console.log("name: ", name_, "value: ", value);
       var member = _this.state.member;
-      member[name_] = value;
+      if (name_ === "memberUserName") {
+        var user = _this.state.users.find(function (user) {
+          return user.username === value;
+        });
+        member.memberName = user.first_name + " " + user.last_name;
+        member[name_] = value;
+      } else {
+        member[name_] = value;
+      }
       _this.setState(Object.assign({}, _this.state, {
         member: member
       }));
@@ -242,7 +250,7 @@ var CreateDP = function (_React$Component) {
     _this.onAddCommitteeMembers = function () {
       var members = _this.state.committeeMembers;
       var member_ = _this.state.member;
-      if (member_.memberUserName === "") {
+      if (member_.memberUserName === "" || member_.memberPosition === "") {
         alert("Please select a user");
       }
       // check if memberUserName exists
@@ -329,6 +337,10 @@ var CreateDP = function (_React$Component) {
 
     _this.onCommitteeApprove = function (username, approval, justification) {
       var form_data = new FormData();
+      if (approval === "Rejected" && justification === "") {
+        alert("Please enter justification");
+        return;
+      }
       form_data.append("cs_id", _this.state.cs_id);
       form_data.append("username", username);
       form_data.append("approval", approval);
@@ -551,6 +563,10 @@ var CreateDP = function (_React$Component) {
     };
 
     _this.onSubmitCSItems = function () {
+      if (_this.state.cs_items.length === 0) {
+        alert("Please add items to the Comparative Schedule");
+        return;
+      }
       var form_data = new FormData();
       form_data.append("cs_id", _this.state.cs_id);
       form_data.append("pr_id", _this.state.pr_number);
@@ -863,6 +879,11 @@ var CreateDP = function (_React$Component) {
     };
 
     _this.onSaveSchedule = function () {
+
+      if (!_this.state.proc_ref || !_this.state.scope_of_work || !_this.state.pr_number || !_this.state.pr_date || !_this.state.closing_date || !_this.state.ref_date || !_this.state.closing_time_hour || !_this.state.date_tender_opened || !_this.state.tender_adjudication_committee_date) {
+        alert("Please fill in all required fields");
+        return;
+      }
       var form_data = new FormData();
       // add enctype to form data
       form_data.enctype = "multipart/form-data";
@@ -2246,7 +2267,6 @@ var CreateDP = function (_React$Component) {
                             "select",
                             {
                               id: "vat",
-                              defaultValue: item.vat,
                               onChange: function onChange(e) {
                                 return _this2.onCurrentBidItemChange(item.item_required, "vat", e);
                               },
@@ -2260,8 +2280,8 @@ var CreateDP = function (_React$Component) {
                             ) : "",
                             React.createElement(
                               "option",
-                              null,
-                              "Select Vat"
+                              { value: "" },
+                              "Select VAT"
                             ),
                             React.createElement(
                               "option",
@@ -2790,6 +2810,7 @@ var CreateDP = function (_React$Component) {
                       onChange: function onChange(e) {
                         return _this2.onComplianceItemsChange("showSiteVisit", e);
                       },
+                      disabled: this.state.username === this.state.cs_owner || this.state.cs_owner === "" ? false : true,
                       autoComplete: "site_visit",
                       className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
                     },
@@ -2836,6 +2857,7 @@ var CreateDP = function (_React$Component) {
                         onChange: function onChange(e) {
                           return _this2.onComplianceItemsChange("showSamples", e);
                         },
+                        disabled: this.state.username === this.state.cs_owner || this.state.cs_owner === "" ? false : true,
                         autoComplete: "samples",
                         className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
                       },
@@ -2988,6 +3010,7 @@ var CreateDP = function (_React$Component) {
                           onChange: function onChange(e) {
                             return _this2.onComplianceChange(key, e);
                           },
+                          disabled: _this2.state.username === _this2.state.cs_owner || _this2.state.cs_owner === "" ? false : true,
                           id: "payment_terms",
                           type: "checkbox"
                         })
@@ -3001,6 +3024,7 @@ var CreateDP = function (_React$Component) {
                           onChange: function onChange(e) {
                             return _this2.onComplianceChange(key, e);
                           },
+                          disabled: _this2.state.username === _this2.state.cs_owner || _this2.state.cs_owner === "" ? false : true,
                           id: "bid_validity",
                           type: "checkbox"
                         })
@@ -3014,6 +3038,7 @@ var CreateDP = function (_React$Component) {
                           onChange: function onChange(e) {
                             return _this2.onComplianceChange(key, e);
                           },
+                          disabled: _this2.state.username === _this2.state.cs_owner || _this2.state.cs_owner === "" ? false : true,
                           id: "delivery_period",
                           type: "checkbox"
                         })
@@ -3027,6 +3052,7 @@ var CreateDP = function (_React$Component) {
                           onChange: function onChange(e) {
                             return _this2.onComplianceChange(key, e);
                           },
+                          disabled: _this2.state.username === _this2.state.cs_owner || _this2.state.cs_owner === "" ? false : true,
                           id: "technical_specifications",
                           type: "checkbox"
                         })
@@ -3040,6 +3066,7 @@ var CreateDP = function (_React$Component) {
                           onChange: function onChange(e) {
                             return _this2.onComplianceChange(key, e);
                           },
+                          disabled: _this2.state.username === _this2.state.cs_owner || _this2.state.cs_owner === "" ? false : true,
                           id: "valid_tax_clearance",
                           type: "checkbox"
                         })
@@ -3053,6 +3080,7 @@ var CreateDP = function (_React$Component) {
                           onChange: function onChange(e) {
                             return _this2.onComplianceChange(key, e);
                           },
+                          disabled: _this2.state.username === _this2.state.cs_owner || _this2.state.cs_owner === "" ? false : true,
                           id: "registered_with_praz",
                           type: "checkbox"
                         })
@@ -3066,6 +3094,7 @@ var CreateDP = function (_React$Component) {
                           onChange: function onChange(e) {
                             return _this2.onComplianceChange(key, e);
                           },
+                          disabled: _this2.state.username === _this2.state.cs_owner || _this2.state.cs_owner === "" ? false : true,
                           id: "tax_status",
                           type: "checkbox"
                         })
@@ -3082,6 +3111,7 @@ var CreateDP = function (_React$Component) {
                           onChange: function onChange(e) {
                             return _this2.onComplianceChange(key, e);
                           },
+                          disabled: _this2.state.username === _this2.state.cs_owner || _this2.state.cs_owner === "" ? false : true,
                           id: "site_visit",
                           type: "checkbox"
                         })
@@ -3098,6 +3128,7 @@ var CreateDP = function (_React$Component) {
                           onChange: function onChange(e) {
                             return _this2.onComplianceChange(key, e);
                           },
+                          disabled: _this2.state.username === _this2.state.cs_owner || _this2.state.cs_owner === "" ? false : true,
                           id: "samples_required",
                           type: "checkbox"
                         })
@@ -3111,6 +3142,7 @@ var CreateDP = function (_React$Component) {
                           onChange: function onChange(e) {
                             return _this2.onComplianceChange(key, e);
                           },
+                          disabled: _this2.state.username === _this2.state.cs_owner || _this2.state.cs_owner === "" ? false : true,
                           id: "decision",
                           type: "checkbox"
                         })
@@ -3124,6 +3156,7 @@ var CreateDP = function (_React$Component) {
                           onChange: function onChange(e) {
                             return _this2.onComplianceChange(key, e);
                           },
+                          disabled: _this2.state.username === _this2.state.cs_owner || _this2.state.cs_owner === "" ? false : true,
                           id: "reject",
                           type: "checkbox"
                         })
@@ -3178,6 +3211,7 @@ var CreateDP = function (_React$Component) {
                           onChange: function onChange(e) {
                             return _this2.onComplianceRemarksChange(bid.supplier_name, e);
                           },
+                          disabled: _this2.state.username === _this2.state.cs_owner || _this2.state.cs_owner === "" ? false : true,
                           type: "text",
                           className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
                         })
@@ -3346,14 +3380,6 @@ var CreateDP = function (_React$Component) {
                         "div",
                         null,
                         React.createElement(
-                          "label",
-                          {
-                            htmlFor: "memberPosition",
-                            className: "block text-sm font-medium leading-6 text-gray-900"
-                          },
-                          "Member Position"
-                        ),
-                        React.createElement(
                           "div",
                           { className: "mt-2" },
                           this.state.username === this.state.cs_owner ? React.createElement(
@@ -3370,7 +3396,7 @@ var CreateDP = function (_React$Component) {
                             React.createElement(
                               "option",
                               { value: "" },
-                              "Select Option"
+                              "Select Member Position"
                             ),
                             React.createElement(
                               "option",
@@ -3408,14 +3434,6 @@ var CreateDP = function (_React$Component) {
                         "div",
                         null,
                         React.createElement(
-                          "label",
-                          {
-                            htmlFor: "memberUserName",
-                            className: "block text-sm font-medium leading-6 text-gray-900"
-                          },
-                          "Select User"
-                        ),
-                        React.createElement(
                           "div",
                           { className: "mt-2" },
                           this.state.username === this.state.cs_owner ? React.createElement(
@@ -3429,13 +3447,22 @@ var CreateDP = function (_React$Component) {
                               autoComplete: "memberUserName",
                               className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
                             },
+                            React.createElement(
+                              "option",
+                              { value: "" },
+                              "Select User"
+                            ),
                             this.state.users ? this.state.users.map(function (user) {
                               return React.createElement(
                                 "option",
                                 { value: user.username },
                                 user.first_name + " " + user.last_name
                               );
-                            }) : ""
+                            }) : React.createElement(
+                              "option",
+                              { value: "" },
+                              "No Users"
+                            )
                           ) : ""
                         )
                       )
@@ -3444,7 +3471,7 @@ var CreateDP = function (_React$Component) {
                     React.createElement(
                       "td",
                       { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
-                      this.state.username === this.state.cs_owner && !this.state.approvalsComplete ? React.createElement(
+                      this.state.username === this.state.cs_owner && !this.state.approvalsComplete && this.state.member.memberPosition !== "" && this.state.member.memberUserName !== "" ? React.createElement(
                         "div",
                         { className: "w-30" },
                         React.createElement(
@@ -3855,6 +3882,11 @@ var CreateDP = function (_React$Component) {
                     ) : "",
                     React.createElement(
                       "option",
+                      { value: "" },
+                      "Select Closing Time"
+                    ),
+                    React.createElement(
+                      "option",
                       { value: "10:00" },
                       "10:00"
                     ),
@@ -4127,82 +4159,82 @@ var CreateDP = function (_React$Component) {
             ),
             this.state.fetchPR && React.createElement(
               "div",
-              { className: "flex justify-evenly items-end mt-5 px-2 py-2" },
+              null,
               React.createElement(
                 "div",
-                { className: "flex-1 w-40" },
+                { className: "m-2" },
                 React.createElement(
-                  "label",
+                  "button",
                   {
-                    htmlFor: "pr_number",
-                    className: "block text-sm font-medium leading-6 text-gray-900"
+                    style: { width: "100%" },
+                    onClick: this.onAddSuppliersModal,
+                    className: "rounded-md bg-nepal-950 hover:bg-nepal-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
                   },
-                  "Enter PR Number"
-                ),
-                React.createElement(
-                  "div",
-                  { className: "mt-2" },
-                  React.createElement("input", {
-                    name: "pr_number",
-                    id: "pr_number",
-                    onChange: this.onFetchPrNumberChange,
-                    defaultValue: this.state.pr_number,
-                    className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                  })
+                  "ADD NEW SUPPLIER"
                 )
               ),
               React.createElement(
                 "div",
-                { className: "flex-1 ml-2 w-40" },
+                { className: "flex justify-evenly items-end mt-5 px-2 py-2" },
                 React.createElement(
                   "div",
-                  { className: "w-30" },
+                  { className: "flex-1 w-40" },
                   React.createElement(
-                    "button",
+                    "label",
                     {
-                      style: { width: "100%" },
-                      onClick: function onClick() {
-                        return _this2.onFetchPR(_this2.state.pr_number);
-                      },
-                      name: "save_next",
-                      className: "rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                      htmlFor: "pr_number",
+                      className: "block text-sm font-medium leading-6 text-gray-900"
                     },
-                    "FETCH PR"
+                    "Enter PR Number"
+                  ),
+                  React.createElement(
+                    "div",
+                    { className: "mt-2" },
+                    React.createElement("input", {
+                      name: "pr_number",
+                      id: "pr_number",
+                      onChange: this.onFetchPrNumberChange,
+                      defaultValue: this.state.pr_number,
+                      className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                    })
+                  )
+                ),
+                React.createElement(
+                  "div",
+                  { className: "flex-1 ml-2 w-40" },
+                  React.createElement(
+                    "div",
+                    { className: "w-30" },
+                    React.createElement(
+                      "button",
+                      {
+                        style: { width: "100%" },
+                        onClick: function onClick() {
+                          return _this2.onFetchPR(_this2.state.pr_number);
+                        },
+                        name: "save_next",
+                        className: "rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                      },
+                      "FETCH PR"
+                    )
                   )
                 )
               )
             ),
             csDetailsView
           ),
-          this.state.username === this.state.cs_owner ? React.createElement(
+          this.state.username === this.state.cs_owner && this.state.bids.length < 1 ? React.createElement(
             "div",
-            { style: { width: "100%" }, className: "flex justify-content-evenly mt-5 px-3 py-3" },
+            { className: "m-2" },
             React.createElement(
-              "div",
-              { className: "m-2" },
-              React.createElement(
-                "button",
-                {
-                  style: { width: "100%" },
-                  onClick: this.onAddSuppliersModal,
-                  className: "rounded-md bg-nepal-950 hover:bg-nepal-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                },
-                "ADD SUPPLIERS"
-              )
-            ),
-            this.state.bids.length < 1 ? React.createElement(
-              "div",
-              { className: "m-2" },
-              React.createElement(
-                "button",
-                {
-                  style: { width: "100%" },
-                  onClick: this.onAddItemsModal,
-                  className: "rounded-md bg-nepal-950 hover:bg-nepal-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                },
-                "ADD SCHEDULE ITEMS"
-              )
-            ) : ""
+              "button",
+              {
+                style: { width: "100%" },
+                onClick: this.onAddItemsModal,
+                className: "rounded-md bg-nepal-950 hover:bg-nepal-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+              },
+              "ADD SCHEDULE ITEMS"
+            )
           ) : "",
           this.state.bids.map(function (bid, index) {
             return React.createElement(
