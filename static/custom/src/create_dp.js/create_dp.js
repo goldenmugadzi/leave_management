@@ -323,13 +323,12 @@ var CreateDP = function (_React$Component) {
       }));
     };
 
-    _this.onCommitteeJustificationChange = function (event) {
-      var _event$target3 = event.target,
-          name = _event$target3.name,
-          value = _event$target3.value;
+    _this.onCommitteeJustificationChange = function (name_, event) {
+      console.log("event: ", event);
+      var value = event.target.value;
 
       var currentApprover = _this.state.currentApprover;
-      currentApprover[name] = value;
+      currentApprover[name_] = value;
       _this.setState(Object.assign({}, _this.state, {
         currentApprover: currentApprover
       }));
@@ -337,6 +336,7 @@ var CreateDP = function (_React$Component) {
 
     _this.onCommitteeApprove = function (username, approval, justification) {
       var form_data = new FormData();
+      console.log("approval: ", approval, justification);
       if (approval === "Rejected" && justification === "") {
         alert("Please enter justification");
         return;
@@ -372,11 +372,11 @@ var CreateDP = function (_React$Component) {
             committeeMembers: members
           }));
           if (committeeApproval === "Approved") {
-            alert("Committee approved successfully by " + memberName);
+            alert("Committee approved successfully");
             // reload page
             window.location.reload();
           } else {
-            alert("Committee rejected successfully by " + memberName);
+            alert("Committee rejected successfully");
             window.location.reload();
           }
         } else {
@@ -412,6 +412,11 @@ var CreateDP = function (_React$Component) {
     };
 
     _this.onApprovalApprove = function (role, username, approval, justification) {
+      console.log("approval: ", approval, justification);
+      if (approval === "Rejected" && justification === "") {
+        alert("Please enter justification");
+        return;
+      }
       var form_data = new FormData();
       form_data.append("cs_id", _this.state.cs_id);
       form_data.append("role", role);
@@ -502,12 +507,11 @@ var CreateDP = function (_React$Component) {
     };
 
     _this.onApprovalJustificationChange = function (name_, event) {
-      var _event$target4 = event.target,
-          name = _event$target4.name,
-          value = _event$target4.value;
+      console.log("event: ", event);
+      var value = event.target.value;
 
       var currentApprover = _this.state.currentApprover;
-      currentApprover[name] = value;
+      currentApprover[name_] = value;
       _this.setState(Object.assign({}, _this.state, {
         currentApprover: currentApprover
       }));
@@ -603,9 +607,9 @@ var CreateDP = function (_React$Component) {
     };
 
     _this.onSupplierChange = function (name_, event) {
-      var _event$target5 = event.target,
-          name = _event$target5.name,
-          value = _event$target5.value;
+      var _event$target3 = event.target,
+          name = _event$target3.name,
+          value = _event$target3.value;
 
 
       _this.setState(Object.assign({}, _this.state, {
@@ -659,18 +663,18 @@ var CreateDP = function (_React$Component) {
         currentBid[name_] = bid_file;
         currentBid.bid_document_url = bid_document_url;
       } else if (name_ === "supplier") {
-        var _event$target6 = event.target,
-            name = _event$target6.name,
-            value = _event$target6.value;
+        var _event$target4 = event.target,
+            name = _event$target4.name,
+            value = _event$target4.value;
 
         console.log("value: ", value);
         var id_name = value ? value.split("-#-") : [];
         currentBid[name_] = id_name.length > 0 ? id_name[0] : "";
         currentBid["supplier_name"] = id_name.length >= 1 ? id_name[1] : "";
       } else {
-        var _event$target7 = event.target,
-            _name = _event$target7.name,
-            _value = _event$target7.value;
+        var _event$target5 = event.target,
+            _name = _event$target5.name,
+            _value = _event$target5.value;
 
         currentBid[name_] = _value;
       }
@@ -688,9 +692,9 @@ var CreateDP = function (_React$Component) {
       console.log("item: ", item);
       // if item exists update item
       if (item) {
-        var _event$target8 = event.target,
-            name = _event$target8.name,
-            value = _event$target8.value;
+        var _event$target6 = event.target,
+            name = _event$target6.name,
+            value = _event$target6.value;
 
         item[name_] = value;
         // update item in current bid
@@ -1026,9 +1030,9 @@ var CreateDP = function (_React$Component) {
 
     _this.onInputChange = function (event) {
       console.log(event);
-      var _event$target9 = event.target,
-          name = _event$target9.name,
-          value = _event$target9.value;
+      var _event$target7 = event.target,
+          name = _event$target7.name,
+          value = _event$target7.value;
 
       _this.setState(Object.assign({}, _this.state, _defineProperty({}, name, value)));
     };
@@ -1084,9 +1088,9 @@ var CreateDP = function (_React$Component) {
       var _Object$assign5;
 
       console.log("name and value: ", name_, event);
-      var _event$target10 = event.target,
-          name = _event$target10.name,
-          value = _event$target10.value;
+      var _event$target8 = event.target,
+          name = _event$target8.name,
+          value = _event$target8.value;
 
       var compliance = _this.state.compliance;
       var updatedComplianceList = compliance.map(function (compliance_, index) {
@@ -1152,9 +1156,9 @@ var CreateDP = function (_React$Component) {
     };
 
     _this.onComplianceChange = function (index, event) {
-      var _event$target11 = event.target,
-          name = _event$target11.name,
-          checked = _event$target11.checked;
+      var _event$target9 = event.target,
+          name = _event$target9.name,
+          checked = _event$target9.checked;
 
       console.log("name: ", name, "checked: ", checked);
       var compliance = _this.state.compliance;
@@ -1222,9 +1226,9 @@ var CreateDP = function (_React$Component) {
     };
 
     _this.onComplianceRemarksChange = function (supplier_name, event) {
-      var _event$target12 = event.target,
-          name = _event$target12.name,
-          value = _event$target12.value;
+      var _event$target10 = event.target,
+          name = _event$target10.name,
+          value = _event$target10.value;
 
       console.log("name: ", name, "value: ", value, "supplier_name: ", supplier_name);
       var complianceRemarks = _this.state.complianceRemarks;
@@ -1420,18 +1424,18 @@ var CreateDP = function (_React$Component) {
   }, {
     key: "onSelectChange",
     value: function onSelectChange(name_, event) {
-      var _event$target13 = event.target,
-          name = _event$target13.name,
-          value = _event$target13.value;
+      var _event$target11 = event.target,
+          name = _event$target11.name,
+          value = _event$target11.value;
 
       this.setState(Object.assign({}, this.state, _defineProperty({}, name_, value)));
     }
   }, {
     key: "onFilterSelectCenters",
     value: function onFilterSelectCenters(name_, event) {
-      var _event$target14 = event.target,
-          name = _event$target14.name,
-          value = _event$target14.value;
+      var _event$target12 = event.target,
+          name = _event$target12.name,
+          value = _event$target12.value;
 
       if (name_ === "region") {
         var dist = this.state.allDistricts.filter(function (_district) {

@@ -437,10 +437,11 @@ class CreateDP extends React.Component {
     });
   };
 
-  onCommitteeJustificationChange = (event) => {
-    let { name, value } = event.target;
+  onCommitteeJustificationChange = (name_, event) => {
+    console.log("event: ", event);
+    let { value } = event.target;
     let currentApprover = this.state.currentApprover;
-    currentApprover[name] = value;
+    currentApprover[name_] = value;
     this.setState({
       ...this.state,
       currentApprover: currentApprover,
@@ -449,6 +450,7 @@ class CreateDP extends React.Component {
 
   onCommitteeApprove = (username, approval, justification) => {
     let form_data = new FormData();
+    console.log("approval: ", approval, justification);
     if (approval === "Rejected" && justification === "") {
       alert("Please enter justification");
       return;
@@ -485,11 +487,11 @@ class CreateDP extends React.Component {
             committeeMembers: members,
           });
           if (committeeApproval === "Approved") {
-            alert("Committee approved successfully by " + memberName);
+            alert("Committee approved successfully");
             // reload page
             window.location.reload();
           } else {
-            alert("Committee rejected successfully by " + memberName);
+            alert("Committee rejected successfully");
             window.location.reload();
           }
         } else {
@@ -528,6 +530,11 @@ class CreateDP extends React.Component {
   };
 
   onApprovalApprove = (role, username, approval, justification) => {
+    console.log("approval: ", approval, justification);
+    if(approval === "Rejected" && justification === "") {
+      alert("Please enter justification");
+      return;
+    }
     let form_data = new FormData();
     form_data.append("cs_id", this.state.cs_id);
     form_data.append("role", role);
@@ -620,9 +627,10 @@ class CreateDP extends React.Component {
   };
 
   onApprovalJustificationChange = (name_, event) => {
-    let { name, value } = event.target;
+    console.log("event: ", event);
+    let { value } = event.target;
     let currentApprover = this.state.currentApprover;
-    currentApprover[name] = value;
+    currentApprover[name_] = value;
     this.setState({
       ...this.state,
       currentApprover: currentApprover,

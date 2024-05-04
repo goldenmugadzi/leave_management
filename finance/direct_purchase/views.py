@@ -1102,6 +1102,7 @@ def approve_cs_committee(request):
     username = request.POST.get("username", "")
     print("username: ", username)
     approval = request.POST.get("approval", "")
+    justification = request.POST.get("justification", "")
     cs_query = DirectPurchase.objects.filter(cs_id=cs_id).first()
     if not cs_query:
         return JsonResponse({
@@ -1114,6 +1115,7 @@ def approve_cs_committee(request):
         committee_query = DPCommittee.objects.filter(cs_id=cs_query, user=member_profile).first()
         if committee_query:
             committee_query.committee_approval = approval
+            committee_query.justification = justification
             committee_query.committee_date = datetime.now()
             committee_query.save()
             return JsonResponse({
