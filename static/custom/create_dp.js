@@ -197,8 +197,8 @@ class CreateDP extends React.Component {
           (member) => (member.memberApproval === "" || member.memberApproval === null || member.memberApproval === undefined || member.memberApproval === "Rejected")
         ).length === 0;
         
-        console.log("gm_approval: ", gm_approval, fm_approval);
-        let approvalsComplete = gm_approval.approval !== "" && fm_approval.approval !== "";
+        console.log("gm_approval: ", gm_approval, fm_approval, gm_approval.approval, fm_approval.approval);
+        let approvalsComplete = gm_approval.approval !== "" && fm_approval.approval !== "" && gm_approval.approval !== undefined && fm_approval.approval !== undefined;
 
         console.log("advert file", advert, typeof advert);
         this.setState({
@@ -344,7 +344,13 @@ class CreateDP extends React.Component {
     let { name, value } = event.target;
     console.log("name: ", name_, "value: ", value);
     let member = this.state.member;
-    member[name_] = value;
+    if (name_ === "memberUserName") {
+      let user = this.state.users.find((user) => user.username === value);
+      member.memberName = user.first_name + " " + user.last_name;
+      member[name_] = value;
+    } else{
+      member[name_] = value;
+    }
     this.setState({
       ...this.state,
       member: member,
@@ -354,7 +360,7 @@ class CreateDP extends React.Component {
   onAddCommitteeMembers = () => {
     let members = this.state.committeeMembers;
     let member_ = this.state.member;
-    if (member_.memberUserName === "") {
+    if (member_.memberUserName === "" || member_.memberPosition === "") {
       alert("Please select a user");
     }
     // check if memberUserName exists
@@ -443,6 +449,10 @@ class CreateDP extends React.Component {
 
   onCommitteeApprove = (username, approval, justification) => {
     let form_data = new FormData();
+    if (approval === "Rejected" && justification === "") {
+      alert("Please enter justification");
+      return;
+    }
     form_data.append("cs_id", this.state.cs_id);
     form_data.append("username", username);
     form_data.append("approval", approval);
@@ -665,6 +675,10 @@ class CreateDP extends React.Component {
   };
 
   onSubmitCSItems = () => {
+    if (this.state.cs_items.length === 0) {
+      alert("Please add items to the Comparative Schedule");
+      return;
+    }
     let form_data = new FormData();
     form_data.append("cs_id", this.state.cs_id);
     form_data.append("pr_id", this.state.pr_number);
@@ -994,6 +1008,11 @@ class CreateDP extends React.Component {
   };
 
   onSaveSchedule = () => {
+
+    if(!this.state.proc_ref || !this.state.scope_of_work || !this.state.pr_number || !this.state.pr_date || !this.state.closing_date || !this.state.ref_date || !this.state.closing_time_hour || !this.state.date_tender_opened || !this.state.tender_adjudication_committee_date) {
+      alert("Please fill in all required fields");
+      return;
+    }
     let form_data = new FormData();
     // add enctype to form data
     form_data.enctype = "multipart/form-data";
@@ -2051,7 +2070,6 @@ class CreateDP extends React.Component {
                           <div className="mt-2">
                             <select
                               id="vat"
-                              defaultValue={item.vat}
                               onChange={(e) =>
                                 this.onCurrentBidItemChange(
                                   item.item_required,
@@ -2067,7 +2085,7 @@ class CreateDP extends React.Component {
                               ) : (
                                 ""
                               )}
-                              <option>Select Vat</option>
+                              <option value="">Select VAT</option>
                               <option value="Excl.">Excl.</option>
                               <option value="Incl.">Incl.</option>
                             </select>
@@ -2457,6 +2475,7 @@ class CreateDP extends React.Component {
                     onChange={(e) =>
                       this.onComplianceItemsChange("showSiteVisit", e)
                     }
+                    disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
                     autoComplete="site_visit"
                     className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
                   >
@@ -2481,6 +2500,7 @@ class CreateDP extends React.Component {
                       onChange={(e) =>
                         this.onComplianceItemsChange("showSamples", e)
                       }
+                      disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
                       autoComplete="samples"
                       className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
                     >
@@ -2580,6 +2600,7 @@ class CreateDP extends React.Component {
                               comp.payment_terms ? comp.payment_terms : false
                             }
                             onChange={(e) => this.onComplianceChange(key, e)}
+                            disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
                             id="payment_terms"
                             type="checkbox"
                           />
@@ -2591,6 +2612,7 @@ class CreateDP extends React.Component {
                               comp.bid_validity ? comp.bid_validity : false
                             }
                             onChange={(e) => this.onComplianceChange(key, e)}
+                            disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
                             id="bid_validity"
                             type="checkbox"
                           />
@@ -2604,6 +2626,7 @@ class CreateDP extends React.Component {
                                 : false
                             }
                             onChange={(e) => this.onComplianceChange(key, e)}
+                            disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
                             id="delivery_period"
                             type="checkbox"
                           />
@@ -2617,6 +2640,7 @@ class CreateDP extends React.Component {
                                 : false
                             }
                             onChange={(e) => this.onComplianceChange(key, e)}
+                            disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
                             id="technical_specifications"
                             type="checkbox"
                           />
@@ -2630,6 +2654,7 @@ class CreateDP extends React.Component {
                                 : false
                             }
                             onChange={(e) => this.onComplianceChange(key, e)}
+                            disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
                             id="valid_tax_clearance"
                             type="checkbox"
                           />
@@ -2643,6 +2668,7 @@ class CreateDP extends React.Component {
                                 : false
                             }
                             onChange={(e) => this.onComplianceChange(key, e)}
+                            disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
                             id="registered_with_praz"
                             type="checkbox"
                           />
@@ -2652,6 +2678,7 @@ class CreateDP extends React.Component {
                             name="tax_status"
                             checked={comp.tax_status ? comp.tax_status : false}
                             onChange={(e) => this.onComplianceChange(key, e)}
+                            disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
                             id="tax_status"
                             type="checkbox"
                           />
@@ -2667,6 +2694,7 @@ class CreateDP extends React.Component {
                                 comp.site_visit ? comp.site_visit : false
                               }
                               onChange={(e) => this.onComplianceChange(key, e)}
+                              disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
                               id="site_visit"
                               type="checkbox"
                             />
@@ -2687,6 +2715,7 @@ class CreateDP extends React.Component {
                                   : false
                               }
                               onChange={(e) => this.onComplianceChange(key, e)}
+                              disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
                               id="samples_required"
                               type="checkbox"
                             />
@@ -2699,6 +2728,7 @@ class CreateDP extends React.Component {
                             name="decision"
                             checked={comp.decision ? comp.decision : false}
                             onChange={(e) => this.onComplianceChange(key, e)}
+                            disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
                             id="decision"
                             type="checkbox"
                           />
@@ -2708,6 +2738,7 @@ class CreateDP extends React.Component {
                             name="reject"
                             checked={comp.reject ? comp.reject : false}
                             onChange={(e) => this.onComplianceChange(key, e)}
+                            disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
                             id="reject"
                             type="checkbox"
                           />
@@ -2747,6 +2778,7 @@ class CreateDP extends React.Component {
                                 e
                               )
                             }
+                            disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
                             type="text"
                             className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
                           />
@@ -2858,12 +2890,6 @@ class CreateDP extends React.Component {
                   <tr className="text-gray-900">
                     <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
                       <div>
-                        <label
-                          htmlFor="memberPosition"
-                          className="block text-sm font-medium leading-6 text-gray-900"
-                        >
-                          Member Position
-                        </label>
                         <div className="mt-2">
                           {this.state.username === this.state.cs_owner ? (
                             <select
@@ -2875,7 +2901,7 @@ class CreateDP extends React.Component {
                               autoComplete="memberPosition"
                               className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
                             >
-                              <option value="">Select Option</option>
+                              <option value="">Select Member Position</option>
                               <option value="chairman">Chairman</option>
                               <option value="finance">Finance</option>
                               <option value="procurement">Procurement</option>
@@ -2890,12 +2916,6 @@ class CreateDP extends React.Component {
                     </td>
                     <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
                       <div>
-                        <label
-                          htmlFor="memberUserName"
-                          className="block text-sm font-medium leading-6 text-gray-900"
-                        >
-                          Select User
-                        </label>
                         <div className="mt-2">
                           {this.state.username === this.state.cs_owner ? (
                             <select
@@ -2907,13 +2927,15 @@ class CreateDP extends React.Component {
                               autoComplete="memberUserName"
                               className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
                             >
+                              <option value="">Select User</option>
                               {this.state.users
                                 ? this.state.users.map((user) => (
                                     <option value={user.username}>
                                       {user.first_name + " " + user.last_name}
                                     </option>
                                   ))
-                                : ""}
+                                : <option value="">No Users</option>}
+
                             </select>
                           ) : (
                             ""
@@ -2923,7 +2945,7 @@ class CreateDP extends React.Component {
                     </td>
                     <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2"></td>
                     <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                      {this.state.username === this.state.cs_owner && !this.state.approvalsComplete ? (
+                      {this.state.username === this.state.cs_owner && !this.state.approvalsComplete && this.state.member.memberPosition !== "" && this.state.member.memberUserName !== "" ? (
                         <div className="w-30">
                           <button
                             style={{ width: "100%" }}
@@ -3257,6 +3279,7 @@ class CreateDP extends React.Component {
                   ) : (
                     ""
                   )}
+                  <option value="">Select Closing Time</option>
                   <option value="10:00">10:00</option>
                   <option value="14:00">14:00</option>
                 </select>
@@ -3457,9 +3480,19 @@ class CreateDP extends React.Component {
             <p className="mt-1 max-w-2xl text-sm leading-6 text-gray-500">
               CS NO: {this.state.cs_id}
             </p>
-            
             {this.state.fetchPR && (
+              <div>
+              <div className="m-2">
+            <button
+              style={{ width: "100%" }}
+              onClick={this.onAddSuppliersModal}
+              className="rounded-md bg-nepal-950 hover:bg-nepal-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+            >
+              ADD NEW SUPPLIER
+            </button>
+          </div>
               <div className="flex justify-evenly items-end mt-5 px-2 py-2">
+              
               <div className="flex-1 w-40">
                 <label
                   htmlFor="pr_number"
@@ -3490,32 +3523,22 @@ class CreateDP extends React.Component {
                 </div>
               </div>
             </div>
+            </div>
+            
+            
       ) }
             {csDetailsView}
           </div>
 
-          {this.state.username === this.state.cs_owner ? (
-            <div style={{width: "100%"}} className="flex justify-content-evenly mt-5 px-3 py-3">
-              <div className="m-2">
-                <button
-                  style={{ width: "100%" }}
-                  onClick={this.onAddSuppliersModal}
-                  className="rounded-md bg-nepal-950 hover:bg-nepal-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                >
-                  ADD SUPPLIERS
-                </button>
-              </div>
-              {this.state.bids.length < 1 ? (
-                <div className="m-2">
-                  <button
-                    style={{ width: "100%" }}
-                    onClick={this.onAddItemsModal}
-                    className="rounded-md bg-nepal-950 hover:bg-nepal-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                  >
-                    ADD SCHEDULE ITEMS
-                  </button>
-                </div>
-              ) : ""}
+          {this.state.username === this.state.cs_owner && this.state.bids.length < 1 ? (
+            <div className="m-2">
+              <button
+                style={{ width: "100%" }}
+                onClick={this.onAddItemsModal}
+                className="rounded-md bg-nepal-950 hover:bg-nepal-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+              >
+                ADD SCHEDULE ITEMS
+              </button>
             </div>
           ) : (
             ""
