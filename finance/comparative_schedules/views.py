@@ -10,7 +10,6 @@ from it.users.models import *
 from finance.purchase_request.models import PurchaseRequest, PrItem, Attachment, UnitOfMeasurement
 from finance.comparative_schedules.models import *
 
-
 def clear_approvals(cs_id):
 
     cs_query = ComparativeSchedules.objects.filter(cs_id=cs_id).first()
@@ -37,7 +36,6 @@ def clear_approvals(cs_id):
             approval.save()
             
     return True
-
 
 def get_comperative_schedules(request):
     
@@ -970,8 +968,7 @@ def save_supplier(request):
         "message": "Supplier saved successfully",
         "success": True,
     })
-    
-    
+     
 def save_cs_ranking(request):
     cs_id = request.POST.get("cs_id", "")
     cs_query = ComparativeSchedules.objects.filter(cs_id=cs_id).first()

@@ -949,7 +949,7 @@ var CreateCS = function (_React$Component) {
       form_data.append("advert", _this.state.advert);
       form_data.append("csrfmiddlewaretoken", _this.getCookie("csrftoken"));
 
-      fetch(BASE_URL + "/update", {
+      fetch(BASE_URL + "/comperative_schedule/update", {
         method: "POST",
         headers: {
           "X-CSRFToken": _this.getCookie("csrftoken")
