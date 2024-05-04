@@ -99,15 +99,11 @@ var CreateDP = function (_React$Component) {
           return member.memberApproval === "" || member.memberApproval === null || member.memberApproval === undefined || member.memberApproval === "Rejected";
         }).length === 0;
 
-        console.log("gm_approval: ", gm_approval, fm_approval);
-        var approvalsComplete = gm_approval.approval !== "" && fm_approval.approval !== "";
-
         console.log("advert file", advert, typeof advert === "undefined" ? "undefined" : _typeof(advert));
         _this.setState(Object.assign({}, _this.state, (_Object$assign = {
           requester_role: requester_role,
           cs_owner: cs_owner,
           committeeApprovalComplete: committeeApprovalComplete,
-          approvalsComplete: approvalsComplete,
           proc_plans: proc_plans,
           uom: uom,
           suppliers: suppliers,
@@ -193,11 +189,7 @@ var CreateDP = function (_React$Component) {
           _this.setState({
             scope_of_work: scope_of_work,
             proc_ref: proc_ref,
-            proc_plan: {
-              description: proc_plan.name,
-              id: proc_plan.id,
-              proc_ref: proc_plan.proc_ref
-            },
+            proc_plan: proc_plan,
             proc_plans: plans,
             uom: uom,
             suppliers: suppliers,
@@ -1332,7 +1324,6 @@ var CreateDP = function (_React$Component) {
       },
       gmApproval: null,
       fmApproval: null,
-      approvalsComplete: false,
       approvalsJustificationModal: false,
       users: [],
       currentApprover: {
@@ -3189,7 +3180,7 @@ var CreateDP = function (_React$Component) {
             )
           )
         ),
-        this.state.username === this.state.cs_owner && !this.state.approvalsComplete ? React.createElement(
+        this.state.username === this.state.cs_owner ? React.createElement(
           "div",
           { className: "flex justify-center mt-5 px-3 py-3" },
           React.createElement(
@@ -3444,7 +3435,7 @@ var CreateDP = function (_React$Component) {
                     React.createElement(
                       "td",
                       { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
-                      this.state.username === this.state.cs_owner && !this.state.approvalsComplete ? React.createElement(
+                      this.state.username === this.state.cs_owner ? React.createElement(
                         "div",
                         { className: "w-30" },
                         React.createElement(
@@ -3487,7 +3478,7 @@ var CreateDP = function (_React$Component) {
                         (member.memberApproval === "" || member.memberApproval === null) && React.createElement(
                           "div",
                           { className: "flex justify-content-evenly" },
-                          _this2.state.username === _this2.state.cs_owner && !_this2.state.approvalsComplete ? React.createElement(
+                          _this2.state.username === _this2.state.cs_owner ? React.createElement(
                             "div",
                             { className: "m-2" },
                             React.createElement(
@@ -3900,8 +3891,8 @@ var CreateDP = function (_React$Component) {
                 },
                 this.state.proc_plan ? React.createElement(
                   "option",
-                  { value: this.state.proc_plan.proc_ref },
-                  this.state.proc_plan.description
+                  { value: this.state.proc_plan.id },
+                  this.state.proc_plan.name
                 ) : "",
                 this.state.proc_plans ? this.state.proc_plans.map(function (plan) {
                   return React.createElement(
@@ -4066,7 +4057,7 @@ var CreateDP = function (_React$Component) {
             );
           })
         ),
-        (this.state.username === this.state.cs_owner || !this.state.cs_id) && !this.state.approvalsComplete ? React.createElement(
+        this.state.username === this.state.cs_owner || !this.state.cs_id ? React.createElement(
           "div",
           { className: "flex justify-center mt-10 px-3 py-3" },
           this.state.cs_id ? React.createElement(
@@ -4447,7 +4438,7 @@ var CreateDP = function (_React$Component) {
                   );
                 })
               ),
-              _this2.state.username === _this2.state.cs_owner && !_this2.state.approvalsComplete ? React.createElement(
+              _this2.state.username === _this2.state.cs_owner ? React.createElement(
                 "div",
                 { className: "flex justify-center mt-5 px-3 py-3" },
                 React.createElement(
@@ -4482,7 +4473,7 @@ var CreateDP = function (_React$Component) {
               ) : ""
             );
           }),
-          this.state.cs_items.length > 0 && this.state.username === this.state.cs_owner && this.state.bids.length < 1 && !this.state.approvalsComplete ? React.createElement(
+          this.state.cs_items.length > 0 && this.state.username === this.state.cs_owner && this.state.bids.length < 1 ? React.createElement(
             "div",
             { className: "m-2" },
             React.createElement(
@@ -4495,7 +4486,7 @@ var CreateDP = function (_React$Component) {
               "ADD BID"
             )
           ) : "",
-          this.state.bids.length > 0 && this.state.compliance.length < 1 && this.state.username === this.state.cs_owner && !this.state.approvalsComplete ? React.createElement(
+          this.state.bids.length > 0 && this.state.compliance.length < 1 && this.state.username === this.state.cs_owner ? React.createElement(
             "div",
             { className: "m-2" },
             React.createElement(
@@ -4509,7 +4500,7 @@ var CreateDP = function (_React$Component) {
             )
           ) : "",
           this.state.compliance.length > 0 ? complianceTable : "",
-          this.state.compliance.length > 0 && this.state.username === this.state.cs_owner && !this.state.approvalsComplete ? React.createElement(
+          this.state.compliance.length > 0 && this.state.username === this.state.cs_owner ? React.createElement(
             "div",
             { className: "m-2" },
             React.createElement(
@@ -4524,7 +4515,7 @@ var CreateDP = function (_React$Component) {
           ) : "",
           this.state.rankings.length > 0 ? rankingTable : "",
           this.state.rankings.length > 0 ? committeeTable : "",
-          this.state.committeeMembers.length > 0 && this.state.username === this.state.cs_owner && !this.state.approvalsComplete ? React.createElement(
+          this.state.committeeMembers.length > 0 && this.state.username === this.state.cs_owner ? React.createElement(
             "div",
             { className: "m-2" },
             React.createElement(
@@ -4545,10 +4536,7 @@ var CreateDP = function (_React$Component) {
               "button",
               {
                 style: { width: "100%" },
-                onClick: function onClick() {
-                  console.log("going back ...");
-                  window.history.back();
-                },
+                onClick: this.onGoBack,
                 className: "rounded-md bg-nepal-950 hover:bg-nepal-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
               },
               "GO BACK TO SCHEDULES"

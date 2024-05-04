@@ -109,7 +109,7 @@ class CreateRB extends React.Component {
         fetchPR: true,
       });
     }
-  }
+  } 
 
   onGetFileObjectUrl = (fileData) => {
     if (typeof fileData === "string") {
@@ -439,7 +439,7 @@ class CreateRB extends React.Component {
           let members = this.state.committeeMembers.map((member) => {
             if (member.memberUserName === username) {
               member.committee_date = committeeDate;
-              member.member_approval = committeeApproval;
+              member.memberApproval = committeeApproval;
             }
             return member;
           });
