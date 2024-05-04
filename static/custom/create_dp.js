@@ -56,6 +56,7 @@ class CreateDP extends React.Component {
       },
       gmApproval: null,
       fmApproval: null,
+      approvalsComplete: false,
       approvalsJustificationModal: false,
       users: [],
       currentApprover: {
@@ -195,6 +196,9 @@ class CreateDP extends React.Component {
         let committeeApprovalComplete = committee.filter(
           (member) => (member.memberApproval === "" || member.memberApproval === null || member.memberApproval === undefined || member.memberApproval === "Rejected")
         ).length === 0;
+        
+        console.log("gm_approval: ", gm_approval, fm_approval);
+        let approvalsComplete = gm_approval.approval !== "" && fm_approval.approval !== "";
 
         console.log("advert file", advert, typeof advert);
         this.setState({
@@ -202,6 +206,7 @@ class CreateDP extends React.Component {
           requester_role: requester_role,
           cs_owner: cs_owner,
           committeeApprovalComplete: committeeApprovalComplete,
+          approvalsComplete: approvalsComplete,
           proc_plans: proc_plans,
           uom: uom,
           suppliers: suppliers,
@@ -304,7 +309,11 @@ class CreateDP extends React.Component {
           this.setState({
             scope_of_work: scope_of_work,
             proc_ref: proc_ref,
-            proc_plan: proc_plan,
+            proc_plan: {
+              description: proc_plan.name,
+              id: proc_plan.id,
+              proc_ref: proc_plan.proc_ref,
+            },
             proc_plans: plans,
             uom: uom,
             suppliers: suppliers,
@@ -2751,7 +2760,7 @@ class CreateDP extends React.Component {
           </div>
         </div>
 
-        {this.state.username === this.state.cs_owner ? (
+        {this.state.username === this.state.cs_owner && !this.state.approvalsComplete ? (
           <div className="flex justify-center mt-5 px-3 py-3">
             <div className="flex-1 m-2">
               <button
@@ -2914,7 +2923,7 @@ class CreateDP extends React.Component {
                     </td>
                     <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2"></td>
                     <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                      {this.state.username === this.state.cs_owner ? (
+                      {this.state.username === this.state.cs_owner && !this.state.approvalsComplete ? (
                         <div className="w-30">
                           <button
                             style={{ width: "100%" }}
@@ -2949,7 +2958,7 @@ class CreateDP extends React.Component {
                           {member.memberApproval === "Rejected" && "REJECTED"}
                           {(member.memberApproval === "" || member.memberApproval === null) && (
                             <div className="flex justify-content-evenly">
-                              {this.state.username === this.state.cs_owner ? (
+                              {this.state.username === this.state.cs_owner && !this.state.approvalsComplete ? (
                                 <div className="m-2">
                                   <button
                                     onClick={() =>
@@ -3274,8 +3283,8 @@ class CreateDP extends React.Component {
                 className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
               >
                 {this.state.proc_plan ? (
-                  <option value={this.state.proc_plan.id}>
-                    {this.state.proc_plan.name}
+                  <option value={this.state.proc_plan.proc_ref}>
+                    {this.state.proc_plan.description}
                   </option>
                 ) : (
                   ""
@@ -3399,8 +3408,8 @@ class CreateDP extends React.Component {
         }
       </div>
       
-      {this.state.username === this.state.cs_owner ||
-      !this.state.cs_id ? (
+      {(this.state.username === this.state.cs_owner ||
+      !this.state.cs_id) && !this.state.approvalsComplete ? (
         <div className="flex justify-center mt-10 px-3 py-3">
           {this.state.cs_id ? (
             <div className="w-30 m-2">
@@ -3652,7 +3661,7 @@ class CreateDP extends React.Component {
                   })}
                 </div>
 
-                {this.state.username === this.state.cs_owner ? (
+                {this.state.username === this.state.cs_owner && !this.state.approvalsComplete ? (
                   <div className="flex justify-center mt-5 px-3 py-3">
                     <div className="m-2">
                       <button
@@ -3685,7 +3694,8 @@ class CreateDP extends React.Component {
           })}
 
           {this.state.cs_items.length > 0 &&
-          this.state.username === this.state.cs_owner ? (
+          this.state.username === this.state.cs_owner &&
+          this.state.bids.length < 1 && !this.state.approvalsComplete ? (
             <div className="m-2">
               <button
                 style={{ width: "100%" }}
@@ -3701,7 +3711,7 @@ class CreateDP extends React.Component {
 
           {this.state.bids.length > 0 &&
           this.state.compliance.length < 1 &&
-          this.state.username === this.state.cs_owner ? (
+          this.state.username === this.state.cs_owner && !this.state.approvalsComplete ? (
             <div className="m-2">
               <button
                 style={{ width: "100%" }}
@@ -3718,7 +3728,7 @@ class CreateDP extends React.Component {
           {this.state.compliance.length > 0 ? complianceTable : ""}
 
           {this.state.compliance.length > 0 &&
-          this.state.username === this.state.cs_owner ? (
+          this.state.username === this.state.cs_owner && !this.state.approvalsComplete ? (
             <div className="m-2">
               <button
                 style={{ width: "100%" }}
@@ -3737,7 +3747,7 @@ class CreateDP extends React.Component {
           {this.state.rankings.length > 0 ? committeeTable : ""}
 
           {this.state.committeeMembers.length > 0 &&
-          this.state.username === this.state.cs_owner ? (
+          this.state.username === this.state.cs_owner && !this.state.approvalsComplete ? (
             <div className="m-2">
               <button
                 style={{ width: "100%" }}
@@ -3751,6 +3761,19 @@ class CreateDP extends React.Component {
             ""
           )}
           {this.state.committeeMembers.length > 2 ? approvalsTable : ""}
+
+          <div className="m-2">
+              <button
+                style={{ width: "100%" }}
+                onClick={() => {
+                  console.log("going back ...")
+                  window.history.back();
+                }}
+                className="rounded-md bg-nepal-950 hover:bg-nepal-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+              >
+                GO BACK TO SCHEDULES
+              </button>
+            </div>
         </div>
       </div>
     );

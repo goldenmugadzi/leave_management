@@ -10,6 +10,33 @@ from it.users.models import *
 from finance.purchase_request.models import PurchaseRequest, PrItem, Attachment, UnitOfMeasurement
 from finance.direct_purchase.models import *
 
+def clear_approvals(cs_id):
+
+    cs_query = DirectPurchase.objects.filter(cs_id=cs_id).first()
+    if not cs_query:
+        return JsonResponse({
+            "message": "Comparative Schedule not found",
+            "success": False,
+            }, safe=False)
+        
+    committee = DPCommittee.objects.filter(cs_id=cs_query).all()
+    if committee:
+        for member in committee:
+            member.committee_approval = ""
+            member.committee_status = ""
+            member.committee_date = None
+            member.save()
+    
+    approvals = DPApproval.objects.filter(cs_id=cs_query).all()
+    if approvals:
+        for approval in approvals:
+            approval.approval = ""
+            approval.justification = ""
+            approval.approval_date = None
+            approval.save()
+            
+    return True
+
 def get_comperative_schedules(request):
     
     cs = DirectPurchase.objects.all()
@@ -619,32 +646,24 @@ def update_comparative_schedule(request):
         # section = Sections.objects.filter(section=pr.section).first() if 'section' in pr else None
         cs_query = DirectPurchase.objects.filter(cs_id=cs_id).first()
 
-        if cs_query:
-            print(scope_of_work)
+        clear_approval = clear_approvals(cs_id)
+        if cs_query and clear_approval:
             if scope_of_work:
                 cs_query.scope_of_work = scope_of_work 
-            print(closing_date)
             if closing_date:
                 cs_query.closing_date = closing_date
-            print(closing_time)
             if closing_time:
                 cs_query.closing_time = closing_time
-            print(advert_path)
             if advert_path:
                 cs_query.advert = advert_path
-            print(pr_number)
             if pr_number:
                 cs_query.pr_number = pr_number
-            print(pr_date)
             if pr_date:
                 cs_query.pr_date = pr_date
-            print(date_tender_opened)
             if date_tender_opened:
                 cs_query.cs_opened = date_tender_opened
-            print(tender_adjudication_committee_date)
             if tender_adjudication_committee_date:
                 cs_query.tac_date = tender_adjudication_committee_date
-            print(proc_plan_)
             if proc_plan_:
                 cs_query.proc_plan = proc_plan_
             if ref_date:
@@ -747,7 +766,7 @@ def save_cs_bid(request):
             "message": "Comparative Schedule not found",
             "success": False,
             }, safe=False)
-      
+    
     supplier = Supplier.objects.filter(name=supplier_name).first()
     if not supplier:
         supplier_ = Supplier(
@@ -759,6 +778,7 @@ def save_cs_bid(request):
     # check if bid exists
     bid_query = DPBids.objects.filter(cs_id=cs_query, sup_id=supplier, bid_no=bid_no).all()
     if bid_query:
+        clear_approval = clear_approvals(cs_id)
         for bid in bid_query:
             # delete item
             item = DPItems.objects.filter(item_id=bid.item_id).first()
@@ -831,6 +851,7 @@ def delete_cs_bid(request):
     # check if bid exists
     bid_query = DPBids.objects.filter(cs_id=cs_query, sup_id=supplier).all()
     if bid_query:
+        clear_approval = clear_approvals(cs_id)
         for bid in bid_query:
             # delete item
             item = DPItems.objects.filter(item_id=bid.item_id).first()
@@ -865,6 +886,7 @@ def save_cs_compliance(request):
     # check if compliance exists
     compliance_query = DPCompliance.objects.filter(cs_id=cs_query).all()
     if compliance_query:
+        clear_approval = clear_approvals(cs_id)
         for compliance in compliance_query:
             compliance.delete()
     
@@ -950,6 +972,7 @@ def save_cs_ranking(request):
     # check if rankings exists
     ranking_query = DPRanking.objects.filter(cs_id=cs_query).all()
     if ranking_query:
+        clear_approval = clear_approvals(cs_id)
         for ranking in ranking_query:
             ranking.delete()
     # get bids
@@ -1022,6 +1045,7 @@ def save_cs_committee(request):
         if member_profile:
             committee_query = DPCommittee.objects.filter(cs_id=cs_query, user=member_profile).first()
             if committee_query:
+                clear_approval = clear_approvals(cs_id)
                 committee_query.committee_position = member['memberPosition']
                 committee_query.committee_date = datetime.now()
                 committee_query.save()
@@ -1056,6 +1080,7 @@ def delete_cs_committee_member(request):
         committee_query = DPCommittee.objects.filter(cs_id=cs_query, user=member_profile).first()
         print("committee_query: ", committee_query)
         if committee_query:
+            clear_approval = clear_approvals(cs_id)
             committee_query.delete()
             return JsonResponse({
                 "message": "Committee member deleted successfully",
@@ -1098,6 +1123,7 @@ def approve_cs_committee(request):
                     "committee_date": committee_query.committee_date,
                     "committee_status": committee_query.committee_status,
                     "committee_fullname": member_profile.first_name + " " + member_profile.last_name,
+                    "committe_approval": approval
                 }
             })
         else:
