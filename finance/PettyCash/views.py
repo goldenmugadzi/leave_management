@@ -131,27 +131,52 @@ def create_pettycash(request):
     if request.method == 'POST':
         form = PettycashForm(request.POST, request.FILES)
         formset = QuotationFormSet(request.POST, request.FILES)
-        if form.is_valid() and formset.is_valid():
-            pettycash = form.save(commit=False)
-            pettycash.process = intiate(request, 'pettycash')
-            pettycash.requested_by = request.user
+        user_id = request.user.id
+        user_profile = UserProfile.objects.filter(id=user_id).first()
 
-            rand = randrange(1, 1000)
-            rand2 = str(rand)
-            date = datetime.now()
-            date = date.strftime("%Y%m%d")
+        user_groups = user_profile.groups.values_list('name', flat=True)
 
-            petty_id = "PC" + date + rand2
-            pettycash.petty_id = petty_id
-            pettycash.save()
+        custom_user_roles = {
+            "pettycash": {},
+        }
 
-            for quotation_form in formset:
-                quotation = quotation_form.save(commit=False)
-                quotation.pettycash = pettycash
-                quotation.save()
+        roles_ = user_profile.roles.all()
+        for _role in roles_:
+            role = Roles.objects.filter(id=_role.id).first()
 
-            url = reverse('pettycash:pettycash_detail', args=[pettycash.petty_id])
-            return redirect(url)
+        if role.application == "pettycash":
+            custom_user_roles["pettycash"] = role
+        pettycash_role = str(custom_user_roles["pettycash"])
+        if pettycash_role == 'create':
+            if form.is_valid() and formset.is_valid():
+                pettycash = form.save(commit=False)
+                pettycash.process = intiate(request, 'pettycash')
+                pettycash.requested_by = request.user
+
+                rand = randrange(1, 1000)
+                rand2 = str(rand)
+                date = datetime.now()
+                date = date.strftime("%Y%m%d")
+
+                petty_id = "PC" + date + rand2
+                pettycash.petty_id = petty_id
+                pettycash.save()
+
+                for quotation_form in formset:
+                    quotation = quotation_form.save(commit=False)
+                    quotation.pettycash = pettycash
+                    quotation.save()
+
+                url = reverse('pettycash:pettycash_detail', args=[pettycash.petty_id])
+                return redirect(url)
+            else:
+                form = PettycashForm()
+                formset = QuotationFormSet()
+        else:
+            sweetify.error(request, "You are not authorized to create a new pettycash")
+            messages.error(request, "You are not authorized to create a new pettycash")
+            return redirect('/pettycash/pettycashs')
+
     else:
         form = PettycashForm()
         formset = QuotationFormSet()
@@ -185,6 +210,7 @@ def pettycash_awaiting_my_action(request):
         if role.application == "pettycash":
             custom_user_roles["pettycash"] = role
     pettycash_role = str(custom_user_roles["pettycash"])
+    requester = 'create'
 
     if pettycash_role == "approve":
         for pettycash in Pettycash.objects.filter(section=request.user.section):
@@ -222,7 +248,10 @@ def pettycash_awaiting_my_action(request):
             if step:
                 pettycashs_to_process.append(pettycash)
 
-    return render(request, 'finance/pettycash/view_all_pettycashs.html', {'pettycashs': pettycashs_to_process})
+    return render(request, 'finance/pettycash/view_all_pettycashs.html', {'pettycashs': pettycashs_to_process,
+                                                                          'pettycash_role': pettycash_role,
+                                                                          'user_groups': user_groups,
+                                                                          'requester': requester})
 
 
 @login_required
@@ -245,6 +274,7 @@ def view_all_pettycashs(request):
         if role.application == "pettycash":
             custom_user_roles["pettycash"] = role
     pettycash_role = str(custom_user_roles["pettycash"])
+    requester = "create"
 
     if pettycash_role == "create":
         pettycashs = Pettycash.objects.filter(requested_by=request.user)
@@ -252,7 +282,8 @@ def view_all_pettycashs(request):
         pettycashs = Pettycash.objects.filter(section=request.user.section)
     else:
         pettycashs = Pettycash.objects.all()
-    return render(request, 'finance/pettycash/view_all_pettycashs.html', {'pettycashs': pettycashs})
+    return render(request, 'finance/pettycash/view_all_pettycashs.html', {'pettycashs': pettycashs,
+                                                                          'requester': requester})
 
 
 @login_required
@@ -544,5 +575,6 @@ def download_file(request, filename):
     except FileNotFoundError:
         # Handle file not found error (return 404 or a custom message)
         sweetify.error(request, 'File not found')
+        messages.error(request, 'File not found')
 
         return HttpResponseNotFound('The requested file does not exist.')
