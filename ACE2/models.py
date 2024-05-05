@@ -20,7 +20,7 @@ class AssetBudget(models.Model):
     balance = models.FloatField(blank=True, null=True, default=0)
     withdrawal_date = models.DateField(blank=True, null=True)
     period = models.PositiveIntegerField(validators=[MinValueValidator(1), MaxValueValidator(9999)])
-    region = models.CharField(max_length=36, blank=True, null=True)
+    region = models.ForeignKey(Regions, on_delete=models.DO_NOTHING, blank=True)
     created_date = models.DateField(blank=True, null=True)
     budget_note = models.FileField(upload_to='uploads/budget')
 
