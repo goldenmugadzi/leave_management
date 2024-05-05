@@ -20,7 +20,7 @@ from it.users.forms import CustomUserCreationForm
 from django.contrib.auth.models import Group
 from .helpers import DESIGNATIONS, REGIONS, DISTRICTS, DEPOTS, ROLES, SECTIONS
 
-BASE_URL = "http://172.16.8.98:9300"
+BASE_URL = "http://172.16.8.99:9300"
 
 
 def add_centers(request):

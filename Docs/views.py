@@ -12,7 +12,7 @@ def search_view(request):
     query = request.GET.get('q', '')
 
     try:
-        url = 'http://172.16.8.98:9200/_search'
+        url = 'http://172.16.8.99:9200/_search'
         params = {
             'q': query
         }
