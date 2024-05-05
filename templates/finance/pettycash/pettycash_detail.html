@@ -1,26 +1,28 @@
 {% extends "admin_layout.html" %}
 {% load static %}
-{% load custom_tags %}
-
-{% block content %}
 <head>
-  <style>
-      .arrow {
-          position: relative;
-      }
+    <link rel="stylesheet" href="{% static 'assets/disburse.css' %}">
+    <script src="{% static 'assets/disbursemodal.js' %}"></script>
+</head>
+{% load custom_tags %}
+{% block content %}
+    <head>
+        <style>
 
-      .arrow::after {
-          content: "";
-          position: absolute;
-          top: 50%;
-          transform: translateY(-50%);
-          width: 0;
-          height: 0;
-          border-top: 15px solid transparent;
-          border-bottom: 15px solid transparent;
-          border-left: 10px solid #3B82F6; /* Adjust arrow color here */
-          left: -10px;
-      }
+.arrow, .arrow-step {
+    position: relative;
+    {% comment %} margin-left: 5px; /* Adjust this to move the arrows left or right */ {% endcomment %}
+}
+
+.arrow::before, .arrow::after, .arrow-step::before, .arrow-step::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    width: 0;
+    height: 0;
+    border-top: 15px solid transparent;
+    border-bottom: 15px solid transparent;
+}
 
       .arrow-step::before {
           content: "";
@@ -34,7 +36,46 @@
           border-bottom: 10px solid transparent;
           border-left: 20px solid #3B82F6; /* Adjust arrow color here */
       }
+
+      .modal {
+          display: none; /* Initially hide the modal */
+          position: fixed; /* Stay in place */
+          z-index: 1; /* Sit on top */
+          left: 50%;
+          top: 0;
+          width: 50%; /* Full width */
+          height: 50%; /* Full height */
+          overflow: auto; /* Enable scroll if needed */
+          background-color: rgba(0,0,0,0.4); /* Transparent black background */
+      }
+
+      .modal-content {
+          background-color: white;
+          margin: 15% auto; /* 15% from top and centered */
+          padding: 20px;
+          border: 1px solid #888;
+          width: 80%; /* Modal content width */
+      }
+
+      .form-group {
+          margin-bottom: 15px;
+      }
+
+      .close-modal {
+          color: #aaa;
+          float: right;
+          font-size: 16px;
+          font-weight: bold;
+      }
+
+      .close-modal:hover,
+      .close-modal:focus {
+          color: black;
+          text-decoration: none;
+          cursor: pointer;
+      }
   </style>
+    <script src="{% static 'assets/disbursemodal.js' %}"></script>
 </head>
 <div class="m-auto mt-5 ">
     <div class="card grid grid-cols-1 gap-2 mb-3">
@@ -46,12 +87,48 @@
                         border rounded   justify-content-center align-content-stretch container rounded  shadow-lg">
                             <h1 class="text-center mb-4 font-bold text-xl  mb-2">Petty Cash Details</h1>
                             <p class="font-bold   mb-2"> Details of expenditure: {{ pettycash.details_of_expenditure }}</p>
+                            <p class="font-bold   mb-2"> Currency: {{ pettycash.currency }}</p>
                             <p class="font-bold   mb-2"> Allocation code of expenditure: {{ pettycash.section }}</p>
                             <p class="font-bold   mb-2"> Amount: {{ pettycash.amount }}</p>
-                       {%   if pettycash.payment_mode == None %}
-                            <p class="font-bold   mb-2 bg-red-600"> Payment mode: Not yet Added By Cashier</p>
-                       {% else %}
-                            <p class="font-bold   mb-2"> Payment mode: {{ pettycash.payment_mode }}</p>
+                        {% if clear %}
+                            <br>
+                        <p class="font-bold   mb-2 bg-red-600"> Clearance status:Pending</p>
+{#                            <button id="open-modal" class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded">Clear pettycash</button>#}
+{#                            <div id="modal" class="modal">#}
+{#                                <div class="modal-content">#}
+{#                                    <form id="upload-form" enctype="multipart/form-data">#}
+{#                                        {% csrf_token %}#}
+{#                                        <div class="form-group">#}
+{#                                            <label for="file-input">Receipt:</label>#}
+{#                                            <br>#}
+{#                                            <input type="file" id="file-input" name="file-input">#}
+{#                                        </div>#}
+{#                                        <div class="form-group">#}
+{#                                            <label for="disbursed">Amount used($):</label>#}
+{#                                            <br>#}
+{#                                            <input type="number" id="disbursed" name="disbursed">#}
+{#                                            <input type="hidden" name="petty_id" value="{{ pettycash.petty_id }}">#}
+{#                                        </div>#}
+{#                                        <button type="submit" class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded">Submit</button>#}
+{#                                    </form>#}
+{#                                    <br>#}
+{#                                    <button id="close-modal" class="bg-red-500 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded">Close</button>#}
+{#                                </div>#}
+{#                            </div>#}
+                            <br>
+                            <br>
+                        {% else %}
+                            <p class="font-bold   mb-2"> Clearance status:Cleared</p>
+                        {% endif %}
+
+                        {%   if quotations %}
+                        {% for quotation in quotations %}
+                            {% if quotation.quotation_file == '' %}
+                                <p class="font-bold   mb-2"> Quotation: not available</p>
+                            {% else %}
+                                <p class="font-bold   mb-2"> Quotation: {{ quotation }}<a href="/pettycash/qoutes/{{ quotation.quotation_file }}"></a></p>
+                            {% endif %}
+                        {% endfor %}
                         {% endif %}
                             <p class="font-bold   mb-2"> Requested by:
                                 {% if request.user == pettycash.requested_by %}
@@ -64,13 +141,31 @@
                             <p class="font-bold   mb-2"> Created At: {{ pettycash.date_created }}</p>
                             <p class="font-bold   mb-2"> Section: {{ pettycash.section }}</p>
 {#                            <p class="font-bold   mb-2"> Role : {{ pettycash_role }}</p>#}
-                    </div>
+                            {%   if pettycash.payment_mode == None %}
+                                <p class="font-bold   mb-2 bg-red-600"> Payment mode: Not yet Added By Cashier</p>
+                            {% else %}
+                                <p class="font-bold   mb-2"> Payment mode: {{ pettycash.payment_mode }}</p>
+                                {% if pettycash.receipt_file == '' or pettycash.receipt_file == None and request.user == approval.user %}
+                                    <p class="font-bold   mb-2"> Receipt: Not yet Receipted</p>
+
+
+                                {% else %}
+                                    <p class="font-bold   mb-2"> Receipt: {{ pettycash.receipt_file }}</p>
+                                    <p class="font-bold   mb-2"> Disbursed Amount($): {{ pettycash.amount_disbursed }}</p>
+                                    <p class="font-bold   mb-2"> Amount Used($): {{ pettycash.amount_used }}</p>
+                                    {#                               #input and post receipt file #}
+                                {% endif %}
+
+
+                            {% endif %}
+
+                        </div>
 
                 
                  </div>
                     <h1 class="text-center mb-4 font-bold text-xl  mb-2">Workflow Details</h1>
                     <p class="font-bold  mb-2"> Workflow name : {{ pettycash.process.workflow }}</p>
-                {% if pettycash_role == "disburse" and pettycash.payment_mode == None %}
+                {% if clear_minus %}
                 <form class="row rounded py-4 border  rounded-lg p-3 m-auto container" method="POST"
                       action="/pettycash/pettycash_detail/{{ pettycash.petty_id  }}/" enctype="multipart/form-data">
                     {% csrf_token %}
@@ -89,92 +184,143 @@
                         </div>
 
                         <div class="m-4 text-center">
+                            <label for="amount_disbursed">Amount Disbursed</label>
+                            <input type="number" name="amount_disbursed" required>
+                        </div>
+
+
+                        <div class="m-4 text-center">
 {#                            <button type="submit" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded" name="approved" value="Rejected">Reject</button>#}
                             <button type="submit" class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded" name="submit" value="submit"> Add </button>
                         </div>
                     </div>
                 </form>
+{#                {% elif pettycash_role=='create' and pettycash.amount_used is None and clear %}#}
+                    {% elif clear and pettycash.receipt_file is None %}
+                    <button id="open-modal" class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded">Clear pettycash</button>
+                    <div id="modal" class="modal">
+                        <div class="modal-content">
+                            <form id="upload-form" enctype="multipart/form-data">
+                                {% csrf_token %}
+                                <div class="form-group">
+                                    <label for="file-input">Receipt:</label>
+                                    <br>
+                                    <input type="file" id="file-input" name="file-input">
+                                </div>
+                                <div class="form-group">
+                                    <label for="disbursed">Amount used($):</label>
+                                    <br>
+                                    <input type="number" id="disbursed" name="disbursed">
+                                    <input type="hidden" name="petty_id" value="{{ pettycash.petty_id }}">
+                                </div>
+                                <button type="submit" class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded">Submit</button>
+                            </form>
+                            <br>
+                            <button id="close-modal" class="bg-red-500 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded">Close</button>
+                        </div>
+                    </div>
+
+                {% else %}
+                    {% if approvalForm %}
+                        <form class="row rounded py-4 border bg-gulf-blue-400 rounded-lg p-3 m-auto container"
+                              method="POST"
+                              action="{% url 'approve:approve' pettycash.process.id %}"
+                              enctype="multipart/form-data">
+                            {% csrf_token %}
+                            <div class=" m-auto container  ">
+                                {{ approvalForm.comment }}
+                                <div class="m-4 text-center">
+                                    <button type="submit"
+                                            class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded"
+                                            name="approved"
+                                            value="Rejected">Reject</button>
+                                    <button type="submit"
+                                            class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded"
+                                            name="approved"
+                                            value="Approved">{{ to }}</button>
+                                </div>
+                            </div>
+                        </form>
+                    {% endif %}
+
+
                 {% endif %}
 
 {#            {% if pettycash.payment_mode != None %}#}
-                        {% if approvalForm %}
-                    <form class="row rounded py-4 border bg-gulf-blue-400 rounded-lg p-3 m-auto container" method="POST" action="{% url 'approve:approve' pettycash.process.id %}" enctype="multipart/form-data">
-                         {% csrf_token %}
-                        <div class=" m-auto container  ">
-                             {{approvalForm.comment}}
-
-                                 <div class="m-4 text-center">
-                                    <button type="submit" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded" name="approved" value="Rejected">Reject</button>
-                                    <button type="submit" class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded" name="approved" value="Approved"> {{ to }} </button>
-                              </div>
-                        </div>
-                    </form>
-               {% endif %}
-               <div class="card grid grid-cols-5 gap-5">
-                <div class="  rounded ">
-                <div class="card-body  arrow bg-gradient-to-r from-gulf-blue-100 to-green-700 ed border rounded container rounded">
-                        <div class="p-3 font-bold rounded-lg">Created</div>
-                        <div class=" grid grid-cols-2 text-center">
-                            <span class="inline-block rounded-full text-sm">By:
-                                {% if request.user == pettycash.requested_by %}
-                                    You
-                                {% elif pettycash.requested_by.get_full_name %}
-                                    {{ pettycash.requested_by.get_full_name }}
-                                {% elif request.user == pettycash.requested_by %}
-                                    {{ pettycash.requested_by }}
-                                {% endif %}
-                            </span>
-                        </div>
-                    </div>
-                </div>
-              
-                    {% for step in pettycash.process.workflow.step_set.all %}
-                    <div class="   rounded ">
-                        {% if step.step in approved_steps %}
-                            {% for approval in pettycash.process.approval_set.all %}
-                                {% if step == approval.step %}
-                                    <div class="card-body px-2 mx-4 arrow bg-gradient-to-r from-gulf-green-100 to-green-700 ed border rounded container rounded">
-                                        <div class=" rounded-lg" title="{{ approval.comment }}">
-                                            <p class="font-bold">{{ step |default_if_none:'' }}</p>
-                                            <br>
-                                        </div>
-                                        <div class=" grid grid-cols-2 text-center">
-                                            <span class="inline-block rounded-full text-sm">{{ approval.approved }}</span>
-                                            <span class="inline-block rounded-full text-sm">By:
-                                                {% if request.user == approval.user %}
-                                                    You
-                                                {% elif approval.user.get_full_name %}
-                                                    {{ approval.user.get_full_name }}
-                                                {% elif request.user == approval.user %}
-                                                    {{ approval.user }}
+                        {#            {% if pettycash.payment_mode != None %}#}
+                        <div class="card grid grid-cols-5 gap-5">
+                            <div class="  rounded ">
+                                <div class="card-body  arrow bg-gradient-to-r from-gulf-blue-100 to-green-700 ed border rounded container rounded">
+                                    <div class="p-3 font-bold rounded-lg">Created</div>
+                                    <div class=" grid grid-cols-2 text-center">
+                                        <span class="inline-block rounded-full text-sm">By:
+                                            {% if request.user == pettycash.requested_by %}
+                                                You
+                                            {% elif pettycash.requested_by.get_full_name %}
+                                                {{ pettycash.requested_by.get_full_name }}
+                                            {% elif request.user == pettycash.requested_by %}
+                                                {{ pettycash.requested_by }}
+                                            {% endif %}
+                                            <i class="fas fa-check-circle text-green-500">  </i>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            {% for step in pettycash.process.workflow.step_set.all %}
+                                <div class=" mx-3 rounded ">
+                                    {% if step.step in approved_steps %}
+                                        {% for approval in pettycash.process.approval_set.all %}
+                                            {% if step == approval.step %}
+                                                <div class="card-body px-2 arrow bg-gradient-to-r from-gulf-blue-100 to-green-700 ed border rounded container rounded">
+                                                    <div class=" rounded-lg" title="{{ approval.comment }}">
+                                                        <p class="font-bold">{{ step |default_if_none:'' }}</p>
+                                                        <br>
+                                                    </div>
+                                                    <div class=" grid grid-cols-2 text-center">
+                                                        <span class="inline-block rounded-full text-sm">{{ approval.approved }}</span>
+                                                        <span class="inline-block rounded-full text-sm">By:
+                                                            {% if request.user == approval.user %}
+                                                                You
+                                                            {% elif approval.user.get_full_name %}
+                                                                {{ approval.user.get_full_name }}
+                                                            {% elif request.user == approval.user %}
+                                                                {{ approval.user }}
+                                                            {% endif %}
+                                                            <i class="fas fa-check-circle text-green-500">  </i>
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            {% endif %}
+                                        {% endfor %}
+                                    {% else %}
+                                        <div class="card-body px-2 arrow bg-gradient-to-r from-gulf-blue-100 to-blue-700 ed border rounded container rounded">
+                                            <div class=" rounded-lg" title="{{ approval.comment }}">
+                                                <p class="font-bold">{{ step |default_if_none:'' }}</p>
+                                                <br>
+                                                {% if step.to %}
+                                                    <span class="inline-block rounded-full text-sm">To {{ step.to|default_if_none:'' }}  <i class="fas fa-circle-notch fa-spin text-blue-500"></i>  </span>
                                                 {% endif %}
-                                            </span>
+                                            </div>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                {% if step == pettycash.process.workflow.step_set.last and step == pettycash.process.approval_set.last.step %}
+                                    <div class="flex justify-center items-center  rounded ">
+                                        <div class="flex justify-center rounded-lg" title="{{ approval.comment }}">
+                                            Completed
+                                            <i class="fas fa-check-circle text-green-500"></i>
                                         </div>
                                     </div>
                                 {% endif %}
                             {% endfor %}
-                        {% else %}
-                        <div class="card-body px-2 mx-4 arrow bg-gradient-to-r from-gulf-blue-100 to-blue-700 ed border rounded container rounded">
-                                <div class=" rounded-lg" title="{{ approval.comment }}">
-                                    <p class="font-bold">{{ step |default_if_none:'' }}</p>
-                                    <br>
-                                    {% if step.to %}<span class="inline-block rounded-full text-sm">To {{ step.to|default_if_none:'' }}</span>{% endif %}
-                                </div>
-                            </div>
-                        {% endif %}
-                    </div>
-                    {% if step == pettycash.process.workflow.step_set.last and step == pettycash.process.approval_set.last.step %}
-                        <div class="flex justify-center items-center  rounded ">
-                            <div class="flex justify-center rounded-lg" title="{{ approval.comment }}">
-                                Compmleted
-                            </div>
                         </div>
-                    {% endif %}
-                {% endfor %}
+                    </div>
+                </div>
             </div>
-                </div>    
-            </div>    
-        </div>    
+        </div>
     </div>
-</div>
 {% endblock %}
+{% block scripts %}
+    <script src="{% static 'assets/disbursemodal.js' %}"></script>
+{% endblock %}
+

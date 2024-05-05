@@ -47,14 +47,14 @@ APPLICATIONS = [
         "name": "comperative_schedule",
         "title": "Comperative Schedule",
         "iconUrl": "assets/images/bid.png",
-        "url": "/comparative_schedule/create_schedule/"
+        "url": "/comperative_schedule/comperative_schedules"
     },
-    {
-        "name": "direct_purchases",
-        "title": "Direct Purchases",
-        "iconUrl": "assets/images/direct-marketing.png",
-        "url": "#"
-    }
+    # {
+    #     "name": "direct_purchases",
+    #     "title": "Direct Purchases",
+    #     "iconUrl": "assets/images/direct-marketing.png",
+    #     "url": "#"
+    # }
 ]
 
 # Create your views here.

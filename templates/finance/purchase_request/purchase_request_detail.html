@@ -108,6 +108,12 @@
                                 {% endfor %}
                                 {% comment %} </div>  {% endcomment %}
                             </div>
+                            
+                            <div class="flex">
+                                <a href="{% url 'comparative_schedules:adopt_schedule' purchase_request.id %}" class="bg-blue-500 px-3 p-2 text-white">
+                                Adopt Comparative Schedule
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -116,11 +122,11 @@
     </div>
     {% if can_cs %}
         <div class="fixed bottom-4 right-4">
-            {% comment %} <a href="{% url 'comparative_schedules:adopt_schedule' purchase_request.id %}"
+            <a href="{% url 'comparative_schedules:adopt_schedule' purchase_request.id %}"
                title="edit"
                class="bg-blue-500  text-2xl px-3 p-2 text-white w-14 h-14 rounded-full hover:bg-blue-400 active:shadow-lg mouse shadow transition ease-in duration-200 focus:outline-none">
                 <i class="fas fa-edit text-2xl m-auto"></i> Comparative Schedule
-            </a> {% endcomment %}
+            </a>
         </div>
     {% endif %}
 </div>

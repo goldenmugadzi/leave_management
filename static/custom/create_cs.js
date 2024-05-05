@@ -1,14 +1,19 @@
 "use strict";
 
 const e = React.createElement;
+const BASE_URL = "http://localhost:8000";
+// const BASE_URL = "http://172.16.8.98:9300";
 
 class CreateCS extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
+      requester_role: "",
       cs_id: "",
+      cs_owner: "",
       plan_ref: "",
-      proc_plan: "",
+      proc_ref: "",
+      proc_plan: null,
       scope_of_work: "",
       pr_number: "",
       quantity: "",
@@ -19,10 +24,12 @@ class CreateCS extends React.Component {
       date_tender_opened: "",
       tender_adjudication_committee_date: "",
       advert: null,
+      advert_url: null,
       bid_count: 0,
       currentBid: {},
       bids: [],
       addBidModal: false,
+      updateBidModal: false,
       cs_items: [],
       cs_item_count: 0,
       addItemsModal: false,
@@ -30,55 +37,448 @@ class CreateCS extends React.Component {
       complianceTable: false,
       compliance: [],
       complianceRemarks: [],
+      showSamples: "",
+      showSiteVisit: "",
 
       rankingTable: false,
       rankings: [],
 
+      committeeTable: false,
+      committeeMembers: [],
+      committeeJustificationModal: false,
+      member: {
+        memberName: "",
+        memberUserName: "",
+        memberPosition: "",
+        memberApproval: "",
+      },
+      gmApproval: null,
+      fmApproval: null,
+      approvalsJustificationModal: false,
+      users: [],
+      currentApprover: {
+        username: "",
+        justification: "",
+        role: "",
+      },
+
       pr_items: [],
       suppliers: [],
-      procurement_plans: [],
+      proc_plans: [],
       authUser: {},
       username: "",
     };
     this.getCreateData = this.getCreateData.bind(this);
     this.onAddBid = this.onAddBid.bind(this);
+    this.onUpdateBidModal = this.onUpdateBidModal.bind(this);
     this.onAddItemsModal = this.onAddItemsModal.bind(this);
+    this.onCommitteeChange = this.onCommitteeChange.bind(this);
+    this.onGetFileObjectUrl = this.onGetFileObjectUrl.bind(this);
+    this.onComplianceItemsChange = this.onComplianceItemsChange.bind(this);
+    this.onComplianceRemarksChange = this.onComplianceRemarksChange.bind(this);
+    this.onCommitteeApprove = this.onCommitteeApprove.bind(this);
+    this.onCommitteeJustificationChange =
+      this.onCommitteeJustificationChange.bind(this);
+    this.onCommitteeJustificationModal =
+      this.onCommitteeJustificationModal.bind(this);
+    this.onApprovalJustificationModal = this.onApprovalJustificationModal.bind(this);
+    this.onApprovalJustificationChange = this.onApprovalJustificationChange.bind(this);
   }
 
   componentDidMount() {
-    this.setState({
-      username: this.props.username,
-    });
-    this.getCreateData();
+    console.log("props: ", this.props);
+    if (this.props.csid !== "") {
+      this.setState({
+        username: this.props.username,
+        cs_id: this.props.csid,
+      });
+      this.getCSData(this.props.csid);
+    } else {
+      this.setState({
+        username: this.props.username,
+        pr_number: this.props.prid,
+      });
+      this.getCreateData(this.props.prid);
+    }
   }
 
-  getCreateData = () => {
-    fetch(`http://localhost:8000/comparative_schedule/create_data`)
+  onGetFileObjectUrl = (fileData) => {
+    if (typeof fileData === "string") {
+      const decodedFileData = atob(fileData);
+      const uint8Array = new Uint8Array(decodedFileData.length);
+      for (let i = 0; i < decodedFileData.length; i++) {
+        uint8Array[i] = decodedFileData.charCodeAt(i);
+      }
+
+      const file = new Blob([uint8Array], { type: "application/pdf" });
+      console.log("file: ", file);
+
+      return URL.createObjectURL(file);
+    } else {
+      console.log("fileData: ", fileData);
+      return URL.createObjectURL(fileData);
+    }
+  };
+
+  getCSData = (cs_id) => {
+    fetch(`${BASE_URL}/comperative_schedule/cs_data/${cs_id}`)
+      .then((response) => response.json())
+      .then((data_) => {
+        let data = JSON.parse(data_);
+        console.log("cs data: ", data, typeof data);
+        let requester_role = data.requester_role ? data.requester_role : "";
+        let bids_object = data.bids ? data.bids : [];
+        let bids = Object.keys(bids_object).map((key) => {
+          let new_obj = bids_object[key];
+          return {
+            ...new_obj,
+            bid_document_url: this.onGetFileObjectUrl(new_obj.bid_document),
+          };
+        });
+
+        let compliance = data.compliance ? data.compliance : [];
+        let complianceRemarks = data.complianceRemarks
+          ? data.complianceRemarks
+          : [];
+        let rankings = data.rankings ? data.rankings : [];
+        let committee = data.committee ? data.committee : [];
+        let gm_approval = data.gm_approval ? data.gm_approval : null;
+        let fm_approval = data.fm_approval ? data.fm_approval : null;
+        let pr_date = data.pr_date ? data.pr_date : "";
+        let proc_plan = data.proc_plan ? data.proc_plan : "";
+        let scope_of_work = data.scope_of_work ? data.scope_of_work : "";
+        let pr_number = data.pr_number ? data.pr_number : "";
+        let quantity = data.quantity ? data.quantity : "";
+        let closing_date = data.closing_date ? data.closing_date : "";
+        let ref_date = data.ref_date ? data.ref_date : "";
+        let closing_time = data.closing_time ? data.closing_time : "";
+        let tender_adjudication_committee_date = data.tac_date
+          ? data.tac_date
+          : "";
+        let cs_opened = data.cs_opened ? data.cs_opened : false;
+
+        let proc_plans = data.proc_plans ? data.proc_plans : [];
+        let suppliers = data.suppliers ? data.suppliers : [];
+        let pr_items = data.pr_items ? data.pr_items : [];
+        let cs_items = data.cs_items ? data.cs_items : [];
+        let users = data.users ? data.users : [];
+        let cs_owner = data.cs_owner ? data.cs_owner : "";
+
+        let advert_url = this.onGetFileObjectUrl(data.advert);
+        console.log("advert file", advert, typeof advert);
+        this.setState({
+          ...this.state,
+          requester_role: requester_role,
+          cs_owner: cs_owner,
+          proc_plans: proc_plans,
+          suppliers: suppliers,
+          users: users,
+
+          date_tender_opened: cs_opened,
+          ref_date: ref_date,
+          proc_ref: proc_plan.proc_ref,
+          proc_plan: proc_plan,
+          scope_of_work: scope_of_work,
+          pr_number: pr_number,
+          quantity: quantity,
+          pr_date: pr_date,
+          closing_date: closing_date,
+          closing_time_hour: closing_time,
+          ref_date: ref_date,
+          tender_adjudication_committee_date:
+            tender_adjudication_committee_date,
+          advert: advert,
+          advert_url: advert_url,
+          bids: bids,
+          cs_items: cs_items,
+          compliance: compliance,
+          complianceRemarks: complianceRemarks,
+          rankings: rankings,
+          committeeMembers: committee,
+          gmApproval: gm_approval,
+          fmApproval: fm_approval,
+          pr_items: pr_items,
+        });
+      });
+  };
+
+  getCreateData = (pr_id) => {
+    console.log("cs pr_id: ", pr_id);
+
+    fetch(`${BASE_URL}/comperative_schedule/create_data/${pr_id}`)
       .then((response) => response.json())
       .then((data) => {
         console.log("data: ", data);
+        let scope_of_work = data.scope_of_work ? data.scope_of_work : "";
+        let proc_ref = data.proc_ref ? data.proc_ref : "";
         let plans = data.proc_plans ? data.proc_plans : [];
         let suppliers = data.suppliers ? data.suppliers : [];
         let pr_items = data.pr_items ? data.pr_items : [];
         let pr_id = data.pr_id ? data.pr_id : "";
         let pr_date = data.pr_date ? data.pr_date : "";
+        let users = data.users ? data.users : [];
         this.setState({
-          procurement_plans: plans,
+          scope_of_work: scope_of_work,
+          proc_ref: proc_ref,
+          proc_plans: plans,
           suppliers: suppliers,
           pr_items: pr_items,
           pr_number: pr_id,
           pr_date: pr_date,
+          users: users,
         });
       });
   };
 
-  onAddCSItem = (item_id) => {
+  onCommitteeChange = (name_, event) => {
+    let { name, value } = event.target;
+    console.log("name: ", name_, "value: ", value);
+    let member = this.state.member;
+    member[name_] = value;
+    this.setState({
+      ...this.state,
+      member: member,
+    });
+  };
+
+  onAddCommitteeMembers = () => {
+    let members = this.state.committeeMembers;
+    // check if memberUserName exists
+    let member = members.find(
+      (_member) => _member.memberUserName === this.state.member.memberUserName
+    );
+    // check if memberUserName is the one creating
+    let currentUserFlag =
+      this.state.member.memberUserName === this.state.username;
+    if (member) {
+      alert("Committee Member already added.");
+    } else if (currentUserFlag) {
+      alert("You cannot add yourself. Please choose another user.");
+    } else {
+      members.push(this.state.member);
+      this.setState({
+        ...this.state,
+        committeeMembers: members,
+        member: {
+          memberUserName: "",
+          memberName: "",
+          memberPosition: "",
+          memberApproval: "",
+        },
+      });
+    }
+  };
+
+  onRemoveCommitteeMember = (index, username) => {
+    let members = this.state.committeeMembers.filter(
+      (member, _index) => _index !== index
+    );
+    if (members.length < this.state.committeeMembers.length) {
+      this.setState({
+        ...this.state,
+        committeeMembers: members,
+      });
+    }
+    this.deleteCommitteeMember(username);
+  };
+
+  deleteCommitteeMember = (username) => {
+    let form_data = new FormData();
+    form_data.append("cs_id", this.state.cs_id);
+    form_data.append("username", username);
+    form_data.append("csrfmiddlewaretoken", this.getCookie("csrftoken"));
+
+    fetch(`${BASE_URL}/comperative_schedule/delete_committee_member`, {
+      method: "POST",
+      headers: {
+        "X-CSRFToken": this.getCookie("csrftoken"),
+      },
+      body: form_data,
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        console.log("data: ", data);
+        if (data.success) {
+          alert("Committee member deleted successfully");
+        } else {
+          alert("Error deleting Committee member");
+        }
+      });
+  };
+
+  onCommitteeJustificationModal = (username) => {
+    this.setState({
+      ...this.state,
+      currentApprover: {
+        username: username,
+        justification: "",
+      },
+      committeeJustificationModal: !this.state.committeeJustificationModal,
+    });
+  };
+
+  onCommitteeJustificationChange = (event) => {
+    let { name, value } = event.target;
+    let currentApprover = this.state.currentApprover;
+    currentApprover[name] = value;
+    this.setState({
+      ...this.state,
+      currentApprover: currentApprover,
+    });
+  };
+
+  onCommitteeApprove = (username, approval, justification) => {
+    let form_data = new FormData();
+    form_data.append("cs_id", this.state.cs_id);
+    form_data.append("username", username);
+    form_data.append("approval", approval);
+    form_data.append("justification", justification);
+    form_data.append("csrfmiddlewaretoken", this.getCookie("csrftoken"));
+
+    fetch(`${BASE_URL}/comperative_schedule/committee_approve`, {
+      method: "POST",
+      headers: {
+        "X-CSRFToken": this.getCookie("csrftoken"),
+      },
+      body: form_data,
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        console.log("data: ", data);
+        if (data.success) {
+          let committeeDate = data.committee_date;
+          let committeeApproval = data.committe_approval;
+          let memberName = data.committee_fullname;
+          let members = this.state.committeeMembers.map((member) => {
+            if (member.memberUserName === username) {
+              member.committee_date = committeeDate;
+              member.member_approval = committeeApproval;
+            }
+            return member;
+          });
+          this.setState({
+            ...this.state,
+            committeeMembers: members,
+          });
+          if (committeeApproval === "Approved") {
+            alert("Committee approved successfully by " + memberName);
+            // reload page
+            window.location.reload();
+          } else {
+            alert("Committee rejected successfully by " + memberName);
+            window.location.reload();
+          }
+        } else {
+          alert("Error approving Committee");
+        }
+      });
+  };
+
+  onSubmitCommitee = () => {
+    let form_data = new FormData();
+    form_data.append("cs_id", this.state.cs_id);
+    form_data.append(
+      "committee",
+      JSON.stringify({
+        committee: this.state.committeeMembers,
+      })
+    );
+    form_data.append("csrfmiddlewaretoken", this.getCookie("csrftoken"));
+
+    fetch(`${BASE_URL}/comperative_schedule/save_committee`, {
+      method: "POST",
+      headers: {
+        "X-CSRFToken": this.getCookie("csrftoken"),
+      },
+      body: form_data,
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        console.log("data: ", data);
+        if (data.success) {
+          alert("Committee saved successfully");
+        } else {
+          alert("Error saving Committee");
+        }
+      });
+  };
+
+  onApprovalApprove = (role, username, approval, justification) => {
+    let form_data = new FormData();
+    form_data.append("cs_id", this.state.cs_id);
+    form_data.append("role", role);
+    form_data.append("username", username);
+    form_data.append("approval", approval);
+    form_data.append("justification", justification);
+    form_data.append("csrfmiddlewaretoken", this.getCookie("csrftoken"));
+
+    fetch(`${BASE_URL}/comperative_schedule/approval_approve`, {
+      method: "POST",
+      headers: {
+        "X-CSRFToken": this.getCookie("csrftoken"),
+      },
+      body: form_data,
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        console.log("data: ", data);
+        if (data.success) {
+          let role = data.role;
+          let approval = data.approval;
+          if (role === "finance_manager") {
+            let fm_approval = data.fm_approval ? data.fm_approval : null;
+            this.setState({
+              fmApproval: fm_approval,
+            });
+          } else if(role === "general_manager") {
+            let gm_approval = data.gm_approval ? data.gm_approval : null;
+            this.setState({
+              gmApproval: gm_approval,
+            });
+          }
+          if (approval === "Approved") {
+            alert("Approval successfull");
+            // reload page
+            window.location.reload();
+          } else {
+            alert("Rejected successfully");
+            window.location.reload();
+          }
+        } else {
+          alert("Error approving Approval");
+        }
+      });
+  };
+
+  onApprovalJustificationModal = (username, role) => {
+    this.setState({
+      ...this.state,
+      currentApprover: {
+        username: username,
+        role: role,
+        justification: "",
+      },
+      approvalsJustificationModal: !this.state.approvalsJustificationModal,
+    });
+  };
+
+  onApprovalJustificationChange = (name_, event) => {
+    let { name, value } = event.target;
+    let currentApprover = this.state.currentApprover;
+    currentApprover[name] = value;
+    this.setState({
+      ...this.state,
+      currentApprover: currentApprover,
+    });
+  };
+
+  onAddCSItem = (item_id, ordered) => {
     // check is item already added
     let item = this.state.cs_items.find((item) => item.id === item_id);
     console.log("item: ", item);
     if (item) {
       // update item selected to false
-      item.selected = false;
+      item.ordered = false;
       // update pr_items
       let pr_items = this.state.pr_items.map((_item) => {
         if (_item.id === item_id) {
@@ -97,7 +497,8 @@ class CreateCS extends React.Component {
       // find item in pr_items
       let item = this.state.pr_items.find((item) => item.id === item_id);
       // update pr_item selected to added
-      item.selected = true;
+      item.ordered = true;
+      item.item_name = item.item_required;
       // update pr_items
       let pr_items = this.state.pr_items.map((_item) => {
         if (_item.id === item_id) {
@@ -113,13 +514,45 @@ class CreateCS extends React.Component {
         cs_items: [...this.state.cs_items, item],
         pr_items: pr_items,
       });
-      console.log("cs_items: ", this.state.cs_items);
-      console.log("pr_items: ", this.state.pr_items);
     }
   };
 
+  onSubmitCSItems = () => {
+    let form_data = new FormData();
+    form_data.append("cs_id", this.state.cs_id);
+    form_data.append("pr_id", this.state.pr_number);
+    form_data.append(
+      "json_data",
+      JSON.stringify({
+        cs_items: this.state.cs_items,
+      })
+    );
+    form_data.append("csrfmiddlewaretoken", this.getCookie("csrftoken"));
+
+    fetch(`${BASE_URL}/comperative_schedule/update_pritem_ordered`, {
+      method: "POST",
+      headers: {
+        "X-CSRFToken": this.getCookie("csrftoken"),
+      },
+      body: form_data,
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        console.log("data: ", data);
+        if (data.success) {
+          alert("Items saved successfully");
+        } else {
+          alert("Error saving Items");
+        }
+      });
+    this.setState({
+      ...this.state,
+      addItemsModal: false,
+    });
+  };
+
   onAddBidModal = () => {
-    let bid_count = this.state.bid_count + 1;
+    let bid_count = this.state.bids.length + 1;
     this.setState({
       ...this.state,
       addBidModal: !this.state.addBidModal,
@@ -134,18 +567,27 @@ class CreateCS extends React.Component {
     let bid = this.state.bids.find((bid) => bid.bid_count === bid_count);
     this.setState({
       ...this.state,
-      addBidModal: !this.state.addBidModal,
+      updateBidModal: !this.state.updateBidModal,
       currentBid: bid,
     });
   };
 
   onCloseCurrentBid = () => {
-    let bid_count = this.state.bid_count - 1;
+    let bid_count = this.state.bids.length - 1;
     this.setState({
       ...this.state,
       currentBid: {},
       addBidModal: false,
+      updateBidModal: false,
       bid_count: bid_count,
+    });
+  };
+
+  onCloseUpdateBidBid = () => {
+    this.setState({
+      ...this.state,
+      currentBid: {},
+      updateBidModal: false,
     });
   };
 
@@ -153,7 +595,9 @@ class CreateCS extends React.Component {
     let currentBid = this.state.currentBid;
     if (name_ === "bid_document") {
       let bid_file = event.target.files[0];
+      let bid_document_url = this.onGetFileObjectUrl(event.target.files[0]);
       currentBid[name_] = bid_file;
+      currentBid.bid_document_url = bid_document_url;
     } else if (name_ === "supplier") {
       let { name, value } = event.target;
       console.log("value: ", value);
@@ -170,10 +614,13 @@ class CreateCS extends React.Component {
     });
   };
 
-  onCurrentBidItemChange = (item_id, name_, event) => {
+  onCurrentBidItemChange = (description, name_, event) => {
     // check if item exists in current bid
+    console.log("description: ", description);
     let item = this.state.currentBid.items
-      ? this.state.currentBid.items.find((item) => item.id === item_id)
+      ? this.state.currentBid.items.find(
+          (item) => item.item_required === description
+        )
       : null;
     console.log("item: ", item);
     // if item exists update item
@@ -182,7 +629,7 @@ class CreateCS extends React.Component {
       item[name_] = value;
       // update item in current bid
       let items = this.state.currentBid.items.map((_item) => {
-        if (_item.id === item_id) {
+        if (_item.item_required === description) {
           return item;
         }
         return _item;
@@ -197,11 +644,12 @@ class CreateCS extends React.Component {
       });
     } else {
       // find item in cs_items
-      let item = this.state.cs_items.find((item) => item.id === item_id);
+      let item = this.state.cs_items.find(
+        (item) => item.item_name === description
+      );
       // create new item
       let new_item = {
-        id: item.id,
-        description: item.description,
+        item_required: item.item_name,
         quantity: item.quantity,
         unit_of_measurement: item.unit_of_measurement,
         vat: item.vat,
@@ -228,57 +676,71 @@ class CreateCS extends React.Component {
 
   onCurrentBidSave = () => {
     let currentBid = this.state.currentBid;
-    // check if current bid already exists
-    if (currentBid.items) {
-      console.log("state bids found: ", this.state.bids);
-      let bid = this.state.bids.find(
-        (bid) => bid && bid.bid_count === currentBid.bid_count
-      );
-      console.log("bid found: ", bid);
-      if (bid) {
-        // update bid
-        console.log("currentBid 1: ", currentBid);
-        let items = currentBid.items.map((item) => {
-          item.total_price = item.quantity * item.unit_price;
-          return item;
-        });
-        currentBid.items = items;
-        console.log("currentBid: ", currentBid);
-        this.onSaveBid(currentBid);
-        let bids = this.state.bids.map((bid) => {
-          if (bid.bid_count === currentBid.bid_count) {
-            return currentBid;
-          }
-          return bid;
-        });
-        this.setState({
-          ...this.state,
-          bids: bids,
-          currentBid: {},
-          addBidModal: false,
-        });
-      } else {
-        // calculate total price for each item
-        let items = currentBid.items.map((item) => {
-          item.total_price = item.quantity * item.unit_price;
-          return item;
-        });
-        // update current bid items
-        currentBid.items = items;
-        this.onSaveBid(currentBid);
-
-        let bids = this.state.bids;
-        console.log("currentBid: ", currentBid);
-        bids.push(currentBid);
-        this.setState({
-          ...this.state,
-          bids: bids,
-          currentBid: {},
-          addBidModal: false,
-        });
-      }
+    if (
+      currentBid.supplier_name === "" ||
+      currentBid.supplier_name === undefined
+    ) {
+      alert("Please select a supplier");
+      return;
+    } else if (
+      currentBid.bid_date === "" ||
+      currentBid.bid_date === undefined
+    ) {
+      alert("Please select a bid date");
+      return;
     } else {
-      alert("Please add items to the bid");
+      // check if current bid already exists
+      if (currentBid.items) {
+        console.log("state bids found: ", this.state.bids);
+        let bid = this.state.bids.find(
+          (bid) => bid && bid.bid_count === currentBid.bid_count
+        );
+        console.log("bid found: ", bid);
+        if (bid) {
+          // update bid
+          console.log("currentBid 1: ", currentBid);
+          let items = currentBid.items.map((item) => {
+            item.total_price = item.quantity * item.unit_price;
+            return item;
+          });
+          currentBid.items = items;
+          console.log("currentBid: ", currentBid);
+          this.onSaveBid(currentBid);
+          let bids = this.state.bids.map((bid) => {
+            if (bid.bid_count === currentBid.bid_count) {
+              return currentBid;
+            }
+            return bid;
+          });
+          this.setState({
+            ...this.state,
+            bids: bids,
+            currentBid: {},
+            addBidModal: false,
+          });
+        } else {
+          // calculate total price for each item
+          let items = currentBid.items.map((item) => {
+            item.total_price = item.quantity * item.unit_price;
+            return item;
+          });
+          // update current bid items
+          currentBid.items = items;
+          this.onSaveBid(currentBid);
+
+          let bids = this.state.bids;
+          console.log("currentBid: ", currentBid);
+          bids.push(currentBid);
+          this.setState({
+            ...this.state,
+            bids: bids,
+            currentBid: {},
+            addBidModal: false,
+          });
+        }
+      } else {
+        alert("Please add items to the bid");
+      }
     }
   };
 
@@ -301,7 +763,7 @@ class CreateCS extends React.Component {
     form_data.append("bid_document", currentBid.bid_document);
     form_data.append("csrfmiddlewaretoken", this.getCookie("csrftoken"));
 
-    fetch(`http://localhost:8000/comparative_schedule/save_bid`, {
+    fetch(`${BASE_URL}/comperative_schedule/save_bid`, {
       method: "POST",
       headers: {
         "X-CSRFToken": this.getCookie("csrftoken"),
@@ -323,8 +785,7 @@ class CreateCS extends React.Component {
     let form_data = new FormData();
     // add enctype to form data
     form_data.enctype = "multipart/form-data";
-    form_data.append("plan_ref", this.state.plan_ref);
-    form_data.append("proc_plan", this.state.proc_plan);
+    form_data.append("proc_ref", this.state.proc_ref);
     form_data.append("scope_of_work", this.state.scope_of_work);
     form_data.append("pr_number", this.state.pr_number);
     form_data.append("quantity", this.state.quantity);
@@ -341,7 +802,7 @@ class CreateCS extends React.Component {
     form_data.append("advert", this.state.advert);
     form_data.append("csrfmiddlewaretoken", this.getCookie("csrftoken"));
 
-    fetch(`http://localhost:8000/comparative_schedule/save`, {
+    fetch(`${BASE_URL}/comperative_schedule/save`, {
       method: "POST",
       headers: {
         "X-CSRFToken": this.getCookie("csrftoken"),
@@ -350,12 +811,13 @@ class CreateCS extends React.Component {
     })
       .then((response) => response.json())
       .then((data) => {
-        console.log("data: ", data);
+        console.log("comperative schedule saved data: ", data);
         if (data.success) {
           alert("Comparative Schedule saved successfully" + " " + data.cs_id);
           this.setState({
             ...this.state,
             cs_id: data.cs_id,
+            cs_owner: data.cs_owner,
           });
         } else {
           alert("Error saving Comparative Schedule");
@@ -368,8 +830,7 @@ class CreateCS extends React.Component {
     // add enctype to form data
     form_data.enctype = "multipart/form-data";
     form_data.append("cs_id", this.state.cs_id);
-    form_data.append("plan_ref", this.state.plan_ref);
-    form_data.append("proc_plan", this.state.proc_plan);
+    form_data.append("proc_ref", this.state.proc_ref);
     form_data.append("scope_of_work", this.state.scope_of_work);
     form_data.append("pr_number", this.state.pr_number);
     form_data.append("quantity", this.state.quantity);
@@ -386,7 +847,7 @@ class CreateCS extends React.Component {
     form_data.append("advert", this.state.advert);
     form_data.append("csrfmiddlewaretoken", this.getCookie("csrftoken"));
 
-    fetch(`http://localhost:8000/comparative_schedule/update`, {
+    fetch(`${BASE_URL}/comperative_schedule/update`, {
       method: "POST",
       headers: {
         "X-CSRFToken": this.getCookie("csrftoken"),
@@ -404,7 +865,7 @@ class CreateCS extends React.Component {
       });
   };
 
-  onDeleteBidModal = (bid_count) => {
+  onDeleteBidModal = (bid_count, supplier_name) => {
     // reset bid no index
     let bid_count_ = this.state.bid_count - 1;
     let bids = this.state.bids.filter((bid) => bid.bid_count !== bid_count);
@@ -418,6 +879,32 @@ class CreateCS extends React.Component {
       bids: bids,
       bid_count: bid_count_,
     });
+    this.deleteBid(bid_count, supplier_name);
+  };
+
+  deleteBid = (bid_count, supplier_name) => {
+    let form_data = new FormData();
+    form_data.append("cs_id", this.state.cs_id);
+    form_data.append("bid_count", bid_count);
+    form_data.append("supplier_name", supplier_name);
+    form_data.append("csrfmiddlewaretoken", this.getCookie("csrftoken"));
+
+    fetch(`${BASE_URL}/comperative_schedule/delete_bid`, {
+      method: "POST",
+      headers: {
+        "X-CSRFToken": this.getCookie("csrftoken"),
+      },
+      body: form_data,
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        console.log("data: ", data);
+        if (data.success) {
+          alert("Bid deleted successfully");
+        } else {
+          alert("Error deleting Bid");
+        }
+      });
   };
 
   onAddBid = () => {
@@ -493,76 +980,6 @@ class CreateCS extends React.Component {
     // Filter by depot, filter by month, filter combined
   }
 
-  getFilterData = (selectedRegion, selectedDistrict, selectedDepot) => {
-    fetch(`http://localhost:8000/dashboards/dashboard_filter`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRFToken": this.getCookie("csrftoken"),
-      },
-      body: JSON.stringify({
-        region: selectedRegion,
-        district: selectedDistrict,
-        depot: selectedDepot,
-      }),
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        console.log("data: ", data);
-        if (data) {
-          console.log("running ...");
-          let inspection_locations_,
-            inspections_count_,
-            maintenance_locations_,
-            maintenance_count_,
-            mtn_;
-          try {
-            inspection_locations_ = JSON.parse(data.inspection_locations);
-          } catch (error) {
-            console.error("Error parsing inspection_locations:", error);
-            inspection_locations_ = []; // Set to empty array on error
-          }
-          try {
-            inspections_count_ = JSON.parse(data.inspections_count);
-          } catch (error) {
-            console.error("Error parsing inspections_count_:", error);
-            inspections_count_ = []; // Set to empty array on error
-          }
-          try {
-            maintenance_locations_ = JSON.parse(data.maintenance_locations);
-          } catch (error) {
-            console.error("Error parsing maintenance_locations_:", error);
-            maintenance_locations_ = []; // Set to empty array on error
-          }
-          try {
-            maintenance_count_ = JSON.parse(data.maintenance_count);
-          } catch (error) {
-            console.error("Error parsing maintenance_count_:", error);
-            maintenance_count_ = []; // Set to empty array on error
-          }
-          try {
-            mtn_ = data.mtn;
-          } catch (error) {
-            console.error("Error parsing mtn_:", error);
-            mtn_ = {}; // Set to empty dict on error
-          }
-
-          this.setState({
-            inspection_locations: inspection_locations_,
-            inspections_count: inspections_count_,
-            maintenance_locations: maintenance_locations_,
-            maintenance_count: maintenance_count_,
-            mnt: mtn_,
-            pbncs: data.pbncs,
-            upos: data.upos,
-            tds: data.tds,
-          });
-
-          this.initComponents();
-        }
-      });
-  };
-
   getCookie(name) {
     let cookieValue = null;
     if (document.cookie && document.cookie !== "") {
@@ -578,32 +995,6 @@ class CreateCS extends React.Component {
     return cookieValue;
   }
 
-  getDashboardData = () => {
-    fetch(`http://localhost:8000/dashboards/dashboard_data`)
-      .then((response) => response.json())
-      .then((data) => {
-        console.log("data: ", data);
-        let inspection_locations_ = JSON.parse(data.inspection_locations);
-        let inspections_count_ = JSON.parse(data.inspections_count);
-        let maintenance_locations_ = JSON.parse(data.maintenance_locations);
-        let maintenance_count_ = JSON.parse(data.maintenance_count);
-        let mtn_ = data.mtn;
-
-        this.setState({
-          inspection_locations: inspection_locations_,
-          inspections_count: inspections_count_,
-          maintenance_locations: maintenance_locations_,
-          maintenance_count: maintenance_count_,
-          mnt: mtn_,
-          pbncs: data.pbncs,
-          upos: data.upos,
-          tds: data.tds,
-        });
-
-        this.initComponents();
-      });
-  };
-
   onInputChange = (event) => {
     console.log(event);
     const { name, value } = event.target;
@@ -615,9 +1006,12 @@ class CreateCS extends React.Component {
 
   onFileInputChange = (name_, event) => {
     console.log(event);
+    let file = event.target.files[0];
+    let fileUrl = this.onGetFileObjectUrl(file);
     this.setState({
       ...this.state,
-      [name_]: event.target.files[0],
+      [name_]: file,
+      advert_url: fileUrl,
     });
   };
 
@@ -625,22 +1019,22 @@ class CreateCS extends React.Component {
     // add bid compliance
     let compliances = this.state.bids.map((bid) => {
       return {
-      bid_count: bid.bid_count,
-      supplier: bid.supplier,
-      supplier_name: bid.supplier_name,
-      payment_terms: false,
-      bid_validity: false,
-      delivery_period: false,
-      technical_specifications: false,
-      valid_tax_clearance: false,
-      registered_with_praz: false,
-      tax_status: false,
-      site_visit_done: false,
-      samples_delivered: false,
-      decision: false,
-      reject: true,
-      remarks: "",
-      }
+        bid_count: bid.bid_count,
+        supplier: bid.supplier,
+        supplier_name: bid.supplier_name,
+        payment_terms: false,
+        bid_validity: false,
+        delivery_period: false,
+        technical_specifications: false,
+        valid_tax_clearance: false,
+        registered_with_praz: false,
+        tax_status: false,
+        site_visit: false,
+        samples_required: false,
+        decision: false,
+        reject: true,
+        remarks: "",
+      };
     });
 
     let complianceRemarks = this.state.bids.map((bid) => {
@@ -649,9 +1043,8 @@ class CreateCS extends React.Component {
         supplier: bid.supplier,
         supplier_name: bid.supplier_name,
         remarks: "",
-      }
+      };
     });
-
 
     this.setState({
       ...this.state,
@@ -661,38 +1054,131 @@ class CreateCS extends React.Component {
     });
   };
 
-  onComplianceChange = (bid_count, event) => {
+  onComplianceItemsChange = (name_, event) => {
+    console.log("name and value: ", name_, event);
+    let { name, value } = event.target;
+    this.setState({
+      ...this.state,
+      [name_]: value,
+    });
+  };
+
+  onComplianceChange = (index, event) => {
     let { name, checked } = event.target;
     console.log("name: ", name, "checked: ", checked);
     let compliance = this.state.compliance;
-    let index = compliance.findIndex((item) => item.bid_count === bid_count);
     compliance[index][name] = checked;
-    this.setState({
-      ...this.state,
-      compliance: compliance,
-    });
-  }
+    // filter decision and reject from list
+    let _compliance = {};
+    if (this.state.showSamples && this.state.showSiteVisit) {
+      _compliance = {
+        payment_terms: compliance[index].payment_terms,
+        bid_validity: compliance[index].bid_validity,
+        delivery_period: compliance[index].delivery_period,
+        technical_specifications: compliance[index].technical_specifications,
+        valid_tax_clearance: compliance[index].valid_tax_clearance,
+        registered_with_praz: compliance[index].registered_with_praz,
+        tax_status: compliance[index].tax_status,
+        site_visit: compliance[index].site_visit,
+        samples_required: compliance[index].samples_required,
+      };
+    } else if (this.state.showSamples && !this.state.showSiteVisit) {
+      _compliance = {
+        payment_terms: compliance[index].payment_terms,
+        bid_validity: compliance[index].bid_validity,
+        delivery_period: compliance[index].delivery_period,
+        technical_specifications: compliance[index].technical_specifications,
+        valid_tax_clearance: compliance[index].valid_tax_clearance,
+        registered_with_praz: compliance[index].registered_with_praz,
+        tax_status: compliance[index].tax_status,
+        samples_required: compliance[index].samples_required,
+      };
+    } else if (!this.state.showSamples && this.state.showSiteVisit) {
+      _compliance = {
+        payment_terms: compliance[index].payment_terms,
+        bid_validity: compliance[index].bid_validity,
+        delivery_period: compliance[index].delivery_period,
+        technical_specifications: compliance[index].technical_specifications,
+        valid_tax_clearance: compliance[index].valid_tax_clearance,
+        registered_with_praz: compliance[index].registered_with_praz,
+        tax_status: compliance[index].tax_status,
+        site_visit: compliance[index].site_visit,
+      };
+    } else {
+      _compliance = {
+        payment_terms: compliance[index].payment_terms,
+        bid_validity: compliance[index].bid_validity,
+        delivery_period: compliance[index].delivery_period,
+        technical_specifications: compliance[index].technical_specifications,
+        valid_tax_clearance: compliance[index].valid_tax_clearance,
+        registered_with_praz: compliance[index].registered_with_praz,
+        tax_status: compliance[index].tax_status,
+      };
+    }
 
-  onComplianceRemarksChange = (bid_count, event) => {
-    let { name, value } = event.target;
-    let compliance = this.state.compliance;
-    let index = compliance.findIndex((item) => item.bid_count === bid_count);
-    compliance[index][name] = value;
+    // set compliance[index]['decision'] to true if all compliance are true
+    let compliance_values = Object.values(_compliance);
+    console.log("compliances: ", compliance_values);
+    let decision = compliance_values.every((value) => value === true);
+    compliance[index]["decision"] = decision;
+    compliance[index]["reject"] = !decision;
+
     this.setState({
       ...this.state,
       compliance: compliance,
     });
-  }
+  };
+
+  onComplianceRemarksChange = (supplier_name, event) => {
+    let { name, value } = event.target;
+    console.log(
+      "name: ",
+      name,
+      "value: ",
+      value,
+      "supplier_name: ",
+      supplier_name
+    );
+    let complianceRemarks = this.state.complianceRemarks;
+    let index = complianceRemarks.findIndex(
+      (item) => item.supplier_name === supplier_name
+    );
+    if (index !== -1) {
+      complianceRemarks[index]["remarks"] = value;
+      this.setState({
+        ...this.state,
+        complianceRemarks: complianceRemarks,
+      });
+    } else {
+      complianceRemarks.push({
+        supplier_name: supplier_name,
+        remarks: value,
+      });
+      this.setState({
+        ...this.state,
+        complianceRemarks: complianceRemarks,
+      });
+    }
+  };
 
   onSaveCompliance = () => {
     let form_data = new FormData();
     form_data.append("cs_id", this.state.cs_id);
-    form_data.append("compliance", JSON.stringify({
-      compliance: this.state.compliance,
-    }));
+    form_data.append(
+      "compliance",
+      JSON.stringify({
+        compliance: this.state.compliance,
+      })
+    );
+    form_data.append(
+      "complianceRemarks",
+      JSON.stringify({
+        complianceRemarks: this.state.complianceRemarks,
+      })
+    );
     form_data.append("csrfmiddlewaretoken", this.getCookie("csrftoken"));
 
-    fetch(`http://localhost:8000/comparative_schedule/save_compliance`, {
+    fetch(`${BASE_URL}/comperative_schedule/save_compliance`, {
       method: "POST",
       headers: {
         "X-CSRFToken": this.getCookie("csrftoken"),
@@ -708,14 +1194,14 @@ class CreateCS extends React.Component {
           alert("Error saving Compliance");
         }
       });
-  }
+  };
 
   onCloseCS = () => {
     let form_data = new FormData();
     form_data.append("cs_id", this.state.cs_id);
     form_data.append("csrfmiddlewaretoken", this.getCookie("csrftoken"));
 
-    fetch(`http://localhost:8000/comparative_schedule/close_compliance`, {
+    fetch(`${BASE_URL}/comperative_schedule/close_compliance`, {
       method: "POST",
       headers: {
         "X-CSRFToken": this.getCookie("csrftoken"),
@@ -737,20 +1223,184 @@ class CreateCS extends React.Component {
           alert("Error saving Schedule");
         }
       });
-  }
+  };
 
   render() {
     var itemsModal = null;
     var bidsModal = null;
+    var updateBidModal = null;
     var complianceTable = null;
     var rankingTable = null;
+    var committeeTable = null;
+    var rejectJustification = null;
+    var approvalsTable = null;
+    var rejectApprovalJustification = null;
+
+    if (this.state.approvalsJustificationModal) {
+      rejectApprovalJustification = (
+        <div className="fixed inset-0 flex items-center justify-center z-50 pt-10 pb-20">
+          <div className="bg-gulf-blue-100 rounded-lg shadow-lg p-6 max-h-screen overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-medium">Reason for rejection</h3>
+              <button
+                type="button"
+                className="text-gray-400 hover:text-gray-500 focus:outline-none"
+                onClick={this.onApprovalJustificationModal}
+              >
+                <svg
+                  className="h-6 w-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+            <div className="overflow-auto px-2 py-2 mt-5 rounded-md bg-gulf-blue-300">
+              <div>
+                <div className="flex-1 w-full ml-1">
+                  <label
+                    htmlFor="bid_date"
+                    className="block text-sm font-medium leading-6 text-gray-900"
+                  >
+                    Justification
+                  </label>
+                  <div className="mt-2">
+                    <textarea
+                      name="justification"
+                      onChange={(e) =>
+                        this.onApprovalJustificationChange("justification", e)
+                      }
+                      type="text"
+                      required="required"
+                      className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-center mt-5 px-3 py-3">
+                <div className="m-2">
+                  <button
+                    onClick={this.onApprovalJustificationModal}
+                    className="rounded-md text-gray-50 text-sm bg-gray-300 hover:bg-blue-550 px-3 py-2 font-semibold leading-6"
+                  >
+                    <span className="ml-2">CANCEL</span>
+                  </button>
+                </div>
+                <div className="m-2">
+                  <button
+                    onClick={() =>
+                      this.onApprovalApprove(
+                        this.state.currentApprover.role,
+                        this.state.currentApprover.username,
+                        "Rejected",
+                        this.state.currentApprover.justification
+                      )
+                    }
+                    className="rounded-md text-gray-50 text-sm bg-blue-925 hover:bg-blue-550 px-3 py-2 font-semibold leading-6"
+                  >
+                    <span className="ml-2">PROCEED</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    if (this.state.committeeJustificationModal) {
+      rejectJustification = (
+        <div className="fixed inset-0 flex items-center justify-center z-50 pt-10 pb-20">
+          <div className="bg-gulf-blue-100 rounded-lg shadow-lg p-6 max-h-screen overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-medium">Reason for rejection</h3>
+              <button
+                type="button"
+                className="text-gray-400 hover:text-gray-500 focus:outline-none"
+                onClick={this.onCommitteeJustificationModal}
+              >
+                <svg
+                  className="h-6 w-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+            <div className="overflow-auto px-2 py-2 mt-5 rounded-md bg-gulf-blue-300">
+              <div>
+                <div className="flex-1 w-full ml-1">
+                  <label
+                    htmlFor="bid_date"
+                    className="block text-sm font-medium leading-6 text-gray-900"
+                  >
+                    Justification
+                  </label>
+                  <div className="mt-2">
+                    <textarea
+                      name="justification"
+                      onChange={(e) =>
+                        this.onCommitteeJustificationChange("justification", e)
+                      }
+                      type="text"
+                      required="required"
+                      className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-center mt-5 px-3 py-3">
+                <div className="m-2">
+                  <button
+                    onClick={this.onCommitteeJustificationModal}
+                    className="rounded-md text-gray-50 text-sm bg-gray-300 hover:bg-blue-550 px-3 py-2 font-semibold leading-6"
+                  >
+                    <span className="ml-2">CANCEL</span>
+                  </button>
+                </div>
+                <div className="m-2">
+                  <button
+                    onClick={() =>
+                      this.onCommitteeApprove(
+                        this.state.currentApprover.username,
+                        "Rejected",
+                        this.state.currentApprover.justification
+                      )
+                    }
+                    className="rounded-md text-gray-50 text-sm bg-blue-925 hover:bg-blue-550 px-3 py-2 font-semibold leading-6"
+                  >
+                    <span className="ml-2">PROCEED</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
 
     if (this.state.addItemsModal) {
       itemsModal = (
         <div className="fixed inset-0 flex items-center justify-center z-50 pt-10 pb-20">
-          <div className="bg-white rounded-lg shadow-lg p-6 max-h-screen overflow-y-auto">
+          <div className="bg-gulf-blue-100 rounded-lg shadow-lg p-6 max-h-screen overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-medium">Modal Title</h3>
+              <h3 className="text-lg font-medium">SELECT SCHEDULE ITEMS</h3>
               <button
                 type="button"
                 className="text-gray-400 hover:text-gray-500 focus:outline-none"
@@ -771,36 +1421,59 @@ class CreateCS extends React.Component {
                 </svg>
               </button>
             </div>
-            <div>
+            <div className="overflow-auto px-2 py-2 mt-5 rounded-md bg-gulf-blue-300">
               <table
                 style={{ width: "100%" }}
-                className="table-auto border-spacing-4"
+                className="table-auto w-full text-left"
               >
                 <thead>
-                  <tr>
-                    <th>Add Item</th>
-                    <th>Item Description</th>
-                    <th>Quantity</th>
+                  <tr className="text-gray-900">
+                    <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                      Select
+                    </th>
+                    <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                      Item
+                    </th>
+                    <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                      Quantity
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
                   {this.state.pr_items.map((item, index) => {
                     return (
-                      <tr>
-                        <td>
+                      <tr className="text-gray-900">
+                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
                           <input
                             type="checkbox"
-                            checked={item.selected ? item.selected : false}
-                            onChange={() => this.onAddCSItem(item.id)}
+                            checked={item.ordered ? item.ordered : false}
+                            onChange={() =>
+                              this.onAddCSItem(item.id, item.ordered)
+                            }
                           />
                         </td>
-                        <td>{item.description}</td>
-                        <td>{item.quantity}</td>
+                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                          {item.item_required}
+                        </td>
+                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                          {item.quantity}
+                        </td>
                       </tr>
                     );
                   })}
                 </tbody>
               </table>
+
+              <div className="flex justify-center mt-5 px-3 py-3">
+                <div className="m-2">
+                  <button
+                    onClick={this.onSubmitCSItems}
+                    className="rounded-md text-gray-50 text-sm bg-blue-925 hover:bg-blue-550 px-3 py-2 font-semibold leading-6"
+                  >
+                    <span className="ml-2">SAVE SCHEDULE ITEMS</span>
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -948,11 +1621,11 @@ class CreateCS extends React.Component {
                         <div className="mt-2">
                           <input
                             name="item_description"
-                            defaultValue={item.description}
+                            defaultValue={item.item_name}
                             onChange={(e) =>
                               this.onCurrentBidItemChange(
-                                item.id,
-                                "description",
+                                item.item_name,
+                                "item_required",
                                 e
                               )
                             }
@@ -975,7 +1648,7 @@ class CreateCS extends React.Component {
                             defaultValue={item.quantity}
                             onChange={(e) =>
                               this.onCurrentBidItemChange(
-                                item.id,
+                                item.item_name,
                                 "quantity",
                                 e
                               )
@@ -999,7 +1672,7 @@ class CreateCS extends React.Component {
                               id="unit_of_measurement"
                               onChange={(e) =>
                                 this.onCurrentBidItemChange(
-                                  item.id,
+                                  item.item_name,
                                   "unit_of_measurement",
                                   e
                                 )
@@ -1038,7 +1711,11 @@ class CreateCS extends React.Component {
                             <select
                               id="vat"
                               onChange={(e) =>
-                                this.onCurrentBidItemChange(item.id, "vat", e)
+                                this.onCurrentBidItemChange(
+                                  item.item_name,
+                                  "vat",
+                                  e
+                                )
                               }
                               autoComplete="vat"
                               className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
@@ -1067,7 +1744,7 @@ class CreateCS extends React.Component {
                             defaultValue={item.unit_price}
                             onChange={(e) =>
                               this.onCurrentBidItemChange(
-                                item.id,
+                                item.item_name,
                                 "unit_price",
                                 e
                               )
@@ -1109,30 +1786,362 @@ class CreateCS extends React.Component {
       );
     }
 
-    if (this.state.complianceTable) {
-      complianceTable = (
-        <div className="bg-gulf-blue-300 shadow shadow-nepal-300 text-gray-700 rounded px-2 py-2">
-          <div className="space-y-12 px-5 py-5">
-            <div className="px-4 sm:px-0 mt-6 border-t border-gray-100 border-gray-900/10">
-              <h2 className="text-base font-semibold leading-6 text-gray-900">
-                COMPLIANCE TABLE
-              </h2>
-              <p className="mt-1 max-w-2xl text-sm leading-6 text-gray-500">
-                Key: Comply/ Not Comply (Y/ N), Not Stated (NS)
-              </p>
-              <div className="flex justify-evenly mt-5 bg-gulf-blue-300 px-2 py-2 rounded-md">
-                <div className="flex-1 w-45">
+    if (this.state.updateBidModal) {
+      updateBidModal = (
+        <div
+          id={"bid-" + this.state.currentBid}
+          className="fixed inset-0 flex items-center justify-center z-50 pt-10 pb-20"
+        >
+          <div className="bg-white rounded-lg shadow-lg p-6 max-h-screen min-w-max overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-medium">Modal Title</h3>
+              <button
+                type="button"
+                className="text-gray-400 hover:text-gray-500 focus:outline-none"
+                onClick={this.onCloseUpdateBidBid}
+              >
+                <svg
+                  className="h-6 w-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+            <div className="px-4 sm:px-0 mt-6 bg-gulf-blue-300 rounded-md border-t border-gray-100 border-b border-gray-900/10 pb-12">
+              <div id="bid_container" className=" rounded-md">
+                <div className="flex justify-evenly mt-5  px-2 py-2 rounded-md">
+                  <div className="flex-1 w-20 ml-1">
+                    <label
+                      htmlFor="supplier_name"
+                      className="block text-sm font-medium leading-6 text-gray-900"
+                    >
+                      Supplier
+                    </label>
+                    <div className="mt-2">
+                      <select
+                        id="supplier"
+                        onChange={(e) => this.onCurrentBidChange("supplier", e)}
+                        className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
+                      >
+                        {this.state.currentBid.supplier_name ? (
+                          <option
+                            value={
+                              this.state.currentBid.supplier +
+                              "-#-" +
+                              this.state.currentBid.supplier_name
+                            }
+                          >
+                            {this.state.currentBid.supplier_name}
+                          </option>
+                        ) : (
+                          ""
+                        )}
+                        <option>Select Supplier</option>
+                        {this.state.suppliers
+                          ? this.state.suppliers.map((supplier) => (
+                              <option
+                                value={supplier.id + "-#-" + supplier.name}
+                              >
+                                {supplier.name}
+                              </option>
+                            ))
+                          : ""}
+                      </select>
+                    </div>
+                  </div>
+                  <div className="flex-1 w-20 ml-1">
+                    <label
+                      htmlFor="bid_date"
+                      className="block text-sm font-medium leading-6 text-gray-900"
+                    >
+                      Bid Date
+                    </label>
+                    <div className="mt-2">
+                      <input
+                        name="bid_date"
+                        value={this.state.currentBid.bid_date}
+                        onChange={(e) => this.onCurrentBidChange("bid_date", e)}
+                        type="date"
+                        required="required"
+                        className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex-1 w-20 ml-1">
+                    <label
+                      htmlFor="supplier[bid][0]"
+                      className="block text-sm font-medium leading-6 text-gray-900"
+                    >
+                      Bid No.
+                    </label>
+                    <div className="mt-2">
+                      <input
+                        name="supplier[bid][0]"
+                        type="number"
+                        value="1"
+                        id="bid"
+                        required="required"
+                        readOnly
+                        className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex-1 w-40 ml-1">
+                    <label
+                      htmlFor="bid_document"
+                      className="block text-sm font-medium leading-6 text-gray-900"
+                    >
+                      Bid Documents
+                    </label>
+                    <div className="mt-2">
+                      <input
+                        name="bid_document"
+                        type="file"
+                        onChange={(e) =>
+                          this.onCurrentBidChange("bid_document", e)
+                        }
+                        className="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {this.state.currentBid.items.map((item, index) => {
+                  return (
+                    <div className="flex justify-evenly mt-5  px-2 py-2 rounded-md">
+                      <div className="flex-1 w-15 ml-1">
+                        <label
+                          htmlFor="item_name"
+                          className="block text-sm font-medium leading-6 text-gray-900"
+                        >
+                          Item Description
+                        </label>
+                        <div className="mt-2">
+                          <input
+                            name="item_description"
+                            defaultValue={item.description}
+                            onChange={(e) =>
+                              this.onCurrentBidItemChange(
+                                item.item_name,
+                                "item_required",
+                                e
+                              )
+                            }
+                            id="item_description"
+                            required="required"
+                            className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                          />
+                        </div>
+                      </div>
+                      <div className="flex-1 w-15 ml-1">
+                        <label
+                          htmlFor="quantity"
+                          className="block text-sm font-medium leading-6 text-gray-900"
+                        >
+                          Quantity
+                        </label>
+                        <div className="mt-2">
+                          <input
+                            name="quantity"
+                            defaultValue={item.quantity}
+                            onChange={(e) =>
+                              this.onCurrentBidItemChange(
+                                item.item_name,
+                                "quantity",
+                                e
+                              )
+                            }
+                            type="number"
+                            id="quantity"
+                            className="block inpt w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                          />
+                        </div>
+                      </div>
+                      <div className="flex-1 w-15 ml-3">
+                        <div>
+                          <label
+                            htmlFor="unit_of_measurement"
+                            className="block text-sm font-medium leading-6 text-gray-900"
+                          >
+                            UOM
+                          </label>
+                          <div className="mt-2">
+                            <select
+                              id="unit_of_measurement"
+                              onChange={(e) =>
+                                this.onCurrentBidItemChange(
+                                  item.item_name,
+                                  "unit_of_measurement",
+                                  e
+                                )
+                              }
+                              autoComplete="unit_of_measurement"
+                              className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+                            >
+                              {item.unit_of_measurement ? (
+                                <option value={item.unit_of_measurement}>
+                                  {item.unit_of_measurement}
+                                </option>
+                              ) : (
+                                ""
+                              )}
+                              <option value="Each">Each</option>
+                              <option value="Kgs">Kg`s</option>
+                              <option value="Grammes">Grammes</option>
+                              <option value="Litres">Litres</option>
+                              <option value="Metres">Metres</option>
+                              <option value="Bags">Bags</option>
+                              <option value="Packets">Packets</option>
+                              <option value="Cartons">Cartons</option>
+                            </select>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex-1 w-15 ml-3">
+                        <div>
+                          <label
+                            htmlFor="vat"
+                            className="block text-sm font-medium leading-6 text-gray-900"
+                          >
+                            VAT
+                          </label>
+                          <div className="mt-2">
+                            <select
+                              id="vat"
+                              onChange={(e) =>
+                                this.onCurrentBidItemChange(
+                                  item.item_name,
+                                  "vat",
+                                  e
+                                )
+                              }
+                              autoComplete="vat"
+                              className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+                            >
+                              {item.vat ? (
+                                <option value={item.vat}>{item.vat}</option>
+                              ) : (
+                                ""
+                              )}
+                              <option value="Excl.">Excl.</option>
+                              <option value="Incl.">Incl.</option>
+                            </select>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex-1 w-15 ml-1">
+                        <label
+                          htmlFor="unit_price"
+                          className="block text-sm font-medium leading-6 text-gray-900"
+                        >
+                          Unit Price
+                        </label>
+                        <div className="mt-2">
+                          <input
+                            name="unit_price"
+                            defaultValue={item.unit_price}
+                            onChange={(e) =>
+                              this.onCurrentBidItemChange(
+                                item.item_name,
+                                "unit_price",
+                                e
+                              )
+                            }
+                            type="text"
+                            id="unit_price"
+                            required
+                            className="block inpt w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="flex justify-center mt-5 px-3 py-3">
+                <div className="m-2">
+                  <button
+                    onClick={this.onCurrentBidSave}
+                    className="rounded-md text-gray-50 text-sm bg-blue-925 hover:bg-blue-550 px-3 py-2 font-semibold leading-6"
+                  >
+                    <span className="ml-2">SAVE BID</span>
+                  </button>
+                </div>
+                <div className="m-2">
+                  <button
+                    onClick={this.onCloseCurrentBid}
+                    type="submit"
+                    className="rounded-md bg-red-danger hover:bg-orange-500 text-sm font-semibold px-3 py-2 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                  >
+                    <span className="ml-2">CANCEL</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    complianceTable = (
+      <div className="bg-gulf-blue-300 shadow shadow-nepal-300 text-gray-700 rounded px-2 py-2">
+        <div className="space-y-12 px-5 py-5">
+          <div className="px-4 sm:px-0 mt-6 border-t border-gray-100 border-gray-900/10">
+            <h2 className="text-base font-semibold leading-6 text-gray-900">
+              COMPLIANCE TABLE
+            </h2>
+            <p className="mt-1 max-w-2xl text-sm leading-6 text-gray-500">
+              Key: Comply/ Not Comply (Y/ N), Not Stated (NS)
+            </p>
+            <div className="flex justify-evenly mt-5 bg-gulf-blue-300 px-2 py-2 rounded-md">
+              <div className="flex-1 w-45">
+                <label
+                  htmlFor="site_visit"
+                  className="block text-sm font-medium leading-6 text-gray-900"
+                >
+                  Site visit required?
+                </label>
+                <div className="mt-2">
+                  <select
+                    id="site_visit"
+                    name="showSiteVisit"
+                    onChange={(e) =>
+                      this.onComplianceItemsChange("showSiteVisit", e)
+                    }
+                    autoComplete="site_visit"
+                    className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
+                  >
+                    <option value="">Select Option</option>
+                    <option value="yes">Yes</option>
+                    <option value="no">No</option>
+                  </select>
+                </div>
+              </div>
+              <div className="flex-1 w-45">
+                <div>
                   <label
-                    htmlFor="site_visit"
+                    htmlFor="samples"
                     className="block text-sm font-medium leading-6 text-gray-900"
                   >
-                    Site visit required?
+                    Are Samples Required?
                   </label>
                   <div className="mt-2">
                     <select
-                      id="site_visit"
-                      name="site_visit"
-                      autoComplete="site_visit"
+                      id="samples"
+                      name="showSamples"
+                      onChange={(e) =>
+                        this.onComplianceItemsChange("showSamples", e)
+                      }
+                      autoComplete="samples"
                       className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
                     >
                       <option value="">Select Option</option>
@@ -1141,250 +2150,281 @@ class CreateCS extends React.Component {
                     </select>
                   </div>
                 </div>
-                <div className="flex-1 w-45">
-                  <div>
-                    <label
-                      htmlFor="samples"
-                      className="block text-sm font-medium leading-6 text-gray-900"
-                    >
-                      Are Samples Required?
-                    </label>
-                    <div className="mt-2">
-                      <select
-                        id="samples"
-                        name="samples"
-                        autoComplete="samples"
-                        className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
-                      >
-                        <option value="">Select Option</option>
-                        <option value="yes">Yes</option>
-                        <option value="no">No</option>
-                      </select>
-                    </div>
-                  </div>
-                </div>
               </div>
+            </div>
 
-              <div className="overflow-auto px-2 py-2 mt-5 rounded-md bg-gulf-blue-300">
-                <table className="table-auto w-full text-left">
-                  <thead>
-                    <tr className="text-gray-900">
-                      <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                        Bid No.
-                      </th>
-                      <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                        Name of Supplier
-                      </th>
-                      <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                        Payment <br />
-                        Terms
-                      </th>
-                      <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                        Bid <br />
-                        Validity
-                      </th>
-                      <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                        Delivery <br />
-                        Period
-                      </th>
-                      <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                        Technical <br />
-                        Specifications
-                      </th>
-                      <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                        Valid <br />
-                        Tax Clearance
-                      </th>
-                      <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                        Registered <br />
-                        with PRAZ?
-                      </th>
-                      <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                        Tax <br />
-                        Status
-                      </th>
+            <div className="overflow-auto px-2 py-2 mt-5 rounded-md bg-gulf-blue-300">
+              <table className="table-auto w-full text-left">
+                <thead>
+                  <tr className="text-gray-900">
+                    <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                      Bid No.
+                    </th>
+                    <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                      Name of Supplier
+                    </th>
+                    <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                      Payment <br />
+                      Terms
+                    </th>
+                    <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                      Bid <br />
+                      Validity
+                    </th>
+                    <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                      Delivery <br />
+                      Period
+                    </th>
+                    <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                      Technical <br />
+                      Specifications
+                    </th>
+                    <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                      Valid <br />
+                      Tax Clearance
+                    </th>
+                    <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                      Registered <br />
+                      with PRAZ?
+                    </th>
+                    <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                      Tax <br />
+                      Status
+                    </th>
+                    {this.state.showSiteVisit === "yes" ? (
                       <th
                         id="site_visit_header"
-                        className="hidden site-visit-header border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2"
+                        className="site-visit-header border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2"
                       >
                         Site Visit
                         <br />
                         Done?
                       </th>
+                    ) : (
+                      ""
+                    )}
+                    {this.state.showSamples === "yes" ? (
                       <th
                         id="samples_header"
-                        className="hidden samples-header border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2"
+                        className="samples-header border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2"
                       >
                         Samples <br />
                         Delivered?
                       </th>
-                      <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                        Accept
-                      </th>
-                      <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                        Reject
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {this.state.compliance.map((comp, key) => {
-                      return (
-                        <tr>
-                          <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                            {comp.bid_count}
-                          </td>
-                          <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                            {comp.supplier_name}
-                          </td>
-                          <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                            <input
-                              name="payment_terms"
-                              checked={comp.payment_terms? comp.payment_terms : false}
-                              onChange={(e) => this.onComplianceChange(comp.bid_count, e)}
-                              id="payment_terms"
-                              type="checkbox"
-                            />
-                          </td>
-                          <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                            <input
-                              name="bid_validity"
-                              checked={comp.bid_validity? comp.bid_validity : false}
-                              onChange={(e) => this.onComplianceChange(comp.bid_count, e)}
-                              id="bid_validity"
-                              type="checkbox"
-                            />
-                          </td>
-                          <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                            <input
-                              name="delivery_period"
-                              checked={comp.delivery_period? comp.delivery_period : false}
-                              onChange={(e) => this.onComplianceChange(comp.bid_count, e)}
-                              id="delivery_period"
-                              type="checkbox"
-                            />
-                          </td>
-                          <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                            <input
-                              name="technical_specifications"
-                              checked={comp.technical_specifications? comp.technical_specifications : false}
-                              onChange={(e) => this.onComplianceChange(comp.bid_count, e)}
-                              id="technical_specifications"
-                              type="checkbox"
-                            />
-                          </td>
-                          <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                            <input
-                              name="valid_tax_clearance"
-                              checked={comp.valid_tax_clearance? comp.valid_tax_clearance : false}
-                              onChange={(e) => this.onComplianceChange(comp.bid_count, e)}
-                              id="valid_tax_clearance"
-                              type="checkbox"
-                            />
-                          </td>
-                          <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                            <input
-                              name="registered_with_praz"
-                              checked={comp.registered_with_praz? comp.registered_with_praz : false}
-                              onChange={(e) => this.onComplianceChange(comp.bid_count, e)}
-                              id="registered_with_praz"
-                              type="checkbox"
-                            />
-                          </td>
-                          <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                            <input
-                              name="tax_status"
-                              checked={comp.tax_status? comp.tax_status : false}
-                              onChange={(e) => this.onComplianceChange(comp.bid_count, e)}
-                              id="tax_status"
-                              type="checkbox"
-                            />
-                          </td>
+                    ) : (
+                      ""
+                    )}
+
+                    <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                      Accept
+                    </th>
+                    <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                      Reject
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {this.state.compliance.map((comp, key) => {
+                    return (
+                      <tr>
+                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                          {key + 1}
+                        </td>
+                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                          {comp.supplier_name}
+                        </td>
+                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                          <input
+                            name="payment_terms"
+                            checked={
+                              comp.payment_terms ? comp.payment_terms : false
+                            }
+                            onChange={(e) => this.onComplianceChange(key, e)}
+                            id="payment_terms"
+                            type="checkbox"
+                          />
+                        </td>
+                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                          <input
+                            name="bid_validity"
+                            checked={
+                              comp.bid_validity ? comp.bid_validity : false
+                            }
+                            onChange={(e) => this.onComplianceChange(key, e)}
+                            id="bid_validity"
+                            type="checkbox"
+                          />
+                        </td>
+                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                          <input
+                            name="delivery_period"
+                            checked={
+                              comp.delivery_period
+                                ? comp.delivery_period
+                                : false
+                            }
+                            onChange={(e) => this.onComplianceChange(key, e)}
+                            id="delivery_period"
+                            type="checkbox"
+                          />
+                        </td>
+                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                          <input
+                            name="technical_specifications"
+                            checked={
+                              comp.technical_specifications
+                                ? comp.technical_specifications
+                                : false
+                            }
+                            onChange={(e) => this.onComplianceChange(key, e)}
+                            id="technical_specifications"
+                            type="checkbox"
+                          />
+                        </td>
+                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                          <input
+                            name="valid_tax_clearance"
+                            checked={
+                              comp.valid_tax_clearance
+                                ? comp.valid_tax_clearance
+                                : false
+                            }
+                            onChange={(e) => this.onComplianceChange(key, e)}
+                            id="valid_tax_clearance"
+                            type="checkbox"
+                          />
+                        </td>
+                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                          <input
+                            name="registered_with_praz"
+                            checked={
+                              comp.registered_with_praz
+                                ? comp.registered_with_praz
+                                : false
+                            }
+                            onChange={(e) => this.onComplianceChange(key, e)}
+                            id="registered_with_praz"
+                            type="checkbox"
+                          />
+                        </td>
+                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                          <input
+                            name="tax_status"
+                            checked={comp.tax_status ? comp.tax_status : false}
+                            onChange={(e) => this.onComplianceChange(key, e)}
+                            id="tax_status"
+                            type="checkbox"
+                          />
+                        </td>
+                        {this.state.showSiteVisit === "yes" ? (
                           <td
                             id="site_visit_header"
-                            className="hidden site-visit-header border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2"
+                            className="site-visit-header border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2"
                           >
                             <input
-                              name="site_visit_done"
-                              checked={comp.site_visit_done? comp.site_visit_done : false}
-                              onChange={(e) => this.onComplianceChange(comp.bid_count, e)}
-                              id="site_visit_done"
+                              name="site_visit"
+                              checked={
+                                comp.site_visit ? comp.site_visit : false
+                              }
+                              onChange={(e) => this.onComplianceChange(key, e)}
+                              id="site_visit"
                               type="checkbox"
                             />
                           </td>
+                        ) : (
+                          ""
+                        )}
+                        {this.state.showSamples === "yes" ? (
                           <td
                             id="samples_header"
-                            className="hidden samples-header border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2"
+                            className="samples-header border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2"
                           >
                             <input
-                              name="samples_delivered"
-                              checked={comp.samples_delivered? comp.samples_delivered : false}
-                              onChange={(e) => this.onComplianceChange(comp.bid_count, e)}
-                              id="samples_delivered"
+                              name="samples_required"
+                              checked={
+                                comp.samples_required
+                                  ? comp.samples_required
+                                  : false
+                              }
+                              onChange={(e) => this.onComplianceChange(key, e)}
+                              id="samples_required"
                               type="checkbox"
                             />
                           </td>
-                          <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                            <input
-                              name="decision"
-                              checked={comp.decision? comp.decision : false}
-                              onChange={(e) => this.onComplianceChange(comp.bid_count, e)}
-                              id="decision"
-                              type="checkbox"
-                            />
-                          </td>
-                          <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                            <input 
-                            name="reject" 
-                            checked={comp.reject? comp.reject : false}
-                            onChange={(e) => this.onComplianceChange(comp.bid_count, e)}
-                            id="reject" type="checkbox" />
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-              <div className="px-2 py-2 mt-5 rounded-sm bg-gulf-blue-300">
-                <table className="table-auto w-full text-left">
-                  <thead>
-                    <tr className="text-gray-900">
-                      <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                        Supplier
-                      </th>
-                      <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                        Remarks
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {this.state.compliance.map((bid, key) => {
-                      return (
-                        <tr>
-                          <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                            {bid.supplier_name}
-                          </td>
-                          <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                            <input
-                              name="remarks"
-                              onChange={(e) => this.onComplianceRemarksChange(bid.bid_count, e)}
-                              type="text"
-                              className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
-                            />
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
+                        ) : (
+                          ""
+                        )}
+                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                          <input
+                            name="decision"
+                            checked={comp.decision ? comp.decision : false}
+                            onChange={(e) => this.onComplianceChange(key, e)}
+                            id="decision"
+                            type="checkbox"
+                          />
+                        </td>
+                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                          <input
+                            name="reject"
+                            checked={comp.reject ? comp.reject : false}
+                            onChange={(e) => this.onComplianceChange(key, e)}
+                            id="reject"
+                            type="checkbox"
+                          />
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+            <div className="px-2 py-2 mt-5 rounded-sm bg-gulf-blue-300">
+              <table className="table-auto w-full text-left">
+                <thead>
+                  <tr className="text-gray-900">
+                    <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                      Supplier
+                    </th>
+                    <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                      Remarks
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {this.state.complianceRemarks.map((bid, key) => {
+                    return (
+                      <tr>
+                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                          {bid.supplier_name}
+                        </td>
+                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                          <input
+                            name="remarks"
+                            defaultValue={bid.remarks}
+                            onChange={(e) =>
+                              this.onComplianceRemarksChange(
+                                bid.supplier_name,
+                                e
+                              )
+                            }
+                            type="text"
+                            className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
+                          />
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
           </div>
+        </div>
 
+        {this.state.username === this.state.cs_owner ? (
           <div className="flex justify-center mt-5 px-3 py-3">
             <div className="flex-1 m-2">
               <button
-                style={{width: "100%"}}
+                style={{ width: "100%" }}
                 onClick={this.onSaveCompliance}
                 name="save_next"
                 className="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
@@ -1393,81 +2433,387 @@ class CreateCS extends React.Component {
               </button>
             </div>
           </div>
-        </div>
-      );
-    }
+        ) : (
+          ""
+        )}
+      </div>
+    );
 
-    if (this.state.rankingTable) {
-      rankingTable = (
-        <div className="bg-gulf-blue-300 shadow shadow-nepal-300 text-gray-700 rounded px-2 py-2">
-          <div className="space-y-12 px-5 py-5">
-            <div className="px-4 sm:px-0 mt-6 border-t border-gray-100 border-gray-900/10">
-              <h2 className="text-base font-semibold leading-6 text-gray-900">
-                RANKING TABLE
-              </h2>
+    rankingTable = (
+      <div className="bg-gulf-blue-300 shadow shadow-nepal-300 text-gray-700 rounded px-2 py-2">
+        <div className="space-y-12 px-5 py-5">
+          <div className="px-4 sm:px-0 mt-6 border-t border-gray-100 border-gray-900/10">
+            <h2 className="text-base font-semibold leading-6 text-gray-900">
+              RANKING TABLE
+            </h2>
 
-              <div className="overflow-auto px-2 py-2 mt-5 rounded-md bg-gulf-blue-300">
-                <table className="table-auto w-full text-left">
-                  <thead>
-                    <tr className="text-gray-900">
-                      <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                        ID
-                      </th>
-                      <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                        Name of Supplier
-                      </th>
-                      <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                        Rank
-                      </th>
-                      <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                        Decision
-                      </th>
-                      <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                        Remarks
-                      </th>
-                      <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                        Total
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {this.state.rankings.map((rank, key) => {
-                      return (
-                        <tr className="text-gray-900">
-                          <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                            {rank.id}
-                          </td>
-                          <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                            {rank.supplier_name}
-                          </td>
-                          <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                            {rank.rank}
-                          </td>
-                          <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                            {rank.decision}
-                          </td>
-                          <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                            {rank.remarks}
-                          </td>
-                          <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                            {rank.total}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
+            <div className="overflow-auto px-2 py-2 mt-5 rounded-md bg-gulf-blue-300">
+              <table className="table-auto w-full text-left">
+                <thead>
+                  <tr className="text-gray-900">
+                    <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                      ID
+                    </th>
+                    <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                      Name of Supplier
+                    </th>
+                    <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                      Rank
+                    </th>
+                    <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                      Decision
+                    </th>
+                    <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                      Remarks
+                    </th>
+                    <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                      Total
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {this.state.rankings.map((rank, key) => {
+                    return (
+                      <tr className="text-gray-900">
+                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                          {key + 1}
+                        </td>
+                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                          {rank.supplier_name}
+                        </td>
+                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                          {rank.rank}
+                        </td>
+                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                          {rank.decision}
+                        </td>
+                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                          {rank.remarks}
+                        </td>
+                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                          {rank.total}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
-      );
-    }
+      </div>
+    );
+
+    committeeTable = (
+      <div className="bg-gulf-blue-300 shadow shadow-nepal-300 text-gray-700 rounded px-2 py-2">
+        <div className="space-y-12 px-5 py-5">
+          <div className="px-4 sm:px-0 mt-6 border-t border-gray-100 border-gray-900/10">
+            <h2 className="text-base font-semibold leading-6 text-gray-900">
+              Committee Members
+            </h2>
+
+            <div className="overflow-auto px-2 py-2 mt-5 rounded-md bg-gulf-blue-300">
+              <table className="table-auto w-full text-left">
+                <tbody>
+                  <tr className="text-gray-900">
+                    <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                      <div>
+                        <label
+                          htmlFor="memberPosition"
+                          className="block text-sm font-medium leading-6 text-gray-900"
+                        >
+                          Member Position
+                        </label>
+                        <div className="mt-2">
+                          {this.state.username === this.state.cs_owner ? (
+                            <select
+                              onChange={(text) =>
+                                this.onCommitteeChange("memberPosition", text)
+                              }
+                              id="memberPosition"
+                              name="memberPosition"
+                              autoComplete="memberPosition"
+                              className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
+                            >
+                              <option value="">Select Option</option>
+                              <option value="chairman">Chairman</option>
+                              <option value="finance">Finance</option>
+                              <option value="procurement">Procurement</option>
+                              <option value="user">User</option>
+                              <option value="other">Other</option>
+                            </select>
+                          ) : (
+                            ""
+                          )}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                      <div>
+                        <label
+                          htmlFor="memberUserName"
+                          className="block text-sm font-medium leading-6 text-gray-900"
+                        >
+                          Select User
+                        </label>
+                        <div className="mt-2">
+                          {this.state.username === this.state.cs_owner ? (
+                            <select
+                              onChange={(text) =>
+                                this.onCommitteeChange("memberUserName", text)
+                              }
+                              id="memberUserName"
+                              name="memberUserName"
+                              autoComplete="memberUserName"
+                              className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
+                            >
+                              {this.state.users
+                                ? this.state.users.map((user) => (
+                                    <option value={user.username}>
+                                      {user.first_name + " " + user.last_name}
+                                    </option>
+                                  ))
+                                : ""}
+                            </select>
+                          ) : (
+                            ""
+                          )}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2"></td>
+                    <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                      {this.state.username === this.state.cs_owner ? (
+                        <div className="w-30">
+                          <button
+                            style={{ width: "100%" }}
+                            onClick={this.onAddCommitteeMembers}
+                            name="save_next"
+                            className="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                          >
+                            ADD MEMBER
+                          </button>
+                        </div>
+                      ) : (
+                        ""
+                      )}
+                    </td>
+                  </tr>
+                  {this.state.committeeMembers.map((member, key) => {
+                    return (
+                      <tr className="text-gray-900">
+                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                          {member.memberPosition}
+                        </td>
+                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                          {member.memberName
+                            ? member.memberName
+                            : member.memberUserName}
+                        </td>
+                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                          {member.committeeDate}
+                        </td>
+                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                          {member.committeeApproval === "Approved" && "APPROVED"}
+                          {member.committeeApproval === "Rejected" && "REJECTED"}
+                          {(member.committeeApproval === "" || member.committeeApproval === null) && (
+                            <div className="flex justify-content-evenly">
+                              {this.state.username === this.state.cs_owner ? (
+                                <div className="m-2">
+                                  <button
+                                    onClick={() =>
+                                      this.onRemoveCommitteeMember(
+                                        key,
+                                        member.memberUserName
+                                      )
+                                    }
+                                    name="save_next"
+                                    className="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                                  >
+                                    REMOVE
+                                  </button>
+                                </div>
+                              ) : (
+                                ""
+                              )}
+                              {this.state.username === member.memberUserName? (
+                                <div className="flex justify-content-evenly">
+                                  <div className="m-2">
+                                    <button
+                                      onClick={() =>
+                                        this.onCommitteeApprove(
+                                          member.memberUserName,
+                                          "Approved",
+                                          ""
+                                        )
+                                      }
+                                      name="save_next"
+                                      className="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                                    >
+                                      APPROVE
+                                    </button>
+                                  </div>
+                                  <div className="m-2">
+                                    <button
+                                      onClick={() =>
+                                        this.onCommitteeJustificationModal(member.memberUserName)
+                                      }
+                                      name="save_next"
+                                      className="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                                    >
+                                      REJECT
+                                    </button>
+                                  </div>
+                                </div>
+                              ) : (
+                                ""
+                              )}
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+
+    approvalsTable = (
+      <div className="bg-gulf-blue-300 shadow shadow-nepal-300 text-gray-700 rounded px-2 py-2">
+        <div className="space-y-12 px-5 py-5">
+          <div className="px-4 sm:px-0 mt-6 border-t border-gray-100 border-gray-900/10">
+            <h2 className="text-base font-semibold leading-6 text-gray-900">
+              Approvals
+            </h2>
+
+            <div className="overflow-auto px-2 py-2 mt-5 rounded-md bg-gulf-blue-300">
+              <table className="table-auto w-full text-left">
+                <tbody>
+                  <tr className="text-gray-900">
+                    <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                      FINANCE MANAGER
+                    </td>
+                    <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                      {this.state.fmApproval && this.state.fmApproval.approval === "Approved" && "APPROVED"}
+                      {this.state.fmApproval && this.state.fmApproval.approval === "Rejected" && "REJECTED"}
+                      {(
+                            <div className="flex justify-content-evenly">
+                              {(this.state.requester_role === 'check') && Object.keys(this.state.fmApproval).length === 0 ? (
+                                <div className="flex justify-content-evenly">
+                                  <div className="m-2">
+                                    <button
+                                      onClick={() =>
+                                        this.onApprovalApprove(
+                                          "finance_manager",
+                                          this.state.username,
+                                          "Approved",
+                                          ""
+                                        )
+                                      }
+                                      name="save_next"
+                                      className="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                                    >
+                                      APPROVE
+                                    </button>
+                                  </div>
+                                  <div className="m-2">
+                                    <button
+                                      onClick={() =>
+                                        this.onApprovalJustificationModal(this.state.username, "finance_manager")
+                                      }
+                                      name="save_next"
+                                      className="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                                    >
+                                      REJECT
+                                    </button>
+                                  </div>
+                                </div>
+                              ) : (
+                                ""
+                              )}
+                            </div>
+                          )
+                    }
+                    </td>
+                    <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                      {this.state.fmApproval && this.state.fmApproval.justification}
+                    </td>
+                    <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                      {this.state.fmApproval && this.state.fmApproval.approval_date}
+                    </td>
+                  </tr>
+                  <tr className="text-gray-900">
+                    <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                      GENERAL MANAGER
+                    </td>
+                    <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                      {this.state.gmApproval && this.state.gmApproval.approval === "Approved" && "APPROVED"}
+                      {this.state.gmApproval && this.state.gmApproval.approval === "Rejected" && "REJECTED"}
+                      {(
+                            <div className="flex justify-content-evenly">
+                              {(this.state.requester_role === 'approve') && Object.keys(this.state.gmApproval).length === 0 ? (
+                                <div className="flex justify-content-evenly">
+                                  <div className="m-2">
+                                    <button
+                                      onClick={() =>
+                                        this.onApprovalApprove(
+                                          "general_manager",
+                                          this.state.username,
+                                          "Approved",
+                                          ""
+                                        )
+                                      }
+                                      name="save_next"
+                                      className="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                                    >
+                                      APPROVE
+                                    </button>
+                                  </div>
+                                  <div className="m-2">
+                                    <button
+                                      onClick={() =>
+                                        this.onApprovalJustificationModal(this.state.username, "general_manager")
+                                      }
+                                      name="save_next"
+                                      className="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                                    >
+                                      REJECT
+                                    </button>
+                                  </div>
+                                </div>
+                              ) : (
+                                ""
+                              )}
+                            </div>
+                          )
+                    }
+                    </td>
+                    <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                      {this.state.gmApproval && this.state.gmApproval.justification}
+                    </td>
+                    <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                      {this.state.gmApproval && this.state.gmApproval.approval_date}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
 
     return (
       <div>
         {itemsModal}
         {bidsModal}
+        {updateBidModal}
+        {rejectJustification}
+        {rejectApprovalJustification}
         <div className="space-y-12 px-5 py-5">
           <div className="px-4 sm:px-0">
             <h3 className="text-base font-semibold leading-7 text-gray-900">
@@ -1517,8 +2863,15 @@ class CreateCS extends React.Component {
                       className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
                     >
                       <option>Select Procurement Plan Ref</option>
-                      {this.state.procurement_plans
-                        ? this.state.procurement_plans.map((plan) => (
+                      {this.state.proc_plan ? (
+                        <option value={this.state.proc_plan.proc_ref}>
+                          {this.state.proc_plan.description}
+                        </option>
+                      ) : (
+                        ""
+                      )}
+                      {this.state.proc_plans
+                        ? this.state.proc_plans.map((plan) => (
                             <option value={plan.proc_ref}>
                               {plan.description}
                             </option>
@@ -1563,24 +2916,6 @@ class CreateCS extends React.Component {
                     value={this.state.pr_number}
                     onChange={this.onInputChange}
                     id="pr_number"
-                    required="required"
-                    className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                  />
-                </div>
-              </div>
-              <div className="flex-1 w-20 ml-1">
-                <label
-                  htmlFor="quantity"
-                  className="block text-sm font-medium leading-6 text-gray-900"
-                >
-                  Quantity
-                </label>
-                <div className="mt-2">
-                  <input
-                    name="quantity"
-                    value={this.state.quantity}
-                    onChange={this.onInputChange}
-                    type="number"
                     required="required"
                     className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                   />
@@ -1639,6 +2974,13 @@ class CreateCS extends React.Component {
                         }
                         className="rounded-md block border-none w-full py-1.5 text-gray-900 sm:max-w-xs sm:text-sm sm:leading-6"
                       >
+                        {this.state.closing_time_hour ? (
+                          <option value={this.state.closing_time_hour}>
+                            {this.state.closing_time_hour}
+                          </option>
+                        ) : (
+                          ""
+                        )}
                         <option value="10:00">10:00</option>
                         <option value="14:00">14:00</option>
                       </select>
@@ -1739,36 +3081,55 @@ class CreateCS extends React.Component {
                   />
                 </div>
               </div>
+              <div className="flex-1 w-40 ml-2">
+                <label
+                  htmlFor="bid_document"
+                  className="block text-sm font-medium leading-6 text-gray-900"
+                >
+                  Advert Document
+                </label>
+                <div className="mt-2">
+                  <a href={this.state.advert_url} rel="noopener noreferrer">
+                    View Advert Document
+                  </a>
+                </div>
+              </div>
             </div>
 
-            <div className="flex justify-center mt-10 px-3 py-3">
-              {this.state.cs_id ? (
-                <div className="w-30 m-2">
-                  <button
-                    style={{ width: "100%" }}
-                    onClick={this.onUpdateSchedule}
-                    name="save_next"
-                    className="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                  >
-                    UPDATE SCHEDULE
-                  </button>
-                </div>
-              ) : (
-                <div className="w-30 m-2">
-                  <button
-                    style={{ width: "100%" }}
-                    onClick={this.onSaveSchedule}
-                    name="save_next"
-                    className="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                  >
-                    SAVE SCHEDULE
-                  </button>
-                </div>
-              )}
-            </div>
+            {this.state.username === this.state.cs_owner ||
+            !this.state.cs_id ? (
+              <div className="flex justify-center mt-10 px-3 py-3">
+                {this.state.cs_id ? (
+                  <div className="w-30 m-2">
+                    <button
+                      style={{ width: "100%" }}
+                      onClick={this.onUpdateSchedule}
+                      name="save_next"
+                      className="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                    >
+                      UPDATE SCHEDULE
+                    </button>
+                  </div>
+                ) : (
+                  <div className="w-30 m-2">
+                    <button
+                      style={{ width: "100%" }}
+                      onClick={this.onSaveSchedule}
+                      name="save_next"
+                      className="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                    >
+                      SAVE SCHEDULE
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              ""
+            )}
           </div>
 
-          {this.state.bids.length === 0 && this.state.cs_id && (
+          {this.state.bids.length < 1 &&
+          this.state.username === this.state.cs_owner ? (
             <div className="m-2">
               <button
                 style={{ width: "100%" }}
@@ -1778,6 +3139,8 @@ class CreateCS extends React.Component {
                 ADD SCHEDULE ITEMS
               </button>
             </div>
+          ) : (
+            ""
           )}
 
           {this.state.bids.map((bid, index) => {
@@ -1830,15 +3193,11 @@ class CreateCS extends React.Component {
                       </label>
                       <div className="mt-2">
                         <a
-                          href={
-                            bid.bid_document
-                              ? URL.createObjectURL(bid.bid_document)
-                              : ""
-                          }
+                          href={bid.bid_document_url}
                           target="_blank"
                           rel="noopener noreferrer"
                         >
-                          {bid.bid_document ? bid.bid_document.name : ""}
+                          View Document
                         </a>
                       </div>
                     </div>
@@ -1855,7 +3214,11 @@ class CreateCS extends React.Component {
                             Item Description
                           </label>
                           <div className="mt-2">
-                            <p>{item.description}</p>
+                            <p>
+                              {item.item_required
+                                ? item.item_required
+                                : item.description}
+                            </p>
                           </div>
                         </div>
                         <div className="flex-1 w-15 ml-1">
@@ -1922,30 +3285,40 @@ class CreateCS extends React.Component {
                   })}
                 </div>
 
-                <div className="flex justify-center mt-5 px-3 py-3">
-                  <div className="m-2">
-                    <button
-                      onClick={() => this.onUpdateBidModal(bid.bid_count)}
-                      className="rounded-md text-gray-50 text-sm bg-blue-925 hover:bg-blue-550 px-3 py-2 font-semibold leading-6"
-                    >
-                      UPDATE BID
-                    </button>
+                {this.state.username === this.state.cs_owner ? (
+                  <div className="flex justify-center mt-5 px-3 py-3">
+                    <div className="m-2">
+                      <button
+                        onClick={() => this.onUpdateBidModal(bid.bid_count)}
+                        className="rounded-md text-gray-50 text-sm bg-blue-925 hover:bg-blue-550 px-3 py-2 font-semibold leading-6"
+                      >
+                        UPDATE BID
+                      </button>
+                    </div>
+                    <div className="m-2">
+                      <button
+                        onClick={() =>
+                          this.onDeleteBidModal(
+                            bid.bid_count,
+                            bid.supplier_name
+                          )
+                        }
+                        type="submit"
+                        className="rounded-md bg-red-danger hover:bg-orange-500 text-sm font-semibold px-3 py-2 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                      >
+                        DELETE BID
+                      </button>
+                    </div>
                   </div>
-                  <div className="m-2">
-                    <button
-                      onClick={() => this.onDeleteBidModal(bid.bid_count)}
-                      type="submit"
-                      className="rounded-md bg-red-danger hover:bg-orange-500 text-sm font-semibold px-3 py-2 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                    >
-                      DELETE BID
-                    </button>
-                  </div>
-                </div>
+                ) : (
+                  ""
+                )}
               </div>
             );
           })}
 
-          {this.state.cs_items.length > 0 ? (
+          {this.state.cs_items.length > 0 &&
+          this.state.username === this.state.cs_owner ? (
             <div className="m-2">
               <button
                 style={{ width: "100%" }}
@@ -1959,7 +3332,9 @@ class CreateCS extends React.Component {
             ""
           )}
 
-          {this.state.bids.length > 0 ? (
+          {this.state.bids.length > 0 &&
+          this.state.compliance.length < 1 &&
+          this.state.username === this.state.cs_owner ? (
             <div className="m-2">
               <button
                 style={{ width: "100%" }}
@@ -1973,23 +3348,42 @@ class CreateCS extends React.Component {
             ""
           )}
 
-          {complianceTable}
+          {this.state.compliance.length > 0 ? complianceTable : ""}
 
-          {this.state.compliance.length > 0 ? (
+          {this.state.compliance.length > 0 &&
+          this.state.username === this.state.cs_owner ? (
             <div className="m-2">
               <button
                 style={{ width: "100%" }}
                 onClick={this.onCloseCS}
-                className="rounded-md bg-red-danger hover:bg-orange-500 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                className="rounded-md bg-nepal-950 hover:bg-nepal-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
               >
-                CLOSE SCHEDULE
+                RANK BIDS
               </button>
             </div>
           ) : (
             ""
           )}
 
-          {rankingTable}
+          {this.state.rankings.length > 0 ? rankingTable : ""}
+
+          {this.state.rankings.length > 0 ? committeeTable : ""}
+
+          {this.state.committeeMembers.length > 0 &&
+          this.state.username === this.state.cs_owner ? (
+            <div className="m-2">
+              <button
+                style={{ width: "100%" }}
+                onClick={this.onSubmitCommitee}
+                className="rounded-md bg-nepal-950 hover:bg-nepal-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+              >
+                SUBMIT COMMITTEE
+              </button>
+            </div>
+          ) : (
+            ""
+          )}
+          {this.state.committeeMembers.length > 2 ? approvalsTable : ""}
         </div>
       </div>
     );
@@ -1998,4 +3392,6 @@ class CreateCS extends React.Component {
 
 const domContainer = document.querySelector("#create_comparative_schedule");
 const username = domContainer.getAttribute("data-username");
-ReactDOM.render(e(CreateCS, { username }), domContainer);
+const prid = domContainer.getAttribute("data-prid");
+const csid = domContainer.getAttribute("data-csid");
+ReactDOM.render(e(CreateCS, { username, prid, csid }), domContainer);

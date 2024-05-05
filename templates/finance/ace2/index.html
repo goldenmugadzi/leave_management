@@ -1,0 +1,236 @@
+<!--users/templates/quotations/index.html-->
+{% extends 'admin_layout.html' %}
+{% block styles %}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.2.0/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.12.1/css/dataTables.bootstrap5.min.css" />
+{% endblock styles %}
+{% block content %}
+    <div class="content-wrapper">
+        <div class="page-header">
+            <h3 class="page-title">
+      <span class="page-title-icon bg-primary text-white me-2">
+        <i class="menu-icon">
+            <span class="material-symbols-outlined mt-1">
+                straighten
+            </span>
+          </i>
+      </span>
+                PettyCash
+            </h3>
+            <nav aria-label="breadcrumb">
+                <ul class="breadcrumb">
+                    <li class="breadcrumb-item active" aria-current="page">
+                        <a href="/pettycash/create" class="text-decoration-none">
+                            <span></span>Create PettyCash
+                            <i
+                                    class="icon-sm text-primary align-middle"
+                            >
+                <span class="material-symbols-outlined">
+                  add
+                  </span>
+                            </i>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+
+        <div class="col-10 grid-margin stretch-card">
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="card-title">Pettycash</h4>
+                    <p class="card-description">All Approved Pettycash Records</p>
+                    <table id="pettycash" class="table table-striped" style="width:100%">
+                        <thead>
+                        <tr>
+                            <th>Pettycash id</th>
+                            <th>Department</th>
+                            <th>Location</th>
+                            <th>Section</th>
+                            <th>Allocation Code of Expenditure</th>
+                            <th>Details of Expenditure</th>
+                            <th>Amount</th>
+                            <th>Quotation1</th>
+                            <th>Quotation2</th>
+                            <th>Quotation3</th>
+                            <th>Payment Mode</th>
+                            <th>Requested by</th>
+                            <th>Date Created</th>
+                            <th>Approval Status</th>
+                            <th>Disbursal Status</th>
+                            <th>Disburse</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        </tbody>
+                        <tfoot>
+                        <tr>
+                            <th>Pettycash id</th>
+                            <th>Department</th>
+                            <th>Location</th>
+                            <th>Section</th>
+                            <th>Allocation Code of Expenditure</th>
+                            <th>Details of Expenditure</th>
+                            <th>Amount</th>
+                            <th>Quotation1</th>
+                            <th>Quotation2</th>
+                            <th>Quotation3</th>
+                            <th>Payment Mode</th>
+                            <th>Requested by</th>
+                            <th>Date Created</th>
+                            <th>Approval Status</th>
+                            <th>Disbursal Status</th>
+                            <th>Disburse</th>
+                        </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block scripts %}
+    <script src="https://code.jquery.com/jquery-3.5.1.js"></script>
+    <script src="https://cdn.datatables.net/1.12.1/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.12.1/js/dataTables.bootstrap5.min.js"></script>
+    <script>
+        var objs = JSON.parse("{{context|escapejs}}");
+
+        //var isCreator = "{{is_creator|escapejs}}";
+
+        let list = [];
+        objs.forEach((element, index) => {
+            let o = {
+                petty_id: element.fields.petty_id,
+                Department: element.fields.Department,
+                location: element.fields.location,
+                section: element.fields.section,
+                allocation_code_of_expenditure: element.fields.allocation_code_of_expenditure,
+                details_of_expenditure: element.fields.details_of_expenditure,
+                amount: element.fields.amount,
+                quotation1: element.fields.quotation1,
+                quotation2: element.fields.quotation2,
+                quotation3: element.fields.quotation3,
+                payment_mode: element.fields.payment_mode,
+                requested_by: element.fields.requested_by,
+                date_created: element.fields.date_created,
+                approval_status: element.fields.approval_status,
+                disbursal_status: element.fields.disbursal_status,
+                disburse: element.fields.disburse,
+            };
+
+            list.push(o);
+        });
+
+    console.log(list);
+    $(document).ready(function () {
+        $('#pettycash').DataTable(
+            {
+                data: list,
+                scrollX:true,
+                columns: [
+                    {
+                        data: "petty_id",
+                    },
+                    {
+                        data: "Department",
+                        // width: 200,
+                    },
+                    {
+                        data: "location",
+                    },
+                    {
+                        data: "section",
+                    },
+                    {
+                        data: "allocation_code_of_expenditure",
+                    },
+                    {
+                        data: "details_of_expenditure",
+                    },
+                    {
+                        data: "amount",
+                    },
+                    {
+                        data: "quotation1",
+                        render: function (data, type, row, meta) {
+                            let component;
+                            if(data){
+                                component = `
+                    <a class="btn btn-link" href='/pettycash/quotation_download?f=${data}' >
+                      Download quote1
+                    </a>`
+                            } else {
+                                component = 'None'
+                            }
+                            return component;
+                        },
+                    },
+                    {
+                        data: "quotation2",
+                        render: function (data, type, row, meta) {
+                            let component;
+                            if(data){
+                                component = `
+                    <a class="btn btn-link" href='/pettycash/quotation_download?f=${data}' >
+                      Download quote2
+                    </a>`
+                            } else {
+                                component = 'None'
+                            }
+                            return component;
+                        },
+                    },
+                    {
+                        data: "quotation3",
+                        render: function (data, type, row, meta) {
+                            let component;
+                            if(data){
+                                component = `
+                    <a class="btn btn-link" href='/pettycash/quotation_download?f=${data}' >
+                      Download quote3
+                    </a>`
+                            } else {
+                                component = 'None'
+                            }
+                            return component;
+                        },
+                    },
+                    {
+                        data: "payment_mode",
+                    },
+                    {
+                        data: "requested_by",
+                    },
+                    {
+                        data: "date_created",
+                    },
+                    {
+                        data:"approval_status",
+                    },
+                    {
+                        data:"disbursal_status",
+                    },
+                    {
+                        data: "petty_id",
+                        render: function (data, type, row, meta){
+                            let component;
+                            if(data){
+                                component = `<a class="btn btn-link" href='/pettycash/disburse?f=${data}' >
+                      View
+                    </a>`
+                            }
+                            else {
+                                component = 'None'
+                            }
+                            return component;
+                        }
+                    },
+            ],
+            }
+        );
+        });
+    </script>
+{% endblock scripts %}
