@@ -5,6 +5,8 @@ import csv
 import sweetify
 from datetime import datetime
 from random import randrange
+
+from ACE2.models import AssetBudget
 from it.users.models import *
 
 from django.apps import apps
@@ -1544,7 +1546,7 @@ def list_budgets(request):
     }
     user_title = request.user.get_full_name()
     print(section_used)
-    section_budget = Budget.objects.all()
+    section_budget = AssetBudget.objects.all()
     # print(section_budget)
     user_title = request.user.get_full_name()
     l = request.user.groups.values_list('name', flat=True)
