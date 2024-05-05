@@ -49,6 +49,7 @@ def import_old_rfq(request):
     
     # save rfq
     for index, row in rfq_data.iterrows():
+        print("")
         section = Sections.objects.filter(section=row['section']).first() if row['section'] else None
         procurement_plan = ProcPlan.objects.filter(proc_ref=row['proc_ref']).first() if row['proc_ref'] else None
         created_by = UserProfile.objects.filter(username=row['created_by']).first() if row['created_by'] else None
