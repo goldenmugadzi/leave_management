@@ -221,49 +221,15 @@ def uploaduuom(request):
         unit = UnitOfMeasurement(unit=data['UM'], name=data['MUT'])
         unit.save()
     """upload procurement Plan References data to the database"""
-    from .grn import data
-    procurementPlanReferences= data 
-    for procurementPlanReference in procurementPlanReferences:
-        print(procurementPlanReference)
-        try:
-            unit = ProcurementPlanReference(id=procurementPlanReference['id'], name=procurementPlanReference['name'])
-            unit.save()
-        except:
-            pass
-    """upload rfq data to the database"""
-    import mysql.connector 
-
-    # Connect to the MySQL database
-    cnx = mysql.connector.connect(
-        host="172.16.8.22",
-        user="root",
-        password="",
-        database="dms"
-    )
-
-    # Create a cursor object
-    cursor = cnx.cursor()
-
-    # Execute the SQL query
-    sql_query = """
-        SELECT rfq.rfq_number, rfq.rfq_date, rfq.scope_of_work, 
-            rfq.date_created, rfq.specifications, rfq.created_by, rfq.section_code, 
-            rfq.ace, rfq.ace_spec, rfq.proc_ref, rfq.region, required_items.*
-        FROM required_items
-        JOIN rfq ON required_items.document_id = rfq.document_id
-        ORDER BY rfq.id ASC
-    """
-    cursor.execute(sql_query)
-
-    # Fetch all the results
-    results = cursor.fetchall()
-    for item_dict in results:
-        item = dict(zip(cursor.column_names, item_dict))
-        try:
-            unit = ProcurementPlanReference(id=procurementPlanReference['id'], name=procurementPlanReference['name'])
-            unit.save()
-        except:
-            pass
+    # from .grn import data
+    # procurementPlanReferences= data 
+    # for procurementPlanReference in procurementPlanReferences:
+    #     print(procurementPlanReference)
+    #     try:
+    #         unit = ProcurementPlanReference(id=procurementPlanReference['id'], name=procurementPlanReference['name'])
+    #         unit.save()
+    #     except:
+    #         pass
     """upload rfq data to the database"""
     import mysql.connector 
 
@@ -309,7 +275,6 @@ def uploaduuom(request):
                 'scope_of_work': item['scope_of_work'],
             }
         purchase_request, created = PurchaseRequest.objects.get_or_create(pr_no=item['rfq_number'], defaults=defaults)
-        print(item,"\n\n\n\n\n\n\npritem\n\n", item['uom'])
         try:pritem = PrItem(item_required=item['item_required'],
                         unit_of_measurement = UnitOfMeasurement.objects.get(Q(unit__iexact=item['uom']) | Q(name__iexact=item['uom'])),
                         quantity=item['qty'],
@@ -340,36 +305,3 @@ class AddUOM(CreateView):
         return super().form_valid(form)
 
 
-@login_required
-def quote_purchase_request(request, purchase_request_id):
-    prq = PurchaseRequest.objects.get(id=purchase_request_id)
-    pr_items = prq.pritem_set.all()
-    itemFormset = inlineformset_factory(Quotation, QuoteItem, form=QuoteItemForm, extra=len(pr_items), can_delete=False)
-    initial_data = [{'pr_item': pr_item, 'quantity': pr_item.quantity} for pr_item in pr_items]
-    if request.method == 'POST' and not request.POST.get('quote'):
-        quote = QuotationForm(request.POST, request.FILES, instance=Quotation(purchase_request=prq))
-        if quote.is_valid():
-            quotation = quote.save(commit=False)
-            quotation.purchase_request = prq
-            quotation.created_by = request.user
-            quotation.save()
-
-            formset = itemFormset(request.POST, request.FILES, instance=quotation, initial=initial_data)
-            for form in formset:
-                if form.is_valid():
-                    try:
-                        print(quotation.id)
-                        item = form.save(commit=False)
-                        item.quotation = quotation
-                        item.save()
-                    except:
-                        pass
-                else:
-                    return render(request, 'finance/purchase_request/create_quote.html',
-                                  {'formset': formset, 'quote': quote})
-            return redirect('purchase_request:purchase_request_detail', purchase_request_id)
-        else:
-            return render(request, 'finance/purchase_request/create_quote.html', {'formset': formset, 'quote': quote})
-    else:
-        quote = QuotationForm()
-        return render(request, 'finance/purchase_request/create_quote.html', {'formset': itemFormset(initial=initial_data), 'quote': quote})

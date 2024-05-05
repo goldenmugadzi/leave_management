@@ -52,4 +52,4 @@ class Approval(models.Model):
     approved_at = models.DateTimeField(auto_now_add=True, blank=True, null=True)
 
     def __str__(self):
-        return f"Approval for step {self.step} by {self.user}"
+        return f"{self.approved} by {self.step}"

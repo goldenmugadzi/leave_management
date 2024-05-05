@@ -1,3 +1,4 @@
+import datetime
 from django import forms
 from .models import *
 from django.utils import timezone
@@ -74,10 +75,9 @@ class NonconformityForm(forms.ModelForm):
                 field.widget.attrs.update({'rows': '3'})
                 
             field.label = field.label or field_name.replace('_', ' ').capitalize()
-            field.label_attrs = {'class': 'block text-sm font-medium leading-6 text-gray-900'}
-           
+            field.label_attrs = {'class': 'block text-sm font-medium leading-6 text-gray-900'}          
 class AdditionalInfoForm(forms.ModelForm):
-    expected_completion_date = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}))
+    expected_completion_date = forms.DateField(widget=forms.DateInput(attrs={'type': 'date','min': str(datetime.date.today())}))
 
     class Meta:
         model = Nonconformity
@@ -94,12 +94,7 @@ class AdditionalInfoForm(forms.ModelForm):
             if isinstance(field.widget, forms.Textarea):
                 field.widget.attrs.update({'rows': '3'})
                 
-            field.label = field.label or field_name.replace('_', ' ').capitalize()
-            field.label_attrs = {'class': 'block text-sm font-medium leading-6 text-gray-900'}
-            if field_name == 'recipient':
-                choices = [(user.id, user.get_full_name()) if user.get_full_name() else (user.id, user.username) for user in User.objects.all()]
-                field.choices = choices
-
+           
     def clean_expected_completion_date(self):
         expected_completion_date = self.cleaned_data['expected_completion_date']
         if expected_completion_date < timezone.now().date():

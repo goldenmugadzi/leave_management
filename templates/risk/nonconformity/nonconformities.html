@@ -24,6 +24,7 @@
       <br> <table id="nonconformity" class="table table-striped stripe table-bordered">
         <thead>
           <tr>
+            <th>ID</th>
             <th>Recipient</th>
             <th>Date</th>
             <th>Auditor</th>
@@ -37,14 +38,15 @@
         <tbody>
           {% for nonconformity in nonconformities %}
           <tr class="h-1">
+            <td>{{ nonconformity.id|default_if_none:'' }}</td>
             <td>{% if nonconformity.recipient == user %} You {% else %} {{nonconformity.recipient.get_full_name }} {% endif %}</td>
             <td>{{ nonconformity.created_at|date:'Y-m-d H:i' }}</td>
             <td>{% if nonconformity.created_by == user %} You {% else %} {{nonconformity.created_by.get_full_name }} {% endif %}</td>
-            <td><a class="text-blue-500" href="/nonconformity/{{nonconformity.id}}">{{ nonconformity.description|default_if_none:'' }}</a></td>
+            <td><a class="text-blue-500" href="{% url 'nonconformity:nonconformity' nonconformity.id %}">{{ nonconformity.description|default_if_none:'' }}</a></td>
             <td>{{ nonconformity.violation_standard_reference|default_if_none:''}}</td>
             <td>{{nonconformity.recommended_corrective_action|default_if_none:''}}</td>
             <td>{{nonconformity.recipient.section|default_if_none:''}}</td>
-            <td>{{nonconformity.status}}</td>
+            <td>{{ nonconformity.response_set.last|default_if_none:'' }}</td>
           </tr>
           {% endfor %}
         </tbody>

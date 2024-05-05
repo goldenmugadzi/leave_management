@@ -22,45 +22,25 @@
         <table id="tokens" class="table table-striped stripe table-bordered">
           <thead>
             <tr>
-              <th>Description</th>
+              <th>ID</th>
               <th>Reason</th>
-              <th>Kind</th>
+              <th>Type</th>
               <th>Date</th>
               <th>Customer</th>
               <th>Meter number</th>
-              <th>Address</th>
-              <th>Phone Number</th>
+              <th>Status</th>
             </tr>
           </thead>
           <tbody>
             {% for token in tokens %}
               <tr class="h-1">
-                {% if token.fault_set.first %}
-                  <td>
-                    <a class="text-blue-500" href="{% url 'tokens:token' token.id %}">{{ token.fault_set.first.description|default_if_none:'' }}</a>
-                  </td>
-                  <td>Fault</td>
-                {% endif %}
-                {% if token.recover_set.first %}
-                  <td>
-                    <a class="text-blue-500" href="{% url 'tokens:token' token.id %}">{{ token.recover_set.first.description|default_if_none:'' }}</a>
-                  </td>
-                  <td>Recover</td>
-                {% endif %}
-                {% if token.reconnection_set.first %}
-                  <td>
-                    <a class="text-blue-500" href="{% url 'tokens:token' token.id %}">{{ token.reconnection_set.first.description|default_if_none:'' }}</a>
-                  </td>
-                  <td>Reconnection</td>
-                {% endif %}
-                <td>{{ token.kind|default_if_none:'' }}</td>
+                  <td><a class="text-blue-500" href="{% url 'tokens:token' token.id %}">{{ token.id|default_if_none:'' }}</a></td>
+                  <td>{{ token.reason|default_if_none:'' }}</td>
+                  <td>{{ token.type|default_if_none:'' }}</td>
                 <td>{{ token.created_at|date:'d/m/Y' }}</td>
                 <td>{{ token.customer.name|default_if_none:'' }}</td>
-                <td>
-                  <span title="{{ token.meter.meter_type }}">{{ token.meter.number }}</span>
-                </td>
-                <td>{{ token.customer.address|default_if_none:'' }}</td>
-                <td>{{ token.customer.contact_number|default_if_none:'' }}</td>
+                <td><span title="{{ token.meter.meter_type }}">{{ token.meter.number }}</span></td>
+                <td>{{ token.process.approval_set.last|default_if_none:'' }}</td>
               </tr>
             {% endfor %}
           </tbody>

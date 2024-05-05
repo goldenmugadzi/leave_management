@@ -100,7 +100,7 @@ def nonconformity_details(request, nonconformity_id):
                 response.save()
 
                 # Prompt for additional information if status is 'accepted'
-                if response.status == 'accepted':
+                if response.status == 'True':
                     additional_info_form = AdditionalInfoForm(instance=nonconformity)  # Create an instance of the additional info form
                     return render(request, 'risk/nonconformity/additional_info.html', {'nonconformity': nonconformity, 'form': additional_info_form})
                 
@@ -114,7 +114,7 @@ def nonconformity_details(request, nonconformity_id):
                 messages.success(request, 'Response added successfully!')
                 return redirect('/nonconformities', nonconformity_id=nonconformity.id)
             else:
-                print(str(response_form))
+                # print(str(response_form))
                 return render(request, 'risk/nonconformity/nonconformity_details.html', {'nonconformity': nonconformity, 'form': response_form})
         elif request.user == nonconformity.created_by:
             form = NonconformityForm(request.POST, request.FILES, instance=nonconformity)
@@ -142,11 +142,13 @@ def nonconformity_details(request, nonconformity_id):
 
     else:  # GET request
         nonconformity_accepted = False
+        AcceptedForm=None
         if Response.objects.filter(nonconformity=nonconformity).exists():
-            if Response.objects.filter(nonconformity=nonconformity).latest('created_at').status == 'accepted':
+            if Response.objects.filter(nonconformity=nonconformity).latest('created_at').status == 'false':
                 nonconformity_accepted = True
         if request.user == nonconformity.recipient:
             form = NonconformityResponseForm(instance=response)
+            AcceptedForm=AdditionalInfoForm(instance=nonconformity)
         elif request.user == nonconformity.created_by and not nonconformity_accepted:
             form = NonconformityForm(instance=nonconformity)
         else:
@@ -157,7 +159,7 @@ def nonconformity_details(request, nonconformity_id):
         old_notification.is_read = True
         old_notification.save()
         
-    return render(request, 'risk/nonconformity/nonconformity_details.html', {'nonconformity': nonconformity, 'form': form})
+    return render(request, 'risk/nonconformity/nonconformity_details.html', {'nonconformity': nonconformity,"AcceptedForm":AcceptedForm, 'form': form})
 
 @login_required
 def view_notifications(request):
