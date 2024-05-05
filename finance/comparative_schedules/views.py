@@ -8,8 +8,110 @@ from django.db.models import Sum
 from .models import *
 from it.users.models import *
 from finance.purchase_request.models import PurchaseRequest, PrItem, Attachment, UnitOfMeasurement
+from ACE2.models import Ace2
 from finance.comparative_schedules.models import *
 from django.db.models import Q, Exists, OuterRef
+import pandas as pd
+
+def import_old_rfq(request):
+    tender_csv = 'tender.csv'
+    rfq_csv = 'rfq.csv'
+    bid_update_csv = 'bid_update.csv'
+    bids_csv = 'bids.csv'
+    items_csv = 'items.csv'
+    required_items_csv = 'required_items.csv'
+    suppliers_csv = 'suppliers.csv'
+    
+    # Read the tender CSV file using pandas
+    # tender_data = pd.read_csv(tender_csv)
+    # print(tender_data.head())
+    rfq_data = pd.read_csv(rfq_csv)
+    print(rfq_data.head())
+    # bid_update_data = pd.read_csv(bid_update_csv)
+    # print(bid_update_data.head())
+    # bids_data = pd.read_csv(bids_csv)
+    # print(bids_data.head())
+    # items_data = pd.read_csv(items_csv)
+    # print(items_data.head())
+    required_items_data = pd.read_csv(required_items_csv)
+    print(required_items_data.head())
+    # suppliers_data = pd.read_csv(suppliers_csv)
+    # print(suppliers_data.head())
+    
+    # save suppliers
+    # for index, row in suppliers_data.iterrows():
+    #     supplier_id = row['sup_id']
+    #     supplier_name = row['supplier']
+    #     supplier = Supplier(
+    #         name = supplier_name,
+    #     )
+    #     supplier.save()
+    
+    # save rfq
+    for index, row in rfq_data.iterrows():
+        section = Sections.objects.filter(section=row['section']).first() if row['section'] else None
+        procurement_plan = ProcPlan.objects.filter(proc_ref=row['proc_ref']).first() if row['proc_ref'] else None
+        created_by = UserProfile.objects.filter(username=row['created_by']).first() if row['created_by'] else None
+        ace = Ace2.objects.filter(ace=row['ace']).first() if row['ace'] else None
+        
+        pr = PurchaseRequest(
+            pr_no = row['rfq_number'],
+            section = section,
+            procurement_plan = procurement_plan,
+            requested_by = created_by,
+            created_at = row['date_created'],
+            ace = ace,
+            scope_of_work = row['scope_of_work'],
+        )
+        pr.save()
+        
+        # att_path = 'uploads/finance/pr/attachments/' + row['specifications'].split('/')[-1] if row['specifications'] else ""
+
+        # attachments = Attachment(
+        #     file = row['attachment'],
+        # )
+        
+    # save required items
+    # for index, row in required_items_data.iterrows():
+    #     pr = PurchaseRequest.objects.filter(pr_no=row['rfq_no']).first() if row['rfq_no'] else None
+    #     uom = UnitOfMeasurement.objects.filter(name=row['unit_of_measurement']).first() if row['unit_of_measurement'] else None
+    #     pr_item = PrItem(
+    #         item_required = row['item_required'],
+    #         quantity = row['quantity'],
+    #         unit_of_measurement = uom,
+    #         purchase_request = pr,
+    #     )
+    #     pr_item.save()
+    
+    
+    
+    # save comperative schedules
+    # for index, row in tender_data.iterrows():
+    #     cs_id = row['document_id']
+    #     pr_number = row['rfq_no']
+    #     pr = PurchaseRequest.objects.filter(id=pr_id).first()
+    #     proc_plan = ProcPlan.objects.filter(proc_ref=row['proc_plan']).first()
+    #     cs_query = ComparativeSchedules(
+    #         cs_id = cs_id,
+    #         pr_id = pr,
+    #         proc_plan = proc_plan,
+    #         scope_of_work = row['scope_of_work'],
+    #         closing_date = row['closing_date'],
+    #         closing_time = row['closing_time'],
+    #         advert = row['advert'],
+    #         pr_number = row['pr_number'],
+    #         pr_date = row['pr_date'],
+    #         ref_date = row['ref_date'],
+    #         cs_opened = row['cs_opened'],
+    #         tac_date = row['tac_date'],
+    #         region = row['region'],
+    #     )
+    #     cs_query.save()
+    
+    return JsonResponse({
+        "success": True,
+        "message": "Data imported successfully",
+        }, safe=False)
 
 def clear_approvals(cs_id):
 

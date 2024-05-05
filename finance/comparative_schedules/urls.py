@@ -32,5 +32,5 @@ urlpatterns = [
     path('cs_data/<str:cs_id>', get_comperative_schedule_data, name='get_comperative_schedule_data'),
     
     path('update_pritem_ordered', update_pritem_ordered, name='update_pritem_ordered'),
-    
+    path('import_old_rfq', import_old_rfq, name='import_old_rfq'),
 ]
