@@ -2,7 +2,7 @@
 
 const e = React.createElement;
 // const BASE_URL = "http://localhost:8000/ristricted_bidding";
-const BASE_URL = "http://172.16.8.98:9300/ristricted_bidding";
+const BASE_URL = "http://172.16.8.99:9300/ristricted_bidding";
 
 class CreateRB extends React.Component {
   constructor(props) {

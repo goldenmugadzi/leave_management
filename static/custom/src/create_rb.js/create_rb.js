@@ -16,7 +16,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 var e = React.createElement;
 // const BASE_URL = "http://localhost:8000/ristricted_bidding";
-var BASE_URL = "http://172.16.8.98:9300/ristricted_bidding";
+var BASE_URL = "http://172.16.8.99:9300/ristricted_bidding";
 
 var CreateRB = function (_React$Component) {
   _inherits(CreateRB, _React$Component);

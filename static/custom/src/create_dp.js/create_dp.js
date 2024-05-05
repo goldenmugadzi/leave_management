@@ -16,7 +16,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 var e = React.createElement;
 // const BASE_URL = "http://localhost:8000/direct_purchase";
-var BASE_URL = "http://172.16.8.98:9300/direct_purchase";
+var BASE_URL = "http://172.16.8.99:9300/direct_purchase";
 
 var CreateDP = function (_React$Component) {
   _inherits(CreateDP, _React$Component);
