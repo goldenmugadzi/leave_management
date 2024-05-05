@@ -160,16 +160,16 @@ def get_comperative_schedules(request):
     #     created_by_id=user_id,
     # ).distinct()
     # fetch all pending approvals
-    cs = ComparativeSchedules.objects.filter(    
-        Exists(Committee.objects.filter(
-            cs_id=OuterRef('pk'),
-            committee_approval="",
-        )),
-        Q(csapproval__approval=None) | Q(csapproval__approval="Rejected"), 
-        created_by_id=user_id,
-    ).distinct()
+    # cs = ComparativeSchedules.objects.filter(    
+    #     Exists(Committee.objects.filter(
+    #         cs_id=OuterRef('pk'),
+    #         committee_approval="",
+    #     )),
+    #     Q(csapproval__approval=None) | Q(csapproval__approval="Rejected"), 
+    #     created_by_id=user_id,
+    # ).distinct()
     # fetch all schedules
-    # cs = ComparativeSchedules.objects.filter().all()
+    cs = ComparativeSchedules.objects.filter().all()
 
     cs_list = []
     for c in cs:
