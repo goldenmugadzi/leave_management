@@ -77,7 +77,7 @@ class UnitOfMeasurement(models.Model):
 
 class PrItem(models.Model):
     item_required = models.CharField(max_length=100)
-    unit_of_measurement = models.ForeignKey(UnitOfMeasurement, on_delete=models.CASCADE,blank=True, null=True)
+    unit_of_measurement = models.ForeignKey(UnitOfMeasurement, on_delete=models.CASCADE)
     quantity = models.IntegerField(default=1)
     purchase_request = models.ForeignKey(PurchaseRequest, models.CASCADE, blank=True, null=True)
     ordered = models.BooleanField(default=False)

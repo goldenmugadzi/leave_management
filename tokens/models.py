@@ -31,6 +31,7 @@ class Token(models.Model):
     created_by = models.ForeignKey(UserProfile, on_delete=models.CASCADE, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     process=models.ForeignKey(Process, on_delete=models.CASCADE, blank=True, null=True)
+    token_photo = models.ImageField(upload_to='uploads/Tokens/generatedtoken',help_text="photo of generated token " , blank=True, null=True)
     type = models.CharField(max_length=100,help_text="Type of Token",  choices=[('REIMBURSEMENT', 'REIMBURSEMENT') , ('CLEAR CREDIT', 'CLEAR CREDIT'), ('TEMPER', 'TEMPER')])
     def __str__(self):
         return str(self.meter.number)
@@ -85,6 +86,6 @@ class FaultMaintanance(models.Model):
 class Reconnection(models.Model):
     token = models.ForeignKey(Token, on_delete=models.CASCADE)
     invoice = models.FileField(upload_to='uploads/Tokens/Reconnection/Invoice',help_text="invoice is issued to request payment", blank=True, null=True)
-    proof_of_payment = models.FileField(upload_to='uploads/Tokens/Reconnection/ProofOfPayment',help_text="receipt serves as proof of payment", blank=True, null=True)
+    proof_of_payment = models.FileField(upload_to='uploads/Tokens/Reconnection/ProofOfPayment',help_text="proof_of_payment serves as proof of payment", blank=True, null=True)
     def __str__(self):
         return str(self.token.meter.number)
