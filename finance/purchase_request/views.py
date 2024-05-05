@@ -39,7 +39,10 @@ def create_purchase_request(request):
     itemFormset = inlineformset_factory(PurchaseRequest, PrItem, form=PrItemForm,
                                         extra=int(request.POST.get('items') or 1), can_delete=False)
     if request.method == 'POST':
-        prexist=PurchaseRequest.objects.get(pr_no = request.POST.get('pr_no'))
+        try:
+            prexist=PurchaseRequest.objects.get(pr_no = request.POST.get('pr_no'))
+        except:
+            prexist = None
         form = PurchaseRequestForm(request.POST)
         formset = itemFormset(request.POST)
         if not prexist :

@@ -191,13 +191,13 @@ DATABASES = {
     #     'PASSWORD': 'Z3tdc_it@2021_',
     #     'HOST': 'localhost'
     # }
-    # 'default': {
-    #     'ENGINE': 'django.db.backends.mysql',
-    #     'NAME': 'beii_new',
-    #     'USER': 'root',
-    #     'PASSWORD': '',
-    #     'HOST': 'localhost',
-    # }
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'beii_new',
+        'USER': 'root',
+        'PASSWORD': '',
+        'HOST': 'localhost',
+    }
     # 'default': {
     #     'ENGINE': 'django.db.backends.mysql',
     #     'NAME': 'beii_test',
@@ -205,16 +205,16 @@ DATABASES = {
     #     'PASSWORD': '',
     #     'HOST': 'localhost',
     # }
-    'default': {
-        'OPTIONS': {
-            'sql_mode': 'NO_BACKSLASH_ESCAPES',
-        },
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'beii_new',
-        'USER': 'be_user',
-        'PASSWORD': 'Z3tdc_it@2024',
-        'HOST': 'localhost'
-    }
+    # 'default': {
+    #     'OPTIONS': {
+    #         'sql_mode': 'NO_BACKSLASH_ESCAPES',
+    #     },
+    #     'ENGINE': 'django.db.backends.mysql',
+    #     'NAME': 'beii_new',
+    #     'USER': 'be_user',
+    #     'PASSWORD': 'Z3tdc_it@2024',
+    #     'HOST': 'localhost'
+    # }
     # 'default': {
     #     'ENGINE': 'django.db.backends.mysql',
     #     'NAME': 'beii',
