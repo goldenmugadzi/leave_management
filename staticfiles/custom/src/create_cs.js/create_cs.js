@@ -1,0 +1,2645 @@
+"use strict";
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
+function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var e = React.createElement;
+
+var CreateCS = function (_React$Component) {
+  _inherits(CreateCS, _React$Component);
+
+  function CreateCS(props) {
+    _classCallCheck(this, CreateCS);
+
+    var _this = _possibleConstructorReturn(this, (CreateCS.__proto__ || Object.getPrototypeOf(CreateCS)).call(this, props));
+
+    _this.getCreateData = function () {
+      fetch("http://localhost:8000/comparative_schedule/create_data").then(function (response) {
+        return response.json();
+      }).then(function (data) {
+        console.log("data: ", data);
+        var plans = data.proc_plans ? data.proc_plans : [];
+        var suppliers = data.suppliers ? data.suppliers : [];
+        var pr_items = data.pr_items ? data.pr_items : [];
+        var pr_id = data.pr_id ? data.pr_id : "";
+        var pr_date = data.pr_date ? data.pr_date : "";
+        _this.setState({
+          procurement_plans: plans,
+          suppliers: suppliers,
+          pr_items: pr_items,
+          pr_number: pr_id,
+          pr_date: pr_date
+        });
+      });
+    };
+
+    _this.onAddCSItem = function (item_id) {
+      // check is item already added
+      var item = _this.state.cs_items.find(function (item) {
+        return item.id === item_id;
+      });
+      console.log("item: ", item);
+      if (item) {
+        // update item selected to false
+        item.selected = false;
+        // update pr_items
+        var pr_items = _this.state.pr_items.map(function (_item) {
+          if (_item.id === item_id) {
+            return item;
+          }
+          return _item;
+        });
+        // remove item
+        var items = _this.state.cs_items.filter(function (item) {
+          return item.id !== item_id;
+        });
+        _this.setState(Object.assign({}, _this.state, {
+          cs_items: items,
+          pr_items: pr_items
+        }));
+      } else {
+        // find item in pr_items
+        var _item2 = _this.state.pr_items.find(function (item) {
+          return item.id === item_id;
+        });
+        // update pr_item selected to added
+        _item2.selected = true;
+        // update pr_items
+        var _pr_items = _this.state.pr_items.map(function (_item) {
+          if (_item.id === item_id) {
+            return _item2;
+          }
+          return _item;
+        });
+
+        var item_count = _this.state.cs_item_count + 1;
+        _this.setState(Object.assign({}, _this.state, {
+          item_count: item_count,
+          cs_items: [].concat(_toConsumableArray(_this.state.cs_items), [_item2]),
+          pr_items: _pr_items
+        }));
+        console.log("cs_items: ", _this.state.cs_items);
+        console.log("pr_items: ", _this.state.pr_items);
+      }
+    };
+
+    _this.onAddBidModal = function () {
+      var bid_count = _this.state.bid_count + 1;
+      _this.setState(Object.assign({}, _this.state, {
+        addBidModal: !_this.state.addBidModal,
+        bid_count: bid_count,
+        currentBid: {
+          bid_count: bid_count
+        }
+      }));
+    };
+
+    _this.onUpdateBidModal = function (bid_count) {
+      var bid = _this.state.bids.find(function (bid) {
+        return bid.bid_count === bid_count;
+      });
+      _this.setState(Object.assign({}, _this.state, {
+        addBidModal: !_this.state.addBidModal,
+        currentBid: bid
+      }));
+    };
+
+    _this.onCloseCurrentBid = function () {
+      var bid_count = _this.state.bid_count - 1;
+      _this.setState(Object.assign({}, _this.state, {
+        currentBid: {},
+        addBidModal: false,
+        bid_count: bid_count
+      }));
+    };
+
+    _this.onCurrentBidChange = function (name_, event) {
+      var currentBid = _this.state.currentBid;
+      if (name_ === "bid_document") {
+        var bid_file = event.target.files[0];
+        currentBid[name_] = bid_file;
+      } else if (name_ === "supplier") {
+        var _event$target = event.target,
+            name = _event$target.name,
+            value = _event$target.value;
+
+        console.log("value: ", value);
+        var id_name = value ? value.split("-#-") : [];
+        currentBid[name_] = id_name.length > 0 ? id_name[0] : "";
+        currentBid["supplier_name"] = id_name.length >= 1 ? id_name[1] : "";
+      } else {
+        var _event$target2 = event.target,
+            _name = _event$target2.name,
+            _value = _event$target2.value;
+
+        currentBid[name_] = _value;
+      }
+      _this.setState(Object.assign({}, _this.state, {
+        currentBid: currentBid
+      }));
+    };
+
+    _this.onCurrentBidItemChange = function (item_id, name_, event) {
+      // check if item exists in current bid
+      var item = _this.state.currentBid.items ? _this.state.currentBid.items.find(function (item) {
+        return item.id === item_id;
+      }) : null;
+      console.log("item: ", item);
+      // if item exists update item
+      if (item) {
+        var _event$target3 = event.target,
+            name = _event$target3.name,
+            value = _event$target3.value;
+
+        item[name_] = value;
+        // update item in current bid
+        var items = _this.state.currentBid.items.map(function (_item) {
+          if (_item.id === item_id) {
+            return item;
+          }
+          return _item;
+        });
+        // update current bid
+        var currentBid = _this.state.currentBid;
+        currentBid.items = items;
+        // update state
+        _this.setState(Object.assign({}, _this.state, {
+          currentBid: currentBid
+        }));
+      } else {
+        // find item in cs_items
+        var _item3 = _this.state.cs_items.find(function (item) {
+          return item.id === item_id;
+        });
+        // create new item
+        var new_item = {
+          id: _item3.id,
+          description: _item3.description,
+          quantity: _item3.quantity,
+          unit_of_measurement: _item3.unit_of_measurement,
+          vat: _item3.vat,
+          unit_price: _item3.unit_price,
+          total_price: _item3.total_price
+        };
+        // update current bid items
+        var _items = [];
+        if (!_this.state.currentBid.items) {
+          _items.push(new_item);
+        } else {
+          _items = [].concat(_toConsumableArray(_this.state.currentBid.items), [new_item]);
+        }
+        // update current bid
+        var _currentBid = _this.state.currentBid;
+        _currentBid.items = _items;
+        // update state
+        _this.setState(Object.assign({}, _this.state, {
+          currentBid: _currentBid
+        }));
+      }
+    };
+
+    _this.onCurrentBidSave = function () {
+      var currentBid = _this.state.currentBid;
+      // check if current bid already exists
+      if (currentBid.items) {
+        console.log("state bids found: ", _this.state.bids);
+        var bid = _this.state.bids.find(function (bid) {
+          return bid && bid.bid_count === currentBid.bid_count;
+        });
+        console.log("bid found: ", bid);
+        if (bid) {
+          // update bid
+          console.log("currentBid 1: ", currentBid);
+          var items = currentBid.items.map(function (item) {
+            item.total_price = item.quantity * item.unit_price;
+            return item;
+          });
+          currentBid.items = items;
+          console.log("currentBid: ", currentBid);
+          _this.onSaveBid(currentBid);
+          var bids = _this.state.bids.map(function (bid) {
+            if (bid.bid_count === currentBid.bid_count) {
+              return currentBid;
+            }
+            return bid;
+          });
+          _this.setState(Object.assign({}, _this.state, {
+            bids: bids,
+            currentBid: {},
+            addBidModal: false
+          }));
+        } else {
+          // calculate total price for each item
+          var _items2 = currentBid.items.map(function (item) {
+            item.total_price = item.quantity * item.unit_price;
+            return item;
+          });
+          // update current bid items
+          currentBid.items = _items2;
+          _this.onSaveBid(currentBid);
+
+          var _bids = _this.state.bids;
+          console.log("currentBid: ", currentBid);
+          _bids.push(currentBid);
+          _this.setState(Object.assign({}, _this.state, {
+            bids: _bids,
+            currentBid: {},
+            addBidModal: false
+          }));
+        }
+      } else {
+        alert("Please add items to the bid");
+      }
+    };
+
+    _this.onSaveBid = function (currentBid) {
+      var form_data = new FormData();
+
+      // add enctype to form data
+      form_data.enctype = "multipart/form-data";
+      form_data.append("cs_id", _this.state.cs_id);
+      form_data.append("bid_no", currentBid.bid_count);
+      form_data.append("supplier_id", currentBid.supplier);
+      form_data.append("supplier_name", currentBid.supplier_name);
+      form_data.append("bid_date", currentBid.bid_date);
+      form_data.append("json_data", JSON.stringify({
+        bid_items: currentBid.items
+      }));
+      form_data.append("bid_document", currentBid.bid_document);
+      form_data.append("csrfmiddlewaretoken", _this.getCookie("csrftoken"));
+
+      fetch("http://localhost:8000/comparative_schedule/save_bid", {
+        method: "POST",
+        headers: {
+          "X-CSRFToken": _this.getCookie("csrftoken")
+        },
+        body: form_data
+      }).then(function (response) {
+        return response.json();
+      }).then(function (data) {
+        console.log("data: ", data);
+        if (data.success) {
+          alert("Bid saved successfully" + " " + data.bid_no);
+        } else {
+          alert("Error saving Bid");
+        }
+      });
+    };
+
+    _this.onSaveSchedule = function () {
+      var form_data = new FormData();
+      // add enctype to form data
+      form_data.enctype = "multipart/form-data";
+      form_data.append("plan_ref", _this.state.plan_ref);
+      form_data.append("proc_plan", _this.state.proc_plan);
+      form_data.append("scope_of_work", _this.state.scope_of_work);
+      form_data.append("pr_number", _this.state.pr_number);
+      form_data.append("quantity", _this.state.quantity);
+      form_data.append("pr_date", _this.state.pr_date);
+      form_data.append("closing_date", _this.state.closing_date);
+      form_data.append("ref_date", _this.state.ref_date);
+      form_data.append("closing_time_hour", _this.state.closing_time_hour);
+      form_data.append("date_tender_opened", _this.state.date_tender_opened);
+      form_data.append("username", _this.state.username);
+      form_data.append("tender_adjudication_committee_date", _this.state.tender_adjudication_committee_date);
+      form_data.append("advert", _this.state.advert);
+      form_data.append("csrfmiddlewaretoken", _this.getCookie("csrftoken"));
+
+      fetch("http://localhost:8000/comparative_schedule/save", {
+        method: "POST",
+        headers: {
+          "X-CSRFToken": _this.getCookie("csrftoken")
+        },
+        body: form_data
+      }).then(function (response) {
+        return response.json();
+      }).then(function (data) {
+        console.log("data: ", data);
+        if (data.success) {
+          alert("Comparative Schedule saved successfully" + " " + data.cs_id);
+          _this.setState(Object.assign({}, _this.state, {
+            cs_id: data.cs_id
+          }));
+        } else {
+          alert("Error saving Comparative Schedule");
+        }
+      });
+    };
+
+    _this.onUpdateSchedule = function () {
+      var form_data = new FormData();
+      // add enctype to form data
+      form_data.enctype = "multipart/form-data";
+      form_data.append("cs_id", _this.state.cs_id);
+      form_data.append("plan_ref", _this.state.plan_ref);
+      form_data.append("proc_plan", _this.state.proc_plan);
+      form_data.append("scope_of_work", _this.state.scope_of_work);
+      form_data.append("pr_number", _this.state.pr_number);
+      form_data.append("quantity", _this.state.quantity);
+      form_data.append("pr_date", _this.state.pr_date);
+      form_data.append("closing_date", _this.state.closing_date);
+      form_data.append("ref_date", _this.state.ref_date);
+      form_data.append("closing_time_hour", _this.state.closing_time_hour);
+      form_data.append("date_tender_opened", _this.state.date_tender_opened);
+      form_data.append("username", _this.state.username);
+      form_data.append("tender_adjudication_committee_date", _this.state.tender_adjudication_committee_date);
+      form_data.append("advert", _this.state.advert);
+      form_data.append("csrfmiddlewaretoken", _this.getCookie("csrftoken"));
+
+      fetch("http://localhost:8000/comparative_schedule/update", {
+        method: "POST",
+        headers: {
+          "X-CSRFToken": _this.getCookie("csrftoken")
+        },
+        body: form_data
+      }).then(function (response) {
+        return response.json();
+      }).then(function (data) {
+        console.log("data: ", data);
+        if (data.success) {
+          alert("Comparative Schedule updated successfully" + " " + data.cs_id);
+        } else {
+          alert("Error updating Comparative Schedule");
+        }
+      });
+    };
+
+    _this.onDeleteBidModal = function (bid_count) {
+      // reset bid no index
+      var bid_count_ = _this.state.bid_count - 1;
+      var bids = _this.state.bids.filter(function (bid) {
+        return bid.bid_count !== bid_count;
+      });
+      // update bid_count index for all bids sequentially
+      bids = bids.map(function (bid, index) {
+        bid.bid_count = index + 1;
+        return bid;
+      });
+      _this.setState(Object.assign({}, _this.state, {
+        bids: bids,
+        bid_count: bid_count_
+      }));
+    };
+
+    _this.onAddBid = function () {
+      var bid_count = _this.state.bid_count + 1;
+      _this.setState(Object.assign({}, _this.state, {
+        bid_count: bid_count,
+        bids: [].concat(_toConsumableArray(_this.state.bids), [{
+          supplier: "",
+          bid_date: "",
+          bid_count: bid_count,
+          bid_document: null,
+          items: []
+        }])
+      }));
+    };
+
+    _this.onAddItemsModal = function () {
+      console.log("Adding items ...");
+      _this.setState(Object.assign({}, _this.state, {
+        addItemsModal: !_this.state.addItemsModal
+      }));
+    };
+
+    _this.getFilterData = function (selectedRegion, selectedDistrict, selectedDepot) {
+      fetch("http://localhost:8000/dashboards/dashboard_filter", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": _this.getCookie("csrftoken")
+        },
+        body: JSON.stringify({
+          region: selectedRegion,
+          district: selectedDistrict,
+          depot: selectedDepot
+        })
+      }).then(function (response) {
+        return response.json();
+      }).then(function (data) {
+        console.log("data: ", data);
+        if (data) {
+          console.log("running ...");
+          var inspection_locations_ = void 0,
+              inspections_count_ = void 0,
+              maintenance_locations_ = void 0,
+              maintenance_count_ = void 0,
+              mtn_ = void 0;
+          try {
+            inspection_locations_ = JSON.parse(data.inspection_locations);
+          } catch (error) {
+            console.error("Error parsing inspection_locations:", error);
+            inspection_locations_ = []; // Set to empty array on error
+          }
+          try {
+            inspections_count_ = JSON.parse(data.inspections_count);
+          } catch (error) {
+            console.error("Error parsing inspections_count_:", error);
+            inspections_count_ = []; // Set to empty array on error
+          }
+          try {
+            maintenance_locations_ = JSON.parse(data.maintenance_locations);
+          } catch (error) {
+            console.error("Error parsing maintenance_locations_:", error);
+            maintenance_locations_ = []; // Set to empty array on error
+          }
+          try {
+            maintenance_count_ = JSON.parse(data.maintenance_count);
+          } catch (error) {
+            console.error("Error parsing maintenance_count_:", error);
+            maintenance_count_ = []; // Set to empty array on error
+          }
+          try {
+            mtn_ = data.mtn;
+          } catch (error) {
+            console.error("Error parsing mtn_:", error);
+            mtn_ = {}; // Set to empty dict on error
+          }
+
+          _this.setState({
+            inspection_locations: inspection_locations_,
+            inspections_count: inspections_count_,
+            maintenance_locations: maintenance_locations_,
+            maintenance_count: maintenance_count_,
+            mnt: mtn_,
+            pbncs: data.pbncs,
+            upos: data.upos,
+            tds: data.tds
+          });
+
+          _this.initComponents();
+        }
+      });
+    };
+
+    _this.getDashboardData = function () {
+      fetch("http://localhost:8000/dashboards/dashboard_data").then(function (response) {
+        return response.json();
+      }).then(function (data) {
+        console.log("data: ", data);
+        var inspection_locations_ = JSON.parse(data.inspection_locations);
+        var inspections_count_ = JSON.parse(data.inspections_count);
+        var maintenance_locations_ = JSON.parse(data.maintenance_locations);
+        var maintenance_count_ = JSON.parse(data.maintenance_count);
+        var mtn_ = data.mtn;
+
+        _this.setState({
+          inspection_locations: inspection_locations_,
+          inspections_count: inspections_count_,
+          maintenance_locations: maintenance_locations_,
+          maintenance_count: maintenance_count_,
+          mnt: mtn_,
+          pbncs: data.pbncs,
+          upos: data.upos,
+          tds: data.tds
+        });
+
+        _this.initComponents();
+      });
+    };
+
+    _this.onInputChange = function (event) {
+      console.log(event);
+      var _event$target4 = event.target,
+          name = _event$target4.name,
+          value = _event$target4.value;
+
+      _this.setState(Object.assign({}, _this.state, _defineProperty({}, name, value)));
+    };
+
+    _this.onFileInputChange = function (name_, event) {
+      console.log(event);
+      _this.setState(Object.assign({}, _this.state, _defineProperty({}, name_, event.target.files[0])));
+    };
+
+    _this.onAddComplianceTable = function () {
+      // add bid compliance
+      var compliances = _this.state.bids.map(function (bid) {
+        return {
+          bid_count: bid.bid_count,
+          supplier: bid.supplier,
+          supplier_name: bid.supplier_name,
+          payment_terms: false,
+          bid_validity: false,
+          delivery_period: false,
+          technical_specifications: false,
+          valid_tax_clearance: false,
+          registered_with_praz: false,
+          tax_status: false,
+          site_visit_done: false,
+          samples_delivered: false,
+          decision: false,
+          reject: true,
+          remarks: ""
+        };
+      });
+
+      var complianceRemarks = _this.state.bids.map(function (bid) {
+        return {
+          bid_count: bid.bid_count,
+          supplier: bid.supplier,
+          supplier_name: bid.supplier_name,
+          remarks: ""
+        };
+      });
+
+      _this.setState(Object.assign({}, _this.state, {
+        compliance: compliances,
+        complianceRemarks: complianceRemarks,
+        complianceTable: !_this.state.complianceTable
+      }));
+    };
+
+    _this.onComplianceChange = function (bid_count, event) {
+      var _event$target5 = event.target,
+          name = _event$target5.name,
+          checked = _event$target5.checked;
+
+      console.log("name: ", name, "checked: ", checked);
+      var compliance = _this.state.compliance;
+      var index = compliance.findIndex(function (item) {
+        return item.bid_count === bid_count;
+      });
+      compliance[index][name] = checked;
+      _this.setState(Object.assign({}, _this.state, {
+        compliance: compliance
+      }));
+    };
+
+    _this.onComplianceRemarksChange = function (bid_count, event) {
+      var _event$target6 = event.target,
+          name = _event$target6.name,
+          value = _event$target6.value;
+
+      var compliance = _this.state.compliance;
+      var index = compliance.findIndex(function (item) {
+        return item.bid_count === bid_count;
+      });
+      compliance[index][name] = value;
+      _this.setState(Object.assign({}, _this.state, {
+        compliance: compliance
+      }));
+    };
+
+    _this.onSaveCompliance = function () {
+      var form_data = new FormData();
+      form_data.append("cs_id", _this.state.cs_id);
+      form_data.append("compliance", JSON.stringify({
+        compliance: _this.state.compliance
+      }));
+      form_data.append("csrfmiddlewaretoken", _this.getCookie("csrftoken"));
+
+      fetch("http://localhost:8000/comparative_schedule/save_compliance", {
+        method: "POST",
+        headers: {
+          "X-CSRFToken": _this.getCookie("csrftoken")
+        },
+        body: form_data
+      }).then(function (response) {
+        return response.json();
+      }).then(function (data) {
+        console.log("data: ", data);
+        if (data.success) {
+          alert("Compliance saved successfully");
+        } else {
+          alert("Error saving Compliance");
+        }
+      });
+    };
+
+    _this.onCloseCS = function () {
+      var form_data = new FormData();
+      form_data.append("cs_id", _this.state.cs_id);
+      form_data.append("csrfmiddlewaretoken", _this.getCookie("csrftoken"));
+
+      fetch("http://localhost:8000/comparative_schedule/close_compliance", {
+        method: "POST",
+        headers: {
+          "X-CSRFToken": _this.getCookie("csrftoken")
+        },
+        body: form_data
+      }).then(function (response) {
+        return response.json();
+      }).then(function (data) {
+        console.log("data: ", data);
+        if (data.success) {
+          var rankings = data.rankings;
+          _this.setState(Object.assign({}, _this.state, {
+            rankings: rankings,
+            rankingTable: true
+          }));
+          alert("Schedule closed successfully");
+        } else {
+          alert("Error saving Schedule");
+        }
+      });
+    };
+
+    _this.state = {
+      cs_id: "",
+      plan_ref: "",
+      proc_plan: "",
+      scope_of_work: "",
+      pr_number: "",
+      quantity: "",
+      pr_date: "",
+      closing_date: "",
+      closing_time_hour: "",
+      ref_date: "",
+      date_tender_opened: "",
+      tender_adjudication_committee_date: "",
+      advert: null,
+      bid_count: 0,
+      currentBid: {},
+      bids: [],
+      addBidModal: false,
+      cs_items: [],
+      cs_item_count: 0,
+      addItemsModal: false,
+
+      complianceTable: false,
+      compliance: [],
+      complianceRemarks: [],
+
+      rankingTable: false,
+      rankings: [],
+
+      pr_items: [],
+      suppliers: [],
+      procurement_plans: [],
+      authUser: {},
+      username: ""
+    };
+    _this.getCreateData = _this.getCreateData.bind(_this);
+    _this.onAddBid = _this.onAddBid.bind(_this);
+    _this.onAddItemsModal = _this.onAddItemsModal.bind(_this);
+    return _this;
+  }
+
+  _createClass(CreateCS, [{
+    key: "componentDidMount",
+    value: function componentDidMount() {
+      this.setState({
+        username: this.props.username
+      });
+      this.getCreateData();
+    }
+  }, {
+    key: "onSelectChange",
+    value: function onSelectChange(name_, event) {
+      var _event$target7 = event.target,
+          name = _event$target7.name,
+          value = _event$target7.value;
+
+      this.setState(Object.assign({}, this.state, _defineProperty({}, name_, value)));
+    }
+  }, {
+    key: "onFilterSelectCenters",
+    value: function onFilterSelectCenters(name_, event) {
+      var _event$target8 = event.target,
+          name = _event$target8.name,
+          value = _event$target8.value;
+
+      if (name_ === "region") {
+        var dist = this.state.allDistricts.filter(function (_district) {
+          return _district.region_id === value;
+        });
+        this.setState({
+          districts: dist,
+          selectedRegion: value,
+          selectedDepot: "",
+          selectedDistrict: ""
+        });
+        this.getFilterData(value, "", "");
+      } else if (name_ === "district") {
+        console.log("district: ", value, this.state.allDepots);
+        var depos = this.state.allDepots.filter(function (_depot) {
+          return parseInt(_depot.district_id) === parseInt(value);
+        });
+        console.log("depots: ", depos);
+        this.setState({
+          depots: depos,
+          selectedDepot: "",
+          selectedDistrict: value,
+          selectedRegion: ""
+        });
+        this.getFilterData("", value, "");
+      } else if (name_ === "depot") {
+        console.log("depot: ", value);
+        this.setState({
+          selectedDepot: value,
+          selectedDistrict: "",
+          selectedRegion: ""
+        });
+        this.getFilterData("", "", value);
+      }
+
+      // Filter by depot, filter by month, filter combined
+    }
+  }, {
+    key: "getCookie",
+    value: function getCookie(name) {
+      var cookieValue = null;
+      if (document.cookie && document.cookie !== "") {
+        var cookies = document.cookie.split(";");
+        for (var i = 0; i < cookies.length; i++) {
+          var cookie = cookies[i].trim();
+          if (cookie.substring(0, name.length + 1) === name + "=") {
+            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+            break;
+          }
+        }
+      }
+      return cookieValue;
+    }
+  }, {
+    key: "render",
+    value: function render() {
+      var _this2 = this;
+
+      var itemsModal = null;
+      var bidsModal = null;
+      var complianceTable = null;
+      var rankingTable = null;
+
+      if (this.state.addItemsModal) {
+        itemsModal = React.createElement(
+          "div",
+          { className: "fixed inset-0 flex items-center justify-center z-50 pt-10 pb-20" },
+          React.createElement(
+            "div",
+            { className: "bg-white rounded-lg shadow-lg p-6 max-h-screen overflow-y-auto" },
+            React.createElement(
+              "div",
+              { className: "flex justify-between items-center mb-4" },
+              React.createElement(
+                "h3",
+                { className: "text-lg font-medium" },
+                "Modal Title"
+              ),
+              React.createElement(
+                "button",
+                {
+                  type: "button",
+                  className: "text-gray-400 hover:text-gray-500 focus:outline-none",
+                  onClick: this.onAddItemsModal
+                },
+                React.createElement(
+                  "svg",
+                  {
+                    className: "h-6 w-6",
+                    fill: "none",
+                    stroke: "currentColor",
+                    viewBox: "0 0 24 24"
+                  },
+                  React.createElement("path", {
+                    strokeLinecap: "round",
+                    strokeLinejoin: "round",
+                    strokeWidth: "2",
+                    d: "M6 18L18 6M6 6l12 12"
+                  })
+                )
+              )
+            ),
+            React.createElement(
+              "div",
+              null,
+              React.createElement(
+                "table",
+                {
+                  style: { width: "100%" },
+                  className: "table-auto border-spacing-4"
+                },
+                React.createElement(
+                  "thead",
+                  null,
+                  React.createElement(
+                    "tr",
+                    null,
+                    React.createElement(
+                      "th",
+                      null,
+                      "Add Item"
+                    ),
+                    React.createElement(
+                      "th",
+                      null,
+                      "Item Description"
+                    ),
+                    React.createElement(
+                      "th",
+                      null,
+                      "Quantity"
+                    )
+                  )
+                ),
+                React.createElement(
+                  "tbody",
+                  null,
+                  this.state.pr_items.map(function (item, index) {
+                    return React.createElement(
+                      "tr",
+                      null,
+                      React.createElement(
+                        "td",
+                        null,
+                        React.createElement("input", {
+                          type: "checkbox",
+                          checked: item.selected ? item.selected : false,
+                          onChange: function onChange() {
+                            return _this2.onAddCSItem(item.id);
+                          }
+                        })
+                      ),
+                      React.createElement(
+                        "td",
+                        null,
+                        item.description
+                      ),
+                      React.createElement(
+                        "td",
+                        null,
+                        item.quantity
+                      )
+                    );
+                  })
+                )
+              )
+            )
+          )
+        );
+      }
+
+      if (this.state.addBidModal) {
+        bidsModal = React.createElement(
+          "div",
+          {
+            id: "bid-" + this.state.currentBid,
+            className: "fixed inset-0 flex items-center justify-center z-50 pt-10 pb-20"
+          },
+          React.createElement(
+            "div",
+            { className: "bg-white rounded-lg shadow-lg p-6 max-h-screen min-w-max overflow-y-auto" },
+            React.createElement(
+              "div",
+              { className: "flex justify-between items-center mb-4" },
+              React.createElement(
+                "h3",
+                { className: "text-lg font-medium" },
+                "Modal Title"
+              ),
+              React.createElement(
+                "button",
+                {
+                  type: "button",
+                  className: "text-gray-400 hover:text-gray-500 focus:outline-none",
+                  onClick: this.onCloseCurrentBid
+                },
+                React.createElement(
+                  "svg",
+                  {
+                    className: "h-6 w-6",
+                    fill: "none",
+                    stroke: "currentColor",
+                    viewBox: "0 0 24 24"
+                  },
+                  React.createElement("path", {
+                    strokeLinecap: "round",
+                    strokeLinejoin: "round",
+                    strokeWidth: "2",
+                    d: "M6 18L18 6M6 6l12 12"
+                  })
+                )
+              )
+            ),
+            React.createElement(
+              "div",
+              { className: "px-4 sm:px-0 mt-6 bg-gulf-blue-300 rounded-md border-t border-gray-100 border-b border-gray-900/10 pb-12" },
+              React.createElement(
+                "div",
+                { id: "bid_container", className: " rounded-md" },
+                React.createElement(
+                  "div",
+                  { className: "flex justify-evenly mt-5  px-2 py-2 rounded-md" },
+                  React.createElement(
+                    "div",
+                    { className: "flex-1 w-20 ml-1" },
+                    React.createElement(
+                      "label",
+                      {
+                        htmlFor: "supplier_name",
+                        className: "block text-sm font-medium leading-6 text-gray-900"
+                      },
+                      "Supplier"
+                    ),
+                    React.createElement(
+                      "div",
+                      { className: "mt-2" },
+                      React.createElement(
+                        "select",
+                        {
+                          id: "supplier",
+                          onChange: function onChange(e) {
+                            return _this2.onCurrentBidChange("supplier", e);
+                          },
+                          className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
+                        },
+                        this.state.currentBid.supplier_name ? React.createElement(
+                          "option",
+                          {
+                            value: this.state.currentBid.supplier + "-#-" + this.state.currentBid.supplier_name
+                          },
+                          this.state.currentBid.supplier_name
+                        ) : "",
+                        React.createElement(
+                          "option",
+                          null,
+                          "Select Supplier"
+                        ),
+                        this.state.suppliers ? this.state.suppliers.map(function (supplier) {
+                          return React.createElement(
+                            "option",
+                            {
+                              value: supplier.id + "-#-" + supplier.name
+                            },
+                            supplier.name
+                          );
+                        }) : ""
+                      )
+                    )
+                  ),
+                  React.createElement(
+                    "div",
+                    { className: "flex-1 w-20 ml-1" },
+                    React.createElement(
+                      "label",
+                      {
+                        htmlFor: "bid_date",
+                        className: "block text-sm font-medium leading-6 text-gray-900"
+                      },
+                      "Bid Date"
+                    ),
+                    React.createElement(
+                      "div",
+                      { className: "mt-2" },
+                      React.createElement("input", {
+                        name: "bid_date",
+                        value: this.state.currentBid.bid_date,
+                        onChange: function onChange(e) {
+                          return _this2.onCurrentBidChange("bid_date", e);
+                        },
+                        type: "date",
+                        required: "required",
+                        className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                      })
+                    )
+                  ),
+                  React.createElement(
+                    "div",
+                    { className: "flex-1 w-20 ml-1" },
+                    React.createElement(
+                      "label",
+                      {
+                        htmlFor: "supplier[bid][0]",
+                        className: "block text-sm font-medium leading-6 text-gray-900"
+                      },
+                      "Bid No."
+                    ),
+                    React.createElement(
+                      "div",
+                      { className: "mt-2" },
+                      React.createElement("input", {
+                        name: "supplier[bid][0]",
+                        type: "number",
+                        value: "1",
+                        id: "bid",
+                        required: "required",
+                        readOnly: true,
+                        className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                      })
+                    )
+                  ),
+                  React.createElement(
+                    "div",
+                    { className: "flex-1 w-40 ml-1" },
+                    React.createElement(
+                      "label",
+                      {
+                        htmlFor: "bid_document",
+                        className: "block text-sm font-medium leading-6 text-gray-900"
+                      },
+                      "Bid Documents"
+                    ),
+                    React.createElement(
+                      "div",
+                      { className: "mt-2" },
+                      React.createElement("input", {
+                        name: "bid_document",
+                        type: "file",
+                        onChange: function onChange(e) {
+                          return _this2.onCurrentBidChange("bid_document", e);
+                        },
+                        className: "block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                      })
+                    )
+                  )
+                ),
+                this.state.cs_items.map(function (item, index) {
+                  return React.createElement(
+                    "div",
+                    { className: "flex justify-evenly mt-5  px-2 py-2 rounded-md" },
+                    React.createElement(
+                      "div",
+                      { className: "flex-1 w-15 ml-1" },
+                      React.createElement(
+                        "label",
+                        {
+                          htmlFor: "item_name",
+                          className: "block text-sm font-medium leading-6 text-gray-900"
+                        },
+                        "Item Description"
+                      ),
+                      React.createElement(
+                        "div",
+                        { className: "mt-2" },
+                        React.createElement("input", {
+                          name: "item_description",
+                          defaultValue: item.description,
+                          onChange: function onChange(e) {
+                            return _this2.onCurrentBidItemChange(item.id, "description", e);
+                          },
+                          id: "item_description",
+                          required: "required",
+                          className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                        })
+                      )
+                    ),
+                    React.createElement(
+                      "div",
+                      { className: "flex-1 w-15 ml-1" },
+                      React.createElement(
+                        "label",
+                        {
+                          htmlFor: "quantity",
+                          className: "block text-sm font-medium leading-6 text-gray-900"
+                        },
+                        "Quantity"
+                      ),
+                      React.createElement(
+                        "div",
+                        { className: "mt-2" },
+                        React.createElement("input", {
+                          name: "quantity",
+                          defaultValue: item.quantity,
+                          onChange: function onChange(e) {
+                            return _this2.onCurrentBidItemChange(item.id, "quantity", e);
+                          },
+                          type: "number",
+                          id: "quantity",
+                          className: "block inpt w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                        })
+                      )
+                    ),
+                    React.createElement(
+                      "div",
+                      { className: "flex-1 w-15 ml-3" },
+                      React.createElement(
+                        "div",
+                        null,
+                        React.createElement(
+                          "label",
+                          {
+                            htmlFor: "unit_of_measurement",
+                            className: "block text-sm font-medium leading-6 text-gray-900"
+                          },
+                          "UOM"
+                        ),
+                        React.createElement(
+                          "div",
+                          { className: "mt-2" },
+                          React.createElement(
+                            "select",
+                            {
+                              id: "unit_of_measurement",
+                              onChange: function onChange(e) {
+                                return _this2.onCurrentBidItemChange(item.id, "unit_of_measurement", e);
+                              },
+                              autoComplete: "unit_of_measurement",
+                              className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+                            },
+                            item.unit_of_measurement ? React.createElement(
+                              "option",
+                              { value: item.unit_of_measurement },
+                              item.unit_of_measurement
+                            ) : "",
+                            React.createElement(
+                              "option",
+                              { value: "Each" },
+                              "Each"
+                            ),
+                            React.createElement(
+                              "option",
+                              { value: "Kgs" },
+                              "Kg`s"
+                            ),
+                            React.createElement(
+                              "option",
+                              { value: "Grammes" },
+                              "Grammes"
+                            ),
+                            React.createElement(
+                              "option",
+                              { value: "Litres" },
+                              "Litres"
+                            ),
+                            React.createElement(
+                              "option",
+                              { value: "Metres" },
+                              "Metres"
+                            ),
+                            React.createElement(
+                              "option",
+                              { value: "Bags" },
+                              "Bags"
+                            ),
+                            React.createElement(
+                              "option",
+                              { value: "Packets" },
+                              "Packets"
+                            ),
+                            React.createElement(
+                              "option",
+                              { value: "Cartons" },
+                              "Cartons"
+                            )
+                          )
+                        )
+                      )
+                    ),
+                    React.createElement(
+                      "div",
+                      { className: "flex-1 w-15 ml-3" },
+                      React.createElement(
+                        "div",
+                        null,
+                        React.createElement(
+                          "label",
+                          {
+                            htmlFor: "vat",
+                            className: "block text-sm font-medium leading-6 text-gray-900"
+                          },
+                          "VAT"
+                        ),
+                        React.createElement(
+                          "div",
+                          { className: "mt-2" },
+                          React.createElement(
+                            "select",
+                            {
+                              id: "vat",
+                              onChange: function onChange(e) {
+                                return _this2.onCurrentBidItemChange(item.id, "vat", e);
+                              },
+                              autoComplete: "vat",
+                              className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+                            },
+                            item.vat ? React.createElement(
+                              "option",
+                              { value: item.vat },
+                              item.vat
+                            ) : "",
+                            React.createElement(
+                              "option",
+                              { value: "Excl." },
+                              "Excl."
+                            ),
+                            React.createElement(
+                              "option",
+                              { value: "Incl." },
+                              "Incl."
+                            )
+                          )
+                        )
+                      )
+                    ),
+                    React.createElement(
+                      "div",
+                      { className: "flex-1 w-15 ml-1" },
+                      React.createElement(
+                        "label",
+                        {
+                          htmlFor: "unit_price",
+                          className: "block text-sm font-medium leading-6 text-gray-900"
+                        },
+                        "Unit Price"
+                      ),
+                      React.createElement(
+                        "div",
+                        { className: "mt-2" },
+                        React.createElement("input", {
+                          name: "unit_price",
+                          defaultValue: item.unit_price,
+                          onChange: function onChange(e) {
+                            return _this2.onCurrentBidItemChange(item.id, "unit_price", e);
+                          },
+                          type: "text",
+                          id: "unit_price",
+                          required: true,
+                          className: "block inpt w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                        })
+                      )
+                    )
+                  );
+                })
+              ),
+              React.createElement(
+                "div",
+                { className: "flex justify-center mt-5 px-3 py-3" },
+                React.createElement(
+                  "div",
+                  { className: "m-2" },
+                  React.createElement(
+                    "button",
+                    {
+                      onClick: this.onCurrentBidSave,
+                      className: "rounded-md text-gray-50 text-sm bg-blue-925 hover:bg-blue-550 px-3 py-2 font-semibold leading-6"
+                    },
+                    React.createElement(
+                      "span",
+                      { className: "ml-2" },
+                      "SAVE BID"
+                    )
+                  )
+                ),
+                React.createElement(
+                  "div",
+                  { className: "m-2" },
+                  React.createElement(
+                    "button",
+                    {
+                      onClick: this.onCloseCurrentBid,
+                      type: "submit",
+                      className: "rounded-md bg-red-danger hover:bg-orange-500 text-sm font-semibold px-3 py-2 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                    },
+                    React.createElement(
+                      "span",
+                      { className: "ml-2" },
+                      "CANCEL"
+                    )
+                  )
+                )
+              )
+            )
+          )
+        );
+      }
+
+      if (this.state.complianceTable) {
+        complianceTable = React.createElement(
+          "div",
+          { className: "bg-gulf-blue-300 shadow shadow-nepal-300 text-gray-700 rounded px-2 py-2" },
+          React.createElement(
+            "div",
+            { className: "space-y-12 px-5 py-5" },
+            React.createElement(
+              "div",
+              { className: "px-4 sm:px-0 mt-6 border-t border-gray-100 border-gray-900/10" },
+              React.createElement(
+                "h2",
+                { className: "text-base font-semibold leading-6 text-gray-900" },
+                "COMPLIANCE TABLE"
+              ),
+              React.createElement(
+                "p",
+                { className: "mt-1 max-w-2xl text-sm leading-6 text-gray-500" },
+                "Key: Comply/ Not Comply (Y/ N), Not Stated (NS)"
+              ),
+              React.createElement(
+                "div",
+                { className: "flex justify-evenly mt-5 bg-gulf-blue-300 px-2 py-2 rounded-md" },
+                React.createElement(
+                  "div",
+                  { className: "flex-1 w-45" },
+                  React.createElement(
+                    "label",
+                    {
+                      htmlFor: "site_visit",
+                      className: "block text-sm font-medium leading-6 text-gray-900"
+                    },
+                    "Site visit required?"
+                  ),
+                  React.createElement(
+                    "div",
+                    { className: "mt-2" },
+                    React.createElement(
+                      "select",
+                      {
+                        id: "site_visit",
+                        name: "site_visit",
+                        autoComplete: "site_visit",
+                        className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
+                      },
+                      React.createElement(
+                        "option",
+                        { value: "" },
+                        "Select Option"
+                      ),
+                      React.createElement(
+                        "option",
+                        { value: "yes" },
+                        "Yes"
+                      ),
+                      React.createElement(
+                        "option",
+                        { value: "no" },
+                        "No"
+                      )
+                    )
+                  )
+                ),
+                React.createElement(
+                  "div",
+                  { className: "flex-1 w-45" },
+                  React.createElement(
+                    "div",
+                    null,
+                    React.createElement(
+                      "label",
+                      {
+                        htmlFor: "samples",
+                        className: "block text-sm font-medium leading-6 text-gray-900"
+                      },
+                      "Are Samples Required?"
+                    ),
+                    React.createElement(
+                      "div",
+                      { className: "mt-2" },
+                      React.createElement(
+                        "select",
+                        {
+                          id: "samples",
+                          name: "samples",
+                          autoComplete: "samples",
+                          className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
+                        },
+                        React.createElement(
+                          "option",
+                          { value: "" },
+                          "Select Option"
+                        ),
+                        React.createElement(
+                          "option",
+                          { value: "yes" },
+                          "Yes"
+                        ),
+                        React.createElement(
+                          "option",
+                          { value: "no" },
+                          "No"
+                        )
+                      )
+                    )
+                  )
+                )
+              ),
+              React.createElement(
+                "div",
+                { className: "overflow-auto px-2 py-2 mt-5 rounded-md bg-gulf-blue-300" },
+                React.createElement(
+                  "table",
+                  { className: "table-auto w-full text-left" },
+                  React.createElement(
+                    "thead",
+                    null,
+                    React.createElement(
+                      "tr",
+                      { className: "text-gray-900" },
+                      React.createElement(
+                        "th",
+                        { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                        "Bid No."
+                      ),
+                      React.createElement(
+                        "th",
+                        { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                        "Name of Supplier"
+                      ),
+                      React.createElement(
+                        "th",
+                        { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                        "Payment ",
+                        React.createElement("br", null),
+                        "Terms"
+                      ),
+                      React.createElement(
+                        "th",
+                        { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                        "Bid ",
+                        React.createElement("br", null),
+                        "Validity"
+                      ),
+                      React.createElement(
+                        "th",
+                        { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                        "Delivery ",
+                        React.createElement("br", null),
+                        "Period"
+                      ),
+                      React.createElement(
+                        "th",
+                        { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                        "Technical ",
+                        React.createElement("br", null),
+                        "Specifications"
+                      ),
+                      React.createElement(
+                        "th",
+                        { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                        "Valid ",
+                        React.createElement("br", null),
+                        "Tax Clearance"
+                      ),
+                      React.createElement(
+                        "th",
+                        { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                        "Registered ",
+                        React.createElement("br", null),
+                        "with PRAZ?"
+                      ),
+                      React.createElement(
+                        "th",
+                        { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                        "Tax ",
+                        React.createElement("br", null),
+                        "Status"
+                      ),
+                      React.createElement(
+                        "th",
+                        {
+                          id: "site_visit_header",
+                          className: "hidden site-visit-header border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2"
+                        },
+                        "Site Visit",
+                        React.createElement("br", null),
+                        "Done?"
+                      ),
+                      React.createElement(
+                        "th",
+                        {
+                          id: "samples_header",
+                          className: "hidden samples-header border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2"
+                        },
+                        "Samples ",
+                        React.createElement("br", null),
+                        "Delivered?"
+                      ),
+                      React.createElement(
+                        "th",
+                        { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                        "Accept"
+                      ),
+                      React.createElement(
+                        "th",
+                        { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                        "Reject"
+                      )
+                    )
+                  ),
+                  React.createElement(
+                    "tbody",
+                    null,
+                    this.state.compliance.map(function (comp, key) {
+                      return React.createElement(
+                        "tr",
+                        null,
+                        React.createElement(
+                          "td",
+                          { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                          comp.bid_count
+                        ),
+                        React.createElement(
+                          "td",
+                          { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                          comp.supplier_name
+                        ),
+                        React.createElement(
+                          "td",
+                          { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                          React.createElement("input", {
+                            name: "payment_terms",
+                            checked: comp.payment_terms ? comp.payment_terms : false,
+                            onChange: function onChange(e) {
+                              return _this2.onComplianceChange(comp.bid_count, e);
+                            },
+                            id: "payment_terms",
+                            type: "checkbox"
+                          })
+                        ),
+                        React.createElement(
+                          "td",
+                          { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                          React.createElement("input", {
+                            name: "bid_validity",
+                            checked: comp.bid_validity ? comp.bid_validity : false,
+                            onChange: function onChange(e) {
+                              return _this2.onComplianceChange(comp.bid_count, e);
+                            },
+                            id: "bid_validity",
+                            type: "checkbox"
+                          })
+                        ),
+                        React.createElement(
+                          "td",
+                          { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                          React.createElement("input", {
+                            name: "delivery_period",
+                            checked: comp.delivery_period ? comp.delivery_period : false,
+                            onChange: function onChange(e) {
+                              return _this2.onComplianceChange(comp.bid_count, e);
+                            },
+                            id: "delivery_period",
+                            type: "checkbox"
+                          })
+                        ),
+                        React.createElement(
+                          "td",
+                          { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                          React.createElement("input", {
+                            name: "technical_specifications",
+                            checked: comp.technical_specifications ? comp.technical_specifications : false,
+                            onChange: function onChange(e) {
+                              return _this2.onComplianceChange(comp.bid_count, e);
+                            },
+                            id: "technical_specifications",
+                            type: "checkbox"
+                          })
+                        ),
+                        React.createElement(
+                          "td",
+                          { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                          React.createElement("input", {
+                            name: "valid_tax_clearance",
+                            checked: comp.valid_tax_clearance ? comp.valid_tax_clearance : false,
+                            onChange: function onChange(e) {
+                              return _this2.onComplianceChange(comp.bid_count, e);
+                            },
+                            id: "valid_tax_clearance",
+                            type: "checkbox"
+                          })
+                        ),
+                        React.createElement(
+                          "td",
+                          { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                          React.createElement("input", {
+                            name: "registered_with_praz",
+                            checked: comp.registered_with_praz ? comp.registered_with_praz : false,
+                            onChange: function onChange(e) {
+                              return _this2.onComplianceChange(comp.bid_count, e);
+                            },
+                            id: "registered_with_praz",
+                            type: "checkbox"
+                          })
+                        ),
+                        React.createElement(
+                          "td",
+                          { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                          React.createElement("input", {
+                            name: "tax_status",
+                            checked: comp.tax_status ? comp.tax_status : false,
+                            onChange: function onChange(e) {
+                              return _this2.onComplianceChange(comp.bid_count, e);
+                            },
+                            id: "tax_status",
+                            type: "checkbox"
+                          })
+                        ),
+                        React.createElement(
+                          "td",
+                          {
+                            id: "site_visit_header",
+                            className: "hidden site-visit-header border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2"
+                          },
+                          React.createElement("input", {
+                            name: "site_visit_done",
+                            checked: comp.site_visit_done ? comp.site_visit_done : false,
+                            onChange: function onChange(e) {
+                              return _this2.onComplianceChange(comp.bid_count, e);
+                            },
+                            id: "site_visit_done",
+                            type: "checkbox"
+                          })
+                        ),
+                        React.createElement(
+                          "td",
+                          {
+                            id: "samples_header",
+                            className: "hidden samples-header border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2"
+                          },
+                          React.createElement("input", {
+                            name: "samples_delivered",
+                            checked: comp.samples_delivered ? comp.samples_delivered : false,
+                            onChange: function onChange(e) {
+                              return _this2.onComplianceChange(comp.bid_count, e);
+                            },
+                            id: "samples_delivered",
+                            type: "checkbox"
+                          })
+                        ),
+                        React.createElement(
+                          "td",
+                          { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                          React.createElement("input", {
+                            name: "decision",
+                            checked: comp.decision ? comp.decision : false,
+                            onChange: function onChange(e) {
+                              return _this2.onComplianceChange(comp.bid_count, e);
+                            },
+                            id: "decision",
+                            type: "checkbox"
+                          })
+                        ),
+                        React.createElement(
+                          "td",
+                          { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                          React.createElement("input", {
+                            name: "reject",
+                            checked: comp.reject ? comp.reject : false,
+                            onChange: function onChange(e) {
+                              return _this2.onComplianceChange(comp.bid_count, e);
+                            },
+                            id: "reject", type: "checkbox" })
+                        )
+                      );
+                    })
+                  )
+                )
+              ),
+              React.createElement(
+                "div",
+                { className: "px-2 py-2 mt-5 rounded-sm bg-gulf-blue-300" },
+                React.createElement(
+                  "table",
+                  { className: "table-auto w-full text-left" },
+                  React.createElement(
+                    "thead",
+                    null,
+                    React.createElement(
+                      "tr",
+                      { className: "text-gray-900" },
+                      React.createElement(
+                        "th",
+                        { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                        "Supplier"
+                      ),
+                      React.createElement(
+                        "th",
+                        { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                        "Remarks"
+                      )
+                    )
+                  ),
+                  React.createElement(
+                    "tbody",
+                    null,
+                    this.state.compliance.map(function (bid, key) {
+                      return React.createElement(
+                        "tr",
+                        null,
+                        React.createElement(
+                          "td",
+                          { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                          bid.supplier_name
+                        ),
+                        React.createElement(
+                          "td",
+                          { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                          React.createElement("input", {
+                            name: "remarks",
+                            onChange: function onChange(e) {
+                              return _this2.onComplianceRemarksChange(bid.bid_count, e);
+                            },
+                            type: "text",
+                            className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
+                          })
+                        )
+                      );
+                    })
+                  )
+                )
+              )
+            )
+          ),
+          React.createElement(
+            "div",
+            { className: "flex justify-center mt-5 px-3 py-3" },
+            React.createElement(
+              "div",
+              { className: "flex-1 m-2" },
+              React.createElement(
+                "button",
+                {
+                  style: { width: "100%" },
+                  onClick: this.onSaveCompliance,
+                  name: "save_next",
+                  className: "rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                },
+                "SAVE COMPLIANCES"
+              )
+            )
+          )
+        );
+      }
+
+      if (this.state.rankingTable) {
+        rankingTable = React.createElement(
+          "div",
+          { className: "bg-gulf-blue-300 shadow shadow-nepal-300 text-gray-700 rounded px-2 py-2" },
+          React.createElement(
+            "div",
+            { className: "space-y-12 px-5 py-5" },
+            React.createElement(
+              "div",
+              { className: "px-4 sm:px-0 mt-6 border-t border-gray-100 border-gray-900/10" },
+              React.createElement(
+                "h2",
+                { className: "text-base font-semibold leading-6 text-gray-900" },
+                "RANKING TABLE"
+              ),
+              React.createElement(
+                "div",
+                { className: "overflow-auto px-2 py-2 mt-5 rounded-md bg-gulf-blue-300" },
+                React.createElement(
+                  "table",
+                  { className: "table-auto w-full text-left" },
+                  React.createElement(
+                    "thead",
+                    null,
+                    React.createElement(
+                      "tr",
+                      { className: "text-gray-900" },
+                      React.createElement(
+                        "th",
+                        { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                        "ID"
+                      ),
+                      React.createElement(
+                        "th",
+                        { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                        "Name of Supplier"
+                      ),
+                      React.createElement(
+                        "th",
+                        { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                        "Rank"
+                      ),
+                      React.createElement(
+                        "th",
+                        { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                        "Decision"
+                      ),
+                      React.createElement(
+                        "th",
+                        { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                        "Remarks"
+                      ),
+                      React.createElement(
+                        "th",
+                        { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                        "Total"
+                      )
+                    )
+                  ),
+                  React.createElement(
+                    "tbody",
+                    null,
+                    this.state.rankings.map(function (rank, key) {
+                      return React.createElement(
+                        "tr",
+                        { className: "text-gray-900" },
+                        React.createElement(
+                          "td",
+                          { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                          rank.id
+                        ),
+                        React.createElement(
+                          "td",
+                          { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                          rank.supplier_name
+                        ),
+                        React.createElement(
+                          "td",
+                          { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                          rank.rank
+                        ),
+                        React.createElement(
+                          "td",
+                          { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                          rank.decision
+                        ),
+                        React.createElement(
+                          "td",
+                          { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                          rank.remarks
+                        ),
+                        React.createElement(
+                          "td",
+                          { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                          rank.total
+                        )
+                      );
+                    })
+                  )
+                )
+              )
+            )
+          )
+        );
+      }
+
+      return React.createElement(
+        "div",
+        null,
+        itemsModal,
+        bidsModal,
+        React.createElement(
+          "div",
+          { className: "space-y-12 px-5 py-5" },
+          React.createElement(
+            "div",
+            { className: "px-4 sm:px-0" },
+            React.createElement(
+              "h3",
+              { className: "text-base font-semibold leading-7 text-gray-900" },
+              "COMPARATIVE SCHEDULE"
+            ),
+            React.createElement(
+              "p",
+              { className: "mt-1 max-w-2xl text-sm leading-6 text-gray-500" },
+              "CS NO: ",
+              this.state.cs_id
+            )
+          ),
+          React.createElement(
+            "div",
+            { className: "px-4 sm:px-0 mt-6 bg-gulf-blue-300 rounded-md border-t border-gray-100 border-gray-900/10" },
+            React.createElement(
+              "h2",
+              { className: "text-base font-semibold leading-6 text-gray-900" },
+              "CS DETAILS"
+            ),
+            React.createElement(
+              "div",
+              { className: "flex justify-evenly mt-5 px-2 py-2" },
+              React.createElement(
+                "div",
+                { className: "flex-1 w-40" },
+                React.createElement(
+                  "label",
+                  {
+                    htmlFor: "plan_ref",
+                    className: "block text-sm font-medium leading-6 text-gray-900"
+                  },
+                  "Plan Ref"
+                ),
+                React.createElement(
+                  "div",
+                  { className: "mt-2" },
+                  React.createElement("input", {
+                    name: "plan_ref",
+                    id: "plan_ref",
+                    value: this.state.proc_ref,
+                    readOnly: true,
+                    className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                  })
+                )
+              ),
+              React.createElement(
+                "div",
+                { className: "flex-1 w-40 ml-3" },
+                React.createElement(
+                  "div",
+                  null,
+                  React.createElement(
+                    "label",
+                    {
+                      htmlFor: "designation",
+                      className: "block text-sm font-medium leading-6 text-gray-900"
+                    },
+                    "Procurement Plan"
+                  ),
+                  React.createElement(
+                    "div",
+                    { className: "mt-2" },
+                    React.createElement(
+                      "select",
+                      {
+                        id: "proc_plan",
+                        name: "proc_plan",
+                        autoComplete: "proc_plan",
+                        onChange: function onChange(e) {
+                          return _this2.onSelectChange("proc_ref", e);
+                        },
+                        className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
+                      },
+                      React.createElement(
+                        "option",
+                        null,
+                        "Select Procurement Plan Ref"
+                      ),
+                      this.state.procurement_plans ? this.state.procurement_plans.map(function (plan) {
+                        return React.createElement(
+                          "option",
+                          { value: plan.proc_ref },
+                          plan.description
+                        );
+                      }) : ""
+                    )
+                  )
+                )
+              )
+            ),
+            React.createElement(
+              "div",
+              { className: "flex justify-evenly mt-5  px-2 py-2 rounded-md" },
+              React.createElement(
+                "div",
+                { className: "flex-1 w-100" },
+                React.createElement(
+                  "label",
+                  {
+                    htmlFor: "scope",
+                    className: "block text-sm font-medium leading-6 text-gray-900"
+                  },
+                  "Scope of Work"
+                ),
+                React.createElement(
+                  "div",
+                  { className: "mt-2" },
+                  React.createElement("textarea", {
+                    id: "scope",
+                    name: "scope_of_work",
+                    type: "scope",
+                    value: this.state.scope_of_work,
+                    onChange: this.onInputChange,
+                    className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                  })
+                )
+              )
+            ),
+            React.createElement(
+              "div",
+              { className: "flex justify-evenly mt-5  px-2 py-2 rounded-md" },
+              React.createElement(
+                "div",
+                { className: "flex-1 w-20 ml-1" },
+                React.createElement(
+                  "label",
+                  {
+                    htmlFor: "pr_number",
+                    className: "block text-sm font-medium leading-6 text-gray-900"
+                  },
+                  "PR No."
+                ),
+                React.createElement(
+                  "div",
+                  { className: "mt-2" },
+                  React.createElement("input", {
+                    name: "pr_number",
+                    value: this.state.pr_number,
+                    onChange: this.onInputChange,
+                    id: "pr_number",
+                    required: "required",
+                    className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                  })
+                )
+              ),
+              React.createElement(
+                "div",
+                { className: "flex-1 w-20 ml-1" },
+                React.createElement(
+                  "label",
+                  {
+                    htmlFor: "quantity",
+                    className: "block text-sm font-medium leading-6 text-gray-900"
+                  },
+                  "Quantity"
+                ),
+                React.createElement(
+                  "div",
+                  { className: "mt-2" },
+                  React.createElement("input", {
+                    name: "quantity",
+                    value: this.state.quantity,
+                    onChange: this.onInputChange,
+                    type: "number",
+                    required: "required",
+                    className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                  })
+                )
+              ),
+              React.createElement(
+                "div",
+                { className: "flex-1 w-20 ml-1" },
+                React.createElement(
+                  "label",
+                  {
+                    htmlFor: "pr_date",
+                    className: "block text-sm font-medium leading-6 text-gray-900"
+                  },
+                  "PR Date"
+                ),
+                React.createElement(
+                  "div",
+                  { className: "mt-2" },
+                  React.createElement("input", {
+                    name: "pr_date",
+                    value: this.state.pr_date,
+                    onChange: this.onInputChange,
+                    type: "date",
+                    required: "required",
+                    className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                  })
+                )
+              ),
+              React.createElement(
+                "div",
+                { className: "flex-1 w-20 ml-1" },
+                React.createElement(
+                  "label",
+                  {
+                    htmlFor: "closing_date",
+                    className: "block text-sm font-medium leading-6 text-gray-900"
+                  },
+                  "Closing Date"
+                ),
+                React.createElement(
+                  "div",
+                  { className: "mt-2" },
+                  React.createElement("input", {
+                    name: "closing_date",
+                    value: this.state.closing_date,
+                    onChange: this.onInputChange,
+                    type: "date",
+                    required: "required",
+                    className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                  })
+                )
+              ),
+              React.createElement(
+                "div",
+                { className: "flex-1 w-20 ml-1" },
+                React.createElement(
+                  "div",
+                  null,
+                  React.createElement(
+                    "label",
+                    {
+                      htmlFor: "closing_time",
+                      className: "block text-sm font-medium leading-6 text-gray-900"
+                    },
+                    "Closing Time"
+                  ),
+                  React.createElement(
+                    "div",
+                    { className: "mt-2 text-gray-900" },
+                    React.createElement(
+                      "div",
+                      { className: "flex px-1" },
+                      React.createElement(
+                        "select",
+                        {
+                          name: "closing_time_hour",
+                          onChange: function onChange(e) {
+                            return _this2.onSelectChange("closing_time_hour", e);
+                          },
+                          className: "rounded-md block border-none w-full py-1.5 text-gray-900 sm:max-w-xs sm:text-sm sm:leading-6"
+                        },
+                        React.createElement(
+                          "option",
+                          { value: "10:00" },
+                          "10:00"
+                        ),
+                        React.createElement(
+                          "option",
+                          { value: "14:00" },
+                          "14:00"
+                        )
+                      )
+                    )
+                  )
+                )
+              )
+            ),
+            React.createElement(
+              "div",
+              { className: "flex justify-evenly mt-5  px-2 py-2 rounded-md" },
+              React.createElement(
+                "div",
+                { className: "flex-1 w-20 ml-1" },
+                React.createElement(
+                  "label",
+                  {
+                    htmlFor: "proc_plan_ref",
+                    className: "block text-sm font-medium leading-6 text-gray-900"
+                  },
+                  "Procurement Plan Ref"
+                ),
+                React.createElement(
+                  "div",
+                  { className: "mt-2" },
+                  React.createElement("input", {
+                    id: "proc_plan_ref",
+                    value: this.state.proc_ref,
+                    readOnly: true,
+                    className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                  })
+                )
+              ),
+              React.createElement(
+                "div",
+                { className: "flex-1 w-20 ml-1" },
+                React.createElement(
+                  "label",
+                  {
+                    htmlFor: "pr_date",
+                    className: "block text-sm font-medium leading-6 text-gray-900"
+                  },
+                  "Ref Date"
+                ),
+                React.createElement(
+                  "div",
+                  { className: "mt-2" },
+                  React.createElement("input", {
+                    name: "ref_date",
+                    value: this.state.ref_date,
+                    onChange: this.onInputChange,
+                    type: "date",
+                    required: "required",
+                    className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                  })
+                )
+              ),
+              React.createElement(
+                "div",
+                { className: "flex-1 w-20 ml-1" },
+                React.createElement(
+                  "label",
+                  {
+                    htmlFor: "date_tender_opened",
+                    className: "block text-sm font-medium leading-6 text-gray-900"
+                  },
+                  "Tender Box Opened On"
+                ),
+                React.createElement(
+                  "div",
+                  { className: "mt-2" },
+                  React.createElement("input", {
+                    name: "date_tender_opened",
+                    value: this.state.date_tender_opened,
+                    onChange: this.onInputChange,
+                    type: "date",
+                    required: "required",
+                    className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                  })
+                )
+              ),
+              React.createElement(
+                "div",
+                { className: "flex-1 w-40 ml-1" },
+                React.createElement(
+                  "label",
+                  {
+                    htmlFor: "tender_adjudication_committee_date",
+                    className: "block text-sm font-medium leading-6 text-gray-900"
+                  },
+                  "Tender Committee Date"
+                ),
+                React.createElement(
+                  "div",
+                  { className: "mt-2" },
+                  React.createElement("input", {
+                    name: "tender_adjudication_committee_date",
+                    value: this.state.tender_adjudication_committee_date,
+                    onChange: this.onInputChange,
+                    type: "date",
+                    required: "required",
+                    className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                  })
+                )
+              )
+            ),
+            React.createElement(
+              "div",
+              { className: "flex justify-evenly mt-5  px-2 py-2 rounded-md" },
+              React.createElement(
+                "div",
+                { className: "flex-1 w-full ml-1" },
+                React.createElement(
+                  "label",
+                  {
+                    htmlFor: "advert",
+                    className: "block text-sm font-medium leading-6 text-gray-900"
+                  },
+                  "Tender Advert"
+                ),
+                React.createElement(
+                  "div",
+                  { className: "mt-2" },
+                  React.createElement("input", {
+                    name: "advert",
+                    onChange: function onChange(e) {
+                      return _this2.onFileInputChange("advert", e);
+                    },
+                    type: "file",
+                    id: "advert",
+                    required: "required",
+                    readOnly: true,
+                    className: "block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                  })
+                )
+              )
+            ),
+            React.createElement(
+              "div",
+              { className: "flex justify-center mt-10 px-3 py-3" },
+              this.state.cs_id ? React.createElement(
+                "div",
+                { className: "w-30 m-2" },
+                React.createElement(
+                  "button",
+                  {
+                    style: { width: "100%" },
+                    onClick: this.onUpdateSchedule,
+                    name: "save_next",
+                    className: "rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                  },
+                  "UPDATE SCHEDULE"
+                )
+              ) : React.createElement(
+                "div",
+                { className: "w-30 m-2" },
+                React.createElement(
+                  "button",
+                  {
+                    style: { width: "100%" },
+                    onClick: this.onSaveSchedule,
+                    name: "save_next",
+                    className: "rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                  },
+                  "SAVE SCHEDULE"
+                )
+              )
+            )
+          ),
+          this.state.bids.length === 0 && this.state.cs_id && React.createElement(
+            "div",
+            { className: "m-2" },
+            React.createElement(
+              "button",
+              {
+                style: { width: "100%" },
+                onClick: this.onAddItemsModal,
+                className: "rounded-md bg-nepal-950 hover:bg-nepal-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+              },
+              "ADD SCHEDULE ITEMS"
+            )
+          ),
+          this.state.bids.map(function (bid, index) {
+            return React.createElement(
+              "div",
+              {
+                id: "opening_rfq",
+                className: "px-4 sm:px-0 mt-6 bg-gulf-blue-300 rounded-md border-t border-gray-100 border-b border-gray-900/10 pb-12"
+              },
+              React.createElement(
+                "div",
+                { id: "bid_container", className: " rounded-md" },
+                React.createElement(
+                  "div",
+                  { className: "flex justify-evenly mt-5  px-2 py-2 rounded-md" },
+                  React.createElement(
+                    "div",
+                    { className: "flex-1 w-20 ml-1" },
+                    React.createElement(
+                      "label",
+                      {
+                        htmlFor: "supplier_name",
+                        className: "block text-sm font-medium leading-6 text-gray-900"
+                      },
+                      "Supplier"
+                    ),
+                    React.createElement(
+                      "div",
+                      { className: "mt-2" },
+                      React.createElement(
+                        "p",
+                        null,
+                        bid.supplier_name
+                      )
+                    )
+                  ),
+                  React.createElement(
+                    "div",
+                    { className: "flex-1 w-20 ml-1" },
+                    React.createElement(
+                      "label",
+                      {
+                        htmlFor: "bid_date",
+                        className: "block text-sm font-medium leading-6 text-gray-900"
+                      },
+                      "Bid Date"
+                    ),
+                    React.createElement(
+                      "div",
+                      { className: "mt-2" },
+                      React.createElement(
+                        "p",
+                        null,
+                        bid.bid_date
+                      )
+                    )
+                  ),
+                  React.createElement(
+                    "div",
+                    { className: "flex-1 w-20 ml-1" },
+                    React.createElement(
+                      "label",
+                      {
+                        htmlFor: "supplier[bid][0]",
+                        className: "block text-sm font-medium leading-6 text-gray-900"
+                      },
+                      "Bid No."
+                    ),
+                    React.createElement(
+                      "div",
+                      { className: "mt-2" },
+                      React.createElement(
+                        "p",
+                        null,
+                        bid.bid_count
+                      )
+                    )
+                  ),
+                  React.createElement(
+                    "div",
+                    { className: "flex-1 w-40 ml-1" },
+                    React.createElement(
+                      "label",
+                      {
+                        htmlFor: "bid_document",
+                        className: "block text-sm font-medium leading-6 text-gray-900"
+                      },
+                      "Bid Documents"
+                    ),
+                    React.createElement(
+                      "div",
+                      { className: "mt-2" },
+                      React.createElement(
+                        "a",
+                        {
+                          href: bid.bid_document ? URL.createObjectURL(bid.bid_document) : "",
+                          target: "_blank",
+                          rel: "noopener noreferrer"
+                        },
+                        bid.bid_document ? bid.bid_document.name : ""
+                      )
+                    )
+                  )
+                ),
+                bid.items.map(function (item, index) {
+                  return React.createElement(
+                    "div",
+                    { className: "flex justify-evenly mt-5  px-2 py-2 rounded-md" },
+                    React.createElement(
+                      "div",
+                      { className: "flex-1 w-15 ml-1" },
+                      React.createElement(
+                        "label",
+                        {
+                          htmlFor: "item_name",
+                          className: "block text-sm font-medium leading-6 text-gray-900"
+                        },
+                        "Item Description"
+                      ),
+                      React.createElement(
+                        "div",
+                        { className: "mt-2" },
+                        React.createElement(
+                          "p",
+                          null,
+                          item.description
+                        )
+                      )
+                    ),
+                    React.createElement(
+                      "div",
+                      { className: "flex-1 w-15 ml-1" },
+                      React.createElement(
+                        "label",
+                        {
+                          htmlFor: "quantity",
+                          className: "block text-sm font-medium leading-6 text-gray-900"
+                        },
+                        "Quantity"
+                      ),
+                      React.createElement(
+                        "div",
+                        { className: "mt-2" },
+                        React.createElement(
+                          "p",
+                          null,
+                          item.quantity
+                        )
+                      )
+                    ),
+                    React.createElement(
+                      "div",
+                      { className: "flex-1 w-15 ml-3" },
+                      React.createElement(
+                        "div",
+                        null,
+                        React.createElement(
+                          "label",
+                          {
+                            htmlFor: "unit_of_measurement",
+                            className: "block text-sm font-medium leading-6 text-gray-900"
+                          },
+                          "UOM"
+                        ),
+                        React.createElement(
+                          "div",
+                          { className: "mt-2" },
+                          React.createElement(
+                            "p",
+                            null,
+                            item.unit_of_measurement
+                          )
+                        )
+                      )
+                    ),
+                    React.createElement(
+                      "div",
+                      { className: "flex-1 w-15 ml-3" },
+                      React.createElement(
+                        "div",
+                        null,
+                        React.createElement(
+                          "label",
+                          {
+                            htmlFor: "vat",
+                            className: "block text-sm font-medium leading-6 text-gray-900"
+                          },
+                          "VAT"
+                        ),
+                        React.createElement(
+                          "div",
+                          { className: "mt-2" },
+                          React.createElement(
+                            "p",
+                            null,
+                            item.vat
+                          )
+                        )
+                      )
+                    ),
+                    React.createElement(
+                      "div",
+                      { className: "flex-1 w-15 ml-1" },
+                      React.createElement(
+                        "label",
+                        {
+                          htmlFor: "unit_price",
+                          className: "block text-sm font-medium leading-6 text-gray-900"
+                        },
+                        "Unit Price"
+                      ),
+                      React.createElement(
+                        "div",
+                        { className: "mt-2" },
+                        React.createElement(
+                          "p",
+                          null,
+                          item.unit_price
+                        )
+                      )
+                    ),
+                    React.createElement(
+                      "div",
+                      { className: "flex-1 w-15 ml-1" },
+                      React.createElement(
+                        "label",
+                        {
+                          htmlFor: "total_price",
+                          className: "block text-sm font-medium leading-6 text-gray-900"
+                        },
+                        "Total Price"
+                      ),
+                      React.createElement(
+                        "div",
+                        { className: "mt-2" },
+                        React.createElement(
+                          "p",
+                          null,
+                          item.total_price
+                        )
+                      )
+                    )
+                  );
+                })
+              ),
+              React.createElement(
+                "div",
+                { className: "flex justify-center mt-5 px-3 py-3" },
+                React.createElement(
+                  "div",
+                  { className: "m-2" },
+                  React.createElement(
+                    "button",
+                    {
+                      onClick: function onClick() {
+                        return _this2.onUpdateBidModal(bid.bid_count);
+                      },
+                      className: "rounded-md text-gray-50 text-sm bg-blue-925 hover:bg-blue-550 px-3 py-2 font-semibold leading-6"
+                    },
+                    "UPDATE BID"
+                  )
+                ),
+                React.createElement(
+                  "div",
+                  { className: "m-2" },
+                  React.createElement(
+                    "button",
+                    {
+                      onClick: function onClick() {
+                        return _this2.onDeleteBidModal(bid.bid_count);
+                      },
+                      type: "submit",
+                      className: "rounded-md bg-red-danger hover:bg-orange-500 text-sm font-semibold px-3 py-2 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                    },
+                    "DELETE BID"
+                  )
+                )
+              )
+            );
+          }),
+          this.state.cs_items.length > 0 ? React.createElement(
+            "div",
+            { className: "m-2" },
+            React.createElement(
+              "button",
+              {
+                style: { width: "100%" },
+                onClick: this.onAddBidModal,
+                className: "rounded-md bg-nepal-950 hover:bg-nepal-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+              },
+              "ADD BID"
+            )
+          ) : "",
+          this.state.bids.length > 0 ? React.createElement(
+            "div",
+            { className: "m-2" },
+            React.createElement(
+              "button",
+              {
+                style: { width: "100%" },
+                onClick: this.onAddComplianceTable,
+                className: "rounded-md bg-nepal-950 hover:bg-nepal-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+              },
+              "ADD COMPLIANCES"
+            )
+          ) : "",
+          complianceTable,
+          this.state.compliance.length > 0 ? React.createElement(
+            "div",
+            { className: "m-2" },
+            React.createElement(
+              "button",
+              {
+                style: { width: "100%" },
+                onClick: this.onCloseCS,
+                className: "rounded-md bg-red-danger hover:bg-orange-500 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+              },
+              "CLOSE SCHEDULE"
+            )
+          ) : "",
+          rankingTable
+        )
+      );
+    }
+  }]);
+
+  return CreateCS;
+}(React.Component);
+
+var domContainer = document.querySelector("#create_comparative_schedule");
+var username = domContainer.getAttribute("data-username");
+ReactDOM.render(e(CreateCS, { username: username }), domContainer);
