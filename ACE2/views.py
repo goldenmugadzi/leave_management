@@ -16,6 +16,7 @@ from approve.forms import ApprovalForm
 from approve.models import Step
 from approve.views import intiate
 from it.users.models import UserProfile, Roles, Designations, Districts, Depots
+from finance.PettyCash.views import approve_step
 
 
 # Create your views here.
@@ -360,10 +361,13 @@ def view_all_aces(request):
 
     if ace_role == "create":
         aces = Ace2.objects.filter(requested_by=request.user)
-    elif ace_role == "approve":
+    elif ace_role == "pass":
         aces = Ace2.objects.filter(section=request.user.section)
     else:
+        print('kings')
         aces = Ace2.objects.all()
+        print(aces)
+
     return render(request, 'finance/ace2/view_all_aces.html', {'aces': aces,
                                                                'requester': requester})
 
@@ -664,111 +668,216 @@ def add_asset_number(request):
     else:
         return redirect('/ace/aces')
 
-# @login_required
-# def upload_aces_csv(request):
-#     if request.method == 'POST':
-#         csvfile = request.FILES['file']  # file as key
-#         decoded_file = csvfile.read().decode('cp1252').splitlines()
-#         reader = csv.DictReader(decoded_file)
-#         for row in reader:
-#             ace_id2 = row['ace']
-#             region = row['division']
-#             section	= row['undertaking']
-#             district = row['district']
-#             details_of_expenditure = row['description']
-#             classification = row['classification']
-#             present_tariff = row['present_tariff']
-#             present_fmc = row['present_fmc']
-#             requested_by = row['estimator']
-#             date_created = row['date_est']
-#             date_created = date_created.strip().split(" ")[0]
-#             if date_created != "null":
-#                 date_created = datetime.strptime(date_created, "%Y-%m-%d")
-#             else:
-#                 date_created = None
-#             capital_contr = row['capital_contr']
-#             connection_fee = row['connection_fee']
-#             total_connection_fee = row['total_connection_fee']
-#             materials = row['materials']
-#             labour = row['labour']
-#             transport = row['transport']
-#             summary_total = row['summary_total']
-#             admin_fee = row['admin_fee']
-#             estimated_cost = row['estimated_cost']
-#
-#             applicant = row['applicant']
-#             app_designation = row['app_designation']
-#             app_date = row['app_date']
-#             app_date = app_date.strip().split(" ")[0]
-#             if app_date != "null":
-#                 app_date = datetime.strptime(app_date, "%Y-%m-%d")
-#             else:
-#                 app_date = None
-#
-#             passed_by = row['passed_by']
-#             passed_date = row['passed_date']
-#             passed_date = passed_date.strip().split(" ")[0]
-#             if passed_date != "null":
-#                 passed_date = datetime.strptime(passed_date, "%Y-%m-%d")
-#             else:
-#                 passed_date = None
-#
-#
-#             specification = row['specification']
-#             asset_number = row['asset_number']
-#             item_division = row['item_division']
-#             year = row['year']
-#             est_division = row['est']
-#             item_cap_est = row['item_cap_est']
-#             item_cap_sanc = row['item_cap_sanc']
-#             item_totcap_req = row['item_totcap_req']
-#             item_totcap_sanc = row['item_totcap_sanc']
-#             item_balcap = row['item_balcap']
-#             item_balcap_sanc = row['item_balcap_sanc']
-#             gross_division = row['gross_division']
-#             gross_tot_cap = row['gross_tot_cap']
-#             gross_cap_sanc = row['gross_cap_sanc']
-#             gross_balcap = row['gross_balcap']
-#             ace_amt = row['ace_amt']
-#             gross_balcap = row['gross_balcap']
-#             attachment1=row['attachment1']
-#             attachment2=row['attachment2']
-#             attachment3=row['attachment3']
-#             attachment4=row['attachment']
-#             attachment5=row['attachment5']
-#             order_number=row['order_number']
-#
-#             period=row['period']
-#             section=Sections.objects.filter(section=section).first()
-#             if section:
-#                 section_code=section.section_code
-#             else:
-#                 section_code=None
-#
-#             if requested_by:
-#                 requested_by = User.objects.filter(username=requested_by).first()
-#             else:
-#                 requested_by = None
-#
-#             if date_created:
-#                 date_created = datetime.strptime(date_created, "%Y-%m-%d")
-#             else:
-#                 date_created = None
-#
-#             check_ace = Ace2.objects.filter(Ace_id2=ace_id2).first()
-#             if check_ace:
-#                 print("duplicate record ....")
-#                 messages.error(request, 'duplicate record')
-#                 sweetify.error(request, 'duplicate record')
-#             else:
-#                 Ace2.objects.create(ace_id2=ace_id2,
-#                                region=region,
-#                                section=section,
-#                                 details_of_expenditure=details_of_expenditure,
-#                                 requested_by=requested_by,
-#                                 date_created=date_created,
-#                                 asset_number=asset_number,
-#
-#                                 classification=classification,
-#                                 present_tariff=present_tariff,
-#                                 present_fmc=present_fmc,
+
+@login_required
+def upload_aces_csv(request):
+    if request.method == 'POST':
+        csvfile = request.FILES['file']  # file as key
+        decoded_file = csvfile.read().decode('utf-8').splitlines()
+        reader = csv.DictReader(decoded_file)
+        csvfile2 = request.FILES['file2']  # file as key
+        decoded_file2 = csvfile2.read().decode('utf-8').splitlines()
+        reader2 = csv.DictReader(decoded_file2)
+        for row in reader:
+            ace_id2 = row['ace']
+            region = row['division']
+            section = row['undertaking']
+            district = row['district']
+            details_of_expenditure = row['description']
+            classification = row['classification']
+            present_tariff = row['present_tariff']
+            present_fmc = row['present_fmc']
+            requested_by = row['estimator']
+            date_created = row['date_est']
+            date_created = date_created.strip().split(" ")[0]
+            if date_created != "null":
+                date_created = datetime.strptime(date_created, "%Y-%m-%d")
+            else:
+                date_created = None
+            capital_contr = row['capital_contr']
+            connection_fee = row['connection_fee']
+            total_connection_fee = row['total_connection_fee']
+            materials = row['materials']
+            labour = row['labour']
+            transport = row['transport']
+            summary_total = row['summary_total']
+            admin_fee = row['admin_fee']
+            estimated_cost = row['estimated_cost']
+
+            applicant = row['applicant']
+            app_designation = row['app_designation']
+            app_date = row['app_date']
+            app_date = app_date.strip().split(" ")[0]
+            if app_date != "null":
+                app_date = datetime.strptime(app_date, "%Y-%m-%d")
+            else:
+                app_date = None
+
+            passed_by = row['passed_by']
+            passed_date = row['app_date']
+            passed_date = passed_date.strip().split(" ")[0]
+            if passed_date != "null" or passed_date != "" or passed_date != "0000-00-00":
+                passed_date = datetime.strptime(passed_date, "%Y-%m-%d")
+            else:
+                passed_date = None
+
+            specification = row['specification']
+            asset_number = row['asset_number']
+            item_division = row['item_division']
+            year = row['year']
+            item_cap_est = row['item_cap_est']
+            item_cap_sanc = row['item_cap_sanc']
+            item_totcap_req = row['item_totcap_req']
+            item_balcap = row['item_balcap']
+            gross_division = row['gross_division']
+            gross_tot_cap = row['gross_tot_cap']
+            gross_cap_sanc = row['gross_cap_sanc']
+            gross_balcap = row['gross_balcap']
+            ace_amt = row['ace_amt']
+            gross_balcap = row['gross_balcap']
+            attachment1 = row['attachment1']
+            attachment2 = row['attachment2']
+            attachment3 = row['attachment3']
+            attachment4 = row['attachment4']
+            attachment5 = row['attachment5']
+            order_number = row['order_number']
+
+            period = row['period']
+
+            if requested_by:
+                requested_by = UserProfile.objects.filter(username=requested_by).first()
+            else:
+                requested_by = None
+            #
+            # if date_created:
+            #     date_created = datetime.strptime(date_created, "%Y-%m-%d")
+            # else:
+            #     date_created = None
+            if app_designation:
+                app_designation = Designations.objects.filter(description=app_designation).first()
+            else:
+                app_designation = None
+
+            if item_division:
+                # fetch from remote budgets model
+                budget_obj = RemoteBudget.objects.using('remote').filter(budget_id=item_division).first()
+                # create assetbudget object using this informationif asset budget doesnt exist'
+                assetbudget = AssetBudget.objects.filter(budget_name=budget_obj.budget, period=budget_obj.period).first()
+                region = Regions.objects.filter(region='Harare Region').first()
+                section = Sections.objects.filter(section=str(budget_obj.section_code)).first()
+                if section:
+                    section_code = section.code
+                else:
+                    section_code = None
+                if assetbudget:
+                    assetbudget = assetbudget
+                else:
+                    assetbudget = AssetBudget.objects.create(section_code=str(section_code),
+                                                             budget_name=budget_obj.budget,
+                                                             allocated=budget_obj.allocated,
+                                                             withdrawn=budget_obj.withdrawn,
+                                                             balance=budget_obj.balance,
+                                                             awaiting_sanctioning=budget_obj.awaiting_sanctioning,
+                                                             period=budget_obj.period,
+                                                             region=region,
+                                                             created_date=date.today(),
+                                                             )
+                    assetbudget.save()
+            else:
+                assetbudget = None
+
+            check_ace = Ace2.objects.filter(Ace_id2=ace_id2).first()
+            if check_ace:
+                print("duplicate record ....")
+                messages.error(request, 'duplicate record')
+                sweetify.error(request, 'duplicate record')
+            else:
+                if present_tariff == "":
+                    present_tariff = 0
+                if present_fmc == "":
+                    present_fmc = 0
+                if capital_contr == "":
+                    capital_contr = 0
+                if materials == "":
+                    materials = 0
+                if connection_fee == "":
+                    connection_fee = 0
+                if labour == "":
+                    labour = 0
+                if transport == "":
+                    transport = 0
+                if total_connection_fee == "":
+                    total_connection_fee = 0
+                section = Sections.objects.filter(section=section).first()
+                if section:
+                    section = section
+                else:
+                    section = None
+                requested_by = UserProfile.objects.filter(username=requested_by).first()
+                if requested_by:
+                    requested_by = requested_by
+                else:
+                    requested_by = None
+                ace = Ace2.objects.create(Ace_id2=ace_id2,
+                                          region=region,
+                                          section_id=section.id if section else None,
+                                          details_of_expenditure=details_of_expenditure,
+                                          requested_by=requested_by if requested_by else None,
+                                          date_created=passed_date,
+                                          asset_number=asset_number,
+
+                                          classification=classification,
+                                          present_tariff=present_tariff if isinstance(present_tariff, (int, float)) else None,
+                                          present_fmc=present_fmc,
+                                          capital_contribution=capital_contr,
+                                          materials=materials,
+                                          connection_fee=connection_fee,
+                                          labour=labour,
+                                          transport=transport,
+                                          total_connection_fee=total_connection_fee,
+
+                                          designation=app_designation,
+                                          currency='rtgs',
+                                          quantity=1,
+                                          budget_id=assetbudget,
+                                          )
+                ace.process = intiate(request, 'ace')
+                ace.save()
+                # for approvals in csvfile2:
+        for row in reader2:
+            ace_id2 = row['ace']
+            ace = Ace2.objects.filter(Ace_id2=ace_id2).first()
+
+            if ace:
+                print('ace found', ace)
+                section = row['section_code']
+                section = Sections.objects.filter(code=section).first()
+                if section:
+                    section_code = section.code
+                else:
+                    section_code = None
+                ace.section_code = section_code
+                ace.save()
+                if row['status_1'] == 1:
+                    user = row['update_user1']
+                    date_approved = row['update_date2']
+                    user = UserProfile.objects.filter(username=user).first()
+
+                    approve_step(ace.process, user, date_approved)
+                    if row['status_2'] == 2:
+                        user = row['update_user2']
+                        date_approved = row['update_date3']
+                        user = UserProfile.objects.filter(username=user).first()
+                        approve_step(ace.process, user, date_approved)
+                        approve_step(ace.process, user, date_approved)
+
+                        if row['status_3'] == 3:
+                            user = row['update_user3']
+                            date_approved = row['update_date4']
+                            user = UserProfile.objects.filter(username=user).first()
+                            approve_step(ace.process, user, date_approved)
+                            p
+
+        return redirect("/ace/aces")
+    else:
+        return render(request, 'finance/ace2/upload_ace.html')

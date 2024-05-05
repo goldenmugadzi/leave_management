@@ -5,8 +5,82 @@ from approve.models import Process
 from finance.Ace.models import Budget
 from it.users.models import Regions, UserProfile, Sections, Designations
 
-
 # Create your models here.
+from django.db import models
+
+
+class RemoteBudget(models.Model):
+    # Define your fields here. For example:
+    budget_id = models.AutoField(primary_key=True)
+    section_code = models.CharField(max_length=36, blank=True, null=True)
+    section = models.CharField(max_length=36, blank=True, null=True)
+    budget = models.CharField(max_length=200, blank=True, null=True)
+    allocated = models.FloatField(blank=True, null=True)
+    awaiting_sanctioning = models.FloatField(blank=True, null=True, default=0)
+    withdrawn = models.FloatField(blank=True, null=True, default=0)
+    balance = models.FloatField(blank=True, null=True, default=0)
+    withdrawal_date = models.DateField(blank=True, null=True)
+    awaiting_sanctioning = models.FloatField(blank=True, null=True, default=0)
+    period = models.PositiveIntegerField(validators=[MinValueValidator(1), MaxValueValidator(9999)])
+    region = models.CharField(max_length=36, blank=True, null=True)
+    # Add other fields based on the columns in the remote table
+
+    class Meta:
+        db_table = 'budget'  # Use the exact name of the table in your remote database
+        managed = False  # Django won't create a table in your local database
+        app_label = 'ACE2'  # Set the app label to the name of the app where this model is defined
+
+
+# class RemoteDataModelRouter:
+#     """
+#     A router to control all database operations on models in the
+#     RemoteDataModel application.
+#     """
+#
+#     def db_for_read(self, model, **hints):
+#         """
+#         Attempts to read RemoteDataModel models go to 'other'.
+#         """
+#         if model._meta.app_label == 'RemoteDataModel':
+#             return 'other'
+#         return None
+#
+#     def db_for_write(self, model, **hints):
+#         """
+#         Attempts to write RemoteDataModel models go to 'other'.
+#         """
+#         if model._meta.app_label == 'RemoteDataModel':
+#             return 'other'
+#         return None
+#
+#     def allow_relation(self, obj1, obj2, **hints):
+#         """
+#         Allow relations if a model in the RemoteDataModel app is involved.
+#         """
+#         if obj1._meta.app_label == 'RemoteDataModel' or \
+#                 obj2._meta.app_label == 'RemoteDataModel':
+#             return True
+#         return None
+#
+#     def allow_migrate(self, db, app_label, model_name=None, **hints):
+#         """
+#         Make sure the RemoteDataModel app only appears in the 'other'
+#         database.
+#         """
+#         if app_label == 'RemoteDataModel':
+#             return db == 'other'
+#         return None
+#
+#
+# class Old_budget(models.Model):
+#     # Define fields that map to columns in your remote table
+#     field1 = models.CharField(max_length=100)
+#     field2 = models.IntegerField()
+#
+#     class Meta:
+#         managed = False  # Set to avoid creating a local table
+#         db_table = 'budget'
+
 
 class AssetBudget(models.Model):
     budget_id = models.AutoField(primary_key=True)
@@ -45,7 +119,7 @@ class Ace2(models.Model):
     details_of_expenditure = models.CharField(max_length=100, blank=True, null=True)
     amount = models.FloatField(blank=True, null=True)
     # payment_mode = models.CharField(max_length=100, blank=True, null=True)
-    requested_by = models.ForeignKey(UserProfile, on_delete=models.DO_NOTHING, blank=True)
+    requested_by = models.ForeignKey(UserProfile, on_delete=models.DO_NOTHING, blank=True, null=True)
     date_created = models.DateField(auto_now_add=True, blank=True, null=True)
     Ace_id2 = models.CharField(max_length=60)
     Ace_id = models.AutoField(primary_key=True)
@@ -74,7 +148,8 @@ class Ace2(models.Model):
     quantity = models.IntegerField(null=True, max_length=20)
 
     process = models.ForeignKey(Process, on_delete=models.SET_NULL, blank=True, null=True)
-    section = models.ForeignKey(Sections, on_delete=models.DO_NOTHING, blank=True)
+    section = models.ForeignKey(Sections, on_delete=models.DO_NOTHING, blank=True, null=True)
+
     # dummy = models.CharField(null=True, max_length=120, blank=True)
 
     def __str__(self):
