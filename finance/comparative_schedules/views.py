@@ -9,6 +9,7 @@ from .models import *
 from it.users.models import *
 from finance.purchase_request.models import PurchaseRequest, PrItem, Attachment, UnitOfMeasurement
 from finance.comparative_schedules.models import *
+from django.db.models import Q, Exists, OuterRef
 
 def clear_approvals(cs_id):
 
@@ -39,7 +40,33 @@ def clear_approvals(cs_id):
 
 def get_comperative_schedules(request):
     
-    cs = ComparativeSchedules.objects.all()
+    user_id = request.user.id
+    user = UserProfile.objects.filter(id=user_id).first()
+    # fetch schedules if user exists in the committee and has not yet approved
+    # cs = ComparativeSchedules.objects.filter(
+    # committee__user_id=user_id,
+    # committee__committee_approval="",
+    # ).all()
+    # fetch schedules created by the user
+    # cs = ComparativeSchedules.objects.filter(
+    #     created_by_id=user_id,
+    # ).all()
+    # fetch all pending committee approvals
+    # cs = ComparativeSchedules.objects.filter(
+    #     Q(committee__committee_approval=None) | Q(committee__committee_approval="Rejected"), 
+    #     created_by_id=user_id,
+    # ).distinct()
+    # fetch all pending approvals
+    cs = ComparativeSchedules.objects.filter(    
+        Exists(Committee.objects.filter(
+            cs_id=OuterRef('pk'),
+            committee_approval="",
+        )),
+        Q(csapproval__approval=None) | Q(csapproval__approval="Rejected"), 
+        created_by_id=user_id,
+    ).distinct()
+    # fetch all schedules
+    # cs = ComparativeSchedules.objects.filter().all()
 
     cs_list = []
     for c in cs:
