@@ -205,7 +205,7 @@ DATABASES = {
         'NAME': 'harare',
         'USER': 'root',
         'PASSWORD': '',
-        'HOST': '172.16.8.22',  #  # Optional
+        'HOST': '172.16.8.22',  # # Optional
     }
     # 'default': {
     #     'ENGINE': 'django.db.backends.mysql',

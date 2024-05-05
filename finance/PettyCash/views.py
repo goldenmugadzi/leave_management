@@ -137,10 +137,11 @@ def create_pettycash(request):
         for _role in roles_:
             role = Roles.objects.filter(id=_role.id).first()
 
-        if role.application == "pettycash":
-            custom_user_roles["pettycash"] = role
+            if role.application == "pettycash":
+                custom_user_roles["pettycash"] = role
         pettycash_role = str(custom_user_roles["pettycash"])
-        if pettycash_role == 'create':
+        print(pettycash_role)
+        if pettycash_role == "create":
             if form.is_valid() and formset.is_valid():
                 pettycash = form.save(commit=False)
                 pettycash.process = intiate(request, 'pettycash')
