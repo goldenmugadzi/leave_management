@@ -38,7 +38,7 @@
                 <div class="card-body m-auto mb-5 p-3      container rounded  shadow-lg">
                     <div class="px-6 py-4">
                         <div class="card bg-gradient-to-r from-gulf-blue-100 rounded to-blue-500 mb-3">
-                            <h1 class="text-center mb-4 font-bold text-xl rounded  mb-2">{{ token.type|default_if_none:'' }} TOKEN </h1>
+                            <h1 class="text-center mb-4 font-bold text-xl rounded  mb-2">{{ token.type|default_if_none:'' }} TOKEN</h1>
                             <div class="card-body grid grid-cols-3 gap-2  rounded m-auto mb-5 ed p-3     justify-content-center align-content-stretch container rounded  shadow-lg">
                                 <div class=" text-center">
                                     <p class="font-bold mb-2">Customer</p>
@@ -49,163 +49,196 @@
                                 <div>
                                     <p class="font-bold mb-2">Phone Number</p>
                                     <p class="mb-2 font-normal">{{ token.customer.contact_number|default_if_none:'' }}</p>
-                                    
-                                    {% if token.recover_set.first %}
-                                        <p class="font-bold text-center mb-2">Recovery :</p>
-                                        <p class="mb-2 font-normal">{{ token.recover_set.first.description|default_if_none:'' }}</p>
-                                    {% endif %}
-                                    {% if token.reconnection_set.first %}
-                                        <p class="font-bold text-center mb-2">
-                                            Reconnection:</p>
-                                            <p class="mb-2 font-normal">{{ token.reconnection_set.first.description|default_if_none:'' }}</p>
-                                        {% endif %}
-                                    </div>
-                                    <div >
-                                        <p class="font-bold mb-2">Created By</p>
-                                        <p class="mb-2 font-normal">
-                                            {% if request.user == token.created_by %}
-                                                You
-                                            {% elif  token.created_by.get_full_name %}
-                                                {{ token.created_by.get_full_name }}
-                                            {% elif request.user == token.created_by %}
-                                                {{ token.created_by }}
-                                            {% endif %}
-                                        </p>
-                                        <p class="font-bold mb-2">Created at</p>
-                                        <p class="mb-2 font-normal">{{ token.created_at|default_if_none:'' }}</p>
-                                    </div>
+                                   <p class="font-bold ">Description:</p>
+                                        <p class="mb-2 font-normal">{{ token.reason|default_if_none:'' }}</p>
                                 </div>
-                                {% if token.type == 'TEMPER' or token.type == 'REIMBURSEMENT' %}
-                                      {% if token.tampertoken_set.last.is_for == 'Recovered Meter' %}
-                                   
-                                        <details class="font-bold text-center ">
-                                            <summary class="text-blue-900 mb-2">{{ token.tampertoken_set.last.is_for|default_if_none:'' }} picture</summary>
-                                            <img class="flex justify-center items-center h-screen" src="/media/{{ token.recoveredmeter_set.last.picture }}" alt="{{ token.recoveredmeter_set.last.picture }}">
-                                          </details>
-                                          {% elif  token.reimbursement_set.last.purpose == 'Recovered Meter' %}
-                                          <details class="font-bold text-center ">
-                                            <summary class="text-blue-900 mb-2">{{ token.reimbursement_set.last.purpose|default_if_none:'' }} Invoice and Proof of payment</summary>
-                                            <img class="flex justify-center items-center h-screen" src="/media/{{ token.recoveredmeter_set.last.picture }}" alt="{{ token.recoveredmeter_set.last.picture }}">
-                                          </details>
-                                        {% elif  token.tampertoken_set.last.is_for == 'Fauty Maintanance' %}
-                                          <p class="font-bold mb-2">Fault Number</p>
-                                          <p class="mb-2 font-normal">{{ token.faultmaintanance_set.last.number|default_if_none:'' }}</p>
-                                          {% elif  token.tampertoken_set.last.is_for == 'Reconnection'  %}
-                                          <details class="font-bold text-center ">
-                                            <summary class="text-blue-900 mb-2">{{ token.tampertoken_set.last.is_for|default_if_none:'' }} Invoice and Proof of payment</summary>
-                                            <img class="flex justify-center items-center h-screen" src="/media/{{ token.reconnection_set.last.invoice }}" alt="{{ token.reconnection_set.last.picture }}">
-                                            <img class="flex justify-center items-center h-screen" src="/media/{{ token.reconnection_set.last.proof_of_payment }}" alt="{{ token.reconnection_set.last.picture }}">
-                                          </details>
-                                         
-                                          {% elif  token.tampertoken_set.last.purpose == 'Faulty Meter' %}
-                                          <details class="font-bold text-center ">
-                                            <summary class="text-blue-900 mb-2">{{ token.tampertoken_set.last.is_for|default_if_none:'' }} Invoi and Proof of payment</summary>
-                                            <img class="flex justify-center items-center h-screen" src="/media/{{ token.recoveredmeter_set.last.proof_of_payment }}" alt="{{ token.recoveredmeter_set.last.picture }}">
-                                          </details>
-                                          {% elif  token.tampertoken_set.last.purpose == 'Old Token' %}
-                                          <details class="font-bold text-center ">
-                                            <summary class="text-blue-900 mb-2">{{ token.tampertoken_set.last.is_for|default_if_none:'' }} Invoice and Proof of payment</summary>
-                                            <img class="flex justify-center items-center h-screen" src="/media/{{ token.recoveredmeter_set.last.invoice }}" alt="{{ token.recoveredmeter_set.last.picture }}">
-                                            <img class="flex justify-center items-center h-screen" src="/media/{{ token.recoveredmeter_set.last.proof_of_payment }}" alt="{{ token.recoveredmeter_set.last.picture }}">
-                                          </details>
-                                      {% endif %}
-                                    {% endif %}
+                                <div>
+                                    <p class="font-bold mb-2">Created By</p>
+                                    <p class="mb-2 font-normal">
+                                        {% if request.user == token.created_by %}
+                                            You
+                                        {% elif  token.created_by.get_full_name %}
+                                            {{ token.created_by.get_full_name }}
+                                        {% elif request.user == token.created_by %}
+                                            {{ token.created_by }}
+                                        {% endif %}
+                                    </p>
+                                    <p class="font-bold mb-2">Created at</p>
+                                    <p class="mb-2 font-normal">{{ token.created_at|default_if_none:'' }}</p>
+                                </div>
                             </div>
-                            <h1 class="text-center mb-4 font-bold text-xl  mb-2">Workflow Details</h1>
-                            <p class="font-bold  mb-2">Workflow name : {{ token.process.workflow }}</p>
-                            {% if approvalForm %}
-                                <form class="row rounded py-4 border  rounded-lg p-3 m-auto container"
-                                      method="POST"
-                                      action="{% url 'approve:approve' token.process.id %}"
-                                      enctype="multipart/form-data">
-                                    {% csrf_token %}
-                                    <div class=" m-auto container  ">
-                                        <div class="col-span-4">
-                                            {{ approvalForm.comment.label_tag }}
-                                            <div class="text-red-500">{{ approvalForm.comment.errors }}</div>
-                                            {{ approvalForm.comment }}
-                                        </div>
-                                        <div class="m-4 text-center">
-                                            <button type="submit"
-                                                    class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded"
-                                                    name="approved"
-                                                    value="Rejected">Reject</button>
-                                            <button type="submit"
-                                                    class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded"
-                                                    name="approved"
-                                                    value="Approved">{{ to }}</button>
-                                        </div>
-                                    </div>
-                                </form>
+                            {% if token.type == 'TEMPER' or token.type == 'REIMBURSEMENT' %}
+                                {% if token.tampertoken_set.last.is_for == 'Recovered Meter' %}
+                                    <details class="font-bold text-center  ">
+                                        <summary class="text-blue-900 mb-2">{{ token.tampertoken_set.last.is_for|default_if_none:'' }} picture</summary>
+                                        <img class="flex justify-center items-center h-screen"
+                                             src="/media/{{ token.recoveredmeter_set.last.picture }}"
+                                             alt="{{ token.recoveredmeter_set.last.picture }}">
+                                    </details>
+                                {% elif token.reimbursement_set.last.purpose == 'Recovered Meter' %}
+                                    <details class="font-bold text-center ">
+                                        <summary class="text-blue-900 mb-2">
+                                            {{ token.reimbursement_set.last.purpose|default_if_none:'' }} picture
+                                        </summary>
+                                        <img class="flex justify-center items-center h-screen"
+                                             src="/media/{{ token.recoveredmeter_set.last.picture }}"
+                                             alt="{{ token.recoveredmeter_set.last.picture }}">
+                                    </details>
+                                {% elif  token.tampertoken_set.last.is_for == 'Fauty Maintanance' %}
+                                    <div class="font-bold text-center ">
+                                        <p class="font-bold mb-2">Fauty Maintanance </p>
+                                        <p class="mb-2 font-normal">Fault Code {{ token.faultmaintanance_set.last.code|default_if_none:'' }}</p>
+                                     </div>
+                                {% elif  token.tampertoken_set.last.is_for == 'Reconnection' %}
+                                    <details class="font-bold text-center ">
+                                        <summary class="text-blue-900 mb-2">
+                                            {{ token.tampertoken_set.last.is_for|default_if_none:'' }} Invoice and Proof of payment
+                                        </summary>
+                                        <img class="flex justify-center items-center h-screen"
+                                             src="/media/{{ token.reconnection_set.last.invoice }}"
+                                             alt="{{ token.reconnection_set.last.picture }}">
+                                        <img class="flex justify-center items-center h-screen"
+                                             src="/media/{{ token.reconnection_set.last.proof_of_payment }}"
+                                             alt="{{ token.reconnection_set.last.picture }}">
+                                    </details>
+                                {% elif  token.tampertoken_set.last.purpose == 'Faulty Meter' %}
+                                    <details class="font-bold text-center ">
+                                        <summary class="text-blue-900 mb-2">
+                                            {{ token.tampertoken_set.last.is_for|default_if_none:'' }} Picture
+                                        </summary>
+                                        <img class="flex justify-center items-center h-screen"
+                                        src="/media/{{ token.faultmeter_set.last.photo }}"
+                                        alt="{{ token.faultmeter_set.last.photo }}">
+                                    </details>
+                                {% elif  token.reimbursement_set.last.purpose == 'Faulty Meter' %}
+                                    <details class="font-bold text-center ">
+                                        <summary class="text-blue-900 mb-2">
+                                            {{ token.reimbursement_set.last.purpose|default_if_none:'' }} Picture
+                                        </summary>
+                                        <img class="flex justify-center items-center h-screen"
+                                             src="/media/{{ token.faultmeter_set.last.photo }}"
+                                             alt="{{ token.faultmeter_set.last.photo }}">
+                                    </details>
+                                {% elif  token.reimbursement_set.last.purpose == 'Old Token' %}
+                                    <details class="font-bold text-center ">
+                                        <summary class="text-blue-900 mb-2">
+                                            {{ token.reimbursement_set.last.purpose|default_if_none:'' }} Picture
+                                        </summary>
+                                        <img class="flex justify-center items-center h-screen"
+                                             src="/media/{{ token.oldtoken_set.last.old_token }}"
+                                             alt="{{ token.oldtoken_set.last.old_token }}">
+                                       </details>
+                                {% endif %}
+                            {% elif token.type == 'CLEAR CREDIT' %}
+                                {% if  token.clearcredit_set.last %}
+                                    <details class="font-bold text-center ">
+                                        <summary class="text-blue-900 mb-2">
+                                            Pernalty paid : ${{ token.clearcredit_set.last.amount|default_if_none:'' }}
+                                        </summary>
+                                        <img class="flex justify-center items-center h-screen"
+                                             src="/media/{{ token.clearcredit_set.last.receipt }}"
+                                             alt="picture of a receipt">
+                                    </details>
+                                {% endif %}
                             {% endif %}
-                            <div class="card grid grid-cols-5 gap-5">
-                                <div class="  rounded ">
-                                <div class="card-body  arrow bg-gradient-to-r from-gulf-blue-100 to-green-700 ed border rounded container rounded">
-                                            <div class="p-3 font-bold rounded-lg">Created</div>
-                                        <div class=" grid grid-cols-2 text-center">
-                                            <span class="inline-block rounded-full text-sm">By:
-                                                {% if request.user == token.requested_by %}
-                                                    You
-                                                {% elif token.requested_by.get_full_name %}
-                                                    {{ token.requested_by.get_full_name }}
-                                                {% elif request.user == token.requested_by %}
-                                                    {{ token.requested_by }}
-                                                {% endif %} <i class="fas fa-check-circle text-green-500">  </i> 
-                                            </span>
-                                        </div>
+                        </div>
+                        <h1 class="text-center mb-4 font-bold text-xl  mb-2">Workflow Details</h1>
+                        <p class="font-bold  mb-2">Workflow name : {{ token.process.workflow }}</p>
+                        {% if approvalForm %}
+                            <form class="row rounded py-4 border  rounded-lg p-3 m-auto container"
+                                  method="POST"
+                                  action="{% url 'approve:approve' token.process.id %}"
+                                  enctype="multipart/form-data">
+                                {% csrf_token %}
+                                <div class=" m-auto container  ">
+                                    <div class="col-span-4">
+                                        {{ approvalForm.comment.label_tag }}
+                                        <div class="text-red-500">{{ approvalForm.comment.errors }}</div>
+                                        {{ approvalForm.comment }}
+                                    </div>
+                                    <div class="m-4 text-center">
+                                        <button type="submit"
+                                                class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded"
+                                                name="approved"
+                                                value="Rejected">Reject</button>
+                                        <button type="submit"
+                                                class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded"
+                                                name="approved"
+                                                value="Approved">{{ to }}</button>
                                     </div>
                                 </div>
-                              
-                                    {% for step in token.process.workflow.step_set.all %}
-                                    <div class=" mx-3 rounded ">
-                                        {% if step.step in approved_steps %}
-                                            {% for approval in token.process.approval_set.all %}
-                                                {% if step == approval.step %}
-                                                    <div class="card-body px-2 arrow bg-gradient-to-r from-gulf-blue-100 to-green-700 ed border rounded container rounded">
-                                           <div class=" rounded-lg" title="{{ approval.comment }}">
-                                                            <p class="font-bold">{{ step |default_if_none:'' }}</p>
-                                                            <br>
-                                                        </div>
-                                                        <div class=" grid grid-cols-2 text-center">
-                                                            <span class="inline-block rounded-full text-sm">{{ approval.approved }}</span>
-                                                            <span class="inline-block rounded-full text-sm">By:
-                                                                {% if request.user == approval.user %}
-                                                                    You
-                                                                {% elif approval.user.get_full_name %}
-                                                                    {{ approval.user.get_full_name }}
-                                                                {% elif request.user == approval.user %}
-                                                                    {{ approval.user }}
-                                                                {% endif %} <i class="fas fa-check-circle text-green-500">  </i> 
-                                                            </span>
-                                                        </div>
-                                            
-                                                    </div>
-                                                {% endif %}
-                                            {% endfor %}
-                                        {% else %}
-                                        <div class="card-body px-2 arrow bg-gradient-to-r from-gulf-blue-100 to-blue-700 ed border rounded container rounded">
-                                                <div class=" rounded-lg" title="{{ approval.comment }}">
-                                                    <p class="font-bold">{{ step |default_if_none:'' }}</p>
-                                                    <br>
-                                                    {% if step.to %}<span class="inline-block rounded-full text-sm">To {{ step.to|default_if_none:'' }}  <i class="fas fa-circle-notch fa-spin text-blue-500"></i>  </span>{% endif %}
-                                                </div>
-                                            </div>
-                                        {% endif %}
+                            </form>
+                        {% endif %}
+                        <div class="card grid grid-cols-5 gap-5">
+                            <div class="  rounded ">
+                                <div class="card-body  arrow bg-gradient-to-r from-gulf-blue-100 to-green-700 ed border rounded container rounded">
+                                    <div class="p-3 font-bold rounded-lg">Created</div>
+                                    <div class=" grid grid-cols-2 text-center">
+                                        <span class="inline-block rounded-full text-sm">By:
+                                            {% if request.user == token.requested_by %}
+                                                You
+                                            {% elif token.requested_by.get_full_name %}
+                                                {{ token.requested_by.get_full_name }}
+                                            {% elif request.user == token.requested_by %}
+                                                {{ token.requested_by }}
+                                            {% endif %}
+                                            <i class="fas fa-check-circle text-green-500">  </i>
+                                        </span>
                                     </div>
-                                    {% if step == token.process.workflow.step_set.last and step == token.process.approval_set.last.step %}
-                                        <div class="flex justify-center items-center  rounded ">
-                                            <div class="flex justify-center rounded-lg" title="{{ approval.comment }}">
-                                                Completed
-                                                <i class="fas fa-check-circle text-green-500"></i>
+                                </div>
+                            </div>
+                            {% for step in token.process.workflow.step_set.all %}
+                                <div class=" mx-3 rounded ">
+                                    {% if step.step in approved_steps %}
+                                        {% for approval in token.process.approval_set.all %}
+                                            {% if step == approval.step %}
+                                                <div class="card-body px-2 arrow bg-gradient-to-r from-gulf-blue-100 to-green-700 ed border rounded container rounded">
+                                                    <div class=" rounded-lg" title="{{ approval.comment }}">
+                                                        <p class="font-bold">{{ step |default_if_none:'' }}</p>
+                                                        <br>
+                                                    </div>
+                                                    <div class=" grid grid-cols-2 text-center">
+                                                        <span class="inline-block rounded-full text-sm">{{ approval.approved }}</span>
+                                                        <span class="inline-block rounded-full text-sm">By:
+                                                            {% if request.user == approval.user %}
+                                                                You
+                                                            {% elif approval.user.get_full_name %}
+                                                                {{ approval.user.get_full_name }}
+                                                            {% elif request.user == approval.user %}
+                                                                {{ approval.user }}
+                                                            {% endif %}
+                                                            <i class="fas fa-check-circle text-green-500">  </i>
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            {% endif %}
+                                        {% endfor %}
+                                    {% else %}
+                                        <div class="card-body px-2 arrow bg-gradient-to-r from-gulf-blue-100 to-blue-700 ed border rounded container rounded">
+                                            <div class=" rounded-lg" title="{{ approval.comment }}">
+                                                <p class="font-bold">{{ step |default_if_none:'' }}</p>
+                                                <br>
+                                                {% if step.to %}
+                                                    <span class="inline-block rounded-full text-sm">To {{ step.to|default_if_none:'' }}  <i class="fas fa-circle-notch fa-spin text-blue-500"></i>  </span>
+                                                {% endif %}
                                             </div>
                                         </div>
                                     {% endif %}
-                                {% endfor %}
-                            </div>
+                                </div>
+                                {% if step == token.process.workflow.step_set.last and step == token.process.approval_set.last.step %}
+                                    <div class="flex justify-center items-center  rounded ">
+                                        <div class="flex justify-center rounded-lg" title="{{ approval.comment }}">
+                                            Completed
+                                            <i class="fas fa-check-circle text-green-500"></i>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+</div>
 {% endblock %}

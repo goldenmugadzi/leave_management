@@ -51,4 +51,4 @@ class Approval(models.Model):
     approved = models.CharField(max_length=8, choices=APPROVAL_CHOICES, blank=True, null=True)
 
     def __str__(self):
-        return f"Approval for step {self.step} by {self.user}"
+        return f"{self.approved} by {self.step}"

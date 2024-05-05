@@ -78,7 +78,7 @@ class RecoveredMeter(models.Model):
         return str(self.token.meter.number)
 class FaultMaintanance(models.Model): 
     token = models.ForeignKey(Token, on_delete=models.CASCADE)
-    code = models.CharField(max_length=11, blank=True,null=True,help_text="fault number displayed" , validators=[RegexValidator(r'\d{11}$', 'Enter a valid Meter number.')])
+    code = models.IntegerField(help_text="fault number displayed", blank=True, null=True )
     def __str__(self):
         return str(self.token.meter.number)
 

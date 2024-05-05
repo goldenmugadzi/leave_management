@@ -94,26 +94,31 @@ def approve_step(request, process_id):
     except Step.DoesNotExist:
         message = messages.info(request, 'This process was completed')
         return redirect('approve:workflow_detail', process.workflow.id, message)
-    if request.method == 'POST':
-        form = ApprovalForm(request.POST)
-        if form.is_valid():
-            approval = ApprovalForm(request.POST).save(commit=False)
-            approval.user = request.user
-            approval.process = process
-            approval.step = step
-            approval.save()
+    if not process.approval_set.filter(approved='Rejected'):
+        if request.method == 'POST':
+            form = ApprovalForm(request.POST)
+            if form.is_valid():
+                approval = ApprovalForm(request.POST).save(commit=False)
+                approval.user = request.user
+                approval.process = process
+                approval.step = step
+                approval.save()
+                
+                if process.workflow.name == 'purchase request':
+                    return redirect('purchase_request:purchase_request_detail', process.purchaserequest_set.last().id)
             
-            if process.workflow.name == 'purchase request':
-                return redirect('purchase_request:purchase_request_detail', process.purchaserequest_set.last().id)
-           
-            if process.workflow.name == 'tokens':
-                return redirect('tokens:token', process.token_set.last().id)
-            elif process.workflow.name == 'pettycash':
-                return redirect('pettycash:pettycash_detail', process.pettycash_set.last().id)
+                if process.workflow.name == 'tokens':
+                    return redirect('tokens:token', process.token_set.last().id)
+                elif process.workflow.name == 'pettycash':
+                    return redirect('pettycash:pettycash_detail', process.pettycash_set.last().id)
 
+                else:
+                    return redirect('approve:workflow_detail', process.workflow.id)
             else:
-                return redirect('approve:workflow_detail', process.workflow.id)
-        else:
 
-            return HttpResponse('A comment must be provided for rejection.')
-    return HttpResponse('You are not allowed to approve')
+                message = messages.info(request, 'A comment must be provided for rejection.')
+                return redirect('approve:workflow_detail', process.workflow.id, message)
+        message = messages.info(request, 'You are not allowed to approve')
+        return redirect('approve:workflow_detail', process.workflow.id, message)
+    message = messages.info(request, 'this process was already rejected')
+    return redirect('approve:workflow_detail', process.workflow.id, message)
