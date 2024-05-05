@@ -49,8 +49,8 @@
                                 <div>
                                     <p class="font-bold mb-2">Phone Number</p>
                                     <p class="mb-2 font-normal">{{ token.customer.contact_number|default_if_none:'' }}</p>
-                                   <p class="font-bold ">Description:</p>
-                                        <p class="mb-2 font-normal">{{ token.reason|default_if_none:'' }}</p>
+                                    <p class="font-bold ">Description:</p>
+                                    <p class="mb-2 font-normal">{{ token.reason|default_if_none:'' }}</p>
                                 </div>
                                 <div>
                                     <p class="font-bold mb-2">Created By</p>
@@ -67,6 +67,14 @@
                                     <p class="mb-2 font-normal">{{ token.created_at|default_if_none:'' }}</p>
                                 </div>
                             </div>
+                            {% if token.token_photo %}
+                                <details class="font-bold text-center  ">
+                                    <summary class="text-blue-900 mb-2">Token photo</summary>
+                                    <img class="flex justify-center items-center h-screen"
+                                         src="/media/{{ token.token_photo }}"
+                                         alt="{{ token.token_photo }}">
+                                </details>
+                            {% endif %}
                             {% if token.type == 'TEMPER' or token.type == 'REIMBURSEMENT' %}
                                 {% if token.tampertoken_set.last.is_for == 'Recovered Meter' %}
                                     <details class="font-bold text-center  ">
@@ -77,18 +85,16 @@
                                     </details>
                                 {% elif token.reimbursement_set.last.purpose == 'Recovered Meter' %}
                                     <details class="font-bold text-center ">
-                                        <summary class="text-blue-900 mb-2">
-                                            {{ token.reimbursement_set.last.purpose|default_if_none:'' }} picture
-                                        </summary>
+                                        <summary class="text-blue-900 mb-2">{{ token.reimbursement_set.last.purpose|default_if_none:'' }} picture</summary>
                                         <img class="flex justify-center items-center h-screen"
                                              src="/media/{{ token.recoveredmeter_set.last.picture }}"
                                              alt="{{ token.recoveredmeter_set.last.picture }}">
                                     </details>
                                 {% elif  token.tampertoken_set.last.is_for == 'Fauty Maintanance' %}
                                     <div class="font-bold text-center ">
-                                        <p class="font-bold mb-2">Fauty Maintanance </p>
+                                        <p class="font-bold mb-2">Fauty Maintanance</p>
                                         <p class="mb-2 font-normal">Fault Code {{ token.faultmaintanance_set.last.code|default_if_none:'' }}</p>
-                                     </div>
+                                    </div>
                                 {% elif  token.tampertoken_set.last.is_for == 'Reconnection' %}
                                     <details class="font-bold text-center ">
                                         <summary class="text-blue-900 mb-2">
@@ -103,31 +109,25 @@
                                     </details>
                                 {% elif  token.tampertoken_set.last.purpose == 'Faulty Meter' %}
                                     <details class="font-bold text-center ">
-                                        <summary class="text-blue-900 mb-2">
-                                            {{ token.tampertoken_set.last.is_for|default_if_none:'' }} Picture
-                                        </summary>
+                                        <summary class="text-blue-900 mb-2">{{ token.tampertoken_set.last.is_for|default_if_none:'' }} Picture</summary>
                                         <img class="flex justify-center items-center h-screen"
-                                        src="/media/{{ token.faultmeter_set.last.photo }}"
-                                        alt="{{ token.faultmeter_set.last.photo }}">
+                                             src="/media/{{ token.faultmeter_set.last.photo }}"
+                                             alt="{{ token.faultmeter_set.last.photo }}">
                                     </details>
                                 {% elif  token.reimbursement_set.last.purpose == 'Faulty Meter' %}
                                     <details class="font-bold text-center ">
-                                        <summary class="text-blue-900 mb-2">
-                                            {{ token.reimbursement_set.last.purpose|default_if_none:'' }} Picture
-                                        </summary>
+                                        <summary class="text-blue-900 mb-2">{{ token.reimbursement_set.last.purpose|default_if_none:'' }} Picture</summary>
                                         <img class="flex justify-center items-center h-screen"
                                              src="/media/{{ token.faultmeter_set.last.photo }}"
                                              alt="{{ token.faultmeter_set.last.photo }}">
                                     </details>
                                 {% elif  token.reimbursement_set.last.purpose == 'Old Token' %}
                                     <details class="font-bold text-center ">
-                                        <summary class="text-blue-900 mb-2">
-                                            {{ token.reimbursement_set.last.purpose|default_if_none:'' }} Picture
-                                        </summary>
+                                        <summary class="text-blue-900 mb-2">{{ token.reimbursement_set.last.purpose|default_if_none:'' }} Picture</summary>
                                         <img class="flex justify-center items-center h-screen"
                                              src="/media/{{ token.oldtoken_set.last.old_token }}"
                                              alt="{{ token.oldtoken_set.last.old_token }}">
-                                       </details>
+                                    </details>
                                 {% endif %}
                             {% elif token.type == 'CLEAR CREDIT' %}
                                 {% if  token.clearcredit_set.last %}
@@ -147,14 +147,50 @@
                         {% if approvalForm %}
                             <form class="row rounded py-4 border  rounded-lg p-3 m-auto container"
                                   method="POST"
-                                  action="{% url 'approve:approve' token.process.id %}"
+                                  action=""
+                                  {% comment %}
+                                  {% url 'approve:approve' token.process.id %}
+                                  {% endcomment %}
                                   enctype="multipart/form-data">
                                 {% csrf_token %}
                                 <div class=" m-auto container  ">
                                     <div class="col-span-4">
-                                        {{ approvalForm.comment.label_tag }}
-                                        <div class="text-red-500">{{ approvalForm.comment.errors }}</div>
-                                        {{ approvalForm.comment }}
+                                        {{ field.name }}
+                                        {% for field in generateTokenForm %}
+                                            <div class="rounded row text-center py-2 my-3">
+                                                {% if field.is_hidden %}
+                                                    {{ field }}
+                                                {% else %}
+                                                    <div class=" m-auto grid grid-cols-2 pr-5">
+                                                        <div>
+                                                            {{ field.label }}
+                                                            <div class="text-blue-500">{{ field.help_text }}</div>
+                                                            <div class="text-red-500 text-red-500 ">{{ field.errors }}</div>
+                                                        </div>
+                                                        {{ field }}
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                        {% endfor %}
+                                        {% for field in approvalForm %}
+                                            <div class="rounded row text-center py-2 my-3">
+                                                {% if field.is_hidden %}
+                                                    {{ field }}
+                                                {% else %}
+                                                    {% if field.name == "approved" %}
+                                                    {% else %}
+                                                        <div class=" m-auto grid grid-cols-2 pr-5">
+                                                            <div>
+                                                                {{ field.label }}
+                                                                <div class="text-blue-500">{{ field.help_text }}</div>
+                                                                <div class="text-red-500 text-red-500 ">{{ field.errors }}</div>
+                                                            </div>
+                                                            {{ field }}
+                                                        </div>
+                                                    {% endif %}
+                                                {% endif %}
+                                            </div>
+                                        {% endfor %}
                                     </div>
                                     <div class="m-4 text-center">
                                         <button type="submit"
