@@ -8,6 +8,12 @@ from it.users.models import UserProfile, Depots, Districts, Regions, Designation
 
 APPLICATIONS = [
     {
+        "name": "users",
+        "title": "Users",
+        "iconUrl": "assets/images/management.png",
+        "url": "/users/users-index"
+    },
+    {
         "name": "non_conformity",
         "title": "Non-Conformity",
         "iconUrl": "assets/images/non-conforming.png",
@@ -18,12 +24,6 @@ APPLICATIONS = [
         "title": "ACE",
         "iconUrl": "assets/images/capital.png",
         "url": "/acee/aces"
-    },
-    {
-        "users": "users",
-        "title": "Users",
-        "iconUrl": "assets/images/management.png",
-        "url": "/users/users-index"
     },
     {
         "name": "Token",
@@ -253,6 +253,25 @@ def business_applications(request):
     user_title = request.user.get_full_name()
     l = request.user.groups.values_list('name',flat = True) # QuerySet Object
     user_groups = list(l)  
+    custom_user_roles = {
+        "users": {},
+    }
+    user_profile = UserProfile.objects.filter(id=request.user.id).first()
+    roles_ = user_profile.roles.all()
+    for _role in roles_:
+        role = Roles.objects.filter(id=_role.id).first()
+
+        if role.application == "users":
+            custom_user_roles["users"] = role
+    users_role = str(custom_user_roles["users"])
+
+    if users_role != "administrator":
+        # remove users app in APPLICATIONS
+        for app in APPLICATIONS:
+            if app["name"] == "users":
+                APPLICATIONS.remove(app)
+        
+        
 
     url_path = request.path.split("/")
     return render(
