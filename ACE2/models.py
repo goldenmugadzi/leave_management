@@ -35,7 +35,6 @@ class Ace2(models.Model):
     ]
 
     CURRENCY_CHOICES = [
-        ('USD', 'USD'),
         ('ZIG', 'ZIG'),
     ]
 

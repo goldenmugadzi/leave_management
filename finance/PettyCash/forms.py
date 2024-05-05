@@ -31,12 +31,21 @@ class PettycashForm(forms.ModelForm):
             })
 
             if field_name == 'currency':
-                choices = [(currency, currency) for currency in ['ZIG', 'USD']]
+                choices = [(currency, currency) for currency in ['ZIG']]
                 field.choices = choices
                 field.widget.attrs.update({'class': 'block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm '
                                                     'ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 '
                                                     'focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm '
                                                     'sm:leading-6'})
+            if field_name == 'amount':
+                field.widget.attrs.update({'type': 'number'})
+                field.widget.attrs.update({'class': 'block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm '
+                                                    'ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 '
+                                                    'focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm '
+                                                    'sm:leading-6'
+                                           })
+                # set maximum to 2600
+                field.widget.attrs.update({'max': '2600'})
 
             if isinstance(field.widget, forms.Textarea):
                 field.widget.attrs.update({'rows': '3'})

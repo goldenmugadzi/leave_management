@@ -412,18 +412,18 @@ def upload_budgets(request):
             print("row: ", row)
             section_code = row['section_code']
             section = row['section']
-            budget_name = row['budget_name']
+            budget_name = row['budget']
             allocated = row['allocated']
             withdrawn = row['withdrawn']
             balance = row['balance']
 
-            withdrawal_date = row['withdrawal_date']
-            withdrawal_date = withdrawal_date.strip().split(" ")[0]
-            if withdrawal_date != "NULL":
-
-                withdrawal_date = datetime.strptime(withdrawal_date, "%Y-%m-%d")
-            else:
-                withdrawal_date = None
+            # withdrawal_date = row['withdrawal_date']
+            # withdrawal_date = withdrawal_date.strip().split(" ")[0]
+            # if withdrawal_date != "NULL":
+            #
+            #     withdrawal_date = datetime.strptime(withdrawal_date, "%Y-%m-%d")
+            # else:
+            #     withdrawal_date = None
 
             awaiting_sanctioning = row['awaiting_sanctioning']
             period = int(row['period'])
@@ -444,7 +444,6 @@ def upload_budgets(request):
                                            allocated=allocated,
                                            withdrawn=withdrawn,
                                            balance=balance,
-                                           withdrawal_date=withdrawal_date,
                                            awaiting_sanctioning=awaiting_sanctioning,
                                            period=period,
                                            region=region,
