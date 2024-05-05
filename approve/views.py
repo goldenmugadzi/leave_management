@@ -92,8 +92,8 @@ def approve_step(request, process_id):
     try:
         step = Step.objects.get(workflow=process.workflow, step=next_step, approver__in=request.user.roles.all())
     except Step.DoesNotExist:
-        message = messages.info(request, 'This process was completed')
-        return redirect('approve:workflow_detail', process.workflow.id, message)
+        messages.info(request, 'This process was completed')
+        return redirect('approve:workflow_detail', process.workflow.id)
     if not process.approval_set.filter(approved='Rejected'):
         if request.method == 'POST':
             form = ApprovalForm(request.POST)
@@ -108,7 +108,7 @@ def approve_step(request, process_id):
                     return redirect('purchase_request:purchase_request_detail', process.purchaserequest_set.last().id)
             
                 if process.workflow.name == 'tokens':
-                    return redirect('tokens:token', process.token_set.last().id)
+                    return True # redirect('tokens:token', process.token_set.last().id)
                 elif process.workflow.name == 'pettycash':
                     return redirect('pettycash:pettycash_detail', process.pettycash_set.last().id)
 
@@ -116,9 +116,37 @@ def approve_step(request, process_id):
                     return redirect('approve:workflow_detail', process.workflow.id)
             else:
 
-                message = messages.info(request, 'A comment must be provided for rejection.')
-                return redirect('approve:workflow_detail', process.workflow.id, message)
-        message = messages.info(request, 'You are not allowed to approve')
-        return redirect('approve:workflow_detail', process.workflow.id, message)
-    message = messages.info(request, 'this process was already rejected')
-    return redirect('approve:workflow_detail', process.workflow.id, message)
+                messages.error(request, 'A comment must be provided for rejection.')
+                if process.workflow.name == 'purchase request':
+                    return  redirect('purchase_request:purchase_request_detail', process.purchaserequest_set.last().id)
+            
+                if process.workflow.name == 'tokens':
+                    return False #redirect('tokens:token', process.token_set.last().id)
+                elif process.workflow.name == 'pettycash':
+                    return redirect('pettycash:pettycash_detail', process.pettycash_set.last().id)
+
+                else:
+                    return redirect('approve:workflow_detail', process.workflow.id)
+        messages.error(request, 'You are not allowed to approve')
+        if process.workflow.name == 'purchase request':
+            return redirect('purchase_request:purchase_request_detail', process.purchaserequest_set.last().id)
+
+        if process.workflow.name == 'tokens':
+            return redirect('tokens:token', process.token_set.last().id)
+        elif process.workflow.name == 'pettycash':
+            return redirect('pettycash:pettycash_detail', process.pettycash_set.last().id)
+
+        else:
+            return redirect('approve:workflow_detail', process.workflow.id)
+       
+    messages.error(request, 'this process was already rejected')
+    if process.workflow.name == 'purchase request':
+        return redirect('purchase_request:purchase_request_detail', process.purchaserequest_set.last().id)
+
+    if process.workflow.name == 'tokens':
+        return redirect('tokens:token', process.token_set.last().id)
+    elif process.workflow.name == 'pettycash':
+        return redirect('pettycash:pettycash_detail', process.pettycash_set.last().id)
+
+    else:
+        return redirect('approve:workflow_detail', process.workflow.id)

@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect
 from .forms import *
 from .models import *
 from django.contrib import messages
-from approve.views import intiate
+from approve.views import intiate, approve_step
 from approve.models import Step
 from approve.forms import ApprovalForm
 from django.contrib.auth.decorators import login_required
@@ -147,7 +147,25 @@ def create_token(request):
 @login_required
 def token_details(request, token_id):
     token = Token.objects.get(id=token_id)
+    if request.method == "POST":
+        generatetokenform = GenerateTokenForm(request.POST, request.FILES, instance=token)
+        last_approval = token.process.approval_set.last()
+        last_step = last_approval.step if last_approval else None
+        decesion = request.POST.get("approvaed")
+        if (
+            token.process.workflow.step_set.last() is not None
+            and last_step is not None
+            and token.process.workflow.step_set.last().step == (last_step.step + 1)
+        ):
+            if generatetokenform.is_valid() and request.FILES.get("token_photo"):
+                approve_step(request, token.process.pk)
+                generatetokenform.save()
+            else:
+                messages.error(request, 'Generate token form is invalid. Have you provided a token photo?')
+        else:
+            approve_step(request, token.process.pk)
     approvalForm = None
+    generateTokenForm = None
     to = None
     completed = False
     user_roles = request.user.roles.all()
@@ -163,6 +181,9 @@ def token_details(request, token_id):
             newStep = Step.objects.get(step=next_step, workflow=token.process.workflow, approver__in=user_roles)
             approvalForm = ApprovalForm
             to = newStep.to
+            if newStep == token.process.workflow.step_set.last():
+                generateTokenForm = GenerateTokenForm()
+
         except Step.DoesNotExist:
             pass
 
@@ -174,6 +195,7 @@ def token_details(request, token_id):
         "completed": completed,
         "approved_steps": approved_steps,
         "approvalForm": approvalForm,
+        "generateTokenForm":generateTokenForm,
         "to": to,
     })
 def view_all_tokens(request):

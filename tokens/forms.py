@@ -27,12 +27,25 @@ class CustomerForm(forms.ModelForm):
         for field_name, field in self.fields.items():
             field.widget.attrs.update({'class': "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6",})
             if isinstance(field.widget, forms.Textarea):field.widget.attrs.update({'rows': '3'})
+class GenerateTokenForm(forms.ModelForm):
+    class Meta:
+        model = Token
+        fields = ('token_photo',  )
+        
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
+        for field_name, field in self.fields.items():
+            field.widget.attrs.update({
+                'class': "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6",
+            })
+            if isinstance(field.widget, forms.Textarea):
+                field.widget.attrs.update({'rows': '3'})
 class TokenForm(forms.ModelForm):
     class Meta:
         model = Token
         fields = "__all__"
-        exclude = [ 'meter', 'customer', 'created_by', 'created_at', 'process',]
+        exclude = [ 'meter', 'customer','token_photo' , 'created_by', 'created_at', 'process',]
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for field_name, field in self.fields.items():
@@ -59,7 +72,11 @@ class ClearCreditForm(forms.ModelForm):
         for field_name, field in self.fields.items():
             field.widget.attrs.update({'class': "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6",})
             if isinstance(field.widget, forms.Textarea):field.widget.attrs.update({'rows': '3'})
-
+    def clean_receipt(self):
+        receipt = self.cleaned_data['receipt']
+        if not receipt:
+            raise forms.ValidationError('A receipt photo is required.')
+   
 class TamperTokenForm(forms.ModelForm):
     class Meta:
         model = TAMPERTOKEN
@@ -80,7 +97,11 @@ class OldTokenForm(forms.ModelForm):
         for field_name, field in self.fields.items():
             field.widget.attrs.update({'class': "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6",})
             if isinstance(field.widget, forms.Textarea):field.widget.attrs.update({'rows': '3'})
-
+    def clean_old_token(self):
+        old_token = self.cleaned_data['old_token']
+        if not old_token:
+            raise forms.ValidationError('A old token photo is required.')
+   
 class FaultMeterForm(forms.ModelForm):
     class Meta:
         model = FaultMeter
@@ -91,7 +112,11 @@ class FaultMeterForm(forms.ModelForm):
         for field_name, field in self.fields.items():
             field.widget.attrs.update({'class': "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6",})
             if isinstance(field.widget, forms.Textarea):field.widget.attrs.update({'rows': '3'})
-
+    def clean_photo(self):
+        photo = self.cleaned_data['photo']
+        if not photo:
+            raise forms.ValidationError('A photo photo is required.')
+   
 class RecoveredMeterForm(forms.ModelForm):
     class Meta:
         model = RecoveredMeter
@@ -102,7 +127,11 @@ class RecoveredMeterForm(forms.ModelForm):
         for field_name, field in self.fields.items():
             field.widget.attrs.update({'class': "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6",})
             if isinstance(field.widget, forms.Textarea):field.widget.attrs.update({'rows': '3'})
-
+    def clean_picture(self):
+        picture = self.cleaned_data['picture']
+        if not picture:
+            raise forms.ValidationError('A picture photo is required.')
+   
 class FaultMaintananceForm(forms.ModelForm):
     class Meta:
         model = FaultMaintanance
@@ -125,3 +154,11 @@ class ReconnectionForm(forms.ModelForm):
         for field_name, field in self.fields.items():
             field.widget.attrs.update({'class': "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6",})
             if isinstance(field.widget, forms.Textarea):field.widget.attrs.update({'rows': '3'})
+    def clean_invoice(self):
+        invoice = self.cleaned_data['invoice']
+        if not invoice:
+            raise forms.ValidationError('A invoice photo is required.')
+    def clean_proof_of_payment(self):
+        proof_of_payment = self.cleaned_data['proof_of_payment']
+        if not proof_of_payment:
+            raise forms.ValidationError('A proof_of_payment photo is required.')
