@@ -3,96 +3,57 @@
 
 {% block content %}
 
-<div class="m-auto mt-5 justify-content-center">
-  <form class="row rounded py-4 border bg-gulf-blue-100 p-3 m-auto  container" method="POST" action="{{url}}" enctype="multipart/form-data">
+  <form class="row rounded py-4 border bg-gulf-blue-100 p-3 m-auto  container" method="post" action="" enctype="multipart/form-data">
     {% csrf_token %}
-    <h3 class="font-bold my-4 text-center">Token</h3>
     <div class="rounded d-flex justify-content-center align-items-center p-3 gap-4  m-auto grid grid-cols-2">
-            
-        <div class="rounded">
-           
-    <h3 class="font-bold my-4 text-center">Meter</h3>
-    {% for field in Meter %}
-          {% if field.is_hidden %}
-            {{ field }}
-          {% else %}
-            <div class="col-span-4">
-              {{ field.label_tag }}
-              <div class="text-red-500">
-                {{ field.errors }}
-              </div>
-              {{ field }}
-            </div>
-          {% endif %}
-        {% endfor %}
-
+      <div>
+        <h3 class="font-bold my-4 text-center">Meter</h3>
+    {% for field in meter_form %} <div class="rounded row text-center py-2 my-3"> {% if field.is_hidden %} {{ field }} {% else %} <div class=" m-auto grid grid-cols-2 pr-5"> <div> {{ field.label }} <div class="text-blue-500">{{ field.help_text }}</div> <div class="text-red-500 text-red-500 ">{{ field.errors }}</div> </div> {{ field }} </div> {% endif %} </div> {% endfor %}
+    </div><div>
     <h3 class="font-bold my-4 text-center">Customer</h3>
-         {% for field in Customer %}
-            {% if field.is_hidden %}
-              {{ field }}
-            {% else %}
-              <div class="col-span-4">
-                {{ field.label_tag }}
-                <div class="text-red-500">
-                  {{ field.errors }}
-                </div>
-                {{ field }}
-              </div>
-            {% endif %}
-          {% endfor %}
+         {% for field in customer_form %} <div class="rounded row text-center py-2 my-3"> {% if field.is_hidden %} {{ field }} {% else %} <div class=" m-auto grid grid-cols-2 pr-5"> <div> {{ field.label }} <div class="text-blue-500">{{ field.help_text }}</div> <div class="text-red-500 text-red-500 ">{{ field.errors }}</div> </div> {{ field }} </div> {% endif %} </div> {% endfor %}
         </div>
-    <div class="rounded  ">
-    <h3 class="font-bold my-4 text-center">Reason</h3>
-    {% for field in reason %}
-            {% if field.is_hidden %}
-              {{ field }}
-            {% else %}
-              <div class="col-span-4">
-                {{ field.label_tag }}
-                <div class="text-red-500">
-                  {{ field.errors }}
-                </div>
-                {{ field }}
-              </div>
-            {% endif %}
-          {% endfor %}
-          {% for field in token %}
-            {% if field.is_hidden %}
-              {{ field }}
-            {% else %}
-              <div class="col-span-4">
-                {{ field.label_tag }}
-                <div class="text-red-500">
-                  {{ field.errors }}
-                </div>
-                {{ field }}
-              </div>
-            {% endif %}
-          {% endfor %}
-    <h3 class="font-bold my-4 text-center">Pernalt</h3>
-
-          {% for field in Pernalt %}
-          {% if field.is_hidden %}
-            {{ field }}
-          {% else %}
-            <div class="col-span-4">
-              {{ field.label_tag }}
-              <div class="text-red-500">
-                {{ field.errors }}
-              </div>
-              {{ field }}
-            </div>
-          {% endif %}
-        {% endfor %}
-          </div>     
+        </div>
+    <div class="rounded d-flex justify-content-center align-items-center p-3 gap-4  m-auto grid grid-cols-2">
+      <div>
+        <h3 class="font-bold my-4 text-center">Token</h3>
+        {% for field in token_form %} <div class="rounded row text-center py-2 my-3"> {% if field.is_hidden %} {{ field }} {% else %} <div class=" m-auto grid grid-cols-2 pr-5"> <div> {{ field.label }} <div class="text-blue-500">{{ field.help_text }}</div> <div class="text-red-500 text-red-500 ">{{ field.errors }}</div> </div> {{ field }} </div> {% endif %} </div> {% endfor %}
+      </div>
+             <div id="reimbursement_form" class="{% if not token_form.type.value == 'REIMBURSEMENT' %}hidden{% endif %}" >
+      {% for field in reimbursement_form %} <div class="rounded row text-center py-2 my-3"> {% if field.is_hidden %} {{ field }} {% else %} <div class=" m-auto grid grid-cols-2 pr-5"> <div> {{ field.label }} <div class="text-blue-500">{{ field.help_text }}</div> <div class="text-red-500 text-red-500 ">{{ field.errors }}</div> </div> {{ field }} </div> {% endif %} </div> {% endfor %}
+    </div>
+    <div id="clear_credit_form" class="{% if not token_form.type.value == 'CLEAR CREDIT' %}hidden{% endif %}" >
+      {% for field in clear_credit_form %} <div class="rounded row text-center py-2 my-3"> {% if field.is_hidden %} {{ field }} {% else %} <div class=" m-auto grid grid-cols-2 pr-5"> <div> {{ field.label }} <div class="text-blue-500">{{ field.help_text }}</div> <div class="text-red-500 text-red-500 ">{{ field.errors }}</div> </div> {{ field }} </div> {% endif %} </div> {% endfor %}
+    </div>
+    <div id="tamper_token_form" class="{% if not token_form.type.value == 'TEMPER' %}hidden{% endif %}" >
+      {% for field in tamper_token_form %} <div class="rounded row text-center py-2 my-3"> {% if field.is_hidden %} {{ field }} {% else %} <div class=" m-auto grid grid-cols-2 pr-5"> <div> {{ field.label }} <div class="text-blue-500">{{ field.help_text }}</div> <div class="text-red-500 text-red-500 ">{{ field.errors }}</div> </div> {{ field }} </div> {% endif %} </div> {% endfor %}
+    </div>
+      <div id="faulty_meter_form" class="{% if not reimbursement_form.purpose.value == 'Faulty Meter' %}hidden{% endif %}" >
+      {% for field in faulty_meter_form %} <div class="rounded row text-center py-2 my-3"> {% if field.is_hidden %} {{ field }} {% else %} <div class=" m-auto grid grid-cols-2 pr-5"> <div> {{ field.label }} <div class="text-blue-500">{{ field.help_text }}</div> <div class="text-red-500 text-red-500 ">{{ field.errors }}</div> </div> {{ field }} </div> {% endif %} </div> {% endfor %}
+    </div>
+    <div id="recovered_meter_form" class="{% if not reimbursement_form.purpose.value == 'Recovered Meter' or not tamper_token_form.is_for.value == 'Recovered Meter' %}hidden{% endif %}" >
+      {% for field in recovered_meter_form %} <div class="rounded row text-center py-2 my-3"> {% if field.is_hidden %} {{ field }} {% else %} <div class=" m-auto grid grid-cols-2 pr-5"> <div> {{ field.label }} <div class="text-blue-500">{{ field.help_text }}</div> <div class="text-red-500 text-red-500 ">{{ field.errors }}</div> </div> {{ field }} </div> {% endif %} </div> {% endfor %}
+    </div>
+    <div id="old_token_form" class="{% if not reimbursement_form.purpose.value == 'Old Token' %}hidden{% endif %}" >
+      {% for field in old_token_form %} <div class="rounded row text-center py-2 my-3"> {% if field.is_hidden %} {{ field }} {% else %} <div class=" m-auto grid grid-cols-2 pr-5"> <div> {{ field.label }} <div class="text-blue-500">{{ field.help_text }}</div> <div class="text-red-500 text-red-500 ">{{ field.errors }}</div> </div> {{ field }} </div> {% endif %} </div> {% endfor %}
+    </div>
+    
+    <div id="fault_maintanance_form" class="{% if not tamper_token_form.is_for.value == 'Fauty Maintanance' %}hidden{% endif %}" >
+      {% for field in fault_maintanance_form %} <div class="rounded row text-center py-2 my-3"> {% if field.is_hidden %} {{ field }} {% else %} <div class=" m-auto grid grid-cols-2 pr-5"> <div> {{ field.label }} <div class="text-blue-500">{{ field.help_text }}</div> <div class="text-red-500 text-red-500 ">{{ field.errors }}</div> </div> {{ field }} </div> {% endif %} </div> {% endfor %}
+    </div> 
+    <div id="reconnection_form" class="{% if not tamper_token_form.is_for.value == 'Reconnection' %}hidden{% endif %}" >
+      {% for field in reconnection_form %} <div class="rounded row text-center py-2 my-3"> {% if field.is_hidden %} {{ field }} {% else %} <div class=" m-auto grid grid-cols-2 pr-5"> <div> {{ field.label }} <div class="text-blue-500">{{ field.help_text }}</div> <div class="text-red-500 text-red-500 ">{{ field.errors }}</div> </div> {{ field }} </div> {% endif %} </div> {% endfor %}
     </div>
     <br>
 
     <br>
     <div class="m-auto text-center">
-      <input class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded" type="submit">
+      <input type="submit" class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded" />
     </div>
   </form>
 </div>
 
-{% endblock %}
+{% endblock content %}
+{% block scripts %}
+<script src="{% static 'assets/js/token.js' %}"></script>
+{% endblock scripts %}

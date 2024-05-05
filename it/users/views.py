@@ -16,7 +16,6 @@ from django.contrib.auth.hashers import make_password
 
 from it.users.models import Application, Roles, UserProfile, Depots, Districts, Regions, Designations, Sections
 from it.users.forms import CustomUserCreationForm
-# from scr import csvfile
 
 from django.contrib.auth.models import Group
 from .helpers import DESIGNATIONS, REGIONS, DISTRICTS, DEPOTS, ROLES, SECTIONS

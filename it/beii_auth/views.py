@@ -26,8 +26,8 @@ APPLICATIONS = [
         "url": "/users/users-index"
     },
     {
-        "name": "Tamper Token",
-        "title": "Tamper Tokens",
+        "name": "Token",
+        "title": "Tokens",
         "iconUrl": "assets/images/token.png",
         "url": "/tokens/"
     },
