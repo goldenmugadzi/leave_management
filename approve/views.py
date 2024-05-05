@@ -92,25 +92,28 @@ def approve_step(request, process_id):
     try:
         step = Step.objects.get(workflow=process.workflow, step=next_step, approver__in=request.user.roles.all())
     except Step.DoesNotExist:
-        messages.info(request, 'This process was completed')
-        return redirect('approve:workflow_detail', process.workflow.id)
-    if not process.approval_set.filter(approved='Rejected'):
-        if request.method == 'POST':
-            form = ApprovalForm(request.POST)
-            if form.is_valid():
-                approval = ApprovalForm(request.POST).save(commit=False)
-                approval.user = request.user
-                approval.process = process
-                approval.step = step
-                approval.save()
-                
-                if process.workflow.name == 'purchase request':
-                    return redirect('purchase_request:purchase_request_detail', process.purchaserequest_set.last().id)
-            
-                if process.workflow.name == 'tokens':
-                    return True # redirect('tokens:token', process.token_set.last().id)
-                elif process.workflow.name == 'pettycash':
-                    return redirect('pettycash:pettycash_detail', process.pettycash_set.last().id)
+        message = messages.info(request, 'This process was completed')
+        return redirect('approve:workflow_detail', process.workflow.id, message)
+    if request.method == 'POST':
+        form = ApprovalForm(request.POST)
+        if form.is_valid():
+            approval = ApprovalForm(request.POST).save(commit=False)
+            approval.user = request.user
+            approval.process = process
+            approval.step = step
+            approval.save()
+
+            if process.workflow.name == 'purchase request':
+                return redirect('purchase_request:purchase_request_detail', process.purchaserequest_set.last().id)
+
+            if process.workflow.name == 'tokens':
+                return redirect('tokens:token', process.token_set.last().id)
+            elif process.workflow.name == 'pettycash':
+                return redirect('pettycash:pettycash_detail', process.pettycash_set.last().petty_id)
+            elif process.workflow.name == 'ace':
+                print(process.ace2_set.last().Ace_id2, "Please")
+                messages.success(request, "ace approved")
+                return redirect('Ace:ace_detail', process.ace2_set.last().Ace_id2)
 
                 else:
                     return redirect('approve:workflow_detail', process.workflow.id)
