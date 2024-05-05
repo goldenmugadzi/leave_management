@@ -195,7 +195,7 @@ def create_Ace(request):
                         ace.designation = designation
                     else:
                         sweetify.error(request, "Please get your designation from It")
-                        messages.error(request,'Please get your designation from It')
+                        messages.error(request, 'Please get your designation from It')
                     if region:
                         ace.region = region
                     else:
@@ -428,11 +428,13 @@ def upload_budgets(request):
             awaiting_sanctioning = row['awaiting_sanctioning']
             period = int(row['period'])
             region = row['region']
+            region = Regions.objects.filter(region=region).first()
+            print(region)
             created_date = date.today()
 
             # withdrawal_date = datetime.strptime(row['withdrawal_date'], "%Y/%m/%d").strftime("%Y-%m-%d")
             # areas = row['area'].split(',')
-            check_budget = Budget.objects.filter(budget_name=budget_name, period=period).first()
+            check_budget = AssetBudget.objects.filter(budget_name=budget_name, period=period).first()
             budget_note = csvfile
 
             if check_budget:

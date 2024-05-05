@@ -1,5 +1,8 @@
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+from django.db.models import DO_NOTHING
+
+from it.users.models import Regions
 
 
 # Create your models here.
@@ -33,7 +36,7 @@ class Budget(models.Model):
     balance = models.FloatField(blank=True, null=True, default=0)
     withdrawal_date = models.DateField(blank=True, null=True)
     period = models.PositiveIntegerField(validators=[MinValueValidator(1), MaxValueValidator(9999)])
-    region = models.CharField(max_length=36, blank=True, null=True)
+    region = models.ForeignKey(Regions, on_delete=models.DO_NOTHING, blank=True)
     created_date = models.DateField(blank=True, null=True)
     budget_note = models.FileField(upload_to='uploads/budget')
 
