@@ -199,6 +199,13 @@ DATABASES = {
         'USER': 'root',
         'PASSWORD': '',
         'HOST': 'localhost',
+    },
+    'remote': {  # New database connection for the remote database
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'harare',
+        'USER': 'root',
+        'PASSWORD': '',
+        'HOST': '172.16.8.22',  #  # Optional
     }
     # 'default': {
     #     'ENGINE': 'django.db.backends.mysql',
