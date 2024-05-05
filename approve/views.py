@@ -112,6 +112,7 @@ def approve_step(request, process_id):
                 return redirect('pettycash:pettycash_detail', process.pettycash_set.last().petty_id)
             elif process.workflow.name == 'ace':
                 print(process.ace2_set.last().Ace_id2, "Please")
+                messages.success(request, "ace approved")
                 return redirect('Ace:ace_detail', process.ace2_set.last().Ace_id2)
 
             else:
