@@ -267,13 +267,10 @@ def business_applications(request):
 
     print("users_role: ", users_role)
     if users_role != "administrator":
-        # remove users app in APPLICATIONS
         for app in APPLICATIONS:
             if app["name"] == "users":
-                APPLICATIONS.remove(app)
+                APPLICATIONS.remove(app)        
         
-        
-
     url_path = request.path.split("/")
     return render(
         request, 
