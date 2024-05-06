@@ -143,6 +143,7 @@ def Ace_detail(request, Ace_id2):
 
 @login_required
 def create_Ace(request):
+    global ace_role
     QuotationFormSet()
     form = AceForm()
     formset = QuotationFormSet()
@@ -162,9 +163,10 @@ def create_Ace(request):
         for _role in roles_:
             role = Roles.objects.filter(id=_role.id).first()
 
-        if role.application == "ace":
-            custom_user_roles["ace"] = role
-        ace_role = str(custom_user_roles["ace"])
+            if role.application == "ace":
+                custom_user_roles["ace"] = role
+                ace_role = str(custom_user_roles["ace"])
+                print(ace_role)
 
         if ace_role == "create":
             if form.is_valid():
@@ -260,8 +262,8 @@ def create_Ace(request):
         else:
             sweetify.error(request, "You are not allowed to create Ace")
             messages.error(request, "You are not allowed to create")
-            url = reverse('/acee/aces')
-            return redirect(url)
+            # url = reverse('/acee/aces')
+            return redirect('/acee/aces')
 
     return render(request, 'finance/ace2/create_ace.html', {'form': form, 'formset': formset})
 
@@ -369,7 +371,7 @@ def view_all_aces(request):
         print(aces)
 
     return render(request, 'finance/ace2/view_all_aces.html', {'aces': aces,
-                                                               'requester': requester,'ace_role': ace_role})
+                                                               'requester': requester, 'ace_role': ace_role})
 
 
 def add_project_details(request, Ace_id2):
@@ -762,7 +764,8 @@ def upload_aces_csv(request):
                 # fetch from remote budgets model
                 budget_obj = RemoteBudget.objects.using('remote').filter(budget_id=item_division).first()
                 # create assetbudget object using this informationif asset budget doesnt exist'
-                assetbudget = AssetBudget.objects.filter(budget_name=budget_obj.budget, period=budget_obj.period).first()
+                assetbudget = AssetBudget.objects.filter(budget_name=budget_obj.budget,
+                                                         period=budget_obj.period).first()
                 region = Regions.objects.filter(region='Harare Region').first()
                 section = Sections.objects.filter(section=str(budget_obj.section_code)).first()
                 if section:
@@ -827,7 +830,8 @@ def upload_aces_csv(request):
                                           asset_number=asset_number,
 
                                           classification=classification,
-                                          present_tariff=present_tariff if isinstance(present_tariff, (int, float)) else None,
+                                          present_tariff=present_tariff if isinstance(present_tariff,
+                                                                                      (int, float)) else None,
                                           present_fmc=present_fmc,
                                           capital_contribution=capital_contr,
                                           materials=materials,
