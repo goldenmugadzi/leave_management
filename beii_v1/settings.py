@@ -125,6 +125,7 @@ INSTALLED_APPS = [
     'finance.comparative_schedules',
     'finance.Direct_purchases',
 
+    'finance.comperative_schedule',
 
     'reports',
     'sweetify',
@@ -187,12 +188,16 @@ DATABASES = {
     #     'PASSWORD': 'Z3tdc_it@2021_',
     #     'HOST': 'localhost'
     # }
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'beii_new',
-        'USER': 'root',
-        'PASSWORD': '',
-        'HOST': 'localhost',
+    # 'default': {
+    #     'ENGINE': 'django.db.backends.mysql',
+    #     'NAME': 'beii_new',
+    #     'USER': 'root',
+    #     'PASSWORD': '',
+    #     'HOST': 'localhost',
+    # }
+     'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
     # 'default': {
     #     'ENGINE': 'django.db.backends.mysql',
