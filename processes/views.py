@@ -90,12 +90,7 @@ def create(request):
             )
         processObj.save()
         
-        return render(request, 
-                      'process_maps/create_process_maps.html',
-                        {
-                         'user':user,
-                         'user_title':user_title,
-                         }) 
+        return redirect('/processes/create')
 
     return render(request,
                    'process_maps/create_process_maps.html',
