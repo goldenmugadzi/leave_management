@@ -27,7 +27,7 @@ def purchase_request_detail(request, purchase_request_id):
     # approved_steps, approvalForm, to = ApprovalDetails(request, purchase_request)
     can_cs= False
     for role in request.user.roles.all():
-        if role.name=="Procurement Officer":
+        if role.name=="Procurement Officer" and role.app_id:
             can_cs = True
     return render(request, 'finance/purchase_request/purchase_request_detail.html', {'purchase_request': purchase_request, 'can_cs':can_cs })#, 'approved_steps':approved_steps,'approvalForm': approvalForm,'to':to})
     
@@ -35,7 +35,8 @@ def purchase_request_detail(request, purchase_request_id):
 def create_purchase_request(request):
     itemFormset = inlineformset_factory(PurchaseRequest, PrItem, form=PrItemForm, extra=int(request.POST.get('items') or 1) , can_delete=False)
     if request.method == 'POST':
-        prexist=PurchaseRequest.objects.get(pr_no = request.POST.get('pr_no'))
+        try:prexist=PurchaseRequest.objects.get(pr_no = request.POST.get('pr_no'))
+        except:prexist=None
         form = PurchaseRequestForm(request.POST)
         formset = itemFormset(request.POST)
         if not prexist :
