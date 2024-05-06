@@ -76,6 +76,7 @@ class ClearCreditForm(forms.ModelForm):
         receipt = self.cleaned_data['receipt']
         if not receipt:
             raise forms.ValidationError('A receipt photo is required.')
+        return receipt
    
 class TamperTokenForm(forms.ModelForm):
     class Meta:
@@ -101,6 +102,7 @@ class OldTokenForm(forms.ModelForm):
         old_token = self.cleaned_data['old_token']
         if not old_token:
             raise forms.ValidationError('A old token photo is required.')
+        return old_token
    
 class FaultMeterForm(forms.ModelForm):
     class Meta:
@@ -115,7 +117,8 @@ class FaultMeterForm(forms.ModelForm):
     def clean_photo(self):
         photo = self.cleaned_data['photo']
         if not photo:
-            raise forms.ValidationError('A photo photo is required.')
+            raise forms.ValidationError('A photo  is required.')
+        return photo
    
 class RecoveredMeterForm(forms.ModelForm):
     class Meta:
@@ -130,7 +133,8 @@ class RecoveredMeterForm(forms.ModelForm):
     def clean_picture(self):
         picture = self.cleaned_data['picture']
         if not picture:
-            raise forms.ValidationError('A picture photo is required.')
+            raise forms.ValidationError('A picture  is required.')
+        return picture
    
 class FaultMaintananceForm(forms.ModelForm):
     class Meta:
@@ -158,7 +162,9 @@ class ReconnectionForm(forms.ModelForm):
         invoice = self.cleaned_data['invoice']
         if not invoice:
             raise forms.ValidationError('A invoice photo is required.')
+        return invoice
     def clean_proof_of_payment(self):
         proof_of_payment = self.cleaned_data['proof_of_payment']
         if not proof_of_payment:
             raise forms.ValidationError('A proof_of_payment photo is required.')
+        return proof_of_payment
