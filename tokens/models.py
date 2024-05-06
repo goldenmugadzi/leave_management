@@ -74,7 +74,7 @@ class FaultMeter(models.Model):
     
 class RecoveredMeter(models.Model):
     token = models.ForeignKey(Token, on_delete=models.CASCADE)
-    picture= models.FileField(upload_to='uploads/Tokens/RecoveredMeter',help_text="Meter photo showing nil credit", blank=True, null=True)
+    picture= models.FileField(upload_to='uploads/Tokens/RecoveredMeter',help_text="Meter photo showing nill credit", blank=True, null=True)
     def __str__(self):
         return str(self.token.meter.number)
 class FaultMaintanance(models.Model): 

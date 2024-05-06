@@ -18,22 +18,15 @@ def create_nonconformity(request):
         if form.is_valid():
             nonconformity = form.save(commit=False)
             nonconformity.created_by = request.user
-            # Check if the recipient is the same as the current user
             if nonconformity.recipient != request.user:
-                # Save the nonconformity
                 nonconformity.save()
-                # Create a notification for the auditee
                 auditee = nonconformity.recipient
-                notification = Notification.objects.create(
-                    user=auditee,
-                    message=f"nc: {nonconformity.description}",
-                    url = reverse('nonconformity:nonconformity', args=[nonconformity.id])
-                )
-                # Display a success message
+                Notification.objects.create( user=auditee,message=f"nc: {nonconformity.description}",url = reverse('nonconformity:nonconformity', args=[nonconformity.id]))
                 messages.success(request, 'Nonconformity created successfully!')
                 return redirect('/', messages.SUCCESS)
             else:
-                return HttpResponse("You cannot create a nonconformity for yourself.")
+                messages.error(request,"You cannot create a nonconformity for yourself.")
+                return render(request, 'risk/nonconformity/create_nonconformity.html', {'form': form})
     else:
         form = NonconformityForm()
     
