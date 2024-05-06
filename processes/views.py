@@ -1485,9 +1485,12 @@ def view_Engineering(request):
 
 def view_Commercial(request):
     
-    return render(request, 'process_maps/commercial.html',
-                  {
-                    "page_title": "Commercial Process Risks"})
+    files = Processes.objects.filter(archived=False, filetype="PROCESS_MAPS", department="Commercial")
+
+    url_path = request.path.split("/")
+    return render(request, 'process_maps/ict.html',{
+        "files": files,  "page_title": "Commercial", "url_path": url_path} )
+
 
 def view_Finance(request):
     
