@@ -128,6 +128,7 @@ INSTALLED_APPS = [
     'finance.Direct_purchases',
     'ACE2',
 
+    'finance.comperative_schedule',
 
     'reports',
     'sweetify',
