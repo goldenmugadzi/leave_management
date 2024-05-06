@@ -49,7 +49,7 @@ CSRF_TRUSTED_ORIGINS = ['http://172.16.8.97', "http://172.16.8.97:3200", "http:/
                         "http://bexcel.zedc.co.zw:9300"]
 
 CORS_ALLOW_HEADERS = ('content-disposition', 'accept-encoding',
-                      'content-type', 'accept', 'origin', 'authorization')
+                      'content-type', 'accept', 'origin', 'authorization', 'X-CSRFToken', )
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
