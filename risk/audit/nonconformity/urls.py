@@ -9,7 +9,7 @@ urlpatterns = [
     path('inbox/', view_notifications, name='inbox'),
     path('nonconformities/', view_nonconformities, name='nonconformities'),
     path('my_nonconformities/', my_nonconformities, name='my_nonconformities'),
-    path('nonconformity/<int:nonconformity_id>/', nonconformity_details, name='nonconformity'),
+    path('nonconformity/<str:nonconformity_id>/', nonconformity_details, name='nonconformity'),
     
     path('create_clause/', create_clause, name='create_clause'),
     path('create_topic/<str:clause>', create_topic, name='create_topic'),

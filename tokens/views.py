@@ -70,7 +70,7 @@ def create_token(request):
                     fault_maintanance.token = token
                     fault_maintanance.save()
                     messages.info(request, "Token request saved successfully")
-                elif tamper_token.is_for == 'Recovered Meter' and recovered_meter_form.is_valid():
+                elif tamper_token.is_for == 'Recovered Meter' and  request.FILES.get("picture") and recovered_meter_form.is_valid():
                     recovered_meter = recovered_meter_form.save(commit=False)
                     recovered_meter.token = token
                     recovered_meter.save()
@@ -86,6 +86,8 @@ def create_token(request):
                         'recovered_meter_form': recovered_meter_form,
                         'reconnection_form': reconnection_form
                     })
+                    tamper_token.delete()
+                    token.delete()
                     messages.error(request, "Token request error")
                     return render(request, "tokens/create_token.html", forms)
 

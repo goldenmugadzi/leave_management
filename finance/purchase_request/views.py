@@ -30,7 +30,7 @@ def purchase_request_detail(request, purchase_request_id):
     # approved_steps, approvalForm, to = ApprovalDetails(request, purchase_request)
     can_cs= False
     for role in request.user.roles.all():
-        if role.name=="Procurement Officer":
+        if role.name=="Requester" and role.app_id.name == 'comparative_schedules':
             can_cs = True
     return render(request, 'finance/purchase_request/purchase_request_detail.html', {'purchase_request': purchase_request, 'can_cs':can_cs })#, 'approved_steps':approved_steps,'approvalForm': approvalForm,'to':to})
     
@@ -39,10 +39,8 @@ def create_purchase_request(request):
     itemFormset = inlineformset_factory(PurchaseRequest, PrItem, form=PrItemForm,
                                         extra=int(request.POST.get('items') or 1), can_delete=False)
     if request.method == 'POST':
-        try:
-            prexist=PurchaseRequest.objects.get(pr_no = request.POST.get('pr_no'))
-        except:
-            prexist = None
+        try:prexist=PurchaseRequest.objects.get(pr_no = request.POST.get('pr_no'))
+        except:prexist=None
         form = PurchaseRequestForm(request.POST)
         formset = itemFormset(request.POST)
         if not prexist :
@@ -223,12 +221,12 @@ def view_all_purchase_requests(request):
 @login_required
 def uploaduuom(request):
     """upload unit of measurement data to the database"""
-    xl = pd.ExcelFile('finance/purchase_request/uom.xlsx')
-    df = xl.parse('units')
-    data_dict = df.to_dict('records')
-    for data in data_dict:
-        unit = UnitOfMeasurement(unit=data['UM'], name=data['MUT'])
-        unit.save()
+    # xl = pd.ExcelFile('finance/purchase_request/uom.xlsx')
+    # df = xl.parse('units')
+    # data_dict = df.to_dict('records')
+    # for data in data_dict:
+    #     unit = UnitOfMeasurement(unit=data['UM'], name=data['MUT'])
+    #     unit.save()
     """upload procurement Plan References data to the database"""
     # from .grn import data
     # procurementPlanReferences= data 
@@ -240,63 +238,61 @@ def uploaduuom(request):
     #     except:
     #         pass
     """upload rfq data to the database"""
-    import mysql.connector 
+    # import mysql.connector 
 
-    # Connect to the MySQL database
-    cnx = mysql.connector.connect(
-        host="172.16.8.22",
-        user="root",
-        password="",
-        database="dms"
-    )
+    # # Connect to the MySQL database
+    # cnx = mysql.connector.connect(
+    #     host="172.16.8.22",
+    #     user="root",
+    #     password="",
+    #     database="dms"
+    # )
 
-    # Create a cursor object
-    cursor = cnx.cursor()
+    # # Create a cursor object
+    # cursor = cnx.cursor()
 
-    # Execute the SQL query
-    sql_query = """
-        SELECT rfq.rfq_number, rfq.rfq_date, rfq.scope_of_work, 
-            rfq.date_created, rfq.specifications, rfq.created_by, rfq.section_code, 
-            rfq.ace, rfq.ace_spec, rfq.proc_ref, rfq.region, required_items.*
-        FROM required_items
-        JOIN rfq ON required_items.document_id = rfq.document_id
-        ORDER BY rfq.id ASC
-    """
-    cursor.execute(sql_query)
+    # # Execute the SQL query
+    # sql_query = """
+    #     SELECT rfq.rfq_number, rfq.rfq_date, rfq.scope_of_work, 
+    #         rfq.date_created, rfq.specifications, rfq.created_by, rfq.section_code, 
+    #         rfq.ace, rfq.ace_spec, rfq.proc_ref, rfq.region, required_items.*
+    #     FROM required_items
+    #     JOIN rfq ON required_items.document_id = rfq.document_id
+    #     ORDER BY rfq.id ASC
+    # """
+    # cursor.execute(sql_query)
 
-    # Fetch all the results
-    results = cursor.fetchall()
-    for item_dict in results:
-        item = dict(zip(cursor.column_names, item_dict))
-        try:
-            created_by = UserProfile.objects.get(username=item['created_by'])
-        except :
-            created_by= request.user
+    # # Fetch all the results
+    # results = cursor.fetchall()
+    # for item_dict in results:
+    #     item = dict(zip(cursor.column_names, item_dict))
+    #     try:
+    #         created_by = UserProfile.objects.get(username=item['created_by'])
+    #     except :
+    #         created_by= request.user
 
-        section_code = item.get('section_code')
-        if section_code:
-            defaults = {
-                # 'section': Sections.objects.get(code=section_code) or Sections.objects.get(id=1),
-                'procurement_plan_reference': ProcurementPlanReference.objects.get(id=item['proc_ref'][3:]),
-                'requested_by': created_by,
-                # 'created_at': item['date_created'] if "#" not in item['date_created'] else None,
-                # 'ace': item['ace'],
-                'scope_of_work': item['scope_of_work'],
-            }
-        purchase_request, created = PurchaseRequest.objects.get_or_create(pr_no=item['rfq_number'], defaults=defaults)
-        try:
-            pritem = PrItem(item_required=item['item_required'],
-                        unit_of_measurement = UnitOfMeasurement.objects.get(Q(unit__iexact=item['uom']) | Q(name__iexact=item['uom'])),
-                        quantity=item['qty'],
-                        purchase_request=purchase_request,
-                        ) 
-        except: print(item['uom'],"failed")
-    # Close the cursor and database connection
-    cursor.close()
-    cnx.close()
-    # unit = PurchaseRequest(unit=data['document_id'], name=data['MUT'])
-    #     unit.save()
-    
+    #     section_code = item.get('section_code')
+    #     if section_code:
+    #         defaults = {
+    #             # 'section': Sections.objects.get(code=section_code) or Sections.objects.get(id=1),
+    #             'procurement_plan_reference': ProcurementPlanReference.objects.get(id=item['proc_ref'][3:]),
+    #             'requested_by': created_by,
+    #             # 'created_at': item['date_created'] if "#" not in item['date_created'] else None,
+    #             # 'ace': item['ace'],
+    #             'scope_of_work': item['scope_of_work'],
+    #         }
+    #     purchase_request, created = PurchaseRequest.objects.get_or_create(pr_no=item['rfq_number'], defaults=defaults)
+    #     try:
+    #         pritem = PrItem(item_required=item['item_required'],
+    #                     unit_of_measurement = UnitOfMeasurement.objects.get(Q(unit__iexact=item['uom']) | Q(name__iexact=item['uom'])),
+    #                     quantity=item['qty'],
+    #                     purchase_request=purchase_request,
+    #                     ) 
+    #     except: print(item['uom'],"failed")
+    # # Close the cursor and database connection
+    # cursor.close()
+    # cnx.close()
+
     return render(request, 'finance/purchase_request/add_uom.html')
 @login_required
 def del_file(request, id):
