@@ -1,8 +1,8 @@
 "use strict";
 
 const e = React.createElement;
-// const BASE_URL = "http://localhost:8000";
-const BASE_URL = "http://172.16.8.99:9300";
+const BASE_URL = "http://localhost:8000";
+// const BASE_URL = "http://172.16.8.99:9300";
 
 class CreateCS extends React.Component {
   constructor(props) {
@@ -661,6 +661,10 @@ class CreateCS extends React.Component {
     } else {
       // find item in pr_items
       let item = this.state.pr_items.find((item) => item.id === item_id);
+      if(item.item_required === undefined || item.quantity === undefined || item.unit_of_measurement === undefined){
+        alert("Item selected has missing fields. Please correct the PR items first.")
+        return
+      }
       // update pr_item selected to added
       item.ordered = true;
       item.item_required = item.item_required;
@@ -891,8 +895,23 @@ class CreateCS extends React.Component {
             item.total_price = item.quantity * item.unit_price;
             return item;
           });
+
+          let missingFields = items.filter(
+            (item) =>
+              item.quantity === "" || item.quantity === undefined ||
+              item.unit_price === "" || item.unit_price === undefined ||
+              item.vat === "" || item.vat === undefined ||
+              item.unit_of_measurement === "" || item.unit_of_measurement === undefined ||
+              item.total_price === "" || item.total_price === undefined
+          );
+
+          if (missingFields.length > 0) {
+            alert("Please fill in all required fields");
+            return;
+          }
           currentBid.items = items;
           console.log("currentBid: ", currentBid);
+
           this.onSaveBid(currentBid);
           let bids = this.state.bids.map((bid) => {
             if (bid.bid_count === currentBid.bid_count) {

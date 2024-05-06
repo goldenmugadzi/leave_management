@@ -15,8 +15,8 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
 var e = React.createElement;
-// const BASE_URL = "http://localhost:8000";
-var BASE_URL = "http://172.16.8.99:9300";
+var BASE_URL = "http://localhost:8000";
+// const BASE_URL = "http://172.16.8.99:9300";
 
 var CreateCS = function (_React$Component) {
   _inherits(CreateCS, _React$Component);
@@ -545,6 +545,10 @@ var CreateCS = function (_React$Component) {
         var _item2 = _this.state.pr_items.find(function (item) {
           return item.id === item_id;
         });
+        if (_item2.item_required === undefined || _item2.quantity === undefined || _item2.unit_of_measurement === undefined) {
+          alert("Item selected has missing fields. Please correct the PR items first.");
+          return;
+        }
         // update pr_item selected to added
         _item2.ordered = true;
         _item2.item_required = _item2.item_required;
@@ -764,8 +768,18 @@ var CreateCS = function (_React$Component) {
               item.total_price = item.quantity * item.unit_price;
               return item;
             });
+
+            var missingFields = items.filter(function (item) {
+              return item.quantity === "" || item.quantity === undefined || item.unit_price === "" || item.unit_price === undefined || item.vat === "" || item.vat === undefined || item.unit_of_measurement === "" || item.unit_of_measurement === undefined || item.total_price === "" || item.total_price === undefined;
+            });
+
+            if (missingFields.length > 0) {
+              alert("Please fill in all required fields");
+              return;
+            }
             currentBid.items = items;
             console.log("currentBid: ", currentBid);
+
             _this.onSaveBid(currentBid);
             var bids = _this.state.bids.map(function (bid) {
               if (bid.bid_count === currentBid.bid_count) {
