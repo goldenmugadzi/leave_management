@@ -369,7 +369,7 @@ def view_all_aces(request):
         print(aces)
 
     return render(request, 'finance/ace2/view_all_aces.html', {'aces': aces,
-                                                               'requester': requester})
+                                                               'requester': requester,'ace_role': ace_role})
 
 
 def add_project_details(request, Ace_id2):
@@ -876,8 +876,6 @@ def upload_aces_csv(request):
                             date_approved = row['update_date4']
                             user = UserProfile.objects.filter(username=user).first()
                             approve_step(ace.process, user, date_approved)
-                            p
-
         return redirect("/ace/aces")
     else:
         return render(request, 'finance/ace2/upload_ace.html')
