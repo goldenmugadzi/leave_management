@@ -265,6 +265,7 @@ def business_applications(request):
             custom_user_roles["users"] = role
     users_role = str(custom_user_roles["users"])
 
+    print("users_role: ", users_role)
     if users_role != "administrator":
         # remove users app in APPLICATIONS
         for app in APPLICATIONS:

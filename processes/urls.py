@@ -19,9 +19,10 @@ urlpatterns =[
     path('payment/',views.view_payment,name='commercial payment processes'),
     path('revenue/',views.view_revenue_assurance,name='revenue'),
     
-    path('planning/',views.view_eng_planning,name='planning'),
-    path('maintenance/',views.view_Maintenance,name='maintenance'),
-    path('project/',views.view_eng_project,name='engineering project processes'),
+    path('network-development/',views.view_eng_nde,name='network_development'),
+    path('operations-maintenance/',views.view_Maintenance,name='maintenance'),
+    path('transport/',views.view_eng_transport,name='view_eng_transport'),
+    path('districts/',views.view_eng_districts,name='view_eng_districts'),
     
     path('download_file/', views.download_file, name='download_file'),
     path('procurement/',views.view_procurement,name='procurement'),

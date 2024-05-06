@@ -1444,30 +1444,37 @@ def view_revenue_assurance(request):
                   { "files": files,
                     "page_title": "Revenue Process Maps"},
                     )
-def view_eng_planning(request):
+def view_eng_nde(request):
     
-    files = Processes.objects.filter(archived=False, filetype="PROCESS_MAPS", department="Engineering", sub_category="planning")
+    files = Processes.objects.filter(archived=False, filetype="PROCESS_MAPS", department="Engineering", sub_category="Network Development")
     
     url_path = request.path.split("/")
     return render(request, 'process_maps/ict.html',{
-        "files": files,  "page_title": "Planning process map Files", "url_path": url_path} )
+        "files": files,  "page_title": "Network Development", "url_path": url_path} )
 
 #Project procesess
-def view_eng_project(request):
+def view_eng_transport(request):
     
-    files = Processes.objects.filter(archived=False, filetype="PROCESS_MAPS", department="Engineering", sub_category="projects")
+    files = Processes.objects.filter(archived=False, filetype="PROCESS_MAPS", department="Engineering", sub_category="Transport")
 
     url_path = request.path.split("/")
     return render(request, 'process_maps/ict.html',{
-        "files": files,  "page_title": "Planning process map Files", "url_path": url_path} )
+        "files": files,  "page_title": "Transport", "url_path": url_path} )
 
 def view_Maintenance(request):
-        files = Processes.objects.filter(archived=False, filetype="PROCESS_MAPS", department="Engineering", sub_category="maintenance")
+        files = Processes.objects.filter(archived=False, filetype="PROCESS_MAPS", department="Engineering", sub_category="Operations and Maintenance")
 
         url_path = request.path.split("/")
         return render(request, 'process_maps/ict.html',{
-        "files": files,  "page_title": "Maintenace process map Files", "url_path": url_path} )
+        "files": files,  "page_title": "Operations and Maintenance", "url_path": url_path} )
 
+def view_eng_districts(request):
+        files = Processes.objects.filter(archived=False, filetype="PROCESS_MAPS", department="Engineering", sub_category="Districts")
+
+        url_path = request.path.split("/")
+        return render(request, 'process_maps/ict.html',{
+        "files": files,  "page_title": "Districts", "url_path": url_path} )
+        
 def view_Engineering(request):
     
     return render(request, 'process_maps/eng.html',
