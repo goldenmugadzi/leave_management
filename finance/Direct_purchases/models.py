@@ -13,7 +13,7 @@ class Direct_purchase(models.Model):
     choices = 'Direct Purchase'
     Dp_id = models.CharField(primary_key=True, max_length=60)
     section = models.ForeignKey(Sections, models.DO_NOTHING, blank=True, null=True)
-    process = models.OneToOneField(Process, on_delete=models.SET_NULL, blank=True, null=True)
+    process = models.ForeignKey(Process, on_delete=models.SET_NULL, blank=True, null=True)
     # allocation_code_of_expenditure = models.CharField(max_length=100, blank=True, null=True)
     details_of_expenditure = models.CharField(max_length=100, blank=True, null=True)
     amount = models.FloatField(blank=True, null=True)

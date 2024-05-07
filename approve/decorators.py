@@ -1,4 +1,4 @@
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required,user_passes_test
 from approve.models import Step
 from approve.forms import ApprovalForm
 from functools import wraps
@@ -45,3 +45,10 @@ def checklist_roles(view_func):
 
         return view_func(request, *args, **kwargs)
     return _wrapped_view
+def allowed_roles(allowed_roles, app_names):
+    def decorator(view_func):
+        @user_passes_test(lambda user: user.roles.filter(name__in=allowed_roles, app_id__name__in=app_names).exists())
+        def wrapper(request, *args, **kwargs):
+            return view_func(request, *args, **kwargs)
+        return wrapper
+    return decorator

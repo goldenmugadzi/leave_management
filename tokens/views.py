@@ -6,8 +6,10 @@ from approve.views import intiate, approve_step
 from approve.models import Step
 from approve.forms import ApprovalForm
 from django.contrib.auth.decorators import login_required
+from approve.decorators import allowed_roles
 
 @login_required
+@allowed_roles(['Requester'], ['temper', 'reimbursement','clear credit'])
 def create_token(request):
     if request.method == "POST":
         # meter details from the database if the meter number already exists and use its instance to update the meter details
@@ -49,16 +51,18 @@ def create_token(request):
         }
 
         if meter_form.is_valid() and customer_form.is_valid() and token_form.is_valid():
-            process = intiate(request, "tokens")
             meter = meter_form.save()
             customer = customer_form.save()
             token = token_form.save(commit=False)
+            token_type = token.type
+            if token_type == 'TEMPER': process = intiate(request, "temper")
+            elif token_type == 'REIMBURSEMENT': process = intiate(request, "reimbursement")
+            elif token_type == 'CLEAR CREDIT': process = intiate(request, "clear credit")
             token.meter = meter
             token.customer = customer
             token.process = process
             token.created_by = request.user
             token.save()
-            token_type = token.type
 
             if token_type == 'TEMPER' and tamper_token_form.is_valid():
                 tamper_token = tamper_token_form.save(commit=False)
