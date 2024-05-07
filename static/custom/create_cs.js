@@ -1,8 +1,8 @@
 "use strict";
 
 const e = React.createElement;
-// const BASE_URL = "http://localhost:8000";
-const BASE_URL = "http://172.16.8.99:9300";
+const BASE_URL = "http://localhost:8000";
+// const BASE_URL = "http://172.16.8.99:9300";
 
 class CreateCS extends React.Component {
   constructor(props) {
@@ -122,20 +122,26 @@ class CreateCS extends React.Component {
   }
 
   onGetFileObjectUrl = (fileData) => {
-    if (typeof fileData === "string") {
-      const decodedFileData = atob(fileData);
-      const uint8Array = new Uint8Array(decodedFileData.length);
-      for (let i = 0; i < decodedFileData.length; i++) {
-        uint8Array[i] = decodedFileData.charCodeAt(i);
+    try{
+
+      if (typeof fileData === "string") {
+        const decodedFileData = atob(fileData);
+        const uint8Array = new Uint8Array(decodedFileData.length);
+        for (let i = 0; i < decodedFileData.length; i++) {
+          uint8Array[i] = decodedFileData.charCodeAt(i);
+        }
+  
+        const file = new Blob([uint8Array], { type: "application/pdf" });
+        console.log("file: ", file);
+  
+        return URL.createObjectURL(file);
+      } else {
+        console.log("fileData: ", fileData);
+        return URL.createObjectURL(fileData);
       }
 
-      const file = new Blob([uint8Array], { type: "application/pdf" });
-      console.log("file: ", file);
-
-      return URL.createObjectURL(file);
-    } else {
-      console.log("fileData: ", fileData);
-      return URL.createObjectURL(fileData);
+    } catch(err) {
+      console.log("error: ", error);
     }
   };
 
@@ -154,6 +160,7 @@ class CreateCS extends React.Component {
             bid_document_url: this.onGetFileObjectUrl(new_obj.bid_document),
           };
         });
+        let sorted_bids = bids.sort((a, b) => b.bid_no - a.bid_no);
 
         let compliance = data.compliance ? data.compliance : [];
         let complianceRemarks = data.complianceRemarks
@@ -183,6 +190,12 @@ class CreateCS extends React.Component {
         let pr_attachments = data.pr_attachments ? data.pr_attachments : [];
         let cs_items = data.cs_items ? data.cs_items : [];
         let users = data.users ? data.users : [];
+        // Sort users by full name (first_name + " " + last_name)
+        users.sort((user1, user2) => {
+          const fullName1 = user1.first_name + " " + user1.last_name;
+          const fullName2 = user2.first_name + " " + user2.last_name;
+          return fullName1.localeCompare(fullName2);
+        });
         let cs_owner = data.cs_owner ? data.cs_owner : "";
 
         let advert_url = this.onGetFileObjectUrl(data.advert);
@@ -227,7 +240,7 @@ class CreateCS extends React.Component {
             tender_adjudication_committee_date,
           advert: advert,
           advert_url: advert_url,
-          bids: bids,
+          bids: sorted_bids,
           cs_items: cs_items,
           compliance: compliance,
           complianceRemarks: complianceRemarks,
@@ -238,7 +251,8 @@ class CreateCS extends React.Component {
           pr_items: pr_items,
           pr_attachments: pr_at_list,
         });
-      });
+      })
+      .catch((error) => console.log("error: ", error))
   };
 
   getCreateData = (pr_id) => {
@@ -277,7 +291,8 @@ class CreateCS extends React.Component {
           pr_date: pr_date,
           users: users,
         });
-      });
+      })
+      .catch((error) => console.log("error: ", error))
   };
 
   onFetchPR = (pr_id) => {
@@ -329,7 +344,8 @@ class CreateCS extends React.Component {
         } else {
           alert("PR Number not found");
         }
-      });
+      })
+      .catch((error) => console.log("error: ", error))
   };
 
   onFetchPrNumberChange = (event) => {
@@ -473,7 +489,7 @@ class CreateCS extends React.Component {
         console.log("data: ", data);
         if (data.success) {
           let committeeDate = data.committee_date;
-          let committeeApproval = data.committe_approval;
+          let committeeApproval = data.committee_approval;
           let memberName = data.committee_fullname;
           let members = this.state.committeeMembers.map((member) => {
             if (member.memberUserName === username) {
@@ -486,14 +502,21 @@ class CreateCS extends React.Component {
             ...this.state,
             committeeMembers: members,
           });
-          if (committeeApproval === "Approved") {
-            alert("Committee approved successfully");
-            // reload page
-            window.location.reload();
-          } else {
-            alert("Committee rejected successfully");
-            window.location.reload();
-          }
+          console.log("committeeApproval: ", committeeApproval, justification);
+          alert("Approval Done!!");
+          // reload page
+          window.location.reload();
+        //   if (committeeApproval === "Approved") {
+        //     alert("Committee approved successfully");
+        //     // reload page
+        //     // window.location.reload();
+        //   } else if(committeeApproval === "Rejected") {
+        //     alert("Committee rejected successfully");
+        //     // window.location.reload();
+        //   } else {
+        //     alert("Error approving Committee");
+        //     // window.location.reload();
+        //   }
         } else {
           alert("Error approving Committee");
         }
@@ -880,6 +903,12 @@ class CreateCS extends React.Component {
     ) {
       alert("Please select a bid date");
       return;
+    } else if (
+      currentBid.bid_document === "" ||
+      currentBid.bid_document === undefined
+    ) {
+      alert("Please select a bid document");
+      return;
     } else {
       // check if current bid already exists
       if (currentBid.items) {
@@ -1031,7 +1060,8 @@ class CreateCS extends React.Component {
         } else {
           alert("Error saving Bid");
         }
-      });
+      })
+      .catch(err => console.log("onSaveBid: ", err));
   };
 
   onSaveSchedule = () => {
@@ -1399,7 +1429,6 @@ class CreateCS extends React.Component {
         technical_specifications: compliance[index].technical_specifications,
         valid_tax_clearance: compliance[index].valid_tax_clearance,
         registered_with_praz: compliance[index].registered_with_praz,
-        tax_status: compliance[index].tax_status,
         site_visit: compliance[index].site_visit,
         samples_required: compliance[index].samples_required,
       };
@@ -1411,7 +1440,6 @@ class CreateCS extends React.Component {
         technical_specifications: compliance[index].technical_specifications,
         valid_tax_clearance: compliance[index].valid_tax_clearance,
         registered_with_praz: compliance[index].registered_with_praz,
-        tax_status: compliance[index].tax_status,
         samples_required: compliance[index].samples_required,
       };
     } else if (!this.state.showSamples && this.state.showSiteVisit) {
@@ -1422,7 +1450,6 @@ class CreateCS extends React.Component {
         technical_specifications: compliance[index].technical_specifications,
         valid_tax_clearance: compliance[index].valid_tax_clearance,
         registered_with_praz: compliance[index].registered_with_praz,
-        tax_status: compliance[index].tax_status,
         site_visit: compliance[index].site_visit,
       };
     } else {
@@ -1433,7 +1460,6 @@ class CreateCS extends React.Component {
         technical_specifications: compliance[index].technical_specifications,
         valid_tax_clearance: compliance[index].valid_tax_clearance,
         registered_with_praz: compliance[index].registered_with_praz,
-        tax_status: compliance[index].tax_status,
       };
     }
 
@@ -2578,10 +2604,10 @@ class CreateCS extends React.Component {
                       Registered <br />
                       with PRAZ?
                     </th>
-                    <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                    {/* <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
                       Tax <br />
                       Status
-                    </th>
+                    </th> */}
                     {this.state.showSiteVisit === "yes" ? (
                       <th
                         id="site_visit_header"
@@ -2704,7 +2730,7 @@ class CreateCS extends React.Component {
                             type="checkbox"
                           />
                         </td>
-                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                        {/* <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
                           <input
                             name="tax_status"
                             checked={comp.tax_status ? comp.tax_status : false}
@@ -2713,7 +2739,7 @@ class CreateCS extends React.Component {
                             id="tax_status"
                             type="checkbox"
                           />
-                        </td>
+                        </td> */}
                         {this.state.showSiteVisit === "yes" ? (
                           <td
                             id="site_visit_header"
