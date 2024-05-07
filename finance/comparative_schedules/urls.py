@@ -1,6 +1,7 @@
 from django.urls import path
 from .views import *
-app_name ='comparative_schedules'
+
+app_name = 'comparative_schedules'
 
 urlpatterns = [
     path('schedule/<str:pr_id>', get_create_cs, name='adopt_schedule'),
@@ -8,22 +9,29 @@ urlpatterns = [
     path('create_schedule/', create, name='create_schedule'),
     path('add_supplier/<str:tender_id>', cs_add_supplier, name='add_supplier'),
     path('compliance/<str:tender_id>', cs_compliance_table, name="tender_compliance"),
-    
+
     path('create_data/<str:pr_id>', get_create_data, name='get_create_data'),
     path('save', save_comparative_schedule, name='save_schedule'),
     path('update', update_comparative_schedule, name='update_schedule'),
+<<<<<<< HEAD
     
     path('save_supplier', save_supplier, name='save_supplier'),
     path('save_bid', save_cs_bid, name='save_bid'),
     path('delete_bid', delete_cs_bid, name='delete_cs_bid'),
     
+=======
+
+    path('save_bid', save_cs_bid, name='save_bid'),
+
+>>>>>>> e318ae0725ea9e59a8d94265310507a0eac89435
     path('save_compliance', save_cs_compliance, name='save_compliance'),
-    
+
     path('close_compliance', save_cs_ranking, name='save_cs_ranking'),
     path('save_committee', save_cs_committee, name='save_cs_committee'),
     path('delete_committee_member', delete_cs_committee_member, name='delete_cs_committee_member'),
     path('committee_approve', approve_cs_committee, name='approve_cs_committee'),
     path('save_decision', save_cs_decision, name='save_cs_decision'),
+<<<<<<< HEAD
     
     path('approval_approve', approve_cs, name='approve_cs'),
     
@@ -37,3 +45,12 @@ urlpatterns = [
     path('pending_commitee', get_pending_committee, name='get_pending_committee'),
     path('pending_approval', get_pending_approval, name='get_pending_approval'),
 ]
+=======
+
+    path('comperative_schedules', get_comperative_schedules, name='get_comperative_schedules'),
+    path('comperative_schedule/<str:cs_id>', get_comperative_schedule, name='get_comperative_schedule'),
+    path('cs_data/<str:cs_id>', get_comperative_schedule_data, name='get_comperative_schedule_data'),
+    path('suppliers', get_comperative_schedule_suppliers, name='get_comperative_schedule_suppliers'),
+
+]
+>>>>>>> e318ae0725ea9e59a8d94265310507a0eac89435

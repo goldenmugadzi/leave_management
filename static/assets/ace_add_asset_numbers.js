@@ -7,6 +7,8 @@ $(document).ready(function() {
     // Close modal on close button click
     $("#close-modal").click(function() {
         $("#asset_number_modal").hide();
+        // reload page after closing modal
+        location.reload();
     });
 
     // Submit form data via AJAX
@@ -26,6 +28,7 @@ $(document).ready(function() {
                 console.log("Success:", response);
                 $("#upload-form").trigger("reset"); // Reset form after submission
                 $("#modal").hide();
+                location.reload();
             },
             error: function(error) {
                 // Handle error response
