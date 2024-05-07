@@ -15,8 +15,8 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
 var e = React.createElement;
-// const BASE_URL = "http://localhost:8000";
-var BASE_URL = "http://172.16.8.99:9300";
+var BASE_URL = "http://localhost:8000";
+// const BASE_URL = "http://172.16.8.99:9300";
 
 var CreateCS = function (_React$Component) {
   _inherits(CreateCS, _React$Component);
@@ -27,20 +27,25 @@ var CreateCS = function (_React$Component) {
     var _this = _possibleConstructorReturn(this, (CreateCS.__proto__ || Object.getPrototypeOf(CreateCS)).call(this, props));
 
     _this.onGetFileObjectUrl = function (fileData) {
-      if (typeof fileData === "string") {
-        var decodedFileData = atob(fileData);
-        var uint8Array = new Uint8Array(decodedFileData.length);
-        for (var i = 0; i < decodedFileData.length; i++) {
-          uint8Array[i] = decodedFileData.charCodeAt(i);
+      try {
+
+        if (typeof fileData === "string") {
+          var decodedFileData = atob(fileData);
+          var uint8Array = new Uint8Array(decodedFileData.length);
+          for (var i = 0; i < decodedFileData.length; i++) {
+            uint8Array[i] = decodedFileData.charCodeAt(i);
+          }
+
+          var file = new Blob([uint8Array], { type: "application/pdf" });
+          console.log("file: ", file);
+
+          return URL.createObjectURL(file);
+        } else {
+          console.log("fileData: ", fileData);
+          return URL.createObjectURL(fileData);
         }
-
-        var file = new Blob([uint8Array], { type: "application/pdf" });
-        console.log("file: ", file);
-
-        return URL.createObjectURL(file);
-      } else {
-        console.log("fileData: ", fileData);
-        return URL.createObjectURL(fileData);
+      } catch (err) {
+        console.log("error: ", error);
       }
     };
 
@@ -59,6 +64,9 @@ var CreateCS = function (_React$Component) {
           return Object.assign({}, new_obj, {
             bid_document_url: _this.onGetFileObjectUrl(new_obj.bid_document)
           });
+        });
+        var sorted_bids = bids.sort(function (a, b) {
+          return b.bid_no - a.bid_no;
         });
 
         var compliance = data.compliance ? data.compliance : [];
@@ -85,6 +93,12 @@ var CreateCS = function (_React$Component) {
         var pr_attachments = data.pr_attachments ? data.pr_attachments : [];
         var cs_items = data.cs_items ? data.cs_items : [];
         var users = data.users ? data.users : [];
+        // Sort users by full name (first_name + " " + last_name)
+        users.sort(function (user1, user2) {
+          var fullName1 = user1.first_name + " " + user1.last_name;
+          var fullName2 = user2.first_name + " " + user2.last_name;
+          return fullName1.localeCompare(fullName2);
+        });
         var cs_owner = data.cs_owner ? data.cs_owner : "";
 
         var advert_url = _this.onGetFileObjectUrl(data.advert);
@@ -122,7 +136,9 @@ var CreateCS = function (_React$Component) {
           pr_date: pr_date,
           closing_date: closing_date,
           closing_time_hour: closing_time
-        }, _defineProperty(_Object$assign, "ref_date", ref_date), _defineProperty(_Object$assign, "tender_adjudication_committee_date", tender_adjudication_committee_date), _defineProperty(_Object$assign, "advert", advert), _defineProperty(_Object$assign, "advert_url", advert_url), _defineProperty(_Object$assign, "bids", bids), _defineProperty(_Object$assign, "cs_items", cs_items), _defineProperty(_Object$assign, "compliance", compliance), _defineProperty(_Object$assign, "complianceRemarks", complianceRemarks), _defineProperty(_Object$assign, "rankings", rankings), _defineProperty(_Object$assign, "committeeMembers", committee), _defineProperty(_Object$assign, "gmApproval", gm_approval), _defineProperty(_Object$assign, "fmApproval", fm_approval), _defineProperty(_Object$assign, "pr_items", pr_items), _defineProperty(_Object$assign, "pr_attachments", pr_at_list), _Object$assign)));
+        }, _defineProperty(_Object$assign, "ref_date", ref_date), _defineProperty(_Object$assign, "tender_adjudication_committee_date", tender_adjudication_committee_date), _defineProperty(_Object$assign, "advert", advert), _defineProperty(_Object$assign, "advert_url", advert_url), _defineProperty(_Object$assign, "bids", sorted_bids), _defineProperty(_Object$assign, "cs_items", cs_items), _defineProperty(_Object$assign, "compliance", compliance), _defineProperty(_Object$assign, "complianceRemarks", complianceRemarks), _defineProperty(_Object$assign, "rankings", rankings), _defineProperty(_Object$assign, "committeeMembers", committee), _defineProperty(_Object$assign, "gmApproval", gm_approval), _defineProperty(_Object$assign, "fmApproval", fm_approval), _defineProperty(_Object$assign, "pr_items", pr_items), _defineProperty(_Object$assign, "pr_attachments", pr_at_list), _Object$assign)));
+      }).catch(function (error) {
+        return console.log("error: ", error);
       });
     };
 
@@ -161,6 +177,8 @@ var CreateCS = function (_React$Component) {
           pr_date: pr_date,
           users: users
         });
+      }).catch(function (error) {
+        return console.log("error: ", error);
       });
     };
 
@@ -212,6 +230,8 @@ var CreateCS = function (_React$Component) {
         } else {
           alert("PR Number not found");
         }
+      }).catch(function (error) {
+        return console.log("error: ", error);
       });
     };
 
@@ -358,7 +378,7 @@ var CreateCS = function (_React$Component) {
         console.log("data: ", data);
         if (data.success) {
           var committeeDate = data.committee_date;
-          var committeeApproval = data.committe_approval;
+          var committeeApproval = data.committee_approval;
           var memberName = data.committee_fullname;
           var members = _this.state.committeeMembers.map(function (member) {
             if (member.memberUserName === username) {
@@ -370,14 +390,21 @@ var CreateCS = function (_React$Component) {
           _this.setState(Object.assign({}, _this.state, {
             committeeMembers: members
           }));
-          if (committeeApproval === "Approved") {
-            alert("Committee approved successfully");
-            // reload page
-            window.location.reload();
-          } else {
-            alert("Committee rejected successfully");
-            window.location.reload();
-          }
+          console.log("committeeApproval: ", committeeApproval, justification);
+          alert("Approval Done!!");
+          // reload page
+          window.location.reload();
+          //   if (committeeApproval === "Approved") {
+          //     alert("Committee approved successfully");
+          //     // reload page
+          //     // window.location.reload();
+          //   } else if(committeeApproval === "Rejected") {
+          //     alert("Committee rejected successfully");
+          //     // window.location.reload();
+          //   } else {
+          //     alert("Error approving Committee");
+          //     // window.location.reload();
+          //   }
         } else {
           alert("Error approving Committee");
         }
@@ -753,6 +780,9 @@ var CreateCS = function (_React$Component) {
       } else if (currentBid.bid_date === "" || currentBid.bid_date === undefined) {
         alert("Please select a bid date");
         return;
+      } else if (currentBid.bid_document === "" || currentBid.bid_document === undefined) {
+        alert("Please select a bid document");
+        return;
       } else {
         // check if current bid already exists
         if (currentBid.items) {
@@ -892,6 +922,8 @@ var CreateCS = function (_React$Component) {
         } else {
           alert("Error saving Bid");
         }
+      }).catch(function (err) {
+        return console.log("onSaveBid: ", err);
       });
     };
 
@@ -1190,7 +1222,6 @@ var CreateCS = function (_React$Component) {
           technical_specifications: compliance[index].technical_specifications,
           valid_tax_clearance: compliance[index].valid_tax_clearance,
           registered_with_praz: compliance[index].registered_with_praz,
-          tax_status: compliance[index].tax_status,
           site_visit: compliance[index].site_visit,
           samples_required: compliance[index].samples_required
         };
@@ -1202,7 +1233,6 @@ var CreateCS = function (_React$Component) {
           technical_specifications: compliance[index].technical_specifications,
           valid_tax_clearance: compliance[index].valid_tax_clearance,
           registered_with_praz: compliance[index].registered_with_praz,
-          tax_status: compliance[index].tax_status,
           samples_required: compliance[index].samples_required
         };
       } else if (!_this.state.showSamples && _this.state.showSiteVisit) {
@@ -1213,7 +1243,6 @@ var CreateCS = function (_React$Component) {
           technical_specifications: compliance[index].technical_specifications,
           valid_tax_clearance: compliance[index].valid_tax_clearance,
           registered_with_praz: compliance[index].registered_with_praz,
-          tax_status: compliance[index].tax_status,
           site_visit: compliance[index].site_visit
         };
       } else {
@@ -1223,8 +1252,7 @@ var CreateCS = function (_React$Component) {
           delivery_period: compliance[index].delivery_period,
           technical_specifications: compliance[index].technical_specifications,
           valid_tax_clearance: compliance[index].valid_tax_clearance,
-          registered_with_praz: compliance[index].registered_with_praz,
-          tax_status: compliance[index].tax_status
+          registered_with_praz: compliance[index].registered_with_praz
         };
       }
 
@@ -2967,13 +2995,6 @@ var CreateCS = function (_React$Component) {
                       React.createElement("br", null),
                       "with PRAZ?"
                     ),
-                    React.createElement(
-                      "th",
-                      { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
-                      "Tax ",
-                      React.createElement("br", null),
-                      "Status"
-                    ),
                     this.state.showSiteVisit === "yes" ? React.createElement(
                       "th",
                       {
@@ -3104,20 +3125,6 @@ var CreateCS = function (_React$Component) {
                           },
                           disabled: _this2.state.username === _this2.state.cs_owner || _this2.state.cs_owner === "" ? false : true,
                           id: "registered_with_praz",
-                          type: "checkbox"
-                        })
-                      ),
-                      React.createElement(
-                        "td",
-                        { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
-                        React.createElement("input", {
-                          name: "tax_status",
-                          checked: comp.tax_status ? comp.tax_status : false,
-                          onChange: function onChange(e) {
-                            return _this2.onComplianceChange(key, e);
-                          },
-                          disabled: _this2.state.username === _this2.state.cs_owner || _this2.state.cs_owner === "" ? false : true,
-                          id: "tax_status",
                           type: "checkbox"
                         })
                       ),
