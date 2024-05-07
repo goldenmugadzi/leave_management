@@ -149,9 +149,7 @@ def get_comperative_schedules(request):
     user_id = request.user.id
     user = UserProfile.objects.filter(id=user_id).first()
     # fetch schedules created by the user
-    cs = ComparativeSchedules.objects.filter(
-        created_by_id=user_id,
-    ).all()
+    cs = ComparativeSchedules.objects.all()
 
     cs_list = []
     for c in cs:

@@ -1,8 +1,8 @@
 "use strict";
 
 const e = React.createElement;
-const BASE_URL = "http://localhost:8000";
-// const BASE_URL = "http://172.16.8.99:9300";
+// const BASE_URL = "http://localhost:8000";
+const BASE_URL = "http://172.16.8.99:9300";
 
 class CreateCS extends React.Component {
   constructor(props) {
@@ -160,7 +160,7 @@ class CreateCS extends React.Component {
             bid_document_url: this.onGetFileObjectUrl(new_obj.bid_document),
           };
         });
-        let sorted_bids = bids.sort((a, b) => b.bid_no - a.bid_no);
+        let sorted_bids = bids.sort((a, b) => a.bid_no - b.bid_no);
 
         let compliance = data.compliance ? data.compliance : [];
         let complianceRemarks = data.complianceRemarks
@@ -272,6 +272,12 @@ class CreateCS extends React.Component {
         let pr_id = data.pr_id ? data.pr_id : "";
         let pr_date = data.pr_date ? data.pr_date : "";
         let users = data.users ? data.users : [];
+        // Sort users by full name (first_name + " " + last_name)
+        users.sort((user1, user2) => {
+          const fullName1 = user1.first_name + " " + user1.last_name;
+          const fullName2 = user2.first_name + " " + user2.last_name;
+          return fullName1.localeCompare(fullName2);
+        });
 
         let pr_at_list = pr_attachments.map((pr_attachment) => {
           return {

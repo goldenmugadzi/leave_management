@@ -15,8 +15,8 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
 var e = React.createElement;
-var BASE_URL = "http://localhost:8000";
-// const BASE_URL = "http://172.16.8.99:9300";
+// const BASE_URL = "http://localhost:8000";
+var BASE_URL = "http://172.16.8.99:9300";
 
 var CreateCS = function (_React$Component) {
   _inherits(CreateCS, _React$Component);
@@ -66,7 +66,7 @@ var CreateCS = function (_React$Component) {
           });
         });
         var sorted_bids = bids.sort(function (a, b) {
-          return b.bid_no - a.bid_no;
+          return a.bid_no - b.bid_no;
         });
 
         var compliance = data.compliance ? data.compliance : [];
@@ -159,6 +159,12 @@ var CreateCS = function (_React$Component) {
         var pr_id = data.pr_id ? data.pr_id : "";
         var pr_date = data.pr_date ? data.pr_date : "";
         var users = data.users ? data.users : [];
+        // Sort users by full name (first_name + " " + last_name)
+        users.sort(function (user1, user2) {
+          var fullName1 = user1.first_name + " " + user1.last_name;
+          var fullName2 = user2.first_name + " " + user2.last_name;
+          return fullName1.localeCompare(fullName2);
+        });
 
         var pr_at_list = pr_attachments.map(function (pr_attachment) {
           return Object.assign({}, pr_attachment, {
