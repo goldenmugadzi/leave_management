@@ -36,7 +36,6 @@ class ComparativeSchedules(models.Model):
     region = models.ForeignKey(Regions, on_delete=models.CASCADE, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
-<<<<<<< HEAD
 class CSRequiredItems(models.Model):
     cs_id = models.ForeignKey(ComparativeSchedules, on_delete=models.CASCADE)
     item_id = models.CharField(max_length=100)
@@ -44,8 +43,6 @@ class CSRequiredItems(models.Model):
     quantity = models.CharField(max_length=50)
     unit_of_measurement = models.CharField(max_length=50)
     created_at = models.DateTimeField(auto_now_add=True)
-=======
->>>>>>> e318ae0725ea9e59a8d94265310507a0eac89435
 
 class CSItems(models.Model):
     cs_id = models.ForeignKey(ComparativeSchedules, on_delete=models.CASCADE)
@@ -85,15 +82,11 @@ class CSCompliance(models.Model):
     remarks = models.CharField(max_length=255)
     created_at = models.DateTimeField(auto_now_add=True)
 
-<<<<<<< HEAD
 class CSComplianceRemarks(models.Model):
     cs_id = models.ForeignKey(ComparativeSchedules, on_delete=models.CASCADE)
     supplier_id = models.ForeignKey(Supplier, on_delete=models.CASCADE)
     remarks = models.CharField(max_length=255)
     
-=======
-
->>>>>>> e318ae0725ea9e59a8d94265310507a0eac89435
 class Ranking(models.Model):
     cs_id = models.ForeignKey(ComparativeSchedules, on_delete=models.CASCADE)
     supplier_id = models.ForeignKey(Supplier, on_delete=models.CASCADE)
@@ -126,7 +119,6 @@ class Committee(models.Model):
     justification = models.CharField(max_length=255, null=True, blank=True)
     committee_date = models.DateField()
     created_at = models.DateTimeField(auto_now_add=True)
-<<<<<<< HEAD
     
 class CSApproval(models.Model):
     cs_id = models.ForeignKey(ComparativeSchedules, on_delete=models.CASCADE)
@@ -136,5 +128,3 @@ class CSApproval(models.Model):
     justification = models.CharField(max_length=255, null=True, blank=True)
     approval_date = models.DateField()
     created_at = models.DateTimeField(auto_now_add=True)
-=======
->>>>>>> e318ae0725ea9e59a8d94265310507a0eac89435

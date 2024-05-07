@@ -195,13 +195,13 @@ DATABASES = {
     #     'PASSWORD': 'Z3tdc_it@2021_',
     #     'HOST': 'localhost'
     # }
-    # 'default': {
-    #     'ENGINE': 'django.db.backends.mysql',
-    #     'NAME': 'beii_new',
-    #     'USER': 'root',
-    #     'PASSWORD': '',
-    #     'HOST': 'localhost',
-    # }
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'beii_new',
+        'USER': 'root',
+        'PASSWORD': '',
+        'HOST': 'localhost',
+    }
     # 'default': {
     #     'ENGINE': 'django.db.backends.mysql',
     #     'NAME': 'beii_test',
@@ -209,16 +209,16 @@ DATABASES = {
     #     'PASSWORD': '',
     #     'HOST': 'localhost',
     # }
-    'default': {
-        'OPTIONS': {
-            'sql_mode': 'NO_BACKSLASH_ESCAPES',
-        },
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'beii_new',
-        'USER': 'be_user',
-        'PASSWORD': 'Z3tdc_it@2024',
-        'HOST': 'localhost'
-    }
+    # 'default': {
+    #     'OPTIONS': {
+    #         'sql_mode': 'NO_BACKSLASH_ESCAPES',
+    #     },
+    #     'ENGINE': 'django.db.backends.mysql',
+    #     'NAME': 'beii_new',
+    #     'USER': 'be_user',
+    #     'PASSWORD': 'Z3tdc_it@2024',
+    #     'HOST': 'localhost'
+    # }
     # 'default': {
     #     'ENGINE': 'django.db.backends.mysql',
     #     'NAME': 'beii',
@@ -265,6 +265,7 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'perseychinaka@gmail.com'
 EMAIL_HOST_PASSWORD = 'apppassword'
 DEFAULT_FROM_EMAIL = "Zetdc Business Excellence "
+DATA_UPLOAD_MAX_MEMORY_SIZE = 1024 * 1024 * 30
 
 LANGUAGE_CODE = 'en-us'
 
@@ -280,9 +281,9 @@ LOGIN_URL = '/accounts/login'
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
 
 STATIC_URL = 'static/'
-STATICFILES_DIRS = [BASE_DIR / "static", BASE_DIR / "uploads", ]
+STATICFILES_DIRS = [BASE_DIR / "static", BASE_DIR / "uploads", BASE_DIR / "media"]
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-MEDIA_URL = '/media/'
+MEDIA_URL = 'media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # Default primary key field type
