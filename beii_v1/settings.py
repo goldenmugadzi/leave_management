@@ -29,7 +29,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-7per#nouy422m0!hn0!ecb7ltnq#!^#g!2r5&%^5c%v(!ivv&a'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ['localhost', '172.16.8.97', '172.16.8.22', '127.0.0.1', '172.16.8.99', '172.16.8.98', 'bexcel.zedc.co.zw']
 
@@ -49,7 +49,7 @@ CSRF_TRUSTED_ORIGINS = ['http://172.16.8.97', "http://172.16.8.97:3200", "http:/
                         "http://bexcel.zedc.co.zw:9300"]
 
 CORS_ALLOW_HEADERS = ('content-disposition', 'accept-encoding',
-                      'content-type', 'accept', 'origin', 'authorization', 'X-CSRFToken', )
+                      'content-type', 'accept', 'origin', 'authorization')
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
@@ -279,12 +279,11 @@ LOGIN_URL = '/accounts/login'
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
-
+MEDIA_URL = 'media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 STATIC_URL = 'static/'
 STATICFILES_DIRS = [BASE_DIR / "static", BASE_DIR / "uploads", BASE_DIR / "media"]
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-MEDIA_URL = 'media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field

@@ -1,8 +1,8 @@
 "use strict";
 
 const e = React.createElement;
-// const BASE_URL = "http://localhost:8000";
-const BASE_URL = "http://172.16.8.99:9300";
+const BASE_URL = "http://localhost:8000";
+// const BASE_URL = "http://172.16.8.99:9300";
 
 class CreateCS extends React.Component {
   constructor(props) {
@@ -11,6 +11,8 @@ class CreateCS extends React.Component {
       requester_role: "",
       cs_id: "",
       cs_owner: "",
+      creator: "",
+      created_at: "",
       committeeApprovalComplete: false,
       plan_ref: "",
       proc_ref: "",
@@ -39,8 +41,8 @@ class CreateCS extends React.Component {
       complianceTable: false,
       compliance: [],
       complianceRemarks: [],
-      showSamples: "",
-      showSiteVisit: "",
+      showSamples: "no",
+      showSiteVisit: "no",
 
       rankingTable: false,
       rankings: [],
@@ -152,14 +154,19 @@ class CreateCS extends React.Component {
         let data = JSON.parse(data_);
         console.log("cs data: ", data, typeof data);
         let requester_role = data.requester_role ? data.requester_role : "";
+        let creator = data.creator ? data.creator : "";
+        let created_at = data.created_at ? data.created_at : "";
         let bids_object = data.bids ? data.bids : [];
-        let bids = Object.keys(bids_object).map((key) => {
-          let new_obj = bids_object[key];
-          return {
-            ...new_obj,
-            bid_document_url: this.onGetFileObjectUrl(new_obj.bid_document),
-          };
-        });
+        let bids = [];
+        if(bids_object.length !== 0) {
+          bids = Object.keys(bids_object).map((key) => {
+            let new_obj = bids_object[key];
+            return {
+              ...new_obj,
+              bid_document_url: this.onGetFileObjectUrl(new_obj.bid_document),
+            };
+          });
+        }
         let sorted_bids = bids.sort((a, b) => a.bid_no - b.bid_no);
 
         let compliance = data.compliance ? data.compliance : [];
@@ -199,13 +206,15 @@ class CreateCS extends React.Component {
         let cs_owner = data.cs_owner ? data.cs_owner : "";
 
         let advert_url = this.onGetFileObjectUrl(data.advert);
-        
-        let pr_at_list = pr_attachments.map((pr_attachment) => {
-          return {
-            ...pr_attachment,
-            attachment_url: this.onGetFileObjectUrl(pr_attachment.file),
-          };
-        });
+        let pr_at_list = [];
+        if(pr_attachments.length > 0) {
+          pr_at_list = pr_attachments.map((pr_attachment) => {
+            return {
+              ...pr_attachment,
+              attachment_url: this.onGetFileObjectUrl(pr_attachment.file),
+            };
+          });
+        }
 
         let committeeApprovalComplete = committee.filter(
           (member) => (member.memberApproval === "" || member.memberApproval === null || member.memberApproval === undefined || member.memberApproval === "Rejected")
@@ -217,6 +226,8 @@ class CreateCS extends React.Component {
         this.setState({
           ...this.state,
           requester_role: requester_role,
+          creator: creator,
+          created_at: created_at,
           cs_owner: cs_owner,
           committeeApprovalComplete: committeeApprovalComplete,
           approvalsComplete: approvalsComplete,
@@ -278,13 +289,15 @@ class CreateCS extends React.Component {
           const fullName2 = user2.first_name + " " + user2.last_name;
           return fullName1.localeCompare(fullName2);
         });
-
-        let pr_at_list = pr_attachments.map((pr_attachment) => {
-          return {
-            ...pr_attachment,
-            attachment_url: this.onGetFileObjectUrl(pr_attachment.file),
-          };
-        });
+        let pr_at_list = [];
+        if(pr_items.length === 0) {
+          pr_at_list = pr_attachments.map((pr_attachment) => {
+            return {
+              ...pr_attachment,
+              attachment_url: this.onGetFileObjectUrl(pr_attachment.file),
+            };
+          });
+        }
         this.setState({
           scope_of_work: scope_of_work,
           proc_ref: proc_ref,
@@ -320,13 +333,15 @@ class CreateCS extends React.Component {
           let pr_id = data.pr_id ? data.pr_id : "";
           let pr_date = data.pr_date ? data.pr_date : "";
           let users = data.users ? data.users : [];
-
-          let pr_at_list = pr_attachments.map((pr_attachment) => {
-            return {
-              ...pr_attachment,
-              attachment_url: this.onGetFileObjectUrl(pr_attachment.file),
-            };
-          });
+          let pr_at_list = [];
+          if(pr_attachments.length > 0){
+            pr_at_list = pr_attachments.map((pr_attachment) => {
+              return {
+                ...pr_attachment,
+                attachment_url: this.onGetFileObjectUrl(pr_attachment.file),
+              };
+            });
+          }
           this.setState({
             scope_of_work: scope_of_work,
             proc_ref: proc_ref,
@@ -497,13 +512,16 @@ class CreateCS extends React.Component {
           let committeeDate = data.committee_date;
           let committeeApproval = data.committee_approval;
           let memberName = data.committee_fullname;
-          let members = this.state.committeeMembers.map((member) => {
-            if (member.memberUserName === username) {
-              member.committee_date = committeeDate;
-              member.member_approval = committeeApproval;
-            }
-            return member;
-          });
+          let members = [];
+          if(this.state.committeeMembers && this.state.committeeMembers.length > 0) {
+            members = this.state.committeeMembers.map((member) => {
+              if (member.memberUserName === username) {
+                member.committee_date = committeeDate;
+                member.member_approval = committeeApproval;
+              }
+              return member;
+            });
+          }
           this.setState({
             ...this.state,
             committeeMembers: members,
@@ -674,12 +692,15 @@ class CreateCS extends React.Component {
       // update item selected to false
       item.ordered = false;
       // update pr_items
-      let pr_items = this.state.pr_items.map((_item) => {
-        if (_item.id === item_id) {
-          return item;
-        }
-        return _item;
-      });
+      let pr_items = [];
+      if(this.state.pr_items && this.state.pr_items.length > 0) {
+        pr_items = this.state.pr_items.map((_item) => {
+          if (_item.id === item_id) {
+            return item;
+          }
+          return _item;
+        });
+      }
       // remove item
       let items = this.state.cs_items.filter((item) => item.id !== item_id);
       this.setState({
@@ -698,12 +719,15 @@ class CreateCS extends React.Component {
       item.ordered = true;
       item.item_required = item.item_required;
       // update pr_items
-      let pr_items = this.state.pr_items.map((_item) => {
-        if (_item.id === item_id) {
-          return item;
-        }
-        return _item;
-      });
+      let pr_items = [];
+      if(this.state.pr_items && this.state.pr_items.length > 0){
+        pr_items = this.state.pr_items.map((_item) => {
+          if (_item.id === item_id) {
+            return item;
+          }
+          return _item;
+        });
+      }
 
       let item_count = this.state.cs_item_count + 1;
       this.setState({
@@ -774,12 +798,15 @@ class CreateCS extends React.Component {
 
   onAddBidModal = () => {
     let bid_count = this.state.bids.length + 1;
+    let items = this.state.cs_items
+    console.log("items: ", items)
     this.setState({
       ...this.state,
       addBidModal: !this.state.addBidModal,
       bid_count: bid_count,
       currentBid: {
         bid_count: bid_count,
+        items: items
       },
     });
   };
@@ -843,13 +870,14 @@ class CreateCS extends React.Component {
           (item) => item.item_required === description
         )
       : null;
-    console.log("item: ", item);
+    console.log("item found in currentBid: ", item);
     // if item exists update item
     if (item) {
       let { name, value } = event.target;
       item[name_] = value;
       // update item in current bid
-      let items = this.state.currentBid.items.map((_item) => {
+      let items = []
+      items = this.state.currentBid.items.map((_item) => {
         if (_item.item_required === description) {
           return item;
         }
@@ -873,9 +901,6 @@ class CreateCS extends React.Component {
         item_required: item.item_required,
         quantity: item.quantity,
         unit_of_measurement: item.unit_of_measurement,
-        vat: item.vat,
-        unit_price: item.unit_price,
-        total_price: item.total_price,
       };
       // update current bid items
       let items = [];
@@ -916,6 +941,7 @@ class CreateCS extends React.Component {
       alert("Please select a bid document");
       return;
     } else {
+      
       // check if current bid already exists
       if (currentBid.items) {
         console.log("state bids found: ", this.state.bids);
@@ -926,10 +952,13 @@ class CreateCS extends React.Component {
         if (bid) {
           // update bid
           console.log("currentBid 1: ", currentBid);
-          let items = currentBid.items.map((item) => {
-            item.total_price = item.quantity * item.unit_price;
-            return item;
-          });
+          let items = [];
+          if(this.state.currentBid.items && this.state.currentBid.items.length > 0){
+            items = currentBid.items.map((item) => {
+              item.total_price = item.quantity * item.unit_price;
+              return item;
+            });
+          }
 
           let missingFields = items.filter(
             (item) =>
@@ -946,33 +975,51 @@ class CreateCS extends React.Component {
           }
           currentBid.items = items;
           console.log("currentBid: ", currentBid);
-
-          this.onSaveBid(currentBid);
-          let bids = this.state.bids.map((bid) => {
-            if (bid.bid_count === currentBid.bid_count) {
-              return currentBid;
-            }
-            return bid;
-          });
-          this.setState({
-            ...this.state,
-            bids: bids,
-            currentBid: {},
-            addBidModal: false,
-          });
+          let bids = [];
+          if(this.state.bids && this.state.bids.length > 0) {
+            bids = this.state.bids.map((bid) => {
+              if (bid.bid_count === currentBid.bid_count) {
+                return {
+                  ...currentBid,
+                  bid_document: currentBid.bid_document ? currentBid.bid_document : bid.bid_document,
+                };
+              }
+              return bid;
+            });
+            bids.sort((a, b) => a.bid_count - b.bid_count);
+          }
+          this.onSaveBid(currentBid, bids, undefined, undefined);
         } else {
           // calculate total price for each item
-          let items = currentBid.items.map((item) => {
-            item.total_price = item.quantity * item.unit_price;
-            return item;
-          });
+          let items = [];
+          if(currentBid.items && currentBid.items.length > 0){
+            items = currentBid.items.map((item) => {
+              item.total_price = item.quantity * item.unit_price;
+              return item;
+            });
+          }
+
+          let missingFields = items.filter(
+            (item) =>
+              item.quantity === "" || item.quantity === undefined ||
+              item.unit_price === "" || item.unit_price === undefined ||
+              item.vat === "" || item.vat === undefined ||
+              item.unit_of_measurement === "" || item.unit_of_measurement === undefined ||
+              item.total_price === "" || item.total_price === undefined
+          );
+
+          if (missingFields.length > 0) {
+            alert("Please fill in all required fields");
+            return;
+          }
           // update current bid items
           currentBid.items = items;
-          this.onSaveBid(currentBid);
 
           let bids = this.state.bids;
           console.log("currentBid: ", currentBid);
           bids.push(currentBid);
+          bids.sort((a, b) => a.bid_count - b.bid_count);
+
           // check if compliance for supplier exists
           let compliances = this.state.compliance;
           let compliance = compliances.find(
@@ -1015,15 +1062,7 @@ class CreateCS extends React.Component {
             };
             complianceRemarks.push(complianceRemark_);
           }
-  
-          this.setState({
-            ...this.state,
-            bids: bids,
-            currentBid: {},
-            addBidModal: false,
-            compliance: compliances,
-            complianceRemarks: complianceRemarks,
-          });
+          this.onSaveBid(currentBid, bids, compliance, complianceRemarks);
 
         }
       } else {
@@ -1032,7 +1071,7 @@ class CreateCS extends React.Component {
     }
   };
 
-  onSaveBid = (currentBid) => {
+  onSaveBid = (currentBid, bids, compliances, complianceRemarks) => {
     let form_data = new FormData();
 
     // add enctype to form data
@@ -1062,18 +1101,36 @@ class CreateCS extends React.Component {
       .then((data) => {
         console.log("data: ", data);
         if (data.success) {
+  
+          this.setState({
+            ...this.state,
+            bids: bids ? bids : this.state.bids,
+            compliance: compliances ? compliances : this.state.compliance,
+            complianceRemarks: complianceRemarks ? complianceRemarks : this.state.complianceRemarks
+          });
+
           alert("Bid saved successfully");
         } else {
           alert("Error saving Bid");
         }
       })
       .catch(err => console.log("onSaveBid: ", err));
+      this.setState({
+        ...this.state,
+        currentBid: null,
+        addBidModal: false,
+        updateBidModal: false,
+      });
   };
 
   onSaveSchedule = () => {
 
     if(!this.state.proc_ref || !this.state.scope_of_work || !this.state.pr_number || !this.state.pr_date || !this.state.closing_date || !this.state.ref_date || !this.state.closing_time_hour || !this.state.date_tender_opened || !this.state.tender_adjudication_committee_date) {
       alert("Please fill in all required fields");
+      return;
+    }
+    if(this.state.pr_items.length === 0) {
+      alert("Cannot create a Comparative Schedule without Purchase Request items.");
       return;
     }
     let form_data = new FormData();
@@ -1315,6 +1372,10 @@ class CreateCS extends React.Component {
 
   onAddComplianceTable = () => {
     // add bid compliance
+    if(this.state.bids.length === 0) {
+      alert("Please add bids first");
+      return;
+    }
     let compliances = this.state.bids.map((bid) => {
       return {
         bid_no: bid.bid_count,
@@ -1353,69 +1414,66 @@ class CreateCS extends React.Component {
   };
 
   onComplianceItemsChange = (name_, event) => {
-    console.log("name and value: ", name_, event);
     let { name, value } = event.target;
+    console.log("name: ", name, "value: ", value);
     let compliance = this.state.compliance;
+    if(compliance.length === 0) {
+      alert("Please add bids first");
+      return;
+    }
+    console.log("showSamples: ", this.state.showSamples, "showSiteVisit: ", this.state.showSiteVisit, value, name);
     let updatedComplianceList = compliance.map((compliance_, index) => {
       let _compliance = {};
-      if (this.state.showSamples && this.state.showSiteVisit) {
-        _compliance = {
-          payment_terms: compliance_.payment_terms,
-          bid_validity: compliance_.bid_validity,
-          delivery_period: compliance_.delivery_period,
-          technical_specifications: compliance_.technical_specifications,
-          valid_tax_clearance: compliance_.valid_tax_clearance,
-          registered_with_praz: compliance_.registered_with_praz,
-          tax_status: compliance_.tax_status,
-          site_visit: compliance_.site_visit,
-          samples_required: compliance_.samples_required,
-        };
-      } else if (this.state.showSamples && !this.state.showSiteVisit) {
-        _compliance = {
-          payment_terms: compliance_.payment_terms,
-          bid_validity: compliance_.bid_validity,
-          delivery_period: compliance_.delivery_period,
-          technical_specifications: compliance_.technical_specifications,
-          valid_tax_clearance: compliance_.valid_tax_clearance,
-          registered_with_praz: compliance_.registered_with_praz,
-          tax_status: compliance_.tax_status,
-          samples_required: compliance_.samples_required,
-        };
-      } else if (!this.state.showSamples && this.state.showSiteVisit) {
-        _compliance = {
-          payment_terms: compliance_.payment_terms,
-          bid_validity: compliance_.bid_validity,
-          delivery_period: compliance_.delivery_period,
-          technical_specifications: compliance_.technical_specifications,
-          valid_tax_clearance: compliance_.valid_tax_clearance,
-          registered_with_praz: compliance_.registered_with_praz,
-          tax_status: compliance_.tax_status,
-          site_visit: compliance_.site_visit,
-        };
-      } else {
-        _compliance = {
-          payment_terms: compliance_.payment_terms,
-          bid_validity: compliance_.bid_validity,
-          delivery_period: compliance_.delivery_period,
-          technical_specifications: compliance_.technical_specifications,
-          valid_tax_clearance: compliance_.valid_tax_clearance,
-          registered_with_praz: compliance_.registered_with_praz,
-          tax_status: compliance_.tax_status,
-        };
+      let site_visit = compliance_.site_visit;
+      let samples_required = compliance_.samples_required;
+      if (name === "showSiteVisit") {
+        if(value === "no"){
+          site_visit = false;
+        }
+      } else if (name === "showSamples") {
+        if(value === "no"){
+          samples_required = false;
+        }
       }
+      
+      console.log("other value: ", value)
+      console.log("site_visit: ", site_visit, "samples_required: ", samples_required);
+      console.log("showSamples: ", this.state.showSamples, "showSiteVisit: ", this.state.showSiteVisit);
+      _compliance = {
+        payment_terms: compliance_.payment_terms,
+        bid_validity: compliance_.bid_validity,
+        delivery_period: compliance_.delivery_period,
+        technical_specifications: compliance_.technical_specifications,
+        valid_tax_clearance: compliance_.valid_tax_clearance,
+        registered_with_praz: compliance_.registered_with_praz,
+        site_visit: site_visit,
+        samples_required: samples_required,
+      };
 
       // set compliance_['decision'] to true if all compliance are true
-      let compliance_values = Object.values(_compliance);
-      console.log("compliances: ", compliance_values);
-      let decision = compliance_values.every((value) => value === true);
-      compliance_["decision"] = decision;
-      compliance_["reject"] = !decision;
+      let allValuesTrue = true;
+      for (const key in _compliance) {
+        if (_compliance.hasOwnProperty(key)) {
+          if (key === "site_visit" && value === "no") {
+            continue;
+          } else if (key === "samples_required" && value === "no") {
+            continue;
+          } else if (!_compliance[key]) {
+            allValuesTrue = false;
+            break;
+          }
+        }
+      }
+
+      compliance_["decision"] = allValuesTrue;
+      compliance_["reject"] = !allValuesTrue;
 
       return compliance_;
     });
+    console.log("state: ", this.state.showSamples, this.state.showSiteVisit)
     this.setState({
       ...this.state,
-      [name_]: value,
+      [name]: value,
       compliance: updatedComplianceList,
     });
   };
@@ -1425,56 +1483,81 @@ class CreateCS extends React.Component {
     console.log("name: ", name, "checked: ", checked);
     let compliance = this.state.compliance;
     compliance[index][name] = checked;
-    // filter decision and reject from list
-    let _compliance = {};
-    if (this.state.showSamples && this.state.showSiteVisit) {
-      _compliance = {
-        payment_terms: compliance[index].payment_terms,
-        bid_validity: compliance[index].bid_validity,
-        delivery_period: compliance[index].delivery_period,
-        technical_specifications: compliance[index].technical_specifications,
-        valid_tax_clearance: compliance[index].valid_tax_clearance,
-        registered_with_praz: compliance[index].registered_with_praz,
-        site_visit: compliance[index].site_visit,
-        samples_required: compliance[index].samples_required,
-      };
-    } else if (this.state.showSamples && !this.state.showSiteVisit) {
-      _compliance = {
-        payment_terms: compliance[index].payment_terms,
-        bid_validity: compliance[index].bid_validity,
-        delivery_period: compliance[index].delivery_period,
-        technical_specifications: compliance[index].technical_specifications,
-        valid_tax_clearance: compliance[index].valid_tax_clearance,
-        registered_with_praz: compliance[index].registered_with_praz,
-        samples_required: compliance[index].samples_required,
-      };
-    } else if (!this.state.showSamples && this.state.showSiteVisit) {
-      _compliance = {
-        payment_terms: compliance[index].payment_terms,
-        bid_validity: compliance[index].bid_validity,
-        delivery_period: compliance[index].delivery_period,
-        technical_specifications: compliance[index].technical_specifications,
-        valid_tax_clearance: compliance[index].valid_tax_clearance,
-        registered_with_praz: compliance[index].registered_with_praz,
-        site_visit: compliance[index].site_visit,
-      };
-    } else {
-      _compliance = {
-        payment_terms: compliance[index].payment_terms,
-        bid_validity: compliance[index].bid_validity,
-        delivery_period: compliance[index].delivery_period,
-        technical_specifications: compliance[index].technical_specifications,
-        valid_tax_clearance: compliance[index].valid_tax_clearance,
-        registered_with_praz: compliance[index].registered_with_praz,
-      };
-    }
+    // // filter decision and reject from list
+    // let _compliance = {};
+    // if (this.state.showSamples && this.state.showSiteVisit) {
+    //   _compliance = {
+    //     payment_terms: compliance[index].payment_terms,
+    //     bid_validity: compliance[index].bid_validity,
+    //     delivery_period: compliance[index].delivery_period,
+    //     technical_specifications: compliance[index].technical_specifications,
+    //     valid_tax_clearance: compliance[index].valid_tax_clearance,
+    //     registered_with_praz: compliance[index].registered_with_praz,
+    //     site_visit: compliance[index].site_visit,
+    //     samples_required: compliance[index].samples_required,
+    //   };
+    // } else if (this.state.showSamples && !this.state.showSiteVisit) {
+    //   _compliance = {
+    //     payment_terms: compliance[index].payment_terms,
+    //     bid_validity: compliance[index].bid_validity,
+    //     delivery_period: compliance[index].delivery_period,
+    //     technical_specifications: compliance[index].technical_specifications,
+    //     valid_tax_clearance: compliance[index].valid_tax_clearance,
+    //     registered_with_praz: compliance[index].registered_with_praz,
+    //     samples_required: compliance[index].samples_required,
+    //   };
+    // } else if (!this.state.showSamples && this.state.showSiteVisit) {
+    //   _compliance = {
+    //     payment_terms: compliance[index].payment_terms,
+    //     bid_validity: compliance[index].bid_validity,
+    //     delivery_period: compliance[index].delivery_period,
+    //     technical_specifications: compliance[index].technical_specifications,
+    //     valid_tax_clearance: compliance[index].valid_tax_clearance,
+    //     registered_with_praz: compliance[index].registered_with_praz,
+    //     site_visit: compliance[index].site_visit,
+    //   };
+    // } else {
+    //   _compliance = {
+    //     payment_terms: compliance[index].payment_terms,
+    //     bid_validity: compliance[index].bid_validity,
+    //     delivery_period: compliance[index].delivery_period,
+    //     technical_specifications: compliance[index].technical_specifications,
+    //     valid_tax_clearance: compliance[index].valid_tax_clearance,
+    //     registered_with_praz: compliance[index].registered_with_praz,
+    //   };
+    // }
 
-    // set compliance[index]['decision'] to true if all compliance are true
-    let compliance_values = Object.values(_compliance);
-    console.log("compliances: ", compliance_values);
-    let decision = compliance_values.every((value) => value === true);
-    compliance[index]["decision"] = decision;
-    compliance[index]["reject"] = !decision;
+    // // set compliance[index]['decision'] to true if all compliance are true
+    // let compliance_values = Object.values(_compliance);
+    // console.log("compliances: ", compliance_values);
+    // let decision = compliance_values.every((value) => value === true);
+    let _compliance = {
+      payment_terms: compliance[index].payment_terms,
+      bid_validity: compliance[index].bid_validity,
+      delivery_period: compliance[index].delivery_period,
+      technical_specifications: compliance[index].technical_specifications,
+      valid_tax_clearance: compliance[index].valid_tax_clearance,
+      registered_with_praz: compliance[index].registered_with_praz,
+      site_visit: compliance[index].site_visit,
+      samples_required: compliance[index].samples_required,
+    };
+
+    // set compliance_['decision'] to true if all compliance are true
+    let allValuesTrue = true;
+    for (const key in _compliance) {
+      if (_compliance.hasOwnProperty(key)) {
+        if (key === "site_visit" && this.state.showSiteVisit === "no") {
+          continue;
+        } else if (key === "samples_required" && this.state.showSamples === "no") {
+          continue;
+        } else if (!_compliance[key]) {
+          allValuesTrue = false;
+          break;
+        }
+      }
+    }
+    compliance[index]["decision"] = allValuesTrue;
+    compliance[index]["reject"] = !allValuesTrue;
 
     this.setState({
       ...this.state,
@@ -1571,7 +1654,7 @@ class CreateCS extends React.Component {
             rankings: rankings,
             rankingTable: true,
           });
-          alert("Schedule closed successfully");
+          alert("Bids ranked successfully");
         } else {
           alert("Error saving Schedule");
         }
@@ -1868,9 +1951,9 @@ class CreateCS extends React.Component {
                   </tr>
                 </thead>
                 <tbody>
-                  {this.state.pr_items.map((item, index) => {
+                  {this.state.pr_items && this.state.pr_items.map((item, index) => {
                     return (
-                      <tr className="text-gray-900">
+                      <tr key={index} className="text-gray-900">
                         <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
                           <input
                             type="checkbox"
@@ -1911,7 +1994,7 @@ class CreateCS extends React.Component {
     if (this.state.addBidModal) {
       bidsModal = (
         <div
-          id={"bid-" + this.state.currentBid}
+          id={"bid-" + this.state.currentBid.bid_count}
           className="fixed inset-0 flex items-center justify-center z-50 pt-10 pb-20"
         >
           <div className="bg-gulf-blue-100 rounded-lg shadow-lg p-6 max-h-screen min-w-max overflow-y-auto">
@@ -2006,9 +2089,9 @@ class CreateCS extends React.Component {
                     </label>
                     <div className="mt-2">
                       <input
-                        name="supplier[bid][0]"
+                        name=""
                         type="number"
-                        value="1"
+                        value={this.state.currentBid.bid_count}
                         id="bid"
                         required="required"
                         readOnly
@@ -2036,7 +2119,7 @@ class CreateCS extends React.Component {
                   </div>
                 </div>
 
-                {this.state.cs_items.map((item, index) => {
+                {this.state.cs_items && this.state.cs_items.map((item, index) => {
                   return (
                     <div className="flex justify-evenly mt-5  px-2 py-2 rounded-md">
                       <div className="flex-1 w-15 ml-1">
@@ -2218,7 +2301,7 @@ class CreateCS extends React.Component {
         >
           <div className="bg-white rounded-lg shadow-lg p-6 max-h-screen min-w-max overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-medium">Modal Title</h3>
+              <h3 className="text-lg font-medium">Update Bid</h3>
               <button
                 type="button"
                 className="text-gray-400 hover:text-gray-500 focus:outline-none"
@@ -2338,9 +2421,9 @@ class CreateCS extends React.Component {
                   </div>
                 </div>
 
-                {this.state.currentBid.items.map((item, index) => {
+                {this.state.currentBid.items && this.state.currentBid.items.map((item, index) => {
                   return (
-                    <div className="flex justify-evenly mt-5  px-2 py-2 rounded-md">
+                    <div key={index} className="flex justify-evenly mt-5  px-2 py-2 rounded-md">
                       <div className="flex-1 w-15 ml-1">
                         <label
                           htmlFor="item_name"
@@ -2452,6 +2535,7 @@ class CreateCS extends React.Component {
                               ) : (
                                 ""
                               )}
+                              <option value="">Select VAT</option>
                               <option value="Excl.">Excl.</option>
                               <option value="Incl.">Incl.</option>
                             </select>
@@ -2581,7 +2665,7 @@ class CreateCS extends React.Component {
                 <thead>
                   <tr className="text-gray-900">
                     <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                      Bid No.
+                      #
                     </th>
                     <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
                       Name of Supplier
@@ -2647,9 +2731,9 @@ class CreateCS extends React.Component {
                   </tr>
                 </thead>
                 <tbody>
-                  {this.state.compliance.map((comp, key) => {
+                  {this.state.compliance && this.state.compliance.map((comp, key) => {
                     return (
-                      <tr>
+                      <tr key={key}>
                         <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
                           {key + 1}
                         </td>
@@ -2825,7 +2909,7 @@ class CreateCS extends React.Component {
                   </tr>
                 </thead>
                 <tbody>
-                  {this.state.complianceRemarks.map((bid, key) => {
+                  {this.state.complianceRemarks && this.state.complianceRemarks.map((bid, key) => {
                     return (
                       <tr>
                         <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
@@ -2907,7 +2991,7 @@ class CreateCS extends React.Component {
                   </tr>
                 </thead>
                 <tbody>
-                  {this.state.rankings.map((rank, key) => {
+                  {this.state.rankings && this.state.rankings.map((rank, key) => {
                     return (
                       <tr className="text-gray-900">
                         <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
@@ -3024,7 +3108,7 @@ class CreateCS extends React.Component {
                       )}
                     </td>
                   </tr>
-                  {this.state.committeeMembers.map((member, key) => {
+                  {this.state.committeeMembers && this.state.committeeMembers.map((member, key) => {
                     return (
                       <tr className="text-gray-900">
                         <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
@@ -3099,6 +3183,20 @@ class CreateCS extends React.Component {
                       </tr>
                     );
                   })}
+                  <tr className="text-gray-900">
+                    <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                      Created By
+                    </td>
+                    <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                      {this.state.creator}
+                    </td>
+                    <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                      {this.state.created_at ? this.state.created_at.split(" ")[0] : ""}
+                    </td>
+                    <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+
+                    </td>
+                  </tr>
                 </tbody>
               </table>
             </div>
@@ -3607,7 +3705,7 @@ class CreateCS extends React.Component {
             ""
           )}
 
-          {this.state.bids.map((bid, index) => {
+          {this.state.bids && this.state.bids.map((bid, index) => {
             return (
               <div
                 id="opening_rfq"
