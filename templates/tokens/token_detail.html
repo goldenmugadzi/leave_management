@@ -78,77 +78,54 @@
                             </div>
                             
                         {% if token.token_photo %}
-                                <details class="font-bold rounded text-center  ">
-                                    <summary class="text-blue-900 mb-2">Token photo</summary>
-                                    <img class="flex justify-center mx-5 rounded items-center h-screen"
-                                         src="/media/{{ token.token_photo }}"
-                                         alt="{{ token.token_photo }}">
-                                </details>
+                                    <a class="flex justify-center mx-5 rounded items-center h-screen"
+                                         href="/media/{{ token.token_photo }}"
+                                         alt="{{ token.token_photo }}">Token photo</a>
                             {% endif %}
                             {% if token.type == 'TEMPER' or token.type == 'REIMBURSEMENT' %}
                                 {% if token.tampertoken_set.last.is_for == 'Recovered Meter' %}
-                                    <details class="font-bold rounded text-center  ">
-                                        <summary class="text-blue-900 mb-2">{{ token.tampertoken_set.last.is_for|default_if_none:'' }} picture </summary>
-                                        <img class="flex justify-center mx-5 rounded items-center h-screen"
-                                             src="/media/{{ token.recoveredmeter_set.last.picture }}"
+                                    <a class="text-blue-900 m-auto shadow-lg mb-2 p-2 border-red-500 border border-1 font-bold inline-block text-start rounded-full text-sm" 
+                                             href="/media/{{ token.recoveredmeter_set.last.picture }}"
                                              alt="{{ token.recoveredmeter_set.last.picture }}">
-                                    </details>
+                                             {{ token.tampertoken_set.last.is_for|default_if_none:'' }} picture
+                                    </a>
                                 {% elif token.reimbursement_set.last.purpose == 'Recovered Meter' %}
-                                    <details class="font-bold rounded text-center ">
-                                        <summary class="text-blue-900 mb-2">{{ token.reimbursement_set.last.purpose|default_if_none:'' }} picture</summary>
-                                        <img class="flex justify-center mx-5 rounded items-center h-screen"
-                                             src="/media/{{ token.recoveredmeter_set.last.picture }}"
-                                             alt="{{ token.recoveredmeter_set.last.picture }}">
-                                    </details>
+                                    <a class="text-blue-900 m-auto shadow-lg mb-2 p-2 border-red-500 border border-1 font-bold inline-block text-start rounded-full text-sm"  href="/media/{{ token.recoveredmeter_set.last.picture }}">
+                                        {{ token.reimbursement_set.last.purpose|default_if_none:'' }} picture
+                                    </a>
                                 {% elif  token.tampertoken_set.last.is_for == 'Fauty Maintanance' %}
                                     <div class="font-bold text-center ">
                                         <p class="font-bold mb-2">Fauty Maintanance</p>
                                         <p class="mb-2 font-normal">Fault Code {{ token.faultmaintanance_set.last.code|default_if_none:'' }}</p>
                                     </div>
                                 {% elif  token.tampertoken_set.last.is_for == 'Reconnection' %}
-                                    <details class="font-bold rounded text-center ">
-                                        <summary class="text-blue-900 mb-2">
-                                            {{ token.tampertoken_set.last.is_for|default_if_none:'' }} Invoice and Proof of payment
-                                        </summary>
-                                        <img class="flex justify-center mx-5 rounded items-center h-screen"
-                                             src="/media/{{ token.reconnection_set.last.invoice }}"
-                                             alt="{{ token.reconnection_set.last.picture }}">
-                                        <img class="flex justify-center mx-5 rounded items-center h-screen"
-                                             src="/media/{{ token.reconnection_set.last.proof_of_payment }}"
-                                             alt="{{ token.reconnection_set.last.picture }}">
-                                    </details>
+                                <div class=" grid grid-cols-2  px-3 ">
+                             
+                                  <a class="text-blue-900 m-auto shadow-lg mb-2 p-2 border-red-500 border border-1 font-bold inline-block text-start rounded-full text-sm" href="/media/{{ token.reconnection_set.last.invoice }}">
+                                    {{ token.tampertoken_set.last.is_for|default_if_none:'' }} Invoice
+                                </a>
+                                <a class="text-blue-900 m-auto shadow-lg mb-2 p-2 border-red-500 border border-1 font-bold inline-block text-end rounded-full text-sm"  href="/media/{{ token.reconnection_set.last.proof_of_payment }}">
+                                    {{ token.tampertoken_set.last.is_for|default_if_none:'' }} Proof of payment
+                                </a>
+                            </div>
                                 {% elif  token.tampertoken_set.last.purpose == 'Faulty Meter' %}
-                                    <details class="font-bold rounded text-center ">
-                                        <summary class="text-blue-900 mb-2">{{ token.tampertoken_set.last.is_for|default_if_none:'' }} Picture</summary>
-                                        <img class="flex justify-center mx-5 rounded items-center h-screen"
-                                             src="/media/{{ token.faultmeter_set.last.photo }}"
-                                             alt="{{ token.faultmeter_set.last.photo }}">
-                                    </details>
-                                {% elif  token.reimbursement_set.last.purpose == 'Faulty Meter' %}
-                                    <details class="font-bold rounded text-center ">
-                                        <summary class="text-blue-900 mb-2">{{ token.reimbursement_set.last.purpose|default_if_none:'' }} Picture</summary>
-                                        <img class="flex justify-center mx-5 rounded items-center h-screen"
-                                             src="/media/{{ token.faultmeter_set.last.photo }}"
-                                             alt="{{ token.faultmeter_set.last.photo }}">
-                                    </details>
-                                {% elif  token.reimbursement_set.last.purpose == 'Old Token' %}
-                                    <details class="font-bold rounded text-center ">
-                                        <summary class="text-blue-900 mb-2">{{ token.reimbursement_set.last.purpose|default_if_none:'' }} Picture</summary>
-                                        <img class="flex justify-center mx-5 rounded items-center h-screen"
-                                             src="/media/{{ token.oldtoken_set.last.old_token }}"
-                                             alt="{{ token.oldtoken_set.last.old_token }}">
-                                    </details>
-                                {% endif %}
+                                <a class="text-blue-900 m-auto shadow-lg mb-2 p-2 border-red-500 border border-1 font-bold inline-block text-start rounded-full text-sm"  href="/media/{{ token.faultmeter_set.last.photo }}">
+                                    {{ token.tampertoken_set.last.is_for|default_if_none:'' }} Picture
+                                </a>
+                                  {% elif  token.reimbursement_set.last.purpose == 'Faulty Meter' %}
+                                <a class="text-blue-900 m-auto shadow-lg mb-2 p-2 border-red-500 border border-1 font-bold inline-block text-start rounded-full text-sm"  href="/media/{{ token.faultmeter_set.last.photo }}">
+                                    {{ token.reimbursement_set.last.purpose|default_if_none:'' }} Picture
+                                </a>
+                                   {% elif  token.reimbursement_set.last.purpose == 'Old Token' %}
+                                <a class="text-blue-900 m-auto shadow-lg mb-2 p-2 border-red-500 border border-1 font-bold inline-block text-start rounded-full text-sm"  href="/media/{{ token.oldtoken_set.last.old_token }}">
+                                    {{ token.reimbursement_set.last.purpose|default_if_none:'' }} Picture
+                                </a>
+                                      {% endif %}
                             {% elif token.type == 'CLEAR CREDIT' %}
                                 {% if  token.clearcredit_set.last %}
-                                    <details class="font-bold rounded text-center ">
-                                        <summary class="text-blue-900 mb-2">
-                                            Pernalty paid : ${{ token.clearcredit_set.last.amount|default_if_none:'' }}
-                                        </summary>
-                                        <img class="flex justify-center mx-5 rounded items-center h-screen"
-                                             src="/media/{{ token.clearcredit_set.last.receipt }}"
-                                             alt="picture of a receipt">
-                                    </details>
+                                <a class="text-blue-900 m-auto shadow-lg mb-2 p-2 border-red-500 border border-1 font-bold inline-block text-start rounded-full text-sm"  href="/media/{{ token.clearcredit_set.last.receipt }}">
+                                    Pernalty paid : ${{ token.clearcredit_set.last.amount|default_if_none:'' }}
+                                </a>
                                 {% endif %}
                             {% endif %}
                         </div>

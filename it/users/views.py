@@ -23,6 +23,8 @@ from .helpers import DESIGNATIONS, REGIONS, DISTRICTS, DEPOTS, ROLES, SECTIONS
 BASE_URL = "http://172.16.8.99:9300"
 
 
+@login_required
+@allowed_roles(['Administrator'], ['users'])
 def add_centers(request):
     
     # for region in REGIONS:
@@ -94,6 +96,8 @@ def add_centers(request):
     return redirect('/users/users-index')
 
 
+@login_required
+@allowed_roles(['Administrator'], ['users'])
 def add_user(request):
     if request.method == "GET":
 
@@ -181,6 +185,8 @@ def add_user(request):
         return redirect("/users/users-index")
 
 
+@login_required
+@allowed_roles(['Administrator'], ['users'])
 def get_user_records(request):
     records = UserProfile.objects.order_by('-date_joined').all()
 
@@ -214,6 +220,8 @@ def get_user_records(request):
 
         })
 
+@login_required
+@allowed_roles(['Administrator'], ['users'])
 def update_user(request):
     if request.method == "GET":
         user_profile = UserProfile.objects.get(id=request.GET['i'])
@@ -276,6 +284,9 @@ def update_user(request):
         user_profile.roles.add(*Roles.objects.filter(id__in=roles))
 
         return redirect("/users/users-index")
+
+@login_required
+@allowed_roles(['Administrator'], ['users'])
 def update_userx(request):
     if request.method == "GET":
 
@@ -408,6 +419,8 @@ def update_userx(request):
             return redirect("/users/users-index")
 
 
+@login_required
+@allowed_roles(['Administrator'], ['users'])
 def reset_user_password(request):
     if request.method == "POST":
 
@@ -480,6 +493,8 @@ def change_user_password(request):
     return redirect('/dashboards/overview')
 
 
+@login_required
+@allowed_roles(['Administrator'], ['users'])
 def delete_user(request):
     if request.method == "GET":
         id = request.GET['i']
@@ -489,19 +504,24 @@ def delete_user(request):
     return redirect('/users/users-index')
 
 
+@login_required
+@allowed_roles(['Administrator'], ['users'])
 def get_filtered_districts(request, region_id):
     
     districts = Districts.objects.filter(region_id=region_id).all()
 
     return JsonResponse(list(districts.values('id', 'district')), safe=False)
 
+@login_required
+@allowed_roles(['Administrator'], ['users'])
 def get_filtered_depots(request, district_id):
         
     depots = Depots.objects.filter(district_id=district_id).all()
 
     return JsonResponse(list(depots.values('id', 'depot')), safe=False)
 
-# Manage groups
+@login_required
+@allowed_roles(['Administrator'], ['users'])
 def get_user_all_groups(request):
     if request.method == "GET":
         user_title = request.user.get_full_name()
@@ -573,6 +593,7 @@ def get_user_all_groups(request):
 
 
 @login_required
+@allowed_roles(['Administrator'], ['users'])
 def import_users(request):
     if request.method == "POST":
         file = request.FILES['file']

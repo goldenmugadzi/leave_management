@@ -173,6 +173,7 @@ def purchase_request_update(request, purchase_request_id):
                     except:
                         pass
                 if action:
+                    messages.success(request, 'Purchase request saved successfully.')
                     return render(request, 'finance/purchase_request/create_purchase_request.html', {"attachments":purchase_request.attachment_set.all(),'formset': itemFormset(instance=purchase_request), 'form': form})
                 else:
                     return redirect(reverse('purchase_request:purchase_request_detail', args=[purchase_request.id]))
