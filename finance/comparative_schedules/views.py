@@ -941,9 +941,6 @@ def update_pritem_ordered(request):
             "message": "Comparative Schedule not found",
             "success": False,
             }, safe=False)
-    
-def save_cs_bid(request):
-
 
 def save_cs_bid(request):
     cs_id = request.POST.get("cs_id", "")
@@ -1064,9 +1061,8 @@ def delete_cs_bid(request):
         "success": True,
     })
 
-def save_cs_compliance(request):
 
-
+    
 def save_cs_compliance(request):
     cs_id = request.POST.get("cs_id", "")
     json_data = json.loads(request.POST.get("compliance", "{}"))
@@ -1647,7 +1643,7 @@ def cs_compliance_table(request, cs_id):
     return render(request, 'finance/comparative_schedules/cs_compliance_table.html', {"bids_items": bids_dict})
 
 
-@login_required
+# @login_required
 def add_supplier(request):
     if request.method == 'POST':
         form = SupplierForm(request.POST, request.FILES)
@@ -1660,7 +1656,7 @@ def add_supplier(request):
         form = SupplierForm()
     return render(request, 'finance/tenders/add_supplier.html', {'form': form})
 
-@login_required
+# @login_required
 def get_comperative_schedule_suppliers(request):
     if request.method == 'GET':
         cs = Supplier.objects.all()
