@@ -840,6 +840,7 @@ class CreateCS extends React.Component {
   };
 
   onCurrentBidChange = (name_, event) => {
+    
     let currentBid = this.state.currentBid;
     if (name_ === "bid_document") {
       let bid_file = event.target.files[0];
@@ -862,62 +863,34 @@ class CreateCS extends React.Component {
     });
   };
 
-  onCurrentBidItemChange = (description, name_, event) => {
-    // check if item exists in current bid
+  onCurrentBidItemChange = (description, name_, event, bid_no) => {
+
+    let { name, value } = event.target
+    console.log("name: ", name, " value: ", value, " bid no: ", bid_no)
     console.log("description: ", description);
-    let item = this.state.currentBid.items
-      ? this.state.currentBid.items.find(
-          (item) => item.item_required === description
-        )
-      : null;
-    console.log("item found in currentBid: ", item);
-    // if item exists update item
-    if (item) {
-      let { name, value } = event.target;
-      item[name_] = value;
-      // update item in current bid
-      let items = []
-      items = this.state.currentBid.items.map((_item) => {
-        if (_item.item_required === description) {
-          return item;
+
+    let items = this.state.currentBid.items
+
+    let new_items = items? items.map((it, index) => {
+      if(it.item_required === description){
+        return {
+          ...it,
+          [name_]: value
         }
-        return _item;
-      });
-      // update current bid
-      let currentBid = this.state.currentBid;
-      currentBid.items = items;
-      // update state
-      this.setState({
-        ...this.state,
-        currentBid: currentBid,
-      });
-    } else {
-      // find item in cs_items
-      let item = this.state.cs_items.find(
-        (item) => item.item_required === description
-      );
-      // create new item
-      let new_item = {
-        item_required: item.item_required,
-        quantity: item.quantity,
-        unit_of_measurement: item.unit_of_measurement,
-      };
-      // update current bid items
-      let items = [];
-      if (!this.state.currentBid.items) {
-        items.push(new_item);
       } else {
-        items = [...this.state.currentBid.items, new_item];
+        return it
       }
-      // update current bid
-      let currentBid = this.state.currentBid;
-      currentBid.items = items;
-      // update state
-      this.setState({
-        ...this.state,
-        currentBid: currentBid,
-      });
-    }
+    }): []
+
+    this.setState({
+      ...this.state,
+      currentBid: {
+        ...this.state.currentBid,
+        items: new_items
+      }
+    })
+
+
   };
 
   onCurrentBidSave = () => {
@@ -2137,7 +2110,8 @@ class CreateCS extends React.Component {
                               this.onCurrentBidItemChange(
                                 item.item_required,
                                 "item_required",
-                                e
+                                e,
+                                this.state.currentBid.bid_count
                               )
                             }
                             id="item_description"
@@ -2161,7 +2135,8 @@ class CreateCS extends React.Component {
                               this.onCurrentBidItemChange(
                                 item.item_required,
                                 "quantity",
-                                e
+                                e,
+                                this.state.currentBid.bid_count
                               )
                             }
                             type="number"
@@ -2185,7 +2160,8 @@ class CreateCS extends React.Component {
                                 this.onCurrentBidItemChange(
                                   item.item_required,
                                   "unit_of_measurement",
-                                  e
+                                  e,
+                                  this.state.currentBid.bid_count
                                 )
                               }
                               autoComplete="unit_of_measurement"
@@ -2220,7 +2196,8 @@ class CreateCS extends React.Component {
                                 this.onCurrentBidItemChange(
                                   item.item_required,
                                   "vat",
-                                  e
+                                  e,
+                                  this.state.currentBid.bid_count
                                 )
                               }
                               autoComplete="vat"
@@ -2253,7 +2230,8 @@ class CreateCS extends React.Component {
                               this.onCurrentBidItemChange(
                                 item.item_required,
                                 "unit_price",
-                                e
+                                e,
+                                this.state.currentBid.bid_count
                               )
                             }
                             type="text"
@@ -2296,7 +2274,7 @@ class CreateCS extends React.Component {
     if (this.state.updateBidModal) {
       updateBidModal = (
         <div
-          id={"bid-" + this.state.currentBid}
+          id={"bid-" + this.state.currentBid.bid_count}
           className="fixed inset-0 flex items-center justify-center z-50 pt-10 pb-20"
         >
           <div className="bg-white rounded-lg shadow-lg p-6 max-h-screen min-w-max overflow-y-auto">
@@ -2439,7 +2417,8 @@ class CreateCS extends React.Component {
                               this.onCurrentBidItemChange(
                                 item.item_required,
                                 "item_required",
-                                e
+                                e,
+                                this.state.currentBid.bid_count
                               )
                             }
                             id="item_description"
@@ -2463,7 +2442,8 @@ class CreateCS extends React.Component {
                               this.onCurrentBidItemChange(
                                 item.item_required,
                                 "quantity",
-                                e
+                                e,
+                                this.state.currentBid.bid_count
                               )
                             }
                             type="number"
@@ -2488,7 +2468,8 @@ class CreateCS extends React.Component {
                                 this.onCurrentBidItemChange(
                                   item.item_required,
                                   "unit_of_measurement",
-                                  e
+                                  e,
+                                  this.state.currentBid.bid_count
                                 )
                               }
                               autoComplete="unit_of_measurement"
@@ -2524,7 +2505,8 @@ class CreateCS extends React.Component {
                                 this.onCurrentBidItemChange(
                                   item.item_required,
                                   "vat",
-                                  e
+                                  e,
+                                  this.state.currentBid.bid_count
                                 )
                               }
                               autoComplete="vat"
@@ -2557,7 +2539,8 @@ class CreateCS extends React.Component {
                               this.onCurrentBidItemChange(
                                 item.item_required,
                                 "unit_price",
-                                e
+                                e,
+                                this.state.currentBid.bid_count
                               )
                             }
                             type="text"

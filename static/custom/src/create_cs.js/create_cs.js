@@ -717,6 +717,7 @@ var CreateCS = function (_React$Component) {
     };
 
     _this.onCurrentBidChange = function (name_, event) {
+
       var currentBid = _this.state.currentBid;
       if (name_ === "bid_document") {
         var bid_file = event.target.files[0];
@@ -744,61 +745,29 @@ var CreateCS = function (_React$Component) {
       }));
     };
 
-    _this.onCurrentBidItemChange = function (description, name_, event) {
-      // check if item exists in current bid
-      console.log("description: ", description);
-      var item = _this.state.currentBid.items ? _this.state.currentBid.items.find(function (item) {
-        return item.item_required === description;
-      }) : null;
-      console.log("item found in currentBid: ", item);
-      // if item exists update item
-      if (item) {
-        var _event$target6 = event.target,
-            name = _event$target6.name,
-            value = _event$target6.value;
+    _this.onCurrentBidItemChange = function (description, name_, event, bid_no) {
+      var _event$target6 = event.target,
+          name = _event$target6.name,
+          value = _event$target6.value;
 
-        item[name_] = value;
-        // update item in current bid
-        var items = [];
-        items = _this.state.currentBid.items.map(function (_item) {
-          if (_item.item_required === description) {
-            return item;
-          }
-          return _item;
-        });
-        // update current bid
-        var currentBid = _this.state.currentBid;
-        currentBid.items = items;
-        // update state
-        _this.setState(Object.assign({}, _this.state, {
-          currentBid: currentBid
-        }));
-      } else {
-        // find item in cs_items
-        var _item3 = _this.state.cs_items.find(function (item) {
-          return item.item_required === description;
-        });
-        // create new item
-        var new_item = {
-          item_required: _item3.item_required,
-          quantity: _item3.quantity,
-          unit_of_measurement: _item3.unit_of_measurement
-        };
-        // update current bid items
-        var _items = [];
-        if (!_this.state.currentBid.items) {
-          _items.push(new_item);
+      console.log("name: ", name, " value: ", value, " bid no: ", bid_no);
+      console.log("description: ", description);
+
+      var items = _this.state.currentBid.items;
+
+      var new_items = items ? items.map(function (it, index) {
+        if (it.item_required === description) {
+          return Object.assign({}, it, _defineProperty({}, name_, value));
         } else {
-          _items = [].concat(_toConsumableArray(_this.state.currentBid.items), [new_item]);
+          return it;
         }
-        // update current bid
-        var _currentBid = _this.state.currentBid;
-        _currentBid.items = _items;
-        // update state
-        _this.setState(Object.assign({}, _this.state, {
-          currentBid: _currentBid
-        }));
-      }
+      }) : [];
+
+      _this.setState(Object.assign({}, _this.state, {
+        currentBid: Object.assign({}, _this.state.currentBid, {
+          items: new_items
+        })
+      }));
     };
 
     _this.onCurrentBidSave = function () {
@@ -859,15 +828,15 @@ var CreateCS = function (_React$Component) {
             _this.onSaveBid(currentBid, bids, undefined, undefined);
           } else {
             // calculate total price for each item
-            var _items2 = [];
+            var _items = [];
             if (currentBid.items && currentBid.items.length > 0) {
-              _items2 = currentBid.items.map(function (item) {
+              _items = currentBid.items.map(function (item) {
                 item.total_price = item.quantity * item.unit_price;
                 return item;
               });
             }
 
-            var _missingFields = _items2.filter(function (item) {
+            var _missingFields = _items.filter(function (item) {
               return item.quantity === "" || item.quantity === undefined || item.unit_price === "" || item.unit_price === undefined || item.vat === "" || item.vat === undefined || item.unit_of_measurement === "" || item.unit_of_measurement === undefined || item.total_price === "" || item.total_price === undefined;
             });
 
@@ -876,7 +845,7 @@ var CreateCS = function (_React$Component) {
               return;
             }
             // update current bid items
-            currentBid.items = _items2;
+            currentBid.items = _items;
 
             var _bids = _this.state.bids;
             console.log("currentBid: ", currentBid);
@@ -1146,12 +1115,12 @@ var CreateCS = function (_React$Component) {
     };
 
     _this.onFileInputChange = function (name_, event) {
-      var _Object$assign4;
+      var _Object$assign5;
 
       console.log(event);
       var file = event.target.files[0];
       var fileUrl = _this.onGetFileObjectUrl(file);
-      _this.setState(Object.assign({}, _this.state, (_Object$assign4 = {}, _defineProperty(_Object$assign4, name_, file), _defineProperty(_Object$assign4, "advert_url", fileUrl), _Object$assign4)));
+      _this.setState(Object.assign({}, _this.state, (_Object$assign5 = {}, _defineProperty(_Object$assign5, name_, file), _defineProperty(_Object$assign5, "advert_url", fileUrl), _Object$assign5)));
     };
 
     _this.onAddComplianceTable = function () {
@@ -1197,7 +1166,7 @@ var CreateCS = function (_React$Component) {
     };
 
     _this.onComplianceItemsChange = function (name_, event) {
-      var _Object$assign5;
+      var _Object$assign6;
 
       var _event$target8 = event.target,
           name = _event$target8.name,
@@ -1259,7 +1228,7 @@ var CreateCS = function (_React$Component) {
         return compliance_;
       });
       console.log("state: ", _this.state.showSamples, _this.state.showSiteVisit);
-      _this.setState(Object.assign({}, _this.state, (_Object$assign5 = {}, _defineProperty(_Object$assign5, name, value), _defineProperty(_Object$assign5, "compliance", updatedComplianceList), _Object$assign5)));
+      _this.setState(Object.assign({}, _this.state, (_Object$assign6 = {}, _defineProperty(_Object$assign6, name, value), _defineProperty(_Object$assign6, "compliance", updatedComplianceList), _Object$assign6)));
     };
 
     _this.onComplianceChange = function (index, event) {
@@ -2298,7 +2267,7 @@ var CreateCS = function (_React$Component) {
                           name: "item_description",
                           defaultValue: item.item_required,
                           onChange: function onChange(e) {
-                            return _this2.onCurrentBidItemChange(item.item_required, "item_required", e);
+                            return _this2.onCurrentBidItemChange(item.item_required, "item_required", e, _this2.state.currentBid.bid_count);
                           },
                           id: "item_description",
                           required: "required",
@@ -2324,7 +2293,7 @@ var CreateCS = function (_React$Component) {
                           name: "quantity",
                           defaultValue: item.quantity,
                           onChange: function onChange(e) {
-                            return _this2.onCurrentBidItemChange(item.item_required, "quantity", e);
+                            return _this2.onCurrentBidItemChange(item.item_required, "quantity", e, _this2.state.currentBid.bid_count);
                           },
                           type: "number",
                           id: "quantity",
@@ -2354,7 +2323,7 @@ var CreateCS = function (_React$Component) {
                             {
                               id: "unit_of_measurement",
                               onChange: function onChange(e) {
-                                return _this2.onCurrentBidItemChange(item.item_required, "unit_of_measurement", e);
+                                return _this2.onCurrentBidItemChange(item.item_required, "unit_of_measurement", e, _this2.state.currentBid.bid_count);
                               },
                               autoComplete: "unit_of_measurement",
                               className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
@@ -2401,7 +2370,7 @@ var CreateCS = function (_React$Component) {
                             {
                               id: "vat",
                               onChange: function onChange(e) {
-                                return _this2.onCurrentBidItemChange(item.item_required, "vat", e);
+                                return _this2.onCurrentBidItemChange(item.item_required, "vat", e, _this2.state.currentBid.bid_count);
                               },
                               autoComplete: "vat",
                               className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
@@ -2448,7 +2417,7 @@ var CreateCS = function (_React$Component) {
                           name: "unit_price",
                           defaultValue: item.unit_price,
                           onChange: function onChange(e) {
-                            return _this2.onCurrentBidItemChange(item.item_required, "unit_price", e);
+                            return _this2.onCurrentBidItemChange(item.item_required, "unit_price", e, _this2.state.currentBid.bid_count);
                           },
                           type: "text",
                           id: "unit_price",
@@ -2506,7 +2475,7 @@ var CreateCS = function (_React$Component) {
         updateBidModal = React.createElement(
           "div",
           {
-            id: "bid-" + this.state.currentBid,
+            id: "bid-" + this.state.currentBid.bid_count,
             className: "fixed inset-0 flex items-center justify-center z-50 pt-10 pb-20"
           },
           React.createElement(
@@ -2698,7 +2667,7 @@ var CreateCS = function (_React$Component) {
                           name: "item_description",
                           defaultValue: item.item_required,
                           onChange: function onChange(e) {
-                            return _this2.onCurrentBidItemChange(item.item_required, "item_required", e);
+                            return _this2.onCurrentBidItemChange(item.item_required, "item_required", e, _this2.state.currentBid.bid_count);
                           },
                           id: "item_description",
                           required: "required",
@@ -2724,7 +2693,7 @@ var CreateCS = function (_React$Component) {
                           name: "quantity",
                           defaultValue: item.quantity,
                           onChange: function onChange(e) {
-                            return _this2.onCurrentBidItemChange(item.item_required, "quantity", e);
+                            return _this2.onCurrentBidItemChange(item.item_required, "quantity", e, _this2.state.currentBid.bid_count);
                           },
                           type: "number",
                           id: "quantity",
@@ -2755,7 +2724,7 @@ var CreateCS = function (_React$Component) {
                               id: "unit_of_measurement",
                               defaultValue: item.unit_of_measurement,
                               onChange: function onChange(e) {
-                                return _this2.onCurrentBidItemChange(item.item_required, "unit_of_measurement", e);
+                                return _this2.onCurrentBidItemChange(item.item_required, "unit_of_measurement", e, _this2.state.currentBid.bid_count);
                               },
                               autoComplete: "unit_of_measurement",
                               className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
@@ -2803,7 +2772,7 @@ var CreateCS = function (_React$Component) {
                               id: "vat",
                               defaultValue: item.vat,
                               onChange: function onChange(e) {
-                                return _this2.onCurrentBidItemChange(item.item_required, "vat", e);
+                                return _this2.onCurrentBidItemChange(item.item_required, "vat", e, _this2.state.currentBid.bid_count);
                               },
                               autoComplete: "vat",
                               className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
@@ -2850,7 +2819,7 @@ var CreateCS = function (_React$Component) {
                           name: "unit_price",
                           defaultValue: item.unit_price,
                           onChange: function onChange(e) {
-                            return _this2.onCurrentBidItemChange(item.item_required, "unit_price", e);
+                            return _this2.onCurrentBidItemChange(item.item_required, "unit_price", e, _this2.state.currentBid.bid_count);
                           },
                           type: "text",
                           id: "unit_price",

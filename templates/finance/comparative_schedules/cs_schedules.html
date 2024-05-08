@@ -32,6 +32,7 @@
     </div>
     </div>
     <div class="flex justify-end items-center mb-5">
+      {% if fm_role == False and gm_role == False %}
       <a
       href="/comperative_schedule/comperative_schedules"
       class="bg-gulf-blue-600 hover:bg-gulf-blue-800 text-white font-bold py-2 px-4 rounded m-2"
@@ -44,6 +45,7 @@
         >
         Pending Committee
       </a>
+      {% endif %}
       {% if fm_role == True %} 
       <a
       href="/comperative_schedule/pending_fm_approval"

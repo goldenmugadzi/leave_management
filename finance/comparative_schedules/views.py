@@ -573,10 +573,17 @@ def get_pending_fm_approval(request):
                 cs_id=OuterRef('pk'),
                 committee_approval=""
             )
+        ),
+        any_rejected=Exists(
+            Committee.objects.filter(
+                cs_id=OuterRef('pk'),
+                committee_approval="Rejected"
+            )
         )
     ).filter(
         all_approved=True,
         any_not_approved=False,
+        any_rejected=False,
         csapproval__approval=None
     ).distinct()
 
