@@ -10,10 +10,13 @@ document.getElementById('add-form-button').addEventListener('click', () => {
     container.appendChild(newFormDiv);
     totalForms.value = parseInt(totalForms.value) + 1;
 });
-const fileInput = document.getElementById('upload');
-const form = document.getElementById('purchase-request-form');
+$(document).ready(function() {
+  const fileInput = document.getElementById('upload');
+  const form = document.getElementById('purchase-request-form');
 
-fileInput.addEventListener('change', () => {
-  $('#saveRadio').checked = true;
+  $(fileInput).on('change', function() {
+    $('#loading').show();
+  $('#loaded').hide();
   form.submit();
+  });
 });
