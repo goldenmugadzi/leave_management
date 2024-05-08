@@ -19,7 +19,7 @@ from it.users.forms import CustomUserCreationForm
 
 from django.contrib.auth.models import Group
 from .helpers import DESIGNATIONS, REGIONS, DISTRICTS, DEPOTS, ROLES, SECTIONS
-
+from approve.decorators import allowed_roles
 BASE_URL = "http://172.16.8.99:9300"
 
 
