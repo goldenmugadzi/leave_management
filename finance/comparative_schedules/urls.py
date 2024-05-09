@@ -1,6 +1,7 @@
 from django.urls import path
 from .views import *
-app_name ='comparative_schedules'
+
+app_name = 'comparative_schedules'
 
 urlpatterns = [
     path('schedule/<str:pr_id>', get_create_cs, name='adopt_schedule'),
@@ -8,8 +9,8 @@ urlpatterns = [
     path('create_schedule/', create, name='create_schedule'),
     path('add_supplier/<str:tender_id>', cs_add_supplier, name='add_supplier'),
     path('compliance/<str:tender_id>', cs_compliance_table, name="tender_compliance"),
-    
-    path('create_data/<str:pr_id>', get_create_data, name='get_create_data'),
+
+    # path('create_data/<str:pr_id>', get_create_data, name='get_create_data'),
     path('save', save_comparative_schedule, name='save_schedule'),
     path('update', update_comparative_schedule, name='update_schedule'),
     
@@ -18,7 +19,7 @@ urlpatterns = [
     path('delete_bid', delete_cs_bid, name='delete_cs_bid'),
     
     path('save_compliance', save_cs_compliance, name='save_compliance'),
-    
+
     path('close_compliance', save_cs_ranking, name='save_cs_ranking'),
     path('save_committee', save_cs_committee, name='save_cs_committee'),
     path('delete_committee_member', delete_cs_committee_member, name='delete_cs_committee_member'),
@@ -33,4 +34,9 @@ urlpatterns = [
     
     path('update_pritem_ordered', update_pritem_ordered, name='update_pritem_ordered'),
     path('import_old_rfq', import_old_rfq, name='import_old_rfq'),
+    
+    path('pending_commitee', get_pending_committee, name='get_pending_committee'),
+    path('pending_gm_approval', get_pending_gm_approval, name='get_pending_gm_approval'),
+    path('pending_fm_approval', get_pending_fm_approval, name='get_pending_fm_approval'),
+    path('all_schedules', get_all_schedules, name='get_all_schedules'),
 ]

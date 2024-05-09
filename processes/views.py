@@ -90,12 +90,7 @@ def create(request):
             )
         processObj.save()
         
-        return render(request, 
-                      'process_maps/create_process_maps.html',
-                        {
-                         'user':user,
-                         'user_title':user_title,
-                         }) 
+        return redirect('/processes/create')
 
     return render(request,
                    'process_maps/create_process_maps.html',
@@ -1669,7 +1664,7 @@ def hr_forms(request):
 
 def commercial_forms(request):
     
-    files = Processes.objects.filter(archived=False, filetype="PROCESS_FORMS", department="HR")
+    files = Processes.objects.filter(archived=False, filetype="PROCESS_FORMS", department="Commercial")
 
     return render(request, 'process_maps/ict.html',
                   {"files": files,

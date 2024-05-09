@@ -31,7 +31,7 @@
       <div id="faulty_meter_form" class="{% if not reimbursement_form.purpose.value == 'Faulty Meter' %}hidden{% endif %}" >
       {% for field in faulty_meter_form %} <div class="rounded row text-center py-2 my-3"> {% if field.is_hidden %} {{ field }} {% else %} <div class=" m-auto grid grid-cols-2 pr-5"> <div> {{ field.label }} <div class="text-blue-500">{{ field.help_text }}</div> <div class="text-red-500 text-red-500 ">{{ field.errors }}</div> </div> {{ field }} </div> {% endif %} </div> {% endfor %}
     </div>
-    <div id="recovered_meter_form" class="{% if not reimbursement_form.purpose.value == 'Recovered Meter' or not tamper_token_form.is_for.value == 'Recovered Meter' %}hidden{% endif %}" >
+    <div id="recovered_meter_form" class="{% if not reimbursement_form.purpose.value == 'Recovered Meter' and not tamper_token_form.is_for.value == 'Recovered Meter' %}hidden{% endif %}" >
       {% for field in recovered_meter_form %} <div class="rounded row text-center py-2 my-3"> {% if field.is_hidden %} {{ field }} {% else %} <div class=" m-auto grid grid-cols-2 pr-5"> <div> {{ field.label }} <div class="text-blue-500">{{ field.help_text }}</div> <div class="text-red-500 text-red-500 ">{{ field.errors }}</div> </div> {{ field }} </div> {% endif %} </div> {% endfor %}
     </div>
     <div id="old_token_form" class="{% if not reimbursement_form.purpose.value == 'Old Token' %}hidden{% endif %}" >
@@ -55,5 +55,5 @@
 
 {% endblock content %}
 {% block scripts %}
-<script src="{% static 'assets/js/token.js' %}"></script>
+<script type="application/javascript" src="{% static 'assets/js/token.js' %}"></script>
 {% endblock scripts %}

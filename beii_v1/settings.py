@@ -41,10 +41,12 @@ ALLOWED_HOSTS = ['localhost', '172.16.8.97', '172.16.8.22', '127.0.0.1', '172.16
 #     "http://localhost:3000",
 #     "http://172.16.8.99:9300"
 # ]
+
 CORS_ALLOW_ALL_ORIGINS = True
 
 CSRF_TRUSTED_ORIGINS = ['http://172.16.8.97', "http://172.16.8.97:3200", "http://172.16.8.99",
-                        "http://172.16.8.99:9300", "http://172.16.8.98", "http://172.16.8.98:9300"]
+                        "http://172.16.8.99:9300", "http://172.16.8.98", "http://172.16.8.98:9300",
+                        "http://bexcel.zedc.co.zw:9300"]
 
 CORS_ALLOW_HEADERS = ('content-disposition', 'accept-encoding',
                       'content-type', 'accept', 'origin', 'authorization')
@@ -131,6 +133,7 @@ INSTALLED_APPS = [
     'finance.Direct_purchases',
     'ACE2',
 
+    'finance.comperative_schedule',
 
     'reports',
     'sweetify',
@@ -194,7 +197,7 @@ DATABASES = {
     # }
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'beii_new',
+        'NAME': 'beii_test',
         'USER': 'root',
         'PASSWORD': '',
         'HOST': 'localhost',
@@ -262,6 +265,7 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'perseychinaka@gmail.com'
 EMAIL_HOST_PASSWORD = 'apppassword'
 DEFAULT_FROM_EMAIL = "Zetdc Business Excellence "
+DATA_UPLOAD_MAX_MEMORY_SIZE = 1024 * 1024 * 30
 
 LANGUAGE_CODE = 'en-us'
 
@@ -275,12 +279,11 @@ LOGIN_URL = '/accounts/login'
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
-
-STATIC_URL = 'static/'
-STATICFILES_DIRS = [BASE_DIR / "static", BASE_DIR / "uploads", ]
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-MEDIA_URL = '/media/'
+MEDIA_URL = 'media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+STATIC_URL = 'static/'
+STATICFILES_DIRS = [BASE_DIR / "static", BASE_DIR / "uploads", BASE_DIR / "media"]
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
