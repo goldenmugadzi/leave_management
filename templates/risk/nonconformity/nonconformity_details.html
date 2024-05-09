@@ -50,18 +50,17 @@
               {% csrf_token %}
             
            <div id="AcceptedForm" class="hidden" >{{ AcceptedForm.as_table }}</div>
-              {{ form.as_table }}
-              <table>
-                <tr>
-                  <td colspan="2">
-                    {% for error in form.non_field_errors %}
-                      <ul class="errorlist nonfield">
-                        <li>{{ error }}</li>
-                      </ul>
-                    {% endfor %}
-                  </td>
-                </tr>
-              </table>
+           {% for field in form %}
+           <div class=" ">
+             {% if field.is_hidden %}
+               {{ field }}
+             {% else %}
+               {{ field.label_tag }}
+               {{ field }}
+               <div class="text-red-500">{{ field.errors }}</div>
+             {% endif %}
+           </div>
+         {% endfor %}
               <div class="row rounded py-4 border  text-center   container">
                 <input class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded"
                        type="submit"
@@ -96,7 +95,7 @@
                       </span>
                       <span class="text-sm text-right">{{ response }} @ {{ response.created_at }} </span>
                     </div>
-                  </div>
+                   </div>
                 </div>
               {% endfor %}
             </div>

@@ -86,6 +86,10 @@ def nonconformity_details(request, nonconformity_id):
     if request.method == 'POST':
         if request.user == nonconformity.recipient:
             response_form = NonconformityResponseForm(request.POST, instance=response)
+            if not request.POST.get("status") and not request.POST.get("expected_completion_date"):
+                messages.warning(request, 'You need to give expected resolution date and plan of action! ')
+                return render(request, 'risk/nonconformity/nonconformity_details.html', {'nonconformity': nonconformity, 'form': response_form})
+            
             if response_form.is_valid():
                 response = response_form.save(commit=False)
                 response.user = request.user
@@ -93,9 +97,9 @@ def nonconformity_details(request, nonconformity_id):
                 response.save()
 
                 # Prompt for additional information if status is 'accepted'
-                if response.status == 'True':
-                    additional_info_form = AdditionalInfoForm(instance=nonconformity)  # Create an instance of the additional info form
-                    return render(request, 'risk/nonconformity/additional_info.html', {'nonconformity': nonconformity, 'form': additional_info_form})
+                # if response.status == 'True':
+                #     additional_info_form = AdditionalInfoForm(instance=nonconformity)  # Create an instance of the additional info form
+                #     return render(request, 'risk/nonconformity/additional_info.html', {'nonconformity': nonconformity, 'form': additional_info_form})
                 
                 # Notify the user who created the nonconformity
                 Notification.objects.create(
@@ -146,13 +150,13 @@ def nonconformity_details(request, nonconformity_id):
             form = NonconformityForm(instance=nonconformity)
         else:
             form = None
-    # Update the old notification to mark it as read
-    old_notifications = Notification.objects.filter( user=request.user,url=nonconformity.get_absolute_url())
-    for old_notification in old_notifications:
-        old_notification.is_read = True
-        old_notification.save()
-        
-    return render(request, 'risk/nonconformity/nonconformity_details.html', {'nonconformity': nonconformity,"AcceptedForm":AcceptedForm, 'form': form})
+        # Update the old notification to mark it as read
+        old_notifications = Notification.objects.filter( user=request.user,url=nonconformity.get_absolute_url())
+        for old_notification in old_notifications:
+            old_notification.is_read = True
+            old_notification.save()
+            
+        return render(request, 'risk/nonconformity/nonconformity_details.html', {'nonconformity': nonconformity,"AcceptedForm":AcceptedForm, 'form': form})
 
 @login_required
 def view_notifications(request):
@@ -170,7 +174,7 @@ def view_nonconformities(request):
     for nonconformity in nonconformities:
         try:
             response = Response.objects.filter(nonconformity=nonconformity).latest('created_at')
-            nonconformity.status = f"{response.user.first_name[0]}. {response.user.last_name} : {response.status}"
+            nonconformity.status = f"{response.user.first_name[0]}. {response.user.last_name} : {response.status}" if response.user.first_name else  f"{ response.user } : {response.status}"
         except Response.DoesNotExist:
             nonconformity.status = 'created'
 

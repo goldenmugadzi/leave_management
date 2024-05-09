@@ -77,7 +77,7 @@ class NonconformityForm(forms.ModelForm):
             field.label = field.label or field_name.replace('_', ' ').capitalize()
             field.label_attrs = {'class': 'block text-sm font-medium leading-6 text-gray-900'}          
 class AdditionalInfoForm(forms.ModelForm):
-    expected_completion_date = forms.DateField(widget=forms.DateInput(attrs={'required':"false",'type': 'date','min': str(datetime.date.today())}))
+    expected_completion_date = forms.DateField(widget=forms.DateInput(attrs={'type': 'date', 'min': str(datetime.date.today())}),required=False)
 
     class Meta:
         model = Nonconformity
@@ -92,13 +92,14 @@ class AdditionalInfoForm(forms.ModelForm):
             })
 
             if isinstance(field.widget, forms.Textarea):
-                field.widget.attrs.update({'rows': '3'})
-                
+                field.widget.attrs.update({'rows': '3'})    
            
+ 
     def clean_expected_completion_date(self):
         expected_completion_date = self.cleaned_data['expected_completion_date']
         if expected_completion_date < timezone.now().date():
             raise forms.ValidationError("The expected completion date must be now or later.")
+       
         return expected_completion_date
         
 class NonconformityResponseForm(forms.ModelForm):
@@ -120,13 +121,12 @@ class NonconformityResponseForm(forms.ModelForm):
             field.label_attrs = {'class': 'block text-sm font-medium leading-6 text-gray-900'}
 
         self.error_css_class = 'text-red-500'  # Add the CSS class for error messages
-    
-    def clean(self):
-        cleaned_data = super().clean()
-        status = cleaned_data.get('status')
-        comment = cleaned_data.get('comment')
+  
+    def clean_status(self):
+        status = self.cleaned_data.get('status')
+        comment = self.cleaned_data.get('comment')
+        print("status",str(status))
+        if not status  and not comment:
+            raise forms.ValidationError("You must give a comment for rejecting the nonconformity !")
 
-        if status == 'rejected' and not comment:
-            self.add_error('comment', 'A reason must be provided for rejecting the nonconformity.')
-
-        return cleaned_data
+        return status
