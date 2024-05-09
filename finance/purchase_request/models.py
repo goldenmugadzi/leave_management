@@ -24,7 +24,7 @@ def validate_pr_no(value):
 class PurchaseRequest(models.Model):
     id = models.CharField(primary_key=True, max_length=20, editable=False)
     pr_no = models.CharField( max_length=10, verbose_name="PR Number", validators=[validate_pr_no])
-    section = models.ForeignKey(Sections, on_delete=models.CASCADE, blank=True, null=True)
+    section = models.ForeignKey(Sections, on_delete=models.CASCADE)
     procurement_plan_reference = models.ForeignKey(ProcurementPlanReference, on_delete=models.CASCADE, blank=True, null=True)
     requested_by = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True, blank=True, null=True)

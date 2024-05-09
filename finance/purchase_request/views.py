@@ -48,6 +48,7 @@ def create_purchase_request(request):
                 purchase_request = form.save(commit=False)
                 # purchase_request.process = intiate(request, 'purchase request')
                 purchase_request.requested_by = request.user
+                purchase_request.region = request.user.region
                 purchase_request.save()
                 attachments = request.FILES.getlist('attachments')
                 for attachment in attachments:
@@ -74,7 +75,7 @@ def create_purchase_request(request):
             messages.error(request, 'A Purchase request for this PR Number already exist.')
             return render(request, 'finance/purchase_request/create_purchase_request.html', {'formset': formset, 'form': form})
     else:
-        form = PurchaseRequestForm()
+        form = PurchaseRequestForm(initial={'section':request.user.section})
         return render(request, 'finance/purchase_request/create_purchase_request.html',
                       {'formset': itemFormset(), 'form': form})
 
@@ -90,6 +91,7 @@ def create_ace_purchase_request(request, ace_id):
             purchase_request = form.save(commit=False)
             purchase_request.process = intiate(request, 'purchase request')
             purchase_request.requested_by = request.user
+            purchase_request.region = request.user.region
             purchase_request.save()
             try:
                 items_from_sap = pd.ExcelFile(request.FILES.get('upload'))

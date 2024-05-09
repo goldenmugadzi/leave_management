@@ -46,6 +46,7 @@
                                             Allocation code of expenditure: {{ purchase_request.allocation_code_of_expenditure |default_if_none:'' }}
                                         </p>
                                     {% endif %}
+                                    <p class="font-bold text-xl  mb-2">Created for :{{ purchase_request.section |default_if_none:'' }} in {{ purchase_request.region |default_if_none:'' }} </p>
                                     <p class="font-bold text-xl  mb-2">Procurement reference number: {{ purchase_request.pr_no |default_if_none:'' }}</p>
                                     {% if purchase_request.payment_mode %}
                                         <p class="font-bold   mb-2">Payment mode: {{ purchase_request.payment_mode |default_if_none:'' }}</p>
