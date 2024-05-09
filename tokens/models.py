@@ -31,8 +31,8 @@ class Token(models.Model):
     created_by = models.ForeignKey(UserProfile, on_delete=models.CASCADE, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     process=models.ForeignKey(Process, on_delete=models.CASCADE, blank=True, null=True)
-    section=models.ForeignKey(Sections, on_delete=models.CASCADE)
-    region=models.ForeignKey(Regions, on_delete=models.CASCADE)
+    section=models.ForeignKey(Sections, on_delete=models.CASCADE, blank=True, null=True)
+    region=models.ForeignKey(Regions, on_delete=models.CASCADE, blank=True, null=True)
      
     token_photo = models.FileField(upload_to='uploads/Tokens/generatedtoken',help_text="photo of generated token " , blank=True, null=True)
     type = models.CharField(max_length=100,help_text="Type of Token",  choices=[('REIMBURSEMENT', 'REIMBURSEMENT') , ('CLEAR CREDIT', 'CLEAR CREDIT'), ('TEMPER', 'TEMPER')])
