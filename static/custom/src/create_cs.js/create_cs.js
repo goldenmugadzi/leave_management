@@ -58,13 +58,18 @@ var CreateCS = function (_React$Component) {
         var data = JSON.parse(data_);
         console.log("cs data: ", data, typeof data === "undefined" ? "undefined" : _typeof(data));
         var requester_role = data.requester_role ? data.requester_role : "";
+        var creator = data.creator ? data.creator : "";
+        var created_at = data.created_at ? data.created_at : "";
         var bids_object = data.bids ? data.bids : [];
-        var bids = Object.keys(bids_object).map(function (key) {
-          var new_obj = bids_object[key];
-          return Object.assign({}, new_obj, {
-            bid_document_url: _this.onGetFileObjectUrl(new_obj.bid_document)
+        var bids = [];
+        if (bids_object.length !== 0) {
+          bids = Object.keys(bids_object).map(function (key) {
+            var new_obj = bids_object[key];
+            return Object.assign({}, new_obj, {
+              bid_document_url: _this.onGetFileObjectUrl(new_obj.bid_document)
+            });
           });
-        });
+        }
         var sorted_bids = bids.sort(function (a, b) {
           return a.bid_no - b.bid_no;
         });
@@ -102,12 +107,14 @@ var CreateCS = function (_React$Component) {
         var cs_owner = data.cs_owner ? data.cs_owner : "";
 
         var advert_url = _this.onGetFileObjectUrl(data.advert);
-
-        var pr_at_list = pr_attachments.map(function (pr_attachment) {
-          return Object.assign({}, pr_attachment, {
-            attachment_url: _this.onGetFileObjectUrl(pr_attachment.file)
+        var pr_at_list = [];
+        if (pr_attachments.length > 0) {
+          pr_at_list = pr_attachments.map(function (pr_attachment) {
+            return Object.assign({}, pr_attachment, {
+              attachment_url: _this.onGetFileObjectUrl(pr_attachment.file)
+            });
           });
-        });
+        }
 
         var committeeApprovalComplete = committee.filter(function (member) {
           return member.memberApproval === "" || member.memberApproval === null || member.memberApproval === undefined || member.memberApproval === "Rejected";
@@ -118,6 +125,8 @@ var CreateCS = function (_React$Component) {
 
         _this.setState(Object.assign({}, _this.state, (_Object$assign = {
           requester_role: requester_role,
+          creator: creator,
+          created_at: created_at,
           cs_owner: cs_owner,
           committeeApprovalComplete: committeeApprovalComplete,
           approvalsComplete: approvalsComplete,
@@ -165,12 +174,14 @@ var CreateCS = function (_React$Component) {
           var fullName2 = user2.first_name + " " + user2.last_name;
           return fullName1.localeCompare(fullName2);
         });
-
-        var pr_at_list = pr_attachments.map(function (pr_attachment) {
-          return Object.assign({}, pr_attachment, {
-            attachment_url: _this.onGetFileObjectUrl(pr_attachment.file)
+        var pr_at_list = [];
+        if (pr_items.length === 0) {
+          pr_at_list = pr_attachments.map(function (pr_attachment) {
+            return Object.assign({}, pr_attachment, {
+              attachment_url: _this.onGetFileObjectUrl(pr_attachment.file)
+            });
           });
-        });
+        }
         _this.setState({
           scope_of_work: scope_of_work,
           proc_ref: proc_ref,
@@ -207,12 +218,14 @@ var CreateCS = function (_React$Component) {
           var _pr_id = data.pr_id ? data.pr_id : "";
           var pr_date = data.pr_date ? data.pr_date : "";
           var users = data.users ? data.users : [];
-
-          var pr_at_list = pr_attachments.map(function (pr_attachment) {
-            return Object.assign({}, pr_attachment, {
-              attachment_url: _this.onGetFileObjectUrl(pr_attachment.file)
+          var pr_at_list = [];
+          if (pr_attachments.length > 0) {
+            pr_at_list = pr_attachments.map(function (pr_attachment) {
+              return Object.assign({}, pr_attachment, {
+                attachment_url: _this.onGetFileObjectUrl(pr_attachment.file)
+              });
             });
-          });
+          }
           _this.setState({
             scope_of_work: scope_of_work,
             proc_ref: proc_ref,
@@ -386,13 +399,16 @@ var CreateCS = function (_React$Component) {
           var committeeDate = data.committee_date;
           var committeeApproval = data.committee_approval;
           var memberName = data.committee_fullname;
-          var members = _this.state.committeeMembers.map(function (member) {
-            if (member.memberUserName === username) {
-              member.committee_date = committeeDate;
-              member.member_approval = committeeApproval;
-            }
-            return member;
-          });
+          var members = [];
+          if (_this.state.committeeMembers && _this.state.committeeMembers.length > 0) {
+            members = _this.state.committeeMembers.map(function (member) {
+              if (member.memberUserName === username) {
+                member.committee_date = committeeDate;
+                member.member_approval = committeeApproval;
+              }
+              return member;
+            });
+          }
           _this.setState(Object.assign({}, _this.state, {
             committeeMembers: members
           }));
@@ -559,12 +575,15 @@ var CreateCS = function (_React$Component) {
         // update item selected to false
         item.ordered = false;
         // update pr_items
-        var pr_items = _this.state.pr_items.map(function (_item) {
-          if (_item.id === item_id) {
-            return item;
-          }
-          return _item;
-        });
+        var pr_items = [];
+        if (_this.state.pr_items && _this.state.pr_items.length > 0) {
+          pr_items = _this.state.pr_items.map(function (_item) {
+            if (_item.id === item_id) {
+              return item;
+            }
+            return _item;
+          });
+        }
         // remove item
         var items = _this.state.cs_items.filter(function (item) {
           return item.id !== item_id;
@@ -586,12 +605,15 @@ var CreateCS = function (_React$Component) {
         _item2.ordered = true;
         _item2.item_required = _item2.item_required;
         // update pr_items
-        var _pr_items = _this.state.pr_items.map(function (_item) {
-          if (_item.id === item_id) {
-            return _item2;
-          }
-          return _item;
-        });
+        var _pr_items = [];
+        if (_this.state.pr_items && _this.state.pr_items.length > 0) {
+          _pr_items = _this.state.pr_items.map(function (_item) {
+            if (_item.id === item_id) {
+              return _item2;
+            }
+            return _item;
+          });
+        }
 
         var item_count = _this.state.cs_item_count + 1;
         _this.setState(Object.assign({}, _this.state, {
@@ -655,11 +677,14 @@ var CreateCS = function (_React$Component) {
 
     _this.onAddBidModal = function () {
       var bid_count = _this.state.bids.length + 1;
+      var items = _this.state.cs_items;
+      console.log("items: ", items);
       _this.setState(Object.assign({}, _this.state, {
         addBidModal: !_this.state.addBidModal,
         bid_count: bid_count,
         currentBid: {
-          bid_count: bid_count
+          bid_count: bid_count,
+          items: items
         }
       }));
     };
@@ -692,6 +717,7 @@ var CreateCS = function (_React$Component) {
     };
 
     _this.onCurrentBidChange = function (name_, event) {
+
       var currentBid = _this.state.currentBid;
       if (name_ === "bid_document") {
         var bid_file = event.target.files[0];
@@ -719,63 +745,29 @@ var CreateCS = function (_React$Component) {
       }));
     };
 
-    _this.onCurrentBidItemChange = function (description, name_, event) {
-      // check if item exists in current bid
-      console.log("description: ", description);
-      var item = _this.state.currentBid.items ? _this.state.currentBid.items.find(function (item) {
-        return item.item_required === description;
-      }) : null;
-      console.log("item: ", item);
-      // if item exists update item
-      if (item) {
-        var _event$target6 = event.target,
-            name = _event$target6.name,
-            value = _event$target6.value;
+    _this.onCurrentBidItemChange = function (description, name_, event, bid_no) {
+      var _event$target6 = event.target,
+          name = _event$target6.name,
+          value = _event$target6.value;
 
-        item[name_] = value;
-        // update item in current bid
-        var items = _this.state.currentBid.items.map(function (_item) {
-          if (_item.item_required === description) {
-            return item;
-          }
-          return _item;
-        });
-        // update current bid
-        var currentBid = _this.state.currentBid;
-        currentBid.items = items;
-        // update state
-        _this.setState(Object.assign({}, _this.state, {
-          currentBid: currentBid
-        }));
-      } else {
-        // find item in cs_items
-        var _item3 = _this.state.cs_items.find(function (item) {
-          return item.item_required === description;
-        });
-        // create new item
-        var new_item = {
-          item_required: _item3.item_required,
-          quantity: _item3.quantity,
-          unit_of_measurement: _item3.unit_of_measurement,
-          vat: _item3.vat,
-          unit_price: _item3.unit_price,
-          total_price: _item3.total_price
-        };
-        // update current bid items
-        var _items = [];
-        if (!_this.state.currentBid.items) {
-          _items.push(new_item);
+      console.log("name: ", name, " value: ", value, " bid no: ", bid_no);
+      console.log("description: ", description);
+
+      var items = _this.state.currentBid.items;
+
+      var new_items = items ? items.map(function (it, index) {
+        if (it.item_required === description) {
+          return Object.assign({}, it, _defineProperty({}, name_, value));
         } else {
-          _items = [].concat(_toConsumableArray(_this.state.currentBid.items), [new_item]);
+          return it;
         }
-        // update current bid
-        var _currentBid = _this.state.currentBid;
-        _currentBid.items = _items;
-        // update state
-        _this.setState(Object.assign({}, _this.state, {
-          currentBid: _currentBid
-        }));
-      }
+      }) : [];
+
+      _this.setState(Object.assign({}, _this.state, {
+        currentBid: Object.assign({}, _this.state.currentBid, {
+          items: new_items
+        })
+      }));
     };
 
     _this.onCurrentBidSave = function () {
@@ -790,6 +782,7 @@ var CreateCS = function (_React$Component) {
         alert("Please select a bid document");
         return;
       } else {
+
         // check if current bid already exists
         if (currentBid.items) {
           console.log("state bids found: ", _this.state.bids);
@@ -800,10 +793,13 @@ var CreateCS = function (_React$Component) {
           if (bid) {
             // update bid
             console.log("currentBid 1: ", currentBid);
-            var items = currentBid.items.map(function (item) {
-              item.total_price = item.quantity * item.unit_price;
-              return item;
-            });
+            var items = [];
+            if (_this.state.currentBid.items && _this.state.currentBid.items.length > 0) {
+              items = currentBid.items.map(function (item) {
+                item.total_price = item.quantity * item.unit_price;
+                return item;
+              });
+            }
 
             var missingFields = items.filter(function (item) {
               return item.quantity === "" || item.quantity === undefined || item.unit_price === "" || item.unit_price === undefined || item.vat === "" || item.vat === undefined || item.unit_of_measurement === "" || item.unit_of_measurement === undefined || item.total_price === "" || item.total_price === undefined;
@@ -815,32 +811,49 @@ var CreateCS = function (_React$Component) {
             }
             currentBid.items = items;
             console.log("currentBid: ", currentBid);
-
-            _this.onSaveBid(currentBid);
-            var bids = _this.state.bids.map(function (bid) {
-              if (bid.bid_count === currentBid.bid_count) {
-                return currentBid;
-              }
-              return bid;
-            });
-            _this.setState(Object.assign({}, _this.state, {
-              bids: bids,
-              currentBid: {},
-              addBidModal: false
-            }));
+            var bids = [];
+            if (_this.state.bids && _this.state.bids.length > 0) {
+              bids = _this.state.bids.map(function (bid) {
+                if (bid.bid_count === currentBid.bid_count) {
+                  return Object.assign({}, currentBid, {
+                    bid_document: currentBid.bid_document ? currentBid.bid_document : bid.bid_document
+                  });
+                }
+                return bid;
+              });
+              bids.sort(function (a, b) {
+                return a.bid_count - b.bid_count;
+              });
+            }
+            _this.onSaveBid(currentBid, bids, undefined, undefined);
           } else {
             // calculate total price for each item
-            var _items2 = currentBid.items.map(function (item) {
-              item.total_price = item.quantity * item.unit_price;
-              return item;
+            var _items = [];
+            if (currentBid.items && currentBid.items.length > 0) {
+              _items = currentBid.items.map(function (item) {
+                item.total_price = item.quantity * item.unit_price;
+                return item;
+              });
+            }
+
+            var _missingFields = _items.filter(function (item) {
+              return item.quantity === "" || item.quantity === undefined || item.unit_price === "" || item.unit_price === undefined || item.vat === "" || item.vat === undefined || item.unit_of_measurement === "" || item.unit_of_measurement === undefined || item.total_price === "" || item.total_price === undefined;
             });
+
+            if (_missingFields.length > 0) {
+              alert("Please fill in all required fields");
+              return;
+            }
             // update current bid items
-            currentBid.items = _items2;
-            _this.onSaveBid(currentBid);
+            currentBid.items = _items;
 
             var _bids = _this.state.bids;
             console.log("currentBid: ", currentBid);
             _bids.push(currentBid);
+            _bids.sort(function (a, b) {
+              return a.bid_count - b.bid_count;
+            });
+
             // check if compliance for supplier exists
             var compliances = _this.state.compliance;
             var compliance = compliances.find(function (compliance) {
@@ -882,14 +895,7 @@ var CreateCS = function (_React$Component) {
               };
               complianceRemarks.push(complianceRemark_);
             }
-
-            _this.setState(Object.assign({}, _this.state, {
-              bids: _bids,
-              currentBid: {},
-              addBidModal: false,
-              compliance: compliances,
-              complianceRemarks: complianceRemarks
-            }));
+            _this.onSaveBid(currentBid, _bids, compliance, complianceRemarks);
           }
         } else {
           alert("Please add items to the bid");
@@ -897,7 +903,7 @@ var CreateCS = function (_React$Component) {
       }
     };
 
-    _this.onSaveBid = function (currentBid) {
+    _this.onSaveBid = function (currentBid, bids, compliances, complianceRemarks) {
       var form_data = new FormData();
 
       // add enctype to form data
@@ -924,6 +930,13 @@ var CreateCS = function (_React$Component) {
       }).then(function (data) {
         console.log("data: ", data);
         if (data.success) {
+
+          _this.setState(Object.assign({}, _this.state, {
+            bids: bids ? bids : _this.state.bids,
+            compliance: compliances ? compliances : _this.state.compliance,
+            complianceRemarks: complianceRemarks ? complianceRemarks : _this.state.complianceRemarks
+          }));
+
           alert("Bid saved successfully");
         } else {
           alert("Error saving Bid");
@@ -931,12 +944,21 @@ var CreateCS = function (_React$Component) {
       }).catch(function (err) {
         return console.log("onSaveBid: ", err);
       });
+      _this.setState(Object.assign({}, _this.state, {
+        currentBid: null,
+        addBidModal: false,
+        updateBidModal: false
+      }));
     };
 
     _this.onSaveSchedule = function () {
 
       if (!_this.state.proc_ref || !_this.state.scope_of_work || !_this.state.pr_number || !_this.state.pr_date || !_this.state.closing_date || !_this.state.ref_date || !_this.state.closing_time_hour || !_this.state.date_tender_opened || !_this.state.tender_adjudication_committee_date) {
         alert("Please fill in all required fields");
+        return;
+      }
+      if (_this.state.pr_items.length === 0) {
+        alert("Cannot create a Comparative Schedule without Purchase Request items.");
         return;
       }
       var form_data = new FormData();
@@ -1093,16 +1115,20 @@ var CreateCS = function (_React$Component) {
     };
 
     _this.onFileInputChange = function (name_, event) {
-      var _Object$assign4;
+      var _Object$assign5;
 
       console.log(event);
       var file = event.target.files[0];
       var fileUrl = _this.onGetFileObjectUrl(file);
-      _this.setState(Object.assign({}, _this.state, (_Object$assign4 = {}, _defineProperty(_Object$assign4, name_, file), _defineProperty(_Object$assign4, "advert_url", fileUrl), _Object$assign4)));
+      _this.setState(Object.assign({}, _this.state, (_Object$assign5 = {}, _defineProperty(_Object$assign5, name_, file), _defineProperty(_Object$assign5, "advert_url", fileUrl), _Object$assign5)));
     };
 
     _this.onAddComplianceTable = function () {
       // add bid compliance
+      if (_this.state.bids.length === 0) {
+        alert("Please add bids first");
+        return;
+      }
       var compliances = _this.state.bids.map(function (bid) {
         return {
           bid_no: bid.bid_count,
@@ -1140,74 +1166,69 @@ var CreateCS = function (_React$Component) {
     };
 
     _this.onComplianceItemsChange = function (name_, event) {
-      var _Object$assign5;
+      var _Object$assign6;
 
-      console.log("name and value: ", name_, event);
       var _event$target8 = event.target,
           name = _event$target8.name,
           value = _event$target8.value;
 
+      console.log("name: ", name, "value: ", value);
       var compliance = _this.state.compliance;
+      if (compliance.length === 0) {
+        alert("Please add bids first");
+        return;
+      }
+      console.log("showSamples: ", _this.state.showSamples, "showSiteVisit: ", _this.state.showSiteVisit, value, name);
       var updatedComplianceList = compliance.map(function (compliance_, index) {
         var _compliance = {};
-        if (_this.state.showSamples && _this.state.showSiteVisit) {
-          _compliance = {
-            payment_terms: compliance_.payment_terms,
-            bid_validity: compliance_.bid_validity,
-            delivery_period: compliance_.delivery_period,
-            technical_specifications: compliance_.technical_specifications,
-            valid_tax_clearance: compliance_.valid_tax_clearance,
-            registered_with_praz: compliance_.registered_with_praz,
-            tax_status: compliance_.tax_status,
-            site_visit: compliance_.site_visit,
-            samples_required: compliance_.samples_required
-          };
-        } else if (_this.state.showSamples && !_this.state.showSiteVisit) {
-          _compliance = {
-            payment_terms: compliance_.payment_terms,
-            bid_validity: compliance_.bid_validity,
-            delivery_period: compliance_.delivery_period,
-            technical_specifications: compliance_.technical_specifications,
-            valid_tax_clearance: compliance_.valid_tax_clearance,
-            registered_with_praz: compliance_.registered_with_praz,
-            tax_status: compliance_.tax_status,
-            samples_required: compliance_.samples_required
-          };
-        } else if (!_this.state.showSamples && _this.state.showSiteVisit) {
-          _compliance = {
-            payment_terms: compliance_.payment_terms,
-            bid_validity: compliance_.bid_validity,
-            delivery_period: compliance_.delivery_period,
-            technical_specifications: compliance_.technical_specifications,
-            valid_tax_clearance: compliance_.valid_tax_clearance,
-            registered_with_praz: compliance_.registered_with_praz,
-            tax_status: compliance_.tax_status,
-            site_visit: compliance_.site_visit
-          };
-        } else {
-          _compliance = {
-            payment_terms: compliance_.payment_terms,
-            bid_validity: compliance_.bid_validity,
-            delivery_period: compliance_.delivery_period,
-            technical_specifications: compliance_.technical_specifications,
-            valid_tax_clearance: compliance_.valid_tax_clearance,
-            registered_with_praz: compliance_.registered_with_praz,
-            tax_status: compliance_.tax_status
-          };
+        var site_visit = compliance_.site_visit;
+        var samples_required = compliance_.samples_required;
+        if (name === "showSiteVisit") {
+          if (value === "no") {
+            site_visit = false;
+          }
+        } else if (name === "showSamples") {
+          if (value === "no") {
+            samples_required = false;
+          }
         }
 
+        console.log("other value: ", value);
+        console.log("site_visit: ", site_visit, "samples_required: ", samples_required);
+        console.log("showSamples: ", _this.state.showSamples, "showSiteVisit: ", _this.state.showSiteVisit);
+        _compliance = {
+          payment_terms: compliance_.payment_terms,
+          bid_validity: compliance_.bid_validity,
+          delivery_period: compliance_.delivery_period,
+          technical_specifications: compliance_.technical_specifications,
+          valid_tax_clearance: compliance_.valid_tax_clearance,
+          registered_with_praz: compliance_.registered_with_praz,
+          site_visit: site_visit,
+          samples_required: samples_required
+        };
+
         // set compliance_['decision'] to true if all compliance are true
-        var compliance_values = Object.values(_compliance);
-        console.log("compliances: ", compliance_values);
-        var decision = compliance_values.every(function (value) {
-          return value === true;
-        });
-        compliance_["decision"] = decision;
-        compliance_["reject"] = !decision;
+        var allValuesTrue = true;
+        for (var key in _compliance) {
+          if (_compliance.hasOwnProperty(key)) {
+            if (key === "site_visit" && value === "no") {
+              continue;
+            } else if (key === "samples_required" && value === "no") {
+              continue;
+            } else if (!_compliance[key]) {
+              allValuesTrue = false;
+              break;
+            }
+          }
+        }
+
+        compliance_["decision"] = allValuesTrue;
+        compliance_["reject"] = !allValuesTrue;
 
         return compliance_;
       });
-      _this.setState(Object.assign({}, _this.state, (_Object$assign5 = {}, _defineProperty(_Object$assign5, name_, value), _defineProperty(_Object$assign5, "compliance", updatedComplianceList), _Object$assign5)));
+      console.log("state: ", _this.state.showSamples, _this.state.showSiteVisit);
+      _this.setState(Object.assign({}, _this.state, (_Object$assign6 = {}, _defineProperty(_Object$assign6, name, value), _defineProperty(_Object$assign6, "compliance", updatedComplianceList), _Object$assign6)));
     };
 
     _this.onComplianceChange = function (index, event) {
@@ -1218,58 +1239,81 @@ var CreateCS = function (_React$Component) {
       console.log("name: ", name, "checked: ", checked);
       var compliance = _this.state.compliance;
       compliance[index][name] = checked;
-      // filter decision and reject from list
-      var _compliance = {};
-      if (_this.state.showSamples && _this.state.showSiteVisit) {
-        _compliance = {
-          payment_terms: compliance[index].payment_terms,
-          bid_validity: compliance[index].bid_validity,
-          delivery_period: compliance[index].delivery_period,
-          technical_specifications: compliance[index].technical_specifications,
-          valid_tax_clearance: compliance[index].valid_tax_clearance,
-          registered_with_praz: compliance[index].registered_with_praz,
-          site_visit: compliance[index].site_visit,
-          samples_required: compliance[index].samples_required
-        };
-      } else if (_this.state.showSamples && !_this.state.showSiteVisit) {
-        _compliance = {
-          payment_terms: compliance[index].payment_terms,
-          bid_validity: compliance[index].bid_validity,
-          delivery_period: compliance[index].delivery_period,
-          technical_specifications: compliance[index].technical_specifications,
-          valid_tax_clearance: compliance[index].valid_tax_clearance,
-          registered_with_praz: compliance[index].registered_with_praz,
-          samples_required: compliance[index].samples_required
-        };
-      } else if (!_this.state.showSamples && _this.state.showSiteVisit) {
-        _compliance = {
-          payment_terms: compliance[index].payment_terms,
-          bid_validity: compliance[index].bid_validity,
-          delivery_period: compliance[index].delivery_period,
-          technical_specifications: compliance[index].technical_specifications,
-          valid_tax_clearance: compliance[index].valid_tax_clearance,
-          registered_with_praz: compliance[index].registered_with_praz,
-          site_visit: compliance[index].site_visit
-        };
-      } else {
-        _compliance = {
-          payment_terms: compliance[index].payment_terms,
-          bid_validity: compliance[index].bid_validity,
-          delivery_period: compliance[index].delivery_period,
-          technical_specifications: compliance[index].technical_specifications,
-          valid_tax_clearance: compliance[index].valid_tax_clearance,
-          registered_with_praz: compliance[index].registered_with_praz
-        };
-      }
+      // // filter decision and reject from list
+      // let _compliance = {};
+      // if (this.state.showSamples && this.state.showSiteVisit) {
+      //   _compliance = {
+      //     payment_terms: compliance[index].payment_terms,
+      //     bid_validity: compliance[index].bid_validity,
+      //     delivery_period: compliance[index].delivery_period,
+      //     technical_specifications: compliance[index].technical_specifications,
+      //     valid_tax_clearance: compliance[index].valid_tax_clearance,
+      //     registered_with_praz: compliance[index].registered_with_praz,
+      //     site_visit: compliance[index].site_visit,
+      //     samples_required: compliance[index].samples_required,
+      //   };
+      // } else if (this.state.showSamples && !this.state.showSiteVisit) {
+      //   _compliance = {
+      //     payment_terms: compliance[index].payment_terms,
+      //     bid_validity: compliance[index].bid_validity,
+      //     delivery_period: compliance[index].delivery_period,
+      //     technical_specifications: compliance[index].technical_specifications,
+      //     valid_tax_clearance: compliance[index].valid_tax_clearance,
+      //     registered_with_praz: compliance[index].registered_with_praz,
+      //     samples_required: compliance[index].samples_required,
+      //   };
+      // } else if (!this.state.showSamples && this.state.showSiteVisit) {
+      //   _compliance = {
+      //     payment_terms: compliance[index].payment_terms,
+      //     bid_validity: compliance[index].bid_validity,
+      //     delivery_period: compliance[index].delivery_period,
+      //     technical_specifications: compliance[index].technical_specifications,
+      //     valid_tax_clearance: compliance[index].valid_tax_clearance,
+      //     registered_with_praz: compliance[index].registered_with_praz,
+      //     site_visit: compliance[index].site_visit,
+      //   };
+      // } else {
+      //   _compliance = {
+      //     payment_terms: compliance[index].payment_terms,
+      //     bid_validity: compliance[index].bid_validity,
+      //     delivery_period: compliance[index].delivery_period,
+      //     technical_specifications: compliance[index].technical_specifications,
+      //     valid_tax_clearance: compliance[index].valid_tax_clearance,
+      //     registered_with_praz: compliance[index].registered_with_praz,
+      //   };
+      // }
 
-      // set compliance[index]['decision'] to true if all compliance are true
-      var compliance_values = Object.values(_compliance);
-      console.log("compliances: ", compliance_values);
-      var decision = compliance_values.every(function (value) {
-        return value === true;
-      });
-      compliance[index]["decision"] = decision;
-      compliance[index]["reject"] = !decision;
+      // // set compliance[index]['decision'] to true if all compliance are true
+      // let compliance_values = Object.values(_compliance);
+      // console.log("compliances: ", compliance_values);
+      // let decision = compliance_values.every((value) => value === true);
+      var _compliance = {
+        payment_terms: compliance[index].payment_terms,
+        bid_validity: compliance[index].bid_validity,
+        delivery_period: compliance[index].delivery_period,
+        technical_specifications: compliance[index].technical_specifications,
+        valid_tax_clearance: compliance[index].valid_tax_clearance,
+        registered_with_praz: compliance[index].registered_with_praz,
+        site_visit: compliance[index].site_visit,
+        samples_required: compliance[index].samples_required
+      };
+
+      // set compliance_['decision'] to true if all compliance are true
+      var allValuesTrue = true;
+      for (var key in _compliance) {
+        if (_compliance.hasOwnProperty(key)) {
+          if (key === "site_visit" && _this.state.showSiteVisit === "no") {
+            continue;
+          } else if (key === "samples_required" && _this.state.showSamples === "no") {
+            continue;
+          } else if (!_compliance[key]) {
+            allValuesTrue = false;
+            break;
+          }
+        }
+      }
+      compliance[index]["decision"] = allValuesTrue;
+      compliance[index]["reject"] = !allValuesTrue;
 
       _this.setState(Object.assign({}, _this.state, {
         compliance: compliance
@@ -1352,7 +1396,7 @@ var CreateCS = function (_React$Component) {
             rankings: rankings,
             rankingTable: true
           }));
-          alert("Schedule closed successfully");
+          alert("Bids ranked successfully");
         } else {
           alert("Error saving Schedule");
         }
@@ -1363,6 +1407,8 @@ var CreateCS = function (_React$Component) {
       requester_role: "",
       cs_id: "",
       cs_owner: "",
+      creator: "",
+      created_at: "",
       committeeApprovalComplete: false,
       plan_ref: "",
       proc_ref: "",
@@ -1391,8 +1437,8 @@ var CreateCS = function (_React$Component) {
       complianceTable: false,
       compliance: [],
       complianceRemarks: [],
-      showSamples: "",
-      showSiteVisit: "",
+      showSamples: "no",
+      showSiteVisit: "no",
 
       rankingTable: false,
       rankings: [],
@@ -1971,10 +2017,10 @@ var CreateCS = function (_React$Component) {
                 React.createElement(
                   "tbody",
                   null,
-                  this.state.pr_items.map(function (item, index) {
+                  this.state.pr_items && this.state.pr_items.map(function (item, index) {
                     return React.createElement(
                       "tr",
-                      { className: "text-gray-900" },
+                      { key: index, className: "text-gray-900" },
                       React.createElement(
                         "td",
                         { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
@@ -2029,7 +2075,7 @@ var CreateCS = function (_React$Component) {
         bidsModal = React.createElement(
           "div",
           {
-            id: "bid-" + this.state.currentBid,
+            id: "bid-" + this.state.currentBid.bid_count,
             className: "fixed inset-0 flex items-center justify-center z-50 pt-10 pb-20"
           },
           React.createElement(
@@ -2164,9 +2210,9 @@ var CreateCS = function (_React$Component) {
                       "div",
                       { className: "mt-2" },
                       React.createElement("input", {
-                        name: "supplier[bid][0]",
+                        name: "",
                         type: "number",
-                        value: "1",
+                        value: this.state.currentBid.bid_count,
                         id: "bid",
                         required: "required",
                         readOnly: true,
@@ -2199,7 +2245,7 @@ var CreateCS = function (_React$Component) {
                     )
                   )
                 ),
-                this.state.cs_items.map(function (item, index) {
+                this.state.cs_items && this.state.cs_items.map(function (item, index) {
                   return React.createElement(
                     "div",
                     { className: "flex justify-evenly mt-5  px-2 py-2 rounded-md" },
@@ -2221,7 +2267,7 @@ var CreateCS = function (_React$Component) {
                           name: "item_description",
                           defaultValue: item.item_required,
                           onChange: function onChange(e) {
-                            return _this2.onCurrentBidItemChange(item.item_required, "item_required", e);
+                            return _this2.onCurrentBidItemChange(item.item_required, "item_required", e, _this2.state.currentBid.bid_count);
                           },
                           id: "item_description",
                           required: "required",
@@ -2247,7 +2293,7 @@ var CreateCS = function (_React$Component) {
                           name: "quantity",
                           defaultValue: item.quantity,
                           onChange: function onChange(e) {
-                            return _this2.onCurrentBidItemChange(item.item_required, "quantity", e);
+                            return _this2.onCurrentBidItemChange(item.item_required, "quantity", e, _this2.state.currentBid.bid_count);
                           },
                           type: "number",
                           id: "quantity",
@@ -2277,7 +2323,7 @@ var CreateCS = function (_React$Component) {
                             {
                               id: "unit_of_measurement",
                               onChange: function onChange(e) {
-                                return _this2.onCurrentBidItemChange(item.item_required, "unit_of_measurement", e);
+                                return _this2.onCurrentBidItemChange(item.item_required, "unit_of_measurement", e, _this2.state.currentBid.bid_count);
                               },
                               autoComplete: "unit_of_measurement",
                               className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
@@ -2324,7 +2370,7 @@ var CreateCS = function (_React$Component) {
                             {
                               id: "vat",
                               onChange: function onChange(e) {
-                                return _this2.onCurrentBidItemChange(item.item_required, "vat", e);
+                                return _this2.onCurrentBidItemChange(item.item_required, "vat", e, _this2.state.currentBid.bid_count);
                               },
                               autoComplete: "vat",
                               className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
@@ -2371,7 +2417,7 @@ var CreateCS = function (_React$Component) {
                           name: "unit_price",
                           defaultValue: item.unit_price,
                           onChange: function onChange(e) {
-                            return _this2.onCurrentBidItemChange(item.item_required, "unit_price", e);
+                            return _this2.onCurrentBidItemChange(item.item_required, "unit_price", e, _this2.state.currentBid.bid_count);
                           },
                           type: "text",
                           id: "unit_price",
@@ -2429,7 +2475,7 @@ var CreateCS = function (_React$Component) {
         updateBidModal = React.createElement(
           "div",
           {
-            id: "bid-" + this.state.currentBid,
+            id: "bid-" + this.state.currentBid.bid_count,
             className: "fixed inset-0 flex items-center justify-center z-50 pt-10 pb-20"
           },
           React.createElement(
@@ -2441,7 +2487,7 @@ var CreateCS = function (_React$Component) {
               React.createElement(
                 "h3",
                 { className: "text-lg font-medium" },
-                "Modal Title"
+                "Update Bid"
               ),
               React.createElement(
                 "button",
@@ -2599,10 +2645,10 @@ var CreateCS = function (_React$Component) {
                     )
                   )
                 ),
-                this.state.currentBid.items.map(function (item, index) {
+                this.state.currentBid.items && this.state.currentBid.items.map(function (item, index) {
                   return React.createElement(
                     "div",
-                    { className: "flex justify-evenly mt-5  px-2 py-2 rounded-md" },
+                    { key: index, className: "flex justify-evenly mt-5  px-2 py-2 rounded-md" },
                     React.createElement(
                       "div",
                       { className: "flex-1 w-15 ml-1" },
@@ -2621,7 +2667,7 @@ var CreateCS = function (_React$Component) {
                           name: "item_description",
                           defaultValue: item.item_required,
                           onChange: function onChange(e) {
-                            return _this2.onCurrentBidItemChange(item.item_required, "item_required", e);
+                            return _this2.onCurrentBidItemChange(item.item_required, "item_required", e, _this2.state.currentBid.bid_count);
                           },
                           id: "item_description",
                           required: "required",
@@ -2647,7 +2693,7 @@ var CreateCS = function (_React$Component) {
                           name: "quantity",
                           defaultValue: item.quantity,
                           onChange: function onChange(e) {
-                            return _this2.onCurrentBidItemChange(item.item_required, "quantity", e);
+                            return _this2.onCurrentBidItemChange(item.item_required, "quantity", e, _this2.state.currentBid.bid_count);
                           },
                           type: "number",
                           id: "quantity",
@@ -2678,7 +2724,7 @@ var CreateCS = function (_React$Component) {
                               id: "unit_of_measurement",
                               defaultValue: item.unit_of_measurement,
                               onChange: function onChange(e) {
-                                return _this2.onCurrentBidItemChange(item.item_required, "unit_of_measurement", e);
+                                return _this2.onCurrentBidItemChange(item.item_required, "unit_of_measurement", e, _this2.state.currentBid.bid_count);
                               },
                               autoComplete: "unit_of_measurement",
                               className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
@@ -2726,7 +2772,7 @@ var CreateCS = function (_React$Component) {
                               id: "vat",
                               defaultValue: item.vat,
                               onChange: function onChange(e) {
-                                return _this2.onCurrentBidItemChange(item.item_required, "vat", e);
+                                return _this2.onCurrentBidItemChange(item.item_required, "vat", e, _this2.state.currentBid.bid_count);
                               },
                               autoComplete: "vat",
                               className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
@@ -2736,6 +2782,11 @@ var CreateCS = function (_React$Component) {
                               { value: item.vat },
                               item.vat
                             ) : "",
+                            React.createElement(
+                              "option",
+                              { value: "" },
+                              "Select VAT"
+                            ),
                             React.createElement(
                               "option",
                               { value: "Excl." },
@@ -2768,7 +2819,7 @@ var CreateCS = function (_React$Component) {
                           name: "unit_price",
                           defaultValue: item.unit_price,
                           onChange: function onChange(e) {
-                            return _this2.onCurrentBidItemChange(item.item_required, "unit_price", e);
+                            return _this2.onCurrentBidItemChange(item.item_required, "unit_price", e, _this2.state.currentBid.bid_count);
                           },
                           type: "text",
                           id: "unit_price",
@@ -2952,7 +3003,7 @@ var CreateCS = function (_React$Component) {
                     React.createElement(
                       "th",
                       { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
-                      "Bid No."
+                      "#"
                     ),
                     React.createElement(
                       "th",
@@ -3036,10 +3087,10 @@ var CreateCS = function (_React$Component) {
                 React.createElement(
                   "tbody",
                   null,
-                  this.state.compliance.map(function (comp, key) {
+                  this.state.compliance && this.state.compliance.map(function (comp, key) {
                     return React.createElement(
                       "tr",
-                      null,
+                      { key: key },
                       React.createElement(
                         "td",
                         { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
@@ -3228,7 +3279,7 @@ var CreateCS = function (_React$Component) {
                 React.createElement(
                   "tbody",
                   null,
-                  this.state.complianceRemarks.map(function (bid, key) {
+                  this.state.complianceRemarks && this.state.complianceRemarks.map(function (bid, key) {
                     return React.createElement(
                       "tr",
                       null,
@@ -3339,7 +3390,7 @@ var CreateCS = function (_React$Component) {
                 React.createElement(
                   "tbody",
                   null,
-                  this.state.rankings.map(function (rank, key) {
+                  this.state.rankings && this.state.rankings.map(function (rank, key) {
                     return React.createElement(
                       "tr",
                       { className: "text-gray-900" },
@@ -3522,7 +3573,7 @@ var CreateCS = function (_React$Component) {
                       ) : ""
                     )
                   ),
-                  this.state.committeeMembers.map(function (member, key) {
+                  this.state.committeeMembers && this.state.committeeMembers.map(function (member, key) {
                     return React.createElement(
                       "tr",
                       { className: "text-gray-900" },
@@ -3601,7 +3652,27 @@ var CreateCS = function (_React$Component) {
                         )
                       )
                     );
-                  })
+                  }),
+                  React.createElement(
+                    "tr",
+                    { className: "text-gray-900" },
+                    React.createElement(
+                      "td",
+                      { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                      "Created By"
+                    ),
+                    React.createElement(
+                      "td",
+                      { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                      this.state.creator
+                    ),
+                    React.createElement(
+                      "td",
+                      { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                      this.state.created_at ? this.state.created_at.split(" ")[0] : ""
+                    ),
+                    React.createElement("td", { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" })
+                  )
                 )
               )
             )
@@ -4271,7 +4342,7 @@ var CreateCS = function (_React$Component) {
               "ADD SCHEDULE ITEMS"
             )
           ) : "",
-          this.state.bids.map(function (bid, index) {
+          this.state.bids && this.state.bids.map(function (bid, index) {
             return React.createElement(
               "div",
               {

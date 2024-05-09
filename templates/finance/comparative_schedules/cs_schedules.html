@@ -16,33 +16,52 @@
   >
     <div class="flex justify-between items-center mb-5">
       <span class="text-lg font-semibold">Comperative Schedules</span>
-      <div></div>
+      <div class="flex justify-end items-center">
+      <a
+      href="/comperative_schedule/create_comperative_schedule/"
+      class="border-gulf-blue-600 hover:bg-gulf-blue-400 hover:text-gulf-blue-50 font-bold py-2 px-4 rounded m-2"
+      >
+      Create Schedule
+    </a>
+      <a
+      href="/comperative_schedule/all_schedules"
+      class="bg-gulf-blue-600 hover:bg-gulf-blue-800 text-white font-bold py-2 px-4 rounded m-2"
+      >
+      All Schedules
+    </a>
+    </div>
     </div>
     <div class="flex justify-end items-center mb-5">
-      {% comment %} <a
+      {% if fm_role == False and gm_role == False %}
+      <a
       href="/comperative_schedule/comperative_schedules"
       class="bg-gulf-blue-600 hover:bg-gulf-blue-800 text-white font-bold py-2 px-4 rounded m-2"
       >
       Your Schedules
-    </a> {% endcomment %}
-      <a
-      href="/comperative_schedule/create_comperative_schedule/"
-      class="bg-gulf-blue-600 hover:bg-gulf-blue-800 text-white font-bold py-2 px-4 rounded m-2"
-      >
-      Create Schedule
     </a>
-      {% comment %} <a
+      <a
         href="/comperative_schedule/pending_commitee"
         class="bg-gulf-blue-600 hover:bg-gulf-blue-800 text-white font-bold py-2 px-4 rounded m-2"
         >
         Pending Committee
-      </a>      
+      </a>
+      {% endif %}
+      {% if fm_role == True %} 
       <a
-      href="/comperative_schedule/pending_approval"
+      href="/comperative_schedule/pending_fm_approval"
       class="bg-gulf-blue-600 hover:bg-gulf-blue-800 text-white font-bold py-2 px-4 rounded m-2"
       >
-      Pending Approval
-    </a> {% endcomment %}
+      Pending Finance
+    </a>    
+    {% endif %} 
+    {% if gm_role == True %}
+    <a
+    href="/comperative_schedule/pending_gm_approval"
+    class="bg-gulf-blue-600 hover:bg-gulf-blue-800 text-white font-bold py-2 px-4 rounded m-2"
+    >
+      Pending GM
+    </a>
+    {% endif %}
     </div>
     <table id="users_index" class="display" style="width: 100%">
       <thead>
@@ -50,9 +69,9 @@
           <th>ID</th>
           <th>Scope</th>
           <th>Closing Date</th>
-          <th>Opened On</th>
-          <th>Committee Date</th>
-          <th>ACTION</th>
+          <th>Committee</th>
+          <th>Finance</th>
+          <th>GM</th>
         </tr>
       </thead>
       <tbody></tbody>
@@ -61,9 +80,9 @@
             <th>ID</th>
             <th>Scope</th>
             <th>Closing Date</th>
-            <th>Opened On</th>
-            <th>Committee Date</th>
-            <th>ACTION</th>
+            <th>Committee</th>
+            <th>Finance</th>
+            <th>GM</th>
         </tr>
       </tfoot>
     </table>
@@ -95,18 +114,72 @@
           data: "closing_date",
         },
         {
-          data: "cs_opened",
-        },
-        {
-          data: "tac_date",
-        },
-        {
-          data: null,
+          data: "committee_approval",
           render: function (data, type, row, meta) {
-            return `
-              <a type="button" class="btn btn-info" href='/comperative_schedule/comperative_schedule/${row.cs_id}' >
-                View              
-              </a>`;
+            let approval_badge = ""
+            if(data === "Approval Complete"){
+              approval_badge = `
+              <a type="button" class="bg-green-300 text-green-800 rounded px-1 py-2" href='/comperative_schedule/comperative_schedule/${row.cs_id}' >
+                ${data}              
+              </a>`
+            } else if (data === "Rejected"){
+              approval_badge = `
+              <a type="button" class="bg-red-300 text-red-800 rounded px-1 py-2" href='/comperative_schedule/comperative_schedule/${row.cs_id}' >
+                ${data}              
+              </a>`
+            } else {
+              approval_badge = `
+              <a type="button" class="bg-blue-300 text-blue-800 rounded px-1 py-2" href='/comperative_schedule/comperative_schedule/${row.cs_id}' >
+                ${data}              
+              </a>`
+            }
+            return approval_badge;
+          },
+        },
+        {
+          data: "fm_approval",
+          render: function (data, type, row, meta) {
+            let approval_badge = ""
+            if(data === "Approved"){
+              approval_badge = `
+              <a type="button" class="bg-green-300 text-green-800 rounded px-1 py-2" href='/comperative_schedule/comperative_schedule/${row.cs_id}' >
+                ${data}              
+              </a>`
+            } else if (data === "Rejected"){
+              approval_badge = `
+              <a type="button" class="bg-red-300 text-red-800 rounded px-1 py-2" href='/comperative_schedule/comperative_schedule/${row.cs_id}' >
+                ${data}              
+              </a>`
+            } else {
+              approval_badge = `
+              <a type="button" class="bg-blue-300 text-blue-800 rounded px-1 py-2" href='/comperative_schedule/comperative_schedule/${row.cs_id}' >
+                ${data}              
+              </a>`
+            }
+            return approval_badge;
+          },
+        },
+        {
+          data: "gm_approval",
+          render: function (data, type, row, meta) {
+            let approval_badge = ""
+            if(data === "Approved"){
+              approval_badge = `
+              <a type="button" class="bg-green-300 text-green-800 rounded px-1 py-2" href='/comperative_schedule/comperative_schedule/${row.cs_id}' >
+                ${data}              
+              </a>`
+            } else if (data === "Rejected"){
+              approval_badge = `
+              <a type="button" class="bg-red-300 text-red-800 rounded px-1 py-2" href='/comperative_schedule/comperative_schedule/${row.cs_id}' >
+                ${data}              
+              </a>`
+            } else {
+              approval_badge = `
+              <a type="button" class="bg-blue-300 text-blue-800 rounded px-1 py-2" href='/comperative_schedule/comperative_schedule/${row.cs_id}' >
+                ${data}              
+              </a>`
+            }
+            return approval_badge;
           },
         },
       ],

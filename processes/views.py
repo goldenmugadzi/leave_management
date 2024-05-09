@@ -1664,7 +1664,7 @@ def hr_forms(request):
 
 def commercial_forms(request):
     
-    files = Processes.objects.filter(archived=False, filetype="PROCESS_FORMS", department="HR")
+    files = Processes.objects.filter(archived=False, filetype="PROCESS_FORMS", department="Commercial")
 
     return render(request, 'process_maps/ict.html',
                   {"files": files,

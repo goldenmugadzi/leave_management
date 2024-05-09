@@ -40,7 +40,7 @@ urlpatterns = [
     path('process_risks/', include('process_risks.urls'), name='process_risks'),
     # path('process_maps/',include('process_maps.urls'), name='process_maps'),
     path('competence/', include('competence_building.urls')),
-    path('admin/', admin.site.urls),
+    # path('admin/', admin.site.urls),
     path('accounts/', include('django.contrib.auth.urls')),
     path('acee/', include('ACE2.urls')),
 
