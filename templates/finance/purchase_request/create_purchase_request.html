@@ -5,12 +5,12 @@
   Create Purchase Request
 {% endblock title %}
 {% block content %}
-{% if not form %}
-<div id="loading-screen" class="loading-screen fixed inset-0 flex items-center justify-center bg-black bg-opacity-75 text-white text-2xl" style="display: none;">
-  Loading...
+<div id="loading"  class="hidden ">
+  <div   class="fixed top-0 left-0 right-0 bottom-0 bg-black bg-blue-50 flex justify-center items-center ">
+    <span class="text-blue-500 text-3xl">Loading <i class="fas fa-circle-notch fa-spin "></i></span>
 </div>
-{% endif %}
-  <div class=" m-auto mt-5  ">
+</div>
+ <div id="loaded" class=" m-auto mt-5  ">
     <form id="purchase-request-form"
           class="row rounded py-4 border  bg-gulf-blue-100 p-3 m-auto  container"
           method="post"
@@ -98,9 +98,9 @@
             </div>
           {% endfor %}
         </div>
-        <input type="radio" name="action" class="hidden" value="Save" id="saveRadio" >
+        <input type="radio" name="action"  value="Save" checked id="saveRadio" class="hidden">
         <div class="flex">
-          <input class="bg-blue-500 text-white px-3 p-2 mb-3 m-1 p-1 rounded-full font-bold flex justify-center  hover:bg-blue-600"
+          <input class="bg-blue-500 text-white fa fa-plus px-3  mb-3 m-1  rounded-full font-bold flex justify-center  hover:bg-blue-600"
                  title="add line item"
                  id="add-form-button"
                  type="button"
@@ -108,22 +108,21 @@
                  <label for="upload"
                  class="text-blue-500 px-3  pl-0  rounded-full font-bold flex justify-center mb-3  items-center hover:bg-gray-300">
                  <i class="bg-blue-500  text-white fa fa-upload p-2 m-1 border rounded-full" aria-hidden="true"></i>  Import Items from Excel
-              <input id="upload" name="upload" type="file" class="">
+              <input id="upload" name="upload" type="file" >
           </label>
       </div>     
         <div class="m-auto justify-content-stretch text-center align-content-stretch">
           <input class="bg-blue-500 mx-3 hover:bg-gulf-blue-400 text-white font-bold text-2xl py-2 px-4 rounded"
                  type="submit"
-                 onclick="document.getElementById('saveRadio').checked = true;"
                  value="Save">
           <input class="bg-green-500 mx-3 hover:bg-green-400 text-white font-bold text-2xl py-2 px-4 rounded"
-          onclick="document.getElementById('saveRadio').checked = false;"
-          type="submit"
+          onclick="document.getElementById('saveRadio').checked = false;submit();"
+          type="button"
                  value="Submit">
         </div>
       </form>
     </div>
-  </div>
+  </div> 
 {% endblock content %}
 {% block scripts %}
   <script src="{% static 'assets/js/purchase_request.js' %}"></script>

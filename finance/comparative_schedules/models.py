@@ -4,6 +4,7 @@ from finance.Direct_purchases.models import Supplier
 from finance.purchase_request.models import PurchaseRequest
 from it.users.models import *
 
+
 class ProcPlan(models.Model):
     proc_ref = models.CharField(max_length=100)
     period = models.CharField(max_length=4)
@@ -14,6 +15,7 @@ class ProcPlan(models.Model):
     proc_method = models.CharField(max_length=20)
     sprc = models.CharField(max_length=3)
     region = models.CharField(max_length=100)
+
 
 class ComparativeSchedules(models.Model):
     cs_id = models.CharField(max_length=100)
@@ -50,6 +52,7 @@ class CSItems(models.Model):
     unit_of_measurement = models.CharField(max_length=50)
     created_at = models.DateTimeField(auto_now_add=True)
 
+
 class Bids(models.Model):
     cs_id = models.ForeignKey(ComparativeSchedules, on_delete=models.CASCADE)
     item_id = models.ForeignKey(CSItems, on_delete=models.CASCADE)
@@ -62,7 +65,8 @@ class Bids(models.Model):
     total = models.CharField(max_length=50)
     bid_document = models.CharField(max_length=400)
     created_at = models.DateTimeField(auto_now_add=True)
-    
+
+
 class CSCompliance(models.Model):
     cs_id = models.ForeignKey(ComparativeSchedules, on_delete=models.CASCADE)
     supplier_id = models.ForeignKey(Supplier, on_delete=models.CASCADE)
@@ -91,7 +95,8 @@ class Ranking(models.Model):
     decision = models.CharField(max_length=255)
     total = models.CharField(max_length=50)
     created_at = models.DateTimeField(auto_now_add=True)
-    
+
+
 class Order(models.Model):
     cs_id = models.ForeignKey(ComparativeSchedules, on_delete=models.CASCADE)
     order_no = models.CharField(max_length=100)
@@ -102,6 +107,7 @@ class Order(models.Model):
     site_visit_done = models.CharField(max_length=100)
     samples_delivered = models.CharField(max_length=100)
     created_at = models.DateTimeField(auto_now_add=True)
+
 
 class Committee(models.Model):
     cs_id = models.ForeignKey(ComparativeSchedules, on_delete=models.CASCADE)

@@ -77,7 +77,7 @@ class NonconformityForm(forms.ModelForm):
             field.label = field.label or field_name.replace('_', ' ').capitalize()
             field.label_attrs = {'class': 'block text-sm font-medium leading-6 text-gray-900'}          
 class AdditionalInfoForm(forms.ModelForm):
-    expected_completion_date = forms.DateField(widget=forms.DateInput(attrs={'type': 'date','min': str(datetime.date.today())}))
+    expected_completion_date = forms.DateField(widget=forms.DateInput(attrs={'required':"false",'type': 'date','min': str(datetime.date.today())}))
 
     class Meta:
         model = Nonconformity
