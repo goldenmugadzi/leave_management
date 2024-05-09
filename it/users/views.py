@@ -20,6 +20,7 @@ from it.users.forms import CustomUserCreationForm
 
 from django.contrib.auth.models import Group
 from .helpers import DESIGNATIONS, REGIONS, DISTRICTS, DEPOTS, ROLES, SECTIONS
+from django.contrib import messages
 
 BASE_URL = "http://172.16.8.99:9300"
 
@@ -180,8 +181,10 @@ def add_user(request):
                 user.set_password(password1)
                 user.save()
 
+            messages.success(request, "User created successfully")
         except Exception as ex:
             print("save user error", ex)
+            messages.error(request, "An error occurred while saving the user")
 
         return redirect("/users/users-index")
 
@@ -261,29 +264,34 @@ def update_user(request):
             }
         )
     elif request.method == "POST":
-        user_profile = UserProfile.objects.filter(id=request.POST['user_id']).first()
-        user_data = {
-            'first_name': request.POST['firstname'],
-            'last_name': request.POST['lastname'],
-            'username': request.POST['username'],
-            'email': request.POST['email'],
-            'region': Regions.objects.filter(id=request.POST['region']).first(),
-            'district': Districts.objects.filter(id=request.POST['district']).first() if request.POST['district'] not in ["Select District", ""] else None,
-            'depot': Depots.objects.filter(id=request.POST['depot']).first() if request.POST['depot'] not in ["Select Depot", ""] else None,
-            'section': Sections.objects.filter(code=request.POST['section']).first(),
-            'designation': Designations.objects.filter(id=request.POST['designation']).first() if request.POST['designation'] not in ["Select Designation", ""] else None
-        }
+        try:
+            user_profile = UserProfile.objects.filter(id=request.POST['user_id']).first()
+            user_data = {
+                'first_name': request.POST['firstname'],
+                'last_name': request.POST['lastname'],
+                'username': request.POST['username'],
+                'email': request.POST['email'],
+                'region': Regions.objects.filter(id=request.POST['region']).first(),
+                'district': Districts.objects.filter(id=request.POST['district']).first() if request.POST['district'] not in ["Select District", ""] else None,
+                'depot': Depots.objects.filter(id=request.POST['depot']).first() if request.POST['depot'] not in ["Select Depot", ""] else None,
+                'section': Sections.objects.filter(code=request.POST['section']).first(),
+                'designation': Designations.objects.filter(id=request.POST['designation']).first() if request.POST['designation'] not in ["Select Designation", ""] else None
+            }
 
-        for field, value in user_data.items():
-            if value:
-                setattr(user_profile, field, value)
+            for field, value in user_data.items():
+                if value:
+                    setattr(user_profile, field, value)
 
-        user_profile.save()
+            user_profile.save()
 
-        roles = [role for role in [request.POST.get(app.name) for app in Application.objects.all() if request.POST.get(app.name) != 'Select Role'] if role and role != ""]
-        user_profile.roles.clear()
-        user_profile.roles.add(*Roles.objects.filter(id__in=roles))
-
+            roles = [role for role in [request.POST.get(app.name) for app in Application.objects.all() if request.POST.get(app.name) != 'Select Role'] if role and role != ""]
+            user_profile.roles.clear()
+            user_profile.roles.add(*Roles.objects.filter(id__in=roles))
+            messages.success(request, "User updated successfully")
+        except Exception as ex:
+            print("save user error", ex)
+            messages.error(request, "An error occurred while saving the user")
+    
         return redirect("/users/users-index")
 
 @login_required
@@ -434,7 +442,7 @@ def reset_user_password(request):
             user_profile.set_password(password1)
             user_profile.save()
             print("saving done ....")
-
+        messages.success(request, "Password reset successfully")
         return redirect('/users/users-index')
 
     elif request.method == "GET":
@@ -474,6 +482,7 @@ def change_user_password(request):
             else:
                 print("Current password is incorrect. Password not changed.")
 
+        messages.success(request, "Password changed successfully")
         return redirect('/accounts/login')
 
     elif request.method == "GET":
@@ -494,15 +503,15 @@ def change_user_password(request):
     return redirect('/dashboards/overview')
 
 
-@login_required
-@allowed_roles(['Administrator'], ['users'])
-def delete_user(request):
-    if request.method == "GET":
-        id = request.GET['i']
-        user_profile = UserProfile.objects.filter(id=id).first()
-        user_profile.delete()
+# @login_required
+# @allowed_roles(['Administrator'], ['users'])
+# def delete_user(request):
+#     if request.method == "GET":
+#         id = request.GET['i']
+#         user_profile = UserProfile.objects.filter(id=id).first()
+#         user_profile.delete()
 
-    return redirect('/users/users-index')
+#     return redirect('/users/users-index')
 
 
 @login_required
