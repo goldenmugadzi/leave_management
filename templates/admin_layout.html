@@ -34,67 +34,118 @@
   <body class="bg-gulf-blue-50">
     <main style="display: flex" class="flex justify-between p-4">
       <aside id="sidebar"
-      style="width: 15%;
-             position: fixed;
-             top: 0;
-             left: 0;
-             height: 100vh;
-             padding-bottom: 3rem"
-      class="bg-gradient-to-r from-gulf-blue-600 to-gulf-blue-800 rounded-xl ml-1 mb-3 mt-1 z-10">
- <div style="display: flex;
-             flex-direction: column"
-      class="text-gulf-blue-50 rounded mt-3">
-   <a style="margin-top: 3rem"
-      class="flex items-center w-full px-3"
-      href="#">
-      <img class="h-10 w-auto"
-                  src="/static/assets/images/website-logo.png"
-                  alt="ZETDC" />
-     <span class="item-center ml-2 text-sm font-bold">Business Excellence</span>
-   </a>
-   <div class="w-full px-2">
-     <div style="display: flex;
-                 flex-direction: column"
-          class="text-gulf-blue-50 w-full mt-3 border-t border-gulf-blue-700">
-       <a id="menu-item"
-          class="flex items-center w-full h-12 px-3 mt-2 rounded hover:bg-gulf-blue-500 hover:shadow-lg"
-          href="{% url 'dashboard_index' %}">
-          <i class="fa fa-home" aria-hidden="true"></i>
-         <span class="ml-2 text-sm font-medium">Home</span>
-       </a>
-       <a id="menu-item"
-          class="flex items-center w-full h-12 px-3 mt-2 rounded hover:bg-gulf-blue-500 hover:shadow-lg"
-          href="/business-applications">
-          <i class="fa fa-th" aria-hidden="true"></i>
-         <span class="ml-2 text-sm font-medium">Business Applications</span>
-       </a>        <a id="menu-item"
+             style="width: 15%;
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    height: 100vh;
+                    padding-bottom: 3rem"
+             class="bg-gradient-to-r from-gulf-blue-600 to-gulf-blue-800 rounded-xl ml-1 mb-3 mt-1 z-10">
+        <div style="display: flex;
+                    flex-direction: column"
+             class="text-gulf-blue-50 rounded mt-3">
+          <a style="margin-top: 3rem"
+             class="flex items-center w-full px-3"
+             href="#">
+            <svg class="w-8 h-8 fill-current"
+                 xmlns="http://www.w3.org/2000/svg"
+                 viewBox="0 0 20 20"
+                 fill="currentColor">
+              <path d="M11 17a1 1 0 001.447.894l4-2A1 1 0 0017 15V9.236a1 1 0 00-1.447-.894l-4 2a1 1 0 00-.553.894V17zM15.211 6.276a1 1 0 000-1.788l-4.764-2.382a1 1 0 00-.894 0L4.789 4.488a1 1 0 000 1.788l4.764 2.382a1 1 0 00.894 0l4.764-2.382zM4.447 8.342A1 1 0 003 9.236V15a1 1 0 00.553.894l4 2A1 1 0 009 17v-5.764a1 1 0 00-.553-.894l-4-2z" />
+            </svg>
+            <span class="item-center ml-2 text-sm font-bold">Business Excellence</span>
+          </a>
+          <div class="w-full px-2">
+            <div style="display: flex;
+                        flex-direction: column"
+                 class="text-gulf-blue-50 w-full mt-3 border-t border-gulf-blue-700">
+              <a id="menu-item"
+                 class="flex items-center w-full h-12 px-3 mt-2 rounded hover:bg-gulf-blue-500 hover:shadow-lg"
+                 href="{% url 'dashboard_index' %}">
+                <svg class="w-6 h-6 stroke-current"
+                     xmlns="http://www.w3.org/2000/svg"
+                     fill="none"
+                     viewBox="0 0 24 24"
+                     stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                </svg>
+                <span class="ml-2 text-sm font-medium">Home</span>
+              </a>
+              <a id="menu-item"
+                 class="flex items-center w-full h-12 px-3 mt-2 rounded hover:bg-gulf-blue-500 hover:shadow-lg"
+                 href="/business-applications">
+                <svg xmlns="http://www.w3.org/2000/svg"
+                     fill="none"
+                     viewBox="0 0 24 24"
+                     stroke-width="1.5"
+                     stroke="currentColor"
+                     class="w-6 h-6">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25Z" />
+                </svg>
+                <span class="ml-2 text-sm font-medium">Business Applications</span>
+              </a>
+              <a id="menu-item"
                  class="flex items-center w-full h-12 px-3 mt-2 rounded hover:bg-gulf-blue-500 hover:shadow-lg"
                  href="/knowledge_center/view_firstview">
-                 <i class="fa fa-book" aria-hidden="true"></i>
+                <svg xmlns="http://www.w3.org/2000/svg"
+                     fill="none"
+                     viewBox="0 0 24 24"
+                     stroke-width="1.5"
+                     stroke="currentColor"
+                     class="w-6 h-6">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25" />
+                </svg>
                 <span class="ml-2 text-sm font-medium">Knowledge Centre</span>
               </a>
               <a id="menu-item"
                  class="flex items-center w-full h-12 px-3 mt-2 rounded hover:bg-gulf-blue-500 hover:shadow-lg"
                  href="/processes/new_view">
-                 <i class="fa fa-angle-double-right" aria-hidden="true"></i>
+                <svg class="w-6 h-6 stroke-current"
+                     xmlns="http://www.w3.org/2000/svg"
+                     fill="none"
+                     viewBox="0 0 24 24"
+                     stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
+                </svg>
                 <span class="ml-2 text-sm font-medium">Processes and Procedures</span>
               </a>
               <a id="menu-item"
                  class="flex items-center w-full h-12 px-3 mt-2 rounded hover:bg-gulf-blue-500 hover:shadow-lg"
                  href="/competence/competence">
-                 <i class="fa fa-briefcase" aria-hidden="true"></i>
+                <svg xmlns="http://www.w3.org/2000/svg"
+                     fill="none"
+                     viewBox="0 0 24 24"
+                     stroke-width="1.5"
+                     stroke="currentColor"
+                     class="w-6 h-6">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 0 0 .75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 0 0-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0 1 12 15.75c-2.648 0-5.195-.429-7.577-1.22a2.016 2.016 0 0 1-.673-.38m0 0A2.18 2.18 0 0 1 3 12.489V8.706c0-1.081.768-2.015 1.837-2.175a48.111 48.111 0 0 1 3.413-.387m7.5 0V5.25A2.25 2.25 0 0 0 13.5 3h-3a2.25 2.25 0 0 0-2.25 2.25v.894m7.5 0a48.667 48.667 0 0 0-7.5 0M12 12.75h.008v.008H12v-.008Z" />
+                </svg>
                 <span class="ml-2 text-sm font-medium">Competence Building</span>
               </a>
               <a id="menu-item"
                  class="flex items-center text-center w-full h-12 px-3 mt-2 rounded hover:bg-gulf-blue-500 hover:shadow-lg"
                  href="/inbox">
-                 <i class="fa fa-inbox" aria-hidden="true"></i>
+                <svg xmlns="http://www.w3.org/2000/svg"
+                     fill="none"
+                     viewBox="0 0 24 24"
+                     stroke-width="1.5"
+                     stroke="currentColor"
+                     class="w-6 h-6">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 13.5h3.86a2.25 2.25 0 0 1 2.012 1.244l.256.512a2.25 2.25 0 0 0 2.013 1.244h3.218a2.25 2.25 0 0 0 2.013-1.244l.256-.512a2.25 2.25 0 0 1 2.013-1.244h3.859m-19.5.338V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18v-4.162c0-.224-.034-.447-.1-.661L19.24 5.338a2.25 2.25 0 0 0-2.15-1.588H6.911a2.25 2.25 0 0 0-2.15 1.588L2.35 13.177a2.25 2.25 0 0 0-.1.661Z" />
+                </svg>
                 <span class="ml-2 text-sm font-medium">Inbox</span>
               </a>
               <a id="menu-item"
                  class="flex items-center w-full h-12 px-3 mt-2 rounded hover:bg-gulf-blue-500 hover:shadow-lg"
                  href="/reports/reports_index">
-                 <i class="fa fa-flag-checkered" aria-hidden="true"></i>
+                <svg xmlns="http://www.w3.org/2000/svg"
+                     fill="none"
+                     viewBox="0 0 24 24"
+                     stroke-width="1.5"
+                     stroke="currentColor"
+                     class="w-6 h-6">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+                </svg>
                 <span class="ml-2 text-sm font-medium">Plans & Reports</span>
               </a>
             </div>
@@ -110,70 +161,172 @@
                     width: 83%;
                     height: 6rem"
              class="rounded-xl p-4 bg-gulf-blue-100 z-10 mx-2 mt-1 max-w-screen">
-             <nav class="flex items-center justify-between">
-              <div class="flex items-center">
-                <img class="h-14 w-auto md:hidden" src="/static/assets/images/website-logo.png" alt="ZETDC" />
-                <div class="text-lg text-gulf-blue-950 font-medium ml-3 hidden md:block">Business Excellence</div>
-              </div>
-              <div class="flex items-center ml-3">
-                <form action="{% url 'search' %}" method="GET">
-                  <input type="text" placeholder="Search..." name="q" class="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring focus:border-blue-300" />
-                  <button type="submit" class="rounded p-2 text-blue-900 hover:bg-gulf-blue-100 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gulf-blue-800">
-                    <i class="fas fa-search"></i>
+          <nav>
+            <div class="mx-auto px-2 sm:px-6 md:px-2 lg:px-2 xl:px-2">
+              <div class="relative flex h-16 items-center justify-between">
+                <div class="absolute inset-y-0 left-0 flex items-center sm:hidden">
+                  <!-- Mobile menu button-->
+                  <button type="button"
+                          class="relative inline-flex items-center justify-center rounded-md p-2 text-gulf-blue-900 hover:bg-gulf-blue-500 hover:text-white focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
+                          aria-controls="mobile-menu"
+                          aria-expanded="false">
+                    <span class="absolute -inset-0.5"></span>
+                    <span class="sr-only">Open main menu</span>
+                    <svg class="block h-6 w-6"
+                         fill="none"
+                         viewBox="0 0 24 24"
+                         stroke-width="1.5"
+                         stroke="currentColor"
+                         aria-hidden="true">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"></path>
+                    </svg>
+                    <svg class="hidden h-6 w-6"
+                         fill="none"
+                         viewBox="0 0 24 24"
+                         stroke-width="1.5"
+                         stroke="currentColor"
+                         aria-hidden="true">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
                   </button>
-                </form>
-              </div>
-              <div class="flex items-center">
-                <button type="button" class="rounded p-2 text-blue-900 hover:bg-gulf-blue-100 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gulf-blue-800">
-                  <a href="/inbox" class="flex items-center">
-                    <i class="far fa-envelope"></i>
-                  </a>
-                </button>
-                {% get_filtered_notifications %}
-                <div x-data="{ open: false }">
-                  <a href="javascript:;" class="rounded p-2 text-blue-900 hover:bg-gulf-blue-100 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gulf-blue-800" @click="open = !open">
-                    <span class="inline-flex items-center">
-                      <i class="far fa-bell"></i>
-                      {% if filtered_notifications %}
-                        <span class="ml-1 text-sm text-red-900">{{ filtered_notifications|length }}</span>
-                      {% else %}
-                        <span class="ml-1 text-sm text-red-900">0</span>
-                      {% endif %}
-                    </span>
-                  </a>
-                  <div x-show="open" @click.outside="open = false" class="dropdown-content absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none" style="max-height: 30rem; overflow-y: auto">
-                    {% if filtered_notifications %}
-                      {% for notification in filtered_notifications %}
-                        <div class="mb-2">
-                          <div class="notification {% if not notification.is_read %}unread{% endif %} rounded">
-                            <a href="{{ notification.url }}" class="notification-link">
-                              <div class="flex py-1">
-                                <div class="flex flex-col">
-                                  <h6 class="text-sm font-normal mb-1">
-                                    <span class="font-bold">{{ notification }}</span>
-                                  </h6>
-                                  <p class="text-xs text-secondary mb-0">
-                                    <i class="fa fa-clock me-1"></i>
-                                    {{ notification.created_at }}
-                                  </p>
-                                </div>
-                              </div>
-                            </a>
-                          </div>
-                        </div>
-                      {% endfor %}
-                    {% else %}
-                      <div class="mb-2">
-                        <div class="notification rounded">
-                          <p class="text-xs text-secondary mb-0">You have no notifications.</p>
-                        </div>
+                </div>
+                <div class="flex flex-1 items-center sm:items-stretch">
+                  <div style="flex: 0.2" class="flex ml-2 flex-shrink-0 items-center">
+                    <img class="h-14 w-auto"
+                         src="/static/assets/images/website-logo.png"
+                         alt="ZETDC" />
+                  </div>
+                  <div style="flex: 0.8" class="flex w-full items-center">
+                    <div id="scrolling-text"
+                         class="text-right text-lg whitespace-nowrap text-gulf-blue-950 px-3 py-2 font-medium"
+                         style="text-indent: 10px">Business Excellence</div>
+                  </div>
+                  <div class="relative ml-3 flex items-center">
+                    <form action="{% url 'search' %}" method="GET">
+                      <input type="text"
+                             placeholder="Search..."
+                             name="q"
+                             class="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring focus:border-blue-300" />
+                      <button type="submit"
+                              class="rounded p-2 text-blue-900 hover:bg-gulf-blue-100 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gulf-blue-800">
+                        <i class="fas fa-search mr-2"></i>
+                      </button>
+                    </form>
+                  </div>
+                  <div class="absolute hide inset-y-0 right-0 flex items-center pr-2 sm:static sm:inset-auto sm:ml-6 sm:pr-0">
+                    <div class="relative" x-data="{ open: false }">
+                      <div>
+                        <button @click="open = ! open"
+                                type="button"
+                                class="relative ml-3 flex items-center text-blue-900 p-2 hover:bg-gulf-blue-100 rounded focus:outline-none focus:ring-2 focus:ring-tory-blue-50 focus:ring-offset-2 focus:ring-offset-gulf-blue-800 px-2 py-1"
+                                id="user-menu-button"
+                                aria-expanded="false"
+                                aria-haspopup="true">
+                          <span class="absolute -inset-1.5"></span>
+                          <span class="ml-2">
+                            <i class="fa fa-user me-1"></i>
+                            {% if request.user.first_name %}
+                              {{ request.user.get_full_name }}
+                            {% else %}
+                              {{ request.user }}
+                            {% endif %}
+                          </span>
+                        </button>
                       </div>
-                    {% endif %}
+                      <div x-show="open"
+                           @click.outside="open = false"
+                           class="text-black absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
+                           role="menu"
+                           aria-orientation="vertical"
+                           aria-labelledby="user-menu-button"
+                           tabindex="-1"
+                           style="display: none">
+                        <!-- Active: "bg-gulf-blue-100", Not Active: "" -->
+                        <a href="/users/user/change-password"
+                           class="relative ml-3 rounded p-2 text-blue-900 hover:bg-gulf-blue-100 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 flex items-center focus:ring-offset-gulf-blue-800"
+                           role="menuitem"
+                           tabindex="-1"
+                           id="user-menu-item-3">
+                          <span class="absolute -inset-1.5"></span>
+                          <i class="fas fa-key mr-2"></i>Change Password
+                        </a>
+                        <a href="{% url 'app_logout' %}"
+                           class="relative ml-3 rounded p-2 text-red-900 hover:bg-gulf-blue-100 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 flex items-center focus:ring-offset-gulf-blue-800"
+                           role="menuitem"
+                           tabindex="-1"
+                           id="user-menu-item-2">
+                          <span class="absolute -inset-1.5"></span>
+                          <i class="fas fa-power-off mr-2"></i>Logout</a>
+                      </div>
+                    </div>
+                    <button type="button"
+                            class="relative ml-3 rounded p-2 text-blue-900 hover:bg-gulf-blue-100 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gulf-blue-800">
+                      <a href="/inbox" class="flex items-center">
+                        <span class="absolute -inset-1.5"></span>
+                        <i class="far fa-envelope mr-2"></i>
+                      </a>
+                    </button>
+                    {% get_filtered_notifications %}
+                    <div x-data="{ open: false }">
+                      <!-- Toggle button -->
+                      <a href="javascript:;"
+                         class="relative ml-3 rounded p-2 text-blue-900 hover:bg-gulf-blue-100 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gulf-blue-800"
+                         id="dropdownMenuButton"
+                         @click="open = !open"
+                         aria-expanded="false">
+                        <span class="inline-flex items-center">
+                          <i class="far fa-bell mr-2"></i>
+                          {% if filtered_notifications %}
+                            <span class="ml-1 text-sm text-red-900">{{ filtered_notifications|length }}</span>
+                          {% else %}
+                            <span class="ml-1 text-sm text-red-900">0</span>
+                          {% endif %}
+                        </span>
+                      </a>
+                      <!-- Dropdown content -->
+                      <div x-show="open"
+                           @click.outside="open = false"
+                           class="dropdown-content absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
+                           style="max-height: 30rem;
+                                  overflow-y: auto"
+                           role="menu"
+                           aria-labelledby="dropdownMenuButton"
+                           tabindex="-1">
+                        {% if filtered_notifications %}
+                          {% for notification in filtered_notifications %}
+                            <div class="mb-2">
+                              <div class="notification {% if not notification.is_read %}unread{% endif %} rounded">
+                                <a href="{{ notification.url }}" class="notification-link">
+                                  <div class="flex py-1">
+                                    <!-- Avatar code -->
+                                    <div class="flex flex-col ">
+                                      <h6 class="text-sm font-normal mb-1">
+                                        <span class="font-bold">{{ notification }}</span>
+                                      </h6>
+                                      <p class="text-xs text-secondary mb-0">
+                                        <i class="fa fa-clock me-1"></i>
+                                        {{ notification.created_at }}
+                                      </p>
+                                    </div>
+                                  </div>
+                                </a>
+                              </div>
+                            </div>
+                          {% endfor %}
+                        {% else %}
+                          <div class="mb-2">
+                            <div class="notification rounded">
+                              <p class="text-xs text-secondary mb-0">You have no notifications.</p>
+                            </div>
+                          </div>
+                        {% endif %}
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
-            </nav>
-            
+            </div>
+          </nav>
         </div>
         <div style="margin-top: 4.3rem; width: 83%" class="px-4 py-4 float-right">
           <div class="mx-auto py-6">
@@ -231,7 +384,11 @@
                     role="alert">
                   <span class="block sm:inline">{{ message }}</span>
                   <span class="absolute top-0 bottom-0 right-0 px-4 py-3">
-                    <i class="fa fa-times"  onclick="document.getElementById('message-{{ forloop.counter }}').style.display='none';" aria-hidden="true"></i>
+                    <svg class="fill-current h-6 w-6 text-red-500"
+                         role="button"
+                         xmlns="http://www.w3.org/2000/svg"
+                         viewBox="0 0 20 20"
+                         onclick="document.getElementById('message-{{ forloop.counter }}').style.display='none';">
                       <title>Close</title>
                       <path d="M14.348 14.849a1.2 1.2 0 0 1-1.697 0L10 11.819l-2.651 3.029a1.2 1.2 0 1 1-1.697-1.697l2.758-3.15-2.759-3.152a1.2 1.2 0 1 1 1.697-1.697L10 8.183l2.651-3.031a1.2 1.2 0 1 1 1.697 1.697l-2.758 3.152 2.758 3.15a1.2 1.2 0 0 1 0 1.698z" />
                     </svg>
@@ -335,4 +492,93 @@
       };*/
     </script>
   </body>
-</html>   
+</html>
+{% comment %}
+
+<div style="display: flex; flex-direction: column" class="text-gulf-blue-50 w-full mt-3 border-t border-gulf-blue-700">
+  <div x-data="{expanded: false, current_url: ''}" x-init="$watch('$route.path', (newPath) => currentUrl = newPath)">
+    <div class="flex items-center w-full h-12 px-3 mt-2 rounded hover:bg-gulf-blue-500">
+      <svg class="w-6 h-6 stroke-current" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
+      </svg>
+      <button @click="expanded = ! expanded" class="ml-2 text-sm font-medium">
+        Knowledge Centre
+      </button>
+    </div>
+    <div style="flex-direction: column; padding-left: 1.5rem" class="flex justify-center w-full">
+      <div x-show="url_path.find('knowledge-center')? true: expanded" x-collapse.duration.100ms>
+        <a id="menu-item" href="/knowledge-center/view_legislation">
+          <div class="flex justify-start items-center h-12 px-3 py-2 mt-2 rounded hover:bg-gulf-blue-400">
+            <span class="mr-2 font-medium">L </span>
+            <span class="ml-2">Legislation</span>
+          </div>
+        </a>
+      </div>
+      <div class="flex justify-start items-center h-12 px-3 py-2 mt-2 rounded hover:bg-gulf-blue-400" x-show="expanded" x-collapse.duration.1000ms>
+        <span class="mr-2 font-medium">P </span>
+        <span class="ml-2">Policies & Guidelines</span>
+      </div>
+      <div class="flex justify-start items-center h-12 px-3 py-2 mt-2 rounded hover:bg-gulf-blue-400" x-show="expanded" x-collapse.duration.1000ms>
+        <span class="mr-2 font-medium">I </span>
+        <span class="ml-2">Internal Publications</span>
+      </div>
+      <div class="flex justify-start items-center h-12 px-3 py-2 mt-2 rounded hover:bg-gulf-blue-400" x-show="expanded" x-collapse.duration.1000ms>
+        <span class="mr-2 font-medium">E </span>
+        <span class="ml-2">Engineering Instructions</span>
+      </div>
+      <div class="flex justify-start items-center h-12 px-3 py-2 mt-2 rounded hover:bg-gulf-blue-400" x-show="expanded" x-collapse.duration.1000ms>
+        <span class="mr-2 font-medium">U </span>
+        <span class="ml-2">User Manuals</span>
+      </div>
+      <div class="flex justify-start items-center h-12 px-3 py-2 mt-2 rounded hover:bg-gulf-blue-400" x-show="expanded" x-collapse.duration.1000ms>
+        <span class="mr-2 font-medium">S </span>
+        <span class="ml-2">Standards</span>
+      </div>
+      <div class="flex justify-start items-center h-12 px-3 py-2 mt-2 rounded hover:bg-gulf-blue-400" x-show="expanded" x-collapse.duration.1000ms>
+        <span class="mr-2 font-medium">S </span>
+        <span class="ml-2">Specifications</span>
+      </div>
+      <div class="flex justify-start items-center h-12 px-3 py-2 mt-2 rounded hover:bg-gulf-blue-400" x-show="expanded" x-collapse.duration.1000ms>
+        <span class="mr-2 font-medium">D </span>
+        <span class="ml-2">Drawings</span>
+      </div>
+      <div class="flex justify-start items-center h-12 px-3 py-2 mt-2 rounded hover:bg-gulf-blue-400" x-show="expanded" x-collapse.duration.1000ms>
+        <span class="mr-2 font-medium">P </span>
+        <span class="ml-2">Prince2 Centre</span>
+      </div>
+      <div class="flex justify-start items-center h-12 px-3 py-2 mt-2 rounded hover:bg-gulf-blue-400" x-show="expanded" x-collapse.duration.1000ms>
+        <span class="mr-2 font-medium">O </span>
+        <span class="ml-2">Other External Documents</span>
+      </div>
+      <div class="flex justify-start items-center h-12 px-3 py-2 mt-2 rounded hover:bg-gulf-blue-400" x-show="expanded" x-collapse.duration.1000ms>
+        <span class="mr-2 font-medium">D </span>
+        <span class="ml-2">Drone Technology</span>
+      </div>
+    </div>
+  </div>
+</div>
+{% endcomment %} {% comment %}
+<div x-data="{ showNewsFlash: false }" style="position: fixed; width: 100%" class="z-30">
+  <div class="p-4 bg-gulf-blue-100" x-show="showNewsFlash">
+    <nav>
+      <div class="mx-auto px-2 sm:px-6 md:px-2 lg:px-2 xl:px-2">
+        <div class="w-full flex h-8 items-center justify-between">
+          <div class="flex w-full items-center sm:items-stretch">
+            <div id="scrolling-container" class="flex w-full items-center">
+              <div id="scrolling-news-text" class="text-right text-lg whitespace-nowrap text-gulf-blue-950 px-3 py-2 font-medium">
+                ZETDC NEWS FLASH
+              </div>
+            </div>
+
+            <div class="absolute hide inset-y-0 right-0 flex items-center pr-2 sm:static sm:inset-auto sm:ml-6 sm:pr-0">
+              <svg @click="showNewsFlash = !showNewsFlash" role="button" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+    </nav>
+  </div>
+</div>
+{% endcomment %}

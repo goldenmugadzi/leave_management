@@ -25,7 +25,7 @@ BASE_URL = "http://172.16.8.99:9300"
 
 
 @login_required
-@allowed_roles(['Administrator'], ['users'])
+@allowed_roles(['administrator'], ['users'])
 def add_centers(request):
     
     # for region in REGIONS:
@@ -98,7 +98,7 @@ def add_centers(request):
 
 
 @login_required
-@allowed_roles(['Administrator'], ['users'])
+@allowed_roles(['administrator'], ['users'])
 def add_user(request):
     if request.method == "GET":
 
@@ -187,7 +187,7 @@ def add_user(request):
 
 
 @login_required
-@allowed_roles(['Administrator'], ['users'])
+@allowed_roles(['administrator'], ['users'])
 def get_user_records(request):
     records = UserProfile.objects.order_by('-date_joined').all()
 
@@ -222,7 +222,7 @@ def get_user_records(request):
         })
 
 @login_required
-@allowed_roles(['Administrator'], ['users'])
+@allowed_roles(['administrator'], ['users'])
 def update_user(request):
     if request.method == "GET":
         user_profile = UserProfile.objects.get(id=request.GET['i'])
