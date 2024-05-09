@@ -62,6 +62,7 @@ def create_token(request):
             token.customer = customer
             token.process = process
             token.created_by = request.user
+            token.region = request.user.region
             token.save()
 
             if token_type == 'TEMPER' and tamper_token_form.is_valid():

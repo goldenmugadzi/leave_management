@@ -220,20 +220,26 @@ DATABASES = {
     #     'HOST': 'localhost'
     # }
     # 'default': {
+    #     'OPTIONS': {
+    #         'sql_mode': 'NO_BACKSLASH_ESCAPES',
+    #     },
+    #     'ENGINE': 'django.db.backends.mysql',
+    #     'NAME': 'beii_new',
+    #     'USER': 'be_user',
+    #     'PASSWORD': 'Z3tdc_it@2024',
+    #     'HOST': 'localhost'
+    # }
+    # 'default': {
     #     'ENGINE': 'django.db.backends.mysql',
     #     'NAME': 'beii',
     #     'USER': 'excellence',
     #     'PASSWORD': 'Z3tdc_it@2021_',
     #     'HOST': 'localhost'
     # }
-    # Localhost
-    # 'default': {
-    #     'ENGINE': 'django.db.backends.postgresql_psycopg2',
-    #     'NAME': 'beii',
-    #     'USER': 'Excellence',
-    #     'PASSWORD': 'Z3tdc_it@2021_',
-    #     'HOST': 'localhost'
-    # }
+  'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
 }
 
 # Password validation
