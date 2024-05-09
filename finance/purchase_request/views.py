@@ -198,7 +198,6 @@ def purchase_requests_awaiting_my_action(request):
     user_roles = request.user.roles.all()
     for purchase_request in PurchaseRequest.objects.all():
         process = purchase_request.process
-
         if process.approval_set.exists():
             last_approval = process.approval_set.last()
             current_step = last_approval.step.step

@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect
 from .forms import *
 from .models import *
 from django.contrib import messages
-from approve.views import intiate, approve_step
+from approve.views import intiate, approve_step,get_my_roles_for_apps
 from approve.models import Step
 from approve.forms import ApprovalForm
 from django.contrib.auth.decorators import login_required
@@ -206,4 +206,32 @@ def token_details(request, token_id):
         "to": to,
     })
 def view_all_tokens(request):
-    return render(request, "tokens/tokens.html", {"tokens": Token.objects.all()})
+    return render(request, "tokens/tokens.html", {"tokens": Token.objects.all(),'all':True,'roles': get_my_roles_for_apps(request.user, ['temper','reimbursement','clear credit'])})
+@login_required
+def awaiting_my_action(request):
+    """
+    for each token.process in the tokens,  let curent_step = the last token.process.approval if any else 0 and let next_step =curent_step+1
+    then check if  next_step=step.step for token.process.workflow.step_set filtered by approcer = user.roles.all.
+    """
+    tokens_to_process = []
+    user_roles = request.user.roles.all()
+    for token in Token.objects.all():
+        process = token.process
+
+        if process.approval_set.exists():
+            last_approval = process.approval_set.last()
+            current_step = last_approval.step.step
+        else:
+            current_step = 0
+
+        next_step = current_step + 1
+
+        workflow = process.workflow
+        step = workflow.step_set.filter(step=next_step, approver__in=user_roles).first()
+
+        if step:
+            tokens_to_process.append(token)
+
+    return render(request, 'tokens/tokens.html',
+                  {'tokens': tokens_to_process,'all':False,'roles': get_my_roles_for_apps(request.user, ['temper','reimbursement','clear credit'])})
+
