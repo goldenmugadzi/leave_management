@@ -43,7 +43,7 @@ class BidItem(models.Model):
 
 class Order(models.Model):
     id = models.CharField(primary_key=True, max_length=20, editable=False)
-    process = models.ForeignKey(Process, on_delete=models.CASCADE)
+    # process = models.ForeignKey(Process, on_delete=models.CASCADE)
     bid = models.ForeignKey(Bid, on_delete=models.CASCADE)
     requested_by = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True, blank=True, null=True)
