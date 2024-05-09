@@ -10,7 +10,7 @@ urlpatterns = [
     path('add_supplier/<str:tender_id>', cs_add_supplier, name='add_supplier'),
     path('compliance/<str:tender_id>', cs_compliance_table, name="tender_compliance"),
 
-    # path('create_data/<str:pr_id>', get_create_data, name='get_create_data'),
+    path('create_data/<str:pr_id>', get_create_data, name='get_create_data'),
     path('save', save_comparative_schedule, name='save_schedule'),
     path('update', update_comparative_schedule, name='update_schedule'),
     

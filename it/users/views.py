@@ -22,6 +22,7 @@ from django.contrib.auth.models import Group
 from .helpers import DESIGNATIONS, REGIONS, DISTRICTS, DEPOTS, ROLES, SECTIONS
 from django.contrib import messages
 
+from approve.decorators import allowed_roles
 BASE_URL = "http://172.16.8.99:9300"
 
 
@@ -190,7 +191,7 @@ def add_user(request):
 
 
 @login_required
-# @allowed_roles(['administrator'], ['users'])
+@allowed_roles(['administrator'], ['users'])
 def get_user_records(request):
     records = UserProfile.objects.order_by('-date_joined').all()
 
@@ -225,7 +226,7 @@ def get_user_records(request):
         })
 
 @login_required
-# @allowed_roles(['administrator'], ['users'])
+@allowed_roles(['administrator'], ['users'])
 def update_user(request):
     if request.method == "GET":
         user_profile = UserProfile.objects.get(id=request.GET['i'])

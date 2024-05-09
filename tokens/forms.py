@@ -45,7 +45,7 @@ class TokenForm(forms.ModelForm):
     class Meta:
         model = Token
         fields = "__all__"
-        exclude = [ 'meter', 'customer','token_photo' , 'created_by', 'created_at', 'process',]
+        exclude = [ 'meter', 'customer','token_photo' , 'created_by','region', 'created_at', 'process',]
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for field_name, field in self.fields.items():
