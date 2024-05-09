@@ -248,8 +248,11 @@ def get_comperative_schedules(request):
 
 def get_all_schedules(request):
     
+    
     user_id = request.user.id
-    user = UserProfile.objects.filter(id=user_id).first()
+    print("user name: ", request.user.username, request.user.id)
+    user_profile = UserProfile.objects.filter(id=user_id).first()
+    print("user: ", user_profile.username, user_profile.id)
     # fetch schedules if user exists in the committee and has not yet approved
     cs = ComparativeSchedules.objects.all()
 
@@ -330,28 +333,24 @@ def get_all_schedules(request):
         
     # Assuming you have a valid 'user' object and 'Roles' model
     fm_role, gm_role = False, False
-
-    for role in user.roles.all():
+    for role in user_profile.roles.all():
         print("role id:", role.id)
         user_ace_role_ = Roles.objects.filter(id=role.id).first() if role.id else None
-        if user_ace_role_:
-            print("role application:", user_ace_role_.application)
-            if user_ace_role_.application == "comparative_schedules":
-                print(user_ace_role_.role)
-                if user_ace_role_.role == "check":
-                    fm_role = True
-                if user_ace_role_.role == "approve":
-                    gm_role = True
-
+        print("role application:", user_ace_role_.application)
+        if user_ace_role_.application == "comparative_schedules":
+            if user_ace_role_.role == "check":
+                fm_role = True
+            if user_ace_role_.role == "approve":
+                gm_role = True
+    
     print("roles: ", fm_role, gm_role)
     user_page = 'finance/comparative_schedules/cs_schedules.html'
-    print("roles: ", fm_role, gm_role)
     return render(request, user_page, {"cs": context, "fm_role": fm_role, "gm_role": gm_role})
 
 def get_pending_committee(request):
     
     user_id = request.user.id
-    user = UserProfile.objects.filter(id=user_id).first()
+    user_profile = UserProfile.objects.filter(id=user_id).first()
     # fetch schedules if user exists in the committee and has not yet approved
     cs = ComparativeSchedules.objects.filter(
         Q(committee__committee_approval=None) | Q(committee__committee_approval=""),
@@ -434,7 +433,7 @@ def get_pending_committee(request):
     context = json.dumps(cs_list, default=str)
         
     fm_role, gm_role = False, False
-    for role in user.roles.all():
+    for role in user_profile.roles.all():
         print("role id:", role.id)
         user_ace_role_ = Roles.objects.filter(id=role.id).first() if role.id else None
         print("role application:", user_ace_role_.application)
@@ -454,7 +453,7 @@ def get_pending_committee(request):
 def get_pending_gm_approval(request):
     
     user_id = request.user.id
-    user = UserProfile.objects.filter(id=user_id).first()
+    user_profile = UserProfile.objects.filter(id=user_id).first()
     # fetch all pending approvals
     cs = ComparativeSchedules.objects.annotate(
         all_approved=Exists(
@@ -558,7 +557,7 @@ def get_pending_gm_approval(request):
         
     context = json.dumps(cs_list, default=str)
     fm_role, gm_role = False, False
-    for role in user.roles.all():
+    for role in user_profile.roles.all():
         print("role id:", role.id)
         user_ace_role_ = Roles.objects.filter(id=role.id).first() if role.id else None
         print("role application:", user_ace_role_.application)
@@ -576,7 +575,7 @@ def get_pending_gm_approval(request):
 def get_pending_fm_approval(request):
     
     user_id = request.user.id
-    user = UserProfile.objects.filter(id=user_id).first()
+    user_profile = UserProfile.objects.filter(id=user_id).first()
     # fetch all pending approvals
     cs = ComparativeSchedules.objects.annotate(
         all_approved=Exists(
@@ -679,7 +678,7 @@ def get_pending_fm_approval(request):
         
     context = json.dumps(cs_list, default=str)
     fm_role, gm_role = False, False
-    for role in user.roles.all():
+    for role in user_profile.roles.all():
         print("role id:", role.id)
         user_ace_role_ = Roles.objects.filter(id=role.id).first() if role.id else None
         print("role application:", user_ace_role_.application)
