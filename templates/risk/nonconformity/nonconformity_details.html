@@ -9,10 +9,8 @@
       <div id="parent" class="card-body m-auto mb-5 bg-gradient-to-r from-gulf-blue-100 to-blue-500 ed p-3 border rounded container rounded shadow-lg">
         <div class="px-6 py-4">
           <div class=" grid grid-cols-2 px-3 ">
-            <span class="inline-block text-start rounded-full text-sm">Resolved: {% if nonconformity.resolved%}Yes{% else %}  No{% endif %}
-       </span>
-       <span class="inline-block text-end rounded-full text-sm">Closed: {% if nonconformity.closed%}Yes{% else %}  No{% endif %}
-       
+            <span class="inline-block text-start rounded-full text-sm">Resolved: {% if nonconformity.resolved%}Yes{% else %}  No{% endif %}</span>
+            <span class="inline-block text-end rounded-full text-sm">Closed: {% if nonconformity.closed%}Yes{% else %}  No{% endif %}</span>
           </div>  <div class="font-bold text-xl text-center mb-2">Nonconformity Details</div>
           <p class="card-text font-semibold text-base">Description: {{ nonconformity.description }}</p>
           <p class="card-text font-semibold text-base">Violation Standard Reference: {{ nonconformity.violation_standard_reference }}</p>
