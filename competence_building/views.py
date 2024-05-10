@@ -56,6 +56,7 @@ def bulk_create(request):
                                 dp = items[3] if len(items) >=4 else ""
                                 print(ft, dp)
                                 doc_ = Document.objects.filter(name=filename).first()
+                                print("doc_", doc_)
                                 if ft and doc_ is None:
                                         ft = ft.capitalize()
                                         section = Sections.objects.filter(section=ft).first()
@@ -71,6 +72,9 @@ def bulk_create(request):
                                                 file = filename
                                                 )
                                         documentObj.save()
+                                        print(f"Document {filename} has been saved to the database.")
+                                else:
+                                        print(f"Document {filename} already exists in the database.")
 
         return redirect("/competence/competence")
 
