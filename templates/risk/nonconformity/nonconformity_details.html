@@ -22,7 +22,7 @@
             <p class="card-text font-semibold text-base">Expected completion date: {{ nonconformity.expected_completion_date }}</p>
           {% endif %}
           {% if nonconformity.attachment %}
-            <p class="card-text font-semibold text-base">Attachment: <a href="{{ nonconformity.attachment.url }}">{{ nonconformity.attachment.url|split_and_get_last:'/' }}</a></p>
+            <p class="card-text font-semibold text-base">Attachment: <a class="text-green-600" href="{{ nonconformity.attachment.url }}">{{ nonconformity.attachment.url|split_and_get_last:'/' }}</a></p>
           {% endif %}
         </div>
         <div class="grid grid-cols-2 text-center">
