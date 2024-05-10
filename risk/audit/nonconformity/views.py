@@ -126,15 +126,16 @@ def nonconformity_details(request, nonconformity_id):
                     return redirect('/', messages.SUCCESS)
         messages.success(request, "You are not authorized to edit this nonconformity.")
     else:
-        latest_response = Response.objects.filter(nonconformity=nonconformity).latest('created_at').status
+        try:latest_response = Response.objects.filter(nonconformity=nonconformity).latest('created_at').status
+        except:latest_response=None
         AcceptedForm = None
         form = None
-        if request.user == nonconformity.recipient and latest_response and nonconformity.resolved == True :
+        if request.user == nonconformity.recipient and latest_response and nonconformity.resolved == False:
             form = ResolveNcForm(instance=nonconformity)
-        elif request.user == nonconformity.recipient:
+        elif request.user == nonconformity.recipient and nonconformity.resolved == False:
             form = NonconformityResponseForm()
             AcceptedForm = AdditionalInfoForm(instance=nonconformity)
-        elif request.user == nonconformity.created_by and nonconformity.resolved and latest_response and nonconformity.resolved == True:
+        elif request.user == nonconformity.created_by and nonconformity.resolved and latest_response and nonconformity.resolved == False:
             form = CloseNcForm(instance=nonconformity)
         elif request.user == nonconformity.created_by and not latest_response:
             form = NonconformityForm(instance=nonconformity)
