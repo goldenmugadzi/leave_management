@@ -1,111 +1,86 @@
 {% extends "admin_layout.html" %}
 {% load static %}
 {% load custom_tags %}
+
 {% block content %}
-  <div class="m-auto mt-5 ">
-    <h1 class="text-center mb-4 font-bold">Nonconformity and Responses</h1>
-    <div class="m-auto   mt-5 ">
-      <div class="card grid grid-cols-2 gap-2 mb-3">
-        <div class="card-body m-2">
-          <div id="parent" class="card-body m-auto mb-5 bg-gradient-to-r from-gulf-blue-100 to-blue-500 ed p-3 border rounded    container rounded  shadow-lg">
-            <div class="px-6 py-4">
-              <div class="font-bold text-xl text-center mb-2">Nonconformity Details</div>
-              <p class="card-text   font-semibold text-base">Description: {{ nonconformity.description }}</p>
-              <p class="card-text  font-semibold text-base">
-                Violation Standard Reference: {{ nonconformity.violation_standard_reference }}
-              </p>
-              <p class="card-text  font-semibold text-base">
-                Recommended Corrective Action: {{ nonconformity.recommended_corrective_action }}
-              </p>
-              {% if nonconformity.plan_of_action %}
-                <p class="card-text  font-semibold text-base">Plan of Action: {{ nonconformity.plan_of_action }}</p>
-              {% endif %}
-              {% if nonconformity.expected_completion_date %}
-                <p class="card-text  font-semibold text-base">
-                  Expected completion date: {{ nonconformity.expected_completion_date }}
-                </p>
-              {% endif %}
-              {% if   nonconformity.attachment %}
-                <p class="card-text  font-semibold text-base">
-                  Attachment: <a href="{{ nonconformity.attachment.url }}">{{ nonconformity.attachment.url|split_and_get_last:'/' }}</a>
-                </p>
-              {% endif %}
-            </div>
-            <div class=" grid grid-cols-2 text-center">
-              <span class="inline-block rounded-full text-sm">Created By: {{ nonconformity.created_by.get_full_name }}</span>
-              <span class="inline-block rounded-full text-sm">Directed To:
-                {% if nonconformity.recipient.get_full_name %}
-                  {{ nonconformity.recipient.get_full_name }}
-                {% else %}
-                  {{ nonconformity.recipient }}
-                {% endif %}
-              </span>
-            </div>
-            <br>
-          </div>
-          {% if request.user.username ==  nonconformity.recipient.username or request.user.username == nonconformity.created_by.username %}
-            <form id="form" class="row rounded py-4 border bg-gulf-blue-100  col-6 m-auto p-3  container"
-                  method="POST"
-                  enctype="multipart/form-data">
-              {% csrf_token %}
-            
-           <div id="AcceptedForm" class="hidden" >{{ AcceptedForm.as_table }}</div>
-           {% for field in form %}
-           <div class=" ">
-             {% if field.is_hidden %}
-               {{ field }}
-             {% else %}
-               {{ field.label_tag }}
-               {{ field }}
-               <div class="text-red-500">{{ field.errors }}</div>
-             {% endif %}
-           </div>
-         {% endfor %}
-              <div class="row rounded py-4 border  text-center   container">
-                <input class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded"
-                       type="submit"
-                       value="Submit">
-              </div>
-              <input type="hidden" name='is_read' value='True'>
-            </form>
+  <h1 class="text-center mb-4 font-bold">Nonconformity and Responses</h1>
+  <div class="card grid grid-cols-2 gap-2 mb-3">
+    <div class="card-body m-2">
+      <div id="parent" class="card-body m-auto mb-5 bg-gradient-to-r from-gulf-blue-100 to-blue-500 ed p-3 border rounded container rounded shadow-lg">
+        <div class="px-6 py-4">
+          <div class=" grid grid-cols-2 px-3 ">
+            <span class="inline-block text-start rounded-full text-sm">Resolved: {% if nonconformity.resolved%}Yes{% else %}  No{% endif %}
+       </span>
+       <span class="inline-block text-end rounded-full text-sm">Closed: {% if nonconformity.closed%}Yes{% else %}  No{% endif %}
+       
+          </div>  <div class="font-bold text-xl text-center mb-2">Nonconformity Details</div>
+          <p class="card-text font-semibold text-base">Description: {{ nonconformity.description }}</p>
+          <p class="card-text font-semibold text-base">Violation Standard Reference: {{ nonconformity.violation_standard_reference }}</p>
+          <p class="card-text font-semibold text-base">Recommended Corrective Action: {{ nonconformity.recommended_corrective_action }}</p>
+          {% if nonconformity.plan_of_action %}
+            <p class="card-text font-semibold text-base">Plan of Action: {{ nonconformity.plan_of_action }}</p>
+          {% endif %}
+          {% if nonconformity.expected_completion_date %}
+            <p class="card-text font-semibold text-base">Expected completion date: {{ nonconformity.expected_completion_date }}</p>
+          {% endif %}
+          {% if nonconformity.attachment %}
+            <p class="card-text font-semibold text-base">Attachment: <a href="{{ nonconformity.attachment.url }}">{{ nonconformity.attachment.url|split_and_get_last:'/' }}</a></p>
           {% endif %}
         </div>
-        <div class="card-body m-2">
-          {% if nonconformity.response_set.all %}
-            <h5 class="card-title mb-3 font-bold">Responses</h5>
-            <hr>
-            <br>
-            <div style="max-height: 40rem; overflow-y: auto;">
-              {% for response in nonconformity.response_set.all %}
-                <div class="card-body bg-gulf-blue-200">
-                  <div class="card mb-3 row rounded py-4 border p-3 m-auto   container">
-                    <div class="card-body">
-                      <p class="card-text">Comment : {{ response.comment }}</p>
-                    </div>
-                    <br>
-                    <div class="card-footer flex  justify-between items-end"
-                         style="max-height: 1rem;
-                                overflow-y: auto">
-                      <span class="text-sm text-left">
-                        {% if response.user.get_full_name %}
-                          {{ response.user.get_full_name }}
-                        {% else %}
-                          {{ response.user.username }}
-                        {% endif %}
-                      </span>
-                      <span class="text-sm text-right">{{ response }} @ {{ response.created_at }} </span>
-                    </div>
-                   </div>
-                </div>
-              {% endfor %}
+        <div class="grid grid-cols-2 text-center">
+          <span class="inline-block rounded-full text-sm">Created By: {{ nonconformity.created_by.get_full_name }}</span>
+          <span class="inline-block rounded-full text-sm">Directed To: {% if nonconformity.recipient.get_full_name %}{{ nonconformity.recipient.get_full_name }}{% else %}{{ nonconformity.recipient }}{% endif %}</span>
+        </div>
+      </div>
+      {% if form  %}
+        {% if request.user.username == nonconformity.recipient.username or request.user.username == nonconformity.created_by.username %}
+          <form id="form" class="row rounded py-4 border bg-gulf-blue-100 col-6 m-auto p-3 container" method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div id="AcceptedForm" class="{% if not form.status %}hidden{% endif %}">
+              {% for field in AcceptedForm %}
+              <div> {% if field.is_hidden %} {{ field }} {% else %} {{ field.label_tag }} {{ field }} <div class="text-red-500">{{ field.errors }}</div> {% endif %} </div>
+               {% endfor %}
             </div>
-          </div>
+            {% for field in form %}
+            <div> {% if field.is_hidden %} {{ field }} {% else %} {{ field.label_tag }} {{ field }} <div class="text-red-500">{{ field.errors }}</div> {% endif %} </div>
+             {% endfor %}
+            <div class="row rounded py-4 border text-center container">
+              <input class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded" type="submit" value="Submit">
+            </div>
+            <input type="hidden" name="is_read" value="True">
+          </form>
+        {% endif %}
+      {% endif %}
+    </div>
+    <div class="card-body m-2">
+      {% if nonconformity.response_set.all %}
+        <h5 class="card-title mb-3 font-bold">Responses</h5>
+        <hr>
+        <br>
+        <div style="max-height: 40rem; overflow-y: auto;">
+          {% for response in nonconformity.response_set.all %}
+            <div class="card-body bg-gulf-blue-200">
+              <div class="card mb-3 row rounded py-4 border p-3 m-auto container">
+                <div class="card-body">
+                  <p class="card-text">Comment: {{ response.comment }}</p>
+                </div>
+                <br>
+                <div class="card-footer flex justify-between items-end" style="max-height: 1rem; overflow-y: auto">
+                  <span class="text-sm text-left">{% if response.user.get_full_name %}{{ response.user.get_full_name }}{% else %}{{ response.user.username }}{% endif %}</span>
+                  <span class="text-smtext-right">{{ response }} @ {{ response.created_at }}</span>
+                </div>
+              </div>
+            </div>
+          {% endfor %}
         </div>
       {% endif %}
     </div>
   </div>
 {% endblock %}
+
 {% block scripts %}
-{% comment %} static\assets\js\nonconformity.js {% endcomment %}
-<script src="{% static 'assets/js/nonconformity.js' %}"></script>
+
+{% comment %} <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> {% endcomment %}
+  <script src="{% static 'assets/cdn/jquery-3.7.0.js' %}"></script>
+  <script src="{% static 'assets/js/nonconformity.js' %}"></script>
 {% endblock scripts %}
