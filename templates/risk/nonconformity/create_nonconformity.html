@@ -1,7 +1,5 @@
 {% extends "admin_layout.html" %}{% load static %}
-
 {% block content %}
-
 <div class=" m-auto mt-5  ">
   <form class="row rounded py-4 border  bg-gulf-blue-100 p-3 m-auto text-center   container" method="POST" action="" enctype="multipart/form-data">
     {% csrf_token %}
@@ -10,13 +8,9 @@
      {{form.as_table}}
     </div>
      <br>
-     <div class="m-auto justify-content-stretch align-content-stretch">
-      <a class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded" href="/dashboard">Back</a>
+    <div class="m-auto justify-content-stretch align-content-stretch">
       <input class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded" type="submit" value="Submit">
-  </div>
+    </div>
   </form>
 </div>
-
-
-
-{% endblock %}
+{% endblock content %}

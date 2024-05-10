@@ -38,7 +38,8 @@ class Nonconformity(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     attachment = models.FileField(upload_to='nonconformity_attachments/', blank=True, null=True, verbose_name='Attachment')
     expected_completion_date = models.DateField( verbose_name='Expected Completion Date', blank=True, null=True)
-    status = models.BooleanField( choices=((True, 'Created'),(False, 'Resolved')), default= True)
+    resolved = models.BooleanField(default=False)
+    closed = models.BooleanField(default=False)
     
     def __str__(self):
         return self.description

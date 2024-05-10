@@ -36,12 +36,12 @@ def purchase_request_detail(request, purchase_request_id):
     
 @login_required
 def create_purchase_request(request):
-    itemFormset = inlineformset_factory(PurchaseRequest, PrItem, form=PrItemForm,
-                                        extra=int(request.POST.get('items') or 1), can_delete=False)
+    itemFormset = inlineformset_factory(PurchaseRequest, PrItem, form=PrItemForm, extra=int(request.POST.get('items') or 1), can_delete=False)
     if request.method == 'POST':
         try:prexist=PurchaseRequest.objects.get(pr_no = request.POST.get('pr_no'))
         except:prexist=None
         form = PurchaseRequestForm(request.POST)
+        action = request.POST.get("action")
         formset = itemFormset(request.POST)
         if not prexist :
             if  form.is_valid():
@@ -65,11 +65,22 @@ def create_purchase_request(request):
                 except:pass
                 formset = itemFormset(request.POST,instance=purchase_request)
                 if formset.is_valid():
-                    formset.save()
+                    for it in formset:
+                        try:
+                            item = it.save(commit=False)
+                            item.purchase_request = purchase_request
+                            item.save() 
+                        except:
+                            pass
+                    if action:
+                        messages.success(request, 'Purchase request saved successfully.')
+                        return render(request, 'finance/purchase_request/create_purchase_request.html', {"attachments":purchase_request.attachment_set.all(),'formset': itemFormset(instance=purchase_request), 'form': form})
+                    else:
+                        return redirect(reverse('purchase_request:purchase_request_detail', args=[purchase_request.id]))
+        
                 else:
                     return render(request, 'finance/purchase_request/create_purchase_request.html', {'formset': itemFormset, 'form': form})
                 
-                return redirect(reverse('purchase_request:purchase_request_update',  args=[purchase_request.id]))
             return render(request, 'finance/purchase_request/create_purchase_request.html', {'formset': itemFormset, 'form': form})
         else: 
             messages.error(request, 'A Purchase request for this PR Number already exist.')
@@ -83,42 +94,56 @@ def create_purchase_request(request):
 @login_required
 def create_ace_purchase_request(request, ace_id):
     ace = Ace2.objects.get(Ace_id2=ace_id)
-    itemFormset = inlineformset_factory(PurchaseRequest, PrItem, form=PrItemForm,
-                                        extra=int(request.POST.get('items') or 1), can_delete=False)
+    itemFormset = inlineformset_factory(PurchaseRequest, PrItem, form=PrItemForm, extra=int(request.POST.get('items') or 1), can_delete=False)
     if request.method == 'POST':
-        form = acePurchaseRequestForm(request.POST, request.FILES)
-        if form.is_valid():
-            purchase_request = form.save(commit=False)
-            purchase_request.process = intiate(request, 'purchase request')
-            purchase_request.requested_by = request.user
-            purchase_request.region = request.user.region
-            purchase_request.save()
-            try:
-                items_from_sap = pd.ExcelFile(request.FILES.get('upload'))
-                if items_from_sap:
-                    df = items_from_sap.parse('Sheet1')
-                    data_dict = df.to_dict('records')
-                    for data in data_dict:
-                        item = PrItem(item_required=data['Short Text'],purchase_request=purchase_request,quantity=data['Quantity requested'],unit_of_measurement=UnitOfMeasurement.objects.get(unit=data['Unit of Measure']) )
-                        item.save()
-            except:pass
-            formset = itemFormset(request.POST, request.FILES)
-            for it in formset:
-                if it.is_valid():
-                    try:
-                        item = it.save(commit=False)
-                        item.purchase_request = purchase_request
-                        item.save()
-                    except:
-                        pass
-                else:
-                    return render(request, 'finance/purchase_request/create_purchase_request.html',
-                                  {'formset': formset, "attachentFormset": attachentFormset, 'form': form})
+        try:prexist=PurchaseRequest.objects.get(pr_no = request.POST.get('pr_no'))
+        except:prexist=None
+        form = acePurchaseRequestForm(request.POST,instance=ace)
+        action = request.POST.get("action")
+        formset = itemFormset(request.POST)
+        if not prexist :
+            if  form.is_valid():
+                purchase_request = form.save(commit=False)
+                # purchase_request.process = intiate(request, 'purchase request')
+                purchase_request.requested_by = request.user
+                purchase_request.region = request.user.region
+                purchase_request.save()
+                attachments = request.FILES.getlist('attachments')
+                for attachment in attachments:
+                    attachment = Attachment(file=attachment, purchase_request=purchase_request)
+                    attachment.save()
+                try:
+                    items_from_sap = pd.ExcelFile(request.FILES.get('upload'))
+                    if items_from_sap:
+                        df = items_from_sap.parse('Sheet1')
+                        data_dict = df.to_dict('records')
+                        for data in data_dict:
+                            item = PrItem(item_required=data['Short Text'],purchase_request=purchase_request,quantity=data['Quantity requested'],unit_of_measurement=UnitOfMeasurement.objects.get(unit=data['Unit of Measure']) )
+                            item.save()
+                except:pass
+                formset = itemFormset(request.POST,instance=purchase_request)
 
-            url = reverse('purchase_request:purchase_request_detail', args=[purchase_request.id])
-            return redirect(url)
-        return render(request, 'finance/purchase_request/create_purchase_request.html',
-                      {'formset': itemFormset, 'form': form})
+                if formset.is_valid():
+                    for it in formset:
+                        try:
+                            item = it.save(commit=False)
+                            item.purchase_request = purchase_request
+                            item.save()
+                        except:
+                            pass
+                    if action:
+                        messages.success(request, 'Purchase request saved successfully.')
+                        return render(request, 'finance/purchase_request/create_purchase_request.html', {"attachments":purchase_request.attachment_set.all(),'formset': itemFormset(instance=purchase_request), 'form': form})
+                    else:
+                        return redirect(reverse('purchase_request:purchase_request_detail', args=[purchase_request.id]))
+        
+                else:
+                    return render(request, 'finance/purchase_request/create_purchase_request.html', {'formset': itemFormset, 'form': form})
+                
+            return render(request, 'finance/purchase_request/create_purchase_request.html', {'formset': itemFormset, 'form': form})
+        else: 
+            messages.error(request, 'A Purchase request for this PR Number already exist.')
+            return render(request, 'finance/purchase_request/create_purchase_request.html', {'formset': formset, 'form': form})
     else:
         ace_data = {
             'description': ace.details_of_expenditure,
@@ -129,7 +154,7 @@ def create_ace_purchase_request(request, ace_id):
         }
         if ace.section:
             ace_data['section'] = ace.section
-        form = acePurchaseRequestForm(initial=ace_data)
+        form = acePurchaseRequestForm(initial=ace_data,instance=ace)
         return render(request, 'finance/purchase_request/create_purchase_request.html', {'formset': itemFormset(), 'form': form})
 @login_required
 def purchase_request_update(request, purchase_request_id):
