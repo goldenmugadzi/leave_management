@@ -128,6 +128,7 @@ def clear_approvals(cs_id):
         for member in committee:
             member.committee_approval = ""
             member.committee_status = ""
+            member.committee_date = None
             member.save()
     
     approvals = CSApproval.objects.filter(cs_id=cs_query).all()
@@ -140,22 +141,28 @@ def clear_approvals(cs_id):
             
     return True
 
+def getUserFMGMRoles(user):
+    fm_role, gm_role = False, False
+    for role in user.roles.all():
+        print("role id:", role.id)
+        user_ace_role_ = Roles.objects.filter(id=role.id).first() if role.id else None
+        print("role application:", user_ace_role_.application)
+        if user_ace_role_.application == "comparative_schedules":
+            if user_ace_role_.role == "check":
+                fm_role = True
+            if user_ace_role_.role == "approve":
+                gm_role = True
+    
+    return fm_role, gm_role
+    
 def get_comperative_schedules(request):
     
     user_id = request.user.id
     user = UserProfile.objects.filter(id=user_id).first()
     
     fm_role, gm_role = False, False
-    for role in user.roles.all():
-        print("role id:", role.id)
-        user_ace_role_ = Roles.objects.filter(id=role.id).first() if role.id else None
-        print("role application:", user_ace_role_.application)
-        if user_ace_role_.application == "comparative_schedule":
-            if user_ace_role_.role == "check":
-                fm_role = True
-            if user_ace_role_.role == "approve":
-                gm_role = True
-    
+    fm_role, gm_role = getUserFMGMRoles(user)
+
     if fm_role == True:
         return redirect('/comperative_schedule/pending_fm_approval')
     elif gm_role == True:
@@ -235,7 +242,7 @@ def get_comperative_schedules(request):
                 "fm_approval": fm_approval.approval if fm_approval else "Pending",
                 "section": section.section if section else "",
                 "region": region.region if region else "",
-                "created_at": c.created_at,
+                "created_at": c.created_at.strftime("%Y-%m-%d %H:%M") if c.created_at else "",
             })
             
         context = json.dumps(cs_list, default=str)
@@ -247,7 +254,6 @@ def get_comperative_schedules(request):
                 "gm_role": gm_role,})
 
 def get_all_schedules(request):
-    
     
     user_id = request.user.id
     print("user name: ", request.user.username, request.user.id)
@@ -326,22 +332,14 @@ def get_all_schedules(request):
             "fm_approval": fm_approval.approval if fm_approval else "Pending",
             "section": section.section if section else "",
             "region": region.region if region else "",
-            "created_at": c.created_at,
+            "created_at": c.created_at.strftime("%Y-%m-%d %H:%M") if c.created_at else ""
         })
         
     context = json.dumps(cs_list, default=str)
         
     # Assuming you have a valid 'user' object and 'Roles' model
     fm_role, gm_role = False, False
-    for role in user_profile.roles.all():
-        print("role id:", role.id)
-        user_ace_role_ = Roles.objects.filter(id=role.id).first() if role.id else None
-        print("role application:", user_ace_role_.application)
-        if user_ace_role_.application == "comparative_schedule":
-            if user_ace_role_.role == "check":
-                fm_role = True
-            if user_ace_role_.role == "approve":
-                gm_role = True
+    fm_role, gm_role = getUserFMGMRoles(user)
     
     print("roles: ", fm_role, gm_role)
     user_page = 'finance/comparative_schedules/cs_schedules.html'
@@ -427,22 +425,14 @@ def get_pending_committee(request):
             "fm_approval": fm_approval.approval if fm_approval else "Pending",
             "section": section.section if section else "",
             "region": region.region if region else "",
-            "created_at": c.created_at,
+            "created_at": c.created_at.strftime("%Y-%m-%d %H:%M") if c.created_at else "",
         })
         
     context = json.dumps(cs_list, default=str)
         
     fm_role, gm_role = False, False
-    for role in user_profile.roles.all():
-        print("role id:", role.id)
-        user_ace_role_ = Roles.objects.filter(id=role.id).first() if role.id else None
-        print("role application:", user_ace_role_.application)
-        if user_ace_role_.application == "comparative_schedule":
-            if user_ace_role_.role == "check":
-                fm_role = True
-            if user_ace_role_.role == "approve":
-                gm_role = True
-    
+    fm_role, gm_role = getUserFMGMRoles(user)   
+        
     print("roles: ", fm_role, gm_role)
     user_page = 'finance/comparative_schedules/cs_schedules.html'
     print("roles: ", fm_role, gm_role)
@@ -552,20 +542,12 @@ def get_pending_gm_approval(request):
             "fm_approval": fm_approval.approval if fm_approval else "Pending",
             "section": section.section if section else "",
             "region": region.region if region else "",
-            "created_at": c.created_at,
+            "created_at": c.created_at.strftime("%Y-%m-%d %H:%M") if c.created_at else "",
         })
         
     context = json.dumps(cs_list, default=str)
     fm_role, gm_role = False, False
-    for role in user_profile.roles.all():
-        print("role id:", role.id)
-        user_ace_role_ = Roles.objects.filter(id=role.id).first() if role.id else None
-        print("role application:", user_ace_role_.application)
-        if user_ace_role_.application == "comparative_schedule":
-            if user_ace_role_.role == "check":
-                fm_role = True
-            if user_ace_role_.role == "approve":
-                gm_role = True
+    fm_role, gm_role = getUserFMGMRoles(user_profile)
     user_page = 'finance/comparative_schedules/cs_schedules.html'
     print("roles: ", fm_role, gm_role)
     return render(request, user_page, {"cs": context, 
@@ -673,27 +655,17 @@ def get_pending_fm_approval(request):
             "fm_approval": fm_approval.approval if fm_approval else "Pending",
             "section": section.section if section else "",
             "region": region.region if region else "",
-            "created_at": c.created_at,
+            "created_at": c.created_at.strftime("%Y-%m-%d %H:%M") if c.created_at else "",
         })
         
     context = json.dumps(cs_list, default=str)
     fm_role, gm_role = False, False
-    for role in user_profile.roles.all():
-        print("role id:", role.id)
-        user_ace_role_ = Roles.objects.filter(id=role.id).first() if role.id else None
-        print("role application:", user_ace_role_.application)
-        if user_ace_role_.application == "comparative_schedule":
-            if user_ace_role_.role == "check":
-                fm_role = True
-            if user_ace_role_.role == "approve":
-                gm_role = True
+    fm_role, gm_role = getUserFMGMRoles(user)
     user_page = 'finance/comparative_schedules/cs_schedules.html'
     print("roles: ", fm_role, gm_role)
     return render(request, user_page, {"cs": context, 
             "fm_role": fm_role,
             "gm_role": gm_role,})
-
-
 
 def get_comperative_schedule(request, cs_id):
     
@@ -720,7 +692,7 @@ def get_comperative_schedule_data(request, cs_id):
         print("role id:", role.id)
         user_ace_role_ = Roles.objects.filter(id=role.id).first() if role.id else None
         print("role application:", user_ace_role_.application)
-        if user_ace_role_.application == "comparative_schedule":
+        if user_ace_role_.application == "comparative_schedules":
             user_comparative_schedule_role = user_ace_role_
             
     cs = ComparativeSchedules.objects.filter(cs_id=cs_id).first()
@@ -889,7 +861,6 @@ def get_comperative_schedule_data(request, cs_id):
             "unit_of_measurement": cs_item.unit_of_measurement,
         })
 
-    print("user rolly ....", user_comparative_schedule_role)
     context = {
         "requester_role": user_comparative_schedule_role.role if user_comparative_schedule_role else "",
         "cs_id": cs.cs_id,
@@ -1275,31 +1246,22 @@ def update_comparative_schedule(request):
 
         if cs_query:
             clear_approvals(cs_id)
-            print(scope_of_work)
             if scope_of_work:
                 cs_query.scope_of_work = scope_of_work 
-            print(closing_date)
             if closing_date:
                 cs_query.closing_date = closing_date
-            print(closing_time)
             if closing_time:
                 cs_query.closing_time = closing_time
-            print(advert_path)
             if advert_path:
                 cs_query.advert = advert_path
-            print(pr_number)
             if pr_number:
                 cs_query.pr_number = pr_number
-            print(pr_date)
             if pr_date:
                 cs_query.pr_date = pr_date
-            print(date_tender_opened)
             if date_tender_opened:
                 cs_query.cs_opened = date_tender_opened
-            print(tender_adjudication_committee_date)
             if tender_adjudication_committee_date:
                 cs_query.tac_date = tender_adjudication_committee_date
-            print(proc_plan_)
             if proc_plan_:
                 cs_query.proc_plan = proc_plan_
             if ref_date:
@@ -1612,18 +1574,13 @@ def save_cs_ranking(request):
         for ranking in ranking_query:
             ranking.delete()
     # get bids
-    print("cs_query: ", cs_query)
     bids = Bids.objects.filter(cs_id=cs_query).values('sup_id').annotate(total_sum=Sum('total'))
-    print("bids: ", bids)
     compliant_bids = []
     for bid in bids:
-        print("bid: ", bid)
         supplier = Supplier.objects.filter(id=bid['sup_id']).first()
         _compliance = CSCompliance.objects.filter(cs_id=cs_query, supplier_id=supplier, decision=True).first()
-        print("compliance: ", _compliance)
         if _compliance:
             compliant_bids.append(bid)
-    print("compliant_bids: ", compliant_bids)
     rankings = {bid['sup_id']: bid['total_sum'] for bid in compliant_bids}
     print("rankings: ", rankings)
     sorted_rankings = sorted(rankings.items(), key=lambda x: x[1])
@@ -1743,6 +1700,7 @@ def approve_cs_committee(request):
     username = request.POST.get("username", "")
     print("username: ", username)
     approval = request.POST.get("approval", "")
+    justification = request.POST.get("justification", "")
     cs_query = ComparativeSchedules.objects.filter(cs_id=cs_id).first()
     if not cs_query:
         return JsonResponse({
@@ -1755,9 +1713,9 @@ def approve_cs_committee(request):
         committee_query = Committee.objects.filter(cs_id=cs_query, user=member_profile).first()
         if committee_query:
             committee_query.committee_approval = approval
+            committee_query.justification = justification
             committee_query.committee_date = datetime.now()
             committee_query.save()
-            print("approval: ", approval)
             return JsonResponse({
                 "message": "Committee member approved successfully",
                 "success": True,

@@ -1,102 +1,106 @@
 "use strict";
 
 const e = React.createElement;
-// const BASE_URL = "http://localhost:8000/ristricted_bidding";
-const BASE_URL = "http://172.16.8.99:9300/ristricted_bidding";
+const BASE_URL = "http://localhost:8000/ristricted_bidding";
+// const BASE_URL = "http://172.16.8.99:9300/ristricted_bidding";
 
 class CreateRB extends React.Component {
   constructor(props) {
-      super(props);
-      this.state = {
-        requester_role: "",
-        cs_id: "",
-        cs_owner: "",
-        committeeApprovalComplete: false,
-        plan_ref: "",
-        proc_ref: "",
-        proc_plan: null,
-        scope_of_work: "",
-        pr_number: "",
-        pr_attachments: [],
-        quantity: "",
-        pr_date: "",
-        closing_date: "",
-        closing_time_hour: "",
-        ref_date: "",
-        date_tender_opened: "",
-        tender_adjudication_committee_date: "",
-        advert: null,
-        advert_url: null,
-        bid_count: 0,
-        currentBid: {},
-        bids: [],
-        addBidModal: false,
-        updateBidModal: false,
-        cs_items: [],
-        cs_item_count: 0,
-        addItemsModal: false,
-  
-        complianceTable: false,
-        compliance: [],
-        complianceRemarks: [],
-        showSamples: "",
-        showSiteVisit: "",
-  
-        rankingTable: false,
-        rankings: [],
-  
-        committeeTable: false,
-        committeeMembers: [],
-        committeeJustificationModal: false,
-        member: {
-          memberName: "",
-          memberUserName: "",
-          memberPosition: "",
-          memberApproval: "",
-        },
-        gmApproval: null,
-        fmApproval: null,
-        approvalsComplete: false,
-        approvalsJustificationModal: false,
-        users: [],
-        currentApprover: {
-          username: "",
-          justification: "",
-          role: "",
-        },
-  
-        pr_items: [],
-        suppliers: [],
-        proc_plans: [],
-        uom: null,
-        authUser: {},
+    super(props);
+    this.state = {
+      requester_role: "",
+      cs_id: "",
+      cs_owner: "",
+      creator: "",
+      created_at: "",
+      committeeApprovalComplete: false,
+      plan_ref: "",
+      proc_ref: "",
+      proc_plan: null,
+      scope_of_work: "",
+      pr_number: "",
+      pr_attachments: [],
+      quantity: "",
+      pr_date: "",
+      closing_date: "",
+      closing_time: "",
+      ref_date: "",
+      date_tender_opened: "",
+      tender_adjudication_committee_date: "",
+      advert: null,
+      advert_url: null,
+      bid_count: 0,
+      currentBid: {},
+      bids: [],
+      addBidModal: false,
+      updateBidModal: false,
+      cs_items: [],
+      cs_item_count: 0,
+      addItemsModal: false,
+
+      complianceTable: false,
+      compliance: [],
+      complianceRemarks: [],
+      showSamples: "",
+      showSiteVisit: "",
+
+      rankingTable: false,
+      rankings: [],
+
+      committeeTable: false,
+      committeeMembers: [],
+      committeeJustificationModal: false,
+      member: {
+        memberName: "",
+        memberUserName: "",
+        memberPosition: "",
+        memberApproval: "",
+      },
+      gmApproval: null,
+      fmApproval: null,
+      approvalsComplete: false,
+      approvalsJustificationModal: false,
+      users: [],
+      currentApprover: {
         username: "",
-  
-        fetchPR: false,
-        onAddSupplier: false,
-        newSupplier: {
-          supplier_name: "",
-          supplier_contact: "",
-          supplier_email: "",
-          supplier_address: "",
-        },
-      };
-      this.getCreateData = this.getCreateData.bind(this);
-      this.onAddBid = this.onAddBid.bind(this);
-      this.onUpdateBidModal = this.onUpdateBidModal.bind(this);
-      this.onAddItemsModal = this.onAddItemsModal.bind(this);
-      this.onCommitteeChange = this.onCommitteeChange.bind(this);
-      this.onGetFileObjectUrl = this.onGetFileObjectUrl.bind(this);
-      this.onComplianceItemsChange = this.onComplianceItemsChange.bind(this);
-      this.onComplianceRemarksChange = this.onComplianceRemarksChange.bind(this);
-      this.onCommitteeApprove = this.onCommitteeApprove.bind(this);
-      this.onCommitteeJustificationChange =
-        this.onCommitteeJustificationChange.bind(this);
-      this.onCommitteeJustificationModal =
-        this.onCommitteeJustificationModal.bind(this);
-      this.onApprovalJustificationModal = this.onApprovalJustificationModal.bind(this);
-      this.onApprovalJustificationChange = this.onApprovalJustificationChange.bind(this);
-      this.onSupplierChange = this.onSupplierChange.bind(this);
+        justification: "",
+        role: "",
+      },
+
+      pr_items: [],
+      suppliers: [],
+      proc_plans: [],
+      uom: null,
+      authUser: {},
+      username: "",
+
+      fetchPR: false,
+      onAddSupplier: false,
+      newSupplier: {
+        supplier_name: "",
+        supplier_contact: "",
+        supplier_email: "",
+        supplier_address: "",
+      },
+    };
+    this.getCreateData = this.getCreateData.bind(this);
+    this.onAddBid = this.onAddBid.bind(this);
+    this.onUpdateBidModal = this.onUpdateBidModal.bind(this);
+    this.onAddItemsModal = this.onAddItemsModal.bind(this);
+    this.onCommitteeChange = this.onCommitteeChange.bind(this);
+    this.onGetFileObjectUrl = this.onGetFileObjectUrl.bind(this);
+    this.onComplianceItemsChange = this.onComplianceItemsChange.bind(this);
+    this.onComplianceRemarksChange = this.onComplianceRemarksChange.bind(this);
+    this.onCommitteeApprove = this.onCommitteeApprove.bind(this);
+    this.onCommitteeJustificationChange =
+      this.onCommitteeJustificationChange.bind(this);
+    this.onCommitteeJustificationModal =
+      this.onCommitteeJustificationModal.bind(this);
+    this.onApprovalJustificationModal =
+      this.onApprovalJustificationModal.bind(this);
+    this.onApprovalJustificationChange =
+      this.onApprovalJustificationChange.bind(this);
+    this.onSupplierChange = this.onSupplierChange.bind(this);
   }
 
   componentDidMount() {
@@ -107,7 +111,7 @@ class CreateRB extends React.Component {
         cs_id: this.props.csid,
       });
       this.getCSData(this.props.csid);
-    } else if(this.props.prid !== "") {
+    } else if (this.props.prid !== "") {
       this.setState({
         username: this.props.username,
         pr_number: this.props.prid,
@@ -119,23 +123,27 @@ class CreateRB extends React.Component {
         fetchPR: true,
       });
     }
-  } 
+  }
 
   onGetFileObjectUrl = (fileData) => {
-    if (typeof fileData === "string") {
-      const decodedFileData = atob(fileData);
-      const uint8Array = new Uint8Array(decodedFileData.length);
-      for (let i = 0; i < decodedFileData.length; i++) {
-        uint8Array[i] = decodedFileData.charCodeAt(i);
+    try {
+      if (typeof fileData === "string") {
+        const decodedFileData = atob(fileData);
+        const uint8Array = new Uint8Array(decodedFileData.length);
+        for (let i = 0; i < decodedFileData.length; i++) {
+          uint8Array[i] = decodedFileData.charCodeAt(i);
+        }
+
+        const file = new Blob([uint8Array], { type: "application/pdf" });
+        console.log("file: ", file);
+
+        return URL.createObjectURL(file);
+      } else {
+        console.log("fileData: ", fileData);
+        return URL.createObjectURL(fileData);
       }
-
-      const file = new Blob([uint8Array], { type: "application/pdf" });
-      console.log("file: ", file);
-
-      return URL.createObjectURL(file);
-    } else {
-      console.log("fileData: ", fileData);
-      return URL.createObjectURL(fileData);
+    } catch (err) {
+      console.log("error: ", error);
     }
   };
 
@@ -146,14 +154,20 @@ class CreateRB extends React.Component {
         let data = JSON.parse(data_);
         console.log("cs data: ", data, typeof data);
         let requester_role = data.requester_role ? data.requester_role : "";
+        let creator = data.creator ? data.creator : "";
+        let created_at = data.created_at ? data.created_at : "";
         let bids_object = data.bids ? data.bids : [];
-        let bids = Object.keys(bids_object).map((key) => {
-          let new_obj = bids_object[key];
-          return {
-            ...new_obj,
-            bid_document_url: this.onGetFileObjectUrl(new_obj.bid_document),
-          };
-        });
+        let bids = [];
+        if (bids_object.length !== 0) {
+          bids = Object.keys(bids_object).map((key) => {
+            let new_obj = bids_object[key];
+            return {
+              ...new_obj,
+              bid_document_url: this.onGetFileObjectUrl(new_obj.bid_document),
+            };
+          });
+        }
+        let sorted_bids = bids.sort((a, b) => a.bid_no - b.bid_no);
 
         let compliance = data.compliance ? data.compliance : [];
         let complianceRemarks = data.complianceRemarks
@@ -183,27 +197,52 @@ class CreateRB extends React.Component {
         let pr_attachments = data.pr_attachments ? data.pr_attachments : [];
         let cs_items = data.cs_items ? data.cs_items : [];
         let users = data.users ? data.users : [];
+        // Sort users by full name (first_name + " " + last_name)
+        users.sort((user1, user2) => {
+          const fullName1 = user1.first_name + " " + user1.last_name;
+          const fullName2 = user2.first_name + " " + user2.last_name;
+          return fullName1.localeCompare(fullName2);
+        });
         let cs_owner = data.cs_owner ? data.cs_owner : "";
 
         let advert_url = this.onGetFileObjectUrl(data.advert);
-        
-        let pr_at_list = pr_attachments.map((pr_attachment) => {
-          return {
-            ...pr_attachment,
-            attachment_url: this.onGetFileObjectUrl(pr_attachment.file),
-          };
-        });
+        let pr_at_list = [];
+        if (pr_attachments.length > 0) {
+          pr_at_list = pr_attachments.map((pr_attachment) => {
+            return {
+              ...pr_attachment,
+              attachment_url: this.onGetFileObjectUrl(pr_attachment.file),
+            };
+          });
+        }
 
-        let committeeApprovalComplete = committee.filter(
-          (member) => (member.memberApproval === "" || member.memberApproval === null || member.memberApproval === undefined || member.memberApproval === "Rejected")
-        ).length === 0;
-        
-        console.log("gm_approval: ", gm_approval, fm_approval, gm_approval.approval, fm_approval.approval);
-        let approvalsComplete = gm_approval.approval !== "" && fm_approval.approval !== "" && gm_approval.approval !== undefined && fm_approval.approval !== undefined;
+        let committeeApprovalComplete =
+          committee.filter(
+            (member) =>
+              member.memberApproval === "" ||
+              member.memberApproval === null ||
+              member.memberApproval === undefined ||
+              member.memberApproval === "Rejected"
+          ).length === 0;
+
+        console.log(
+          "gm_approval: ",
+          gm_approval,
+          fm_approval,
+          gm_approval.approval,
+          fm_approval.approval
+        );
+        let approvalsComplete =
+          gm_approval.approval !== "" &&
+          fm_approval.approval !== "" &&
+          gm_approval.approval !== undefined &&
+          fm_approval.approval !== undefined;
 
         this.setState({
           ...this.state,
           requester_role: requester_role,
+          creator: creator,
+          created_at: created_at,
           cs_owner: cs_owner,
           committeeApprovalComplete: committeeApprovalComplete,
           approvalsComplete: approvalsComplete,
@@ -221,13 +260,13 @@ class CreateRB extends React.Component {
           quantity: quantity,
           pr_date: pr_date,
           closing_date: closing_date,
-          closing_time_hour: closing_time,
+          closing_time: closing_time,
           ref_date: ref_date,
           tender_adjudication_committee_date:
             tender_adjudication_committee_date,
           advert: advert,
           advert_url: advert_url,
-          bids: bids,
+          bids: sorted_bids,
           cs_items: cs_items,
           compliance: compliance,
           complianceRemarks: complianceRemarks,
@@ -238,7 +277,8 @@ class CreateRB extends React.Component {
           pr_items: pr_items,
           pr_attachments: pr_at_list,
         });
-      });
+      })
+      .catch((error) => console.log("error: ", error));
   };
 
   getCreateData = (pr_id) => {
@@ -258,13 +298,21 @@ class CreateRB extends React.Component {
         let pr_id = data.pr_id ? data.pr_id : "";
         let pr_date = data.pr_date ? data.pr_date : "";
         let users = data.users ? data.users : [];
-
-        let pr_at_list = pr_attachments.map((pr_attachment) => {
-          return {
-            ...pr_attachment,
-            attachment_url: this.onGetFileObjectUrl(pr_attachment.file),
-          };
+        // Sort users by full name (first_name + " " + last_name)
+        users.sort((user1, user2) => {
+          const fullName1 = user1.first_name + " " + user1.last_name;
+          const fullName2 = user2.first_name + " " + user2.last_name;
+          return fullName1.localeCompare(fullName2);
         });
+        let pr_at_list = [];
+        if (pr_items.length === 0) {
+          pr_at_list = pr_attachments.map((pr_attachment) => {
+            return {
+              ...pr_attachment,
+              attachment_url: this.onGetFileObjectUrl(pr_attachment.file),
+            };
+          });
+        }
         this.setState({
           scope_of_work: scope_of_work,
           proc_ref: proc_ref,
@@ -277,7 +325,8 @@ class CreateRB extends React.Component {
           pr_date: pr_date,
           users: users,
         });
-      });
+      })
+      .catch((error) => console.log("error: ", error));
   };
 
   onFetchPR = (pr_id) => {
@@ -287,7 +336,7 @@ class CreateRB extends React.Component {
       .then((response) => response.json())
       .then((data) => {
         console.log("data: ", data);
-        if(data && data.success) {
+        if (data && data.success) {
           let scope_of_work = data.scope_of_work ? data.scope_of_work : "";
           let proc_ref = data.proc_ref ? data.proc_ref : "";
           let proc_plan = data.proc_plan ? data.proc_plan : null;
@@ -299,13 +348,15 @@ class CreateRB extends React.Component {
           let pr_id = data.pr_id ? data.pr_id : "";
           let pr_date = data.pr_date ? data.pr_date : "";
           let users = data.users ? data.users : [];
-
-          let pr_at_list = pr_attachments.map((pr_attachment) => {
-            return {
-              ...pr_attachment,
-              attachment_url: this.onGetFileObjectUrl(pr_attachment.file),
-            };
-          });
+          let pr_at_list = [];
+          if (pr_attachments.length > 0) {
+            pr_at_list = pr_attachments.map((pr_attachment) => {
+              return {
+                ...pr_attachment,
+                attachment_url: this.onGetFileObjectUrl(pr_attachment.file),
+              };
+            });
+          }
           this.setState({
             scope_of_work: scope_of_work,
             proc_ref: proc_ref,
@@ -324,12 +375,13 @@ class CreateRB extends React.Component {
             users: users,
             fetchPR: false,
           });
-      
+
           alert("PR fetched successfully");
         } else {
           alert("PR Number not found");
         }
-      });
+      })
+      .catch((error) => console.log("error: ", error));
   };
 
   onFetchPrNumberChange = (event) => {
@@ -338,7 +390,7 @@ class CreateRB extends React.Component {
       ...this.state,
       pr_number: value,
     });
-  }
+  };
 
   onCommitteeChange = (name_, event) => {
     let { name, value } = event.target;
@@ -348,7 +400,7 @@ class CreateRB extends React.Component {
       let user = this.state.users.find((user) => user.username === value);
       member.memberName = user.first_name + " " + user.last_name;
       member[name_] = value;
-    } else{
+    } else {
       member[name_] = value;
     }
     this.setState({
@@ -473,27 +525,40 @@ class CreateRB extends React.Component {
         console.log("data: ", data);
         if (data.success) {
           let committeeDate = data.committee_date;
-          let committeeApproval = data.committe_approval;
+          let committeeApproval = data.committee_approval;
           let memberName = data.committee_fullname;
-          let members = this.state.committeeMembers.map((member) => {
-            if (member.memberUserName === username) {
-              member.committee_date = committeeDate;
-              member.member_approval = committeeApproval;
-            }
-            return member;
-          });
+          let members = [];
+          if (
+            this.state.committeeMembers &&
+            this.state.committeeMembers.length > 0
+          ) {
+            members = this.state.committeeMembers.map((member) => {
+              if (member.memberUserName === username) {
+                member.committee_date = committeeDate;
+                member.member_approval = committeeApproval;
+              }
+              return member;
+            });
+          }
           this.setState({
             ...this.state,
             committeeMembers: members,
           });
-          if (committeeApproval === "Approved") {
-            alert("Committee approved successfully");
-            // reload page
-            window.location.reload();
-          } else {
-            alert("Committee rejected successfully");
-            window.location.reload();
-          }
+          console.log("committeeApproval: ", committeeApproval, justification);
+          alert("Approval Done!!");
+          // reload page
+          window.location.reload();
+          //   if (committeeApproval === "Approved") {
+          //     alert("Committee approved successfully");
+          //     // reload page
+          //     // window.location.reload();
+          //   } else if(committeeApproval === "Rejected") {
+          //     alert("Committee rejected successfully");
+          //     // window.location.reload();
+          //   } else {
+          //     alert("Error approving Committee");
+          //     // window.location.reload();
+          //   }
         } else {
           alert("Error approving Committee");
         }
@@ -531,7 +596,7 @@ class CreateRB extends React.Component {
 
   onApprovalApprove = (role, username, approval, justification) => {
     console.log("approval: ", approval, justification);
-    if(approval === "Rejected" && justification === "") {
+    if (approval === "Rejected" && justification === "") {
       alert("Please enter justification");
       return;
     }
@@ -561,7 +626,7 @@ class CreateRB extends React.Component {
             this.setState({
               fmApproval: fm_approval,
             });
-          } else if(role === "general_manager") {
+          } else if (role === "general_manager") {
             let gm_approval = data.gm_approval ? data.gm_approval : null;
             this.setState({
               gmApproval: gm_approval,
@@ -645,12 +710,15 @@ class CreateRB extends React.Component {
       // update item selected to false
       item.ordered = false;
       // update pr_items
-      let pr_items = this.state.pr_items.map((_item) => {
-        if (_item.id === item_id) {
-          return item;
-        }
-        return _item;
-      });
+      let pr_items = [];
+      if (this.state.pr_items && this.state.pr_items.length > 0) {
+        pr_items = this.state.pr_items.map((_item) => {
+          if (_item.id === item_id) {
+            return item;
+          }
+          return _item;
+        });
+      }
       // remove item
       let items = this.state.cs_items.filter((item) => item.id !== item_id);
       this.setState({
@@ -661,16 +729,29 @@ class CreateRB extends React.Component {
     } else {
       // find item in pr_items
       let item = this.state.pr_items.find((item) => item.id === item_id);
+      if (
+        item.item_required === undefined ||
+        item.quantity === undefined ||
+        item.unit_of_measurement === undefined
+      ) {
+        alert(
+          "Item selected has missing fields. Please correct the PR items first."
+        );
+        return;
+      }
       // update pr_item selected to added
       item.ordered = true;
       item.item_required = item.item_required;
       // update pr_items
-      let pr_items = this.state.pr_items.map((_item) => {
-        if (_item.id === item_id) {
-          return item;
-        }
-        return _item;
-      });
+      let pr_items = [];
+      if (this.state.pr_items && this.state.pr_items.length > 0) {
+        pr_items = this.state.pr_items.map((_item) => {
+          if (_item.id === item_id) {
+            return item;
+          }
+          return _item;
+        });
+      }
 
       let item_count = this.state.cs_item_count + 1;
       this.setState({
@@ -741,12 +822,15 @@ class CreateRB extends React.Component {
 
   onAddBidModal = () => {
     let bid_count = this.state.bids.length + 1;
+    let items = this.state.cs_items;
+    console.log("items: ", items);
     this.setState({
       ...this.state,
       addBidModal: !this.state.addBidModal,
       bid_count: bid_count,
       currentBid: {
         bid_count: bid_count,
+        items: items,
       },
     });
   };
@@ -802,64 +886,33 @@ class CreateRB extends React.Component {
     });
   };
 
-  onCurrentBidItemChange = (description, name_, event) => {
-    // check if item exists in current bid
+  onCurrentBidItemChange = (description, name_, event, bid_no) => {
+    let { name, value } = event.target;
+    console.log("name: ", name, " value: ", value, " bid no: ", bid_no);
     console.log("description: ", description);
-    let item = this.state.currentBid.items
-      ? this.state.currentBid.items.find(
-          (item) => item.item_required === description
-        )
-      : null;
-    console.log("item: ", item);
-    // if item exists update item
-    if (item) {
-      let { name, value } = event.target;
-      item[name_] = value;
-      // update item in current bid
-      let items = this.state.currentBid.items.map((_item) => {
-        if (_item.item_required === description) {
-          return item;
-        }
-        return _item;
-      });
-      // update current bid
-      let currentBid = this.state.currentBid;
-      currentBid.items = items;
-      // update state
-      this.setState({
-        ...this.state,
-        currentBid: currentBid,
-      });
-    } else {
-      // find item in cs_items
-      let item = this.state.cs_items.find(
-        (item) => item.item_required === description
-      );
-      // create new item
-      let new_item = {
-        item_required: item.item_required,
-        quantity: item.quantity,
-        unit_of_measurement: item.unit_of_measurement,
-        vat: item.vat,
-        unit_price: item.unit_price,
-        total_price: item.total_price,
-      };
-      // update current bid items
-      let items = [];
-      if (!this.state.currentBid.items) {
-        items.push(new_item);
-      } else {
-        items = [...this.state.currentBid.items, new_item];
-      }
-      // update current bid
-      let currentBid = this.state.currentBid;
-      currentBid.items = items;
-      // update state
-      this.setState({
-        ...this.state,
-        currentBid: currentBid,
-      });
-    }
+
+    let items = this.state.currentBid.items;
+
+    let new_items = items
+      ? items.map((it, index) => {
+          if (it.item_required === description) {
+            return {
+              ...it,
+              [name_]: value,
+            };
+          } else {
+            return it;
+          }
+        })
+      : [];
+
+    this.setState({
+      ...this.state,
+      currentBid: {
+        ...this.state.currentBid,
+        items: new_items,
+      },
+    });
   };
 
   onCurrentBidSave = () => {
@@ -876,6 +929,12 @@ class CreateRB extends React.Component {
     ) {
       alert("Please select a bid date");
       return;
+    } else if (
+      currentBid.bid_document === "" ||
+      currentBid.bid_document === undefined
+    ) {
+      alert("Please select a bid document");
+      return;
     } else {
       // check if current bid already exists
       if (currentBid.items) {
@@ -887,42 +946,94 @@ class CreateRB extends React.Component {
         if (bid) {
           // update bid
           console.log("currentBid 1: ", currentBid);
-          let items = currentBid.items.map((item) => {
-            item.total_price = item.quantity * item.unit_price;
-            return item;
-          });
+          let items = [];
+          if (
+            this.state.currentBid.items &&
+            this.state.currentBid.items.length > 0
+          ) {
+            items = currentBid.items.map((item) => {
+              item.total_price = item.quantity * item.unit_price;
+              return item;
+            });
+          }
+
+          let missingFields = items.filter(
+            (item) =>
+              item.quantity === "" ||
+              item.quantity === undefined ||
+              item.unit_price === "" ||
+              item.unit_price === undefined ||
+              item.vat === "" ||
+              item.vat === undefined ||
+              item.unit_of_measurement === "" ||
+              item.unit_of_measurement === undefined ||
+              item.total_price === "" ||
+              item.total_price === undefined
+          );
+
+          if (missingFields.length > 0) {
+            alert("Please fill in all required fields");
+            return;
+          }
           currentBid.items = items;
           console.log("currentBid: ", currentBid);
-          this.onSaveBid(currentBid);
-          let bids = this.state.bids.map((bid) => {
-            if (bid.bid_count === currentBid.bid_count) {
-              return currentBid;
-            }
-            return bid;
-          });
-          this.setState({
-            ...this.state,
-            bids: bids,
-            currentBid: {},
-            addBidModal: false,
-          });
+          let bids = [];
+          if (this.state.bids && this.state.bids.length > 0) {
+            bids = this.state.bids.map((bid) => {
+              if (bid.bid_count === currentBid.bid_count) {
+                return {
+                  ...currentBid,
+                  bid_document: currentBid.bid_document
+                    ? currentBid.bid_document
+                    : bid.bid_document,
+                };
+              }
+              return bid;
+            });
+            bids.sort((a, b) => a.bid_count - b.bid_count);
+          }
+          this.onSaveBid(currentBid, bids, undefined, undefined);
         } else {
           // calculate total price for each item
-          let items = currentBid.items.map((item) => {
-            item.total_price = item.quantity * item.unit_price;
-            return item;
-          });
+          let items = [];
+          if (currentBid.items && currentBid.items.length > 0) {
+            items = currentBid.items.map((item) => {
+              item.total_price = item.quantity * item.unit_price;
+              return item;
+            });
+          }
+
+          let missingFields = items.filter(
+            (item) =>
+              item.quantity === "" ||
+              item.quantity === undefined ||
+              item.unit_price === "" ||
+              item.unit_price === undefined ||
+              item.vat === "" ||
+              item.vat === undefined ||
+              item.unit_of_measurement === "" ||
+              item.unit_of_measurement === undefined ||
+              item.total_price === "" ||
+              item.total_price === undefined
+          );
+
+          if (missingFields.length > 0) {
+            alert("Please fill in all required fields");
+            return;
+          }
           // update current bid items
           currentBid.items = items;
-          this.onSaveBid(currentBid);
 
           let bids = this.state.bids;
           console.log("currentBid: ", currentBid);
           bids.push(currentBid);
+          bids.sort((a, b) => a.bid_count - b.bid_count);
+
           // check if compliance for supplier exists
           let compliances = this.state.compliance;
           let compliance = compliances.find(
-            (compliance) => compliance.supplier_name === currentBid.supplier_name
+            (compliance) =>
+              compliance.supplier_name === currentBid.supplier_name
           );
           let compliance_ = {};
           if (!compliance) {
@@ -945,13 +1056,13 @@ class CreateRB extends React.Component {
             };
             compliances.push(compliance_);
           }
-  
+
           let complianceRemarks = this.state.complianceRemarks;
           let complianceRemark = complianceRemarks.find(
             (complianceRemark) =>
               complianceRemark.supplier_name === currentBid.supplier_name
           );
-  
+
           if (!complianceRemark) {
             let complianceRemark_ = {
               bid_count: currentBid.bid_count,
@@ -961,16 +1072,7 @@ class CreateRB extends React.Component {
             };
             complianceRemarks.push(complianceRemark_);
           }
-  
-          this.setState({
-            ...this.state,
-            bids: bids,
-            currentBid: {},
-            addBidModal: false,
-            compliance: compliances,
-            complianceRemarks: complianceRemarks,
-          });
-
+          this.onSaveBid(currentBid, bids, compliance, complianceRemarks);
         }
       } else {
         alert("Please add items to the bid");
@@ -1008,17 +1110,48 @@ class CreateRB extends React.Component {
       .then((data) => {
         console.log("data: ", data);
         if (data.success) {
+          this.setState({
+            ...this.state,
+            bids: bids ? bids : this.state.bids,
+            compliance: compliances ? compliances : this.state.compliance,
+            complianceRemarks: complianceRemarks
+              ? complianceRemarks
+              : this.state.complianceRemarks,
+          });
+
           alert("Bid saved successfully");
         } else {
           alert("Error saving Bid");
         }
-      });
+      })
+      .catch((err) => console.log("onSaveBid: ", err));
+    this.setState({
+      ...this.state,
+      currentBid: null,
+      addBidModal: false,
+      updateBidModal: false,
+    });
   };
 
   onSaveSchedule = () => {
-
-    if(!this.state.proc_ref || !this.state.scope_of_work || !this.state.pr_number || !this.state.pr_date || !this.state.closing_date || !this.state.ref_date || !this.state.closing_time_hour || !this.state.date_tender_opened || !this.state.tender_adjudication_committee_date) {
+    if (
+      !this.state.proc_ref ||
+      !this.state.scope_of_work ||
+      !this.state.pr_number ||
+      !this.state.pr_date ||
+      !this.state.closing_date ||
+      !this.state.ref_date ||
+      !this.state.closing_time ||
+      !this.state.date_tender_opened ||
+      !this.state.tender_adjudication_committee_date
+    ) {
       alert("Please fill in all required fields");
+      return;
+    }
+    if (this.state.pr_items.length === 0) {
+      alert(
+        "Cannot create a Comparative Schedule without Purchase Request items."
+      );
       return;
     }
     let form_data = new FormData();
@@ -1031,7 +1164,7 @@ class CreateRB extends React.Component {
     form_data.append("pr_date", this.state.pr_date);
     form_data.append("closing_date", this.state.closing_date);
     form_data.append("ref_date", this.state.ref_date);
-    form_data.append("closing_time_hour", this.state.closing_time_hour);
+    form_data.append("closing_time", this.state.closing_time);
     form_data.append("date_tender_opened", this.state.date_tender_opened);
     form_data.append("username", this.state.username);
     form_data.append(
@@ -1061,11 +1194,26 @@ class CreateRB extends React.Component {
         } else {
           alert("Error saving Comparative Schedule");
         }
-      });
+      })
+      .catch((err) => console.log("onSaveSchedule: ", err));
   };
 
   onUpdateSchedule = () => {
-    if(!this.state.proc_ref || !this.state.scope_of_work || !this.state.pr_number || !this.state.pr_date || !this.state.closing_date || !this.state.ref_date || !this.state.closing_time_hour || !this.state.date_tender_opened || !this.state.tender_adjudication_committee_date) {
+    if (this.state.cs_id === "" || this.state.cs_id === undefined) {
+      alert("Please save the Comparative Schedule first");
+      return;
+    }
+    if (
+      !this.state.proc_ref ||
+      !this.state.scope_of_work ||
+      !this.state.pr_number ||
+      !this.state.pr_date ||
+      !this.state.closing_date ||
+      !this.state.ref_date ||
+      !this.state.closing_time ||
+      !this.state.date_tender_opened ||
+      !this.state.tender_adjudication_committee_date
+    ) {
       alert("Please fill in all required fields");
       return;
     }
@@ -1080,7 +1228,7 @@ class CreateRB extends React.Component {
     form_data.append("pr_date", this.state.pr_date);
     form_data.append("closing_date", this.state.closing_date);
     form_data.append("ref_date", this.state.ref_date);
-    form_data.append("closing_time_hour", this.state.closing_time_hour);
+    form_data.append("closing_time", this.state.closing_time);
     form_data.append("date_tender_opened", this.state.date_tender_opened);
     form_data.append("username", this.state.username);
     form_data.append(
@@ -1105,7 +1253,8 @@ class CreateRB extends React.Component {
         } else {
           alert("Error updating Comparative Schedule");
         }
-      });
+      })
+      .catch((err) => console.log("onUpdateSchedule: ", err));
   };
 
   onDeleteBidModal = (bid_count, supplier_name) => {
@@ -1260,9 +1409,13 @@ class CreateRB extends React.Component {
 
   onAddComplianceTable = () => {
     // add bid compliance
+    if (this.state.bids.length === 0) {
+      alert("Please add bids first");
+      return;
+    }
     let compliances = this.state.bids.map((bid) => {
       return {
-        bid_count: bid.bid_count,
+        bid_no: bid.bid_count,
         supplier: bid.supplier,
         supplier_name: bid.supplier_name,
         payment_terms: false,
@@ -1298,69 +1451,83 @@ class CreateRB extends React.Component {
   };
 
   onComplianceItemsChange = (name_, event) => {
-    console.log("name and value: ", name_, event);
     let { name, value } = event.target;
+    console.log("name: ", name, "value: ", value);
     let compliance = this.state.compliance;
+    if (compliance.length === 0) {
+      alert("Please add bids first");
+      return;
+    }
+    console.log(
+      "showSamples: ",
+      this.state.showSamples,
+      "showSiteVisit: ",
+      this.state.showSiteVisit,
+      value,
+      name
+    );
     let updatedComplianceList = compliance.map((compliance_, index) => {
       let _compliance = {};
-      if (this.state.showSamples && this.state.showSiteVisit) {
-        _compliance = {
-          payment_terms: compliance_.payment_terms,
-          bid_validity: compliance_.bid_validity,
-          delivery_period: compliance_.delivery_period,
-          technical_specifications: compliance_.technical_specifications,
-          valid_tax_clearance: compliance_.valid_tax_clearance,
-          registered_with_praz: compliance_.registered_with_praz,
-          tax_status: compliance_.tax_status,
-          site_visit: compliance_.site_visit,
-          samples_required: compliance_.samples_required,
-        };
-      } else if (this.state.showSamples && !this.state.showSiteVisit) {
-        _compliance = {
-          payment_terms: compliance_.payment_terms,
-          bid_validity: compliance_.bid_validity,
-          delivery_period: compliance_.delivery_period,
-          technical_specifications: compliance_.technical_specifications,
-          valid_tax_clearance: compliance_.valid_tax_clearance,
-          registered_with_praz: compliance_.registered_with_praz,
-          tax_status: compliance_.tax_status,
-          samples_required: compliance_.samples_required,
-        };
-      } else if (!this.state.showSamples && this.state.showSiteVisit) {
-        _compliance = {
-          payment_terms: compliance_.payment_terms,
-          bid_validity: compliance_.bid_validity,
-          delivery_period: compliance_.delivery_period,
-          technical_specifications: compliance_.technical_specifications,
-          valid_tax_clearance: compliance_.valid_tax_clearance,
-          registered_with_praz: compliance_.registered_with_praz,
-          tax_status: compliance_.tax_status,
-          site_visit: compliance_.site_visit,
-        };
-      } else {
-        _compliance = {
-          payment_terms: compliance_.payment_terms,
-          bid_validity: compliance_.bid_validity,
-          delivery_period: compliance_.delivery_period,
-          technical_specifications: compliance_.technical_specifications,
-          valid_tax_clearance: compliance_.valid_tax_clearance,
-          registered_with_praz: compliance_.registered_with_praz,
-          tax_status: compliance_.tax_status,
-        };
+      let site_visit = compliance_.site_visit;
+      let samples_required = compliance_.samples_required;
+      if (name === "showSiteVisit") {
+        if (value === "no") {
+          site_visit = false;
+        }
+      } else if (name === "showSamples") {
+        if (value === "no") {
+          samples_required = false;
+        }
       }
 
+      console.log("other value: ", value);
+      console.log(
+        "site_visit: ",
+        site_visit,
+        "samples_required: ",
+        samples_required
+      );
+      console.log(
+        "showSamples: ",
+        this.state.showSamples,
+        "showSiteVisit: ",
+        this.state.showSiteVisit
+      );
+      _compliance = {
+        payment_terms: compliance_.payment_terms,
+        bid_validity: compliance_.bid_validity,
+        delivery_period: compliance_.delivery_period,
+        technical_specifications: compliance_.technical_specifications,
+        valid_tax_clearance: compliance_.valid_tax_clearance,
+        registered_with_praz: compliance_.registered_with_praz,
+        site_visit: site_visit,
+        samples_required: samples_required,
+      };
+
       // set compliance_['decision'] to true if all compliance are true
-      let compliance_values = Object.values(_compliance);
-      console.log("compliances: ", compliance_values);
-      let decision = compliance_values.every((value) => value === true);
-      compliance_["decision"] = decision;
-      compliance_["reject"] = !decision;
+      let allValuesTrue = true;
+      for (const key in _compliance) {
+        if (_compliance.hasOwnProperty(key)) {
+          if (key === "site_visit" && value === "no") {
+            continue;
+          } else if (key === "samples_required" && value === "no") {
+            continue;
+          } else if (!_compliance[key]) {
+            allValuesTrue = false;
+            break;
+          }
+        }
+      }
+
+      compliance_["decision"] = allValuesTrue;
+      compliance_["reject"] = !allValuesTrue;
 
       return compliance_;
     });
+    console.log("state: ", this.state.showSamples, this.state.showSiteVisit);
     this.setState({
       ...this.state,
-      [name_]: value,
+      [name]: value,
       compliance: updatedComplianceList,
     });
   };
@@ -1370,60 +1537,84 @@ class CreateRB extends React.Component {
     console.log("name: ", name, "checked: ", checked);
     let compliance = this.state.compliance;
     compliance[index][name] = checked;
-    // filter decision and reject from list
-    let _compliance = {};
-    if (this.state.showSamples && this.state.showSiteVisit) {
-      _compliance = {
-        payment_terms: compliance[index].payment_terms,
-        bid_validity: compliance[index].bid_validity,
-        delivery_period: compliance[index].delivery_period,
-        technical_specifications: compliance[index].technical_specifications,
-        valid_tax_clearance: compliance[index].valid_tax_clearance,
-        registered_with_praz: compliance[index].registered_with_praz,
-        tax_status: compliance[index].tax_status,
-        site_visit: compliance[index].site_visit,
-        samples_required: compliance[index].samples_required,
-      };
-    } else if (this.state.showSamples && !this.state.showSiteVisit) {
-      _compliance = {
-        payment_terms: compliance[index].payment_terms,
-        bid_validity: compliance[index].bid_validity,
-        delivery_period: compliance[index].delivery_period,
-        technical_specifications: compliance[index].technical_specifications,
-        valid_tax_clearance: compliance[index].valid_tax_clearance,
-        registered_with_praz: compliance[index].registered_with_praz,
-        tax_status: compliance[index].tax_status,
-        samples_required: compliance[index].samples_required,
-      };
-    } else if (!this.state.showSamples && this.state.showSiteVisit) {
-      _compliance = {
-        payment_terms: compliance[index].payment_terms,
-        bid_validity: compliance[index].bid_validity,
-        delivery_period: compliance[index].delivery_period,
-        technical_specifications: compliance[index].technical_specifications,
-        valid_tax_clearance: compliance[index].valid_tax_clearance,
-        registered_with_praz: compliance[index].registered_with_praz,
-        tax_status: compliance[index].tax_status,
-        site_visit: compliance[index].site_visit,
-      };
-    } else {
-      _compliance = {
-        payment_terms: compliance[index].payment_terms,
-        bid_validity: compliance[index].bid_validity,
-        delivery_period: compliance[index].delivery_period,
-        technical_specifications: compliance[index].technical_specifications,
-        valid_tax_clearance: compliance[index].valid_tax_clearance,
-        registered_with_praz: compliance[index].registered_with_praz,
-        tax_status: compliance[index].tax_status,
-      };
-    }
+    // // filter decision and reject from list
+    // let _compliance = {};
+    // if (this.state.showSamples && this.state.showSiteVisit) {
+    //   _compliance = {
+    //     payment_terms: compliance[index].payment_terms,
+    //     bid_validity: compliance[index].bid_validity,
+    //     delivery_period: compliance[index].delivery_period,
+    //     technical_specifications: compliance[index].technical_specifications,
+    //     valid_tax_clearance: compliance[index].valid_tax_clearance,
+    //     registered_with_praz: compliance[index].registered_with_praz,
+    //     site_visit: compliance[index].site_visit,
+    //     samples_required: compliance[index].samples_required,
+    //   };
+    // } else if (this.state.showSamples && !this.state.showSiteVisit) {
+    //   _compliance = {
+    //     payment_terms: compliance[index].payment_terms,
+    //     bid_validity: compliance[index].bid_validity,
+    //     delivery_period: compliance[index].delivery_period,
+    //     technical_specifications: compliance[index].technical_specifications,
+    //     valid_tax_clearance: compliance[index].valid_tax_clearance,
+    //     registered_with_praz: compliance[index].registered_with_praz,
+    //     samples_required: compliance[index].samples_required,
+    //   };
+    // } else if (!this.state.showSamples && this.state.showSiteVisit) {
+    //   _compliance = {
+    //     payment_terms: compliance[index].payment_terms,
+    //     bid_validity: compliance[index].bid_validity,
+    //     delivery_period: compliance[index].delivery_period,
+    //     technical_specifications: compliance[index].technical_specifications,
+    //     valid_tax_clearance: compliance[index].valid_tax_clearance,
+    //     registered_with_praz: compliance[index].registered_with_praz,
+    //     site_visit: compliance[index].site_visit,
+    //   };
+    // } else {
+    //   _compliance = {
+    //     payment_terms: compliance[index].payment_terms,
+    //     bid_validity: compliance[index].bid_validity,
+    //     delivery_period: compliance[index].delivery_period,
+    //     technical_specifications: compliance[index].technical_specifications,
+    //     valid_tax_clearance: compliance[index].valid_tax_clearance,
+    //     registered_with_praz: compliance[index].registered_with_praz,
+    //   };
+    // }
 
-    // set compliance[index]['decision'] to true if all compliance are true
-    let compliance_values = Object.values(_compliance);
-    console.log("compliances: ", compliance_values);
-    let decision = compliance_values.every((value) => value === true);
-    compliance[index]["decision"] = decision;
-    compliance[index]["reject"] = !decision;
+    // // set compliance[index]['decision'] to true if all compliance are true
+    // let compliance_values = Object.values(_compliance);
+    // console.log("compliances: ", compliance_values);
+    // let decision = compliance_values.every((value) => value === true);
+    let _compliance = {
+      payment_terms: compliance[index].payment_terms,
+      bid_validity: compliance[index].bid_validity,
+      delivery_period: compliance[index].delivery_period,
+      technical_specifications: compliance[index].technical_specifications,
+      valid_tax_clearance: compliance[index].valid_tax_clearance,
+      registered_with_praz: compliance[index].registered_with_praz,
+      site_visit: compliance[index].site_visit,
+      samples_required: compliance[index].samples_required,
+    };
+
+    // set compliance_['decision'] to true if all compliance are true
+    let allValuesTrue = true;
+    for (const key in _compliance) {
+      if (_compliance.hasOwnProperty(key)) {
+        if (key === "site_visit" && this.state.showSiteVisit === "no") {
+          continue;
+        } else if (
+          key === "samples_required" &&
+          this.state.showSamples === "no"
+        ) {
+          continue;
+        } else if (!_compliance[key]) {
+          allValuesTrue = false;
+          break;
+        }
+      }
+    }
+    compliance[index]["decision"] = allValuesTrue;
+    compliance[index]["reject"] = !allValuesTrue;
 
     this.setState({
       ...this.state,
@@ -1528,7 +1719,6 @@ class CreateRB extends React.Component {
   };
 
   render() {
-
     var itemsModal = null;
     var bidsModal = null;
     var updateBidModal = null;
@@ -1817,27 +2007,28 @@ class CreateRB extends React.Component {
                   </tr>
                 </thead>
                 <tbody>
-                  {this.state.pr_items.map((item, index) => {
-                    return (
-                      <tr className="text-gray-900">
-                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                          <input
-                            type="checkbox"
-                            checked={item.ordered ? item.ordered : false}
-                            onChange={() =>
-                              this.onAddCSItem(item.id, item.ordered)
-                            }
-                          />
-                        </td>
-                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                          {item.item_required}
-                        </td>
-                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                          {item.quantity}
-                        </td>
-                      </tr>
-                    );
-                  })}
+                  {this.state.pr_items &&
+                    this.state.pr_items.map((item, index) => {
+                      return (
+                        <tr key={index} className="text-gray-900">
+                          <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                            <input
+                              type="checkbox"
+                              checked={item.ordered ? item.ordered : false}
+                              onChange={() =>
+                                this.onAddCSItem(item.id, item.ordered)
+                              }
+                            />
+                          </td>
+                          <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                            {item.item_required}
+                          </td>
+                          <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                            {item.quantity}
+                          </td>
+                        </tr>
+                      );
+                    })}
                 </tbody>
               </table>
 
@@ -1860,7 +2051,7 @@ class CreateRB extends React.Component {
     if (this.state.addBidModal) {
       bidsModal = (
         <div
-          id={"bid-" + this.state.currentBid}
+          id={"bid-" + this.state.currentBid.bid_count}
           className="fixed inset-0 flex items-center justify-center z-50 pt-10 pb-20"
         >
           <div className="bg-gulf-blue-100 rounded-lg shadow-lg p-6 max-h-screen min-w-max overflow-y-auto">
@@ -1955,9 +2146,9 @@ class CreateRB extends React.Component {
                     </label>
                     <div className="mt-2">
                       <input
-                        name="supplier[bid][0]"
+                        name=""
                         type="number"
-                        value="1"
+                        value={this.state.currentBid.bid_count}
                         id="bid"
                         required="required"
                         readOnly
@@ -1985,153 +2176,163 @@ class CreateRB extends React.Component {
                   </div>
                 </div>
 
-                {this.state.cs_items.map((item, index) => {
-                  return (
-                    <div className="flex justify-evenly mt-5  px-2 py-2 rounded-md">
-                      <div className="flex-1 w-15 ml-1">
-                        <label
-                          htmlFor="item_name"
-                          className="block text-sm font-medium leading-6 text-gray-900"
-                        >
-                          Item Description
-                        </label>
-                        <div className="mt-2">
-                          <input
-                            name="item_description"
-                            defaultValue={item.item_required}
-                            onChange={(e) =>
-                              this.onCurrentBidItemChange(
-                                item.item_required,
-                                "item_required",
-                                e
-                              )
-                            }
-                            id="item_description"
-                            required="required"
-                            className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                          />
-                        </div>
-                      </div>
-                      <div className="flex-1 w-15 ml-1">
-                        <label
-                          htmlFor="quantity"
-                          className="block text-sm font-medium leading-6 text-gray-900"
-                        >
-                          Quantity
-                        </label>
-                        <div className="mt-2">
-                          <input
-                            name="quantity"
-                            defaultValue={item.quantity}
-                            onChange={(e) =>
-                              this.onCurrentBidItemChange(
-                                item.item_required,
-                                "quantity",
-                                e
-                              )
-                            }
-                            type="number"
-                            id="quantity"
-                            className="block inpt w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                          />
-                        </div>
-                      </div>
-                      <div className="flex-1 w-15 ml-3">
-                        <div>
+                {this.state.cs_items &&
+                  this.state.cs_items.map((item, index) => {
+                    return (
+                      <div className="flex justify-evenly mt-5  px-2 py-2 rounded-md">
+                        <div className="flex-1 w-15 ml-1">
                           <label
-                            htmlFor="unit_of_measurement"
+                            htmlFor="item_name"
                             className="block text-sm font-medium leading-6 text-gray-900"
                           >
-                            UOM
+                            Item Description
                           </label>
                           <div className="mt-2">
-                            <select
-                              id="unit_of_measurement"
+                            <input
+                              name="item_description"
+                              defaultValue={item.item_required}
                               onChange={(e) =>
                                 this.onCurrentBidItemChange(
                                   item.item_required,
-                                  "unit_of_measurement",
-                                  e
+                                  "item_required",
+                                  e,
+                                  this.state.currentBid.bid_count
                                 )
                               }
-                              autoComplete="unit_of_measurement"
-                              className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
-                            >
-                              {item.unit_of_measurement ? (
-                                <option value={item.unit_of_measurement}>
-                                  {item.unit_of_measurement}
-                                </option>
-                              ) : (
-                                ""
-                              )}
-                              {this.state.uom ? this.state.uom.map((uom) => (
-                                <option value={uom.name}>{uom.name}</option>
-                              )): <option>No Units</option>}
-                            </select>
+                              id="item_description"
+                              required="required"
+                              className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                            />
                           </div>
                         </div>
-                      </div>
-                      <div className="flex-1 w-15 ml-3">
-                        <div>
+                        <div className="flex-1 w-15 ml-1">
                           <label
-                            htmlFor="vat"
+                            htmlFor="quantity"
                             className="block text-sm font-medium leading-6 text-gray-900"
                           >
-                            VAT
+                            Quantity
                           </label>
                           <div className="mt-2">
-                            <select
-                              id="vat"
+                            <input
+                              name="quantity"
+                              defaultValue={item.quantity}
                               onChange={(e) =>
                                 this.onCurrentBidItemChange(
                                   item.item_required,
-                                  "vat",
-                                  e
+                                  "quantity",
+                                  e,
+                                  this.state.currentBid.bid_count
                                 )
                               }
-                              autoComplete="vat"
-                              className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+                              type="number"
+                              id="quantity"
+                              className="block inpt w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                            />
+                          </div>
+                        </div>
+                        <div className="flex-1 w-15 ml-3">
+                          <div>
+                            <label
+                              htmlFor="unit_of_measurement"
+                              className="block text-sm font-medium leading-6 text-gray-900"
                             >
-                              {item.vat ? (
-                                <option value={item.vat}>{item.vat}</option>
-                              ) : (
-                                ""
-                              )}
-                              <option value="">Select VAT</option>
-                              <option value="Excl.">Excl.</option>
-                              <option value="Incl.">Incl.</option>
-                            </select>
+                              UOM
+                            </label>
+                            <div className="mt-2">
+                              <select
+                                id="unit_of_measurement"
+                                onChange={(e) =>
+                                  this.onCurrentBidItemChange(
+                                    item.item_required,
+                                    "unit_of_measurement",
+                                    e,
+                                    this.state.currentBid.bid_count
+                                  )
+                                }
+                                autoComplete="unit_of_measurement"
+                                className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+                              >
+                                {item.unit_of_measurement ? (
+                                  <option value={item.unit_of_measurement}>
+                                    {item.unit_of_measurement}
+                                  </option>
+                                ) : (
+                                  ""
+                                )}
+                                {this.state.uom ? (
+                                  this.state.uom.map((uom) => (
+                                    <option value={uom.name}>{uom.name}</option>
+                                  ))
+                                ) : (
+                                  <option>No Units</option>
+                                )}
+                              </select>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex-1 w-15 ml-3">
+                          <div>
+                            <label
+                              htmlFor="vat"
+                              className="block text-sm font-medium leading-6 text-gray-900"
+                            >
+                              VAT
+                            </label>
+                            <div className="mt-2">
+                              <select
+                                id="vat"
+                                onChange={(e) =>
+                                  this.onCurrentBidItemChange(
+                                    item.item_required,
+                                    "vat",
+                                    e,
+                                    this.state.currentBid.bid_count
+                                  )
+                                }
+                                autoComplete="vat"
+                                className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+                              >
+                                {item.vat ? (
+                                  <option value={item.vat}>{item.vat}</option>
+                                ) : (
+                                  ""
+                                )}
+                                <option value="">Select VAT</option>
+                                <option value="Excl.">Excl.</option>
+                                <option value="Incl.">Incl.</option>
+                              </select>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex-1 w-15 ml-1">
+                          <label
+                            htmlFor="unit_price"
+                            className="block text-sm font-medium leading-6 text-gray-900"
+                          >
+                            Unit Price
+                          </label>
+                          <div className="mt-2">
+                            <input
+                              name="unit_price"
+                              defaultValue={item.unit_price}
+                              onChange={(e) =>
+                                this.onCurrentBidItemChange(
+                                  item.item_required,
+                                  "unit_price",
+                                  e,
+                                  this.state.currentBid.bid_count
+                                )
+                              }
+                              type="text"
+                              id="unit_price"
+                              required
+                              className="block inpt w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                            />
                           </div>
                         </div>
                       </div>
-                      <div className="flex-1 w-15 ml-1">
-                        <label
-                          htmlFor="unit_price"
-                          className="block text-sm font-medium leading-6 text-gray-900"
-                        >
-                          Unit Price
-                        </label>
-                        <div className="mt-2">
-                          <input
-                            name="unit_price"
-                            defaultValue={item.unit_price}
-                            onChange={(e) =>
-                              this.onCurrentBidItemChange(
-                                item.item_required,
-                                "unit_price",
-                                e
-                              )
-                            }
-                            type="text"
-                            id="unit_price"
-                            required
-                            className="block inpt w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
               </div>
 
               <div className="flex justify-center mt-5 px-3 py-3">
@@ -2162,12 +2363,12 @@ class CreateRB extends React.Component {
     if (this.state.updateBidModal) {
       updateBidModal = (
         <div
-          id={"bid-" + this.state.currentBid}
+          id={"bid-" + this.state.currentBid.bid_count}
           className="fixed inset-0 flex items-center justify-center z-50 pt-10 pb-20"
         >
           <div className="bg-white rounded-lg shadow-lg p-6 max-h-screen min-w-max overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-medium">Modal Title</h3>
+              <h3 className="text-lg font-medium">Update Bid</h3>
               <button
                 type="button"
                 className="text-gray-400 hover:text-gray-500 focus:outline-none"
@@ -2287,154 +2488,168 @@ class CreateRB extends React.Component {
                   </div>
                 </div>
 
-                {this.state.currentBid.items.map((item, index) => {
-                  return (
-                    <div className="flex justify-evenly mt-5  px-2 py-2 rounded-md">
-                      <div className="flex-1 w-15 ml-1">
-                        <label
-                          htmlFor="item_name"
-                          className="block text-sm font-medium leading-6 text-gray-900"
-                        >
-                          Item Description
-                        </label>
-                        <div className="mt-2">
-                          <input
-                            name="item_description"
-                            defaultValue={item.item_required}
-                            onChange={(e) =>
-                              this.onCurrentBidItemChange(
-                                item.item_required,
-                                "item_required",
-                                e
-                              )
-                            }
-                            id="item_description"
-                            required="required"
-                            className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                          />
-                        </div>
-                      </div>
-                      <div className="flex-1 w-15 ml-1">
-                        <label
-                          htmlFor="quantity"
-                          className="block text-sm font-medium leading-6 text-gray-900"
-                        >
-                          Quantity
-                        </label>
-                        <div className="mt-2">
-                          <input
-                            name="quantity"
-                            defaultValue={item.quantity}
-                            onChange={(e) =>
-                              this.onCurrentBidItemChange(
-                                item.item_required,
-                                "quantity",
-                                e
-                              )
-                            }
-                            type="number"
-                            id="quantity"
-                            className="block inpt w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                          />
-                        </div>
-                      </div>
-                      <div className="flex-1 w-15 ml-3">
-                        <div>
+                {this.state.currentBid.items &&
+                  this.state.currentBid.items.map((item, index) => {
+                    return (
+                      <div
+                        key={index}
+                        className="flex justify-evenly mt-5  px-2 py-2 rounded-md"
+                      >
+                        <div className="flex-1 w-15 ml-1">
                           <label
-                            htmlFor="unit_of_measurement"
+                            htmlFor="item_name"
                             className="block text-sm font-medium leading-6 text-gray-900"
                           >
-                            UOM
+                            Item Description
                           </label>
                           <div className="mt-2">
-                            <select
-                              id="unit_of_measurement"
-                              defaultValue={item.unit_of_measurement}
+                            <input
+                              name="item_description"
+                              defaultValue={item.item_required}
                               onChange={(e) =>
                                 this.onCurrentBidItemChange(
                                   item.item_required,
-                                  "unit_of_measurement",
-                                  e
+                                  "item_required",
+                                  e,
+                                  this.state.currentBid.bid_count
                                 )
                               }
-                              autoComplete="unit_of_measurement"
-                              className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
-                            >
-                              {item.unit_of_measurement ? (
-                                <option value={item.unit_of_measurement}>
-                                  {item.unit_of_measurement}
-                                </option>
-                              ) : (
-                                ""
-                              )}
-                              {this.state.uom ? this.state.uom.map((uom) => (
-                                <option value={uom.name}>{uom.name}</option>
-                              )): <option>No Units</option>}
-                            </select>
+                              id="item_description"
+                              required="required"
+                              className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                            />
                           </div>
                         </div>
-                      </div>
-                      <div className="flex-1 w-15 ml-3">
-                        <div>
+                        <div className="flex-1 w-15 ml-1">
                           <label
-                            htmlFor="vat"
+                            htmlFor="quantity"
                             className="block text-sm font-medium leading-6 text-gray-900"
                           >
-                            VAT
+                            Quantity
                           </label>
                           <div className="mt-2">
-                            <select
-                              id="vat"
-                              defaultValue={item.vat}
+                            <input
+                              name="quantity"
+                              defaultValue={item.quantity}
                               onChange={(e) =>
                                 this.onCurrentBidItemChange(
                                   item.item_required,
-                                  "vat",
-                                  e
+                                  "quantity",
+                                  e,
+                                  this.state.currentBid.bid_count
                                 )
                               }
-                              autoComplete="vat"
-                              className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+                              type="number"
+                              id="quantity"
+                              className="block inpt w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                            />
+                          </div>
+                        </div>
+                        <div className="flex-1 w-15 ml-3">
+                          <div>
+                            <label
+                              htmlFor="unit_of_measurement"
+                              className="block text-sm font-medium leading-6 text-gray-900"
                             >
-                              {item.vat ? (
-                                <option value={item.vat}>{item.vat}</option>
-                              ) : (
-                                ""
-                              )}
-                              <option value="Excl.">Excl.</option>
-                              <option value="Incl.">Incl.</option>
-                            </select>
+                              UOM
+                            </label>
+                            <div className="mt-2">
+                              <select
+                                id="unit_of_measurement"
+                                defaultValue={item.unit_of_measurement}
+                                onChange={(e) =>
+                                  this.onCurrentBidItemChange(
+                                    item.item_required,
+                                    "unit_of_measurement",
+                                    e,
+                                    this.state.currentBid.bid_count
+                                  )
+                                }
+                                autoComplete="unit_of_measurement"
+                                className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+                              >
+                                {item.unit_of_measurement ? (
+                                  <option value={item.unit_of_measurement}>
+                                    {item.unit_of_measurement}
+                                  </option>
+                                ) : (
+                                  ""
+                                )}
+                                {this.state.uom ? (
+                                  this.state.uom.map((uom) => (
+                                    <option value={uom.name}>{uom.name}</option>
+                                  ))
+                                ) : (
+                                  <option>No Units</option>
+                                )}
+                              </select>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex-1 w-15 ml-3">
+                          <div>
+                            <label
+                              htmlFor="vat"
+                              className="block text-sm font-medium leading-6 text-gray-900"
+                            >
+                              VAT
+                            </label>
+                            <div className="mt-2">
+                              <select
+                                id="vat"
+                                defaultValue={item.vat}
+                                onChange={(e) =>
+                                  this.onCurrentBidItemChange(
+                                    item.item_required,
+                                    "vat",
+                                    e,
+                                    this.state.currentBid.bid_count
+                                  )
+                                }
+                                autoComplete="vat"
+                                className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+                              >
+                                {item.vat ? (
+                                  <option value={item.vat}>{item.vat}</option>
+                                ) : (
+                                  ""
+                                )}
+                                <option value="">Select VAT</option>
+                                <option value="Excl.">Excl.</option>
+                                <option value="Incl.">Incl.</option>
+                              </select>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex-1 w-15 ml-1">
+                          <label
+                            htmlFor="unit_price"
+                            className="block text-sm font-medium leading-6 text-gray-900"
+                          >
+                            Unit Price
+                          </label>
+                          <div className="mt-2">
+                            <input
+                              name="unit_price"
+                              defaultValue={item.unit_price}
+                              onChange={(e) =>
+                                this.onCurrentBidItemChange(
+                                  item.item_required,
+                                  "unit_price",
+                                  e,
+                                  this.state.currentBid.bid_count
+                                )
+                              }
+                              type="text"
+                              id="unit_price"
+                              required
+                              className="block inpt w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                            />
                           </div>
                         </div>
                       </div>
-                      <div className="flex-1 w-15 ml-1">
-                        <label
-                          htmlFor="unit_price"
-                          className="block text-sm font-medium leading-6 text-gray-900"
-                        >
-                          Unit Price
-                        </label>
-                        <div className="mt-2">
-                          <input
-                            name="unit_price"
-                            defaultValue={item.unit_price}
-                            onChange={(e) =>
-                              this.onCurrentBidItemChange(
-                                item.item_required,
-                                "unit_price",
-                                e
-                              )
-                            }
-                            type="text"
-                            id="unit_price"
-                            required
-                            className="block inpt w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
               </div>
 
               <div className="flex justify-center mt-5 px-3 py-3">
@@ -2487,7 +2702,12 @@ class CreateRB extends React.Component {
                     onChange={(e) =>
                       this.onComplianceItemsChange("showSiteVisit", e)
                     }
-                    disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
+                    disabled={
+                      this.state.username === this.state.cs_owner ||
+                      this.state.cs_owner === ""
+                        ? false
+                        : true
+                    }
                     autoComplete="site_visit"
                     className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
                   >
@@ -2512,7 +2732,12 @@ class CreateRB extends React.Component {
                       onChange={(e) =>
                         this.onComplianceItemsChange("showSamples", e)
                       }
-                      disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
+                      disabled={
+                        this.state.username === this.state.cs_owner ||
+                        this.state.cs_owner === ""
+                          ? false
+                          : true
+                      }
                       autoComplete="samples"
                       className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
                     >
@@ -2530,7 +2755,7 @@ class CreateRB extends React.Component {
                 <thead>
                   <tr className="text-gray-900">
                     <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                      Bid No.
+                      #
                     </th>
                     <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
                       Name of Supplier
@@ -2559,10 +2784,10 @@ class CreateRB extends React.Component {
                       Registered <br />
                       with PRAZ?
                     </th>
-                    <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                    {/* <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
                       Tax <br />
                       Status
-                    </th>
+                    </th> */}
                     {this.state.showSiteVisit === "yes" ? (
                       <th
                         id="site_visit_header"
@@ -2596,96 +2821,127 @@ class CreateRB extends React.Component {
                   </tr>
                 </thead>
                 <tbody>
-                  {this.state.compliance.map((comp, key) => {
-                    return (
-                      <tr>
-                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                          {key + 1}
-                        </td>
-                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                          {comp.supplier_name}
-                        </td>
-                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                          <input
-                            name="payment_terms"
-                            checked={
-                              comp.payment_terms ? comp.payment_terms : false
-                            }
-                            onChange={(e) => this.onComplianceChange(key, e)}
-                            disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
-                            id="payment_terms"
-                            type="checkbox"
-                          />
-                        </td>
-                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                          <input
-                            name="bid_validity"
-                            checked={
-                              comp.bid_validity ? comp.bid_validity : false
-                            }
-                            onChange={(e) => this.onComplianceChange(key, e)}
-                            disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
-                            id="bid_validity"
-                            type="checkbox"
-                          />
-                        </td>
-                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                          <input
-                            name="delivery_period"
-                            checked={
-                              comp.delivery_period
-                                ? comp.delivery_period
-                                : false
-                            }
-                            onChange={(e) => this.onComplianceChange(key, e)}
-                            disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
-                            id="delivery_period"
-                            type="checkbox"
-                          />
-                        </td>
-                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                          <input
-                            name="technical_specifications"
-                            checked={
-                              comp.technical_specifications
-                                ? comp.technical_specifications
-                                : false
-                            }
-                            onChange={(e) => this.onComplianceChange(key, e)}
-                            disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
-                            id="technical_specifications"
-                            type="checkbox"
-                          />
-                        </td>
-                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                          <input
-                            name="valid_tax_clearance"
-                            checked={
-                              comp.valid_tax_clearance
-                                ? comp.valid_tax_clearance
-                                : false
-                            }
-                            onChange={(e) => this.onComplianceChange(key, e)}
-                            disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
-                            id="valid_tax_clearance"
-                            type="checkbox"
-                          />
-                        </td>
-                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                          <input
-                            name="registered_with_praz"
-                            checked={
-                              comp.registered_with_praz
-                                ? comp.registered_with_praz
-                                : false
-                            }
-                            onChange={(e) => this.onComplianceChange(key, e)}
-                            disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
-                            id="registered_with_praz"
-                            type="checkbox"
-                          />
-                        </td>
-                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                  {this.state.compliance &&
+                    this.state.compliance.map((comp, key) => {
+                      return (
+                        <tr key={key}>
+                          <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                            {key + 1}
+                          </td>
+                          <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                            {comp.supplier_name}
+                          </td>
+                          <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                            <input
+                              name="payment_terms"
+                              checked={
+                                comp.payment_terms ? comp.payment_terms : false
+                              }
+                              onChange={(e) => this.onComplianceChange(key, e)}
+                              disabled={
+                                this.state.username === this.state.cs_owner ||
+                                this.state.cs_owner === ""
+                                  ? false
+                                  : true
+                              }
+                              id="payment_terms"
+                              type="checkbox"
+                            />
+                          </td>
+                          <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                            <input
+                              name="bid_validity"
+                              checked={
+                                comp.bid_validity ? comp.bid_validity : false
+                              }
+                              onChange={(e) => this.onComplianceChange(key, e)}
+                              disabled={
+                                this.state.username === this.state.cs_owner ||
+                                this.state.cs_owner === ""
+                                  ? false
+                                  : true
+                              }
+                              id="bid_validity"
+                              type="checkbox"
+                            />
+                          </td>
+                          <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                            <input
+                              name="delivery_period"
+                              checked={
+                                comp.delivery_period
+                                  ? comp.delivery_period
+                                  : false
+                              }
+                              onChange={(e) => this.onComplianceChange(key, e)}
+                              disabled={
+                                this.state.username === this.state.cs_owner ||
+                                this.state.cs_owner === ""
+                                  ? false
+                                  : true
+                              }
+                              id="delivery_period"
+                              type="checkbox"
+                            />
+                          </td>
+                          <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                            <input
+                              name="technical_specifications"
+                              checked={
+                                comp.technical_specifications
+                                  ? comp.technical_specifications
+                                  : false
+                              }
+                              onChange={(e) => this.onComplianceChange(key, e)}
+                              disabled={
+                                this.state.username === this.state.cs_owner ||
+                                this.state.cs_owner === ""
+                                  ? false
+                                  : true
+                              }
+                              id="technical_specifications"
+                              type="checkbox"
+                            />
+                          </td>
+                          <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                            <input
+                              name="valid_tax_clearance"
+                              checked={
+                                comp.valid_tax_clearance
+                                  ? comp.valid_tax_clearance
+                                  : false
+                              }
+                              onChange={(e) => this.onComplianceChange(key, e)}
+                              disabled={
+                                this.state.username === this.state.cs_owner ||
+                                this.state.cs_owner === ""
+                                  ? false
+                                  : true
+                              }
+                              id="valid_tax_clearance"
+                              type="checkbox"
+                            />
+                          </td>
+                          <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                            <input
+                              name="registered_with_praz"
+                              checked={
+                                comp.registered_with_praz
+                                  ? comp.registered_with_praz
+                                  : false
+                              }
+                              onChange={(e) => this.onComplianceChange(key, e)}
+                              disabled={
+                                this.state.username === this.state.cs_owner ||
+                                this.state.cs_owner === ""
+                                  ? false
+                                  : true
+                              }
+                              id="registered_with_praz"
+                              type="checkbox"
+                            />
+                          </td>
+                          {/* <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
                           <input
                             name="tax_status"
                             checked={comp.tax_status ? comp.tax_status : false}
@@ -2694,70 +2950,94 @@ class CreateRB extends React.Component {
                             id="tax_status"
                             type="checkbox"
                           />
-                        </td>
-                        {this.state.showSiteVisit === "yes" ? (
-                          <td
-                            id="site_visit_header"
-                            className="site-visit-header border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2"
-                          >
+                        </td> */}
+                          {this.state.showSiteVisit === "yes" ? (
+                            <td
+                              id="site_visit_header"
+                              className="site-visit-header border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2"
+                            >
+                              <input
+                                name="site_visit"
+                                checked={
+                                  comp.site_visit ? comp.site_visit : false
+                                }
+                                onChange={(e) =>
+                                  this.onComplianceChange(key, e)
+                                }
+                                disabled={
+                                  this.state.username === this.state.cs_owner ||
+                                  this.state.cs_owner === ""
+                                    ? false
+                                    : true
+                                }
+                                id="site_visit"
+                                type="checkbox"
+                              />
+                            </td>
+                          ) : (
+                            ""
+                          )}
+                          {this.state.showSamples === "yes" ? (
+                            <td
+                              id="samples_header"
+                              className="samples-header border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2"
+                            >
+                              <input
+                                name="samples_required"
+                                checked={
+                                  comp.samples_required
+                                    ? comp.samples_required
+                                    : false
+                                }
+                                onChange={(e) =>
+                                  this.onComplianceChange(key, e)
+                                }
+                                disabled={
+                                  this.state.username === this.state.cs_owner ||
+                                  this.state.cs_owner === ""
+                                    ? false
+                                    : true
+                                }
+                                id="samples_required"
+                                type="checkbox"
+                              />
+                            </td>
+                          ) : (
+                            ""
+                          )}
+                          <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
                             <input
-                              name="site_visit"
-                              checked={
-                                comp.site_visit ? comp.site_visit : false
-                              }
+                              name="decision"
+                              checked={comp.decision ? comp.decision : false}
                               onChange={(e) => this.onComplianceChange(key, e)}
-                              disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
-                              id="site_visit"
+                              disabled={
+                                this.state.username === this.state.cs_owner ||
+                                this.state.cs_owner === ""
+                                  ? false
+                                  : true
+                              }
+                              id="decision"
                               type="checkbox"
                             />
                           </td>
-                        ) : (
-                          ""
-                        )}
-                        {this.state.showSamples === "yes" ? (
-                          <td
-                            id="samples_header"
-                            className="samples-header border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2"
-                          >
+                          <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
                             <input
-                              name="samples_required"
-                              checked={
-                                comp.samples_required
-                                  ? comp.samples_required
-                                  : false
-                              }
+                              name="reject"
+                              checked={comp.reject ? comp.reject : false}
                               onChange={(e) => this.onComplianceChange(key, e)}
-                              disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
-                              id="samples_required"
+                              disabled={
+                                this.state.username === this.state.cs_owner ||
+                                this.state.cs_owner === ""
+                                  ? false
+                                  : true
+                              }
+                              id="reject"
                               type="checkbox"
                             />
                           </td>
-                        ) : (
-                          ""
-                        )}
-                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                          <input
-                            name="decision"
-                            checked={comp.decision ? comp.decision : false}
-                            onChange={(e) => this.onComplianceChange(key, e)}
-                            disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
-                            id="decision"
-                            type="checkbox"
-                          />
-                        </td>
-                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                          <input
-                            name="reject"
-                            checked={comp.reject ? comp.reject : false}
-                            onChange={(e) => this.onComplianceChange(key, e)}
-                            disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
-                            id="reject"
-                            type="checkbox"
-                          />
-                        </td>
-                      </tr>
-                    );
-                  })}
+                        </tr>
+                      );
+                    })}
                 </tbody>
               </table>
             </div>
@@ -2774,37 +3054,44 @@ class CreateRB extends React.Component {
                   </tr>
                 </thead>
                 <tbody>
-                  {this.state.complianceRemarks.map((bid, key) => {
-                    return (
-                      <tr>
-                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                          {bid.supplier_name}
-                        </td>
-                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                          <input
-                            name="remarks"
-                            defaultValue={bid.remarks}
-                            onChange={(e) =>
-                              this.onComplianceRemarksChange(
-                                bid.supplier_name,
-                                e
-                              )
-                            }
-                            disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
-                            type="text"
-                            className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
-                          />
-                        </td>
-                      </tr>
-                    );
-                  })}
+                  {this.state.complianceRemarks &&
+                    this.state.complianceRemarks.map((bid, key) => {
+                      return (
+                        <tr>
+                          <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                            {bid.supplier_name}
+                          </td>
+                          <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                            <input
+                              name="remarks"
+                              defaultValue={bid.remarks}
+                              onChange={(e) =>
+                                this.onComplianceRemarksChange(
+                                  bid.supplier_name,
+                                  e
+                                )
+                              }
+                              disabled={
+                                this.state.username === this.state.cs_owner ||
+                                this.state.cs_owner === ""
+                                  ? false
+                                  : true
+                              }
+                              type="text"
+                              className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
+                            />
+                          </td>
+                        </tr>
+                      );
+                    })}
                 </tbody>
               </table>
             </div>
           </div>
         </div>
 
-        {this.state.username === this.state.cs_owner && !this.state.approvalsComplete ? (
+        {this.state.username === this.state.cs_owner &&
+        !this.state.approvalsComplete ? (
           <div className="flex justify-center mt-5 px-3 py-3">
             <div className="flex-1 m-2">
               <button
@@ -2856,30 +3143,31 @@ class CreateRB extends React.Component {
                   </tr>
                 </thead>
                 <tbody>
-                  {this.state.rankings.map((rank, key) => {
-                    return (
-                      <tr className="text-gray-900">
-                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                          {key + 1}
-                        </td>
-                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                          {rank.supplier_name}
-                        </td>
-                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                          {rank.rank}
-                        </td>
-                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                          {rank.decision}
-                        </td>
-                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                          {rank.remarks}
-                        </td>
-                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                          {rank.total}
-                        </td>
-                      </tr>
-                    );
-                  })}
+                  {this.state.rankings &&
+                    this.state.rankings.map((rank, key) => {
+                      return (
+                        <tr className="text-gray-900">
+                          <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                            {key + 1}
+                          </td>
+                          <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                            {rank.supplier_name}
+                          </td>
+                          <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                            {rank.rank}
+                          </td>
+                          <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                            {rank.decision}
+                          </td>
+                          <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                            {rank.remarks}
+                          </td>
+                          <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                            {rank.total}
+                          </td>
+                        </tr>
+                      );
+                    })}
                 </tbody>
               </table>
             </div>
@@ -2940,14 +3228,15 @@ class CreateRB extends React.Component {
                               className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
                             >
                               <option value="">Select User</option>
-                              {this.state.users
-                                ? this.state.users.map((user) => (
-                                    <option value={user.username}>
-                                      {user.first_name + " " + user.last_name}
-                                    </option>
-                                  ))
-                                : <option value="">No Users</option>}
-
+                              {this.state.users ? (
+                                this.state.users.map((user) => (
+                                  <option value={user.username}>
+                                    {user.first_name + " " + user.last_name}
+                                  </option>
+                                ))
+                              ) : (
+                                <option value="">No Users</option>
+                              )}
                             </select>
                           ) : (
                             ""
@@ -2957,7 +3246,10 @@ class CreateRB extends React.Component {
                     </td>
                     <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2"></td>
                     <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                      {this.state.username === this.state.cs_owner && !this.state.approvalsComplete && this.state.member.memberPosition !== "" && this.state.member.memberUserName !== "" ? (
+                      {this.state.username === this.state.cs_owner &&
+                      !this.state.approvalsComplete &&
+                      this.state.member.memberPosition !== "" &&
+                      this.state.member.memberUserName !== "" ? (
                         <div className="w-30">
                           <button
                             style={{ width: "100%" }}
@@ -2972,82 +3264,109 @@ class CreateRB extends React.Component {
                         ""
                       )}
                     </td>
+                    <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2"></td>
                   </tr>
-                  {this.state.committeeMembers.map((member, key) => {
-                    return (
-                      <tr className="text-gray-900">
-                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                          {member.memberPosition}
-                        </td>
-                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                          {member.memberName
-                            ? member.memberName
-                            : member.memberUserName}
-                        </td>
-                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                          {member.committeeDate}
-                        </td>
-                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                          {member.memberApproval === "Approved" && "APPROVED"}
-                          {member.memberApproval === "Rejected" && "REJECTED"}
-                          {(member.memberApproval === "" || member.memberApproval === null) && (
-                            <div className="flex justify-content-evenly">
-                              {this.state.username === this.state.cs_owner && !this.state.approvalsComplete ? (
-                                <div className="m-2">
-                                  <button
-                                    onClick={() =>
-                                      this.onRemoveCommitteeMember(
-                                        key,
-                                        member.memberUserName
-                                      )
-                                    }
-                                    name="save_next"
-                                    className="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                                  >
-                                    REMOVE
-                                  </button>
-                                </div>
-                              ) : (
-                                ""
-                              )}
-                              {this.state.username === member.memberUserName? (
-                                <div className="flex justify-content-evenly">
+                  <tr className="text-gray-900">
+                    <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                      CREATED BY
+                    </td>
+                    <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                      {this.state.creator}
+                    </td>
+                    <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                      INITIATED
+                    </td>
+                    <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2"></td>
+                    <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                      {this.state.created_at
+                        ? this.state.created_at.split(" ")[0]
+                        : ""}
+                    </td>
+                  </tr>
+                  {this.state.committeeMembers &&
+                    this.state.committeeMembers.map((member, key) => {
+                      return (
+                        <tr className="text-gray-900">
+                          <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                            {member.memberPosition.toUpperCase()}
+                          </td>
+                          <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                            {member.memberName
+                              ? member.memberName
+                              : member.memberUserName}
+                          </td>
+                          <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                            {member.memberApproval === "Approved" && "APPROVED"}
+                            {member.memberApproval === "Rejected" && "REJECTED"}
+                            {(member.memberApproval === "" ||
+                              member.memberApproval === null) && (
+                              <div className="flex justify-content-evenly">
+                                {this.state.username === this.state.cs_owner &&
+                                !this.state.approvalsComplete ? (
                                   <div className="m-2">
                                     <button
                                       onClick={() =>
-                                        this.onCommitteeApprove(
-                                          member.memberUserName,
-                                          "Approved",
-                                          ""
+                                        this.onRemoveCommitteeMember(
+                                          key,
+                                          member.memberUserName
                                         )
                                       }
                                       name="save_next"
                                       className="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
                                     >
-                                      APPROVE
+                                      REMOVE
                                     </button>
                                   </div>
-                                  <div className="m-2">
-                                    <button
-                                      onClick={() =>
-                                        this.onCommitteeJustificationModal(member.memberUserName)
-                                      }
-                                      name="save_next"
-                                      className="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                                    >
-                                      REJECT
-                                    </button>
+                                ) : (
+                                  ""
+                                )}
+                                {this.state.username ===
+                                member.memberUserName ? (
+                                  <div className="flex justify-content-evenly">
+                                    <div className="m-2">
+                                      <button
+                                        onClick={() =>
+                                          this.onCommitteeApprove(
+                                            member.memberUserName,
+                                            "Approved",
+                                            ""
+                                          )
+                                        }
+                                        name="save_next"
+                                        className="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                                      >
+                                        APPROVE
+                                      </button>
+                                    </div>
+                                    <div className="m-2">
+                                      <button
+                                        onClick={() =>
+                                          this.onCommitteeJustificationModal(
+                                            member.memberUserName
+                                          )
+                                        }
+                                        name="save_next"
+                                        className="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                                      >
+                                        REJECT
+                                      </button>
+                                    </div>
                                   </div>
-                                </div>
-                              ) : (
-                                ""
-                              )}
-                            </div>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
+                                ) : (
+                                  ""
+                                )}
+                              </div>
+                            )}
+                          </td>
+                          <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                            {member.committeeJustification}
+                          </td>
+                          <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                            {member.committeeDate}
+                          </td>
+                        </tr>
+                      );
+                    })}
                 </tbody>
               </table>
             </div>
@@ -3072,52 +3391,62 @@ class CreateRB extends React.Component {
                       FINANCE MANAGER
                     </td>
                     <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                      {this.state.fmApproval && this.state.fmApproval.approval === "Approved" && "APPROVED"}
-                      {this.state.fmApproval && this.state.fmApproval.approval === "Rejected" && "REJECTED"}
+                      {this.state.fmApproval &&
+                        this.state.fmApproval.approval === "Rejected" &&
+                        this.state.fmApproval.justification}
+                    </td>
+                    <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                      {this.state.fmApproval &&
+                        this.state.fmApproval.approval === "Approved" &&
+                        "APPROVED"}
+                      {this.state.fmApproval &&
+                        this.state.fmApproval.approval === "Rejected" &&
+                        "REJECTED"}
                       {this.state.committeeApprovalComplete && (
-                          <div className="flex justify-content-evenly">
-                            {(this.state.requester_role === 'check') && Object.keys(this.state.fmApproval).length === 0 ? (
-                              <div className="flex justify-content-evenly">
-                                <div className="m-2">
-                                  <button
-                                    onClick={() =>
-                                      this.onApprovalApprove(
-                                        "finance_manager",
-                                        this.state.username,
-                                        "Approved",
-                                        ""
-                                      )
-                                    }
-                                    name="save_next"
-                                    className="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                                  >
-                                    APPROVE
-                                  </button>
-                                </div>
-                                <div className="m-2">
-                                  <button
-                                    onClick={() =>
-                                      this.onApprovalJustificationModal(this.state.username, "finance_manager")
-                                    }
-                                    name="save_next"
-                                    className="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                                  >
-                                    REJECT
-                                  </button>
-                                </div>
+                        <div className="flex justify-content-evenly">
+                          {this.state.requester_role === "check" &&
+                          Object.keys(this.state.fmApproval).length === 0 ? (
+                            <div className="flex justify-content-evenly">
+                              <div className="m-2">
+                                <button
+                                  onClick={() =>
+                                    this.onApprovalApprove(
+                                      "finance_manager",
+                                      this.state.username,
+                                      "Approved",
+                                      ""
+                                    )
+                                  }
+                                  name="save_next"
+                                  className="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                                >
+                                  APPROVE
+                                </button>
                               </div>
-                            ) : (
-                              ""
-                            )}
-                          </div>
-                        )
-                      }
+                              <div className="m-2">
+                                <button
+                                  onClick={() =>
+                                    this.onApprovalJustificationModal(
+                                      this.state.username,
+                                      "finance_manager"
+                                    )
+                                  }
+                                  name="save_next"
+                                  className="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                                >
+                                  REJECT
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            ""
+                          )}
+                        </div>
+                      )}
                     </td>
                     <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                      {this.state.fmApproval && this.state.fmApproval.justification}
-                    </td>
-                    <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                      {this.state.fmApproval && this.state.fmApproval.approval_date}
+                      {this.state.fmApproval &&
+                        this.state.fmApproval.approval_date}
                     </td>
                   </tr>
                   <tr className="text-gray-900">
@@ -3125,52 +3454,64 @@ class CreateRB extends React.Component {
                       GENERAL MANAGER
                     </td>
                     <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                      {this.state.gmApproval && this.state.gmApproval.approval === "Approved" && "APPROVED"}
-                      {this.state.gmApproval && this.state.gmApproval.approval === "Rejected" && "REJECTED"}
-                      {(
+                      {this.state.gmApproval &&
+                        this.state.gmApproval.approval === "Rejected" &&
+                        this.state.gmApproval.justification}
+                    </td>
+                    <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                      {this.state.gmApproval &&
+                        this.state.gmApproval.approval === "Approved" &&
+                        "APPROVED"}
+                      {this.state.gmApproval &&
+                        this.state.gmApproval.approval === "Rejected" &&
+                        "REJECTED"}
+                      {
+                        <div className="flex justify-content-evenly">
+                          {this.state.fmApproval &&
+                          this.state.fmApproval.approval === "Approved" &&
+                          this.state.requester_role === "approve" &&
+                          Object.keys(this.state.gmApproval).length === 0 ? (
                             <div className="flex justify-content-evenly">
-                              {(this.state.fmApproval) && (this.state.fmApproval.approval === "Approved") && (this.state.requester_role === 'approve') && Object.keys(this.state.gmApproval).length === 0 ? (
-                                <div className="flex justify-content-evenly">
-                                  <div className="m-2">
-                                    <button
-                                      onClick={() =>
-                                        this.onApprovalApprove(
-                                          "general_manager",
-                                          this.state.username,
-                                          "Approved",
-                                          ""
-                                        )
-                                      }
-                                      name="save_next"
-                                      className="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                                    >
-                                      APPROVE
-                                    </button>
-                                  </div>
-                                  <div className="m-2">
-                                    <button
-                                      onClick={() =>
-                                        this.onApprovalJustificationModal(this.state.username, "general_manager")
-                                      }
-                                      name="save_next"
-                                      className="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                                    >
-                                      REJECT
-                                    </button>
-                                  </div>
-                                </div>
-                              ) : (
-                                ""
-                              )}
+                              <div className="m-2">
+                                <button
+                                  onClick={() =>
+                                    this.onApprovalApprove(
+                                      "general_manager",
+                                      this.state.username,
+                                      "Approved",
+                                      ""
+                                    )
+                                  }
+                                  name="save_next"
+                                  className="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                                >
+                                  APPROVE
+                                </button>
+                              </div>
+                              <div className="m-2">
+                                <button
+                                  onClick={() =>
+                                    this.onApprovalJustificationModal(
+                                      this.state.username,
+                                      "general_manager"
+                                    )
+                                  }
+                                  name="save_next"
+                                  className="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                                >
+                                  REJECT
+                                </button>
+                              </div>
                             </div>
-                          )
-                    }
+                          ) : (
+                            ""
+                          )}
+                        </div>
+                      }
                     </td>
                     <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                      {this.state.gmApproval && this.state.gmApproval.justification}
-                    </td>
-                    <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                      {this.state.gmApproval && this.state.gmApproval.approval_date}
+                      {this.state.gmApproval &&
+                        this.state.gmApproval.approval_date}
                     </td>
                   </tr>
                 </tbody>
@@ -3181,127 +3522,149 @@ class CreateRB extends React.Component {
       </div>
     );
 
-    var csDetailsView = (  
-    <div className="px-4 sm:px-0 mt-6 bg-gulf-blue-300 rounded-md border-t border-gray-100 border-gray-900/10">
-      <h2 className="text-base font-semibold leading-6 text-gray-900">
-        COMPERATIVE SCHEDULE DETAILS
-      </h2>
+    var csDetailsView = (
+      <div className="px-4 sm:px-0 mt-6 bg-gulf-blue-300 rounded-md border-t border-gray-100 border-gray-900/10">
+        <h2 className="text-base font-semibold leading-6 text-gray-900">
+          COMPERATIVE SCHEDULE DETAILS
+        </h2>
 
-      <div className="flex justify-evenly mt-5  px-2 py-2 rounded-md">
-        <div className="flex-1 w-100">
-          <label
-            htmlFor="scope"
-            className="block text-sm font-medium leading-6 text-gray-900"
-          >
-            Scope of Work
-          </label>
-          <div className="mt-2">
-            <textarea
-              id="scope"
-              name="scope_of_work"
-              type="scope"
-              value={this.state.scope_of_work}
-              disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
-              onChange={this.onInputChange}
-              className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-            ></textarea>
-          </div>
-        </div>
-      </div>
-      <div className="flex justify-evenly mt-5  px-2 py-2 rounded-md">
-        <div className="flex-1 w-20 ml-1">
-          <label
-            htmlFor="pr_number"
-            className="block text-sm font-medium leading-6 text-gray-900"
-          >
-            PR No.
-          </label>
-          <div className="mt-2">
-            <input
-              name="pr_number"
-              value={this.state.pr_number}
-              onChange={this.onInputChange}
-              disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
-              id="pr_number"
-              required="required"
-              className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-            />
-          </div>
-        </div>
-        <div className="flex-1 w-20 ml-1">
-          <label
-            htmlFor="pr_date"
-            className="block text-sm font-medium leading-6 text-gray-900"
-          >
-            PR Date
-          </label>
-          <div className="mt-2">
-            <input
-              name="pr_date"
-              value={this.state.pr_date}
-              onChange={this.onInputChange}
-              disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
-              type="date"
-              required="required"
-              className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-            />
-          </div>
-        </div>
-        <div className="flex-1 w-20 ml-1">
-          <label
-            htmlFor="closing_date"
-            className="block text-sm font-medium leading-6 text-gray-900"
-          >
-            Closing Date
-          </label>
-          <div className="mt-2">
-            <input
-              name="closing_date"
-              value={this.state.closing_date}
-              onChange={this.onInputChange}
-              disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
-              type="date"
-              required="required"
-              className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-            />
-          </div>
-        </div>
-        <div className="flex-1 w-20 ml-1">
-          <div>
+        <div className="flex justify-evenly mt-5  px-2 py-2 rounded-md">
+          <div className="flex-1 w-100">
             <label
-              htmlFor="closing_time"
+              htmlFor="scope"
               className="block text-sm font-medium leading-6 text-gray-900"
             >
-              Closing Time
+              Scope of Work
             </label>
-            <div className="mt-2 text-gray-900">
-              <div className="flex px-1">
-                <select
-                  name="closing_time_hour"
-                  onChange={(e) =>
-                    this.onSelectChange("closing_time_hour", e)
-                  }
-                  disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
-                  className="rounded-md block border-none w-full py-1.5 text-gray-900 sm:max-w-xs sm:text-sm sm:leading-6"
-                >
-                  {this.state.closing_time_hour ? (
-                    <option value={this.state.closing_time_hour}>
-                      {this.state.closing_time_hour}
-                    </option>
-                  ) : (
-                    ""
-                  )}
-                  <option value="">Select Closing Time</option>
-                  <option value="10:00">10:00</option>
-                  <option value="14:00">14:00</option>
-                </select>
+            <div className="mt-2">
+              <textarea
+                id="scope"
+                name="scope_of_work"
+                type="scope"
+                value={this.state.scope_of_work}
+                disabled={
+                  this.state.username === this.state.cs_owner ||
+                  this.state.cs_owner === ""
+                    ? false
+                    : true
+                }
+                onChange={this.onInputChange}
+                className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+              ></textarea>
+            </div>
+          </div>
+        </div>
+        <div className="flex justify-evenly mt-5  px-2 py-2 rounded-md">
+          <div className="flex-1 w-20 ml-1">
+            <label
+              htmlFor="pr_number"
+              className="block text-sm font-medium leading-6 text-gray-900"
+            >
+              PR No.
+            </label>
+            <div className="mt-2">
+              <input
+                name="pr_number"
+                value={this.state.pr_number}
+                onChange={this.onInputChange}
+                disabled={
+                  this.state.username === this.state.cs_owner ||
+                  this.state.cs_owner === ""
+                    ? false
+                    : true
+                }
+                id="pr_number"
+                required="required"
+                className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+              />
+            </div>
+          </div>
+          <div className="flex-1 w-20 ml-1">
+            <label
+              htmlFor="pr_date"
+              className="block text-sm font-medium leading-6 text-gray-900"
+            >
+              PR Date
+            </label>
+            <div className="mt-2">
+              <input
+                name="pr_date"
+                value={this.state.pr_date}
+                onChange={this.onInputChange}
+                disabled={
+                  this.state.username === this.state.cs_owner ||
+                  this.state.cs_owner === ""
+                    ? false
+                    : true
+                }
+                type="date"
+                required="required"
+                className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+              />
+            </div>
+          </div>
+          <div className="flex-1 w-20 ml-1">
+            <label
+              htmlFor="closing_date"
+              className="block text-sm font-medium leading-6 text-gray-900"
+            >
+              Closing Date
+            </label>
+            <div className="mt-2">
+              <input
+                name="closing_date"
+                value={this.state.closing_date}
+                onChange={this.onInputChange}
+                disabled={
+                  this.state.username === this.state.cs_owner ||
+                  this.state.cs_owner === ""
+                    ? false
+                    : true
+                }
+                type="date"
+                required="required"
+                className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+              />
+            </div>
+          </div>
+          <div className="flex-1 w-20 ml-1">
+            <div>
+              <label
+                htmlFor="closing_time"
+                className="block text-sm font-medium leading-6 text-gray-900"
+              >
+                Closing Time
+              </label>
+              <div className="mt-2 text-gray-900">
+                <div className="flex px-1">
+                  <select
+                    name="closing_time"
+                    onChange={(e) => this.onSelectChange("closing_time", e)}
+                    disabled={
+                      this.state.username === this.state.cs_owner ||
+                      this.state.cs_owner === ""
+                        ? false
+                        : true
+                    }
+                    className="rounded-md block border-none w-full py-1.5 text-gray-900 sm:max-w-xs sm:text-sm sm:leading-6"
+                  >
+                    {this.state.closing_time ? (
+                      <option value={this.state.closing_time}>
+                        {this.state.closing_time}
+                      </option>
+                    ) : (
+                      <option value="">Select Closing Time</option>
+                    )}
+                    <option value="10:00">10:00</option>
+                    <option value="14:00">14:00</option>
+                  </select>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
-      <div className="flex justify-evenly mt-5  px-2 py-2 rounded-md">
-        <div className="flex-1 w-20 ml-1">
+        <div className="flex justify-evenly mt-5  px-2 py-2 rounded-md">
+          <div className="flex-1 w-20 ml-1">
             <label
               htmlFor="designation"
               className="block text-sm font-medium leading-6 text-gray-900"
@@ -3314,7 +3677,12 @@ class CreateRB extends React.Component {
                 name="proc_plan"
                 autoComplete="proc_plan"
                 onChange={(e) => this.onSelectChange("proc_ref", e)}
-                disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
+                disabled={
+                  this.state.username === this.state.cs_owner ||
+                  this.state.cs_owner === ""
+                    ? false
+                    : true
+                }
                 className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
               >
                 {this.state.proc_plan ? (
@@ -3326,155 +3694,177 @@ class CreateRB extends React.Component {
                 )}
                 {this.state.proc_plans
                   ? this.state.proc_plans.map((plan) => (
-                      <option value={plan.proc_ref}>
-                        {plan.description}
-                      </option>
+                      <option value={plan.proc_ref}>{plan.description}</option>
                     ))
                   : ""}
               </select>
             </div>
-        </div>
-        <div className="flex-1 w-20 ml-1">
-          <label
-            htmlFor="pr_date"
-            className="block text-sm font-medium leading-6 text-gray-900"
-          >
-            Ref Date
-          </label>
-          <div className="mt-2">
-            <input
-              name="ref_date"
-              value={this.state.ref_date}
-              onChange={this.onInputChange}
-              disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
-              type="date"
-              required="required"
-              className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-            />
+          </div>
+          <div className="flex-1 w-20 ml-1">
+            <label
+              htmlFor="pr_date"
+              className="block text-sm font-medium leading-6 text-gray-900"
+            >
+              Ref Date
+            </label>
+            <div className="mt-2">
+              <input
+                name="ref_date"
+                value={this.state.ref_date}
+                onChange={this.onInputChange}
+                disabled={
+                  this.state.username === this.state.cs_owner ||
+                  this.state.cs_owner === ""
+                    ? false
+                    : true
+                }
+                type="date"
+                required="required"
+                className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+              />
+            </div>
+          </div>
+          <div className="flex-1 w-20 ml-1">
+            <label
+              htmlFor="date_tender_opened"
+              className="block text-sm font-medium leading-6 text-gray-900"
+            >
+              Tender Box Opened On
+            </label>
+            <div className="mt-2">
+              <input
+                name="date_tender_opened"
+                value={this.state.date_tender_opened}
+                onChange={this.onInputChange}
+                disabled={
+                  this.state.username === this.state.cs_owner ||
+                  this.state.cs_owner === ""
+                    ? false
+                    : true
+                }
+                type="date"
+                required="required"
+                className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+              />
+            </div>
+          </div>
+          <div className="flex-1 w-40 ml-1">
+            <label
+              htmlFor="tender_adjudication_committee_date"
+              className="block text-sm font-medium leading-6 text-gray-900"
+            >
+              Tender Committee Date
+            </label>
+            <div className="mt-2">
+              <input
+                name="tender_adjudication_committee_date"
+                value={this.state.tender_adjudication_committee_date}
+                onChange={this.onInputChange}
+                disabled={
+                  this.state.username === this.state.cs_owner ||
+                  this.state.cs_owner === ""
+                    ? false
+                    : true
+                }
+                type="date"
+                required="required"
+                className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+              />
+            </div>
           </div>
         </div>
-        <div className="flex-1 w-20 ml-1">
-          <label
-            htmlFor="date_tender_opened"
-            className="block text-sm font-medium leading-6 text-gray-900"
-          >
-            Tender Box Opened On
-          </label>
-          <div className="mt-2">
-            <input
-              name="date_tender_opened"
-              value={this.state.date_tender_opened}
-              onChange={this.onInputChange}
-              disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
-              type="date"
-              required="required"
-              className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-            />
+        <div className="flex justify-evenly mt-5  px-2 py-2 rounded-md">
+          <div className="flex-1 w-full ml-1">
+            <label
+              htmlFor="advert"
+              className="block text-sm font-medium leading-6 text-gray-900"
+            >
+              Tender Advert
+            </label>
+            <div className="mt-2">
+              <input
+                name="advert"
+                onChange={(e) => this.onFileInputChange("advert", e)}
+                disabled={
+                  this.state.username === this.state.cs_owner ||
+                  this.state.cs_owner === ""
+                    ? false
+                    : true
+                }
+                type="file"
+                id="advert"
+                required="required"
+                readOnly
+                className="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+              />
+            </div>
+          </div>
+          <div className="flex-1 w-40 ml-2">
+            <label
+              htmlFor="bid_document"
+              className="block text-sm font-medium leading-6 text-gray-900"
+            >
+              Advert Document
+            </label>
+            <div className="mt-2">
+              <a href={this.state.advert_url} rel="noopener noreferrer">
+                View Advert Document
+              </a>
+            </div>
           </div>
         </div>
-        <div className="flex-1 w-40 ml-1">
-          <label
-            htmlFor="tender_adjudication_committee_date"
-            className="block text-sm font-medium leading-6 text-gray-900"
-          >
-            Tender Committee Date
-          </label>
-          <div className="mt-2">
-            <input
-              name="tender_adjudication_committee_date"
-              value={this.state.tender_adjudication_committee_date}
-              onChange={this.onInputChange}
-              disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
-              type="date"
-              required="required"
-              className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-            />
-          </div>
-        </div>
-      </div>
-      <div className="flex justify-evenly mt-5  px-2 py-2 rounded-md">
-        <div className="flex-1 w-full ml-1">
-          <label
-            htmlFor="advert"
-            className="block text-sm font-medium leading-6 text-gray-900"
-          >
-            Tender Advert
-          </label>
-          <div className="mt-2">
-            <input
-              name="advert"
-              onChange={(e) => this.onFileInputChange("advert", e)}
-              disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
-              type="file"
-              id="advert"
-              required="required"
-              readOnly
-              className="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-            />
-          </div>
-        </div>
-        <div className="flex-1 w-40 ml-2">
-          <label
-            htmlFor="bid_document"
-            className="block text-sm font-medium leading-6 text-gray-900"
-          >
-            Advert Document
-          </label>
-          <div className="mt-2">
-            <a href={this.state.advert_url} rel="noopener noreferrer">
-              View Advert Document
-            </a>
-          </div>
-        </div>
-      </div>
-      <div className="flex justify-evenly mt-5  px-2 py-2 rounded-md">
-        {(this.state.pr_attachments.length > 0) && this.state.pr_attachments.map((attachment, key) => {
-          return (
-            <div className="flex-1 w-20 ml-1">
-              <div className="mt-2">
-                <div className="rounded bg-white border border-1 shadow-lg text-center m-2">
-                    <a href={attachment.attachment_url}
-                        className="text-center text-blue-600  p-3 sm whitespace-normal max-w-full">{ attachment.name }</a>
+        <div className="flex justify-evenly mt-5  px-2 py-2 rounded-md">
+          {this.state.pr_attachments.length > 0 &&
+            this.state.pr_attachments.map((attachment, key) => {
+              return (
+                <div className="flex-1 w-20 ml-1">
+                  <div className="mt-2">
+                    <div className="rounded bg-white border border-1 shadow-lg text-center m-2">
+                      <a
+                        href={attachment.attachment_url}
+                        className="text-center text-blue-600  p-3 sm whitespace-normal max-w-full"
+                      >
+                        {attachment.name}
+                      </a>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
-          )
-        })
-        }
-      </div>
-      
-      {(this.state.username === this.state.cs_owner ||
-      !this.state.cs_id) && !this.state.approvalsComplete ? (
-        <div className="flex justify-center mt-10 px-3 py-3">
-          {this.state.cs_id ? (
-            <div className="w-30 m-2">
-              <button
-                style={{ width: "100%" }}
-                onClick={this.onUpdateSchedule}
-                name="save_next"
-                className="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-              >
-                UPDATE SCHEDULE
-              </button>
-            </div>
-          ) : (
-            <div className="w-30 m-2">
-              <button
-                style={{ width: "100%" }}
-                onClick={this.onSaveSchedule}
-                name="save_next"
-                className="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-              >
-                SAVE SCHEDULE
-              </button>
-            </div>
-          )}
+              );
+            })}
         </div>
-      ) : (
-        ""
-      )}
-    </div>
-    )
+
+        {(this.state.username === this.state.cs_owner || !this.state.cs_id) &&
+        !this.state.approvalsComplete ? (
+          <div className="flex justify-center mt-10 px-3 py-3">
+            {this.state.cs_id ? (
+              <div className="w-30 m-2">
+                <button
+                  style={{ width: "100%" }}
+                  onClick={this.onUpdateSchedule}
+                  name="save_next"
+                  className="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                >
+                  UPDATE SCHEDULE
+                </button>
+              </div>
+            ) : (
+              <div className="w-30 m-2">
+                <button
+                  style={{ width: "100%" }}
+                  onClick={this.onSaveSchedule}
+                  name="save_next"
+                  className="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                >
+                  SAVE SCHEDULE
+                </button>
+              </div>
+            )}
+          </div>
+        ) : (
+          ""
+        )}
+      </div>
+    );
 
     return (
       <div>
@@ -3494,55 +3884,53 @@ class CreateRB extends React.Component {
             </p>
             {this.state.fetchPR && (
               <div>
-              <div className="m-2">
-            <button
-              style={{ width: "100%" }}
-              onClick={this.onAddSuppliersModal}
-              className="rounded-md bg-nepal-950 hover:bg-nepal-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-            >
-              ADD NEW SUPPLIER
-            </button>
-          </div>
-              <div className="flex justify-evenly items-end mt-5 px-2 py-2">
-              
-              <div className="flex-1 w-40">
-                <label
-                  htmlFor="pr_number"
-                  className="block text-sm font-medium leading-6 text-gray-900"
-                >
-                  Enter PR Number
-                </label>
-                <div className="mt-2">
-                  <input
-                    name="pr_number"
-                    id="pr_number"
-                    onChange={this.onFetchPrNumberChange}
-                    defaultValue={this.state.pr_number}
-                    className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                  />
-                </div>
-              </div>
-              <div className="flex-1 ml-2 w-40">
-                <div className="w-30">
+                <div className="m-2">
                   <button
                     style={{ width: "100%" }}
-                    onClick={() => this.onFetchPR(this.state.pr_number)}
-                    name="save_next"
-                    className="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                    onClick={this.onAddSuppliersModal}
+                    className="rounded-md bg-nepal-950 hover:bg-nepal-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
                   >
-                    FETCH PR
+                    ADD NEW SUPPLIER
                   </button>
                 </div>
+                <div className="flex justify-evenly items-end mt-5 px-2 py-2">
+                  <div className="flex-1 w-40">
+                    <label
+                      htmlFor="pr_number"
+                      className="block text-sm font-medium leading-6 text-gray-900"
+                    >
+                      Enter PR Number
+                    </label>
+                    <div className="mt-2">
+                      <input
+                        name="pr_number"
+                        id="pr_number"
+                        onChange={this.onFetchPrNumberChange}
+                        defaultValue={this.state.pr_number}
+                        className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex-1 ml-2 w-40">
+                    <div className="w-30">
+                      <button
+                        style={{ width: "100%" }}
+                        onClick={() => this.onFetchPR(this.state.pr_number)}
+                        name="save_next"
+                        className="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                      >
+                        FETCH PR
+                      </button>
+                    </div>
+                  </div>
+                </div>
               </div>
-            </div>
-            </div>
-            
-            
-      ) }
+            )}
             {csDetailsView}
           </div>
 
-          {this.state.username === this.state.cs_owner && this.state.bids.length < 1 ? (
+          {this.state.username === this.state.cs_owner &&
+          this.state.bids.length < 1 ? (
             <div className="m-2">
               <button
                 style={{ width: "100%" }}
@@ -3556,180 +3944,181 @@ class CreateRB extends React.Component {
             ""
           )}
 
-          {this.state.bids.map((bid, index) => {
-            return (
-              <div
-                id="opening_rfq"
-                className="px-4 sm:px-0 mt-6 bg-gulf-blue-300 rounded-md border-t border-gray-100 border-b border-gray-900/10 pb-12"
-              >
-                <div id="bid_container" className=" rounded-md">
-                  <div className="flex justify-evenly mt-5  px-2 py-2 rounded-md">
-                    <div className="flex-1 w-20 ml-1">
-                      <label
-                        htmlFor="supplier_name"
-                        className="block text-sm font-medium leading-6 text-gray-900"
-                      >
-                        Supplier
-                      </label>
-                      <div className="mt-2">
-                        <p>{bid.supplier_name}</p>
-                      </div>
-                    </div>
-                    <div className="flex-1 w-20 ml-1">
-                      <label
-                        htmlFor="bid_date"
-                        className="block text-sm font-medium leading-6 text-gray-900"
-                      >
-                        Bid Date
-                      </label>
-                      <div className="mt-2">
-                        <p>{bid.bid_date}</p>
-                      </div>
-                    </div>
-                    <div className="flex-1 w-20 ml-1">
-                      <label
-                        htmlFor="supplier[bid][0]"
-                        className="block text-sm font-medium leading-6 text-gray-900"
-                      >
-                        Bid No.
-                      </label>
-                      <div className="mt-2">
-                        <p>{bid.bid_count}</p>
-                      </div>
-                    </div>
-                    <div className="flex-1 w-40 ml-1">
-                      <label
-                        htmlFor="bid_document"
-                        className="block text-sm font-medium leading-6 text-gray-900"
-                      >
-                        Bid Documents
-                      </label>
-                      <div className="mt-2">
-                        <a
-                          href={bid.bid_document_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
+          {this.state.bids &&
+            this.state.bids.map((bid, index) => {
+              return (
+                <div
+                  id="opening_rfq"
+                  className="px-4 sm:px-0 mt-6 bg-gulf-blue-300 rounded-md border-t border-gray-100 border-b border-gray-900/10 pb-12"
+                >
+                  <div id="bid_container" className=" rounded-md">
+                    <div className="flex justify-evenly mt-5  px-2 py-2 rounded-md">
+                      <div className="flex-1 w-20 ml-1">
+                        <label
+                          htmlFor="supplier_name"
+                          className="block text-sm font-medium leading-6 text-gray-900"
                         >
-                          View Document
-                        </a>
+                          Supplier
+                        </label>
+                        <div className="mt-2">
+                          <p>{bid.supplier_name}</p>
+                        </div>
+                      </div>
+                      <div className="flex-1 w-20 ml-1">
+                        <label
+                          htmlFor="bid_date"
+                          className="block text-sm font-medium leading-6 text-gray-900"
+                        >
+                          Bid Date
+                        </label>
+                        <div className="mt-2">
+                          <p>{bid.bid_date}</p>
+                        </div>
+                      </div>
+                      <div className="flex-1 w-20 ml-1">
+                        <label
+                          htmlFor="supplier[bid][0]"
+                          className="block text-sm font-medium leading-6 text-gray-900"
+                        >
+                          Bid No.
+                        </label>
+                        <div className="mt-2">
+                          <p>{bid.bid_count}</p>
+                        </div>
+                      </div>
+                      <div className="flex-1 w-40 ml-1">
+                        <label
+                          htmlFor="bid_document"
+                          className="block text-sm font-medium leading-6 text-gray-900"
+                        >
+                          Bid Documents
+                        </label>
+                        <div className="mt-2">
+                          <a
+                            href={bid.bid_document_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            View Document
+                          </a>
+                        </div>
                       </div>
                     </div>
+
+                    {bid.items.map((item, index) => {
+                      return (
+                        <div className="flex justify-evenly mt-5  px-2 py-2 rounded-md">
+                          <div className="flex-1 w-15 ml-1">
+                            <label
+                              htmlFor="item_name"
+                              className="block text-sm font-medium leading-6 text-gray-900"
+                            >
+                              Item Description
+                            </label>
+                            <div className="mt-2">
+                              <p>{item.item_required}</p>
+                            </div>
+                          </div>
+                          <div className="flex-1 w-15 ml-1">
+                            <label
+                              htmlFor="quantity"
+                              className="block text-sm font-medium leading-6 text-gray-900"
+                            >
+                              Quantity
+                            </label>
+                            <div className="mt-2">
+                              <p>{item.quantity}</p>
+                            </div>
+                          </div>
+                          <div className="flex-1 w-15 ml-3">
+                            <div>
+                              <label
+                                htmlFor="unit_of_measurement"
+                                className="block text-sm font-medium leading-6 text-gray-900"
+                              >
+                                UOM
+                              </label>
+                              <div className="mt-2">
+                                <p>{item.unit_of_measurement}</p>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex-1 w-15 ml-3">
+                            <div>
+                              <label
+                                htmlFor="vat"
+                                className="block text-sm font-medium leading-6 text-gray-900"
+                              >
+                                VAT
+                              </label>
+                              <div className="mt-2">
+                                <p>{item.vat}</p>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex-1 w-15 ml-1">
+                            <label
+                              htmlFor="unit_price"
+                              className="block text-sm font-medium leading-6 text-gray-900"
+                            >
+                              Unit Price
+                            </label>
+                            <div className="mt-2">
+                              <p>{item.unit_price}</p>
+                            </div>
+                          </div>
+                          <div className="flex-1 w-15 ml-1">
+                            <label
+                              htmlFor="total_price"
+                              className="block text-sm font-medium leading-6 text-gray-900"
+                            >
+                              Total Price
+                            </label>
+                            <div className="mt-2">
+                              <p>{item.total_price}</p>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
 
-                  {bid.items.map((item, index) => {
-                    return (
-                      <div className="flex justify-evenly mt-5  px-2 py-2 rounded-md">
-                        <div className="flex-1 w-15 ml-1">
-                          <label
-                            htmlFor="item_name"
-                            className="block text-sm font-medium leading-6 text-gray-900"
-                          >
-                            Item Description
-                          </label>
-                          <div className="mt-2">
-                            <p>
-                              {item.item_required}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex-1 w-15 ml-1">
-                          <label
-                            htmlFor="quantity"
-                            className="block text-sm font-medium leading-6 text-gray-900"
-                          >
-                            Quantity
-                          </label>
-                          <div className="mt-2">
-                            <p>{item.quantity}</p>
-                          </div>
-                        </div>
-                        <div className="flex-1 w-15 ml-3">
-                          <div>
-                            <label
-                              htmlFor="unit_of_measurement"
-                              className="block text-sm font-medium leading-6 text-gray-900"
-                            >
-                              UOM
-                            </label>
-                            <div className="mt-2">
-                              <p>{item.unit_of_measurement}</p>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex-1 w-15 ml-3">
-                          <div>
-                            <label
-                              htmlFor="vat"
-                              className="block text-sm font-medium leading-6 text-gray-900"
-                            >
-                              VAT
-                            </label>
-                            <div className="mt-2">
-                              <p>{item.vat}</p>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex-1 w-15 ml-1">
-                          <label
-                            htmlFor="unit_price"
-                            className="block text-sm font-medium leading-6 text-gray-900"
-                          >
-                            Unit Price
-                          </label>
-                          <div className="mt-2">
-                            <p>{item.unit_price}</p>
-                          </div>
-                        </div>
-                        <div className="flex-1 w-15 ml-1">
-                          <label
-                            htmlFor="total_price"
-                            className="block text-sm font-medium leading-6 text-gray-900"
-                          >
-                            Total Price
-                          </label>
-                          <div className="mt-2">
-                            <p>{item.total_price}</p>
-                          </div>
-                        </div>
+                  {this.state.username === this.state.cs_owner &&
+                  !this.state.approvalsComplete ? (
+                    <div className="flex justify-center mt-5 px-3 py-3">
+                      <div className="m-2">
+                        <button
+                          onClick={() => this.onUpdateBidModal(bid.bid_count)}
+                          className="rounded-md text-gray-50 text-sm bg-blue-925 hover:bg-blue-550 px-3 py-2 font-semibold leading-6"
+                        >
+                          UPDATE BID
+                        </button>
                       </div>
-                    );
-                  })}
+                      <div className="m-2">
+                        <button
+                          onClick={() =>
+                            this.onDeleteBidModal(
+                              bid.bid_count,
+                              bid.supplier_name
+                            )
+                          }
+                          type="submit"
+                          className="rounded-md bg-red-danger hover:bg-orange-500 text-sm font-semibold px-3 py-2 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                        >
+                          DELETE BID
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    ""
+                  )}
                 </div>
-
-                {this.state.username === this.state.cs_owner && !this.state.approvalsComplete ? (
-                  <div className="flex justify-center mt-5 px-3 py-3">
-                    <div className="m-2">
-                      <button
-                        onClick={() => this.onUpdateBidModal(bid.bid_count)}
-                        className="rounded-md text-gray-50 text-sm bg-blue-925 hover:bg-blue-550 px-3 py-2 font-semibold leading-6"
-                      >
-                        UPDATE BID
-                      </button>
-                    </div>
-                    <div className="m-2">
-                      <button
-                        onClick={() =>
-                          this.onDeleteBidModal(
-                            bid.bid_count,
-                            bid.supplier_name
-                          )
-                        }
-                        type="submit"
-                        className="rounded-md bg-red-danger hover:bg-orange-500 text-sm font-semibold px-3 py-2 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                      >
-                        DELETE BID
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  ""
-                )}
-              </div>
-            );
-          })}
+              );
+            })}
 
           {this.state.cs_items.length > 0 &&
-          this.state.username === this.state.cs_owner && !this.state.approvalsComplete ? (
+          this.state.username === this.state.cs_owner &&
+          !this.state.approvalsComplete ? (
             <div className="m-2">
               <button
                 style={{ width: "100%" }}
@@ -3745,7 +4134,8 @@ class CreateRB extends React.Component {
 
           {this.state.bids.length > 0 &&
           this.state.compliance.length < 1 &&
-          this.state.username === this.state.cs_owner && !this.state.approvalsComplete ? (
+          this.state.username === this.state.cs_owner &&
+          !this.state.approvalsComplete ? (
             <div className="m-2">
               <button
                 style={{ width: "100%" }}
@@ -3762,7 +4152,8 @@ class CreateRB extends React.Component {
           {this.state.compliance.length > 0 ? complianceTable : ""}
 
           {this.state.compliance.length > 0 &&
-          this.state.username === this.state.cs_owner && !this.state.approvalsComplete ? (
+          this.state.username === this.state.cs_owner &&
+          !this.state.approvalsComplete ? (
             <div className="m-2">
               <button
                 style={{ width: "100%" }}
@@ -3781,7 +4172,8 @@ class CreateRB extends React.Component {
           {this.state.rankings.length > 0 ? committeeTable : ""}
 
           {this.state.committeeMembers.length > 0 &&
-          this.state.username === this.state.cs_owner && !this.state.approvalsComplete ? (
+          this.state.username === this.state.cs_owner &&
+          !this.state.approvalsComplete ? (
             <div className="m-2">
               <button
                 style={{ width: "100%" }}
@@ -3797,17 +4189,17 @@ class CreateRB extends React.Component {
           {this.state.committeeMembers.length > 2 ? approvalsTable : ""}
 
           <div className="m-2">
-              <button
-                style={{ width: "100%" }}
-                onClick={() => {
-                  console.log("going back ...")
-                  window.history.back();
-                }}
-                className="rounded-md bg-nepal-950 hover:bg-nepal-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-              >
-                GO BACK TO SCHEDULES
-              </button>
-            </div>
+            <button
+              style={{ width: "100%" }}
+              onClick={() => {
+                console.log("going back ...");
+                window.history.back();
+              }}
+              className="rounded-md bg-nepal-950 hover:bg-nepal-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+            >
+              GO BACK TO SCHEDULES
+            </button>
+          </div>
         </div>
       </div>
     );
