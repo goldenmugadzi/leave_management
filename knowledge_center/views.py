@@ -20,6 +20,7 @@ def create(request):
     if request.method == 'POST':
         # something
         print("post data: ", request.POST)
+        user = request.user
         filename = request.POST['filename']
         filetype = request.POST['category_id']
         section = request.POST['section']
@@ -54,7 +55,7 @@ def create(request):
             region=region,
             created_at = datetime.now().date(),
             updated_at = datetime.now().date(),
-            created_by = "Max",
+            created_by = user.username,
         )
         um.save()
         
@@ -198,6 +199,7 @@ def edit_file(request, file_id):
     if request.method == 'POST':
         # something
         print("post data: ", request.POST)
+        user = request.user
         id = request.POST['id']
         filename = request.POST['filename']
         filetype = request.POST['category_id']
@@ -233,7 +235,7 @@ def edit_file(request, file_id):
         um.sub_category_2 = subtype2_.name if subtype2_ else ""
         um.region=region
         um.updated_at = datetime.now().date()
-        um.created_by = "Max"
+        um.created_by = user.username
 
         um.save()
         
@@ -289,26 +291,37 @@ def get_cat2(request, file_type, selected_cat):
 
 def view_legislation(request):
     
-    files = KnowledgeCenter.objects.all()
-
-    print("files: ", files)
-    new_dict = get_kc_dict(files)
-    print("new_dict: ", new_dict)
-    
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/view_legislation.html', {"page_title": "LEGISLATION", "url_path": url_path} )
 
+def view_legal_registers(request):
+    
+    url_path = request.path.split("/")
+    return render(request, 'knowledge-center/legal_registers.html', {"page_title": "Legal Registers", "url_path": url_path} )
+
+def legal_registers_departments(request, department):
+    
+    files = KnowledgeCenter.objects.filter(file_type="LEGISLATION", sub_category_1="Legal Registers", sub_category_2=department).all()
+    
+    url_path = request.path.split("/")
+    title = department + " Legal Registers"
+    return render(request, 'knowledge-center/test.html',{"files": files, "page_title": title, "url_path": url_path})
+
+def fetch_knowledge_center(request, filetype, subtype, subsubtype):
+    
+    files = []
+    # if filetype and subtype and subsubtype:
+    files = KnowledgeCenter.objects.filter(file_type=filetype, sub_category_1=subtype, sub_category_2=subsubtype).all()
+    url_path = request.path.split("/")
+    title = (subsubtype + " " + subtype).capitalize()
+    return render(request, 'knowledge-center/test.html',{"files": files, "page_title": title, "url_path": url_path})
 
 def view_ea(request):
     
     files = KnowledgeCenter.objects.filter(sub_category_1="Electricity Acts")
-
-    print("files: ", files)
-    new_dict = get_kc_dict(files)
-    print("new_dict: ", new_dict)
     
     url_path = request.path.split("/")
-    return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "Electricity Acts files", "url_path": url_path})
+    return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "Acts of Parliament", "url_path": url_path})
 
 
 def view_gl(request):
@@ -475,7 +488,7 @@ def view_commercial_policies(request):
 
 def view_hr_policies(request):
     
-    files = KnowledgeCenter.objects.filter(sub_category_1="Human Resources")
+    files = KnowledgeCenter.objects.filter(file_type="POLICIES & GUIDELINES", sub_category_1="Human Resources")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -486,7 +499,7 @@ def view_hr_policies(request):
 
 def view_engineering(request):
     
-    files = KnowledgeCenter.objects.filter(sub_category_1="Engineering")
+    files = KnowledgeCenter.objects.filter(file_type="POLICIES & GUIDELINES", sub_category_1="Engineering")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -497,7 +510,7 @@ def view_engineering(request):
 
 def view_finance_policies(request):
     
-    files = KnowledgeCenter.objects.filter(sub_category_1="Finance")
+    files = KnowledgeCenter.objects.filter(file_type="POLICIES & GUIDELINES", sub_category_1="Finance")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -508,7 +521,7 @@ def view_finance_policies(request):
 
 def view_ict_policies(request):
     
-    files = KnowledgeCenter.objects.filter(sub_category_1="ICT")
+    files = KnowledgeCenter.objects.filter(file_type="POLICIES & GUIDELINES", sub_category_1="ICT")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -519,7 +532,7 @@ def view_ict_policies(request):
 
 def view_risk_policies(request):
     
-    files = KnowledgeCenter.objects.filter(sub_category_1="Risk")
+    files = KnowledgeCenter.objects.filter(file_type="POLICIES & GUIDELINES", sub_category_1="Risk")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)

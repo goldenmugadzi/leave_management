@@ -1464,6 +1464,10 @@ def delete_cs_bid(request):
             item = RBItems.objects.filter(item_id=bid.item_id).first()
             if item:
                 item.delete()
+                
+            compliance = RBCompliance.objects.filter(cs_id=cs_query, supplier_id=supplier).first()
+            if compliance:
+                compliance.delete()
             bid.delete()
             
     return JsonResponse({

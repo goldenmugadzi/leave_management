@@ -43,6 +43,9 @@ def create(request):
         filename = request.POST['file_name']
         filetype = request.POST['filetype']
         _filetype = File_Type.objects.filter(id=filetype).first()
+        sub_category = ""
+        _sub_category = ""
+        _subsubtype = ""
         print(_filetype)
         if 'subtype' in request.POST:
            sub_category=request.POST['subtype']
@@ -1414,6 +1417,24 @@ def download_file(request):
 
 # ----------------------------
 # Process Maps
+def view_internal(request):
+   
+    files = Processes.objects.filter(archived=False, filetype="INTERNAL_EXTERNAL").all()
+   
+    return render(request, 'process_maps/ict.html',
+                  { "files": files,
+                    "page_title": "Internal & External Issues"},
+                    )
+
+def view_stakeholder(request):
+   
+    files = Processes.objects.filter(archived=False, filetype="STAKEHOLDER_RELATIONS").all()
+   
+    return render(request, 'process_maps/ict.html',
+                  { "files": files,
+                    "page_title": "Stakeholder Relations"},
+                    )
+    
 def view_Client(request):
    
     files = Processes.objects.filter(archived=False, filetype="PROCESS_MAPS", department="Commercial", sub_category="client interaction")
@@ -1485,6 +1506,39 @@ def view_Commercial(request):
     url_path = request.path.split("/")
     return render(request, 'process_maps/ict.html',{
         "files": files,  "page_title": "Commercial", "url_path": url_path} )
+    
+def view_management(request):
+    
+    files = Processes.objects.filter(archived=False, filetype="PROCESS_MAPS", department="Management")
+
+    url_path = request.path.split("/")
+    return render(request, 'process_maps/ict.html',{
+        "files": files,  "page_title": "Management", "url_path": url_path} )
+  
+def view_stakeholder_relations(request):
+    
+    files = Processes.objects.filter(archived=False, filetype="PROCESS_MAPS", department="Stakeholder Relations")
+
+    url_path = request.path.split("/")
+    return render(request, 'process_maps/ict.html',{
+        "files": files,  "page_title": "Stakeholder Relations", "url_path": url_path} )
+
+def view_legal_services(request):
+    
+    files = Processes.objects.filter(archived=False, filetype="PROCESS_MAPS", department="Legal Services")
+
+    url_path = request.path.split("/")
+    return render(request, 'process_maps/ict.html',{
+        "files": files,  "page_title": "Legal Services", "url_path": url_path} )
+    
+def fetch_processes(request, filetype, subtype, subsubtype):
+    
+    files = Processes.objects.filter(archived=False, filetype=filetype, department=subtype, sub_category=subsubtype).all()
+
+    url_path = request.path.split("/")
+    title = (subtype + " " + subsubtype).capitalize()
+    return render(request, 'process_maps/ict.html',{
+        "files": files,  "page_title": title, "url_path": url_path} )
 
 
 def view_Finance(request):
@@ -1525,7 +1579,7 @@ def view_procurement(request):
     return render(request, 'process_maps/ict.html',{
         "files": files,  "page_title": "Procurement Processes", "url_path": url_path} )
 
-def view_management(request):
+def view_managementx(request):
     return render(request,'processes/management.html',{})
 
 def view_Risk(request):
@@ -1557,12 +1611,41 @@ def risk_Procurement(request):
 
 def risk_Engineering(request):
     
-    eng_files = Processes.objects.filter(archived=False, filetype="RISK_OPPORTUNITY", department="Engineering")
+    return render(request, 'process_risks/eng_index.html',
+                  {"page_title": "Engineering Process Risks"})
+
+def risk_eng_nde(request):
+    
+    eng_files = Processes.objects.filter(archived=False, filetype="RISK_OPPORTUNITY", department="Engineering", sub_category="Network Development").all()
     print(eng_files)
     return render(request, 'process_maps/ict.html',
                   {"files": eng_files,
-                    "page_title": "Engineering Process Risks"})
+                    "page_title": "Network Development Risks"})
 
+def risk_eng_transport(request):
+    
+    eng_files = Processes.objects.filter(archived=False, filetype="RISK_OPPORTUNITY", department="Engineering", sub_category="Transport").all()
+    print(eng_files)
+    return render(request, 'process_maps/ict.html',
+                  {"files": eng_files,
+                    "page_title": "Transport Risks"})
+    
+def risk_eng_districts(request):
+    
+    eng_files = Processes.objects.filter(archived=False, filetype="RISK_OPPORTUNITY", department="Engineering", sub_category="Districts").all()
+    print(eng_files)
+    return render(request, 'process_maps/ict.html',
+                  {"files": eng_files,
+                    "page_title": "Districts Risks"})
+
+def risk_eng_maintenance(request):
+    
+    eng_files = Processes.objects.filter(archived=False, filetype="RISK_OPPORTUNITY", department="Engineering", sub_category="Maintenance").all()
+    print(eng_files)
+    return render(request, 'process_maps/ict.html',
+                  {"files": eng_files,
+                    "page_title": "Operations and Maintenance Risks"})
+    
 def risk_Finance(request):
     
     finance_files = Processes.objects.filter(archived=False, filetype="RISK_OPPORTUNITY", department="Finance")
@@ -1642,6 +1725,15 @@ def engineering_forms(request):
     return render(request, 'process_maps/ict.html',
                   {"files": files,
                     "page_title": "Engineering Forms"},
+                    )
+
+def procurement_forms(request):
+    
+    files = Processes.objects.filter(archived=False, filetype="PROCESS_FORMS", department="Procurement")
+
+    return render(request, 'process_maps/ict.html',
+                  {"files": files,
+                    "page_title": "Procurement Forms"},
                     )
     
 def finance_forms(request):

@@ -13,7 +13,12 @@ urlpatterns = [
     path('view_archive', views.view_archived_files, name='view_archived_files'),
     path('get-files/<int:file_type_id>/', views.get_files, name='get_files'),
     path('get-cat2/<int:file_type>/<int:selected_cat>', views.get_cat2, name='get_cat2'),
+    
     path('view_legislation', views.view_legislation, name='user_manual_view_legislation'),
+    path('legal_registers', views.view_legal_registers, name='legal_registers'),
+    path('legal_registers/<str:department>', views.legal_registers_departments, name='legal_registers_departments'),
+    path('view/<str:filetype>/<str:subtype>/<str:subsubtype>', views.fetch_knowledge_center, name='fetch_knowledge_center'),
+    
     path('view_firstview', views.view_firstview, name='user_manual_view_advanced'),
     path('view_policies', views.view_policies, name='user_manual_view_policies'),
     path('view_index', views.view_index, name='user_manual_view_index'),

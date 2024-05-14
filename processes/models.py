@@ -1,13 +1,13 @@
 from django.db import models
 
 class Processes(models.Model):
-    filename = models.CharField(max_length=100)
-    filetype = models.CharField(max_length=100)
-    department = models.CharField(max_length=100)
-    sub_category = models.CharField(max_length=100, null=True)
-    filepath = models.CharField(max_length=400)
-    section = models.CharField(max_length=100)
-    region = models.CharField(max_length=100)
+    filename = models.CharField(max_length=200, blank=True, null=True)
+    filetype = models.CharField(max_length=100, blank=True, null=True)
+    department = models.CharField(max_length=100, blank=True, null=True)
+    sub_category = models.CharField(max_length=100, blank=True, null=True)
+    filepath = models.CharField(max_length=400, blank=True, null=True)
+    section = models.CharField(max_length=100, blank=True, null=True)
+    region = models.CharField(max_length=100, blank=True, null=True)
     archived = models.BooleanField(default=False)
     created_at = models.DateField()
     updated_at = models.DateField()

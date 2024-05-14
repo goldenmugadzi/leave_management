@@ -15,6 +15,9 @@ urlpatterns =[
     path('archive_file/<int:file_id>', views.archive_file, name='archive_file'),
     path('unarchive_file/<int:file_id>', views.unarchive_file, name='unarchive_file'),
     
+    path('issues/',views.view_internal,name='view_internal'),
+    path('stakeholder_relations/',views.view_stakeholder,name='view_stakeholder'),
+    
     path('client/',views.view_Client,name='commercial client processes'),
     path('payment/',views.view_payment,name='commercial payment processes'),
     path('revenue/',views.view_revenue_assurance,name='revenue'),
@@ -36,6 +39,10 @@ urlpatterns =[
     path('testtypes/',views.bulk_set_up,name='bulk_set_up'),
     
     path('commercial/',views.view_Commercial,name='Commercial Processes'),
+    path('management/',views.view_management,name='Management Processes'),
+    path('stakeholder_relations/',views.view_stakeholder_relations,name='Stakeholder Relations Processes'),
+    path('legal_services/',views.view_legal_services,name='Legal Services Processes'),
+    path('view/<str:filetype>/<str:subtype>/<str:subsubtype>',views.fetch_processes,name='Fetch Processes'),
     path('engineering/',views.view_Engineering,name='Engineering Processes'),
     # path('edit_file',views.edit_file,name='edit'),
     
@@ -43,6 +50,7 @@ urlpatterns =[
     path("engineering_forms",views.engineering_forms,name="Engineering Forms"),
     path("finance_forms",views.finance_forms,name="Finance Forms"),
     path("hr_forms",views.hr_forms,name="Human Resources Forms"),
+    path("procurement_forms",views.procurement_forms,name="Procurement Forms"),
      path("it_forms",views.it_forms,name="IT Forms"),
     path("risk_forms",views.risk_forms,name="Risk Forms"),
     path("commercial_forms",views.commercial_forms,name="Commercial Forms"),
@@ -69,6 +77,10 @@ urlpatterns =[
     
     path('risk_opportunity/commercial',views.risk_Commercial,name='commercial'),
     path('risk_opportunity/engineering',views.risk_Engineering,name='engineering'),
+    path('risk_opportunity/network-development/',views.risk_eng_nde,name='risk_eng_nde'),
+    path('risk_opportunity/operations-maintenance/',views.risk_eng_maintenance,name='risk_eng_maintenance'),
+    path('risk_opportunity/transport/',views.risk_eng_transport,name='risk_eng_transport'),
+    path('risk_opportunity/districts/',views.risk_eng_districts,name='risk_eng_districts'),
     path('risk_opportunity/procurement',views.risk_Procurement,name='procurement'),
     path('risk_opportunity/finance',views.risk_Finance,name='finance'),
     path('risk_opportunity/ict',views.risk_ICT,name='ict'),

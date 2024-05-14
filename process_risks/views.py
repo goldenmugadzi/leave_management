@@ -125,7 +125,7 @@ def view_Procurement(request):
 def view_Engineering(request):
     
     eng_files = RiskFiles.objects.filter(cat_id="2")
-    return render(request, 'process_risks/engineering.html',
+    return render(request, 'process_risks/eng_index.html',
                   {"eng_files": eng_files,
                     "page_title": "Engineering Process Risks"})
 
