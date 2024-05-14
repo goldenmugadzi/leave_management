@@ -339,7 +339,7 @@ def get_all_schedules(request):
         
     # Assuming you have a valid 'user' object and 'Roles' model
     fm_role, gm_role = False, False
-    fm_role, gm_role = getUserFMGMRoles(user)
+    fm_role, gm_role = getUserFMGMRoles(user_profile)
     
     print("roles: ", fm_role, gm_role)
     user_page = 'finance/comparative_schedules/cs_schedules.html'
@@ -431,7 +431,7 @@ def get_pending_committee(request):
     context = json.dumps(cs_list, default=str)
         
     fm_role, gm_role = False, False
-    fm_role, gm_role = getUserFMGMRoles(user)   
+    fm_role, gm_role = getUserFMGMRoles(user_profile)   
         
     print("roles: ", fm_role, gm_role)
     user_page = 'finance/comparative_schedules/cs_schedules.html'
@@ -660,7 +660,7 @@ def get_pending_fm_approval(request):
         
     context = json.dumps(cs_list, default=str)
     fm_role, gm_role = False, False
-    fm_role, gm_role = getUserFMGMRoles(user)
+    fm_role, gm_role = getUserFMGMRoles(user_profile)
     user_page = 'finance/comparative_schedules/cs_schedules.html'
     print("roles: ", fm_role, gm_role)
     return render(request, user_page, {"cs": context, 

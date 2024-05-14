@@ -15,8 +15,8 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
 var e = React.createElement;
-var BASE_URL = "http://localhost:8000/direct_purchase";
-// const BASE_URL = "http://172.16.8.99:9300/direct_purchase";
+// const BASE_URL = "http://localhost:8000/direct_purchase";
+var BASE_URL = "http://172.16.8.99:9300/direct_purchase";
 
 var CreateDP = function (_React$Component) {
   _inherits(CreateDP, _React$Component);
@@ -300,6 +300,8 @@ var CreateDP = function (_React$Component) {
         alert("Committee Member already added.");
       } else if (currentUserFlag) {
         alert("You cannot add yourself. Please choose another user.");
+      } else if (positionFlag) {
+        alert(_this.state.member.memberPosition + ", already exists, please add a different one.");
       } else {
         members.push(_this.state.member);
         _this.setState(Object.assign({}, _this.state, {

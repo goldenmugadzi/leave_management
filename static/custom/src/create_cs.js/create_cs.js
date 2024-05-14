@@ -15,8 +15,8 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
 var e = React.createElement;
-var BASE_URL = "http://localhost:8000";
-// const BASE_URL = "http://172.16.8.99:9300";
+// const BASE_URL = "http://localhost:8000";
+var BASE_URL = "http://172.16.8.99:9300";
 
 var CreateCS = function (_React$Component) {
   _inherits(CreateCS, _React$Component);
@@ -297,10 +297,15 @@ var CreateCS = function (_React$Component) {
       });
       // check if memberUserName is the one creating
       var currentUserFlag = _this.state.member.memberUserName === _this.state.username;
+      var positionFlag = members.find(function (_member) {
+        return _member.memberPosition === _this.state.member.memberPosition;
+      });
       if (member) {
         alert("Committee Member already added.");
       } else if (currentUserFlag) {
         alert("You cannot add yourself. Please choose another user.");
+      } else if (positionFlag) {
+        alert(_this.state.member.memberPosition + ", already exists, please add a different one.");
       } else {
         members.push(_this.state.member);
         _this.setState(Object.assign({}, _this.state, {

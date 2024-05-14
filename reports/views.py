@@ -109,6 +109,7 @@ def edit_report(request):
 
     if request.method == 'POST':
 
+        print("request.POST: ", request.POST)
         report_id = request.POST.get('report_id')
         report_period = request.POST.get('report_period')
         file_name = request.POST.get('file_name')
@@ -120,13 +121,12 @@ def edit_report(request):
                 file_path = 'uploads/plans_and_reports/' + \
                     datetime.now().strftime("%Y%m%d%I%M%S%p") + uploaded_file.name
                 save_file(uploaded_file, file_path)
-                
+
         except Exception as ex:
             print("Error:", ex)
         
         region = Regions.objects.filter(id=request.POST.get('region')).first()
         section = Sections.objects.filter(id=request.POST.get('section')).first()
-
         report_ = Report.objects.filter(id=report_id).first()
 
         if report_:
@@ -137,9 +137,9 @@ def edit_report(request):
             if file_name:
                 report_.file_name = file_name
             if region:
-                report_.region = region.id
+                report_.region = region
             if section:
-                report_.section = section.id
+                report_.section = section
             report_.date_updated = datetime.now().strftime("%Y%m%d")
 
             report_.save()       

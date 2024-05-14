@@ -1,8 +1,8 @@
 "use strict";
 
 const e = React.createElement;
-const BASE_URL = "http://localhost:8000/direct_purchase";
-// const BASE_URL = "http://172.16.8.99:9300/direct_purchase";
+// const BASE_URL = "http://localhost:8000/direct_purchase";
+const BASE_URL = "http://172.16.8.99:9300/direct_purchase";
 
 class CreateDP extends React.Component {
   constructor(props) {

@@ -1376,99 +1376,63 @@ def test(request):
 
 def view_risk_management(request):
     
-    files = KnowledgeCenter.objects.filter(sub_category_2="Risk Management Strategy")
-
-    print("files: ", files)
-    new_dict = get_kc_dict(files)
-    print("new_dict: ", new_dict)
+    files = KnowledgeCenter.objects.filter(file_type="PRINCE2 CENTRE OF EXCELLENCE", sub_category_1="Risk Management Strategy")
     
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "Risk Management Strategy Files", "url_path": url_path} )
 
 def view_communication_management(request):
     
-    files = KnowledgeCenter.objects.filter(sub_category_2="Communication Management Strategy")
-
-    print("files: ", files)
-    new_dict = get_kc_dict(files)
-    print("new_dict: ", new_dict)
+    files = KnowledgeCenter.objects.filter(file_type="PRINCE2 CENTRE OF EXCELLENCE", sub_category_1="Communication Management Strategy")
     
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "Communications Management Strategy Files", "url_path": url_path} )
 
 def view_quality_management(request):
     
-    files = KnowledgeCenter.objects.filter(sub_category_2="Quality Management Strategy")
-
-    print("files: ", files)
-    new_dict = get_kc_dict(files)
-    print("new_dict: ", new_dict)
+    files = KnowledgeCenter.objects.filter(file_type="PRINCE2 CENTRE OF EXCELLENCE", sub_category_1="Quality Management Strategy")
     
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "Quality Management Strategy Files", "url_path": url_path} )
 
 def view_configuration_management(request):
     
-    files = KnowledgeCenter.objects.filter(sub_category_2="Configuration Management Strategy")
-
-    print("files: ", files)
-    new_dict = get_kc_dict(files)
-    print("new_dict: ", new_dict)
+    files = KnowledgeCenter.objects.filter(file_type="PRINCE2 CENTRE OF EXCELLENCE", sub_category_1="Configuration Management Strategy")
     
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "Configuration Management Strategy Files", "url_path": url_path} )
 
 def view_risk_register(request):
     
-    files = KnowledgeCenter.objects.filter(sub_category_2="Risk Register Template")
-
-    print("files: ", files)
-    new_dict = get_kc_dict(files)
-    print("new_dict: ", new_dict)
+    files = KnowledgeCenter.objects.filter(file_type="PRINCE2 CENTRE OF EXCELLENCE", sub_category_1="Risk Register Template")
     
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "Risk Register Template Files", "url_path": url_path} )
 
 def view_lessons_learnt(request):
     
-    files = KnowledgeCenter.objects.filter(sub_category_2="Lessons Learnt From Previous Projects")
-
-    print("files: ", files)
-    new_dict = get_kc_dict(files)
-    print("new_dict: ", new_dict)
+    files = KnowledgeCenter.objects.filter(file_type="PRINCE2 CENTRE OF EXCELLENCE", sub_category_1="Lessons Learnt From Previous Projects")
     
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "Lessons Learnt From Previous Projects Files", "url_path": url_path} )
 
 def view_quality_register(request):
     
-    files = KnowledgeCenter.objects.filter(sub_category_2="Quality Register Template")
-
-    print("files: ", files)
-    new_dict = get_kc_dict(files)
-    print("new_dict: ", new_dict)
+    files = KnowledgeCenter.objects.filter(file_type="PRINCE2 CENTRE OF EXCELLENCE", sub_category_1="Quality Register Template")
     
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "Quality Register Template Files", "url_path": url_path} )
 
 def view_configuration_item(request):
     
-    files = KnowledgeCenter.objects.filter(sub_category_2="Configuration Item Record Template")
-
-    print("files: ", files)
-    new_dict = get_kc_dict(files)
-    print("new_dict: ", new_dict)
+    files = KnowledgeCenter.objects.filter(file_type="PRINCE2 CENTRE OF EXCELLENCE", sub_category_1="Configuration Item Record Template")
     
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "Configuration Item Record Template Files", "url_path": url_path} )
 
 def view_current_projects(request):
     
-    files = KnowledgeCenter.objects.filter(sub_category_2="Current Projects")
-
-    print("files: ", files)
-    new_dict = get_kc_dict(files)
-    print("new_dict: ", new_dict)
+    files = KnowledgeCenter.objects.filter(file_type="PRINCE2 CENTRE OF EXCELLENCE", sub_category_1="Current Projects")
     
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "Current Projects Files", "url_path": url_path} )
