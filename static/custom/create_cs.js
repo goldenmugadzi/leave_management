@@ -407,10 +407,15 @@ class CreateCS extends React.Component {
     // check if memberUserName is the one creating
     let currentUserFlag =
       this.state.member.memberUserName === this.state.username;
+    let positionFlag = members.find(
+      (_member) => _member.memberPosition === this.state.member.memberPosition
+    );
     if (member) {
       alert("Committee Member already added.");
     } else if (currentUserFlag) {
       alert("You cannot add yourself. Please choose another user.");
+    } else if(positionFlag){
+      alert(this.state.member.memberPosition+", already exists, please add a different one.")
     } else {
       members.push(this.state.member);
       this.setState({

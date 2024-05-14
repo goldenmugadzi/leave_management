@@ -426,6 +426,8 @@ class CreateRB extends React.Component {
       alert("Committee Member already added.");
     } else if (currentUserFlag) {
       alert("You cannot add yourself. Please choose another user.");
+    } else if(positionFlag){
+      alert(this.state.member.memberPosition+", already exists, please add a different one.")
     } else {
       members.push(this.state.member);
       this.setState({

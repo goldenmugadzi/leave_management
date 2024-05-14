@@ -7,7 +7,6 @@ from django.shortcuts import redirect, render
 from beii_v1 import settings
 from .models import *
 
-
 # Create your views here.
 def index(request):
     
@@ -17,17 +16,18 @@ def index(request):
     
     files_list = []
     for file in plans_and_reports_fields:
+        fullname = file.created_by.first_name + " " + file.created_by.last_name if file.created_by else None
         new_file = {
             "id": file.id,
             "uploaded_by": file.uploaded_by,
-            "region": file.region,
+            "region": file.region.region,
             "report_period": file.report_period,
-            "date_created": file.date_created,
-            "date_updated": file.date_updated,
-            "section": file.section,
+            "date_created": file.date_created.strftime("%Y-%m-%d %H:%M") if file.date_created else "",
+            "date_updated": file.date_updated.strftime("%Y-%m-%d %H:%M") if file.date_updated else "",
+            "section": file.section.section,
             "file_name": file.file_name,
-            "file_type": file.file_type,
             "file_path": file.file_path,
+            "created_by": fullname
         }
         files_list.append(new_file)
         
@@ -44,8 +44,9 @@ def create_report(request):
     if request.method == 'POST':
         
         user = request.user
+        report_period = request.POST.get('report_period')
+        file_name = request.POST.get('file_name')
         file_path = ""
-        file_type = ""
         
         try:
             if 'uploaded_file' in request.FILES:
@@ -57,24 +58,30 @@ def create_report(request):
         except Exception as ex:
             print("Error:", ex)
         
+        region = Regions.objects.filter(id=request.POST.get('region')).first()
+        section = Sections.objects.filter(id=request.POST.get('section')).first()
+        created_by = UserProfile.objects.filter(id=user.id).first()
         new_plans_and_reports_fields = Report(
             uploaded_by=user if user else "",
-            region=request.POST['region'],
-            report_period=request.POST['report_period'],
+            region=region if region else None,
+            report_period=report_period if report_period else None,
             date_created=datetime.now().strftime("%Y%m%d"),
             date_updated=datetime.now().strftime("%Y%m%d"),
-            section=request.POST['section'],
-            file_name=request.POST['file_name'],
-            file_type="",
+            section=section if section else None,
+            file_name=file_name if file_name else "",
             file_path=file_path,
+            created_by=created_by if created_by else None
         )
         new_plans_and_reports_fields.save()       
-
         
         return redirect('/reports/reports_index/')
     
-    return render(request, 'plans_reports/create_report.html', {})
-
+    sections = Sections.objects.all()
+    regions = Regions.objects.all()
+    return render(request, 'plans_reports/create_report.html', {
+        "sections": sections,
+        "regions": regions
+    })
 
 def download_file(request):
 
@@ -86,24 +93,71 @@ def download_file(request):
     # search for file in system
     try:
         base_directory_path = os.path.join(settings.BASE_DIR, file_path)
+        import mimetypes
+        content_type, _ = mimetypes.guess_type(base_directory_path)
+        # if content_type is None:
+        #     content_type = 'application/octet-stream'  # Default to binary file type if MIME type cannot be guessed
+        # print(content_type)
         print(base_directory_path)
-        return FileResponse(open(base_directory_path, 'rb'), content_type='application/pdf')
+        return FileResponse(open(base_directory_path, 'rb'), content_type=content_type)
     except Exception as ex:
         print(ex)
 
     return redirect('/dashboards/dashboard/plans_and_reports/view')
 
-
-def edit_file(request, file_id):
+def edit_report(request):
 
     if request.method == 'POST':
-        print("file_id: ", file_id)
-        file_record = Report.objects.filter(id=file_id).first()
-        # fetch section code
 
-        return render(request, 'dashboards/plans_and_reports/edit_reports.html', {"record": file_record})    
+        report_id = request.POST.get('report_id')
+        report_period = request.POST.get('report_period')
+        file_name = request.POST.get('file_name')
+        file_path = ""
+        
+        try:
+            if 'uploaded_file' in request.FILES:
+                uploaded_file = request.FILES['uploaded_file']
+                file_path = 'uploads/plans_and_reports/' + \
+                    datetime.now().strftime("%Y%m%d%I%M%S%p") + uploaded_file.name
+                save_file(uploaded_file, file_path)
+                
+        except Exception as ex:
+            print("Error:", ex)
+        
+        region = Regions.objects.filter(id=request.POST.get('region')).first()
+        section = Sections.objects.filter(id=request.POST.get('section')).first()
+
+        report_ = Report.objects.filter(id=report_id).first()
+
+        if report_:
+            if file_path:
+                report_.file_path = file_path
+            if report_period:
+                report_.report_period = report_period
+            if file_name:
+                report_.file_name = file_name
+            if region:
+                report_.region = region.id
+            if section:
+                report_.section = section.id
+            report_.date_updated = datetime.now().strftime("%Y%m%d")
+
+            report_.save()       
+        
+        return redirect('/reports/reports_index/')
     
-    return render(request, 'dashboards/plans_and_reports/edit_reports.html', {})
+    file_id = request.GET['i']
+    report = Report.objects.filter(id=file_id).first()
+    sections = Sections.objects.all()
+    regions = Regions.objects.all()
+    print("report: ", report)
+    return render(request, 'plans_reports/update_report.html', {
+        "report": report,
+        "sections": sections,
+        "regions": regions
+        })    
+    
+# return render(request, 'dashboards/plans_and_reports/edit_reports.html', {})
 
 # start region - new views for Plans and Reports
 
