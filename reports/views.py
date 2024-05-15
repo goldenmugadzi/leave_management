@@ -103,7 +103,7 @@ def download_file(request):
     except Exception as ex:
         print(ex)
 
-    return redirect('/dashboards/dashboard/plans_and_reports/view')
+    return redirect('/reports/reports_index/')
 
 def edit_report(request):
 
