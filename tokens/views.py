@@ -7,6 +7,7 @@ from approve.models import Step
 from approve.forms import ApprovalForm
 from django.contrib.auth.decorators import login_required
 from approve.decorators import allowed_roles
+from django.db.models import Q
 
 @login_required
 @allowed_roles(['Requester'], ['temper', 'reimbursement','clear credit'])
@@ -214,8 +215,7 @@ def awaiting_my_action(request):
     """
     tokens_to_process = []
     user_roles = request.user.roles.all()
-    # for token in Token.objects.filter(section=request.user.section):
-    for token in Token.objects.all():
+    for token in Token.objects.filter(Q(section=request.user.section), Q(region=request.user.region)):
         process = token.process
 
         if process.approval_set.exists():
@@ -234,3 +234,18 @@ def awaiting_my_action(request):
 
     return render(request, 'tokens/tokens.html',{'tokens': tokens_to_process,'all':False,'roles': get_my_roles_for_apps(request.user, ['temper','tokens','reimbursement','clear credit'])})
 
+def addsection(request):
+    for token in Token.objects.all():
+        if not token.section:
+            token.section = token.created_by.section
+            token.region = token.created_by.region
+            token.save() 
+        old_process = token.process
+        if old_process.workflow.name == 'tokens':
+            if token.type == 'TEMPER': process = intiate(request, "temper")
+            elif token.type == 'REIMBURSEMENT': process = intiate(request, "reimbursement")
+            elif token.type == 'CLEAR CREDIT': process = intiate(request, "clear credit")
+            token.process = process
+            token.save()
+            old_process.delete()
+    return redirect('tokens:tokens')
