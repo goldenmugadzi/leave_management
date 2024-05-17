@@ -158,7 +158,6 @@ def token_details(request, token_id):
         generatetokenform = GenerateTokenForm(request.POST, request.FILES, instance=token)
         last_approval = token.process.approval_set.last()
         last_step = last_approval.step if last_approval else None
-        decesion = request.POST.get("approvaed")
         if (
             token.process.workflow.step_set.last() is not None
             and last_step is not None
@@ -183,7 +182,7 @@ def token_details(request, token_id):
         last_approved = 0
 
     next_step = last_approved + 1
-    if not token.process.approval_set.filter(approved='Rejected'):
+    if not token.process.approval_set.all():
         try:
             newStep = Step.objects.get(step=next_step, workflow=token.process.workflow, approver__in=user_roles)
             approvalForm = ApprovalForm
@@ -206,7 +205,7 @@ def token_details(request, token_id):
         "to": to,
     })
 def view_all_tokens(request):
-    return render(request, "tokens/tokens.html", {"tokens": Token.objects.all(),'all':True,'roles': get_my_roles_for_apps(request.user, ['temper','reimbursement','clear credit'])})
+    return render(request, "tokens/tokens.html", {"tokens": Token.objects.all(),'all':True,'roles': get_my_roles_for_apps(request.user, ['temper','tokens','reimbursement','clear credit'])})
 @login_required
 def awaiting_my_action(request):
     """
@@ -215,6 +214,7 @@ def awaiting_my_action(request):
     """
     tokens_to_process = []
     user_roles = request.user.roles.all()
+    # for token in Token.objects.filter(section=request.user.section):
     for token in Token.objects.all():
         process = token.process
 
@@ -232,6 +232,5 @@ def awaiting_my_action(request):
         if step:
             tokens_to_process.append(token)
 
-    return render(request, 'tokens/tokens.html',
-                  {'tokens': tokens_to_process,'all':False,'roles': get_my_roles_for_apps(request.user, ['temper','reimbursement','clear credit'])})
+    return render(request, 'tokens/tokens.html',{'tokens': tokens_to_process,'all':False,'roles': get_my_roles_for_apps(request.user, ['temper','tokens','reimbursement','clear credit'])})
 

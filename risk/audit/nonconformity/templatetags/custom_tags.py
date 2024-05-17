@@ -34,7 +34,6 @@ def get_filtered_notifications(context):
         user = context['request'].user
         notifications = Notification.objects.filter(user=user).order_by('-created_at')
         filtered_notifications = notifications.filter(is_read=False).order_by('-created_at')#[:10]
-        context['size_notifications'] = len(filtered_notifications)
         context['filtered_notifications'] = filtered_notifications
         return ""
     except:

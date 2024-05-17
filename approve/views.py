@@ -69,7 +69,7 @@ def get_my_roles_for_apps(user, app_names):
     for app_name in app_names:
         roles = user.roles.filter(app_id__name=app_name).values_list('name', flat=True)
         if roles:
-            for role in roles: roles_dict.append( "You are "+role+" for "+app_name )
+            for role in roles: roles_dict.append( role+" for "+app_name )
     return roles_dict
 def intiate(request, app):
     app = Workflow.objects.get(name__iexact=app)
@@ -119,7 +119,7 @@ def approve_step(request, process_id):
                     return redirect('pettycash:pettycash_detail', process.pettycash_set.last().petty_id)
                 elif process.workflow.name == 'ace':
                     print(process.ace2_set.last().Ace_id2, "Please")
-                    messages.success(request, "ace approved")
+                    messages.success(request, "ace actioned successfully")
                     return redirect('Ace:ace_detail', process.ace2_set.last().Ace_id2)
                 else:
                     return redirect('approve:workflow_detail', process.workflow.id)
