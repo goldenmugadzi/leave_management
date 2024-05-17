@@ -31,7 +31,7 @@ SECRET_KEY = 'django-insecure-7per#nouy422m0!hn0!ecb7ltnq#!^#g!2r5&%^5c%v(!ivv&a
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = ['localhost', '172.16.8.97', '172.16.8.22', '127.0.0.1', '172.16.8.99', '172.16.8.98', 'bexcel.zedc.co.zw']
+ALLOWED_HOSTS = ['localhost', '172.16.8.20']
 
 # CORS_ALLOWED_ORIGINS = [
 #     "http://172.16.8.97",
@@ -182,42 +182,10 @@ WSGI_APPLICATION = 'beii_v1.wsgi.application'
 DATABASES = {
     # 'default': {
     #     'ENGINE': 'django.db.backends.mysql',
-    #     'NAME': 'beii',
-    #     'USER': 'beii_user',
-    #     'PASSWORD': 'v4mnwVrOsAupSY0k',
-    #     'HOST': '172.16.8.22'
-    # }
-    # Localhost
-    # 'default': {
-    #     'ENGINE': 'django.db.backends.postgresql_psycopg2',
-    #     'NAME': 'beii',
-    #     'USER': 'Excellence',
-    #     'PASSWORD': 'Z3tdc_it@2021_',
-    #     'HOST': 'localhost'
-    # }
-    # 'default': {
-    #     'ENGINE': 'django.db.backends.mysql',
     #     'NAME': 'beii_new',
     #     'USER': 'root',
     #     'PASSWORD': '',
     #     'HOST': 'localhost',
-    # }
-    # 'default': {
-    #     'ENGINE': 'django.db.backends.mysql',
-    #     'NAME': 'beii_test',
-    #     'USER': 'root',
-    #     'PASSWORD': '',
-    #     'HOST': 'localhost',
-    # }
-    # 'default': {
-    #     'OPTIONS': {
-    #         'sql_mode': 'NO_BACKSLASH_ESCAPES',
-    #     },
-    #     'ENGINE': 'django.db.backends.mysql',
-    #     'NAME': 'beii_new',
-    #     'USER': 'be_user',
-    #     'PASSWORD': 'Z3tdc_it@2024',
-    #     'HOST': 'localhost'
     # }
     'default': {
         'OPTIONS': {
@@ -229,17 +197,6 @@ DATABASES = {
         'PASSWORD': 'Z3tdc_it@2024',
         'HOST': 'localhost'
     }
-    # 'default': {
-    #     'ENGINE': 'django.db.backends.mysql',
-    #     'NAME': 'beii',
-    #     'USER': 'excellence',
-    #     'PASSWORD': 'Z3tdc_it@2021_',
-    #     'HOST': 'localhost'
-    # }
-#   'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': BASE_DIR / 'db.sqlite3',
-#     }
 }
 
 # Password validation
