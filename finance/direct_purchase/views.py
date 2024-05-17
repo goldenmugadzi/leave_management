@@ -186,12 +186,12 @@ def get_comperative_schedules(request):
                 committee_approved = all([c.committee_approval == "Approved" for c in committee])
                 if committee_approved:
                     committee_approval = "Approval Complete"
-                    fm_approval = DPCommittee.objects.filter(
+                    fm_approval = DPApproval.objects.filter(
                         cs_id=c,
                         approver_role="finance_manager",
                     ).first()
                         
-                    gm_approval = DPCommittee.objects.filter(
+                    gm_approval = DPApproval.objects.filter(
                         cs_id=c,
                         approver_role="general_manager",
                     ).first()
