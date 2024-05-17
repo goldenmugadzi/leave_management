@@ -51,11 +51,9 @@
         <p class="flex flex-row  text-sm">
           <div class=" grid grid-cols-5 gap-1 ">
               {% for attachment in nonconformity.attachment_set.all %}
-                  <div class="rounded  bg-white shadow-lg  row text-center ">
                       <a href="{{ attachment.attachment.url }}"
-                         class=" text-center text-blue-600  "
+                         class="rounded shadow-md bg-white text-center text-blue-600  "
                          name>{{ attachment.attachment.name|basename }}</a>
-                  </div>
               {% endfor %}
           </div>
       </p>
@@ -175,11 +173,9 @@
                 <p class="flex flex-row  text-sm">
                   <div class=" grid grid-cols-5 gap-1 ">
                         {% for attachment in response.rejectionattachment_set.all %}
-                  <div class="rounded  bg-white shadow-lg  row text-center ">
-                              <a href="{{ attachment.attachment.url }}"
-                                 class=" text-center text-blue-600  p-3 sm "
-                                 name>{{ attachment.attachment.name|basename }}</a>
-                          </div>
+                        <a href="{{ attachment.attachment.url }}"
+                        class="rounded shadow-md bg-white text-center text-blue-600  "
+                        name>{{ attachment.attachment.name|basename }}</a>
                       {% endfor %}
                   </div>
               </p>
@@ -208,11 +204,9 @@
                           <p class="flex flex-row  text-sm">
                             <div class=" grid grid-cols-5 gap-1 ">
                                   {% for attachment in response.acceptanceattachment_set.all %}
-                            <div class="rounded  bg-white shadow-lg  row text-center ">
-                                         <a href="{{ attachment.attachment.url }}"
-                               class=" text-center text-blue-600  p-3 sm "
-                               name>{{ attachment.attachment.name|basename }}</a>
-                        </div>
+                                  <a href="{{ attachment.attachment.url }}"
+                                  class="rounded shadow-md bg-white text-center text-blue-600  "
+                                  name>{{ attachment.attachment.name|basename }}</a>
                     {% endfor %}
                 </div>
             </div>
