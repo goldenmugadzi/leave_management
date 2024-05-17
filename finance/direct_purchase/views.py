@@ -431,7 +431,7 @@ def get_pending_committee(request):
     context = json.dumps(cs_list, default=str)
         
     fm_role, gm_role = False, False
-    fm_role, gm_role = getUserFMGMRoles(user)   
+    fm_role, gm_role = getUserFMGMRoles(user_profile)   
         
     print("roles: ", fm_role, gm_role)
     user_page = 'finance/direct_purchase/cs_schedules.html'

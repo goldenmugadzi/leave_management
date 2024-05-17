@@ -10,7 +10,7 @@ from it.users.models import *
 from finance.purchase_request.models import PurchaseRequest, PrItem, Attachment, UnitOfMeasurement
 from ACE2.models import Ace2
 from finance.comparative_schedules.models import *
-from django.db.models import Q, Exists, OuterRef
+from django.db.models import Q, Exists, OuterRef, Count, F
 import pandas as pd
 
 def import_old_rfq(request):
@@ -128,6 +128,7 @@ def clear_approvals(cs_id):
         for member in committee:
             member.committee_approval = ""
             member.committee_status = ""
+            member.committee_date = None
             member.save()
     
     approvals = CSApproval.objects.filter(cs_id=cs_query).all()
@@ -338,7 +339,7 @@ def get_all_schedules(request):
         
     # Assuming you have a valid 'user' object and 'Roles' model
     fm_role, gm_role = False, False
-    fm_role, gm_role = getUserFMGMRoles(user)
+    fm_role, gm_role = getUserFMGMRoles(user_profile)
     
     print("roles: ", fm_role, gm_role)
     user_page = 'finance/comparative_schedules/cs_schedules.html'
@@ -430,7 +431,7 @@ def get_pending_committee(request):
     context = json.dumps(cs_list, default=str)
         
     fm_role, gm_role = False, False
-    fm_role, gm_role = getUserFMGMRoles(user)   
+    fm_role, gm_role = getUserFMGMRoles(user_profile)   
         
     print("roles: ", fm_role, gm_role)
     user_page = 'finance/comparative_schedules/cs_schedules.html'
@@ -559,28 +560,15 @@ def get_pending_fm_approval(request):
     user_profile = UserProfile.objects.filter(id=user_id).first()
     # fetch all pending approvals
     cs = ComparativeSchedules.objects.annotate(
-        all_approved=Exists(
-            Committee.objects.filter(
-                cs_id=OuterRef('pk'),
-                committee_approval="Approved"
-            )
-        ),
-        any_not_approved=Exists(
-            Committee.objects.filter(
-                cs_id=OuterRef('pk'),
-                committee_approval=""
-            )
-        ),
-        any_rejected=Exists(
-            Committee.objects.filter(
-                cs_id=OuterRef('pk'),
-                committee_approval="Rejected"
-            )
-        )
+        approved_count=Count('committee', filter=Q(committee__committee_approval="Approved")),
+        not_approved_count=Count('committee', filter=Q(committee__committee_approval="")),
+        rejected_count=Count('committee', filter=Q(committee__committee_approval="Rejected")),
+        committee_count=Count('committee')
     ).filter(
-        all_approved=True,
-        any_not_approved=False,
-        any_rejected=False,
+        approved_count=F('committee_count'),
+        committee_count__gt=2,
+        not_approved_count=0,
+        rejected_count=0,
         csapproval__approval=None
     ).distinct()
 
@@ -659,7 +647,7 @@ def get_pending_fm_approval(request):
         
     context = json.dumps(cs_list, default=str)
     fm_role, gm_role = False, False
-    fm_role, gm_role = getUserFMGMRoles(user)
+    fm_role, gm_role = getUserFMGMRoles(user_profile)
     user_page = 'finance/comparative_schedules/cs_schedules.html'
     print("roles: ", fm_role, gm_role)
     return render(request, user_page, {"cs": context, 
