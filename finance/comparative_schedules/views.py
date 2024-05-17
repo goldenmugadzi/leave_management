@@ -146,7 +146,7 @@ def getUserFMGMRoles(user):
         print("role id:", role.id)
         user_ace_role_ = Roles.objects.filter(id=role.id).first() if role.id else None
         print("role application:", user_ace_role_.application)
-        if user_ace_role_.application == "comparative_schedules":
+        if user_ace_role_.application == "comparative_schedule":
             if user_ace_role_.role == "check":
                 fm_role = True
             if user_ace_role_.role == "approve":
