@@ -15,63 +15,23 @@
     class="bg-gulf-blue-100 shadow shadow-gulf-blue-300 text-gulf-blue-900 rounded px-2 py-2"
   >
     <div class="flex justify-between items-center mb-5">
-      <span class="text-lg font-semibold">Restricted Biddings</span>
-      <div class="flex justify-end items-center">
+      <span class="text-lg font-semibold">Ristricted Bids</span>
       <a
-      href="/ristricted_bidding/create_comperative_schedule/"
-      class="border-gulf-blue-600 hover:bg-gulf-blue-400 hover:text-gulf-blue-50 font-bold py-2 px-4 rounded m-2"
-      >
-      Create Schedule
-    </a>
-      <a
-      href="/ristricted_bidding/all_schedules"
-      class="bg-gulf-blue-600 hover:bg-gulf-blue-800 text-white font-bold py-2 px-4 rounded m-2"
-      >
-      All Schedules
-    </a>
-    </div>
-    </div>
-    <div class="flex justify-end items-center mb-5">
-      {% if fm_role == False and gm_role == False %}
-      <a
-      href="/ristricted_bidding/comperative_schedules"
-      class="bg-gulf-blue-600 hover:bg-gulf-blue-800 text-white font-bold py-2 px-4 rounded m-2"
-      >
-      Your Schedules
-    </a>
-      <a
-        href="/ristricted_bidding/pending_commitee"
-        class="bg-gulf-blue-600 hover:bg-gulf-blue-800 text-white font-bold py-2 px-4 rounded m-2"
+        href="/ristricted_bidding/create_comperative_schedule/"
+        class="bg-gulf-blue-600 hover:bg-gulf-blue-800 text-white font-bold py-2 px-4 rounded"
         >
-        Pending Committee
+        Create Schedule
       </a>
-      {% endif %}
-      {% if fm_role == True %} 
-      <a
-      href="/ristricted_bidding/pending_fm_approval"
-      class="bg-gulf-blue-600 hover:bg-gulf-blue-800 text-white font-bold py-2 px-4 rounded m-2"
-      >
-      Pending Finance
-    </a>    
-    {% endif %} 
-    {% if gm_role == True %}
-    <a
-    href="/ristricted_bidding/pending_gm_approval"
-    class="bg-gulf-blue-600 hover:bg-gulf-blue-800 text-white font-bold py-2 px-4 rounded m-2"
-    >
-      Pending GM
-    </a>
-    {% endif %}
     </div>
     <table id="users_index" class="display" style="width: 100%">
       <thead>
         <tr>
           <th>ID</th>
           <th>Scope</th>
-          <th>Committee</th>
-          <th>Finance</th>
-          <th>GM</th>
-          <th>Created On</th>
+          <th>Closing Date</th>
+          <th>Opened On</th>
+          <th>Committee Date</th>
+          <th>ACTION</th>
         </tr>
       </thead>
       <tbody></tbody>
@@ -79,10 +39,10 @@
         <tr>
             <th>ID</th>
             <th>Scope</th>
-            <th>Committee</th>
-            <th>Finance</th>
-            <th>GM</th>
-            <th>Created On</th>
+            <th>Closing Date</th>
+            <th>Opened On</th>
+            <th>Committee Date</th>
+            <th>ACTION</th>
         </tr>
       </tfoot>
     </table>
@@ -111,77 +71,23 @@
           data: "scope_of_work",
         },
         {
-          data: "committee_approval",
-          render: function (data, type, row, meta) {
-            let approval_badge = ""
-            if(data === "Approval Complete"){
-              approval_badge = `
-              <a type="button" class="bg-green-300 text-green-800 rounded px-1 py-2 w-full text-center" href='/ristricted_bidding/comperative_schedule/${row.cs_id}' >
-                ${data}              
-              </a>`
-            } else if (data === "Rejected"){
-              approval_badge = `
-              <a type="button" class="bg-red-300 text-red-800 rounded px-1 py-2 w-full text-center" href='/ristricted_bidding/comperative_schedule/${row.cs_id}' >
-                ${data}              
-              </a>`
-            } else {
-              approval_badge = `
-              <a type="button" class="bg-blue-300 text-blue-800 rounded px-1 py-2 w-full text-center" href='/ristricted_bidding/comperative_schedule/${row.cs_id}' >
-                ${data}              
-              </a>`
-            }
-            return approval_badge;
-          },
+          data: "closing_date",
         },
         {
-          data: "fm_approval",
-          render: function (data, type, row, meta) {
-            let approval_badge = ""
-            if(data === "Approved"){
-              approval_badge = `
-              <a type="button" class="bg-green-300 text-green-800 rounded px-1 py-2 w-full text-center" href='/ristricted_bidding/comperative_schedule/${row.cs_id}' >
-                ${data}              
-              </a>`
-            } else if (data === "Rejected"){
-              approval_badge = `
-              <a type="button" class="bg-red-300 text-red-800 rounded px-1 py-2 w-full text-center" href='/ristricted_bidding/comperative_schedule/${row.cs_id}' >
-                ${data}              
-              </a>`
-            } else {
-              approval_badge = `
-              <a type="button" class="bg-blue-300 text-blue-800 rounded px-1 py-2 w-full text-center" href='/ristricted_bidding/comperative_schedule/${row.cs_id}' >
-                ${data}              
-              </a>`
-            }
-            return approval_badge;
-          },
+          data: "cs_opened",
         },
         {
-          data: "gm_approval",
-          render: function (data, type, row, meta) {
-            let approval_badge = ""
-            if(data === "Approved"){
-              approval_badge = `
-              <a type="button" class="bg-green-300 text-green-800 rounded px-1 py-2 w-full text-center" href='/ristricted_bidding/comperative_schedule/${row.cs_id}' >
-                ${data}              
-              </a>`
-            } else if (data === "Rejected"){
-              approval_badge = `
-              <a type="button" class="bg-red-300 text-red-800 rounded px-1 py-2 w-full text-center" href='/ristricted_bidding/comperative_schedule/${row.cs_id}' >
-                ${data}              
-              </a>`
-            } else {
-              approval_badge = `
-              <a type="button" class="bg-blue-300 text-blue-800 rounded px-1 py-2 w-full text-center" href='/ristricted_bidding/comperative_schedule/${row.cs_id}' >
-                ${data}              
-              </a>`
-            }
-            return approval_badge;
-          },
+          data: "tac_date",
         },
         {
-          data: "created_at"
-        }
+          data: null,
+          render: function (data, type, row, meta) {
+            return `
+              <a type="button" class="btn btn-info" href='/comparative_schedule/comperative_schedule/${row.cs_id}' >
+                View              
+              </a>`;
+          },
+        },
       ],
     });
   });

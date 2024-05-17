@@ -1,8 +1,8 @@
 "use strict";
 
 const e = React.createElement;
-const BASE_URL = "http://localhost:8000";
-// const BASE_URL = "http://172.16.8.99:9300";
+// const BASE_URL = "http://localhost:8000";
+const BASE_URL = "http://172.16.8.99:9300";
 
 class CreateCS extends React.Component {
   constructor(props) {
@@ -23,7 +23,7 @@ class CreateCS extends React.Component {
       quantity: "",
       pr_date: "",
       closing_date: "",
-      closing_time: "",
+      closing_time_hour: "",
       ref_date: "",
       date_tender_opened: "",
       tender_adjudication_committee_date: "",
@@ -245,7 +245,7 @@ class CreateCS extends React.Component {
           quantity: quantity,
           pr_date: pr_date,
           closing_date: closing_date,
-          closing_time: closing_time,
+          closing_time_hour: closing_time,
           ref_date: ref_date,
           tender_adjudication_committee_date:
             tender_adjudication_committee_date,
@@ -407,15 +407,10 @@ class CreateCS extends React.Component {
     // check if memberUserName is the one creating
     let currentUserFlag =
       this.state.member.memberUserName === this.state.username;
-    let positionFlag = members.find(
-      (_member) => _member.memberPosition === this.state.member.memberPosition
-    );
     if (member) {
       alert("Committee Member already added.");
     } else if (currentUserFlag) {
       alert("You cannot add yourself. Please choose another user.");
-    } else if(positionFlag){
-      alert(this.state.member.memberPosition+", already exists, please add a different one.")
     } else {
       members.push(this.state.member);
       this.setState({
@@ -549,7 +544,7 @@ class CreateCS extends React.Component {
         } else {
           alert("Error approving Committee");
         }
-      }).catch((err) => console.log("onCommitteeApprove error: ", err));
+      });
   };
 
   onSubmitCommitee = () => {
@@ -697,12 +692,15 @@ class CreateCS extends React.Component {
       // update item selected to false
       item.ordered = false;
       // update pr_items
-      let pr_items = this.state.pr_items.map((_item) => {
-        if (_item.id === item_id) {
-          return item;
-        }
-        return _item;
-      });
+      let pr_items = [];
+      if(this.state.pr_items && this.state.pr_items.length > 0) {
+        pr_items = this.state.pr_items.map((_item) => {
+          if (_item.id === item_id) {
+            return item;
+          }
+          return _item;
+        });
+      }
       // remove item
       let items = this.state.cs_items.filter((item) => item.id !== item_id);
       this.setState({
@@ -713,16 +711,23 @@ class CreateCS extends React.Component {
     } else {
       // find item in pr_items
       let item = this.state.pr_items.find((item) => item.id === item_id);
+      if(item.item_required === undefined || item.quantity === undefined || item.unit_of_measurement === undefined){
+        alert("Item selected has missing fields. Please correct the PR items first.")
+        return
+      }
       // update pr_item selected to added
       item.ordered = true;
-      item.item_name = item.item_required;
+      item.item_required = item.item_required;
       // update pr_items
-      let pr_items = this.state.pr_items.map((_item) => {
-        if (_item.id === item_id) {
-          return item;
-        }
-        return _item;
-      });
+      let pr_items = [];
+      if(this.state.pr_items && this.state.pr_items.length > 0){
+        pr_items = this.state.pr_items.map((_item) => {
+          if (_item.id === item_id) {
+            return item;
+          }
+          return _item;
+        });
+      }
 
       let item_count = this.state.cs_item_count + 1;
       this.setState({
@@ -835,6 +840,7 @@ class CreateCS extends React.Component {
   };
 
   onCurrentBidChange = (name_, event) => {
+    
     let currentBid = this.state.currentBid;
     if (name_ === "bid_document") {
       let bid_file = event.target.files[0];
@@ -1092,7 +1098,7 @@ class CreateCS extends React.Component {
 
   onSaveSchedule = () => {
 
-    if(!this.state.proc_ref || !this.state.scope_of_work || !this.state.pr_number || !this.state.pr_date || !this.state.closing_date || !this.state.ref_date || !this.state.closing_time || !this.state.date_tender_opened || !this.state.tender_adjudication_committee_date) {
+    if(!this.state.proc_ref || !this.state.scope_of_work || !this.state.pr_number || !this.state.pr_date || !this.state.closing_date || !this.state.ref_date || !this.state.closing_time_hour || !this.state.date_tender_opened || !this.state.tender_adjudication_committee_date) {
       alert("Please fill in all required fields");
       return;
     }
@@ -1110,7 +1116,7 @@ class CreateCS extends React.Component {
     form_data.append("pr_date", this.state.pr_date);
     form_data.append("closing_date", this.state.closing_date);
     form_data.append("ref_date", this.state.ref_date);
-    form_data.append("closing_time", this.state.closing_time);
+    form_data.append("closing_time_hour", this.state.closing_time_hour);
     form_data.append("date_tender_opened", this.state.date_tender_opened);
     form_data.append("username", this.state.username);
     form_data.append(
@@ -1140,15 +1146,11 @@ class CreateCS extends React.Component {
         } else {
           alert("Error saving Comparative Schedule");
         }
-      }).catch(err => console.log("onSaveSchedule: ", err));
+      });
   };
 
   onUpdateSchedule = () => {
-    if(this.state.cs_id === "" || this.state.cs_id === undefined) {
-      alert("Please save the Comparative Schedule first");
-      return;
-    }
-    if(!this.state.proc_ref || !this.state.scope_of_work || !this.state.pr_number || !this.state.pr_date || !this.state.closing_date || !this.state.ref_date || !this.state.closing_time || !this.state.date_tender_opened || !this.state.tender_adjudication_committee_date) {
+    if(!this.state.proc_ref || !this.state.scope_of_work || !this.state.pr_number || !this.state.pr_date || !this.state.closing_date || !this.state.ref_date || !this.state.closing_time_hour || !this.state.date_tender_opened || !this.state.tender_adjudication_committee_date) {
       alert("Please fill in all required fields");
       return;
     }
@@ -1163,7 +1165,7 @@ class CreateCS extends React.Component {
     form_data.append("pr_date", this.state.pr_date);
     form_data.append("closing_date", this.state.closing_date);
     form_data.append("ref_date", this.state.ref_date);
-    form_data.append("closing_time", this.state.closing_time);
+    form_data.append("closing_time_hour", this.state.closing_time_hour);
     form_data.append("date_tender_opened", this.state.date_tender_opened);
     form_data.append("username", this.state.username);
     form_data.append(
@@ -1188,7 +1190,7 @@ class CreateCS extends React.Component {
         } else {
           alert("Error updating Comparative Schedule");
         }
-      }).catch(err => console.log("onUpdateSchedule: ", err));
+      });
   };
 
   onDeleteBidModal = (bid_count, supplier_name) => {
@@ -3088,35 +3090,20 @@ class CreateCS extends React.Component {
                         ""
                       )}
                     </td>
-                    <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2"></td>
-                  </tr>
-                  <tr className="text-gray-900">
-                    <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                      CREATED BY
-                    </td>
-                    <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                      {this.state.creator}
-                    </td>
-                    <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                      INITIATED
-                    </td>
-                    <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-
-                    </td>
-                    <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                      {this.state.created_at ? this.state.created_at.split(" ")[0] : ""}
-                    </td>
                   </tr>
                   {this.state.committeeMembers && this.state.committeeMembers.map((member, key) => {
                     return (
                       <tr className="text-gray-900">
                         <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                          {member.memberPosition.toUpperCase()}
+                          {member.memberPosition}
                         </td>
                         <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
                           {member.memberName
                             ? member.memberName
                             : member.memberUserName}
+                        </td>
+                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                          {member.committeeDate}
                         </td>
                         <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
                           {member.memberApproval === "Approved" && "APPROVED"}
@@ -3176,15 +3163,23 @@ class CreateCS extends React.Component {
                             </div>
                           )}
                         </td>
-                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                          {member.committeeJustification}
-                        </td>
-                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                          {member.committeeDate}
-                        </td>
                       </tr>
                     );
                   })}
+                  <tr className="text-gray-900">
+                    <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                      Created By
+                    </td>
+                    <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                      {this.state.creator}
+                    </td>
+                    <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                      {this.state.created_at ? this.state.created_at.split(" ")[0] : ""}
+                    </td>
+                    <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+
+                    </td>
+                  </tr>
                 </tbody>
               </table>
             </div>
@@ -3207,9 +3202,6 @@ class CreateCS extends React.Component {
                   <tr className="text-gray-900">
                     <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
                       FINANCE MANAGER
-                    </td>
-                    <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                      {this.state.fmApproval && this.state.fmApproval.approval === "Rejected" && this.state.fmApproval.justification}
                     </td>
                     <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
                       {this.state.fmApproval && this.state.fmApproval.approval === "Approved" && "APPROVED"}
@@ -3254,15 +3246,15 @@ class CreateCS extends React.Component {
                       }
                     </td>
                     <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                      {this.state.fmApproval && this.state.fmApproval.justification}
+                    </td>
+                    <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
                       {this.state.fmApproval && this.state.fmApproval.approval_date}
                     </td>
                   </tr>
                   <tr className="text-gray-900">
                     <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
                       GENERAL MANAGER
-                    </td>
-                    <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                      {this.state.gmApproval && this.state.gmApproval.approval === "Rejected" && this.state.gmApproval.justification}
                     </td>
                     <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
                       {this.state.gmApproval && this.state.gmApproval.approval === "Approved" && "APPROVED"}
@@ -3305,6 +3297,9 @@ class CreateCS extends React.Component {
                             </div>
                           )
                     }
+                    </td>
+                    <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                      {this.state.gmApproval && this.state.gmApproval.justification}
                     </td>
                     <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
                       {this.state.gmApproval && this.state.gmApproval.approval_date}
@@ -3414,20 +3409,21 @@ class CreateCS extends React.Component {
             <div className="mt-2 text-gray-900">
               <div className="flex px-1">
                 <select
-                  name="closing_time"
+                  name="closing_time_hour"
                   onChange={(e) =>
-                    this.onSelectChange("closing_time", e)
+                    this.onSelectChange("closing_time_hour", e)
                   }
                   disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
                   className="rounded-md block border-none w-full py-1.5 text-gray-900 sm:max-w-xs sm:text-sm sm:leading-6"
                 >
-                  {this.state.closing_time ? (
-                    <option value={this.state.closing_time}>
-                      {this.state.closing_time}
+                  {this.state.closing_time_hour ? (
+                    <option value={this.state.closing_time_hour}>
+                      {this.state.closing_time_hour}
                     </option>
-                  ) : ( 
-                    <option value="">Select Closing Time</option>
+                  ) : (
+                    ""
                   )}
+                  <option value="">Select Closing Time</option>
                   <option value="10:00">10:00</option>
                   <option value="14:00">14:00</option>
                 </select>

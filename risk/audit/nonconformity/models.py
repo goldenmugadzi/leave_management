@@ -29,15 +29,13 @@ class Nonconformity(models.Model):
     id = models.CharField(primary_key=True, max_length=20, editable=False)
     created_by = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
     recipient = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='nonconformities_assigned_to', null=True, blank=True)
-    violation_standard_reference = models.ForeignKey(Question,on_delete=models.SET_NULL ,  blank=True, null=True, verbose_name='Violation Standard Reference')
+    violation_standard_reference = models.ForeignKey(Question,on_delete=models.SET_NULL ,  blank=True, null=True)
     description = models.TextField(max_length=400, blank=True, null=True)
-    root_cause = models.TextField(max_length=400, blank=True, null=True)
-    findings = models.TextField(max_length=400, blank=True, null=True)
-    plan_of_action = models.TextField(max_length=400, blank=True, null=True, verbose_name='Plan of Action')
-    recommended_corrective_action = models.CharField(max_length=300, blank=False, null=False, verbose_name='Recommended Corrective Action')
+    # findings = models.TextField(max_length=400, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    attachment = models.FileField(upload_to='nonconformity_attachments/', blank=True, null=True, verbose_name='Attachment')
-    expected_completion_date = models.DateField( verbose_name='Expected Completion Date', blank=True, null=True)
+    root_cause = models.TextField(max_length=400, blank=True, null=True)
+    recommended_corrective_action = models.CharField(max_length=300, blank=True, null=True, help_text='Recommend a corrective action')
+    accepted = models.BooleanField( blank=True, null=True)
     resolved = models.BooleanField(default=False)
     closed = models.BooleanField(default=False)
     
@@ -53,12 +51,36 @@ class Nonconformity(models.Model):
             self.id = "NC" + timestamp + random_number
         super().save(*args, **kwargs)
 
-class Response(models.Model):
-    user = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
-    nonconformity = models.ForeignKey(Nonconformity, on_delete=models.CASCADE)
-    comment = models.TextField(max_length=400, blank=True, null=True)
-    created_at = models.DateTimeField(auto_now=True)
-    status = models.BooleanField( choices=((True, 'Accepted'),(False, 'Rejected')))
-    
+class Acceptance(models.Model):
+    nonconformity = models.ForeignKey(Nonconformity , on_delete=models.CASCADE)
+    cause = models.TextField(max_length=400, blank=True, null=True)
+    corrective_action = models.CharField(max_length=300, blank=True, null=True)
+    dated = models.DateTimeField(auto_now=True) 
+    expected_completion_date = models.DateField(blank=True, null=True)
+    user = models.ForeignKey(UserProfile, on_delete=models.CASCADE, blank=True, null=True)
     def __str__(self):
-        return 'Accepted' if self.status else 'Rejected'
+        return self.corrective_action
+    
+class Rejection(models.Model):
+    nonconformity = models.ForeignKey(Nonconformity , on_delete=models.CASCADE)
+    user = models.ForeignKey(UserProfile, on_delete=models.CASCADE, blank=True, null=True)
+    rejection_reason = models.TextField(max_length=400, blank=True, null=True)
+    dated = models.DateTimeField(auto_now=True) 
+    def __str__(self):
+        return self.rejection_reason
+    
+class Attachment(models.Model):
+    nonconformity = models.ForeignKey(Nonconformity, on_delete=models.CASCADE)
+    attachment = models.FileField(upload_to='nonconformity/attachments/', blank=True, null=True, verbose_name='Attachment')
+    def __str__(self):
+        return self.attachment.name
+class RejectionAttachment(models.Model):
+    rejection = models.ForeignKey(Rejection, on_delete=models.CASCADE)
+    attachment = models.FileField(upload_to='nonconformity/rejection_attachments/', blank=True, null=True, verbose_name='Attachment')
+    def __str__(self):
+        return self.attachment.name
+class AcceptanceAttachment(models.Model):
+    acceptance = models.ForeignKey(Acceptance, on_delete=models.CASCADE)
+    attachment = models.FileField(upload_to='nonconformity/acceptance_attachments/', blank=True, null=True, verbose_name='Attachment')
+    def __str__(self):
+        return self.attachment.name

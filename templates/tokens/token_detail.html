@@ -68,6 +68,12 @@
                                         <span class="inline-block text-start font-bold rounded-full text-sm">Meter Number </span>
                                     <span class="inline-block text-end rounded-full text-sm">{{ token.meter.number|default_if_none:'' }} </span>
                                     </div>
+                                    {% if token.section %}
+                                        <div class=" text-center">
+                                            <span class="inline-block text-start font-bold rounded-full text-sm">Section </span>
+                                            <span class="inline-block text-end rounded-full text-sm">{{ token.section|default_if_none:'' }} </span>
+                                        </div>
+                                    {% endif %}
                                     <div class=" text-center">
                                         <span class="inline-block text-start font-bold rounded-full text-sm">Units </span>
                                     <span class="inline-block text-end rounded-full text-sm">{{ token.meter.kilowatt_hours|default_if_none:'' }} </span>

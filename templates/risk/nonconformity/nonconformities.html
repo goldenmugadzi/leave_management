@@ -30,7 +30,7 @@
             <th>Auditor</th>
             <th>Violation Standard Reference</th>
             <th>Section</th>
-            <th>Status</th>
+            <th>Accepted</th>
           </tr>
         </thead>
         <tbody>
@@ -42,7 +42,7 @@
             <td>{% if nonconformity.created_by == user %} You {% else %} {{nonconformity.created_by.get_full_name }} {% endif %}</td>
             <td>{{ nonconformity.violation_standard_reference|default_if_none:''}}</td>
             <td>{{nonconformity.recipient.section|default_if_none:''}}</td>
-            <td>{{ nonconformity.response_set.last|default_if_none:'' }}</td>
+            <td>{% if nonconformity.accepted == 1 %}Accepted {% elif nonconformity.accepted == 0 %} Rejected {% else %}    {% endif %}</td>
           </tr>
           {% endfor %}
         </tbody>

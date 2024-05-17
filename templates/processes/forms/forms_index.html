@@ -1,43 +1,47 @@
 {% extends 'admin_layout.html' %} {% load static %} {% block content %}
 
-<div style="margin-bottom: 25px" class="content-wrapper p-2 m-px">
+<div
+  style="margin-bottom: 25px"
+  class="content-wrapper p-2 m-px"
+>
   <div class="grid grid-cols-3 gap-4">
+
     <div
       class="w-auto bg-gulf-blue-300 text-center shadow shadow-nepal-300 text-gray-700 rounded px-10 py-10"
     >
-      <a href="{%url 'Commercial Forms'%}">
-        <div class="sm:flex lg:items-center lg:justify-between">
-          <div class="min-w-0 flex-1">
-            <div class="">
-              <div class="mx-auto">
-                <div class="group relative">
+    <a
+    href="{%url 'Commercial Forms'%}"
+    >
+      <div class="sm:flex lg:items-center lg:justify-between">
+        <div class="min-w-0 flex-1">
+          <div class="">
+            <div class="mx-auto">
+              <div class="group relative">
                   <div class="flex justify-between items-center">
                     <img
                       src="{% static 'assets/images/folder.png' %}"
                       alt=""
-                      class="h-1/5 w-1/5 object-cover object-center"
-                    />
-                    <span
-                      class="pr-1 font-semibold flex-1 text-left text-gray-800 px-2"
-                      >Commercial</span
-                    >
+                      class="h-1/5 w-1/5 object-cover object-center"/>
+                    <span class="pr-1 font-semibold flex-1 text-left text-gray-800 px-2"
+                      >Commercial</span>
                   </div>
-                </div>
               </div>
             </div>
           </div>
         </div>
-      </a>
+      </div>
+    </a>
     </div>
     <div
       class="w-auto bg-citron-200 text-center shadow shadow-nepal-300 text-gray-700 rounded px-10 py-10 py-10"
     >
-      <a href="{%url 'Engineering Forms'%}">
-        <div class="sm:flex lg:items-center lg:justify-between">
-          <div class="min-w-0 flex-1">
-            <div class="">
-              <div class="mx-auto">
-                <div class="group relative">
+    <a href="{%url 'Engineering Forms'%}"
+    >
+      <div class="sm:flex lg:items-center lg:justify-between">
+        <div class="min-w-0 flex-1">
+          <div class="">
+            <div class="mx-auto">
+              <div class="group relative">
                   <div class="flex justify-between items-center">
                     <img
                       src="{% static 'assets/images/folder.png' %}"
@@ -49,50 +53,52 @@
                       >Engineering</span
                     >
                   </div>
-                </div>
               </div>
             </div>
           </div>
         </div>
-      </a>
+      </div>
+    </a>
     </div>
     <div
       class="w-auto bg-green-300 text-center shadow shadow-nepal-300 text-gray-700 rounded px-10 py-10"
     >
-      <a href="{%url 'Finance Forms'%}">
-        <div class="sm:flex lg:items-center lg:justify-between">
-          <div class="min-w-0 flex-1">
-            <div class="">
-              <div class="mx-auto">
-                <div class="group relative">
-                  <div class="flex justify-between items-center">
-                    <img
-                      src="{% static 'assets/images/folder.png' %}"
-                      alt=""
-                      class="h-1/5 w-1/5 object-cover object-center"
-                    />
-                    <span
-                      class="pr-1 font-semibold flex-1 text-left text-gray-800 px-2"
-                      >Finance</span
-                    >
-                  </div>
-                </div>
+    <a href="{%url 'Finance Forms'%}">
+      <div class="sm:flex lg:items-center lg:justify-between">
+        <div class="min-w-0 flex-1">
+          <div class="">
+            <div class="mx-auto">
+              <div class="group relative">
+                    <div class="flex justify-between items-center">
+                      <img
+                        src="{% static 'assets/images/folder.png' %}"
+                        alt=""
+                        class="h-1/5 w-1/5 object-cover object-center"
+                      />
+                      <span
+                        class="pr-1 font-semibold flex-1 text-left text-gray-800 px-2"
+                        >Finance</span
+                      >
+                    </div>
               </div>
             </div>
           </div>
         </div>
-      </a>
+      </div>
+    </a>
     </div>
 
     <div
       class="w-auto bg-gulf-blue-300 text-center shadow shadow-nepal-300 text-gray-700 rounded px-10 py-10"
     >
-      <a href="{%url 'Human Resources Forms'%}">
-        <div class="sm:flex lg:items-center lg:justify-between">
-          <div class="min-w-0 flex-1">
-            <div class="">
-              <div class="mx-auto">
-                <div class="group relative">
+    <a
+    href="{%url 'Human Resources Forms'%}"
+    >
+      <div class="sm:flex lg:items-center lg:justify-between">
+        <div class="min-w-0 flex-1">
+          <div class="">
+            <div class="mx-auto">
+              <div class="group relative">
                   <div class="flex justify-between items-center">
                     <img
                       src="{% static 'assets/images/folder.png' %}"
@@ -104,22 +110,22 @@
                       >Human Resources</span
                     >
                   </div>
-                </div>
               </div>
             </div>
           </div>
         </div>
-      </a>
+      </div>
+    </a>
     </div>
     <div
       class="w-auto bg-citron-200 text-center shadow shadow-nepal-300 text-gray-700 rounded px-10 py-10 py-10"
     >
-      <a href="{%url 'IT Forms'%}">
-        <div class="sm:flex lg:items-center lg:justify-between">
-          <div class="min-w-0 flex-1">
-            <div class="">
-              <div class="mx-auto">
-                <div class="group relative">
+    <a href="{%url 'IT Forms'%}">
+      <div class="sm:flex lg:items-center lg:justify-between">
+        <div class="min-w-0 flex-1">
+          <div class="">
+            <div class="mx-auto">
+              <div class="group relative">
                   <div class="flex justify-between items-center">
                     <img
                       src="{% static 'assets/images/folder.png' %}"
@@ -131,71 +137,45 @@
                       >Information Technology</span
                     >
                   </div>
-                </div>
               </div>
             </div>
           </div>
         </div>
-      </a>
+      </div>
+    </a>
     </div>
-
+    
     <div
       class="w-auto bg-green-300 text-center shadow shadow-nepal-300 text-gray-700 rounded px-10 py-10"
     >
-      <a href="{%url 'Risk Forms'%}">
-        <div class="sm:flex lg:items-center lg:justify-between">
-          <div class="min-w-0 flex-1">
-            <div class="">
-              <div class="mx-auto">
-                <div class="group relative">
-                  <div class="flex justify-between items-center">
-                    <img
-                      src="{% static 'assets/images/folder.png' %}"
-                      alt=""
-                      class="h-1/5 w-1/5 object-cover object-center"
-                    />
-                    <span
-                      class="pr-1 font-semibold flex-1 text-left text-gray-800 px-2"
-                      >Risk Management</span
-                    >
-                  </div>
-                </div>
+    <a href="{%url 'Risk Forms'%}">
+      <div class="sm:flex lg:items-center lg:justify-between">
+        <div class="min-w-0 flex-1">
+          <div class="">
+            <div class="mx-auto">
+              <div class="group relative">
+                    <div class="flex justify-between items-center">
+                      <img
+                        src="{% static 'assets/images/folder.png' %}"
+                        alt=""
+                        class="h-1/5 w-1/5 object-cover object-center"
+                      />
+                      <span
+                        class="pr-1 font-semibold flex-1 text-left text-gray-800 px-2"
+                        >Risk Management</span
+                      >
+                    </div>
               </div>
             </div>
           </div>
         </div>
-      </a>
+      </div>
+    </a>
     </div>
 
-    <div
-      class="w-auto bg-green-300 text-center shadow shadow-nepal-300 text-gray-700 rounded px-10 py-10"
-    >
-      <a href="/processes/procurement_forms">
-        <div class="sm:flex lg:items-center lg:justify-between">
-          <div class="min-w-0 flex-1">
-            <div class="">
-              <div class="mx-auto">
-                <div class="group relative">
-                  <div class="flex justify-between items-center">
-                    <img
-                      src="{% static 'assets/images/folder.png' %}"
-                      alt=""
-                      class="h-1/5 w-1/5 object-cover object-center"
-                    />
-                    <span
-                      class="pr-1 font-semibold flex-1 text-left text-gray-800 px-2"
-                      >Procurement</span
-                    >
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </a>
-    </div>
   </div>
 </div>
+
 
 <div style="display: flex; justify-content: center">
   <a href="javascript:history.back()">

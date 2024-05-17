@@ -14,12 +14,12 @@ urlpatterns = [
     path('create_clause/', create_clause, name='create_clause'),
     path('create_topic/<str:clause>', create_topic, name='create_topic'),
     path('create_iso_req/<str:topic>', create_iso_req, name='create_iso_req'),
+    # path('del_file/<int:id>/', del_file, name='del_file'),
 
     path('edit_clause/<str:clause>', edit_clause, name='edit_clause'),
     path('edit_topic/<str:topic>', edit_topic, name='edit_topic'),
     path('edit_iso_req/<str:iso_req>', edit_iso_req, name='edit_iso_req'),
 
-    path('newinfo/<int:nonconformity_id>/', additionalInfoForm, name='newinfo'),
     path('notify/', notify, name='notify'),
     path('checklist/', checklist, name='checklist'),
     path('editable_checklist/', editable_checklist, name='editable_checklist'),
