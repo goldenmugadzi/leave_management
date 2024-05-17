@@ -71,7 +71,7 @@ def nonconformity_details(request, nonconformity_id):
             resolve_form = ResolveNcForm(request.POST, instance=nonconformity)
             if resolve_form.is_valid():
                 resolve_form.save()
-                messages.error(request, 'You have already accepted this nonconformity.')
+                messages.success(request, 'You have successfully resolved this nonconformity.')
                 return redirect('nonconformity:nonconformities')
             else:
                 messages.error(request, 'Sorry, something went wrong. Please try again.')

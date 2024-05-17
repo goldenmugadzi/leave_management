@@ -49,7 +49,7 @@
           </span>
         </div>
         <p class="flex flex-row  text-sm">
-          <div class=" grid grid-cols-5 gap-1 ">
+          <div class=" grid grid-cols-2 gap-1 ">
               {% for attachment in nonconformity.attachment_set.all %}
                       <a href="{{ attachment.attachment.url }}"
                          class="rounded shadow-md bg-white text-center text-blue-600  "
@@ -171,7 +171,7 @@
                   <span class="text-smtext-right">rejected @ {{ response.dated }}</span>
                 </div>
                 <p class="flex flex-row  text-sm">
-                  <div class=" grid grid-cols-5 gap-1 ">
+                  <div class=" grid grid-cols-2 gap-1 ">
                         {% for attachment in response.rejectionattachment_set.all %}
                         <a href="{{ attachment.attachment.url }}"
                         class="rounded shadow-md bg-white text-center text-blue-600  "
@@ -199,10 +199,10 @@
                     {{ response.user.username }}
                   {% endif %}
                 </span>
-                <span class="text-smtext-right">rejected @ {{ response.dated }}</span>
+                <span class="text-smtext-right">Accepted @ {{ response.dated }}</span>
               </div>
                           <p class="flex flex-row  text-sm">
-                            <div class=" grid grid-cols-5 gap-1 ">
+                            <div class=" grid grid-cols-2 gap-1 ">
                                   {% for attachment in response.acceptanceattachment_set.all %}
                                   <a href="{{ attachment.attachment.url }}"
                                   class="rounded shadow-md bg-white text-center text-blue-600  "
