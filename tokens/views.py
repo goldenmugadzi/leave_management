@@ -214,7 +214,8 @@ def awaiting_my_action(request):
     """
     tokens_to_process = []
     user_roles = request.user.roles.all()
-    for token in Token.objects.filter(section=request.user.section):
+    # for token in Token.objects.filter(section=request.user.section):
+    for token in Token.objects.all():
         process = token.process
 
         if process.approval_set.exists():

@@ -69,7 +69,7 @@ def get_my_roles_for_apps(user, app_names):
     for app_name in app_names:
         roles = user.roles.filter(app_id__name=app_name).values_list('name', flat=True)
         if roles:
-            for role in roles: roles_dict.append( "You are "+role+" for "+app_name )
+            for role in roles: roles_dict.append( role+" for "+app_name )
     return roles_dict
 def intiate(request, app):
     app = Workflow.objects.get(name__iexact=app)
