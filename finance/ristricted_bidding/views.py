@@ -128,7 +128,7 @@ def clear_approvals(cs_id):
         for member in committee:
             member.committee_approval = ""
             member.committee_status = ""
-            member.committee_date = None
+            # member.committee_date = None
             member.save()
     
     approvals = RBApproval.objects.filter(cs_id=cs_query).all()

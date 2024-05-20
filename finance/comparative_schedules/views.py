@@ -135,7 +135,7 @@ def clear_approvals(cs_id):
         for approval in approvals:
             approval.approval = ""
             approval.justification = ""
-            approval.approval_date = None
+            # approval.approval_date = None
             approval.save()
             
     return True
