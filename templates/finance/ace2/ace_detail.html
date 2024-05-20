@@ -289,6 +289,8 @@
                                                         {% elif request.user == approval.user %}
                                                                 {{ approval.user  }}
                                                         {% endif %}</span>
+
+                                                    <span class="inline-block rounded-full text-sm">On: {{ approval.approved_at }}</span>
                                                     </div> 
                                                 </div>
                                                 {% endif %}
