@@ -136,7 +136,7 @@ def nonconformity_details(request, nonconformity_id):
         acceptanceForm = None
         rejectionForm = None
         form = None
-        if request.user == nonconformity.recipient and nonconformity.accepted != True:
+        if request.user == nonconformity.recipient and nonconformity.accepted ==None :
             rejectionForm = RejectionForm()
             acceptanceForm = AcceptanceForm(instance=nonconformity)
         elif request.user == nonconformity.recipient and nonconformity.accepted == True and nonconformity.resolved != True:
