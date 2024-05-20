@@ -296,6 +296,9 @@ var CreateDP = function (_React$Component) {
       });
       // check if memberUserName is the one creating
       var currentUserFlag = _this.state.member.memberUserName === _this.state.username;
+      var positionFlag = members.find(function (_member) {
+        return _member.memberPosition === _this.state.member.memberPosition;
+      });
       if (member) {
         alert("Committee Member already added.");
       } else if (currentUserFlag) {
