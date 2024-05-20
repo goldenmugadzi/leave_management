@@ -240,14 +240,14 @@ def addsection(request):
             token.section = token.created_by.section
             token.region = token.created_by.region
             token.save() 
+            old_process = token.process
+            if old_process.workflow.name == 'tokens':
+                if token.type == 'TEMPER': process = intiate(request, "temper")
+                elif token.type == 'REIMBURSEMENT': process = intiate(request, "reimbursement")
+                elif token.type == 'CLEAR CREDIT': process = intiate(request, "clear credit")
+                token.process = process
+                token.save()
+                old_process.delete()
         except Exception as e:
             print("error: ", e)
-        old_process = token.process
-        if old_process.workflow.name == 'tokens':
-            if token.type == 'TEMPER': process = intiate(request, "temper")
-            elif token.type == 'REIMBURSEMENT': process = intiate(request, "reimbursement")
-            elif token.type == 'CLEAR CREDIT': process = intiate(request, "clear credit")
-            token.process = process
-            token.save()
-            old_process.delete()
     return redirect('tokens:tokens')
