@@ -422,6 +422,9 @@ class CreateDP extends React.Component {
     // check if memberUserName is the one creating
     let currentUserFlag =
       this.state.member.memberUserName === this.state.username;
+    let positionFlag = members.find(
+      (_member) => _member.memberPosition === this.state.member.memberPosition
+    );
     if (member) {
       alert("Committee Member already added.");
     } else if (currentUserFlag) {
