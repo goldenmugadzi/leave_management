@@ -236,10 +236,12 @@ def awaiting_my_action(request):
 
 def addsection(request):
     for token in Token.objects.all():
-        if not token.section:
+        try:
             token.section = token.created_by.section
             token.region = token.created_by.region
             token.save() 
+        except Exception as e:
+            print("error: ", e)
         old_process = token.process
         if old_process.workflow.name == 'tokens':
             if token.type == 'TEMPER': process = intiate(request, "temper")
