@@ -232,7 +232,7 @@ def awaiting_my_action(request):
         if step:
             tokens_to_process.append(token)
 
-    return render(request, 'tokens/tokens.html',{'tokens': tokens_to_process,'all':False,'roles': get_my_roles_for_apps(request.user, ['temper','tokens','reimbursement','clear credit'])})
+    return render(request, 'tokens/tokens.html',{'tokens': tokens_to_process,'all':False,'roles': get_my_roles_for_apps(request.user, ['temper','reimbursement','clear credit'])})
 
 def addsection(request):
     for token in Token.objects.all():
