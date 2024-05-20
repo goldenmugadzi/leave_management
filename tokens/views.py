@@ -206,7 +206,7 @@ def token_details(request, token_id):
         "to": to,
     })
 def view_all_tokens(request):
-    return render(request, "tokens/tokens.html", {"tokens": Token.objects.all(),'all':True,'roles': get_my_roles_for_apps(request.user, ['temper','tokens','reimbursement','clear credit'])})
+    return render(request, "tokens/tokens.html", {"tokens": Token.objects.all(),'all':True,'roles': get_my_roles_for_apps(request.user, ['temper','reimbursement','clear credit'])})
 @login_required
 def awaiting_my_action(request):
     """
@@ -236,16 +236,18 @@ def awaiting_my_action(request):
 
 def addsection(request):
     for token in Token.objects.all():
-        if not token.section:
-            token.section = token.created_by.section
-            token.region = token.created_by.region
-            token.save() 
-        old_process = token.process
-        if old_process.workflow.name == 'tokens':
-            if token.type == 'TEMPER': process = intiate(request, "temper")
-            elif token.type == 'REIMBURSEMENT': process = intiate(request, "reimbursement")
-            elif token.type == 'CLEAR CREDIT': process = intiate(request, "clear credit")
-            token.process = process
-            token.save()
-            old_process.delete()
+        try:
+            if not token.section:
+                token.section = token.created_by.section
+                token.region = token.created_by.region
+                token.save() 
+            old_process = token.process
+            if old_process.workflow.name == 'tokens':
+                if token.type == 'TEMPER': process = intiate(request, "temper")
+                elif token.type == 'REIMBURSEMENT': process = intiate(request, "reimbursement")
+                elif token.type == 'CLEAR CREDIT': process = intiate(request, "clear credit")
+                token.process = process
+                token.save()
+                old_process.delete()
+        except: pass
     return redirect('tokens:tokens')
