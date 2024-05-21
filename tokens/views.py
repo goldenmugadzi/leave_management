@@ -181,18 +181,16 @@ def token_details(request, token_id):
         last_approved = token.process.approval_set.last().step.step
     except AttributeError:
         last_approved = 0
-
     next_step = last_approved + 1
-    if not token.process.approval_set.all():
-        try:
-            newStep = Step.objects.get(step=next_step, workflow=token.process.workflow, approver__in=user_roles)
-            approvalForm = ApprovalForm
-            to = newStep.to
-            if newStep == token.process.workflow.step_set.last():
-                generateTokenForm = GenerateTokenForm()
+    try:
+        newStep = Step.objects.get(step=next_step, workflow=token.process.workflow, approver__in=user_roles)
+        approvalForm = ApprovalForm
+        to = newStep.to
+        if newStep == token.process.workflow.step_set.last():
+            generateTokenForm = GenerateTokenForm()
 
-        except Step.DoesNotExist:
-            pass
+    except Step.DoesNotExist:
+        pass
 
     completed = token.process.workflow.step_set.last().step == last_approved
     approved_steps = token.process.approval_set.all().values_list("step__step", flat=True)
