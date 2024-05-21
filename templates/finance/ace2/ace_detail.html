@@ -95,13 +95,17 @@
                                     inline-block rounded-full mx-3 text-white py-2 px-4 rounded">Create Purchase Request </a>
                             </h1>
                     {% endif %}
+{#                        <div class="">#}
+{#                                        <span class="inline-block font-bold text-start rounded-full text-sm">Customer </span>#}
+{#                                    <span class="inline-block text-end rounded-full text-sm">{{ ace.region}} </span>#}
+{#                        </div>#}
                             <p class="font-bold   mb-2"> Details of expenditure: {{ ace.details_of_expenditure }}</p>
                             <p class="font-bold mb-2"> Region: {{ ace.region}}</p>
                             <p class="font-bold   mb-2"> Section: {{ ace.section }}</p>
                             <p class="font-bold mb-2">Budget:{{ ace.budget_id }}</p>
                         <p class="font-bold mb-2">
                             {% for attachment in ace.quotation_set.all %}
-                                <a href="/acee/attachment/ {{attachment}}"><button class="bg-red-500 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded"
+                                <a href="/acee/attachment/ {{attachment}}"><button class=" hover:text-green-600 text-green-300 font-bold py-2 px-4 rounded"
                                         href="/acee/attachment/ {{attachment}}">
                                     {{ attachment.quotation_file.name|basename }}
                                 </button>
