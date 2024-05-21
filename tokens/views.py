@@ -9,6 +9,7 @@ from django.contrib.auth.decorators import login_required
 from approve.decorators import allowed_roles
 from django.db.models import Q
 
+# check update
 @login_required
 @allowed_roles(['Requester'], ['temper', 'reimbursement','clear credit'])
 def create_token(request):
@@ -181,18 +182,16 @@ def token_details(request, token_id):
         last_approved = token.process.approval_set.last().step.step
     except AttributeError:
         last_approved = 0
-
     next_step = last_approved + 1
-    if not token.process.approval_set.all():
-        try:
-            newStep = Step.objects.get(step=next_step, workflow=token.process.workflow, approver__in=user_roles)
-            approvalForm = ApprovalForm
-            to = newStep.to
-            if newStep == token.process.workflow.step_set.last():
-                generateTokenForm = GenerateTokenForm()
+    try:
+        newStep = Step.objects.get(step=next_step, workflow=token.process.workflow, approver__in=user_roles)
+        approvalForm = ApprovalForm
+        to = newStep.to
+        if newStep == token.process.workflow.step_set.last():
+            generateTokenForm = GenerateTokenForm()
 
-        except Step.DoesNotExist:
-            pass
+    except Step.DoesNotExist:
+        pass
 
     completed = token.process.workflow.step_set.last().step == last_approved
     approved_steps = token.process.approval_set.all().values_list("step__step", flat=True)
@@ -206,7 +205,7 @@ def token_details(request, token_id):
         "to": to,
     })
 def view_all_tokens(request):
-    return render(request, "tokens/tokens.html", {"tokens": Token.objects.all(),'all':True,'roles': get_my_roles_for_apps(request.user, ['temper','tokens','reimbursement','clear credit'])})
+    return render(request, "tokens/tokens.html", {"tokens": Token.objects.all(),'all':True,'roles': get_my_roles_for_apps(request.user, ['temper','reimbursement','clear credit'])})
 @login_required
 def awaiting_my_action(request):
     """
@@ -237,9 +236,10 @@ def awaiting_my_action(request):
 def addsection(request):
     for token in Token.objects.all():
         try:
-            token.section = token.created_by.section
-            token.region = token.created_by.region
-            token.save() 
+            if not token.section:
+                token.section = token.created_by.section
+                token.region = token.created_by.region
+                token.save() 
             old_process = token.process
             if old_process.workflow.name == 'tokens':
                 if token.type == 'TEMPER': process = intiate(request, "temper")
@@ -248,6 +248,5 @@ def addsection(request):
                 token.process = process
                 token.save()
                 old_process.delete()
-        except Exception as e:
-            print("error: ", e)
+        except: pass
     return redirect('tokens:tokens')
