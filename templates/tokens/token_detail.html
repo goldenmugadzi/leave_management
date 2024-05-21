@@ -55,6 +55,11 @@
                             <div class="card-body grid grid-cols-2  rounded m-auto ed p-3      rounded  ">
                                 <div class=" text-center">    <p class="font-bold ">Description:</p>
                                     <p class="mb-2 font-normal">{{ token.reason|default_if_none:'' }}</p>
+                                   {% if token.token_photo %}
+                                        <a class=" mb-2 font-normal text-red-900 bg-white m-auto shadow-lg mb-2 p-2 border-red-500 border border-1 font-bold inline-block text-start rounded-full text-sm" 
+                                            href="/media/{{ token.token_photo }}"
+                                            alt="{{ token.token_photo }}">Token photo</a>
+                                    {% endif %}
                                 </div>  <div class=" text-center">
                                     <div class=" text-center">
                                         <span class="inline-block font-bold text-start rounded-full text-sm">Customer </span>
@@ -90,11 +95,7 @@
                                 
                             </div>
                             
-                        {% if token.token_photo %}
-                                    <a class="flex justify-center mx-5 rounded items-center h-screen"
-                                         href="/media/{{ token.token_photo }}"
-                                         alt="{{ token.token_photo }}">Token photo</a>
-                            {% endif %}
+                       
                             {% if token.type == 'TEMPER' or token.type == 'REIMBURSEMENT' %}
                                 {% if token.tampertoken_set.last.is_for == 'Recovered Meter' %}
                                     <a class="text-blue-900 m-auto shadow-lg mb-2 p-2 border-red-500 border border-1 font-bold inline-block text-start rounded-full text-sm" 
