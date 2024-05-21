@@ -14,5 +14,6 @@ const fileInput = document.getElementById('upload');
 const form = document.getElementById('purchase-request-form');
 
 fileInput.addEventListener('change', () => {
+  $('#saveRadio').checked = true;
   form.submit();
 });
