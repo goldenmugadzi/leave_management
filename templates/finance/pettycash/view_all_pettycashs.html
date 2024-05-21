@@ -36,6 +36,7 @@
                 <th>Requested By</th>
                 <th>Created At</th>
                 <th>Section</th>
+                <th>Status</th>
           </tr>
         </thead>
         <tbody>
@@ -49,6 +50,7 @@
             <td>{% if pettycash.requested_by == user %} You {% else %} {{pettycash.requested_by.get_full_name }} {% endif %}</td>
               <td>{{ pettycash.date_created }}</td>
               <td>{{ pettycash.section }}</td>
+            <td>{{ pettycash.process.approval_set.last|default_if_none:'' }}</td>
               {% comment %} <td>{{ pettycash.process }}</td> {% endcomment %}
             </tr>
           {% endfor %}
