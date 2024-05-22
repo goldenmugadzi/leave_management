@@ -296,8 +296,9 @@
                                     {% endif %}
                                 </div>
                                 {% if step == token.process.workflow.step_set.last and step == token.process.approval_set.last.step %}
+                                <div class="card-body   m-2 p-2 border  rounded">
                                     <div class="flex justify-center items-center  rounded ">
-                                        <div class="flex justify-center rounded-lg" title="{{ approval.comment }}">
+                                        <div class="rounded-lg" title="{{ approval.comment }}">
                                             Completed
                                             <i class="fas fa-check-circle text-green-500"></i>
                                         </div>
