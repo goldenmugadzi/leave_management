@@ -52,7 +52,7 @@ class CustomClearableFileInput(ClearableFileInput):
         if value and hasattr(value, 'name'):
             file_name = os.path.basename(value.name)
             context['widget']['value'] = file_name
-        return context
+        else:return context
 
 class NonconformityForm(forms.ModelForm):
     class Meta:
@@ -95,19 +95,19 @@ class AcceptanceForm(forms.ModelForm):
         corrective_action = self.cleaned_data.get('corrective_action')
         if not corrective_action:
             raise forms.ValidationError("This field is required.")
-        return corrective_action
+        else:return corrective_action
     def clean_cause(self):
         cause = self.cleaned_data.get('cause')
         if not cause:
             raise forms.ValidationError("This field is required.")
-        return cause
+        else:return cause
     def clean_expected_completion_date(self):
         expected_completion_date = self.cleaned_data.get('expected_completion_date')
         if expected_completion_date is None:
             raise forms.ValidationError("This field is required.")
         if  expected_completion_date < timezone.now().date():
             raise forms.ValidationError("Expected completion date cannot be in the past.")
-        return expected_completion_date 
+        else:return expected_completion_date 
 
 class RejectionForm(forms.ModelForm):
     class Meta:
@@ -120,6 +120,11 @@ class RejectionForm(forms.ModelForm):
             field.widget.attrs.update({ 'class': "block w-full rounded-md border-0 my-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6",})
             if isinstance(field.widget, forms.Textarea): field.widget.attrs.update({'rows': '3'})
 
+    def clean_rejection_reason(self):
+        rejection = self.cleaned_data.get('rejection_reason')
+        if len(rejection)>0 :return rejection
+        else: raise forms.ValidationError("This field is required.")
+        
 class CloseNcForm(forms.ModelForm):
 
     class Meta:
