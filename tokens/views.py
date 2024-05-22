@@ -165,11 +165,11 @@ def token_details(request, token_id):
             and last_step is not None
             and token.process.workflow.step_set.last().step == (last_step.step + 1)
         ):
-            if generatetokenform.is_valid() and request.FILES.get("token_photo"):
+            if generatetokenform.is_valid() and request.FILES.get("token_photo") is not None:
                 approve_step(request, token.process.pk)
                 generatetokenform.save()
             else:
-                messages.error(request, 'Generate token form is invalid. Have you provided a token photo?')
+                messages.error(request,'Generate token form is invalid. Have you provided a token photo?')
         else:
             approve_step(request, token.process.pk)
     approvalForm = None
@@ -177,23 +177,23 @@ def token_details(request, token_id):
     to = None
     completed = False
     user_roles = request.user.roles.all()
+    if not token.process.approval_set.filter(approved = 'Rejected').exists():
+        try:
+            last_approved = token.process.approval_set.last().step.step
+        except AttributeError:
+            last_approved = 0
+        next_step = last_approved + 1
+        try:
+            newStep = Step.objects.get(step=next_step, workflow=token.process.workflow, approver__in=user_roles)
+            approvalForm = ApprovalForm
+            to = newStep.to
+            if newStep == token.process.workflow.step_set.last():
+                generateTokenForm = GenerateTokenForm()
 
-    try:
-        last_approved = token.process.approval_set.last().step.step
-    except AttributeError:
-        last_approved = 0
-    next_step = last_approved + 1
-    try:
-        newStep = Step.objects.get(step=next_step, workflow=token.process.workflow, approver__in=user_roles)
-        approvalForm = ApprovalForm
-        to = newStep.to
-        if newStep == token.process.workflow.step_set.last():
-            generateTokenForm = GenerateTokenForm()
+        except Step.DoesNotExist:
+            pass
 
-    except Step.DoesNotExist:
-        pass
-
-    completed = token.process.workflow.step_set.last().step == last_approved
+        completed = token.process.workflow.step_set.last().step == last_approved
     approved_steps = token.process.approval_set.all().values_list("step__step", flat=True)
 
     return render(request, "tokens/token_detail.html", {
@@ -231,7 +231,7 @@ def awaiting_my_action(request):
         if step:
             tokens_to_process.append(token)
 
-    return render(request, 'tokens/tokens.html',{'tokens': tokens_to_process,'all':False,'roles': get_my_roles_for_apps(request.user, ['temper','reimbursement','clear credit'])})
+    return render(request, 'tokens/tokens.html',{'tokens': tokens_to_process,'all':False,'roles': get_my_roles_for_apps(request.user, ['temper','tokens','reimbursement','clear credit'])})
 
 def addsection(request):
     for token in Token.objects.all():
