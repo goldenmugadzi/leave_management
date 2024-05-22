@@ -41,6 +41,11 @@ class GenerateTokenForm(forms.ModelForm):
             })
             if isinstance(field.widget, forms.Textarea):
                 field.widget.attrs.update({'rows': '3'})
+    def clean_token_photo(self):
+        token_photo = self.cleaned_data['token_photo']
+        if not token_photo:
+            raise forms.ValidationError('A token photo is required.')
+        return token_photo
 class TokenForm(forms.ModelForm):
     class Meta:
         model = Token
