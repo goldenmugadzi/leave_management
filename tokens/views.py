@@ -8,6 +8,7 @@ from approve.forms import ApprovalForm
 from django.contrib.auth.decorators import login_required
 from approve.decorators import allowed_roles
 from django.db.models import Q
+import os
 
 @login_required
 @allowed_roles(['Requester'], ['temper', 'reimbursement','clear credit'])
@@ -249,3 +250,53 @@ def addsection(request):
                 old_process.delete()
         except: pass
     return redirect('tokens:tokens')
+def process_file(file_path):
+    if not os.path.isfile(file_path):
+        raise FileNotFoundError("File not found!")
+
+    with open(file_path, 'r') as file:
+        current_number_of_tabs = 0
+        parent = None
+        for line in file:
+            tabs = len(line) - len(line.lstrip('\t'))
+            cost, *name_parts = line.strip().split('\t')
+            name = ' '.join(name_parts).replace('\t', '')
+
+            print(f"Number of tabs: {tabs}")
+            print(f"Cost Centre: {cost}")
+            print(f"Name: {name}")
+            print("----------------------")
+            if not parent or tabs > current_number_of_tabs:
+                parent = CostCenter.objects.get_or_create(id=cost, name=name, parent=parent)[0]
+            elif tabs == current_number_of_tabs:
+                CostCenter.objects.get_or_create(id=cost, name=name, parent=parent)[0]
+            elif tabs < current_number_of_tabs:
+                parent = CostCenter.objects.get(id=parent.id)
+                CostCenter.objects.get_or_create(id=cost, name=name, parent=parent)[0]
+
+
+            current_number_of_tabs = max(tabs, current_number_of_tabs)
+def cost_centers(request):
+    # file_path = r'tokens\\cc.txt'
+    # try:
+    #     process_file(file_path)
+    # except FileNotFoundError as e:
+    #     print(e)
+
+    # Retrieve the cost centers with id 'CC513500'
+    cost_centers = CostCenter.objects.filter(parent='CC100000')
+
+    # Create a dictionary of cost_center tree including children for each node
+    cost_center_tree = {} 
+    for cost_center in cost_centers:
+        if cost_center.parent:
+            # If the cost center has a parent, add it to the parent's children list
+            if cost_center.parent in cost_center_tree:
+                cost_center_tree[cost_center.parent].append(cost_center)
+            else:
+                cost_center_tree[cost_center.parent] = [cost_center]
+        else:
+            # If it doesn't have a parent, add it as a root node
+            cost_center_tree[cost_center] = []
+
+    return render(request, 'tokens/cost_centers.html', {'cost_centers': cost_center_tree})

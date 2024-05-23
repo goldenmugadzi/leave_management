@@ -1,5 +1,5 @@
 from django.db import models
-from it.users.models import UserProfile,Regions,Sections
+from it.users.models import UserProfile,Regions,Sections,CostCenter
 from approve.models import Process
 from django.core.validators import RegexValidator
 import random
