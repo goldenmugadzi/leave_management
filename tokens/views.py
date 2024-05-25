@@ -2,16 +2,17 @@ from django.shortcuts import render, redirect
 from .forms import *
 from .models import *
 from django.contrib import messages
-from approve.views import intiate, approve_step,get_my_roles_for_apps
+from approve.views import intiate, approve_step, get_my_roles_for_apps
 from approve.models import Step
 from approve.forms import ApprovalForm
 from django.contrib.auth.decorators import login_required
 from approve.decorators import allowed_roles
 from django.db.models import Q
-import os
+import os, json
+
 
 @login_required
-@allowed_roles(['Requester'], ['temper', 'reimbursement','clear credit'])
+@allowed_roles(["Requester"], ["temper", "reimbursement", "clear credit"])
 def create_token(request):
     if request.method == "POST":
         # meter details from the database if the meter number already exists and use its instance to update the meter details
@@ -23,7 +24,9 @@ def create_token(request):
 
         # customer details from the database if the customer already exists and use its instance to update the customer details
         try:
-            customer = Customer.objects.get(contact_number=request.POST["contact_number"])
+            customer = Customer.objects.get(
+                contact_number=request.POST["contact_number"]
+            )
             customer_form = CustomerForm(request.POST, instance=customer)
         except Customer.DoesNotExist:
             customer_form = CustomerForm(request.POST)
@@ -57,9 +60,12 @@ def create_token(request):
             customer = customer_form.save()
             token = token_form.save(commit=False)
             token_type = token.type
-            if token_type == 'TEMPER': process = intiate(request, "temper")
-            elif token_type == 'REIMBURSEMENT': process = intiate(request, "reimbursement")
-            elif token_type == 'CLEAR CREDIT': process = intiate(request, "clear credit")
+            if token_type == "TEMPER":
+                process = intiate(request, "temper")
+            elif token_type == "REIMBURSEMENT":
+                process = intiate(request, "reimbursement")
+            elif token_type == "CLEAR CREDIT":
+                process = intiate(request, "clear credit")
             token.meter = meter
             token.customer = customer
             token.process = process
@@ -67,66 +73,90 @@ def create_token(request):
             token.region = request.user.region
             token.save()
 
-            if token_type == 'TEMPER' and tamper_token_form.is_valid():
+            if token_type == "TEMPER" and tamper_token_form.is_valid():
                 tamper_token = tamper_token_form.save(commit=False)
                 tamper_token.token = token
                 tamper_token.save()
 
-                if tamper_token.is_for == 'Fauty Maintanance' and fault_maintanance_form.is_valid():
+                if (
+                    tamper_token.is_for == "Fauty Maintanance"
+                    and fault_maintanance_form.is_valid()
+                ):
                     fault_maintanance = fault_maintanance_form.save(commit=False)
                     fault_maintanance.token = token
                     fault_maintanance.save()
                     messages.info(request, "Token request saved successfully")
-                elif tamper_token.is_for == 'Recovered Meter' and  request.FILES.get("picture") and recovered_meter_form.is_valid():
+                elif (
+                    tamper_token.is_for == "Recovered Meter"
+                    and request.FILES.get("picture")
+                    and recovered_meter_form.is_valid()
+                ):
                     recovered_meter = recovered_meter_form.save(commit=False)
                     recovered_meter.token = token
                     recovered_meter.save()
                     messages.info(request, "Token request saved successfully")
-                elif tamper_token.is_for == 'Reconnection' and reconnection_form.is_valid():
+                elif (
+                    tamper_token.is_for == "Reconnection"
+                    and reconnection_form.is_valid()
+                ):
                     reconnection = reconnection_form.save(commit=False)
                     reconnection.token = token
                     reconnection.save()
                     messages.info(request, "Token request saved successfully")
                 else:
-                    forms.update({
-                        'fault_maintanance_form': fault_maintanance_form,
-                        'recovered_meter_form': recovered_meter_form,
-                        'reconnection_form': reconnection_form
-                    })
+                    forms.update(
+                        {
+                            "fault_maintanance_form": fault_maintanance_form,
+                            "recovered_meter_form": recovered_meter_form,
+                            "reconnection_form": reconnection_form,
+                        }
+                    )
                     tamper_token.delete()
                     token.delete()
                     messages.error(request, "Token request error")
                     return render(request, "tokens/create_token.html", forms)
 
-            elif token_type == 'REIMBURSEMENT' and reimbursement_form.is_valid():
+            elif token_type == "REIMBURSEMENT" and reimbursement_form.is_valid():
                 reimbursement = reimbursement_form.save(commit=False)
                 reimbursement.token = token
                 reimbursement.save()
-                if reimbursement.purpose == 'Faulty Meter' and faulty_meter_form.is_valid():
+                if (
+                    reimbursement.purpose == "Faulty Meter"
+                    and faulty_meter_form.is_valid()
+                ):
                     faulty_meter = faulty_meter_form.save(commit=False)
                     faulty_meter.token = token
                     faulty_meter.save()
                     messages.info(request, "Token request saved successfully")
-                elif reimbursement.purpose == 'Recovered Meter' and recovered_meter_form.is_valid():
+                elif (
+                    reimbursement.purpose == "Recovered Meter"
+                    and recovered_meter_form.is_valid()
+                ):
                     recovered_meter = recovered_meter_form.save(commit=False)
                     recovered_meter.token = token
                     recovered_meter.save()
                     messages.info(request, "Token request saved successfully")
-                elif reimbursement.purpose == 'Old Token' and old_token_form.is_valid() and request.FILES.get("old_token"):
+                elif (
+                    reimbursement.purpose == "Old Token"
+                    and old_token_form.is_valid()
+                    and request.FILES.get("old_token")
+                ):
                     old_token = old_token_form.save(commit=False)
                     old_token.token = token
                     old_token.save()
                     messages.info(request, "Token request saved successfully")
                 else:
-                    forms.update({
-                        'faulty_meter_form': faulty_meter_form,
-                        'recovered_meter_form': recovered_meter_form,
-                        'old_token_form': old_token_form
-                    })
+                    forms.update(
+                        {
+                            "faulty_meter_form": faulty_meter_form,
+                            "recovered_meter_form": recovered_meter_form,
+                            "old_token_form": old_token_form,
+                        }
+                    )
                     messages.error(request, "Token request error")
                     return render(request, "tokens/create_token.html", forms)
 
-            elif token_type == 'CLEAR CREDIT' and clear_credit_form.is_valid():
+            elif token_type == "CLEAR CREDIT" and clear_credit_form.is_valid():
                 clear_credit = clear_credit_form.save(commit=False)
                 clear_credit.token = token
                 clear_credit.save()
@@ -134,7 +164,7 @@ def create_token(request):
             else:
                 return render(request, "tokens/create_token.html", forms)
 
-            return redirect('tokens:tokens')
+            return redirect("tokens:tokens")
 
         else:
             return render(request, "tokens/create_token.html", forms)
@@ -153,11 +183,15 @@ def create_token(request):
         "reconnection_form": ReconnectionForm(),
     }
     return render(request, "tokens/create_token.html", forms)
+
+
 @login_required
 def token_details(request, token_id):
     token = Token.objects.get(id=token_id)
     if request.method == "POST":
-        generatetokenform = GenerateTokenForm(request.POST, request.FILES, instance=token)
+        generatetokenform = GenerateTokenForm(
+            request.POST, request.FILES, instance=token
+        )
         last_approval = token.process.approval_set.last()
         last_step = last_approval.step if last_approval else None
         if (
@@ -165,11 +199,17 @@ def token_details(request, token_id):
             and last_step is not None
             and token.process.workflow.step_set.last().step == (last_step.step + 1)
         ):
-            if generatetokenform.is_valid() and request.FILES.get("token_photo") is not None:
+            if (
+                generatetokenform.is_valid()
+                and request.FILES.get("token_photo") is not None
+            ):
                 approve_step(request, token.process.pk)
                 generatetokenform.save()
             else:
-                messages.error(request,'Generate token form is invalid. Have you provided a token photo?')
+                messages.error(
+                    request,
+                    "Generate token form is invalid. Have you provided a token photo?",
+                )
         else:
             approve_step(request, token.process.pk)
     approvalForm = None
@@ -177,14 +217,16 @@ def token_details(request, token_id):
     to = None
     completed = False
     user_roles = request.user.roles.all()
-    if not token.process.approval_set.filter(approved = 'Rejected').exists():
+    if not token.process.approval_set.filter(approved="Rejected").exists():
         try:
             last_approved = token.process.approval_set.last().step.step
         except AttributeError:
             last_approved = 0
         next_step = last_approved + 1
         try:
-            newStep = Step.objects.get(step=next_step, workflow=token.process.workflow, approver__in=user_roles)
+            newStep = Step.objects.get(
+                step=next_step, workflow=token.process.workflow, approver__in=user_roles
+            )
             approvalForm = ApprovalForm
             to = newStep.to
             if newStep == token.process.workflow.step_set.last():
@@ -194,18 +236,38 @@ def token_details(request, token_id):
             pass
 
         completed = token.process.workflow.step_set.last().step == last_approved
-    approved_steps = token.process.approval_set.all().values_list("step__step", flat=True)
+    approved_steps = token.process.approval_set.all().values_list(
+        "step__step", flat=True
+    )
 
-    return render(request, "tokens/token_detail.html", {
-        "token": token,
-        "completed": completed,
-        "approved_steps": approved_steps,
-        "approvalForm": approvalForm,
-        "generateTokenForm":generateTokenForm,
-        "to": to,
-    })
+    return render(
+        request,
+        "tokens/token_detail.html",
+        {
+            "token": token,
+            "completed": completed,
+            "approved_steps": approved_steps,
+            "approvalForm": approvalForm,
+            "generateTokenForm": generateTokenForm,
+            "to": to,
+        },
+    )
+
+
 def view_all_tokens(request):
-    return render(request, "tokens/tokens.html", {"tokens": Token.objects.all(),'all':True,'roles': get_my_roles_for_apps(request.user, ['temper','reimbursement','clear credit'])})
+    return render(
+        request,
+        "tokens/tokens.html",
+        {
+            "tokens": Token.objects.all(),
+            "all": True,
+            "roles": get_my_roles_for_apps(
+                request.user, ["temper", "reimbursement", "clear credit"]
+            ),
+        },
+    )
+
+
 @login_required
 def awaiting_my_action(request):
     """
@@ -214,7 +276,9 @@ def awaiting_my_action(request):
     """
     tokens_to_process = []
     user_roles = request.user.roles.all()
-    for token in Token.objects.filter(Q(section=request.user.section), Q(region=request.user.region)):
+    for token in Token.objects.filter(
+        Q(section=request.user.section), Q(region=request.user.region)
+    ):
         process = token.process
 
         if process.approval_set.exists():
@@ -231,7 +295,18 @@ def awaiting_my_action(request):
         if step:
             tokens_to_process.append(token)
 
-    return render(request, 'tokens/tokens.html',{'tokens': tokens_to_process,'all':False,'roles': get_my_roles_for_apps(request.user, ['temper','tokens','reimbursement','clear credit'])})
+    return render(
+        request,
+        "tokens/tokens.html",
+        {
+            "tokens": tokens_to_process,
+            "all": False,
+            "roles": get_my_roles_for_apps(
+                request.user, ["temper", "tokens", "reimbursement", "clear credit"]
+            ),
+        },
+    )
+
 
 def addsection(request):
     for token in Token.objects.all():
@@ -239,64 +314,87 @@ def addsection(request):
             if not token.section:
                 token.section = token.created_by.section
                 token.region = token.created_by.region
-                token.save() 
+                token.save()
             old_process = token.process
-            if old_process.workflow.name == 'tokens':
-                if token.type == 'TEMPER': process = intiate(request, "temper")
-                elif token.type == 'REIMBURSEMENT': process = intiate(request, "reimbursement")
-                elif token.type == 'CLEAR CREDIT': process = intiate(request, "clear credit")
+            if old_process.workflow.name == "tokens":
+                if token.type == "TEMPER":
+                    process = intiate(request, "temper")
+                elif token.type == "REIMBURSEMENT":
+                    process = intiate(request, "reimbursement")
+                elif token.type == "CLEAR CREDIT":
+                    process = intiate(request, "clear credit")
                 token.process = process
                 token.save()
                 old_process.delete()
-        except: pass
-    return redirect('tokens:tokens')
+        except:
+            pass
+    return redirect("tokens:tokens")
+
+
 def process_file(file_path):
     if not os.path.isfile(file_path):
         raise FileNotFoundError("File not found!")
 
-    with open(file_path, 'r') as file:
-        current_number_of_tabs = 0
-        parent = None
-        for line in file:
-            tabs = len(line) - len(line.lstrip('\t'))
-            cost, *name_parts = line.strip().split('\t')
-            name = ' '.join(name_parts).replace('\t', '')
+    with open(file_path, "r") as file:
+        cont = file.readlines()
+        roots=[] 
+        p_t=None
+        root = None
+        prev = None
+        curent = None
+        next = None
+        for a in range(100):
+            if a > 1:prev = cont[a-1].rstrip()
+            curent = cont[a].rstrip()
+            if a < (len(cont)-1): next = cont[a+1].rstrip()
 
-            print(f"Number of tabs: {tabs}")
-            print(f"Cost Centre: {cost}")
-            print(f"Name: {name}")
-            print("----------------------")
-            if not parent or tabs > current_number_of_tabs:
-                parent = CostCenter.objects.get_or_create(id=cost, name=name, parent=parent)[0]
-            elif tabs == current_number_of_tabs:
-                CostCenter.objects.get_or_create(id=cost, name=name, parent=parent)[0]
-            elif tabs < current_number_of_tabs:
-                parent = CostCenter.objects.get(id=parent.id)
-                CostCenter.objects.get_or_create(id=cost, name=name, parent=parent)[0]
+            if prev: p_t = len(prev) - len(prev.lstrip('\t'))
+            c_t = len(curent) - len(curent.lstrip('\t'))
+            if next: n_t = len(next) - len(next.lstrip('\t'))
 
+            if prev:p_id, *pname = prev.strip().split('\t')
+            c_id, *cname = curent.strip().split('\t')
+            n_id, *nname = next.strip().split('\t')
 
-            current_number_of_tabs = max(tabs, current_number_of_tabs)
-def cost_centers(request):
-    # file_path = r'tokens\\cc.txt'
-    # try:
-    #     process_file(file_path)
-    # except FileNotFoundError as e:
-    #     print(e)
-
-    # Retrieve the cost centers with id 'CC513500'
-    cost_centers = CostCenter.objects.filter(parent='CC100000')
-
-    # Create a dictionary of cost_center tree including children for each node
-    cost_center_tree = {} 
-    for cost_center in cost_centers:
-        if cost_center.parent:
-            # If the cost center has a parent, add it to the parent's children list
-            if cost_center.parent in cost_center_tree:
-                cost_center_tree[cost_center.parent].append(cost_center)
+            if prev:p_name = ' '.join(pname).replace('\t', '').replace(' ', '')
+            c_name = ' '.join(cname).replace('\t', '').replace(' ', '')
+            n_name = ' '.join(nname).replace('\t', '').replace(' ', '')
+            if roots:
+                root = CostCenter.objects.get(id=roots[-1])
             else:
-                cost_center_tree[cost_center.parent] = [cost_center]
-        else:
-            # If it doesn't have a parent, add it as a root node
-            cost_center_tree[cost_center] = []
+                root = CostCenter.objects.create(id=c_id , name=c_name, parent=root)
+                roots.append(c_id)
+            if prev and c_t > p_t:
+                root = CostCenter.objects.get(id=p_id)
+                CostCenter.objects.create(id=c_id , name=c_name, parent=root)
+                roots.append(c_id)
+            elif prev and c_t == p_t:
+                CostCenter.objects.create(id=c_id , name=c_name, parent=root)
+            elif prev and c_t < p_t:
+                if n_t > c_t:
+                    # print("roots", roots)
+                    for i in range(c_t-p_t):
+                        roots.pop()
 
-    return render(request, 'tokens/cost_centers.html', {'cost_centers': cost_center_tree})
+                    root = CostCenter.objects.get(id=roots[-1])
+                    roots.append(c_id)
+                    CostCenter.objects.create(id=c_id , name=c_name, parent=root)
+                else:
+                    # print("roots", roots)
+                    for i in range(c_t-p_t):
+                        roots.pop()
+                    root = CostCenter.objects.get(id=roots[-1])
+                    CostCenter.objects.create(id=c_id , name=c_name, parent=root)
+            else:
+                print("c_name", c_name)
+
+    return 'json_data'
+
+def cost_centers(request):
+    CostCenter.objects.all().delete()
+    file_path = r"tokens\\cc.txt"
+    try:
+        process_file(file_path)
+    except FileNotFoundError as e:
+        print(e)
+    return render(request, "tokens/cost_centers.html", {"cost_centers": CostCenter.objects.all().order_by("parent")[:100]})
