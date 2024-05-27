@@ -51,7 +51,7 @@ APPLICATIONS = [
     },
     {
         "name": "ristricted_bidding",
-        "title": "Ristricted Biddings",
+        "title": "Restricted Biddings",
         "iconUrl": "assets/images/direct_bid.png",
         "url": "/ristricted_bidding/comperative_schedules"
     },
