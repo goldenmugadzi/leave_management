@@ -372,7 +372,6 @@ def process_file(file_path):
                 CostCenter.objects.create(id=c_id , name=c_name, parent=root)
             elif prev and c_t < p_t:
                 if n_t > c_t:
-                    # print("roots", roots)
                     for i in range(c_t-p_t):
                         roots.pop()
 
@@ -380,7 +379,6 @@ def process_file(file_path):
                     roots.append(c_id)
                     CostCenter.objects.create(id=c_id , name=c_name, parent=root)
                 else:
-                    # print("roots", roots)
                     for i in range(c_t-p_t):
                         roots.pop()
                     root = CostCenter.objects.get(id=roots[-1])
@@ -397,4 +395,4 @@ def cost_centers(request):
         process_file(file_path)
     except FileNotFoundError as e:
         print(e)
-    return render(request, "tokens/cost_centers.html", {"cost_centers": CostCenter.objects.all().order_by("parent")[:100]})
+    return render(request, "tokens/cost_centers.html", {"cost_centers": CostCenter.objects.all().order_by("parent")[:20]})
