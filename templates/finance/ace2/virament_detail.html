@@ -1,0 +1,330 @@
+{% extends "admin_layout.html" %}
+{% load static %}
+<head>
+    <link rel="stylesheet" href="{% static 'assets/disburse.css' %}">
+    <script src="{% static 'assets/disbursemodal.js' %}"></script>
+</head>
+{% load custom_tags %}
+
+{% block content %}
+<head>
+  <style>
+
+      .arrow {
+          position: relative;
+      }
+
+      .arrow::after {
+          content: "";
+          position: absolute;
+          top: 50%;
+          transform: translateY(-50%);
+          width: 0;
+          height: 0;
+          border-top: 15px solid transparent;
+          border-bottom: 15px solid transparent;
+          border-left: 10px solid #3B82F6; /* Adjust arrow color here */
+          left: -10px;
+      }
+
+      .arrow-step::before {
+          content: "";
+          position: absolute;
+          top: 50%;
+          right: -20px;
+          transform: translateY(-50%);
+          width: 0;
+          height: 0;
+          border-top: 10px solid transparent;
+          border-bottom: 10px solid transparent;
+          border-left: 20px solid #3B82F6; /* Adjust arrow color here */
+      }
+
+      .modal {
+          display: none; /* Initially hide the modal */
+          position: fixed; /* Stay in place */
+          z-index: 1; /* Sit on top */
+          left: 50%;
+          top: 0;
+          width: 50%; /* Full width */
+          height: 50%; /* Full height */
+          overflow: auto; /* Enable scroll if needed */
+          background-color: rgba(0,0,0,0.4); /* Transparent black background */
+      }
+
+      .modal-content {
+          background-color: white;
+          margin: 15% auto; /* 15% from top and centered */
+          padding: 20px;
+          border: 1px solid #888;
+          width: 80%; /* Modal content width */
+      }
+
+      .form-group {
+          margin-bottom: 15px;
+      }
+
+      .close-modal {
+          color: #aaa;
+          float: right;
+          font-size: 16px;
+          font-weight: bold;
+      }
+
+      .close-modal:hover,
+      .close-modal:focus {
+          color: black;
+          text-decoration: none;
+          cursor: pointer;
+      }
+  </style>
+    <script src="{% static 'assets/disbursemodal.js' %}"></script>
+</head>
+<div class="m-auto mt-5 ">
+    <div class="card grid grid-cols-1 gap-2 mb-3">
+        <div class="card-body m-2">
+            <div class="card-body m-auto mb-5 p-3 border rounded    container rounded  shadow-lg">
+                <div class="px-6 py-4">
+                    <div class="card grid grid-cols-2 gap-2 mb-3">
+                        <div class="card-body m-auto mb-5 bg-gradient-to-r from-gulf-blue-100 to-blue-500 ed p-3
+                        border rounded   justify-content-center align-content-stretch container rounded  shadow-lg">
+                            <h1 class="text-center mb-4 font-bold text-xl  mb-2">Virament Details</h1>
+{#                    {% if clear %}#}
+{#                            <h1 class="text-2xl font-semibold leading-7 text-gray-900">#}
+{#                                <a href="{% url 'purchase_request:create_ace_purchase_request' virament.virament_id %}" class="bg-gray-500 hover:bg-gray-700#}
+{#                                    inline-block rounded-full mx-3 text-white py-2 px-4 rounded">Create Purchase Request </a>#}
+{#                            </h1>#}
+{#                    {% endif %}#}
+{#                        <div class="">#}
+{#                                        <span class="inline-block font-bold text-start rounded-full text-sm">Customer </span>#}
+{#                                    <span class="inline-block text-end rounded-full text-sm">{{ virament.region}} </span>#}
+{#                        </div>#}
+                            <p class="font-bold   mb-2"> From Budget: {{ virament.from_budget }}</p>
+                            <p class="font-bold mb-2"> To Budget: {{ virament.to_budget}}</p>
+                            <p class="font-bold   mb-2"> Amount: {{ virament.amount }}</p>
+                            <p class="font-bold mb-2">Reason:{{ virament.reason }}</p>
+                        <p class="font-bold mb-2">Region:{{ virament.region }}</p>
+                        <p class="font-bold mb-2">
+                            {% for attachment in virament.quotation_set.all %}
+                                <a href="/acee/attachment/ {{attachment}}"><button class=" hover:text-green-600 text-green-300 font-bold py-2 px-4 rounded"
+                                        href="/acee/attachment/ {{attachment}}">
+                                    {{ attachment.quotation_file.name|basename }}
+                                </button>
+                                </a>
+                            {% endfor %}
+                        </p>
+                            <p class="font-bold   mb-2"> Requested By: {{ virament.requested_by }}</p>
+                            <p class="font-bold   mb-2"> Date Created: {{ virament.date_created }}</p>
+                        {% if virament.asset_number != None %}
+                            <p class="font-bold   mb-2"> Asset Number or (s): {{ virament.asset_number }}</p>
+                        {% elif accounting_officer_role %}
+                            <button id="asset_number_btn" class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded">Add Asset Numbers</button>
+                            <div id="asset_number_modal" class="modal">
+                                <div class="modal-content">
+                                    <form id="asset_upload" enctype="multipart/form-data">
+                                        {% csrf_token %}
+                                        {% for index in virament_quantity %}
+                                        <div class="form-group">
+                                            <label for="asset_number">Asset Number {{ index }}:</label>
+                                            <br>
+                                            <input required="required" type="text" id="asset_number" name="asset_number[]">
+                                        </div>
+                                        {% endfor %}
+                                            <input type="hidden" name="virament_id" value="{{ virament.virament_id2 }}">
+                                            <input type="hidden" name="quantity" value="{{ virament.quantity }}">
+                                        <button type="submit" class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded">Submit</button>
+                                    </form>
+                                    <br>
+                                    <button id="close-modal" class="bg-red-500 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded">Close</button>
+                                </div>
+                            </div>
+                        {% endif %}
+                            <p class="font-bold   mb-2"> Currency: {{ virament.currency }}</p>
+                            <p class="font-bold mb-2">Budget:{{ virament.budget_id }}</p>
+{#                            <p class="font-bold   mb-2"> Allocation code of expenditure: {{ virament.allocation_code_of_expenditure }}</p>#}
+                            <p class="font-bold   mb-2"> Amount($) : {{ virament.amount }}</p>
+                            <p class="font-bold   mb-2"> Quantity : {{ virament.quantity }}</p>
+{#                            <p class="font-bold   mb-2"> Designation :{{ virament.designation }}</p>#}
+                            <p class="font-bold   mb-2"> Classification :{{ virament.classification }}</p>
+                            {% if virament.classification == 'Project' %}
+                                <p class="font-bold   mb-2"> Present Tariff :{{ virament.project_name }}</p>
+                                <p class="font-bold   mb-2"> Present Fmc :{{ virament.present_fmc }}</p>
+                                <p class="font-bold   mb-2"> Capital Contribution :{{ virament.capital_contribution }}</p>
+                                <p class="font-bold   mb-2"> Materials :{{ virament.materials }}</p>
+                                <p class="font-bold   mb-2"> Connection Fee :{{ virament.connection_fee }}</p>
+                                <p class="font-bold   mb-2"> Labour :{{ virament.labour }}</p>
+                                <p class="font-bold   mb-2"> Transport :{{ virament.transport }}</p>
+                                <p class="font-bold   mb-2"> Total Connection Fee :{{ virament.total_connection_fee }}</p>
+                            {% endif %}
+
+                        {%   if quotations %}
+                        {% for quotation in quotations %}
+                            {% if quotation.quotation_file == '' %}
+                                <p class="font-bold   mb-2"> Quotation: not available</p>
+                            {% else %}
+                                <p class="font-bold   mb-2"> Quotation: {{ quotation }}<a href="/virament/qoutes/{{ quotation.quotation_file }}"></a></p>
+                            {% endif %}
+                        {% endfor %}
+                        {% endif %}
+                            <p class="font-bold   mb-2"> Requested by:
+                                {% if request.user == virament.requested_by %}
+                                                            You
+                                                            {% elif virament.requested_by.get_full_name %}
+                                                                {{virament.requested_by.get_full_name}}
+                                                        {% elif request.user == virament.requested_by %}
+                                                                {{ virament.requested_by }}
+                                                        {% endif %}</p>
+                            <p class="font-bold   mb-2"> Created At: {{ virament.date_created }}</p>
+{#                            <p class="font-bold   mb-2"> Role : {{ virament_role }}</p>#}
+                            {%   if virament.payment_mode == None %}
+{#                                <p class="font-bold   mb-2 bg-red-600"> Payment mode: Not yet Added By Cashier</p>#}
+                            {% else %}
+                                <p class="font-bold   mb-2"> Payment mode: {{ virament.payment_mode }}</p>
+                                {% if virament.receipt_file == '' or virament.receipt_file == None and request.user == approval.user %}
+                                    <p class="font-bold   mb-2"> Receipt: Not yet Receipted</p>
+                                    {% if virament_role == "create" or virament.payment_mode != '' or virament.payment_mode == None %}
+                                    <button id="open-modal" class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded">Clear virament</button>
+                                    <div id="modal" class="modal">
+                                        <div class="modal-content">
+                                            <form id="upload-form" enctype="multipart/form-data">
+                                                {% csrf_token %}
+                                                <div class="form-group">
+                                                    <label for="file-input">Receipt:</label>
+                                                    <br>
+                                                    <input type="file" id="file-input" name="file-input">
+                                                </div>
+                                                <div class="form-group">
+                                                    <label for="disbursed">Amount used($):</label>
+                                                    <br>
+                                                    <input type="number" id="disbursed" name="disbursed">
+                                                    <input type="hidden" name="petty_id" value="{{ virament.petty_id }}">
+                                                </div>
+                                                <button type="submit" class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded">Submit</button>
+                                            </form>
+                                            <br>
+                                            <button id="close-modal" class="bg-red-500 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded">Close</button>
+                                        </div>
+                                    </div>
+                                    {% endif %}
+
+
+                                {% else %}
+
+                                    {#                               #input and post receipt file #}
+                                {% endif %}
+
+
+                            {% endif %}
+
+                        </div>
+
+                
+                 </div>
+                    <h1 class="text-center mb-4 font-bold text-xl  mb-2">Workflow Details</h1>
+                    <p class="font-bold  mb-2"> Workflow name : {{ virament.process.workflow }}</p>
+{#                {% if virament_role == "disburse" and virament.payment_mode == None %}#}
+{#                <form class="row rounded py-4 border  rounded-lg p-3 m-auto container" method="POST"#}
+{#                      action="/virament/virament_detail/{{ virament.petty_id  }}/" enctype="multipart/form-data">#}
+{#                    {% csrf_token %}#}
+{#                    <div class=" m-auto container  ">#}
+{#                        <h4 class="text-center mb-4 font-bold text-xl  mb-2">Add Payment Mode</h4>#}
+{##}
+{#                        <div class="m-4 text-center">#}
+{#                            <label for="payment_mode">Payment mode</label>#}
+{#                            <select name="payment_mode" id="payment_mode" required>#}
+{#                                <option value="">Add Payment Mode</option>#}
+{#                                <option value="ZIG_SWIPE">Swipe ZIG</option>#}
+{#                                <option value="ZIG_CASH">Cash ZIG</option>#}
+{#                                <option value="SWIPE_USD">Swipe Usd</option>#}
+{#                                <option value="CASH_USD">Rtgs Usd</option>#}
+{#                            </select>#}
+{#                        </div>#}
+{##}
+{#                        <div class="m-4 text-center">#}
+{#                            <label for="amount_disbursed">Amount Disbursed</label>#}
+{#                            <input type="number" name="amount_disbursed" required>#}
+{#                        </div>#}
+{##}
+{##}
+{#                        <div class="m-4 text-center">#}
+{#                            <button type="submit" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded" name="approved" value="Rejected">Reject</button>#}
+{#                            <button type="submit" class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded" name="submit" value="submit"> Add </button>#}
+{#                        </div>#}
+{#                    </div>#}
+{#                </form>#}
+{#                {% endif %}#}
+
+{#            {% if virament.payment_mode != None %}#}
+                        {% if approvalForm %}
+                    <form class="row rounded py-4 border bg-gulf-blue-400 rounded-lg p-3 m-auto container" method="POST" action="{% url 'approve:approve' virament.process.id %}" enctype="multipart/form-data">
+                         {% csrf_token %}
+                        <div class=" m-auto container  ">
+                             {{approvalForm.comment}}
+
+                                 <div class="m-4 text-center">
+                                    <button type="submit" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded" name="approved" value="Rejected">Reject</button>
+                                    <button type="submit" class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded" name="approved" value="Approved"> {{ to }} </button>
+                              </div>
+                        </div>
+                    </form>
+               {% endif %}
+{#            {% endif %}#}
+
+                    <div class="card grid grid-cols-5 gap-4">
+
+                        <div class="px-2 mb-5  bg-gradient-to-r from-gulf-blue-100 to-green-700 border rounded ">
+                            <div class="p-4 font-bold rounded-lg">Start</div>
+                            <span class="inline-block rounded-full text-sm">  requested by {{virament.requested_by}}</span>
+                            </div>
+                            {% for step in virament.process.workflow.step_set.all %}
+                                    {% if step.step in approved_steps %}
+                                        {% for approval in virament.process.approval_set.all %}
+                                           {% if step == approval.step %}
+                                                <div class="card-body m-auto arrow arrow-step mb-5 bg-gradient-to-r from-gulf-blue-100 to-green-700 ed p-3 border rounded  container rounded shadow-lg">
+                                                    <div class="p-4 rounded-lg" title="Comment : {{ approval.comment }}" >
+                                                        <p class="font-bold">{{ step }}</p> <br>
+                                                    </div>
+                                                    <div class=" grid grid-cols-2 text-center">
+                                                        <span class="inline-block rounded-full text-sm"> {{ approval.approved }}</span>
+                                                        <span class="inline-block rounded-full text-sm">By: 
+                                                        {% if request.user == approval.user %}
+                                                            You
+                                                            {% elif  approval.user.get_full_name %}
+                                                                {{approval.user.get_full_name}}
+                                                        {% elif request.user == approval.user %}
+                                                                {{ approval.user  }}
+                                                        {% endif %}</span>
+
+                                                    <span class="inline-block rounded-full text-sm">On: {{ approval.approved_at }}</span>
+                                                    </div> 
+                                                </div>
+                                                {% endif %}
+                                            {% endfor %}
+
+                                        {% else %}
+                                            <div class="card-body m-auto arrow arrow-step mb-5 bg-gradient-to-r from-gulf-blue-100 to-blue-500 ed p-3 border rounded  container rounded shadow-lg">
+                                                <div class="p-4 rounded-lg" title="{{ approval.comment }}" >
+                                                    <p class="font-bold">{{ step }}</p> <br>
+                                                    {% if step.to %}
+                                                        <span class="inline-block rounded-full text-sm">To {{ step.to|default_if_none:'' }}</span>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        
+                                    {% endif %}
+                                {% endfor %}
+                            <div class="mb-5 bg-blue-500 border rounded">
+                                <div class="p-4 font-bold rounded-lg">Completed</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>    
+            </div>    
+        </div>    
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+    <script src="{% static 'assets/virament_add_asset_numbers.js' %}"></script>
+{% endblock %}
+

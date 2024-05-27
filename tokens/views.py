@@ -2,15 +2,16 @@ from django.shortcuts import render, redirect
 from .forms import *
 from .models import *
 from django.contrib import messages
-from approve.views import intiate, approve_step,get_my_roles_for_apps
+from approve.views import intiate, approve_step, get_my_roles_for_apps
 from approve.models import Step
 from approve.forms import ApprovalForm
 from django.contrib.auth.decorators import login_required
 from approve.decorators import allowed_roles
 from django.db.models import Q
 
+
 @login_required
-@allowed_roles(['Requester'], ['temper', 'reimbursement','clear credit'])
+@allowed_roles(['Requester'], ['temper', 'reimbursement', 'clear credit'])
 def create_token(request):
     if request.method == "POST":
         # meter details from the database if the meter number already exists and use its instance to update the meter details
@@ -56,9 +57,12 @@ def create_token(request):
             customer = customer_form.save()
             token = token_form.save(commit=False)
             token_type = token.type
-            if token_type == 'TEMPER': process = intiate(request, "temper")
-            elif token_type == 'REIMBURSEMENT': process = intiate(request, "reimbursement")
-            elif token_type == 'CLEAR CREDIT': process = intiate(request, "clear credit")
+            if token_type == 'TEMPER':
+                process = intiate(request, "temper")
+            elif token_type == 'REIMBURSEMENT':
+                process = intiate(request, "reimbursement")
+            elif token_type == 'CLEAR CREDIT':
+                process = intiate(request, "clear credit")
             token.meter = meter
             token.customer = customer
             token.process = process
@@ -76,7 +80,8 @@ def create_token(request):
                     fault_maintanance.token = token
                     fault_maintanance.save()
                     messages.info(request, "Token request saved successfully")
-                elif tamper_token.is_for == 'Recovered Meter' and  request.FILES.get("picture") and recovered_meter_form.is_valid():
+                elif tamper_token.is_for == 'Recovered Meter' and request.FILES.get(
+                        "picture") and recovered_meter_form.is_valid():
                     recovered_meter = recovered_meter_form.save(commit=False)
                     recovered_meter.token = token
                     recovered_meter.save()
@@ -111,7 +116,8 @@ def create_token(request):
                     recovered_meter.token = token
                     recovered_meter.save()
                     messages.info(request, "Token request saved successfully")
-                elif reimbursement.purpose == 'Old Token' and old_token_form.is_valid() and request.FILES.get("old_token"):
+                elif reimbursement.purpose == 'Old Token' and old_token_form.is_valid() and request.FILES.get(
+                        "old_token"):
                     old_token = old_token_form.save(commit=False)
                     old_token.token = token
                     old_token.save()
@@ -152,6 +158,8 @@ def create_token(request):
         "reconnection_form": ReconnectionForm(),
     }
     return render(request, "tokens/create_token.html", forms)
+
+
 @login_required
 def token_details(request, token_id):
     token = Token.objects.get(id=token_id)
@@ -160,15 +168,15 @@ def token_details(request, token_id):
         last_approval = token.process.approval_set.last()
         last_step = last_approval.step if last_approval else None
         if (
-            token.process.workflow.step_set.last() is not None
-            and last_step is not None
-            and token.process.workflow.step_set.last().step == (last_step.step + 1)
+                token.process.workflow.step_set.last() is not None
+                and last_step is not None
+                and token.process.workflow.step_set.last().step == (last_step.step + 1)
         ):
             if generatetokenform.is_valid() and request.FILES.get("token_photo") is not None:
                 approve_step(request, token.process.pk)
                 generatetokenform.save()
             else:
-                messages.error(request,'Generate token form is invalid. Have you provided a token photo?')
+                messages.error(request, 'Generate token form is invalid. Have you provided a token photo?')
         else:
             approve_step(request, token.process.pk)
     approvalForm = None
@@ -176,7 +184,7 @@ def token_details(request, token_id):
     to = None
     completed = False
     user_roles = request.user.roles.all()
-    if not token.process.approval_set.filter(approved = 'Rejected').exists():
+    if not token.process.approval_set.filter(approved='Rejected').exists():
         try:
             last_approved = token.process.approval_set.last().step.step
         except AttributeError:
@@ -200,11 +208,18 @@ def token_details(request, token_id):
         "completed": completed,
         "approved_steps": approved_steps,
         "approvalForm": approvalForm,
-        "generateTokenForm":generateTokenForm,
+        "generateTokenForm": generateTokenForm,
         "to": to,
     })
+
+
 def view_all_tokens(request):
-    return render(request, "tokens/tokens.html", {"tokens": Token.objects.all(),'all':True,'roles': get_my_roles_for_apps(request.user, ['temper','reimbursement','clear credit'])})
+    return render(request, "tokens/tokens.html", {"tokens": Token.objects.all(), 'all': True,
+                                                  'roles': get_my_roles_for_apps(request.user,
+                                                                                 ['temper', 'reimbursement',
+                                                                                  'clear credit'])})
+
+
 @login_required
 def awaiting_my_action(request):
     """
@@ -230,7 +245,11 @@ def awaiting_my_action(request):
         if step:
             tokens_to_process.append(token)
 
-    return render(request, 'tokens/tokens.html',{'tokens': tokens_to_process,'all':False,'roles': get_my_roles_for_apps(request.user, ['temper','tokens','reimbursement','clear credit'])})
+    return render(request, 'tokens/tokens.html', {'tokens': tokens_to_process, 'all': False,
+                                                  'roles': get_my_roles_for_apps(request.user,
+                                                                                 ['temper', 'tokens', 'reimbursement',
+                                                                                  'clear credit'])})
+
 
 def addsection(request):
     for token in Token.objects.all():
@@ -238,14 +257,18 @@ def addsection(request):
             if not token.section:
                 token.section = token.created_by.section
                 token.region = token.created_by.region
-                token.save() 
+                token.save()
             old_process = token.process
             if old_process.workflow.name == 'tokens':
-                if token.type == 'TEMPER': process = intiate(request, "temper")
-                elif token.type == 'REIMBURSEMENT': process = intiate(request, "reimbursement")
-                elif token.type == 'CLEAR CREDIT': process = intiate(request, "clear credit")
+                if token.type == 'TEMPER':
+                    process = intiate(request, "temper")
+                elif token.type == 'REIMBURSEMENT':
+                    process = intiate(request, "reimbursement")
+                elif token.type == 'CLEAR CREDIT':
+                    process = intiate(request, "clear credit")
                 token.process = process
                 token.save()
                 old_process.delete()
-        except: pass
+        except:
+            pass
     return redirect('tokens:tokens')

@@ -16,6 +16,6 @@ urlpatterns = [
     path('budgets', list_budgets, name='view_all_budgets'),
     path('add_asset_number', add_asset_number, name='add_asset_number'),
     path('upload_ace', upload_aces_csv, name='upload_ace'),
-    # path('import_pettycash', import_pettycash, name='import_pettycash'),
-    # path('receipt', receipt, name='receipt'),
+    path('create_virament', create_virament, name='create_virament'),
+    path('virament_detail/<str:virament_id>', virament_detail, name='virament_detail'),
 ]
