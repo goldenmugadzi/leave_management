@@ -692,6 +692,7 @@ def get_comperative_schedule_data(request, cs_id):
     cs = ComparativeSchedules.objects.filter(cs_id=cs_id).first()
     pr = PurchaseRequest.objects.filter(id=cs.pr_id_id).first()
     proc_plans = ProcPlan.objects.all()
+    currencies = Currency.objects.all()
     proc_plan = ""
     try:
         proc_plan = cs.proc_plan if cs.proc_plan else ""
@@ -869,6 +870,11 @@ def get_comperative_schedule_data(request, cs_id):
             "description": proc_plan.description,
             } if proc_plan else {},
         "proc_plans": list(proc_plans.values('id', 'proc_ref', 'description')),
+        "currencies": list(currencies.values('id', 'currency')),
+        "currency": {
+            "id": cs.currency.id,
+            "currency": cs.currency.currency,
+            } if cs.currency else {},
         "scope_of_work": cs.scope_of_work,
         "closing_date": cs.closing_date,
         "closing_time": cs.closing_time,
@@ -933,6 +939,7 @@ def get_create_data(request, pr_id):
     purchase_request = PurchaseRequest.objects.filter(id=pr_id).first()
     if purchase_request:
         proc_plans = ProcPlan.objects.all()
+        currencies = Currency.objects.all()
         suppliers = Supplier.objects.all()
         users = UserProfile.objects.all()
         uom = UnitOfMeasurement.objects.all()
@@ -979,6 +986,7 @@ def get_create_data(request, pr_id):
                 "pr_attachments": pr_at_list,
                 "proc_plans": list(proc_plans.values('id', 'proc_ref', 'description')),
                 "uom": list(uom.values('unit', 'name')),
+                "currencies": list(currencies.values('id', 'currency')),
                 "suppliers": list(suppliers.values('id', 'name')),
                 "users": list(users.values('id', 'username', 'first_name', 'last_name')),
             }, safe=False)
@@ -1135,6 +1143,8 @@ def save_comparative_schedule(request):
         pr_number = request.POST.get("pr_number", "")
         pr_date = request.POST.get("pr_date", "")
         ref_date = request.POST.get("ref_date", "")
+        currency = request.POST.get("currency", "")
+        print("currency: ", currency)
         # quantity = data['quantity']
         closing_date = request.POST.get("closing_date", "")
         closing_time = request.POST.get("closing_time", "")
@@ -1161,12 +1171,14 @@ def save_comparative_schedule(request):
         print("PR: ", pr, pr_number, username)
         # fetch user
         user = UserProfile.objects.filter(username=username).first()
+        currency = Currency.objects.filter(id=currency).first() if currency else None
         # region_ = Regions.objects.filter(region=pr.region).first() if 'region' in pr else None
         # section = Sections.objects.filter(section=pr.section).first() if 'section' in pr else None
         cs_query = ComparativeSchedules(
             cs_id = cs_id,
             pr_id_id = pr.id,
             scope_of_work = scope_of_work,
+            currency = currency,
             closing_date = closing_date,
             closing_time = closing_time,
             advert = advert_path,
@@ -1558,6 +1570,7 @@ def save_supplier(request):
 def save_cs_ranking(request):
     cs_id = request.POST.get("cs_id", "")
     cs_query = ComparativeSchedules.objects.filter(cs_id=cs_id).first()
+    print("cs_query: ", cs_query)
     if not cs_query:
         return JsonResponse({
             "message": "Comparative Schedule not found",
@@ -1589,7 +1602,7 @@ def save_cs_ranking(request):
         remarks = ""
         decision = ""
         if rank == 1:
-            decision = "Awarded " + supplier.name + " being the lowest bidder having complied with all the requirements is recommended to provide the goods/service at a total cost of ZIG" + str(total) + " excluding VAT."
+            decision = "Awarded " + supplier.name + " being the lowest bidder having complied with all the requirements is recommended to provide the goods/service at a total cost of " + cs_query.currency.currency + " " + str(total) + " excluding VAT."
         ranking_query = Ranking(
             cs_id = cs_query,
             supplier_id = supplier,

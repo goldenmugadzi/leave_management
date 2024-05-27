@@ -4,6 +4,13 @@ from finance.Direct_purchases.models import Supplier
 from finance.purchase_request.models import PurchaseRequest
 from it.users.models import *
 
+class Currency(models.Model):
+    currency = models.CharField(max_length=100)
+    rate_value = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True, default=None)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self) -> str:
+        return self.currency
 
 class ProcPlan(models.Model):
     proc_ref = models.CharField(max_length=100)
@@ -28,6 +35,7 @@ class ComparativeSchedules(models.Model):
     closing_time = models.CharField(max_length=10)
     advert = models.CharField(max_length=400)
     pr_number = models.CharField(max_length=100)
+    currency = models.ForeignKey(Currency, on_delete=models.CASCADE, default=1)
     pr_date = models.DateField()
     cs_opened = models.DateField()
     tac_date = models.DateField()
