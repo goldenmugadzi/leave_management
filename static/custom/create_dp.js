@@ -3268,7 +3268,7 @@ class CreateDP extends React.Component {
                     <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2"></td>
                     <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
                       {this.state.created_at
-                        ? this.state.created_at.split(" ")[0]
+                        ? this.state.created_at.split(".")[0]
                         : ""}
                     </td>
                   </tr>
@@ -3351,7 +3351,7 @@ class CreateDP extends React.Component {
                             {member.committeeJustification}
                           </td>
                           <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                            {member.committeeDate}
+                            {member.committeeDate ? member.committeeDate.split("+")[0] : ""}
                           </td>
                         </tr>
                       );
@@ -3435,7 +3435,7 @@ class CreateDP extends React.Component {
                     </td>
                     <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
                       {this.state.fmApproval &&
-                        this.state.fmApproval.approval_date}
+                        this.state.fmApproval.approval_date ? this.state.fmApproval.approval_date.split("+")[0] : ""}
                     </td>
                   </tr>
                   <tr className="text-gray-900">
@@ -3500,7 +3500,7 @@ class CreateDP extends React.Component {
                     </td>
                     <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
                       {this.state.gmApproval &&
-                        this.state.gmApproval.approval_date}
+                        this.state.gmApproval.approval_date ? this.state.gmApproval.approval_date.split("+")[0] : ""}
                     </td>
                   </tr>
                 </tbody>

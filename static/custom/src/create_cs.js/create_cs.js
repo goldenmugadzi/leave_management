@@ -3600,7 +3600,7 @@ var CreateCS = function (_React$Component) {
                     React.createElement(
                       "td",
                       { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
-                      this.state.created_at ? this.state.created_at.split(" ")[0] : ""
+                      this.state.created_at ? this.state.created_at.split(".")[0] : ""
                     )
                   ),
                   this.state.committeeMembers && this.state.committeeMembers.map(function (member, key) {
@@ -3684,7 +3684,7 @@ var CreateCS = function (_React$Component) {
                       React.createElement(
                         "td",
                         { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
-                        member.committeeDate
+                        member.committeeDate ? member.committeeDate.split("+")[0] : ""
                       )
                     );
                   })
@@ -3778,7 +3778,7 @@ var CreateCS = function (_React$Component) {
                     React.createElement(
                       "td",
                       { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
-                      this.state.fmApproval && this.state.fmApproval.approval_date
+                      this.state.fmApproval && this.state.fmApproval.approval_date ? this.state.fmApproval.approval_date.split("+")[0] : ""
                     )
                   ),
                   React.createElement(
@@ -3841,7 +3841,7 @@ var CreateCS = function (_React$Component) {
                     React.createElement(
                       "td",
                       { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
-                      this.state.gmApproval && this.state.gmApproval.approval_date
+                      this.state.gmApproval && this.state.gmApproval.approval_date ? this.state.gmApproval.approval_date.split("+")[0] : ""
                     )
                   )
                 )
