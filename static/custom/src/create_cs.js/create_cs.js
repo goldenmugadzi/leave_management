@@ -15,8 +15,8 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
 var e = React.createElement;
-// const BASE_URL = "http://localhost:8000";
-var BASE_URL = "http://172.16.8.99:9300";
+var BASE_URL = "http://localhost:8000";
+// const BASE_URL = "http://172.16.8.99:9300";
 
 var CreateCS = function (_React$Component) {
   _inherits(CreateCS, _React$Component);
@@ -3684,7 +3684,7 @@ var CreateCS = function (_React$Component) {
                       React.createElement(
                         "td",
                         { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
-                        member.committeeDate ? member.committeeDate.split("+")[0] : ""
+                        member.committeeDate ? member.committeeDate.split(".")[0] : ""
                       )
                     );
                   })

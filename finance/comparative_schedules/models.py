@@ -15,7 +15,7 @@ class ProcPlan(models.Model):
     proc_method = models.CharField(max_length=20)
     sprc = models.CharField(max_length=3)
     region = models.CharField(max_length=100)
-
+    created_at = models.DateTimeField(auto_now_add=True)
 
 class ComparativeSchedules(models.Model):
     cs_id = models.CharField(max_length=100)
@@ -86,6 +86,7 @@ class CSComplianceRemarks(models.Model):
     cs_id = models.ForeignKey(ComparativeSchedules, on_delete=models.CASCADE)
     supplier_id = models.ForeignKey(Supplier, on_delete=models.CASCADE)
     remarks = models.CharField(max_length=255)
+    created_at = models.DateTimeField(auto_now_add=True)
     
 class Ranking(models.Model):
     cs_id = models.ForeignKey(ComparativeSchedules, on_delete=models.CASCADE)
@@ -117,7 +118,7 @@ class Committee(models.Model):
     committee_status = models.BooleanField(default=False, null=True, blank=True)
     committee_approval = models.CharField(max_length=100, null=True, blank=True) # Approved, Rejected
     justification = models.CharField(max_length=255, null=True, blank=True)
-    committee_date = models.DateField()
+    committee_date = models.DateTimeField(blank=True, null=True, default=None)
     created_at = models.DateTimeField(auto_now_add=True)
     
 class CSApproval(models.Model):
@@ -126,5 +127,5 @@ class CSApproval(models.Model):
     approver_role = models.CharField(max_length=100, null=True, blank=True) # General Manager, Finance Manager
     approval = models.CharField(max_length=100, null=True, blank=True) # Approved, Rejected
     justification = models.CharField(max_length=255, null=True, blank=True)
-    approval_date = models.DateField()
+    approval_date = models.DateTimeField(blank=True, null=True, default=None)
     created_at = models.DateTimeField(auto_now_add=True)

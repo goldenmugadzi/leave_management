@@ -1,8 +1,8 @@
 "use strict";
 
 const e = React.createElement;
-// const BASE_URL = "http://localhost:8000";
-const BASE_URL = "http://172.16.8.99:9300";
+const BASE_URL = "http://localhost:8000";
+// const BASE_URL = "http://172.16.8.99:9300";
 
 class CreateCS extends React.Component {
   constructor(props) {
@@ -3180,7 +3180,7 @@ class CreateCS extends React.Component {
                           {member.committeeJustification}
                         </td>
                         <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                          {member.committeeDate ? member.committeeDate.split("+")[0] : ""}
+                          {member.committeeDate ? member.committeeDate.split(".")[0] : ""}
                         </td>
                       </tr>
                     );

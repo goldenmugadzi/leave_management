@@ -14,6 +14,7 @@ class RBProcPlan(models.Model):
     proc_method = models.CharField(max_length=20)
     sprc = models.CharField(max_length=3)
     region = models.CharField(max_length=100)
+    created_at = models.DateTimeField(auto_now_add=True)
 
 class RistricedBiddings(models.Model):
     cs_id = models.CharField(max_length=100)
@@ -100,7 +101,7 @@ class RBCommittee(models.Model):
     committee_status = models.BooleanField(default=False, null=True, blank=True)
     committee_approval = models.CharField(max_length=100, null=True, blank=True) # Approved, Rejected
     justification = models.CharField(max_length=255, null=True, blank=True)
-    committee_date = models.DateField()
+    committee_date = models.DateTimeField()
     created_at = models.DateTimeField(auto_now_add=True)
     
 class RBApproval(models.Model):
@@ -109,5 +110,5 @@ class RBApproval(models.Model):
     approver_role = models.CharField(max_length=100, null=True, blank=True) # General Manager, Finance Manager
     approval = models.CharField(max_length=100, null=True, blank=True) # Approved, Rejected
     justification = models.CharField(max_length=255, null=True, blank=True)
-    approval_date = models.DateField()
+    approval_date = models.DateTimeField()
     created_at = models.DateTimeField(auto_now_add=True)

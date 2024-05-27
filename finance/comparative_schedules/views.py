@@ -167,90 +167,98 @@ def get_comperative_schedules(request):
     elif gm_role == True:
         return redirect('/comperative_schedule/pending_gm_approval')
     else:
-        # fetch schedules created by the user
-        cs = ComparativeSchedules.objects.filter(
-            created_by_id=user_id,
+        return redirect('/comperative_schedule/pending_commitee')
+
+def your_comperative_schedules(request):
+    user_id = request.user.id
+    user = UserProfile.objects.filter(id=user_id).first()
+    
+    fm_role, gm_role = False, False
+    fm_role, gm_role = getUserFMGMRoles(user)
+    # fetch schedules created by the user
+    cs = ComparativeSchedules.objects.filter(
+        created_by_id=user_id,
+    ).all()
+
+    cs_list = []
+    for c in cs:
+        committee_approval = ""
+        gm_approval = None
+        fm_approval = None
+        committee = Committee.objects.filter(
+                cs_id=c
         ).all()
-
-        cs_list = []
-        for c in cs:
-            committee_approval = ""
-            gm_approval = None
-            fm_approval = None
-            committee = Committee.objects.filter(
-                    cs_id=c
-            ).all()
-            
-            if len(committee) > 0:            
-                committee_approved = all([c.committee_approval == "Approved" for c in committee])
-                if committee_approved:
-                    committee_approval = "Approval Complete"
-                    fm_approval = CSApproval.objects.filter(
-                        cs_id=c,
-                        approver_role="finance_manager",
-                    ).first()
-                        
-                    gm_approval = CSApproval.objects.filter(
-                        cs_id=c,
-                        approver_role="general_manager",
-                    ).first()
-                else:
-                    committee_approval = "Pending"
-                    fm_approval = None
-                    gm_approval = None
-                
-                    committee_rejected = Committee.objects.filter(
+        
+        if len(committee) > 0:            
+            committee_approved = all([c.committee_approval == "Approved" for c in committee])
+            if committee_approved:
+                committee_approval = "Approval Complete"
+                fm_approval = CSApproval.objects.filter(
                     cs_id=c,
-                        committee_approval="Rejected"
-                    ).exists()
-
-                    if committee_rejected:
-                        committee_approval = "Rejected"
+                    approver_role="finance_manager",
+                ).first()
                     
-                    committee_pending = Committee.objects.filter(
-                        cs_id=c,
-                        committee_approval__in=["", None]
-                    ).exists()
-
-                    if committee_pending:
-                        committee_approval = "Pending"
+                gm_approval = CSApproval.objects.filter(
+                    cs_id=c,
+                    approver_role="general_manager",
+                ).first()
             else:
                 committee_approval = "Pending"
                 fm_approval = None
                 gm_approval = None
-            pr = PurchaseRequest.objects.filter(id=c.pr_id_id).first()
-            user = UserProfile.objects.filter(id=c.created_by_id).first()
-            region = Regions.objects.filter(id=c.region_id).first()
-            section = Sections.objects.filter(id=c.section_id).first()
-            cs_list.append({
-                "cs_id": c.cs_id,
-                "pr_id": pr.id if pr else "",
-                "pr_number": c.pr_number,
-                "pr_date": c.pr_date,
-                "scope_of_work": c.scope_of_work,
-                "closing_date": c.closing_date,
-                "closing_time": c.closing_time,
-                "advert": c.advert,
-                "pr_number": c.pr_number,
-                "pr_date": c.pr_date,
-                "cs_opened": c.cs_opened,
-                "tac_date": c.tac_date,
-                "created_by": user.username,
-                "committee_approval": committee_approval,
-                "gm_approval": gm_approval.approval if gm_approval else "Pending",
-                "fm_approval": fm_approval.approval if fm_approval else "Pending",
-                "section": section.section if section else "",
-                "region": region.region if region else "",
-                "created_at": c.created_at.strftime("%Y-%m-%d %H:%M") if c.created_at else "",
-            })
             
-        context = json.dumps(cs_list, default=str)
+                committee_rejected = Committee.objects.filter(
+                cs_id=c,
+                    committee_approval="Rejected"
+                ).exists()
 
-        user_page = 'finance/comparative_schedules/cs_schedules.html'
-        print("roles: ", fm_role, gm_role)
-        return render(request, user_page, {"cs": context, 
-                "fm_role": fm_role,
-                "gm_role": gm_role,})
+                if committee_rejected:
+                    committee_approval = "Rejected"
+                
+                committee_pending = Committee.objects.filter(
+                    cs_id=c,
+                    committee_approval__in=["", None]
+                ).exists()
+
+                if committee_pending:
+                    committee_approval = "Pending"
+        else:
+            committee_approval = "Pending"
+            fm_approval = None
+            gm_approval = None
+        pr = PurchaseRequest.objects.filter(id=c.pr_id_id).first()
+        user = UserProfile.objects.filter(id=c.created_by_id).first()
+        region = Regions.objects.filter(id=c.region_id).first()
+        section = Sections.objects.filter(id=c.section_id).first()
+        cs_list.append({
+            "cs_id": c.cs_id,
+            "pr_id": pr.id if pr else "",
+            "pr_number": c.pr_number,
+            "pr_date": c.pr_date,
+            "scope_of_work": c.scope_of_work,
+            "closing_date": c.closing_date,
+            "closing_time": c.closing_time,
+            "advert": c.advert,
+            "pr_number": c.pr_number,
+            "pr_date": c.pr_date,
+            "cs_opened": c.cs_opened,
+            "tac_date": c.tac_date,
+            "created_by": user.username,
+            "committee_approval": committee_approval,
+            "gm_approval": gm_approval.approval if gm_approval else "Pending",
+            "fm_approval": fm_approval.approval if fm_approval else "Pending",
+            "section": section.section if section else "",
+            "region": region.region if region else "",
+            "created_at": c.created_at.strftime("%Y-%m-%d %H:%M") if c.created_at else "",
+        })
+        
+    context = json.dumps(cs_list, default=str)
+
+    user_page = 'finance/comparative_schedules/cs_schedules.html'
+    print("roles: ", fm_role, gm_role)
+    return render(request, user_page, {"cs": context, 
+            "fm_role": fm_role,
+            "gm_role": gm_role,})
 
 def get_all_schedules(request):
     
@@ -1634,15 +1642,21 @@ def save_cs_committee(request):
             if committee_query:
                 clear_approvals(cs_id)
                 committee_query.committee_position = member['memberPosition']
-                committee_query.committee_date = datetime.now()
                 committee_query.save()
             else:
                 committee_query = Committee(
                     cs_id = cs_query,
                     user = member_profile,
                     committee_name = member['memberUserName'],
-                    committee_position = member['memberPosition'],
-                    committee_date = datetime.now(),
+                    committee_position = member['memberPosition']
+                )
+                Notification.objects.create(
+                    user=member_profile,
+                    message="You have been added to the committee for Comparative Schedule " + cs_query.cs_id,
+                    notification_type="RFQ",
+                    notification_id=cs_query.id,
+                    url="/comperative_schedule/comperative_schedule/" + cs_query.cs_id,
+                    created_at=datetime.now(),
                 )
             committee_query.save()
         
@@ -1687,7 +1701,6 @@ def delete_cs_committee_member(request):
 def approve_cs_committee(request):
     cs_id = request.POST.get("cs_id", "")
     username = request.POST.get("username", "")
-    print("username: ", username)
     approval = request.POST.get("approval", "")
     justification = request.POST.get("justification", "")
     cs_query = ComparativeSchedules.objects.filter(cs_id=cs_id).first()
@@ -1705,6 +1718,10 @@ def approve_cs_committee(request):
             committee_query.justification = justification
             committee_query.committee_date = datetime.now()
             committee_query.save()
+            notification = Notification.objects.filter(user=member_profile, url="/comperative_schedule/comperative_schedule/" + cs_query.cs_id).first()
+            if notification:
+                notification.is_read = True
+                notification.save()
             return JsonResponse({
                 "message": "Committee member approved successfully",
                 "success": True,
