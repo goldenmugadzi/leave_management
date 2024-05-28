@@ -1159,7 +1159,7 @@ class CreateCS extends React.Component {
       alert("Please save the Comparative Schedule first");
       return;
     }
-    if(!this.state.proc_ref || !this.state.scope_of_work || !this.state.pr_number || !this.state.pr_date || !this.state.closing_date || !this.state.ref_date || !this.state.closing_time || !this.state.date_tender_opened || !this.state.tender_adjudication_committee_date) {
+    if(!this.state.currency || !this.state.proc_ref || !this.state.scope_of_work || !this.state.pr_number || !this.state.pr_date || !this.state.closing_date || !this.state.ref_date || !this.state.closing_time || !this.state.date_tender_opened || !this.state.tender_adjudication_committee_date) {
       alert("Please fill in all required fields");
       return;
     }
@@ -1169,6 +1169,7 @@ class CreateCS extends React.Component {
     form_data.append("cs_id", this.state.cs_id);
     form_data.append("proc_ref", this.state.proc_ref);
     form_data.append("scope_of_work", this.state.scope_of_work);
+    form_data.append("currency", this.state.currency);
     form_data.append("pr_number", this.state.pr_number);
     form_data.append("quantity", this.state.quantity);
     form_data.append("pr_date", this.state.pr_date);
@@ -3220,6 +3221,9 @@ class CreateCS extends React.Component {
                       FINANCE MANAGER
                     </td>
                     <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                      {this.state.fmApproval && this.state.fmApproval.approver_name}
+                    </td>
+                    <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
                       {this.state.fmApproval && this.state.fmApproval.approval === "Rejected" && this.state.fmApproval.justification}
                     </td>
                     <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
@@ -3265,12 +3269,15 @@ class CreateCS extends React.Component {
                       }
                     </td>
                     <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                      {this.state.fmApproval && this.state.fmApproval.approval_date ? this.state.fmApproval.approval_date.split("+")[0] : ""}
+                      {this.state.fmApproval && this.state.fmApproval.approval_date ? this.state.fmApproval.approval_date.split(".")[0] : ""}
                     </td>
                   </tr>
                   <tr className="text-gray-900">
                     <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
                       GENERAL MANAGER
+                    </td>
+                    <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                      {this.state.gmApproval && this.state.gmApproval.approver_name}
                     </td>
                     <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
                       {this.state.gmApproval && this.state.gmApproval.approval === "Rejected" && this.state.gmApproval.justification}
@@ -3318,7 +3325,7 @@ class CreateCS extends React.Component {
                     }
                     </td>
                     <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                      {this.state.gmApproval && this.state.gmApproval.approval_date ? this.state.gmApproval.approval_date.split("+")[0] : ""}
+                      {this.state.gmApproval && this.state.gmApproval.approval_date ? this.state.gmApproval.approval_date.split(".")[0] : ""}
                     </td>
                   </tr>
                 </tbody>
@@ -3483,7 +3490,7 @@ class CreateCS extends React.Component {
         </div>
         <div className="flex-1 w-20 ml-1">
             <label
-              htmlFor="designation"
+              htmlFor="currency"
               className="block text-sm font-medium leading-6 text-gray-900"
             >
               Currency
@@ -3502,9 +3509,8 @@ class CreateCS extends React.Component {
                     {this.state.currency.currency}
                   </option>
                 ) : (
-                  ""
+                  <option value="">Select Currency</option>
                 )}
-                <option value="">Select Currency</option>
                 {this.state.currencies
                   ? this.state.currencies.map((currency) => (
                       <option value={currency.id}>

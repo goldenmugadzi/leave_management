@@ -104,6 +104,8 @@ var CreateDP = function (_React$Component) {
           return fullName1.localeCompare(fullName2);
         });
         var cs_owner = data.cs_owner ? data.cs_owner : "";
+        var currencies = data.currencies ? data.currencies : [];
+        var currency = data.currency ? data.currency : "";
 
         var advert_url = _this.onGetFileObjectUrl(data.advert);
         var pr_at_list = [];
@@ -130,6 +132,8 @@ var CreateDP = function (_React$Component) {
           committeeApprovalComplete: committeeApprovalComplete,
           approvalsComplete: approvalsComplete,
           proc_plans: proc_plans,
+          currencies: currencies,
+          currency: currency,
           uom: uom,
           suppliers: suppliers,
           users: users,
@@ -173,6 +177,8 @@ var CreateDP = function (_React$Component) {
           var fullName2 = user2.first_name + " " + user2.last_name;
           return fullName1.localeCompare(fullName2);
         });
+        var currencies = data.currencies ? data.currencies : [];
+        var currency = data.currency ? data.currency : "";
         var pr_at_list = [];
         if (pr_items.length === 0) {
           pr_at_list = pr_attachments.map(function (pr_attachment) {
@@ -185,6 +191,8 @@ var CreateDP = function (_React$Component) {
           scope_of_work: scope_of_work,
           proc_ref: proc_ref,
           proc_plans: plans,
+          currencies: currencies,
+          currency: currency,
           uom: uom,
           suppliers: suppliers,
           pr_items: pr_items,
@@ -210,6 +218,8 @@ var CreateDP = function (_React$Component) {
           var proc_ref = data.proc_ref ? data.proc_ref : "";
           var proc_plan = data.proc_plan ? data.proc_plan : null;
           var plans = data.proc_plans ? data.proc_plans : [];
+          var currencies = data.currencies ? data.currencies : [];
+          var currency = data.currency ? data.currency : "";
           var uom = data.uom ? data.uom : "";
           var suppliers = data.suppliers ? data.suppliers : [];
           var pr_items = data.pr_items ? data.pr_items : [];
@@ -234,6 +244,8 @@ var CreateDP = function (_React$Component) {
               proc_ref: proc_plan.proc_ref
             },
             proc_plans: plans,
+            currencies: currencies,
+            currency: currency,
             uom: uom,
             suppliers: suppliers,
             pr_items: pr_items,
@@ -945,7 +957,7 @@ var CreateDP = function (_React$Component) {
     };
 
     _this.onSaveSchedule = function () {
-      if (!_this.state.proc_ref || !_this.state.scope_of_work || !_this.state.pr_number || !_this.state.pr_date || !_this.state.closing_date || !_this.state.ref_date || !_this.state.closing_time || !_this.state.date_tender_opened || !_this.state.tender_adjudication_committee_date) {
+      if (!_this.state.currency || !_this.state.proc_ref || !_this.state.scope_of_work || !_this.state.pr_number || !_this.state.pr_date || !_this.state.closing_date || !_this.state.ref_date || !_this.state.closing_time || !_this.state.date_tender_opened || !_this.state.tender_adjudication_committee_date) {
         alert("Please fill in all required fields");
         return;
       }
@@ -958,6 +970,7 @@ var CreateDP = function (_React$Component) {
       form_data.enctype = "multipart/form-data";
       form_data.append("proc_ref", _this.state.proc_ref);
       form_data.append("scope_of_work", _this.state.scope_of_work);
+      form_data.append("currency", _this.state.currency);
       form_data.append("pr_number", _this.state.pr_number);
       form_data.append("quantity", _this.state.quantity);
       form_data.append("pr_date", _this.state.pr_date);
@@ -999,7 +1012,7 @@ var CreateDP = function (_React$Component) {
         alert("Please save the Comparative Schedule first");
         return;
       }
-      if (!_this.state.proc_ref || !_this.state.scope_of_work || !_this.state.pr_number || !_this.state.pr_date || !_this.state.closing_date || !_this.state.ref_date || !_this.state.closing_time || !_this.state.date_tender_opened || !_this.state.tender_adjudication_committee_date) {
+      if (!_this.state.currency || !_this.state.proc_ref || !_this.state.scope_of_work || !_this.state.pr_number || !_this.state.pr_date || !_this.state.closing_date || !_this.state.ref_date || !_this.state.closing_time || !_this.state.date_tender_opened || !_this.state.tender_adjudication_committee_date) {
         alert("Please fill in all required fields");
         return;
       }
@@ -1009,6 +1022,7 @@ var CreateDP = function (_React$Component) {
       form_data.append("cs_id", _this.state.cs_id);
       form_data.append("proc_ref", _this.state.proc_ref);
       form_data.append("scope_of_work", _this.state.scope_of_work);
+      form_data.append("currency", _this.state.currency);
       form_data.append("pr_number", _this.state.pr_number);
       form_data.append("quantity", _this.state.quantity);
       form_data.append("pr_date", _this.state.pr_date);
@@ -1410,6 +1424,8 @@ var CreateDP = function (_React$Component) {
       committeeApprovalComplete: false,
       plan_ref: "",
       proc_ref: "",
+      currency: null,
+      currencies: [],
       proc_plan: null,
       scope_of_work: "",
       pr_number: "",
@@ -4057,6 +4073,52 @@ var CreateDP = function (_React$Component) {
                     "option",
                     { value: plan.proc_ref },
                     plan.description
+                  );
+                }) : ""
+              )
+            )
+          ),
+          React.createElement(
+            "div",
+            { className: "flex-1 w-20 ml-1" },
+            React.createElement(
+              "label",
+              {
+                htmlFor: "currency",
+                className: "block text-sm font-medium leading-6 text-gray-900"
+              },
+              "Currency"
+            ),
+            React.createElement(
+              "div",
+              { className: "mt-2" },
+              React.createElement(
+                "select",
+                {
+                  id: "currency",
+                  name: "currency",
+                  autoComplete: "currency",
+                  onChange: function onChange(e) {
+                    return _this2.onSelectChange("currency", e);
+                  },
+                  disabled: this.state.username === this.state.cs_owner || this.state.cs_owner === "" ? false : true,
+                  className: "block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
+                },
+                this.state.currency ? React.createElement(
+                  "option",
+                  { value: this.state.currency.id },
+                  this.state.currency.currency
+                ) : "",
+                React.createElement(
+                  "option",
+                  { value: "" },
+                  "Select Currency"
+                ),
+                this.state.currencies ? this.state.currencies.map(function (currency) {
+                  return React.createElement(
+                    "option",
+                    { value: currency.id },
+                    currency.currency
                   );
                 }) : ""
               )

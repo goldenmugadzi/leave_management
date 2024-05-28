@@ -13,6 +13,8 @@ from finance.comparative_schedules.models import *
 from django.db.models import Q, Exists, OuterRef, Count, F
 import pandas as pd
 
+APP_NAME = "comparative_schedules"
+
 def import_old_rfq(request):
     tender_csv = 'tender.csv'
     rfq_csv = 'rfq.csv'
@@ -146,13 +148,33 @@ def getUserFMGMRoles(user):
         print("role id:", role.id)
         user_ace_role_ = Roles.objects.filter(id=role.id).first() if role.id else None
         print("role application:", user_ace_role_.application)
-        if user_ace_role_.application == "comparative_schedule":
+        if user_ace_role_.application == APP_NAME:
             if user_ace_role_.role == "check":
                 fm_role = True
             if user_ace_role_.role == "approve":
                 gm_role = True
     
     return fm_role, gm_role
+
+def notify_user(user_, msg, notification_type, url, id):
+            
+        Notification.objects.create(
+            user=user_,
+            message=msg,
+            notification_type=notification_type,
+            notification_id=id,
+            url=url,
+            created_at=datetime.now(),
+        )
+        
+        return True
+    
+def notification_update(user, id):
+    notification = Notification.objects.filter(user=user, notification_id=id).first()
+    if notification:
+        notification.is_read = True
+        notification.save()
+    return True
     
 def get_comperative_schedules(request):
     
@@ -686,7 +708,7 @@ def get_comperative_schedule_data(request, cs_id):
         print("role id:", role.id)
         user_ace_role_ = Roles.objects.filter(id=role.id).first() if role.id else None
         print("role application:", user_ace_role_.application)
-        if user_ace_role_.application == "comparative_schedule":
+        if user_ace_role_.application == APP_NAME:
             user_comparative_schedule_role = user_ace_role_
             
     cs = ComparativeSchedules.objects.filter(cs_id=cs_id).first()
@@ -856,6 +878,7 @@ def get_comperative_schedule_data(request, cs_id):
             "unit_of_measurement": cs_item.unit_of_measurement,
         })
 
+    print("current user role: ", user_comparative_schedule_role.role)
     context = {
         "requester_role": user_comparative_schedule_role.role if user_comparative_schedule_role else "",
         "cs_id": cs.cs_id,
@@ -1663,15 +1686,11 @@ def save_cs_committee(request):
                     committee_name = member['memberUserName'],
                     committee_position = member['memberPosition']
                 )
-                Notification.objects.create(
-                    user=member_profile,
-                    message="You have been added to the committee for Comparative Schedule " + cs_query.cs_id,
-                    notification_type="RFQ",
-                    notification_id=cs_query.id,
-                    url="/comperative_schedule/comperative_schedule/" + cs_query.cs_id,
-                    created_at=datetime.now(),
-                )
+                msg = "You have been added to the committee for Comperative Schedule " + cs_query.cs_id
+                url = "/comperative_schedule/comperative_schedule/" + cs_query.cs_id
+                notify_user(member_profile, msg, "RFQ", url, cs_query.id)
             committee_query.save()
+            
         
     return JsonResponse({
         "message": "Committee saved successfully",
@@ -1731,10 +1750,19 @@ def approve_cs_committee(request):
             committee_query.justification = justification
             committee_query.committee_date = datetime.now()
             committee_query.save()
-            notification = Notification.objects.filter(user=member_profile, url="/comperative_schedule/comperative_schedule/" + cs_query.cs_id).first()
-            if notification:
-                notification.is_read = True
-                notification.save()
+            notification_update(member_profile, cs_query.id)
+        
+        committees = Committee.objects.filter(cs_id=cs_query).all()
+        committee_approved = all([c.committee_approval == "Approved" for c in committees])
+        if committee_approved:
+            fm_role = Roles.objects.filter(name="Finance Manager", application="comparative_schedules").first()
+            print("fm role: ", fm_role)
+            fm_user = UserProfile.objects.filter(roles=fm_role).first()
+            print("fm user: ", fm_user.username, fm_user.id)
+            msg = "Comperative Schedule is ready for your approval " + cs_query.cs_id
+            url = "/comperative_schedule/comperative_schedule/" + cs_query.cs_id
+            notify_user(fm_user, msg, "RFQ", url, cs_query.id)
+
             return JsonResponse({
                 "message": "Committee member approved successfully",
                 "success": True,
@@ -1769,6 +1797,7 @@ def approve_cs(request):
             "success": False,
             }, safe=False)
     
+    committees = Committee.objects.filter(cs_id=cs_query)
     user = UserProfile.objects.filter(username=username).first()
     if user:
         if role == "general_manager":
@@ -1782,6 +1811,7 @@ def approve_cs(request):
                 created_at = datetime.now(),
             )
             gm_approval.save()
+            notification_update(user, cs_query.id)
             
             return JsonResponse({
                 "message": "GM approval saved successfully",
@@ -1809,6 +1839,15 @@ def approve_cs(request):
                 created_at = datetime.now(),
             )
             fm_approval.save()
+            notification_update(user, cs_query.id)
+                
+            committee_approved = all([c.committee_approval == "Approved" for c in committees])
+            if committee_approved and approval == "Approved":
+                gm_role = Roles.objects.filter(name="General Manager", application="comparative_schedules").first()
+                print("gm role: ", gm_role)
+                gm_user = UserProfile.objects.filter(roles=gm_role).first()
+                print("gm user: ", gm_user.username, gm_user.id)
+                notify_user(gm_user, "Comperative Schedule is ready for your approval " + cs_query.cs_id, "RFQ", "/comperative_schedule/comperative_schedule/" + cs_query.cs_id, cs_query.id)
         
             return JsonResponse({
                 "message": "FM approval saved successfully",

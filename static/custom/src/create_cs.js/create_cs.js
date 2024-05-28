@@ -1012,7 +1012,7 @@ var CreateCS = function (_React$Component) {
         alert("Please save the Comparative Schedule first");
         return;
       }
-      if (!_this.state.proc_ref || !_this.state.scope_of_work || !_this.state.pr_number || !_this.state.pr_date || !_this.state.closing_date || !_this.state.ref_date || !_this.state.closing_time || !_this.state.date_tender_opened || !_this.state.tender_adjudication_committee_date) {
+      if (!_this.state.currency || !_this.state.proc_ref || !_this.state.scope_of_work || !_this.state.pr_number || !_this.state.pr_date || !_this.state.closing_date || !_this.state.ref_date || !_this.state.closing_time || !_this.state.date_tender_opened || !_this.state.tender_adjudication_committee_date) {
         alert("Please fill in all required fields");
         return;
       }
@@ -1022,6 +1022,7 @@ var CreateCS = function (_React$Component) {
       form_data.append("cs_id", _this.state.cs_id);
       form_data.append("proc_ref", _this.state.proc_ref);
       form_data.append("scope_of_work", _this.state.scope_of_work);
+      form_data.append("currency", _this.state.currency);
       form_data.append("pr_number", _this.state.pr_number);
       form_data.append("quantity", _this.state.quantity);
       form_data.append("pr_date", _this.state.pr_date);
@@ -3740,6 +3741,11 @@ var CreateCS = function (_React$Component) {
                     React.createElement(
                       "td",
                       { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                      this.state.fmApproval && this.state.fmApproval.approver_name
+                    ),
+                    React.createElement(
+                      "td",
+                      { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
                       this.state.fmApproval && this.state.fmApproval.approval === "Rejected" && this.state.fmApproval.justification
                     ),
                     React.createElement(
@@ -3789,7 +3795,7 @@ var CreateCS = function (_React$Component) {
                     React.createElement(
                       "td",
                       { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
-                      this.state.fmApproval && this.state.fmApproval.approval_date ? this.state.fmApproval.approval_date.split("+")[0] : ""
+                      this.state.fmApproval && this.state.fmApproval.approval_date ? this.state.fmApproval.approval_date.split(".")[0] : ""
                     )
                   ),
                   React.createElement(
@@ -3799,6 +3805,11 @@ var CreateCS = function (_React$Component) {
                       "td",
                       { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
                       "GENERAL MANAGER"
+                    ),
+                    React.createElement(
+                      "td",
+                      { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                      this.state.gmApproval && this.state.gmApproval.approver_name
                     ),
                     React.createElement(
                       "td",
@@ -3852,7 +3863,7 @@ var CreateCS = function (_React$Component) {
                     React.createElement(
                       "td",
                       { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
-                      this.state.gmApproval && this.state.gmApproval.approval_date ? this.state.gmApproval.approval_date.split("+")[0] : ""
+                      this.state.gmApproval && this.state.gmApproval.approval_date ? this.state.gmApproval.approval_date.split(".")[0] : ""
                     )
                   )
                 )
@@ -4082,7 +4093,7 @@ var CreateCS = function (_React$Component) {
             React.createElement(
               "label",
               {
-                htmlFor: "designation",
+                htmlFor: "currency",
                 className: "block text-sm font-medium leading-6 text-gray-900"
               },
               "Currency"
@@ -4106,8 +4117,7 @@ var CreateCS = function (_React$Component) {
                   "option",
                   { value: this.state.currency.id },
                   this.state.currency.currency
-                ) : "",
-                React.createElement(
+                ) : React.createElement(
                   "option",
                   { value: "" },
                   "Select Currency"

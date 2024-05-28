@@ -5,6 +5,8 @@ from django.shortcuts import redirect, render
 import json
 from datetime import datetime
 from django.db.models import Sum
+
+from finance.comparative_schedules.models import Currency
 from .models import *
 from it.users.models import *
 from finance.purchase_request.models import PurchaseRequest, PrItem, Attachment, UnitOfMeasurement
@@ -698,6 +700,7 @@ def get_comperative_schedule_data(request, cs_id):
     cs = DirectPurchase.objects.filter(cs_id=cs_id).first()
     pr = PurchaseRequest.objects.filter(id=cs.pr_id_id).first()
     proc_plans = DPProcPlan.objects.all()
+    currencies = Currency.objects.all()
     proc_plan = ""
     try:
         proc_plan = cs.proc_plan if cs.proc_plan else ""
@@ -875,6 +878,11 @@ def get_comperative_schedule_data(request, cs_id):
             "description": proc_plan.description,
             } if proc_plan else {},
         "proc_plans": list(proc_plans.values('id', 'proc_ref', 'description')),
+        "currencies": list(currencies.values('id', 'currency')),
+        "currency": {
+            "id": cs.currency.id,
+            "currency": cs.currency.currency,
+            } if cs.currency else {},
         "scope_of_work": cs.scope_of_work,
         "closing_date": cs.closing_date,
         "closing_time": cs.closing_time,
@@ -939,6 +947,7 @@ def get_create_data(request, pr_id):
     purchase_request = PurchaseRequest.objects.filter(id=pr_id).first()
     if purchase_request:
         proc_plans = DPProcPlan.objects.all()
+        currencies = Currency.objects.all()
         suppliers = Supplier.objects.all()
         users = UserProfile.objects.all()
         uom = UnitOfMeasurement.objects.all()
@@ -985,6 +994,7 @@ def get_create_data(request, pr_id):
                 "pr_attachments": pr_at_list,
                 "proc_plans": list(proc_plans.values('id', 'proc_ref', 'description')),
                 "uom": list(uom.values('unit', 'name')),
+                "currencies": list(currencies.values('id', 'currency')),
                 "suppliers": list(suppliers.values('id', 'name')),
                 "users": list(users.values('id', 'username', 'first_name', 'last_name')),
             }, safe=False)
@@ -1141,6 +1151,7 @@ def save_comparative_schedule(request):
         pr_number = request.POST.get("pr_number", "")
         pr_date = request.POST.get("pr_date", "")
         ref_date = request.POST.get("ref_date", "")
+        currency = request.POST.get("currency", "")
         # quantity = data['quantity']
         closing_date = request.POST.get("closing_date", "")
         closing_time = request.POST.get("closing_time", "")
@@ -1167,12 +1178,14 @@ def save_comparative_schedule(request):
         print("PR: ", pr, pr_number, username)
         # fetch user
         user = UserProfile.objects.filter(username=username).first()
+        currency = Currency.objects.filter(id=currency).first() if currency else None
         # region_ = Regions.objects.filter(region=pr.region).first() if 'region' in pr else None
         # section = Sections.objects.filter(section=pr.section).first() if 'section' in pr else None
         cs_query = DirectPurchase(
             cs_id = cs_id,
             pr_id_id = pr.id,
             scope_of_work = scope_of_work,
+            currency = currency,
             closing_date = closing_date,
             closing_time = closing_time,
             advert = advert_path,
@@ -1212,6 +1225,7 @@ def update_comparative_schedule(request):
         # proc_plan = data['proc_plan']
         proc_plan_ = DPProcPlan.objects.filter(proc_ref=plan_ref).first()
         scope_of_work = request.POST.get("scope_of_work", "")
+        currency = request.POST.get("currency", "")
         pr_number = request.POST.get("pr_number", "")
         pr_date = request.POST.get("pr_date", "")
         ref_date = request.POST.get("ref_date", "")
@@ -1240,12 +1254,15 @@ def update_comparative_schedule(request):
 
         # fetch user
         user = UserProfile.objects.filter(username=username).first()
+        currency = Currency.objects.filter(id=currency).first() if currency else None
         # region_ = Regions.objects.filter(region=pr.region).first() if 'region' in pr else None
         # section = Sections.objects.filter(section=pr.section).first() if 'section' in pr else None
         cs_query = DirectPurchase.objects.filter(cs_id=cs_id).first()
 
         if cs_query:
             clear_approvals(cs_id)
+            if currency:
+                cs_query.currency = currency
             if scope_of_work:
                 cs_query.scope_of_work = scope_of_work 
             if closing_date:

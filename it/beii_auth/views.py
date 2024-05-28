@@ -267,7 +267,7 @@ def business_applications(request):
 
     print("users_role: ", users_role)
     applications = APPLICATIONS
-    if users_role == "standard":
+    if users_role == "standard" or "":
         print("creating standard list ..")
         applications = [app for app in applications if app['name'] != 'users']
         
