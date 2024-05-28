@@ -23,7 +23,7 @@ APPLICATIONS = [
         "name": "ace",
         "title": "ACE",
         "iconUrl": "assets/images/capital.png",
-        "url": "/acee/aces"
+        "url": "/ace/aces"
     },
     {
         "name": "Token",
