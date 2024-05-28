@@ -88,7 +88,7 @@
                     <div class="card grid grid-cols-2 gap-2 mb-3">
                         <div class="card-body m-auto mb-5 bg-gradient-to-r from-gulf-blue-100 to-blue-500 ed p-3
                         border rounded   justify-content-center align-content-stretch container rounded  shadow-lg">
-                            <h1 class="text-center mb-4 font-bold text-xl  mb-2">Ace Details</h1>
+                            <h1 class="text-center mb-4 font-bold text-xl  mb-2">ACE Details</h1>
                     {% if clear %}
                             <h1 class="text-2xl font-semibold leading-7 text-gray-900">
                                 <a href="{% url 'purchase_request:create_ace_purchase_request' ace.Ace_id2 %}" class="bg-gray-500 hover:bg-gray-700
@@ -105,8 +105,8 @@
                             <p class="font-bold mb-2">Budget:{{ ace.budget_id }}</p>
                         <p class="font-bold mb-2">
                             {% for attachment in ace.quotation_set.all %}
-                                <a href="/acee/attachment/ {{attachment}}"><button class=" hover:text-green-600 text-green-300 font-bold py-2 px-4 rounded"
-                                        href="/acee/attachment/ {{attachment}}">
+                                <a href="/ace/attachment/ {{attachment}}"><button class=" hover:text-green-600 text-green-300 font-bold py-2 px-4 rounded"
+                                        href="/ace/attachment/ {{attachment}}">
                                     {{ attachment.quotation_file.name|basename }}
                                 </button>
                                 </a>
