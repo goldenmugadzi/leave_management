@@ -10,6 +10,7 @@ cssselect2==0.7.0
 distlib==0.3.4
 Django==4.1.3
 django-bootstrap-modal-forms==3.0.4
+django-clearcache==1.2.1
 django-cors-headers==3.14.0
 django-elasticsearch-dsl==8.0
 django-jazzmin==2.6.0
@@ -20,6 +21,7 @@ djangorestframework-simplejwt==5.2.2
 elastic-transport==8.12.0
 elasticsearch==8.12.0
 elasticsearch-dsl==8.12.0
+et-xmlfile==1.1.0
 filelock==3.13.1
 fonttools==4.38.0
 fsspec==2023.12.2
@@ -34,11 +36,15 @@ Mako==1.2.1
 Markdown==3.4.1
 MarkupSafe==2.1.1
 mpmath==1.3.0
+mysql==0.0.3
+mysql-connector-python==8.4.0
 mysqlclient==2.1.1
 networkx==3.2.1
 nltk==3.8.1
 numpy==1.24.2
+openpyxl==3.1.2
 packaging==23.2
+panda==0.3.1
 pandas==1.5.3
 Pillow==9.4.0
 platformdirs==2.5.2
@@ -61,6 +67,7 @@ scikit-learn==1.4.0
 scipy==1.12.0
 sentence-transformers==2.2.2
 sentencepiece==0.1.99
+simplejson==3.19.2
 six==1.16.0
 sqlparse==0.4.3
 sweetify==2.3.1
@@ -80,11 +87,3 @@ webencodings==0.5.1
 Werkzeug==2.2.2
 WTForms==2.3.3
 zopfli==0.2.2
-
-django-email-users~=1.1.0
-pip~=22.0.4
-colorclass~=2.2.2
-setuptools~=58.1.0
-zipp~=3.17.0
-docopt~=0.6.2
-terminaltables~=3.1.10
