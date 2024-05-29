@@ -1241,6 +1241,7 @@ def update_comparative_schedule(request):
         # proc_plan = data['proc_plan']
         proc_plan_ = ProcPlan.objects.filter(proc_ref=plan_ref).first()
         scope_of_work = request.POST.get("scope_of_work", "")
+        currency = request.POST.get("currency", "")
         pr_number = request.POST.get("pr_number", "")
         pr_date = request.POST.get("pr_date", "")
         ref_date = request.POST.get("ref_date", "")
@@ -1275,6 +1276,8 @@ def update_comparative_schedule(request):
 
         if cs_query:
             clear_approvals(cs_id)
+            if currency:
+                cs_query.currency = currency
             if scope_of_work:
                 cs_query.scope_of_work = scope_of_work 
             if closing_date:
@@ -1688,7 +1691,7 @@ def save_cs_committee(request):
                 )
                 msg = "You have been added to the committee for RFQ " + cs_query.cs_id
                 url = "/comperative_schedule/comperative_schedule/" + cs_query.cs_id
-                notify_user(member_profile, msg, "RFQ", url, cs_query.id)
+                notify_user(member_profile, msg, "RFQ", url, cs_query.cs_id)
             committee_query.save()
             
         
@@ -1750,7 +1753,7 @@ def approve_cs_committee(request):
             committee_query.justification = justification
             committee_query.committee_date = datetime.now()
             committee_query.save()
-            notification_update(member_profile, cs_query.id)
+            notification_update(member_profile, cs_query.cs_id)
         
         committees = Committee.objects.filter(cs_id=cs_query).all()
         committee_approved = all([c.committee_approval == "Approved" for c in committees])
@@ -1761,7 +1764,7 @@ def approve_cs_committee(request):
             print("fm user: ", fm_user.username, fm_user.id)
             msg = "Comperative Schedule is ready for your approval " + cs_query.cs_id
             url = "/comperative_schedule/comperative_schedule/" + cs_query.cs_id
-            notify_user(fm_user, msg, "RFQ", url, cs_query.id)
+            notify_user(fm_user, msg, "RFQ", url, cs_query.cs_id)
 
             return JsonResponse({
                 "message": "Committee member approved successfully",
@@ -1797,7 +1800,7 @@ def approve_cs(request):
             "success": False,
             }, safe=False)
     
-    committees = Committee.objects.filter(cs_id=cs_query)
+    committees = Committee.objects.filter(cs_id=cs_query).all()
     user = UserProfile.objects.filter(username=username).first()
     if user:
         if role == "general_manager":
@@ -1811,7 +1814,7 @@ def approve_cs(request):
                 created_at = datetime.now(),
             )
             gm_approval.save()
-            notification_update(user, cs_query.id)
+            notification_update(user, cs_query.cs_id)
             
             return JsonResponse({
                 "message": "GM approval saved successfully",
@@ -1839,7 +1842,7 @@ def approve_cs(request):
                 created_at = datetime.now(),
             )
             fm_approval.save()
-            notification_update(user, cs_query.id)
+            notification_update(user, cs_query.cs_id)
                 
             committee_approved = all([c.committee_approval == "Approved" for c in committees])
             if committee_approved and approval == "Approved":
@@ -1847,7 +1850,7 @@ def approve_cs(request):
                 print("gm role: ", gm_role)
                 gm_user = UserProfile.objects.filter(roles=gm_role).first()
                 print("gm user: ", gm_user.username, gm_user.id)
-                notify_user(gm_user, "Comperative Schedule is ready for your approval " + cs_query.cs_id, "RFQ", "/comperative_schedule/comperative_schedule/" + cs_query.cs_id, cs_query.id)
+                notify_user(gm_user, "Comperative Schedule is ready for your approval " + cs_query.cs_id, "RFQ", "/comperative_schedule/comperative_schedule/" + cs_query.cs_id, cs_query.cs_id)
         
             return JsonResponse({
                 "message": "FM approval saved successfully",

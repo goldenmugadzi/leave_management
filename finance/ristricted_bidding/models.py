@@ -1,5 +1,6 @@
 from django.db import models
 from finance.Direct_purchases.models import Supplier
+from finance.comparative_schedules.models import Currency
 
 from finance.purchase_request.models import PurchaseRequest
 from it.users.models import *
@@ -23,6 +24,7 @@ class RistricedBiddings(models.Model):
     proc_plan = models.ForeignKey(RBProcPlan, on_delete=models.CASCADE)
     ref_date = models.DateField(blank=True, null=True, default=None)
     scope_of_work = models.CharField(max_length=400)
+    currency = models.ForeignKey(Currency, on_delete=models.CASCADE, default=1)
     closing_date = models.DateField()
     closing_time = models.CharField(max_length=10)
     advert = models.CharField(max_length=400)

@@ -1682,7 +1682,7 @@ def save_cs_committee(request):
                 )
                 msg = "You have been added to the committee for Direct Purchase " + cs_query.cs_id
                 url = "/direct_purchase/comperative_schedule/" + cs_query.cs_id
-                notify_user(member_profile, msg, "Direct Purchase", url, cs_query.id)
+                notify_user(member_profile, msg, "Direct Purchase", url, cs_query.cs_id)
             committee_query.save()
         
     return JsonResponse({
@@ -1744,7 +1744,7 @@ def approve_cs_committee(request):
             committee_query.justification = justification
             committee_query.committee_date = now()
             committee_query.save()
-            notification_update(member_profile, cs_query.id)
+            notification_update(member_profile, cs_query.cs_id)
         
         committees = DPCommittee.objects.filter(cs_id=cs_query).all()
         committee_approved = all([c.committee_approval == "Approved" for c in committees])
@@ -1755,7 +1755,7 @@ def approve_cs_committee(request):
             print("fm user: ", fm_user.username, fm_user.id)
             msg = cs_query.cs_id + " Direct Purchase is ready for your approval "
             url = "/direct_purchase/comperative_schedule/" + cs_query.cs_id
-            notify_user(fm_user, msg, "Direct Purchase", url, cs_query.id)
+            notify_user(fm_user, msg, "Direct Purchase", url, cs_query.cs_id)
 
             return JsonResponse({
                 "message": "Committee member approved successfully",
@@ -1805,7 +1805,7 @@ def approve_cs(request):
                 created_at = datetime.now(),
             )
             gm_approval.save()
-            notification_update(user, cs_query.id)
+            notification_update(user, cs_query.cs_id)
             
             return JsonResponse({
                 "message": "GM approval saved successfully",
@@ -1835,7 +1835,7 @@ def approve_cs(request):
             fm_approval.save()
             
             print("user: ", user, cs_query.id)
-            flag = notification_update(user, cs_query.id)
+            flag = notification_update(user, cs_query.cs_id)
             print("flag: ", flag)
             notification = Notification.objects.filter(user=user, notification_id=cs_query.id).first()
             if notification:
@@ -1849,7 +1849,7 @@ def approve_cs(request):
                 print("gm role: ", gm_role)
                 gm_user = UserProfile.objects.filter(roles=gm_role).first()
                 print("gm user: ", gm_user.username, gm_user.id)
-                notify_user(gm_user, "Direct Purchase is ready for your approval " + cs_query.cs_id, "Direct Purchase", "/direct_purchase/comperative_schedule/" + cs_query.cs_id, cs_query.id)
+                notify_user(gm_user, "Direct Purchase is ready for your approval " + cs_query.cs_id, "Direct Purchase", "/direct_purchase/comperative_schedule/" + cs_query.cs_id, cs_query.cs_id)
         
         
             return JsonResponse({

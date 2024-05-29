@@ -3698,7 +3698,7 @@ var CreateDP = function (_React$Component) {
                       React.createElement(
                         "td",
                         { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
-                        member.committeeDate ? member.committeeDate.split("+")[0] : ""
+                        member.committeeDate ? member.committeeDate.split(".")[0] : ""
                       )
                     );
                   })
@@ -3792,7 +3792,7 @@ var CreateDP = function (_React$Component) {
                     React.createElement(
                       "td",
                       { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
-                      this.state.fmApproval && this.state.fmApproval.approval_date ? this.state.fmApproval.approval_date.split("+")[0] : ""
+                      this.state.fmApproval && this.state.fmApproval.approval_date ? this.state.fmApproval.approval_date.split(".")[0] : ""
                     )
                   ),
                   React.createElement(
@@ -3855,7 +3855,7 @@ var CreateDP = function (_React$Component) {
                     React.createElement(
                       "td",
                       { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
-                      this.state.gmApproval && this.state.gmApproval.approval_date ? this.state.gmApproval.approval_date.split("+")[0] : ""
+                      this.state.gmApproval && this.state.gmApproval.approval_date ? this.state.gmApproval.approval_date.split(".")[0] : ""
                     )
                   )
                 )
