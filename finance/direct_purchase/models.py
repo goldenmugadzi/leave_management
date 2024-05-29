@@ -1,5 +1,6 @@
 from django.db import models
 from finance.Direct_purchases.models import Supplier
+from finance.comparative_schedules.models import Currency
 
 from finance.purchase_request.models import PurchaseRequest
 from it.users.models import *
@@ -26,6 +27,7 @@ class DirectPurchase(models.Model):
     closing_time = models.CharField(max_length=10)
     advert = models.CharField(max_length=400)
     pr_number = models.CharField(max_length=100)
+    currency = models.ForeignKey(Currency, on_delete=models.CASCADE, default=1)
     pr_date = models.DateField()
     cs_opened = models.DateField()
     tac_date = models.DateField()
@@ -82,6 +84,7 @@ class DPComplianceRemarks(models.Model):
     cs_id = models.ForeignKey(DirectPurchase, on_delete=models.CASCADE)
     supplier_id = models.ForeignKey(Supplier, on_delete=models.CASCADE)
     remarks = models.CharField(max_length=255)
+    created_at = models.DateTimeField(auto_now_add=True)
     
 class DPRanking(models.Model):
     cs_id = models.ForeignKey(DirectPurchase, on_delete=models.CASCADE)

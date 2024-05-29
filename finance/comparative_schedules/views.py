@@ -1686,7 +1686,7 @@ def save_cs_committee(request):
                     committee_name = member['memberUserName'],
                     committee_position = member['memberPosition']
                 )
-                msg = "You have been added to the committee for Comperative Schedule " + cs_query.cs_id
+                msg = "You have been added to the committee for RFQ " + cs_query.cs_id
                 url = "/comperative_schedule/comperative_schedule/" + cs_query.cs_id
                 notify_user(member_profile, msg, "RFQ", url, cs_query.id)
             committee_query.save()
@@ -1755,7 +1755,7 @@ def approve_cs_committee(request):
         committees = Committee.objects.filter(cs_id=cs_query).all()
         committee_approved = all([c.committee_approval == "Approved" for c in committees])
         if committee_approved:
-            fm_role = Roles.objects.filter(name="Finance Manager", application="comparative_schedules").first()
+            fm_role = Roles.objects.filter(name="Finance Manager", application=APP_NAME).first()
             print("fm role: ", fm_role)
             fm_user = UserProfile.objects.filter(roles=fm_role).first()
             print("fm user: ", fm_user.username, fm_user.id)
@@ -1843,7 +1843,7 @@ def approve_cs(request):
                 
             committee_approved = all([c.committee_approval == "Approved" for c in committees])
             if committee_approved and approval == "Approved":
-                gm_role = Roles.objects.filter(name="General Manager", application="comparative_schedules").first()
+                gm_role = Roles.objects.filter(name="General Manager", application=APP_NAME).first()
                 print("gm role: ", gm_role)
                 gm_user = UserProfile.objects.filter(roles=gm_role).first()
                 print("gm user: ", gm_user.username, gm_user.id)

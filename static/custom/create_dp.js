@@ -1,8 +1,8 @@
 "use strict";
 
 const e = React.createElement;
-// const BASE_URL = "http://localhost:8000/direct_purchase";
-const BASE_URL = "http://172.16.8.99:9300/direct_purchase";
+const BASE_URL = "http://localhost:8000/direct_purchase";
+// const BASE_URL = "http://172.16.8.99:9300/direct_purchase";
 
 class CreateDP extends React.Component {
   constructor(props) {
@@ -43,8 +43,8 @@ class CreateDP extends React.Component {
       complianceTable: false,
       compliance: [],
       complianceRemarks: [],
-      showSamples: "",
-      showSiteVisit: "",
+      showSamples: "no",
+      showSiteVisit: "no",
 
       rankingTable: false,
       rankings: [],
@@ -1620,6 +1620,7 @@ class CreateDP extends React.Component {
         }
       }
     }
+    console.log("allValuesTrue: ", allValuesTrue, "compliance: ", _compliance);
     compliance[index]["decision"] = allValuesTrue;
     compliance[index]["reject"] = !allValuesTrue;
 
@@ -3728,9 +3729,8 @@ class CreateDP extends React.Component {
                     {this.state.currency.currency}
                   </option>
                 ) : (
-                  ""
+                  <option value="">Select Currency</option>
                 )}
-                <option value="">Select Currency</option>
                 {this.state.currencies
                   ? this.state.currencies.map((currency) => (
                       <option value={currency.id}>

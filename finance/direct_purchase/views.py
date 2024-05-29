@@ -7,6 +7,7 @@ from datetime import datetime
 from django.db.models import Sum
 
 from finance.comparative_schedules.models import Currency
+from finance.comparative_schedules.views import notification_update, notify_user
 from .models import *
 from it.users.models import *
 from finance.purchase_request.models import PurchaseRequest, PrItem, Attachment, UnitOfMeasurement
@@ -14,7 +15,9 @@ from ACE2.models import Ace2
 from finance.direct_purchase.models import *
 from django.db.models import Q, Exists, OuterRef
 import pandas as pd
+from django.utils.timezone import now
 
+APP_NAME = "direct_purchases"
 # def import_old_rfq(request):
 #     tender_csv = 'tender.csv'
 #     rfq_csv = 'rfq.csv'
@@ -149,7 +152,7 @@ def getUserFMGMRoles(user):
         print("role id:", role.id)
         user_ace_role_ = Roles.objects.filter(id=role.id).first() if role.id else None
         print("role application:", user_ace_role_.application)
-        if user_ace_role_.application == "direct_purchases":
+        if user_ace_role_.application == APP_NAME:
             if user_ace_role_.role == "check":
                 fm_role = True
             if user_ace_role_.role == "approve":
@@ -694,7 +697,7 @@ def get_comperative_schedule_data(request, cs_id):
         print("role id:", role.id)
         user_ace_role_ = Roles.objects.filter(id=role.id).first() if role.id else None
         print("role application:", user_ace_role_.application)
-        if user_ace_role_.application == "direct_purchases":
+        if user_ace_role_.application == APP_NAME:
             user_comparative_schedule_role = user_ace_role_
             
     cs = DirectPurchase.objects.filter(cs_id=cs_id).first()
@@ -1547,16 +1550,17 @@ def save_cs_compliance(request):
             remark.delete()
             
     for remark in compliance_remarks:
-        supplier_name = remark['supplier_name'] if 'supplier_name' in remark else ""
-        print("supplier_name: ", supplier_name, cs_query)
-        supplier = Supplier.objects.filter(name=supplier_name).first()
-        print("supplier: ", supplier)
-        _remark = DPComplianceRemarks(
-            cs_id = cs_query,
-            supplier_id = supplier,
-            remarks = remark['remarks'] if 'remarks' in remark else "",
-        )  
-        _remark.save()
+        if 'remarks' in remark and remark['remarks']:
+            supplier_name = remark['supplier_name'] if 'supplier_name' in remark else ""
+            print("supplier_name: ", supplier_name, cs_query)
+            supplier = Supplier.objects.filter(name=supplier_name).first()
+            print("supplier: ", supplier)
+            _remark = DPComplianceRemarks(
+                cs_id = cs_query,
+                supplier_id = supplier,
+                remarks = remark['remarks'] if 'remarks' in remark else ""
+            )  
+            _remark.save()
         
     return JsonResponse({
         "message": "Compliance saved successfully",
@@ -1613,7 +1617,7 @@ def save_cs_ranking(request):
         remarks = ""
         decision = ""
         if rank == 1:
-            decision = "Awarded " + supplier.name + " being the lowest bidder having complied with all the requirements is recommended to provide the goods/service at a total cost of ZIG" + str(total) + " excluding VAT."
+            decision = "Awarded " + supplier.name + " being the lowest bidder having complied with all the requirements is recommended to provide the goods/service at a total cost of " + cs_query.currency.currency + " " + str(total) + " excluding VAT."
         ranking_query = DPRanking(
             cs_id = cs_query,
             supplier_id = supplier,
@@ -1676,6 +1680,9 @@ def save_cs_committee(request):
                     committee_position = member['memberPosition'],
                     committee_date = datetime.now(),
                 )
+                msg = "You have been added to the committee for Direct Purchase " + cs_query.cs_id
+                url = "/direct_purchase/comperative_schedule/" + cs_query.cs_id
+                notify_user(member_profile, msg, "Direct Purchase", url, cs_query.id)
             committee_query.save()
         
     return JsonResponse({
@@ -1735,8 +1742,21 @@ def approve_cs_committee(request):
         if committee_query:
             committee_query.committee_approval = approval
             committee_query.justification = justification
-            committee_query.committee_date = datetime.now()
+            committee_query.committee_date = now()
             committee_query.save()
+            notification_update(member_profile, cs_query.id)
+        
+        committees = DPCommittee.objects.filter(cs_id=cs_query).all()
+        committee_approved = all([c.committee_approval == "Approved" for c in committees])
+        if committee_approved:
+            fm_role = Roles.objects.filter(name="Finance Manager", application=APP_NAME).first()
+            print("fm role: ", fm_role)
+            fm_user = UserProfile.objects.filter(roles=fm_role).first()
+            print("fm user: ", fm_user.username, fm_user.id)
+            msg = cs_query.cs_id + " Direct Purchase is ready for your approval "
+            url = "/direct_purchase/comperative_schedule/" + cs_query.cs_id
+            notify_user(fm_user, msg, "Direct Purchase", url, cs_query.id)
+
             return JsonResponse({
                 "message": "Committee member approved successfully",
                 "success": True,
@@ -1744,7 +1764,7 @@ def approve_cs_committee(request):
                     "committee_date": committee_query.committee_date,
                     "committee_status": committee_query.committee_status,
                     "committee_fullname": member_profile.first_name + " " + member_profile.last_name,
-                    "committe_approval": approval
+                    "committee_approval": approval,
                 }
             })
         else:
@@ -1771,6 +1791,7 @@ def approve_cs(request):
             "success": False,
             }, safe=False)
     
+    committees = DPCommittee.objects.filter(cs_id=cs_query)
     user = UserProfile.objects.filter(username=username).first()
     if user:
         if role == "general_manager":
@@ -1784,6 +1805,7 @@ def approve_cs(request):
                 created_at = datetime.now(),
             )
             gm_approval.save()
+            notification_update(user, cs_query.id)
             
             return JsonResponse({
                 "message": "GM approval saved successfully",
@@ -1807,10 +1829,28 @@ def approve_cs(request):
                 approver_role = role,
                 approval = approval,
                 justification = justification,
-                approval_date = datetime.now(),
-                created_at = datetime.now(),
+                approval_date = now(),
+                created_at = now(),
             )
             fm_approval.save()
+            
+            print("user: ", user, cs_query.id)
+            flag = notification_update(user, cs_query.id)
+            print("flag: ", flag)
+            notification = Notification.objects.filter(user=user, notification_id=cs_query.id).first()
+            if notification:
+                print("notification: ", notification.is_read, notification.notification_type, notification.message)
+                notification.is_read = True
+                notification.save()
+                
+            committee_approved = all([c.committee_approval == "Approved" for c in committees])
+            if committee_approved and approval == "Approved":
+                gm_role = Roles.objects.filter(name="General Manager", application=APP_NAME).first()
+                print("gm role: ", gm_role)
+                gm_user = UserProfile.objects.filter(roles=gm_role).first()
+                print("gm user: ", gm_user.username, gm_user.id)
+                notify_user(gm_user, "Direct Purchase is ready for your approval " + cs_query.cs_id, "Direct Purchase", "/direct_purchase/comperative_schedule/" + cs_query.cs_id, cs_query.id)
+        
         
             return JsonResponse({
                 "message": "FM approval saved successfully",
