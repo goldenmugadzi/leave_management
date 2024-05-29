@@ -18,11 +18,11 @@
        <h3 class="text-center font-bold  mb-4">All ACEs</h3>
       <div class=" grid grid-cols-4 container text-center ">
           {% if ace_role == requester %}
-        <a href="/acee/create_ace" class="bg-green-500 hover:bg-green-900 inline-block rounded-full mx-3 text-white py-2 px-4 rounded">Create New</a>
+        <a href="/ace/create_ace" class="bg-green-500 hover:bg-green-900 inline-block rounded-full mx-3 text-white py-2 px-4 rounded">Create New</a>
           {% endif %}
 {#        {% comment %} <a href="{% url 'nonconformity:checklist' %}" class="bg-blue-500 hover:bg-blue-700 inline-block rounded-full mx-3 text-white py-2 px-4 rounded">Create from checklist</a> {% endcomment %}#}
-        <a href="/acee/aces_awaiting_my_action" class="bg-blue-500 hover:bg-blue-900 inline-block rounded-full mx-3 text-white py-2 px-4 rounded">Awaiting my action </a>
-          <a href="/acee/aces" class="bg-gray-500 hover:bg-gray-700 inline-block rounded-full mx-3 text-white py-2 px-4 rounded">View ACEs</a>
+        <a href="/ace/aces_awaiting_my_action" class="bg-blue-500 hover:bg-blue-900 inline-block rounded-full mx-3 text-white py-2 px-4 rounded">Awaiting my action </a>
+          <a href="/ace/aces" class="bg-gray-500 hover:bg-gray-700 inline-block rounded-full mx-3 text-white py-2 px-4 rounded">View ACEs</a>
       </div>
       <br> <table id="nonconformity" class="table table-striped stripe table-bordered">
         <thead>
@@ -42,7 +42,7 @@
         <tbody>
             {% for ace in aces %}
             <tr class="h-1">
-                <td><a class="text-blue-500" href="/acee/ace_detail/{{ace.Ace_id2}}">{{ ace.Ace_id2|default_if_none:'' }}</a></td>
+                <td><a class="text-blue-500" href="/ace/ace_detail/{{ace.Ace_id2}}">{{ ace.Ace_id2|default_if_none:'' }}</a></td>
                 <td>{{ ace.details_of_expenditure }}</td>
               <td>{{ ace.amount }}</td>
 

@@ -23,6 +23,7 @@ class RemoteBudget(models.Model):
     awaiting_sanctioning = models.FloatField(blank=True, null=True, default=0)
     period = models.PositiveIntegerField(validators=[MinValueValidator(1), MaxValueValidator(9999)])
     region = models.CharField(max_length=36, blank=True, null=True)
+
     # Add other fields based on the columns in the remote table
 
     class Meta:
@@ -178,3 +179,17 @@ class Quotation(models.Model):
 
     def __str__(self):
         return str(self.pk)
+
+
+class Asset_budget_Virament(models.Model):
+    virament_id = models.AutoField(primary_key=True)
+    requested_by = models.ForeignKey(UserProfile, on_delete=models.DO_NOTHING, blank=True, null=True)
+    from_budget = models.ForeignKey(AssetBudget, on_delete=models.DO_NOTHING, related_name='from_budget')
+    to_budget = models.ForeignKey(AssetBudget, on_delete=models.DO_NOTHING, related_name='to_budget')
+    amount = models.FloatField(blank=True, null=True)
+    reason = models.TextField(blank=True, null=True)
+    process = models.ForeignKey(Process, on_delete=models.DO_NOTHING, blank=True, null=True)
+    region = models.ForeignKey(Regions, on_delete=models.DO_NOTHING, blank=True, null=True)
+    section = models.ForeignKey(Sections, on_delete=models.DO_NOTHING, blank=True, null=True)
+    date_created = models.DateField(auto_now_add=True, blank=True, null=True)
+    currency = models.CharField(max_length=15, blank=True, null=True, choices=Ace2.CURRENCY_CHOICES)

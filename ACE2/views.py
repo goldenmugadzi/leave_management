@@ -883,3 +883,24 @@ def upload_aces_csv(request):
         return redirect("/ace/aces")
     else:
         return render(request, 'finance/ace2/upload_ace.html')
+
+
+def create_virament(request):
+    if request.method == 'POST':
+        form = ViramentForm(request.POST, request.FILES)
+        if form.is_valid():
+            virament = form.save(commit=False)
+            virament.process = intiate(request, 'virement')
+            virament.requested_by = request.user
+            virament.region = request.user.region
+            virament.save()
+            url = reverse('Ace:virament_detail', args=[virament.virament_id])
+            return redirect(url)
+    else:
+        form = ViramentForm()
+    return render(request, 'finance/ace2/create_virament.html', {'form': form})
+
+
+def virament_detail(request, virament_id):
+    virament = Asset_budget_Virament.objects.get(virament_id=virament_id)
+    return render(request, 'finance/ace2/virament_detail.html', {'virament': virament})
