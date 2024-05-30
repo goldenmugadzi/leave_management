@@ -1,5 +1,6 @@
 from django.db import models
 from finance.Direct_purchases.models import Supplier
+from finance.comparative_schedules.models import Currency
 
 from finance.purchase_request.models import PurchaseRequest
 from it.users.models import *
@@ -26,6 +27,7 @@ class DirectPurchase(models.Model):
     closing_time = models.CharField(max_length=10)
     advert = models.CharField(max_length=400)
     pr_number = models.CharField(max_length=100)
+    currency = models.ForeignKey(Currency, on_delete=models.CASCADE, default=1)
     pr_date = models.DateField()
     cs_opened = models.DateField()
     tac_date = models.DateField()
@@ -82,6 +84,7 @@ class DPComplianceRemarks(models.Model):
     cs_id = models.ForeignKey(DirectPurchase, on_delete=models.CASCADE)
     supplier_id = models.ForeignKey(Supplier, on_delete=models.CASCADE)
     remarks = models.CharField(max_length=255)
+    created_at = models.DateTimeField(auto_now_add=True)
     
 class DPRanking(models.Model):
     cs_id = models.ForeignKey(DirectPurchase, on_delete=models.CASCADE)
@@ -100,7 +103,7 @@ class DPCommittee(models.Model):
     committee_status = models.BooleanField(default=False, null=True, blank=True)
     committee_approval = models.CharField(max_length=100, null=True, blank=True) # Approved, Rejected
     justification = models.CharField(max_length=255, null=True, blank=True)
-    committee_date = models.DateField()
+    committee_date = models.DateTimeField()
     created_at = models.DateTimeField(auto_now_add=True)
     
 class DPApproval(models.Model):
@@ -109,5 +112,5 @@ class DPApproval(models.Model):
     approver_role = models.CharField(max_length=100, null=True, blank=True) # General Manager, Finance Manager
     approval = models.CharField(max_length=100, null=True, blank=True) # Approved, Rejected
     justification = models.CharField(max_length=255, null=True, blank=True)
-    approval_date = models.DateField()
+    approval_date = models.DateTimeField()
     created_at = models.DateTimeField(auto_now_add=True)

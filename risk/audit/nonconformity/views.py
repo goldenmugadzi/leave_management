@@ -80,7 +80,6 @@ def nonconformity_details(request, nonconformity_id):
             accepeted = request.POST.get('accepted')
             rejectionForm = RejectionForm(request.POST)
             form = None
-            print(request.POST.get('accepted'),'rejectionForm is valid1',str(accepeted))
             acceptanceForm = AcceptanceForm(request.POST)
             if accepeted == "True":
                 if acceptanceForm.is_valid():
@@ -95,6 +94,9 @@ def nonconformity_details(request, nonconformity_id):
                         AcceptanceAttachment.objects.create(acceptance=acceptance, attachment=attachment)
                     messages.success(request, 'You have successfully accepted the nonconformity.')
                     return redirect('nonconformity:nonconformities')
+                else:
+                    messages.error(request, 'Sorry, something went wrong. Please fill in the required details and try again.')
+                    return render(request, 'risk/nonconformity/nonconformity_details.html',{'nonconformity': nonconformity, 'acceptanceForm': acceptanceForm,'rejectionForm':rejectionForm, 'form': form})
             elif accepeted == "False":
                 if rejectionForm.is_valid():
                     rejection = rejectionForm.save(commit=False)
@@ -108,9 +110,9 @@ def nonconformity_details(request, nonconformity_id):
                         RejectionAttachment.objects.create(rejection=rejection, attachment=attachment)
                     messages.success(request, 'You have successfully rejected the nonconformity.')
                     return redirect('nonconformity:nonconformities')
-            else:
-                messages.error(request, 'Sorry, something went wrong. Please try again.')
-                return render(request, 'risk/nonconformity/nonconformity_details.html',{'nonconformity': nonconformity, 'acceptanceForm': acceptanceForm,'rejectionForm':rejectionForm, 'form': form, 'attachments': attachments })
+                else:
+                    messages.error(request, 'Sorry, something went wrong. Please fill in the required details and try again.')
+                    return render(request, 'risk/nonconformity/nonconformity_details.html',{'nonconformity': nonconformity, 'acceptanceForm': acceptanceForm,'rejectionForm':rejectionForm, 'form': form})
         elif request.user == nonconformity.created_by:
             if nonconformity.accepted != True:
                 form = NonconformityForm(request.POST, instance=nonconformity)
@@ -124,19 +126,21 @@ def nonconformity_details(request, nonconformity_id):
                         Attachment.objects.create(acceptance=nc, attachment=attachment)
                     messages.success(request, 'Nonconformity updated successfully!')
                     return redirect('nonconformity:nonconformities')
-            elif nonconformity.accepted == True and nonconformity.resolved == True:
+            else:
+                messages.error(request, 'Sorry, something went wrong. Please fill in the required details and try again.')
+                return render(request, 'risk/nonconformity/nonconformity_details.html',{'nonconformity': nonconformity, 'acceptanceForm': acceptanceForm,'rejectionForm':rejectionForm, 'form': form })
+        elif nonconformity.accepted == True and nonconformity.resolved == True:
                 form = CloseNcForm(request.POST, instance=nonconformity)
                 if form.is_valid():
                     form.save()
                     return redirect('nonconformity:nonconformities')
-            else: 
-                messages.error(request, 'You cannot make changes on this nonconformity at the moment.')
-                return redirect('nonconformity:nonconformities')
+        messages.error(request, 'Sorry, something went wrong. Please try again.')
+        return redirect(reverse('nonconformity:nonconformity', args=[nonconformity.id]))
     else:
         acceptanceForm = None
         rejectionForm = None
         form = None
-        if request.user == nonconformity.recipient and nonconformity.accepted != True:
+        if request.user == nonconformity.recipient and nonconformity.accepted ==None :
             rejectionForm = RejectionForm()
             acceptanceForm = AcceptanceForm(instance=nonconformity)
         elif request.user == nonconformity.recipient and nonconformity.accepted == True and nonconformity.resolved != True:

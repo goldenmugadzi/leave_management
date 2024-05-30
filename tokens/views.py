@@ -7,7 +7,9 @@ from approve.models import Step
 from approve.forms import ApprovalForm
 from django.contrib.auth.decorators import login_required
 from approve.decorators import allowed_roles
+from django.db.models import Q
 
+# check update
 @login_required
 @allowed_roles(['Requester'], ['temper', 'reimbursement','clear credit'])
 def create_token(request):
@@ -163,11 +165,11 @@ def token_details(request, token_id):
             and last_step is not None
             and token.process.workflow.step_set.last().step == (last_step.step + 1)
         ):
-            if generatetokenform.is_valid() and request.FILES.get("token_photo"):
+            if generatetokenform.is_valid() and request.FILES.get("token_photo") is not None:
                 approve_step(request, token.process.pk)
                 generatetokenform.save()
             else:
-                messages.error(request, 'Generate token form is invalid. Have you provided a token photo?')
+                messages.error(request,'Generate token form is invalid. Have you provided a token photo?')
         else:
             approve_step(request, token.process.pk)
     approvalForm = None
@@ -175,14 +177,12 @@ def token_details(request, token_id):
     to = None
     completed = False
     user_roles = request.user.roles.all()
-
-    try:
-        last_approved = token.process.approval_set.last().step.step
-    except AttributeError:
-        last_approved = 0
-
-    next_step = last_approved + 1
-    if not token.process.approval_set.all():
+    if not token.process.approval_set.filter(approved = 'Rejected').exists():
+        try:
+            last_approved = token.process.approval_set.last().step.step
+        except AttributeError:
+            last_approved = 0
+        next_step = last_approved + 1
         try:
             newStep = Step.objects.get(step=next_step, workflow=token.process.workflow, approver__in=user_roles)
             approvalForm = ApprovalForm
@@ -193,7 +193,7 @@ def token_details(request, token_id):
         except Step.DoesNotExist:
             pass
 
-    completed = token.process.workflow.step_set.last().step == last_approved
+        completed = token.process.workflow.step_set.last().step == last_approved
     approved_steps = token.process.approval_set.all().values_list("step__step", flat=True)
 
     return render(request, "tokens/token_detail.html", {
@@ -205,7 +205,7 @@ def token_details(request, token_id):
         "to": to,
     })
 def view_all_tokens(request):
-    return render(request, "tokens/tokens.html", {"tokens": Token.objects.all(),'all':True,'roles': get_my_roles_for_apps(request.user, ['temper','tokens','reimbursement','clear credit'])})
+    return render(request, "tokens/tokens.html", {"tokens": Token.objects.all(),'all':True,'roles': get_my_roles_for_apps(request.user, ['temper','reimbursement','clear credit'])})
 @login_required
 def awaiting_my_action(request):
     """
@@ -214,8 +214,7 @@ def awaiting_my_action(request):
     """
     tokens_to_process = []
     user_roles = request.user.roles.all()
-    # for token in Token.objects.filter(section=request.user.section):
-    for token in Token.objects.all():
+    for token in Token.objects.filter(Q(section=request.user.section), Q(region=request.user.region)):
         process = token.process
 
         if process.approval_set.exists():
@@ -234,3 +233,20 @@ def awaiting_my_action(request):
 
     return render(request, 'tokens/tokens.html',{'tokens': tokens_to_process,'all':False,'roles': get_my_roles_for_apps(request.user, ['temper','tokens','reimbursement','clear credit'])})
 
+def addsection(request):
+    for token in Token.objects.all():
+        try:
+            if not token.section:
+                token.section = token.created_by.section
+                token.region = token.created_by.region
+                token.save() 
+            old_process = token.process
+            if old_process.workflow.name == 'tokens':
+                if token.type == 'TEMPER': process = intiate(request, "temper")
+                elif token.type == 'REIMBURSEMENT': process = intiate(request, "reimbursement")
+                elif token.type == 'CLEAR CREDIT': process = intiate(request, "clear credit")
+                token.process = process
+                token.save()
+                old_process.delete()
+        except: pass
+    return redirect('tokens:tokens')

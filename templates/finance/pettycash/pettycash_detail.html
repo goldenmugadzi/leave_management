@@ -115,7 +115,7 @@
                                         <div class="form-group">
                                             <label for="disbursed">Amount used($):</label>
                                             <br>
-                                            <input type="number" id="disbursed" name="disbursed">
+                                            <input type="text" id="disbursed" name="disbursed">
                                             <input type="hidden" name="petty_id" value="{{ pettycash.petty_id }}">
                                         </div>
                                         <button type="submit" class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded">Submit</button>
@@ -200,7 +200,7 @@
 
                         <div class="m-4 text-center">
                             <label for="amount_disbursed">Amount Disbursed</label>
-                            <input type="number" name="amount_disbursed" required>
+                            <input type="text" name="amount_disbursed" required>
                         </div>
 
 
@@ -225,7 +225,7 @@
                                 <div class="form-group">
                                     <label for="disbursed">Amount used($):</label>
                                     <br>
-                                    <input type="number" id="disbursed" name="disbursed">
+                                    <input type="text" id="disbursed" name="disbursed">
                                     <input type="hidden" name="petty_id" value="{{ pettycash.petty_id }}">
                                 </div>
                                 <button type="submit" class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded">Submit</button>
@@ -303,6 +303,7 @@
                                                             {% endif %}
                                                             <i class="fas fa-check-circle text-green-500">  </i>
                                                         </span>
+                                                    <span class="inline-block rounded-full text-sm">On: {{ approval.approved_at }}</span>
                                                     </div>
                                                 </div>
                                             {% endif %}

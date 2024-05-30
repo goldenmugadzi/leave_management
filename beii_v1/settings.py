@@ -14,6 +14,7 @@ from pathlib import Path
 import sys, os
 from datetime import timedelta
 from django.contrib.messages import constants as messages
+from decouple import config
 
 MESSAGE_TAGS = {
     messages.ERROR: 'danger'
@@ -29,7 +30,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-7per#nouy422m0!hn0!ecb7ltnq#!^#g!2r5&%^5c%v(!ivv&a'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = config('DEBUG', default=False, cast=bool)
 
 ALLOWED_HOSTS = ['localhost', '172.16.8.20']
 
@@ -44,9 +45,7 @@ ALLOWED_HOSTS = ['localhost', '172.16.8.20']
 
 CORS_ALLOW_ALL_ORIGINS = True
 
-CSRF_TRUSTED_ORIGINS = ['http://172.16.8.97', "http://172.16.8.97:3200", "http://172.16.8.99",
-                        "http://172.16.8.99:9300", "http://172.16.8.98", "http://172.16.8.98:9300",
-                        "http://bexcel.zedc.co.zw:9300"]
+CSRF_TRUSTED_ORIGINS = ['http://172.16.8.20', 'http://172.16.8.20:9300']
 
 CORS_ALLOW_HEADERS = ('content-disposition', 'accept-encoding',
                       'content-type', 'accept', 'origin', 'authorization')
@@ -169,6 +168,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'it.beii_auth.context_processors.environment_vars'
             ],
         },
     },
@@ -180,23 +180,23 @@ WSGI_APPLICATION = 'beii_v1.wsgi.application'
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
 
 DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': config('DB_NAME'),
+        'USER': config('DB_USER'),
+        'PASSWORD': config('DB_PASS'),
+        'HOST': config('DB_HOST'),
+    }
     # 'default': {
+    #     'OPTIONS': {
+    #         'sql_mode': 'NO_BACKSLASH_ESCAPES',
+    #     },
     #     'ENGINE': 'django.db.backends.mysql',
     #     'NAME': 'beii_new',
-    #     'USER': 'root',
-    #     'PASSWORD': '',
-    #     'HOST': 'localhost',
+    #     'USER': 'beii_user',
+    #     'PASSWORD': 'Z3tdc_it@2024',
+    #     'HOST': 'localhost'
     # }
-    'default': {
-        'OPTIONS': {
-            'sql_mode': 'NO_BACKSLASH_ESCAPES',
-        },
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'beii_new',
-        'USER': 'be_user',
-        'PASSWORD': 'Z3tdc_it@2024',
-        'HOST': 'localhost'
-    }
 }
 
 # Password validation

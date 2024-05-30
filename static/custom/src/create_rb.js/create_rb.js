@@ -15,8 +15,9 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
 var e = React.createElement;
+var url = domContainer.getAttribute("data-baseurl");
 // const BASE_URL = "http://localhost:8000/ristricted_bidding";
-var BASE_URL = "http://172.16.8.99:9300/ristricted_bidding";
+var BASE_URL = url + "/ristricted_bidding";
 
 var CreateRB = function (_React$Component) {
   _inherits(CreateRB, _React$Component);
@@ -104,6 +105,8 @@ var CreateRB = function (_React$Component) {
           return fullName1.localeCompare(fullName2);
         });
         var cs_owner = data.cs_owner ? data.cs_owner : "";
+        var currencies = data.currencies ? data.currencies : [];
+        var currency = data.currency ? data.currency : "";
 
         var advert_url = _this.onGetFileObjectUrl(data.advert);
         var pr_at_list = [];
@@ -130,6 +133,8 @@ var CreateRB = function (_React$Component) {
           committeeApprovalComplete: committeeApprovalComplete,
           approvalsComplete: approvalsComplete,
           proc_plans: proc_plans,
+          currencies: currencies,
+          currency: currency,
           uom: uom,
           suppliers: suppliers,
           users: users,
@@ -167,6 +172,7 @@ var CreateRB = function (_React$Component) {
         var pr_id = data.pr_id ? data.pr_id : "";
         var pr_date = data.pr_date ? data.pr_date : "";
         var users = data.users ? data.users : [];
+        var currencies = data.currencies ? data.currencies : [];
         // Sort users by full name (first_name + " " + last_name)
         users.sort(function (user1, user2) {
           var fullName1 = user1.first_name + " " + user1.last_name;
@@ -183,6 +189,7 @@ var CreateRB = function (_React$Component) {
         }
         _this.setState({
           scope_of_work: scope_of_work,
+          currencies: currencies,
           proc_ref: proc_ref,
           proc_plans: plans,
           uom: uom,
@@ -210,6 +217,7 @@ var CreateRB = function (_React$Component) {
           var proc_ref = data.proc_ref ? data.proc_ref : "";
           var proc_plan = data.proc_plan ? data.proc_plan : null;
           var plans = data.proc_plans ? data.proc_plans : [];
+          var currencies = data.currencies ? data.currencies : [];
           var uom = data.uom ? data.uom : "";
           var suppliers = data.suppliers ? data.suppliers : [];
           var pr_items = data.pr_items ? data.pr_items : [];
@@ -234,6 +242,7 @@ var CreateRB = function (_React$Component) {
               proc_ref: proc_plan.proc_ref
             },
             proc_plans: plans,
+            currencies: currencies,
             uom: uom,
             suppliers: suppliers,
             pr_items: pr_items,
@@ -296,6 +305,9 @@ var CreateRB = function (_React$Component) {
       });
       // check if memberUserName is the one creating
       var currentUserFlag = _this.state.member.memberUserName === _this.state.username;
+      var positionFlag = members.find(function (_member) {
+        return _member.memberPosition === _this.state.member.memberPosition;
+      });
       if (member) {
         alert("Committee Member already added.");
       } else if (currentUserFlag) {
@@ -810,9 +822,9 @@ var CreateRB = function (_React$Component) {
             }
             currentBid.items = items;
             console.log("currentBid: ", currentBid);
-            var _bids = [];
+            var bids = [];
             if (_this.state.bids && _this.state.bids.length > 0) {
-              _bids = _this.state.bids.map(function (bid) {
+              bids = _this.state.bids.map(function (bid) {
                 if (bid.bid_count === currentBid.bid_count) {
                   return Object.assign({}, currentBid, {
                     bid_document: currentBid.bid_document ? currentBid.bid_document : bid.bid_document
@@ -820,11 +832,11 @@ var CreateRB = function (_React$Component) {
                 }
                 return bid;
               });
-              _bids.sort(function (a, b) {
+              bids.sort(function (a, b) {
                 return a.bid_count - b.bid_count;
               });
             }
-            _this.onSaveBid(currentBid, _bids, undefined, undefined);
+            _this.onSaveBid(currentBid, bids, undefined, undefined);
           } else {
             // calculate total price for each item
             var _items = [];
@@ -846,16 +858,16 @@ var CreateRB = function (_React$Component) {
             // update current bid items
             currentBid.items = _items;
 
-            var _bids2 = _this.state.bids;
+            var _bids = _this.state.bids;
             console.log("currentBid: ", currentBid);
-            _bids2.push(currentBid);
-            _bids2.sort(function (a, b) {
+            _bids.push(currentBid);
+            _bids.sort(function (a, b) {
               return a.bid_count - b.bid_count;
             });
 
             // check if compliance for supplier exists
-            var _compliances = _this.state.compliance;
-            var compliance = _compliances.find(function (compliance) {
+            var compliances = _this.state.compliance;
+            var compliance = compliances.find(function (compliance) {
               return compliance.supplier_name === currentBid.supplier_name;
             });
             var compliance_ = {};
@@ -877,11 +889,11 @@ var CreateRB = function (_React$Component) {
                 reject: true,
                 remarks: ""
               };
-              _compliances.push(compliance_);
+              compliances.push(compliance_);
             }
 
-            var _complianceRemarks = _this.state.complianceRemarks;
-            var complianceRemark = _complianceRemarks.find(function (complianceRemark) {
+            var complianceRemarks = _this.state.complianceRemarks;
+            var complianceRemark = complianceRemarks.find(function (complianceRemark) {
               return complianceRemark.supplier_name === currentBid.supplier_name;
             });
 
@@ -892,9 +904,9 @@ var CreateRB = function (_React$Component) {
                 supplier_name: currentBid.supplier_name,
                 remarks: ""
               };
-              _complianceRemarks.push(complianceRemark_);
+              complianceRemarks.push(complianceRemark_);
             }
-            _this.onSaveBid(currentBid, _bids2, compliance, _complianceRemarks);
+            _this.onSaveBid(currentBid, _bids, compliance, complianceRemarks);
           }
         } else {
           alert("Please add items to the bid");
@@ -902,7 +914,7 @@ var CreateRB = function (_React$Component) {
       }
     };
 
-    _this.onSaveBid = function (currentBid) {
+    _this.onSaveBid = function (currentBid, bids, compliances, complianceRemarks) {
       var form_data = new FormData();
 
       // add enctype to form data
@@ -950,7 +962,7 @@ var CreateRB = function (_React$Component) {
     };
 
     _this.onSaveSchedule = function () {
-      if (!_this.state.proc_ref || !_this.state.scope_of_work || !_this.state.pr_number || !_this.state.pr_date || !_this.state.closing_date || !_this.state.ref_date || !_this.state.closing_time || !_this.state.date_tender_opened || !_this.state.tender_adjudication_committee_date) {
+      if (!_this.state.currency || !_this.state.proc_ref || !_this.state.scope_of_work || !_this.state.pr_number || !_this.state.pr_date || !_this.state.closing_date || !_this.state.ref_date || !_this.state.closing_time || !_this.state.date_tender_opened || !_this.state.tender_adjudication_committee_date) {
         alert("Please fill in all required fields");
         return;
       }
@@ -963,6 +975,7 @@ var CreateRB = function (_React$Component) {
       form_data.enctype = "multipart/form-data";
       form_data.append("proc_ref", _this.state.proc_ref);
       form_data.append("scope_of_work", _this.state.scope_of_work);
+      form_data.append("currency", _this.state.currency);
       form_data.append("pr_number", _this.state.pr_number);
       form_data.append("quantity", _this.state.quantity);
       form_data.append("pr_date", _this.state.pr_date);
@@ -1004,7 +1017,7 @@ var CreateRB = function (_React$Component) {
         alert("Please save the Comparative Schedule first");
         return;
       }
-      if (!_this.state.proc_ref || !_this.state.scope_of_work || !_this.state.pr_number || !_this.state.pr_date || !_this.state.closing_date || !_this.state.ref_date || !_this.state.closing_time || !_this.state.date_tender_opened || !_this.state.tender_adjudication_committee_date) {
+      if (!_this.state.currency || !_this.state.proc_ref || !_this.state.scope_of_work || !_this.state.pr_number || !_this.state.pr_date || !_this.state.closing_date || !_this.state.ref_date || !_this.state.closing_time || !_this.state.date_tender_opened || !_this.state.tender_adjudication_committee_date) {
         alert("Please fill in all required fields");
         return;
       }
@@ -1014,6 +1027,7 @@ var CreateRB = function (_React$Component) {
       form_data.append("cs_id", _this.state.cs_id);
       form_data.append("proc_ref", _this.state.proc_ref);
       form_data.append("scope_of_work", _this.state.scope_of_work);
+      form_data.append("currency", _this.state.currency);
       form_data.append("pr_number", _this.state.pr_number);
       form_data.append("quantity", _this.state.quantity);
       form_data.append("pr_date", _this.state.pr_date);
@@ -1417,6 +1431,8 @@ var CreateRB = function (_React$Component) {
       committeeApprovalComplete: false,
       plan_ref: "",
       proc_ref: "",
+      currency: null,
+      currencies: [],
       proc_plan: null,
       scope_of_work: "",
       pr_number: "",
@@ -1442,8 +1458,8 @@ var CreateRB = function (_React$Component) {
       complianceTable: false,
       compliance: [],
       complianceRemarks: [],
-      showSamples: "",
-      showSiteVisit: "",
+      showSamples: "no",
+      showSiteVisit: "no",
 
       rankingTable: false,
       rankings: [],
@@ -3604,7 +3620,7 @@ var CreateRB = function (_React$Component) {
                     React.createElement(
                       "td",
                       { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
-                      this.state.created_at ? this.state.created_at.split(" ")[0] : ""
+                      this.state.created_at ? this.state.created_at.split(".")[0] : ""
                     )
                   ),
                   this.state.committeeMembers && this.state.committeeMembers.map(function (member, key) {
@@ -3688,7 +3704,7 @@ var CreateRB = function (_React$Component) {
                       React.createElement(
                         "td",
                         { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
-                        member.committeeDate
+                        member.committeeDate ? member.committeeDate.split(".")[0] : ""
                       )
                     );
                   })
@@ -3782,7 +3798,7 @@ var CreateRB = function (_React$Component) {
                     React.createElement(
                       "td",
                       { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
-                      this.state.fmApproval && this.state.fmApproval.approval_date
+                      this.state.fmApproval && this.state.fmApproval.approval_date ? this.state.fmApproval.approval_date.split(".")[0] : ""
                     )
                   ),
                   React.createElement(
@@ -3845,7 +3861,7 @@ var CreateRB = function (_React$Component) {
                     React.createElement(
                       "td",
                       { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
-                      this.state.gmApproval && this.state.gmApproval.approval_date
+                      this.state.gmApproval && this.state.gmApproval.approval_date ? this.state.gmApproval.approval_date.split(".")[0] : ""
                     )
                   )
                 )
@@ -4064,6 +4080,51 @@ var CreateRB = function (_React$Component) {
                     "option",
                     { value: plan.proc_ref },
                     plan.description
+                  );
+                }) : ""
+              )
+            )
+          ),
+          React.createElement(
+            "div",
+            { className: "flex-1 w-20 ml-1" },
+            React.createElement(
+              "label",
+              {
+                htmlFor: "currency",
+                className: "block text-sm font-medium leading-6 text-gray-900"
+              },
+              "Currency"
+            ),
+            React.createElement(
+              "div",
+              { className: "mt-2" },
+              React.createElement(
+                "select",
+                {
+                  id: "currency",
+                  name: "currency",
+                  autoComplete: "currency",
+                  onChange: function onChange(e) {
+                    return _this2.onSelectChange("currency", e);
+                  },
+                  disabled: this.state.username === this.state.cs_owner || this.state.cs_owner === "" ? false : true,
+                  className: "block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
+                },
+                this.state.currency ? React.createElement(
+                  "option",
+                  { value: this.state.currency.id },
+                  this.state.currency.currency
+                ) : React.createElement(
+                  "option",
+                  { value: "" },
+                  "Select Currency"
+                ),
+                this.state.currencies ? this.state.currencies.map(function (currency) {
+                  return React.createElement(
+                    "option",
+                    { value: currency.id },
+                    currency.currency
                   );
                 }) : ""
               )

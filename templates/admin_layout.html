@@ -27,7 +27,25 @@
       <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
       <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
 {#      <script src="{% static 'assets/precalc.js' %}"></script>#} {% endcomment %}
-
+    <style>
+      .scroll-container {
+        position: relative;
+        white-space: nowrap;
+      }
+      
+      #scrolling-text {
+        animation: scroll-text 10s linear infinite;
+      }
+      
+      @keyframes scroll-text {
+        0% {
+          transform: translateX(100%);
+        }
+        100% {
+          transform: translateX(-100%);
+        }
+      }
+    </style>
     {% block styles %}
     {% endblock styles %}
   </head>
@@ -197,9 +215,11 @@
                          alt="ZETDC" />
                   </div>
                   <div style="flex: 0.8" class="flex w-full items-center">
+                    <div class="scroll-container relative w-full overflow-hidden">
                     <div id="scrolling-text"
                          class="text-right text-lg whitespace-nowrap text-gulf-blue-950 px-3 py-2 font-medium"
-                         style="text-indent: 10px">Business Excellence</div>
+                         style="text-indent: 10px">ZETDC BUSINESS EXCELLENCE</div>
+                    </div>
                   </div>
                   <div class="relative ml-3 flex items-center">
                     <form action="{% url 'search' %}" method="GET">
@@ -410,17 +430,6 @@
     {% block scripts %}
     {% endblock scripts %}
     <script>
-      const textElement = document.querySelector("#scrolling-text");
-      let textWidth = textElement.scrollWidth; // Get text width
-      let scrollPosition = 0;
-
-      const intervalId = setInterval(() => {
-        scrollPosition += 2; // Adjust scrolling speed
-        textElement.style.textIndent = `${scrollPosition}px`;
-        if (scrollPosition >= textWidth) {
-          scrollPosition = 0;
-        }
-      }, 50);
     </script>
     
   <script>

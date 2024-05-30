@@ -21,80 +21,80 @@ from it.users.forms import CustomUserCreationForm
 from django.contrib.auth.models import Group
 from .helpers import DESIGNATIONS, REGIONS, DISTRICTS, DEPOTS, ROLES, SECTIONS
 from django.contrib import messages
-
+from decouple import config
 from approve.decorators import allowed_roles
-BASE_URL = "http://172.16.8.99:9300"
+BASE_URL = "http://"+config('HOST')+":"+config('PORT')
 
 
 @login_required
 @allowed_roles(['administrator'], ['users'])
 def add_centers(request):
     
-    # for region in REGIONS:
-    #     _region = Regions(
-    #         region=region['name'],
-    #         code=region['code'],
-    #     )
-    #     _region.save()
-    #
-    # for district in DISTRICTS:
-    #     region_id = Regions.objects.filter(code=district['parent_code']).first()
-    #     _district = Districts(
-    #         district=district['name'],
-    #         code=district['code'],
-    #         region_id=region_id.id
-    #     )
-    #     _district.save()
-    #
-    # for depot in DEPOTS:
-    #     district_id=Districts.objects.filter(code=depot['district_code']).first()
-    #     region_id = Regions.objects.filter(code=depot['parent_code']).first()
-    #     _depot = Depots(
-    #         depot=depot['name'],
-    #         code=depot['code'],
-    #         district_id=district_id.id,
-    #         region_id=region_id.id
-    #     )
-    #     _depot.save()
-    #
-    # for designation in DESIGNATIONS:
-    #     _designation = Designations(
-    #         description=designation['description']
-    #     )
-    #     _designation.save()
-    #
-    # for role in ROLES:
-    #     application_ = role['application']
-    #     app_id = Application.objects.filter(name=application_).first()
-    #     if app_id:
-    #         _role = Roles(
-    #             role=role['role'],
-    #             name=role['name'],
-    #             description=role['description'],
-    #             application=role['application'],
-    #             app_id=app_id
-    #         )
-    #         _role.save()
-    #     else:
-    #         new_app = Application(
-    #             name=application_
-    #         )
-    #         new_app.save()
-    #         _role = Roles(
-    #             role=role['name'],
-    #             name=role['name'],
-    #             description=role['description'],
-    #             application=role['application'],
-    #             app_id=new_app
-    #         )
-    #         _role.save()
+    for region in REGIONS:
+        _region = Regions(
+            region=region['name'],
+            code=region['code'],
+        )
+        _region.save()
+    
+    for district in DISTRICTS:
+        region_id = Regions.objects.filter(code=district['parent_code']).first()
+        _district = Districts(
+            district=district['name'],
+            code=district['code'],
+            region_id=region_id.id
+        )
+        _district.save()
+    
+    for depot in DEPOTS:
+        district_id=Districts.objects.filter(code=depot['district_code']).first()
+        region_id = Regions.objects.filter(code=depot['parent_code']).first()
+        _depot = Depots(
+            depot=depot['name'],
+            code=depot['code'],
+            district_id=district_id.id,
+            region_id=region_id.id
+        )
+        _depot.save()
+    
+    for designation in DESIGNATIONS:
+        _designation = Designations(
+            description=designation['description']
+        )
+        _designation.save()
+    
+    for role in ROLES:
+        application_ = role['application']
+        app_id = Application.objects.filter(name=application_).first()
+        if app_id:
+            _role = Roles(
+                role=role['role'],
+                name=role['name'],
+                description=role['description'],
+                application=role['application'],
+                app_id=app_id
+            )
+            _role.save()
+        else:
+            new_app = Application(
+                name=application_
+            )
+            new_app.save()
+            _role = Roles(
+                role=role['name'],
+                name=role['name'],
+                description=role['description'],
+                application=role['application'],
+                app_id=new_app
+            )
+            _role.save()
             
-    # for section in SECTIONS:
-    #     _section = Sections(
-    #         section=section['section'],
-    #         code=section['code']
-    #     )
-    #     _section.save()
+    for section in SECTIONS:
+        _section = Sections(
+            section=section['section'],
+            code=section['code']
+        )
+        _section.save()
         
     return redirect('/users/users-index')
 

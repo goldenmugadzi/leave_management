@@ -1,8 +1,10 @@
 "use strict";
 
 const e = React.createElement;
+const domContainer = document.querySelector("#create_comparative_schedule");
+const url = domContainer.getAttribute("data-baseurl");
 // const BASE_URL = "http://localhost:8000";
-const BASE_URL = "http://172.16.8.99:9300";
+const BASE_URL = url;
 
 class CreateCS extends React.Component {
   constructor(props) {
@@ -16,6 +18,8 @@ class CreateCS extends React.Component {
       committeeApprovalComplete: false,
       plan_ref: "",
       proc_ref: "",
+      currency: null,
+      currencies: [],
       proc_plan: null,
       scope_of_work: "",
       pr_number: "",
@@ -204,6 +208,8 @@ class CreateCS extends React.Component {
           return fullName1.localeCompare(fullName2);
         });
         let cs_owner = data.cs_owner ? data.cs_owner : "";
+        let currencies = data.currencies ? data.currencies : [];
+        let currency = data.currency ? data.currency : "";
 
         let advert_url = this.onGetFileObjectUrl(data.advert);
         let pr_at_list = [];
@@ -232,6 +238,8 @@ class CreateCS extends React.Component {
           committeeApprovalComplete: committeeApprovalComplete,
           approvalsComplete: approvalsComplete,
           proc_plans: proc_plans,
+          currencies: currencies,
+          currency: currency,
           uom: uom,
           suppliers: suppliers,
           users: users,
@@ -283,6 +291,7 @@ class CreateCS extends React.Component {
         let pr_id = data.pr_id ? data.pr_id : "";
         let pr_date = data.pr_date ? data.pr_date : "";
         let users = data.users ? data.users : [];
+        let currencies = data.currencies ? data.currencies : [];
         // Sort users by full name (first_name + " " + last_name)
         users.sort((user1, user2) => {
           const fullName1 = user1.first_name + " " + user1.last_name;
@@ -300,6 +309,7 @@ class CreateCS extends React.Component {
         }
         this.setState({
           scope_of_work: scope_of_work,
+          currencies: currencies,
           proc_ref: proc_ref,
           proc_plans: plans,
           uom: uom,
@@ -326,6 +336,7 @@ class CreateCS extends React.Component {
           let proc_ref = data.proc_ref ? data.proc_ref : "";
           let proc_plan = data.proc_plan ? data.proc_plan : null;
           let plans = data.proc_plans ? data.proc_plans : [];
+          let currencies = data.currencies ? data.currencies : [];
           let uom = data.uom ? data.uom : "";
           let suppliers = data.suppliers ? data.suppliers : [];
           let pr_items = data.pr_items ? data.pr_items : [];
@@ -351,6 +362,7 @@ class CreateCS extends React.Component {
               proc_ref: proc_plan.proc_ref,
             },
             proc_plans: plans,
+            currencies: currencies,
             uom: uom,
             suppliers: suppliers,
             pr_items: pr_items,
@@ -1092,7 +1104,7 @@ class CreateCS extends React.Component {
 
   onSaveSchedule = () => {
 
-    if(!this.state.proc_ref || !this.state.scope_of_work || !this.state.pr_number || !this.state.pr_date || !this.state.closing_date || !this.state.ref_date || !this.state.closing_time || !this.state.date_tender_opened || !this.state.tender_adjudication_committee_date) {
+    if(!this.state.currency || !this.state.proc_ref || !this.state.scope_of_work || !this.state.pr_number || !this.state.pr_date || !this.state.closing_date || !this.state.ref_date || !this.state.closing_time || !this.state.date_tender_opened || !this.state.tender_adjudication_committee_date) {
       alert("Please fill in all required fields");
       return;
     }
@@ -1105,6 +1117,7 @@ class CreateCS extends React.Component {
     form_data.enctype = "multipart/form-data";
     form_data.append("proc_ref", this.state.proc_ref);
     form_data.append("scope_of_work", this.state.scope_of_work);
+    form_data.append("currency", this.state.currency);
     form_data.append("pr_number", this.state.pr_number);
     form_data.append("quantity", this.state.quantity);
     form_data.append("pr_date", this.state.pr_date);
@@ -1148,7 +1161,7 @@ class CreateCS extends React.Component {
       alert("Please save the Comparative Schedule first");
       return;
     }
-    if(!this.state.proc_ref || !this.state.scope_of_work || !this.state.pr_number || !this.state.pr_date || !this.state.closing_date || !this.state.ref_date || !this.state.closing_time || !this.state.date_tender_opened || !this.state.tender_adjudication_committee_date) {
+    if(!this.state.currency || !this.state.proc_ref || !this.state.scope_of_work || !this.state.pr_number || !this.state.pr_date || !this.state.closing_date || !this.state.ref_date || !this.state.closing_time || !this.state.date_tender_opened || !this.state.tender_adjudication_committee_date) {
       alert("Please fill in all required fields");
       return;
     }
@@ -1158,6 +1171,7 @@ class CreateCS extends React.Component {
     form_data.append("cs_id", this.state.cs_id);
     form_data.append("proc_ref", this.state.proc_ref);
     form_data.append("scope_of_work", this.state.scope_of_work);
+    form_data.append("currency", this.state.currency);
     form_data.append("pr_number", this.state.pr_number);
     form_data.append("quantity", this.state.quantity);
     form_data.append("pr_date", this.state.pr_date);
@@ -3104,7 +3118,7 @@ class CreateCS extends React.Component {
 
                     </td>
                     <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                      {this.state.created_at ? this.state.created_at.split(" ")[0] : ""}
+                      {this.state.created_at ? this.state.created_at.split(".")[0] : ""}
                     </td>
                   </tr>
                   {this.state.committeeMembers && this.state.committeeMembers.map((member, key) => {
@@ -3180,7 +3194,7 @@ class CreateCS extends React.Component {
                           {member.committeeJustification}
                         </td>
                         <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                          {member.committeeDate}
+                          {member.committeeDate ? member.committeeDate.split(".")[0] : ""}
                         </td>
                       </tr>
                     );
@@ -3207,6 +3221,9 @@ class CreateCS extends React.Component {
                   <tr className="text-gray-900">
                     <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
                       FINANCE MANAGER
+                    </td>
+                    <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                      {this.state.fmApproval && this.state.fmApproval.approver_name}
                     </td>
                     <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
                       {this.state.fmApproval && this.state.fmApproval.approval === "Rejected" && this.state.fmApproval.justification}
@@ -3254,12 +3271,15 @@ class CreateCS extends React.Component {
                       }
                     </td>
                     <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                      {this.state.fmApproval && this.state.fmApproval.approval_date}
+                      {this.state.fmApproval && this.state.fmApproval.approval_date ? this.state.fmApproval.approval_date.split(".")[0] : ""}
                     </td>
                   </tr>
                   <tr className="text-gray-900">
                     <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
                       GENERAL MANAGER
+                    </td>
+                    <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                      {this.state.gmApproval && this.state.gmApproval.approver_name}
                     </td>
                     <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
                       {this.state.gmApproval && this.state.gmApproval.approval === "Rejected" && this.state.gmApproval.justification}
@@ -3307,7 +3327,7 @@ class CreateCS extends React.Component {
                     }
                     </td>
                     <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                      {this.state.gmApproval && this.state.gmApproval.approval_date}
+                      {this.state.gmApproval && this.state.gmApproval.approval_date ? this.state.gmApproval.approval_date.split(".")[0] : ""}
                     </td>
                   </tr>
                 </tbody>
@@ -3451,7 +3471,7 @@ class CreateCS extends React.Component {
                 autoComplete="proc_plan"
                 onChange={(e) => this.onSelectChange("proc_ref", e)}
                 disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
-                className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
+                className="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
               >
                 {this.state.proc_plan ? (
                   <option value={this.state.proc_plan.proc_ref}>
@@ -3464,6 +3484,39 @@ class CreateCS extends React.Component {
                   ? this.state.proc_plans.map((plan) => (
                       <option value={plan.proc_ref}>
                         {plan.description}
+                      </option>
+                    ))
+                  : ""}
+              </select>
+            </div>
+        </div>
+        <div className="flex-1 w-20 ml-1">
+            <label
+              htmlFor="currency"
+              className="block text-sm font-medium leading-6 text-gray-900"
+            >
+              Currency
+            </label>
+            <div className="mt-2">
+              <select
+                id="currency"
+                name="currency"
+                autoComplete="currency"
+                onChange={(e) => this.onSelectChange("currency", e)}
+                disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
+                className="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
+              >
+                {this.state.currency ? (
+                  <option value={this.state.currency.id}>
+                    {this.state.currency.currency}
+                  </option>
+                ) : (
+                  <option value="">Select Currency</option>
+                )}
+                {this.state.currencies
+                  ? this.state.currencies.map((currency) => (
+                      <option value={currency.id}>
+                        {currency.currency}
                       </option>
                     ))
                   : ""}
@@ -3950,7 +4003,6 @@ class CreateCS extends React.Component {
   }
 }
 
-const domContainer = document.querySelector("#create_comparative_schedule");
 const username = domContainer.getAttribute("data-username");
 const prid = domContainer.getAttribute("data-prid");
 const csid = domContainer.getAttribute("data-csid");
