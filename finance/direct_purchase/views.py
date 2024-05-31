@@ -1209,6 +1209,30 @@ def datatable_data(request, view):
     page_number = start // length + 1
     page_obj = paginator.get_page(page_number)
 
+    # Prepare response
+    data = [{
+                "cs_id": obj['cs_id'],
+                "pr_id": obj['pr_id'],
+                "pr_number": obj['pr_number'],
+                "pr_date": obj['pr_date'],
+                "scope_of_work": obj['scope_of_work'],
+                "closing_date": obj['closing_date'],
+                "closing_time": obj['closing_time'],
+                "advert": obj['advert'],
+                "pr_number": obj['pr_number'],
+                "pr_date": obj['pr_date'],
+                "cs_opened": obj['cs_opened'],
+                "tac_date": obj['tac_date'],
+                "created_by": obj['created_by'],
+                "committee_approval": obj['committee_approval'],
+                "gm_approval": obj['gm_approval'],
+                "fm_approval": obj['fm_approval'],
+                "section": obj['section'],
+                "region": obj['region'],
+                "created_at": obj['created_at'],
+            } for obj in page_obj]
+
+
     return JsonResponse({
         'draw': draw,
         'recordsTotal': total,

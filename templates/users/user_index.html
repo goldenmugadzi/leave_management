@@ -52,29 +52,35 @@
 <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 <script>
-  var objs = JSON.parse("{{context|escapejs}}");
 
   $(document).ready(function () {
     $("#users_index").DataTable({
-      data: objs,
+      "processing": true,
+      "serverSide": true,
+      "ajax": {
+        "url": "/users/datatables",
+        "type": "GET"
+      },
       columns: [
         {
           data: "username",
         },
         {
-          data: "firstname",
+          data: "first_name",
         },
         {
-          data: "lastname",
+          data: "last_name",
         },
         {
           data: "email",
         },
         {
-          data: "date_created",
+          data: "date_joined",
         },
         {
-          data: null,
+          data: "id",
+          orderable: false,
+          searchable: false,
           render: function (data, type, row, meta) {
             return `
               <a type="button" class="btn btn-info" href='/users/user/update?i=${row.id}' >
@@ -88,8 +94,9 @@
                 </svg>                
               </a>`;
           },
-        },
+        }
       ],
+      order: [[5, 'desc']]
     });
   });
 </script>

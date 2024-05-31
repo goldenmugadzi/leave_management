@@ -34,16 +34,12 @@ DEBUG = config('DEBUG', default=False, cast=bool)
 
 ALLOWED_HOSTS = ['localhost', '172.16.8.20']
 
-# CORS_ALLOWED_ORIGINS = [
-#     "http://172.16.8.97",
-#     "http://172.16.8.99",
-#     "http://172.16.8.98",
-#     "http://172.16.8.97:3200",
-#     "http://localhost:3000",
-#     "http://172.16.8.99:9300"
-# ]
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "http://172.16.8.20:9300"
+]
 
-CORS_ALLOW_ALL_ORIGINS = True
+# CORS_ALLOW_ALL_ORIGINS = True
 
 CSRF_TRUSTED_ORIGINS = ['http://172.16.8.20', 'http://172.16.8.20:9300']
 

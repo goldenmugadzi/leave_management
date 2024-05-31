@@ -23,8 +23,8 @@ from .helpers import DESIGNATIONS, REGIONS, DISTRICTS, DEPOTS, ROLES, SECTIONS
 from django.contrib import messages
 from decouple import config
 from approve.decorators import allowed_roles
+from django.core.paginator import Paginator
 BASE_URL = "http://"+config('HOST')+":"+config('PORT')
-
 
 @login_required
 @allowed_roles(['administrator'], ['users'])
@@ -193,22 +193,7 @@ def add_user(request):
 @login_required
 @allowed_roles(['administrator'], ['users'])
 def get_user_records(request):
-    records = UserProfile.objects.order_by('-date_joined').all()
 
-    records_list = []
-    for record in records:
-        o = {
-            "id": record.pk,
-            "username": record.username,
-            "firstname": record.first_name,
-            "lastname": record.last_name,
-            "email": record.email,
-            "date_created": record.date_joined.date()
-        }
-
-        records_list.append(o)
-
-    context = json.dumps(records_list, default=str)
     user_page = 'users/user_index.html'
     user_title = request.user.get_full_name()
     l = request.user.groups.values_list('name', flat=True)  # QuerySet Object
@@ -219,11 +204,55 @@ def get_user_records(request):
         user_page,
         {
             "title": "All Records",
-            "context": context,
             "user_title": user_title,
             "user_groups": user_groups
-
         })
+    
+def datatable_data(request):
+    draw = int(request.GET.get('draw', default=1))
+    start = int(request.GET.get('start', default=0))
+    length = int(request.GET.get('length', default=10))
+    search_value = request.GET.get('search[value]', default='')
+
+    # Fetch your data from the model
+    records = UserProfile.objects.order_by('-date_joined').all()
+    # Filter based on search value
+    if search_value:
+        records = records.filter(name__icontains=search_value)
+
+    # Total number of records before filtering
+    total = records.count()
+
+    # Sorting
+    order_column = request.GET.get('order[0][column]')
+    order = request.GET.get('order[0][dir]')
+    if order_column:
+        column_name = request.GET.get(f'columns[{order_column}][data]')
+        if order == 'desc':
+            column_name = f'-{column_name}'
+        records = records.order_by(column_name)
+
+    # Pagination
+    paginator = Paginator(records, length)
+    page_number = start // length + 1
+    page_obj = paginator.get_page(page_number)
+
+    # Prepare response
+    data = [{
+            "id": obj.pk,
+            "username": obj.username,
+            "first_name": obj.first_name,
+            "last_name": obj.last_name,
+            "email": obj.email,
+            "date_joined": obj.date_joined.date()
+        } for obj in page_obj]
+
+    return JsonResponse({
+        'draw': draw,
+        'recordsTotal': total,
+        'recordsFiltered': total,
+        'data': data
+    })
 
 @login_required
 @allowed_roles(['administrator'], ['users'])
@@ -296,7 +325,7 @@ def update_user(request):
         return redirect("/users/users-index")
 
 @login_required
-@allowed_roles(['Administrator'], ['users'])
+@allowed_roles(['administrator'], ['users'])
 def update_userx(request):
     if request.method == "GET":
 
@@ -430,7 +459,7 @@ def update_userx(request):
 
 
 @login_required
-@allowed_roles(['Administrator'], ['users'])
+@allowed_roles(['administrator'], ['users'])
 def reset_user_password(request):
     if request.method == "POST":
 
@@ -516,7 +545,7 @@ def change_user_password(request):
 
 
 @login_required
-@allowed_roles(['Administrator'], ['users'])
+@allowed_roles(['administrator'], ['users'])
 def get_filtered_districts(request, region_id):
     
     districts = Districts.objects.filter(region_id=region_id).all()
@@ -524,7 +553,7 @@ def get_filtered_districts(request, region_id):
     return JsonResponse(list(districts.values('id', 'district')), safe=False)
 
 @login_required
-@allowed_roles(['Administrator'], ['users'])
+@allowed_roles(['administrator'], ['users'])
 def get_filtered_depots(request, district_id):
         
     depots = Depots.objects.filter(district_id=district_id).all()
@@ -532,7 +561,7 @@ def get_filtered_depots(request, district_id):
     return JsonResponse(list(depots.values('id', 'depot')), safe=False)
 
 @login_required
-@allowed_roles(['Administrator'], ['users'])
+@allowed_roles(['administrator'], ['users'])
 def get_user_all_groups(request):
     if request.method == "GET":
         user_title = request.user.get_full_name()
@@ -604,7 +633,7 @@ def get_user_all_groups(request):
 
 
 @login_required
-@allowed_roles(['Administrator'], ['users'])
+@allowed_roles(['administrator'], ['users'])
 def import_users(request):
     if request.method == "POST":
         file = request.FILES['file']
