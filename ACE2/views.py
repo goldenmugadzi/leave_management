@@ -909,14 +909,33 @@ def virament_detail(request, virament_id):
     to = None
     user_roles = request.user.roles.all()  # Accessing the user's roles through the 'roles' attribute
 
+    user_id = request.user.id
+    user_profile = UserProfile.objects.filter(id=user_id).first()
+    clear = False
+    clear_minus = False
+    approve_now = False
+
+    user_groups = user_profile.groups.values_list('name', flat=True)
+
+    custom_user_roles = {
+        "virement": {},
+    }
+
+    roles_ = user_profile.roles.all()
+    for _role in roles_:
+        role = Roles.objects.filter(id=_role.id).first()
+
+        if role.application == "virement":
+            custom_user_roles["virement"] = role
+    virement_role = str(custom_user_roles["virement"])
+
     try:
         last_approved = virament_item.process.approval_set.last().step.step
     except AttributeError:
         last_approved = 0
-    if ace_role == "create" or ace_role == "order":
+    if virement_role == "create" or virement_role == "order":
         if len(virament_item.process.approval_set.all()) == len(virament_item.process.workflow.step_set.all()):
             clear = True
-    virament_item = None
 
     approval_status = virament_item.process.approval_set.last().approved if virament_item.process.approval_set.last() else ""
     if approval_status != "Rejected":
@@ -929,12 +948,12 @@ def virament_detail(request, virament_id):
             newStep = Step.objects.get(step=next_step, workflow=virament_item.process.workflow,
                                        approver__in=user_roles)
 
-            if ace_role == "pass":
+            if virement_role == "pass":
 
                 if newStep and request.user.section == virament_item.section and next_step == 1:
                     approvalForm = ApprovalForm
                     to = newStep.to
-                    print(ace_role)
+                    print(virement_role)
                     if newStep.step == len(virament_item.process.workflow.step_set.all()):
                         clear = True
                     if newStep.step == len(virament_item.process.workflow.step_set.all()) - 1:
@@ -980,15 +999,18 @@ def virament_detail(request, virament_id):
             transaction.save()
             print("transaction: ", str(transaction.approval_status))
 
-    ace_quantity = range(virament_item.quantity)
+    # ace_quantity = range(virament_item.quantity)
     approved_steps = virament_item.process.approval_set.all().values_list('step__step', flat=True)
 
-    return render(request, 'finance/ace2/virament_detail.html', {'virament': virament_item})
+    return render(request, 'finance/ace2/virament_detail.html', {'virament': virament_item,
+                                                                 'approved_steps': approved_steps,
+                                                                 'approvalForm': approvalForm, 'to': to})
 
 
 def view_all_viraments(request):
     viraments = Asset_budget_Virament.objects.all()
     return render(request, 'finance/ace2/view_all_viraments.html', {'viraments': viraments})
+
 
 @login_required
 def viraments_awaiting_my_action(request):
@@ -1006,7 +1028,7 @@ def viraments_awaiting_my_action(request):
     user_groups = user_profile.groups.values_list('name', flat=True)
 
     custom_user_roles = {
-        "ace": {},
+        "virement": {},
     }
 
     roles_ = user_profile.roles.all()
