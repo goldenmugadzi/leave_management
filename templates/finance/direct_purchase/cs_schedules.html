@@ -17,14 +17,16 @@
     <div class="flex justify-between items-center mb-5">
       <span class="text-lg font-semibold">Direct Purchases</span>
       <div class="flex justify-end items-center">
+        {% if procurement_role %}
       <a
       href="/direct_purchase/create_comperative_schedule/"
       class="border-gulf-blue-600 hover:bg-gulf-blue-400 hover:text-gulf-blue-50 font-bold py-2 px-4 rounded m-2"
       >
       Create Schedule
     </a>
+    {% endif %}
       <a
-      href="/direct_purchase/all_schedules"
+      id="all_schedules"
       class="bg-gulf-blue-600 hover:bg-gulf-blue-800 text-white font-bold py-2 px-4 rounded m-2"
       >
       All Schedules
@@ -32,15 +34,17 @@
     </div>
     </div>
     <div class="flex justify-end items-center mb-5">
-      {% if fm_role == False and gm_role == False %}
+      {% if procurement_role %}
       <a
-      href="/direct_purchase/comperative_schedules"
+      id="your_schedules"
       class="bg-gulf-blue-600 hover:bg-gulf-blue-800 text-white font-bold py-2 px-4 rounded m-2"
       >
       Your Schedules
     </a>
+    {% endif %}
+      {% if fm_role == False and gm_role == False %}
       <a
-        href="/direct_purchase/pending_commitee"
+        id="pending_committee"
         class="bg-gulf-blue-600 hover:bg-gulf-blue-800 text-white font-bold py-2 px-4 rounded m-2"
         >
         Pending Committee
@@ -48,7 +52,7 @@
       {% endif %}
       {% if fm_role == True %} 
       <a
-      href="/direct_purchase/pending_fm_approval"
+      id="pendind_fm"
       class="bg-gulf-blue-600 hover:bg-gulf-blue-800 text-white font-bold py-2 px-4 rounded m-2"
       >
       Pending Finance
@@ -56,7 +60,7 @@
     {% endif %} 
     {% if gm_role == True %}
     <a
-    href="/direct_purchase/pending_gm_approval"
+    id="pending_gm"
     class="bg-gulf-blue-600 hover:bg-gulf-blue-800 text-white font-bold py-2 px-4 rounded m-2"
     >
       Pending GM
@@ -92,11 +96,29 @@
 <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 <script>
-  var objs = JSON.parse("{{cs|escapejs}}");
+  var procurement = "{{procurement_role|safe}}";
+  var fm = "{{fm_role|safe}}";
+  var gm = "{{gm_role|safe}}";
+  let url = ""
 
+  console.log("current user roles: ", procurement, fm, gm)
+  if(procurement === "True"){
+    url = '/direct_purchase/datatables/your_schedules'
+  } else if(fm === "True"){
+    url = '/direct_purchase/datatables/pending_fm'
+  } else if(gm === "True"){
+    url = '/direct_purchase/datatables/pending_gm'
+  } else {
+    url = '/direct_purchase/datatables/pending_committee'
+  }
   $(document).ready(function () {
-    $("#users_index").DataTable({
-      data: objs,
+    var table = $("#users_index").DataTable({
+      "processing": true,
+      "serverSide": true,
+      "ajax": {
+        "url": url,
+        "type": "GET"
+      },
       columns: [
         {
           data: "cs_id",
@@ -112,6 +134,8 @@
         },
         {
           data: "committee_approval",
+          orderable: false,
+          searchable: false,
           render: function (data, type, row, meta) {
             let approval_badge = ""
             if(data === "Approval Complete"){
@@ -135,6 +159,8 @@
         },
         {
           data: "fm_approval",
+          orderable: false,
+          searchable: false,
           render: function (data, type, row, meta) {
             let approval_badge = ""
             if(data === "Approved"){
@@ -158,6 +184,8 @@
         },
         {
           data: "gm_approval",
+          orderable: false,
+          searchable: false,
           render: function (data, type, row, meta) {
             let approval_badge = ""
             if(data === "Approved"){
@@ -183,6 +211,32 @@
           data: "created_at"
         }
       ],
+      order: [[5, 'desc']]
+    });
+
+    $('#all_schedules').on('click', function() {
+      var newUrl = '/direct_purchase/datatables/all_schedules';
+      table.ajax.url(newUrl).load();
+    });
+
+    $('#your_schedules').on('click', function() {
+      var newUrl = '/direct_purchase/datatables/your_schedules';
+      table.ajax.url(newUrl).load();
+    });
+
+    $('#pending_committee').on('click', function() {
+      var newUrl = '/direct_purchase/datatables/pending_committee';
+      table.ajax.url(newUrl).load();
+    });
+
+    $('#pending_fm').on('click', function() {
+      var newUrl = '/direct_purchase/datatables/pending_fm';
+      table.ajax.url(newUrl).load();
+    });
+
+    $('#pending_gm').on('click', function() {
+      var newUrl = '/direct_purchase/datatables/pending_gm';
+      table.ajax.url(newUrl).load();
     });
   });
 </script>
