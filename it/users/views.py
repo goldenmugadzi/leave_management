@@ -323,7 +323,47 @@ def update_user(request):
             messages.error(request, "An error occurred while saving the user")
     
         return redirect("/users/users-index")
+    
 
+@login_required
+def view_user(request):
+    if request.method == "GET":
+        user_profile = UserProfile.objects.get(id=request.user.id)
+        active_roles = {role.app_id.name: role for role in user_profile.roles.all() if role.app_id}
+
+        new_user = {
+            "id": user_profile.pk,
+            "username": user_profile.username,
+            "firstname": user_profile.first_name,
+            "lastname": user_profile.last_name,
+            "email": user_profile.email,
+            "section": Sections.objects.filter(id=user_profile.section.id).first() if user_profile.section else None,
+            "depot": Depots.objects.filter(id=user_profile.depot.id).first() if user_profile.depot else None,
+            "district": Districts.objects.filter(id=user_profile.district.id).first() if user_profile.district else None,
+            "region": Regions.objects.filter(id=user_profile.region.id).first() if user_profile.region else None,
+            "roles": active_roles,
+            "designation": Designations.objects.filter(id=user_profile.designation.id).first() if user_profile.designation else None,
+        }
+
+        all_roles = {app.name: Roles.objects.filter(app_id=app.id).all() for app in Application.objects.all()}
+
+        return render(
+            request,
+            "users/view_user.html",
+            {
+                "form": CustomUserCreationForm,
+                "user_roles": all_roles,
+                "user_applications": Application.objects.all(),
+                "user_designations": Designations.objects.all(),
+                "sections": Sections.objects.all(),
+                "districts": Districts.objects.all(),
+                "regions": Regions.objects.all(),
+                "user_title": request.user.get_full_name(),
+                "user_groups": list(request.user.groups.values_list('name', flat=True)),
+                "user": new_user
+            }
+        )
+        
 @login_required
 @allowed_roles(['administrator'], ['users'])
 def update_userx(request):

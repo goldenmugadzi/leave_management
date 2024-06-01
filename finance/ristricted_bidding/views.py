@@ -169,6 +169,7 @@ def get_comperative_schedules(request):
     
     fm_role, gm_role, procurement_role = False, False, False
     fm_role, gm_role, procurement_role = getUserFMGMRoles(user)
+    print("fm_role: ", fm_role, "gm_role: ", gm_role, "procurement_role: ", procurement_role)
     
     if fm_role == True:
         return redirect('/ristricted_bidding/pending_fm_approval')
