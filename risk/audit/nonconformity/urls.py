@@ -22,5 +22,6 @@ urlpatterns = [
 
     path('notify/', notify, name='notify'),
     path('checklist/', checklist, name='checklist'),
+    path('migrate_nc/', migrate_nonconformities, name='migrate_nc'),
     path('editable_checklist/', editable_checklist, name='editable_checklist'),
 ]

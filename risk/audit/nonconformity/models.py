@@ -1,5 +1,7 @@
 from django.db import models
 import random
+from django.utils import timezone
+
 import time
 from django.urls import reverse
 from it.users.models import UserProfile
@@ -40,7 +42,7 @@ class Nonconformity(models.Model):
     closed = models.BooleanField(default=False)
     
     def __str__(self):
-        return self.description
+        return self.id
     
     def get_absolute_url(self):
         return reverse('nonconformity:nonconformity', args=[str(self.id)])
@@ -55,7 +57,7 @@ class Acceptance(models.Model):
     nonconformity = models.ForeignKey(Nonconformity , on_delete=models.CASCADE)
     cause = models.TextField(max_length=400, blank=True, null=True)
     corrective_action = models.CharField(max_length=300, blank=True, null=True)
-    dated = models.DateTimeField(auto_now=True) 
+    dated = models.DateTimeField(default=timezone.now)
     expected_completion_date = models.DateField(blank=True, null=True)
     user = models.ForeignKey(UserProfile, on_delete=models.CASCADE, blank=True, null=True)
     def __str__(self):
@@ -65,7 +67,7 @@ class Rejection(models.Model):
     nonconformity = models.ForeignKey(Nonconformity , on_delete=models.CASCADE)
     user = models.ForeignKey(UserProfile, on_delete=models.CASCADE, blank=True, null=True)
     rejection_reason = models.TextField(max_length=400, blank=True, null=True)
-    dated = models.DateTimeField(auto_now=True) 
+    dated = models.DateTimeField(default=timezone.now) 
     def __str__(self):
         return self.rejection_reason
     

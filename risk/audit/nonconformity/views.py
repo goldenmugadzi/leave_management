@@ -2,7 +2,8 @@
 from django.shortcuts import render, redirect,reverse,get_object_or_404,HttpResponse
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
-
+import datetime
+from django.utils import timezone
 from .models import *
 from .forms import *
 # from it.users.models import Notification
@@ -271,3 +272,82 @@ def notify(request):
     )
     return HttpResponse('Email sent successfully!')
     # ['ruvheneko@zetdc.co.zw'],  # recipient list
+def migrate_nonconformities(request):
+    import mysql.connector 
+
+    # Connect to the MySQL database
+    cnx = mysql.connector.connect(
+        host="172.16.8.10",
+        user="root",
+        password="",
+        database="nca"
+    )
+
+    # Create a cursor object
+    cursor = cnx.cursor()
+
+    # Execute the SQL query
+    sql_query = """SELECT  * FROM non_conformity AS nc JOIN nc_update AS nu ON nu.document_number = nc.document_number"""
+    ncs =[]
+    try:
+        cursor.execute(sql_query)
+
+        # Fetch all the results
+        ncs = cursor.fetchall()
+         
+    except mysql.connector.Error as err:
+        print("Error executing SQL query:", err)
+
+    # Close the cursor and database connection
+    cursor.close()
+    cnx.close()
+    nonconformity={}
+    Nonconformity._meta.get_field('created_at').auto_now_add = False
+   
+    for nc_dict in ncs:
+        nc = dict(zip(cursor.column_names, nc_dict))
+        try: recipient = UserProfile.objects.get(username=nc['recipient_name']) 
+        except:recipient = None
+        try: created_by = UserProfile.objects.get(username=nc['originator'])
+        except: created_by = None
+        create_date = timezone.make_aware(nc['originator_date'])
+        recipt_date = timezone.make_aware(nc['recipient_date']) if nc['recipient_date'] else None
+        nonconformity['id'] = nc['document_number']
+        nonconformity['recipient'] = recipient
+        nonconformity['created_by'] = created_by
+        nonconformity['description'] = nc['description'] +". Violated standard: "+ nc['violated_standard']
+        nonconformity['created_at'] = create_date
+        nonconformity['recommended_corrective_action'] = nc['recommended_action']
+        nonconformity['resolved'] = True if nc['supervisor_action'] == 5 else False
+        nonconformity['closed'] = True if nc['supervisor_action'] == 5 else False
+        nonconformity['accepted'] = True if nc['recipient_action'] == 2 else False if nc['recipient_action'] == 4 else None
+
+        try:
+            nc_id,created = Nonconformity.objects.get_or_create(**nonconformity)
+        except Exception as e :
+            print(e)
+            nc_id= None
+        response = nc['recipient_action']
+        if nc_id:
+            if response == 2:
+                try:
+                    print('Acceptance',recipt_date)
+                    Acceptance._meta.get_field('dated').auto_now_add = False
+                    Acceptance.objects.create(nonconformity=nc_id, user=recipient,dated=recipt_date )
+                    Acceptance._meta.get_field('dated').auto_now_add = True
+
+                except Exception as err:
+                    print(err)
+            elif response == 4:
+                try:
+                    print(nc['recipient_reason'],'recipient_reason')
+                    Rejection._meta.get_field('dated').auto_now_add = False
+                    Rejection.objects.create(nonconformity=nc_id, user=recipient,dated=recipt_date, rejection_reason=nc['recipient_reason'])
+                    Rejection._meta.get_field('dated').auto_now_add = True
+                except Exception as err:
+                    print(err)
+
+    Nonconformity._meta.get_field('created_at').auto_now_add = True
+    cursor.close()
+    cnx.close()
+    return HttpResponse("results")
