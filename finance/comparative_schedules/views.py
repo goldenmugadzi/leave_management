@@ -13,6 +13,7 @@ from finance.comparative_schedules.models import *
 from django.db.models import Q, Exists, OuterRef, Count, F
 import pandas as pd
 from django.core.paginator import Paginator
+from django.utils.timezone import now
 
 APP_NAME = "comparative_schedule"
 
@@ -2314,6 +2315,8 @@ def approve_cs_committee(request):
     username = request.POST.get("username", "")
     approval = request.POST.get("approval", "")
     justification = request.POST.get("justification", "")
+    
+    print("running : ", cs_id, username, approval, justification)
     cs_query = ComparativeSchedules.objects.filter(cs_id=cs_id).first()
     if not cs_query:
         return JsonResponse({
@@ -2327,9 +2330,11 @@ def approve_cs_committee(request):
         if committee_query:
             committee_query.committee_approval = approval
             committee_query.justification = justification
-            committee_query.committee_date = datetime.now()
+            committee_query.committee_date = now()
             committee_query.save()
+            print("committee_query: ", committee_query.committee_approval)
             notification_update(member_profile, cs_query.cs_id)
+            print("notification updated")
         
         committees = Committee.objects.filter(cs_id=cs_query).all()
         committee_approved = all([c.committee_approval == "Approved" for c in committees])
@@ -2342,21 +2347,16 @@ def approve_cs_committee(request):
             url = "/comperative_schedule/comperative_schedule/" + cs_query.cs_id
             notify_user(fm_user, msg, "RFQ", url, cs_query.cs_id)
 
-            return JsonResponse({
-                "message": "Committee member approved successfully",
-                "success": True,
-                "data": {
-                    "committee_date": committee_query.committee_date,
-                    "committee_status": committee_query.committee_status,
-                    "committee_fullname": member_profile.first_name + " " + member_profile.last_name,
-                    "committee_approval": approval,
-                }
-            })
-        else:
-            return JsonResponse({
-                "message": "Committee member not found",
-                "success": False,
-            })
+        return JsonResponse({
+            "message": "Committee member approved successfully",
+            "success": True,
+            "data": {
+                "committee_date": committee_query.committee_date,
+                "committee_status": committee_query.committee_status,
+                "committee_fullname": member_profile.first_name + " " + member_profile.last_name,
+                "committee_approval": approval,
+            }
+        })
     else:
         return JsonResponse({
             "message": "Committee member not found",
@@ -2386,8 +2386,8 @@ def approve_cs(request):
                 approver_role = role,
                 approval = approval,
                 justification = justification,
-                approval_date = datetime.now(),
-                created_at = datetime.now(),
+                approval_date = now(),
+                created_at = now(),
             )
             gm_approval.save()
             notification_update(user, cs_query.cs_id)
@@ -2414,8 +2414,8 @@ def approve_cs(request):
                 approver_role = role,
                 approval = approval,
                 justification = justification,
-                approval_date = datetime.now(),
-                created_at = datetime.now(),
+                approval_date = now(),
+                created_at = now(),
             )
             fm_approval.save()
             notification_update(user, cs_query.cs_id)

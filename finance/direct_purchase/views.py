@@ -2326,21 +2326,17 @@ def approve_cs_committee(request):
             url = "/direct_purchase/comperative_schedule/" + cs_query.cs_id
             notify_user(fm_user, msg, "Direct Purchase", url, cs_query.cs_id)
 
-            return JsonResponse({
-                "message": "Committee member approved successfully",
-                "success": True,
-                "data": {
-                    "committee_date": committee_query.committee_date,
-                    "committee_status": committee_query.committee_status,
-                    "committee_fullname": member_profile.first_name + " " + member_profile.last_name,
-                    "committee_approval": approval,
-                }
-            })
-        else:
-            return JsonResponse({
-                "message": "Committee member not found",
-                "success": False,
-            })
+        return JsonResponse({
+            "message": "Committee member approved successfully",
+            "success": True,
+            "data": {
+                "committee_date": committee_query.committee_date,
+                "committee_status": committee_query.committee_status,
+                "committee_fullname": member_profile.first_name + " " + member_profile.last_name,
+                "committee_approval": approval,
+            }
+        })
+
     else:
         return JsonResponse({
             "message": "Committee member not found",
@@ -2370,8 +2366,8 @@ def approve_cs(request):
                 approver_role = role,
                 approval = approval,
                 justification = justification,
-                approval_date = datetime.now(),
-                created_at = datetime.now(),
+                approval_date = now(),
+                created_at = now(),
             )
             gm_approval.save()
             notification_update(user, cs_query.cs_id)

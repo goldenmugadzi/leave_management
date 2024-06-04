@@ -2334,11 +2334,7 @@ def approve_cs_committee(request):
                     "committee_approval": approval,
                 }
             })
-        else:
-            return JsonResponse({
-                "message": "Committee member not found",
-                "success": False,
-            })
+
     else:
         return JsonResponse({
             "message": "Committee member not found",
