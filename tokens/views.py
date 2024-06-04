@@ -339,12 +339,22 @@ def process_file(file_path):
         cont = file.readlines()
         roots=[] 
         p_t=None
+        c_t=None
+        n_t=None
+        p_name = None
+        c_name = None
+        n_name = None
         root = None
         prev = None
         curent = None
         next = None
-        for a in range(100):
-            if a > 1:prev = cont[a-1].rstrip()
+        state = None
+        nc = None
+        pp = None
+        b4 = 0
+        after = 0
+        for a in range(len(cont)):
+            if a > 0:prev = cont[a-1].rstrip()
             curent = cont[a].rstrip()
             if a < (len(cont)-1): next = cont[a+1].rstrip()
 
@@ -357,35 +367,56 @@ def process_file(file_path):
             n_id, *nname = next.strip().split('\t')
 
             if prev:p_name = ' '.join(pname).replace('\t', '').replace(' ', '')
-            c_name = ' '.join(cname).replace('\t', '').replace(' ', '')
-            n_name = ' '.join(nname).replace('\t', '').replace(' ', '')
-            if roots:
-                root = CostCenter.objects.get(id=roots[-1])
-            else:
-                root = CostCenter.objects.create(id=c_id , name=c_name, parent=root)
-                roots.append(c_id)
-            if prev and c_t > p_t:
+            c_name = ' '.join(cname).replace('\t', '').replace('   ', '')
+            n_name = ' '.join(nname).replace('\t', '').replace('   ', '')
+
+            nc = n_t>c_t
+            if a > 0:
+                pp = c_t>p_t
+                b4 = c_t - p_t
+                after = n_t - c_t
+
+
+
+            
+            if pp and b4 > 0: 
                 root = CostCenter.objects.get(id=p_id)
-                CostCenter.objects.create(id=c_id , name=c_name, parent=root)
-                roots.append(c_id)
-            elif prev and c_t == p_t:
-                CostCenter.objects.create(id=c_id , name=c_name, parent=root)
-            elif prev and c_t < p_t:
-                if n_t > c_t:
-                    for i in range(c_t-p_t):
-                        roots.pop()
-
-                    root = CostCenter.objects.get(id=roots[-1])
-                    roots.append(c_id)
-                    CostCenter.objects.create(id=c_id , name=c_name, parent=root)
+                CostCenter.objects.create(name=c_name,id=c_id, parent=root)
+            elif nc and b4 > 0:
+                if a>0:
+                    CostCenter.objects.create(name=c_name, id=c_id, parent=root)
                 else:
-                    for i in range(c_t-p_t):
-                        roots.pop()
-                    root = CostCenter.objects.get(id=roots[-1])
-                    CostCenter.objects.create(id=c_id , name=c_name, parent=root)
-            else:
-                print("c_name", c_name)
+                    CostCenter.objects.create(name=c_name, id=c_id, parent=root)
+         
+            elif not pp and nc:
+               
+                if b4 < 0:
+                    b4 = -1*b4
+                    root = root 
+                    for i in range(b4): 
+                        root = root.parent 
+                    CostCenter.objects.create(name=c_name, id=c_id, parent=root)
+                if b4 == 0:
+                    if a>0:
+                        root = CostCenter.objects.get(id=p_id).parent
+                        CostCenter.objects.create(name=c_name, id=c_id, parent=root)
+                    else:
+                        CostCenter.objects.create(name=c_name, id=c_id, parent=None)
 
+                
+            elif not pp and not nc:
+                if b4 < 0:
+                    b4 = -1*b4
+                    root = root 
+                    for i in range(b4): 
+                        root = root.parent 
+                CostCenter.objects.create(name=c_name, id=c_id, parent=root)
+            else:
+                CostCenter.objects.create(name=c_name, id=c_id, parent=None)
+           
+               
+            state = { 'p_t': p_t, 'c_t': c_t, 'n_t': n_t,'b4':b4, 'nc': nc, 'pp': pp,'c_name': c_name  }
+            print(state)
     return 'json_data'
 
 def cost_centers(request):
@@ -395,4 +426,4 @@ def cost_centers(request):
         process_file(file_path)
     except FileNotFoundError as e:
         print(e)
-    return render(request, "tokens/cost_centers.html", {"cost_centers": CostCenter.objects.all().order_by("parent")[:20]})
+    return render(request, "tokens/cost_centers.html", {"cost_centers": CostCenter.objects.all()})
