@@ -14,7 +14,7 @@ from django.db.models import Q, Exists, OuterRef, Count, F
 import pandas as pd
 from django.core.paginator import Paginator
 
-APP_NAME = "comparative_schedules"
+APP_NAME = "comparative_schedule"
 
 def import_old_rfq(request):
     tender_csv = 'tender.csv'
@@ -146,9 +146,9 @@ def clear_approvals(cs_id):
 def getUserFMGMRoles(user):
     fm_role, gm_role, procurement_role = False, False, False
     for role in user.roles.all():
-        print("role id:", role.id)
+
         user_ace_role_ = Roles.objects.filter(id=role.id).first() if role.id else None
-        print("role application:", user_ace_role_.application)
+
         if user_ace_role_.application == APP_NAME:
             if user_ace_role_.role == "check":
                 fm_role = True
@@ -203,6 +203,7 @@ def get_comperative_schedules(request):
     
     fm_role, gm_role = False, False
     fm_role, gm_role, procurement_role = getUserFMGMRoles(user)
+    print("roles ,,,, : ", fm_role, gm_role, procurement_role)
 
     if fm_role == True:
         return redirect('/comperative_schedule/pending_fm_approval')

@@ -248,37 +248,37 @@ def view_all_purchase_requests(request):
 @login_required
 def uploaduuom(request):
     """upload unit of measurement data to the database"""
-    # xl = pd.ExcelFile('finance/purchase_request/uom.xlsx')
-    # df = xl.parse('units')
-    # data_dict = df.to_dict('records')
-    # for data in data_dict:
-    #     unit = UnitOfMeasurement(unit=data['UM'], name=data['MUT'])
-    #     unit.save()
+    xl = pd.ExcelFile('finance/purchase_request/uom.xlsx')
+    df = xl.parse('units')
+    data_dict = df.to_dict('records')
+    for data in data_dict:
+        unit = UnitOfMeasurement(unit=data['UM'], name=data['MUT'])
+        unit.save()
     """upload procurement Plan References data to the database"""
-    # from .grn import data
-    # procurementPlanReferences= data 
-    # for procurementPlanReference in procurementPlanReferences:
-    #     print(procurementPlanReference)
-    #     try:
-    #         unit = ProcurementPlanReference(id=procurementPlanReference['id'], name=procurementPlanReference['name'])
-    #         unit.save()
-    #     except:
-    #         pass
+    from .grn import data
+    procurementPlanReferences= data 
+    for procurementPlanReference in procurementPlanReferences:
+        print(procurementPlanReference)
+        try:
+            unit = ProcurementPlanReference(id=procurementPlanReference['id'], name=procurementPlanReference['name'])
+            unit.save()
+        except:
+            pass
     """upload rfq data to the database"""
-    # import mysql.connector 
+    import mysql.connector 
 
-    # # Connect to the MySQL database
+    # Connect to the MySQL database
     # cnx = mysql.connector.connect(
-    #     host="172.16.8.22",
+    #     host="172.16.8.10",
     #     user="root",
     #     password="",
     #     database="dms"
     # )
 
-    # # Create a cursor object
+    # Create a cursor object
     # cursor = cnx.cursor()
 
-    # # Execute the SQL query
+    # Execute the SQL query
     # sql_query = """
     #     SELECT rfq.rfq_number, rfq.rfq_date, rfq.scope_of_work, 
     #         rfq.date_created, rfq.specifications, rfq.created_by, rfq.section_code, 
@@ -289,7 +289,7 @@ def uploaduuom(request):
     # """
     # cursor.execute(sql_query)
 
-    # # Fetch all the results
+    # Fetch all the results
     # results = cursor.fetchall()
     # for item_dict in results:
     #     item = dict(zip(cursor.column_names, item_dict))
@@ -316,9 +316,9 @@ def uploaduuom(request):
     #                     purchase_request=purchase_request,
     #                     ) 
     #     except: print(item['uom'],"failed")
-    # # Close the cursor and database connection
-    # cursor.close()
-    # cnx.close()
+    # Close the cursor and database connection
+    cursor.close()
+    cnx.close()
 
     return render(request, 'finance/purchase_request/add_uom.html')
 @login_required
