@@ -15,6 +15,7 @@ from rest_framework.decorators import api_view, parser_classes
 from rest_framework.parsers import JSONParser
 from django.contrib.auth.decorators import login_required
 from approve.decorators import allowed_roles
+from django.db.models import Q, Exists, OuterRef, Count, F
 from it.users.models import Application, Roles, UserProfile, Depots, Districts, Regions, Designations, Sections
 from it.users.forms import CustomUserCreationForm
 
@@ -218,7 +219,12 @@ def datatable_data(request):
     records = UserProfile.objects.order_by('-date_joined').all()
     # Filter based on search value
     if search_value:
-        records = records.filter(name__icontains=search_value)
+        records = records.filter(
+        Q(username__icontains=search_value) |
+        Q(first_name__icontains=search_value) |
+        Q(last_name__icontains=search_value) |
+        Q(email__icontains=search_value)
+        )
 
     # Total number of records before filtering
     total = records.count()
