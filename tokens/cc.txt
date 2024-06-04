@@ -28,7 +28,7 @@ ZESA		ZESA
 						514103								HR-Apprentices				
 						514200								Loss Control				
 					CC513000								Commercial Director					
-						513100								Commercial Director�s Office				
+						513100								Commercial Director s Office				
 						513101								Retail Manager				
 							CC511300							Marketing & Communications Manager			
 								511301							Marketing & Communications Manager		
@@ -44,7 +44,7 @@ ZESA		ZESA
 								513200							Comm.Services Mgr.		
 								513201							Comm.Services Team		
 					CC512000								Finance Director					
-						512100								Finance Director�s Office				
+						512100								Finance Director s Office				
 						512101								Sales & Trading				
 							CC512300							Finance Manager			
 								512300							Finance Manager		
@@ -65,7 +65,7 @@ ZESA		ZESA
 						511200								Company Secretary				
 						511201								Legal Team				
 					CC511500								Total Electrification & Nat Plc Lighting					
-							511500								General Manager - Total Electrification				
+						511500								General Manager - Total Electrification				
 			CC515000								Distribution Director								
 				515100								Distribution Director`s Office							
 				515200								Distribution Services							
@@ -74,62 +74,62 @@ ZESA		ZESA
 				515400								Transport							
 		CC520000						Harare Region											
 			CC521000								General Manager								
-				521001								General Manager�s Office							
+				521001								General Manager s Office							
 			CC522000								Finance								
 				522001								Finance Manager							
-						CC522100								Management Accounting					
-							522101								Management Accounting				
-							522102								Stores				
-							522301								Procurement				
-						CC522200								Financial Accounting					
-							522201								Financial Accounting				
-							522202								Creditors				
-							522203								Revenue				
+					CC522100								Management Accounting					
+						522101								Management Accounting				
+						522102								Stores				
+						522301								Procurement				
+					CC522200								Financial Accounting					
+						522201								Financial Accounting				
+						522202								Creditors				
+						522203								Revenue				
 			CC523000								Human Resources & Administration								
-				523001								HR & Admin Mgr�s Office							
+				523001								HR & Admin Mgr s Office							
 				523002								Human Resources							
 				523003								Administration							
 				523004								HR-Contract Workers							
 				523005								HR-Post Graduate Trainees							
 				523006								HR-Apprentices							
 			CC524000								Engineering								
-				524001								Engineering Mgr�s Office							
-						CC524100								Network & Development					
-							524101								Networks & Dev Engr�s Office				
-							524102								Planning & Design				
-							524103								Projects				
-						CC524200								Garage & Transport					
-							524201								Garage				
-							524202								Transport				
-						CC524300								Operations & Maintenance					
-							524301								Ops Manager's Office				
-							524306								Computer Applications				
-							524307								Operations-IMS				
-									CC524350							 Maintenance			
-										524305							Principal Engineer's Office		
-										524302							Mains		
-										524303							Substations		
-										524304							Faults		
-						CC524400								Chitungwiza District					
-							524401								Chitungwiza District				
-							524402								Seke Depot				
-							524403								Zengeza Depot				
-						CC524500								North District					
-							524501								North District				
-							524502								Kuwadzana Depot				
-							524503								Mabelreign Depot				
-							524504								Workington/Warren Park Depot				
-						CC524600								South District					
-							524601								South District				
-							524602								Glenview Depot				
-							524603								Waterfalls Depot				
-							524604								Southerton Depot				
-						CC524700								East District					
-							524701								East District				
-							524702								CBD				
-							524703								Borrowdale				
-							524704								Mabvuku Depot				
-							524705								Ruwa Depot				
+				524001								Engineering Mgr s Office							
+					CC524100								Network & Development					
+						524101								Networks & Dev Engr s Office				
+						524102								Planning & Design				
+						524103								Projects				
+					CC524200								Garage & Transport					
+						524201								Garage				
+						524202								Transport				
+					CC524300								Operations & Maintenance					
+						524301								Ops Manager's Office				
+						524306								Computer Applications				
+						524307								Operations-IMS				
+							CC524350							 Maintenance			
+								524305							Principal Engineer's Office		
+								524302							Mains		
+								524303							Substations		
+								524304							Faults		
+					CC524400								Chitungwiza District					
+						524401								Chitungwiza District				
+						524402								Seke Depot				
+						524403								Zengeza Depot				
+					CC524500								North District					
+						524501								North District				
+						524502								Kuwadzana Depot				
+						524503								Mabelreign Depot				
+						524504								Workington/Warren Park Depot				
+					CC524600								South District					
+						524601								South District				
+						524602								Glenview Depot				
+						524603								Waterfalls Depot				
+						524604								Southerton Depot				
+					CC524700								East District					
+						524701								East District				
+						524702								CBD				
+						524703								Borrowdale				
+						524704								Mabvuku Depot				
+						524705								Ruwa Depot				
 			CC525000								Commercial								
 				525000								Commercial Manager's Office							
 				525001								Chitungwiza							
@@ -148,13 +148,13 @@ ZESA		ZESA
 				528003								>>> No valid master record							
 				528004								>>> No valid master record							
 			CC527100								Blocked Cost Centres								
-					CC524800								Protection & COM					
-						524801								Protection & Com				
+				CC524800								Protection & COM					
+					524801								Protection & Com				
 		CC530000						Northern Region											
 			CC531000								General Manager								
 				531001								General Manager							
 			CC532000								Finance								
-				532001								Finance Mgr�s Office							
+				532001								Finance Mgr s Office							
 				532002								Financial Accounting							
 				532101								Management Accounting							
 				532102								Procurement							
@@ -169,10 +169,10 @@ ZESA		ZESA
 			CC534000								Engineering								
 				534001								Engineering Mgr's Office							
 					CC534300								Maintenance Engineer					
-						534301								Engr�s Office				
+						534301								Engr s Office				
 						534303								Substations				
 					CC534100								Network Development					
-						534101								Development Engineer�s Office				
+						534101								Development Engineer s Office				
 						534102								Planning & Drawing				
 					CC534200								Garage & Transport					
 						534201								Regional Transport				
@@ -239,7 +239,7 @@ ZESA		ZESA
 			C541000								General Manager								
 				541001								General Manager - Southern							
 			C542000								Finance								
-				542001								Finance Mgr�s Office							
+				542001								Finance Mgr s Office							
 					C542005								Financial Management					
 						542002								Creditors				
 						542006								Revenue				
@@ -259,7 +259,7 @@ ZESA		ZESA
 					C544300								Operations & Maintenance					
 						544301								Maintenance				
 					C544100								Network Development					
-						544101								Development Mgr�s Office				
+						544101								Development Mgr s Office				
 						544102								Planning and Design				
 						544103								Projects				
 					C544200								Garage & Transport					
@@ -309,7 +309,7 @@ ZESA		ZESA
 				551001								General Manager							
 				558000								TOTAL ELECTRIFICATION							
 			CC552000								Finance								
-				552001								Finance Mgr�s Office							
+				552001								Finance Mgr s Office							
 					CC552100								Management Accounting					
 						552101								Costing				
 						552102								Stores				
@@ -332,12 +332,12 @@ ZESA		ZESA
 					CC553400								ADMIN OFFICER					
 						553003								 Administration				
 			CC554000								Engineering								
-				554001								Engineering Mgr�s Office							
+				554001								Engineering Mgr s Office							
 					CC554050								TRANSPORT					
 						554405								MUTARE GARAGE				
 						554607								Masvingo Garage				
 					CC554100								Network Development					
-						554101								Development Mgr�s Office				
+						554101								Development Mgr s Office				
 						554102								Planning & Drawing				
 						554301								Operations & Maint.				
 						554304								Faults				
@@ -756,11 +756,11 @@ ZESA		ZESA
 							574244							Haven-Zisco Line		
 		CC560000						Western Region											
 			CC564000								Engineering								
-				564001								Engineering Mgr�s Office							
+				564001								Engineering Mgr s Office							
 				564002								Engineering							
 				564003								Apprentices							
 					CC564100								Networks & Development					
-						564101								Networks & Dev Engr�s Office				
+						564101								Networks & Dev Engr s Office				
 						564102								Planning & Drawing				
 						564103								Projects				
 						564104								Fabrication Workshop				
@@ -775,7 +775,7 @@ ZESA		ZESA
 					CC564700													
 						564701								Protection & COM				
 			CC561000								General Manager								
-				561001								General Manager�s Office							
+				561001								General Manager s Office							
 					CC564600								Bulawayo West District					
 						564601								Bulawayo West District				
 						564602								Nketa				
@@ -817,7 +817,7 @@ ZESA		ZESA
 					CC562300								Procurement					
 						562301								Procurement				
 			CC563000								Human Resources & Administration								
-				563001								HR & Admin Mgr�s Office							
+				563001								HR & Admin Mgr s Office							
 				563002								H/R							
 				563003								Admin							
 				563004								Post Grad Trainees							
