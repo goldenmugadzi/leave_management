@@ -419,11 +419,12 @@ def process_file(file_path):
             print(state)
     return 'json_data'
 
-def cost_centers(request):
+def cost_centers(request):return render(request, "tokens/cost_centers.html", {"cost_centers": CostCenter.objects.all()})
+def upload_centers(request):
     CostCenter.objects.all().delete()
     file_path = r"tokens\\cc.txt"
     try:
         process_file(file_path)
     except FileNotFoundError as e:
         print(e)
-    return render(request, "tokens/cost_centers.html", {"cost_centers": CostCenter.objects.all()})
+    return redirect("tokens:cost_centers")

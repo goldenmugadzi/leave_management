@@ -8,5 +8,6 @@ urlpatterns = [
     path('tokens/', view_all_tokens, name='tokens'),
     path('addsection/', addsection, name='addsection'),
     path('tokens_awaiting_my_action/', awaiting_my_action, name='tokens_awaiting_my_action'),
+    path('upload_centers/', upload_centers, name='upload_centers'),
     path('cost_centers/', cost_centers, name='cost_centers'),
 ]
