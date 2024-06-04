@@ -886,23 +886,50 @@ def upload_aces_csv(request):
 
 
 def create_virament(request):
+    form = ViramentForm()
+    formset = QuotationFormSet()
     if request.method == 'POST':
         form = ViramentForm(request.POST, request.FILES)
+        formset = QuotationFormSet(request.POST, request.FILES)
         if form.is_valid():
             virament = form.save(commit=False)
             virament.process = intiate(request, 'virement')
             virament.requested_by = request.user
             virament.region = request.user.region
             virament.save()
+            #add attachments
+            attachments = request.FILES.getlist('attachments')
+            for attachment in attachments:
+                attachment = Quotation(quotation_file=attachment,
+                                       virament=virament)
+                attachment.save()
+
+            #create transaction
+            transaction = Transactions.objects.create(
+                virament=virament,
+                details_of_expenditure="virement of " + str(virament.from_budget) + " to " + str(virament.to_budget),
+                approval_status="created",
+                region=request.user.region,
+                amount=virament.amount,
+                budget=virament.from_budget,
+                section=virament.section
+            )
+            transaction.section = virament.section
+            transaction.save()
             url = reverse('Ace:virament_detail', args=[virament.virament_id])
             return redirect(url)
     else:
         form = ViramentForm()
-    return render(request, 'finance/ace2/create_virament.html', {'form': form})
+    return render(request, 'finance/ace2/create_virament.html', {'form': form, 'formset': formset})
 
 
 def virament_detail(request, virament_id):
     virament_item = Asset_budget_Virament.objects.get(virament_id=virament_id)
+    balance_before_from = virament_item.from_budget.balance
+    balance_before_to = virament_item.to_budget.balance
+    balance_after_from = virament_item.from_budget.balance - virament_item.amount
+    balance_after_to = virament_item.to_budget.balance + virament_item.amount
+    statements = Quotation.objects.filter(virament=virament_item)
     approvalForm = None
     print('virament')
     print(virament_item.process)
@@ -965,7 +992,7 @@ def virament_detail(request, virament_id):
             else:
                 approvalForm = ApprovalForm
                 to = newStep.to
-                print(ace_role)
+                print(virement_role)
                 print(approve_now)
                 if approve_now:
                     if newStep.step == len(virament_item.process.workflow.step_set.all()):
@@ -979,19 +1006,27 @@ def virament_detail(request, virament_id):
     print(approve_now)
     if approve_now:
         # budget calculations
-        budget = virament_item.budget_id.budget_id
-        budget = AssetBudget.objects.get(budget_id=budget)
-        print("ace: ", virament_item.Ace_id)
-        transaction = Transactions.objects.filter(Ace_id2=str(virament_item.Ace_id)).first()
+        fbudget = virament_item.from_budget
+        tbudget = virament_item.to_budget
+
+        fbudget = AssetBudget.objects.get(budget_id=fbudget.budget_id)
+        tbudget = AssetBudget.objects.get(budget_id=tbudget.budget_id)
+        print("virament: ", virament_item.virament_id)
+        transaction = Transactions.objects.filter(virament_id=str(virament_item.virament_id)).first()
         # print("transaction: ", transaction)
         print("transaction: ", str(transaction.approval_status))
 
-        if transaction.approval_status != "approved by General Manager":
-            budget.balance = budget.balance - virament_item.amount
-            budget.to_be_withdrawn = budget.to_be_withdrawn - virament_item.amount
-            budget.withdrawal_date = date.today()
-            budget.withdrawn = budget.withdrawn + virament_item.amount
-            budget.save()
+        if transaction.approval_status != "approved by General Manager" and virement_role == "approve":
+            fbudget.balance = fbudget.balance - virament_item.amount
+            # budget.to_be_withdrawn = budget.to_be_withdrawn - virament_item.amount
+            fbudget.withdrawal_date = date.today()
+            fbudget.withdrawn = fbudget.withdrawn + virament_item.amount
+            fbudget.save()
+
+            # budget viremented to
+            tbudget.balance = tbudget.balance + virament_item.amount
+            tbudget.allocated = tbudget.allocated + virament_item.amount
+            tbudget.save()
 
             # transaction
 
@@ -1003,8 +1038,14 @@ def virament_detail(request, virament_id):
     approved_steps = virament_item.process.approval_set.all().values_list('step__step', flat=True)
 
     return render(request, 'finance/ace2/virament_detail.html', {'virament': virament_item,
+                                                                 'statements': statements,
                                                                  'approved_steps': approved_steps,
-                                                                 'approvalForm': approvalForm, 'to': to})
+                                                                 'approvalForm': approvalForm,
+                                                                 'to': to,
+                                                                 'balance_before_to': balance_before_to,
+                                                                 'balance_after_to': balance_after_to,
+                                                                 'balance_before_from': balance_before_from,
+                                                                 'balance_after_from': balance_after_from})
 
 
 def view_all_viraments(request):
