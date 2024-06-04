@@ -81,14 +81,14 @@
     <script src="{% static 'assets/disbursemodal.js' %}"></script>
 </head>
 <div class="m-auto mt-5 ">
-    <div class="card grid grid-cols-1 gap-2 mb-3">
+    <div class="card grid grid-cols-1 gap-1 mb-3">
         <div class="card-body m-2">
             <div class="card-body m-auto mb-5 p-3 border rounded    container rounded  shadow-lg">
                 <div class="px-6 py-4">
                     <div class="card grid grid-cols-2 gap-2 mb-3">
                         <div class="card-body m-auto mb-5 bg-gradient-to-r from-gulf-blue-100 to-blue-500 ed p-3
                         border rounded   justify-content-center align-content-stretch container rounded  shadow-lg">
-                            <h1 class="text-center mb-4 font-bold text-xl  mb-2">Virament Details</h1>
+                            <h1 class="text-center mb-4 font-bold text-xl  mb-2">Virement Details</h1>
 {#                    {% if clear %}#}
 {#                            <h1 class="text-2xl font-semibold leading-7 text-gray-900">#}
 {#                                <a href="{% url 'purchase_request:create_ace_purchase_request' virament.virament_id %}" class="bg-gray-500 hover:bg-gray-700#}
@@ -104,6 +104,7 @@
                             <p class="font-bold   mb-2"> Amount: {{ virament.amount }}</p>
                             <p class="font-bold mb-2">Reason:{{ virament.reason }}</p>
                         <p class="font-bold mb-2">Region:{{ virament.region }}</p>
+                        <p class="font-bold mb-2">Section:{{ virament.section }}</p>
                         <p class="font-bold mb-2">
                             {% for attachment in virament.quotation_set.all %}
                                 <a href="/acee/attachment/ {{attachment}}"><button class=" hover:text-green-600 text-green-300 font-bold py-2 px-4 rounded"
@@ -140,12 +141,12 @@
                             </div>
                         {% endif %}
                             <p class="font-bold   mb-2"> Currency: {{ virament.currency }}</p>
-                            <p class="font-bold mb-2">Budget:{{ virament.budget_id }}</p>
+{#                            <p class="font-bold mb-2">Budget:{{ virament.budget_id }}</p>#}
 {#                            <p class="font-bold   mb-2"> Allocation code of expenditure: {{ virament.allocation_code_of_expenditure }}</p>#}
                             <p class="font-bold   mb-2"> Amount($) : {{ virament.amount }}</p>
-                            <p class="font-bold   mb-2"> Quantity : {{ virament.quantity }}</p>
+{#                            <p class="font-bold   mb-2"> Quantity : {{ virament.quantity }}</p>#}
 {#                            <p class="font-bold   mb-2"> Designation :{{ virament.designation }}</p>#}
-                            <p class="font-bold   mb-2"> Classification :{{ virament.classification }}</p>
+{#                            <p class="font-bold   mb-2"> Classification :{{ virament.classification }}</p>#}
                             {% if virament.classification == 'Project' %}
                                 <p class="font-bold   mb-2"> Present Tariff :{{ virament.project_name }}</p>
                                 <p class="font-bold   mb-2"> Present Fmc :{{ virament.present_fmc }}</p>
@@ -182,32 +183,6 @@
                                 <p class="font-bold   mb-2"> Payment mode: {{ virament.payment_mode }}</p>
                                 {% if virament.receipt_file == '' or virament.receipt_file == None and request.user == approval.user %}
                                     <p class="font-bold   mb-2"> Receipt: Not yet Receipted</p>
-                                    {% if virament_role == "create" or virament.payment_mode != '' or virament.payment_mode == None %}
-                                    <button id="open-modal" class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded">Clear virament</button>
-                                    <div id="modal" class="modal">
-                                        <div class="modal-content">
-                                            <form id="upload-form" enctype="multipart/form-data">
-                                                {% csrf_token %}
-                                                <div class="form-group">
-                                                    <label for="file-input">Receipt:</label>
-                                                    <br>
-                                                    <input type="file" id="file-input" name="file-input">
-                                                </div>
-                                                <div class="form-group">
-                                                    <label for="disbursed">Amount used($):</label>
-                                                    <br>
-                                                    <input type="number" id="disbursed" name="disbursed">
-                                                    <input type="hidden" name="petty_id" value="{{ virament.petty_id }}">
-                                                </div>
-                                                <button type="submit" class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded">Submit</button>
-                                            </form>
-                                            <br>
-                                            <button id="close-modal" class="bg-red-500 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded">Close</button>
-                                        </div>
-                                    </div>
-                                    {% endif %}
-
-
                                 {% else %}
 
                                     {#                               #input and post receipt file #}
@@ -217,45 +192,58 @@
                             {% endif %}
 
                         </div>
+                     <div class="card-body m-auto mb-5 bg-gradient-to-l from-red-100 to-red-500 ed p-3
+                        border rounded   justify-content-center align-content-stretch container rounded  shadow-lg">
+                            <h1 class="text-center mb-4 font-bold text-xl  mb-2">Virement Calculations</h1>
+{#                    {% if clear %}#}
+{#                            <h1 class="text-2xl font-semibold leading-7 text-gray-900">#}
+{#                                <a href="{% url 'purchase_request:create_ace_purchase_request' virament.virament_id %}" class="bg-gray-500 hover:bg-gray-700#}
+{#                                    inline-block rounded-full mx-3 text-white py-2 px-4 rounded">Create Purchase Request </a>#}
+{#                            </h1>#}
+{#                    {% endif %}#}
+{#                        <div class="">#}
+{#                                        <span class="inline-block font-bold text-start rounded-full text-sm">Customer </span>#}
+{#                                    <span class="inline-block text-end rounded-full text-sm">{{ virament.region}} </span>#}
+{#                        </div>#}
+                            <p class="font-bold   mb-2"> From Budget           : {{ virament.from_budget }}</p>
+                            <p class="font-bold mb-2"> Balance before Virement : {{ balance_before_from }}</p>
+                            <p class="font-bold   mb-2"> Amount                : {{ virament.amount }}</p>
+                            <p class="font-bold mb-2"> Balance after Virement  : {{ balance_after_from }}</p>
+                            <p class="font-bold mb-2"> To Budget               : {{ virament.to_budget}}</p>
+                            <p class="font-bold mb-2"> Balance before Virement : {{ balance_before_to }}</p>
+                            <p class="font-bold mb-2"> Amount                  : {{ virament.amount }}</p>
+                            <p class="font-bold mb-2"> Balance after Virement  : {{ balance_after_to }}</p>
+                            {% if virament.classification == 'Project' %}
+                                <p class="font-bold   mb-2"> Present Tariff :{{ virament.project_name }}</p>
+                                <p class="font-bold   mb-2"> Present Fmc :{{ virament.present_fmc }}</p>
+                                <p class="font-bold   mb-2"> Capital Contribution :{{ virament.capital_contribution }}</p>
+                                <p class="font-bold   mb-2"> Materials :{{ virament.materials }}</p>
+                                <p class="font-bold   mb-2"> Connection Fee :{{ virament.connection_fee }}</p>
+                                <p class="font-bold   mb-2"> Labour :{{ virament.labour }}</p>
+                                <p class="font-bold   mb-2"> Transport :{{ virament.transport }}</p>
+                                <p class="font-bold   mb-2"> Total Connection Fee :{{ virament.total_connection_fee }}</p>
+                            {% endif %}
+
+                        {%   if quotations %}
+                        {% for quotation in quotations %}
+                            {% if quotation.quotation_file == '' %}
+                                <p class="font-bold   mb-2"> Quotation: not available</p>
+                            {% else %}
+                                <p class="font-bold   mb-2"> Quotation: {{ quotation }}<a href="/virament/qoutes/{{ quotation.quotation_file }}"></a></p>
+                            {% endif %}
+                        {% endfor %}
+                        {% endif %}
+{#                            <p class="font-bold   mb-2"> Role : {{ virament_role }}</p>#}
+
+
+                        </div>
 
                 
                  </div>
+
                     <h1 class="text-center mb-4 font-bold text-xl  mb-2">Workflow Details</h1>
                     <p class="font-bold  mb-2"> Workflow name : {{ virament.process.workflow }}</p>
-{#                {% if virament_role == "disburse" and virament.payment_mode == None %}#}
-{#                <form class="row rounded py-4 border  rounded-lg p-3 m-auto container" method="POST"#}
-{#                      action="/virament/virament_detail/{{ virament.petty_id  }}/" enctype="multipart/form-data">#}
-{#                    {% csrf_token %}#}
-{#                    <div class=" m-auto container  ">#}
-{#                        <h4 class="text-center mb-4 font-bold text-xl  mb-2">Add Payment Mode</h4>#}
-{##}
-{#                        <div class="m-4 text-center">#}
-{#                            <label for="payment_mode">Payment mode</label>#}
-{#                            <select name="payment_mode" id="payment_mode" required>#}
-{#                                <option value="">Add Payment Mode</option>#}
-{#                                <option value="ZIG_SWIPE">Swipe ZIG</option>#}
-{#                                <option value="ZIG_CASH">Cash ZIG</option>#}
-{#                                <option value="SWIPE_USD">Swipe Usd</option>#}
-{#                                <option value="CASH_USD">Rtgs Usd</option>#}
-{#                            </select>#}
-{#                        </div>#}
-{##}
-{#                        <div class="m-4 text-center">#}
-{#                            <label for="amount_disbursed">Amount Disbursed</label>#}
-{#                            <input type="number" name="amount_disbursed" required>#}
-{#                        </div>#}
-{##}
-{##}
-{#                        <div class="m-4 text-center">#}
-{#                            <button type="submit" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded" name="approved" value="Rejected">Reject</button>#}
-{#                            <button type="submit" class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded" name="submit" value="submit"> Add </button>#}
-{#                        </div>#}
-{#                    </div>#}
-{#                </form>#}
-{#                {% endif %}#}
-
-{#            {% if virament.payment_mode != None %}#}
-                        {% if approvalForm %}
+                    {% if approvalForm %}
                     <form class="row rounded py-4 border bg-gulf-blue-400 rounded-lg p-3 m-auto container" method="POST" action="{% url 'approve:approve' virament.process.id %}" enctype="multipart/form-data">
                          {% csrf_token %}
                         <div class=" m-auto container  ">

@@ -157,8 +157,26 @@ class Ace2(models.Model):
         return self.Ace_id2
 
 
+class Asset_budget_Virament(models.Model):
+    virament_id = models.AutoField(primary_key=True)
+    requested_by = models.ForeignKey(UserProfile, on_delete=models.DO_NOTHING, blank=True, null=True)
+    from_budget = models.ForeignKey(AssetBudget, on_delete=models.DO_NOTHING, related_name='from_budget')
+    to_budget = models.ForeignKey(AssetBudget, on_delete=models.DO_NOTHING, related_name='to_budget')
+    amount = models.FloatField(blank=True, null=True)
+    reason = models.TextField(blank=True, null=True)
+    process = models.ForeignKey(Process, on_delete=models.DO_NOTHING, blank=True, null=True)
+    region = models.ForeignKey(Regions, on_delete=models.DO_NOTHING, blank=True, null=True)
+    section = models.ForeignKey(Sections, on_delete=models.DO_NOTHING, blank=True, null=True)
+    date_created = models.DateField(auto_now_add=True, blank=True, null=True)
+    currency = models.CharField(max_length=15, blank=True, null=True, choices=Ace2.CURRENCY_CHOICES)
+
+    def __str__(self):
+        return str(self.virament_id)
+
+
 class Transactions(models.Model):
-    Ace_id2 = models.ForeignKey(Ace2, on_delete=models.CASCADE)
+    Ace_id2 = models.ForeignKey(Ace2, on_delete=models.CASCADE, blank=True, null=True)
+    virament = models.ForeignKey(Asset_budget_Virament, on_delete=models.DO_NOTHING, blank=True, null=True)
     details_of_expenditure = models.CharField(blank=True, null=True, max_length=120)
     approval_status = models.CharField(blank=True, null=True, max_length=120)
     transaction_id = models.AutoField(primary_key=True)
@@ -174,22 +192,9 @@ class Transactions(models.Model):
 
 
 class Quotation(models.Model):
-    ace2 = models.ForeignKey(Ace2, on_delete=models.CASCADE)
+    ace2 = models.ForeignKey(Ace2, on_delete=models.CASCADE, blank=True, null=True)
+    virament = models.ForeignKey(Asset_budget_Virament, on_delete=models.DO_NOTHING, blank=True, null=True)
     quotation_file = models.FileField(upload_to='uploads/ace2')
 
     def __str__(self):
         return str(self.pk)
-
-
-class Asset_budget_Virament(models.Model):
-    virament_id = models.AutoField(primary_key=True)
-    requested_by = models.ForeignKey(UserProfile, on_delete=models.DO_NOTHING, blank=True, null=True)
-    from_budget = models.ForeignKey(AssetBudget, on_delete=models.DO_NOTHING, related_name='from_budget')
-    to_budget = models.ForeignKey(AssetBudget, on_delete=models.DO_NOTHING, related_name='to_budget')
-    amount = models.FloatField(blank=True, null=True)
-    reason = models.TextField(blank=True, null=True)
-    process = models.ForeignKey(Process, on_delete=models.DO_NOTHING, blank=True, null=True)
-    region = models.ForeignKey(Regions, on_delete=models.DO_NOTHING, blank=True, null=True)
-    section = models.ForeignKey(Sections, on_delete=models.DO_NOTHING, blank=True, null=True)
-    date_created = models.DateField(auto_now_add=True, blank=True, null=True)
-    currency = models.CharField(max_length=15, blank=True, null=True, choices=Ace2.CURRENCY_CHOICES)
