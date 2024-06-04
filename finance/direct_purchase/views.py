@@ -267,7 +267,7 @@ def your_comperative_schedules(request):
         
     # context = json.dumps(cs_list, default=str)
 
-    user_page = 'finance/comparative_schedules/cs_schedules.html'
+    user_page = 'finance/direct_purchase/cs_schedules.html'
     print("roles: ", fm_role, gm_role)
     return render(request, user_page, { 
             "fm_role": fm_role,

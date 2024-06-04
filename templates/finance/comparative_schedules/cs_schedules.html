@@ -67,7 +67,7 @@
     </a>
     {% endif %}
     </div>
-    <table id="users_index" class="display" style="width: 100%">
+    <table id="comperative_schedules" class="display" style="width: 100%">
       <thead>
         <tr>
           <th>ID</th>
@@ -121,7 +121,7 @@
     url = '/comperative_schedule/datatables/pending_committee'
   }
   $(document).ready(function () {
-    var table = $("#users_index").DataTable({
+    var table = $("#comperative_schedules").DataTable({
       dom: 'Bfrtip',
       buttons: [
           {

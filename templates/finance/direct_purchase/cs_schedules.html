@@ -15,7 +15,7 @@
     class="bg-gulf-blue-100 shadow shadow-gulf-blue-300 text-gulf-blue-900 rounded px-2 py-2"
   >
     <div class="flex justify-between items-center mb-5">
-      <span class="text-lg font-semibold">Direct Purchases</span>
+      <span class="text-lg font-semibold">Direct Purchases fghjk</span>
       <div class="flex justify-end items-center">
         {% if procurement_role %}
       <a
@@ -67,7 +67,7 @@
     </a>
     {% endif %}
     </div>
-    <table id="users_index" class="display" style="width: 100%">
+    <table id="direct_purchase" class="display" style="width: 100%">
       <thead>
         <tr>
           <th>ID</th>
@@ -121,7 +121,7 @@
     url = '/direct_purchase/datatables/pending_committee'
   }
   $(document).ready(function () {
-    var table = $("#users_index").DataTable({
+    var table = $("#direct_purchase").DataTable({
       dom: 'Bfrtip',
       buttons: [
           {

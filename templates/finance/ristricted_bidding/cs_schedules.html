@@ -67,7 +67,7 @@
     </a>
     {% endif %}
     </div>
-    <table id="users_index" class="display" style="width: 100%">
+    <table id="ristricted_bidding" class="display" style="width: 100%">
       <thead>
         <tr>
           <th>ID</th>
@@ -121,7 +121,7 @@
     url = '/ristricted_bidding/datatables/pending_committee'
   }
   $(document).ready(function () {
-    var table = $("#users_index").DataTable({
+    var table = $("#ristricted_bidding").DataTable({
       dom: 'Bfrtip',
       buttons: [
           {
