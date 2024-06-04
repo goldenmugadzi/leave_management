@@ -108,7 +108,7 @@
                                            href="/media/{{ token.recoveredmeter_set.last.picture }}">
                                             {{ token.reimbursement_set.last.purpose|default_if_none:'' }} picture
                                         </a>
-                                    {% elif  token.tampertoken_set.last.is_for == 'Fauty Maintanance' %}
+                                    {% elif token.tampertoken_set.last.is_for == 'Fauty Maintanance' %}
                                         <div class="font-bold text-center ">
                                             <p class="font-bold mb-2">Fauty Maintanance</p>
                                             <p class="mb-2 font-normal">Fault Code {{ token.faultmaintanance_set.last.code|default_if_none:'' }}</p>
@@ -124,17 +124,17 @@
                                                 {{ token.tampertoken_set.last.is_for|default_if_none:'' }} Proof of payment
                                             </a>
                                         </div>
-                                    {% elif  token.tampertoken_set.last.purpose == 'Faulty Meter' and token.faultmeter_set.last.photo %}
+                                    {% elif token.tampertoken_set.last.purpose == 'Faulty Meter' and token.faultmeter_set.last.photo %}
                                         <a class="text-blue-900 m-auto shadow-lg mb-2 p-2 border-yellow-500 border border-1 font-bold inline-block text-start rounded-full text-sm"
                                            href="/media/{{ token.faultmeter_set.last.photo }}">
                                             {{ token.tampertoken_set.last.is_for|default_if_none:'' }} Picture
                                         </a>
-                                    {% elif  token.reimbursement_set.last.purpose == 'Faulty Meter' and token.faultmeter_set.last.photo  %}
+                                    {% elif token.reimbursement_set.last.purpose == 'Faulty Meter' and token.faultmeter_set.last.photo %}
                                         <a class="text-blue-900 m-auto shadow-lg mb-2 p-2 border-yellow-500 border border-1 font-bold inline-block text-start rounded-full text-sm"
                                            href="/media/{{ token.faultmeter_set.last.photo }}">
                                             {{ token.reimbursement_set.last.purpose|default_if_none:'' }} Picture
                                         </a>
-                                    {% elif  token.reimbursement_set.last.purpose == 'Old Token' and token.oldtoken_set.last.old_token %}
+                                    {% elif token.reimbursement_set.last.purpose == 'Old Token' and token.oldtoken_set.last.old_token %}
                                         <a class="text-blue-900 m-auto shadow-lg mb-2 p-2 border-yellow-500 border border-1 font-bold inline-block text-start rounded-full text-sm"
                                            href="/media/{{ token.oldtoken_set.last.old_token }}">
                                             {{ token.reimbursement_set.last.purpose|default_if_none:'' }} Picture
@@ -199,9 +199,7 @@
                             <form class="row rounded py-4 border  rounded-lg p-3 m-auto container"
                                   method="POST"
                                   action=""
-                                  {% comment %}
-                                  {% url 'approve:approve' token.process.id %}
-                                  {% endcomment %}
+
                                   enctype="multipart/form-data">
                                 {% csrf_token %}
                                 <div class=" m-auto container  ">
@@ -296,11 +294,12 @@
                                     {% endif %}
                                 </div>
                                 {% if step == token.process.workflow.step_set.last and step == token.process.approval_set.last.step %}
-                                <div class="card-body   m-2 p-2 border  rounded">
-                                    <div class="flex justify-center items-center  rounded ">
-                                        <div class="rounded-lg" title="{{ approval.comment }}">
-                                            Completed
-                                            <i class="fas fa-check-circle text-green-500"></i>
+                                    <div class="card-body   m-2  p-2 border  rounded">
+                                        <div class="flex justify-center items-center  rounded ">
+                                            <div class="rounded-lg" title="{{ approval.comment }}">
+                                                Completed
+                                                <i class="fas fa-check-circle text-green-500"></i>
+                                            </div>
                                         </div>
                                     </div>
                                 {% endif %}
@@ -311,4 +310,4 @@
             </div>
         </div>
     </div>
-{% endblock %}
+{% endblock content %}

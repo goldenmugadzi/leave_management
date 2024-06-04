@@ -1,0 +1,49 @@
+{% extends 'admin_layout.html' %}
+{% load static %}
+{% block styles %}
+    <style>
+  .google-visualization-orgchart-linebottom {
+    border-bottom: 1px solid #3388dd;
+    height: 2rem;
+}
+.google-visualization-orgchart-lineleft {
+  border-left: 1px solid #3388dd;
+  height: 2rem;
+}
+    </style>
+{% endblock %}
+
+{% block scripts %}
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <script type="text/javascript">
+      google.charts.load('current', {packages:["orgchart"]});
+      google.charts.setOnLoadCallback(drawChart);
+    
+      function drawChart() {
+        var data = new google.visualization.DataTable();
+        data.addColumn('string', 'Name');
+        data.addColumn('string', 'Manager');
+        data.addColumn('string', 'ToolTip');
+    
+        data.addRows([
+
+        {% for cost_center in cost_centers %}
+        [{v: '{{ cost_center.id }}', f: '{{ cost_center.name }}<div style="color:red; font-style:italic">{{ cost_center.id }}</div>'},'{{ cost_center.parent.id }}', '{{ cost_center.parent.id  }}'],
+      {% endfor %}
+        ]);
+    
+        var chart = new google.visualization.OrgChart(document.getElementById('chart_div'));
+        chart.draw(data, {'allowHtml':true});
+      }
+    </script>
+{% endblock scripts %}
+
+{% block content %}
+    <div>
+        <div style="text-color:blue; font-size:14pt">
+            <strong>Cost Centres</strong>
+        </div>
+        
+        <div id="chart_div" class="py-10 px-5"></div>
+    </div>
+{% endblock %}

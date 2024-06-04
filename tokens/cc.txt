@@ -1,0 +1,1247 @@
+ZESA		ZESA																	
+	CC100000				ZESA Holdings														
+	CC200000				Powertel														
+	CC300000				ZENT														
+	CC400000				ZPC														
+	CCZ001				HESCO														
+	CC500000				ZETDC														
+		CC510000						Head Office											
+			CC511000								MD								
+				511100								MD`s office							
+					CC513500								Business Planning					
+						513500								Bus. Planning Mgr.				
+						513501								Metering Manager`s office				
+						513502								Metering East				
+						513503								Metering West				
+						513504								Systems Administration				
+						513505								Bus. Planning Team				
+					CC513400								Information Technology					
+						513400								Snr Manager I.T				
+						513401								I.T.-C.S.A (Financials & Operations)				
+						513402								I.T-C.S.A(Commercial				
+						513403								I.T-C.S.A(Hardware)				
+						513404								I.T Condition Monitoring				
+					CC514000								Human Resources					
+						514100								Snr Manager HR				
+						514101								Principal HRO				
+						514102								Admin Officer				
+						514103								HR-Apprentices				
+						514200								Loss Control				
+					CC513000								Commercial Director					
+						513100								Commercial Director s Office				
+						513101								Retail Manager				
+							CC511300							Marketing & Communications Manager			
+								511301							Marketing & Communications Manager		
+								513202							Marketing Executive		
+								511300							Public Relations		
+							CC513600							Revenue Assurance			
+								513600							Revenue Ass. Mgr.		
+								513601							Revenue Ass. Team		
+							CC513300							Tariff and Pricing			
+								513300							Tariffs &Pricing Mgr		
+								513301							Tariffs & Pric. Team		
+							CC513200							Commercial Services			
+								513200							Comm.Services Mgr.		
+								513201							Comm.Services Team		
+					CC512000								Finance Director					
+						512100								Finance Director s Office				
+						512101								Sales & Trading				
+							CC512300							Finance Manager			
+								512300							Finance Manager		
+								512301							Stores		
+								512302							Reporting and Budgets		
+								512303							Procurement		
+							CC512400							Procurement Manager			
+								512400							Procurement Manager		
+								512401							Procurement Team		
+							CC512200							Treasury Manager			
+								512200							Treasury Manager`s Office		
+								512201							Payroll		
+								512202							Treasury		
+								512203							Revenue		
+					CC511400								Risk and Insurance					
+						511400								Risk & Insurance				
+					CC511200								Company Secretary					
+						511200								Company Secretary				
+						511201								Legal Team				
+					CC511500								Total Electrification & Nat Plc Lighting					
+						511500								General Manager - Total Electrification				
+			CC515000								Distribution Director								
+				515100								Distribution Director`s Office							
+				515200								Distribution Services							
+				515201								Distribution Services Team							
+				515300								Technical Services							
+				515400								Transport							
+		CC520000						Harare Region											
+			CC521000								General Manager								
+				521001								General Manager s Office							
+			CC522000								Finance								
+				522001								Finance Manager							
+					CC522100								Management Accounting					
+						522101								Management Accounting				
+						522102								Stores				
+						522301								Procurement				
+					CC522200								Financial Accounting					
+						522201								Financial Accounting				
+						522202								Creditors				
+						522203								Revenue				
+			CC523000								Human Resources & Administration								
+				523001								HR & Admin Mgr s Office							
+				523002								Human Resources							
+				523003								Administration							
+				523004								HR-Contract Workers							
+				523005								HR-Post Graduate Trainees							
+				523006								HR-Apprentices							
+			CC524000								Engineering								
+				524001								Engineering Mgr s Office							
+					CC524100								Network & Development					
+						524101								Networks & Dev Engr s Office				
+						524102								Planning & Design				
+						524103								Projects				
+					CC524200								Garage & Transport					
+						524201								Garage				
+						524202								Transport				
+					CC524300								Operations & Maintenance					
+						524301								Ops Manager's Office				
+						524306								Computer Applications				
+						524307								Operations-IMS				
+							CC524350							 Maintenance			
+								524305							Principal Engineer's Office		
+								524302							Mains		
+								524303							Substations		
+								524304							Faults		
+					CC524400								Chitungwiza District					
+						524401								Chitungwiza District				
+						524402								Seke Depot				
+						524403								Zengeza Depot				
+					CC524500								North District					
+						524501								North District				
+						524502								Kuwadzana Depot				
+						524503								Mabelreign Depot				
+						524504								Workington/Warren Park Depot				
+					CC524600								South District					
+						524601								South District				
+						524602								Glenview Depot				
+						524603								Waterfalls Depot				
+						524604								Southerton Depot				
+					CC524700								East District					
+						524701								East District				
+						524702								CBD				
+						524703								Borrowdale				
+						524704								Mabvuku Depot				
+						524705								Ruwa Depot				
+			CC525000								Commercial								
+				525000								Commercial Manager's Office							
+				525001								Chitungwiza							
+				525002								North District							
+				525003								South District							
+				525004								East District							
+				525005								Marketing							
+			CC526000								Risk Management								
+				526001								Loss Control							
+			CC527000								Information Technology								
+				527001								Information Technology							
+				527002								Integrated Management System(IMS)							
+			CC528000								Total Electrification								
+				528001								>>> No valid master record							
+				528002								>>> No valid master record							
+				528003								>>> No valid master record							
+				528004								>>> No valid master record							
+			CC527100								Blocked Cost Centres								
+				CC524800								Protection & COM					
+					524801								Protection & Com				
+		CC530000						Northern Region											
+			CC531000								General Manager								
+				531001								General Manager							
+			CC532000								Finance								
+				532001								Finance Mgr s Office							
+				532002								Financial Accounting							
+				532101								Management Accounting							
+				532102								Procurement							
+					CC532100								Management Accounting					
+			CC533000								Human Resources & Administrati								
+				533001								HR & Admin							
+				533002								HR-Contract Workers							
+				533003								HR-PostGraduate Trainees							
+				533004								HR-Apprentices							
+				533005								Students on attachment							
+				533006								Healthy & Safety							
+			CC534000								Engineering								
+				534001								Engineering Mgr's Office							
+					CC534300								Maintenance Engineer					
+						534301								Engr s Office				
+						534303								Substations				
+					CC534100								Network Development					
+						534101								Development Engineer s Office				
+						534102								Planning & Drawing				
+					CC534200								Garage & Transport					
+						534201								Regional Transport				
+						534202								Garages				
+					CC534400								Chinhoyi District					
+						534401								Chinhoyi District				
+						534402								Kariba Depot				
+						534403								Karoi Depot				
+						534404								Mhangura Depot				
+						534405								Chinhoyi Depot				
+						534407								Mutorashanga Depot				
+						535001								Chinhoyi District Commercial				
+					CC534500								Kadoma District					
+						534501								Kadoma District Office				
+						534502								Kadoma Depot				
+						534504								Chegutu Depot				
+						534506								Norton Depot				
+						534507								Beatrice Depot				
+						535002								Kadoma District Commercial				
+					CC534600								Bindura  District					
+						534601								Bindura District Office				
+						534602								Centenary Depot				
+						534603								Mvurwi Depot				
+						534604								Mt Darwin Depot				
+						534605								Bindura Depot				
+						534607								Concession Depot				
+						535003								Bindura District Commercial				
+					CC534700								Marondera District					
+						534701								Marondera District Office				
+						534702								Mutoko/Murewa Depot				
+						534703								Marondera Depot				
+						534705								Bromley Depot				
+						534706								Juru Depot				
+						535004								Marondera District Commercial				
+			CC535000								Commercial								
+				535000								Commercial Mgr's Office							
+			CC536000								Risk Management								
+				536001								Loss Control							
+				536002								Risk Control							
+			CC537000								Information Technology								
+				537001								Information Technology							
+			CC538001								Blocked Cost Centres								
+				532003								xxxxxx							
+				534103								Projects							
+				534203								Kadoma Garage							
+				534204								Marondera Garage							
+				534205								Bindura Garage							
+				534302								Mains							
+				534304								Faults							
+				534406								Chinhoyi Rural							
+				534408								Chinhoyi Stores							
+				534503								Kadoma Rural							
+				534505								Chegutu Rural							
+				534606								Bindura Rural							
+				534704								Marondera Rural							
+				554506								MURAMBINDA DEPOT							
+					CC534800								Protection & Comm					
+						534801								Protection & COM				
+			CC539000								Total Electrification								
+				534901								>>> No valid master record							
+				534902								>>> No valid master record							
+				534903								>>> No valid master record							
+		C540000						Southern Region											
+			C541000								General Manager								
+				541001								General Manager - Southern							
+			C542000								Finance								
+				542001								Finance Mgr s Office							
+					C542005								Financial Management					
+						542002								Creditors				
+						542006								Revenue				
+					C542100								Management Accounting					
+						542101								Costing				
+						542105								Stores				
+						542003								Procurement				
+			C543000								Human Resources & Administration								
+				541003								Post Graduate Trainees							
+				541004								Apprentices							
+				541005								Contract Workers							
+				543001								Human Resources							
+				543002								Administration							
+				543003								Students on attachment							
+			C544000								Engineering								
+				540001								Engineering Mgr							
+					C544300								Operations & Maintenance					
+						544301								Maintenance				
+					C544100								Network Development					
+						544101								Development Mgr s Office				
+						544102								Planning and Design				
+						544103								Projects				
+					C544200								Garage & Transport					
+						544201								Transport				
+						544204								Garage				
+					C544400								Gweru District					
+						544401								Gweru District Office				
+						544402								Gweru Urban Depot				
+						544403								Gweru Rural Depot				
+						544404								Mvuma Depot				
+						544405								Shurugwi Depot				
+						544406								Chivhu Depot				
+					C544500								Kwekwe District					
+						544501								Kwekwe District Office				
+						544502								Kwekwe Depot				
+						544503								Redcliff Depot				
+						544504								Gokwe Depot				
+						544505								Nkayi Depot				
+						544506								Nembudziya Depot				
+					C544600								Zvishavane District					
+						544601								Zvishavane District Office				
+						544602								Mataga Depot				
+						544407								Zvishavane Depot				
+			C545000								Commercial								
+				545001								Commercial Manager's Office							
+				545002								Gweru Commercial District							
+				545003								Zvishavane Commercial District							
+				545004								Kwekwe Commercial District							
+			C546000								Risk Management								
+				546001								Loss Control							
+			C547000								Information Technology								
+				547001								Information Technology							
+			C547050								Blocked Cost Centres								
+				544202								Kwekwe Garage							
+				542102								Gweru Stores							
+				544203								Gweru Garage							
+				542103								Kwekwe Stores							
+				542104								Zvishavane Stores							
+				542106								Gweru Garage Stores							
+				542107								KweKwe Garage Stores							
+			C548000								Total Electrification Engineer								
+				548001								Total Electrification Engineer					
+				548200								Total Elect Electrical Services Officer					
+				548100								Total Elect Commercial Services Officer					
+		CC550000						Eastern Region											
+			CC551000								General Manager								
+				551001								General Manager							
+				558000								TOTAL ELECTRIFICATION							
+			CC552000								Finance								
+				552001								Finance Mgr s Office							
+					CC552100								Management Accounting					
+						552101								Costing				
+						552102								Stores				
+					CC552200								Financial Management					
+						552002								Creditors				
+					CC552300								Procurement					
+						552003								Procurement				
+			CC553000								Human Resources & Administration								
+				553001								HR & Admin Manager							
+					CC553100								Industrial Relations					
+						553100								 INDUSTRIAL RELATIONS				
+					CC553200								Human resources					
+						551003								EASTERN REGION CONTRACT WORKERS				
+						551004								EASTERN REGION POSR GRADUATE TRAINNEES				
+						551005								EASTERN REGION APPRENTICES				
+						553002								HR				
+						553004								Students on Attachment				
+					CC553300								SAFETY AND HEALTH OFFICER					
+						553300								 HEALTH AND SAFETY				
+					CC553400								ADMIN OFFICER					
+						553003								 Administration				
+			CC554000								Engineering								
+				554001								Engineering Mgr s Office							
+					CC554050								TRANSPORT					
+						554405								MUTARE GARAGE				
+						554607								Masvingo Garage				
+					CC554100								Network Development					
+						554101								Development Mgr s Office				
+						554102								Planning & Drawing				
+						554301								Operations & Maint.				
+						554304								Faults				
+					CC554103								OPERATION AND MAINTANANCE					
+						554103								MAINTENANCE DEPARTMENT				
+						554302								Mains				
+						554303								Substations				
+						554801								Protection				
+			CC554400								MUTARE DISTRICT								
+				554401								Mutare District							
+				554402								Mutare Urban Depot							
+				554403								Mutare Environs							
+				555001								Mutare District							
+			CC554500								Manicaland District								
+				554404								Nyanga depot							
+				554501								Manicaland District							
+				554502								Chipinge Depot							
+				554503								Chimanimani Depot							
+				554504								Middle Sabi Depot							
+				554505								Rusape Depot							
+				554507								Murambinda Depot							
+				555002								Manicaland District							
+			CC554600								Masvingo District								
+				554601								Masvingo District							
+				554602								Masvingo Depot							
+				554603								Gutu Depot							
+				554604								Mashava Depot							
+				554605								Rutenga Depot							
+				554606								Chiredzi Depot							
+				554608								Masvingo Environment Depot							
+				555003								Masvingo District							
+			CC555000								Commercial								
+				555000								Commercial manager's office							
+				555004								Marketing officer							
+			CC556000								Loss Control								
+				556001								loss Control							
+			CC557000								Information Technology								
+				557001								Information Technology							
+		CC570000						Transmission & Distribution											
+			CC570950								Transport  & Logistics								
+				570951								Transport & Logistics Manager							
+			CC570100								Transmission & Distribution Director								
+				570121								Trans & Dis Director's Office							
+				570122								Senior Manager Special Assignments							
+			CC570150								Electricity Trading & Operations								
+				570001								Electricity Trading & Operations Manager							
+				570002								Administration Ofice  Headoffice							
+				570151								Electricity Trading & Operations Manager							
+				570152								Electricity Trading							
+				570153								National Grid							
+				570154								Subtransmission							
+				570155								NCC Administration							
+				570706								Electricity Trading & Operations Manager							
+				571563								Administration Ofice  Headoffice							
+			CC570200								Technical Services								
+				570201								Technical Services Manager							
+					CC570210								Power Network Control					
+						570210								BRCC-Power Network Control				
+						570211								Sherwood B PNC				
+						570212								Hwange B PNS				
+						570220								NCC - Power Network Control				
+					CC570300								Telecoms					
+						570301								Telecomms Engineer's Office				
+						570302								Harare Area-Telecomms				
+						570304								Harare Environs-Telecomms				
+						570305								Kariba-Telecomms				
+						570306								Orange Grove-Telecomms				
+						570307								Hwange-Telecomms				
+						570308								Marvel-Telecomms				
+						570309								Sherwood-Telecomms				
+						570310								Tokwe-Telecomms				
+						570311								Sherwood B Telecomms				
+						570312								Hwange B Telecomms				
+					CC570400								Protection					
+						570401								Protection Services Engineer				
+						570402								Harare City-Protection				
+						570403								Harare Environs-Protection				
+						570404								Kariba-Protection				
+						570405								Orange Grove-Protection				
+						570406								Bulawayo-Protection				
+						570407								Hwange-Protection				
+						570408								Sherwood-Protection				
+						570409								Tokwe-Protection				
+						570410								Sherwood B Protection				
+						570411								Hwange B Protection				
+			CC570500								Distribution Services								
+				570505								Distribution Services Manager							
+				570506								Transport							
+				570507								Section Engineer (SRRC)							
+					CC570510								Metering					
+						570511								Section Engineer Metering				
+						570512								Metering East				
+						570513								Metering West				
+			CC570600								System Development								
+				570601								System Development Manager							
+				570602								Network Development							
+				570603								Power Development							
+			CC570800								Finance								
+				570801								Finance Manager							
+				570802								Financial Accounting							
+				570803								Management Accounting							
+				570804								Procurement							
+			CC570900								Business Planning								
+				570901								Business Planning Manager							
+			CC571000								Human Resources and Administration								
+				571005								HR_Apprentices							
+				571004								HR-Postgraduate Trainees							
+				571003								HR-Contract Workers							
+				571001								HR & Admin Manager							
+				571002								Human Resources & Administration							
+			CC572610								RegionalTransmission East								
+				572610								Eastern Regional Office							
+				572611								Eastern Region Risk Control							
+				572612								Regional Accounting Officer East							
+				572613								Regional Personnel Officer East							
+				572614								Condition Monitoring Engineer East							
+				572734								East Region Transmission Engineer North							
+				572777								East Region Transmission Engineer East							
+					CC572900								Chief Risk Transmission East					
+						572905								Loss Control National Control Centre				
+						572910								Loss Control Warren				
+						572915								Loss Control Dema				
+						572920								Loss Control Bindura				
+						572925								Loss Control Norton				
+						572930								Loss Control Orange Grove				
+						572935								Loss Control Alaska				
+						572940								Loss Control Mutorashanga				
+						572945								Loss Control Selous				
+					CC572620								Dema					
+						CC572630							Substations			
+							572631							Dema 330kV S/S		
+							572633							Seke 132kv S/s		
+							572634							Bromley 132KV S/s		
+						CC572640							Lines			
+					CC572660								Mutorashanga					
+						CC572665							Substations			
+							572665							Mtorashanga 300kv s/s		
+							572666							Mtorashanga 132KV S/s		
+							572667							Horseshoe 132KV S/s		
+							572668							Mazoe 88KV S/s		
+						CC572670							Lines			
+					CC572680								Kariba					
+						CC572685							Substations			
+							572685							Kariba 330KV S/s		
+						CC572690							Lines			
+							572690							B1:Kariba-Alaska1 330kV Line		
+							572691							B2:Kariba-Alaska2 330kV Line		
+							572692							B3:Kariba-Alaska3 330kV Line		
+							572693							KN1:Kariba-Norton1 330kV Line		
+							572694							KN2:Kariba-Norton2 330kV Line		
+					CC572700								Alaska					
+						CC572705							Substations			
+							572705							Alaska 330Kv S/s		
+							572706							Alaska 132KvS/s		
+							572707							Chinhoyi 132Kv S/s		
+							572708							Mhangura 88Kv S/s		
+						CC572710							Lines			
+							572710							C1:Alaska-Sherwood (1-272) 330kV Line		
+							572711							N1: Alaska-Warren1 330kV Line		
+							572712							N2: Alaska-Warren2 330kV Line		
+							572713							A1:Alaska-Mutorashanga 330kV Line		
+							572714							Alaska-Chinhoyi 132kV Line		
+							572715							Alaska-Mhangura 88kV Line		
+							572716							Alaska-Mutorashanga 132kV Line		
+							572717							Mutorashanga-Bindura 132kV Line		
+							572718							Mutorashanga-Horseshoe 132kV Line		
+					CC572730								Norton					
+						CC572735							Substations			
+							575735							Norton 330kv S/s		
+							575736							Norton 88KV S/s		
+							575737							Chegutu 88kv S/s		
+							575738							Fylde 88kV S/s		
+							575739							Lydiate 88kV S/s		
+						CC572745							Lines			
+							572745							E1:Norton-Sherwood (1-225) 330kV Line		
+							572746							NRZ North (Norton-Rimuka) 88kV Line		
+							572747							Norton-SMC 132kV Line		
+							572748							Norton-Bindura1 88kV  Line		
+							572749							Norton-Bindura2 88kV Line		
+							572750							Norton-Mazoe 88kV Line		
+							572751							Eiffel Flats T-Off-Eiffel Flats 88kV Lin		
+							572752							Norton-Chegutu 88kV Line		
+							572753							SMC-Selous 132kV Line		
+							572754							Selous-Ngezi 132kV Line		
+							572755							Fylde-Kadoma 88kV Feeder		
+							572756							Chegutu-Fylde 88kV Feeder		
+					CC572775								Harare					
+						CC572780							Substations			
+							572778							Harare 330Kv S/s		
+							572779							Atlanta 132Kv S/s		
+							572780							Marondera 132Kv S/s		
+						CC572785							Lines			
+					CC572790								Bindura					
+						CC572792							Substations			
+							572792							Bindura 330KV S/s		
+							572793							Madziwa 88 kV S/s		
+							572794							Trojan 88 kV S/s		
+						CC572800							Lines			
+					CC572805								Orange Grove					
+						CC572808							Substations			
+							572808							Orange Grove 330Kv S/s		
+							572809							Triangle 132kV S/s		
+							572810							Mutare City 132Kv S/s		
+							572811							Nyanga 132Kv S/s		
+							572813							Rusape 132Kv S/s		
+							572814							Middle Sabi 132Kv S/s		
+						CC572820							Lines			
+							572820							Orange Grove Park Rd 132kV Line		
+							572821							P2:Dema-Orange Grove 338kV Line		
+							572822							Marondera-Rusape 132kV Line		
+							572823							Orange Grove-Nyanga 132kV Line		
+							572824							Orange Grove-Rusape 132kV Line		
+							572825							Orange Grove-M/Sabi 132kV Line		
+							572826							M/Sabi-Mkwasine 132kV Line		
+							572827							Triangle-Mkwasine 132kV Line		
+							572828							Bromley-Marondera 132kV Line		
+							572829							Dema-Bromley 132kV Line		
+							572830							Park Road-Middle Sabi T-Off 132kV Line		
+							572831							Pungwe - Nyanga 30km 33kv Line		
+					CC572835								Warren					
+						CC572838							Substations			
+							572838							Warren 330kv S/s		
+							572839							Warren 132kv S/s		
+							572840							Kadoma 88kv S/s		
+						CC572845							Lines			
+							572845							D2: Warren-Norton330kV  Line		
+							572846							Warren-Seke 132kV Line		
+							572847							Warren-Atlanta 132kV Line		
+							572848							P1:Dema-Warren 330kV Line		
+							572849							Dema-Seki 132kV Line		
+							572850							L1 : Warren-Harare1 330kV Line		
+							572851							L2 : Warren-Harare2 330kV Line		
+							572852							CB1 : Songo-Bindura 420kV Line		
+							572853							BD1: Bindura-Dema 330kV  Line		
+							572854							Trojan-Madziwa 88kV  Line		
+							572855							Dema-Coleford 132kV Line		
+							572856							Bindura-Trojan 132kV Line		
+					CC572870								Selous					
+						CC572871							Substations			
+							572735							Norton 330kV S/s		
+							572736							Norton 88kV S/s		
+							572737							Chegutu 88kV S/s		
+							572738							Fylde 88V S/s		
+							572739							Lydiate 88kV S/s		
+							572871							Selous 330kV S/s		
+							572872							Rimuka 88kV S/s		
+							572873							Bedford 88kV S/s		
+							572874							Eiffel Flats 88kV S/s		
+							572875							Monawood 132kV S/s		
+							572876							SMC 88kV S/s		
+						CC572880							Lines			
+			CC573000								RegionalTransmission West								
+				573005								Western Regional Office							
+				573006								Western Region Risk Control							
+				573007								Regional  Accounting Officer West							
+				573008								Regional  Personnel Officer West							
+				573074								West Region Transmission Engineer S/wood							
+				573204								West Region Transmission Engineer BYO							
+					CC573300								Chief Risk Transmission West					
+						573305								Loss Control Sherwood				
+						573310								Loss Control Haven				
+						573315								Loss Control Chertsey				
+						573320								Loss Control Tokwe				
+						573325								Loss Control Triangle				
+						573330								Loss Control Bulawayo				
+						573335								Loss Control Insukamini				
+					CC573010								Hwange					
+						CC573015							Substations			
+							573015							Hwange 330Kv S/s		
+							573016							Hwange B 330kv S/s Hesco		
+							573017							Victoria Falls 88Kv S/s		
+							573018							Zambezi River Pumps 88kV S/s		
+							573019							Hwange 88kV s/s		
+							573020							Hwange Local 88KV Substation		
+							573021							Zambezi River Pumps 88kV S/s		
+						CC573025							Lines			
+							573025							R1:1-629 Line		
+							573026							S1:1-800 Line		
+							573027							S2:1-800 Line		
+							573028							Hwange Local Line		
+							573029							Zambezi River Pumps Line		
+							573030							Hwange-Victoria Falls Line		
+							573032							Vic Falls - Zambia 1		
+							573034							Vic Falls - Zambia 2		
+							573036							Sipepa Booster line		
+					CC573040								Insukamini					
+						CC573045							Substations			
+							573045							Insukamini 420kV S/s		
+							573046							Insukamini 330kv S/s		
+							573047							Esigodini 88kv S/s		
+							573048							Gwanda 132kV S/s		
+							573049							Gwanda 88kV S/s		
+							573050							Springs 88kv S/s		
+							573051							Insukamini 420kV S/s Extn Hesco		
+						CC573055							Lines			
+							573056							MK1 Line		
+							573057							R3: 1-74 Line		
+							573058							R4: 1-74 Line		
+					CC573070								Marvel					
+						CC573075							Substations			
+							573075							Marvel 330Kv S/s		
+							573076							Marvel 88Kv S/s		
+							573077							Turk mine 88Kv S/s		
+							573078							Filabusi 88Kv S/s		
+							573079							Ncema 88Kv S/s		
+							573080							Mzinyathini 88Kv S/s		
+							573081							Fernhill 88Kv S/s		
+						CC573085							Lines			
+							573086							R2: 629-701 Line		
+							573087							Marvel - Turkmine Line		
+							573088							Byo-Ftwn 1-378 Line		
+							573089							Marvel-Esigodini Line		
+							573090							Esigodini-Ncema Line		
+							573091							Mzinyathini-Ncema Line		
+							573092							Marvel-Gwanda Line		
+							573093							Ncema-Filabusi Line		
+					CC573100								Tokwe					
+						CC573105							Substations			
+							572812							Mkwasine 132Kv S/s		
+							573105							Tokwe 330kV S/s		
+							573106							Tokwe 132kV S/s		
+							573107							Mashava 132kV S/s		
+							573108							Mwenezi 132kV S/s		
+							573109							Triangle 132kV S/s		
+							573110							Zvishavane 132kV S/s		
+							573111							Beitbridge 132kV S/s		
+							573112							Mberengwa 132kV S/s		
+							573113							Mimosa 132kV S/s		
+						CC573120							Lines			
+							573120							X1:1-267 Line		
+							573121							T1:1-321 Line		
+							573122							Mberengwa-Gwanda Line		
+							573123							Mberengwa-Mimosa Line		
+							573124							Zvishavane-Mberengwa Line		
+							573125							Mwenezi-Beitbridge Line		
+							573126							Tokwe-Zvishavane1 Line		
+							573127							Tokwe-Zvishavane2 Line		
+							573128							Tokwe-Mashava 1 Line		
+							573129							Tokwe-Mashava 2 Line		
+							573130							Mwenezi-Triangle Line		
+							573131							Zvishavane-Shurugwi Line		
+							573132							Beitbridge-Limpopo Line		
+					CC573140								Haven					
+						CC573145							Substations			
+							573145							Haven 330kv S/s		
+							573146							Haven 132Kv S/s		
+							573147							Ripple Creek 132kV S/s		
+							573148							Hunters Road 88kV S/s		
+							573149							Zisco 132Kv S/s		
+							573150							Redcliff 88kv S/s		
+							573151							Zisco 88kV S/s		
+							573152							Steelmakers 88kV S/s		
+						CC573155							Lines			
+					CC573160								Chertsey					
+						CC573165							Substations			
+							573165							Chertsey 330Kv S/s		
+							573166							Chertsey 132Kv S/s		
+							573167							Shurugwi 132kV S/s		
+							573168							Unki 132Kv S/s		
+							573169							Gweru Local 132Kv S/s		
+							573170							Mvuma 88Kv S/s		
+							573171							Shangani 132Kv S/s		
+							573172							Lalapansi 88Kv  S/s		
+							573173							Ascot 88Kv S/s		
+							573174							Gweru City 132Kv S/s		
+							573175							Sino 88kV S/s		
+						CC573175							Lines			
+							573176							Chertsey-Shangani Line		
+							573177							Chertsey-Gweru 1		
+							573178							Chertsey-Gweru 3		
+							573179							Gweru-Ascot Line		
+							573180							Gweru-Shurugwi (GS1) Line		
+							573181							Shurugwi-Unki Line		
+							573182							Lalapansi-Sino Line		
+							573183							Lalapansi-Mvuma Line		
+							573184							M1: 1-280 Line		
+							573185							M2: 1-278 Line		
+					CC573200								Sherwood					
+						CC573205							Substations			
+							573205							Sherwood 330Kv S/s		
+							573206							Sherwood 88Kv S/s		
+							573207							Battlefields 88Kv S/s		
+							573208							Zimasco East 88Kv S/s		
+							573209							Zimasco West 88Kv S/s		
+							573210							Sherwood B 330Kv S/S Hesco		
+							573211							Munyati 88Kv S/s		
+							573212							Sables 88kV S/s		
+							573213							Kwekwe 88Kv S/s		
+							573214							Gado 88Kv S/s		
+							573215							Shamwari  88Kv S/s		
+						CC573220							Lines			
+							574220							Sherwood-Kwekwe Line		
+							574221							Battlefields-Kadoma Line		
+							574222							F1:1-182  Line		
+							574223							F2:1-47   Line		
+							574224							F3:47-182  Line		
+							574225							C1:272-357   Line		
+							574226							E1:226-318   Line		
+							574227							UM1:1-54  Line		
+							574228							UM2:1-36  Line		
+							574229							Shwd-Zimasco(RH1) Line		
+							574230							Shwd-Zimasco 3 (RH3) Line		
+							574231							Zimasco(RH4)Line		
+							574232							Kwekwe-Hunters Rd GW Line		
+							574233							Sherwood-Lalapansi Line		
+							574234							Zisco-Ripple Creek Line		
+							574235							Sherwood-Sables1(SA1) Line		
+							574236							Sherwood-Sables2 (SA2) Line		
+							574237							Sherwood-Zisco(RS1) Line		
+							574238							Sherwood-Zisco2(RS2) Line		
+							574239							NRZ(North) Line		
+							574240							NRZ(South) Line		
+							574241							Munyati-Kadoma Line		
+							574242							Munyati-Battlefields Line		
+							574243							Haven-Zimasco (RH5 ) Line		
+							574244							Haven-Zisco Line		
+		CC560000						Western Region											
+			CC564000								Engineering								
+				564001								Engineering Mgr s Office							
+				564002								Engineering							
+				564003								Apprentices							
+					CC564100								Networks & Development					
+						564101								Networks & Dev Engr s Office				
+						564102								Planning & Drawing				
+						564103								Projects				
+						564104								Fabrication Workshop				
+					CC564200								Garage & Transport					
+						564201								Garage				
+						564202								Transport				
+					CC564300								Operations & Maintenance					
+						564301								Operations & Maintenance				
+						564302								Mains				
+						564303								Substations				
+						564304								BRCC				
+					CC564700													
+						564701								Protection & COM				
+			CC561000								General Manager								
+				561001								General Manager s Office							
+					CC564600								Bulawayo West District					
+						564601								Bulawayo West District				
+						564602								Nketa				
+						564603								Entumbane				
+						564604								Bulawayo West Sales				
+					CC564500								Bulawayo East District					
+						564501								Bulawayo East District				
+						564502								Bulawayo East Depot				
+						564503								Bulawayo East Sales				
+							CC564440							Byo Environs			
+								564408							Byo Environs		
+								564414							Tsholotsho		
+					CC564400								Bulawayo Rural District					
+						564401								Gwanda District office				
+						564403								Plumtree Depot				
+						564404								Turk- mine				
+						564407								Beitbridge				
+						564410								Victoria Falls				
+						564415								Gwanda Sales				
+						564416								Hwange Sales				
+						564417								Hwange District Office				
+							CC564410							Hwange			
+								564409							Hwange		
+								564411							Binga		
+								564412							Lupane		
+							CC564420							Gwanda			
+								564402							Gwanda Depot		
+								564413							Maphisa		
+							CC564430							Esigodini			
+								564405							Esigodini		
+								564406							Filabusi		
+			CC562000								Finance								
+				562001								Finance Manager							
+					CC562100								Management Accounting					
+						562101								Management Accounting				
+						562102								Stores				
+					CC562200								Financial Accounting					
+						562201								Financial Accounting				
+					CC562300								Procurement					
+						562301								Procurement				
+			CC563000								Human Resources & Administration								
+				563001								HR & Admin Mgr s Office							
+				563002								H/R							
+				563003								Admin							
+				563004								Post Grad Trainees							
+				563005								Casuals							
+				563006								HR-Apprentices							
+				563007								Students on Attachme							
+			CC565000								Commercial								
+				565001								Gwanda							
+				565002								Bulawayo West							
+				565003								Bulawayo East							
+				565004								Hwange District							
+				565005								Commercial mgr's off							
+				565006								Sales & Marketing							
+			CC566000								Risk Management								
+				566001								Risk Control							
+				566002								Loss Control							
+				566003								Health & Safety Off							
+			CC567000								Information Technology								
+				567001								Information Technology							
+			CC568000								Total Electrification Engineer								
+				568001								>>> No valid master record							
+				568002								>>> No valid master record							
+				568003								>>> No valid master record							
+	CC700000				NGSC														
+		CC710000						Transmission											
+			CC711000								CEO								
+				711001								Chief Executive Officer's Office							
+				711002								Personal Assistant							
+				711003								Executive Assistant							
+			CC712000								Audit								
+				712001								Audit Manager's Office							
+				712002								Risk & Technical							
+				712003								Finance & Investigations							
+			CC713000								Risk & Loss Control								
+				713001								Loss Control Manager's Office							
+				713002								Senior Loss Control Officer							
+			CC714000								Public Relations								
+				714001								Public Relations Manager's Office							
+			CC715000								Transmission								
+				715001								Transmission Director's Office							
+					CC715100								Technical Services					
+						715101								Technical Services				
+					CC715120								Telecommunications					
+						715121								Telecomms Engineer's Office				
+						715122								Harare Area - Telecomms				
+						715123								Harare Envirions- Telecomms				
+						715124								Kariba - Telecomms				
+						715125								Orange Grove - Telecomms				
+						715126								Hwange - Telecomms				
+						715127								Marvel - Telecomms				
+						715128								Sherwood - Telecomms				
+						715129								Tokwe - Telecomms				
+						715130								Head Office - Telecomms				
+					CC715140								Protection Services					
+						715141								Protection Services Engineer's Office				
+						715142								Harare City - Protection				
+						715143								Harare Environs- Protection				
+						715144								Kariba - Protection				
+						715145								Orange Grove - Protection				
+						715146								Bulawayo - Protection				
+						715147								Hwange - Protection				
+						715148								Sherwood - Protection				
+						715149								Tokwe - Protection				
+					CC715160								Power Network Control					
+						715161								BRCC-Power Network Control				
+						715162								NCC-Power Network Control				
+					CC715170								Transmission West					
+						715171								Region Manager's Office				
+						715172								 Risk Control				
+						715173								Administration Supervisor				
+							CC715180							Bulawayo			
+								715181							Transmision Engineer's Office (Bulawayo)		
+									CC715182						Marvel Substation	
+										715182						Marvel 330Kv S/S
+										715183						Marvel 88Kv S/S
+										715184						Turk Mine 88Kv S/S
+										715185						Filabusi 88Kv S/S
+										715186						Ncema 88Kv S/S
+										715187						Mzinyathini 88Kv S/S
+										715188						Fernhill 88Kv S/S
+									CC715190						Marvel Lines	
+										715190						R2: 629-701 Line
+										715191						Marvel - Turkmine Line
+										715192						Byo-Ftwn 1-378 Line
+										715193						Marvel-Esigodini Line
+										715194						Esigodini-Ncema Line
+										715195						Mzinyathini-Ncema Line
+										715196						Marvel-Gwanda Line
+										715197						Ncema-Filabusi Line
+									CC715200						Insukamini Substation	
+										715201						Insukamini 420kV S/s
+										715202						Insukamini 330kv S/s
+										715203						Esigodini 88kv S/s
+										715204						Gwanda 132kV S/s
+										715205						Gwanda 88kV S/s
+										715206						Springs 88kv S/s
+									CC715210						Insukamini Lines	
+										715211						MK1 Line
+										715212						R3: 1-74 Line
+										715213						R4: 1-74 Line
+									CC715220						Hwange Substation	
+										715221						Hwange 330Kv S/s
+										715222						Victoria Falls 88Kv S/s
+										715223						Zambezi River Pumps 88kV S/s
+									CC715230						Hwange Lines	
+										715231						R1:1-629 Line
+										715232						S1:1-800 Line
+										715233						S2:1-800 Line
+										715234						Hwange Local Line
+										715235						Zambezi River Pumps Line
+										715236						Hwange-Victoria Falls Line
+							CC715240							Sherwood			
+								715241							Transmision Engineer's Office		
+									CC715241						Transmission Engineer Sherwood	
+									CC715245						Sherwood Substations	
+										715246						Sherwood 330Kv S/s
+										715247						Sherwood 88Kv S/s
+										715248						Battlefields 88Kv S/s
+										715249						Zimasco East 88Kv S/s
+										715250						Zimasco West 88Kv S/s
+										715251						Munyati 88Kv S/s
+										715252						Sables 88kV S/s
+										715253						Kwekwe 88Kv S/s
+										715254						Gado 88Kv S/s
+										715255						Shamwari  88Kv S/s
+									CC715260						Sherwood Lines	
+										715261						Sherwood-Kwekwe Line
+										715262						Battlefields-Kadoma Line
+										715263						F1:1-182  Line
+										715264						F2:1-47   Line
+										715265						F3:47-182  Line
+										715266						C1:272-357   Line
+										715267						E1:226-318   Line
+										715268						UM1:1-54  Line
+										715269						UM2:1-36  Line
+										715270						Shwd-Zimasco(RH1) Line
+										715271						Shwd-Zimasco 3 (RH3) Line
+										715272						Zimasco(RH4)Line
+										715273						Kwekwe-Hunters Rd GW Line
+										715274						Sherwood-Lalapansi Line
+										715275						Zisco-Ripple Creek Line
+										715276						Sherwood-Sables1(SA1) Line
+										715277						Sherwood-Sables2 (SA2) Line
+										715278						Sherwood-Zisco(RS1) Line
+										715279						Sherwood-Zisco2(RS2) Line
+										715280						NRZ(North) Line
+										715281						NRZ(South) Line
+										715282						Munyati-Kadoma Line
+										715283						Munyati-Battlefields Line
+										715284						Haven-Zimasco (RH5 ) Line
+										715285						Haven-Zisco Line
+									CC715290						Chertsey Substations	
+										715291						Chertsey 330Kv S/s
+										715292						Chertsey 132Kv S/s
+										715293						Shurugwi 132kV S/s
+										715294						Unki 132Kv S/s
+										715295						Gweru Local 132Kv S/s
+										715296						Mvuma 88Kv S/s
+										715297						Shangani 132Kv S/s
+										715298						Lalapansi 88Kv  S/s
+										715299						Ascot 88Kv S/s
+										715300						Gweru City 132Kv S/s
+										715301						Sino 88kV S/s
+									CC715310						Chertsey Lines	
+										715311						Chertsey-Shangani Line
+										715312						Chertsey-Gweru 1
+										715313						Chertsey-Gweru 3
+										715314						Gweru-Ascot Line
+										715315						Gweru-Shurugwi (GS1) Line
+										715316						Shurugwi-Unki Line
+										715317						Lalapansi-Sino Line
+										715318						Lalapansi-Mvuma Line
+										715319						M1: 1-280 Line
+										715320						M2: 1-278 Line
+									CC715330						Haven Substations	
+										715331						Haven 330kv S/s
+										715332						Haven 132Kv S/s
+										715333						Ripple Creek 132kV S/s
+										715334						Hunters Road 88kV S/s
+										715335						Zisco 132Kv S/s
+										715336						Redcliff 88kv S/s
+										715337						Zisco 88kV S/s
+										715338						Steelmakers 88kV S/s
+									CC715340						Haven Lines	
+										715340						Lines
+									CC715345						Tokwe Substations	
+										715346						Tokwe 330kV S/s
+										715347						Tokwe 132kV S/s
+										715348						Mashava 132kV S/s
+										715349						Mwenezi 132kV S/s
+										715350						Triangle 132kV S/s
+										715351						Zvishavane 132kV S/s
+										715352						Beitbridge 132kV S/s
+										715353						Mberengwa 132kV S/s
+										715354						Mimosa 132kV S/s
+									CC715360						Tokwe Lines	
+										715361						Tokwe 330kV S/s
+										715362						X1:1-267 Line
+										715363						T1:1-321 Line
+										715364						Mberengwa-Gwanda Line
+										715365						Mberengwa-Mimosa Line
+										715366						Zvishavane-Mberengwa Line
+										715367						Mwenezi-Beitbridge Line
+										715368						Tokwe-Zvishavane1 Line
+										715369						Tokwe-Zvishavane2 Line
+										715370						Tokwe-Mashava 1 Line
+										715371						Tokwe-Mashava 2 Line
+										715372						Mwenezi-Triangle Line
+										715373						Zvishavane-Shurugwi Line
+										715374						Beitbridge-Limpopo Line
+							CC715380							Loss Control			
+								715381							Chief Loss Control Office		
+								715382							Loss Control (Tokwe)		
+									715383							Loss Control (Sherwood)		
+									715384							Loss Control (Haven)		
+									715385							Loss Control (Chertsey)		
+									715386							Loss Control (Insukamini)		
+									715387							Loss Control (Bulawayo)		
+					CC715390								Transmission East					
+						715391								Regional Transmission Manager's Office				
+							CC715400							Harare			
+								715401							Transmission Engineer's Office		
+									CC715420						Dema Lines	
+										715421						Lines
+									CC715415						Dema Substations	
+										715416						Dema 330kV S/S
+										715417						Seke 132kv S/s
+										715418						Bromley 132KV S/s
+									CC715410						Bindura Lines	
+										715410						Lines
+									CC715403						Bindura Substations	
+										715403						Bindura 330KV S/s
+										715404						Madziwa 88 kV S/s
+										715405						Trojan 88 kV S/s
+									CC715500						Orange Groove Substation	
+										715501						Orange Grove 330Kv S/s
+										715502						Triangle 132kV S/s
+										715503						Mutare City 132Kv S/s
+										715504						Nyanga 132Kv S/s
+										715505						Mkwasine 132Kv S/s
+										715506						Rusape 132Kv S/s
+										715507						Middle Sabi 132Kv S/s
+									CC715510						Orange Groove Lines	
+										715511						Orange Grove Park Rd 132kV Line
+										715512						P2:Dema-Orange Grove 338kV Line
+										715513						Marondera-Rusape 132kV Line
+										715514						Orange Grove-Nyanga 132kV Line
+										715515						Orange Grove-Rusape 132kV Line
+										715516						Orange Grove-M/Sabi 132kV Line
+										715517						M/Sabi-Mkwasine 132kV Line
+										715518						Triangle-Mkwasine 132kV Line
+										715519						Bromley-Marondera 132kV Line
+										715520						Dema-Bromley 132kV Line
+										715521						Park Road-Middle Sabi T-Off 132kV Line
+									CC715525						Warren Substation	
+										715526						Warren 330kv S/s
+										715527						Warren 132kv S/s
+										715528						Kadoma 88kv S/s
+									CC715530						Warren Lines	
+										715531						D2: Warren-Norton330kV  Line
+										715532						Warren-Seke 132kV Line
+										715533						Warren-Atlanta 132kV Line
+										715534						P1:Dema-Warren 330kV Line
+										715535						Dema-Seki 132kV Line
+										715536						L1 : Warren-Harare1 330kV Line
+										715537						L2 : Warren-Harare2 330kV Line
+										715538						CB1 : Songo-Bindura 420kV Line
+										715539						BD1: Bindura-Dema 330kV  Line
+										715540						Trojan-Madziwa 88kV  Line
+										715541						Dema-Coleford 132kV Line
+										715542						Bindura-Trojan 132kV Line
+										715543						Park Road-Middle Sabi T-Off 132kV Line
+									CC715560						Harare Substation	
+										715561						Harare 330Kv S/s
+										715562						Atlanta 132Kv S/s
+										715563						Marondera 132Kv S/s
+									CC715565						Harare Lines	
+										715566						Lines
+							CC715422							Norton			
+								CC715425						Mutorashanga Substation	
+									715426						Mtorashanga 300kv s/s
+									715427						Mtorashanga 132KV S/s
+									715428						Horseshoe 132KV S/s
+									715429						Mazoe 88KV S/s
+								CC715430						Mutorashanga Lines	
+									715431						Lines
+								CC715435						Kariba Substations	
+									715436						Kariba 330KV S/s
+								CC715440						Kariba Lines	
+									715441						B1:Kariba-Alaska1 330kV Line
+									715442						B2:Kariba-Alaska2 330kV Line
+									715443						B3:Kariba-Alaska3 330kV Line
+									715444						KN1:Kariba-Norton1 330kV Line
+									715445						KN2:Kariba-Norton2 330kV Line
+								CC715450						Alaska Substations	
+									715451						Alaska 330Kv S/s
+									715452						Alaska 132KvS/s
+									715453						Chinhoyi 132Kv S/s
+									715454						Mhangura 88Kv S/s
+								CC715460						Alaska Lines	
+									715461						C1:Alaska-Sherwood (1-272) 330kV Line
+									715462						N1: Alaska-Warren1 330kV Line
+									715463						N2: Alaska-Warren2 330kV Line
+									715464						A1:Alaska-Mutorashanga 330kV Line
+									715465						Alaska-Chinhoyi 132kV Line
+									715466						Alaska-Mhangura 88kV Line
+									715467						Alaska-Mutorashanga 132kV Line
+									715468						Mutorashanga-Bindura 132kV Line
+									715469						Mutorashanga-Horseshoe 132kV Line
+								CC715475						Norton Substation	
+									715476						Norton 330kv S/s
+									715477						Norton 88KV S/s
+									715478						Chegutu 88kv S/s
+									715479						Fylde 88kV S/s
+									715480						Lydiate 88kV S/s
+								CC715485						Norton Lines	
+									715486						E1:Norton-Sherwood (1-225) 330kV Line
+									715487						NRZ North (Norton-Rimuka) 88kV Line
+									715488						Norton-SMC 132kV Line
+									715489						Norton-Bindura1 88kV  Line
+									715490						Norton-Bindura2 88kV Line
+									715491						Norton-Mazoe 88kV Line
+									715492						Eiffel Flats T-Off-Eiffel Flats 88kV Lin
+									715493						Norton-Chegutu 88kV Line
+									715494						SMC-Selous 132kV Line
+									715495						Selous-Ngezi 132kV Line
+									715496						Fylde-Kadoma 88kV Feeder
+									715497						Chegutu-Fylde 88kV Feeder
+								CC715545						Selous Substation	
+									715546						Selous 330kV S/s
+									715547						Rimuka 88kV S/s
+									715548						Bedford 88kV S/s
+									715549						Eiffel Flats 88kV S/s
+									715550						Monawood 132kV S/s
+									715551						SMC 88kV S/s
+								CC715555						Selous Lines	
+									715556						Lines
+							CC715570							Loss Control			
+								715571							Chief Loss Controller's Office		
+								715572							Loss Controller (Bindura Dema Mutorash		
+								715573							Loss Controller (Orange Grove Alaska)		
+								715574							Loss Controller (Harare and NCC)		
+								715575							Loss Controller (Norton Warren and Seal		
+							CC715580							Condition Monitoring			
+								715581							Condition Monitoring Engineer's Office		
+								715582							Principal Technician		
+								715583							Chemist		
+			CC715600								Trading & Operations								
+				715601								Trading & Operations Director's Office							
+					CC715605								Electricity Trading & Operations					
+						715606								ETO Manager's Office				
+						715607								Compliance and Safety				
+						715608								National Grid				
+						715609								Subtransmission				
+						715610								Administration				
+						715611								Statistical				
+						715612								Operations Engineering				
+					CC715615								Electricity Market Operations					
+						715616								EMO Manager's Office				
+						715617								Electricity Trading				
+			CC715620								HR & Administration								
+				715621								Head : Human Resources's Office							
+					CC715625								Administration					
+						715626								Transport Office				
+						715627								Administration Office				
+						715628								Caretaker's Office				
+						715629								Records Office				
+					CC715635								Human Resources					
+						715636								Human Resources Manager's Office				
+						715637								Human Resources Office				
+						715638								Principal Human Resources Office				
+						715639								Health & Safety Office				
+			CC715640								Finance								
+				715641								Finance Director's Office							
+					CC715650								Finance					
+						715651								Finance Manager's Office				
+						715652								Loans & Investments				
+						715653								Financial Management				
+						715654								Payroll				
+					CC715660								Accounting					
+						715661								Account Manager's Office				
+						715662								Management Accounting				
+						715663								Procurement				
+			CC715670								Systems Planning								
+				715671								System Planning Manager's Office							
+				715672								Network Development							
+				715673								Power Development							
+				715674								Environmental Planning							
+			CC715680								Business Planning								
+				715681								Business Planning Manager's Office							
+				715682								Commercial							
+				715683								Business							
+			CC715690								Company Secretary								
+				715691								Company Secretary's Office							
+		CC750000						NTC											
+			CC751000								Training & Development								
+				751001								Training & Development Manager							
+			CC752000								Training								
+				752001								Training							
+			CC753000								Finance								
+				753001								Finance							
+			CC754000								HR & Administration								
+				754002								Administration							
+				754001								HR & Administration							
+			CC755000								Hospitality								
+				755001								Canteen							
+				755002								Accommodation							
+				755003								Maintenance							
+				755004								Conference							
+			CC756000								Loss Control								
+				756001								Loss Control							
+	CC800000				KHPC														
+		CC810000						KHPC Head Office											
+			CC810100								Managing Director								
+				810110								Managing Director's Office							
+			CC810200								"Operations, Projects and Maintanance"								
+				810210								"Operations, Projects and Maintanance"							
+			CC810300								Finance								
+				810340								Finance Director							
+				810330								Salaries							
+				810310								Financials							
+			CC810400								Administration								
+				810410								Human Resources							
+				810420								Administration							
+			CC810600								"Group Legal, Advisor & Corporate Sect."								
+				810620								Company Secretary							
+				810610								Legal							

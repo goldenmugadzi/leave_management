@@ -1,0 +1,11 @@
+<div class="flex items-center space-x-2">
+    <div class="w-4 h-4 bg-blue-500 rounded-full"></div>
+    <div class="text-blue-500">{{ cost_center.name }}</div>
+</div>
+{% if cost_center.children %}
+<div class="pl-4 border-l-2 border-blue-500">
+    {% for child in cost_center.children %}
+        {% include "tokens/cost_center_tree.html" with cost_center=child %}
+    {% endfor %}
+</div>
+{% endif %}
