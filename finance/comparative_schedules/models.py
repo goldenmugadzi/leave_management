@@ -22,7 +22,6 @@ class ProcPlan(models.Model):
     proc_method = models.CharField(max_length=20)
     sprc = models.CharField(max_length=3)
     region = models.CharField(max_length=100)
-    created_at = models.DateTimeField(auto_now_add=True)
 
 class ComparativeSchedules(models.Model):
     cs_id = models.CharField(max_length=100)
@@ -94,7 +93,6 @@ class CSComplianceRemarks(models.Model):
     cs_id = models.ForeignKey(ComparativeSchedules, on_delete=models.CASCADE)
     supplier_id = models.ForeignKey(Supplier, on_delete=models.CASCADE)
     remarks = models.CharField(max_length=255)
-    created_at = models.DateTimeField(auto_now_add=True)
     
 class Ranking(models.Model):
     cs_id = models.ForeignKey(ComparativeSchedules, on_delete=models.CASCADE)

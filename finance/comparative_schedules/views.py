@@ -720,7 +720,10 @@ def get_your_schedules(user_id, search_value=None, column_name=None):
 
     # Filter based on search value
     if search_value:
-        cs = cs.filter(name__icontains=search_value)
+                cs = cs.filter(
+        Q(cs_id__icontains=search_value) |
+        Q(scope_of_work__icontains=search_value) 
+        )
     if column_name:    
         cs = cs.order_by(column_name)
     cs_list = []
@@ -808,7 +811,10 @@ def get_pending_committee_table(user_id, search_value=None, column_name=None):
 
     # Filter based on search value
     if search_value:
-        cs = cs.filter(name__icontains=search_value)
+        cs = cs.filter(
+        Q(cs_id__icontains=search_value) |
+        Q(scope_of_work__icontains=search_value) 
+        )
     
     if column_name:    
         cs = cs.order_by(column_name)
@@ -907,7 +913,10 @@ def get_finance_manager(search_value=None, column_name=None):
 
     # Filter based on search value
     if search_value:
-        cs = cs.filter(name__icontains=search_value)
+                cs = cs.filter(
+        Q(cs_id__icontains=search_value) |
+        Q(scope_of_work__icontains=search_value) 
+        )
     
     if column_name:    
         cs = cs.order_by(column_name)
@@ -1019,7 +1028,10 @@ def get_general_manager(search_value=None, column_name=None):
     
     # Filter based on search value
     if search_value:
-        cs = cs.filter(name__icontains=search_value)
+                cs = cs.filter(
+        Q(cs_id__icontains=search_value) |
+        Q(scope_of_work__icontains=search_value) 
+        )
     
     if column_name:    
         cs = cs.order_by(column_name)
