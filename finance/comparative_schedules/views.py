@@ -1859,6 +1859,7 @@ def update_comparative_schedule(request):
 
         # fetch user
         user = UserProfile.objects.filter(username=username).first()
+        currency = Currency.objects.filter(id=currency).first() if currency else None
         # region_ = Regions.objects.filter(region=pr.region).first() if 'region' in pr else None
         # section = Sections.objects.filter(section=pr.section).first() if 'section' in pr else None
         cs_query = ComparativeSchedules.objects.filter(cs_id=cs_id).first()

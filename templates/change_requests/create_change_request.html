@@ -1,0 +1,143 @@
+<!--users/templates/users/add_user.html-->
+
+{% extends 'admin_layout.html' %} 
+{% block styles %}
+
+    <link
+        rel="stylesheet"
+        href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css"
+    />
+    <style>
+        .dataTables_wrapper .dataTables_length select {
+            width: 4rem;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        th, td {
+            border: 1px solid gray; /* Change border color to gray */
+            padding: 8px;
+            text-align: left;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        .upload-button {
+            background-color: #333;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+    </style>
+
+{% endblock styles %}
+{% block content %}
+
+<div class="content-wrapper">
+  
+  <div class="bg-gulf-blue-100 shadow shadow-gulf-blue-200 text-gray-900 rounded px-2 py-2">
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      <div class="space-y-12 px-5 py-5">
+
+        <div class="mt-10 border-b border-gray-900/10 pb-12">
+          <h2 class="text-base font-semibold leading-7 text-gray-900">
+            Create Change Request
+          </h2>
+          <p class="mt-1 text-sm leading-6 text-gray-600">
+            Fill all required fields.
+          </p>
+
+          <div class="mt-10 grid grid-cols-3 gap-4">
+            
+            <div>
+              <label
+                for="filename"
+                class="block text-sm font-medium leading-6 text-gray-900"
+                >Change Type</label
+              >
+              <div class="mt-2">
+                <select
+                    id="change_type"
+                    name="change_type"
+                    autocomplete="change_type"
+                    class="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+                  >
+                    <option>Select Type</option>
+                    <option value="Change Role">Change Role</option>
+                    <option value="System Configuration Change">System Configuration Change</option>
+                    <option value="New Feature Request">New Feature Request</option>
+                    <option value="Enhancement Request">Enhancement Request</option>
+                    <option value="Other">Other</option>
+                  </select>
+              </div>
+            </div>
+
+            <div>
+              <label
+                for="filename"
+                class="block text-sm font-medium leading-6 text-gray-900"
+                >Change Description</label
+              >
+              <div class="mt-2">
+                <input
+                  type="text"
+                  name="file_name"
+                  id="file_name"
+                  autocomplete="file_name_id"
+                  class="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                />
+              </div>
+            </div>
+
+            <div>
+                <label
+                  for="filename"
+                  class="block text-sm font-medium leading-6 text-gray-900"
+                  >Section</label
+                >
+                <div class="mt-2">
+                  <select
+                      id="section"
+                      name="section"
+                      autocomplete="section"
+                      class="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+                    >
+                        <option>Select Section</option>
+                        {% for cost_center in cost_centers %}
+                        <option value="{{cost_center.id}}">{{cost_center.section}}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+              </div>
+
+          </div>
+        </div>
+      </div>
+
+      <div class="flex mt-10 px-3 py-3">
+        <div style="width: 50%;">
+          <button style="width: 100%;" class="text-sm font-semibold leading-6 text-gray-900">
+            CANCEL
+          </button>
+        </div>
+        <div style="width: 50%;">
+          <div class="text-center">
+            <button
+              type="submit"
+              class="upload-button"
+            >
+              SAVE FILE
+            </button>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

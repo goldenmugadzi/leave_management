@@ -113,6 +113,7 @@ INSTALLED_APPS = [
     'risk.audit.nonconformity',
     'it.beii_auth',
     'it.users',
+    'it.change_requests',
     'executive.exec_dashboards',
     'knowledge_center',
     'Docs',
