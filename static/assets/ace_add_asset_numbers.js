@@ -18,7 +18,7 @@ $(document).ready(function() {
         var formData = new FormData(this);
 
         $.ajax({
-            url: "/acee/add_asset_number", // Replace with your actual URL
+            url: "/ace/add_asset_number", // Replace with your actual URL
             type: "POST",
             data: formData,
             contentType: false,

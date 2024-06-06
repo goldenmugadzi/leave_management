@@ -148,3 +148,44 @@ class ProjectDetailForm(forms.ModelForm):
         words = field_name.split('_')
         capitalized_words = [word.capitalize() for word in words]
         return ' '.join(capitalized_words)
+
+
+class ViramentForm(forms.ModelForm):
+    class Meta:
+        model = Asset_budget_Virament
+        fields = '__all__'
+        exclude = ['process', 'requested_by', 'virament_id', 'date_created', 'region'
+                   ]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        for field_name, field in self.fields.items():
+            # for the field budget, I want it to display its balance attribute when it selected
+
+            field.widget.attrs.update({
+                'class': "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset "
+                         "ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset "
+                         "focus:ring-indigo-600"
+                         "sm:text-sm sm:leading-6",
+            })
+            if isinstance(field.widget, forms.Textarea):
+                field.widget.attrs.update({'rows': '3'})
+
+            field.label = field.label or self.humanize_field_name(field_name)
+            field.label_attrs = {'class': 'block text-sm font-medium leading-6 text-gray-900'}
+
+        # self.formset = QuotationForm(*args, **kwargs)
+        #
+        # for i, quotation_form in enumerate(self.formset.forms):
+        #     quotation_form.fields['quotation_file'].widget.attrs.update({
+        #         'class': "block w-full rounded-md border-0 py-1.5 text-gray-900 bg-white shadow-sm ring-1 "
+        #                  "ring-inset"
+        #                  "ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset "
+        #                  "focus:ring-indigo-600"
+        #                  "sm:text-sm sm:leading-6",
+        #     })
+        # quotation_form.fields['quotation_file'].label = self.get_quotation_label(i + 1)
+
+    # def get_quotation_label(self, quotation_number): suffix = 'ACE' if 11 <= quotation_number <= 13 else {1: 'st',
+    # 2: 'nd', 3

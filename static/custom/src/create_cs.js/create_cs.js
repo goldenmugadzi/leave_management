@@ -15,8 +15,10 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
 var e = React.createElement;
+var domContainer = document.querySelector("#create_comparative_schedule");
+var url = domContainer.getAttribute("data-baseurl");
 // const BASE_URL = "http://localhost:8000";
-var BASE_URL = "http://172.16.8.99:9300";
+var BASE_URL = url;
 
 var CreateCS = function (_React$Component) {
   _inherits(CreateCS, _React$Component);
@@ -105,6 +107,8 @@ var CreateCS = function (_React$Component) {
           return fullName1.localeCompare(fullName2);
         });
         var cs_owner = data.cs_owner ? data.cs_owner : "";
+        var currencies = data.currencies ? data.currencies : [];
+        var currency = data.currency ? data.currency : "";
 
         var advert_url = _this.onGetFileObjectUrl(data.advert);
         var pr_at_list = [];
@@ -131,6 +135,8 @@ var CreateCS = function (_React$Component) {
           committeeApprovalComplete: committeeApprovalComplete,
           approvalsComplete: approvalsComplete,
           proc_plans: proc_plans,
+          currencies: currencies,
+          currency: currency,
           uom: uom,
           suppliers: suppliers,
           users: users,
@@ -144,7 +150,7 @@ var CreateCS = function (_React$Component) {
           quantity: quantity,
           pr_date: pr_date,
           closing_date: closing_date,
-          closing_time_hour: closing_time
+          closing_time: closing_time
         }, _defineProperty(_Object$assign, "ref_date", ref_date), _defineProperty(_Object$assign, "tender_adjudication_committee_date", tender_adjudication_committee_date), _defineProperty(_Object$assign, "advert", advert), _defineProperty(_Object$assign, "advert_url", advert_url), _defineProperty(_Object$assign, "bids", sorted_bids), _defineProperty(_Object$assign, "cs_items", cs_items), _defineProperty(_Object$assign, "compliance", compliance), _defineProperty(_Object$assign, "complianceRemarks", complianceRemarks), _defineProperty(_Object$assign, "rankings", rankings), _defineProperty(_Object$assign, "committeeMembers", committee), _defineProperty(_Object$assign, "gmApproval", gm_approval), _defineProperty(_Object$assign, "fmApproval", fm_approval), _defineProperty(_Object$assign, "pr_items", pr_items), _defineProperty(_Object$assign, "pr_attachments", pr_at_list), _Object$assign)));
       }).catch(function (error) {
         return console.log("error: ", error);
@@ -168,6 +174,7 @@ var CreateCS = function (_React$Component) {
         var pr_id = data.pr_id ? data.pr_id : "";
         var pr_date = data.pr_date ? data.pr_date : "";
         var users = data.users ? data.users : [];
+        var currencies = data.currencies ? data.currencies : [];
         // Sort users by full name (first_name + " " + last_name)
         users.sort(function (user1, user2) {
           var fullName1 = user1.first_name + " " + user1.last_name;
@@ -184,6 +191,7 @@ var CreateCS = function (_React$Component) {
         }
         _this.setState({
           scope_of_work: scope_of_work,
+          currencies: currencies,
           proc_ref: proc_ref,
           proc_plans: plans,
           uom: uom,
@@ -211,6 +219,7 @@ var CreateCS = function (_React$Component) {
           var proc_ref = data.proc_ref ? data.proc_ref : "";
           var proc_plan = data.proc_plan ? data.proc_plan : null;
           var plans = data.proc_plans ? data.proc_plans : [];
+          var currencies = data.currencies ? data.currencies : [];
           var uom = data.uom ? data.uom : "";
           var suppliers = data.suppliers ? data.suppliers : [];
           var pr_items = data.pr_items ? data.pr_items : [];
@@ -235,6 +244,7 @@ var CreateCS = function (_React$Component) {
               proc_ref: proc_plan.proc_ref
             },
             proc_plans: plans,
+            currencies: currencies,
             uom: uom,
             suppliers: suppliers,
             pr_items: pr_items,
@@ -297,10 +307,15 @@ var CreateCS = function (_React$Component) {
       });
       // check if memberUserName is the one creating
       var currentUserFlag = _this.state.member.memberUserName === _this.state.username;
+      var positionFlag = members.find(function (_member) {
+        return _member.memberPosition === _this.state.member.memberPosition;
+      });
       if (member) {
         alert("Committee Member already added.");
       } else if (currentUserFlag) {
         alert("You cannot add yourself. Please choose another user.");
+      } else if (positionFlag) {
+        alert(_this.state.member.memberPosition + ", already exists, please add a different one.");
       } else {
         members.push(_this.state.member);
         _this.setState(Object.assign({}, _this.state, {
@@ -430,6 +445,8 @@ var CreateCS = function (_React$Component) {
         } else {
           alert("Error approving Committee");
         }
+      }).catch(function (err) {
+        return console.log("onCommitteeApprove error: ", err);
       });
     };
 
@@ -575,15 +592,12 @@ var CreateCS = function (_React$Component) {
         // update item selected to false
         item.ordered = false;
         // update pr_items
-        var pr_items = [];
-        if (_this.state.pr_items && _this.state.pr_items.length > 0) {
-          pr_items = _this.state.pr_items.map(function (_item) {
-            if (_item.id === item_id) {
-              return item;
-            }
-            return _item;
-          });
-        }
+        var pr_items = _this.state.pr_items.map(function (_item) {
+          if (_item.id === item_id) {
+            return item;
+          }
+          return _item;
+        });
         // remove item
         var items = _this.state.cs_items.filter(function (item) {
           return item.id !== item_id;
@@ -597,23 +611,16 @@ var CreateCS = function (_React$Component) {
         var _item2 = _this.state.pr_items.find(function (item) {
           return item.id === item_id;
         });
-        if (_item2.item_required === undefined || _item2.quantity === undefined || _item2.unit_of_measurement === undefined) {
-          alert("Item selected has missing fields. Please correct the PR items first.");
-          return;
-        }
         // update pr_item selected to added
         _item2.ordered = true;
-        _item2.item_required = _item2.item_required;
+        _item2.item_name = _item2.item_required;
         // update pr_items
-        var _pr_items = [];
-        if (_this.state.pr_items && _this.state.pr_items.length > 0) {
-          _pr_items = _this.state.pr_items.map(function (_item) {
-            if (_item.id === item_id) {
-              return _item2;
-            }
-            return _item;
-          });
-        }
+        var _pr_items = _this.state.pr_items.map(function (_item) {
+          if (_item.id === item_id) {
+            return _item2;
+          }
+          return _item;
+        });
 
         var item_count = _this.state.cs_item_count + 1;
         _this.setState(Object.assign({}, _this.state, {
@@ -717,7 +724,6 @@ var CreateCS = function (_React$Component) {
     };
 
     _this.onCurrentBidChange = function (name_, event) {
-
       var currentBid = _this.state.currentBid;
       if (name_ === "bid_document") {
         var bid_file = event.target.files[0];
@@ -953,7 +959,7 @@ var CreateCS = function (_React$Component) {
 
     _this.onSaveSchedule = function () {
 
-      if (!_this.state.proc_ref || !_this.state.scope_of_work || !_this.state.pr_number || !_this.state.pr_date || !_this.state.closing_date || !_this.state.ref_date || !_this.state.closing_time_hour || !_this.state.date_tender_opened || !_this.state.tender_adjudication_committee_date) {
+      if (!_this.state.currency || !_this.state.proc_ref || !_this.state.scope_of_work || !_this.state.pr_number || !_this.state.pr_date || !_this.state.closing_date || !_this.state.ref_date || !_this.state.closing_time || !_this.state.date_tender_opened || !_this.state.tender_adjudication_committee_date) {
         alert("Please fill in all required fields");
         return;
       }
@@ -966,12 +972,13 @@ var CreateCS = function (_React$Component) {
       form_data.enctype = "multipart/form-data";
       form_data.append("proc_ref", _this.state.proc_ref);
       form_data.append("scope_of_work", _this.state.scope_of_work);
+      form_data.append("currency", _this.state.currency);
       form_data.append("pr_number", _this.state.pr_number);
       form_data.append("quantity", _this.state.quantity);
       form_data.append("pr_date", _this.state.pr_date);
       form_data.append("closing_date", _this.state.closing_date);
       form_data.append("ref_date", _this.state.ref_date);
-      form_data.append("closing_time_hour", _this.state.closing_time_hour);
+      form_data.append("closing_time", _this.state.closing_time);
       form_data.append("date_tender_opened", _this.state.date_tender_opened);
       form_data.append("username", _this.state.username);
       form_data.append("tender_adjudication_committee_date", _this.state.tender_adjudication_committee_date);
@@ -997,11 +1004,17 @@ var CreateCS = function (_React$Component) {
         } else {
           alert("Error saving Comparative Schedule");
         }
+      }).catch(function (err) {
+        return console.log("onSaveSchedule: ", err);
       });
     };
 
     _this.onUpdateSchedule = function () {
-      if (!_this.state.proc_ref || !_this.state.scope_of_work || !_this.state.pr_number || !_this.state.pr_date || !_this.state.closing_date || !_this.state.ref_date || !_this.state.closing_time_hour || !_this.state.date_tender_opened || !_this.state.tender_adjudication_committee_date) {
+      if (_this.state.cs_id === "" || _this.state.cs_id === undefined) {
+        alert("Please save the Comparative Schedule first");
+        return;
+      }
+      if (!_this.state.currency || !_this.state.proc_ref || !_this.state.scope_of_work || !_this.state.pr_number || !_this.state.pr_date || !_this.state.closing_date || !_this.state.ref_date || !_this.state.closing_time || !_this.state.date_tender_opened || !_this.state.tender_adjudication_committee_date) {
         alert("Please fill in all required fields");
         return;
       }
@@ -1011,12 +1024,13 @@ var CreateCS = function (_React$Component) {
       form_data.append("cs_id", _this.state.cs_id);
       form_data.append("proc_ref", _this.state.proc_ref);
       form_data.append("scope_of_work", _this.state.scope_of_work);
+      form_data.append("currency", _this.state.currency);
       form_data.append("pr_number", _this.state.pr_number);
       form_data.append("quantity", _this.state.quantity);
       form_data.append("pr_date", _this.state.pr_date);
       form_data.append("closing_date", _this.state.closing_date);
       form_data.append("ref_date", _this.state.ref_date);
-      form_data.append("closing_time_hour", _this.state.closing_time_hour);
+      form_data.append("closing_time", _this.state.closing_time);
       form_data.append("date_tender_opened", _this.state.date_tender_opened);
       form_data.append("username", _this.state.username);
       form_data.append("tender_adjudication_committee_date", _this.state.tender_adjudication_committee_date);
@@ -1038,6 +1052,8 @@ var CreateCS = function (_React$Component) {
         } else {
           alert("Error updating Comparative Schedule");
         }
+      }).catch(function (err) {
+        return console.log("onUpdateSchedule: ", err);
       });
     };
 
@@ -1412,6 +1428,8 @@ var CreateCS = function (_React$Component) {
       committeeApprovalComplete: false,
       plan_ref: "",
       proc_ref: "",
+      currency: null,
+      currencies: [],
       proc_plan: null,
       scope_of_work: "",
       pr_number: "",
@@ -1419,7 +1437,7 @@ var CreateCS = function (_React$Component) {
       quantity: "",
       pr_date: "",
       closing_date: "",
-      closing_time_hour: "",
+      closing_time: "",
       ref_date: "",
       date_tender_opened: "",
       tender_adjudication_committee_date: "",
@@ -3571,6 +3589,32 @@ var CreateCS = function (_React$Component) {
                           "ADD MEMBER"
                         )
                       ) : ""
+                    ),
+                    React.createElement("td", { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" })
+                  ),
+                  React.createElement(
+                    "tr",
+                    { className: "text-gray-900" },
+                    React.createElement(
+                      "td",
+                      { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                      "CREATED BY"
+                    ),
+                    React.createElement(
+                      "td",
+                      { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                      this.state.creator
+                    ),
+                    React.createElement(
+                      "td",
+                      { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                      "INITIATED"
+                    ),
+                    React.createElement("td", { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" }),
+                    React.createElement(
+                      "td",
+                      { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                      this.state.created_at ? this.state.created_at.split(".")[0] : ""
                     )
                   ),
                   this.state.committeeMembers && this.state.committeeMembers.map(function (member, key) {
@@ -3580,17 +3624,12 @@ var CreateCS = function (_React$Component) {
                       React.createElement(
                         "td",
                         { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
-                        member.memberPosition
+                        member.memberPosition.toUpperCase()
                       ),
                       React.createElement(
                         "td",
                         { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
                         member.memberName ? member.memberName : member.memberUserName
-                      ),
-                      React.createElement(
-                        "td",
-                        { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
-                        member.committeeDate
                       ),
                       React.createElement(
                         "td",
@@ -3650,29 +3689,19 @@ var CreateCS = function (_React$Component) {
                             )
                           ) : ""
                         )
+                      ),
+                      React.createElement(
+                        "td",
+                        { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                        member.committeeJustification
+                      ),
+                      React.createElement(
+                        "td",
+                        { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                        member.committeeDate ? member.committeeDate.split(".")[0] : ""
                       )
                     );
-                  }),
-                  React.createElement(
-                    "tr",
-                    { className: "text-gray-900" },
-                    React.createElement(
-                      "td",
-                      { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
-                      "Created By"
-                    ),
-                    React.createElement(
-                      "td",
-                      { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
-                      this.state.creator
-                    ),
-                    React.createElement(
-                      "td",
-                      { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
-                      this.state.created_at ? this.state.created_at.split(" ")[0] : ""
-                    ),
-                    React.createElement("td", { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" })
-                  )
+                  })
                 )
               )
             )
@@ -3710,6 +3739,16 @@ var CreateCS = function (_React$Component) {
                       "td",
                       { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
                       "FINANCE MANAGER"
+                    ),
+                    React.createElement(
+                      "td",
+                      { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                      this.state.fmApproval && this.state.fmApproval.approver_name
+                    ),
+                    React.createElement(
+                      "td",
+                      { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                      this.state.fmApproval && this.state.fmApproval.approval === "Rejected" && this.state.fmApproval.justification
                     ),
                     React.createElement(
                       "td",
@@ -3758,12 +3797,7 @@ var CreateCS = function (_React$Component) {
                     React.createElement(
                       "td",
                       { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
-                      this.state.fmApproval && this.state.fmApproval.justification
-                    ),
-                    React.createElement(
-                      "td",
-                      { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
-                      this.state.fmApproval && this.state.fmApproval.approval_date
+                      this.state.fmApproval && this.state.fmApproval.approval_date ? this.state.fmApproval.approval_date.split(".")[0] : ""
                     )
                   ),
                   React.createElement(
@@ -3773,6 +3807,16 @@ var CreateCS = function (_React$Component) {
                       "td",
                       { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
                       "GENERAL MANAGER"
+                    ),
+                    React.createElement(
+                      "td",
+                      { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                      this.state.gmApproval && this.state.gmApproval.approver_name
+                    ),
+                    React.createElement(
+                      "td",
+                      { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                      this.state.gmApproval && this.state.gmApproval.approval === "Rejected" && this.state.gmApproval.justification
                     ),
                     React.createElement(
                       "td",
@@ -3821,12 +3865,7 @@ var CreateCS = function (_React$Component) {
                     React.createElement(
                       "td",
                       { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
-                      this.state.gmApproval && this.state.gmApproval.justification
-                    ),
-                    React.createElement(
-                      "td",
-                      { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
-                      this.state.gmApproval && this.state.gmApproval.approval_date
+                      this.state.gmApproval && this.state.gmApproval.approval_date ? this.state.gmApproval.approval_date.split(".")[0] : ""
                     )
                   )
                 )
@@ -3974,19 +4013,18 @@ var CreateCS = function (_React$Component) {
                   React.createElement(
                     "select",
                     {
-                      name: "closing_time_hour",
+                      name: "closing_time",
                       onChange: function onChange(e) {
-                        return _this2.onSelectChange("closing_time_hour", e);
+                        return _this2.onSelectChange("closing_time", e);
                       },
                       disabled: this.state.username === this.state.cs_owner || this.state.cs_owner === "" ? false : true,
                       className: "rounded-md block border-none w-full py-1.5 text-gray-900 sm:max-w-xs sm:text-sm sm:leading-6"
                     },
-                    this.state.closing_time_hour ? React.createElement(
+                    this.state.closing_time ? React.createElement(
                       "option",
-                      { value: this.state.closing_time_hour },
-                      this.state.closing_time_hour
-                    ) : "",
-                    React.createElement(
+                      { value: this.state.closing_time },
+                      this.state.closing_time
+                    ) : React.createElement(
                       "option",
                       { value: "" },
                       "Select Closing Time"
@@ -4034,7 +4072,7 @@ var CreateCS = function (_React$Component) {
                     return _this2.onSelectChange("proc_ref", e);
                   },
                   disabled: this.state.username === this.state.cs_owner || this.state.cs_owner === "" ? false : true,
-                  className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
+                  className: "block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
                 },
                 this.state.proc_plan ? React.createElement(
                   "option",
@@ -4046,6 +4084,51 @@ var CreateCS = function (_React$Component) {
                     "option",
                     { value: plan.proc_ref },
                     plan.description
+                  );
+                }) : ""
+              )
+            )
+          ),
+          React.createElement(
+            "div",
+            { className: "flex-1 w-20 ml-1" },
+            React.createElement(
+              "label",
+              {
+                htmlFor: "currency",
+                className: "block text-sm font-medium leading-6 text-gray-900"
+              },
+              "Currency"
+            ),
+            React.createElement(
+              "div",
+              { className: "mt-2" },
+              React.createElement(
+                "select",
+                {
+                  id: "currency",
+                  name: "currency",
+                  autoComplete: "currency",
+                  onChange: function onChange(e) {
+                    return _this2.onSelectChange("currency", e);
+                  },
+                  disabled: this.state.username === this.state.cs_owner || this.state.cs_owner === "" ? false : true,
+                  className: "block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
+                },
+                this.state.currency ? React.createElement(
+                  "option",
+                  { value: this.state.currency.id },
+                  this.state.currency.currency
+                ) : React.createElement(
+                  "option",
+                  { value: "" },
+                  "Select Currency"
+                ),
+                this.state.currencies ? this.state.currencies.map(function (currency) {
+                  return React.createElement(
+                    "option",
+                    { value: currency.id },
+                    currency.currency
                   );
                 }) : ""
               )
@@ -4700,7 +4783,6 @@ var CreateCS = function (_React$Component) {
   return CreateCS;
 }(React.Component);
 
-var domContainer = document.querySelector("#create_comparative_schedule");
 var username = domContainer.getAttribute("data-username");
 var prid = domContainer.getAttribute("data-prid");
 var csid = domContainer.getAttribute("data-csid");

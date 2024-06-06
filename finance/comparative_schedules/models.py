@@ -4,6 +4,13 @@ from finance.Direct_purchases.models import Supplier
 from finance.purchase_request.models import PurchaseRequest
 from it.users.models import *
 
+class Currency(models.Model):
+    currency = models.CharField(max_length=100)
+    rate_value = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True, default=None)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self) -> str:
+        return self.currency
 
 class ProcPlan(models.Model):
     proc_ref = models.CharField(max_length=100)
@@ -16,7 +23,6 @@ class ProcPlan(models.Model):
     sprc = models.CharField(max_length=3)
     region = models.CharField(max_length=100)
 
-
 class ComparativeSchedules(models.Model):
     cs_id = models.CharField(max_length=100)
     pr_id = models.ForeignKey(PurchaseRequest, on_delete=models.CASCADE)
@@ -28,6 +34,7 @@ class ComparativeSchedules(models.Model):
     closing_time = models.CharField(max_length=10)
     advert = models.CharField(max_length=400)
     pr_number = models.CharField(max_length=100)
+    currency = models.ForeignKey(Currency, on_delete=models.CASCADE, default=1)
     pr_date = models.DateField()
     cs_opened = models.DateField()
     tac_date = models.DateField()
@@ -117,7 +124,7 @@ class Committee(models.Model):
     committee_status = models.BooleanField(default=False, null=True, blank=True)
     committee_approval = models.CharField(max_length=100, null=True, blank=True) # Approved, Rejected
     justification = models.CharField(max_length=255, null=True, blank=True)
-    committee_date = models.DateField()
+    committee_date = models.DateTimeField(blank=True, null=True, default=None)
     created_at = models.DateTimeField(auto_now_add=True)
     
 class CSApproval(models.Model):
@@ -126,5 +133,5 @@ class CSApproval(models.Model):
     approver_role = models.CharField(max_length=100, null=True, blank=True) # General Manager, Finance Manager
     approval = models.CharField(max_length=100, null=True, blank=True) # Approved, Rejected
     justification = models.CharField(max_length=255, null=True, blank=True)
-    approval_date = models.DateField()
+    approval_date = models.DateTimeField(blank=True, null=True, default=None)
     created_at = models.DateTimeField(auto_now_add=True)

@@ -1,8 +1,10 @@
 "use strict";
 
 const e = React.createElement;
+const domContainer = document.querySelector("#create_comparative_schedule");
+const url = domContainer.getAttribute("data-baseurl");
 // const BASE_URL = "http://localhost:8000";
-const BASE_URL = "http://172.16.8.99:9300";
+const BASE_URL = url;
 
 class CreateCS extends React.Component {
   constructor(props) {
@@ -16,6 +18,8 @@ class CreateCS extends React.Component {
       committeeApprovalComplete: false,
       plan_ref: "",
       proc_ref: "",
+      currency: null,
+      currencies: [],
       proc_plan: null,
       scope_of_work: "",
       pr_number: "",
@@ -23,7 +27,7 @@ class CreateCS extends React.Component {
       quantity: "",
       pr_date: "",
       closing_date: "",
-      closing_time_hour: "",
+      closing_time: "",
       ref_date: "",
       date_tender_opened: "",
       tender_adjudication_committee_date: "",
@@ -204,6 +208,8 @@ class CreateCS extends React.Component {
           return fullName1.localeCompare(fullName2);
         });
         let cs_owner = data.cs_owner ? data.cs_owner : "";
+        let currencies = data.currencies ? data.currencies : [];
+        let currency = data.currency ? data.currency : "";
 
         let advert_url = this.onGetFileObjectUrl(data.advert);
         let pr_at_list = [];
@@ -232,6 +238,8 @@ class CreateCS extends React.Component {
           committeeApprovalComplete: committeeApprovalComplete,
           approvalsComplete: approvalsComplete,
           proc_plans: proc_plans,
+          currencies: currencies,
+          currency: currency,
           uom: uom,
           suppliers: suppliers,
           users: users,
@@ -245,7 +253,7 @@ class CreateCS extends React.Component {
           quantity: quantity,
           pr_date: pr_date,
           closing_date: closing_date,
-          closing_time_hour: closing_time,
+          closing_time: closing_time,
           ref_date: ref_date,
           tender_adjudication_committee_date:
             tender_adjudication_committee_date,
@@ -283,6 +291,7 @@ class CreateCS extends React.Component {
         let pr_id = data.pr_id ? data.pr_id : "";
         let pr_date = data.pr_date ? data.pr_date : "";
         let users = data.users ? data.users : [];
+        let currencies = data.currencies ? data.currencies : [];
         // Sort users by full name (first_name + " " + last_name)
         users.sort((user1, user2) => {
           const fullName1 = user1.first_name + " " + user1.last_name;
@@ -300,6 +309,7 @@ class CreateCS extends React.Component {
         }
         this.setState({
           scope_of_work: scope_of_work,
+          currencies: currencies,
           proc_ref: proc_ref,
           proc_plans: plans,
           uom: uom,
@@ -326,6 +336,7 @@ class CreateCS extends React.Component {
           let proc_ref = data.proc_ref ? data.proc_ref : "";
           let proc_plan = data.proc_plan ? data.proc_plan : null;
           let plans = data.proc_plans ? data.proc_plans : [];
+          let currencies = data.currencies ? data.currencies : [];
           let uom = data.uom ? data.uom : "";
           let suppliers = data.suppliers ? data.suppliers : [];
           let pr_items = data.pr_items ? data.pr_items : [];
@@ -351,6 +362,7 @@ class CreateCS extends React.Component {
               proc_ref: proc_plan.proc_ref,
             },
             proc_plans: plans,
+            currencies: currencies,
             uom: uom,
             suppliers: suppliers,
             pr_items: pr_items,
@@ -407,10 +419,15 @@ class CreateCS extends React.Component {
     // check if memberUserName is the one creating
     let currentUserFlag =
       this.state.member.memberUserName === this.state.username;
+    let positionFlag = members.find(
+      (_member) => _member.memberPosition === this.state.member.memberPosition
+    );
     if (member) {
       alert("Committee Member already added.");
     } else if (currentUserFlag) {
       alert("You cannot add yourself. Please choose another user.");
+    } else if(positionFlag){
+      alert(this.state.member.memberPosition+", already exists, please add a different one.")
     } else {
       members.push(this.state.member);
       this.setState({
@@ -544,7 +561,7 @@ class CreateCS extends React.Component {
         } else {
           alert("Error approving Committee");
         }
-      });
+      }).catch((err) => console.log("onCommitteeApprove error: ", err));
   };
 
   onSubmitCommitee = () => {
@@ -692,15 +709,12 @@ class CreateCS extends React.Component {
       // update item selected to false
       item.ordered = false;
       // update pr_items
-      let pr_items = [];
-      if(this.state.pr_items && this.state.pr_items.length > 0) {
-        pr_items = this.state.pr_items.map((_item) => {
-          if (_item.id === item_id) {
-            return item;
-          }
-          return _item;
-        });
-      }
+      let pr_items = this.state.pr_items.map((_item) => {
+        if (_item.id === item_id) {
+          return item;
+        }
+        return _item;
+      });
       // remove item
       let items = this.state.cs_items.filter((item) => item.id !== item_id);
       this.setState({
@@ -711,23 +725,16 @@ class CreateCS extends React.Component {
     } else {
       // find item in pr_items
       let item = this.state.pr_items.find((item) => item.id === item_id);
-      if(item.item_required === undefined || item.quantity === undefined || item.unit_of_measurement === undefined){
-        alert("Item selected has missing fields. Please correct the PR items first.")
-        return
-      }
       // update pr_item selected to added
       item.ordered = true;
-      item.item_required = item.item_required;
+      item.item_name = item.item_required;
       // update pr_items
-      let pr_items = [];
-      if(this.state.pr_items && this.state.pr_items.length > 0){
-        pr_items = this.state.pr_items.map((_item) => {
-          if (_item.id === item_id) {
-            return item;
-          }
-          return _item;
-        });
-      }
+      let pr_items = this.state.pr_items.map((_item) => {
+        if (_item.id === item_id) {
+          return item;
+        }
+        return _item;
+      });
 
       let item_count = this.state.cs_item_count + 1;
       this.setState({
@@ -840,7 +847,6 @@ class CreateCS extends React.Component {
   };
 
   onCurrentBidChange = (name_, event) => {
-    
     let currentBid = this.state.currentBid;
     if (name_ === "bid_document") {
       let bid_file = event.target.files[0];
@@ -1098,7 +1104,7 @@ class CreateCS extends React.Component {
 
   onSaveSchedule = () => {
 
-    if(!this.state.proc_ref || !this.state.scope_of_work || !this.state.pr_number || !this.state.pr_date || !this.state.closing_date || !this.state.ref_date || !this.state.closing_time_hour || !this.state.date_tender_opened || !this.state.tender_adjudication_committee_date) {
+    if(!this.state.currency || !this.state.proc_ref || !this.state.scope_of_work || !this.state.pr_number || !this.state.pr_date || !this.state.closing_date || !this.state.ref_date || !this.state.closing_time || !this.state.date_tender_opened || !this.state.tender_adjudication_committee_date) {
       alert("Please fill in all required fields");
       return;
     }
@@ -1111,12 +1117,13 @@ class CreateCS extends React.Component {
     form_data.enctype = "multipart/form-data";
     form_data.append("proc_ref", this.state.proc_ref);
     form_data.append("scope_of_work", this.state.scope_of_work);
+    form_data.append("currency", this.state.currency);
     form_data.append("pr_number", this.state.pr_number);
     form_data.append("quantity", this.state.quantity);
     form_data.append("pr_date", this.state.pr_date);
     form_data.append("closing_date", this.state.closing_date);
     form_data.append("ref_date", this.state.ref_date);
-    form_data.append("closing_time_hour", this.state.closing_time_hour);
+    form_data.append("closing_time", this.state.closing_time);
     form_data.append("date_tender_opened", this.state.date_tender_opened);
     form_data.append("username", this.state.username);
     form_data.append(
@@ -1146,11 +1153,15 @@ class CreateCS extends React.Component {
         } else {
           alert("Error saving Comparative Schedule");
         }
-      });
+      }).catch(err => console.log("onSaveSchedule: ", err));
   };
 
   onUpdateSchedule = () => {
-    if(!this.state.proc_ref || !this.state.scope_of_work || !this.state.pr_number || !this.state.pr_date || !this.state.closing_date || !this.state.ref_date || !this.state.closing_time_hour || !this.state.date_tender_opened || !this.state.tender_adjudication_committee_date) {
+    if(this.state.cs_id === "" || this.state.cs_id === undefined) {
+      alert("Please save the Comparative Schedule first");
+      return;
+    }
+    if(!this.state.currency || !this.state.proc_ref || !this.state.scope_of_work || !this.state.pr_number || !this.state.pr_date || !this.state.closing_date || !this.state.ref_date || !this.state.closing_time || !this.state.date_tender_opened || !this.state.tender_adjudication_committee_date) {
       alert("Please fill in all required fields");
       return;
     }
@@ -1160,12 +1171,13 @@ class CreateCS extends React.Component {
     form_data.append("cs_id", this.state.cs_id);
     form_data.append("proc_ref", this.state.proc_ref);
     form_data.append("scope_of_work", this.state.scope_of_work);
+    form_data.append("currency", this.state.currency);
     form_data.append("pr_number", this.state.pr_number);
     form_data.append("quantity", this.state.quantity);
     form_data.append("pr_date", this.state.pr_date);
     form_data.append("closing_date", this.state.closing_date);
     form_data.append("ref_date", this.state.ref_date);
-    form_data.append("closing_time_hour", this.state.closing_time_hour);
+    form_data.append("closing_time", this.state.closing_time);
     form_data.append("date_tender_opened", this.state.date_tender_opened);
     form_data.append("username", this.state.username);
     form_data.append(
@@ -1190,7 +1202,7 @@ class CreateCS extends React.Component {
         } else {
           alert("Error updating Comparative Schedule");
         }
-      });
+      }).catch(err => console.log("onUpdateSchedule: ", err));
   };
 
   onDeleteBidModal = (bid_count, supplier_name) => {
@@ -3090,20 +3102,35 @@ class CreateCS extends React.Component {
                         ""
                       )}
                     </td>
+                    <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2"></td>
+                  </tr>
+                  <tr className="text-gray-900">
+                    <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                      CREATED BY
+                    </td>
+                    <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                      {this.state.creator}
+                    </td>
+                    <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                      INITIATED
+                    </td>
+                    <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+
+                    </td>
+                    <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                      {this.state.created_at ? this.state.created_at.split(".")[0] : ""}
+                    </td>
                   </tr>
                   {this.state.committeeMembers && this.state.committeeMembers.map((member, key) => {
                     return (
                       <tr className="text-gray-900">
                         <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                          {member.memberPosition}
+                          {member.memberPosition.toUpperCase()}
                         </td>
                         <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
                           {member.memberName
                             ? member.memberName
                             : member.memberUserName}
-                        </td>
-                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                          {member.committeeDate}
                         </td>
                         <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
                           {member.memberApproval === "Approved" && "APPROVED"}
@@ -3163,23 +3190,15 @@ class CreateCS extends React.Component {
                             </div>
                           )}
                         </td>
+                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                          {member.committeeJustification}
+                        </td>
+                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                          {member.committeeDate ? member.committeeDate.split(".")[0] : ""}
+                        </td>
                       </tr>
                     );
                   })}
-                  <tr className="text-gray-900">
-                    <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                      Created By
-                    </td>
-                    <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                      {this.state.creator}
-                    </td>
-                    <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                      {this.state.created_at ? this.state.created_at.split(" ")[0] : ""}
-                    </td>
-                    <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-
-                    </td>
-                  </tr>
                 </tbody>
               </table>
             </div>
@@ -3202,6 +3221,12 @@ class CreateCS extends React.Component {
                   <tr className="text-gray-900">
                     <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
                       FINANCE MANAGER
+                    </td>
+                    <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                      {this.state.fmApproval && this.state.fmApproval.approver_name}
+                    </td>
+                    <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                      {this.state.fmApproval && this.state.fmApproval.approval === "Rejected" && this.state.fmApproval.justification}
                     </td>
                     <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
                       {this.state.fmApproval && this.state.fmApproval.approval === "Approved" && "APPROVED"}
@@ -3246,15 +3271,18 @@ class CreateCS extends React.Component {
                       }
                     </td>
                     <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                      {this.state.fmApproval && this.state.fmApproval.justification}
-                    </td>
-                    <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                      {this.state.fmApproval && this.state.fmApproval.approval_date}
+                      {this.state.fmApproval && this.state.fmApproval.approval_date ? this.state.fmApproval.approval_date.split(".")[0] : ""}
                     </td>
                   </tr>
                   <tr className="text-gray-900">
                     <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
                       GENERAL MANAGER
+                    </td>
+                    <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                      {this.state.gmApproval && this.state.gmApproval.approver_name}
+                    </td>
+                    <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+                      {this.state.gmApproval && this.state.gmApproval.approval === "Rejected" && this.state.gmApproval.justification}
                     </td>
                     <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
                       {this.state.gmApproval && this.state.gmApproval.approval === "Approved" && "APPROVED"}
@@ -3299,10 +3327,7 @@ class CreateCS extends React.Component {
                     }
                     </td>
                     <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                      {this.state.gmApproval && this.state.gmApproval.justification}
-                    </td>
-                    <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                      {this.state.gmApproval && this.state.gmApproval.approval_date}
+                      {this.state.gmApproval && this.state.gmApproval.approval_date ? this.state.gmApproval.approval_date.split(".")[0] : ""}
                     </td>
                   </tr>
                 </tbody>
@@ -3409,21 +3434,20 @@ class CreateCS extends React.Component {
             <div className="mt-2 text-gray-900">
               <div className="flex px-1">
                 <select
-                  name="closing_time_hour"
+                  name="closing_time"
                   onChange={(e) =>
-                    this.onSelectChange("closing_time_hour", e)
+                    this.onSelectChange("closing_time", e)
                   }
                   disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
                   className="rounded-md block border-none w-full py-1.5 text-gray-900 sm:max-w-xs sm:text-sm sm:leading-6"
                 >
-                  {this.state.closing_time_hour ? (
-                    <option value={this.state.closing_time_hour}>
-                      {this.state.closing_time_hour}
+                  {this.state.closing_time ? (
+                    <option value={this.state.closing_time}>
+                      {this.state.closing_time}
                     </option>
-                  ) : (
-                    ""
+                  ) : ( 
+                    <option value="">Select Closing Time</option>
                   )}
-                  <option value="">Select Closing Time</option>
                   <option value="10:00">10:00</option>
                   <option value="14:00">14:00</option>
                 </select>
@@ -3447,7 +3471,7 @@ class CreateCS extends React.Component {
                 autoComplete="proc_plan"
                 onChange={(e) => this.onSelectChange("proc_ref", e)}
                 disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
-                className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
+                className="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
               >
                 {this.state.proc_plan ? (
                   <option value={this.state.proc_plan.proc_ref}>
@@ -3460,6 +3484,39 @@ class CreateCS extends React.Component {
                   ? this.state.proc_plans.map((plan) => (
                       <option value={plan.proc_ref}>
                         {plan.description}
+                      </option>
+                    ))
+                  : ""}
+              </select>
+            </div>
+        </div>
+        <div className="flex-1 w-20 ml-1">
+            <label
+              htmlFor="currency"
+              className="block text-sm font-medium leading-6 text-gray-900"
+            >
+              Currency
+            </label>
+            <div className="mt-2">
+              <select
+                id="currency"
+                name="currency"
+                autoComplete="currency"
+                onChange={(e) => this.onSelectChange("currency", e)}
+                disabled={(this.state.username === this.state.cs_owner) || (this.state.cs_owner === "") ? false : true}
+                className="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
+              >
+                {this.state.currency ? (
+                  <option value={this.state.currency.id}>
+                    {this.state.currency.currency}
+                  </option>
+                ) : (
+                  <option value="">Select Currency</option>
+                )}
+                {this.state.currencies
+                  ? this.state.currencies.map((currency) => (
+                      <option value={currency.id}>
+                        {currency.currency}
                       </option>
                     ))
                   : ""}
@@ -3946,7 +4003,6 @@ class CreateCS extends React.Component {
   }
 }
 
-const domContainer = document.querySelector("#create_comparative_schedule");
 const username = domContainer.getAttribute("data-username");
 const prid = domContainer.getAttribute("data-prid");
 const csid = domContainer.getAttribute("data-csid");
