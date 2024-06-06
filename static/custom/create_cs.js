@@ -1171,7 +1171,7 @@ class CreateCS extends React.Component {
     form_data.append("cs_id", this.state.cs_id);
     form_data.append("proc_ref", this.state.proc_ref);
     form_data.append("scope_of_work", this.state.scope_of_work);
-    form_data.append("currency", this.state.currency);
+    form_data.append("currency", this.state.currency.id);
     form_data.append("pr_number", this.state.pr_number);
     form_data.append("quantity", this.state.quantity);
     form_data.append("pr_date", this.state.pr_date);
