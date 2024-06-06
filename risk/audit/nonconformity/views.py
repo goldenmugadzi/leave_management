@@ -282,34 +282,35 @@ def migrate_nonconformities(request):
         password="",
         database="nca"
     )
-
-    # Create a cursor object
     cursor = cnx.cursor()
-
-    # Execute the SQL query
     sql_query = """SELECT  * FROM non_conformity AS nc JOIN nc_update AS nu ON nu.document_number = nc.document_number"""
     ncs =[]
     try:
         cursor.execute(sql_query)
-
-        # Fetch all the results
         ncs = cursor.fetchall()
-         
     except mysql.connector.Error as err:
         print("Error executing SQL query:", err)
-
-    # Close the cursor and database connection
-    cursor.close()
-    cnx.close()
     nonconformity={}
     Nonconformity._meta.get_field('created_at').auto_now_add = False
-   
+    # print("Error executing SQL query:", ncs)
+
     for nc_dict in ncs:
+        recipient = None
+        created_by = None
         nc = dict(zip(cursor.column_names, nc_dict))
-        try: recipient = UserProfile.objects.get(username=nc['recipient_name']) 
-        except:recipient = None
-        try: created_by = UserProfile.objects.get(username=nc['originator'])
-        except: created_by = None
+        try: recipient = UserProfile.objects.get(username = nc['recipient_name']) 
+        except:pass
+        try: created_by = UserProfile.objects.get(username = nc['originator'])
+        except : pass
+        print(created_by , "Error executing SQL query:", nc['originator'])
+
+            # created_by = None
+        if not nc['originator'].startswith('ze') and not nc['originator'].startswith('ZE'):
+            print(nc['originator'],'originator')
+            try: created_by = UserProfile.objects.get(username = 'ze'+nc['originator'])
+            except Exception as e:
+                print(created_by ,e, "Error executing SQL query:", nc['originator'])
+
         create_date = timezone.make_aware(nc['originator_date'])
         recipt_date = timezone.make_aware(nc['recipient_date']) if nc['recipient_date'] else None
         nonconformity['id'] = nc['document_number']
@@ -350,4 +351,4 @@ def migrate_nonconformities(request):
     Nonconformity._meta.get_field('created_at').auto_now_add = True
     cursor.close()
     cnx.close()
-    return HttpResponse("results")
+    return HttpResponse(ncs)
