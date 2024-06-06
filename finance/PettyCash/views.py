@@ -292,7 +292,9 @@ def view_all_pettycashs(request):
     elif pettycash_role == "approve":
         pettycashs = Pettycash.objects.select_related('section').filter(section=request.user.section)
     else:
-        pettycashs = Pettycash.objects.filter(date_created__year__gte=starting_year).only('petty_id', 'date_created').order_by('-petty_id')[:100]
+        pettycashs = Pettycash.objects.filter(date_created__year__gte=starting_year).only('petty_id',
+                                                                                          'date_created').order_by(
+            '-petty_id')[:800]
     return render(request, 'finance/pettycash/view_all_pettycashs.html', {'pettycashs': pettycashs,
                                                                           'requester': requester})
 
@@ -382,21 +384,23 @@ def import_pettycash(request):
                         )
                         pettycash.process = intiate(request, 'pettycash')
                         pettycash.save()
-                        qoutation_1 = Quotation.objects.create(
-                            pettycash=pettycash,
-                            quotation_file=quotation_1,
-                        )
-                        qoutation_1.save()
-                        qoutation_2 = Quotation.objects.create(
-                            pettycash=pettycash,
-                            quotation_file=quotation_2,
-                        )
-                        qoutation_2.save()
-                        qoutation_3 = Quotation.objects.create(
-                            pettycash=pettycash,
-                            quotation_file=quotation_3,
-                        )
-                        qoutation_3.save()
+                        # check if quotation_1 isnt empty
+                        if quotation_1 != '' or quotation_1 == '0':
+                            qoutation_1 = Quotation.objects.create(
+                                pettycash=pettycash,
+                                quotation_file=quotation_1,
+                            )
+                            qoutation_1.save()
+                        # qoutation_2 = Quotation.objects.create(
+                        #     pettycash=pettycash,
+                        #     quotation_file=quotation_2,
+                        # )
+                        # qoutation_2.save()
+                        # qoutation_3 = Quotation.objects.create(
+                        #     pettycash=pettycash,
+                        #     quotation_file=quotation_3,
+                        # )
+                        # qoutation_3.save()
                         # print(petty_id, 'created')
                     else:
                         print(petty_id, 'already exists')
@@ -505,10 +509,17 @@ def import_pettycash(request):
                                     if user:
                                         if approve_step(process.id, user.username, update_date3):
                                             print('approved as Disburser', pettycash)
+                                            user1 = UserProfile.objects.filter(username=update_user1).first()
+                                            if user1:
+                                                if approve_step(process.id, user1.username, update_date3):
+                                                    print('cleared by', user1, "for item", pettycash)
+                                                else:
+                                                    print('not cleared by', user1, "for item", pettycash)
                                         else:
                                             print('not approved')
                                     else:
                                         print('user not found')
+
                         print('dodgy barcket passed')
                         pettycash.payment_mode = payment_method
                         pettycash.currency = 'ZWL'
