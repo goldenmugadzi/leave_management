@@ -58,7 +58,7 @@ class Ace(models.Model):
     # payment_mode = models.CharField(max_length=100, blank=True, null=True)
     requested_by = models.CharField(max_length=100, blank=True, null=True)
     date_created = models.DateField(auto_now_add=True, blank=True, null=True)
-    Ace_id2 = models.CharField(max_length=60)
+    Ace_id2 = models.CharField(max_length=60, db_index=True)
     Ace_id = models.AutoField(primary_key=True)
     approval_status = models.CharField(max_length=120, blank=True, null=True)
     approved_by = models.CharField(max_length=56, blank=True, null=True)
