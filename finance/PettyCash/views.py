@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from mimetypes import guess_type
 from random import randrange
 import csv
@@ -17,6 +17,7 @@ from it.users.models import UserProfile, Roles, Sections, Regions
 from approve.models import Process, Workflow, Step, Approval
 from .forms import PettycashForm, QuotationFormSet
 from .models import Pettycash, Quotation
+from django.db.models import Prefetch
 
 
 @login_required
@@ -68,7 +69,7 @@ def pettyCash_detail(request, petty_id):
         last_approved = pettycash_item.process.approval_set.last().step.step
     except AttributeError:
         last_approved = 0
-    
+
     cashier_approved = False
     if pettycash_item.process.approval_set.filter(step__step=3).exists():
         cashier_approved = True
@@ -86,7 +87,7 @@ def pettyCash_detail(request, petty_id):
 
         try:
             newStep = Step.objects.get(step=next_step, workflow=pettycash_item.process.workflow,
-                                    approver__in=user_roles)
+                                       approver__in=user_roles)
 
             # check if section head
             if pettycash_role == "approve":
@@ -105,7 +106,7 @@ def pettyCash_detail(request, petty_id):
 
         except Step.DoesNotExist:
             pass
-    
+
     approved_steps = pettycash_item.process.approval_set.all().values_list('step__step', flat=True)
 
     if pettycash_role == "create":
@@ -123,7 +124,8 @@ def pettyCash_detail(request, petty_id):
     return render(request, 'finance/pettycash/pettycash_detail.html',
                   {'pettycash': pettycash_item, 'approved_steps': approved_steps, 'approvalForm': approvalForm,
                    'to': to, 'pettycash_role': pettycash_role, 'user_groups': user_groups, 'quotations': quotations
-                      , 'clear': clear, "clear_minus": clear_minus, 'requestor': requestor, 'cashier': cashier, 'cashier_approved': cashier_approved})
+                      , 'clear': clear, "clear_minus": clear_minus, 'requestor': requestor, 'cashier': cashier,
+                   'cashier_approved': cashier_approved})
 
 
 @login_required
@@ -212,9 +214,13 @@ def pettycash_awaiting_my_action(request):
             custom_user_roles["pettycash"] = role
     pettycash_role = str(custom_user_roles["pettycash"])
     requester = 'create'
+    current_year = datetime.now(timezone.utc).year
+
+    # Calculate the starting year
+    starting_year = current_year
 
     if pettycash_role == "approve":
-        for pettycash in Pettycash.objects.filter(section=request.user.section):
+        for pettycash in Pettycash.objects.filter(section=request.user.section, date_created__year__gte=starting_year):
             process = pettycash.process
 
             if process.approval_set.exists():
@@ -232,7 +238,7 @@ def pettycash_awaiting_my_action(request):
                 pettycashs_to_process.append(pettycash)
 
     else:
-        for pettycash in Pettycash.objects.all():
+        for pettycash in Pettycash.objects.filter(date_created__year__gte=starting_year):
             process = pettycash.process
 
             if process.approval_set.exists():
@@ -260,7 +266,7 @@ def view_all_pettycashs(request):
     user_roles = request.user.roles.all()
 
     user_id = request.user.id
-    user_profile = UserProfile.objects.filter(id=user_id).first()
+    user_profile = UserProfile.objects.prefetch_related('roles').filter(id=user_id).first()
 
     user_groups = user_profile.groups.values_list('name', flat=True)
 
@@ -276,13 +282,17 @@ def view_all_pettycashs(request):
             custom_user_roles["pettycash"] = role
     pettycash_role = str(custom_user_roles["pettycash"])
     requester = "create"
+    current_year = datetime.now(timezone.utc).year
+
+    # Calculate the starting year
+    starting_year = current_year - 2
 
     if pettycash_role == "create":
-        pettycashs = Pettycash.objects.filter(requested_by=request.user)
+        pettycashs = Pettycash.objects.select_related('requested_by').filter(requested_by=request.user)
     elif pettycash_role == "approve":
-        pettycashs = Pettycash.objects.filter(section=request.user.section)
+        pettycashs = Pettycash.objects.select_related('section').filter(section=request.user.section)
     else:
-        pettycashs = Pettycash.objects.all()
+        pettycashs = Pettycash.objects.filter(date_created__year__gte=starting_year).only('petty_id', 'date_created').order_by('-petty_id')[:100]
     return render(request, 'finance/pettycash/view_all_pettycashs.html', {'pettycashs': pettycashs,
                                                                           'requester': requester})
 
@@ -325,39 +335,40 @@ def import_pettycash(request):
                     centre = row['centre']
                     sect = row['sect']
                     region = row['region']
-                    if section != '':
-                        Section = Sections.objects.filter(code=section).first()
-                        if not Section:
-                            Section = Sections.objects.create(
-                                section=section,
-                                code=section,
-                            )
-                            Section.save()
-                    else:
-                        Section = None
-
-                    if region != '':
-                        Region = Regions.objects.filter(code=region).first()
-                        if not Region:
-                            Region = Regions.objects.create(
-                                region=region,
-                                code=region,
-                            )
-                            Region.save()
-                    else:
-                        Region = None
-
-                    if requester != '':
-                        # remove the leading and trailing whitespaces
-                        requester = requester.strip()
-                        Requester = UserProfile.objects.filter(username=requester).first()
-                    else:
-                        Requester = None
 
                     # if date created is earlier than 2024 then the currency is ZWL,but if its after 2024 its is ZIG
                     # create pettycash if it does not exist
                     PC = Pettycash.objects.filter(petty_id=petty_id).first()
                     if not PC:
+                        if section != '':
+                            Section = Sections.objects.filter(code=section).first()
+                            if not Section:
+                                Section = Sections.objects.create(
+                                    section=section,
+                                    code=section,
+                                )
+                                Section.save()
+                        else:
+                            Section = None
+
+                        if region != '':
+                            Region = Regions.objects.filter(code=region).first()
+                            if not Region:
+                                Region = Regions.objects.create(
+                                    region=region,
+                                    code=region,
+                                )
+                                Region.save()
+                        else:
+                            Region = None
+
+                        if requester != '':
+                            # remove the leading and trailing whitespaces
+                            requester = requester.strip()
+                            Requester = UserProfile.objects.filter(username=requester).first()
+                        else:
+                            Requester = None
+
                         pettycash = Pettycash.objects.create(
                             petty_id=petty_id,
                             section=Section,
@@ -386,9 +397,11 @@ def import_pettycash(request):
                             quotation_file=quotation_3,
                         )
                         qoutation_3.save()
-                        print(petty_id, 'created')
+                        # print(petty_id, 'created')
                     else:
                         print(petty_id, 'already exists')
+
+                print('now dealing with approvals')
                 for row1 in reader2:
                     voucher_id = row1['voucher_id']
                     section = row1['section']
@@ -438,54 +451,68 @@ def import_pettycash(request):
                     date_returned = row1['date_returned']
                     return_remarks = row1['return_remarks']
                     imt_tax = row1['imt_tax']
-                    print("now dealing with approvals")
+                    # print("now dealing with approvals")
                     # add the date created to the pettycash process
                     pettycash = Pettycash.objects.filter(petty_id=voucher_id).first()
                     # if pettycash exists then update the pettycash process with the date created modify the date created
                     # to the date created in the pettycash modify update_date1 to form a date object yyyy-mm-dd
-                    if pettycash and update_date1 != '0000-00-00 00:00:00' and pettycash.date_created != datetime.strptime(
-                            update_date1, '%Y-%m-%d'):
+                    if pettycash and update_date1 != '0000-00-00 00:00:00':
                         update_date1 = datetime.strptime(update_date1, '%Y-%m-%d')
                         pettycash.date_created = update_date1
                         print('date created', pettycash.date_created)
 
-                    process = Pettycash.objects.filter(petty_id=voucher_id).first().process
-                    # this is the first step of the approval
+                        if pettycash.process:
+                            print('process exists')
+                            print(pettycash)
 
-                    if update_user2 != '' and status_1 == 1:
-                        # remove the leading and trailing whitespaces and  if the field isntr empty then pass the
-                        # required parameters to the approve_step function and check if the approval was successful
-                        update_user2 = update_user2.strip()
-                        user = UserProfile.objects.filter(username=update_user2).first()
-                        if user and status_1 == 1:
-                            if approve_step(process.id, user.id, update_date1):
-                                print('approved as sh', pettycash)
-                            else:
-                                print('not approved')
+                            process = Pettycash.objects.filter(petty_id=voucher_id).first().process
 
-                        if update_user3 != '' and status_2 == 2:
-                            update_user3 = update_user3.strip()
-                            user = UserProfile.objects.filter(username=update_user3).first()
-                            if user:
-                                if approve_step(process.id, user.id, update_date2):
-                                    print('approved as petty Authoriser', pettycash)
-                                else:
-                                    print('not approved')
-                            else:
-                                print('user not found')
-                        if update_user5 != '' and status_3 == 3 and status_7 == 7:
-                            update_user5 = update_user5.strip()
-                            user = UserProfile.objects.filter(username=update_user5).first()
-                            if user:
-                                if approve_step(process.id, user.id, update_date3):
-                                    print('approved as Disburser', pettycash)
-                                else:
-                                    print('not approved')
-                            else:
-                                print('user not found')
-                    pettycash.payment_mode = payment_method
-                    pettycash.currency = 'ZWL'
-                    pettycash.save()
+                            print('process', process.id)
+                            print(update_user2, "update_user2")
+                            print(status_1, "status_1")
+                            # make status_1 an integer
+                            status_1 = int(status_1)
+                            if status_1 == 1:
+                                update_user2 = update_user2.strip()
+                                print(update_user2, "update_user2 stripped")
+                                user = UserProfile.objects.filter(username=update_user2).first()
+                                if user and status_1 == 1:
+                                    if process:
+                                        if approve_step(process.id, user.username, update_date1):
+                                            print('approved as sh', pettycash)
+                                        else:
+                                            print('not approved')
+                                    else:
+                                        print('process not found')
+
+                                status_2 = int(status_2)
+
+                                if update_user3 != '' and status_2 == 2:
+                                    update_user3 = update_user3.strip()
+                                    user = UserProfile.objects.filter(username=update_user3).first()
+                                    if user:
+                                        if approve_step(process.id, user.username, update_date2):
+                                            print('approved as petty Authoriser', pettycash)
+                                        else:
+                                            print('not approved')
+                                    else:
+                                        print('user not found')
+                                status_3 = int(status_3)
+                                status_7 = int(status_7)
+                                if update_user5 != '' and status_3 == 3 and status_7 == 7:
+                                    update_user5 = update_user5.strip()
+                                    user = UserProfile.objects.filter(username=update_user5).first()
+                                    if user:
+                                        if approve_step(process.id, user.username, update_date3):
+                                            print('approved as Disburser', pettycash)
+                                        else:
+                                            print('not approved')
+                                    else:
+                                        print('user not found')
+                        print('dodgy barcket passed')
+                        pettycash.payment_mode = payment_method
+                        pettycash.currency = 'ZWL'
+                        pettycash.save()
 
                 print('done')
                 return redirect('/pettycash/pettycashs')
@@ -505,12 +532,14 @@ def import_pettycash(request):
 
 def approve_step(process_id, user_id, date_approved):
     process = Process.objects.get(id=process_id)
-    user = UserProfile.objects.get(id=user_id)
+    user = UserProfile.objects.get(username=user_id)
     # parse the date into year, month and day
     if date_approved != '0000-00-00 00:00:00':
-        date_approved = datetime.strptime(date_approved, '%Y-%m-%d')
+        print('setting date approved to', date_approved)
+        date_approved1 = date_approved
     else:
-        date_approved = datetime.now()
+        print('setting date approved to current date')
+        date_approved1 = datetime.now()
     try:
         latest_approval = process.approval_set.last()
         if latest_approval is not None:
@@ -530,7 +559,7 @@ def approve_step(process_id, user_id, date_approved):
         process=process,
         approved='Approved',
         # if parameter date_approved is not passed, the default value is the current date and time
-        approved_at=date_approved or datetime.now()
+        approved_at=date_approved1
     )
     approval.save()
     print('approved')
