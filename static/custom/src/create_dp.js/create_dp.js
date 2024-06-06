@@ -15,6 +15,7 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
 var e = React.createElement;
+var domContainer = document.querySelector("#create_comparative_schedule");
 var url = domContainer.getAttribute("data-baseurl");
 // const BASE_URL = "http://localhost:8000/direct_purchase";
 var BASE_URL = url + "/direct_purchase";
@@ -1023,7 +1024,7 @@ var CreateDP = function (_React$Component) {
       form_data.append("cs_id", _this.state.cs_id);
       form_data.append("proc_ref", _this.state.proc_ref);
       form_data.append("scope_of_work", _this.state.scope_of_work);
-      form_data.append("currency", _this.state.currency);
+      form_data.append("currency", _this.state.currency.id);
       form_data.append("pr_number", _this.state.pr_number);
       form_data.append("quantity", _this.state.quantity);
       form_data.append("pr_date", _this.state.pr_date);
@@ -4776,7 +4777,6 @@ var CreateDP = function (_React$Component) {
   return CreateDP;
 }(React.Component);
 
-var domContainer = document.querySelector("#create_comparative_schedule");
 var username = domContainer.getAttribute("data-username");
 var prid = domContainer.getAttribute("data-prid");
 var csid = domContainer.getAttribute("data-csid");
