@@ -432,13 +432,6 @@ def upload_centers(request):
         print(e)
     return redirect("tokens:cost_centers")
 
-def cost_center(request, cost_center_id ):
-    """get ancestors of the cost center and all its children and merge them into cost_centers"""
-    print(cost_center_id,'cost_center_id')
-    cost_center = CostCenter.objects.get(id=cost_center_id )
-    print('cost center',cost_center_id)
-    ancestors_and_their_children = cost_center.get_all_ancestors_and_their_children()
-    children = cost_center.get_all_children()
-    cost_centers = set(ancestors_and_their_children)
-    return render(request, "tokens/cost_centers.html", {"cost_centers":cost_centers}) 
+"""get ancestors of the cost center and all its children and merge them into cost_centers"""
+def cost_center(request, cost_center_id ):return render(request, "tokens/cost_centers.html", {"cost_centers":CostCenter.objects.get(id=cost_center_id ).get_all_ancestors_and_their_children()}) 
 

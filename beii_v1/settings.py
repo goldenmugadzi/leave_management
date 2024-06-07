@@ -109,7 +109,6 @@ INSTALLED_APPS = [
     'django.contrib.humanize',
     'rest_framework',
     'rest_framework_simplejwt',
-    'mptt',
     'clearcache',
     'risk.audit.nonconformity',
     'it.beii_auth',
