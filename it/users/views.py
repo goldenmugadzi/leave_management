@@ -16,6 +16,9 @@ from rest_framework.parsers import JSONParser
 from django.contrib.auth.decorators import login_required
 from approve.decorators import allowed_roles
 from django.db.models import Q, Exists, OuterRef, Count, F
+from exchangelib import Credentials, Account, Configuration, Message, Mailbox
+from django.conf import settings
+
 from it.users.models import Application, Roles, UserProfile, Depots, Districts, Regions, Designations, Sections
 from it.users.forms import CustomUserCreationForm
 
@@ -26,6 +29,43 @@ from decouple import config
 from approve.decorators import allowed_roles
 from django.core.paginator import Paginator
 BASE_URL = "http://"+config('HOST')+":"+config('PORT')
+
+
+def get_exchange_account():
+    exchange_settings = settings.EXCHANGE_SETTINGS
+    print("Connecting to Exchange server...")
+    credentials = Credentials(
+        username=exchange_settings['email'],
+        password=exchange_settings['password']
+    )
+    print("Credentials: ", credentials)
+    config = Configuration(
+        server=exchange_settings['server'],
+        credentials=credentials
+    )
+    print("Config: ", config)
+    account = Account(
+        primary_smtp_address=exchange_settings['primary_smtp_address'],
+        config=config,
+        autodiscover=False,
+        access_type='delegate'
+    )
+    print("Successfully connected to Exchange server.")
+    return account
+
+@login_required
+def ms_exhange_test(request):
+    account = get_exchange_account()
+    message = Message(
+        account=account,
+        folder=account.sent,
+        subject="Test Email",
+        body="This is a test email",
+        to_recipients=[Mailbox(email_address='akwaramba@zetdc.co.zw')]
+    )
+    message.send()
+    return JsonResponse({"status": "success", "message": "Email sent successfully"})
+    
 
 @login_required
 @allowed_roles(['administrator'], ['users'])
@@ -216,7 +256,7 @@ def datatable_data(request):
     search_value = request.GET.get('search[value]', default='')
 
     # Fetch your data from the model
-    records = UserProfile.objects.order_by('-date_joined').all()
+    records = UserProfile.objects.all()
     # Filter based on search value
     if search_value:
         records = records.filter(
@@ -540,7 +580,7 @@ def reset_user_password(request):
 
     return redirect('/users/users-index')
 
-
+@login_required
 def change_user_password(request):
     if request.method == "POST":
 

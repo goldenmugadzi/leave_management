@@ -8,10 +8,14 @@ from .models import Departments, RiskFiles
 from django.apps import apps
 Sections = apps.get_model(app_label='users', model_name='Sections')
 UserProfile = apps.get_model(app_label="users", model_name="UserProfile")
+from django.contrib.auth.decorators import login_required
+
+@login_required
 def index(request):
     
     return render(request, 'process_risks/index.html')
 
+@login_required
 def create(request):
     user_title = request.user.get_full_name()
     l = request.user.groups.values_list('name', flat=True)
@@ -69,7 +73,6 @@ def create(request):
                     'user_title':user_title,
                     })
 
-
 def save_file(f,file_path):
     if f:
         with open(file_path, 'wb+') as destination:
@@ -79,8 +82,7 @@ def save_file(f,file_path):
             else:
                 return False
 
-
-
+@login_required
 def download_file(request):
 
     file_id = request.GET['file_id']
@@ -97,6 +99,7 @@ def download_file(request):
 
     return redirect('/process_risks/')
 
+@login_required
 def view_Commercial(request):
     file=Departments.objects.all()
     files = RiskFiles.objects.filter(cat_id="1")
@@ -115,6 +118,7 @@ def view_Commercial(request):
                     )
 
 
+@login_required
 def view_Procurement(request):
     
     procurement_files = RiskFiles.objects.filter(cat_id="4")
@@ -122,6 +126,7 @@ def view_Procurement(request):
                   {"procurement_files": procurement_files,
                     "page_title": "Procurement Process Risks"})
 
+@login_required
 def view_Engineering(request):
     
     eng_files = RiskFiles.objects.filter(cat_id="2")
@@ -129,6 +134,7 @@ def view_Engineering(request):
                   {"eng_files": eng_files,
                     "page_title": "Engineering Process Risks"})
 
+@login_required
 def view_Finance(request):
     
     finance_files = RiskFiles.objects.filter(cat_id="3")
@@ -136,6 +142,7 @@ def view_Finance(request):
                   {"finance_files": finance_files,
                     "page_title": "Finance Process Risks"})
 
+@login_required
 def view_ICT(request):
     
     ict_files = RiskFiles.objects.filter(cat_id="9")
@@ -143,6 +150,7 @@ def view_ICT(request):
                   {"ict_files": ict_files,
                     "page_title": "ICT Process Risks"})
 
+@login_required
 def view_HR(request):
     
     hr_files = RiskFiles.objects.filter(cat_id="6")
@@ -150,6 +158,7 @@ def view_HR(request):
                   {"hr_files": hr_files,
                     "page_title": "HR Process Risks"})
 
+@login_required
 def view_Risk(request):
     
     risk_files = RiskFiles.objects.filter(cat_id="8")
@@ -157,6 +166,7 @@ def view_Risk(request):
                   {"risk_files": risk_files,
                     "page_title": "Risk Mnangement Process Risks"})
 
+@login_required
 def view_files(request):
     
     files = RiskFiles.objects.all()
@@ -175,6 +185,7 @@ def view_files(request):
     
     return render(request, 'process_risks/risk_table.html', {"context": context})
 
+@login_required
 def edit_file(request):
     departments = Departments.objects.all()
     if request.method == 'POST':

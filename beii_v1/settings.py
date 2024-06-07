@@ -186,16 +186,6 @@ DATABASES = {
         'PASSWORD': config('DB_PASS'),
         'HOST': config('DB_HOST'),
     }
-    # 'default': {
-    #     'OPTIONS': {
-    #         'sql_mode': 'NO_BACKSLASH_ESCAPES',
-    #     },
-    #     'ENGINE': 'django.db.backends.mysql',
-    #     'NAME': 'beii_new',
-    #     'USER': 'beii_user',
-    #     'PASSWORD': 'Z3tdc_it@2024',
-    #     'HOST': 'localhost'
-    # }
 }
 
 # Password validation
@@ -219,14 +209,19 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/4.1/topics/i18n/
 # settings.py
-
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'perseychinaka@gmail.com'
-EMAIL_HOST_PASSWORD = 'apppassword'
-DEFAULT_FROM_EMAIL = "Zetdc Business Excellence "
+EXCHANGE_SETTINGS = {
+    'email': config('MS_EMAIL'),
+    'password': config('MS_EMAIL'),
+    'server': config('MS_SERVER'),
+    'primary_smtp_address': config('MS_PRIMARY_SMTP_ADDRESS'),
+}
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_HOST = 'smtp.gmail.com'
+# EMAIL_PORT = 587
+# EMAIL_USE_TLS = True
+# EMAIL_HOST_USER = 'perseychinaka@gmail.com'
+# EMAIL_HOST_PASSWORD = 'apppassword'
+# DEFAULT_FROM_EMAIL = "Zetdc Business Excellence "
 DATA_UPLOAD_MAX_MEMORY_SIZE = 1024 * 1024 * 30
 
 LANGUAGE_CODE = 'en-us'

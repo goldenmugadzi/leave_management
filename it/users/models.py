@@ -161,6 +161,7 @@ class Supplier(models.Model):
 
 class CostCenter(models.Model):
     id = models.CharField(primary_key=True, max_length=20, editable=False)
+    code = models.CharField(max_length=30)
     name = models.CharField(max_length=100, blank=True, null=True)
     parent = models.ForeignKey('self', on_delete=models.CASCADE, blank=True, null=True)
 

@@ -9,12 +9,14 @@ from utils.save_file import save_file
 from .models import Categories, First_Category, Secondary_Category, Filetype
 from django.shortcuts import render
 from django.db.models import Q
+from django.contrib.auth.decorators import login_required
 
 from utils.helper_functions import get_kc_dict
 
 from .models import KnowledgeCenter
 
 # Create your views here.
+@login_required
 def create(request):
     url_path = request.path.split("/")
     if request.method == 'POST':
@@ -65,6 +67,7 @@ def create(request):
     
     return render(request, 'knowledge-center/create.html', {"url_path": url_path})
 
+@login_required
 def archive_file(request, file_id):
 
     um = KnowledgeCenter.objects.filter(id=file_id).first()
@@ -73,6 +76,7 @@ def archive_file(request, file_id):
     
     return redirect('/knowledge_center/view_files')
 
+@login_required
 def unarchive_file(request, file_id):
 
     um = KnowledgeCenter.objects.filter(id=file_id).first()
@@ -81,6 +85,7 @@ def unarchive_file(request, file_id):
     
     return redirect('/knowledge_center/view_files')
 
+@login_required
 def view_files(request):
     
     files = KnowledgeCenter.objects.filter(archived=False).all()
@@ -106,6 +111,7 @@ def view_files(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/view_files.html', {"context": context, "url_path": url_path, "page": "kc_all"})
 
+@login_required
 def view_archived_files(request):
     
     files = KnowledgeCenter.objects.filter(archived=True).all()
@@ -131,6 +137,7 @@ def view_archived_files(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/view_files.html', {"context": context, "url_path": url_path, "page": "kc_archived"})
 
+@login_required
 def view_by_category(request):
     
     files = KnowledgeCenter.objects.all()
@@ -158,11 +165,13 @@ def view_by_category(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/view_myfiles.html', {"context": new_dict, "url_path": url_path})
 
+@login_required
 def get_category(request, file_type, cat_1, cat_2):
     file_ = KnowledgeCenter.objects.filter(file_type=file_type).all()
     file_ = KnowledgeCenter.objects.filter(file_type=file_type, cat_1=cat_1).all()
     file_ = KnowledgeCenter.objects.filter(file_type=file_type, cat_1=cat_1, cat_2=cat_2).all()
 
+@login_required
 def view_myfiles(request):
     
     files = KnowledgeCenter.objects.all()
@@ -170,6 +179,7 @@ def view_myfiles(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/view_myfiles.html', {"url_path": url_path})
 
+@login_required
 def download_file(request):
 
     file_id = request.GET['file_id']
@@ -186,6 +196,7 @@ def download_file(request):
 
     return redirect('/knowledge_center/view_files')
 
+@login_required
 def edit_file(request, file_id):
     url_path = request.path.split("/")
     if request.method == 'GET':
@@ -246,6 +257,7 @@ def edit_file(request, file_id):
     return render(request, 'knowledge-center/edit_file.html', {"url_path": url_path})
 
 
+@login_required
 def get_files(request, file_type_id):
     if request.method == "GET":
         # Connect to the database and query for relevant options
@@ -265,6 +277,7 @@ def get_files(request, file_type_id):
 
         return JsonResponse({"options": list(options_list)})
     
+@login_required
 def get_cat2(request, file_type, selected_cat):
     if request.method == "GET":
         # Connect to the database and query for relevant options
@@ -289,16 +302,19 @@ def get_cat2(request, file_type, selected_cat):
         return JsonResponse({"options_list": list(options_list)})
     
 
+@login_required
 def view_legislation(request):
     
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/view_legislation.html', {"page_title": "LEGISLATION", "url_path": url_path} )
 
+@login_required
 def view_legal_registers(request):
     
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/legal_registers.html', {"page_title": "Legal Registers", "url_path": url_path} )
 
+@login_required
 def legal_registers_departments(request, department):
     
     files = KnowledgeCenter.objects.filter(file_type="LEGISLATION", sub_category_1="Legal Registers", sub_category_2=department).all()
@@ -307,6 +323,7 @@ def legal_registers_departments(request, department):
     title = department + " Legal Registers"
     return render(request, 'knowledge-center/test.html',{"files": files, "page_title": title, "url_path": url_path})
 
+@login_required
 def fetch_knowledge_center(request, filetype, subtype, subsubtype):
     
     files = []
@@ -316,6 +333,7 @@ def fetch_knowledge_center(request, filetype, subtype, subsubtype):
     title = (subsubtype + " " + subtype).capitalize()
     return render(request, 'knowledge-center/test.html',{"files": files, "page_title": title, "url_path": url_path})
 
+@login_required
 def view_ea(request):
     
     files = KnowledgeCenter.objects.filter(sub_category_1="Electricity Acts")
@@ -324,6 +342,7 @@ def view_ea(request):
     return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "Acts of Parliament", "url_path": url_path})
 
 
+@login_required
 def view_gl(request):
     
     files = KnowledgeCenter.objects.filter(sub_category_1="General Legislation")
@@ -335,6 +354,7 @@ def view_gl(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "General Legislation files", "url_path": url_path} )
 
+@login_required
 def view_si(request):
     
     files = KnowledgeCenter.objects.filter(sub_category_1="Statutory Instruments")
@@ -347,6 +367,7 @@ def view_si(request):
     return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "Statutory Instruments files", "url_path": url_path} )
 
 
+@login_required
 def view_firstview(request):
     
     files = KnowledgeCenter.objects.all()
@@ -359,6 +380,7 @@ def view_firstview(request):
         "results": []})
 
 
+@login_required
 def view_specifications(request):
     
     files = KnowledgeCenter.objects.all()
@@ -366,6 +388,7 @@ def view_specifications(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/view_specifications.html', {"page_title": "SPECIFICATIONS", "results": [], "url_path": url_path})
 
+@login_required
 def view_commercial_spec(request):
     
     files = KnowledgeCenter.objects.filter(file_type="SPECIFICATIONS", sub_category_1="Commercial")
@@ -377,6 +400,7 @@ def view_commercial_spec(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files,  "page_title": "Specifications Commercial Files", "url_path": url_path} )
 
+@login_required
 def view_hr_spec(request):
     
     files = KnowledgeCenter.objects.filter(file_type="SPECIFICATIONS", sub_category_1="Human Resources")
@@ -388,6 +412,7 @@ def view_hr_spec(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files,  "page_title": "Specifications Human Resources Files", "url_path": url_path} )
 
+@login_required
 def view_engineering_spec(request):
     
     files = KnowledgeCenter.objects.filter(file_type="SPECIFICATIONS", sub_category_1="Engineering")
@@ -400,6 +425,7 @@ def view_engineering_spec(request):
     return render(request, 'knowledge-center/test.html',{
         "files": files,  "page_title": "Specifications Engineering Files", "url_path": url_path} )
 
+@login_required
 def view_finance_spec(request):
     
     files = KnowledgeCenter.objects.filter(file_type="SPECIFICATIONS", sub_category_1="Finance")
@@ -412,6 +438,7 @@ def view_finance_spec(request):
     return render(request, 'knowledge-center/test.html',{
         "files": files,  "page_title": "Specifications Finance Files", "url_path": url_path} )
 
+@login_required
 def view_ict_spec(request):
     
     files = KnowledgeCenter.objects.filter(file_type="SPECIFICATIONS", sub_category_1="ICT")
@@ -424,6 +451,7 @@ def view_ict_spec(request):
     return render(request, 'knowledge-center/test.html',{
         "files": files,  "page_title": "Specifications ICT Files", "url_path": url_path} )
 
+@login_required
 def view_risk_spec(request):
     
     files = KnowledgeCenter.objects.filter(file_type="SPECIFICATIONS", sub_category_1="Risk")
@@ -435,6 +463,7 @@ def view_risk_spec(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files,  "page_title": "Specifications Risk Files", "url_path": url_path} )
 
+@login_required
 def view_relations_spec(request):
     
     files = KnowledgeCenter.objects.filter(file_type="SPECIFICATIONS", sub_category_1="Stakeholder Relations")
@@ -446,6 +475,7 @@ def view_relations_spec(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files,  "page_title": "Specifications Stakeholder Relations Files", "url_path": url_path} )
 
+@login_required
 def view_legal_spec(request):
     
     files = KnowledgeCenter.objects.filter(file_type="SPECIFICATIONS", sub_category_1="Legal")
@@ -457,6 +487,7 @@ def view_legal_spec(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files,  "page_title": "Specifications Legal Files", "url_path": url_path} )
 
+@login_required
 def view_procurement_spec(request):
     
     files = KnowledgeCenter.objects.filter(file_type="SPECIFICATIONS", sub_category_1="Procurement")
@@ -468,6 +499,7 @@ def view_procurement_spec(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files,  "page_title": "Specifications Procurement Files", "url_path": url_path} )
 
+@login_required
 def view_policies(request):
     
     files = KnowledgeCenter.objects.all()
@@ -475,6 +507,7 @@ def view_policies(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/view_policies.html',{"page_title": "POLICIES AND GUIDLINES", "url_path": url_path} )
 
+@login_required
 def view_commercial_policies(request):
     
     files = KnowledgeCenter.objects.filter(file_type="POLICIES & GUIDELINES", sub_category_1="Commercial").all()
@@ -486,6 +519,7 @@ def view_commercial_policies(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "Policies and Guidlines Commercial files", "url_path": url_path} )
 
+@login_required
 def view_hr_policies(request):
     
     files = KnowledgeCenter.objects.filter(file_type="POLICIES & GUIDELINES", sub_category_1="Human Resources")
@@ -497,6 +531,7 @@ def view_hr_policies(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "Policies Human Resources files", "url_path": url_path} )
 
+@login_required
 def view_engineering(request):
     
     files = KnowledgeCenter.objects.filter(file_type="POLICIES & GUIDELINES", sub_category_1="Engineering")
@@ -508,6 +543,7 @@ def view_engineering(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "Policies and Guidelines Engineering Files", "url_path": url_path} )
 
+@login_required
 def view_finance_policies(request):
     
     files = KnowledgeCenter.objects.filter(file_type="POLICIES & GUIDELINES", sub_category_1="Finance")
@@ -519,6 +555,7 @@ def view_finance_policies(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html', {"files": files, "page_title": "Policies and Guidelines Finance Files", "url_path": url_path} )
 
+@login_required
 def view_ict_policies(request):
     
     files = KnowledgeCenter.objects.filter(file_type="POLICIES & GUIDELINES", sub_category_1="ICT")
@@ -530,6 +567,7 @@ def view_ict_policies(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html', {"files": files, "page_title": "Policies and Guidelines ICT Files", "url_path": url_path} )
 
+@login_required
 def view_risk_policies(request):
     
     files = KnowledgeCenter.objects.filter(file_type="POLICIES & GUIDELINES", sub_category_1="Risk")
@@ -541,6 +579,7 @@ def view_risk_policies(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "Policies and Guidelines Risk Files", "url_path": url_path} )
 
+@login_required
 def view_index(request):
     
     files = KnowledgeCenter.objects.all()
@@ -548,6 +587,7 @@ def view_index(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/view_index.html',{"page_title": "ENGINEERING INSTRUCTIONS MAIN INDEX", "url_path": url_path} )
 
+@login_required
 def view_reports(request):
     
     files = KnowledgeCenter.objects.filter(sub_category_2="Reports")
@@ -559,6 +599,7 @@ def view_reports(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "Engineering Instructions Main Index Reports Files", "url_path": url_path} )
 
+@login_required
 def view_protection(request):
     
     files = KnowledgeCenter.objects.filter(sub_category_2="Protection")
@@ -570,6 +611,7 @@ def view_protection(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "Engineering Instructions Main Index Protection Files", "url_path": url_path} )
 
+@login_required
 def view_earthing(request):
     
     files = KnowledgeCenter.objects.filter(sub_category_2="Earthing")
@@ -581,6 +623,7 @@ def view_earthing(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "Engineering Instructions Main Index Earthing Files", "url_path": url_path} )
 
+@login_required
 def view_transformers(request):
     
     files = KnowledgeCenter.objects.filter(sub_category_2="Transformers")
@@ -592,6 +635,7 @@ def view_transformers(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "Engineering Instructions Main Index Transformers Files", "url_path": url_path} )
 
+@login_required
 def view_fuses(request):
     
     files = KnowledgeCenter.objects.filter(sub_category_2="Fuses")
@@ -603,6 +647,7 @@ def view_fuses(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "Engineering Instructions Main Index Fuses Files", "url_path": url_path} )
 
+@login_required
 def view_imm(request):
     
     files = KnowledgeCenter.objects.filter(sub_category_2="Instruments, Meters and Metering")
@@ -614,6 +659,7 @@ def view_imm(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "Engineering Instructions Main Index Instruments Meters and Metering Files", "url_path": url_path} )
 
+@login_required
 def view_tg(request):
     
     files = KnowledgeCenter.objects.filter(sub_category_2="Transformer Gaskets")
@@ -625,6 +671,7 @@ def view_tg(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "Engineering Instructions Main Index Transformer Gaskets Files", "url_path": url_path} )
 
+@login_required
 def view_switchgear(request):
     
     files = KnowledgeCenter.objects.filter(sub_category_2="Switchgear")
@@ -636,6 +683,7 @@ def view_switchgear(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "Engineering Instructions Main Index Switchgear Files", "url_path": url_path} )
 
+@login_required
 def view_por(request):
     
     files = KnowledgeCenter.objects.filter(sub_category_2="Post Office Regulations")
@@ -647,6 +695,7 @@ def view_por(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "Engineering Instructions Main Index Post Office Regulations Files", "url_path": url_path} )
 
+@login_required
 def view_io(request):
     
     files = KnowledgeCenter.objects.filter(sub_category_2="io")
@@ -657,6 +706,7 @@ def view_io(request):
     
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "Engineering Instructions Main Index Insulating oils Files", "url_path": url_path} )
+@login_required
 def view_1_10(request):
     
     files = KnowledgeCenter.objects.all()
@@ -665,6 +715,7 @@ def view_1_10(request):
     return render(request, 'knowledge-center/view_1_10.html',{"page_title": "ENGINEERING INSTRUCTIONS MAIN INDEX(1-10)", "url_path": url_path} )
 
 
+@login_required
 def view_11_20(request):
     
     files = KnowledgeCenter.objects.all()
@@ -672,6 +723,7 @@ def view_11_20(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/view_11_20.html',{"page_title": "ENGINEERING INSTRUCTIONS MAIN INDEX(11-20)", "url_path": url_path} )
 
+@login_required
 def view_clearance(request):
     
     files = KnowledgeCenter.objects.filter(sub_category_2="Clearance Distances")
@@ -683,6 +735,7 @@ def view_clearance(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "Engineering Instructions Main Index Clearance Distances Files", "url_path": url_path} )
 
+@login_required
 def view_mines(request):
     
     files = KnowledgeCenter.objects.filter(sub_category_2="Mines Department Regulations")
@@ -694,6 +747,7 @@ def view_mines(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "Engineering Instructions Main Index Mines Department Regulations Files", "url_path": url_path} )
 
+@login_required
 def view_supplies(request):
     
     files = KnowledgeCenter.objects.filter(sub_category_2="Interruption of supply Notice to consumers")
@@ -705,6 +759,7 @@ def view_supplies(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "Engineering Instructions Main Index ISNC Files", "url_path": url_path} )
 
+@login_required
 def view_samples(request):
     
     files = KnowledgeCenter.objects.filter(sub_category_2="Water Samples and Painting to Consumers")
@@ -716,6 +771,7 @@ def view_samples(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "Engineering Instructions Main Index WSPC Files", "url_path": url_path} )
 
+@login_required
 def view_cables(request):
     
     files = KnowledgeCenter.objects.filter(sub_category_2="Cables")
@@ -727,6 +783,7 @@ def view_cables(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "Engineering Instructions Main Index Cables Files", "url_path": url_path} )
 
+@login_required
 def view_capital(request):
     
     files = KnowledgeCenter.objects.filter(sub_category_2="Capital Works and Expenditure")
@@ -738,6 +795,7 @@ def view_capital(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "Engineering Instructions Main Index Capital Works and Expenditure Files", "url_path": url_path} )
 
+@login_required
 def view_government(request):
     
     files = KnowledgeCenter.objects.filter(sub_category_2="Government planning and Wayleaves")
@@ -749,6 +807,7 @@ def view_government(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "Engineering Instructions Main Index GPW Files", "url_path": url_path} )
 
+@login_required
 def view_phases(request):
     
     files = KnowledgeCenter.objects.filter(sub_category_2="Phase Rotation and Colouring")
@@ -760,6 +819,7 @@ def view_phases(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "Engineering Instructions Main Index Phase Rotation and Colouring Files", "url_path": url_path} )
 
+@login_required
 def view_insulators(request):
     
     files = KnowledgeCenter.objects.filter(sub_category_2="Insulators and Bushings")
@@ -771,6 +831,7 @@ def view_insulators(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "Engineering Instructions Main Index Insulators and Bushings Files", "url_path": url_path} )
 
+@login_required
 def view_locks(request):
     
     files = KnowledgeCenter.objects.filter(sub_category_2="Locks and Keys")
@@ -784,6 +845,7 @@ def view_locks(request):
 
 
 
+@login_required
 def view_21_30(request):
     
     files = KnowledgeCenter.objects.all()
@@ -791,6 +853,7 @@ def view_21_30(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/view_21_30.html', {"page_title": "ENGINEERING INSTRUCTIONS MAIN INDEX(21-30)"})
 
+@login_required
 def view_rmasts(request):
     
     files = KnowledgeCenter.objects.filter(sub_category_2="RMasts, Poles, Stays and Crossarms")
@@ -802,6 +865,7 @@ def view_rmasts(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "Engineering Instructions Main Index RMasts, Poles, Stays and Crossarms Files", "url_path": url_path} )
 
+@login_required
 def view_substations(request):
     
     files = KnowledgeCenter.objects.filter(sub_category_2="Substations")
@@ -812,6 +876,7 @@ def view_substations(request):
     
     return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "Engineering Instructions Main Index Substations Files" } )
 
+@login_required
 def view_fire(request):
     
     files = KnowledgeCenter.objects.filter(sub_category_2="Fire Fighting")
@@ -823,6 +888,7 @@ def view_fire(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "Engineering Instructions Main Index Fire Fighting Files", "url_path": url_path} )
 
+@login_required
 def view_defective(request):
     
     files = KnowledgeCenter.objects.filter(sub_category_2="Defective and Damaged Equipment Insurance & Guarantees")
@@ -834,6 +900,7 @@ def view_defective(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "Engineering Instructions Main Index Defective and Damaged Equipment Insurance & Guarantees Files", "url_path": url_path} )
 
+@login_required
 def view_services(request):
     
     files = KnowledgeCenter.objects.filter(sub_category_2="Services and Service Equipment")
@@ -845,6 +912,7 @@ def view_services(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "Engineering Instructions Main Index Services and Service Equipment Files", "url_path": url_path} )
 
+@login_required
 def view_consumers(request):
     
     files = KnowledgeCenter.objects.filter(sub_category_2="Consumer's Equipment and installation")
@@ -856,6 +924,7 @@ def view_consumers(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files, "url_path": url_path, "page_title": "Engineering Instructions Main Index Consumer's Equipment and installation Files"} )
 
+@login_required
 def view_lifting(request):
     
     files = KnowledgeCenter.objects.filter(sub_category_2="Lifting Equipment")
@@ -867,6 +936,7 @@ def view_lifting(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files, "url_path": url_path, "page_title": "Engineering Instructions Main Index Lifting Equipment Files"} )
 
+@login_required
 def view_transport(request):
     
     files = KnowledgeCenter.objects.filter(sub_category_2="Transport")
@@ -878,6 +948,7 @@ def view_transport(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files, "url_path": url_path, "page_title": "Engineering Instructions Main Index Transport Files"} )
 
+@login_required
 def view_lpa(request):
     
     files = KnowledgeCenter.objects.filter(sub_category_2="Lighting Protection and Arrestors")
@@ -889,6 +960,7 @@ def view_lpa(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files, "url_path": url_path, "page_title": "Engineering Instructions Main Index Lighting Protection and Arrestors Files"} )
 
+@login_required
 def view_insulation(request):
     
     files = KnowledgeCenter.objects.filter(sub_category_2="Insulation")
@@ -901,6 +973,7 @@ def view_insulation(request):
     return render(request, 'knowledge-center/test.html',{ "files": files, "url_path": url_path, "page_title": "Engineering Instructions Main Index Insulation Files"} )
 
 
+@login_required
 def view_31_45(request):
     
     files = KnowledgeCenter.objects.all()
@@ -908,6 +981,7 @@ def view_31_45(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/view_31_45.html', {"page_title": "ENGINEERING INSTRUCTIONS MAIN INDEX(31-45)", "url_path": url_path})
 
+@login_required
 def view_cables(request):
     
     files = KnowledgeCenter.objects.filter(sub_category_2="Cable Jointing Laying ")
@@ -919,6 +993,7 @@ def view_cables(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files, "url_path": url_path, "page_title": "Engineering Instructions Main Index Cable Jointing Laying Files"} )
 
+@login_required
 def view_capacitors(request):
     
     files = KnowledgeCenter.objects.filter(sub_category_2="Capacitors and Power Factor Correction")
@@ -930,6 +1005,7 @@ def view_capacitors(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files, "url_path": url_path, "page_title": "Engineering Instructions Main Index Capacitors and Power Factor Correction Files"} )
 
+@login_required
 def view_explosive(request):
     
     files = KnowledgeCenter.objects.filter(sub_category_2="Explosive and Magazine")
@@ -941,6 +1017,7 @@ def view_explosive(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files, "url_path": url_path, "page_title": "Engineering Instructions Main Index Explosive and Magazine Files"} )
 
+@login_required
 def view_standard(request):
     
     files = KnowledgeCenter.objects.filter(sub_category_2="Standard Stock Items")
@@ -952,6 +1029,7 @@ def view_standard(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files, "url_path": url_path, "page_title": "Engineering Instructions Main Index Standard Stock Items Files"} )
 
+@login_required
 def view_cradles(request):
     
     files = KnowledgeCenter.objects.filter(sub_category_2="Cradles and Guards")
@@ -963,6 +1041,7 @@ def view_cradles(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files, "url_path": url_path, "page_title": "Engineering Instructions Main Index Cradles and Guards Files"} )
 
+@login_required
 def view_11kv(request):
     
     files = KnowledgeCenter.objects.filter(sub_category_2="Standard 11Kv Line Construction")
@@ -974,6 +1053,7 @@ def view_11kv(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{ "files": files, "url_path": url_path, "page_title": "Engineering Instructions Main Index Standard 11kv Line Construction Files"} )
 
+@login_required
 def view_conductors(request):
     
     files = KnowledgeCenter.objects.filter(sub_category_2="Conductors, Earthwires and Accessories")
@@ -985,6 +1065,7 @@ def view_conductors(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files, "url_path": url_path, "page_title": "Engineering Instructions Main Index Conductors, Earthwires and Accessories Files"} )
 
+@login_required
 def view_roads(request):
     
     files = KnowledgeCenter.objects.filter(sub_category_2="Road, Rail, and Line Crossings")
@@ -996,6 +1077,7 @@ def view_roads(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{ "files": files, "url_path": url_path, "page_title": "Engineering Instructions Main Index Road, Rail, and Line Crossings Files"} )
 
+@login_required
 def view_zetdc(request):
     
     files = KnowledgeCenter.objects.filter(sub_category_2="Z.E.T.D.C Regulations and Safety Precautions")
@@ -1007,6 +1089,7 @@ def view_zetdc(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files, "url_path": url_path, "page_title": "Engineering Instructions Main Index Z.E.T.D.C Regulations and sfaety Precautions Files"} )
 
+@login_required
 def view_power(request):
     
     files = KnowledgeCenter.objects.filter(sub_category_2="Power Stations")
@@ -1018,6 +1101,7 @@ def view_power(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{ "files": files, "url_path": url_path, "page_title": "Engineering Instructions Main Index Power Stations Files"} )
 
+@login_required
 def view_substation(request):
     
     files = KnowledgeCenter.objects.filter(sub_category_2="Substation Batteries")
@@ -1029,6 +1113,7 @@ def view_substation(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files, "url_path": url_path, "page_title": "Engineering Instructions Main Index Substation Batteries Files"} )
 
+@login_required
 def view_safety(request):
     
     files = KnowledgeCenter.objects.filter(sub_category_2="Safety Rules for Operation and Maintenance Switching Authorization")
@@ -1040,6 +1125,7 @@ def view_safety(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files, "url_path": url_path, "page_title": "Engineering Instructions Main Index Safety Rule For Operation and Maintenance Switching Authorization Files"} )
 
+@login_required
 def view_lighting(request):
     
     files = KnowledgeCenter.objects.filter(sub_category_2="High Mast Lighting")
@@ -1051,6 +1137,7 @@ def view_lighting(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files, "url_path": url_path, "page_title": "Engineering Instructions Main Index High Mast Lighting Files"} )
 
+@login_required
 def view_capacity(request):
     
     files = KnowledgeCenter.objects.filter(sub_category_2="Planning Policy on Firm Capacity")
@@ -1062,6 +1149,7 @@ def view_capacity(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files, "url_path": url_path, "page_title": "Engineering Instructions Main Index Planning Policy on Firm Capacity Files"} )
 
+@login_required
 def view_procurement(request):
     
     files = KnowledgeCenter.objects.filter(sub_category_2="Procurement")
@@ -1074,6 +1162,7 @@ def view_procurement(request):
     return render(request, 'knowledge-center/test.html',{"files": files, "url_path": url_path, "page_title": "Engineering Instructions Main Index Procurement Files"} )
 
 
+@login_required
 def view_user_manuals(request):
     
     files = KnowledgeCenter.objects.all()
@@ -1081,6 +1170,7 @@ def view_user_manuals(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/view_user_manuals.html', {"page_title": "USER MANUALS", "url_path": url_path})
 
+@login_required
 def view_commercial_usermanuals(request):
     
     files = KnowledgeCenter.objects.filter(file_type="USER MANUALS", sub_category_1="Commercial")
@@ -1092,6 +1182,7 @@ def view_commercial_usermanuals(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "User Manuals Commercial Files", "url_path": url_path} )
 
+@login_required
 def view_hr_usermanuals(request):
     
     files = KnowledgeCenter.objects.filter(file_type="USER MANUALS", sub_category_1="hr")
@@ -1103,6 +1194,7 @@ def view_hr_usermanuals(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files,  "page_title": "User Manuals Human Resources Files", "url_path": url_path} )
 
+@login_required
 def view_finance_usermanuals(request):
     
     files = KnowledgeCenter.objects.filter(file_type="USER MANUALS", sub_category_1="Finance")
@@ -1114,6 +1206,7 @@ def view_finance_usermanuals(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files,  "page_title": "User Manuals Finance Files", "url_path": url_path} )
 
+@login_required
 def view_ict_usermanuals(request):
     
     files = KnowledgeCenter.objects.filter(file_type="USER MANUALS", sub_category_1="ICT")
@@ -1125,6 +1218,7 @@ def view_ict_usermanuals(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files,  "page_title": "User Manuals ICT Files", "url_path": url_path} )
 
+@login_required
 def view_relations_usermanuals(request):
     
     files = KnowledgeCenter.objects.filter(file_type="USER MANUALS", sub_category_1="Stakeholder Relations")
@@ -1136,6 +1230,7 @@ def view_relations_usermanuals(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files,  "page_title": "User Manuals Stakeholder Relations Files", "url_path": url_path} )
 
+@login_required
 def view_legal_usermanuals(request):
     
     files = KnowledgeCenter.objects.filter(file_type="USER MANUALS", sub_category_1="Legal")
@@ -1147,6 +1242,7 @@ def view_legal_usermanuals(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files,  "page_title": "User Manuals Legal Files", "url_path": url_path} )
 
+@login_required
 def view_procurement_usermanuals(request):
     
     files = KnowledgeCenter.objects.filter(file_type="USER MANUALS", sub_category_1="Procurement")
@@ -1158,6 +1254,7 @@ def view_procurement_usermanuals(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files,  "page_title": "User Manuals Procument Files", "url_path": url_path} )
 
+@login_required
 def view_risk_usermanuals(request):
     
     files = KnowledgeCenter.objects.filter(file_type ="USER MANUALS", sub_category_1="Risk")
@@ -1171,6 +1268,7 @@ def view_risk_usermanuals(request):
 
 
 
+@login_required
 def view_eng_manuals(request):
     
     files = KnowledgeCenter.objects.filter(file_type='USER MANUALS', sub_category_1="Engineering").all()
@@ -1178,6 +1276,7 @@ def view_eng_manuals(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/view_eng_manuals.html', {"page_title": "USER MANUALS (Engineering)", "url_path": url_path, "files": files})
 
+@login_required
 def view_switchgear(request):
     
     files = KnowledgeCenter.objects.filter(sub_category_2="Switchgear")
@@ -1189,6 +1288,7 @@ def view_switchgear(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files,  "page_title": "User Manuals Switchgear Files", "url_path": url_path} )
 
+@login_required
 def view_dtech(request):
     
     files = KnowledgeCenter.objects.filter(sub_category_2="Drone Technology")
@@ -1200,6 +1300,7 @@ def view_dtech(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{ "files": files,  "page_title": "User Manuals Drone Technology Files", "url_path": url_path} )
 
+@login_required
 def view_ndm(request):
     
     files = KnowledgeCenter.objects.filter(sub_category_2="NDM")
@@ -1211,6 +1312,7 @@ def view_ndm(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files,  "page_title": "User Manuals NDM Files", "url_path": url_path} )
 
+@login_required
 def view_gis(request):
     
     files = KnowledgeCenter.objects.filter(sub_category_2="GIS")
@@ -1222,6 +1324,7 @@ def view_gis(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files,  "page_title": "User Manuals GIS Files", "url_path": url_path} )
 
+@login_required
 def view_itrack(request):
     
     files = KnowledgeCenter.objects.filter(sub_category_2="iTrack Zimbabwe Geotrack Connect Manual")
@@ -1233,6 +1336,7 @@ def view_itrack(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files,  "page_title": "User Manuals iTrack Zimbabwe Geotrack Connect Manual Files", "url_path": url_path} )
 
+@login_required
 def view_sap(request):
     
     files = KnowledgeCenter.objects.filter(sub_category_2="SAP")
@@ -1244,6 +1348,7 @@ def view_sap(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files,"page_title": "User Manuals SAP Files" , "url_path": url_path} )
 
+@login_required
 def view_oms(request):
     
     files = KnowledgeCenter.objects.filter(sub_category_2="OMS")
@@ -1256,12 +1361,14 @@ def view_oms(request):
     return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "User Manuals OMS Files", "url_path": url_path} )
 
 
+# @login_required
 # def view_drawings(request):
     
 #     files = KnowledgeCenter.objects.all()
     
 #     return render(request, 'knowledge-center/view_drawings.html', {"page_title": "STANDARDS, SPECIFICATIONS AND DRAWINGS"} )
 
+@login_required
 def view_drawing(request):
     
     files = KnowledgeCenter.objects.filter(file_type="Drawings")
@@ -1273,6 +1380,7 @@ def view_drawing(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "Drawings Files", "url_path": url_path} )
 
+@login_required
 def view_standards(request):
     
     files = KnowledgeCenter.objects.filter(file_type="Standards")
@@ -1284,6 +1392,7 @@ def view_standards(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "Standards Files", "url_path": url_path} )
 
+# @login_required
 # def view_specifications(request):
     
 #     files = KnowledgeCenter.objects.filter(file_type="Specifications")
@@ -1295,6 +1404,7 @@ def view_standards(request):
 #     url_path = request.path.split("/")    
 # return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "Specifications Files", "url_path": url_path} )
 
+@login_required
 def view_publications(request):
     
     files = KnowledgeCenter.objects.filter(file_type="PUBLICATIONS")
@@ -1306,6 +1416,7 @@ def view_publications(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "Publications Files", "url_path": url_path} )
 
+@login_required
 def view_external_docs(request):
     
     files = KnowledgeCenter.objects.filter(file_type="Other External Documents")
@@ -1317,6 +1428,7 @@ def view_external_docs(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "External Documents Files", "url_path": url_path} )
 
+@login_required
 def view_drone_tech(request):
     
     files = KnowledgeCenter.objects.filter(file_type="Drone Technology")
@@ -1331,6 +1443,7 @@ def view_drone_tech(request):
 
 
 
+@login_required
 def view_knowledge_base(request):
     
     files = KnowledgeCenter.objects.all()
@@ -1339,6 +1452,7 @@ def view_knowledge_base(request):
     return render(request, 'knowledge-center/view_knowledge_base.html',{"page_title": "PRINCE2 CENTRE OF EXCELENCE", "url_path": url_path} )
 
 
+@login_required
 def view_com_base(request):
     
     files = KnowledgeCenter.objects.all()
@@ -1347,6 +1461,7 @@ def view_com_base(request):
     return render(request, 'knowledge-center/view_com_base.html', )
 
 
+@login_required
 def view_eng_base(request):
     
     files = KnowledgeCenter.objects.all()
@@ -1355,6 +1470,7 @@ def view_eng_base(request):
     return render(request, 'knowledge-center/view_eng_base.html', )
 
 
+@login_required
 def view_ict_base(request):
     
     files = KnowledgeCenter.objects.all()
@@ -1363,6 +1479,7 @@ def view_ict_base(request):
     return render(request, 'knowledge-center/view_ict_base.html', )
 
 
+@login_required
 def test(request):
     
     files = KnowledgeCenter.objects.all()
@@ -1374,6 +1491,7 @@ def test(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/view_legislation.html',{"context": new_dict, "url_path": url_path} )
 
+@login_required
 def view_risk_management(request):
     
     files = KnowledgeCenter.objects.filter(file_type="PRINCE2 CENTRE OF EXCELLENCE", sub_category_1="Risk Management Strategy")
@@ -1381,6 +1499,7 @@ def view_risk_management(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "Risk Management Strategy Files", "url_path": url_path} )
 
+@login_required
 def view_communication_management(request):
     
     files = KnowledgeCenter.objects.filter(file_type="PRINCE2 CENTRE OF EXCELLENCE", sub_category_1="Communication Management Strategy")
@@ -1388,6 +1507,7 @@ def view_communication_management(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "Communications Management Strategy Files", "url_path": url_path} )
 
+@login_required
 def view_quality_management(request):
     
     files = KnowledgeCenter.objects.filter(file_type="PRINCE2 CENTRE OF EXCELLENCE", sub_category_1="Quality Management Strategy")
@@ -1395,6 +1515,7 @@ def view_quality_management(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "Quality Management Strategy Files", "url_path": url_path} )
 
+@login_required
 def view_configuration_management(request):
     
     files = KnowledgeCenter.objects.filter(file_type="PRINCE2 CENTRE OF EXCELLENCE", sub_category_1="Configuration Management Strategy")
@@ -1402,6 +1523,7 @@ def view_configuration_management(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "Configuration Management Strategy Files", "url_path": url_path} )
 
+@login_required
 def view_risk_register(request):
     
     files = KnowledgeCenter.objects.filter(file_type="PRINCE2 CENTRE OF EXCELLENCE", sub_category_1="Risk Register Template")
@@ -1409,6 +1531,7 @@ def view_risk_register(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "Risk Register Template Files", "url_path": url_path} )
 
+@login_required
 def view_lessons_learnt(request):
     
     files = KnowledgeCenter.objects.filter(file_type="PRINCE2 CENTRE OF EXCELLENCE", sub_category_1="Lessons Learnt From Previous Projects")
@@ -1416,6 +1539,7 @@ def view_lessons_learnt(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "Lessons Learnt From Previous Projects Files", "url_path": url_path} )
 
+@login_required
 def view_quality_register(request):
     
     files = KnowledgeCenter.objects.filter(file_type="PRINCE2 CENTRE OF EXCELLENCE", sub_category_1="Quality Register Template")
@@ -1423,6 +1547,7 @@ def view_quality_register(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "Quality Register Template Files", "url_path": url_path} )
 
+@login_required
 def view_configuration_item(request):
     
     files = KnowledgeCenter.objects.filter(file_type="PRINCE2 CENTRE OF EXCELLENCE", sub_category_1="Configuration Item Record Template")
@@ -1430,6 +1555,7 @@ def view_configuration_item(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "Configuration Item Record Template Files", "url_path": url_path} )
 
+@login_required
 def view_current_projects(request):
     
     files = KnowledgeCenter.objects.filter(file_type="PRINCE2 CENTRE OF EXCELLENCE", sub_category_1="Current Projects")
@@ -1437,6 +1563,7 @@ def view_current_projects(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "Current Projects Files", "url_path": url_path} )
 
+@login_required
 def file_search(request):
     keyword = request.GET.get('filename', '')
     pattern = r"\b" + str(keyword).lower() + r"\b"
@@ -1469,7 +1596,6 @@ def file_search(request):
 
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/view_firstview.html', {"page_title": "KNOWLEDGE CENTRE", "results": results})
-
 
 def save_file(f,file_path):
     if f:
