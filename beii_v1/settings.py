@@ -109,6 +109,7 @@ INSTALLED_APPS = [
     'django.contrib.humanize',
     'rest_framework',
     'rest_framework_simplejwt',
+    'mptt',
     'clearcache',
     'risk.audit.nonconformity',
     'it.beii_auth',
@@ -127,7 +128,7 @@ INSTALLED_APPS = [
     'finance.direct_purchase',
     'finance.Direct_purchases',
     'ACE2',
-
+    
     'finance.comperative_schedule',
 
     'reports',
