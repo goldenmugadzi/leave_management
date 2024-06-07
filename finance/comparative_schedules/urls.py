@@ -35,7 +35,9 @@ urlpatterns = [
     path('import_old_rfq', import_old_rfq, name='import_old_rfq'),
     
     path('pending_commitee', get_pending_committee, name='get_pending_committee'),
+    path('your_schedules', your_comperative_schedules, name='your_comperative_schedules'),
     path('pending_gm_approval', get_pending_gm_approval, name='get_pending_gm_approval'),
     path('pending_fm_approval', get_pending_fm_approval, name='get_pending_fm_approval'),
     path('all_schedules', get_all_schedules, name='get_all_schedules'),
+    path('datatables/<str:view>', datatable_data, name='datatable_data'),
 ]

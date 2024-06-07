@@ -25,7 +25,7 @@
 <div
   class="flex-column align-items-center "
 >
-  <div class="grid grid-cols-1 gap-4">
+  {% comment %} <div class="grid grid-cols-1 gap-4">
     <div
       class="w-auto bg-white drop-shadow-md shadow shadow-gulf-blue-300 text-gulf-blue-950 rounded px-4 py-4"
     >
@@ -98,7 +98,7 @@
           </div>
       </div>
     </div>
-  </div>
+  </div> {% endcomment %}
 
   <div class="flex-auto p-6 mt-5 bg-blue-100 rounded">
     <!-- Section for the table of values -->
@@ -120,13 +120,12 @@
       <thead>
         <tr>
           <th>id</th>
-          <th>Uploaded By</th>
+          <th>Creator</th>
           <th>Region</th>
           <th>Report Period</th>
-          <th>Date Created</th>
-          <th>Date Updated</th>
           <th>Department</th>
           <th>File Name</th>
+          <th>Created On</th>
           <th>Action</th>
         </tr>
       </thead>
@@ -134,13 +133,12 @@
       <tfoot>
         <tr>
           <th>id</th>
-          <th>Uploaded By</th>
+          <th>Creator</th>
           <th>Region</th>
           <th>Report Period</th>
-          <th>Date Created</th>
-          <th>Date Updated</th>
           <th>Department</th>
           <th>File Name</th>
+          <th>Created On</th>
           <th>Action</th>
         </tr>
       </tfoot>
@@ -192,21 +190,23 @@
           data: "report_period",
         },
         {
-          data: "date_created",
-        },
-        {
-          data: "date_updated",
-        },
-        {
           data: "section",
         },
         {
           data: "file_name",
         },
         {
+          data: "date_created",
+        },
+        {
           data: null,
           render: function (data, type, row, meta) {
             return `
+              <a type="button" class="btn btn-info" href='/reports/edit_report?i=${row.id}' >
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                </svg>                
+              </a>
               <a type="button" class="btn btn-secondary" href='/reports/download_report?file_id=${row.id}' >
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M9 13.5l3 3m0 0l3-3m-3 3v-6m1.06-4.19l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" />

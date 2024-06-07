@@ -1,51 +1,5 @@
 {% extends 'admin_layout.html' %} {% load static %} {% block content %}
-<!--
-<div>
-  <form action="/knowledge_center/search">
-    {% csrf_token %}
 
-    <div class="flex mt-10 px-3 py-3">
-      <div style="width: 100%">
-        <div>
-          <input
-            type="text"
-            name="filename"
-            id="filename"
-            autocomplete="given-name"
-            class="block w-full rounded-md border-0 py-1.5 text-gulf-blue-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-          />
-        </div>
-      </div>
-      <div style="width: 50%">
-        <button
-          style="width: 50%"
-          type="submit"
-          class="rounded-md bg-gulf-blue-600 hover:bg-gulf-blue-800 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-        >
-          SEARCH
-        </button>
-      </div>
-    </div>
-  </form>
-  <div class="card">
-    <ul>
-      {% for result in results %}
-      <li>
-        <a
-          class="m-3 text-blue-600 rounded-xl no-underline font-semibold decoration-sky-600"
-          tabindex="-1"
-          href="/knowledge_center/download_file?file_id={{result.id}}"
-        >
-          {{ result.name }}
-        </a>
-      </li>
-      {% empty %}
-      <li>No results found.</li>
-      {% endfor %}
-    </ul>
-  </div>
-</div>
--->
 <div
   style="margin-bottom: 25px"
   class="content-wrapper p-2 m-px"
@@ -80,33 +34,6 @@
       </div>
     </a>
     </div>
-    {% comment %} <div
-      class="w-auto bg-citron-200 text-center shadow shadow-nepal-300 text-gray-700 rounded px-10 py-4"
-    >
-    <a href="/knowledge_center/view_legislation/gl">
-      <div class="sm:flex lg:items-center lg:justify-between">
-        <div class="min-w-0 flex-1">
-          <div class="">
-            <div class="mx-auto">
-              <div class="group relative">
-                  <div class="flex justify-between items-center">
-                    <img
-                      src="{% static 'assets/images/folder.png' %}"
-                      alt=""
-                      class="h-1/5 w-1/5 object-cover object-center"
-                    />
-                    <span
-                      class="pr-1 font-semibold flex-1 text-left text-gray-800 px-2"
-                      >General Legislation</span
-                    >
-                  </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </a>
-    </div> {% endcomment %}
     <div
       class="w-auto bg-green-300 text-center shadow shadow-nepal-300 text-gray-700 rounded px-10 py-4"
     >
@@ -125,6 +52,33 @@
                       <span
                         class="pr-1 font-semibold flex-1 text-left text-gray-800 px-2"
                         >Statutory Instruments</span
+                      >
+                    </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </a>
+    </div>
+    <div
+      class="w-auto bg-gulf-blue-300 text-center shadow shadow-nepal-300 text-gray-700 rounded px-10 py-4"
+    >
+    <a href="/knowledge_center/legal_registers">
+      <div class="sm:flex lg:items-center lg:justify-between">
+        <div class="min-w-0 flex-1">
+          <div class="">
+            <div class="mx-auto">
+              <div class="group relative">
+                    <div class="flex justify-between items-center">
+                      <img
+                        src="{% static 'assets/images/folder.png' %}"
+                        alt=""
+                        class="h-1/5 w-1/5 object-cover object-center"
+                      />
+                      <span
+                        class="pr-1 font-semibold flex-1 text-left text-gray-800 px-2"
+                        >Legal Register</span
                       >
                     </div>
               </div>

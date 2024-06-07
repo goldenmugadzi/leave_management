@@ -144,3 +144,6 @@ dmypy.json
 /node_modules/*
 node_modules/*
 node_modules/
+/bet/Scripts/tqdm.exe
+/bet/Scripts/transformers-cli.exe
+/bet/Scripts/weasyprint.exe

@@ -17,14 +17,16 @@
     <div class="flex justify-between items-center mb-5">
       <span class="text-lg font-semibold">Comperative Schedules</span>
       <div class="flex justify-end items-center">
+        {% if procurement_role %}
       <a
       href="/comperative_schedule/create_comperative_schedule/"
       class="border-gulf-blue-600 hover:bg-gulf-blue-400 hover:text-gulf-blue-50 font-bold py-2 px-4 rounded m-2"
       >
       Create Schedule
     </a>
+    {% endif %}
       <a
-      href="/comperative_schedule/all_schedules"
+      id="all_schedules"
       class="bg-gulf-blue-600 hover:bg-gulf-blue-800 text-white font-bold py-2 px-4 rounded m-2"
       >
       All Schedules
@@ -32,15 +34,17 @@
     </div>
     </div>
     <div class="flex justify-end items-center mb-5">
-      {% if fm_role == False and gm_role == False %}
+      {% if procurement_role %}
       <a
-      href="/comperative_schedule/comperative_schedules"
+      id="your_schedules"
       class="bg-gulf-blue-600 hover:bg-gulf-blue-800 text-white font-bold py-2 px-4 rounded m-2"
       >
       Your Schedules
     </a>
+    {% endif %}
+      {% if fm_role == False and gm_role == False %}
       <a
-        href="/comperative_schedule/pending_commitee"
+        id="pending_committee"
         class="bg-gulf-blue-600 hover:bg-gulf-blue-800 text-white font-bold py-2 px-4 rounded m-2"
         >
         Pending Committee
@@ -48,7 +52,7 @@
       {% endif %}
       {% if fm_role == True %} 
       <a
-      href="/comperative_schedule/pending_fm_approval"
+      id="pending_fm"
       class="bg-gulf-blue-600 hover:bg-gulf-blue-800 text-white font-bold py-2 px-4 rounded m-2"
       >
       Pending Finance
@@ -56,22 +60,22 @@
     {% endif %} 
     {% if gm_role == True %}
     <a
-    href="/comperative_schedule/pending_gm_approval"
+    id="pending_gm"
     class="bg-gulf-blue-600 hover:bg-gulf-blue-800 text-white font-bold py-2 px-4 rounded m-2"
     >
       Pending GM
     </a>
     {% endif %}
     </div>
-    <table id="users_index" class="display" style="width: 100%">
+    <table id="comperative_schedules" class="display" style="width: 100%">
       <thead>
         <tr>
           <th>ID</th>
           <th>Scope</th>
-          <th>Closing Date</th>
           <th>Committee</th>
           <th>Finance</th>
           <th>GM</th>
+          <th>Created On</th>
         </tr>
       </thead>
       <tbody></tbody>
@@ -79,10 +83,10 @@
         <tr>
             <th>ID</th>
             <th>Scope</th>
-            <th>Closing Date</th>
             <th>Committee</th>
             <th>Finance</th>
             <th>GM</th>
+            <th>Created On</th>
         </tr>
       </tfoot>
     </table>
@@ -91,12 +95,62 @@
 {% endblock %} {% block scripts %}
 <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<!-- Buttons JS -->
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/buttons/2.2.2/js/dataTables.buttons.min.js"></script>
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/buttons/2.2.2/js/buttons.html5.min.js"></script>
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/buttons/2.2.2/js/buttons.print.min.js"></script>
+<!-- PDFMake (for PDF export) -->
+<script type="text/javascript" charset="utf8" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.36/pdfmake.min.js"></script>
+<script type="text/javascript" charset="utf8" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.36/vfs_fonts.js"></script>
+<!-- JSZip (for Excel export) -->
+<script type="text/javascript" charset="utf8" src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
 <script>
-  var objs = JSON.parse("{{cs|escapejs}}");
+  var procurement = "{{procurement_role|safe}}";
+  var fm = "{{fm_role|safe}}";
+  var gm = "{{gm_role|safe}}";
+  let url = ""
 
+  console.log("current user roles: ", procurement, fm, gm)
+  if(procurement === "True"){
+    url = '/comperative_schedule/datatables/your_schedules'
+  } else if(fm === "True"){
+    url = '/comperative_schedule/datatables/pending_fm'
+  } else if(gm === "True"){
+    url = '/comperative_schedule/datatables/pending_gm'
+  } else {
+    url = '/comperative_schedule/datatables/pending_committee'
+  }
   $(document).ready(function () {
-    $("#users_index").DataTable({
-      data: objs,
+    var table = $("#comperative_schedules").DataTable({
+      dom: 'Bfrtip',
+      buttons: [
+          {
+              extend: 'csv',
+              text: 'Export to CSV',
+              className: "bg-gulf-blue-400 hover:bg-gulf-blue-800 text-gulf-blue-950 font-bold py-2 px-4 rounded"
+          },
+          {
+              extend: 'excel',
+              text: 'Export to Excel',
+              className: "bg-gulf-blue-400 hover:bg-gulf-blue-800 text-gulf-blue-950 font-bold py-2 px-4 rounded"
+          },
+          {
+              extend: 'pdf',
+              text: 'Export to PDF',
+              className: "bg-gulf-blue-400 hover:bg-gulf-blue-800 text-gulf-blue-950 font-bold py-2 px-4 rounded"
+          },
+          {
+              extend: 'print',
+              text: 'Print Table',
+              className: "bg-gulf-blue-400 hover:bg-gulf-blue-800 text-gulf-blue-950 font-bold py-2 px-4 rounded"
+          }
+      ],
+      "processing": true,
+      "serverSide": true,
+      "ajax": {
+        "url": url,
+        "type": "GET"
+      },
       columns: [
         {
           data: "cs_id",
@@ -111,25 +165,24 @@
           data: "scope_of_work",
         },
         {
-          data: "closing_date",
-        },
-        {
           data: "committee_approval",
+          orderable: false,
+          searchable: false,
           render: function (data, type, row, meta) {
             let approval_badge = ""
             if(data === "Approval Complete"){
               approval_badge = `
-              <a type="button" class="bg-green-300 text-green-800 rounded px-1 py-2" href='/comperative_schedule/comperative_schedule/${row.cs_id}' >
+              <a type="button" class="bg-green-300 text-green-800 rounded px-1 py-2 w-full text-center" href='/comperative_schedule/comperative_schedule/${row.cs_id}' >
                 ${data}              
               </a>`
             } else if (data === "Rejected"){
               approval_badge = `
-              <a type="button" class="bg-red-300 text-red-800 rounded px-1 py-2" href='/comperative_schedule/comperative_schedule/${row.cs_id}' >
+              <a type="button" class="bg-red-300 text-red-800 rounded px-1 py-2 w-full text-center" href='/comperative_schedule/comperative_schedule/${row.cs_id}' >
                 ${data}              
               </a>`
             } else {
               approval_badge = `
-              <a type="button" class="bg-blue-300 text-blue-800 rounded px-1 py-2" href='/comperative_schedule/comperative_schedule/${row.cs_id}' >
+              <a type="button" class="bg-blue-300 text-blue-800 rounded px-1 py-2 w-full text-center" href='/comperative_schedule/comperative_schedule/${row.cs_id}' >
                 ${data}              
               </a>`
             }
@@ -138,21 +191,23 @@
         },
         {
           data: "fm_approval",
+          orderable: false,
+          searchable: false,
           render: function (data, type, row, meta) {
             let approval_badge = ""
             if(data === "Approved"){
               approval_badge = `
-              <a type="button" class="bg-green-300 text-green-800 rounded px-1 py-2" href='/comperative_schedule/comperative_schedule/${row.cs_id}' >
+              <a type="button" class="bg-green-300 text-green-800 rounded px-1 py-2 w-full text-center" href='/comperative_schedule/comperative_schedule/${row.cs_id}' >
                 ${data}              
               </a>`
             } else if (data === "Rejected"){
               approval_badge = `
-              <a type="button" class="bg-red-300 text-red-800 rounded px-1 py-2" href='/comperative_schedule/comperative_schedule/${row.cs_id}' >
+              <a type="button" class="bg-red-300 text-red-800 rounded px-1 py-2 w-full text-center" href='/comperative_schedule/comperative_schedule/${row.cs_id}' >
                 ${data}              
               </a>`
             } else {
               approval_badge = `
-              <a type="button" class="bg-blue-300 text-blue-800 rounded px-1 py-2" href='/comperative_schedule/comperative_schedule/${row.cs_id}' >
+              <a type="button" class="bg-blue-300 text-blue-800 rounded px-1 py-2 w-full text-center" href='/comperative_schedule/comperative_schedule/${row.cs_id}' >
                 ${data}              
               </a>`
             }
@@ -161,28 +216,59 @@
         },
         {
           data: "gm_approval",
+          orderable: false,
+          searchable: false,
           render: function (data, type, row, meta) {
             let approval_badge = ""
             if(data === "Approved"){
               approval_badge = `
-              <a type="button" class="bg-green-300 text-green-800 rounded px-1 py-2" href='/comperative_schedule/comperative_schedule/${row.cs_id}' >
+              <a type="button" class="bg-green-300 text-green-800 rounded px-1 py-2 w-full text-center" href='/comperative_schedule/comperative_schedule/${row.cs_id}' >
                 ${data}              
               </a>`
             } else if (data === "Rejected"){
               approval_badge = `
-              <a type="button" class="bg-red-300 text-red-800 rounded px-1 py-2" href='/comperative_schedule/comperative_schedule/${row.cs_id}' >
+              <a type="button" class="bg-red-300 text-red-800 rounded px-1 py-2 w-full text-center" href='/comperative_schedule/comperative_schedule/${row.cs_id}' >
                 ${data}              
               </a>`
             } else {
               approval_badge = `
-              <a type="button" class="bg-blue-300 text-blue-800 rounded px-1 py-2" href='/comperative_schedule/comperative_schedule/${row.cs_id}' >
+              <a type="button" class="bg-blue-300 text-blue-800 rounded px-1 py-2 w-full text-center" href='/comperative_schedule/comperative_schedule/${row.cs_id}' >
                 ${data}              
               </a>`
             }
             return approval_badge;
           },
         },
+        {
+          data: "created_at"
+        }
       ],
+      order: [[5, 'desc']]
+    });
+
+    $('#all_schedules').on('click', function() {
+      var newUrl = '/comperative_schedule/datatables/all_schedules';
+      table.ajax.url(newUrl).load();
+    });
+
+    $('#your_schedules').on('click', function() {
+      var newUrl = '/comperative_schedule/datatables/your_schedules';
+      table.ajax.url(newUrl).load();
+    });
+
+    $('#pending_committee').on('click', function() {
+      var newUrl = '/comperative_schedule/datatables/pending_committee';
+      table.ajax.url(newUrl).load();
+    });
+
+    $('#pending_fm').on('click', function() {
+      var newUrl = '/comperative_schedule/datatables/pending_fm';
+      table.ajax.url(newUrl).load();
+    });
+
+    $('#pending_gm').on('click', function() {
+      var newUrl = '/comperative_schedule/datatables/pending_gm';
+      table.ajax.url(newUrl).load();
     });
   });
 </script>

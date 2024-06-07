@@ -15,86 +15,87 @@ from rest_framework.decorators import api_view, parser_classes
 from rest_framework.parsers import JSONParser
 from django.contrib.auth.decorators import login_required
 from approve.decorators import allowed_roles
+from django.db.models import Q, Exists, OuterRef, Count, F
 from it.users.models import Application, Roles, UserProfile, Depots, Districts, Regions, Designations, Sections
 from it.users.forms import CustomUserCreationForm
 
 from django.contrib.auth.models import Group
 from .helpers import DESIGNATIONS, REGIONS, DISTRICTS, DEPOTS, ROLES, SECTIONS
 from django.contrib import messages
-
+from decouple import config
 from approve.decorators import allowed_roles
-BASE_URL = "http://172.16.8.99:9300"
-
+from django.core.paginator import Paginator
+BASE_URL = "http://"+config('HOST')+":"+config('PORT')
 
 @login_required
 @allowed_roles(['administrator'], ['users'])
 def add_centers(request):
     
-    # for region in REGIONS:
-    #     _region = Regions(
-    #         region=region['name'],
-    #         code=region['code'],
-    #     )
-    #     _region.save()
-    #
-    # for district in DISTRICTS:
-    #     region_id = Regions.objects.filter(code=district['parent_code']).first()
-    #     _district = Districts(
-    #         district=district['name'],
-    #         code=district['code'],
-    #         region_id=region_id.id
-    #     )
-    #     _district.save()
-    #
-    # for depot in DEPOTS:
-    #     district_id=Districts.objects.filter(code=depot['district_code']).first()
-    #     region_id = Regions.objects.filter(code=depot['parent_code']).first()
-    #     _depot = Depots(
-    #         depot=depot['name'],
-    #         code=depot['code'],
-    #         district_id=district_id.id,
-    #         region_id=region_id.id
-    #     )
-    #     _depot.save()
-    #
-    # for designation in DESIGNATIONS:
-    #     _designation = Designations(
-    #         description=designation['description']
-    #     )
-    #     _designation.save()
-    #
-    # for role in ROLES:
-    #     application_ = role['application']
-    #     app_id = Application.objects.filter(name=application_).first()
-    #     if app_id:
-    #         _role = Roles(
-    #             role=role['role'],
-    #             name=role['name'],
-    #             description=role['description'],
-    #             application=role['application'],
-    #             app_id=app_id
-    #         )
-    #         _role.save()
-    #     else:
-    #         new_app = Application(
-    #             name=application_
-    #         )
-    #         new_app.save()
-    #         _role = Roles(
-    #             role=role['name'],
-    #             name=role['name'],
-    #             description=role['description'],
-    #             application=role['application'],
-    #             app_id=new_app
-    #         )
-    #         _role.save()
+    for region in REGIONS:
+        _region = Regions(
+            region=region['name'],
+            code=region['code'],
+        )
+        _region.save()
+    
+    for district in DISTRICTS:
+        region_id = Regions.objects.filter(code=district['parent_code']).first()
+        _district = Districts(
+            district=district['name'],
+            code=district['code'],
+            region_id=region_id.id
+        )
+        _district.save()
+    
+    for depot in DEPOTS:
+        district_id=Districts.objects.filter(code=depot['district_code']).first()
+        region_id = Regions.objects.filter(code=depot['parent_code']).first()
+        _depot = Depots(
+            depot=depot['name'],
+            code=depot['code'],
+            district_id=district_id.id,
+            region_id=region_id.id
+        )
+        _depot.save()
+    
+    for designation in DESIGNATIONS:
+        _designation = Designations(
+            description=designation['description']
+        )
+        _designation.save()
+    
+    for role in ROLES:
+        application_ = role['application']
+        app_id = Application.objects.filter(name=application_).first()
+        if app_id:
+            _role = Roles(
+                role=role['role'],
+                name=role['name'],
+                description=role['description'],
+                application=role['application'],
+                app_id=app_id
+            )
+            _role.save()
+        else:
+            new_app = Application(
+                name=application_
+            )
+            new_app.save()
+            _role = Roles(
+                role=role['name'],
+                name=role['name'],
+                description=role['description'],
+                application=role['application'],
+                app_id=new_app
+            )
+            _role.save()
             
-    # for section in SECTIONS:
-    #     _section = Sections(
-    #         section=section['section'],
-    #         code=section['code']
-    #     )
-    #     _section.save()
+    for section in SECTIONS:
+        _section = Sections(
+            section=section['section'],
+            code=section['code']
+        )
+        _section.save()
         
     return redirect('/users/users-index')
 
@@ -193,22 +194,7 @@ def add_user(request):
 @login_required
 @allowed_roles(['administrator'], ['users'])
 def get_user_records(request):
-    records = UserProfile.objects.order_by('-date_joined').all()
 
-    records_list = []
-    for record in records:
-        o = {
-            "id": record.pk,
-            "username": record.username,
-            "firstname": record.first_name,
-            "lastname": record.last_name,
-            "email": record.email,
-            "date_created": record.date_joined.date()
-        }
-
-        records_list.append(o)
-
-    context = json.dumps(records_list, default=str)
     user_page = 'users/user_index.html'
     user_title = request.user.get_full_name()
     l = request.user.groups.values_list('name', flat=True)  # QuerySet Object
@@ -219,11 +205,60 @@ def get_user_records(request):
         user_page,
         {
             "title": "All Records",
-            "context": context,
             "user_title": user_title,
             "user_groups": user_groups
-
         })
+    
+def datatable_data(request):
+    draw = int(request.GET.get('draw', default=1))
+    start = int(request.GET.get('start', default=0))
+    length = int(request.GET.get('length', default=10))
+    search_value = request.GET.get('search[value]', default='')
+
+    # Fetch your data from the model
+    records = UserProfile.objects.order_by('-date_joined').all()
+    # Filter based on search value
+    if search_value:
+        records = records.filter(
+        Q(username__icontains=search_value) |
+        Q(first_name__icontains=search_value) |
+        Q(last_name__icontains=search_value) |
+        Q(email__icontains=search_value)
+        )
+
+    # Total number of records before filtering
+    total = records.count()
+
+    # Sorting
+    order_column = request.GET.get('order[0][column]')
+    order = request.GET.get('order[0][dir]')
+    if order_column:
+        column_name = request.GET.get(f'columns[{order_column}][data]')
+        if order == 'desc':
+            column_name = f'-{column_name}'
+        records = records.order_by(column_name)
+
+    # Pagination
+    paginator = Paginator(records, length)
+    page_number = start // length + 1
+    page_obj = paginator.get_page(page_number)
+
+    # Prepare response
+    data = [{
+            "id": obj.pk,
+            "username": obj.username,
+            "first_name": obj.first_name,
+            "last_name": obj.last_name,
+            "email": obj.email,
+            "date_joined": obj.date_joined.date()
+        } for obj in page_obj]
+
+    return JsonResponse({
+        'draw': draw,
+        'recordsTotal': total,
+        'recordsFiltered': total,
+        'data': data
+    })
 
 @login_required
 @allowed_roles(['administrator'], ['users'])
@@ -294,9 +329,49 @@ def update_user(request):
             messages.error(request, "An error occurred while saving the user")
     
         return redirect("/users/users-index")
+    
 
 @login_required
-@allowed_roles(['Administrator'], ['users'])
+def view_user(request):
+    if request.method == "GET":
+        user_profile = UserProfile.objects.get(id=request.user.id)
+        active_roles = {role.app_id.name: role for role in user_profile.roles.all() if role.app_id}
+
+        new_user = {
+            "id": user_profile.pk,
+            "username": user_profile.username,
+            "firstname": user_profile.first_name,
+            "lastname": user_profile.last_name,
+            "email": user_profile.email,
+            "section": Sections.objects.filter(id=user_profile.section.id).first() if user_profile.section else None,
+            "depot": Depots.objects.filter(id=user_profile.depot.id).first() if user_profile.depot else None,
+            "district": Districts.objects.filter(id=user_profile.district.id).first() if user_profile.district else None,
+            "region": Regions.objects.filter(id=user_profile.region.id).first() if user_profile.region else None,
+            "roles": active_roles,
+            "designation": Designations.objects.filter(id=user_profile.designation.id).first() if user_profile.designation else None,
+        }
+
+        all_roles = {app.name: Roles.objects.filter(app_id=app.id).all() for app in Application.objects.all()}
+
+        return render(
+            request,
+            "users/view_user.html",
+            {
+                "form": CustomUserCreationForm,
+                "user_roles": all_roles,
+                "user_applications": Application.objects.all(),
+                "user_designations": Designations.objects.all(),
+                "sections": Sections.objects.all(),
+                "districts": Districts.objects.all(),
+                "regions": Regions.objects.all(),
+                "user_title": request.user.get_full_name(),
+                "user_groups": list(request.user.groups.values_list('name', flat=True)),
+                "user": new_user
+            }
+        )
+        
+@login_required
+@allowed_roles(['administrator'], ['users'])
 def update_userx(request):
     if request.method == "GET":
 
@@ -430,7 +505,7 @@ def update_userx(request):
 
 
 @login_required
-@allowed_roles(['Administrator'], ['users'])
+@allowed_roles(['administrator'], ['users'])
 def reset_user_password(request):
     if request.method == "POST":
 
@@ -516,7 +591,7 @@ def change_user_password(request):
 
 
 @login_required
-@allowed_roles(['Administrator'], ['users'])
+@allowed_roles(['administrator'], ['users'])
 def get_filtered_districts(request, region_id):
     
     districts = Districts.objects.filter(region_id=region_id).all()
@@ -524,7 +599,7 @@ def get_filtered_districts(request, region_id):
     return JsonResponse(list(districts.values('id', 'district')), safe=False)
 
 @login_required
-@allowed_roles(['Administrator'], ['users'])
+@allowed_roles(['administrator'], ['users'])
 def get_filtered_depots(request, district_id):
         
     depots = Depots.objects.filter(district_id=district_id).all()
@@ -532,7 +607,7 @@ def get_filtered_depots(request, district_id):
     return JsonResponse(list(depots.values('id', 'depot')), safe=False)
 
 @login_required
-@allowed_roles(['Administrator'], ['users'])
+@allowed_roles(['administrator'], ['users'])
 def get_user_all_groups(request):
     if request.method == "GET":
         user_title = request.user.get_full_name()
@@ -604,7 +679,7 @@ def get_user_all_groups(request):
 
 
 @login_required
-@allowed_roles(['Administrator'], ['users'])
+@allowed_roles(['administrator'], ['users'])
 def import_users(request):
     if request.method == "POST":
         file = request.FILES['file']

@@ -55,7 +55,7 @@
 
           <div class="mt-10 grid grid-cols-3 gap-4">
             
-
+            <input type="hidden" name="report_id" value="{{ report.id }}">
             <div>
               <label
                 for="filename"
@@ -66,9 +66,10 @@
                 <input
                   type="text"
                   name="file_name"
+                  value="{{ report.file_name }}"
                   id="file_name"
                   autocomplete="file_name_id"
-                  class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                  class="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                 />
               </div>
             </div>
@@ -85,12 +86,16 @@
                     id="report_period"
                     name="report_period"
                     autocomplete="report_period"
-                    class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+                    class="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
                   >
-                    <option>Select Period</option>
-                    <option value="Daily">Daily</option>
-                    <option value="Weekly">Weekly</option>
-                    <option value="Monthly">Monthly</option>
+                    {% if report.report_period %}
+                        <option value="{{ report.report_period }}">{{ report.report_period }}</option>
+                    {% endif %}
+                      <option>Select Period</option>
+                      <option value="Daily">Daily</option>
+                      <option value="Weekly">Weekly</option>
+                      <option value="Monthly">Monthly</option>
+                    
                   </select>
               </div>
             </div>
@@ -107,34 +112,15 @@
                     id="section"
                     name="section"
                     autocomplete="section"
-                    class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+                    class="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
                   >
-                    <option>Select Section</option>
-                    <option value="521001">GM Office</option>
-                    <option value="522001">Finance</option>
-                    <option value="522102">Stores</option>
-                    <option value="522301">Procurement</option>
-                    <option value="523001">Human Resource</option>
-                    <option value="524001">Engineering</option>
-                    <option value="524101">Network Development</option>
-                    <option value="524202">Transport</option>
-                    <option value="524301">Operations and Maintenance</option>
-                    <option value="525000">Commercial</option>
-                    <option value="526001">Risk Management</option>
-                    <option value="527001">Information Technology</option>
-                    <option value="524402">Makoni Depot</option>
-                    <option value="524403">Zengeza Depot</option>
-                    <option value="524502">Kuwadzana Depot</option>
-                    <option value="524503">Mabelreign Depot</option>
-                    <option value="524504">Warren Park Depot</option>
-                    <option value="524602">Glen View Depot</option>
-                    <option value="524603">Waterfalls Depot</option>
-                    <option value="524604">Southerton Depot</option>
-                    <option value="524702">CBD Depot</option>
-                    <option value="524703">Borrowdale Depot</option>
-                    <option value="524704">Mabvuku Depot</option>
-                    <option value="524705">Ruwa Depot</option>
-                    <option value="000000">Seke Depot</option>
+                    {% if report.section.section %}
+                        <option value="{{ report.section.id }}">{{ report.section.section }}</option>
+                    {% endif %}
+                      <option>Select Section</option>
+                      {% for section in sections %}
+                        <option value="{{section.id}}">{{section.section}}</option>
+                      {% endfor %}
                   </select>
               </div>
             </div>
@@ -150,13 +136,15 @@
                     id="region"
                     name="region"
                     autocomplete="region"
-                    class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+                    class="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
                   >
-                    <option>Select Region</option>
-                    <option value="1">Harare Region</option>
-                    <option value="2">East Region</option>
-                    <option value="3">South Region</option>
-                    <option value="4">West Region</option>
+                    {% if report.region %}
+                        <option value="{{ report.region.id }}">{{ report.region.region }}</option>
+                    {% endif %}
+                      <option>Select Region</option>
+                      {% for region in regions %}
+                        <option value="{{region.id}}">{{region.region}}</option>
+                      {% endfor %}
                   </select>
               </div>
             </div>
@@ -175,13 +163,10 @@
                     name="uploaded_file"
                     id="uploaded_file"
                     autocomplete="family-name"
-                    class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                    class="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                   />
                 </div>
               </div>
-
-            
-              
 
           </div>
         </div>

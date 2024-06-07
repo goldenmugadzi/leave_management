@@ -23,7 +23,7 @@ APPLICATIONS = [
         "name": "ace",
         "title": "ACE",
         "iconUrl": "assets/images/capital.png",
-        "url": "/acee/aces"
+        "url": "/ace/aces"
     },
     {
         "name": "Token",
@@ -51,7 +51,7 @@ APPLICATIONS = [
     },
     {
         "name": "ristricted_bidding",
-        "title": "Ristricted Biddings",
+        "title": "Restricted Biddings",
         "iconUrl": "assets/images/direct_bid.png",
         "url": "/ristricted_bidding/comperative_schedules"
     },
@@ -267,8 +267,9 @@ def business_applications(request):
 
     print("users_role: ", users_role)
     applications = APPLICATIONS
-    if users_role != "administrator":
-        applications = [app for app in applications if app['name']!= 'users']
+    if users_role == "standard" or "":
+        print("creating standard list ..")
+        applications = [app for app in applications if app['name'] != 'users']
         
     url_path = request.path.split("/")
     return render(
@@ -279,7 +280,7 @@ def business_applications(request):
             "url_path": url_path,
             "page_title": "Business Applications", 
             "user_groups": user_groups,
-            "apps": APPLICATIONS
+            "apps": applications
         })
 
 def app_logout(request):

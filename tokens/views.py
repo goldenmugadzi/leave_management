@@ -11,6 +11,7 @@ from django.db.models import Q
 import os, json
 
 
+# check update
 @login_required
 @allowed_roles(["Requester"], ["temper", "reimbursement", "clear credit"])
 def create_token(request):
@@ -276,9 +277,10 @@ def awaiting_my_action(request):
     """
     tokens_to_process = []
     user_roles = request.user.roles.all()
-    for token in Token.objects.filter(
-        Q(section=request.user.section), Q(region=request.user.region)
-    ):
+    mytokens = Token.objects.filter(
+        Q(section=request.user.section) & Q(region=request.user.region) | Q(created_by__district=request.user.district)
+    )
+    for token in mytokens:
         process = token.process
 
         if process.approval_set.exists():
@@ -331,6 +333,7 @@ def addsection(request):
     return redirect("tokens:tokens")
 
 
+
 def process_file(file_path):
     if not os.path.isfile(file_path):
         raise FileNotFoundError("File not found!")
@@ -380,13 +383,13 @@ def process_file(file_path):
 
             
             if pp and b4 > 0: 
-                root = CostCenter.objects.get(id=p_id)
-                CostCenter.objects.create(name=c_name,id=c_id, parent=root)
+                root = CostCenter.objects.get(code=p_id)
+                CostCenter.objects.create(name=c_name,code=c_id, parent=root)
             elif nc and b4 > 0:
                 if a>0:
-                    CostCenter.objects.create(name=c_name, id=c_id, parent=root)
+                    CostCenter.objects.create(name=c_name, code=c_id, parent=root)
                 else:
-                    CostCenter.objects.create(name=c_name, id=c_id, parent=root)
+                    CostCenter.objects.create(name=c_name, code=c_id, parent=root)
          
             elif not pp and nc:
                
@@ -395,13 +398,13 @@ def process_file(file_path):
                     root = root 
                     for i in range(b4): 
                         root = root.parent 
-                    CostCenter.objects.create(name=c_name, id=c_id, parent=root)
+                    CostCenter.objects.create(name=c_name, code=c_id, parent=root)
                 if b4 == 0:
                     if a>0:
-                        root = CostCenter.objects.get(id=p_id).parent
-                        CostCenter.objects.create(name=c_name, id=c_id, parent=root)
+                        root = CostCenter.objects.get(code=p_id).parent
+                        CostCenter.objects.create(name=c_name, code=c_id, parent=root)
                     else:
-                        CostCenter.objects.create(name=c_name, id=c_id, parent=None)
+                        CostCenter.objects.create(name=c_name, code=c_id, parent=None)
 
                 
             elif not pp and not nc:
@@ -410,9 +413,9 @@ def process_file(file_path):
                     root = root 
                     for i in range(b4): 
                         root = root.parent 
-                CostCenter.objects.create(name=c_name, id=c_id, parent=root)
+                CostCenter.objects.create(name=c_name, code=c_id, parent=root)
             else:
-                CostCenter.objects.create(name=c_name, id=c_id, parent=None)
+                CostCenter.objects.create(name=c_name, code=c_id, parent=None)
            
                
             state = { 'p_t': p_t, 'c_t': c_t, 'n_t': n_t,'b4':b4, 'nc': nc, 'pp': pp,'c_name': c_name  }
@@ -422,10 +425,9 @@ def process_file(file_path):
 def cost_centers(request):return render(request, "tokens/cost_centers.html", {"cost_centers": CostCenter.objects.all()})
 def upload_centers(request):
     CostCenter.objects.all().delete()
-    file_path = "tokens/"
-    filepath = os.path.join(file_path, 'cc.txt')
+    file_path = "tokens/cc.txt"
     try:
-        process_file(filepath)
+        process_file(file_path)
     except FileNotFoundError as e:
         print(e)
     return redirect("tokens:cost_centers")
