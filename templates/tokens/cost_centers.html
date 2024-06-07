@@ -28,7 +28,7 @@
         data.addRows([
 
         {% for cost_center in cost_centers %}
-        [{v: '{{ cost_center.id }}', f: '{{ cost_center.name }}<div style="color:red; font-style:italic">{{ cost_center.id }}</div>'},'{{ cost_center.parent.id }}', '{{ cost_center.parent.id  }}'],
+        [{v: '{{ cost_center.id }}',f: ' <a href="/cost_center/{{ cost_center.id  }}">{{ cost_center.name }}<div style="color:red; font-style:italic">{{ cost_center.id }}</div> </a>'},'{{ cost_center.parent.id }}', '{{ cost_center.parent.id  }}'],
       {% endfor %}
         ]);
     
