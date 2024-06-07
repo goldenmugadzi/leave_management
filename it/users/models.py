@@ -126,11 +126,9 @@ class UserProfile(AbstractUser):
 class Notification(models.Model):
     user = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
     message = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
     is_read = models.BooleanField(default=False)
     url = models.CharField(max_length=250)
-    notification_type = models.CharField(max_length=100, blank=True, null=True)
-    notification_id = models.CharField(max_length=100, blank=True, null=True)
-    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.message
@@ -160,12 +158,9 @@ class Supplier(models.Model):
         super().save(*args, **kwargs)
 
 class CostCenter(models.Model):
-    id = models.CharField(primary_key=True, max_length=20, editable=False)
+    code = models.CharField( max_length=20,unique=True)
     name = models.CharField(max_length=100, blank=True, null=True)
     parent = models.ForeignKey('self', on_delete=models.CASCADE, blank=True, null=True)
-
-    class Meta:
-        ordering = ['id']
 
     def __str__(self):
         return self.id
