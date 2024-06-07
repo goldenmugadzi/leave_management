@@ -427,7 +427,7 @@ def upload_centers(request):
     CostCenter.objects.all().delete()
     file_path = "tokens/cc.txt"
     try:
-        process_file(filepath)
+        process_file(file_path)
     except FileNotFoundError as e:
         print(e)
     return redirect("tokens:cost_centers")
