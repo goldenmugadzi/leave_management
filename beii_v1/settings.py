@@ -36,8 +36,6 @@ ALLOWED_HOSTS = ['localhost', '172.16.8.20', '172.16.8.99','127.0.0.1']
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
-    'http://172.16.8.99',
-    'http://172.16.8.99:9300',
     "http://172.16.8.20:9300"
 ]
 
@@ -129,7 +127,7 @@ INSTALLED_APPS = [
     'finance.direct_purchase',
     'finance.Direct_purchases',
     'ACE2',
-
+    
     'finance.comperative_schedule',
 
     'reports',

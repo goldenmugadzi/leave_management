@@ -160,13 +160,36 @@ class Supplier(models.Model):
         super().save(*args, **kwargs)
 
 class CostCenter(models.Model):
-    code = models.CharField( max_length=20,unique=True)
+    code = models.CharField(max_length=20, unique=True)
     name = models.CharField(max_length=100, blank=True, null=True)
-    parent = models.ForeignKey('self', on_delete=models.CASCADE, blank=True, null=True)
-
-    class Meta:
-        ordering = ['id']
-
+    parent = models.ForeignKey('self', on_delete=models.CASCADE, blank=True, null=True, related_name='children')
     def __str__(self):
-        return self.id
+        return str(self.id)
+    
+    
+    def get_all_children(self):
+        children = list(self.children.all())
+        return children
+    
+    def get_all_ancestors(self):
+        ancestors = []
+        if self.parent:
+            ancestors.append(self.parent)
+            ancestors += self.parent.get_all_ancestors()
+        return ancestors
+    def get_all_ancestors_and_their_children(self):
+            """
+            Returns a list of all ancestors and their children for the current instance.
 
+            Ancestors are determined by the parent attribute of each instance.
+            Children are determined by calling the get_all_children method.
+
+            Returns:
+                list: A list of all ancestors and their children.
+            """
+            ancestors = []
+            if self.parent:
+                ancestors.append(self.parent)
+                ancestors += self.parent.get_all_ancestors_and_their_children()
+            children = self.get_all_children()
+            return ancestors  + children
