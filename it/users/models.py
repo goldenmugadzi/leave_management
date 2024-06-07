@@ -106,7 +106,7 @@ class Designations(models.Model):
 
 
 class UserProfile(AbstractUser):
-    username = models.CharField(max_length=15, unique=True, verbose_name='EC Number')
+    username = models.CharField(max_length=15, unique=True, verbose_name='EC Number',db_index=True)
     designation = models.ForeignKey(Designations, on_delete=models.DO_NOTHING, blank=True, null=True)
     section = models.ForeignKey(Sections, on_delete=models.DO_NOTHING, blank=True, null=True)
     depot = models.ForeignKey(Depots, on_delete=models.DO_NOTHING, blank=True, null=True)
