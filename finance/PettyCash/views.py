@@ -239,6 +239,26 @@ def pettycash_awaiting_my_action(request):
 
             if step:
                 pettycashs_to_process.append(pettycash)
+    elif pettycash_role == requester:
+        for pettycash in Pettycash.objects.filter(section=request.user.section,
+                                                  date_created__year__gte=starting_year).only('petty_id',
+                                                                                              'date_created').order_by(
+            'old_version', '-date_created', 'petty_id')[:800]:
+            process = pettycash.process
+
+            if process.approval_set.exists():
+                last_approval = process.approval_set.last()
+                current_step = last_approval.step.step
+            else:
+                current_step = 0
+
+            next_step = current_step + 1
+
+            workflow = process.workflow
+            step = workflow.step_set.filter(step=next_step, approver__in=user_roles).first()
+
+            if step:
+                pettycashs_to_process.append(pettycash)
 
     else:
         for pettycash in Pettycash.objects.filter(date_created__year__gte=starting_year).only('petty_id',
