@@ -277,9 +277,10 @@ def awaiting_my_action(request):
     """
     tokens_to_process = []
     user_roles = request.user.roles.all()
-    for token in Token.objects.filter(
-        Q(section=request.user.section), Q(region=request.user.region)
-    ):
+    mytokens = Token.objects.filter(
+        Q(section=request.user.section) & Q(region=request.user.region) | Q(created_by__district=request.user.district)
+    )
+    for token in mytokens:
         process = token.process
 
         if process.approval_set.exists():
