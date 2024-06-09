@@ -53,11 +53,11 @@
             Fill all required fields.
           </p>
 
-          <div class="mt-10 grid grid-cols-3 gap-4">
+          <div class="mt-10 grid grid-cols-1 gap-4">
             
             <div>
               <label
-                for="filename"
+                for="change_type"
                 class="block text-sm font-medium leading-6 text-gray-900"
                 >Change Type</label
               >
@@ -69,52 +69,65 @@
                     class="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
                   >
                     <option>Select Type</option>
-                    <option value="Change Role">Change Role</option>
+                    <option value="Profile Change">Profile Change</option>
                     <option value="System Configuration Change">System Configuration Change</option>
-                    <option value="New Feature Request">New Feature Request</option>
-                    <option value="Enhancement Request">Enhancement Request</option>
+                    <option value="New Feature Change">New Feature Change</option>
+                    <option value="Enhancement Change">Enhancement Change</option>
                     <option value="Other">Other</option>
                   </select>
               </div>
             </div>
 
-            <div>
+            <div class="w-50">
               <label
-                for="filename"
+                for="change_description"
                 class="block text-sm font-medium leading-6 text-gray-900"
                 >Change Description</label
               >
               <div class="mt-2">
                 <input
                   type="text"
-                  name="file_name"
-                  id="file_name"
-                  autocomplete="file_name_id"
+                  name="change_description"
+                  id="change_description"
+                  autocomplete="change_description"
                   class="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                 />
               </div>
             </div>
 
             <div>
-                <label
-                  for="filename"
-                  class="block text-sm font-medium leading-6 text-gray-900"
-                  >Section</label
-                >
-                <div class="mt-2">
-                  <select
-                      id="section"
-                      name="section"
-                      autocomplete="section"
-                      class="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
-                    >
-                        <option>Select Section</option>
-                        {% for cost_center in cost_centers %}
-                        <option value="{{cost_center.id}}">{{cost_center.section}}</option>
-                        {% endfor %}
-                    </select>
-                </div>
+              <label
+                for="change_reason"
+                class="block text-sm font-medium leading-6 text-gray-900"
+                >Reason for Change</label
+              >
+              <div class="mt-2">
+                <input
+                  type="text"
+                  name="change_reason"
+                  id="change_reason"
+                  autocomplete="change_reason"
+                  class="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                />
               </div>
+            </div>
+
+            <div>
+              <label
+                for="additional_notes"
+                class="block text-sm font-medium leading-6 text-gray-900"
+                >Additional Notes</label
+              >
+              <div class="mt-2">
+                <textarea
+                  type="text"
+                  name="additional_notes"
+                  id="additional_notes"
+                  autocomplete="additional_notes"
+                  class="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                ></textarea>
+              </div>
+            </div>
 
           </div>
         </div>

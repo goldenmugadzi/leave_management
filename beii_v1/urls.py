@@ -34,6 +34,7 @@ urlpatterns = [
     path('', include('approve.urls')),
     path('meter/', include('commecial.tempertockens.urls')),
     path('users/', include('it.users.urls')),
+    path('change_requests/', include('it.change_requests.urls')),
     path('dashboards/', include('executive.exec_dashboards.urls')),
     path('knowledge_center/', include('knowledge_center.urls')),
     path('processes/', include('processes.urls'), name='processes'),
