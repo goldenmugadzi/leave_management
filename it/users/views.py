@@ -25,27 +25,28 @@ from it.users.forms import CustomUserCreationForm
 from django.contrib.auth.models import Group
 from .helpers import DESIGNATIONS, REGIONS, DISTRICTS, DEPOTS, ROLES, SECTIONS
 from django.contrib import messages
-from decouple import config
 from approve.decorators import allowed_roles
 from django.core.paginator import Paginator
+from decouple import config
 BASE_URL = "http://"+config('HOST')+":"+config('PORT')
 
 
 def get_exchange_account():
-    exchange_settings = settings.EXCHANGE_SETTINGS
-    print("Connecting to Exchange server...")
+
+    from decouple import config as cnf
+    print(cnf)
     credentials = Credentials(
-        username=exchange_settings['email'],
-        password=exchange_settings['password']
+        username=cnf('MS_EMAIL'),
+        password=cnf('MS_PASS')
     )
     print("Credentials: ", credentials)
     config = Configuration(
-        server=exchange_settings['server'],
-        credentials=credentials
+        server=cnf('MS_SERVER'),
+        credentials=credentials,
     )
     print("Config: ", config)
     account = Account(
-        primary_smtp_address=exchange_settings['primary_smtp_address'],
+        primary_smtp_address=cnf('MS_PRIMARY_SMTP_ADDRESS'),
         config=config,
         autodiscover=False,
         access_type='delegate'
@@ -61,7 +62,7 @@ def ms_exhange_test(request):
         folder=account.sent,
         subject="Test Email",
         body="This is a test email",
-        to_recipients=[Mailbox(email_address='akwaramba@zetdc.co.zw')]
+        to_recipients=[Mailbox(email_address='kcbosha@zetdc.co.zw'), Mailbox(email_address='mchivinge@zetdc.co.zw'), Mailbox(email_address='amugwambi@zetdc.co.zw'), Mailbox(email_address='akwaramba@zetdc.co.zw')]
     )
     message.send()
     return JsonResponse({"status": "success", "message": "Email sent successfully"})
