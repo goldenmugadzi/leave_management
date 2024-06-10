@@ -1,6 +1,6 @@
 import base64
 import os
-from django.http import JsonResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 import json
 from datetime import datetime
@@ -13,10 +13,26 @@ from finance.comparative_schedules.models import *
 from django.db.models import Q, Exists, OuterRef, Count, F
 import pandas as pd
 from django.core.paginator import Paginator
-from django.utils.timezone import now
+from django.utils import timezone
 from django.contrib.auth.decorators import login_required
 
 APP_NAME = "comparative_schedule"
+
+def debug_time(request):
+    system_time = datetime.now()
+    aware_system_time = timezone.make_aware(system_time, timezone.get_default_timezone())
+    django_time = timezone.now()
+    
+    current_timezone = timezone.get_current_timezone_name()
+    django_time_utc = timezone.now()
+    local_time = django_time_utc.astimezone(timezone.get_current_timezone())
+    
+    return HttpResponse(f"System Time: {system_time}<br>"
+                        f"Aware System Time: {aware_system_time}<br>"
+                        f"Django Time: {django_time}<br>"
+                        f"Current Timezone: {current_timezone}<br>"
+                        f"Django Time UTC: {django_time_utc}<br>"
+                        f"Local Time: {local_time}<br>")
 
 @login_required
 def import_old_rfq(request):
@@ -702,7 +718,7 @@ def get_comperative_schedule_data(request, cs_id):
                 "committeeStatus": member.committee_status,
                 "memberApproval": member.committee_approval if member.committee_approval else "",
                 "committeeJustification": member.justification,
-                "committeeDate": member.committee_date,
+                "committeeDate": member.committee_date.astimezone() if member.committee_date else "",
             }) 
     
     encoded_advert_file = ""
@@ -751,7 +767,7 @@ def get_comperative_schedule_data(request, cs_id):
             "unit_of_measurement": cs_item.unit_of_measurement,
         })
 
-    print("current user role: ", user_comparative_schedule_role.role)
+    #print("current user role: ", user_comparative_schedule_role.role)
     context = {
         "requester_role": user_comparative_schedule_role.role if user_comparative_schedule_role else "",
         "cs_id": cs.cs_id,
@@ -911,7 +927,7 @@ def get_create_cs(request, pr_id):
 def create(request):
 
     if request.method == "POST":
-        tender_id = "CS" + datetime.now().strftime("%Y%m%d%I%M%S")
+        tender_id = "CS" + timezone.astimezone(timezone.get_current_timezone()).strftime("%Y%m%d%I%M%S")
         advert_file = request.FILES['advert']
         bid_document_file = request.FILES['advert']
         item_count = request.POST['item_count']
@@ -938,7 +954,7 @@ def create(request):
             if 'advert' in request.FILES:
                 advert_file = request.FILES['advert']
                 advert_path = 'uploads/finance/cs/adverts/' + \
-                                  datetime.now().strftime("%Y%m%d%I%M%S%p") + advert_file.name
+                                  timezone.astimezone(timezone.get_current_timezone()).strftime("%Y%m%d%I%M%S%p") + advert_file.name
                 save_file(advert_file, advert_path)
                 
             if 'bid_document' in request.FILES:
@@ -1626,8 +1642,7 @@ def approve_cs_committee(request):
     username = request.POST.get("username", "")
     approval = request.POST.get("approval", "")
     justification = request.POST.get("justification", "")
-    
-    print("running : ", cs_id, username, approval, justification)
+
     cs_query = ComparativeSchedules.objects.filter(cs_id=cs_id).first()
     if not cs_query:
         return JsonResponse({
@@ -1638,14 +1653,13 @@ def approve_cs_committee(request):
     member_profile = UserProfile.objects.filter(username=username).first()
     if member_profile:
         committee_query = Committee.objects.filter(cs_id=cs_query, user=member_profile).first()
+
         if committee_query:
             committee_query.committee_approval = approval
             committee_query.justification = justification
-            committee_query.committee_date = now()
+            committee_query.committee_date = timezone.now()
             committee_query.save()
-            print("committee_query: ", committee_query.committee_approval)
             notification_update(member_profile, cs_query.cs_id)
-            print("notification updated")
         
         committees = Committee.objects.filter(cs_id=cs_query).all()
         committee_approved = all([c.committee_approval == "Approved" for c in committees])
@@ -1698,8 +1712,8 @@ def approve_cs(request):
                 approver_role = role,
                 approval = approval,
                 justification = justification,
-                approval_date = now(),
-                created_at = now(),
+                approval_date = timezone.now(),
+                created_at = timezone.now(),
             )
             gm_approval.save()
             notification_update(user, cs_query.cs_id)
@@ -1726,8 +1740,8 @@ def approve_cs(request):
                 approver_role = role,
                 approval = approval,
                 justification = justification,
-                approval_date = now(),
-                created_at = now(),
+                approval_date = timezone.now(),
+                created_at = timezone.now(),
             )
             fm_approval.save()
             notification_update(user, cs_query.cs_id)
@@ -1782,11 +1796,11 @@ def save_cs_decision(request):
     if committee_query:
         if committee_decision == "approve":
             committee_query.committee_status = True
-            committee_query.committee_date = datetime.now()
+            committee_query.committee_date = timezone.now()
             committee_query.save()
         elif committee_decision == "reject":
             committee_query.committee_status = False
-            committee_query.committee_date = datetime.now()
+            committee_query.committee_date = timezone.now()
             committee_query.save() 
             
     return JsonResponse({
@@ -1863,14 +1877,14 @@ def cs_add_supplier(request, cs_id):
             if 'bid_document' in request.FILES:
                 bid_document_file = request.FILES['bid_document']
                 bid_document_path = 'uploads/finance/cs/bids/' + \
-                                  datetime.now().strftime("%Y%m%d%I%M%S") + bid_document_file.name
+                                  timezone.astimezone(timezone.get_current_timezone()).strftime("%Y%m%d%I%M%S") + bid_document_file.name
                 save_file(bid_document_file, bid_document_path)
         
         except Exception as ex:
             print("Error: ", ex)
         
         for i in range(0,int(item_count)):
-            item_id = "Item" + datetime.now().strftime("%Y%m%d%I%M%S%p")
+            item_id = "Item" + timezone.astimezone(timezone.get_current_timezone()).strftime("%Y%m%d%I%M%S%p")
             description = request.POST['supplier[item_name]['+str(i)+']']
             quantity = request.POST['supplier[quantity]['+str(i)+']']
             unit_of_measurement = request.POST['supplier[unit_of_measurement]['+str(i)+']']
@@ -1892,7 +1906,7 @@ def cs_add_supplier(request, cs_id):
             if supplier_id:
                 supplier_id = supplier_key
             else:
-                supplier_id = "SUP" + datetime.now().strftime("%Y%m%d%I%M%S")
+                supplier_id = "SUP" + timezone.astimezone(timezone.get_current_timezone()).strftime("%Y%m%d%I%M%S")
             supplier_query = Suppliers(
                 sup_id = supplier_id,
                 supplier = supplier_name

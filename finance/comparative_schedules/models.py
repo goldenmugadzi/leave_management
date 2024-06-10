@@ -1,3 +1,4 @@
+from datetime import datetime
 from django.db import models
 from finance.Direct_purchases.models import Supplier
 
@@ -126,7 +127,7 @@ class Committee(models.Model):
     justification = models.CharField(max_length=255, null=True, blank=True)
     committee_date = models.DateTimeField(blank=True, null=True, default=None)
     created_at = models.DateTimeField(auto_now_add=True)
-    
+
 class CSApproval(models.Model):
     cs_id = models.ForeignKey(ComparativeSchedules, on_delete=models.CASCADE)
     user = models.ForeignKey(UserProfile, on_delete=models.CASCADE)

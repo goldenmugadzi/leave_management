@@ -208,6 +208,10 @@ AUTH_PASSWORD_VALIDATORS = [
 
 # Internationalization
 # https://docs.djangoproject.com/en/4.1/topics/i18n/
+
+TIME_ZONE = 'Africa/Harare'
+USE_TZ = True
+
 # settings.py
 EXCHANGE_SETTINGS = {
     'email': config('MS_EMAIL'),
@@ -226,11 +230,8 @@ DATA_UPLOAD_MAX_MEMORY_SIZE = 1024 * 1024 * 30
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'Africa/Harare'
-
 USE_I18N = True
 
-USE_TZ = True
 LOGIN_REDIRECT_URL = '/'
 LOGIN_URL = '/accounts/login'
 
