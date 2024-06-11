@@ -84,7 +84,7 @@ class RemoteBudget(models.Model):
 
 
 class AssetBudget(models.Model):
-    budget_id = models.AutoField(primary_key=True)
+    budget_id = models.AutoField(primary_key=True, db_index=True)
     section_code = models.CharField(max_length=36, blank=True, null=True)
     section = models.CharField(max_length=36, blank=True, null=True)
     budget_name = models.CharField(max_length=200, blank=True, null=True)
@@ -122,7 +122,7 @@ class Ace2(models.Model):
     # payment_mode = models.CharField(max_length=100, blank=True, null=True)
     requested_by = models.ForeignKey(UserProfile, on_delete=models.DO_NOTHING, blank=True, null=True)
     date_created = models.DateField(auto_now_add=True, blank=True, null=True)
-    Ace_id2 = models.CharField(max_length=60)
+    Ace_id2 = models.CharField(max_length=60, db_index=True)
     Ace_id = models.AutoField(primary_key=True)
 
     asset_number = models.TextField(max_length=1000, blank=True, null=True)

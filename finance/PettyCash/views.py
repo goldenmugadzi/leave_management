@@ -621,6 +621,9 @@ def approve_step(process_id, user_id, date_approved):
         approved_at=date_approved1
     )
     approval.save()
+    print('approved', date_approved1)
+    approval.approved_at = date_approved1
+    approval.save()
     print('approved')
     return True
 
