@@ -162,7 +162,7 @@ class CostCenter(models.Model):
     name = models.CharField(max_length=100, blank=True, null=True)
     parent = models.ForeignKey('self', on_delete=models.CASCADE, blank=True, null=True, related_name='children')
     def __str__(self):
-        return str(self.id)
+        return f"{self.name} - {self.code}"
     
     
     def get_all_children(self):
@@ -176,6 +176,7 @@ class CostCenter(models.Model):
             ancestors += self.parent.get_all_ancestors()
         return ancestors
     def get_all_ancestors_and_their_children(self):
+            this_instance = [self]
             """
             Returns a list of all ancestors and their children for the current instance.
 
@@ -190,4 +191,5 @@ class CostCenter(models.Model):
                 ancestors.append(self.parent)
                 ancestors += self.parent.get_all_ancestors_and_their_children()
             children = self.get_all_children()
-            return ancestors  + children
+
+            return ancestors  + children + this_instance

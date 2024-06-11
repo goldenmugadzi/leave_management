@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, HttpResponse
 from .forms import *
 from .models import *
 from django.contrib import messages
@@ -6,9 +6,10 @@ from approve.views import intiate, approve_step, get_my_roles_for_apps
 from approve.models import Step
 from approve.forms import ApprovalForm
 from django.contrib.auth.decorators import login_required
+from django.utils import timezone
 from approve.decorators import allowed_roles
 from django.db.models import Q
-import os, json
+import os, json,re
 
 
 # check update
@@ -170,10 +171,11 @@ def create_token(request):
         else:
             return render(request, "tokens/create_token.html", forms)
 
+    cost_center = CostCenter.objects.get(code=request.user.section.code)
     forms = {
         "meter_form": MeterForm(),
         "customer_form": CustomerForm(),
-        "token_form": TokenForm(),
+        "token_form": TokenForm(initial={"cost_center": cost_center}),
         "reimbursement_form": ReimbursementForm(),
         "clear_credit_form": ClearCreditForm(),
         "tamper_token_form": TamperTokenForm(),
@@ -352,7 +354,7 @@ def process_file(file_path):
         curent = None
         next = None
         state = None
-        nc = None
+        tkn = None
         pp = None
         b4 = 0
         after = 0
@@ -373,7 +375,7 @@ def process_file(file_path):
             c_name = ' '.join(cname).replace('\t', '').replace('   ', '')
             n_name = ' '.join(nname).replace('\t', '').replace('   ', '')
 
-            nc = n_t>c_t
+            tkn = n_t>c_t
             if a > 0:
                 pp = c_t>p_t
                 b4 = c_t - p_t
@@ -385,13 +387,13 @@ def process_file(file_path):
             if pp and b4 > 0: 
                 root = CostCenter.objects.get(code=p_id)
                 CostCenter.objects.create(name=c_name,code=c_id, parent=root)
-            elif nc and b4 > 0:
+            elif tkn and b4 > 0:
                 if a>0:
                     CostCenter.objects.create(name=c_name, code=c_id, parent=root)
                 else:
                     CostCenter.objects.create(name=c_name, code=c_id, parent=root)
          
-            elif not pp and nc:
+            elif not pp and tkn:
                
                 if b4 < 0:
                     b4 = -1*b4
@@ -407,7 +409,7 @@ def process_file(file_path):
                         CostCenter.objects.create(name=c_name, code=c_id, parent=None)
 
                 
-            elif not pp and not nc:
+            elif not pp and not tkn:
                 if b4 < 0:
                     b4 = -1*b4
                     root = root 
@@ -418,7 +420,7 @@ def process_file(file_path):
                 CostCenter.objects.create(name=c_name, code=c_id, parent=None)
            
                
-            state = { 'p_t': p_t, 'c_t': c_t, 'n_t': n_t,'b4':b4, 'nc': nc, 'pp': pp,'c_name': c_name  }
+            state = { 'p_t': p_t, 'c_t': c_t, 'n_t': n_t,'b4':b4, 'tkn': tkn, 'pp': pp,'c_name': c_name  }
             print(state)
     return 'json_data'
 
@@ -435,5 +437,76 @@ def upload_centers(request):
 """get ancestors of the cost center and all its children and merge them into cost_centers"""
 def cost_center(request, cost_center_id ):
     cost_center = CostCenter.objects.get(id=cost_center_id)
-    return render(request, "tokens/cost_centers.html", {'ancestors':cost_center.get_all_ancestors(), "cost_centers": cost_center.get_all_ancestors()}) 
+    return render(request, "tokens/cost_centers.html", {'ancestors':cost_center.get_all_ancestors(), "cost_centers": cost_center.get_all_ancestors_and_their_children()}) 
 
+def migrate_tokens(request):
+    import mysql.connector 
+
+    # Connect to the MySQL database
+    cnx = mysql.connector.connect(
+        host="172.16.8.10",
+        user="root",
+        password="",
+        database="harare"
+    )
+    cursor = cnx.cursor()
+    sql_query = """SELECT * FROM tamper_token AS tt JOIN tamper_token_update AS ttu ON tt.request_id = ttu.request_id"""
+    tkns =[]
+    try:
+        cursor.execute(sql_query)
+        tkns = cursor.fetchall()
+    except mysql.connector.Error as err:
+        print("Error executing SQL query:", err)
+    token={}
+    Token._meta.get_field('created_at').auto_now_add = False
+
+    for nc_dict in tkns:
+        recipient = None
+        created_by = None
+        tkn = dict(zip(cursor.column_names, nc_dict))
+        if tkn['recipient'] is not None:
+            try: created_by = UserProfile.objects.get(username = tkn['requester'])
+            except :
+                print(created_by , "Error executing SQL query:", tkn['requester'])
+                if not tkn['requester'].startswith('ze') and not tkn['requester'].startswith('ZE'):
+                    print(tkn['requester'],'requester')
+                    try: created_by = UserProfile.objects.get(username = 'ze'+tkn['requester'])
+                    except Exception as e:
+                        print(created_by ,e, "Error executing SQL query:", tkn['requester'])
+
+            meter, created = Meter.objects.get_or_create(number= tkn['meter_number'] ,defaults={'kilowatt_hours': tkn['kilowatts'], 'phase': tkn['type']}) 
+            customer, created = Customer.objects.get_or_create(name= tkn['customer_name'],defaults={'address': tkn['stand_number'], 'stand_number': tkn['stand_number']})
+        
+            create_date = timezone.make_aware(tkn['requested_date'])
+            token['id'] = tkn['request_id']
+            token['meter'] = meter
+            token['created_by'] = created_by
+            token['reason'] = tkn['reason'] 
+            token['created_at'] = create_date
+            token['customer'] = customer
+            cost_center_query = CostCenter.objects.filter(code= tkn['section_code'])
+            token['cost_center'] = cost_center_query.get() if cost_center_query.exists() else None
+            token['section'] = Sections.objects.get(code=tkn['section_code']) if Sections.objects.filter(code=tkn['section_code']).exists() else None
+            if created_by is not None:
+                token['region'] = created_by.region
+            else:
+                token['region'] = None 
+            token['type'] = 'TEMPER' 
+            purpose= tkn['purpose']
+            crted_token = Token.objects.create(**token)
+            if purpose == 'fault_maintanance':
+                fault_number_str = tkn['fault_number']
+                numbers = re.findall(r'\d+', fault_number_str)
+                code = int(numbers[0]) if numbers else None
+                FaultMaintanance.objects.create(token=crted_token, code = code)
+            elif purpose == 'reconnection':
+                Reconnection.objects.create(token=crted_token)
+            elif purpose == 'recovered_meter':
+                RecoveredMeter.objects.create(token=crted_token)
+            else:
+                print('invalid purpose', purpose)
+        Token._meta.get_field('created_at').auto_now_add = True
+        cursor.close()
+        cnx.close()
+    
+    return HttpResponse(tkns)
