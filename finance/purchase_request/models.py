@@ -3,7 +3,7 @@ import time
 from django.db import models
 from django.core.exceptions import ValidationError
 from finance.Ace.models import Ace
-from it.users.models import UserProfile, Sections, Regions, Districts, Depots
+from it.users.models import CostCenter, UserProfile, Sections, Regions, Districts, Depots
 class ProcurementPlanReference(models.Model):
     id = models.CharField(primary_key=True, max_length=10)
     name = models.CharField(max_length=100)
@@ -24,7 +24,8 @@ def validate_pr_no(value):
 class PurchaseRequest(models.Model):
     id = models.CharField(primary_key=True, max_length=20, editable=False)
     pr_no = models.CharField( max_length=10, verbose_name="PR Number", validators=[validate_pr_no])
-    section = models.ForeignKey(Sections, on_delete=models.CASCADE)
+    section = models.ForeignKey(Sections, on_delete=models.DO_NOTHING, blank=True, null=True)
+    cost_center = models.ForeignKey(CostCenter, on_delete=models.DO_NOTHING, blank=True, null=True)
     procurement_plan_reference = models.ForeignKey(ProcurementPlanReference, on_delete=models.CASCADE, blank=True, null=True)
     requested_by = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True, blank=True, null=True)

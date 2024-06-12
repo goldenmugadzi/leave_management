@@ -167,7 +167,10 @@ def get_your_schedules(user_id, search_value=None, column_name=None):
 
     # Filter based on search value
     if search_value:
-        cs = cs.filter(name__icontains=search_value)
+        cs = cs.filter(
+        Q(cs_id__icontains=search_value) |
+        Q(scope_of_work__icontains=search_value) 
+        )
     if column_name:    
         cs = cs.order_by(column_name)
     return cs
@@ -183,7 +186,10 @@ def get_pending_committee_table(user_id, search_value=None, column_name=None):
 
     # Filter based on search value
     if search_value:
-        cs = cs.filter(name__icontains=search_value)
+        cs = cs.filter(
+        Q(cs_id__icontains=search_value) |
+        Q(scope_of_work__icontains=search_value) 
+        )
     
     if column_name:    
         cs = cs.order_by(column_name)
@@ -201,12 +207,15 @@ def get_finance_manager(search_value=None, column_name=None):
         committee_count__gt=2,
         not_approved_count=0,
         rejected_count=0,
-        csapproval__approval=None
+        dpapproval__approval=None
     ).distinct()
 
     # Filter based on search value
     if search_value:
-        cs = cs.filter(name__icontains=search_value)
+        cs = cs.filter(
+        Q(cs_id__icontains=search_value) |
+        Q(scope_of_work__icontains=search_value) 
+        )
     
     if column_name:    
         cs = cs.order_by(column_name)
@@ -238,13 +247,16 @@ def get_general_manager(search_value=None, column_name=None):
         all_approved=True,
         any_not_approved=True,
         gm_approved=False,
-        csapproval__approver_role="finance_manager",
-        csapproval__approval="Approved"
+        dpapproval__approver_role="finance_manager",
+        dpapproval__approval="Approved"
     ).distinct()
     
     # Filter based on search value
     if search_value:
-        cs = cs.filter(name__icontains=search_value)
+        cs = cs.filter(
+        Q(cs_id__icontains=search_value) |
+        Q(scope_of_work__icontains=search_value) 
+        )
     
     if column_name:    
         cs = cs.order_by(column_name)

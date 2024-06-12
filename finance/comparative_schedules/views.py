@@ -7,7 +7,7 @@ from datetime import datetime
 from django.db.models import Sum
 from .models import *
 from it.users.models import *
-from finance.purchase_request.models import PurchaseRequest, PrItem, Attachment, UnitOfMeasurement
+from finance.purchase_request.models import ProcurementPlanReference, PurchaseRequest, PrItem, Attachment, UnitOfMeasurement
 from ACE2.models import Ace2
 from finance.comparative_schedules.models import *
 from django.db.models import Q, Exists, OuterRef, Count, F
@@ -45,20 +45,20 @@ def import_old_rfq(request):
     suppliers_csv = 'suppliers.csv'
     
     # Read the tender CSV file using pandas
-    # tender_data = pd.read_csv(tender_csv)
-    # print(tender_data.head())
+    tender_data = pd.read_csv(tender_csv)
+    print(tender_data.head())
     rfq_data = pd.read_csv(rfq_csv)
     print(rfq_data.head())
-    # bid_update_data = pd.read_csv(bid_update_csv)
-    # print(bid_update_data.head())
-    # bids_data = pd.read_csv(bids_csv)
-    # print(bids_data.head())
-    # items_data = pd.read_csv(items_csv)
-    # print(items_data.head())
+    bid_update_data = pd.read_csv(bid_update_csv)
+    print(bid_update_data.head())
+    bids_data = pd.read_csv(bids_csv)
+    print(bids_data.head())
+    items_data = pd.read_csv(items_csv)
+    print(items_data.head())
     required_items_data = pd.read_csv(required_items_csv)
     print(required_items_data.head())
-    # suppliers_data = pd.read_csv(suppliers_csv)
-    # print(suppliers_data.head())
+    suppliers_data = pd.read_csv(suppliers_csv)
+    print(suppliers_data.head())
     
     # save suppliers
     # for index, row in suppliers_data.iterrows():
@@ -70,70 +70,456 @@ def import_old_rfq(request):
     #     supplier.save()
     
     # save rfq
+    
     for index, row in rfq_data.iterrows():
-        print("")
-        section = Sections.objects.filter(section=row['section']).first() if row['section'] else None
-        procurement_plan = ProcPlan.objects.filter(proc_ref=row['proc_ref']).first() if row['proc_ref'] else None
-        created_by = UserProfile.objects.filter(username=row['created_by']).first() if row['created_by'] else None
-        ace = Ace2.objects.filter(ace=row['ace']).first() if row['ace'] else None
-        
-        pr = PurchaseRequest(
-            pr_no = row['rfq_number'],
-            section = section,
-            procurement_plan = procurement_plan,
-            requested_by = created_by,
-            created_at = row['date_created'],
-            ace = ace,
-            scope_of_work = row['scope_of_work'],
-        )
-        pr.save()
-        
-        # att_path = 'uploads/finance/pr/attachments/' + row['specifications'].split('/')[-1] if row['specifications'] else ""
+        try:
+            section = Sections.objects.filter(code=row['section_code']).first() if row['section_code'] else None
+            cost_center = CostCenter.objects.filter(id=row['section_code']).first() if row['section_code'] else None
+            proc_ref = row["proc_ref"]
+            if proc_ref.startswith("acc"):
+                proc_ref = proc_ref.lstrip('acc')
+            procurement_plan = ProcurementPlanReference.objects.filter(id=proc_ref).first() if proc_ref else None
+            created_by = None
+            # print("created by: ", row['created_by'])
+            if row['created_by']:
+                # print("using User")
+                created_by = UserProfile.objects.filter(username=row['created_by']).first()
+            if created_by == None: 
+                created_by = UserProfile.objects.filter(username='ze123').first()
+                # print("using No User")
+            # ace = Ace2.objects.filter(ace=row['ace']).first() if row['ace'] else None
+            # print("created by: ", created_by, datetime.strptime(row['date_created'], "%Y-%m-%d %H:%M:%S"))
+            dc = timezone.make_aware(datetime.strptime(row['date_created'], "%Y-%m-%d %H:%M:%S")) if row['date_created'] != '0000-00-00 00:00:00' else None
+            pr = PurchaseRequest(
+                pr_no = row['rfq_number'],
+                section = section,
+                cost_center = cost_center,
+                procurement_plan_reference = procurement_plan,
+                requested_by = created_by,
+                created_at = dc,
+                ace = None,
+                scope_of_work = row['scope_of_work'],
+            )
+            pr.save()
+            
+            # att_path = 'uploads/finance/pr/attachments/' + row['specifications'].split('/')[-1] if row['specifications'] else ""
 
-        # attachments = Attachment(
-        #     file = row['attachment'],
-        # )
+            attachments = Attachment(
+                file = row['specifications'],
+                purchase_request = pr,
+            )
+            attachments.save()
+            
+        except Exception as ex:
+            print("Error: ", ex)    
+            
+    # # save required items
+    try:
+        for index, row in required_items_data.iterrows():
+            document_id = row['document_id']
+            filtered_rows = rfq_data[rfq_data['document_id'] == document_id]
+            if not filtered_rows.empty:
+                pr_row = filtered_rows.iloc[0]
+            else:
+                pr_row = None
+            
+            if pr_row is not None:
+                pr_no = pr_row['rfq_number']
+                pr = PurchaseRequest.objects.filter(pr_no=pr_no).first()
+
+                uom = None
+                if row['uom'] == "None":
+                    print("uom is None")
+                if row['uom'] is not None:
+                    _uom = row['uom']
+                    if row['uom'] == "kgs":
+                        _uom = "Kilogram"
+                    elif row['uom'] == "litres":
+                        _uom = "Liter"
+                    elif row['uom'] == "metres":
+                        _uom = "Meter"
+                    uom = UnitOfMeasurement.objects.filter(name=_uom).first() 
+
+                else: 
+                    uom = UnitOfMeasurement.objects.filter(name='each').first()
+
+                pr_item = PrItem(
+                    item_required = row['item_required'],
+                    quantity = row['qty'],
+                    unit_of_measurement = uom,
+                    purchase_request = pr,
+                )
+                pr_item.save()
+    except Exception as ex:
+        print("error: ", ex)
+    
+    # # save comperative schedules
+    cs_df = pd.DataFrame(columns=['document_id', 'pr_number', 'status', 'message'])
+    try:
+        # initialize dataframe that records all failied and successfull comperative schedules
+        for index, tender_row in tender_data.iterrows():
+            cs_id = tender_row['document_id']
+            pr_number = tender_row['rfq_no']
+            print("pr_number: ", pr_number)
+            if pr_number:
+                pr = PurchaseRequest.objects.filter(pr_no=pr_number).first()
+                if not pr:
+                    pr = PurchaseRequest.objects.filter(pr_no="10000000").first()
+                    print("pr 001: ", pr)
+                if pr:
+                    print("pr: ", pr)
+                    _proc_plan = tender_row['pr_number']
+                    proc_plan = ProcPlan.objects.filter(proc_ref=_proc_plan).first()
+                    tender_update = bid_update_data[bid_update_data['document_id'] == cs_id]
+                    if not tender_update.empty:
+                        tender_update_row = tender_update.iloc[0]
+                    else:
+                        tender_update_row = None
+                    if tender_update_row is not None:
+                        created_by = UserProfile.objects.filter(username=tender_update_row['user3']).first()
+                        if created_by == None: 
+                            created_by = UserProfile.objects.filter(username='ze123').first()
+                        print("tender_row: ", tender_row['region'])
+                        region = None
+                        if tender_row['region']:
+                            region_name = str(tender_row['region']).upper()
+                            region = Regions.objects.filter(region=region_name).first()
+                        else:
+                            region = Regions.objects.filter(id=1).first()
+                        try:
+                            currency = Currency.objects.filter(currency='ZWL').first()
+                            cs_query = ComparativeSchedules(
+                                cs_id = cs_id,
+                                pr_id = pr,
+                                proc_plan = proc_plan,
+                                scope_of_work = tender_row['scope_of_work'],
+                                currency = currency,
+                                closing_date = tender_row['closing_date'],
+                                closing_time = tender_row['closing_time'],
+                                advert = tender_row['advert'],
+                                pr_number = pr_number,
+                                pr_date = tender_row['pr_date'],
+                                ref_date = tender_row['pr_date'],
+                                cs_opened = tender_row['tender_opened'],
+                                tac_date = tender_row['tac_date'],
+                                created_by = created_by,
+                                region = region,
+                                created_at = tender_row['pr_date'],
+                            )
+                            cs_query.save()
+                            cs_df = pd.concat([cs_df, pd.DataFrame({'document_id': [cs_id], 'pr_number': [pr.id], 'status': ['Success'], 'message': ['Success']})], ignore_index=True)
+                        except Exception as ex:
+                            print("Error: ", ex)
+                            cs_df = pd.concat([cs_df, pd.DataFrame({'document_id': [cs_id], 'pr_number': [pr_number], 'status': ['Failed'], 'message': [ex]})], ignore_index=True)
+                    else:
+                        cs_df = pd.concat([cs_df, pd.DataFrame({'document_id': [cs_id], 'pr_number': [pr_number], 'status': ['Failed'], 'message': ['Tender Update not found']})], ignore_index=True)
+                else:
+                    cs_df = pd.concat([cs_df, pd.DataFrame({'document_id': [cs_id], 'pr_number': [pr_number], 'status': ['Failed'], 'message': ['PR Object not found']})], ignore_index=True)
+            else:
+                cs_df = pd.concat([cs_df, pd.DataFrame({'document_id': [cs_id], 'pr_number': [pr_number], 'status': ['Failed'], 'message': ['PR Number not found']})], ignore_index=True)
+        cs_df.to_csv('cs_df.csv')
+        print("cs_df: ", cs_df)
+    
+    except Exception as ex:
+        print("Error: ", ex)
         
-    # save required items
-    # for index, row in required_items_data.iterrows():
-    #     pr = PurchaseRequest.objects.filter(pr_no=row['rfq_no']).first() if row['rfq_no'] else None
-    #     uom = UnitOfMeasurement.objects.filter(name=row['unit_of_measurement']).first() if row['unit_of_measurement'] else None
-    #     pr_item = PrItem(
-    #         item_required = row['item_required'],
-    #         quantity = row['quantity'],
-    #         unit_of_measurement = uom,
-    #         purchase_request = pr,
-    #     )
-    #     pr_item.save()
+    # # save bids
     
+    try:
+        item_df = pd.DataFrame(columns=['document_id', 'item_id', 'sup_id', 'status', 'message'])
+        for index, row in bids_data.iterrows():
+            cs_id = row['document_id']
+            sup_id = row['sup_id']
+            item_id	= row['item_id']
+            unit_price = row['unit_price']	
+            vat = row['vat']
+            quoted_qty = row['quoted_qty']
+            bid_no = row['bid_no']
+            quote_date = row['quote_date']
+            rfq_no = row['rfq_no']
+            total = row['total']
+            bid_document = row['bid_document']
+            print("cs_id: ", cs_id)
+            cs_query = ComparativeSchedules.objects.filter(cs_id=cs_id).first()
+            print("cs_query: ", cs_query)
+            if cs_query:
+                current_supplier = suppliers_data[suppliers_data['sup_id'] == sup_id]
+                supplier = None
+                if not current_supplier.empty:
+                    current_supplier_row = current_supplier.iloc[0]
+                    supplier_name = current_supplier_row['supplier']
+                    if supplier_name and supplier_name != "None" and supplier_name != "nan" and supplier_name != "N/A":
+                        supplier = Supplier.objects.get_or_create(name=supplier_name).first()
+                    
+                else:
+                    item_df = pd.concat([item_df, pd.DataFrame({'document_id': [cs_id], 'item_id': [""], 'sup_id': [sup_id], 'status': ['FAILED'], 'message': ['Supplier Not Found']})], ignore_index=True)
+                
+                if supplier:
+                    current_item = items_data[items_data['item_id'] == item_id]
+                    if not current_item.empty:
+                        current_item_row = current_item.iloc[0]
+                        item_name = current_item_row['item']
+                        quantity = current_item_row['required_qty']
+                        unit_of_measurement = current_item_row['unit_of_measurement']
+                        item_query = CSItems(
+                            cs_id = cs_query,
+                            item_id = item_id,
+                            item_name = item_name,
+                            quantity = quantity,
+                            unit_of_measurement = unit_of_measurement,
+                        )
+                        item_query.save()    
+                    
+                        print("bid_no", bid_no)
+                        bid = Bids(
+                            cs_id = cs_query,
+                            item_id = item_query,
+                            sup_id = supplier,
+                            unit_price = unit_price,
+                            vat = vat,
+                            quoted_qty = quoted_qty,
+                            bid_no = bid_no,
+                            quote_date = quote_date,
+                            total = total,
+                            bid_document = bid_document,
+                        )
+                        bid.save()
+                        item_df = pd.concat([item_df, pd.DataFrame({'document_id': [cs_id], 'item_id': [item_id], 'sup_id': [sup_id], 'status': ['SUCCESS'], 'message': ['SUCCESS']})], ignore_index=True)
+                    else:
+                        item_df = pd.concat([item_df, pd.DataFrame({'document_id': [cs_id], 'item_id': [item_id], 'sup_id': [sup_id], 'status': ['FAILED'], 'message': ['Item Not Found']})], ignore_index=True)
+                else:
+                    item_df = pd.concat([item_df, pd.DataFrame({'document_id': [cs_id], 'item_id': [item_id], 'sup_id': [sup_id], 'status': ['FAILED'], 'message': ['DB Supplier Not Found']})], ignore_index=True)
+            else:
+                item_df = pd.concat([item_df, pd.DataFrame({'document_id': [cs_id], 'item_id': [item_id], 'sup_id': [sup_id], 'status': ['FAILED'], 'message': ['Schedule Not Found']})], ignore_index=True)
+    except Exception as ex:
+        print("Error: ", ex)          
     
+    item_df.to_csv('item_df.csv')
     
-    # save comperative schedules
-    # for index, row in tender_data.iterrows():
-    #     cs_id = row['document_id']
-    #     pr_number = row['rfq_no']
-    #     pr = PurchaseRequest.objects.filter(id=pr_id).first()
-    #     proc_plan = ProcPlan.objects.filter(proc_ref=row['proc_plan']).first()
-    #     cs_query = ComparativeSchedules(
-    #         cs_id = cs_id,
-    #         pr_id = pr,
-    #         proc_plan = proc_plan,
-    #         scope_of_work = row['scope_of_work'],
-    #         closing_date = row['closing_date'],
-    #         closing_time = row['closing_time'],
-    #         advert = row['advert'],
-    #         pr_number = row['pr_number'],
-    #         pr_date = row['pr_date'],
-    #         ref_date = row['ref_date'],
-    #         cs_opened = row['cs_opened'],
-    #         tac_date = row['tac_date'],
-    #         region = row['region'],
-    #     )
-    #     cs_query.save()
+    # save bid update
+    other_df = pd.DataFrame(columns=['document_id', 'sup_id', 'model', 'status', 'message'])
+    try:
+        for index, row in bid_update_data.iterrows():
+            cs_id = row['document_id']
+            cs_query = ComparativeSchedules.objects.filter(cs_id=cs_id).first()
+            if cs_query:
+                # reason1 = row['reason1']
+                # reason2 = row['reason2']
+                # reason3 = row['reason3']
+                for i in range(1, 30):
+                    
+                    supplier_name = row[f'supplier{i}'] if f'supplier{i}' in row else None	
+                    payment_terms = row[f'payment_terms{i}'] if f'payment_terms{i}' in row else ""
+                    bid_validity = row[f'bid_validity{i}'] if f'bid_validity{i}' in row else ""
+                    delivery_period = row[f'delivery_period{i}'] if f'delivery_period{i}' in row else ""	
+                    technical_specifications = row[f'technical_specifications{i}'] if f'technical_specifications{i}' in row else ""	
+                    valid_tax_clearance = row[f'valid_tax_clearance{i}'] if f'valid_tax_clearance{i}' in row else ""	
+                    registered_with_praz = row[f'registered_with_praz{i}'] if f'registered_with_praz{i}' in row else ""	
+                    tax_status = row[f'tax_status{i}'] if f'tax_status{i}' in row else ""
+                    site_visit_done = row[f'site_visit_done{i}'] if f'site_visit_done{i}' in row else ""	
+                    samples_delivered = row[f'samples_delivered{i}'] if f'samples_delivered{i}' in row else ""
+                    decision = row[f'decision{i}'] if f'decision{i}' in row else ""
+                    total = row[f'total{i}'] if f'total{i}' in row else ""
+                    remarks = row[f'remarks{i}'] if f'remarks{i}' in row else ""
+                    
+                    if supplier_name and supplier_name != "None" and supplier_name != "nan" and supplier_name != "N/A" and supplier_name != "N/A":
+                        supplier = Supplier.objects.filter(name=supplier_name).first()
+                        if supplier and supplier != "" and supplier != " " and supplier_name != "None" and supplier_name != "nan" and supplier_name != "N/A" and supplier_name != "N/A":
+                            Supplier.objects.get_or_create(
+                                name = supplier_name
+                            )
+                        
+                        if supplier:
+                            compliance_query = CSCompliance(
+                                cs_id = cs_query,
+                                supplier_id = supplier,
+                                payment_terms = True if payment_terms == "on" else False,
+                                bid_validity = True if bid_validity == "on" else False,
+                                delivery_period = True if delivery_period == "on" else False,
+                                technical_specifications = True if technical_specifications == "on" else False,
+                                valid_tax_clearance = True if valid_tax_clearance == "on" else False,
+                                registered_with_praz = True if registered_with_praz == "on" else False,
+                                site_visit_done = True if site_visit_done == "on" else False,
+                                samples_delivered = True if samples_delivered == "on" else False,
+                                decision = True if decision == "on" else False,
+                                remarks = remarks if remarks and remarks != "nan" else "",
+                            )
+                            compliance_query.save()
+                            
+                            _remark = CSComplianceRemarks(
+                                cs_id = cs_query,
+                                supplier_id = supplier,
+                                remarks = remarks if remarks and remarks != "nan" else "",
+                            )  
+                            _remark.save()
+                            other_df = pd.concat([other_df, pd.DataFrame({'document_id': [cs_id], 'sup_id': [supplier_name], 'model': ["CSCompliance"], 'status': ['Successs'], 'message': ['SUCCESS']})], ignore_index=True) 
+                            
+                        else:
+                            other_df = pd.concat([other_df, pd.DataFrame({'document_id': [cs_id], 'sup_id': [supplier_name], 'model': ["CSCompliance"], 'status': ['Failed'], 'message': ['DB Supplier not found']})], ignore_index=True) 
+                    else:
+                        other_df = pd.concat([other_df, pd.DataFrame({'document_id': [cs_id], 'sup_id': [supplier_name], 'model': ["CSCompliance"], 'status': ['Failed'], 'message': ['Supplier not found']})], ignore_index=True) 
+                
+                # save ranking
+                try:
+                    for i in range(1, 6):
+                        rank_supplier = row[f'ranking{i}'] if f'ranking{i}' in row else ""
+                        if rank_supplier and rank_supplier != "None" and rank_supplier != "nan" and rank_supplier != "N/A":
+                            supplier = Supplier.objects.filter(name=rank_supplier).first()
+                            
+                            bids = Bids.objects.filter(cs_id=cs_query).values('sup_id').annotate(total_sum=Sum('total'))
+                            compliant_bids = []
+                            for bid in bids:
+                                supplier = Supplier.objects.filter(id=bid['sup_id']).first()
+                                _compliance = CSCompliance.objects.filter(cs_id=cs_query, supplier_id=supplier, decision=True).first()
+                                if _compliance:
+                                    compliant_bids.append(bid)
+                            rankings = {bid['sup_id']: bid['total_sum'] for bid in compliant_bids}
+                            print("rankings: ", rankings)
+                            sorted_rankings = sorted(rankings.items(), key=lambda x: x[1])
+                            print("sorted_rankings: ", sorted_rankings)
+                            rank = 1
+                            sorted_rankings_dict = dict(sorted_rankings)
+                            # search dict for supplier and total
+                            total = 0
+                            for key, value in sorted_rankings_dict.items():
+                                if key == supplier.id:
+                                    total = value
+                                    break
+                            
+                            if i == 1:
+                                decision = "Awarded " + supplier.name + " being the lowest bidder having complied with all the requirements is recommended to provide the goods/service at a total cost of " + cs_query.currency.currency + " " + str(total) + " excluding VAT."
+                            ranking_query = Ranking(
+                                cs_id = cs_query,
+                                supplier_id = supplier,
+                                rank = i,
+                                remarks = "",
+                                decision = decision,
+                                total = total,
+                            )
+                            ranking_query.save()
+                            print("ranking_query: ", ranking_query)
+                        else:
+                            print("Ranking Supplier not found")
+                    
+                except Exception as ex:
+                    print("Error: ", ex)        
+                # save committee
+                for i in range(1,10):
+                    username = row[f'user{i}'] if f'user{i}' in row else None
+                    status = row[f'status_{i}'] if f'status_{i}' in row else None
+                    approved_at = row[f'date_{i}'] if f'date_{i}' in row else None
+                    position = ""
+                    if i == 1:
+                        position = "Chairman"
+                    elif i == 2:
+                        position = 'Finance'
+                    elif i == 3:
+                        position = 'Procurement'
+                    elif i == 4:
+                        position = 'User'
+                    else:
+                        position = 'Other'
+                        
+                    if status == 1:
+                        status = "Approved"
+                    elif status == 2:
+                        status = "Rejected"
+                    else:
+                        status = ""
+                    
+                    # check if committee exists
+                    if username:
+                        # check if member exists
+                        # get member user profile
+                        member_profile = UserProfile.objects.filter(username=username).first()
+                        if member_profile:
+                            committee_query = Committee(
+                                cs_id = cs_query,
+                                user = member_profile,
+                                committee_name = username,
+                                committee_position = position,
+                                committee_approval = status,
+                                committee_date = timezone.make_aware(datetime.strptime(approved_at, "%Y-%m-%d %H:%M:%S")) if approved_at != '0000-00-00 00:00:00' else None
+                            )
+                            committee_query.save()
+                            other_df = pd.concat([other_df, pd.DataFrame({'document_id': [cs_id], 'sup_id': [username], 'model': ["Committee"], 'status': ['Success'], 'message': ['SUCCESS']})], ignore_index=True)
+                        else:
+                            other_df = pd.concat([other_df, pd.DataFrame({'document_id': [cs_id], 'sup_id': [username], 'model': ["Committee"], 'status': ['Failed'], 'message': ['member profile empty']})], ignore_index=True)
+                    else:
+                        other_df = pd.concat([other_df, pd.DataFrame({'document_id': [cs_id], 'sup_id': [supplier_name], 'model': ["Committee"], 'status': ['Failed'], 'message': ['username empty']})], ignore_index=True) 
+                
+                finance_user = row['finance_user']
+                finance_date = row['finance_date']
+                finance_status = row['finance_status']
+      
+                if finance_status == 1:
+                    finance_status = "Approved"
+                elif finance_status == 2:
+                    finance_status = "Rejected"
+                else:
+                    finance_status = ""
+                
+                if finance_user:
+                    finance_profile = UserProfile.objects.filter(username=finance_user).first()
+                    if finance_profile:
+                        finance_query = CSApproval(
+                            cs_id = cs_query,
+                            user = finance_profile,
+                            approver_role = "finance_manager",
+                            approval = finance_status,
+                            justification = "",
+                            approval_date = timezone.make_aware(datetime.strptime(finance_date, "%Y-%m-%d %H:%M:%S")) if finance_date != '0000-00-00 00:00:00' else None,
+                        )
+                        finance_query.save()
+                        other_df = pd.concat([other_df, pd.DataFrame({'document_id': [cs_id], 'sup_id': [finance_user], 'model': ["CSApproval"], 'status': ['Success'], 'message': ['SUCCESS']})], ignore_index=True)
+                    else:
+                        other_df = pd.concat([other_df, pd.DataFrame({'document_id': [cs_id], 'sup_id': [finance_user], 'model': ["CSApproval"], 'status': ['Failed'], 'message': ['DB finance_user empty']})], ignore_index=True)
+                else:
+                    other_df = pd.concat([other_df, pd.DataFrame({'document_id': [cs_id], 'sup_id': [finance_user], 'model': ["CSApproval"], 'status': ['Failed'], 'message': ['finance_user empty']})], ignore_index=True)
+                
+                gm_user = row['gm_user']
+                gm_date = row['gm_date']
+                gm_status = row['gm_status']
+      
+                if gm_status == 1:
+                    gm_status = "Approved"
+                elif gm_status == 2:
+                    gm_status = "Rejected"
+                else:
+                    gm_status = ""
+                
+                if gm_user:
+                    gm_profile = UserProfile.objects.filter(username=gm_user).first()
+                    if gm_profile:
+                        gm_query = CSApproval(
+                            cs_id = cs_query,
+                            user = gm_profile,
+                            approver_role = "general_manager",
+                            approval = gm_status,
+                            justification = "",
+                            approval_date = timezone.make_aware(datetime.strptime(gm_date, "%Y-%m-%d %H:%M:%S")) if gm_date != '0000-00-00 00:00:00' else None,
+                        )
+                        gm_query.save()
+                        other_df = pd.concat([other_df, pd.DataFrame({'document_id': [cs_id], 'sup_id': [gm_user], 'model': ["CSApproval"], 'status': ['Success'], 'message': ['SUCCESS GM']})], ignore_index=True)
+                    else:
+                        other_df = pd.concat([other_df, pd.DataFrame({'document_id': [cs_id], 'sup_id': [gm_user], 'model': ["CSApproval"], 'status': ['Failed'], 'message': ['GM DB finance_user empty']})], ignore_index=True)
+                else:
+                    other_df = pd.concat([other_df, pd.DataFrame({'document_id': [cs_id], 'sup_id': [gm_user], 'model': ["CSApproval"], 'status': ['Failed'], 'message': ['GM finance_user empty']})], ignore_index=True)
+            else:
+                print("cs not found")
+                other_df = pd.concat([other_df, pd.DataFrame({'document_id': [cs_id], 'sup_id': [""], 'model': ["ComparativeSchedules"], 'status': ['Failed'], 'message': ['Schedule not found']})], ignore_index=True)
+
+    except Exception as ex:
+        print("Error: ", ex)   
     
+    other_df.to_csv('other_df.csv')    
+      
     return JsonResponse({
         "success": True,
         "message": "Data imported successfully",
+        # "data": other_df.to_json()
+        # "data": cs_df.to_json()
+        # "data": item_df.to_json()
         }, safe=False)
 
 def clear_approvals(cs_id):
@@ -615,7 +1001,9 @@ def get_comperative_schedule_data(request, cs_id):
     items = CSItems.objects.filter(cs_id=cs).all()
     cs_items = CSRequiredItems.objects.filter(cs_id=cs).all()
     bids = Bids.objects.filter(cs_id=cs).all()
+    print("bids: ", bids)
     compliance = CSCompliance.objects.filter(cs_id=cs).all()
+    print("compliance: ", compliance)
     complianceRemarks = CSComplianceRemarks.objects.filter(cs_id=cs).all()
     print("compliance remarks: ", complianceRemarks)
     # compliance remarks
@@ -646,10 +1034,12 @@ def get_comperative_schedule_data(request, cs_id):
         if bid_no not in grouped_data:
             encoded_file_data = ""
             if bid.bid_document:
-                with open(bid.bid_document, 'rb') as f:
-                    file_data = f.read()
-                encoded_file_data = base64.b64encode(file_data).decode('utf-8')
-
+                try:
+                    with open(bid.bid_document, 'rb') as f:
+                        file_data = f.read()
+                    encoded_file_data = base64.b64encode(file_data).decode('utf-8')
+                except Exception as ex:
+                    print("Error: ", ex)
             grouped_data[bid_no] = {
                 'bid_count': bid.bid_no,
                 'supplier_name': bid.sup_id.name,
@@ -672,41 +1062,53 @@ def get_comperative_schedule_data(request, cs_id):
         
     compliance_list = []
     for comp in compliance:
-        print("comp: ", comp.supplier_id)
-        compliance_list.append({
-            "supplier_name": comp.supplier_id.name if comp.supplier_id else "",
-            "payment_terms": comp.payment_terms,
-            "bid_validity": comp.bid_validity,
-            "delivery_period": comp.delivery_period,
-            "technical_specifications": comp.technical_specifications,
-            "valid_tax_clearance": comp.valid_tax_clearance,
-            "registered_with_praz": comp.registered_with_praz,
-            "site_visit_done": comp.site_visit_done,
-            "samples_delivered": comp.samples_delivered,
-            "decision": comp.decision,
-            "remarks": comp.remarks,
-            "created_at": comp.created_at,
-        })
+        sup_name = ""
+        try:
+            sup_name = comp.supplier_id.name
+        except Exception as ex:
+            print("Error: ", ex)
+        
+        if sup_name:
+            compliance_list.append({
+                "supplier_name": sup_name,
+                "payment_terms": comp.payment_terms,
+                "bid_validity": comp.bid_validity,
+                "delivery_period": comp.delivery_period,
+                "technical_specifications": comp.technical_specifications,
+                "valid_tax_clearance": comp.valid_tax_clearance,
+                "registered_with_praz": comp.registered_with_praz,
+                "site_visit_done": comp.site_visit_done,
+                "samples_delivered": comp.samples_delivered,
+                "decision": comp.decision,
+                "remarks": comp.remarks,
+                "created_at": comp.created_at,
+            })
     
     compliance_remarks = []
     for remark in complianceRemarks:
-        compliance_remarks.append({
-        "supplier": remark.supplier_id.id,
-        "supplier_name": remark.supplier_id.name,
-        "remarks": remark.remarks,
-        })
+        try:
+            compliance_remarks.append({
+            "supplier": remark.supplier_id.id,
+            "supplier_name": remark.supplier_id.name,
+            "remarks": remark.remarks,
+            })
+        except Exception as ex:
+            print("Error: ", ex)
         
     rankings_list = []
     for rank in rankings:
-        supplier = Supplier.objects.filter(id=rank.supplier_id.id).first()
-        rankings_list.append({
-            "supplier_name": supplier.name if supplier else "",
-            "rank": rank.rank,
-            "remarks": rank.remarks,
-            "decision": rank.decision,
-            "total": rank.total,
-            "created_at": rank.created_at,
-        })
+        try:
+            supplier = Supplier.objects.filter(id=rank.supplier_id.id).first()
+            rankings_list.append({
+                "supplier_name": supplier.name if supplier else "",
+                "rank": rank.rank,
+                "remarks": rank.remarks,
+                "decision": rank.decision,
+                "total": rank.total,
+                "created_at": rank.created_at,
+            })
+        except Exception as ex:
+            print("Error: ", ex)
         
     committee_list = []
     for member in committee:
