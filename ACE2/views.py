@@ -315,6 +315,9 @@ def ace_awaiting_my_action(request):
 
             if step:
                 aces_to_process.append(ace)
+                # remove aces that have been rejected
+                if process.approval_set.filter(approved="Rejected").exists():
+                    aces_to_process.remove(ace)
 
     else:
         for ace in Ace2.objects.all():
@@ -333,6 +336,11 @@ def ace_awaiting_my_action(request):
 
             if step:
                 aces_to_process.append(ace)
+                # remove aces that have been rejected
+                if process.approval_set.filter(approved="Rejected").exists():
+                    aces_to_process.remove(ace)
+
+    print(aces_to_process)
 
     return render(request, 'finance/ace2/view_all_aces.html', {'aces': aces_to_process,
                                                                'ace_role': ace_role,
