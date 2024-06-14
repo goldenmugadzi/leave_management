@@ -32,6 +32,7 @@ class PurchaseRequest(models.Model):
     ace = models.ForeignKey(Ace, on_delete=models.SET_NULL, blank=True, null=True)
     is_processed = models.BooleanField(default=False, editable=False)
     scope_of_work = models.TextField(blank=True, null=True, help_text="Description for the purchase request")
+    region = models.ForeignKey(Regions, on_delete=models.DO_NOTHING, blank=True, null=True)
 
     def __str__(self):
         return self.id

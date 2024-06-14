@@ -18,6 +18,15 @@ from django.contrib.auth.decorators import login_required
 
 APP_NAME = "comparative_schedule"
 
+def add_cost_center(request):
+    schedules = ComparativeSchedules.objects.all()
+    for schedule in schedules:
+        cost_center = schedule.created_by.cost_center
+        schedule.cost_center = cost_center
+        schedule.save()
+    
+    return HttpResponse("Cost Center added successfully")
+
 def debug_time(request):
     system_time = datetime.now()
     aware_system_time = timezone.make_aware(system_time, timezone.get_default_timezone())
@@ -349,7 +358,7 @@ def import_old_rfq(request):
                             _remark = CSComplianceRemarks(
                                 cs_id = cs_query,
                                 supplier_id = supplier,
-                                remarks = remarks if remarks and remarks != "nan" else "",
+                                remarks = remarks if remarks and remarks != "" and remarks != " " and remarks != "None" and remarks != "nan" and remarks != "N/A" and remarks != "N/A" else "",
                             )  
                             _remark.save()
                             other_df = pd.concat([other_df, pd.DataFrame({'document_id': [cs_id], 'sup_id': [supplier_name], 'model': ["CSCompliance"], 'status': ['Successs'], 'message': ['SUCCESS']})], ignore_index=True) 
@@ -388,6 +397,8 @@ def import_old_rfq(request):
                             
                             if i == 1:
                                 decision = "Awarded " + supplier.name + " being the lowest bidder having complied with all the requirements is recommended to provide the goods/service at a total cost of " + cs_query.currency.currency + " " + str(total) + " excluding VAT."
+                            else:
+                                decision = ""
                             ranking_query = Ranking(
                                 cs_id = cs_query,
                                 supplier_id = supplier,
@@ -701,7 +712,7 @@ def get_pending_fm_approval(request):
             "procurement_role": procurement_role})
 
 
-def get_your_schedules(user_id, search_value=None, column_name=None):
+def get_your_schedules(user_id, search_value=None, column_name=None, region=None):
     
     cs = ComparativeSchedules.objects.filter(
         created_by_id=user_id,
@@ -718,7 +729,7 @@ def get_your_schedules(user_id, search_value=None, column_name=None):
 
     return cs
 
-def get_pending_committee_table(user_id, search_value=None, column_name=None):
+def get_pending_committee_table(user_id, search_value=None, column_name=None, region=None):
 
     print("user id: ", user_id)
     # fetch schedules if user exists in the committee and has not yet approved
@@ -739,7 +750,7 @@ def get_pending_committee_table(user_id, search_value=None, column_name=None):
 
     return cs
 
-def get_finance_manager(search_value=None, column_name=None):
+def get_finance_manager(user_id, search_value=None, column_name=None, region=None):
     
     cs = ComparativeSchedules.objects.annotate(
         approved_count=Count('committee', filter=Q(committee__committee_approval="Approved")),
@@ -766,7 +777,7 @@ def get_finance_manager(search_value=None, column_name=None):
 
     return cs
 
-def get_general_manager(search_value=None, column_name=None):
+def get_general_manager(user_id, search_value=None, column_name=None, region=None):
     # fetch all pending approvals
     cs = ComparativeSchedules.objects.annotate(
         all_approved=Exists(
@@ -808,8 +819,9 @@ def get_general_manager(search_value=None, column_name=None):
 
     return cs
 
-def get_all_schedules_table(search_value=None, column_name=None, start=0, length=10):
-    cs = ComparativeSchedules.objects.all()
+def get_all_schedules_table(user_id, search_value=None, column_name=None, region=None):
+    
+    cs = ComparativeSchedules.objects.filter(region=region).all()
     
     # Filter based on search value
     if search_value:
@@ -903,6 +915,10 @@ def add_details(cs):
 def datatable_data(request, view):
     
     user_id = request.user.id
+    try:
+        user_region = request.user.region
+    except Exception as ex:
+        user_region = None
     draw = int(request.GET.get('draw', default=1))
     start = int(request.GET.get('start', default=0))
     length = int(request.GET.get('length', default=10))
@@ -917,24 +933,17 @@ def datatable_data(request, view):
         if order == 'desc':
             column_name = f'-{column_name}'
 
-    # Fetch your data from the
-    print("view: ", view) 
     data = []
     if view == "your_schedules":
-        print("your schedules ...")
-        data = get_your_schedules(user_id, search_value, column_name)
+        data = get_your_schedules(user_id, search_value, column_name, user_region)
     elif view == "pending_committee":
-        print("pending_committee schedules ...", user_id)
-        data = get_pending_committee_table(user_id, search_value, column_name)
+        data = get_pending_committee_table(user_id, search_value, column_name, user_region)
     elif view == "pending_fm":
-        print("pending_fm schedules ...")
-        data = get_finance_manager(search_value, column_name)
+        data = get_finance_manager(user_id, search_value, column_name, user_region)
     elif view == "pending_gm":
-        print("pending_gm schedules ...")
-        data = get_general_manager(search_value, column_name)
+        data = get_general_manager(user_id, search_value, column_name, user_region)
     elif view == "all_schedules":
-        print("all__schedules schedules ...")
-        data = get_all_schedules_table(search_value, column_name, start, length)
+        data = get_all_schedules_table(user_id, search_value, column_name, user_region)
     
 
     # Total number of records before filtering
@@ -1507,8 +1516,8 @@ def save_comparative_schedule(request):
             cs_opened = date_tender_opened,
             tac_date = tender_adjudication_committee_date,
             created_by_id = user.id,
-            section_id = None,
-            region_id = None,
+            cost_center = user.cost_center if user.cost_center else None,
+            region_id = user.region_id if user.region_id else None,
         )
         cs_query.save()
         

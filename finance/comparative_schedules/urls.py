@@ -34,6 +34,7 @@ urlpatterns = [
     
     path('update_pritem_ordered', update_pritem_ordered, name='update_pritem_ordered'),
     path('import_old_rfq', import_old_rfq, name='import_old_rfq'),
+    path('add_cost_center', add_cost_center, name='add_cost_center'),
     
     path('pending_commitee', get_pending_committee, name='get_pending_committee'),
     path('your_schedules', your_comperative_schedules, name='your_comperative_schedules'),
