@@ -6,7 +6,7 @@ import json
 from datetime import datetime
 from django.db.models import Sum
 
-from finance.comparative_schedules.models import Currency
+from finance.comparative_schedules.models import Currency, ProcPlan
 from finance.comparative_schedules.views import notification_update, notify_user
 from .models import *
 from it.users.models import *
@@ -20,7 +20,307 @@ from django.contrib.auth.decorators import login_required
 
 from django.core.paginator import Paginator
 
+from django.utils import timezone
 APP_NAME = "direct_purchases"
+
+def import_old_dp(request):
+    
+    dp = pd.read_csv('direct_purchases.csv')
+    dp_update = pd.read_csv('direct_purchases_update.csv')
+
+    # # save comperative schedules
+    # cs_df = pd.DataFrame(columns=['document_id', 'pr_number', 'status', 'message'])
+    # try:
+    #     # initialize dataframe that records all failied and successfull comperative schedules
+    #     for index, dp_row in dp.iterrows():
+    #         adjid = dp_row['adjid']
+    #         section_code = dp_row['section_code']
+    #         pr_number = dp_row['pr_number']
+    #         print("pr_number: ", pr_number)
+    #         if pr_number:
+    #             pr = PurchaseRequest.objects.filter(pr_no=pr_number).first()
+
+    #             _proc_plan = dp_row['proc_ref']
+    #             proc_plan = DPProcPlan.objects.filter(proc_ref=_proc_plan).first()
+    #             dp_update_data = dp_update[dp_update['adjid'] == adjid]
+    #             if not dp_update_data.empty:
+    #                 dp_update_row = dp_update_data.iloc[0]
+    #             else:
+    #                 dp_update_row = None
+    #             if dp_update_row is not None:
+    #                 created_by = UserProfile.objects.filter(username=dp_update_row['update_user3']).first()
+    #                 if created_by == None: 
+    #                     created_by = UserProfile.objects.filter(username='ze123').first()
+    #                 print("dp_row: ", dp_row['region'])
+    #                 region = None
+    #                 if dp_row['region']:
+    #                     region_name = str(dp_row['region']).upper()
+    #                     region = Regions.objects.filter(region=region_name).first()
+    #                 else:
+    #                     region = Regions.objects.filter(id=1).first()
+                    
+    #                 cost_center = CostCenter.objects.filter(Q(id=section_code) | Q(id="CC"+str(section_code))).first()
+    #                 try:
+    #                     currency = Currency.objects.filter(currency='ZWL').first()
+    #                     dc = timezone.make_aware(datetime.strptime(dp_row['date_created'], "%Y-%m-%d %H:%M:%S")) if (dp_row['date_created'] != '0000-00-00 00:00:00' or dp_row['date_created'] != "") else None
+    #                     cs_query = DirectPurchase(
+    #                         cs_id = adjid,
+    #                         pr_id = pr,
+    #                         proc_plan = proc_plan,
+    #                         scope_of_work = dp_row['description'],
+    #                         currency = currency,
+    #                         advert = dp_row['specifications'],
+    #                         pr_number = pr_number,
+    #                         created_by = created_by,
+    #                         cost_center = cost_center,
+    #                         region = region,
+    #                         created_at = dc,
+    #                     )
+    #                     cs_query.save()
+    #                     cs_df = pd.concat([cs_df, pd.DataFrame({'document_id': [adjid], 'pr_number': [pr_number], 'status': ['Success'], 'message': ['Success']})], ignore_index=True)
+    #                 except Exception as ex:
+    #                     print("Error: ", ex)
+    #                     cs_df = pd.concat([cs_df, pd.DataFrame({'document_id': [adjid], 'pr_number': [pr_number], 'status': ['Failed'], 'message': [ex]})], ignore_index=True)
+    #             else:
+    #                 cs_df = pd.concat([cs_df, pd.DataFrame({'document_id': [adjid], 'pr_number': [pr_number], 'status': ['Failed'], 'message': ['PR Object not found']})], ignore_index=True)
+    #         else:
+    #             cs_df = pd.concat([cs_df, pd.DataFrame({'document_id': [adjid], 'pr_number': [pr_number], 'status': ['Failed'], 'message': ['PR Number not found']})], ignore_index=True)
+    #     cs_df.to_csv('dp_df.csv')
+    #     print("cs_df: ", cs_df)
+    
+    # except Exception as ex:
+    #     print("Error: ", ex)
+        
+    # # save bids
+    # try:
+    #     item_df = pd.DataFrame(columns=['document_id', 'item_id', 'sup_id', 'status', 'message'])
+    #     for index, row in dp.iterrows():
+    #         adjid = row['adjid']
+    #         item1 = row['item1']
+    #         quantity1 = row['quantity1']
+    #         item1_unitprice = row['item1_unitprice']
+    #         item1_total = row['item1_total']
+    #         description = row['description']
+    #         specifications = row['specifications']
+    #         award1 = row['award1']
+    #         pr_number = row['pr_number']
+    #         date_created = row['date_created']
+    #         section_code = row['section_code']
+    #         remarks = row['remarks']
+    #         service_type = row['service_type']
+    #         proc_ref = row['proc_ref']
+    #         region = row['region']
+    #         print("adjid: ", adjid)
+    #         cs_query = DirectPurchase.objects.filter(cs_id=adjid).first()
+    #         print("cs_query: ", cs_query)
+    #         item_id = "Item" + str(datetime.now().strftime("%Y%m%d%I%M%S%p"))
+    #         if cs_query:
+    #             item_query = DPItems(
+    #                 cs_id = cs_query,
+    #                 item_id = item_id,
+    #                 item_name = item1,
+    #                 quantity = quantity1,
+    #                 unit_of_measurement = "",
+    #             )
+    #             item_query.save()    
+
+    #             for i in range(1,3):
+    #                 supplier_quotation_date = row['supplier'+ str(i) +'_quotation_date']
+    #                 supplier_quotation = row['supplier'+ str(i) +'_quotation']
+    #                 supplier_name = row['supplier'+ str(i)]
+    #                 direct_purchase_quote = row['direct_purchase'+ str(i)]
+
+    #                 supplier = None
+    #                 if supplier_name and supplier_name != "None" and supplier_name != "nan" and supplier_name != "N/A":
+    #                     supplier, created = Supplier.objects.get_or_create(name=supplier_name)
+    #                 else:
+    #                     item_df = pd.concat([item_df, pd.DataFrame({'document_id': [cs_query.cs_id], 'item_id': [item1], 'sup_id': [supplier_name], 'status': ['FAILED'], 'message': ['Supplier Not Found']})], ignore_index=True)
+    #                 quote_dc = timezone.now()
+    #                 if supplier_quotation_date != '0000-00-00':
+    #                     quote_dc = timezone.make_aware(datetime.strptime(supplier_quotation_date, "%Y-%m-%d")) if (date_created != '0000-00-00 00:00:00' or date_created != "") else None
+    #                 if supplier:
+    #                     # print("bid_no", supplier)
+    #                     bid = DPBids(
+    #                         cs_id = cs_query,
+    #                         item_id = item_query,
+    #                         sup_id = supplier,
+    #                         unit_price = item1_unitprice,
+    #                         vat = "",
+    #                         quoted_qty = quantity1,
+    #                         bid_no = "1",
+    #                         quote_date = quote_dc,
+    #                         total = item1_total,
+    #                         bid_document = direct_purchase_quote,
+    #                     )
+    #                     bid.save()
+    #                     item_df = pd.concat([item_df, pd.DataFrame({'document_id': [cs_query.cs_id], 'item_id': [""], 'sup_id': [""], 'status': ['SUCCESS'], 'message': ['SUCCESS']})], ignore_index=True)
+    #                 else:
+    #                     item_df = pd.concat([item_df, pd.DataFrame({'document_id': [cs_query.cs_id], 'item_id': [""], 'sup_id': [""], 'status': ['FAILED'], 'message': ['DB Supplier Not Found']})], ignore_index=True)
+                                    
+    #         else:
+    #             item_df = pd.concat([item_df, pd.DataFrame({'document_id': [""], 'item_id': [""], 'sup_id': [""], 'status': ['FAILED'], 'message': ['Schedule Not Found']})], ignore_index=True)
+    # except Exception as ex:
+    #     print("Error: ", ex)          
+    
+    # item_df.to_csv('dp_item_df.csv')
+    
+    # save bid update
+    other_df = pd.DataFrame(columns=['document_id', 'sup_id', 'model', 'status', 'message'])
+    try:
+        for index, row in dp_update.iterrows():
+            cs_id = row['adjid']
+            cs_query = DirectPurchase.objects.filter(cs_id=cs_id).first()
+            if cs_query:
+                
+                # save ranking
+                try:
+                    for i in range(1, 6):
+                        rank_supplier = row[f'ranking{i}'] if f'ranking{i}' in row else ""
+                        if rank_supplier and rank_supplier != "None" and rank_supplier != "nan" and rank_supplier != "N/A":
+                            supplier = Supplier.objects.filter(name=rank_supplier).first()
+                            
+                            bids = DPBids.objects.filter(cs_id=cs_query).values('sup_id').annotate(total_sum=Sum('total')).order_by('total_sum')
+                            
+                            for bid in bids:
+                                decision = "Awarded " + bid.sup_id.name + " being the lowest bidder having complied with all the requirements is recommended to provide the goods/service at a total cost of " + cs_query.currency.currency + " " + str(total) + " excluding VAT."
+
+                                ranking_query = DPRanking(
+                                    cs_id = cs_query,
+                                    supplier_id = supplier,
+                                    rank = bid.bid_no,
+                                    remarks = "",
+                                    decision = decision,
+                                    total = bid.total,
+                                )
+                                ranking_query.save()
+                                print("ranking_query: ", ranking_query)
+                        else:
+                            print("Ranking Supplier not found")
+                    
+                except Exception as ex:
+                    print("Error: ", ex)        
+                # save committee
+                for i in range(1,3):
+                    username = row[f'update_user{i}'] if f'update_user{i}' in row else None
+                    status = row[f'status{i}'] if f'status{i}' in row else None
+                    approved_at = row[f'update_date{i}'] if f'update_date{i}' in row else None
+                    position = ""
+                    if i == 1:
+                        position = "Chairman"
+                    elif i == 2:
+                        position = 'Finance'
+                    elif i == 3:
+                        position = 'Procurement'
+                    elif i == 4:
+                        position = 'User'
+                    else:
+                        position = 'Other'
+                        
+                    if status == 1 and i == 1:
+                        status = "Approved"
+                    elif status == 2 and i == 2:
+                        status = "Approved"
+                    elif status == 3 and i == 3:
+                        status = "Approved"
+                    elif status == 0:
+                        status = ""
+                    else:
+                        status = "Rejected"
+                    
+                    # check if committee exists
+                    if username:
+                        # check if member exists
+                        # get member user profile
+                        member_profile = UserProfile.objects.filter(username=username).first()
+                        if member_profile:
+                            committee_query = DPCommittee(
+                                cs_id = cs_query,
+                                user = member_profile,
+                                committee_name = username,
+                                committee_position = position,
+                                committee_approval = status,
+                                committee_date = timezone.make_aware(datetime.strptime(approved_at, "%Y-%m-%d %H:%M:%S")) if approved_at != '0000-00-00 00:00:00' else None
+                            )
+                            committee_query.save()
+                            other_df = pd.concat([other_df, pd.DataFrame({'document_id': [cs_id], 'sup_id': [username], 'model': ["Committee"], 'status': ['Success'], 'message': ['SUCCESS']})], ignore_index=True)
+                        else:
+                            other_df = pd.concat([other_df, pd.DataFrame({'document_id': [cs_id], 'sup_id': [username], 'model': ["Committee"], 'status': ['Failed'], 'message': ['member profile empty']})], ignore_index=True)
+                    else:
+                        other_df = pd.concat([other_df, pd.DataFrame({'document_id': [cs_id], 'sup_id': [""], 'model': ["Committee"], 'status': ['Failed'], 'message': ['username empty']})], ignore_index=True) 
+                
+                finance_user = row['update_user4']
+                finance_date = row['update_date4']
+                finance_status = row['status4']
+      
+                if finance_status == 4:
+                    finance_status = "Approved"
+                elif finance_status == 0:
+                    finance_status = ""
+                else:
+                    finance_status = "Rejected"
+                
+                if finance_user:
+                    finance_profile = UserProfile.objects.filter(username=finance_user).first()
+                    if finance_profile:
+                        finance_query = DPApproval(
+                            cs_id = cs_query,
+                            user = finance_profile,
+                            approver_role = "finance_manager",
+                            approval = finance_status,
+                            justification = "",
+                            approval_date = timezone.make_aware(datetime.strptime(finance_date, "%Y-%m-%d %H:%M:%S")) if finance_date != '0000-00-00 00:00:00' else None,
+                        )
+                        finance_query.save()
+                        other_df = pd.concat([other_df, pd.DataFrame({'document_id': [cs_id], 'sup_id': [finance_user], 'model': ["DPApproval"], 'status': ['Success'], 'message': ['SUCCESS']})], ignore_index=True)
+                    else:
+                        other_df = pd.concat([other_df, pd.DataFrame({'document_id': [cs_id], 'sup_id': [finance_user], 'model': ["DPApproval"], 'status': ['Failed'], 'message': ['DB finance_user empty']})], ignore_index=True)
+                else:
+                    other_df = pd.concat([other_df, pd.DataFrame({'document_id': [cs_id], 'sup_id': [finance_user], 'model': ["DPApproval"], 'status': ['Failed'], 'message': ['finance_user empty']})], ignore_index=True)
+                
+                gm_user = row['update_user4']
+                gm_date = row['update_date4']
+                gm_status = row['status4']
+      
+                if gm_status == 5:
+                    gm_status = "Approved"
+                elif gm_status == 0:
+                    gm_status = ""
+                else:
+                    gm_status = "Rejected"
+                
+                if gm_user:
+                    gm_profile = UserProfile.objects.filter(username=gm_user).first()
+                    if gm_profile:
+                        gm_query = DPApproval(
+                            cs_id = cs_query,
+                            user = gm_profile,
+                            approver_role = "general_manager",
+                            approval = gm_status,
+                            justification = "",
+                            approval_date = timezone.make_aware(datetime.strptime(gm_date, "%Y-%m-%d %H:%M:%S")) if gm_date != '0000-00-00 00:00:00' else None,
+                        )
+                        gm_query.save()
+                        other_df = pd.concat([other_df, pd.DataFrame({'document_id': [cs_id], 'sup_id': [gm_user], 'model': ["DPApproval"], 'status': ['Success'], 'message': ['SUCCESS GM']})], ignore_index=True)
+                    else:
+                        other_df = pd.concat([other_df, pd.DataFrame({'document_id': [cs_id], 'sup_id': [gm_user], 'model': ["DPApproval"], 'status': ['Failed'], 'message': ['GM DB finance_user empty']})], ignore_index=True)
+                else:
+                    other_df = pd.concat([other_df, pd.DataFrame({'document_id': [cs_id], 'sup_id': [gm_user], 'model': ["DPApproval"], 'status': ['Failed'], 'message': ['GM finance_user empty']})], ignore_index=True)
+            else:
+                print("cs not found")
+                other_df = pd.concat([other_df, pd.DataFrame({'document_id': [cs_id], 'sup_id': [""], 'model': ["Direct Purchase"], 'status': ['Failed'], 'message': ['Schedule not found']})], ignore_index=True)
+
+    except Exception as ex:
+        print("Error: ", ex)   
+    
+    other_df.to_csv('dp_other_df.csv')    
+      
+    return JsonResponse({
+        "success": True,
+        "message": "Data imported successfully",
+        # "data": other_df.to_json()
+        # "data": cs_df.to_json()
+        # "data": item_df.to_json()
+        }, safe=False)
 
 def clear_approvals(cs_id):
 
@@ -83,7 +383,6 @@ def get_comperative_schedules(request):
     else:
         return redirect('/direct_purchase/pending_commitee')
     
-
 @login_required
 def your_comperative_schedules(request):
     user_id = request.user.id
@@ -440,7 +739,10 @@ def get_comperative_schedule_data(request, cs_id):
             user_comparative_schedule_role = user_ace_role_
             
     cs = DirectPurchase.objects.filter(cs_id=cs_id).first()
-    pr = PurchaseRequest.objects.filter(id=cs.pr_id_id).first()
+    pr = None
+    if cs.pr_id_id:
+        pr = PurchaseRequest.objects.filter(id=cs.pr_id_id).first()
+    
     proc_plans = DPProcPlan.objects.all()
     currencies = Currency.objects.all()
     proc_plan = ""
@@ -485,10 +787,12 @@ def get_comperative_schedule_data(request, cs_id):
         if bid_no not in grouped_data:
             encoded_file_data = ""
             if bid.bid_document:
-                with open(bid.bid_document, 'rb') as f:
-                    file_data = f.read()
-                encoded_file_data = base64.b64encode(file_data).decode('utf-8')
-
+                try:
+                    with open(bid.bid_document, 'rb') as f:
+                        file_data = f.read()
+                    encoded_file_data = base64.b64encode(file_data).decode('utf-8')
+                except Exception as ex:
+                    print("Error: ", ex)
             grouped_data[bid_no] = {
                 'bid_count': bid.bid_no,
                 'supplier_name': bid.sup_id.name,
@@ -942,6 +1246,7 @@ def save_comparative_schedule(request):
             cs_opened = date_tender_opened,
             tac_date = tender_adjudication_committee_date,
             created_by_id = user.id,
+            cost_center = user.cost_center if user.cost_center else None,
             section_id = None,
             region_id = None,
         )

@@ -996,7 +996,9 @@ def get_comperative_schedule_data(request, cs_id):
             user_comparative_schedule_role = user_ace_role_
             
     cs = ComparativeSchedules.objects.filter(cs_id=cs_id).first()
-    pr = PurchaseRequest.objects.filter(id=cs.pr_id_id).first()
+    pr = None
+    if cs:
+        pr = PurchaseRequest.objects.filter(id=cs.pr_id_id).first()
     proc_plans = ProcPlan.objects.all()
     currencies = Currency.objects.all()
     proc_plan = ""
