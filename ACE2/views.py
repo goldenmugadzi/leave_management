@@ -299,7 +299,9 @@ def ace_awaiting_my_action(request):
     print(ace_role)
 
     if ace_role == "pass":
-        for ace in Ace2.objects.filter(section=request.user.section):
+        # I want objects from 2024 upwards
+
+        for ace in Ace2.objects.filter(section=request.user.section, date_created__year__gte=2024):
             process = ace.process
 
             if process.approval_set.exists():
@@ -320,7 +322,7 @@ def ace_awaiting_my_action(request):
                     aces_to_process.remove(ace)
 
     else:
-        for ace in Ace2.objects.all():
+        for ace in Ace2.objects.filter(date_created__year__gte=2024):
             process = ace.process
 
             if process.approval_set.exists():
@@ -609,6 +611,7 @@ def add_asset_number(request):
 
 @login_required
 def upload_aces_csv(request):
+    # day_created = None
     if request.method == 'POST':
         csvfile = request.FILES['file']  # file as key
         decoded_file = csvfile.read().decode('utf-8').splitlines()
@@ -701,11 +704,11 @@ def upload_aces_csv(request):
             if item_division:
                 # fetch from remote budgets model
                 budget_obj = RemoteBudget.objects.using('remote').filter(budget_id=item_division).first()
-                # create assetbudget object using this informationif asset budget doesnt exist'
+                # create assetbudget object using this information if asset budget doesn't exist
                 assetbudget = AssetBudget.objects.filter(budget_name=budget_obj.budget,
                                                          period=budget_obj.period).first()
                 region = Regions.objects.filter(region='Harare Region').first()
-                section = Sections.objects.filter(section=str(budget_obj.section_code)).first()
+                section = Sections.objects.filter(code=str(budget_obj.section_code)).first()
                 if section:
                     section_code = section.code
                 # else:
@@ -721,7 +724,8 @@ def upload_aces_csv(request):
                                                              awaiting_sanctioning=budget_obj.awaiting_sanctioning,
                                                              period=budget_obj.period,
                                                              region=region,
-                                                             created_date=day_created.today(),
+                                                             created_date=date.today(),
+                                                             section=section.section
                                                              )
                     assetbudget.save()
             else:
