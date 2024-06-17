@@ -185,14 +185,14 @@ DATABASES = {
         'PASSWORD': config('DB_PASS'),
         'HOST': config('DB_HOST'),
     },
-    'remote': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': config('REMOTE_DB_NAME'),
-        'USER': config('REMOTE_DB_USER'),
-        'PASSWORD': config('REMOTE_DB_PASS'),
-        'HOST': config('REMOTE_DB_HOST'),
-        'PORT': config('REMOTE_DB_PORT', default='3306'),
-    }
+    # 'remote': {
+    #     'ENGINE': 'django.db.backends.mysql',
+    #     'NAME': config('REMOTE_DB_NAME'),
+    #     'USER': config('REMOTE_DB_USER'),
+    #     'PASSWORD': config('REMOTE_DB_PASS'),
+    #     'HOST': config('REMOTE_DB_HOST'),
+    #     'PORT': config('REMOTE_DB_PORT', default='3306'),
+    # }
 }
 
 # Password validation
