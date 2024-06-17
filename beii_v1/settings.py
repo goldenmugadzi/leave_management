@@ -32,7 +32,7 @@ SECRET_KEY = 'django-insecure-7per#nouy422m0!hn0!ecb7ltnq#!^#g!2r5&%^5c%v(!ivv&a
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=False, cast=bool)
 
-ALLOWED_HOSTS = ['localhost', '172.16.8.20', '127.0.0.1', '172.16.8.99']
+ALLOWED_HOSTS = ['localhost', '172.16.8.20', '127.0.0.1', '172.16.8.99', '172.16.10.76']
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
@@ -129,7 +129,7 @@ INSTALLED_APPS = [
     'finance.direct_purchase',
     'finance.Direct_purchases',
     'ACE2',
-    
+
     'finance.comperative_schedule',
 
     'reports',
@@ -184,6 +184,14 @@ DATABASES = {
         'USER': config('DB_USER'),
         'PASSWORD': config('DB_PASS'),
         'HOST': config('DB_HOST'),
+    },
+    'remote': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': config('REMOTE_DB_NAME'),
+        'USER': config('REMOTE_DB_USER'),
+        'PASSWORD': config('REMOTE_DB_PASS'),
+        'HOST': config('REMOTE_DB_HOST'),
+        'PORT': config('REMOTE_DB_PORT', default='3306'),
     }
 }
 
