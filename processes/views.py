@@ -19,14 +19,18 @@ import  os, re
 from beii_v1 import settings
 from process_risks.views import Sections
 from processes.models import File_Type, First_Category, Second_Category
+from django.contrib.auth.decorators import login_required
 
+@login_required
 def index(request):
     return render(request, 'process_maps/index.html')
 
+@login_required
 def view_map_diagram(request):
     
     return render(request, 'process_maps/process_map_diagram.html')
 
+@login_required
 def create(request):
     user_title = request.user.get_full_name()
     l = request.user.groups.values_list('name', flat=True)
@@ -105,6 +109,7 @@ def create(request):
                     })
 
 
+@login_required
 def update(request, file_id):
     user_title = request.user.get_full_name()
     l = request.user.groups.values_list('name', flat=True)
@@ -175,6 +180,7 @@ def update(request, file_id):
                     'region_': _region
                     })
 
+@login_required
 def get_subtypes(request, filetype):
 	subtypes = FileSubType.objects.filter(filetype_id=filetype).all()
 
@@ -190,6 +196,7 @@ def get_subtypes(request, filetype):
         'subtypes': subtypes_list
      }, safe=False)
 
+@login_required
 def get_subsubtypes(request, subtype):
 	subsubtypes = SubSubType.objects.filter(file_subtype_id=subtype).all()
 	subsubtypes_list = []
@@ -206,6 +213,7 @@ def get_subsubtypes(request, subtype):
         'subsubtypes': subsubtypes_list
      }, safe=False)
 
+@login_required
 def view_process_map_table(request):
     
     files = Processes.objects.filter(archived=False).all()
@@ -229,6 +237,7 @@ def view_process_map_table(request):
     
     return render(request, 'process_maps/process_maps_table.html', {"context": context, "page": "processes_all"})
 
+@login_required
 def view_archived_processes(request):
     
     files = Processes.objects.filter(archived=True).all()
@@ -252,6 +261,7 @@ def view_archived_processes(request):
     
     return render(request, 'process_maps/process_maps_table.html', {"context": context})
 
+@login_required
 def archive_file(request, file_id):
 
     um = Processes.objects.filter(id=file_id).first()
@@ -260,6 +270,7 @@ def archive_file(request, file_id):
     
     return redirect('/processes/table')
 
+@login_required
 def unarchive_file(request, file_id):
 
     um = Processes.objects.filter(id=file_id).first()
@@ -268,6 +279,7 @@ def unarchive_file(request, file_id):
     
     return redirect('/processes/table')
 
+@login_required
 def bulk_create(request):
     user_title = request.user.get_full_name()
     l = request.user.groups.values_list('name', flat=True)
@@ -360,6 +372,7 @@ def bulk_create(request):
                     'user_title':user_title,
                     })
 
+@login_required
 def bulk_risk(request):
     deps = [
 		{
@@ -1313,6 +1326,7 @@ def bulk_risk(request):
         
     return redirect('/process_maps/')
 
+@login_required
 def bulk_set_up(request):
 	processes = Processes.objects.all()
 
@@ -1398,6 +1412,7 @@ def save_file(f,file_path):
             else:
                 return False
 
+@login_required
 def download_file(request):
 
     file_id = request.GET['file_id']
@@ -1417,6 +1432,7 @@ def download_file(request):
 
 # ----------------------------
 # Process Maps
+@login_required
 def view_internal(request):
    
     files = Processes.objects.filter(archived=False, filetype="INTERNAL_EXTERNAL").all()
@@ -1426,6 +1442,7 @@ def view_internal(request):
                     "page_title": "Internal & External Issues"},
                     )
 
+@login_required
 def view_stakeholder(request):
    
     files = Processes.objects.filter(archived=False, filetype="STAKEHOLDER_RELATIONS").all()
@@ -1435,6 +1452,7 @@ def view_stakeholder(request):
                     "page_title": "Stakeholder Relations"},
                     )
     
+@login_required
 def view_Client(request):
    
     files = Processes.objects.filter(archived=False, filetype="PROCESS_MAPS", department="Commercial", sub_category="client interaction")
@@ -1444,6 +1462,7 @@ def view_Client(request):
                     "page_title": "Client Interaction Process Maps"},
                     )
     
+@login_required
 def view_payment(request):
    
     files = Processes.objects.filter(archived=False, filetype="PROCESS_MAPS", department="Commercial", sub_category="payment")
@@ -1452,6 +1471,7 @@ def view_payment(request):
                   { "files": files,
                     "page_title": "Payment Process Maps"},
                     )
+@login_required
 def view_revenue_assurance(request):
    
     files = Processes.objects.filter(archived=False, filetype="PROCESS_MAPS", department="Commercial", sub_category="revenue assuarance")
@@ -1460,6 +1480,7 @@ def view_revenue_assurance(request):
                   { "files": files,
                     "page_title": "Revenue Process Maps"},
                     )
+@login_required
 def view_eng_nde(request):
     
     files = Processes.objects.filter(archived=False, filetype="PROCESS_MAPS", department="Engineering", sub_category="Network Development")
@@ -1469,6 +1490,7 @@ def view_eng_nde(request):
         "files": files,  "page_title": "Network Development", "url_path": url_path} )
 
 #Project procesess
+@login_required
 def view_eng_transport(request):
     
     files = Processes.objects.filter(archived=False, filetype="PROCESS_MAPS", department="Engineering", sub_category="Transport")
@@ -1477,6 +1499,7 @@ def view_eng_transport(request):
     return render(request, 'process_maps/ict.html',{
         "files": files,  "page_title": "Transport", "url_path": url_path} )
 
+@login_required
 def view_Maintenance(request):
         files = Processes.objects.filter(archived=False, filetype="PROCESS_MAPS", department="Engineering", sub_category="Operations and Maintenance")
 
@@ -1484,6 +1507,7 @@ def view_Maintenance(request):
         return render(request, 'process_maps/ict.html',{
         "files": files,  "page_title": "Operations and Maintenance", "url_path": url_path} )
 
+@login_required
 def view_eng_districts(request):
         files = Processes.objects.filter(archived=False, filetype="PROCESS_MAPS", department="Engineering", sub_category="Districts")
 
@@ -1491,6 +1515,7 @@ def view_eng_districts(request):
         return render(request, 'process_maps/ict.html',{
         "files": files,  "page_title": "Districts", "url_path": url_path} )
         
+@login_required
 def view_Engineering(request):
     
     return render(request, 'process_maps/eng.html',
@@ -1499,6 +1524,7 @@ def view_Engineering(request):
 
 #NEW ENGINEERING LIST OF PROCESS MAPS
 
+@login_required
 def view_Commercial(request):
     
     files = Processes.objects.filter(archived=False, filetype="PROCESS_MAPS", department="Commercial")
@@ -1507,6 +1533,7 @@ def view_Commercial(request):
     return render(request, 'process_maps/ict.html',{
         "files": files,  "page_title": "Commercial", "url_path": url_path} )
     
+@login_required
 def view_management(request):
     
     files = Processes.objects.filter(archived=False, filetype="PROCESS_MAPS", department="Management")
@@ -1515,6 +1542,7 @@ def view_management(request):
     return render(request, 'process_maps/ict.html',{
         "files": files,  "page_title": "Management", "url_path": url_path} )
   
+@login_required
 def view_stakeholder_relations(request):
     
     files = Processes.objects.filter(archived=False, filetype="PROCESS_MAPS", department="Stakeholder Relations")
@@ -1523,6 +1551,7 @@ def view_stakeholder_relations(request):
     return render(request, 'process_maps/ict.html',{
         "files": files,  "page_title": "Stakeholder Relations", "url_path": url_path} )
 
+@login_required
 def view_legal_services(request):
     
     files = Processes.objects.filter(archived=False, filetype="PROCESS_MAPS", department="Legal Services")
@@ -1531,6 +1560,7 @@ def view_legal_services(request):
     return render(request, 'process_maps/ict.html',{
         "files": files,  "page_title": "Legal Services", "url_path": url_path} )
     
+@login_required
 def fetch_processes(request, filetype, subtype, subsubtype):
     
     files = Processes.objects.filter(archived=False, filetype=filetype, department=subtype, sub_category=subsubtype).all()
@@ -1541,6 +1571,7 @@ def fetch_processes(request, filetype, subtype, subsubtype):
         "files": files,  "page_title": title, "url_path": url_path} )
 
 
+@login_required
 def view_Finance(request):
     
     files = Processes.objects.filter(archived=False, filetype="PROCESS_MAPS", department="FINANCE")
@@ -1549,6 +1580,7 @@ def view_Finance(request):
     return render(request, 'process_maps/ict.html',{
         "files": files,  "page_title": "FINANCE process map Files", "url_path": url_path} )
 
+@login_required
 def view_ICT(request):
     
     files = Processes.objects.filter(archived=False, filetype="PROCESS_MAPS", department="ICT")
@@ -1557,6 +1589,7 @@ def view_ICT(request):
     return render(request, 'process_maps/ict.html',{
         "files": files,  "page_title": "ICT process map Files", "url_path": url_path} )
 
+@login_required
 def view_HR(request):
     
     files = Processes.objects.filter(archived=False, filetype="PROCESS_MAPS", department="HUMAN RESOURCES")    
@@ -1564,6 +1597,7 @@ def view_HR(request):
     return render(request, 'process_maps/ict.html',{
         "files": files,  "page_title": "Human resources process map Files", "url_path": url_path} )
 
+@login_required
 def view_finance(request):
     
     files = Processes.objects.filter(archived=False, filetype="PROCESS_MAPS", department="Finance")    
@@ -1571,6 +1605,7 @@ def view_finance(request):
     return render(request, 'process_maps/ict.html',{
         "files": files,  "page_title": "Human resources process map Files", "url_path": url_path} )
 
+@login_required
 def view_procurement(request):
 
     files = Processes.objects.filter(archived=False, filetype="PROCESS_MAPS", department="procurement")    
@@ -1579,9 +1614,11 @@ def view_procurement(request):
     return render(request, 'process_maps/ict.html',{
         "files": files,  "page_title": "Procurement Processes", "url_path": url_path} )
 
+@login_required
 def view_managementx(request):
     return render(request,'processes/management.html',{})
 
+@login_required
 def view_Risk(request):
     
     files = Processes.objects.filter(archived=False, filetype="PROCESS_MAPS", department="RISK MANAGEMENT")    
@@ -1592,6 +1629,7 @@ def view_Risk(request):
 
 # -----------------------------
 # Process Risks
+@login_required
 def risk_Commercial(request):
     
     files = Processes.objects.filter(archived=False, filetype="RISK_OPPORTUNITY", department="Commercial")
@@ -1602,6 +1640,7 @@ def risk_Commercial(request):
                     )
 
 
+@login_required
 def risk_Procurement(request):
     
     procurement_files = Processes.objects.filter(archived=False, filetype="RISK_OPPORTUNITY", department="Procurement")
@@ -1609,11 +1648,13 @@ def risk_Procurement(request):
                   {"files": procurement_files,
                     "page_title": "Procurement Process Risks"})
 
+@login_required
 def risk_Engineering(request):
     
     return render(request, 'process_risks/eng_index.html',
                   {"page_title": "Engineering Process Risks"})
 
+@login_required
 def risk_eng_nde(request):
     
     eng_files = Processes.objects.filter(archived=False, filetype="RISK_OPPORTUNITY", department="Engineering", sub_category="Network Development").all()
@@ -1622,6 +1663,7 @@ def risk_eng_nde(request):
                   {"files": eng_files,
                     "page_title": "Network Development Risks"})
 
+@login_required
 def risk_eng_transport(request):
     
     eng_files = Processes.objects.filter(archived=False, filetype="RISK_OPPORTUNITY", department="Engineering", sub_category="Transport").all()
@@ -1630,6 +1672,7 @@ def risk_eng_transport(request):
                   {"files": eng_files,
                     "page_title": "Transport Risks"})
     
+@login_required
 def risk_eng_districts(request):
     
     eng_files = Processes.objects.filter(archived=False, filetype="RISK_OPPORTUNITY", department="Engineering", sub_category="Districts").all()
@@ -1638,6 +1681,7 @@ def risk_eng_districts(request):
                   {"files": eng_files,
                     "page_title": "Districts Risks"})
 
+@login_required
 def risk_eng_maintenance(request):
     
     eng_files = Processes.objects.filter(archived=False, filetype="RISK_OPPORTUNITY", department="Engineering", sub_category="Maintenance").all()
@@ -1646,6 +1690,7 @@ def risk_eng_maintenance(request):
                   {"files": eng_files,
                     "page_title": "Operations and Maintenance Risks"})
     
+@login_required
 def risk_Finance(request):
     
     finance_files = Processes.objects.filter(archived=False, filetype="RISK_OPPORTUNITY", department="Finance")
@@ -1653,6 +1698,7 @@ def risk_Finance(request):
                   {"files": finance_files,
                     "page_title": "Finance Process Risks"})
 
+@login_required
 def risk_ICT(request):
     
     ict_files = Processes.objects.filter(archived=False, filetype="RISK_OPPORTUNITY", department="ICT")
@@ -1660,6 +1706,7 @@ def risk_ICT(request):
                   {"files": ict_files,
                     "page_title": "ICT Process Risks"})
 
+@login_required
 def risk_HR(request):
     
     hr_files = Processes.objects.filter(archived=False, filetype="RISK_OPPORTUNITY", department="Human Resources")
@@ -1667,6 +1714,7 @@ def risk_HR(request):
                   {"files": hr_files,
                     "page_title": "HR Process Risks"})
 
+@login_required
 def risk_Risk(request):
     
     risk_files = Processes.objects.filter(archived=False, filetype="RISK_OPPORTUNITY", department="Risk Management")
@@ -1677,9 +1725,11 @@ def risk_Risk(request):
 
 # -------------------------------------------
 #First page after clicking view process maps
+@login_required
 def view_img(request):
     return render(request,'processes/display.html',{})
 
+@login_required
 def download_static(request, filename):
     file_path = os.path.join(settings.STATIC_ROOT, "documents", filename)
     if os.path.exists(file_path):
@@ -1692,6 +1742,7 @@ def download_static(request, filename):
         pass
 
 # Search processes and procedures
+@login_required
 def file_search(request):
     keyword = request.GET.get('keyword', '')
     pattern = r"\b" + str(keyword).lower() + r"\b"
@@ -1712,12 +1763,15 @@ def file_search(request):
             print("Error:",ex)
 
 #FORMS VIEWS
+@login_required
 def new_view(request):
     return render(request, 'processes/forms/new_view.html',{"page_title": "PROCESSES AND PROCEDURES (clause 4.4)"})
 
+@login_required
 def forms_index(request):
     return render(request,'processes/forms/forms_index.html', {"page_title": "FORMS"})
 
+@login_required
 def engineering_forms(request):
     
     files = Processes.objects.filter(archived=False, filetype="PROCESS_FORMS", department="Engineering")
@@ -1727,6 +1781,7 @@ def engineering_forms(request):
                     "page_title": "Engineering Forms"},
                     )
 
+@login_required
 def procurement_forms(request):
     
     files = Processes.objects.filter(archived=False, filetype="PROCESS_FORMS", department="Procurement")
@@ -1736,6 +1791,7 @@ def procurement_forms(request):
                     "page_title": "Procurement Forms"},
                     )
     
+@login_required
 def finance_forms(request):
     
     files = Processes.objects.filter(archived=False, filetype="PROCESS_FORMS", department="Finance")
@@ -1745,6 +1801,7 @@ def finance_forms(request):
                     "page_title": "Finance Forms"},
                     )
 
+@login_required
 def hr_forms(request):
     
     files = Processes.objects.filter(archived=False, filetype="PROCESS_FORMS", department="HR")
@@ -1754,6 +1811,7 @@ def hr_forms(request):
                     "page_title":"Human Resources Forms"},
                     )
 
+@login_required
 def commercial_forms(request):
     
     files = Processes.objects.filter(archived=False, filetype="PROCESS_FORMS", department="Commercial")
@@ -1763,6 +1821,7 @@ def commercial_forms(request):
                     "page_title":"Commercial Forms"},
                     )
 
+@login_required
 def it_forms(request):
     
     files = Processes.objects.filter(archived=False, filetype="PROCESS_FORMS", department="ICT")
@@ -1772,6 +1831,7 @@ def it_forms(request):
                     "page_title":"Information Technology Forms"},
                     )
 
+@login_required
 def risk_forms(request):
     
     files = Processes.objects.filter(archived=False, filetype="PROCESS_FORMS", department="Risk")
@@ -1783,15 +1843,19 @@ def risk_forms(request):
 
 
 #PROCEDURES AND WORK INSTRUCTIONS
+@login_required
 def viewWorkInstr(request):
         return render(request, 'processes/procedures_workInstr/home.html', {"page_title":"PROCEDURES AND WORK INSTRUCTIONS (clause 7.5)"})
         
+@login_required
 def viewEngProcedureHome(request):
         return render(request, 'processes/procedures_workInstr/eng_proceduresHome.html', {"page_title":"Engineering Procedures and Work Instructions"})
     
+@login_required
 def viewCommercialProcedureHome(request):
         return render(request, 'processes/procedures_workInstr/com_procedureHome.html', {"page_title":"Commercial Procedures and Work Instructions"})
     
+@login_required
 def viewFinanceProcedures(request):
     
     files = Processes.objects.filter(archived=False, filetype="PROCEDURE_WORK_INSTRUCTIONS", department="Finance")
@@ -1801,6 +1865,7 @@ def viewFinanceProcedures(request):
                     "page_title": "Finance Procedures and Work Instructions Files"},
                     )
 
+@login_required
 def viewHRProcedures(request):
     
     files = Processes.objects.filter(archived=False, filetype="PROCEDURE_WORK_INSTRUCTIONS", department="HR")
@@ -1810,44 +1875,56 @@ def viewHRProcedures(request):
                     "page_title": "Human Resources Procedures and Work Instructions Files"},
                     )
     
+@login_required
 def viewSRProcedures(request):
     return render(request, 'processes/procedures_workInstr/stakeholderRelations.html', {"page_title":"Stakeholder Relations Procedures and Work Instructions Files"})
     
+@login_required
 def viewLegalProcedures(request):
     return render(request, 'processes/procedures_workInstr/legal_procedures.html', {"page_title":"Legal Procedures and Work Instructions Files"})
 
 #PROCESSES
+@login_required
 def view_it(request):
     return render(request,'processes/it_process.html', {})
 
+@login_required
 def view_engineeringlist(request):
     return render(request,'processes/engineering.html', {})
 
 #Engineering Process maps
+@login_required
 def view_commercial(request):
     return render(request,'processes/commercial.html',{})
 
+@login_required
 def view_client(request):
     return render(request,'processes/client.html',{})
 
+@login_required
 def view_revenue(request):
     return render(request,'processes/revenue.html',{})
 
+@login_required
 def view_payment(request):
     return render(request,'processes/payment.html',{})
 #end
 
 #Engineering Process maps
+@login_required
 def view_maintenance(request):
     return render(request,'processes/maintenance_processes.html',{})
 
+@login_required
 def view_planning(request):
     return render(request,'processes/planning_processes.html',{})
 
+@login_required
 def view_project(request):
     return render(request,'processes/project_processes.html',{})
 
 # Procedures
+@login_required
 def viewProcurementProcedures(request):
     
     files = Processes.objects.filter(archived=False, filetype="PROCEDURE_WORK_INSTRUCTIONS", department="Risk")
@@ -1858,9 +1935,11 @@ def viewProcurementProcedures(request):
                     )
 
 
+@login_required
 def viewICTProcedures(request):
     return render(request, 'processes/procedures_workInstr/ict_procedures.html', {"page_title":"ICT Procedures and Work Instructions"})
 
+@login_required
 def viewICT_WorkInstr(request):
     
     files = Processes.objects.filter(archived=False, filetype="PROCEDURE_WORK_INSTRUCTIONS", department="ICT", sub_category="planning")
@@ -1871,6 +1950,7 @@ def viewICT_WorkInstr(request):
                     )
 
 
+@login_required
 def viewEng_PlanningProcedure(request):
     
     files = Processes.objects.filter(archived=False, filetype="PROCEDURE_WORK_INSTRUCTIONS", department="Engineering", sub_category="planning")
@@ -1880,6 +1960,7 @@ def viewEng_PlanningProcedure(request):
                     "page_title": "Engineering Planning Procedures and Work Instructions Files"},
                     )
 
+@login_required
 def viewEng_MaintananceProcedure(request):
     
     files = Processes.objects.filter(archived=False, filetype="PROCEDURE_WORK_INSTRUCTIONS", department="Engineering", sub_category="maintanance")
@@ -1889,6 +1970,7 @@ def viewEng_MaintananceProcedure(request):
                     "page_title": "Engineering Maintanance Procedures and Work Instructions Files"},
                     )
 
+@login_required
 def viewEng_ProjectsProcedure(request):
     
     files = Processes.objects.filter(archived=False, filetype="PROCEDURE_WORK_INSTRUCTIONS", department="Engineering", sub_category="projects")
@@ -1898,6 +1980,7 @@ def viewEng_ProjectsProcedure(request):
                     "page_title": "Engineering Projects Procedures and Work Instructions Files"},
                     )
     
+@login_required
 def viewRiskProcedures(request):
     
     files = Processes.objects.filter(archived=False, filetype="PROCEDURE_WORK_INSTRUCTIONS", department="Risk")
@@ -1907,6 +1990,7 @@ def viewRiskProcedures(request):
                     "page_title": "Risk Management Procedures and Work Instructions Files"},
                     )
 
+@login_required
 def viewClientInteractionProcedures(request):
 	
 	files = Processes.objects.filter(archived=False, filetype="PROCEDURE_WORK_INSTRUCTIONS", department="Commercial", sub_category="client interaction")
@@ -1917,6 +2001,7 @@ def viewClientInteractionProcedures(request):
 					"page_title": "Client Interaction Procedures and Work Instructions Files"},
 					)
 
+@login_required
 def viewPaymentProcedures(request):
     
     files = Processes.objects.filter(archived=False, filetype="PROCEDURE_WORK_INSTRUCTIONS", department="Commercial", sub_category="payment")
@@ -1926,6 +2011,7 @@ def viewPaymentProcedures(request):
                     "page_title": "Payment Procedures and Work Instructions Files"},
                     )
 
+@login_required
 def viewRevenueAssuranceProcedures(request):
     
     files = Processes.objects.filter(archived=False, filetype="PROCEDURE_WORK_INSTRUCTIONS", department="Commercial", sub_category="revenue assurance")
@@ -1935,40 +2021,8 @@ def viewRevenueAssuranceProcedures(request):
                     "page_title": "Revenue Assurance Procedures and Work Instructions Files"},
                     )
 
+@login_required
 def view_Map(request):
     return render(request, 'process_maps/process_map_diagram.html',
                   
             )
-
-# def edit_file(request):
-#     departments = Departments.objects.all()
-#     if request.method == 'POST':
-#         fileid = request.POST['id']
-#         filename = request.POST['fileName']
-#         department = request.POST['department_id']
-#         # file_path = request.FILES['uploaded_file']
-
-#         file_path = ''
-#         try:
-#             if 'uploaded_file' in request.FILES:
-#                 uploaded_file = request.FILES ['uploaded_file']
-#                 file_path = 'uploads/process_maps/'+datetime.now().strftime('%Y%m%d%I%M%S%p') + uploaded_file.name
-#                 save_file(uploaded_file,file_path)
-#         except Exception as ex:
-#             print("Error:",ex)
-        
-#         department_ = Departments.objects.filter(id=department).first()
-#         risk = RiskFiles.objects.filter(id=fileid).first()
-#         risk.file_name = filename
-#         risk.filepath = file_path
-#         risk.cat = department_
-#         risk.save()
-#         return render(request, 
-#                       'process_maps/edit_file.html',
-#                         {'departments':departments,'risk':risk}) 
-
-#     risk_id = request.GET['file_id']
-#     risk = RiskFiles.objects.filter(id=risk_id).first()
-#     return render(request,
-#                    'process_maps/edit_file.html',
-#                    {'departments':departments, 'risk':risk})

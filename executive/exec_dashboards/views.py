@@ -332,6 +332,7 @@ def get_districts(request):
     districts = Districts.objects.all()
     return JsonResponse(list(districts.values('id', 'district')), safe=False)
 
+@login_required
 def dashboard_data(request):
     
     user = request.user
@@ -367,7 +368,7 @@ def dashboard_data(request):
 
     return JsonResponse(data, safe=False)
 
-
+@login_required
 def dashboard_filters(request):
     
     data = json.loads(request.body)
@@ -474,7 +475,7 @@ def dashboard_index(request):
                       "tds": tds, 
                       "upos": upos
                   })
-
+@login_required
 def dashboard_filter(request, item):
     
     page_title = ""
@@ -678,6 +679,7 @@ def dashboards_inspections_ajax(request):
         "values_list": values_list
         }, safe=False)
 
+@login_required
 def pbnc_upload(request):
     if request.method == 'POST':
 
@@ -707,7 +709,7 @@ def pbnc_upload(request):
         redirect('/dashboards/pbnc/upload')
             
     return render(request, 'dashboards/pbnc/upload.html', {})
-
+@login_required
 def td_upload(request):
     if request.method == 'POST':
         
@@ -737,7 +739,7 @@ def td_upload(request):
         redirect('/dashboards/td/upload')
             
     return render(request, 'dashboards/td/upload.html', {})
-
+@login_required
 def upo_upload(request):
     if request.method == 'POST':
         
@@ -767,7 +769,7 @@ def upo_upload(request):
         redirect('/dashboards/upo/upload')
             
     return render(request, 'dashboards/upo/upload.html', {})
-
+@login_required
 def inspections_upload(request):
     if request.method == 'POST':
         
@@ -795,7 +797,7 @@ def inspections_upload(request):
         redirect('/dashboards/inspections/upload')
             
     return render(request, 'dashboards/inspections/upload.html', {})
-
+@login_required
 def maintenance_upload(request):
     if request.method == 'POST':
         

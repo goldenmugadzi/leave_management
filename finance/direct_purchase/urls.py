@@ -32,7 +32,7 @@ urlpatterns = [
     path('cs_data/<str:cs_id>', get_comperative_schedule_data, name='get_comperative_schedule_data'),
     
     path('update_pritem_ordered', update_pritem_ordered, name='update_pritem_ordered'),
-    # path('import_old_rfq', import_old_rfq, name='import_old_rfq'),
+    path('import_old_dp', import_old_dp, name='import_old_rfq'),
     
     path('pending_commitee', get_pending_committee, name='get_pending_committee'),
     path('your_schedules', your_comperative_schedules, name='your_comperative_schedules'),

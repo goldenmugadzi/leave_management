@@ -1,0 +1,1617 @@
+,document_id,sup_id,model,status,message
+0,D2111158,ze291463,Committee,Success,SUCCESS
+1,D2111158,ze294136,Committee,Success,SUCCESS
+2,D2111158,ze301736,DPApproval,Success,SUCCESS
+3,D2111158,ze301736,DPApproval,Success,SUCCESS GM
+4,D21111619,ze347558,Committee,Success,SUCCESS
+5,D21111619,ze309702,Committee,Success,SUCCESS
+6,D21111619, ,DPApproval,Failed,DB finance_user empty
+7,D21111619, ,DPApproval,Failed,GM DB finance_user empty
+8,D21111637,ze296538,Committee,Success,SUCCESS
+9,D21111637,ze309702,Committee,Success,SUCCESS
+10,D21111637,ze301736,DPApproval,Success,SUCCESS
+11,D21111637,ze301736,DPApproval,Success,SUCCESS GM
+12,D21111657,ze347558,Committee,Success,SUCCESS
+13,D21111657,ze309702,Committee,Success,SUCCESS
+14,D21111657, ,DPApproval,Failed,DB finance_user empty
+15,D21111657, ,DPApproval,Failed,GM DB finance_user empty
+16,D21111661,ze347558,Committee,Success,SUCCESS
+17,D21111661,ze309702,Committee,Success,SUCCESS
+18,D21111661, ,DPApproval,Failed,DB finance_user empty
+19,D21111661, ,DPApproval,Failed,GM DB finance_user empty
+20,D21111682,ze347558,Committee,Success,SUCCESS
+21,D21111682,ze309702,Committee,Success,SUCCESS
+22,D21111682, ,DPApproval,Failed,DB finance_user empty
+23,D21111682, ,DPApproval,Failed,GM DB finance_user empty
+24,D21111687,ze347558,Committee,Success,SUCCESS
+25,D21111687,ze309702,Committee,Success,SUCCESS
+26,D21111687, ,DPApproval,Failed,DB finance_user empty
+27,D21111687, ,DPApproval,Failed,GM DB finance_user empty
+28,D21111688,ze347558,Committee,Success,SUCCESS
+29,D21111688,ze309702,Committee,Success,SUCCESS
+30,D21111688, ,DPApproval,Failed,DB finance_user empty
+31,D21111688, ,DPApproval,Failed,GM DB finance_user empty
+32,D21111879,ze226580,Committee,Success,SUCCESS
+33,D21111879,ze294136,Committee,Success,SUCCESS
+34,D21111879, ,DPApproval,Failed,DB finance_user empty
+35,D21111879, ,DPApproval,Failed,GM DB finance_user empty
+36,D21111938,ze226580,Committee,Success,SUCCESS
+37,D21111938,ze294136,Committee,Success,SUCCESS
+38,D21111938,ze301736,DPApproval,Success,SUCCESS
+39,D21111938,ze301736,DPApproval,Success,SUCCESS GM
+40,D21112623,ze34045,Committee,Success,SUCCESS
+41,D21112623,ze267562,Committee,Success,SUCCESS
+42,D21112623, ,DPApproval,Failed,DB finance_user empty
+43,D21112623, ,DPApproval,Failed,GM DB finance_user empty
+44,D21112957,ze38466,Committee,Success,SUCCESS
+45,D21112957,ze267562,Committee,Success,SUCCESS
+46,D21112957,ze301736,DPApproval,Success,SUCCESS
+47,D21112957,ze301736,DPApproval,Success,SUCCESS GM
+48,D21112992,ze38466,Committee,Success,SUCCESS
+49,D21112992,ze267562,Committee,Success,SUCCESS
+50,D21112992,ze301736,DPApproval,Success,SUCCESS
+51,D21112992,ze301736,DPApproval,Success,SUCCESS GM
+52,D2112016,ze34045,Committee,Success,SUCCESS
+53,D2112016,ze267562,Committee,Success,SUCCESS
+54,D2112016, ,DPApproval,Failed,DB finance_user empty
+55,D2112016, ,DPApproval,Failed,GM DB finance_user empty
+56,D21121023,ze293091,Committee,Success,SUCCESS
+57,D21121023,ze309702,Committee,Success,SUCCESS
+58,D21121023,ze301736,DPApproval,Success,SUCCESS
+59,D21121023,ze301736,DPApproval,Success,SUCCESS GM
+60,D21121026,ze347558,Committee,Success,SUCCESS
+61,D21121026,ze309702,Committee,Success,SUCCESS
+62,D21121026,ze301736,DPApproval,Success,SUCCESS
+63,D21121026,ze301736,DPApproval,Success,SUCCESS GM
+64,D21121029,ze293091,Committee,Success,SUCCESS
+65,D21121029,ze309702,Committee,Success,SUCCESS
+66,D21121029,ze301736,DPApproval,Success,SUCCESS
+67,D21121029,ze301736,DPApproval,Success,SUCCESS GM
+68,D21121060,ze347558,Committee,Success,SUCCESS
+69,D21121060,ze309702,Committee,Success,SUCCESS
+70,D21121060,ze301736,DPApproval,Success,SUCCESS
+71,D21121060,ze301736,DPApproval,Success,SUCCESS GM
+72,D21121080,ze293091,Committee,Success,SUCCESS
+73,D21121080,ze309702,Committee,Success,SUCCESS
+74,D21121080,ze301736,DPApproval,Success,SUCCESS
+75,D21121080,ze301736,DPApproval,Success,SUCCESS GM
+76,D2112109,ze347558,Committee,Success,SUCCESS
+77,D2112109,ze309702,Committee,Success,SUCCESS
+78,D2112109,ze301736,DPApproval,Success,SUCCESS
+79,D2112109,ze301736,DPApproval,Success,SUCCESS GM
+80,D21122319,ze293091,Committee,Success,SUCCESS
+81,D21122319,ze309702,Committee,Success,SUCCESS
+82,D21122319,ze301736,DPApproval,Success,SUCCESS
+83,D21122319,ze301736,DPApproval,Success,SUCCESS GM
+84,D2112234,ze257516,Committee,Success,SUCCESS
+85,D2112234,ze283266,Committee,Success,SUCCESS
+86,D2112234, ,DPApproval,Failed,DB finance_user empty
+87,D2112234, ,DPApproval,Failed,GM DB finance_user empty
+88,D21122343,ze257516,Committee,Success,SUCCESS
+89,D21122343,ze283266,Committee,Success,SUCCESS
+90,D21122343, ,DPApproval,Failed,DB finance_user empty
+91,D21122343, ,DPApproval,Failed,GM DB finance_user empty
+92,D21122351,ze293091,Committee,Success,SUCCESS
+93,D21122351,ze309702,Committee,Success,SUCCESS
+94,D21122351,ze301736,DPApproval,Success,SUCCESS
+95,D21122351,ze301736,DPApproval,Success,SUCCESS GM
+96,D21122948,ze296538,Committee,Success,SUCCESS
+97,D21122948,ze309702,Committee,Success,SUCCESS
+98,D21122948, ,DPApproval,Failed,DB finance_user empty
+99,D21122948, ,DPApproval,Failed,GM DB finance_user empty
+100,D21122956,ze296538,Committee,Success,SUCCESS
+101,D21122956,ze309702,Committee,Success,SUCCESS
+102,D21122956,ze301736,DPApproval,Success,SUCCESS
+103,D21122956,ze301736,DPApproval,Success,SUCCESS GM
+104,D21123011,ze296538,Committee,Success,SUCCESS
+105,D21123011,ze309702,Committee,Success,SUCCESS
+106,D21123011,ze301736,DPApproval,Success,SUCCESS
+107,D21123011,ze301736,DPApproval,Success,SUCCESS GM
+108,D21123013,ze296538,Committee,Success,SUCCESS
+109,D21123013,ze309702,Committee,Success,SUCCESS
+110,D21123013, ,DPApproval,Failed,DB finance_user empty
+111,D21123013, ,DPApproval,Failed,GM DB finance_user empty
+112,D21123025,ze296538,Committee,Success,SUCCESS
+113,D21123025,ze309702,Committee,Success,SUCCESS
+114,D21123025,ze301736,DPApproval,Success,SUCCESS
+115,D21123025,ze301736,DPApproval,Success,SUCCESS GM
+116,D21123032,ze296538,Committee,Success,SUCCESS
+117,D21123032,ze309702,Committee,Success,SUCCESS
+118,D21123032,ze301736,DPApproval,Success,SUCCESS
+119,D21123032,ze301736,DPApproval,Success,SUCCESS GM
+120,D2112305,ze296538,Committee,Success,SUCCESS
+121,D2112305,ze309702,Committee,Success,SUCCESS
+122,D2112305,ze301736,DPApproval,Success,SUCCESS
+123,D2112305,ze301736,DPApproval,Success,SUCCESS GM
+124,D21123062,ze296538,Committee,Success,SUCCESS
+125,D21123062,ze309702,Committee,Success,SUCCESS
+126,D21123062,ze301736,DPApproval,Success,SUCCESS
+127,D21123062,ze301736,DPApproval,Success,SUCCESS GM
+128,D21123065,ze296538,Committee,Success,SUCCESS
+129,D21123065,ze309702,Committee,Success,SUCCESS
+130,D21123065, ,DPApproval,Failed,DB finance_user empty
+131,D21123065, ,DPApproval,Failed,GM DB finance_user empty
+132,D21123087,ze296538,Committee,Success,SUCCESS
+133,D21123087,ze309702,Committee,Success,SUCCESS
+134,D21123087,ze301736,DPApproval,Success,SUCCESS
+135,D21123087,ze301736,DPApproval,Success,SUCCESS GM
+136,D21123192,ze293091,Committee,Success,SUCCESS
+137,D21123192,ze309702,Committee,Success,SUCCESS
+138,D21123192,ze301736,DPApproval,Success,SUCCESS
+139,D21123192,ze301736,DPApproval,Success,SUCCESS GM
+140,D22010692,ze296538,Committee,Success,SUCCESS
+141,D22010692,ze309702,Committee,Success,SUCCESS
+142,D22010692, ,DPApproval,Failed,DB finance_user empty
+143,D22010692, ,DPApproval,Failed,GM DB finance_user empty
+144,D22011056,ze296538,Committee,Success,SUCCESS
+145,D22011056,ze309702,Committee,Success,SUCCESS
+146,D22011056,ze301736,DPApproval,Success,SUCCESS
+147,D22011056,ze301736,DPApproval,Success,SUCCESS GM
+148,D22011110,ze347558,Committee,Success,SUCCESS
+149,D22011110,ze309702,Committee,Success,SUCCESS
+150,D22011110, ,DPApproval,Failed,DB finance_user empty
+151,D22011110, ,DPApproval,Failed,GM DB finance_user empty
+152,D22011122,ze37540,Committee,Success,SUCCESS
+153,D22011122,ze257516,Committee,Success,SUCCESS
+154,D22011122,ze301736,DPApproval,Success,SUCCESS
+155,D22011122,ze301736,DPApproval,Success,SUCCESS GM
+156,D22011143,ze37540,Committee,Success,SUCCESS
+157,D22011143,ze257516,Committee,Success,SUCCESS
+158,D22011143,ze301736,DPApproval,Success,SUCCESS
+159,D22011143,ze301736,DPApproval,Success,SUCCESS GM
+160,D22011294,ze37540,Committee,Success,SUCCESS
+161,D22011294,ze257516,Committee,Success,SUCCESS
+162,D22011294, ,DPApproval,Failed,DB finance_user empty
+163,D22011294, ,DPApproval,Failed,GM DB finance_user empty
+164,D22011452,ze296538,Committee,Success,SUCCESS
+165,D22011452,ze309702,Committee,Success,SUCCESS
+166,D22011452, ,DPApproval,Failed,DB finance_user empty
+167,D22011452, ,DPApproval,Failed,GM DB finance_user empty
+168,D22011474,ze296538,Committee,Success,SUCCESS
+169,D22011474,ze309702,Committee,Success,SUCCESS
+170,D22011474, ,DPApproval,Failed,DB finance_user empty
+171,D22011474, ,DPApproval,Failed,GM DB finance_user empty
+172,D2201149,ze37540,Committee,Success,SUCCESS
+173,D2201149,ze257516,Committee,Success,SUCCESS
+174,D2201149, ,DPApproval,Failed,DB finance_user empty
+175,D2201149, ,DPApproval,Failed,GM DB finance_user empty
+176,D22011944,ze293091,Committee,Success,SUCCESS
+177,D22011944,ze309702,Committee,Success,SUCCESS
+178,D22011944, ,DPApproval,Failed,DB finance_user empty
+179,D22011944, ,DPApproval,Failed,GM DB finance_user empty
+180,D22011958,ze293091,Committee,Success,SUCCESS
+181,D22011958,ze309702,Committee,Success,SUCCESS
+182,D22011958, ,DPApproval,Failed,DB finance_user empty
+183,D22011958, ,DPApproval,Failed,GM DB finance_user empty
+184,D22011983,ze293091,Committee,Success,SUCCESS
+185,D22011983,ze309702,Committee,Success,SUCCESS
+186,D22011983, ,DPApproval,Failed,DB finance_user empty
+187,D22011983, ,DPApproval,Failed,GM DB finance_user empty
+188,D2201205,ze293091,Committee,Success,SUCCESS
+189,D2201205,ze309702,Committee,Success,SUCCESS
+190,D2201205, ,DPApproval,Failed,DB finance_user empty
+191,D2201205, ,DPApproval,Failed,GM DB finance_user empty
+192,D2201207,ze293091,Committee,Success,SUCCESS
+193,D2201207,ze309702,Committee,Success,SUCCESS
+194,D2201207, ,DPApproval,Failed,DB finance_user empty
+195,D2201207, ,DPApproval,Failed,GM DB finance_user empty
+196,D22012511,ze296538,Committee,Success,SUCCESS
+197,D22012511,ze309702,Committee,Success,SUCCESS
+198,D22012511, ,DPApproval,Failed,DB finance_user empty
+199,D22012511, ,DPApproval,Failed,GM DB finance_user empty
+200,D22012518,ze296538,Committee,Success,SUCCESS
+201,D22012518,ze309702,Committee,Success,SUCCESS
+202,D22012518, ,DPApproval,Failed,DB finance_user empty
+203,D22012518, ,DPApproval,Failed,GM DB finance_user empty
+204,D22012525,ze296538,Committee,Success,SUCCESS
+205,D22012525,ze309702,Committee,Success,SUCCESS
+206,D22012525, ,DPApproval,Failed,DB finance_user empty
+207,D22012525, ,DPApproval,Failed,GM DB finance_user empty
+208,D22012543,ze296538,Committee,Success,SUCCESS
+209,D22012543,ze309702,Committee,Success,SUCCESS
+210,D22012543, ,DPApproval,Failed,DB finance_user empty
+211,D22012543, ,DPApproval,Failed,GM DB finance_user empty
+212,D22012544,ze296538,Committee,Success,SUCCESS
+213,D22012544,ze309702,Committee,Success,SUCCESS
+214,D22012544, ,DPApproval,Failed,DB finance_user empty
+215,D22012544, ,DPApproval,Failed,GM DB finance_user empty
+216,D22012545,ze296538,Committee,Success,SUCCESS
+217,D22012545,ze309702,Committee,Success,SUCCESS
+218,D22012545, ,DPApproval,Failed,DB finance_user empty
+219,D22012545, ,DPApproval,Failed,GM DB finance_user empty
+220,D22012568,ze296538,Committee,Success,SUCCESS
+221,D22012568,ze309702,Committee,Success,SUCCESS
+222,D22012568, ,DPApproval,Failed,DB finance_user empty
+223,D22012568, ,DPApproval,Failed,GM DB finance_user empty
+224,D2201257,ze293091,Committee,Success,SUCCESS
+225,D2201257,ze309702,Committee,Success,SUCCESS
+226,D2201257, ,DPApproval,Failed,DB finance_user empty
+227,D2201257, ,DPApproval,Failed,GM DB finance_user empty
+228,D22012571,ze296538,Committee,Success,SUCCESS
+229,D22012571,ze309702,Committee,Success,SUCCESS
+230,D22012571, ,DPApproval,Failed,DB finance_user empty
+231,D22012571, ,DPApproval,Failed,GM DB finance_user empty
+232,D22012585,ze296538,Committee,Success,SUCCESS
+233,D22012585,ze309702,Committee,Success,SUCCESS
+234,D22012585, ,DPApproval,Failed,DB finance_user empty
+235,D22012585, ,DPApproval,Failed,GM DB finance_user empty
+236,D22020253,ze293091,Committee,Success,SUCCESS
+237,D22020253,ze309702,Committee,Success,SUCCESS
+238,D22020253, ,DPApproval,Failed,DB finance_user empty
+239,D22020253, ,DPApproval,Failed,GM DB finance_user empty
+240,D22020256,ze296538,Committee,Success,SUCCESS
+241,D22020256,ze309702,Committee,Success,SUCCESS
+242,D22020256,ze301736,DPApproval,Success,SUCCESS
+243,D22020256,ze301736,DPApproval,Success,SUCCESS GM
+244,D22020329,ze347558,Committee,Success,SUCCESS
+245,D22020329,ze309702,Committee,Success,SUCCESS
+246,D22020329, ,DPApproval,Failed,DB finance_user empty
+247,D22020329, ,DPApproval,Failed,GM DB finance_user empty
+248,D22020352,ze293091,Committee,Success,SUCCESS
+249,D22020352,ze309702,Committee,Success,SUCCESS
+250,D22020352, ,DPApproval,Failed,DB finance_user empty
+251,D22020352, ,DPApproval,Failed,GM DB finance_user empty
+252,D22020415,ze293091,Committee,Success,SUCCESS
+253,D22020415,ze309702,Committee,Success,SUCCESS
+254,D22020415, ,DPApproval,Failed,DB finance_user empty
+255,D22020415, ,DPApproval,Failed,GM DB finance_user empty
+256,D22020434,ze226769,Committee,Success,SUCCESS
+257,D22020434, ,Committee,Failed,member profile empty
+258,D22020434, ,DPApproval,Failed,DB finance_user empty
+259,D22020434, ,DPApproval,Failed,GM DB finance_user empty
+260,D22020489,ze293091,Committee,Success,SUCCESS
+261,D22020489,ze309702,Committee,Success,SUCCESS
+262,D22020489, ,DPApproval,Failed,DB finance_user empty
+263,D22020489, ,DPApproval,Failed,GM DB finance_user empty
+264,D22020747,ze296538,Committee,Success,SUCCESS
+265,D22020747,ze309702,Committee,Success,SUCCESS
+266,D22020747, ,DPApproval,Failed,DB finance_user empty
+267,D22020747, ,DPApproval,Failed,GM DB finance_user empty
+268,D22020749,ze296538,Committee,Success,SUCCESS
+269,D22020749,ze309702,Committee,Success,SUCCESS
+270,D22020749, ,DPApproval,Failed,DB finance_user empty
+271,D22020749, ,DPApproval,Failed,GM DB finance_user empty
+272,D22020750,ze296538,Committee,Success,SUCCESS
+273,D22020750,ze309702,Committee,Success,SUCCESS
+274,D22020750, ,DPApproval,Failed,DB finance_user empty
+275,D22020750, ,DPApproval,Failed,GM DB finance_user empty
+276,D22021112,ze296538,Committee,Success,SUCCESS
+277,D22021112,ze309702,Committee,Success,SUCCESS
+278,D22021112, ,DPApproval,Failed,DB finance_user empty
+279,D22021112, ,DPApproval,Failed,GM DB finance_user empty
+280,D22021139,ze226769,Committee,Success,SUCCESS
+281,D22021139, ,Committee,Failed,member profile empty
+282,D22021139, ,DPApproval,Failed,DB finance_user empty
+283,D22021139, ,DPApproval,Failed,GM DB finance_user empty
+284,D22021556,ze296538,Committee,Success,SUCCESS
+285,D22021556,ze309702,Committee,Success,SUCCESS
+286,D22021556, ,DPApproval,Failed,DB finance_user empty
+287,D22021556, ,DPApproval,Failed,GM DB finance_user empty
+288,D22022585,ze296538,Committee,Success,SUCCESS
+289,D22022585,ze309702,Committee,Success,SUCCESS
+290,D22022585, ,DPApproval,Failed,DB finance_user empty
+291,D22022585, ,DPApproval,Failed,GM DB finance_user empty
+292,D22022813,ze42510,Committee,Success,SUCCESS
+293,D22022813,ze294136,Committee,Success,SUCCESS
+294,D22022813, ,DPApproval,Failed,DB finance_user empty
+295,D22022813, ,DPApproval,Failed,GM DB finance_user empty
+296,D22022893,ze293091,Committee,Success,SUCCESS
+297,D22022893,ze309702,Committee,Success,SUCCESS
+298,D22022893, ,DPApproval,Failed,DB finance_user empty
+299,D22022893, ,DPApproval,Failed,GM DB finance_user empty
+300,D22030292,ze38466,Committee,Success,SUCCESS
+301,D22030292,ze276111,Committee,Success,SUCCESS
+302,D22030292, ,DPApproval,Failed,DB finance_user empty
+303,D22030292, ,DPApproval,Failed,GM DB finance_user empty
+304,D22030440,ze296538,Committee,Success,SUCCESS
+305,D22030440,ze309702,Committee,Success,SUCCESS
+306,D22030440, ,DPApproval,Failed,DB finance_user empty
+307,D22030440, ,DPApproval,Failed,GM DB finance_user empty
+308,D22030496,ze296538,Committee,Success,SUCCESS
+309,D22030496,ze309702,Committee,Success,SUCCESS
+310,D22030496, ,DPApproval,Failed,DB finance_user empty
+311,D22030496, ,DPApproval,Failed,GM DB finance_user empty
+312,D22030972,ze293091,Committee,Success,SUCCESS
+313,D22030972,ze309702,Committee,Success,SUCCESS
+314,D22030972, ,DPApproval,Failed,DB finance_user empty
+315,D22030972, ,DPApproval,Failed,GM DB finance_user empty
+316,D2203102,ze38466,Committee,Success,SUCCESS
+317,D2203102,ze276111,Committee,Success,SUCCESS
+318,D2203102, ,DPApproval,Failed,DB finance_user empty
+319,D2203102, ,DPApproval,Failed,GM DB finance_user empty
+320,D22031413,ze296538,Committee,Success,SUCCESS
+321,D22031413,ze309702,Committee,Success,SUCCESS
+322,D22031413, ,DPApproval,Failed,DB finance_user empty
+323,D22031413, ,DPApproval,Failed,GM DB finance_user empty
+324,D2203143,ze293091,Committee,Success,SUCCESS
+325,D2203143,ze309702,Committee,Success,SUCCESS
+326,D2203143, ,DPApproval,Failed,DB finance_user empty
+327,D2203143, ,DPApproval,Failed,GM DB finance_user empty
+328,D22031446,ze293091,Committee,Success,SUCCESS
+329,D22031446,ze309702,Committee,Success,SUCCESS
+330,D22031446, ,DPApproval,Failed,DB finance_user empty
+331,D22031446, ,DPApproval,Failed,GM DB finance_user empty
+332,D22031467,ze296538,Committee,Success,SUCCESS
+333,D22031467,ze309702,Committee,Success,SUCCESS
+334,D22031467, ,DPApproval,Failed,DB finance_user empty
+335,D22031467, ,DPApproval,Failed,GM DB finance_user empty
+336,D22031471,ze293091,Committee,Success,SUCCESS
+337,D22031471,ze309702,Committee,Success,SUCCESS
+338,D22031471, ,DPApproval,Failed,DB finance_user empty
+339,D22031471, ,DPApproval,Failed,GM DB finance_user empty
+340,D22031484,ze293091,Committee,Success,SUCCESS
+341,D22031484,ze309702,Committee,Success,SUCCESS
+342,D22031484, ,DPApproval,Failed,DB finance_user empty
+343,D22031484, ,DPApproval,Failed,GM DB finance_user empty
+344,D22031524,ze293091,Committee,Success,SUCCESS
+345,D22031524,ze309702,Committee,Success,SUCCESS
+346,D22031524, ,DPApproval,Failed,DB finance_user empty
+347,D22031524, ,DPApproval,Failed,GM DB finance_user empty
+348,D2203156,ze293091,Committee,Success,SUCCESS
+349,D2203156,ze309702,Committee,Success,SUCCESS
+350,D2203156, ,DPApproval,Failed,DB finance_user empty
+351,D2203156, ,DPApproval,Failed,GM DB finance_user empty
+352,D22031577,ze296538,Committee,Success,SUCCESS
+353,D22031577,ze309702,Committee,Success,SUCCESS
+354,D22031577, ,DPApproval,Failed,DB finance_user empty
+355,D22031577, ,DPApproval,Failed,GM DB finance_user empty
+356,D2203158,ze293091,Committee,Success,SUCCESS
+357,D2203158,ze309702,Committee,Success,SUCCESS
+358,D2203158, ,DPApproval,Failed,DB finance_user empty
+359,D2203158, ,DPApproval,Failed,GM DB finance_user empty
+360,D22032213,ze296538,Committee,Success,SUCCESS
+361,D22032213,ze309702,Committee,Success,SUCCESS
+362,D22032213, ,DPApproval,Failed,DB finance_user empty
+363,D22032213, ,DPApproval,Failed,GM DB finance_user empty
+364,D22032215,ze296538,Committee,Success,SUCCESS
+365,D22032215,ze309702,Committee,Success,SUCCESS
+366,D22032215, ,DPApproval,Failed,DB finance_user empty
+367,D22032215, ,DPApproval,Failed,GM DB finance_user empty
+368,D22032238,ze296538,Committee,Success,SUCCESS
+369,D22032238,ze309702,Committee,Success,SUCCESS
+370,D22032238, ,DPApproval,Failed,DB finance_user empty
+371,D22032238, ,DPApproval,Failed,GM DB finance_user empty
+372,D22032242,ze296538,Committee,Success,SUCCESS
+373,D22032242,ze309702,Committee,Success,SUCCESS
+374,D22032242, ,DPApproval,Failed,DB finance_user empty
+375,D22032242, ,DPApproval,Failed,GM DB finance_user empty
+376,D22032260,ze296538,Committee,Success,SUCCESS
+377,D22032260,ze309702,Committee,Success,SUCCESS
+378,D22032260, ,DPApproval,Failed,DB finance_user empty
+379,D22032260, ,DPApproval,Failed,GM DB finance_user empty
+380,D22032268,ze296538,Committee,Success,SUCCESS
+381,D22032268,ze309702,Committee,Success,SUCCESS
+382,D22032268, ,DPApproval,Failed,DB finance_user empty
+383,D22032268, ,DPApproval,Failed,GM DB finance_user empty
+384,D22032274,ze296538,Committee,Success,SUCCESS
+385,D22032274,ze309702,Committee,Success,SUCCESS
+386,D22032274, ,DPApproval,Failed,DB finance_user empty
+387,D22032274, ,DPApproval,Failed,GM DB finance_user empty
+388,D22032332,ze261092,Committee,Success,SUCCESS
+389,D22032332, ,Committee,Failed,member profile empty
+390,D22032332, ,DPApproval,Failed,DB finance_user empty
+391,D22032332, ,DPApproval,Failed,GM DB finance_user empty
+392,D22032854,ze296538,Committee,Success,SUCCESS
+393,D22032854,ze309702,Committee,Success,SUCCESS
+394,D22032854, ,DPApproval,Failed,DB finance_user empty
+395,D22032854, ,DPApproval,Failed,GM DB finance_user empty
+396,D22032893,ze296538,Committee,Success,SUCCESS
+397,D22032893,ze309702,Committee,Success,SUCCESS
+398,D22032893, ,DPApproval,Failed,DB finance_user empty
+399,D22032893, ,DPApproval,Failed,GM DB finance_user empty
+400,D22032996,ze296538,Committee,Success,SUCCESS
+401,D22032996,ze309702,Committee,Success,SUCCESS
+402,D22032996, ,DPApproval,Failed,DB finance_user empty
+403,D22032996, ,DPApproval,Failed,GM DB finance_user empty
+404,D22040899,ze239046,Committee,Success,SUCCESS
+405,D22040899,ze309702,Committee,Success,SUCCESS
+406,D22040899, ,DPApproval,Failed,DB finance_user empty
+407,D22040899, ,DPApproval,Failed,GM DB finance_user empty
+408,D22041280,ze345237,Committee,Success,SUCCESS
+409,D22041280,ze336319,Committee,Success,SUCCESS
+410,D22041280, ,DPApproval,Failed,DB finance_user empty
+411,D22041280, ,DPApproval,Failed,GM DB finance_user empty
+412,D22041933,ze296538,Committee,Success,SUCCESS
+413,D22041933,ze309702,Committee,Success,SUCCESS
+414,D22041933, ,DPApproval,Failed,DB finance_user empty
+415,D22041933, ,DPApproval,Failed,GM DB finance_user empty
+416,D22041934,ze296538,Committee,Success,SUCCESS
+417,D22041934,ze309702,Committee,Success,SUCCESS
+418,D22041934, ,DPApproval,Failed,DB finance_user empty
+419,D22041934, ,DPApproval,Failed,GM DB finance_user empty
+420,D22041948,ze296538,Committee,Success,SUCCESS
+421,D22041948,ze309702,Committee,Success,SUCCESS
+422,D22041948, ,DPApproval,Failed,DB finance_user empty
+423,D22041948, ,DPApproval,Failed,GM DB finance_user empty
+424,D22042015,ze293091,Committee,Success,SUCCESS
+425,D22042015,ze309702,Committee,Success,SUCCESS
+426,D22042015, ,DPApproval,Failed,DB finance_user empty
+427,D22042015, ,DPApproval,Failed,GM DB finance_user empty
+428,D22042131,ze293091,Committee,Success,SUCCESS
+429,D22042131,ze309702,Committee,Success,SUCCESS
+430,D22042131, ,DPApproval,Failed,DB finance_user empty
+431,D22042131, ,DPApproval,Failed,GM DB finance_user empty
+432,D22042155,ze293091,Committee,Success,SUCCESS
+433,D22042155,ze309702,Committee,Success,SUCCESS
+434,D22042155, ,DPApproval,Failed,DB finance_user empty
+435,D22042155, ,DPApproval,Failed,GM DB finance_user empty
+436,D22042258,ze293091,Committee,Success,SUCCESS
+437,D22042258,ze309702,Committee,Success,SUCCESS
+438,D22042258, ,DPApproval,Failed,DB finance_user empty
+439,D22042258, ,DPApproval,Failed,GM DB finance_user empty
+440,D22042260,ze293091,Committee,Success,SUCCESS
+441,D22042260,ze309702,Committee,Success,SUCCESS
+442,D22042260, ,DPApproval,Failed,DB finance_user empty
+443,D22042260, ,DPApproval,Failed,GM DB finance_user empty
+444,D2204265,ze293091,Committee,Success,SUCCESS
+445,D2204265,ze309702,Committee,Success,SUCCESS
+446,D2204265, ,DPApproval,Failed,DB finance_user empty
+447,D2204265, ,DPApproval,Failed,GM DB finance_user empty
+448,D22042680,ze293091,Committee,Success,SUCCESS
+449,D22042680,ze309702,Committee,Success,SUCCESS
+450,D22042680, ,DPApproval,Failed,DB finance_user empty
+451,D22042680, ,DPApproval,Failed,GM DB finance_user empty
+452,D22042683,ze293091,Committee,Success,SUCCESS
+453,D22042683,ze309702,Committee,Success,SUCCESS
+454,D22042683, ,DPApproval,Failed,DB finance_user empty
+455,D22042683, ,DPApproval,Failed,GM DB finance_user empty
+456,D22042684,ze293091,Committee,Success,SUCCESS
+457,D22042684,ze309702,Committee,Success,SUCCESS
+458,D22042684, ,DPApproval,Failed,DB finance_user empty
+459,D22042684, ,DPApproval,Failed,GM DB finance_user empty
+460,D22042927,ze296538,Committee,Success,SUCCESS
+461,D22042927,ze309702,Committee,Success,SUCCESS
+462,D22042927, ,DPApproval,Failed,DB finance_user empty
+463,D22042927, ,DPApproval,Failed,GM DB finance_user empty
+464,D22042975,ze296538,Committee,Success,SUCCESS
+465,D22042975,ze309702,Committee,Success,SUCCESS
+466,D22042975, ,DPApproval,Failed,DB finance_user empty
+467,D22042975, ,DPApproval,Failed,GM DB finance_user empty
+468,D22050437,ze296538,Committee,Success,SUCCESS
+469,D22050437,ze309702,Committee,Success,SUCCESS
+470,D22050437, ,DPApproval,Failed,DB finance_user empty
+471,D22050437, ,DPApproval,Failed,GM DB finance_user empty
+472,D22050510,ze296538,Committee,Success,SUCCESS
+473,D22050510,ze309702,Committee,Success,SUCCESS
+474,D22050510, ,DPApproval,Failed,DB finance_user empty
+475,D22050510, ,DPApproval,Failed,GM DB finance_user empty
+476,D2205054,ze281875,Committee,Success,SUCCESS
+477,D2205054,ze309702,Committee,Success,SUCCESS
+478,D2205054, ,DPApproval,Failed,DB finance_user empty
+479,D2205054, ,DPApproval,Failed,GM DB finance_user empty
+480,D22050557,ze293091,Committee,Success,SUCCESS
+481,D22050557,ze309702,Committee,Success,SUCCESS
+482,D22050557, ,DPApproval,Failed,DB finance_user empty
+483,D22050557, ,DPApproval,Failed,GM DB finance_user empty
+484,D22050611,ze296538,Committee,Success,SUCCESS
+485,D22050611,ze309702,Committee,Success,SUCCESS
+486,D22050611, ,DPApproval,Failed,DB finance_user empty
+487,D22050611, ,DPApproval,Failed,GM DB finance_user empty
+488,D22050633,ze296538,Committee,Success,SUCCESS
+489,D22050633,ze309702,Committee,Success,SUCCESS
+490,D22050633, ,DPApproval,Failed,DB finance_user empty
+491,D22050633, ,DPApproval,Failed,GM DB finance_user empty
+492,D22050651,ze296538,Committee,Success,SUCCESS
+493,D22050651,ze309702,Committee,Success,SUCCESS
+494,D22050651, ,DPApproval,Failed,DB finance_user empty
+495,D22050651, ,DPApproval,Failed,GM DB finance_user empty
+496,D22050919,ze281875,Committee,Success,SUCCESS
+497,D22050919,ze309702,Committee,Success,SUCCESS
+498,D22050919, ,DPApproval,Failed,DB finance_user empty
+499,D22050919, ,DPApproval,Failed,GM DB finance_user empty
+500,D22050948,ze345237,Committee,Success,SUCCESS
+501,D22050948, ,Committee,Failed,member profile empty
+502,D22050948, ,DPApproval,Failed,DB finance_user empty
+503,D22050948, ,DPApproval,Failed,GM DB finance_user empty
+504,D22050960,ze281875,Committee,Success,SUCCESS
+505,D22050960,ze309702,Committee,Success,SUCCESS
+506,D22050960, ,DPApproval,Failed,DB finance_user empty
+507,D22050960, ,DPApproval,Failed,GM DB finance_user empty
+508,D22050975,ze281875,Committee,Success,SUCCESS
+509,D22050975,ze309702,Committee,Success,SUCCESS
+510,D22050975, ,DPApproval,Failed,DB finance_user empty
+511,D22050975, ,DPApproval,Failed,GM DB finance_user empty
+512,D22050978,ze281875,Committee,Success,SUCCESS
+513,D22050978,ze309702,Committee,Success,SUCCESS
+514,D22050978, ,DPApproval,Failed,DB finance_user empty
+515,D22050978, ,DPApproval,Failed,GM DB finance_user empty
+516,D22051211,ze346373,Committee,Success,SUCCESS
+517,D22051211,ze309702,Committee,Success,SUCCESS
+518,D22051211, ,DPApproval,Failed,DB finance_user empty
+519,D22051211, ,DPApproval,Failed,GM DB finance_user empty
+520,D22051218,ze296538,Committee,Success,SUCCESS
+521,D22051218,ze309702,Committee,Success,SUCCESS
+522,D22051218, ,DPApproval,Failed,DB finance_user empty
+523,D22051218, ,DPApproval,Failed,GM DB finance_user empty
+524,D22051272,ze296538,Committee,Success,SUCCESS
+525,D22051272,ze309702,Committee,Success,SUCCESS
+526,D22051272, ,DPApproval,Failed,DB finance_user empty
+527,D22051272, ,DPApproval,Failed,GM DB finance_user empty
+528,D22051299,ze346373,Committee,Success,SUCCESS
+529,D22051299,ze309702,Committee,Success,SUCCESS
+530,D22051299, ,DPApproval,Failed,DB finance_user empty
+531,D22051299, ,DPApproval,Failed,GM DB finance_user empty
+532,D22051383,ze296538,Committee,Success,SUCCESS
+533,D22051383,ze309702,Committee,Success,SUCCESS
+534,D22051383, ,DPApproval,Failed,DB finance_user empty
+535,D22051383, ,DPApproval,Failed,GM DB finance_user empty
+536,D22051769,ze281875,Committee,Success,SUCCESS
+537,D22051769,ze309702,Committee,Success,SUCCESS
+538,D22051769, ,DPApproval,Failed,DB finance_user empty
+539,D22051769, ,DPApproval,Failed,GM DB finance_user empty
+540,D22051782,ze293091,Committee,Success,SUCCESS
+541,D22051782,ze309702,Committee,Success,SUCCESS
+542,D22051782, ,DPApproval,Failed,DB finance_user empty
+543,D22051782, ,DPApproval,Failed,GM DB finance_user empty
+544,D22051861,ze296538,Committee,Success,SUCCESS
+545,D22051861,ze309702,Committee,Success,SUCCESS
+546,D22051861, ,DPApproval,Failed,DB finance_user empty
+547,D22051861, ,DPApproval,Failed,GM DB finance_user empty
+548,D22051873,ze296538,Committee,Success,SUCCESS
+549,D22051873,ze309702,Committee,Success,SUCCESS
+550,D22051873, ,DPApproval,Failed,DB finance_user empty
+551,D22051873, ,DPApproval,Failed,GM DB finance_user empty
+552,D22051880,ze296538,Committee,Success,SUCCESS
+553,D22051880,ze309702,Committee,Success,SUCCESS
+554,D22051880, ,DPApproval,Failed,DB finance_user empty
+555,D22051880, ,DPApproval,Failed,GM DB finance_user empty
+556,D22051887,ze296538,Committee,Success,SUCCESS
+557,D22051887,ze309702,Committee,Success,SUCCESS
+558,D22051887, ,DPApproval,Failed,DB finance_user empty
+559,D22051887, ,DPApproval,Failed,GM DB finance_user empty
+560,D22051967,ze293180,Committee,Success,SUCCESS
+561,D22051967,ze234001,Committee,Success,SUCCESS
+562,D22051967, ,DPApproval,Failed,DB finance_user empty
+563,D22051967, ,DPApproval,Failed,GM DB finance_user empty
+564,D22051980,ze293180,Committee,Success,SUCCESS
+565,D22051980,ze234001,Committee,Success,SUCCESS
+566,D22051980, ,DPApproval,Failed,DB finance_user empty
+567,D22051980, ,DPApproval,Failed,GM DB finance_user empty
+568,D22052722,ze281875,Committee,Success,SUCCESS
+569,D22052722,ze309702,Committee,Success,SUCCESS
+570,D22052722, ,DPApproval,Failed,DB finance_user empty
+571,D22052722, ,DPApproval,Failed,GM DB finance_user empty
+572,D22052737,ze281875,Committee,Success,SUCCESS
+573,D22052737,ze309702,Committee,Success,SUCCESS
+574,D22052737, ,DPApproval,Failed,DB finance_user empty
+575,D22052737, ,DPApproval,Failed,GM DB finance_user empty
+576,D22052745,ze281875,Committee,Success,SUCCESS
+577,D22052745,ze309702,Committee,Success,SUCCESS
+578,D22052745, ,DPApproval,Failed,DB finance_user empty
+579,D22052745, ,DPApproval,Failed,GM DB finance_user empty
+580,D22052750,ze281875,Committee,Success,SUCCESS
+581,D22052750,ze309702,Committee,Success,SUCCESS
+582,D22052750, ,DPApproval,Failed,DB finance_user empty
+583,D22052750, ,DPApproval,Failed,GM DB finance_user empty
+584,D2205276,ze281875,Committee,Success,SUCCESS
+585,D2205276,ze309702,Committee,Success,SUCCESS
+586,D2205276, ,DPApproval,Failed,DB finance_user empty
+587,D2205276, ,DPApproval,Failed,GM DB finance_user empty
+588,D22052761,ze281875,Committee,Success,SUCCESS
+589,D22052761,ze309702,Committee,Success,SUCCESS
+590,D22052761, ,DPApproval,Failed,DB finance_user empty
+591,D22052761, ,DPApproval,Failed,GM DB finance_user empty
+592,D22052770,ze281875,Committee,Success,SUCCESS
+593,D22052770,ze309702,Committee,Success,SUCCESS
+594,D22052770, ,DPApproval,Failed,DB finance_user empty
+595,D22052770, ,DPApproval,Failed,GM DB finance_user empty
+596,D22052780,ze281875,Committee,Success,SUCCESS
+597,D22052780,ze309702,Committee,Success,SUCCESS
+598,D22052780, ,DPApproval,Failed,DB finance_user empty
+599,D22052780, ,DPApproval,Failed,GM DB finance_user empty
+600,D22052798,ze281875,Committee,Success,SUCCESS
+601,D22052798,ze309702,Committee,Success,SUCCESS
+602,D22052798, ,DPApproval,Failed,DB finance_user empty
+603,D22052798, ,DPApproval,Failed,GM DB finance_user empty
+604,D22053016,ze296538,Committee,Success,SUCCESS
+605,D22053016,ze309702,Committee,Success,SUCCESS
+606,D22053016, ,DPApproval,Failed,DB finance_user empty
+607,D22053016, ,DPApproval,Failed,GM DB finance_user empty
+608,D22053040,ze296538,Committee,Success,SUCCESS
+609,D22053040,ze309702,Committee,Success,SUCCESS
+610,D22053040, ,DPApproval,Failed,DB finance_user empty
+611,D22053040, ,DPApproval,Failed,GM DB finance_user empty
+612,D22053054,ze296538,Committee,Success,SUCCESS
+613,D22053054,ze309702,Committee,Success,SUCCESS
+614,D22053054, ,DPApproval,Failed,DB finance_user empty
+615,D22053054, ,DPApproval,Failed,GM DB finance_user empty
+616,D22053071,ze296538,Committee,Success,SUCCESS
+617,D22053071,ze309702,Committee,Success,SUCCESS
+618,D22053071, ,DPApproval,Failed,DB finance_user empty
+619,D22053071, ,DPApproval,Failed,GM DB finance_user empty
+620,D22053076,ze296538,Committee,Success,SUCCESS
+621,D22053076,ze309702,Committee,Success,SUCCESS
+622,D22053076, ,DPApproval,Failed,DB finance_user empty
+623,D22053076, ,DPApproval,Failed,GM DB finance_user empty
+624,D22053080,ze296538,Committee,Success,SUCCESS
+625,D22053080,ze309702,Committee,Success,SUCCESS
+626,D22053080, ,DPApproval,Failed,DB finance_user empty
+627,D22053080, ,DPApproval,Failed,GM DB finance_user empty
+628,D22053098,ze296538,Committee,Success,SUCCESS
+629,D22053098,ze309702,Committee,Success,SUCCESS
+630,D22053098, ,DPApproval,Failed,DB finance_user empty
+631,D22053098, ,DPApproval,Failed,GM DB finance_user empty
+632,D22060281,ze296538,Committee,Success,SUCCESS
+633,D22060281,ze309702,Committee,Success,SUCCESS
+634,D22060281, ,DPApproval,Failed,DB finance_user empty
+635,D22060281, ,DPApproval,Failed,GM DB finance_user empty
+636,D22060323,ze293091,Committee,Success,SUCCESS
+637,D22060323,ze309702,Committee,Success,SUCCESS
+638,D22060323, ,DPApproval,Failed,DB finance_user empty
+639,D22060323, ,DPApproval,Failed,GM DB finance_user empty
+640,D22060994,ze293091,Committee,Success,SUCCESS
+641,D22060994,ze309702,Committee,Success,SUCCESS
+642,D22060994, ,DPApproval,Failed,DB finance_user empty
+643,D22060994, ,DPApproval,Failed,GM DB finance_user empty
+644,D22061366,ze296538,Committee,Success,SUCCESS
+645,D22061366,ze309702,Committee,Success,SUCCESS
+646,D22061366, ,DPApproval,Failed,DB finance_user empty
+647,D22061366, ,DPApproval,Failed,GM DB finance_user empty
+648,D22061624,ze293091,Committee,Success,SUCCESS
+649,D22061624,ze309702,Committee,Success,SUCCESS
+650,D22061624, ,DPApproval,Failed,DB finance_user empty
+651,D22061624, ,DPApproval,Failed,GM DB finance_user empty
+652,D22062112,ze281875,Committee,Success,SUCCESS
+653,D22062112,ze309702,Committee,Success,SUCCESS
+654,D22062112, ,DPApproval,Failed,DB finance_user empty
+655,D22062112, ,DPApproval,Failed,GM DB finance_user empty
+656,D22062121,ze296538,Committee,Success,SUCCESS
+657,D22062121,ze309702,Committee,Success,SUCCESS
+658,D22062121, ,DPApproval,Failed,DB finance_user empty
+659,D22062121, ,DPApproval,Failed,GM DB finance_user empty
+660,D22062122,ze281875,Committee,Success,SUCCESS
+661,D22062122,ze309702,Committee,Success,SUCCESS
+662,D22062122, ,DPApproval,Failed,DB finance_user empty
+663,D22062122, ,DPApproval,Failed,GM DB finance_user empty
+664,D22062190,ze281875,Committee,Success,SUCCESS
+665,D22062190,ze309702,Committee,Success,SUCCESS
+666,D22062190, ,DPApproval,Failed,DB finance_user empty
+667,D22062190, ,DPApproval,Failed,GM DB finance_user empty
+668,D22062370,ze51705,Committee,Success,SUCCESS
+669,D22062370,ze300950,Committee,Success,SUCCESS
+670,D22062370, ,DPApproval,Failed,DB finance_user empty
+671,D22062370, ,DPApproval,Failed,GM DB finance_user empty
+672,D22062373,ze51705,Committee,Success,SUCCESS
+673,D22062373,ze300950,Committee,Success,SUCCESS
+674,D22062373, ,DPApproval,Failed,DB finance_user empty
+675,D22062373, ,DPApproval,Failed,GM DB finance_user empty
+676,D2206241,ze296538,Committee,Success,SUCCESS
+677,D2206241,ze309702,Committee,Success,SUCCESS
+678,D2206241, ,DPApproval,Failed,DB finance_user empty
+679,D2206241, ,DPApproval,Failed,GM DB finance_user empty
+680,D22062477,ze296538,Committee,Success,SUCCESS
+681,D22062477,ze309702,Committee,Success,SUCCESS
+682,D22062477, ,DPApproval,Failed,DB finance_user empty
+683,D22062477, ,DPApproval,Failed,GM DB finance_user empty
+684,D22062715,ze296538,Committee,Success,SUCCESS
+685,D22062715,ze309702,Committee,Success,SUCCESS
+686,D22062715, ,DPApproval,Failed,DB finance_user empty
+687,D22062715, ,DPApproval,Failed,GM DB finance_user empty
+688,D22062783,ze296538,Committee,Success,SUCCESS
+689,D22062783,ze309702,Committee,Success,SUCCESS
+690,D22062783, ,DPApproval,Failed,DB finance_user empty
+691,D22062783, ,DPApproval,Failed,GM DB finance_user empty
+692,D22062785,ze296538,Committee,Success,SUCCESS
+693,D22062785,ze309702,Committee,Success,SUCCESS
+694,D22062785, ,DPApproval,Failed,DB finance_user empty
+695,D22062785, ,DPApproval,Failed,GM DB finance_user empty
+696,D22062837,ze296538,Committee,Success,SUCCESS
+697,D22062837,ze309702,Committee,Success,SUCCESS
+698,D22062837, ,DPApproval,Failed,DB finance_user empty
+699,D22062837, ,DPApproval,Failed,GM DB finance_user empty
+700,D22062973,ze296538,Committee,Success,SUCCESS
+701,D22062973,ze309702,Committee,Success,SUCCESS
+702,D22062973, ,DPApproval,Failed,DB finance_user empty
+703,D22062973, ,DPApproval,Failed,GM DB finance_user empty
+704,D22070152,ze293091,Committee,Success,SUCCESS
+705,D22070152,ze309702,Committee,Success,SUCCESS
+706,D22070152, ,DPApproval,Failed,DB finance_user empty
+707,D22070152, ,DPApproval,Failed,GM DB finance_user empty
+708,D22070175,ze293091,Committee,Success,SUCCESS
+709,D22070175,ze309702,Committee,Success,SUCCESS
+710,D22070175, ,DPApproval,Failed,DB finance_user empty
+711,D22070175, ,DPApproval,Failed,GM DB finance_user empty
+712,D22070479,ze281875,Committee,Success,SUCCESS
+713,D22070479,ze309702,Committee,Success,SUCCESS
+714,D22070479, ,DPApproval,Failed,DB finance_user empty
+715,D22070479, ,DPApproval,Failed,GM DB finance_user empty
+716,D22070550,ze296538,Committee,Success,SUCCESS
+717,D22070550,ze309702,Committee,Success,SUCCESS
+718,D22070550, ,DPApproval,Failed,DB finance_user empty
+719,D22070550, ,DPApproval,Failed,GM DB finance_user empty
+720,D22070716,ze296538,Committee,Success,SUCCESS
+721,D22070716,ze309702,Committee,Success,SUCCESS
+722,D22070716, ,DPApproval,Failed,DB finance_user empty
+723,D22070716, ,DPApproval,Failed,GM DB finance_user empty
+724,D2207076,ze296538,Committee,Success,SUCCESS
+725,D2207076,ze309702,Committee,Success,SUCCESS
+726,D2207076, ,DPApproval,Failed,DB finance_user empty
+727,D2207076, ,DPApproval,Failed,GM DB finance_user empty
+728,D22070774,ze296538,Committee,Success,SUCCESS
+729,D22070774,ze309702,Committee,Success,SUCCESS
+730,D22070774, ,DPApproval,Failed,DB finance_user empty
+731,D22070774, ,DPApproval,Failed,GM DB finance_user empty
+732,D22070828,ze296538,Committee,Success,SUCCESS
+733,D22070828,ze309702,Committee,Success,SUCCESS
+734,D22070828, ,DPApproval,Failed,DB finance_user empty
+735,D22070828, ,DPApproval,Failed,GM DB finance_user empty
+736,D22070842,ze281875,Committee,Success,SUCCESS
+737,D22070842,ze309702,Committee,Success,SUCCESS
+738,D22070842, ,DPApproval,Failed,DB finance_user empty
+739,D22070842, ,DPApproval,Failed,GM DB finance_user empty
+740,D22072535,ze296538,Committee,Success,SUCCESS
+741,D22072535,ze309702,Committee,Success,SUCCESS
+742,D22072535, ,DPApproval,Failed,DB finance_user empty
+743,D22072535, ,DPApproval,Failed,GM DB finance_user empty
+744,D22072596,ze296538,Committee,Success,SUCCESS
+745,D22072596,ze309702,Committee,Success,SUCCESS
+746,D22072596, ,DPApproval,Failed,DB finance_user empty
+747,D22072596, ,DPApproval,Failed,GM DB finance_user empty
+748,D22080147,ze296538,Committee,Success,SUCCESS
+749,D22080147,ze309702,Committee,Success,SUCCESS
+750,D22080147, ,DPApproval,Failed,DB finance_user empty
+751,D22080147, ,DPApproval,Failed,GM DB finance_user empty
+752,D22080183,ze296538,Committee,Success,SUCCESS
+753,D22080183,ze309702,Committee,Success,SUCCESS
+754,D22080183, ,DPApproval,Failed,DB finance_user empty
+755,D22080183, ,DPApproval,Failed,GM DB finance_user empty
+756,D22080197,ze296538,Committee,Success,SUCCESS
+757,D22080197,ze309702,Committee,Success,SUCCESS
+758,D22080197, ,DPApproval,Failed,DB finance_user empty
+759,D22080197, ,DPApproval,Failed,GM DB finance_user empty
+760,D22080211,ze293091,Committee,Success,SUCCESS
+761,D22080211,ze309702,Committee,Success,SUCCESS
+762,D22080211, ,DPApproval,Failed,DB finance_user empty
+763,D22080211, ,DPApproval,Failed,GM DB finance_user empty
+764,D22080251,ze293091,Committee,Success,SUCCESS
+765,D22080251,ze309702,Committee,Success,SUCCESS
+766,D22080251, ,DPApproval,Failed,DB finance_user empty
+767,D22080251, ,DPApproval,Failed,GM DB finance_user empty
+768,D2208042,ze296538,Committee,Success,SUCCESS
+769,D2208042,ze309702,Committee,Success,SUCCESS
+770,D2208042, ,DPApproval,Failed,DB finance_user empty
+771,D2208042, ,DPApproval,Failed,GM DB finance_user empty
+772,D22080429,ze293091,Committee,Success,SUCCESS
+773,D22080429,ze309702,Committee,Success,SUCCESS
+774,D22080429, ,DPApproval,Failed,DB finance_user empty
+775,D22080429, ,DPApproval,Failed,GM DB finance_user empty
+776,D22080443,ze293091,Committee,Success,SUCCESS
+777,D22080443,ze309702,Committee,Success,SUCCESS
+778,D22080443, ,DPApproval,Failed,DB finance_user empty
+779,D22080443, ,DPApproval,Failed,GM DB finance_user empty
+780,D22081030,ze296538,Committee,Success,SUCCESS
+781,D22081030,ze309702,Committee,Success,SUCCESS
+782,D22081030, ,DPApproval,Failed,DB finance_user empty
+783,D22081030, ,DPApproval,Failed,GM DB finance_user empty
+784,D22081047,ze296538,Committee,Success,SUCCESS
+785,D22081047,ze309702,Committee,Success,SUCCESS
+786,D22081047, ,DPApproval,Failed,DB finance_user empty
+787,D22081047, ,DPApproval,Failed,GM DB finance_user empty
+788,D22081056,ze296538,Committee,Success,SUCCESS
+789,D22081056,ze309702,Committee,Success,SUCCESS
+790,D22081056, ,DPApproval,Failed,DB finance_user empty
+791,D22081056, ,DPApproval,Failed,GM DB finance_user empty
+792,D2208109,ze296538,Committee,Success,SUCCESS
+793,D2208109,ze309702,Committee,Success,SUCCESS
+794,D2208109, ,DPApproval,Failed,DB finance_user empty
+795,D2208109, ,DPApproval,Failed,GM DB finance_user empty
+796,D22081099,ze296538,Committee,Success,SUCCESS
+797,D22081099,ze309702,Committee,Success,SUCCESS
+798,D22081099, ,DPApproval,Failed,DB finance_user empty
+799,D22081099, ,DPApproval,Failed,GM DB finance_user empty
+800,D22081118,ze296538,Committee,Success,SUCCESS
+801,D22081118,ze309702,Committee,Success,SUCCESS
+802,D22081118, ,DPApproval,Failed,DB finance_user empty
+803,D22081118, ,DPApproval,Failed,GM DB finance_user empty
+804,D22081151,ze296538,Committee,Success,SUCCESS
+805,D22081151,ze309702,Committee,Success,SUCCESS
+806,D22081151, ,DPApproval,Failed,DB finance_user empty
+807,D22081151, ,DPApproval,Failed,GM DB finance_user empty
+808,D22081156,ze296538,Committee,Success,SUCCESS
+809,D22081156,ze309702,Committee,Success,SUCCESS
+810,D22081156, ,DPApproval,Failed,DB finance_user empty
+811,D22081156, ,DPApproval,Failed,GM DB finance_user empty
+812,D22081667,ze296538,Committee,Success,SUCCESS
+813,D22081667,ze309702,Committee,Success,SUCCESS
+814,D22081667, ,DPApproval,Failed,DB finance_user empty
+815,D22081667, ,DPApproval,Failed,GM DB finance_user empty
+816,D22081686,ze296538,Committee,Success,SUCCESS
+817,D22081686,ze309702,Committee,Success,SUCCESS
+818,D22081686, ,DPApproval,Failed,DB finance_user empty
+819,D22081686, ,DPApproval,Failed,GM DB finance_user empty
+820,D22081930,ze329223,Committee,Success,SUCCESS
+821,D22081930,ze325650,Committee,Success,SUCCESS
+822,D22081930, ,DPApproval,Failed,DB finance_user empty
+823,D22081930, ,DPApproval,Failed,GM DB finance_user empty
+824,D22082513,ze281875,Committee,Success,SUCCESS
+825,D22082513,ze309702,Committee,Success,SUCCESS
+826,D22082513, ,DPApproval,Failed,DB finance_user empty
+827,D22082513, ,DPApproval,Failed,GM DB finance_user empty
+828,D22082564,ze281875,Committee,Success,SUCCESS
+829,D22082564,ze309702,Committee,Success,SUCCESS
+830,D22082564, ,DPApproval,Failed,DB finance_user empty
+831,D22082564, ,DPApproval,Failed,GM DB finance_user empty
+832,D22082568,ze281875,Committee,Success,SUCCESS
+833,D22082568,ze309702,Committee,Success,SUCCESS
+834,D22082568, ,DPApproval,Failed,DB finance_user empty
+835,D22082568, ,DPApproval,Failed,GM DB finance_user empty
+836,D22082588,ze281875,Committee,Success,SUCCESS
+837,D22082588,ze309702,Committee,Success,SUCCESS
+838,D22082588, ,DPApproval,Failed,DB finance_user empty
+839,D22082588, ,DPApproval,Failed,GM DB finance_user empty
+840,D22082686,ze281875,Committee,Success,SUCCESS
+841,D22082686,ze309702,Committee,Success,SUCCESS
+842,D22082686, ,DPApproval,Failed,DB finance_user empty
+843,D22082686, ,DPApproval,Failed,GM DB finance_user empty
+844,D22082695,ze281875,Committee,Success,SUCCESS
+845,D22082695,ze309702,Committee,Success,SUCCESS
+846,D22082695, ,DPApproval,Failed,DB finance_user empty
+847,D22082695, ,DPApproval,Failed,GM DB finance_user empty
+848,D22083083,ze281875,Committee,Success,SUCCESS
+849,D22083083,ze309702,Committee,Success,SUCCESS
+850,D22083083, ,DPApproval,Failed,DB finance_user empty
+851,D22083083, ,DPApproval,Failed,GM DB finance_user empty
+852,D22090142,ze281875,Committee,Success,SUCCESS
+853,D22090142,ze309702,Committee,Success,SUCCESS
+854,D22090142, ,DPApproval,Failed,DB finance_user empty
+855,D22090142, ,DPApproval,Failed,GM DB finance_user empty
+856,D22090147,ze281875,Committee,Success,SUCCESS
+857,D22090147,ze309702,Committee,Success,SUCCESS
+858,D22090147, ,DPApproval,Failed,DB finance_user empty
+859,D22090147, ,DPApproval,Failed,GM DB finance_user empty
+860,D22090167,ze281875,Committee,Success,SUCCESS
+861,D22090167,ze309702,Committee,Success,SUCCESS
+862,D22090167, ,DPApproval,Failed,DB finance_user empty
+863,D22090167, ,DPApproval,Failed,GM DB finance_user empty
+864,D22090188,ze281875,Committee,Success,SUCCESS
+865,D22090188,ze309702,Committee,Success,SUCCESS
+866,D22090188, ,DPApproval,Failed,DB finance_user empty
+867,D22090188, ,DPApproval,Failed,GM DB finance_user empty
+868,D22090582,ze281875,Committee,Success,SUCCESS
+869,D22090582,ze309702,Committee,Success,SUCCESS
+870,D22090582, ,DPApproval,Failed,DB finance_user empty
+871,D22090582, ,DPApproval,Failed,GM DB finance_user empty
+872,D22090621,ze293091,Committee,Success,SUCCESS
+873,D22090621,ze309702,Committee,Success,SUCCESS
+874,D22090621, ,DPApproval,Failed,DB finance_user empty
+875,D22090621, ,DPApproval,Failed,GM DB finance_user empty
+876,D22090628,ze293091,Committee,Success,SUCCESS
+877,D22090628,ze309702,Committee,Success,SUCCESS
+878,D22090628, ,DPApproval,Failed,DB finance_user empty
+879,D22090628, ,DPApproval,Failed,GM DB finance_user empty
+880,D22090911,ze293091,Committee,Success,SUCCESS
+881,D22090911,ze309702,Committee,Success,SUCCESS
+882,D22090911, ,DPApproval,Failed,DB finance_user empty
+883,D22090911, ,DPApproval,Failed,GM DB finance_user empty
+884,D22090916,ze293091,Committee,Success,SUCCESS
+885,D22090916,ze309702,Committee,Success,SUCCESS
+886,D22090916, ,DPApproval,Failed,DB finance_user empty
+887,D22090916, ,DPApproval,Failed,GM DB finance_user empty
+888,D22090919,ze281875,Committee,Success,SUCCESS
+889,D22090919,ze309702,Committee,Success,SUCCESS
+890,D22090919, ,DPApproval,Failed,DB finance_user empty
+891,D22090919, ,DPApproval,Failed,GM DB finance_user empty
+892,D22090942,ze281875,Committee,Success,SUCCESS
+893,D22090942,ze309702,Committee,Success,SUCCESS
+894,D22090942, ,DPApproval,Failed,DB finance_user empty
+895,D22090942, ,DPApproval,Failed,GM DB finance_user empty
+896,D2209096,ze293091,Committee,Success,SUCCESS
+897,D2209096,ze309702,Committee,Success,SUCCESS
+898,D2209096, ,DPApproval,Failed,DB finance_user empty
+899,D2209096, ,DPApproval,Failed,GM DB finance_user empty
+900,D22090978,ze281875,Committee,Success,SUCCESS
+901,D22090978,ze309702,Committee,Success,SUCCESS
+902,D22090978, ,DPApproval,Failed,DB finance_user empty
+903,D22090978, ,DPApproval,Failed,GM DB finance_user empty
+904,D22090989,ze281875,Committee,Success,SUCCESS
+905,D22090989,ze309702,Committee,Success,SUCCESS
+906,D22090989, ,DPApproval,Failed,DB finance_user empty
+907,D22090989, ,DPApproval,Failed,GM DB finance_user empty
+908,D22091218,ze293091,Committee,Success,SUCCESS
+909,D22091218,ze309702,Committee,Success,SUCCESS
+910,D22091218, ,DPApproval,Failed,DB finance_user empty
+911,D22091218, ,DPApproval,Failed,GM DB finance_user empty
+912,D22091224,ze293091,Committee,Success,SUCCESS
+913,D22091224,ze309702,Committee,Success,SUCCESS
+914,D22091224, ,DPApproval,Failed,DB finance_user empty
+915,D22091224, ,DPApproval,Failed,GM DB finance_user empty
+916,D22091250,ze293091,Committee,Success,SUCCESS
+917,D22091250,ze309702,Committee,Success,SUCCESS
+918,D22091250, ,DPApproval,Failed,DB finance_user empty
+919,D22091250, ,DPApproval,Failed,GM DB finance_user empty
+920,D22091492,ze293091,Committee,Success,SUCCESS
+921,D22091492,ze309702,Committee,Success,SUCCESS
+922,D22091492, ,DPApproval,Failed,DB finance_user empty
+923,D22091492, ,DPApproval,Failed,GM DB finance_user empty
+924,D22091613,ze281875,Committee,Success,SUCCESS
+925,D22091613,ze309702,Committee,Success,SUCCESS
+926,D22091613, ,DPApproval,Failed,DB finance_user empty
+927,D22091613, ,DPApproval,Failed,GM DB finance_user empty
+928,D22091680,ze281875,Committee,Success,SUCCESS
+929,D22091680,ze309702,Committee,Success,SUCCESS
+930,D22091680, ,DPApproval,Failed,DB finance_user empty
+931,D22091680, ,DPApproval,Failed,GM DB finance_user empty
+932,D22091955,ze293091,Committee,Success,SUCCESS
+933,D22091955,ze309702,Committee,Success,SUCCESS
+934,D22091955, ,DPApproval,Failed,DB finance_user empty
+935,D22091955, ,DPApproval,Failed,GM DB finance_user empty
+936,D22092610,ze281875,Committee,Success,SUCCESS
+937,D22092610,ze309702,Committee,Success,SUCCESS
+938,D22092610, ,DPApproval,Failed,DB finance_user empty
+939,D22092610, ,DPApproval,Failed,GM DB finance_user empty
+940,D22092623,ze281875,Committee,Success,SUCCESS
+941,D22092623,ze309702,Committee,Success,SUCCESS
+942,D22092623, ,DPApproval,Failed,DB finance_user empty
+943,D22092623, ,DPApproval,Failed,GM DB finance_user empty
+944,D22092640,ze281875,Committee,Success,SUCCESS
+945,D22092640,ze309702,Committee,Success,SUCCESS
+946,D22092640, ,DPApproval,Failed,DB finance_user empty
+947,D22092640, ,DPApproval,Failed,GM DB finance_user empty
+948,D22092643,ze281875,Committee,Success,SUCCESS
+949,D22092643,ze309702,Committee,Success,SUCCESS
+950,D22092643, ,DPApproval,Failed,DB finance_user empty
+951,D22092643, ,DPApproval,Failed,GM DB finance_user empty
+952,D22092652,ze281875,Committee,Success,SUCCESS
+953,D22092652,ze309702,Committee,Success,SUCCESS
+954,D22092652, ,DPApproval,Failed,DB finance_user empty
+955,D22092652, ,DPApproval,Failed,GM DB finance_user empty
+956,D22092657,ze281875,Committee,Success,SUCCESS
+957,D22092657,ze309702,Committee,Success,SUCCESS
+958,D22092657, ,DPApproval,Failed,DB finance_user empty
+959,D22092657, ,DPApproval,Failed,GM DB finance_user empty
+960,D22092665,ze281875,Committee,Success,SUCCESS
+961,D22092665,ze309702,Committee,Success,SUCCESS
+962,D22092665, ,DPApproval,Failed,DB finance_user empty
+963,D22092665, ,DPApproval,Failed,GM DB finance_user empty
+964,D22092667,ze281875,Committee,Success,SUCCESS
+965,D22092667,ze309702,Committee,Success,SUCCESS
+966,D22092667, ,DPApproval,Failed,DB finance_user empty
+967,D22092667, ,DPApproval,Failed,GM DB finance_user empty
+968,D22092668,ze281875,Committee,Success,SUCCESS
+969,D22092668,ze309702,Committee,Success,SUCCESS
+970,D22092668, ,DPApproval,Failed,DB finance_user empty
+971,D22092668, ,DPApproval,Failed,GM DB finance_user empty
+972,D22092674,ze281875,Committee,Success,SUCCESS
+973,D22092674,ze309702,Committee,Success,SUCCESS
+974,D22092674, ,DPApproval,Failed,DB finance_user empty
+975,D22092674, ,DPApproval,Failed,GM DB finance_user empty
+976,D22092675,ze281875,Committee,Success,SUCCESS
+977,D22092675,ze309702,Committee,Success,SUCCESS
+978,D22092675, ,DPApproval,Failed,DB finance_user empty
+979,D22092675, ,DPApproval,Failed,GM DB finance_user empty
+980,D22092683,ze281875,Committee,Success,SUCCESS
+981,D22092683,ze309702,Committee,Success,SUCCESS
+982,D22092683, ,DPApproval,Failed,DB finance_user empty
+983,D22092683, ,DPApproval,Failed,GM DB finance_user empty
+984,D22092693,ze281875,Committee,Success,SUCCESS
+985,D22092693,ze309702,Committee,Success,SUCCESS
+986,D22092693, ,DPApproval,Failed,DB finance_user empty
+987,D22092693, ,DPApproval,Failed,GM DB finance_user empty
+988,D22092710,ze293091,Committee,Success,SUCCESS
+989,D22092710,ze309702,Committee,Success,SUCCESS
+990,D22092710, ,DPApproval,Failed,DB finance_user empty
+991,D22092710, ,DPApproval,Failed,GM DB finance_user empty
+992,D2209277,ze293091,Committee,Success,SUCCESS
+993,D2209277,ze309702,Committee,Success,SUCCESS
+994,D2209277, ,DPApproval,Failed,DB finance_user empty
+995,D2209277, ,DPApproval,Failed,GM DB finance_user empty
+996,D22100498,ze281875,Committee,Success,SUCCESS
+997,D22100498,ze309702,Committee,Success,SUCCESS
+998,D22100498, ,DPApproval,Failed,DB finance_user empty
+999,D22100498, ,DPApproval,Failed,GM DB finance_user empty
+1000,D2210102,ze281875,Committee,Success,SUCCESS
+1001,D2210102,ze309702,Committee,Success,SUCCESS
+1002,D2210102, ,DPApproval,Failed,DB finance_user empty
+1003,D2210102, ,DPApproval,Failed,GM DB finance_user empty
+1004,D22101029,ze281875,Committee,Success,SUCCESS
+1005,D22101029,ze309702,Committee,Success,SUCCESS
+1006,D22101029, ,DPApproval,Failed,DB finance_user empty
+1007,D22101029, ,DPApproval,Failed,GM DB finance_user empty
+1008,D22101094,ze281875,Committee,Success,SUCCESS
+1009,D22101094,ze309702,Committee,Success,SUCCESS
+1010,D22101094, ,DPApproval,Failed,DB finance_user empty
+1011,D22101094, ,DPApproval,Failed,GM DB finance_user empty
+1012,D22101095,ze281875,Committee,Success,SUCCESS
+1013,D22101095,ze309702,Committee,Success,SUCCESS
+1014,D22101095, ,DPApproval,Failed,DB finance_user empty
+1015,D22101095, ,DPApproval,Failed,GM DB finance_user empty
+1016,D22101829,ze293091,Committee,Success,SUCCESS
+1017,D22101829,ze309702,Committee,Success,SUCCESS
+1018,D22101829, ,DPApproval,Failed,DB finance_user empty
+1019,D22101829, ,DPApproval,Failed,GM DB finance_user empty
+1020,D22101833,ze293091,Committee,Success,SUCCESS
+1021,D22101833,ze309702,Committee,Success,SUCCESS
+1022,D22101833, ,DPApproval,Failed,DB finance_user empty
+1023,D22101833, ,DPApproval,Failed,GM DB finance_user empty
+1024,D22101871,ze293091,Committee,Success,SUCCESS
+1025,D22101871,ze309702,Committee,Success,SUCCESS
+1026,D22101871, ,DPApproval,Failed,DB finance_user empty
+1027,D22101871, ,DPApproval,Failed,GM DB finance_user empty
+1028,D22101956,ze293091,Committee,Success,SUCCESS
+1029,D22101956,ze309702,Committee,Success,SUCCESS
+1030,D22101956, ,DPApproval,Failed,DB finance_user empty
+1031,D22101956, ,DPApproval,Failed,GM DB finance_user empty
+1032,D22102115,ze293091,Committee,Success,SUCCESS
+1033,D22102115,ze309702,Committee,Success,SUCCESS
+1034,D22102115, ,DPApproval,Failed,DB finance_user empty
+1035,D22102115, ,DPApproval,Failed,GM DB finance_user empty
+1036,D22102525,ze281875,Committee,Success,SUCCESS
+1037,D22102525,ze309702,Committee,Success,SUCCESS
+1038,D22102525, ,DPApproval,Failed,DB finance_user empty
+1039,D22102525, ,DPApproval,Failed,GM DB finance_user empty
+1040,D22102545,ze281875,Committee,Success,SUCCESS
+1041,D22102545,ze309702,Committee,Success,SUCCESS
+1042,D22102545, ,DPApproval,Failed,DB finance_user empty
+1043,D22102545, ,DPApproval,Failed,GM DB finance_user empty
+1044,D22102549,ze281875,Committee,Success,SUCCESS
+1045,D22102549,ze309702,Committee,Success,SUCCESS
+1046,D22102549, ,DPApproval,Failed,DB finance_user empty
+1047,D22102549, ,DPApproval,Failed,GM DB finance_user empty
+1048,D22102550,ze281875,Committee,Success,SUCCESS
+1049,D22102550,ze309702,Committee,Success,SUCCESS
+1050,D22102550, ,DPApproval,Failed,DB finance_user empty
+1051,D22102550, ,DPApproval,Failed,GM DB finance_user empty
+1052,D22102565,ze281875,Committee,Success,SUCCESS
+1053,D22102565,ze309702,Committee,Success,SUCCESS
+1054,D22102565, ,DPApproval,Failed,DB finance_user empty
+1055,D22102565, ,DPApproval,Failed,GM DB finance_user empty
+1056,D22102570,ze281875,Committee,Success,SUCCESS
+1057,D22102570,ze309702,Committee,Success,SUCCESS
+1058,D22102570, ,DPApproval,Failed,DB finance_user empty
+1059,D22102570, ,DPApproval,Failed,GM DB finance_user empty
+1060,D22102579,ze281875,Committee,Success,SUCCESS
+1061,D22102579,ze309702,Committee,Success,SUCCESS
+1062,D22102579, ,DPApproval,Failed,DB finance_user empty
+1063,D22102579, ,DPApproval,Failed,GM DB finance_user empty
+1064,D2210258,ze281875,Committee,Success,SUCCESS
+1065,D2210258,ze309702,Committee,Success,SUCCESS
+1066,D2210258, ,DPApproval,Failed,DB finance_user empty
+1067,D2210258, ,DPApproval,Failed,GM DB finance_user empty
+1068,D22102644,ze281875,Committee,Success,SUCCESS
+1069,D22102644,ze309702,Committee,Success,SUCCESS
+1070,D22102644, ,DPApproval,Failed,DB finance_user empty
+1071,D22102644, ,DPApproval,Failed,GM DB finance_user empty
+1072,D22103199,ze281875,Committee,Success,SUCCESS
+1073,D22103199,ze309702,Committee,Success,SUCCESS
+1074,D22103199, ,DPApproval,Failed,DB finance_user empty
+1075,D22103199, ,DPApproval,Failed,GM DB finance_user empty
+1076,D22110135,ze281875,Committee,Success,SUCCESS
+1077,D22110135,ze309702,Committee,Success,SUCCESS
+1078,D22110135, ,DPApproval,Failed,DB finance_user empty
+1079,D22110135, ,DPApproval,Failed,GM DB finance_user empty
+1080,D22111816,ze281875,Committee,Success,SUCCESS
+1081,D22111816,ze309702,Committee,Success,SUCCESS
+1082,D22111816, ,DPApproval,Failed,DB finance_user empty
+1083,D22111816, ,DPApproval,Failed,GM DB finance_user empty
+1084,D22111840,ze281875,Committee,Success,SUCCESS
+1085,D22111840,ze309702,Committee,Success,SUCCESS
+1086,D22111840, ,DPApproval,Failed,DB finance_user empty
+1087,D22111840, ,DPApproval,Failed,GM DB finance_user empty
+1088,D2211188,ze281875,Committee,Success,SUCCESS
+1089,D2211188,ze309702,Committee,Success,SUCCESS
+1090,D2211188, ,DPApproval,Failed,DB finance_user empty
+1091,D2211188, ,DPApproval,Failed,GM DB finance_user empty
+1092,D22112120,ze281875,Committee,Success,SUCCESS
+1093,D22112120,ze309702,Committee,Success,SUCCESS
+1094,D22112120, ,DPApproval,Failed,DB finance_user empty
+1095,D22112120, ,DPApproval,Failed,GM DB finance_user empty
+1096,D22112122,ze281875,Committee,Success,SUCCESS
+1097,D22112122,ze309702,Committee,Success,SUCCESS
+1098,D22112122, ,DPApproval,Failed,DB finance_user empty
+1099,D22112122, ,DPApproval,Failed,GM DB finance_user empty
+1100,D22112168,ze281875,Committee,Success,SUCCESS
+1101,D22112168,ze309702,Committee,Success,SUCCESS
+1102,D22112168, ,DPApproval,Failed,DB finance_user empty
+1103,D22112168, ,DPApproval,Failed,GM DB finance_user empty
+1104,D22112173,ze281875,Committee,Success,SUCCESS
+1105,D22112173,ze309702,Committee,Success,SUCCESS
+1106,D22112173, ,DPApproval,Failed,DB finance_user empty
+1107,D22112173, ,DPApproval,Failed,GM DB finance_user empty
+1108,D22112231,ze281875,Committee,Success,SUCCESS
+1109,D22112231,ze309702,Committee,Success,SUCCESS
+1110,D22112231, ,DPApproval,Failed,DB finance_user empty
+1111,D22112231, ,DPApproval,Failed,GM DB finance_user empty
+1112,D22112266,ze281875,Committee,Success,SUCCESS
+1113,D22112266,ze309702,Committee,Success,SUCCESS
+1114,D22112266, ,DPApproval,Failed,DB finance_user empty
+1115,D22112266, ,DPApproval,Failed,GM DB finance_user empty
+1116,D22112278,ze281875,Committee,Success,SUCCESS
+1117,D22112278,ze309702,Committee,Success,SUCCESS
+1118,D22112278, ,DPApproval,Failed,DB finance_user empty
+1119,D22112278, ,DPApproval,Failed,GM DB finance_user empty
+1120,D22112279,ze281875,Committee,Success,SUCCESS
+1121,D22112279,ze309702,Committee,Success,SUCCESS
+1122,D22112279, ,DPApproval,Failed,DB finance_user empty
+1123,D22112279, ,DPApproval,Failed,GM DB finance_user empty
+1124,D22112591,ze281875,Committee,Success,SUCCESS
+1125,D22112591,ze309702,Committee,Success,SUCCESS
+1126,D22112591, ,DPApproval,Failed,DB finance_user empty
+1127,D22112591, ,DPApproval,Failed,GM DB finance_user empty
+1128,D22120125,ze281875,Committee,Success,SUCCESS
+1129,D22120125,ze309702,Committee,Success,SUCCESS
+1130,D22120125, ,DPApproval,Failed,DB finance_user empty
+1131,D22120125, ,DPApproval,Failed,GM DB finance_user empty
+1132,D2212013,ze281875,Committee,Success,SUCCESS
+1133,D2212013,ze309702,Committee,Success,SUCCESS
+1134,D2212013, ,DPApproval,Failed,DB finance_user empty
+1135,D2212013, ,DPApproval,Failed,GM DB finance_user empty
+1136,D22120142,ze281875,Committee,Success,SUCCESS
+1137,D22120142,ze309702,Committee,Success,SUCCESS
+1138,D22120142, ,DPApproval,Failed,DB finance_user empty
+1139,D22120142, ,DPApproval,Failed,GM DB finance_user empty
+1140,D22120145,ze281875,Committee,Success,SUCCESS
+1141,D22120145,ze309702,Committee,Success,SUCCESS
+1142,D22120145, ,DPApproval,Failed,DB finance_user empty
+1143,D22120145, ,DPApproval,Failed,GM DB finance_user empty
+1144,D22120150,ze281875,Committee,Success,SUCCESS
+1145,D22120150,ze309702,Committee,Success,SUCCESS
+1146,D22120150, ,DPApproval,Failed,DB finance_user empty
+1147,D22120150, ,DPApproval,Failed,GM DB finance_user empty
+1148,D22120174,ze281875,Committee,Success,SUCCESS
+1149,D22120174,ze309702,Committee,Success,SUCCESS
+1150,D22120174, ,DPApproval,Failed,DB finance_user empty
+1151,D22120174, ,DPApproval,Failed,GM DB finance_user empty
+1152,D22120180,ze281875,Committee,Success,SUCCESS
+1153,D22120180,ze309702,Committee,Success,SUCCESS
+1154,D22120180, ,DPApproval,Failed,DB finance_user empty
+1155,D22120180, ,DPApproval,Failed,GM DB finance_user empty
+1156,D22120181,ze281875,Committee,Success,SUCCESS
+1157,D22120181,ze309702,Committee,Success,SUCCESS
+1158,D22120181, ,DPApproval,Failed,DB finance_user empty
+1159,D22120181, ,DPApproval,Failed,GM DB finance_user empty
+1160,D22120713,ze281875,Committee,Success,SUCCESS
+1161,D22120713,ze309702,Committee,Success,SUCCESS
+1162,D22120713, ,DPApproval,Failed,DB finance_user empty
+1163,D22120713, ,DPApproval,Failed,GM DB finance_user empty
+1164,D22121313,ze281875,Committee,Success,SUCCESS
+1165,D22121313,ze309702,Committee,Success,SUCCESS
+1166,D22121313, ,DPApproval,Failed,DB finance_user empty
+1167,D22121313, ,DPApproval,Failed,GM DB finance_user empty
+1168,D22121321,ze54119,Committee,Success,SUCCESS
+1169,D22121321,ze231169,Committee,Success,SUCCESS
+1170,D22121321, ,DPApproval,Failed,DB finance_user empty
+1171,D22121321, ,DPApproval,Failed,GM DB finance_user empty
+1172,D22121332,ze281875,Committee,Success,SUCCESS
+1173,D22121332,ze309702,Committee,Success,SUCCESS
+1174,D22121332, ,DPApproval,Failed,DB finance_user empty
+1175,D22121332, ,DPApproval,Failed,GM DB finance_user empty
+1176,D22121335,ze281875,Committee,Success,SUCCESS
+1177,D22121335,ze309702,Committee,Success,SUCCESS
+1178,D22121335, ,DPApproval,Failed,DB finance_user empty
+1179,D22121335, ,DPApproval,Failed,GM DB finance_user empty
+1180,D22121348,ze54119,Committee,Success,SUCCESS
+1181,D22121348,ze231169,Committee,Success,SUCCESS
+1182,D22121348, ,DPApproval,Failed,DB finance_user empty
+1183,D22121348, ,DPApproval,Failed,GM DB finance_user empty
+1184,D22121366,ze54119,Committee,Success,SUCCESS
+1185,D22121366,ze231169,Committee,Success,SUCCESS
+1186,D22121366, ,DPApproval,Failed,DB finance_user empty
+1187,D22121366, ,DPApproval,Failed,GM DB finance_user empty
+1188,D22121372,ze281875,Committee,Success,SUCCESS
+1189,D22121372,ze309702,Committee,Success,SUCCESS
+1190,D22121372, ,DPApproval,Failed,DB finance_user empty
+1191,D22121372, ,DPApproval,Failed,GM DB finance_user empty
+1192,D22121375,ze54119,Committee,Success,SUCCESS
+1193,D22121375,ze231169,Committee,Success,SUCCESS
+1194,D22121375, ,DPApproval,Failed,DB finance_user empty
+1195,D22121375, ,DPApproval,Failed,GM DB finance_user empty
+1196,D22121376,ze281875,Committee,Success,SUCCESS
+1197,D22121376,ze309702,Committee,Success,SUCCESS
+1198,D22121376, ,DPApproval,Failed,DB finance_user empty
+1199,D22121376, ,DPApproval,Failed,GM DB finance_user empty
+1200,D22121394,ze281875,Committee,Success,SUCCESS
+1201,D22121394,ze309702,Committee,Success,SUCCESS
+1202,D22121394, ,DPApproval,Failed,DB finance_user empty
+1203,D22121394, ,DPApproval,Failed,GM DB finance_user empty
+1204,D23012051,ze281875,Committee,Success,SUCCESS
+1205,D23012051,ze309702,Committee,Success,SUCCESS
+1206,D23012051, ,DPApproval,Failed,DB finance_user empty
+1207,D23012051, ,DPApproval,Failed,GM DB finance_user empty
+1208,D23012083,ze281875,Committee,Success,SUCCESS
+1209,D23012083,ze309702,Committee,Success,SUCCESS
+1210,D23012083, ,DPApproval,Failed,DB finance_user empty
+1211,D23012083, ,DPApproval,Failed,GM DB finance_user empty
+1212,D23012412,ze281875,Committee,Success,SUCCESS
+1213,D23012412,ze309702,Committee,Success,SUCCESS
+1214,D23012412, ,DPApproval,Failed,DB finance_user empty
+1215,D23012412, ,DPApproval,Failed,GM DB finance_user empty
+1216,D23012439,ze281875,Committee,Success,SUCCESS
+1217,D23012439,ze309702,Committee,Success,SUCCESS
+1218,D23012439, ,DPApproval,Failed,DB finance_user empty
+1219,D23012439, ,DPApproval,Failed,GM DB finance_user empty
+1220,D2301245,ze281875,Committee,Success,SUCCESS
+1221,D2301245,ze309702,Committee,Success,SUCCESS
+1222,D2301245, ,DPApproval,Failed,DB finance_user empty
+1223,D2301245, ,DPApproval,Failed,GM DB finance_user empty
+1224,D23012487,ze281875,Committee,Success,SUCCESS
+1225,D23012487,ze309702,Committee,Success,SUCCESS
+1226,D23012487, ,DPApproval,Failed,DB finance_user empty
+1227,D23012487, ,DPApproval,Failed,GM DB finance_user empty
+1228,D23013019,ze281875,Committee,Success,SUCCESS
+1229,D23013019,ze309702,Committee,Success,SUCCESS
+1230,D23013019, ,DPApproval,Failed,DB finance_user empty
+1231,D23013019, ,DPApproval,Failed,GM DB finance_user empty
+1232,D2301309,ze281875,Committee,Success,SUCCESS
+1233,D2301309,ze309702,Committee,Success,SUCCESS
+1234,D2301309, ,DPApproval,Failed,DB finance_user empty
+1235,D2301309, ,DPApproval,Failed,GM DB finance_user empty
+1236,D23013097,ze281875,Committee,Success,SUCCESS
+1237,D23013097,ze309702,Committee,Success,SUCCESS
+1238,D23013097, ,DPApproval,Failed,DB finance_user empty
+1239,D23013097, ,DPApproval,Failed,GM DB finance_user empty
+1240,D2302022,ze281875,Committee,Success,SUCCESS
+1241,D2302022,ze309702,Committee,Success,SUCCESS
+1242,D2302022, ,DPApproval,Failed,DB finance_user empty
+1243,D2302022, ,DPApproval,Failed,GM DB finance_user empty
+1244,D23020240,ze281875,Committee,Success,SUCCESS
+1245,D23020240,ze309702,Committee,Success,SUCCESS
+1246,D23020240, ,DPApproval,Failed,DB finance_user empty
+1247,D23020240, ,DPApproval,Failed,GM DB finance_user empty
+1248,D2302027,ze281875,Committee,Success,SUCCESS
+1249,D2302027,ze309702,Committee,Success,SUCCESS
+1250,D2302027, ,DPApproval,Failed,DB finance_user empty
+1251,D2302027, ,DPApproval,Failed,GM DB finance_user empty
+1252,D23020289,ze281875,Committee,Success,SUCCESS
+1253,D23020289,ze309702,Committee,Success,SUCCESS
+1254,D23020289, ,DPApproval,Failed,DB finance_user empty
+1255,D23020289, ,DPApproval,Failed,GM DB finance_user empty
+1256,D23020668,ze281875,Committee,Success,SUCCESS
+1257,D23020668,ze309702,Committee,Success,SUCCESS
+1258,D23020668, ,DPApproval,Failed,DB finance_user empty
+1259,D23020668, ,DPApproval,Failed,GM DB finance_user empty
+1260,D23020846,ze281875,Committee,Success,SUCCESS
+1261,D23020846,ze309702,Committee,Success,SUCCESS
+1262,D23020846, ,DPApproval,Failed,DB finance_user empty
+1263,D23020846, ,DPApproval,Failed,GM DB finance_user empty
+1264,D23022295,ze281875,Committee,Success,SUCCESS
+1265,D23022295,ze309702,Committee,Success,SUCCESS
+1266,D23022295, ,DPApproval,Failed,DB finance_user empty
+1267,D23022295, ,DPApproval,Failed,GM DB finance_user empty
+1268,D23022321,ze281875,Committee,Success,SUCCESS
+1269,D23022321,ze309702,Committee,Success,SUCCESS
+1270,D23022321, ,DPApproval,Failed,DB finance_user empty
+1271,D23022321, ,DPApproval,Failed,GM DB finance_user empty
+1272,D23022722,ze281875,Committee,Success,SUCCESS
+1273,D23022722,ze309702,Committee,Success,SUCCESS
+1274,D23022722, ,DPApproval,Failed,DB finance_user empty
+1275,D23022722, ,DPApproval,Failed,GM DB finance_user empty
+1276,D23022728,ze281875,Committee,Success,SUCCESS
+1277,D23022728,ze309702,Committee,Success,SUCCESS
+1278,D23022728, ,DPApproval,Failed,DB finance_user empty
+1279,D23022728, ,DPApproval,Failed,GM DB finance_user empty
+1280,D23022757,ze281875,Committee,Success,SUCCESS
+1281,D23022757,ze309702,Committee,Success,SUCCESS
+1282,D23022757, ,DPApproval,Failed,DB finance_user empty
+1283,D23022757, ,DPApproval,Failed,GM DB finance_user empty
+1284,D2302276,ze281875,Committee,Success,SUCCESS
+1285,D2302276,ze309702,Committee,Success,SUCCESS
+1286,D2302276, ,DPApproval,Failed,DB finance_user empty
+1287,D2302276, ,DPApproval,Failed,GM DB finance_user empty
+1288,D23022774,ze281875,Committee,Success,SUCCESS
+1289,D23022774,ze309702,Committee,Success,SUCCESS
+1290,D23022774, ,DPApproval,Failed,DB finance_user empty
+1291,D23022774, ,DPApproval,Failed,GM DB finance_user empty
+1292,D2302278,ze281875,Committee,Success,SUCCESS
+1293,D2302278,ze309702,Committee,Success,SUCCESS
+1294,D2302278, ,DPApproval,Failed,DB finance_user empty
+1295,D2302278, ,DPApproval,Failed,GM DB finance_user empty
+1296,D23022784,ze281875,Committee,Success,SUCCESS
+1297,D23022784,ze309702,Committee,Success,SUCCESS
+1298,D23022784, ,DPApproval,Failed,DB finance_user empty
+1299,D23022784, ,DPApproval,Failed,GM DB finance_user empty
+1300,D23022890,ze281875,Committee,Success,SUCCESS
+1301,D23022890,ze309702,Committee,Success,SUCCESS
+1302,D23022890, ,DPApproval,Failed,DB finance_user empty
+1303,D23022890, ,DPApproval,Failed,GM DB finance_user empty
+1304,D23030197,ze281875,Committee,Success,SUCCESS
+1305,D23030197,ze309702,Committee,Success,SUCCESS
+1306,D23030197, ,DPApproval,Failed,DB finance_user empty
+1307,D23030197, ,DPApproval,Failed,GM DB finance_user empty
+1308,D23030217,ze281875,Committee,Success,SUCCESS
+1309,D23030217,ze309702,Committee,Success,SUCCESS
+1310,D23030217, ,DPApproval,Failed,DB finance_user empty
+1311,D23030217, ,DPApproval,Failed,GM DB finance_user empty
+1312,D23032143,ze281875,Committee,Success,SUCCESS
+1313,D23032143,ze309702,Committee,Success,SUCCESS
+1314,D23032143, ,DPApproval,Failed,DB finance_user empty
+1315,D23032143, ,DPApproval,Failed,GM DB finance_user empty
+1316,D23032193,ze281875,Committee,Success,SUCCESS
+1317,D23032193,ze309702,Committee,Success,SUCCESS
+1318,D23032193, ,DPApproval,Failed,DB finance_user empty
+1319,D23032193, ,DPApproval,Failed,GM DB finance_user empty
+1320,D23032414,ze281875,Committee,Success,SUCCESS
+1321,D23032414,ze309702,Committee,Success,SUCCESS
+1322,D23032414, ,DPApproval,Failed,DB finance_user empty
+1323,D23032414, ,DPApproval,Failed,GM DB finance_user empty
+1324,D23032425,ze281875,Committee,Success,SUCCESS
+1325,D23032425,ze309702,Committee,Success,SUCCESS
+1326,D23032425, ,DPApproval,Failed,DB finance_user empty
+1327,D23032425, ,DPApproval,Failed,GM DB finance_user empty
+1328,D23032452,ze281875,Committee,Success,SUCCESS
+1329,D23032452,ze309702,Committee,Success,SUCCESS
+1330,D23032452, ,DPApproval,Failed,DB finance_user empty
+1331,D23032452, ,DPApproval,Failed,GM DB finance_user empty
+1332,D23032465,ze281875,Committee,Success,SUCCESS
+1333,D23032465,ze309702,Committee,Success,SUCCESS
+1334,D23032465, ,DPApproval,Failed,DB finance_user empty
+1335,D23032465, ,DPApproval,Failed,GM DB finance_user empty
+1336,D23032470,ze281875,Committee,Success,SUCCESS
+1337,D23032470,ze309702,Committee,Success,SUCCESS
+1338,D23032470, ,DPApproval,Failed,DB finance_user empty
+1339,D23032470, ,DPApproval,Failed,GM DB finance_user empty
+1340,D23032476,ze281875,Committee,Success,SUCCESS
+1341,D23032476,ze309702,Committee,Success,SUCCESS
+1342,D23032476, ,DPApproval,Failed,DB finance_user empty
+1343,D23032476, ,DPApproval,Failed,GM DB finance_user empty
+1344,D23032478,ze281875,Committee,Success,SUCCESS
+1345,D23032478,ze309702,Committee,Success,SUCCESS
+1346,D23032478, ,DPApproval,Failed,DB finance_user empty
+1347,D23032478, ,DPApproval,Failed,GM DB finance_user empty
+1348,D23032481,ze281875,Committee,Success,SUCCESS
+1349,D23032481,ze309702,Committee,Success,SUCCESS
+1350,D23032481, ,DPApproval,Failed,DB finance_user empty
+1351,D23032481, ,DPApproval,Failed,GM DB finance_user empty
+1352,D2304052,ze281875,Committee,Success,SUCCESS
+1353,D2304052,ze309702,Committee,Success,SUCCESS
+1354,D2304052, ,DPApproval,Failed,DB finance_user empty
+1355,D2304052, ,DPApproval,Failed,GM DB finance_user empty
+1356,D23040577,ze281875,Committee,Success,SUCCESS
+1357,D23040577,ze309702,Committee,Success,SUCCESS
+1358,D23040577, ,DPApproval,Failed,DB finance_user empty
+1359,D23040577, ,DPApproval,Failed,GM DB finance_user empty
+1360,D23042620,ze281875,Committee,Success,SUCCESS
+1361,D23042620,ze309702,Committee,Success,SUCCESS
+1362,D23042620, ,DPApproval,Failed,DB finance_user empty
+1363,D23042620, ,DPApproval,Failed,GM DB finance_user empty
+1364,D23042629,ze281875,Committee,Success,SUCCESS
+1365,D23042629,ze309702,Committee,Success,SUCCESS
+1366,D23042629, ,DPApproval,Failed,DB finance_user empty
+1367,D23042629, ,DPApproval,Failed,GM DB finance_user empty
+1368,D23042637,ze281875,Committee,Success,SUCCESS
+1369,D23042637,ze309702,Committee,Success,SUCCESS
+1370,D23042637, ,DPApproval,Failed,DB finance_user empty
+1371,D23042637, ,DPApproval,Failed,GM DB finance_user empty
+1372,D23042640,ze281875,Committee,Success,SUCCESS
+1373,D23042640,ze309702,Committee,Success,SUCCESS
+1374,D23042640, ,DPApproval,Failed,DB finance_user empty
+1375,D23042640, ,DPApproval,Failed,GM DB finance_user empty
+1376,D23042646,ze281875,Committee,Success,SUCCESS
+1377,D23042646,ze309702,Committee,Success,SUCCESS
+1378,D23042646, ,DPApproval,Failed,DB finance_user empty
+1379,D23042646, ,DPApproval,Failed,GM DB finance_user empty
+1380,D23042648,ze281875,Committee,Success,SUCCESS
+1381,D23042648,ze309702,Committee,Success,SUCCESS
+1382,D23042648, ,DPApproval,Failed,DB finance_user empty
+1383,D23042648, ,DPApproval,Failed,GM DB finance_user empty
+1384,D23042661,ze281875,Committee,Success,SUCCESS
+1385,D23042661,ze309702,Committee,Success,SUCCESS
+1386,D23042661, ,DPApproval,Failed,DB finance_user empty
+1387,D23042661, ,DPApproval,Failed,GM DB finance_user empty
+1388,D23042663,ze281875,Committee,Success,SUCCESS
+1389,D23042663,ze309702,Committee,Success,SUCCESS
+1390,D23042663, ,DPApproval,Failed,DB finance_user empty
+1391,D23042663, ,DPApproval,Failed,GM DB finance_user empty
+1392,D23042671,ze281875,Committee,Success,SUCCESS
+1393,D23042671,ze309702,Committee,Success,SUCCESS
+1394,D23042671, ,DPApproval,Failed,DB finance_user empty
+1395,D23042671, ,DPApproval,Failed,GM DB finance_user empty
+1396,D23042694,ze281875,Committee,Success,SUCCESS
+1397,D23042694,ze309702,Committee,Success,SUCCESS
+1398,D23042694, ,DPApproval,Failed,DB finance_user empty
+1399,D23042694, ,DPApproval,Failed,GM DB finance_user empty
+1400,D23050293,ze281875,Committee,Success,SUCCESS
+1401,D23050293,ze309702,Committee,Success,SUCCESS
+1402,D23050293, ,DPApproval,Failed,DB finance_user empty
+1403,D23050293, ,DPApproval,Failed,GM DB finance_user empty
+1404,D23050296,ze281875,Committee,Success,SUCCESS
+1405,D23050296,ze309702,Committee,Success,SUCCESS
+1406,D23050296, ,DPApproval,Failed,DB finance_user empty
+1407,D23050296, ,DPApproval,Failed,GM DB finance_user empty
+1408,D23051870,ze281875,Committee,Success,SUCCESS
+1409,D23051870,ze309702,Committee,Success,SUCCESS
+1410,D23051870, ,DPApproval,Failed,DB finance_user empty
+1411,D23051870, ,DPApproval,Failed,GM DB finance_user empty
+1412,D23051871,ze281875,Committee,Success,SUCCESS
+1413,D23051871,ze309702,Committee,Success,SUCCESS
+1414,D23051871, ,DPApproval,Failed,DB finance_user empty
+1415,D23051871, ,DPApproval,Failed,GM DB finance_user empty
+1416,D23051991,ze281875,Committee,Success,SUCCESS
+1417,D23051991,ze309702,Committee,Success,SUCCESS
+1418,D23051991, ,DPApproval,Failed,DB finance_user empty
+1419,D23051991, ,DPApproval,Failed,GM DB finance_user empty
+1420,D2305224,ze281875,Committee,Success,SUCCESS
+1421,D2305224,ze309702,Committee,Success,SUCCESS
+1422,D2305224, ,DPApproval,Failed,DB finance_user empty
+1423,D2305224, ,DPApproval,Failed,GM DB finance_user empty
+1424,D23052254,ze281875,Committee,Success,SUCCESS
+1425,D23052254,ze309702,Committee,Success,SUCCESS
+1426,D23052254, ,DPApproval,Failed,DB finance_user empty
+1427,D23052254, ,DPApproval,Failed,GM DB finance_user empty
+1428,D23052295,ze281875,Committee,Success,SUCCESS
+1429,D23052295,ze309702,Committee,Success,SUCCESS
+1430,D23052295, ,DPApproval,Failed,DB finance_user empty
+1431,D23052295, ,DPApproval,Failed,GM DB finance_user empty
+1432,D23052932,ze281875,Committee,Success,SUCCESS
+1433,D23052932,ze309702,Committee,Success,SUCCESS
+1434,D23052932, ,DPApproval,Failed,DB finance_user empty
+1435,D23052932, ,DPApproval,Failed,GM DB finance_user empty
+1436,D23053194,ze281875,Committee,Success,SUCCESS
+1437,D23053194,ze309702,Committee,Success,SUCCESS
+1438,D23053194, ,DPApproval,Failed,DB finance_user empty
+1439,D23053194, ,DPApproval,Failed,GM DB finance_user empty
+1440,D23060174,ze281875,Committee,Success,SUCCESS
+1441,D23060174,ze309702,Committee,Success,SUCCESS
+1442,D23060174, ,DPApproval,Failed,DB finance_user empty
+1443,D23060174, ,DPApproval,Failed,GM DB finance_user empty
+1444,D23060190,ze281875,Committee,Success,SUCCESS
+1445,D23060190,ze309702,Committee,Success,SUCCESS
+1446,D23060190, ,DPApproval,Failed,DB finance_user empty
+1447,D23060190, ,DPApproval,Failed,GM DB finance_user empty
+1448,D2306054,ze281875,Committee,Success,SUCCESS
+1449,D2306054,ze309702,Committee,Success,SUCCESS
+1450,D2306054, ,DPApproval,Failed,DB finance_user empty
+1451,D2306054, ,DPApproval,Failed,GM DB finance_user empty
+1452,D2306056,ze281875,Committee,Success,SUCCESS
+1453,D2306056,ze309702,Committee,Success,SUCCESS
+1454,D2306056, ,DPApproval,Failed,DB finance_user empty
+1455,D2306056, ,DPApproval,Failed,GM DB finance_user empty
+1456,D23060566,ze281875,Committee,Success,SUCCESS
+1457,D23060566,ze309702,Committee,Success,SUCCESS
+1458,D23060566, ,DPApproval,Failed,DB finance_user empty
+1459,D23060566, ,DPApproval,Failed,GM DB finance_user empty
+1460,D23060583,ze281875,Committee,Success,SUCCESS
+1461,D23060583,ze309702,Committee,Success,SUCCESS
+1462,D23060583, ,DPApproval,Failed,DB finance_user empty
+1463,D23060583, ,DPApproval,Failed,GM DB finance_user empty
+1464,D23060597,ze281875,Committee,Success,SUCCESS
+1465,D23060597,ze309702,Committee,Success,SUCCESS
+1466,D23060597, ,DPApproval,Failed,DB finance_user empty
+1467,D23060597, ,DPApproval,Failed,GM DB finance_user empty
+1468,D23060669,ze281875,Committee,Success,SUCCESS
+1469,D23060669,ze309702,Committee,Success,SUCCESS
+1470,D23060669,ze301736,DPApproval,Success,SUCCESS
+1471,D23060669,ze301736,DPApproval,Success,SUCCESS GM
+1472,D23060674,ze281875,Committee,Success,SUCCESS
+1473,D23060674,ze309702,Committee,Success,SUCCESS
+1474,D23060674, ,DPApproval,Failed,DB finance_user empty
+1475,D23060674, ,DPApproval,Failed,GM DB finance_user empty
+1476,D23061263,ze281875,Committee,Success,SUCCESS
+1477,D23061263,ze309702,Committee,Success,SUCCESS
+1478,D23061263,ze301736,DPApproval,Success,SUCCESS
+1479,D23061263,ze301736,DPApproval,Success,SUCCESS GM
+1480,D23061389,ze281875,Committee,Success,SUCCESS
+1481,D23061389,ze309702,Committee,Success,SUCCESS
+1482,D23061389,ze301736,DPApproval,Success,SUCCESS
+1483,D23061389,ze301736,DPApproval,Success,SUCCESS GM
+1484,D23061916,ze281875,Committee,Success,SUCCESS
+1485,D23061916,ze309702,Committee,Success,SUCCESS
+1486,D23061916,ze301736,DPApproval,Success,SUCCESS
+1487,D23061916,ze301736,DPApproval,Success,SUCCESS GM
+1488,D23061970,ze281875,Committee,Success,SUCCESS
+1489,D23061970,ze309702,Committee,Success,SUCCESS
+1490,D23061970,ze301736,DPApproval,Success,SUCCESS
+1491,D23061970,ze301736,DPApproval,Success,SUCCESS GM
+1492,D23062326,ze281875,Committee,Success,SUCCESS
+1493,D23062326,ze309702,Committee,Success,SUCCESS
+1494,D23062326,ze301736,DPApproval,Success,SUCCESS
+1495,D23062326,ze301736,DPApproval,Success,SUCCESS GM
+1496,D23062335,ze281875,Committee,Success,SUCCESS
+1497,D23062335,ze309702,Committee,Success,SUCCESS
+1498,D23062335,ze301736,DPApproval,Success,SUCCESS
+1499,D23062335,ze301736,DPApproval,Success,SUCCESS GM
+1500,D23062368,ze281875,Committee,Success,SUCCESS
+1501,D23062368,ze309702,Committee,Success,SUCCESS
+1502,D23062368,ze301736,DPApproval,Success,SUCCESS
+1503,D23062368,ze301736,DPApproval,Success,SUCCESS GM
+1504,D23062390,ze281875,Committee,Success,SUCCESS
+1505,D23062390,ze309702,Committee,Success,SUCCESS
+1506,D23062390,ze301736,DPApproval,Success,SUCCESS
+1507,D23062390,ze301736,DPApproval,Success,SUCCESS GM
+1508,D23062395,ze281875,Committee,Success,SUCCESS
+1509,D23062395,ze309702,Committee,Success,SUCCESS
+1510,D23062395,ze301736,DPApproval,Success,SUCCESS
+1511,D23062395,ze301736,DPApproval,Success,SUCCESS GM
+1512,D23062870,ze281875,Committee,Success,SUCCESS
+1513,D23062870,ze309702,Committee,Success,SUCCESS
+1514,D23062870,ze301736,DPApproval,Success,SUCCESS
+1515,D23062870,ze301736,DPApproval,Success,SUCCESS GM
+1516,D23070546,ze281875,Committee,Success,SUCCESS
+1517,D23070546,ze309702,Committee,Success,SUCCESS
+1518,D23070546,ze301736,DPApproval,Success,SUCCESS
+1519,D23070546,ze301736,DPApproval,Success,SUCCESS GM
+1520,D23071133,ze281875,Committee,Success,SUCCESS
+1521,D23071133,ze309702,Committee,Success,SUCCESS
+1522,D23071133,ze301736,DPApproval,Success,SUCCESS
+1523,D23071133,ze301736,DPApproval,Success,SUCCESS GM
+1524,D23071141,ze281875,Committee,Success,SUCCESS
+1525,D23071141,ze309702,Committee,Success,SUCCESS
+1526,D23071141,ze301736,DPApproval,Success,SUCCESS
+1527,D23071141,ze301736,DPApproval,Success,SUCCESS GM
+1528,D2307187,ze281875,Committee,Success,SUCCESS
+1529,D2307187,ze309702,Committee,Success,SUCCESS
+1530,D2307187,ze301736,DPApproval,Success,SUCCESS
+1531,D2307187,ze301736,DPApproval,Success,SUCCESS GM
+1532,D23071891,ze281875,Committee,Success,SUCCESS
+1533,D23071891,ze309702,Committee,Success,SUCCESS
+1534,D23071891,ze301736,DPApproval,Success,SUCCESS
+1535,D23071891,ze301736,DPApproval,Success,SUCCESS GM
+1536,D23072523,ze281875,Committee,Success,SUCCESS
+1537,D23072523,ze309702,Committee,Success,SUCCESS
+1538,D23072523,ze301736,DPApproval,Success,SUCCESS
+1539,D23072523,ze301736,DPApproval,Success,SUCCESS GM
+1540,D2307253,ze281875,Committee,Success,SUCCESS
+1541,D2307253,ze309702,Committee,Success,SUCCESS
+1542,D2307253,ze301736,DPApproval,Success,SUCCESS
+1543,D2307253,ze301736,DPApproval,Success,SUCCESS GM
+1544,D23072532,ze281875,Committee,Success,SUCCESS
+1545,D23072532,ze309702,Committee,Success,SUCCESS
+1546,D23072532,ze301736,DPApproval,Success,SUCCESS
+1547,D23072532,ze301736,DPApproval,Success,SUCCESS GM
+1548,D23072552,ze281875,Committee,Success,SUCCESS
+1549,D23072552,ze309702,Committee,Success,SUCCESS
+1550,D23072552,ze301736,DPApproval,Success,SUCCESS
+1551,D23072552,ze301736,DPApproval,Success,SUCCESS GM
+1552,D23072574,ze281875,Committee,Success,SUCCESS
+1553,D23072574,ze309702,Committee,Success,SUCCESS
+1554,D23072574,ze301736,DPApproval,Success,SUCCESS
+1555,D23072574,ze301736,DPApproval,Success,SUCCESS GM
+1556,D23072577,ze281875,Committee,Success,SUCCESS
+1557,D23072577,ze309702,Committee,Success,SUCCESS
+1558,D23072577,ze301736,DPApproval,Success,SUCCESS
+1559,D23072577,ze301736,DPApproval,Success,SUCCESS GM
+1560,D23072693,ze281875,Committee,Success,SUCCESS
+1561,D23072693,ze309702,Committee,Success,SUCCESS
+1562,D23072693,ze301736,DPApproval,Success,SUCCESS
+1563,D23072693,ze301736,DPApproval,Success,SUCCESS GM
+1564,D23082958,ze281875,Committee,Success,SUCCESS
+1565,D23082958,ze309702,Committee,Success,SUCCESS
+1566,D23082958,ze301736,DPApproval,Success,SUCCESS
+1567,D23082958,ze301736,DPApproval,Success,SUCCESS GM
+1568,D23082967,ze281875,Committee,Success,SUCCESS
+1569,D23082967,ze309702,Committee,Success,SUCCESS
+1570,D23082967,ze301736,DPApproval,Success,SUCCESS
+1571,D23082967,ze301736,DPApproval,Success,SUCCESS GM
+1572,D23083183,ze281875,Committee,Success,SUCCESS
+1573,D23083183,ze309702,Committee,Success,SUCCESS
+1574,D23083183,ze301736,DPApproval,Success,SUCCESS
+1575,D23083183,ze301736,DPApproval,Success,SUCCESS GM
+1576,D23122035,ze236306,Committee,Success,SUCCESS
+1577,D23122035, ,Committee,Failed,member profile empty
+1578,D23122035, ,DPApproval,Failed,DB finance_user empty
+1579,D23122035, ,DPApproval,Failed,GM DB finance_user empty
+1580,D24022346,ze53821,Committee,Success,SUCCESS
+1581,D24022346, ,Committee,Failed,member profile empty
+1582,D24022346, ,DPApproval,Failed,DB finance_user empty
+1583,D24022346, ,DPApproval,Failed,GM DB finance_user empty
+1584,D24032167,ze345024,Committee,Success,SUCCESS
+1585,D24032167, ,Committee,Failed,member profile empty
+1586,D24032167, ,DPApproval,Failed,DB finance_user empty
+1587,D24032167, ,DPApproval,Failed,GM DB finance_user empty
+1588,D24032776,ze261084,Committee,Success,SUCCESS
+1589,D24032776, ,Committee,Failed,member profile empty
+1590,D24032776, ,DPApproval,Failed,DB finance_user empty
+1591,D24032776, ,DPApproval,Failed,GM DB finance_user empty
+1592,D24032829,ze281875,Committee,Success,SUCCESS
+1593,D24032829,ze294268,Committee,Success,SUCCESS
+1594,D24032829,ze301736,DPApproval,Success,SUCCESS
+1595,D24032829,ze301736,DPApproval,Success,SUCCESS GM
+1596,D24032836,ZE9141359,Committee,Success,SUCCESS
+1597,D24032836, ,Committee,Failed,member profile empty
+1598,D24032836, ,DPApproval,Failed,DB finance_user empty
+1599,D24032836, ,DPApproval,Failed,GM DB finance_user empty
+1600,D24032857,ze281875,Committee,Success,SUCCESS
+1601,D24032857,ze294268,Committee,Success,SUCCESS
+1602,D24032857,ze301736,DPApproval,Success,SUCCESS
+1603,D24032857,ze301736,DPApproval,Success,SUCCESS GM
+1604,D24032894,ZE9141359,Committee,Success,SUCCESS
+1605,D24032894, ,Committee,Failed,member profile empty
+1606,D24032894, ,DPApproval,Failed,DB finance_user empty
+1607,D24032894, ,DPApproval,Failed,GM DB finance_user empty
+1608,D24040251,ze281875,Committee,Success,SUCCESS
+1609,D24040251,ze224510,Committee,Success,SUCCESS
+1610,D24040251, ,DPApproval,Failed,DB finance_user empty
+1611,D24040251, ,DPApproval,Failed,GM DB finance_user empty
+1612,D24041928,9104681,Committee,Failed,member profile empty
+1613,D24041928,ze294136,Committee,Success,SUCCESS
+1614,D24041928, ,DPApproval,Failed,DB finance_user empty
+1615,D24041928, ,DPApproval,Failed,GM DB finance_user empty

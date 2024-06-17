@@ -18,20 +18,21 @@ class DPProcPlan(models.Model):
 
 class DirectPurchase(models.Model):
     cs_id = models.CharField(max_length=100)
-    pr_id = models.ForeignKey(PurchaseRequest, on_delete=models.CASCADE)
-    pr_date = models.DateField()
-    proc_plan = models.ForeignKey(DPProcPlan, on_delete=models.CASCADE)
+    pr_id = models.ForeignKey(PurchaseRequest, on_delete=models.CASCADE, blank=True, null=True, default=None)
+    pr_date = models.DateField(blank=True, null=True)
+    proc_plan = models.ForeignKey(DPProcPlan, on_delete=models.CASCADE, blank=True, null=True, default=None)
     ref_date = models.DateField(blank=True, null=True, default=None)
     scope_of_work = models.CharField(max_length=400)
-    closing_date = models.DateField()
+    closing_date = models.DateField(blank=True, null=True)
     closing_time = models.CharField(max_length=10)
     advert = models.CharField(max_length=400)
     pr_number = models.CharField(max_length=100)
     currency = models.ForeignKey(Currency, on_delete=models.CASCADE, default=1)
-    pr_date = models.DateField()
-    cs_opened = models.DateField()
-    tac_date = models.DateField()
+    pr_date = models.DateField(blank=True, null=True)
+    cs_opened = models.DateField(blank=True, null=True)
+    tac_date = models.DateField(blank=True, null=True)
     created_by = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
+    cost_center = models.ForeignKey(CostCenter, on_delete=models.CASCADE, blank=True, null=True)
     section = models.ForeignKey(Sections, on_delete=models.CASCADE, blank=True, null=True)
     region = models.ForeignKey(Regions, on_delete=models.CASCADE, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -41,7 +42,7 @@ class DPRequiredItems(models.Model):
     item_id = models.CharField(max_length=100)
     item_name = models.CharField(max_length=300)
     quantity = models.CharField(max_length=50)
-    unit_of_measurement = models.CharField(max_length=50)
+    unit_of_measurement = models.CharField(max_length=50, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
 class DPItems(models.Model):
@@ -49,7 +50,7 @@ class DPItems(models.Model):
     item_id = models.CharField(max_length=100)
     item_name = models.CharField(max_length=300)
     quantity = models.CharField(max_length=50)
-    unit_of_measurement = models.CharField(max_length=50)
+    unit_of_measurement = models.CharField(max_length=50, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
 class DPBids(models.Model):
@@ -57,7 +58,7 @@ class DPBids(models.Model):
     item_id = models.ForeignKey(DPItems, on_delete=models.CASCADE)
     sup_id = models.ForeignKey(Supplier, on_delete=models.CASCADE)
     unit_price = models.CharField(max_length=50)
-    vat = models.CharField(max_length=10)
+    vat = models.CharField(max_length=10, blank=True, null=True)
     quoted_qty = models.CharField(max_length=50)
     bid_no = models.CharField(max_length=10)
     quote_date = models.DateField()
@@ -103,7 +104,7 @@ class DPCommittee(models.Model):
     committee_status = models.BooleanField(default=False, null=True, blank=True)
     committee_approval = models.CharField(max_length=100, null=True, blank=True) # Approved, Rejected
     justification = models.CharField(max_length=255, null=True, blank=True)
-    committee_date = models.DateTimeField()
+    committee_date = models.DateTimeField(null=True, blank=True, default=None)
     created_at = models.DateTimeField(auto_now_add=True)
     
 class DPApproval(models.Model):
@@ -112,5 +113,5 @@ class DPApproval(models.Model):
     approver_role = models.CharField(max_length=100, null=True, blank=True) # General Manager, Finance Manager
     approval = models.CharField(max_length=100, null=True, blank=True) # Approved, Rejected
     justification = models.CharField(max_length=255, null=True, blank=True)
-    approval_date = models.DateTimeField()
+    approval_date = models.DateTimeField(null=True, blank=True, default=None)
     created_at = models.DateTimeField(auto_now_add=True)

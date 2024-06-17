@@ -104,11 +104,50 @@ class Designations(models.Model):
     class Meta:
         app_label = 'users'
 
+class CostCenter(models.Model):
+    id = models.CharField(primary_key=True, max_length=20, editable=False)
+    code = models.CharField(max_length=30)
+    name = models.CharField(max_length=100, blank=True, null=True)
+    parent = models.ForeignKey('self', on_delete=models.CASCADE, blank=True, null=True)
+
+    class Meta:
+        ordering = ['id']
+
+    def __str__(self):
+        return self.id
+
+    def get_all_children(self):
+        children = list(self.children.all())
+        return children
+    
+    def get_all_ancestors(self):
+        ancestors = []
+        if self.parent:
+            ancestors.append(self.parent)
+            ancestors += self.parent.get_all_ancestors()
+        return ancestors
+    def get_all_ancestors_and_their_children(self):
+            """
+            Returns a list of all ancestors and their children for the current instance.
+
+            Ancestors are determined by the parent attribute of each instance.
+            Children are determined by calling the get_all_children method.
+
+            Returns:
+                list: A list of all ancestors and their children.
+            """
+            ancestors = []
+            if self.parent:
+                ancestors.append(self.parent)
+                ancestors += self.parent.get_all_ancestors_and_their_children()
+            children = self.get_all_children()
+            return ancestors  + children
 
 class UserProfile(AbstractUser):
     username = models.CharField(max_length=15, unique=True, verbose_name='EC Number',db_index=True)
     designation = models.ForeignKey(Designations, on_delete=models.DO_NOTHING, blank=True, null=True)
     section = models.ForeignKey(Sections, on_delete=models.DO_NOTHING, blank=True, null=True)
+    cost_center = models.ForeignKey(CostCenter, on_delete=models.DO_NOTHING, blank=True, null=True)
     depot = models.ForeignKey(Depots, on_delete=models.DO_NOTHING, blank=True, null=True)
     district = models.ForeignKey(Districts, on_delete=models.DO_NOTHING, blank=True, null=True)
     roles = models.ManyToManyField(Roles, blank=True, null=True)
@@ -159,37 +198,3 @@ class Supplier(models.Model):
             self.id = "splr" + timestamp + random_number
         super().save(*args, **kwargs)
 
-class CostCenter(models.Model):
-    code = models.CharField(max_length=20, unique=True)
-    name = models.CharField(max_length=100, blank=True, null=True)
-    parent = models.ForeignKey('self', on_delete=models.CASCADE, blank=True, null=True, related_name='children')
-    def __str__(self):
-        return str(self.id)
-    
-    
-    def get_all_children(self):
-        children = list(self.children.all())
-        return children
-    
-    def get_all_ancestors(self):
-        ancestors = []
-        if self.parent:
-            ancestors.append(self.parent)
-            ancestors += self.parent.get_all_ancestors()
-        return ancestors
-    def get_all_ancestors_and_their_children(self):
-            """
-            Returns a list of all ancestors and their children for the current instance.
-
-            Ancestors are determined by the parent attribute of each instance.
-            Children are determined by calling the get_all_children method.
-
-            Returns:
-                list: A list of all ancestors and their children.
-            """
-            ancestors = []
-            if self.parent:
-                ancestors.append(self.parent)
-                ancestors += self.parent.get_all_ancestors_and_their_children()
-            children = self.get_all_children()
-            return ancestors  + children
