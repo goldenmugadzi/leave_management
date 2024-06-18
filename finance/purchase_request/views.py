@@ -242,10 +242,15 @@ def purchase_requests_awaiting_my_action(request):
     return render(request, 'finance/purchase_request/view_all_purchase_requests.html',
                   {'purchase_requests': purchase_requests_to_process})
 
+@login_required
+def search_purchase_requests(request):
+    search_term = request.GET.get('query', '')
+    purchase_requests = PurchaseRequest.objects.filter(Q(name__icontains=search_term) or Q(id__icontains=search_term) or Q(pr_no__icontains=search_term) or Q(section__icontains=search_term) or Q(created_at__icontains=search_term) or Q(requested_by__icontains=search_term) )  
+    return render(request, 'finance/purchase_request/view_all_purchase_requests.html', {'purchase_requests': purchase_requests})
 
 @login_required
 def view_all_purchase_requests(request):
-    purchase_requests = PurchaseRequest.objects.all()
+    purchase_requests = PurchaseRequest.objects.all()[:100]
     return render(request, 'finance/purchase_request/view_all_purchase_requests.html', {'purchase_requests': purchase_requests})
 @login_required
 def uploaduuom(request):

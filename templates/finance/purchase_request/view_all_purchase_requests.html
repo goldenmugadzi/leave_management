@@ -15,9 +15,10 @@
         <div class=" grid grid-cols-4 container text-center ">
           <a href="{% url 'purchase_request:create_purchase_request' %}"
              class="bg-blue-500 hover:bg-blue-700 inline-block rounded-full mx-3 text-white py-2 px-4 rounded">Create New</a>
-          {% comment %} <a href="{% url 'nonconformity:checklist' %}" class="bg-blue-500 hover:bg-blue-700 inline-block rounded-full mx-3 text-white py-2 px-4 rounded">Create from checklist</a> {% endcomment %}
-          {% comment %} <a href="{% url 'purchase_request:purchase_requests_awaiting_my_action' %}"
-             class="bg-gray-500 hover:bg-gray-700 inline-block rounded-full mx-3 text-white py-2 px-4 rounded">Awaiting my action </a> {% endcomment %}
+          <input type="text"
+                 id="search-input"
+                 class="border border-gray-300 rounded-md py-2 px-4 mb-4"
+                 placeholder="Search...">
         </div>
         <br>
         <table id="nonconformity" class="table table-striped stripe table-bordered">
@@ -39,10 +40,9 @@
                 <td>
                   <a class="text-blue-500"
                      href="{% url 'purchase_request:purchase_request_detail' purchase_request.id %}">{{ purchase_request.id|default_if_none:'' }}</a>
-               
-                     <a class="text-red-400"
+                  <a class="text-red-400"
                      href="{% url 'purchase_request:purchase_request_update' purchase_request.id %}"><i class="fas fa-edit mr-2"></i></a>
-                    </td>
+                </td>
                 <td>{{ purchase_request.created_at|date }}</td>
                 <td>{{ purchase_request.scope_of_work|default_if_none:'' }}</td>
                 <td>
@@ -65,8 +65,10 @@
   </div>
 {% endblock content %}
 {% block scripts %}
-<script src="{% static 'assets/cdn/jquery-3.7.0.js' %}"></script>
-<script src="{% static 'assets/cdn/jquery.dataTables.min.js' %}"></script>
+  <script src="{% static 'assets/cdn/jquery-3.7.0.js' %}"></script>
+  <script src="{% static 'assets/cdn/jquery.dataTables.min.js' %}"></script>
+  <script src="{% static 'assets/cdn/jquery.min.js' %}"></script>
+  {% comment %} <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>  {% endcomment %}
   <script>
   $(document).ready(function () {
     // Initialize the DataTable with options and Tailwind CSS classes
