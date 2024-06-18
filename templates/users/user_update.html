@@ -162,7 +162,7 @@
                 {% if user.cost_center %}
                 <option value="{{user.cost_center.id}}" >{{user.cost_center.name}}</option>
                 {% endif %}
-                <option>Select cost_center</option>
+                <option>Select Cost Centre</option>
                 {% for cost_center in cost_centers %}
                 <option value="{{cost_center.id}}">{{cost_center.name}}</option>
                 {% endfor %}

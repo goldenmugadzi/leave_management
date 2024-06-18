@@ -302,16 +302,24 @@ def datatable_data(request):
         page_obj = paginator.get_page(page_number)
 
         # Prepare response
-        data = [{
+        data = []
+        for obj in page_obj:
+            try:
+                cost_center_name = obj.cost_center.name
+            except Exception as ex:
+                print("Cost Center Error: ", ex)
+                cost_center_name = None
+
+            data.append({
                 "id": obj.pk,
                 "username": obj.username,
                 "first_name": obj.first_name,
                 "last_name": obj.last_name,
                 "email": obj.email,
-                "cost_center": obj.cost_center.name if obj.cost_center else None,
+                "cost_center": cost_center_name,
                 "region": obj.region.region if obj.region else None,
                 "date_joined": obj.date_joined.date()
-            } for obj in page_obj]
+            })
 
         return JsonResponse({
             'draw': draw,
@@ -337,7 +345,7 @@ def update_user(request):
             "depot": Depots.objects.filter(id=user_profile.depot.id).first() if user_profile.depot else None,
             "district": Districts.objects.filter(id=user_profile.district.id).first() if user_profile.district else None,
             "region": Regions.objects.filter(id=user_profile.region.id).first() if user_profile.region else None,
-            "cost_center": CostCenter.objects.filter(id=user_profile.cost_center.id).first() if user_profile.cost_center else None,
+            "cost_center": CostCenter.objects.filter(code=user_profile.cost_center.id).first() if user_profile.cost_center else None,
             "roles": active_roles,
             "designation": Designations.objects.filter(id=user_profile.designation.id).first() if user_profile.designation else None,
         }
@@ -658,7 +666,7 @@ def get_filtered_centers(request, region_id):
     filtered_centers = []
     if region:
         print("Region: ", region.code)
-        cost_center = CostCenter.objects.filter(Q(id=region.code) | Q(id="CC"+region.code)).first()
+        cost_center = CostCenter.objects.filter(Q(code=region.code) | Q(code="CC"+region.code)).first()
         print("Cost Center: ", cost_center) 
     filtered_centers = fetch_center_children(cost_center)                      
 
@@ -667,7 +675,7 @@ def get_filtered_centers(request, region_id):
 def get_center_parents(request, center_code):
 
     filtered_centers = []
-    cost_center = CostCenter.objects.filter(Q(id=center_code) | Q(id="CC"+center_code)).first()
+    cost_center = CostCenter.objects.filter(Q(code=center_code) | Q(code="CC"+center_code)).first()
     print("Cost Center: ", cost_center) 
     filtered_centers = fetch_center_parents(cost_center)                      
 
