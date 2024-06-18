@@ -459,10 +459,7 @@ def safetycircula_view(request):
                 new_safety = {
                 "id":safety.id,
                 "region": safety.region,
-                # "department": safety.department,
                 "archive": safety.archive,
-                # "section": safety.section,
-                "file": safety.file,
                 "name": safety.name,
                 "subcategory": safety.subcategory,
                 "created_by": safety.created_by,
