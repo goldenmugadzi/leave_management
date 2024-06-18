@@ -154,6 +154,7 @@
       columns: [
         {
           data: "cs_id",
+          width: "10%",
           render: function (data, type, row, meta) {
             return `
               <a type="button" class="btn btn-info" href='/direct_purchase/comperative_schedule/${row.cs_id}' >
@@ -163,9 +164,11 @@
         },
         {
           data: "scope_of_work",
+          width: "40%",
         },
         {
           data: "committee_approval",
+          width: "15%",
           orderable: false,
           searchable: false,
           render: function (data, type, row, meta) {
@@ -191,6 +194,7 @@
         },
         {
           data: "fm_approval",
+          width: "10%",
           orderable: false,
           searchable: false,
           render: function (data, type, row, meta) {
@@ -216,6 +220,7 @@
         },
         {
           data: "gm_approval",
+          width: "10%",
           orderable: false,
           searchable: false,
           render: function (data, type, row, meta) {
@@ -233,14 +238,15 @@
             } else {
               approval_badge = `
               <a type="button" class="bg-blue-300 text-blue-800 rounded px-1 py-2 w-full text-center" href='/direct_purchase/comperative_schedule/${row.cs_id}' >
-                ${data? data: "Pending"}              
+                ${data}              
               </a>`
             }
             return approval_badge;
           },
         },
         {
-          data: "created_at"
+          data: "created_at",
+          width: "15%",
         }
       ],
       order: [[5, 'desc']]

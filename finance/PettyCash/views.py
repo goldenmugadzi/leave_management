@@ -220,7 +220,30 @@ def pettycash_awaiting_my_action(request):
     starting_year = current_year
 
     if pettycash_role == "approve":
-        for pettycash in Pettycash.objects.filter(section=request.user.section, date_created__year__gte=starting_year):
+        for pettycash in Pettycash.objects.filter(section=request.user.section,
+                                                  date_created__year__gte=starting_year).only('petty_id',
+                                                                                              'date_created').order_by(
+            'old_version', '-date_created', 'petty_id')[:800]:
+            process = pettycash.process
+
+            if process.approval_set.exists():
+                last_approval = process.approval_set.last()
+                current_step = last_approval.step.step
+            else:
+                current_step = 0
+
+            next_step = current_step + 1
+
+            workflow = process.workflow
+            step = workflow.step_set.filter(step=next_step, approver__in=user_roles).first()
+
+            if step:
+                pettycashs_to_process.append(pettycash)
+    elif pettycash_role == requester:
+        for pettycash in Pettycash.objects.filter(section=request.user.section,
+                                                  date_created__year__gte=starting_year).only('petty_id',
+                                                                                              'date_created').order_by(
+            'old_version', '-date_created', 'petty_id')[:800]:
             process = pettycash.process
 
             if process.approval_set.exists():
@@ -238,7 +261,9 @@ def pettycash_awaiting_my_action(request):
                 pettycashs_to_process.append(pettycash)
 
     else:
-        for pettycash in Pettycash.objects.filter(date_created__year__gte=starting_year):
+        for pettycash in Pettycash.objects.filter(date_created__year__gte=starting_year).only('petty_id',
+                                                                                              'date_created').order_by(
+            'old_version', '-date_created', 'petty_id')[:800]:
             process = pettycash.process
 
             if process.approval_set.exists():
@@ -288,13 +313,14 @@ def view_all_pettycashs(request):
     starting_year = current_year - 2
 
     if pettycash_role == "create":
-        pettycashs = Pettycash.objects.select_related('requested_by').filter(requested_by=request.user)
+        pettycashs = Pettycash.objects.filter(requested_by=request.user)
     elif pettycash_role == "approve":
-        pettycashs = Pettycash.objects.select_related('section').filter(section=request.user.section)
+        pettycashs = Pettycash.objects.filter(section=request.user.section).only('petty_id', 'date_created').order_by(
+            'old_version', '-date_created', 'petty_id')[:800]
     else:
         pettycashs = Pettycash.objects.filter(date_created__year__gte=starting_year).only('petty_id',
                                                                                           'date_created').order_by(
-            '-petty_id')[:800]
+            'old_version', '-date_created', 'petty_id')[:800]
     return render(request, 'finance/pettycash/view_all_pettycashs.html', {'pettycashs': pettycashs,
                                                                           'requester': requester})
 
@@ -337,6 +363,25 @@ def import_pettycash(request):
                     centre = row['centre']
                     sect = row['sect']
                     region = row['region']
+                    # petty_id = 'PC220101...'
+
+                    # Extract the date part from the petty_id
+                    date_str = petty_id[2:8]
+
+                    # Convert the date string to a datetime object
+                    # If the year is less than 20, we assume it's 2000s, otherwise it's 1900s
+                    year = int(date_str[:2])
+                    if year > 20:
+                        year += 2000
+                    else:
+                        year += 1900
+
+                    date_str = str(year) + date_str[2:]
+                    date = datetime.strptime(date_str, '%Y%m%d')
+                    # format into date format not date time
+                    date = date.strftime('%Y-%m-%d')
+
+                    print(date)  # Outputs: 2022-01-01 00:00:00
 
                     # if date created is earlier than 2024 then the currency is ZWL,but if its after 2024 its is ZIG
                     # create pettycash if it does not exist
@@ -380,9 +425,12 @@ def import_pettycash(request):
                             requested_by=Requester,
                             old_version=True,
                             region=Region,
+                            date_created=date
 
                         )
                         pettycash.process = intiate(request, 'pettycash')
+                        pettycash.save()
+                        pettycash.date_created = date
                         pettycash.save()
                         # check if quotation_1 isnt empty
                         if quotation_1 != '' or quotation_1 == '0':
@@ -462,7 +510,7 @@ def import_pettycash(request):
                     # to the date created in the pettycash modify update_date1 to form a date object yyyy-mm-dd
                     if pettycash and update_date1 != '0000-00-00 00:00:00':
                         update_date1 = datetime.strptime(update_date1, '%Y-%m-%d')
-                        pettycash.date_created = update_date1
+                        # pettycash.date_created = update_date1
                         print('date created', pettycash.date_created)
 
                         if pettycash.process:
@@ -572,6 +620,9 @@ def approve_step(process_id, user_id, date_approved):
         # if parameter date_approved is not passed, the default value is the current date and time
         approved_at=date_approved1
     )
+    approval.save()
+    print('approved', date_approved1)
+    approval.approved_at = date_approved1
     approval.save()
     print('approved')
     return True

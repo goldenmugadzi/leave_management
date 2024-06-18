@@ -3,6 +3,7 @@ from .views import *
 app_name = 'comparative_schedules'
 
 urlpatterns = [
+    path('timeline', debug_time, name='timeline'),
     path('schedule/<str:pr_id>', get_create_cs, name='adopt_schedule'),
     path('create_comperative_schedule/', create_comperative_schedule, name='create_comperative_schedule'),
     path('create_schedule/', create, name='create_schedule'),
@@ -33,6 +34,7 @@ urlpatterns = [
     
     path('update_pritem_ordered', update_pritem_ordered, name='update_pritem_ordered'),
     path('import_old_rfq', import_old_rfq, name='import_old_rfq'),
+    path('add_cost_center', add_cost_center, name='add_cost_center'),
     
     path('pending_commitee', get_pending_committee, name='get_pending_committee'),
     path('your_schedules', your_comperative_schedules, name='your_comperative_schedules'),

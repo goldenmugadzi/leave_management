@@ -6,8 +6,10 @@ from django.shortcuts import redirect, render
 
 from beii_v1 import settings
 from .models import *
+from django.contrib.auth.decorators import login_required
 
 # Create your views here.
+@login_required
 def index(request):
     
     plans_and_reports_fields = Report.objects.all()
@@ -39,6 +41,7 @@ def index(request):
         'sections': sections
         })
 
+@login_required
 def create_report(request):
     
     if request.method == 'POST':
@@ -83,6 +86,7 @@ def create_report(request):
         "regions": regions
     })
 
+@login_required
 def download_file(request):
 
     file_id = request.GET['file_id']
@@ -105,6 +109,7 @@ def download_file(request):
 
     return redirect('/reports/reports_index/')
 
+@login_required
 def edit_report(request):
 
     if request.method == 'POST':
@@ -161,6 +166,7 @@ def edit_report(request):
 
 # start region - new views for Plans and Reports
 
+@login_required
 def plans_and_reports_view(request):
     
     plans_and_reports_fields = Report.objects.all()

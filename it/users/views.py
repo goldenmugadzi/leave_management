@@ -16,16 +16,65 @@ from rest_framework.parsers import JSONParser
 from django.contrib.auth.decorators import login_required
 from approve.decorators import allowed_roles
 from django.db.models import Q, Exists, OuterRef, Count, F
-from it.users.models import Application, Roles, UserProfile, Depots, Districts, Regions, Designations, Sections
+from exchangelib import Credentials, Account, Configuration, Message, Mailbox
+from django.conf import settings
+
+from it.users.models import *
 from it.users.forms import CustomUserCreationForm
 
 from django.contrib.auth.models import Group
 from .helpers import DESIGNATIONS, REGIONS, DISTRICTS, DEPOTS, ROLES, SECTIONS
 from django.contrib import messages
-from decouple import config
 from approve.decorators import allowed_roles
 from django.core.paginator import Paginator
+from decouple import config
 BASE_URL = "http://"+config('HOST')+":"+config('PORT')
+
+def user_centers(request):
+    users = UserProfile.objects.all()
+    for user in users:
+        section = user.section
+        if section:
+            cost_center = CostCenter.objects.filter(Q(id=section.code) | Q(id="CC"+section.code)).first()
+            user.cost_center = cost_center
+            user.save()
+    return JsonResponse({"status": "success", "message": "Centers added successfully"})
+
+def get_exchange_account():
+
+    from decouple import config as cnf
+    print(cnf)
+    credentials = Credentials(
+        username=cnf('MS_EMAIL'),
+        password=cnf('MS_PASS')
+    )
+    print("Credentials: ", credentials)
+    config = Configuration(
+        server=cnf('MS_SERVER'),
+        credentials=credentials,
+    )
+    print("Config: ", config)
+    account = Account(
+        primary_smtp_address=cnf('MS_PRIMARY_SMTP_ADDRESS'),
+        config=config,
+        autodiscover=False,
+        access_type='delegate'
+    )
+    print("Successfully connected to Exchange server.")
+    return account
+
+@login_required
+def ms_exhange_test(request):
+    account = get_exchange_account()
+    message = Message(
+        account=account,
+        folder=account.sent,
+        subject="Test Email",
+        body="This is a test email",
+        to_recipients=[Mailbox(email_address='kcbosha@zetdc.co.zw'), Mailbox(email_address='mchivinge@zetdc.co.zw'), Mailbox(email_address='amugwambi@zetdc.co.zw'), Mailbox(email_address='akwaramba@zetdc.co.zw')]
+    )
+    message.send()
+    return JsonResponse({"status": "success", "message": "Email sent successfully"})
 
 @login_required
 @allowed_roles(['administrator'], ['users'])
@@ -119,6 +168,7 @@ def add_user(request):
         # get designations
         user_designations = Designations.objects.all()
         sections = Sections.objects.all()
+        cost_centers = CostCenter.objects.all()
         districts = Districts.objects.all()
         regions = Regions.objects.all()
 
@@ -130,6 +180,7 @@ def add_user(request):
                 "user_roles": all_roles,
                 "user_applications": user_applications,
                 "user_designations": user_designations,
+                "cost_centers": cost_centers,
                 "sections": sections,
                 "districts": districts,
                 "regions": regions,
@@ -147,16 +198,17 @@ def add_user(request):
             section_ = request.POST['section']
             depots_ = request.POST['depot']
             district_ = request.POST['district']
+            cost_center = request.POST['cost_center']
             region_ = request.POST['region']
             password1 = request.POST['password1']
             password2 = request.POST['password2']
             
             region = Regions.objects.filter(id=region_).first()
+            cost_center_ = CostCenter.objects.filter(id=cost_center).first()
             district = Districts.objects.filter(code=district_).first()
             depot = Depots.objects.filter(code=depots_).first()
             section = Sections.objects.filter(code=section_).first()
             designation = Designations.objects.filter(id=designation_).first()
-            print("section: ", section)
             
             if password1 == password2:
                 user = UserProfile(
@@ -165,6 +217,7 @@ def add_user(request):
                     last_name=lastnames,
                     email=email,
                     designation=designation,
+                    cost_center= cost_center_,
                     section=section,
                     depot=depot,
                     district=district,
@@ -182,6 +235,9 @@ def add_user(request):
                 user.roles.add(*role_objects)
                 user.set_password(password1)
                 user.save()
+            else:
+                messages.error(request, "Passwords do not match")
+                return redirect("/users/users-index")
 
             messages.success(request, "User created successfully")
         except Exception as ex:
@@ -214,51 +270,63 @@ def datatable_data(request):
     start = int(request.GET.get('start', default=0))
     length = int(request.GET.get('length', default=10))
     search_value = request.GET.get('search[value]', default='')
+    user = request.user
 
-    # Fetch your data from the model
-    records = UserProfile.objects.order_by('-date_joined').all()
-    # Filter based on search value
-    if search_value:
-        records = records.filter(
-        Q(username__icontains=search_value) |
-        Q(first_name__icontains=search_value) |
-        Q(last_name__icontains=search_value) |
-        Q(email__icontains=search_value)
-        )
+    if user.region:
+        # Fetch your data from the model
+        records = UserProfile.objects.filter(region=user.region).all()
+        # Filter based on search value
+        if search_value:
+            records = records.filter(
+            Q(username__icontains=search_value) |
+            Q(first_name__icontains=search_value) |
+            Q(last_name__icontains=search_value) |
+            Q(email__icontains=search_value)
+            )
 
-    # Total number of records before filtering
-    total = records.count()
+        # Total number of records before filtering
+        total = records.count()
 
-    # Sorting
-    order_column = request.GET.get('order[0][column]')
-    order = request.GET.get('order[0][dir]')
-    if order_column:
-        column_name = request.GET.get(f'columns[{order_column}][data]')
-        if order == 'desc':
-            column_name = f'-{column_name}'
-        records = records.order_by(column_name)
+        # Sorting
+        order_column = request.GET.get('order[0][column]')
+        order = request.GET.get('order[0][dir]')
+        if order_column:
+            column_name = request.GET.get(f'columns[{order_column}][data]')
+            if order == 'desc':
+                column_name = f'-{column_name}'
+            records = records.order_by(column_name)
 
-    # Pagination
-    paginator = Paginator(records, length)
-    page_number = start // length + 1
-    page_obj = paginator.get_page(page_number)
+        # Pagination
+        paginator = Paginator(records, length)
+        page_number = start // length + 1
+        page_obj = paginator.get_page(page_number)
 
-    # Prepare response
-    data = [{
-            "id": obj.pk,
-            "username": obj.username,
-            "first_name": obj.first_name,
-            "last_name": obj.last_name,
-            "email": obj.email,
-            "date_joined": obj.date_joined.date()
-        } for obj in page_obj]
+        # Prepare response
+        data = []
+        for obj in page_obj:
+            try:
+                cost_center_name = obj.cost_center.name
+            except Exception as ex:
+                print("Cost Center Error: ", ex)
+                cost_center_name = None
 
-    return JsonResponse({
-        'draw': draw,
-        'recordsTotal': total,
-        'recordsFiltered': total,
-        'data': data
-    })
+            data.append({
+                "id": obj.pk,
+                "username": obj.username,
+                "first_name": obj.first_name,
+                "last_name": obj.last_name,
+                "email": obj.email,
+                "cost_center": cost_center_name,
+                "region": obj.region.region if obj.region else None,
+                "date_joined": obj.date_joined.date()
+            })
+
+        return JsonResponse({
+            'draw': draw,
+            'recordsTotal': total,
+            'recordsFiltered': total,
+            'data': data
+        })
 
 @login_required
 @allowed_roles(['administrator'], ['users'])
@@ -277,6 +345,7 @@ def update_user(request):
             "depot": Depots.objects.filter(id=user_profile.depot.id).first() if user_profile.depot else None,
             "district": Districts.objects.filter(id=user_profile.district.id).first() if user_profile.district else None,
             "region": Regions.objects.filter(id=user_profile.region.id).first() if user_profile.region else None,
+            "cost_center": CostCenter.objects.filter(id=user_profile.cost_center.id).first() if user_profile.cost_center else None,
             "roles": active_roles,
             "designation": Designations.objects.filter(id=user_profile.designation.id).first() if user_profile.designation else None,
         }
@@ -308,6 +377,7 @@ def update_user(request):
                 'username': request.POST['username'],
                 'email': request.POST['email'],
                 'region': Regions.objects.filter(id=request.POST['region']).first(),
+                'cost_center': CostCenter.objects.filter(id=request.POST['cost_center']).first() if request.POST['cost_center'] not in ["Select Cost Center", ""] else None,
                 'district': Districts.objects.filter(id=request.POST['district']).first() if request.POST['district'] not in ["Select District", ""] else None,
                 'depot': Depots.objects.filter(id=request.POST['depot']).first() if request.POST['depot'] not in ["Select Depot", ""] else None,
                 'section': Sections.objects.filter(code=request.POST['section']).first(),
@@ -330,7 +400,6 @@ def update_user(request):
     
         return redirect("/users/users-index")
     
-
 @login_required
 def view_user(request):
     if request.method == "GET":
@@ -346,6 +415,7 @@ def view_user(request):
             "section": Sections.objects.filter(id=user_profile.section.id).first() if user_profile.section else None,
             "depot": Depots.objects.filter(id=user_profile.depot.id).first() if user_profile.depot else None,
             "district": Districts.objects.filter(id=user_profile.district.id).first() if user_profile.district else None,
+            "cost_center": CostCenter.objects.filter(id=user_profile.cost_center.id).first() if user_profile.cost_center else None,
             "region": Regions.objects.filter(id=user_profile.region.id).first() if user_profile.region else None,
             "roles": active_roles,
             "designation": Designations.objects.filter(id=user_profile.designation.id).first() if user_profile.designation else None,
@@ -540,7 +610,7 @@ def reset_user_password(request):
 
     return redirect('/users/users-index')
 
-
+@login_required
 def change_user_password(request):
     if request.method == "POST":
 
@@ -589,6 +659,66 @@ def change_user_password(request):
 
 #     return redirect('/users/users-index')
 
+@login_required
+@allowed_roles(['administrator'], ['users'])
+def get_filtered_centers(request, region_id):
+    
+    region = Regions.objects.filter(id=region_id).first()
+    filtered_centers = []
+    if region:
+        print("Region: ", region.code)
+        cost_center = CostCenter.objects.filter(Q(code=region.code) | Q(code="CC"+region.code)).first()
+        print("Cost Center: ", cost_center) 
+    filtered_centers = fetch_center_children(cost_center)                      
+
+    return JsonResponse(filtered_centers, safe=False)
+                        
+def get_center_parents(request, center_code):
+
+    filtered_centers = []
+    cost_center = CostCenter.objects.filter(Q(code=center_code) | Q(code="CC"+center_code)).first()
+    print("Cost Center: ", cost_center) 
+    filtered_centers = fetch_center_parents(cost_center)                      
+
+    return JsonResponse(filtered_centers, safe=False)
+
+def fetch_center_children(cost_center):
+    filtered_centers = []
+    if cost_center:
+        filtered_centers_1 = CostCenter.objects.filter(parent=cost_center.id).all().values('id', 'name')
+        filtered_centers += filtered_centers_1
+        for center in filtered_centers_1:
+            print("Center 1: ", center)
+            filtered_centers_2 = CostCenter.objects.filter(parent=center['id']).all().values('id', 'name')
+            filtered_centers += filtered_centers_2
+            for _center in filtered_centers_2:
+                print("Center 2: ", _center)
+                filtered_centers_3 = CostCenter.objects.filter(parent=_center['id']).all().values('id', 'name')
+                filtered_centers += filtered_centers_3
+                for _center2 in filtered_centers_3:
+                    print("Center 3: ", _center2)
+                    filtered_centers_4 = CostCenter.objects.filter(parent=_center2['id']).all().values('id', 'name')
+                    filtered_centers += filtered_centers_4
+    return filtered_centers
+
+def fetch_center_parents(cost_center):
+    filtered_centers = []
+    if cost_center:
+        filtered_centers_1 = CostCenter.objects.filter(id=cost_center.parent).all().values('id', 'name', 'parent')
+        filtered_centers += filtered_centers_1
+        for center in filtered_centers_1:
+            print("Center 1: ", center)
+            filtered_centers_2 = CostCenter.objects.filter(id=center['parent']).all().values('id', 'name', 'parent')
+            filtered_centers += filtered_centers_2
+            for _center in filtered_centers_2:
+                print("Center 2: ", _center)
+                filtered_centers_3 = CostCenter.objects.filter(id=_center['parent']).all().values('id', 'name', 'parent')
+                filtered_centers += filtered_centers_3
+                for _center2 in filtered_centers_3:
+                    print("Center 3: ", _center2)
+                    filtered_centers_4 = CostCenter.objects.filter(id=_center2['parent']).all().values('id', 'name', 'parent')
+                    filtered_centers += filtered_centers_4
+    return filtered_centers
 
 @login_required
 @allowed_roles(['administrator'], ['users'])
@@ -602,7 +732,9 @@ def get_filtered_districts(request, region_id):
 @allowed_roles(['administrator'], ['users'])
 def get_filtered_depots(request, district_id):
         
+    print("District ID: ", district_id)
     depots = Depots.objects.filter(district_id=district_id).all()
+    print("Depots: ", depots)
 
     return JsonResponse(list(depots.values('id', 'depot')), safe=False)
 

@@ -53,7 +53,7 @@
                   {% endif %}
                 </td>
                 <td>{{ purchase_request.section|default_if_none:'' }}</td>
-                <td>{{ purchase_request.allocation_code_of_expenditure |default_if_none:'' }}</td>
+                <td>{{ purchase_request.cost_center.name |default_if_none:'' }}</td>
                 <td>{{ purchase_request.procurement_plan_reference|default_if_none:'' }}</td>
                 <td>{{ purchase_request.ace|default_if_none:'' }}</td>
               </tr>

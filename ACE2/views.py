@@ -299,7 +299,9 @@ def ace_awaiting_my_action(request):
     print(ace_role)
 
     if ace_role == "pass":
-        for ace in Ace2.objects.filter(section=request.user.section):
+        # I want objects from 2024 upwards
+
+        for ace in Ace2.objects.filter(section=request.user.section, date_created__year__gte=2024):
             process = ace.process
 
             if process.approval_set.exists():
@@ -315,9 +317,12 @@ def ace_awaiting_my_action(request):
 
             if step:
                 aces_to_process.append(ace)
+                # remove aces that have been rejected
+                if process.approval_set.filter(approved="Rejected").exists():
+                    aces_to_process.remove(ace)
 
     else:
-        for ace in Ace2.objects.all():
+        for ace in Ace2.objects.filter(date_created__year__gte=2024):
             process = ace.process
 
             if process.approval_set.exists():
@@ -333,6 +338,11 @@ def ace_awaiting_my_action(request):
 
             if step:
                 aces_to_process.append(ace)
+                # remove aces that have been rejected
+                if process.approval_set.filter(approved="Rejected").exists():
+                    aces_to_process.remove(ace)
+
+    print(aces_to_process)
 
     return render(request, 'finance/ace2/view_all_aces.html', {'aces': aces_to_process,
                                                                'ace_role': ace_role,
@@ -601,6 +611,7 @@ def add_asset_number(request):
 
 @login_required
 def upload_aces_csv(request):
+    # day_created = None
     if request.method == 'POST':
         csvfile = request.FILES['file']  # file as key
         decoded_file = csvfile.read().decode('utf-8').splitlines()
@@ -609,8 +620,10 @@ def upload_aces_csv(request):
         decoded_file2 = csvfile2.read().decode('utf-8').splitlines()
         reader2 = csv.DictReader(decoded_file2)
         for row in reader:
+            section_code = None
             ace_id2 = row['ace']
             region = row['division']
+            sectionbg = row['undertaking']
             section = row['undertaking']
             district = row['district']
             details_of_expenditure = row['description']
@@ -691,15 +704,15 @@ def upload_aces_csv(request):
             if item_division:
                 # fetch from remote budgets model
                 budget_obj = RemoteBudget.objects.using('remote').filter(budget_id=item_division).first()
-                # create assetbudget object using this informationif asset budget doesnt exist'
+                # create assetbudget object using this information if asset budget doesn't exist
                 assetbudget = AssetBudget.objects.filter(budget_name=budget_obj.budget,
                                                          period=budget_obj.period).first()
                 region = Regions.objects.filter(region='Harare Region').first()
-                section = Sections.objects.filter(section=str(budget_obj.section_code)).first()
+                section = Sections.objects.filter(code=str(budget_obj.section_code)).first()
                 if section:
                     section_code = section.code
-                else:
-                    section_code = None
+                # else:
+                #     section_code = None
                 if assetbudget:
                     assetbudget = assetbudget
                 else:
@@ -712,6 +725,7 @@ def upload_aces_csv(request):
                                                              period=budget_obj.period,
                                                              region=region,
                                                              created_date=date.today(),
+                                                             section=section.section
                                                              )
                     assetbudget.save()
             else:
@@ -720,8 +734,8 @@ def upload_aces_csv(request):
             check_ace = Ace2.objects.filter(Ace_id2=ace_id2).first()
             if check_ace:
                 print("duplicate record ....")
-                messages.error(request, 'duplicate record')
-                sweetify.error(request, 'duplicate record')
+                # messages.error(request, 'duplicate record')
+                # sweetify.error(request, 'duplicate record')
             else:
                 if present_tariff == "":
                     present_tariff = 0
@@ -739,11 +753,14 @@ def upload_aces_csv(request):
                     transport = 0
                 if total_connection_fee == "":
                     total_connection_fee = 0
-                section = Sections.objects.filter(section=section).first()
+                section = Sections.objects.filter(section=sectionbg).first()
                 if section:
                     section = section
                 else:
-                    section = None
+                    # create new section
+                    section = Sections.objects.create(section=sectionbg, code=section_code or sectionbg)
+                    section.save()
+
                 requested_by = UserProfile.objects.filter(username=requested_by).first()
                 if requested_by:
                     requested_by = requested_by
@@ -751,7 +768,7 @@ def upload_aces_csv(request):
                     requested_by = None
                 ace = Ace2.objects.create(Ace_id2=ace_id2,
                                           region=region,
-                                          section_id=section.id if section else None,
+                                          section=section,
                                           details_of_expenditure=details_of_expenditure,
                                           requested_by=requested_by if requested_by else None,
                                           date_created=passed_date,
@@ -772,13 +789,28 @@ def upload_aces_csv(request):
                                           currency='rtgs',
                                           quantity=1,
                                           budget_id=assetbudget,
+                                          amount=ace_amt
                                           )
                 ace.process = intiate(request, 'ace')
+                transaction = Transactions.objects.create(
+                    Ace_id2=ace,
+                    details_of_expenditure=details_of_expenditure,
+                    approval_status="created",
+                    region=region,
+                    amount=ace_amt,
+                    budget=assetbudget,
+                    section=section
+                )
+                transaction.save()
                 ace.save()
                 # for approvals in csvfile2:
         for row in reader2:
             ace_id2 = row['ace']
             ace = Ace2.objects.filter(Ace_id2=ace_id2).first()
+            if ace:
+                process = Ace2.objects.filter(Ace_id2=ace_id2).first().process
+            print("process", process)
+            print('ace found', ace)
 
             if ace:
                 print('ace found', ace)
@@ -789,25 +821,85 @@ def upload_aces_csv(request):
                 else:
                     section_code = None
                 ace.section_code = section_code
+                ace.allocation_code_of_expenditure = section_code
+                ace.requested_by = UserProfile.objects.filter(username=row['update_user1']).first()
                 ace.save()
-                if row['status_1'] == 1:
-                    user = row['update_user1']
+                print('section code added')
+                status_1 = row['status_1']
+                status_2 = row['status_2']
+                status_3 = row['status_3']
+                status_4 = row['status_4']
+                status_5 = row['status_5']
+                # make int
+                status_1 = int(status_1)
+                status_2 = int(status_2)
+                status_3 = int(status_3)
+                status_4 = int(status_4)
+                status_5 = int(status_5)
+                # Extract the date part from the petty_id
+                date_str = ace_id2[3:9]
+
+                # Convert the date string to a datetime object
+                # If the year is less than 20, we assume it's 2000s, otherwise it's 1900s
+                year = int(date_str[:2])
+                print(year, 'year1')
+                if year > 20:
+                    year += 2000
+                else:
+                    year += 1900
+                print(year, 'year')
+
+                date_str = str(year) + date_str[2:]
+                day_created = datetime.strptime(date_str, '%Y%m%d')
+                # format into date format not date time
+                day_created = day_created.strftime('%Y-%m-%d')
+                ace.date_created = day_created
+                ace.save()
+
+                print(day_created)  # Outputs: 2022-01-01 00:00:00
+                if status_2 == 2:
+                    # strip the row
+                    user = row['update_user2']
+                    # remove whitespaces
+                    userp = user.strip()
                     date_approved = row['update_date2']
-                    user = UserProfile.objects.filter(username=user).first()
-
-                    approve_step(ace.process, user, date_approved)
-                    if row['status_2'] == 2:
-                        user = row['update_user2']
+                    print('user', user)
+                    user = UserProfile.objects.filter(username=userp).first()
+                    if user:
+                        print(process, "ace process")
+                        if process:
+                            approve_step(process.id, userp, date_approved)
+                            print('sent to initial approval')
+                        # approve_step(ace.process.id, userp, date_approved)
+                        # print('sent to initial approval')
+                    if status_3 == 3:
+                        user2 = row['update_user3']
+                        user2p = user2.strip()
                         date_approved = row['update_date3']
-                        user = UserProfile.objects.filter(username=user).first()
-                        approve_step(ace.process, user, date_approved)
-                        approve_step(ace.process, user, date_approved)
+                        user2 = UserProfile.objects.filter(username=user2p).first()
+                        if user2:
+                            if process:
+                                approve_step(ace.process.id, user2p, date_approved)
 
-                        if row['status_3'] == 3:
-                            user = row['update_user3']
+                        if status_4 == 4:
+                            user3 = row['update_user4']
+                            user3p = user3.strip()
                             date_approved = row['update_date4']
-                            user = UserProfile.objects.filter(username=user).first()
-                            approve_step(ace.process, user, date_approved)
+                            user3 = UserProfile.objects.filter(username=user3p).first()
+                            if user3:
+                                if process:
+                                    approve_step(ace.process.id, user3p, date_approved)
+                            if status_5 == 5:
+                                user4 = row['update_user5']
+                                user4p = user4.strip()
+                                date_approved = row['update_date4']
+                                user4 = UserProfile.objects.filter(username=user4p).first()
+                                if user4:
+                                    if process:
+                                        approve_step(ace.process.id, user4p, date_approved)
+                                        transaction = Transactions.objects.filter(Ace_id2=ace).first()
+                                        transaction.approval_status = "approved by General Manager"
+                                        transaction.save()
         return redirect("/ace/aces")
     else:
         return render(request, 'finance/ace2/upload_ace.html')

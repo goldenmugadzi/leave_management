@@ -11,8 +11,10 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
 var e = React.createElement;
+var domContainer = document.querySelector("#dashboard_filters");
+var url = domContainer.getAttribute("data-baseurl");
 // const BASE_URL = "http://localhost:8000";
-var BASE_URL = "http://172.16.8.99:9300";
+var BASE_URL = url;
 
 var DashboardFilter = function (_React$Component) {
   _inherits(DashboardFilter, _React$Component);
@@ -346,7 +348,7 @@ var DashboardFilter = function (_React$Component) {
 
     _this.getRegions = function () {
 
-      fetch("http://172.16.8.99:9300/dashboards/regions").then(function (response) {
+      fetch(BASE_URL + "/dashboards/regions").then(function (response) {
         return response.json();
       }).then(function (data) {
         console.log(data);
@@ -367,7 +369,7 @@ var DashboardFilter = function (_React$Component) {
     };
 
     _this.getDashboardData = function () {
-      fetch("http://172.16.8.99:9300/dashboards/dashboard_data").then(function (response) {
+      fetch(BASE_URL + "/dashboards/dashboard_data").then(function (response) {
         return response.json();
       }).then(function (data) {
 
@@ -537,7 +539,7 @@ var DashboardFilter = function (_React$Component) {
       console.log("csrfToken: ", csrfToken);
 
       // Set up the request
-      xhr.open("GET", "http://172.16.8.99:9300/dashboards/ajax?month=" + month); // Replace with your actual URL and parameters
+      xhr.open("GET", BASE_URL + "/dashboards/ajax?month=" + month); // Replace with your actual URL and parameters
 
       xhr.setRequestHeader("X-CSRFToken", csrfToken);
       // Handle the response
@@ -600,7 +602,7 @@ var DashboardFilter = function (_React$Component) {
       var csrfToken = getCookie("csrf_token");
       console.log("csrfToken: ", csrfToken);
       // Set up the request
-      xhr.open("GET", "http://172.16.8.99:9300/dashboards/inspections/ajax?month=" + month); // Replace with your actual URL and parameters
+      xhr.open("GET", BASE_URL + "/dashboards/inspections/ajax?month=" + month); // Replace with your actual URL and parameters
       xhr.setRequestHeader("X-CSRFToken", csrfToken);
 
       // Handle the response
@@ -1609,7 +1611,6 @@ var DashboardFilter = function (_React$Component) {
   return DashboardFilter;
 }(React.Component);
 
-var domContainer = document.querySelector("#dashboard_filters");
 var spid = domContainer.getAttribute("data-spid");
 var region = domContainer.getAttribute("data-region");
 var district = domContainer.getAttribute("data-district");
