@@ -80,7 +80,7 @@ class AcceptanceForm(forms.ModelForm):
     class Meta:
         model = Acceptance
         fields = "__all__" 
-        exclude = ['nonconformity','user' ]
+        exclude = ['nonconformity','user','dated' ]
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 

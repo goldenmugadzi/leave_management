@@ -35,4 +35,4 @@ class NotificationAdmin(admin.ModelAdmin):
 
 @admin.register(CostCenter)
 class CostCenterAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'parent')
+    list_display = ('code', 'name', 'parent')

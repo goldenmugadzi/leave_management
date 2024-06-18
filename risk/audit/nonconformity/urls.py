@@ -10,7 +10,7 @@ urlpatterns = [
     path('nonconformities/', view_nonconformities, name='nonconformities'),
     path('my_nonconformities/', my_nonconformities, name='my_nonconformities'),
     path('nonconformity/<str:nonconformity_id>/', nonconformity_details, name='nonconformity'),
-    
+    path('awaiting_my_action/', awaiting_my_action, name='awaiting_my_action'),
     path('create_clause/', create_clause, name='create_clause'),
     path('create_topic/<str:clause>', create_topic, name='create_topic'),
     path('create_iso_req/<str:topic>', create_iso_req, name='create_iso_req'),

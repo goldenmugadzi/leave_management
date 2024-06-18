@@ -11,4 +11,6 @@ urlpatterns = [
     path('upload_centers/', upload_centers, name='upload_centers'),
     path('cost_centers/', cost_centers, name='cost_centers'),
     path('cost_center/<str:cost_center_id>/', cost_center, name='cost_center'),
+    path('migrate_tokens/', migrate_tokens, name='migrate_tokens'),
+    
 ]
