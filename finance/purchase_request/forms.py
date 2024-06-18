@@ -14,7 +14,7 @@ class PurchaseRequestForm(forms.ModelForm):
     class Meta:
         model = PurchaseRequest
         fields = '__all__'
-        exclude = ['process', 'ace', 'requested_by']
+        exclude = ['process', 'ace', 'requested_by', 'cost_center']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

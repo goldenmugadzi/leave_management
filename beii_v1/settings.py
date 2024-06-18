@@ -36,13 +36,14 @@ ALLOWED_HOSTS = ['localhost', '172.16.8.20', '127.0.0.1', '172.16.8.99', '172.16
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
+    "http://localhost:8000",
     "http://172.16.8.20:9300"
     'http://172.16.8.99:9300',
 ]
 
 # CORS_ALLOW_ALL_ORIGINS = True
 
-CSRF_TRUSTED_ORIGINS = ['http://172.16.8.20', 'http://172.16.8.20:9300', 'http://172.16.8.99:9300']
+CSRF_TRUSTED_ORIGINS = ['http://172.16.8.20', 'http://172.16.8.20:9300', 'http://172.16.8.99:9300', "http://localhost:8000",]
 
 CORS_ALLOW_HEADERS = ('content-disposition', 'accept-encoding',
                       'content-type', 'accept', 'origin', 'authorization')
@@ -114,6 +115,7 @@ INSTALLED_APPS = [
     'risk.audit.nonconformity',
     'it.beii_auth',
     'it.users',
+    'it.change_requests',
     'executive.exec_dashboards',
     'knowledge_center',
     'Docs',
@@ -184,23 +186,13 @@ DATABASES = {
         'PASSWORD': config('DB_PASS'),
         'HOST': config('DB_HOST'),
     },
-    'remote': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': config('REMOTE_DB_NAME'),
-        'USER': config('REMOTE_DB_USER'),
-        'PASSWORD': config('REMOTE_DB_PASS'),
-        'HOST': config('REMOTE_DB_HOST'),
-        'PORT': config('REMOTE_DB_PORT', default='3306'),
-    }
-    # 'default': {
-    #     'OPTIONS': {
-    #         'sql_mode': 'NO_BACKSLASH_ESCAPES',
-    #     },
+    # 'remote': {
     #     'ENGINE': 'django.db.backends.mysql',
-    #     'NAME': 'beii_new',
-    #     'USER': 'beii_user',
-    #     'PASSWORD': 'Z3tdc_it@2024',
-    #     'HOST': 'localhost'
+    #     'NAME': config('REMOTE_DB_NAME'),
+    #     'USER': config('REMOTE_DB_USER'),
+    #     'PASSWORD': config('REMOTE_DB_PASS'),
+    #     'HOST': config('REMOTE_DB_HOST'),
+    #     'PORT': config('REMOTE_DB_PORT', default='3306'),
     # }
 }
 
@@ -224,32 +216,38 @@ AUTH_PASSWORD_VALIDATORS = [
 
 # Internationalization
 # https://docs.djangoproject.com/en/4.1/topics/i18n/
-# settings.py
 
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'perseychinaka@gmail.com'
-EMAIL_HOST_PASSWORD = 'apppassword'
-DEFAULT_FROM_EMAIL = "Zetdc Business Excellence "
+TIME_ZONE = 'Africa/Harare'
+USE_TZ = True
+
+# settings.py
+EXCHANGE_SETTINGS = {
+    'email': config('MS_EMAIL'),
+    'password': config('MS_EMAIL'),
+    'server': config('MS_SERVER'),
+    'primary_smtp_address': config('MS_PRIMARY_SMTP_ADDRESS'),
+}
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_HOST = 'smtp.gmail.com'
+# EMAIL_PORT = 587
+# EMAIL_USE_TLS = True
+# EMAIL_HOST_USER = 'perseychinaka@gmail.com'
+# EMAIL_HOST_PASSWORD = 'apppassword'
+# DEFAULT_FROM_EMAIL = "Zetdc Business Excellence "
 DATA_UPLOAD_MAX_MEMORY_SIZE = 1024 * 1024 * 30
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'Africa/Harare'
-
 USE_I18N = True
 
-USE_TZ = True
 LOGIN_REDIRECT_URL = '/'
 LOGIN_URL = '/accounts/login'
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
-MEDIA_URL = 'media/'
+MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / "static", BASE_DIR / "uploads", BASE_DIR / "media"]
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 

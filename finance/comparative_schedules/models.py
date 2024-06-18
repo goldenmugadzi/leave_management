@@ -1,3 +1,4 @@
+from datetime import datetime
 from django.db import models
 from finance.Direct_purchases.models import Supplier
 
@@ -39,9 +40,15 @@ class ComparativeSchedules(models.Model):
     cs_opened = models.DateField()
     tac_date = models.DateField()
     created_by = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
+    cost_center = models.ForeignKey(CostCenter, on_delete=models.CASCADE, blank=True, null=True)
     section = models.ForeignKey(Sections, on_delete=models.CASCADE, blank=True, null=True)
     region = models.ForeignKey(Regions, on_delete=models.CASCADE, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    
+    # add a function to get logged in user's cost center
+    def get_logged_in_user_cost_center(self):
+        return self.created_by.cost_center
+    
 
 class CSRequiredItems(models.Model):
     cs_id = models.ForeignKey(ComparativeSchedules, on_delete=models.CASCADE)
@@ -126,7 +133,7 @@ class Committee(models.Model):
     justification = models.CharField(max_length=255, null=True, blank=True)
     committee_date = models.DateTimeField(blank=True, null=True, default=None)
     created_at = models.DateTimeField(auto_now_add=True)
-    
+
 class CSApproval(models.Model):
     cs_id = models.ForeignKey(ComparativeSchedules, on_delete=models.CASCADE)
     user = models.ForeignKey(UserProfile, on_delete=models.CASCADE)

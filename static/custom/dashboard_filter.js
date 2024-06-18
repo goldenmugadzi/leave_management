@@ -1,8 +1,10 @@
 "use strict";
 
 const e = React.createElement;
+const domContainer = document.querySelector("#dashboard_filters");
+const url = domContainer.getAttribute("data-baseurl");
 // const BASE_URL = "http://localhost:8000";
-const BASE_URL = "http://172.16.8.99:9300";
+const BASE_URL = url;
 
 class DashboardFilter extends React.Component {
   constructor(props) {
@@ -456,7 +458,7 @@ class DashboardFilter extends React.Component {
     console.log("csrfToken: ", csrfToken);
 
     // Set up the request
-    xhr.open("GET", `http://172.16.8.99:9300/dashboards/ajax?month=${month}`); // Replace with your actual URL and parameters
+    xhr.open("GET", `${BASE_URL}/dashboards/ajax?month=${month}`); // Replace with your actual URL and parameters
 
     xhr.setRequestHeader("X-CSRFToken", csrfToken);
     // Handle the response
@@ -518,7 +520,7 @@ class DashboardFilter extends React.Component {
     // Set up the request
     xhr.open(
       "GET",
-      `http://172.16.8.99:9300/dashboards/inspections/ajax?month=${month}`
+      `${BASE_URL}/dashboards/inspections/ajax?month=${month}`
     ); // Replace with your actual URL and parameters
     xhr.setRequestHeader("X-CSRFToken", csrfToken);
 
@@ -550,7 +552,7 @@ class DashboardFilter extends React.Component {
   // get service branch
   getRegions = () => {
 
-    fetch(`http://172.16.8.99:9300/dashboards/regions`)
+    fetch(`${BASE_URL}/dashboards/regions`)
       .then((response) => response.json())
       .then((data) => {
         console.log(data);
@@ -571,7 +573,7 @@ class DashboardFilter extends React.Component {
   };
 
   getDashboardData = () => {
-    fetch(`http://172.16.8.99:9300/dashboards/dashboard_data`)
+    fetch(`${BASE_URL}/dashboards/dashboard_data`)
       .then((response) => response.json())
       .then((data) => {
 
@@ -1122,7 +1124,6 @@ class DashboardFilter extends React.Component {
   }
 }
 
-const domContainer = document.querySelector("#dashboard_filters");
 const spid = domContainer.getAttribute("data-spid");
 const region = domContainer.getAttribute("data-region");
 const district = domContainer.getAttribute("data-district");

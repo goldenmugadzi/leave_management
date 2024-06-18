@@ -1,6 +1,6 @@
 from django.db import models
 from it.users.models import UserProfile,Regions,Sections,CostCenter
-from approve.models import Process
+from approve.models import Process,Step,Workflow,Approval
 from django.core.validators import RegexValidator
 import random
 import time
@@ -31,18 +31,20 @@ class Token(models.Model):
     created_by = models.ForeignKey(UserProfile, on_delete=models.CASCADE, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     process=models.ForeignKey(Process, on_delete=models.CASCADE, blank=True, null=True)
-    section=models.ForeignKey(Sections, on_delete=models.CASCADE)
-    region=models.ForeignKey(Regions, on_delete=models.CASCADE)
+    section=models.ForeignKey(Sections, on_delete=models.CASCADE, blank=True, null=True)
+    region=models.ForeignKey(Regions, on_delete=models.CASCADE, blank=True, null=True)
+    cost_center=models.ForeignKey(CostCenter, on_delete=models.CASCADE)
      
     token_photo = models.FileField(upload_to='uploads/Tokens/generatedtoken',help_text="photo of generated token " , blank=True, null=True)
     type = models.CharField(max_length=100,help_text="Type of Token",  choices=[('REIMBURSEMENT', 'REIMBURSEMENT') , ('CLEAR CREDIT', 'CLEAR CREDIT'), ('TEMPER', 'TEMPER')])
     def __str__(self):
-        return str(self.meter.number)
+        return str(self.id)
     
     def save(self, *args, **kwargs):
-        timestamp = str(int(time.time()))
-        random_number = str(random.randint(10000, 99999))
-        self.id = "TKN" + timestamp + random_number
+        if not self.id:
+            timestamp = str(int(time.time()))
+            random_number = str(random.randint(10000, 99999))
+            self.id = "TKN" + timestamp + random_number
         super().save(*args, **kwargs)
 
 class REIMBURSEMENT(models.Model):

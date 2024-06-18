@@ -154,6 +154,7 @@
       columns: [
         {
           data: "cs_id",
+          width: "10%",
           render: function (data, type, row, meta) {
             return `
               <a type="button" class="btn btn-info" href='/comperative_schedule/comperative_schedule/${row.cs_id}' >
@@ -163,9 +164,11 @@
         },
         {
           data: "scope_of_work",
+          width: "40%",
         },
         {
           data: "committee_approval",
+          width: "15%",
           orderable: false,
           searchable: false,
           render: function (data, type, row, meta) {
@@ -191,6 +194,7 @@
         },
         {
           data: "fm_approval",
+          width: "10%",
           orderable: false,
           searchable: false,
           render: function (data, type, row, meta) {
@@ -216,6 +220,7 @@
         },
         {
           data: "gm_approval",
+          width: "10%",
           orderable: false,
           searchable: false,
           render: function (data, type, row, meta) {
@@ -240,7 +245,8 @@
           },
         },
         {
-          data: "created_at"
+          data: "created_at",
+          width: "15%",
         }
       ],
       order: [[5, 'desc']]

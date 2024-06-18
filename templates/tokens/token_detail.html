@@ -76,12 +76,7 @@
                                             <span class="inline-block text-start font-bold rounded-full text-sm">Meter Number</span>
                                             <span class="inline-block text-end rounded-full text-sm">{{ token.meter.number|default_if_none:'' }}</span>
                                         </div>
-                                        {% if token.section %}
-                                            <div class=" text-center">
-                                                <span class="inline-block text-start font-bold rounded-full text-sm">{{ token.region|default_if_none:'' }}</span>
-                                                <span class="inline-block text-end rounded-full text-sm">{{ token.section|default_if_none:'' }}</span>
-                                            </div>
-                                        {% endif %}
+                                        
                                         <div class=" text-center">
                                             <span class="inline-block text-start font-bold rounded-full text-sm">Units</span>
                                             <span class="inline-block text-end rounded-full text-sm">{{ token.meter.kilowatt_hours|default_if_none:'' }}</span>
@@ -94,6 +89,16 @@
                                             <span class="inline-block text-start font-bold rounded-full text-sm">Stand Number</span>
                                             <span class="inline-block text-end rounded-full text-sm">{{ token.customer.stand_number|default_if_none:'' }}</span>
                                         </div>
+                                        <details class=" text-center">
+                                            {% if token.cost_center %}
+                                                <summary class="inline-block  font-bold  text-lg ">{{ token.cost_center|default_if_none:'' }}</summary>
+                                            {% endif %}
+                                            <br>
+                                            {% for center in token.cost_center.get_all_ancestors %}
+                                                <span class="inline-block text-start rounded-full text-sm">{{ center }}</span>
+                                                <br>
+                                            {% endfor %}
+                                        </details>
                                     </div>
                                 </div>
                                 {% if token.type == 'TEMPER' or token.type == 'REIMBURSEMENT' %}
@@ -141,7 +146,7 @@
                                         </a>
                                     {% endif %}
                                 {% elif token.type == 'CLEAR CREDIT' %}
-                                    {% if  token.clearcredit_set.last  %}
+                                    {% if  token.clearcredit_set.last %}
                                         <a class="text-blue-900 m-auto shadow-lg mb-2 p-2 border-yellow-500 border border-1 font-bold inline-block text-start rounded-full text-sm"
                                            href="/media/{{ token.clearcredit_set.last.receipt }}">
                                             Pernalty paid : ${{ token.clearcredit_set.last.amount|default_if_none:'' }}
@@ -150,7 +155,7 @@
                                 {% endif %}
                             </div>
                             <div class="card-body m-2   px-2 rounded">
-                                {% if token.process.approval_set.exists %} <div class="font-bold text-xl text-center">Approvals</div>{% endif %}
+                                {% if token.process.approval_set.exists %}<div class="font-bold text-xl text-center">Approvals</div>{% endif %}
                                 <div class="scrollable-div">
                                     {% for response in token.process.approval_set.all %}
                                         <div class="card-body  rounded-lg rounded-md rounded-sm">
@@ -194,12 +199,11 @@
                                 </div>
                             </div>
                         </div>
-                        <h1 class="text-center mb-4 font-bold text-xl  mb-2"> Workflow Details ({{ token.process.workflow }})</h1>
+                        <h1 class="text-center mb-4 font-bold text-xl  mb-2">Workflow Details ({{ token.process.workflow }})</h1>
                         {% if approvalForm %}
                             <form class="row rounded py-4 border  rounded-lg p-3 m-auto container"
                                   method="POST"
                                   action=""
-
                                   enctype="multipart/form-data">
                                 {% csrf_token %}
                                 <div class=" m-auto container  ">

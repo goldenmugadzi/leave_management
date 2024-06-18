@@ -67,7 +67,9 @@ def create_nonconformity_from_checklist(request, clause):
 def nonconformity_details(request, nonconformity_id):
     nonconformity = get_object_or_404(Nonconformity, id=nonconformity_id)
     if request.method == 'POST':
-        
+        acceptanceForm = None
+        rejectionForm = None
+        form = None
         if request.user == nonconformity.recipient and nonconformity.accepted == True:
             resolve_form = ResolveNcForm(request.POST, instance=nonconformity)
             if resolve_form.is_valid():
@@ -127,16 +129,14 @@ def nonconformity_details(request, nonconformity_id):
                         Attachment.objects.create(acceptance=nc, attachment=attachment)
                     messages.success(request, 'Nonconformity updated successfully!')
                     return redirect('nonconformity:nonconformities')
-            else:
-                messages.error(request, 'Sorry, something went wrong. Please fill in the required details and try again.')
-                return render(request, 'risk/nonconformity/nonconformity_details.html',{'nonconformity': nonconformity, 'acceptanceForm': acceptanceForm,'rejectionForm':rejectionForm, 'form': form })
-        elif nonconformity.accepted == True and nonconformity.resolved == True:
-                form = CloseNcForm(request.POST, instance=nonconformity)
-                if form.is_valid():
-                    form.save()
-                    return redirect('nonconformity:nonconformities')
-        messages.error(request, 'Sorry, something went wrong. Please try again.')
-        return redirect(reverse('nonconformity:nonconformity', args=[nonconformity.id]))
+                 
+            elif nonconformity.accepted == True and nonconformity.resolved == True:
+                    form = CloseNcForm(request.POST, instance=nonconformity)
+                    if form.is_valid():
+                        form.save()
+                        return redirect('nonconformity:nonconformities')
+            messages.error(request, 'Sorry, something went wrong. Please try again.')
+            return redirect(reverse('nonconformity:nonconformity', args=[nonconformity.id]))
     else:
         acceptanceForm = None
         rejectionForm = None
@@ -146,10 +146,12 @@ def nonconformity_details(request, nonconformity_id):
             acceptanceForm = AcceptanceForm(instance=nonconformity)
         elif request.user == nonconformity.recipient and nonconformity.accepted == True and nonconformity.resolved != True:
             form = ResolveNcForm(instance=nonconformity)
-        elif request.user == nonconformity.created_by and nonconformity.resolved == True and nonconformity.accepted == True and nonconformity.closed != True:
+        elif request.user == nonconformity.created_by and nonconformity.created_by is not None  and nonconformity.resolved == True and nonconformity.accepted == True and nonconformity.closed != True:
             form = CloseNcForm(instance=nonconformity)
-        elif request.user == nonconformity.created_by and nonconformity.accepted != True:
+            print('close form',form)
+        elif request.user == nonconformity.created_by and nonconformity.created_by is not None and  not nonconformity.accepted :
             form = NonconformityForm(instance=nonconformity)
+            print('NonconformityForm','user',request.user,'created_by',nonconformity.created_by,'accepted',nonconformity.accepted)
         old_notifications = Notification.objects.filter(user=request.user, url=nonconformity.get_absolute_url())
         old_notifications.update(is_read=True)
         return render(request, 'risk/nonconformity/nonconformity_details.html', {'nonconformity': nonconformity, 'acceptanceForm': acceptanceForm,'rejectionForm':rejectionForm, 'form': form})
@@ -177,6 +179,11 @@ def check_roles(request):
     return any(role.application == 'non_conformity' and role.role == 'supervisor' for role in user.roles.all())
 
 """checklist functions to create, edit and view checklist"""
+@login_required
+def awaiting_my_action(request):
+    user = request.user
+    nonconformities = Nonconformity.objects.filter(Q(recipient=user) & Q(accepted=None) or Q(recipient=user) & Q(accepted=True) & Q(resolved=False) or Q(created_by=user) & Q(accepted=True) & Q(resolved=True) & Q(closed=False) or Q(created_by=user) & Q(accepted=False))
+    return render(request, 'risk/nonconformity/nonconformities.html', {'nonconformities': nonconformities})
 
 @login_required
 @checklist_roles

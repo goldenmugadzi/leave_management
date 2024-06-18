@@ -38,8 +38,11 @@
               <tr class="h-1">
                 <td>
                   <a class="text-blue-500"
-                     href="{% url "purchase_request:purchase_request_detail" purchase_request.id %}">{{ purchase_request.id|default_if_none:'' }}</a>
-                </td>
+                     href="{% url 'purchase_request:purchase_request_detail' purchase_request.id %}">{{ purchase_request.id|default_if_none:'' }}</a>
+               
+                     <a class="text-red-400"
+                     href="{% url 'purchase_request:purchase_request_update' purchase_request.id %}"><i class="fas fa-edit mr-2"></i></a>
+                    </td>
                 <td>{{ purchase_request.created_at|date }}</td>
                 <td>{{ purchase_request.scope_of_work|default_if_none:'' }}</td>
                 <td>
@@ -50,7 +53,7 @@
                   {% endif %}
                 </td>
                 <td>{{ purchase_request.section|default_if_none:'' }}</td>
-                <td>{{ purchase_request.allocation_code_of_expenditure |default_if_none:'' }}</td>
+                <td>{{ purchase_request.cost_center.name |default_if_none:'' }}</td>
                 <td>{{ purchase_request.procurement_plan_reference|default_if_none:'' }}</td>
                 <td>{{ purchase_request.ace|default_if_none:'' }}</td>
               </tr>

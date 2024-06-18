@@ -160,9 +160,11 @@ def create_ace_purchase_request(request, ace_id):
 def purchase_request_update(request, purchase_request_id):
     purchase_request = PurchaseRequest.objects.get(id=purchase_request_id)
     itemFormset = inlineformset_factory(PurchaseRequest, PrItem, form=PrItemForm, extra=0 , can_delete=False)
-    if purchase_request.is_processed:
+    ordered_items = purchase_request.pritem_set.filter(ordered=True)
+    if ordered_items:
         form = PurchaseRequestForm(instance=purchase_request)
-        return render(request, 'finance/purchase_request/create_purchase_request.html', {"attachments":purchase_request.attachment_set.all(),'formset': itemFormset(instance=purchase_request), 'form': form})
+        messages.error(request, 'You cannot update a purchase request with ordered items.')
+        return redirect(reverse('purchase_request:purchase_request_detail', args=[purchase_request.id]))
     elif request.method == 'POST':
         form = PurchaseRequestForm(request.POST, instance=PurchaseRequest(id=purchase_request_id))
         attachments = request.FILES.getlist('attachments')
@@ -219,9 +221,11 @@ def purchase_requests_awaiting_my_action(request):
     for each purchase_request.process in the purchase_requests,  let curent_step = the last purchase_request.process.approval if any else 0 and let next_step =curent_step+1
     then check if  next_step=step.step for purchase_request.process.workflow.step_set filtered by approcer = user.roles.all.
     """
+
     purchase_requests_to_process = []
     user_roles = request.user.roles.all()
-    for purchase_request in PurchaseRequest.objects.all():
+    region = request.user.region
+    for purchase_request in PurchaseRequest.objects.filter(region=region).all():
         process = purchase_request.process
         if process.approval_set.exists():
             last_approval = process.approval_set.last()
@@ -243,7 +247,8 @@ def purchase_requests_awaiting_my_action(request):
 
 @login_required
 def view_all_purchase_requests(request):
-    purchase_requests = PurchaseRequest.objects.all()
+    region = request.user.region
+    purchase_requests = PurchaseRequest.objects.filter(region=region).all()
     return render(request, 'finance/purchase_request/view_all_purchase_requests.html', {'purchase_requests': purchase_requests})
 @login_required
 def uploaduuom(request):

@@ -109,58 +109,77 @@
             </div>
 
             <div>
-              <label
-                for="district"
-                class="block text-sm font-medium leading-6 text-gray-900"
-                >District</label
-              >
-              <div class="mt-2">
-                <select
-                  id="district"
-                  name="district"
-                  autocomplete="district"
-                  class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 px-2 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+                <label
+                  for="district"
+                  class="block text-sm font-medium leading-6 text-gray-900"
+                  >District</label
                 >
-                  <option>Select District</option>
-                </select>
+                <div class="mt-2">
+                  <select
+                    id="district"
+                    name="district"
+                    autocomplete="district"
+                    class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 px-2 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+                  >
+                    <option>Select District</option>
+                  </select>
+                </div>
               </div>
-            </div>
+  
+              <div>
+                <label
+                  for="depot"
+                  class="block text-sm font-medium leading-6 text-gray-900"
+                  >Depot</label
+                >
+                <div class="mt-2">
+                  <select
+                    id="depot"
+                    name="depot"
+                    autocomplete="depot"
+                    class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 px-2 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+                  >
+                    <option>Select Depot</option>
+                  </select>
+                </div>
+              </div>
+  
+              <div>
+                <label
+                  for="section"
+                  class="block text-sm font-medium leading-6 text-gray-900"
+                  >Section</label
+                >
+                <div class="mt-2">
+                  <select
+                    id="section"
+                    name="section"
+                    autocomplete="section"
+                    class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 px-2 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+                  >
+                    <option>Select Section</option>
+                    {% for section in sections %}
+                    <option value="{{section.code}}">{{section.section}}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+              </div>
+  
 
             <div>
               <label
-                for="depot"
+                for="cost_center"
                 class="block text-sm font-medium leading-6 text-gray-900"
-                >Depot</label
+                >Cost Centre</label
               >
               <div class="mt-2">
                 <select
-                  id="depot"
-                  name="depot"
-                  autocomplete="depot"
+                  id="cost_center"
+                  name="cost_center"
+                  autocomplete="cost_center"
                   class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 px-2 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
                 >
-                  <option>Select Depot</option>
-                </select>
-              </div>
-            </div>
-
-            <div>
-              <label
-                for="section"
-                class="block text-sm font-medium leading-6 text-gray-900"
-                >Section</label
-              >
-              <div class="mt-2">
-                <select
-                  id="section"
-                  name="section"
-                  autocomplete="section"
-                  class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 px-2 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
-                >
-                  <option>Select Section</option>
-                  {% for section in sections %}
-                  <option value="{{section.code}}">{{section.section}}</option>
-                  {% endfor %}
+                  <option>Select Cost Centre</option>
                 </select>
               </div>
             </div>
@@ -263,7 +282,7 @@
                   autocomplete="{{app.name}}"
                   class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 px-2 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
                 >
-                  <option>Select Role</option>
+                  <option value="">Select Role</option>
                   {% for role in user_roles|get_value:app.name %}
                   <option value="{{role.id}}">{{role.name}}</option>
                   {% endfor %}
@@ -300,21 +319,33 @@
 <script>
   $(document).ready(() => {
     const region = document.getElementById('region');
-    const district = document.getElementById('district');
-    const depot = document.getElementById('depot');
+    const cost_center = document.getElementById('cost_center');
 
     region.addEventListener('change', (e) => {
       const regionId = e.target.value;
-      fetch(`http://{{HOST}}:{{PORT}}/users/filtered_districts/${regionId}`)
+      fetch(`http://{{HOST}}:{{PORT}}/users/filtered_centers/${regionId}`)
         .then((res) => res.json())
         .then((data) => {
           console.log("var: ", data);
-          district.innerHTML = '<option>Select District</option>';
-          data.forEach((_district) => {
-            district.innerHTML += `<option value="${_district.id}">${_district.district}</option>`;
+          cost_center.innerHTML = '<option>Select Cost Centre</option>';
+          data.forEach((_cost_center) => {
+            cost_center.innerHTML += `<option value="${_cost_center.id}">${_cost_center.name}</option>`;
           });
         });
     });
+
+    region.addEventListener('change', (e) => {
+        const regionId = e.target.value;
+        fetch(`http://{{HOST}}:{{PORT}}/users/filtered_districts/${regionId}`)
+          .then((res) => res.json())
+          .then((data) => {
+            console.log("var: ", data);
+            district.innerHTML = '<option>Select District</option>';
+            data.forEach((_district) => {
+              district.innerHTML += `<option value="${_district.id}">${_district.district}</option>`;
+            });
+          });
+      });
 
     district.addEventListener('change', (e) => {
       const districtId = e.target.value;
