@@ -86,10 +86,10 @@ def create(request):
         processObj = Processes(
             filename= filename,
             filetype=_filetype.name if _filetype else None,
-            department = _sub_category.name if _sub_category else None,
+            department = _sub_category.name if _sub_category else "",
             region=region,
             filepath = file_path,
-            sub_category= _subsubtype.name if _subsubtype else None,
+            sub_category= _subsubtype.name if _subsubtype else "",
             section = section,
             created_by = created_by,
             created_at=created_at,
