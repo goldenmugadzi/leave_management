@@ -160,9 +160,11 @@ def create_ace_purchase_request(request, ace_id):
 def purchase_request_update(request, purchase_request_id):
     purchase_request = PurchaseRequest.objects.get(id=purchase_request_id)
     itemFormset = inlineformset_factory(PurchaseRequest, PrItem, form=PrItemForm, extra=0 , can_delete=False)
-    if purchase_request.is_processed:
+    ordered_items = purchase_request.pritem_set.filter(ordered=True)
+    if ordered_items:
         form = PurchaseRequestForm(instance=purchase_request)
-        return render(request, 'finance/purchase_request/create_purchase_request.html', {"attachments":purchase_request.attachment_set.all(),'formset': itemFormset(instance=purchase_request), 'form': form})
+        messages.error(request, 'You cannot update a purchase request with ordered items.')
+        return redirect(reverse('purchase_request:purchase_request_detail', args=[purchase_request.id]))
     elif request.method == 'POST':
         form = PurchaseRequestForm(request.POST, instance=PurchaseRequest(id=purchase_request_id))
         attachments = request.FILES.getlist('attachments')
