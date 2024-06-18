@@ -36,13 +36,14 @@ ALLOWED_HOSTS = ['localhost', '172.16.8.20', '127.0.0.1', '172.16.8.99', '172.16
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
+    "http://localhost:8000",
     "http://172.16.8.20:9300"
     'http://172.16.8.99:9300',
 ]
 
 # CORS_ALLOW_ALL_ORIGINS = True
 
-CSRF_TRUSTED_ORIGINS = ['http://172.16.8.20', 'http://172.16.8.20:9300', 'http://172.16.8.99:9300']
+CSRF_TRUSTED_ORIGINS = ['http://172.16.8.20', 'http://172.16.8.20:9300', 'http://172.16.8.99:9300', "http://localhost:8000",]
 
 CORS_ALLOW_HEADERS = ('content-disposition', 'accept-encoding',
                       'content-type', 'accept', 'origin', 'authorization')
