@@ -195,9 +195,9 @@ def add_user(request):
             username = request.POST['username']
             designation_ = request.POST['designation']
             email = request.POST['email']
-            # section_ = request.POST['section']
-            # depots_ = request.POST['depot']
-            # district_ = request.POST['district']
+            section_ = request.POST['section']
+            depots_ = request.POST['depot']
+            district_ = request.POST['district']
             cost_center = request.POST['cost_center']
             region_ = request.POST['region']
             password1 = request.POST['password1']
@@ -205,9 +205,9 @@ def add_user(request):
             
             region = Regions.objects.filter(id=region_).first()
             cost_center_ = CostCenter.objects.filter(id=cost_center).first()
-            # district = Districts.objects.filter(code=district_).first()
-            # depot = Depots.objects.filter(code=depots_).first()
-            # section = Sections.objects.filter(code=section_).first()
+            district = Districts.objects.filter(code=district_).first()
+            depot = Depots.objects.filter(code=depots_).first()
+            section = Sections.objects.filter(code=section_).first()
             designation = Designations.objects.filter(id=designation_).first()
             
             if password1 == password2:
@@ -218,9 +218,9 @@ def add_user(request):
                     email=email,
                     designation=designation,
                     cost_center= cost_center_,
-                    # section=section,
-                    # depot=depot,
-                    # district=district,
+                    section=section,
+                    depot=depot,
+                    district=district,
                     region=region,
                     status="active"
                 )
@@ -378,9 +378,9 @@ def update_user(request):
                 'email': request.POST['email'],
                 'region': Regions.objects.filter(id=request.POST['region']).first(),
                 'cost_center': CostCenter.objects.filter(id=request.POST['cost_center']).first() if request.POST['cost_center'] not in ["Select Cost Center", ""] else None,
-                # 'district': Districts.objects.filter(id=request.POST['district']).first() if request.POST['district'] not in ["Select District", ""] else None,
-                # 'depot': Depots.objects.filter(id=request.POST['depot']).first() if request.POST['depot'] not in ["Select Depot", ""] else None,
-                # 'section': Sections.objects.filter(code=request.POST['section']).first(),
+                'district': Districts.objects.filter(id=request.POST['district']).first() if request.POST['district'] not in ["Select District", ""] else None,
+                'depot': Depots.objects.filter(id=request.POST['depot']).first() if request.POST['depot'] not in ["Select Depot", ""] else None,
+                'section': Sections.objects.filter(code=request.POST['section']).first(),
                 'designation': Designations.objects.filter(id=request.POST['designation']).first() if request.POST['designation'] not in ["Select Designation", ""] else None
             }
 
