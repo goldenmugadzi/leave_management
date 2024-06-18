@@ -345,7 +345,7 @@ def update_user(request):
             "depot": Depots.objects.filter(id=user_profile.depot.id).first() if user_profile.depot else None,
             "district": Districts.objects.filter(id=user_profile.district.id).first() if user_profile.district else None,
             "region": Regions.objects.filter(id=user_profile.region.id).first() if user_profile.region else None,
-            "cost_center": CostCenter.objects.filter(code=user_profile.cost_center.id).first() if user_profile.cost_center else None,
+            "cost_center": CostCenter.objects.filter(id=user_profile.cost_center.id).first() if user_profile.cost_center else None,
             "roles": active_roles,
             "designation": Designations.objects.filter(id=user_profile.designation.id).first() if user_profile.designation else None,
         }
@@ -415,6 +415,7 @@ def view_user(request):
             "section": Sections.objects.filter(id=user_profile.section.id).first() if user_profile.section else None,
             "depot": Depots.objects.filter(id=user_profile.depot.id).first() if user_profile.depot else None,
             "district": Districts.objects.filter(id=user_profile.district.id).first() if user_profile.district else None,
+            "cost_center": CostCenter.objects.filter(id=user_profile.cost_center.id).first() if user_profile.cost_center else None,
             "region": Regions.objects.filter(id=user_profile.region.id).first() if user_profile.region else None,
             "roles": active_roles,
             "designation": Designations.objects.filter(id=user_profile.designation.id).first() if user_profile.designation else None,
