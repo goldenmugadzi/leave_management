@@ -1016,7 +1016,7 @@ class DashboardFilter extends React.Component {
             <div className="sm:flex lg:items-center lg:justify-between">
               <div className="min-w-0 flex-1">
                 <div className="text-center text-lg font-bold text-gulf-blue-950 sm:truncate sm:tracking-tight">
-                  Maintanance breakdown
+                  Maintenance breakdown
                 </div>
                 <div style={{height: "14rem"}} className="mt-2 h-20 overflow-auto">
                   <a href="#">
@@ -1032,7 +1032,7 @@ class DashboardFilter extends React.Component {
             <div className="sm:flex lg:items-center lg:justify-between">
               <div className="min-w-0 flex-1">
                 <div className="text-center text-lg font-bold text-gulf-blue-950 sm:truncate sm:tracking-tight">
-                  Maintanance
+                  Maintenance
                 </div>
                 <div className="flex justify-center">
                   <select
