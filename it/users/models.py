@@ -160,6 +160,32 @@ class UserProfile(AbstractUser):
             return f"{self.first_name} {self.last_name}"
         else:
             return self.username
+    
+    def get_user_roles_for_application(self, application_name):
+        # Filter the user's roles for the specific application
+        application = Application.objects.filter(name=application_name).first()
+
+        if application:
+            user_roles = self.roles.filter(app_id=application.id)
+            
+            # Return the roles if any exist
+            if user_roles.exists():
+                return user_roles[0].role
+        else:
+            return None
+    
+    def get_user_role_for_application(self, application_name):
+        # Filter the user's roles for the specific application
+        application = Application.objects.filter(name=application_name).first()
+
+        if application:
+            user_roles = self.roles.filter(app_id=application.id)
+            
+            # Return the roles if any exist
+            if user_roles.exists():
+                return user_roles[0]
+        else:
+            return None
 
 
 class Notification(models.Model):

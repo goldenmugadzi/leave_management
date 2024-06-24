@@ -244,25 +244,30 @@ def view_chitowndistrict(request):
         return render(request, 'competence_building/chitowndistrict.html')
 
 def view_itjobdescription(request):
-        category= Category.objects.filter(name="Job Description").first()
-        subcategory= Subcategory.objects.filter(name="Information Technology").first()
-        documents = Document.objects.filter(category=category, subcategory=subcategory).all()
-        return render(request, 'competence_building/itjobdescription.html', {"Documents": documents})
+    category= Category.objects.filter(name="Job Description").first()
+    subcategory= Subcategory.objects.filter(name="Information Technology").first()
+    documents = Document.objects.filter(category=category, subcategory=subcategory).all()
+    return render(request, 'competence_building/itjobdescription.html', {"Documents": documents})
 
 def view_hrjobdescription(request):
-         section = Sections.objects.filter(section="Human Resource").first()
-         documents = Document.objects.filter(section=section).all()  # Fetch all documents
-         return render(request, 'competence_building/itjobdescription.html', {"Documents": documents})
+    category= Category.objects.filter(name="Job Description").first()
+    subcategory= Subcategory.objects.filter(name="Human Resource").first()
+    documents = Document.objects.filter(category=category, subcategory=subcategory).all()
+    return render(request, 'competence_building/itjobdescription.html', {"Documents": documents})
 
 def view_srjobdescription(request):
-         section = Sections.objects.filter(section="Stakeholder Relations").first()
-         documents = Document.objects.filter(section=section).all()  # Fetch all documents
-         return render(request, 'competence_building/itjobdescription.html', {"Documents": documents})
+    category= Category.objects.filter(name="Job Description").first()
+    subcategory= Subcategory.objects.filter(name="Stakeholder Relations").first()
+    documents = Document.objects.filter(category=category, subcategory=subcategory).all()
+    return render(request, 'competence_building/itjobdescription.html', {"Documents": documents})
 
 def view_riskjobdescription(request):
-         section = Sections.objects.filter(section="Risk Management").first()
-         documents = Document.objects.filter(section=section).all()  # Fetch all documents
-         return render(request, 'competence_building/itjobdescription.html', {"Documents": documents})
+    category= Category.objects.filter(name="Job Description").first()
+    subcategory= Subcategory.objects.filter(name="Stakeholder Relations").first()
+    documents = Document.objects.filter(category=category, subcategory=subcategory).all()
+    section = Sections.objects.filter(section="Risk Management").first()
+    documents = Document.objects.filter(section=section).all()  # Fetch all documents
+    return render(request, 'competence_building/itjobdescription.html', {"Documents": documents})
 
 def view_procjobdescription(request):
          section = Sections.objects.filter(section="Procurement").first()
@@ -270,19 +275,22 @@ def view_procjobdescription(request):
          return render(request, 'competence_building/itjobdescription.html', {"Documents": documents})
 
 def view_legaljobdescription(request):
-         subcategory = Subcategory.objects.filter(subcategory="Legal Services").first()
-         documents = Document.objects.filter(subcategory=subcategory).all()  # Fetch all documents
-         return render(request, 'competence_building/itjobdescription.html', {"Documents": documents})
+    category = Category.objects.filter(name="Job Description").first()
+    subcategories = Subcategory.objects.filter(name="Legal Service").first()
+    documents = Document.objects.filter(category=category,subcategory=subcategories).all()  # Fetch all documents
+    return render(request, 'competence_building/itjobdescription.html', {"Documents": documents})
 
 def view_finjobdescription(request):
-         section = Sections.objects.filter(section="Finance").first()
-         documents = Document.objects.filter(section=section).all()  # Fetch all documents
-         return render(request, 'competence_building/itjobdescription.html', {"Documents": documents})
+    category = Category.objects.filter(name="Job Description").first()
+    subcategories = Subcategory.objects.filter(name="Finance").first()
+    documents = Document.objects.filter(category=category,subcategory=subcategories).all()  # Fetch all documents
+    return render(request, 'competence_building/itjobdescription.html', {"Documents": documents})
 
 def view_engjobdescription(request):
-         section = Sections.objects.filter(section="Engineering").first()
-         documents = Document.objects.filter(section=section).all()  # Fetch all documents
-         return render(request, 'competence_building/itjobdescription.html', {"Documents": documents})
+    category = Category.objects.filter(name="Job Description").first()
+    subcategories = Subcategory.objects.filter(name="Engineering").first()
+    documents = Document.objects.filter(category=category,subcategory=subcategories).all()  # Fetch all documents
+    return render(request, 'competence_building/itjobdescription.html', {"Documents": documents})
 
 def view_comjobdescription(request):
          section = Sections.objects.filter(section="Commercial").first()

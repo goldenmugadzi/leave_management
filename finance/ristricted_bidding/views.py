@@ -551,7 +551,7 @@ def get_comperative_schedule_data(request, cs_id):
                 "committeeStatus": member.committee_status,
                 "memberApproval": member.committee_approval if member.committee_approval else "",
                 "committeeJustification": member.justification,
-                "committeeDate": member.committee_date,
+                "committeeDate": member.committee_date.astimezone() if member.committee_date else "",
             }) 
     
     encoded_advert_file = ""
