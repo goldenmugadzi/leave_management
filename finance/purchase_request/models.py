@@ -10,7 +10,7 @@ class ProcurementPlanReference(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, blank=True, null=True)
     created_by = models.ForeignKey(UserProfile, on_delete=models.CASCADE,blank=True, null=True)
     def __str__(self):
-        return f"{self.id} - {self.name}"
+        return f"{self.name} - [{self.id}]"
 
 def validate_pr_no(value):
     if not value.isdigit():

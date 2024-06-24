@@ -247,6 +247,7 @@ def purchase_requests_awaiting_my_action(request):
 @login_required
 def search_purchase_requests(request):
     search_term = request.GET.get('query', '')
+    print(search_term, "search_term")
     purchase_requests = PurchaseRequest.objects.filter(Q(name__icontains=search_term) or Q(cost_center__icontains=search_term) or Q(id__icontains=search_term) or Q(pr_no__icontains=search_term) or Q(section__icontains=search_term) or Q(created_at__icontains=search_term) or Q(requested_by__icontains=search_term) )  
     return render(request, 'finance/purchase_request/view_all_purchase_requests.html', {'purchase_requests': purchase_requests})
 
@@ -326,8 +327,8 @@ def uploaduuom(request):
     #                     ) 
     #     except: print(item['uom'],"failed")
     # Close the cursor and database connection
-    cursor.close()
-    cnx.close()
+    # cursor.close()
+    # cnx.close()
 
     return render(request, 'finance/purchase_request/add_uom.html')
 @login_required
