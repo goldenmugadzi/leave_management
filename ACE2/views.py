@@ -295,6 +295,7 @@ def ace_awaiting_my_action(request):
             custom_user_roles["ace"] = role
     ace_role = str(custom_user_roles["ace"])
     requester = "create"
+    cashier = "process"
 
     print(ace_role)
 
@@ -346,7 +347,8 @@ def ace_awaiting_my_action(request):
 
     return render(request, 'finance/ace2/view_all_aces.html', {'aces': aces_to_process,
                                                                'ace_role': ace_role,
-                                                               'requester': requester})
+                                                               'requester': requester,
+                                                               'cashier':cashier})
 
 
 @login_required
@@ -573,7 +575,7 @@ def list_budgets(request):
     }
     user_title = request.user.get_full_name()
     print(section_used)
-    section_budget = Budget.objects.all()
+    section_budget = AssetBudget.objects.all()
     # print(section_budget)
     user_title = request.user.get_full_name()
     l = request.user.groups.values_list('name', flat=True)
