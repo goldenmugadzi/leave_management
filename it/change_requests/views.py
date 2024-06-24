@@ -1,4 +1,5 @@
 from datetime import datetime
+from django.forms import model_to_dict
 from django.http import JsonResponse
 from django.shortcuts import redirect, render
 
@@ -28,10 +29,12 @@ def create_change_request(request):
     cost_centers = CostCenter.objects.all()
     districts = Districts.objects.all()
     regions = Regions.objects.all()
+    users = UserProfile.objects.all()
     
     return render(request, 'change_requests/create_change_request.html',
             {
                 "user_roles": all_roles,
+                "user_profiles": users,
                 "user_applications": user_applications,
                 "user_designations": user_designations,
                 "cost_centers": cost_centers,
@@ -112,7 +115,6 @@ def new_profile_request(request):
     if request.method == "GET":
         change_request = ChangeRequest.objects.get(cr_id=request.GET['i'])
         if change_request.new_profile:
-                print("change_request.new_profile.roles.all(): ", change_request.new_profile.roles.all(), change_request.new_profile.roles)
                 active_roles = {role.app_id.name: role for role in change_request.new_profile.roles.all() if role.app_id}
 
                 new_user = {
@@ -194,6 +196,8 @@ def view_profile_request(request):
                 for approval in cr_approvals:
                     if approval.approver_role.role == "section_head":
                         section_head_awaiting_action = False
+                        if approval.approval_status == False:
+                            it_section_head_awaiting_action = False
                     if approval.approver_role.role == "it_section_head":
                         it_section_head_awaiting_action = False
                 
@@ -222,6 +226,24 @@ def view_profile_request(request):
                     }
                 )
 
+def get_user_data(request, username):
+    user = UserProfile.objects.filter(username=username).first()
+    applications = Application.objects.all()
+    all_roles = {app.name: [model_to_dict(role) for role in Roles.objects.filter(app_id=app.id).all()] for app in Application.objects.all()}
+    active_roles = {role.app_id.name: model_to_dict(role) for role in user.roles.all() if role.app_id}
+    
+    if user:
+        return JsonResponse({
+            "applications": list(applications.values('id', 'name', 'fullname')),
+            "userData": all_roles,
+            "active_roles": active_roles,
+        })
+    else:
+        return JsonResponse({
+            "error": "User not found",
+            "applications": [],
+            "userData": []
+        })
 
 def update_new_profile_request(request):
     if request.method == "POST":
@@ -274,11 +296,12 @@ def update_new_profile_request(request):
 def approve_profile_request(request):
     if request.method == "POST":
         try:
+            action_button = request.POST.get('actionButton')
             cr_id = request.POST.get('cr_id')
             requestor = UserProfile.objects.filter(username=request.user.username).first()
             user_role = requestor.get_user_roles_for_application("change_requests")
             change_request = ChangeRequest.objects.filter(cr_id=cr_id).first()
-            if 'APPROVE' in request.POST:
+            if 'APPROVE' in action_button:
                 # The "APPROVE CHANGE REQUEST" button was clicked
                 if not change_request:
                     messages.error(request, "Change request not found")
@@ -300,17 +323,21 @@ def approve_profile_request(request):
                     
                     return redirect("/change_requests/change_request_index")
                     
-            elif 'REJECT' in request.POST:
+            elif 'REJECT' in action_button:
                 # The "REJECT CHANGE REQUEST" button was clicked
                 cr_approval = CRApproval(
                     cr_id=change_request,
                     approver=request.user,
                     approver_role=requestor.get_user_role_for_application("change_requests"),
                     approval_status=False,
-                    comment=request.POST.get('comment'),
+                    comment=request.POST.get('rejectReason'),
                     approval_date=datetime.now()
                 )
-            elif 'APPLY' in request.POST:
+                cr_approval.save()
+                messages.success(request, "Change Request rejected successfully")
+                
+                return redirect("/change_requests/change_request_index")
+            elif 'APPLY' in action_button:
                 # The "APPLY CHANGE REQUEST" button was clicked
                 if user_role == "it_section_head":
                     cr_approval = CRApproval(

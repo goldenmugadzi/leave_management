@@ -11,5 +11,6 @@ urlpatterns = [
     path('update_new_profile_request', views.update_new_profile_request, name='update_new_profile_request'),
     path('view_change_request', views.view_profile_request, name='view_profile_request'),
     path('approve_change_request', views.approve_profile_request, name='approve_profile_request'),
+    path('profile_modification/get_user_data/<str:username>', views.get_user_data, name='get_user_data'),
     
 ]

@@ -48,7 +48,7 @@
           x-show="openTab === 1"
           class="transition-all duration-300 bg-white p-4 rounded-lg shadow-md border-l-4 border-blue-600"
         >
-          <form method="post" action="/change_requests/approve_change_request">
+          <form id="profile_form" method="post" action="/change_requests/approve_change_request">
             {% csrf_token %}
             <div class="space-y-12 px-5 py-5">
               <div class="mt-10 border-b border-gray-900/10 pb-12">
@@ -93,8 +93,7 @@
                         id="change_description"
                         autocomplete="change_description"
                         class="block w-full bg-gulf-blue-50 rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                      >
-{{cr.change_description}}</textarea
+                      >{{cr.change_description}}</textarea
                       >
                     </div>
                   </div>
@@ -425,6 +424,7 @@
                   </div>
                 </div>
 
+                {% if cr_approvals %}
                 <div class="mt-10 pb-12">
                   <h2 class="text-base font-semibold leading-7 text-gray-900">
                     Change Request Approvals
@@ -460,7 +460,7 @@
                           type="text"
                           id="approval_status"
                           value="{{ approvals.approval_status|yesno:'Approved,Pending' }}"
-                          class="block w-full {% if approvals.approval_status %}bg-green-50{% else %}bg-gulf-blue-50{% endif %} rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 px-2 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+                          class="block w-full {% if approvals.approval_status %}bg-green-50{% else %}bg-red-100{% endif %} rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 px-2 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
                         />
                       </div>
                     </div>
@@ -501,10 +501,17 @@
                     {% endif %} {% endfor %}
                   </div>
                 </div>
+                {% endif %}
               </div>
 
+              <input type="hidden" name="rejectReason" id="rejectReason" />
+              <input type="hidden" name="actionButton" id="actionButton" />
               <div
-                x-data="{ modelOpen: false }"
+                x-data="{ 
+                rejectOpen: false,
+                confirmOpen: false,
+                confirmApply: false
+                }"
                 class="flex justify-evenly mt-10 px-3 py-3"
               >
                 <div style="width: 30%">
@@ -514,14 +521,15 @@
                     type="link"
                     class="text-sm px-8 py-4 font-semibold leading-6 text-gray-900"
                   >
-                    CANCEL
+                    GO BACK
                   </a>
                 </div>
                 {% if requestor_role == "section_head" and section_head_awaiting_action %}
                 <div style="width: 30%">
                   <button
                     style="width: 100%"
-                    type="submit"
+                    type="button"
+                    @click="confirmOpen = !confirmOpen"
                     name="APPROVE"
                     class="rounded-md bg-blue-600 hover:bg-blue-450 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
                   >
@@ -531,7 +539,8 @@
                 <div style="width: 30%">
                   <button
                     style="width: 100%"
-                    type="submit"
+                    type="button"
+                    @click="rejectOpen = !rejectOpen"
                     name="REJECT"
                     class="rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
                   >
@@ -544,7 +553,8 @@
                 <div style="width: 30%">
                   <button
                     style="width: 100%"
-                    type="submit"
+                    type="button"
+                    @click="confirmApply = !confirmApply"
                     name="APPLY"
                     class="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
                   >
@@ -555,7 +565,7 @@
                   <button
                     style="width: 100%"
                     type="button"
-                    @click="modelOpen = !modelOpen"
+                    @click="rejectOpen = !rejectOpen"
                     name="REJECT"
                     class="rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
                   >
@@ -565,7 +575,7 @@
                 {% endif %}
                 <div>
                   <div
-                    x-show="modelOpen"
+                    x-show="rejectOpen"
                     class="fixed inset-0 z-50 overflow-y-auto"
                     aria-labelledby="modal-title"
                     role="dialog"
@@ -576,8 +586,8 @@
                     >
                       <div
                         x-cloak
-                        @click="modelOpen = false"
-                        x-show="modelOpen"
+                        @click="rejectOpen = false"
+                        x-show="rejectOpen"
                         x-transition:enter="transition ease-out duration-300 transform"
                         x-transition:enter-start="opacity-0"
                         x-transition:enter-end="opacity-100"
@@ -590,7 +600,7 @@
 
                       <div
                         x-cloak
-                        x-show="modelOpen"
+                        x-show="rejectOpen"
                         x-transition:enter="transition ease-out duration-300 transform"
                         x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
                         x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
@@ -608,7 +618,7 @@
 
                           <button
                             type="button"
-                            @click="modelOpen = false"
+                            @click="rejectOpen = false"
                             class="text-gray-600 focus:outline-none hover:text-gray-700"
                           >
                             <svg
@@ -641,6 +651,7 @@
                             >
                             <input
                               type="text"
+                              id="modalRejectReason"
                               class="block w-full px-3 py-2 mt-2 text-gray-600 placeholder-gray-400 bg-white border border-gray-200 rounded-md focus:border-blue-gulf-400 focus:outline-none focus:ring focus:ring-blue-gulf-300 focus:ring-opacity-40"
                             />
                           </div>
@@ -648,16 +659,199 @@
                           <div class="flex justify-evenly mt-6">
                             <button
                               type="button"
-                              @click="modelOpen = false"
+                              @click="rejectOpen = false"
                               class="px-3 py-2 text-sm tracking-wide text-gulf-blue-900 capitalize transition-colors duration-200 transform focus:outline-none focus:ring-opacity-50"
                             >
                                 Cancel
                             </button>
                             <button
                               type="button"
+                              id="confirmReject"
                               class="px-3 py-2 text-sm tracking-wide text-white capitalize transition-colors duration-200 transform bg-red-600 rounded-md dark:bg-red-800 dark:hover:bg-red-700 dark:focus:bg-red-700 hover:bg-red-600 focus:outline-none focus:bg-red-500 focus:ring focus:ring-red-300 focus:ring-opacity-50"
                             >
-                                Reject Change Request
+                                Confirm
+                            </button>
+                          </div>
+                        </form>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <div
+                    x-show="confirmOpen"
+                    class="fixed inset-0 z-50 overflow-y-auto"
+                    aria-labelledby="modal-title"
+                    role="dialog"
+                    aria-modal="true"
+                  >
+                    <div
+                      class="flex items-end justify-center min-h-screen px-4 text-center md:items-center sm:block sm:p-0"
+                    >
+                      <div
+                        x-cloak
+                        @click="confirmOpen = false"
+                        x-show="confirmOpen"
+                        x-transition:enter="transition ease-out duration-300 transform"
+                        x-transition:enter-start="opacity-0"
+                        x-transition:enter-end="opacity-100"
+                        x-transition:leave="transition ease-in duration-200 transform"
+                        x-transition:leave-start="opacity-100"
+                        x-transition:leave-end="opacity-0"
+                        class="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-40"
+                        aria-hidden="true"
+                      ></div>
+
+                      <div
+                        x-cloak
+                        x-show="confirmOpen"
+                        x-transition:enter="transition ease-out duration-300 transform"
+                        x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                        x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+                        x-transition:leave="transition ease-in duration-200 transform"
+                        x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+                        x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                        class="inline-block w-full max-w-xl p-8 my-20 overflow-hidden text-left transition-all transform bg-white rounded-lg shadow-xl 2xl:max-w-2xl"
+                      >
+                        <div
+                          class="flex items-center justify-between space-x-4"
+                        >
+                          <h1 class="text-xl font-medium text-gray-800">
+                            Approve Change Request
+                          </h1>
+
+                          <button
+                            type="button"
+                            @click="confirmOpen = false"
+                            class="text-gray-600 focus:outline-none hover:text-gray-700"
+                          >
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              class="w-6 h-6"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
+                              />
+                            </svg>
+                          </button>
+                        </div>
+
+                        <p class="mt-2 text-sm text-gray-500">
+                            Are you sure you want to approve this change request?
+                        </p>
+
+                        <form>
+                          <div class="flex justify-evenly mt-6">
+                            <button
+                              type="button"
+                              @click="confirmOpen = false"
+                              class="px-3 py-2 text-sm tracking-wide text-gulf-blue-900 capitalize transition-colors duration-200 transform focus:outline-none focus:ring-opacity-50"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                              type="button"
+                              id="confirmApprove"
+                              class="px-3 py-2 text-sm tracking-wide text-white capitalize transition-colors duration-200 transform bg-gulf-blue-600 rounded-md dark:bg-gulf-blue-800 dark:hover:bg-gulf-blue-700 dark:focus:bg-gulf-blue-700 hover:bg-gulf-blue-600 focus:outline-none focus:bg-gulf-blue-500 focus:ring focus:ring-gulf-blue-300 focus:ring-opacity-50"
+                            >
+                                Confirm
+                            </button>
+                          </div>
+                        </form>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <div
+                    x-show="confirmApply"
+                    class="fixed inset-0 z-50 overflow-y-auto"
+                    aria-labelledby="modal-title"
+                    role="dialog"
+                    aria-modal="true"
+                  >
+                    <div
+                      class="flex items-end justify-center min-h-screen px-4 text-center md:items-center sm:block sm:p-0"
+                    >
+                      <div
+                        x-cloak
+                        @click="confirmApply = false"
+                        x-show="confirmApply"
+                        x-transition:enter="transition ease-out duration-300 transform"
+                        x-transition:enter-start="opacity-0"
+                        x-transition:enter-end="opacity-100"
+                        x-transition:leave="transition ease-in duration-200 transform"
+                        x-transition:leave-start="opacity-100"
+                        x-transition:leave-end="opacity-0"
+                        class="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-40"
+                        aria-hidden="true"
+                      ></div>
+
+                      <div
+                        x-cloak
+                        x-show="confirmApply"
+                        x-transition:enter="transition ease-out duration-300 transform"
+                        x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                        x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+                        x-transition:leave="transition ease-in duration-200 transform"
+                        x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+                        x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                        class="inline-block w-full max-w-xl p-8 my-20 overflow-hidden text-left transition-all transform bg-white rounded-lg shadow-xl 2xl:max-w-2xl"
+                      >
+                        <div
+                          class="flex items-center justify-between space-x-4"
+                        >
+                          <h1 class="text-xl font-medium text-gray-800">
+                            Apply Change Request
+                          </h1>
+
+                          <button
+                            type="button"
+                            @click="confirmApply = false"
+                            class="text-gray-600 focus:outline-none hover:text-gray-700"
+                          >
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              class="w-6 h-6"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
+                              />
+                            </svg>
+                          </button>
+                        </div>
+
+                        <p class="mt-2 text-sm text-gray-500">
+                            Are you sure you want to implement this change request?
+                        </p>
+
+                        <form>
+                          <div class="flex justify-evenly mt-6">
+                            <button
+                              type="button"
+                              @click="confirmApply = false"
+                              class="px-3 py-2 text-sm tracking-wide text-gulf-blue-900 capitalize transition-colors duration-200 transform focus:outline-none focus:ring-opacity-50"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                              type="button"
+                              id="confirmApply"
+                              class="px-3 py-2 text-sm tracking-wide text-white capitalize transition-colors duration-200 transform bg-gulf-blue-600 rounded-md dark:bg-gulf-blue-800 dark:hover:bg-gulf-blue-700 dark:focus:bg-gulf-blue-700 hover:bg-gulf-blue-600 focus:outline-none focus:bg-gulf-blue-500 focus:ring focus:ring-gulf-blue-300 focus:ring-opacity-50"
+                            >
+                                Confirm
                             </button>
                           </div>
                         </form>
@@ -718,5 +912,30 @@
         });
     });
   });
+  document.getElementById('confirmReject').addEventListener('click', function() {
+    // Get the reject reason from the modal
+    var rejectReason = document.getElementById('modalRejectReason').value;
+    
+    // Set the reject reason in the main form's hidden input
+    document.getElementById('rejectReason').value = rejectReason;
+    document.getElementById('actionButton').value = "REJECT"
+    
+    // Submit the main form
+    document.getElementById('profile_form').submit();
+});
+document.getElementById('confirmApprove').addEventListener('click', function() {
+
+  document.getElementById('actionButton').value = "APPROVE"
+  
+  // Submit the main form
+  document.getElementById('profile_form').submit();
+});
+document.getElementById('confirmApply').addEventListener('click', function() {
+
+  document.getElementById('actionButton').value = "APPLY"
+  
+  // Submit the main form
+  document.getElementById('profile_form').submit();
+});
 </script>
 {% endblock %}

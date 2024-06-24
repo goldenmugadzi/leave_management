@@ -340,17 +340,295 @@
                           </button>
                         </div>
                       </div>
-                  </form>
+                </form>
             </div>
 
             <div x-show="openTab === 2" class="transition-all duration-300 bg-white p-4 rounded-lg shadow-md border-l-4 border-blue-600">
-                <h2 class="text-2xl font-semibold mb-2 text-blue-600">Section 2 Content</h2>
-                <p class="text-gray-700">Proin non velit ac purus malesuada venenatis sit amet eget lacus. Morbi quis purus id ipsum ultrices aliquet Morbi quis.</p>
+                <form method="post" action="/change_requests/create_new_profile">
+                    {% csrf_token %}
+                    <div class="space-y-12 px-5 py-5">
+              
+                      <div class="mt-10 border-b border-gray-900/10 pb-12">
+                        <h2 class="text-base font-semibold leading-7 text-gray-900">
+                          Create Change Request
+                        </h2>
+                        <p class="mt-1 text-sm leading-6 text-gray-600">
+                          Fill all required fields.
+                        </p>
+              
+                        <div class="mt-10 grid grid-cols-1 gap-4" x-data="applicationHandler()">
+              
+                          <div>
+                            <label
+                              for="change_reason"
+                              class="block text-sm font-medium leading-6 text-gray-900"
+                              >Reason for Change</label
+                            >
+                            <div class="mt-2">
+                              <input
+                                required
+                                type="text"
+                                name="change_reason"
+                                id="change_reason"
+                                autocomplete="change_reason"
+                                class="block w-full bg-gulf-blue-50 rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                              />
+                            </div>
+                          </div>
+
+                          <div class="w-50">
+                            <label
+                              for="change_description"
+                              class="block text-sm font-medium leading-6 text-gray-900"
+                              >Change Description</label
+                            >
+                            <div class="mt-2">
+                              <textarea
+                                required
+                                type="text"
+                                name="change_description"
+                                id="change_description"
+                                autocomplete="change_description"
+                                class="block w-full bg-gulf-blue-50 rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                              ></textarea>
+                            </div>
+                          </div>
+
+                          <div>
+                            <label
+                              for="user_profile"
+                              class="block text-sm font-medium leading-6 text-gray-900"
+                              >User Profile</label
+                            >
+                            <div class="mt-2">
+                              <select
+                                x-model="selectedUsername"
+                                id="user_profile"
+                                name="user_profile"
+                                autocomplete="user_profile"
+                                class="block w-full bg-gulf-blue-50 rounded-md border-0 px-2 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+                              >
+                                <option value="">Select User</option>
+                                {% for usr in user_profiles %}
+                                <option value="{{usr.username}}" selected>
+                                    {{usr.first_name}} {{usr.last_name}}
+                                </option>
+                                {% endfor %}
+                              </select>
+                            </div>
+                          </div>
+
+                          <div>
+                            <label
+                              for="for_application"
+                              class="block text-sm font-medium leading-6 text-gray-900"
+                              >Application</label
+                            >
+                            <div class="mt-2">
+                              <select
+                                x-model="selectedApplication" @change="fetchUserData"
+                                id="for_application"
+                                name="for_application"
+                                autocomplete="for_application"
+                                class="block w-full bg-gulf-blue-50 rounded-md border-0 px-2 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+                              >
+                                <option value="">Select Application</option>
+                                <option value="BUSINESS EXCELLENCE" selected>
+                                    BUSINESS EXCELLENCE
+                                </option>
+                                <option value="SAP" selected>
+                                    SAP
+                                </option>
+                                <option value="NDM" selected>
+                                    NDM
+                                </option>
+                              </select>
+                            </div>
+                          </div>
+
+                          <div x-show="showUserRoles">
+                          <div class="mt-10 pb-12">
+                            <h2 class="text-base font-semibold leading-7 text-gray-900">
+                              User Roles
+                            </h2>
+                            <p class="mt-1 text-sm leading-6 text-gray-600">
+                              Select user roles for the following application modules.
+                            </p>
+                  
+                            <div class="mt-10 grid grid-cols-3 gap-4">
+                                <template x-for="app in applications" :key="app.id">
+                  
+                                    <div>
+                                        <label
+                                        for="app.name"
+                                        class="block text-sm font-medium leading-6 text-gray-900"
+                                        x-text="app.fullname"></label
+                                        >
+                                        <div class="mt-2">
+                                        <select
+                                            id="app.name"
+                                            name="app.name"
+                                            autocomplete="app.name"
+                                            class="block w-full bg-gulf-blue-50 rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 px-2 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+                                        >
+                                            <template x-for="role in userData[app.name]" :key="role.id">
+                                                <option value="">Select Role</option>
+                                                <option value="role.id" x-text="role.name"></option>
+                                            </template>
+                                        </select>
+                                        </div>
+                                    </div>
+                  
+                                </template>
+                            </div>
+                          </div>
+                          </div>
+              
+                        </div>
+                      </div>
+                    </div>
+              
+                    <div class="flex mt-10 px-3 py-3">
+                        <div style="width: 50%;">
+                          <button style="width: 100%;" class="text-sm font-semibold leading-6 text-gray-900">
+                            CANCEL
+                          </button>
+                        </div>
+                        <div style="width: 50%;">
+                          <button
+                          style="width: 100%;"
+                            type="submit"
+                            class="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                          >
+                            SUBMIT REQUEST
+                          </button>
+                        </div>
+                      </div>
+                </form>
             </div>
 
             <div x-show="openTab === 3" class="transition-all duration-300 bg-white p-4 rounded-lg shadow-md border-l-4 border-blue-600">
-                <h2 class="text-2xl font-semibold mb-2 text-blue-600">Section 3 Content</h2>
-                <p class="text-gray-700">Fusce hendrerit urna vel tortor luctus, nec tristique odio tincidunt. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae.</p>
+                <form method="post" action="/change_requests/create_new_profile">
+                    {% csrf_token %}
+                    <div class="space-y-12 px-5 py-5">
+              
+                      <div class="mt-10 border-b border-gray-900/10 pb-12">
+                        <h2 class="text-base font-semibold leading-7 text-gray-900">
+                          Create Change Request
+                        </h2>
+                        <p class="mt-1 text-sm leading-6 text-gray-600">
+                          Fill all required fields.
+                        </p>
+              
+                        <div class="mt-10 grid grid-cols-1 gap-4">
+              
+                          <div>
+                            <label
+                              for="change_reason"
+                              class="block text-sm font-medium leading-6 text-gray-900"
+                              >Reason for Change</label
+                            >
+                            <div class="mt-2">
+                              <input
+                                required
+                                type="text"
+                                name="change_reason"
+                                id="change_reason"
+                                autocomplete="change_reason"
+                                class="block w-full bg-gulf-blue-50 rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                              />
+                            </div>
+                          </div>
+
+                          <div class="w-50">
+                            <label
+                              for="change_description"
+                              class="block text-sm font-medium leading-6 text-gray-900"
+                              >Change Description</label
+                            >
+                            <div class="mt-2">
+                              <textarea
+                                required
+                                type="text"
+                                name="change_description"
+                                id="change_description"
+                                autocomplete="change_description"
+                                class="block w-full bg-gulf-blue-50 rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                              ></textarea>
+                            </div>
+                          </div>
+
+                          <div>
+                            <label
+                              for="user_profile"
+                              class="block text-sm font-medium leading-6 text-gray-900"
+                              >User Profile</label
+                            >
+                            <div class="mt-2">
+                              <select
+                                id="user_profile"
+                                name="user_profile"
+                                autocomplete="user_profile"
+                                class="block w-full bg-gulf-blue-50 rounded-md border-0 px-2 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+                              >
+                                <option value="">Select User</option>
+                                {% for usr in user_profiles %}
+                                <option value="{{usr.username}}" selected>
+                                    {{usr.first_name}} {{usr.last_name}}
+                                </option>
+                                {% endfor %}
+                              </select>
+                            </div>
+                          </div>
+
+                          <div>
+                            <label
+                              for="for_application"
+                              class="block text-sm font-medium leading-6 text-gray-900"
+                              >Application</label
+                            >
+                            <div class="mt-2">
+                              <select
+                                id="for_application"
+                                name="for_application"
+                                autocomplete="for_application"
+                                class="block w-full bg-gulf-blue-50 rounded-md border-0 px-2 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+                              >
+                                <option value="">Select Application</option>
+                                <option value="BUSINESS EXCELLENCE" selected>
+                                    BUSINESS EXCELLENCE
+                                </option>
+                                <option value="SAP" selected>
+                                    SAP
+                                </option>
+                                <option value="NDM" selected>
+                                    NDM
+                                </option>
+                              </select>
+                            </div>
+                          </div>
+              
+                        </div>
+                      </div>
+                    </div>
+              
+                    <div class="flex mt-10 px-3 py-3">
+                        <div style="width: 50%;">
+                          <button style="width: 100%;" class="text-sm font-semibold leading-6 text-gray-900">
+                            CANCEL
+                          </button>
+                        </div>
+                        <div style="width: 50%;">
+                          <button
+                          style="width: 100%;"
+                            type="submit"
+                            class="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                          >
+                            SUBMIT REQUEST
+                          </button>
+                        </div>
+                      </div>
+                </form>
             </div>
         </div>
     </div>
@@ -403,5 +681,37 @@
         });
     });
   });
+  
+</script>
+<script>
+    document.addEventListener('alpine:init', () => {
+        Alpine.data('applicationHandler', () => ({
+            selectedUsername: '',
+            selectedApplication: '',
+            showUserRoles: false,
+            applications: [],
+            userData: [],
+            active_roles: [],
+            init() {
+                // Initialization code here
+            },
+            fetchUserData() {
+                if (!this.selectedUsername) return;
+
+                this.showUserRoles = this.selectedApplication == 'BUSINESS EXCELLENCE'? true : false
+                if (!this.showUserRoles) return;
+
+                fetch(`http://{{HOST}}:{{PORT}}/change_requests/profile_modification/get_user_data/${this.selectedUsername}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log('User data:', data);
+                        this.applications = data.applications;
+                        this.userData = data.userData;
+                        this.active_roles = data.active_roles;
+                    })
+                    .catch(error => console.error('Error fetching user data:', error));
+            },
+        }));
+    });
 </script>
 {% endblock %}
