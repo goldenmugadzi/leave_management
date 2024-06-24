@@ -280,6 +280,8 @@ def ace_awaiting_my_action(request):
 
     user_id = request.user.id
     user_profile = UserProfile.objects.filter(id=user_id).first()
+    region = Regions.objects.filter(id=user_profile.region.id).first()
+
 
     user_groups = user_profile.groups.values_list('name', flat=True)
 
@@ -302,7 +304,7 @@ def ace_awaiting_my_action(request):
     if ace_role == "pass":
         # I want objects from 2024 upwards
 
-        for ace in Ace2.objects.filter(section=request.user.section, date_created__year__gte=2024):
+        for ace in Ace2.objects.filter(section=request.user.section, date_created__year__gte=2024,region=region):
             process = ace.process
 
             if process.approval_set.exists():
@@ -323,7 +325,7 @@ def ace_awaiting_my_action(request):
                     aces_to_process.remove(ace)
 
     else:
-        for ace in Ace2.objects.filter(date_created__year__gte=2024):
+        for ace in Ace2.objects.filter(date_created__year__gte=2024,region=region):
             process = ace.process
 
             if process.approval_set.exists():
@@ -357,6 +359,7 @@ def view_all_aces(request):
 
     user_id = request.user.id
     user_profile = UserProfile.objects.filter(id=user_id).first()
+    region = Regions.objects.filter(id=user_profile.region.id).first()
 
     user_groups = user_profile.groups.values_list('name', flat=True)
 
@@ -379,7 +382,7 @@ def view_all_aces(request):
         aces = Ace2.objects.filter(section=request.user.section)
     else:
         print('kings')
-        aces = Ace2.objects.all()
+        aces = Ace2.objects.filter(region=region)
         print(aces)
 
     return render(request, 'finance/ace2/view_all_aces.html', {'aces': aces,
@@ -1071,7 +1074,10 @@ def virament_detail(request, virament_id):
 
 
 def view_all_viraments(request):
-    viraments = Asset_budget_Virament.objects.all()
+    user_id = request.user.id
+    user_profile = UserProfile.objects.filter(id=user_id).first()
+    region = Regions.objects.filter(id=user_profile.region.id).first()
+    viraments = Asset_budget_Virament.objects.filter(region=region)
     return render(request, 'finance/ace2/view_all_viraments.html', {'viraments': viraments})
 
 
