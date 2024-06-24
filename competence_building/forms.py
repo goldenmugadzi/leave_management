@@ -26,7 +26,7 @@ class editDocumentForm(forms.ModelForm):
     class Meta:
         model = Document
         fields = "__all__" #['category', 'name', 'region', 'section', 'file', 'created_by']
-        exclude=['created_by','file', 'section']
+        exclude=['created_by','file', 'section', 'archive']
    
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
