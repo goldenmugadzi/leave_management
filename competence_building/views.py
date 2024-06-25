@@ -146,6 +146,12 @@ def view_losscontrol(request):
         return render(request, 'competence_building/losscontrol.html', {
                       "url_path": url_path})
 
+def view_procurement(request):
+        
+        url_path = request.path.split("/")
+        return render(request, 'competence_building/procurement.html', {
+                      "url_path": url_path})
+
 def view_engineering(request):
         
         url_path = request.path.split("/")
