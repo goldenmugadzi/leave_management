@@ -166,7 +166,7 @@ def purchase_request_update(request, purchase_request_id):
         form = PurchaseRequestForm(instance=purchase_request)
         messages.error(request, 'You cannot update a purchase request with ordered items.')
         return redirect(reverse('purchase_request:purchase_request_detail', args=[purchase_request.id]))
-    elif request.method == 'POST':
+    elif request.method == 'POST' and purchase_request.requested_by == request.user:
         form = PurchaseRequestForm(request.POST, instance=PurchaseRequest(id=purchase_request_id))
         attachments = request.FILES.getlist('attachments')
         
@@ -212,55 +212,22 @@ def purchase_request_update(request, purchase_request_id):
                               {'formset': formset, 'form': form})
         else:
             return render(request, 'finance/purchase_request/create_purchase_request.html', {"attachments":purchase_request.attachment_set.all(),'formset': itemFormset(instance=purchase_request), 'form': form})
-    else:
+    elif purchase_request.requested_by == request.user:
         form = PurchaseRequestForm(instance=purchase_request)
         return render(request, 'finance/purchase_request/create_purchase_request.html', {"attachments":purchase_request.attachment_set.all(),'formset': itemFormset(instance=purchase_request), 'form': form})
-        
-@login_required
-def purchase_requests_awaiting_my_action(request):
-    """
-    for each purchase_request.process in the purchase_requests,  let curent_step = the last purchase_request.process.approval if any else 0 and let next_step =curent_step+1
-    then check if  next_step=step.step for purchase_request.process.workflow.step_set filtered by approcer = user.roles.all.
-    """
-
-    purchase_requests_to_process = []
-    user_roles = request.user.roles.all()
-    region = request.user.region
-    for purchase_request in PurchaseRequest.objects.filter(region=region).all():
-        process = purchase_request.process
-        if process.approval_set.exists():
-            last_approval = process.approval_set.last()
-            current_step = last_approval.step.step
-        else:
-            current_step = 0
-
-        next_step = current_step + 1
-
-        workflow = process.workflow
-        step = workflow.step_set.filter(step=next_step, approver__in=user_roles).first()
-
-        if step:
-            purchase_requests_to_process.append(purchase_request)
-
-    return render(request, 'finance/purchase_request/view_all_purchase_requests.html',
-                  {'purchase_requests': purchase_requests_to_process})
-
-@login_required
-def search_purchase_requests(request):
-    search_term = request.GET.get('search_term', '')
-    print(search_term, "search_term")
-    purchase_requests = PurchaseRequest.objects.filter(Q(scope_of_work__icontains=search_term) | Q(id=search_term) | Q(pr_no__icontains=search_term)| Q(created_at__icontains=search_term)  )
-    print(purchase_requests, "purchase_requests",search_term)
-    return render(request, 'finance/purchase_request/view_all_purchase_requests.html', {'purchase_requests': purchase_requests})
+    else:
+        messages.error(request, 'You are not authorized to update this purchase request.')
+        return redirect(reverse('purchase_request:purchase_request_detail', args=[purchase_request.id]))
 
 @login_required
 def view_all_purchase_requests(request):
-    if request.method == 'POST':
-        search_term = request.POST.get('search_term')
-        purchase_requests = PurchaseRequest.objects.filter(Q(scope_of_work__icontains=search_term) | Q(id=search_term) | Q(pr_no__icontains=search_term)| Q(created_at__icontains=search_term)  )
+    search_term = request.POST.get('search_term')
+    if request.method == 'POST' and search_term :
+        purchase_requests = PurchaseRequest.objects.filter(Q(cost_center__name__icontains=search_term) | Q(section__section__icontains=search_term) | Q(requested_by__last_name__icontains=search_term) | Q(scope_of_work__icontains=search_term) | Q(id=search_term) | Q(pr_no__icontains=search_term)| Q(created_at__icontains=search_term)  )
         return render(request, 'finance/purchase_request/view_all_purchase_requests.html', {'purchase_requests': purchase_requests})
-    purchase_requests = PurchaseRequest.objects.all()[:100]
+    purchase_requests = PurchaseRequest.objects.order_by('-created_at')[:10]
     return render(request, 'finance/purchase_request/view_all_purchase_requests.html', {'purchase_requests': purchase_requests})
+
 @login_required
 def uploaduuom(request):
     """upload unit of measurement data to the database"""
