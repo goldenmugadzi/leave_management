@@ -28,6 +28,7 @@ from django.contrib import messages
 from approve.decorators import allowed_roles
 from django.core.paginator import Paginator
 from decouple import config
+
 BASE_URL = "http://"+config('HOST')+":"+config('PORT')
 
 def getUserFMGMRoles(user):
@@ -664,7 +665,6 @@ def change_user_password(request):
             })
 
     return redirect('/dashboards/overview')
-
 
 # @login_required
 # @allowed_roles(['Administrator'], ['users'])

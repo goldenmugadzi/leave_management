@@ -288,6 +288,34 @@ def app_logout(request):
     logout(request)
     return redirect('/accounts/login')
 
+def change_password(request):
+    if request.method == "POST":
+         
+         return redirect('/accounts/login')
+    else:
+        return render(request, "registration/change_password.html", {})
+
+def security_questions(request):
+   if request.method == "POST":
+       
+       return redirect('/accounts/login')
+   else:
+       return render(request, "registration/answer_questions.html", {}) 
+   
+def reset_email(request):
+    if request.method == "POST":
+         
+         return redirect('/accounts/login')
+    else:
+         return render(request, "registration/change_password_email.html", {})
+     
+def reset_password(request):
+    if request.method == "POST":
+         
+         return redirect('/accounts/login')
+    else:
+         return render(request, "registration/reset_password.html", {})
+
 def get_dashboard_reports(section_code):
     
     report = {}
