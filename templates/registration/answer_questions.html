@@ -41,13 +41,7 @@
             <div>
                 <form class="space-y-6" name="loginForm" method="post" 
                   x-data="{
-                      questions: [
-                          { id: '', question: 'Select a question' },
-                          { id: '1', question: 'What is your favorite color?' },
-                          { id: '2', question: 'What is your favorite food?' },
-                          { id: '3', question: 'What is your favorite movie?' },
-                          { id: '4', question: 'What is your favorite song?' }
-                      ],
+                      questions: [],
                       selected: {
                           q1: '',
                           q2: '',
@@ -56,14 +50,32 @@
                           a2: '',
                           a3: ''
                       },
+                      selectedQuestionIds: [],
                       length: 3,
                       validateBeforeSubmit() {
                           if (this.selected.q1 === '' || this.selected.q2 === '' || this.selected.q3 === '') {
                               alert('Please select all security questions.');
                               return false; // Prevent form submission
                           }
+                          console.log('Form submitted!')
+                          this.$el.submit(); // Manually submit the form
                           return true; // Allow form submission
-                      }
+                      },
+                    // Method to check if a question should be disabled
+                    isQuestionDisabled(questionId) {
+                        // Check if the question ID is in the selectedQuestionIds array
+                        console.log('this.selectedQuestionIds.includes(questionId): ', this.selectedQuestionIds.includes(questionId))
+                        return this.selectedQuestionIds.includes(questionId);
+                    },
+                    // Method to handle question selection
+                    selectQuestion(questionId) {
+                        // Add the question ID to the selectedQuestionIds array if not already present
+                        if (!this.selectedQuestionIds.includes(questionId)) {
+                            this.selectedQuestionIds.push(questionId);
+                        }
+                        console.log('this.selectedQuestionIds: ', this.selectedQuestionIds);
+                        // Additional logic to handle question selection can be added here
+                    }
                   }" x-on:submit.prevent="validateBeforeSubmit()">
                   {% csrf_token %}
                   <div>
@@ -98,6 +110,7 @@
                               x-bind:id="'security_question' + i"
                               x-bind:name="'security_question' + i"
                               x-model="selected['q' + i]"
+                              x-on:change="selectQuestion($event.target.value)"
                               class="security_question block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-gray-500 sm:text-sm sm:leading-6"
                             >
                               <template
@@ -106,8 +119,8 @@
                               >
                                 <option
                                   x-bind:value="question.id"
-                                  x-text="question.question"
-                                  x-bind:disabled="selected['q' + (i === 1 ? 2 : i === 2 ? 1 : 3)] === question.id"
+                                  x-text="question.question" 
+                                  x-bind:disabled="isQuestionDisabled(question.id)"
                                 ></option>
                               </template>
                             </select>
@@ -159,5 +172,13 @@
       </div>
     </main>
     <script src="//unpkg.com/alpinejs@3" defer></script>
+
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('securityQuestions', () => ({
+                questions: JSON.parse('{{ questions|safe }}')
+            }));
+        });
+    </script>
   </body>
 </html>

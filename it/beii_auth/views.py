@@ -1,9 +1,11 @@
+import json
 from django.shortcuts import render, redirect
 from django.contrib.auth import logout
 
 # from utils.helper_functions import get_dashboard_reports
 
 
+from it.beii_auth.models import Question
 from it.users.models import UserProfile, Depots, Districts, Regions, Designations, Sections, Roles
 
 APPLICATIONS = [
@@ -298,9 +300,16 @@ def change_password(request):
 def security_questions(request):
    if request.method == "POST":
        
+       username = request.POST.get('username')
+       
+       
        return redirect('/accounts/login')
    else:
-       return render(request, "registration/answer_questions.html", {}) 
+       questions = Question.objects.all()
+       questions_json = json.dumps([{"id": q.id, "question": q.question} for q in questions])
+       return render(request, "registration/answer_questions.html", {
+           "questions": questions_json
+       }) 
    
 def reset_email(request):
     if request.method == "POST":
