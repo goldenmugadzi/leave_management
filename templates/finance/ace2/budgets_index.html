@@ -24,7 +24,7 @@
           <th>Budget Name</th>
           <th>Allocated($)</th>
           <th>Period</th>
-            <th>Region</th>
+{#            <th>Region</th>#}
             <th>Created Date</th>
             <th>Balance($)</th>
             <th>Withdrawn($)</th>
@@ -40,7 +40,7 @@
             <th>Budget Name</th>
             <th>Allocated($)</th>
             <th>Period</th>
-            <th>Region</th>
+{#            <th>Region</th>#}
             <th>Created Date</th>
             <th>Balance($)</th>
             <th>Withdrawn($)</th>
@@ -65,7 +65,7 @@
           budget_name: element.fields.budget_name,
           allocated: element.fields.allocated,
           period: element.fields.period,
-          region: element.fields.region,
+          {#region: element.fields.region,#}
           created_date: element.fields.created_date,
           balance: element.fields.balance,
           withdrawn: element.fields.withdrawn,
@@ -97,9 +97,9 @@
         {
           data: "period",
         },
-          {
-              data: "region",
-          },
+          {#{#}
+          {#    data: "region",#}
+          {#},#}
           {
               data: "created_date",
           },
