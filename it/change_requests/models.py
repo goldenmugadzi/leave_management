@@ -24,8 +24,8 @@ class NewProfile(models.Model):
 
 class ProfileChange(models.Model):
     user = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
-    role_to_assign = models.ForeignKey(Roles, on_delete=models.CASCADE, related_name='role_to_assign')
-    role_to_remove = models.ForeignKey(Roles, on_delete=models.CASCADE, related_name='role_to_remove')
+    role_to_assign = models.ManyToManyField(Roles, related_name='role_to_assign', null=True, blank=True, default=None)
+    role_to_remove = models.ManyToManyField(Roles, related_name='role_to_remove', null=True, blank=True, default=None)
     change_date = models.DateTimeField()
     changed_by = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='changed_by')
 

@@ -3,7 +3,7 @@ from django.forms import model_to_dict
 from django.http import JsonResponse
 from django.shortcuts import redirect, render
 
-from it.change_requests.models import CRApproval, ChangeRequest, NewProfile
+from it.change_requests.models import CRApproval, ChangeRequest, NewProfile, ProfileChange
 from it.users.models import Application, CostCenter, Depots, Designations, Districts, Regions, Roles, Sections, UserProfile
 from django.db.models import Q
 from django.contrib import messages
@@ -49,7 +49,6 @@ def create_change_request(request):
     
 def create_new_profile(request):
     try:
-        requestor_username = request.user.username
         change_reason = request.POST.get('change_reason')
         change_description = request.POST.get('change_description')
         profile_username = request.POST.get('username')
@@ -113,6 +112,49 @@ def create_new_profile(request):
         
     return redirect("/change_requests/create_change_request")
 
+def profile_modification_request(request):
+
+        change_reason = request.POST.get("change_reason")
+        change_description = request.POST.get("change_description")
+        profile_username = request.POST.get("user_profile")
+        print("username: ", profile_username)
+        user = UserProfile.objects.filter(username=profile_username).first()
+        if user:
+            print("user: ", user)
+            roles = [role for role in [request.POST.get(app.name) for app in Application.objects.all() if request.POST.get(app.name) != 'Select Role'] if role and role != ""]
+            print("roles: ", roles)
+            
+            print("roles__: ", Roles.objects.filter(id__in=roles))
+            profile_mod = ProfileChange(
+                user=user,
+                change_date=datetime.now(),
+                changed_by=user
+            )
+            profile_mod.save()
+            profile_mod.role_to_assign.set(Roles.objects.filter(id__in=roles))
+            
+            cr_id = "CR-" + datetime.now().strftime("%Y%m%d%I%M%S")
+            change_request = ChangeRequest(
+                cr_id=cr_id,
+                change_type="Profile Modification",
+                profile_change=profile_mod,
+                change_description=change_description,
+                change_reason=change_reason,
+                creator_designation=user.designation,
+                created_by=request.user,
+                region=user.region,
+                cost_center=user.cost_center,
+                created_at=datetime.now()
+            )
+            change_request.save()
+            
+            messages.success(request, "Change request submitted successfully")
+        else:
+            messages.error(request, "User not found")
+
+    
+        return redirect("/change_requests/change_request_index")
+
 def new_profile_request(request):
     if request.method == "GET":
         change_request = ChangeRequest.objects.get(cr_id=request.GET['i'])
@@ -158,6 +200,98 @@ def new_profile_request(request):
                         "cr": cr
                     }
                 )
+                
+def update_change_request(request):
+    if request.method == "GET":
+        change_request = ChangeRequest.objects.get(cr_id=request.GET['i'])
+        if change_request.new_profile:
+                active_roles = {role.app_id.name: role for role in change_request.new_profile.roles.all() if role.app_id}
+
+                new_user = {
+                    "id": change_request.new_profile.pk,
+                    "username": change_request.new_profile.username,
+                    "firstname": change_request.new_profile.first_name,
+                    "lastname": change_request.new_profile.last_name,
+                    "email": change_request.new_profile.email,
+                    "section": Sections.objects.filter(id=change_request.new_profile.section.id).first() if change_request.new_profile.section else None,
+                    "district": Districts.objects.filter(id=change_request.new_profile.district.id).first() if change_request.new_profile.district else None,
+                    "region": Regions.objects.filter(id=change_request.new_profile.region.id).first() if change_request.new_profile.region else None,
+                    "cost_center": CostCenter.objects.filter(id=change_request.new_profile.cost_center.id).first() if change_request.new_profile.cost_center else None,
+                    "roles": active_roles,
+                    "designation": Designations.objects.filter(id=change_request.new_profile.designation.id).first() if change_request.new_profile.designation else None,
+                }
+
+                all_roles = {app.name: Roles.objects.filter(app_id=app.id).all() for app in Application.objects.all()}
+                cr = {
+                    "user": new_user,
+                    "cr_id": change_request.cr_id,
+                    "change_reason": change_request.change_reason,
+                    "change_description": change_request.change_description,
+                    "created_by": change_request.created_by.first_name + " " + change_request.created_by.last_name,
+                    "creator_designation": change_request.creator_designation.description,
+                    "created_at": change_request.created_at
+                }
+                return render(
+                    request,
+                    "change_requests/new_profile_request.html",
+                    {
+                        "user_roles": all_roles,
+                        "user_applications": Application.objects.all(),
+                        "user_designations": Designations.objects.all(),
+                        "sections": Sections.objects.all(),
+                        "districts": Districts.objects.all(),
+                        "regions": Regions.objects.all(),
+                        "user_title": request.user.get_full_name(),
+                        "user_groups": list(request.user.groups.values_list('name', flat=True)),
+                        "cr": cr
+                    }
+                )
+        
+        elif change_request.profile_change:
+            profile_change = change_request.profile_change
+            user = profile_change.user
+            roles = [role for role in profile_change.role_to_assign.all()]
+            active_roles = {role.app_id.name: role for role in roles if role.app_id}
+
+            new_user = {
+                "id": user.pk,
+                "username": user.username,
+                "firstname": user.first_name,
+                "lastname": user.last_name,
+                "email": user.email,
+                "section": user.section,
+                "district": user.district,
+                "region": user.region,
+                "cost_center": user.cost_center,
+                "roles": active_roles,
+                "designation": user.designation,
+            }
+
+            all_roles = {app.name: Roles.objects.filter(app_id=app.id).all() for app in Application.objects.all()}
+            cr = {
+                "user": new_user,
+                "cr_id": change_request.cr_id,
+                "change_reason": change_request.change_reason,
+                "change_description": change_request.change_description,
+                "created_by": change_request.created_by.first_name + " " + change_request.created_by.last_name,
+                "creator_designation": change_request.creator_designation.description,
+                "created_at": change_request.created_at
+            }
+            return render(
+                request,
+                "change_requests/update_profile_modification.html",
+                {
+                    "user_roles": all_roles,
+                    "user_applications": Application.objects.all(),
+                    "user_designations": Designations.objects.all(),
+                    "sections": Sections.objects.all(),
+                    "districts": Districts.objects.all(),
+                    "regions": Regions.objects.all(),
+                    "user_title": request.user.get_full_name(),
+                    "user_groups": list(request.user.groups.values_list('name', flat=True)),
+                    "cr": cr
+                }
+            )
 
 def view_profile_request(request):
     if request.method == "GET":
@@ -287,6 +421,9 @@ def update_new_profile_request(request):
                     roles = [role for role in [request.POST.get(app.name) for app in Application.objects.all() if request.POST.get(app.name) != 'Select Role'] if role and role != ""]
                     user.roles.clear()
                     user.roles.add(*Roles.objects.filter(id__in=roles))
+                
+                # clear approvals
+                CRApproval.objects.filter(cr_id=change_request).delete()
                 messages.success(request, "Change Request updated successfully")
         except Exception as ex:
             traceback.print_exc()
@@ -443,11 +580,22 @@ def datatable_data(request):
         data = []
         for obj in page_obj:
             try:
+                section_head_approval = CRApproval.objects.filter(cr_id=obj, approver_role__role="section_head").first()
+                it_section_head_approval = CRApproval.objects.filter(cr_id=obj, approver_role__role="it_section_head").first()
+                
+                sh_status = "Pending"
+                if section_head_approval:
+                    sh_status = "Approved" if section_head_approval.approval_status else "Rejected"
+                itsh = "Pending"
+                if it_section_head_approval:
+                    itsh = "Approved" if it_section_head_approval.approval_status else "Rejected"
                 change_requests = {
                     "cr_id": obj.cr_id,
                     "change_type": obj.change_type,
                     "change_description": obj.change_description,
                     "change_reason": obj.change_reason,
+                    "section_head_approval": sh_status,
+                    "it_section_head_approval": itsh,
                     "creator_designation": obj.creator_designation.description,
                     "created_by": obj.created_by.first_name + " " + obj.created_by.last_name,
                     "region": obj.region.region,

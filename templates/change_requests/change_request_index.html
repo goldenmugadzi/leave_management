@@ -28,8 +28,9 @@
         <tr>
           <th>ID</th>
           <th>TYPE</th>
-          <th>DESCRIPTIONS</th>
           <th>REASON</th>
+          <th>SECTION HEAD</th>
+          <th>APPROVAL</th>
           <th>DONE BY</th>
           <th>DATE</th>
           <th>ACTION</th>
@@ -40,8 +41,9 @@
         <tr>
           <th>ID</th>
           <th>TYPE</th>
-          <th>DESCRIPTIONS</th>
           <th>REASON</th>
+          <th>SECTION HEAD</th>
+          <th>APPROVAL</th>
           <th>DONE BY</th>
           <th>DATE</th>
           <th>ACTION</th>
@@ -103,10 +105,57 @@
           data: "change_type",
         },
         {
-          data: "change_description",
+          data: "change_reason",
         },
         {
-          data: "change_reason",
+          data: "section_head_approval",
+          orderable: false,
+          searchable: false,
+          render: function (data, type, row, meta) {
+            let approval_badge = ""
+            if(data === "Approved"){
+              approval_badge = `
+              <a type="button" class="bg-green-300 text-green-800 rounded px-1 py-2 w-full text-center" href='/change_requests/view_change_request?i=${row.cr_id}' >
+                ${data}              
+              </a>`
+            } else if (data === "Rejected"){
+              approval_badge = `
+              <a type="button" class="bg-red-300 text-red-800 rounded px-1 py-2 w-full text-center" href='/change_requests/view_change_request?i=${row.cr_id}' >
+                ${data}              
+              </a>`
+            } else {
+              approval_badge = `
+              <a type="button" class="bg-blue-300 text-blue-800 rounded px-1 py-2 w-full text-center" href='/change_requests/view_change_request?i=${row.cr_id}' >
+                ${data}              
+              </a>`
+            }
+            return approval_badge;
+          },
+        },
+        {
+          data: "it_section_head_approval",
+          orderable: false,
+          searchable: false,
+          render: function (data, type, row, meta) {
+            let approval_badge = ""
+            if(data === "Approved"){
+              approval_badge = `
+              <a type="button" class="bg-green-300 text-green-800 rounded px-1 py-2 w-full text-center" href='/change_requests/view_change_request?i=${row.cr_id}' >
+                ${data}              
+              </a>`
+            } else if (data === "Rejected"){
+              approval_badge = `
+              <a type="button" class="bg-red-300 text-red-800 rounded px-1 py-2 w-full text-center" href='/change_requests/view_change_request?i=${row.cr_id}' >
+                ${data}              
+              </a>`
+            } else {
+              approval_badge = `
+              <a type="button" class="bg-blue-300 text-blue-800 rounded px-1 py-2 w-full text-center" href='/change_requests/view_change_request?i=${row.cr_id}' >
+                ${data}              
+              </a>`
+            }
+            return approval_badge;
+          },
         },
         {
           data: "created_by",
@@ -120,11 +169,8 @@
           searchable: false,
           render: function (data, type, row, meta) {
             return `
-              <a type="button" class="btn btn-info" href='/change_requests/new_profile_request?i=${row.cr_id}' >
+              <a type="button" class="btn btn-info" href='/change_requests/update_change_request?i=${row.cr_id}' >
                 <i class="fa-solid fa-pen-to-square"></i>              
-              </a>
-              <a type="button" class="btn btn-secondary" href='/change_requests/approve_change_request?i=${row.cr_id}' >
-                <i class="fa-solid fa-signature w-6 h-6"></i>
               </a>
               <a type="button" class="btn btn-secondary" href='/change_requests/view_change_request?i=${row.cr_id}' >
                 <i class="fa-solid fa-circle-info"></i>

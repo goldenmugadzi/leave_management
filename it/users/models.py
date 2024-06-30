@@ -168,7 +168,7 @@ class UserProfile(AbstractUser):
         if self.first_name and self.last_name:
             return f"{self.first_name} {self.last_name}"
         else:
-            return self.username
+            return f"{self.username}"
     
     def get_user_roles_for_application(self, application_name):
         # Filter the user's roles for the specific application

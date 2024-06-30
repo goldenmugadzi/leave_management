@@ -30,6 +30,7 @@ from django.core.paginator import Paginator
 from decouple import config
 
 BASE_URL = "http://"+config('HOST')+":"+config('PORT')
+APP_NAME = "users"
 
 def getUserFMGMRoles(user):
     print("user: ", user.username, user.id  )

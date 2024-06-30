@@ -67,6 +67,12 @@ APPLICATIONS = [
         "title": "Direct Purchases",
         "iconUrl": "assets/images/bid.png",
         "url": "/direct_purchase/comperative_schedules"
+    },
+    {
+        "name": "change_requests",
+        "title": "Change Requests",
+        "iconUrl": "assets/images/change.png",
+        "url": "/change_requests/change_request_index"
     }
 ]
 
@@ -283,12 +289,8 @@ def business_applications(request):
     }
     user_profile = UserProfile.objects.filter(id=request.user.id).first()
     roles_ = user_profile.roles.all()
-    for _role in roles_:
-        role = Roles.objects.filter(id=_role.id).first()
 
-        if role.application == "users":
-            custom_user_roles["users"] = role
-    users_role = str(custom_user_roles["users"])
+    users_role = user_profile.get_user_roles_for_application("users")
 
     print("users_role: ", users_role)
     applications = APPLICATIONS
