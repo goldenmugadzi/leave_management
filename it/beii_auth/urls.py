@@ -12,6 +12,6 @@ urlpatterns = [
     path('auth/answer-security-questions', views.security_questions, name='answer-security-questions'),
     path('auth/change-password/email', views.reset_email, name='reset_email'),
     path('auth/reset-password', views.reset_password, name='reset_password'),
-    
+    path('accounts/login/', views.login_user, name='login_user'),
     
 ]

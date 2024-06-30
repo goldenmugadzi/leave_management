@@ -251,8 +251,17 @@ def add_user(request):
                 print("roles: ", roles)    
                 role_objects = Roles.objects.filter(id__in=roles)  # Example of retrieving roles
                 user.roles.add(*role_objects)
-                user.set_password(password1)
-                user.save()
+                try:
+                    validate_password(password1, user=user)
+                    user.set_password(password1)
+                    user.change_password = False
+                    user.save()
+                    # Password is valid
+                except ValidationError as e:
+                    # Password is not valid
+                    print(e.messages)
+                    messages.error(request, e.messages)
+                    return redirect("/users/users-index")
             else:
                 messages.error(request, "Passwords do not match")
                 return redirect("/users/users-index")
@@ -603,11 +612,18 @@ def reset_user_password(request):
 
         if password1 == password2:
             user_profile = UserProfile.objects.filter(id=id).first()
-            user_profile.set_password(password1)
-            user_profile.save()
-            print("saving done ....")
-        messages.success(request, "Password reset successfully")
-        return redirect('/users/users-index')
+            try:
+                validate_password(password1, user=user_profile)
+                user_profile.change_password = True
+                user_profile.set_password(password1)
+                user_profile.save()
+                messages.success(request, "Password reset successfully")
+                return redirect('/users/users-index')
+            except ValidationError as e:
+                # Password is not valid
+                print(e.messages)
+                messages.error(request, e.messages)
+                return redirect('/users/users-index')
 
     elif request.method == "GET":
 
@@ -640,9 +656,16 @@ def change_user_password(request):
         if password1 == password2:
             user_profile = UserProfile.objects.filter(id=user_id).first()
             if user_profile.check_password(current_password):
-                user_profile.set_password(password1)
-                user_profile.save()
-                print("Password changed successfully")
+                try:
+                    validate_password(password1, user=user_profile)
+                    user_profile.set_password(password1)
+                    user_profile.save()
+                    print("Password changed successfully")
+                except ValidationError as e:
+                    # Password is not valid
+                    print(e.messages)
+                    messages.error(request, e.messages)
+                    return redirect('/dashboards/overview/')
             else:
                 print("Current password is incorrect. Password not changed.")
 

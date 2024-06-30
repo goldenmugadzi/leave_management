@@ -4,15 +4,24 @@ import random
 import time
 from django.contrib.auth.models import AbstractUser
 from django.contrib.auth.models import BaseUserManager
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
 
 class UserManager(BaseUserManager):
     def create_user(self, username, password=None, **extra_fields):
         extra_fields.setdefault('is_staff', False)
         extra_fields.setdefault('is_superuser', False)
         user = self.model(username=username, **extra_fields)
-        user.set_password(password)
-        user.save(using=self._db)
-        return user
+        try:
+            validate_password(password, user=user)
+            user.set_password(password)
+            user.save(using=self._db)
+            return user
+            # Password is valid
+        except ValidationError as e:
+            # Password is not valid
+            print(e.messages)
+            return None
 
     def create_superuser(self, username, password=None, **extra_fields):
         extra_fields.setdefault('is_staff', True)
@@ -153,6 +162,7 @@ class UserProfile(AbstractUser):
     region = models.ForeignKey(Regions, on_delete=models.DO_NOTHING, blank=True, null=True)
     status = models.CharField(max_length=30, blank=True)
     last_reset = models.DateField(default=date.today())
+    change_password = models.BooleanField(default=False, null=True, blank=True)
 
     def __str__(self):
         if self.first_name and self.last_name:

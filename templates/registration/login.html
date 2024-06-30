@@ -39,8 +39,8 @@
             </div>
 
             <div class="sm:mx-auto sm:w-full sm:max-w-sm">
-              {% if form.errors %}
-              <p>Your username and password didn't match. Please try again.</p>
+              {% if error_msg %}
+              <p class="text-center">{{error_msg}}</p>
               {% endif %} {% if next %} {% if user.is_authenticated %}
               <p>
                 Your account doesn't have access to this page. To proceed,
@@ -105,12 +105,12 @@
                   href="/auth/answer-security-questions"
                 > Answer Security Questions
                 </a>
-                 <span> or seset via </span>
+                 {% comment %} <span> or reset via </span>
                 <a
                   class="font-semibold leading-6 text-indigo-600 hover:text-indigo-500"
                   href="/auth/change-password/email"
                 > Email
-                </a>
+                </a> {% endcomment %}
               </p>
             </div>
           </div>

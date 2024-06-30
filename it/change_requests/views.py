@@ -9,6 +9,8 @@ from django.db.models import Q
 from django.contrib import messages
 import traceback
 from django.core.paginator import Paginator
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
 
 # Create your views here.
 def create_change_request(request):
@@ -366,9 +368,19 @@ def approve_profile_request(request):
                         )
                         user.save()
                         user.roles.add(*new_profile.roles.all())
-                        user.set_password("Password@2024")
-                        user.save()
-                        messages.success(request, "Change Request applied successfully")
+                        try:
+                            password = "Password@2024"
+                            validate_password(password, user=user)
+                            user.set_password(password)
+                            user.save()
+                            messages.success(request, "Change Request applied successfully")
+                            return redirect("/change_requests/change_request_index")
+                            # Password is valid
+                        except ValidationError as e:
+                            # Password is not valid
+                            print(e.messages)
+                            messages.error(request, e.messages)
+                            return redirect("/change_requests/change_request_index")
                     
                     return redirect("/change_requests/change_request_index")
 

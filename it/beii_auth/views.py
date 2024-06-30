@@ -1,11 +1,16 @@
 import json
 from django.shortcuts import render, redirect
+from django.contrib.auth import authenticate, login
+from django.contrib.auth.hashers import make_password, check_password
 from django.contrib.auth import logout
+from django.contrib import messages
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
 
 # from utils.helper_functions import get_dashboard_reports
 
 
-from it.beii_auth.models import Question
+from it.beii_auth.models import Question, SecurityQuestions
 from it.users.models import UserProfile, Depots, Districts, Regions, Designations, Sections, Roles
 
 APPLICATIONS = [
@@ -66,6 +71,24 @@ APPLICATIONS = [
 ]
 
 # Create your views here.
+def login_user(request):
+    
+    if request.method == "POST":
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        
+        user = authenticate(request, username=username, password=password)
+        if user is not None:
+            if user.change_password:
+                return redirect('/auth/change-password')
+            login(request, user)
+            return redirect('/dashboards/overview')
+        else:
+            return render(request, 'registration/login.html', {
+                "error_msg": "Invalid username or password"
+            })
+    return render(request, 'registration/login.html', {})
+
 def index(request):
     
     if request.user.is_authenticated:
@@ -292,21 +315,119 @@ def app_logout(request):
 
 def change_password(request):
     if request.method == "POST":
-         
-         return redirect('/accounts/login')
+        print("request.POST: ", request.POST)
+        username = request.POST.get('username')
+        user_profile = UserProfile.objects.filter(username=username).first()
+        if user_profile:
+            password = request.POST.get('password')
+            password_confirm = request.POST.get('password_confirm')
+            if password != password_confirm:
+                messages.error(request, "Passwords do not match")
+                return redirect('/auth/change-password')
+            question1 = request.POST.get('security_question1')
+            question2 = request.POST.get('security_question2')
+            question3 = request.POST.get('security_question3')
+            answer1 = request.POST.get('security_answer1')
+            answer2 = request.POST.get('security_answer2')
+            answer3 = request.POST.get('security_answer3')
+            print('question1: ', question1)
+            
+            question1_ = Question.objects.filter(id=question1).first()
+            question2_ = Question.objects.filter(id=question2).first()
+            question3_ = Question.objects.filter(id=question3).first()
+            print('question1_: ', question1_, question2_, question3_)
+            
+            user_security_questions = SecurityQuestions.objects.filter(user=user_profile)
+            if user_security_questions:
+                user_security_questions.delete()
+            
+            try:
+                security_question1 = SecurityQuestions(
+                    user=user_profile,
+                    security_question=question1_,
+                    security_answer=make_password(answer1)
+                )
+                security_question1.save()
+                
+                security_question2 = SecurityQuestions(
+                    user=user_profile,
+                    security_question=question2_,
+                    security_answer=make_password(answer2)
+                )
+                security_question2.save()
+                
+                security_question3 = SecurityQuestions(
+                    user=user_profile,
+                    security_question=question3_,
+                    security_answer=make_password(answer3)
+                )
+                security_question3.save()
+            except Exception as e:
+                print("Error: ", e)
+                messages.error(request, "An error occurred")
+                return redirect('/auth/change-password')
+            
+            try:
+                validate_password(password, user=user_profile)
+                user_profile.set_password(password)
+                user_profile.change_password = False
+                user_profile.save()
+                messages.success(request, "Password changed successfully")
+                return redirect('/accounts/login')
+                # Password is valid
+            except ValidationError as e:
+                # Password is not valid
+                print(e.messages)
+                messages.error(request, e.messages)
+                return redirect('/accounts/login')
     else:
-        return render(request, "registration/change_password.html", {})
+       questions = Question.objects.all()
+       print("questions: ", questions)
+       questions_json = json.dumps([{"id": q.id, "question": q.question} for q in questions])
+       print("questions_json: ", questions_json)
+       return render(request, "registration/change_password.html", {
+           "questions": questions_json
+       })
 
 def security_questions(request):
    if request.method == "POST":
-       
+
        username = request.POST.get('username')
-       
-       
-       return redirect('/accounts/login')
+       user_profile = UserProfile.objects.filter(username=username).first()
+       if user_profile:
+            question = request.POST.get('security_question1')
+            answer = request.POST.get('security_answer1')
+            print('question1: ', question, answer)
+            
+            question1_ = Question.objects.filter(id=question).first()
+            
+            user_security_question = SecurityQuestions.objects.filter(user=user_profile, security_question=question1_).first()
+            if user_security_question:
+                # compare the answer
+                print("user_security_question: ", user_security_question)
+                if check_password(answer, user_security_question.security_answer):
+                    print("Answer matched")
+                    user_profile.change_password = True
+                    user_profile.save()
+                    messages.success(request, "Security questions answered successfully")
+                    return render(request, "registration/reset_password.html", {
+                        "username": username,
+                    })
+                else:
+                    print("Invalid answer")
+                    messages.error(request, "Invalid answer")
+                    return redirect('/auth/answer-security-questions') 
+            else:
+                print("User has not set this security questions")
+                messages.error(request, "User has not set this security questions")
+                return redirect('/auth/answer-security-questions')
+       messages.error(request, "User not found")
+       return redirect('/auth/answer-security-questions')
    else:
        questions = Question.objects.all()
+       print("questions: ", questions)
        questions_json = json.dumps([{"id": q.id, "question": q.question} for q in questions])
+       print("questions_json: ", questions_json)
        return render(request, "registration/answer_questions.html", {
            "questions": questions_json
        }) 
@@ -321,7 +442,36 @@ def reset_email(request):
 def reset_password(request):
     if request.method == "POST":
          
-         return redirect('/accounts/login')
+        username = request.POST.get('username')
+        user_profile = UserProfile.objects.filter(username=username).first()
+        
+        if user_profile:
+            password = request.POST.get('new_password')
+            password_confirm = request.POST.get('password_confirm')
+            print("password: ", password, password_confirm)
+            if password != password_confirm:
+                print("Passwords do not match")
+                messages.error(request, "Passwords do not match")
+                return redirect('/auth/reset-password', {
+                    "username": username,
+                })
+            print("password matched")
+            try:
+                validate_password(password, user=user_profile)
+                user_profile.set_password(password)
+                user_profile.change_password = False
+                user_profile.save()
+                messages.success(request, "Password changed successfully")
+                return redirect('/accounts/login')
+                # Password is valid
+            except ValidationError as e:
+                # Password is not valid
+                print(e.messages)
+                messages.error(request, e.messages)
+                return redirect('/accounts/login')
+        else:
+            print("User not found")
+            return redirect('/auth/reset-password')
     else:
          return render(request, "registration/reset_password.html", {})
 
