@@ -35,12 +35,12 @@ DEBUG = config('DEBUG', default=False, cast=bool)
 ALLOWED_HOSTS = [config('HOST')]
 
 CORS_ALLOWED_ORIGINS = [
-    "http://"+config('HOST')+":"+config('PORT'),
-    "http://"+config('HOST')+":3000",
+    config('BASE_URL')+":"+config('PORT'),
+    config('BASE_URL')+":3000",
 ]
 
 # CORS_ALLOW_ALL_ORIGINS = True
-CSRF_TRUSTED_ORIGINS = ["http://"+config('HOST'), "http://"+config('HOST')+":"+config('PORT')]
+CSRF_TRUSTED_ORIGINS = [config('BASE_URL'), config('BASE_URL')+":"+config('PORT')]
 
 CORS_ALLOW_HEADERS = ('content-disposition', 'accept-encoding',
                       'content-type', 'accept', 'origin', 'authorization')

@@ -650,7 +650,7 @@
 
     region.addEventListener('change', (e) => {
       const regionId = e.target.value;
-      fetch(`http://{{HOST}}:{{PORT}}/users/filtered_centers/${regionId}`)
+      fetch(`{{BASE_URL}}:{{PORT}}/users/filtered_centers/${regionId}`)
         .then((res) => res.json())
         .then((data) => {
           console.log("var: ", data);
@@ -663,7 +663,7 @@
 
     region.addEventListener('change', (e) => {
         const regionId = e.target.value;
-        fetch(`http://{{HOST}}:{{PORT}}/users/filtered_districts/${regionId}`)
+        fetch(`{{BASE_URL}}:{{PORT}}/users/filtered_districts/${regionId}`)
           .then((res) => res.json())
           .then((data) => {
             console.log("var: ", data);
@@ -676,7 +676,7 @@
 
     district.addEventListener('change', (e) => {
       const districtId = e.target.value;
-      fetch(`http://{{HOST}}:{{PORT}}/users/filtered_depots/${districtId}`)
+      fetch(`{{BASE_URL}}:{{PORT}}/users/filtered_depots/${districtId}`)
         .then((res) => res.json())
         .then((data) => {
           console.log("depots: ", data);
@@ -707,7 +707,7 @@
                 this.showUserRoles = this.selectedApplication == 'BUSINESS EXCELLENCE'? true : false
                 if (!this.showUserRoles) return;
 
-                fetch(`http://{{HOST}}:{{PORT}}/change_requests/profile_modification/get_user_data/${this.selectedUsername}`)
+                fetch(`{{BASE_URL}}:{{PORT}}/change_requests/profile_modification/get_user_data/${this.selectedUsername}`)
                     .then(response => response.json())
                     .then(data => {
                         console.log('User data:', data);
