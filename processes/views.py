@@ -1937,7 +1937,12 @@ def viewProcurementProcedures(request):
 
 @login_required
 def viewICTProcedures(request):
-    return render(request, 'processes/procedures_workInstr/ict_procedures.html', {"page_title":"ICT Procedures and Work Instructions"})
+    
+    files = Processes.objects.filter(archived=False, filetype="PROCEDURE_WORK_INSTRUCTIONS", department="ICT")
+
+    return render(request, 'process_maps/ict.html',
+                  {"files": files,
+                    "page_title": "ICT Procedures and Work Instructions"})
 
 @login_required
 def viewICT_WorkInstr(request):

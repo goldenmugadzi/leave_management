@@ -30,6 +30,23 @@ from django.core.paginator import Paginator
 from decouple import config
 BASE_URL = "http://"+config('HOST')+":"+config('PORT')
 
+def getUserFMGMRoles(user):
+    print("user: ", user.username, user.id  )
+    fm_role, gm_role, procurement_role = False, False, False
+    for role in user.roles.all():
+        print("role id:", role.id)
+        user_ace_role_ = Roles.objects.filter(id=role.id).first() if role.id else None
+
+        if user_ace_role_.application == APP_NAME:
+            if user_ace_role_.role == "check":
+                fm_role = True
+            if user_ace_role_.role == "approve":
+                gm_role = True
+            if user_ace_role_.role == "procurement":
+                procurement_role = True
+    
+    return fm_role, gm_role, procurement_role
+
 def user_centers(request):
     users = UserProfile.objects.all()
     for user in users:
@@ -204,11 +221,11 @@ def add_user(request):
             password2 = request.POST['password2']
             
             region = Regions.objects.filter(id=region_).first()
-            cost_center_ = CostCenter.objects.filter(id=cost_center).first()
-            district = Districts.objects.filter(code=district_).first()
-            depot = Depots.objects.filter(code=depots_).first()
-            section = Sections.objects.filter(code=section_).first()
-            designation = Designations.objects.filter(id=designation_).first()
+            cost_center_ = CostCenter.objects.filter(id=cost_center).first() if cost_center else None
+            district = Districts.objects.filter(code=district_).first() if district_ else None
+            depot = Depots.objects.filter(code=depots_).first() if depots_ else None
+            section = Sections.objects.filter(code=section_).first() if section_ else None
+            designation = Designations.objects.filter(id=designation_).first() if designation_ else None
             
             if password1 == password2:
                 user = UserProfile(
