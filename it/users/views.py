@@ -302,7 +302,7 @@ def datatable_data(request):
 
     if user.region:
         # Fetch your data from the model
-        records = UserProfile.objects.filter(region=user.region).all()
+        records = UserProfile.objects.all()
         # Filter based on search value
         if search_value:
             records = records.filter(
