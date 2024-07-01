@@ -45,7 +45,7 @@ class PettycashForm(forms.ModelForm):
                                                     'sm:leading-6'
                                            })
                 # set maximum to 2600
-                field.widget.attrs.update({'max': '2600'})
+                field.widget.attrs.update({'max': '3000'})
 
             if isinstance(field.widget, forms.Textarea):
                 field.widget.attrs.update({'rows': '3'})
