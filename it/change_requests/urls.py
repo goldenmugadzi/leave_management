@@ -14,5 +14,6 @@ urlpatterns = [
     path('profile_modification/get_user_data/<str:username>', views.get_user_data, name='get_user_data'),
     path('profile_modification/create', views.profile_modification_request, name='profile_modification_request'),
     path('update_change_request', views.update_change_request, name='update_change_request'),
+    path('profile_deactivation_request', views.profile_deactivation_request, name='profile_deactivation_request'),
     
 ]

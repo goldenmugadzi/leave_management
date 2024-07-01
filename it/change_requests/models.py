@@ -24,6 +24,7 @@ class NewProfile(models.Model):
 
 class ProfileChange(models.Model):
     user = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
+    application = models.CharField(max_length=100, null=True, blank=True, default=None)
     role_to_assign = models.ManyToManyField(Roles, related_name='role_to_assign', null=True, blank=True, default=None)
     role_to_remove = models.ManyToManyField(Roles, related_name='role_to_remove', null=True, blank=True, default=None)
     change_date = models.DateTimeField()
@@ -37,6 +38,7 @@ class ProfileChange(models.Model):
         
 class ProfileDeactivation(models.Model):
     user = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
+    application = models.CharField(max_length=100, null=True, blank=True, default=None)
     deactivation_date = models.DateTimeField()
     deactivated_by = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='deactivated_by')
 

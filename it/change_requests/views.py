@@ -3,7 +3,7 @@ from django.forms import model_to_dict
 from django.http import JsonResponse
 from django.shortcuts import redirect, render
 
-from it.change_requests.models import CRApproval, ChangeRequest, NewProfile, ProfileChange
+from it.change_requests.models import CRApproval, ChangeRequest, NewProfile, ProfileChange, ProfileDeactivation
 from it.users.models import Application, CostCenter, Depots, Designations, Districts, Regions, Roles, Sections, UserProfile
 from django.db.models import Q
 from django.contrib import messages
@@ -12,7 +12,10 @@ from django.core.paginator import Paginator
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 
+from django.contrib.auth.decorators import login_required
 # Create your views here.
+
+@login_required
 def create_change_request(request):
     user_title = request.user.get_full_name()
     l = request.user.groups.values_list('name', flat=True)  # QuerySet Object
@@ -47,6 +50,7 @@ def create_change_request(request):
                 "user_groups": user_groups,
             })
     
+@login_required
 def create_new_profile(request):
     try:
         change_reason = request.POST.get('change_reason')
@@ -112,6 +116,7 @@ def create_new_profile(request):
         
     return redirect("/change_requests/create_change_request")
 
+@login_required
 def profile_modification_request(request):
 
         change_reason = request.POST.get("change_reason")
@@ -155,6 +160,52 @@ def profile_modification_request(request):
     
         return redirect("/change_requests/change_request_index")
 
+@login_required
+def profile_deactivation_request(request):
+    try:
+        change_reason = request.POST.get('change_reason')
+        change_description = request.POST.get('change_description')
+        profile_username = request.POST.get('user_profile')
+        application = request.POST.get('application')
+        user = UserProfile.objects.filter(username=profile_username).first()
+        if user:
+            
+            if not user.cost_center:
+                messages.error(request, "User does not have a cost center")
+                return redirect("/change_requests/change_request_index")
+            profile_deactivation = ProfileDeactivation(
+                user=user,
+                application=application,
+                deactivation_date=datetime.now(),
+                deactivated_by=user
+            )
+            profile_deactivation.save()
+
+            cr_id = "CR-" + datetime.now().strftime("%Y%m%d%I%M%S")
+            change_request = ChangeRequest(
+                cr_id=cr_id,
+                change_type="Profile Deactivation",
+                profile_deactivation=profile_deactivation,
+                change_description=change_description,
+                change_reason=change_reason,
+                creator_designation=user.designation,
+                created_by=request.user,
+                region=user.region,
+                cost_center=user.cost_center if user.cost_center else None,
+                created_at=datetime.now()
+            )
+            change_request.save()
+            
+            messages.success(request, "Change request submitted successfully")
+        else:
+            messages.error(request, "User not found")
+    except Exception as ex:
+        print("error: ", ex)
+        messages.error(request, "An error occurred while submitting the change request: "+str(ex))
+        
+    return redirect("/change_requests/change_request_index")
+
+@login_required
 def new_profile_request(request):
     if request.method == "GET":
         change_request = ChangeRequest.objects.get(cr_id=request.GET['i'])
@@ -201,6 +252,7 @@ def new_profile_request(request):
                     }
                 )
                 
+@login_required
 def update_change_request(request):
     if request.method == "GET":
         change_request = ChangeRequest.objects.get(cr_id=request.GET['i'])
@@ -289,10 +341,76 @@ def update_change_request(request):
                     "regions": Regions.objects.all(),
                     "user_title": request.user.get_full_name(),
                     "user_groups": list(request.user.groups.values_list('name', flat=True)),
-                    "cr": cr
+                    "cr": cr,
+                    "change_request": change_request
                 }
             )
+        
+        elif change_request.profile_deactivation:
+            profile_deactivation = change_request.profile_deactivation
+            user = profile_deactivation.user
+            cr = {
+                "cr_id": change_request.cr_id,
+                "change_reason": change_request.change_reason,
+                "change_description": change_request.change_description,
+                "created_by": change_request.created_by.first_name + " " + change_request.created_by.last_name,
+                "creator_designation": change_request.creator_designation.description,
+                "created_at": change_request.created_at
+            }
+            return render(
+                request,
+                "change_requests/update_profile_deactivation.html",
+                {
+                    "user_applications": Application.objects.all(),
+                    "user_designations": Designations.objects.all(),
+                    "sections": Sections.objects.all(),
+                    "districts": Districts.objects.all(),
+                    "regions": Regions.objects.all(),
+                    "user_title": request.user.get_full_name(),
+                    "user_groups": list(request.user.groups.values_list('name', flat=True)),
+                    "cr": cr,
+                    "change_request": change_request
+                }
+            )
+            
+    elif request.method == "POST":
+        try:
+            cr_id = request.POST.get('cr_id')
+            change_reason = request.POST.get('change_reason')
+            change_description = request.POST.get('change_description')
+            change_request = ChangeRequest.objects.filter(cr_id=cr_id).first()
+            if not change_request:
+                messages.error(request, "Change request not found")
+                return redirect("/change_requests/change_request_index")
+            else:
+                
+                change_request.change_reason = change_reason if change_reason else change_request.change_reason
+                change_request.change_description = change_description if change_reason else change_request.change_description
+                change_request.save()
 
+                if change_request.profile_change:
+                    profile_mod = ProfileChange.objects.filter(id=change_request.profile_change.id).first()
+                    if profile_mod.application == "BUSINESS EXCELLENCE":
+                        roles = [role for role in [request.POST.get(app.name) for app in Application.objects.all() if request.POST.get(app.name) != 'Select Role'] if role and role != ""]
+                        profile_mod.role_to_assign.clear()
+                        profile_mod.role_to_assign.add(*Roles.objects.filter(id__in=roles))
+                        profile_mod.save()
+                    
+                elif change_request.profile_deactivation:
+                    profile_deactivation = ProfileDeactivation.objects.filter(id=change_request.profile_deactivation.id).first()
+                    profile_deactivation.application = request.POST.get('application')
+                    profile_deactivation.save()
+                # clear approvals
+                CRApproval.objects.filter(cr_id=change_request).delete()
+                messages.success(request, "Change Request updated successfully")
+        except Exception as ex:
+            traceback.print_exc()
+            print("save user error", ex)
+            messages.error(request, "An error occurred while saving the change request")
+    
+        return redirect("/change_requests/change_request_index")
+                
+@login_required
 def view_profile_request(request):
     if request.method == "GET":
         change_request = ChangeRequest.objects.get(cr_id=request.GET['i'])
@@ -361,7 +479,121 @@ def view_profile_request(request):
                         "cr": cr
                     }
                 )
+        
+        elif change_request.profile_change:
+            profile_change = change_request.profile_change
+            user = profile_change.user
+            roles = [role for role in profile_change.role_to_assign.all()]
+            active_roles = {role.app_id.name: role for role in roles if role.app_id}
 
+            new_user = {
+                "id": user.pk,
+                "username": user.username,
+                "firstname": user.first_name,
+                "lastname": user.last_name,
+                "email": user.email,
+                "section": user.section,
+                "district": user.district,
+                "region": user.region,
+                "cost_center": user.cost_center,
+                "roles": active_roles,
+                "designation": user.designation,
+            }
+
+            cr_approvals = CRApproval.objects.filter(cr_id=change_request).all()
+            section_head_awaiting_action = True
+            it_section_head_awaiting_action = True
+            for approval in cr_approvals:
+                if approval.approver_role.role == "section_head":
+                    section_head_awaiting_action = False
+                    if approval.approval_status == False:
+                        it_section_head_awaiting_action = False
+                if approval.approver_role.role == "it_section_head":
+                    it_section_head_awaiting_action = False
+            
+            print("section_head_awaiting_action: ", section_head_awaiting_action)
+            print("it_section_head_awaiting_action: ", it_section_head_awaiting_action)
+            requestor = UserProfile.objects.filter(username=request.user.username).first()
+            requestor_role = requestor.get_user_roles_for_application("change_requests")
+            all_roles = {app.name: Roles.objects.filter(app_id=app.id).all() for app in Application.objects.all()}
+            cr = {
+                "user": new_user,
+                "cr_id": change_request.cr_id,
+                "change_reason": change_request.change_reason,
+                "change_description": change_request.change_description,
+                "created_by": change_request.created_by.first_name + " " + change_request.created_by.last_name,
+                "creator_designation": change_request.creator_designation.description,
+                "created_at": change_request.created_at
+            }
+            return render(
+                request,
+                "change_requests/view_profile_modification.html",
+                {
+                    "user_roles": all_roles,
+                    "requestor_role": requestor_role,
+                    "section_head_awaiting_action": section_head_awaiting_action,
+                    "it_section_head_awaiting_action": it_section_head_awaiting_action,
+                    "user_applications": Application.objects.all(),
+                    "user_designations": Designations.objects.all(),
+                    "sections": Sections.objects.all(),
+                    "districts": Districts.objects.all(),
+                    "regions": Regions.objects.all(),
+                    "user_title": request.user.get_full_name(),
+                    "user_groups": list(request.user.groups.values_list('name', flat=True)),
+                    "cr": cr,
+                    "cr_approvals": cr_approvals,
+                    "change_request": change_request
+                }
+            )
+
+        elif change_request.profile_deactivation:
+            profile_deactivation = change_request.profile_deactivation
+            user = profile_deactivation.user
+            cr = {
+                "cr_id": change_request.cr_id,
+                "change_reason": change_request.change_reason,
+                "change_description": change_request.change_description,
+                "created_by": change_request.created_by.first_name + " " + change_request.created_by.last_name,
+                "creator_designation": change_request.creator_designation.description,
+                "created_at": change_request.created_at
+            }
+            
+            cr_approvals = CRApproval.objects.filter(cr_id=change_request).all()
+            section_head_awaiting_action = True
+            it_section_head_awaiting_action = True
+            for approval in cr_approvals:
+                if approval.approver_role.role == "section_head":
+                    section_head_awaiting_action = False
+                    if approval.approval_status == False:
+                        it_section_head_awaiting_action = False
+                if approval.approver_role.role == "it_section_head":
+                    it_section_head_awaiting_action = False
+            
+            print("section_head_awaiting_action: ", section_head_awaiting_action)
+            print("it_section_head_awaiting_action: ", it_section_head_awaiting_action)
+            requestor = UserProfile.objects.filter(username=request.user.username).first()
+            requestor_role = requestor.get_user_roles_for_application("change_requests")
+            return render(
+                request,
+                "change_requests/view_profile_deactivation.html",
+                {
+                    "user_applications": Application.objects.all(),
+                    "user_designations": Designations.objects.all(),
+                    "sections": Sections.objects.all(),
+                    "districts": Districts.objects.all(),
+                    "regions": Regions.objects.all(),
+                    "user_title": request.user.get_full_name(),
+                    "user_groups": list(request.user.groups.values_list('name', flat=True)),
+                    "requestor_role": requestor_role,
+                    "section_head_awaiting_action": section_head_awaiting_action,
+                    "it_section_head_awaiting_action": it_section_head_awaiting_action,
+                    "cr": cr,
+                    "change_request": change_request,
+                    "cr_approvals": cr_approvals,
+                }
+            )
+            
+@login_required
 def get_user_data(request, username):
     user = UserProfile.objects.filter(username=username).first()
     applications = Application.objects.all()
@@ -381,6 +613,7 @@ def get_user_data(request, username):
             "userData": []
         })
 
+@login_required
 def update_new_profile_request(request):
     if request.method == "POST":
         try:
@@ -432,6 +665,7 @@ def update_new_profile_request(request):
     
         return redirect("/change_requests/change_request_index")
     
+@login_required
 def approve_profile_request(request):
     if request.method == "POST":
         try:
@@ -519,6 +753,14 @@ def approve_profile_request(request):
                             messages.error(request, e.messages)
                             return redirect("/change_requests/change_request_index")
                     
+                    if cr_type == "Profile Modification":
+                        profile_change = change_request.profile_change
+                        user = UserProfile.objects.filter(id=profile_change.user.id).first()
+                        user.roles.clear()
+                        user.roles.add(*profile_change.role_to_assign.all())
+                        user.save()
+                        messages.success(request, "Change Request applied successfully")
+                        return redirect("/change_requests/change_request_index")
                     return redirect("/change_requests/change_request_index")
 
         except Exception as ex:
@@ -526,6 +768,7 @@ def approve_profile_request(request):
             messages.error(request, "An error occurred while approving the change request " + ex)
     return redirect("/change_requests/change_request_index")
 
+@login_required
 def change_request_index(request):
 
     user_page = 'change_requests/change_request_index.html'
@@ -539,6 +782,7 @@ def change_request_index(request):
             "user_title": user_title,
         })
     
+@login_required
 def datatable_data(request):
     draw = int(request.GET.get('draw', default=1))
     start = int(request.GET.get('start', default=0))
