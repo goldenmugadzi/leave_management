@@ -66,7 +66,7 @@
           </a>
           {% else %}    
             <a
-              href="view_files"
+              href="knowledge_center_files"
               class="hover:bg-blue-200 outline-none focus:outline-none px-3 py-1 rounded flex items-center"
             >
               <svg
@@ -123,8 +123,11 @@
       data: objs,
       columns: [
         {
-          data: "id",
-          width: "5%",
+            data: null,
+            render: function (data, type, row, meta) {
+                return meta.row + 1; // meta.row is the row index starting from 0
+            },
+            width: "5%",
         },
         {
           data: "filename",

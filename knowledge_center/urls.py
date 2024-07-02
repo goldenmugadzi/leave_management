@@ -4,7 +4,7 @@ from . import views
 
 urlpatterns = [
     path('create', views.create, name='user_manual_create'),
-    path('view_files', views.view_files, name='user_manual_index'),
+    path('knowledge_center_files', views.view_files, name='user_manual_index'),
     path('download_file', views.download_file, name='download_file'),
     path('archive_file/<int:file_id>', views.archive_file, name='archive_file'),
     path('unarchive_file/<int:file_id>', views.unarchive_file, name='unarchive_file'),

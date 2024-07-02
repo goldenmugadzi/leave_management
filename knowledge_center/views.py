@@ -6,7 +6,7 @@ import json, os
 from django.conf import settings
 from django.contrib import messages
 
-from it.users.models import Regions
+from it.users.models import CostCenter, Regions, Sections
 from utils.save_file import save_file
 from .models import Categories, First_Category, Secondary_Category, Filetype
 from django.shortcuts import render
@@ -16,6 +16,7 @@ from django.contrib.auth.decorators import login_required
 from utils.helper_functions import get_kc_dict
 
 from .models import KnowledgeCenter
+from django.core.files.storage import FileSystemStorage
 
 # Create your views here.
 @login_required
@@ -37,40 +38,68 @@ def create(request):
             if 'subtype2' in request.POST:
                 subtype2 = request.POST['subtype2']
         except Exception as ex:
+            # messages.error(request, "Error uploading file: "+str(ex))
             print("Error:",ex)
         
         file_path = ''
         try:
             if 'uploaded_file' in request.FILES:
-                uploaded_file = request.FILES ['uploaded_file']
-                file_path = 'uploads/knowledge_center/'+datetime.now().strftime('%Y%m%d%I%M%S%p') + uploaded_file.name 
-                save_file(uploaded_file,file_path)        
+                uploaded_file = request.FILES['uploaded_file']
+                root_dir = os.path.join(settings.BASE_DIR, 'uploads', 'knowledge_center')
+                fs = FileSystemStorage(location=root_dir)
+                filename_ = fs.save(uploaded_file.name, uploaded_file)
+                file_url = "uploads" + os.path.sep + "knowledge_center" + os.path.sep + filename_
+                print("file_url: ", file_url)
+                # save_file(uploaded_file,file_path)        
                 file_type= Filetype.objects.filter(id=filetype).first() if filetype else None
                 subtype1_ = First_Category.objects.filter(id=subtype1).first() if subtype1 else None
                 subtype2_ = Secondary_Category.objects.filter(id=subtype2).first() if subtype2 else None
+                
+                try:
+                    region_ = Regions.objects.filter(id=region).first() if region else None
+                    section_ = Sections.objects.filter(id=section).first() if section else None
+                    cost_center = CostCenter.objects.filter(code=section_.code).first() if section_ else None
+                except Exception as ex:
+                    region_ = None
+                    section_ = None
+                    cost_center = None
+                    messages.error(request, "Error uploading file: "+str(ex))
+                    print(ex)
+                
                 um = KnowledgeCenter(
-                    filename= filename,
+                    filename= filename, # uploaded_file.name,
                     file_type= file_type.name if file_type else "",
-                    filepath = file_path,
-                    section= section,
+                    file_type_id = file_type,
+                    filepath = file_url,
+                    section = section,
+                    region = region,
+                    section_id= section_,
                     sub_category_1 = subtype1_.name if subtype1_ else "",
+                    subtype = subtype1_,
                     sub_category_2 = subtype2_.name if subtype2_ else "",
-                    region=region,
+                    subsubtype = subtype2_,
+                    region_id=region_,
+                    cost_center=cost_center,
+                    done_by=user,
+                    created_on = datetime.now(),
+                    updated_on = datetime.now(),
                     created_at = datetime.now().date(),
                     updated_at = datetime.now().date(),
                     created_by = user.username,
                 )
                 um.save()
+                messages.success(request, "File uploaded successfully")
         except Exception as ex:
             messages.error(request, "Error uploading file")
             print("Error:",ex)
         
-        return render(request, 'knowledge-center/create.html', {
-                      "url_path": url_path
-                      })    
+        return redirect('/knowledge_center/create')   
     
     regions = Regions.objects.all()
-    return render(request, 'knowledge-center/create.html', {"url_path": url_path, "regions": regions})
+    sections = Sections.objects.all()
+    cost_centers = CostCenter.objects.all()
+    filetypes = Filetype.objects.all()
+    return render(request, 'knowledge-center/create.html', {"url_path": url_path, "regions": regions, "sections": sections, "cost_centers": cost_centers, "filetypes": filetypes})
 
 @login_required
 def archive_file(request, file_id):
@@ -79,7 +108,7 @@ def archive_file(request, file_id):
     um.archived=True
     um.save()
     
-    return redirect('/knowledge_center/view_files')
+    return redirect('/knowledge_center/knowledge_center_files')
 
 @login_required
 def unarchive_file(request, file_id):
@@ -88,11 +117,13 @@ def unarchive_file(request, file_id):
     um.archived=False
     um.save()
     
-    return redirect('/knowledge_center/view_files')
+    return redirect('/knowledge_center/knowledge_center_files')
 
 @login_required
 def view_files(request):
     
+    KnowledgeCenter.migrate_filetypes()
+    # Secondary_Category.migrate_duplicates()
     files = KnowledgeCenter.objects.filter(archived=False).all()
     
     files_list = []
@@ -101,16 +132,17 @@ def view_files(request):
             "id": file.id,
             "filename": file.filename,
             "filetype": file.file_type,
-            "section": file.section,
+            "section": file.section_id.section if file.section_id else "",
             "subcategory1": file.sub_category_1,
             "subcategory2": file.sub_category_2,
-            "region": file.region,
+            "region": file.region_id.region if file.region_id else "",
             "archived": file.archived,
-            "created_by": file.created_by,
-            "created_at": file.created_at,
+            "created_by": file.done_by.first_name + " " + file.done_by.last_name if file.done_by else "",
+            "created_at": file.created_on.astimezone().strftime("%Y-%m-%d %H:%M:%S") if file.created_on else "",
         }
         files_list.append(new_file)
     
+    files_list = sorted(files_list, key=lambda x: x['created_at'], reverse=True)
     context = json.dumps(files_list, default=str)
     
     url_path = request.path.split("/")
@@ -127,13 +159,13 @@ def view_archived_files(request):
             "id": file.id,
             "filename": file.filename,
             "filetype": file.file_type,
-            "section": file.section,
+            "section": file.section_id.section if file.section_id else "",
             "subcategory1": file.sub_category_1,
             "subcategory2": file.sub_category_2,
-            "region": file.region,
+            "region": file.region_id.region if file.region_id else "",
             "archived": file.archived,
             "created_by": file.created_by,
-            "created_at": file.created_at,
+            "created_at": file.created_on.astimezone().strftime("%Y-%m-%d %H:%M:%S") if file.created_on else "",
         }
         files_list.append(new_file)
     
@@ -193,13 +225,14 @@ def download_file(request):
 
     # search for file in system
     try:
+        # base_directory_path = request.build_absolute_uri(settings.MEDIA_URL + file_path)
         base_directory_path = os.path.join(settings.BASE_DIR, file_path)
         print("base_directory_path: ", base_directory_path)
         return FileResponse(open(base_directory_path, 'rb'), content_type='application/pdf')
     except Exception as ex:
         print(ex)
 
-    return redirect('/knowledge_center/view_files')
+    return redirect('/knowledge_center/knowledge_center_files')
 
 @login_required
 def edit_file(request, file_id):
@@ -210,7 +243,12 @@ def edit_file(request, file_id):
         # fetch section code
 
         url_path = request.path.split("/")
-        return render(request, 'knowledge-center/edit_file.html', {"record": file_record, "url_path": url_path})    
+        regions = Regions.objects.all()
+        sections = Sections.objects.all()
+        cost_centers = CostCenter.objects.all()
+        filetypes = Filetype.objects.all()
+        
+        return render(request, 'knowledge-center/edit_file.html', {"record": file_record, "url_path": url_path, "regions": regions, "sections": sections, "cost_centers": cost_centers, "filetypes": filetypes}) 
     
     if request.method == 'POST':
         # something
@@ -228,38 +266,61 @@ def edit_file(request, file_id):
             subtype2 = request.POST['subtype2']
         region = request.POST['region']
         
-        file_path = ''
+        file_url = ''
         try:
             if 'uploaded_file' in request.FILES:
                 uploaded_file = request.FILES ['uploaded_file']
-                file_path = 'uploads/knowledge_center/'+datetime.now().strftime('%Y%m%d%I%M%S%p') + uploaded_file.name 
-                save_file(uploaded_file,file_path)
+                root_dir = os.path.join(settings.BASE_DIR, 'uploads', 'knowledge_center')
+                fs = FileSystemStorage(location=root_dir)
+                filename_ = fs.save(uploaded_file.name, uploaded_file)
+                file_url = "uploads" + os.path.sep + "knowledge_center" + os.path.sep + filename_
+                print("file_url: ", file_url)
         except Exception as ex:
+            # messages.error(request, "Error uploading file")
             print("Error:",ex)
-
 
         file_type= Filetype.objects.filter(id=filetype).first() if filetype else None
         subtype1_ = First_Category.objects.filter(id=subtype1).first() if subtype1 else None
         subtype2_ = Secondary_Category.objects.filter(id=subtype2).first() if subtype2 else None
-
+                
+        try:
+            region_ = Regions.objects.filter(id=region).first() if region else None
+            section_ = Sections.objects.filter(id=section).first() if section else None
+            cost_center = CostCenter.objects.filter(code=section_.code).first() if section_ else None
+        except Exception as ex:
+            region_ = None
+            section_ = None
+            cost_center = None
+            messages.error(request, "Error uploading file: "+str(ex))
+            print(ex)
+                    
         um = KnowledgeCenter.objects.filter(id=id).first()
-        um.filename= filename
-        um.file_type= file_type.name if file_type else ""
-        um.filepath = file_path
-        um.section= section
-        um.sub_category_1 = subtype1_.name if subtype1_ else ""
-        um.sub_category_2 = subtype2_.name if subtype2_ else ""
-        um.region=region
+        um.filename= filename if filename else um.filename
+        um.file_type= file_type.name if file_type else um.file_type
+        um.file_type_id = file_type if file_type else um.file_type_id
+        um.filepath = file_url if file_url else um.filepath
+        um.section= section if section else um.section
+        um.sub_category_1 = subtype1_.name if subtype1_ else um.sub_category_1
+        um.subtype = subtype1_ if subtype1_ else um.subtype
+        um.sub_category_2 = subtype2_.name if subtype2_ else um.sub_category_2
+        um.subsubtype = subtype2_ if subtype2_ else um.subsubtype
+        um.region=region if region else um.region
         um.updated_at = datetime.now().date()
-        um.created_by = user.username
+        um.region_id = region_ if region_ else um.region_id
+        um.section_id = section_ if section_ else um.section_id
+        um.cost_center = cost_center if cost_center else um.cost_center
+        um.done_by = user
+        um.updated_on = datetime.now()
 
         um.save()
-        
-        return render(request, 'knowledge-center/create.html', {
-                      "url_path": url_path
-                      })    
+        messages.success(request, "File updated successfully")
+        return redirect('/knowledge_center/edit_file/' + str(id))   
+    regions = Regions.objects.all()
+    sections = Sections.objects.all()
+    cost_centers = CostCenter.objects.all()
+    filetypes = Filetype.objects.all()
     
-    return render(request, 'knowledge-center/edit_file.html', {"url_path": url_path})
+    return render(request, 'knowledge-center/edit_file.html', {"url_path": url_path, "regions": regions, "sections": sections, "cost_centers": cost_centers, "filetypes": filetypes})
 
 
 @login_required
@@ -279,6 +340,7 @@ def get_files(request, file_type_id):
                 
             }
             options_list.append(newobj)
+        
 
         return JsonResponse({"options": list(options_list)})
     
