@@ -378,6 +378,7 @@ def archived_documents(request):
             "id":file.id,
             "region": file.region,
             "category": file.category,
+            "sub_category":file.subcategory,
             "archive": file.archive,
             # "section": file.section,
             "file": file.file,
