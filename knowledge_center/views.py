@@ -122,7 +122,7 @@ def unarchive_file(request, file_id):
 @login_required
 def view_files(request):
     
-    KnowledgeCenter.migrate_filetypes()
+    # KnowledgeCenter.migrate_filetypes()
     # Secondary_Category.migrate_duplicates()
     files = KnowledgeCenter.objects.filter(archived=False).all()
     
