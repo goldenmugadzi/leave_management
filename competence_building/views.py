@@ -363,7 +363,7 @@ def uploaded_jobs_view(request):
         print(e)
     
     context = json.dumps(files_list, default=str)
-#     context = {'documents': documents}
+
     return render(request, 'competence_building/competence_index.html', {"context": context, 'page':'competence_index'})
 
 def archived_documents(request):
