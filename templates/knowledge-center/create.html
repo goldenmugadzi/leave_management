@@ -11,7 +11,7 @@
 
         <div class="mt-10 border-b border-gray-900/10 pb-12">
           <h2 class="text-base font-semibold leading-7 text-gray-900">
-            File Information
+            Upload File Information
           </h2>
           <p class="mt-1 text-sm leading-6 text-gray-600">
             Fill all required fields.
@@ -27,6 +27,7 @@
               >
               <div class="mt-2">
                 <input
+                required
                   type="text"
                   name="filename"
                   id="filename"
@@ -45,6 +46,7 @@
               >
               <div class="mt-2">
                 <select
+                required
                   id="category_id"
                   name="category_id"
                   autocomplete="category_id"
@@ -74,7 +76,7 @@
               </div>
             </div>
 
-            <div>
+            <div id="subtype1_container" class="hidden">
               <label
                 for="subtype1"
                 class="block text-sm font-medium leading-6 text-gray-900"
@@ -91,7 +93,7 @@
               </select>
               </div>
             </div>
-            <div>
+            <div id="subtype2_container" class="hidden">
               <label
                 for="subtype2"
                 class="block text-sm font-medium leading-6 text-gray-900"
@@ -228,9 +230,16 @@
           selectElement.options.length = 0;
 
           // Add new options based on data
+          console.log(data.subtypes);
+          let selectOpt = new Option("Select Subtype", "");
+          selectElement.add(selectOpt);
           for (var option of data.options) {
               var opt = new Option(option.name, option.id);
               selectElement.add(opt);
+          }
+          if(data.options.length > 0){
+            document.getElementById("subtype1_container").style.display = "block";
+            document.getElementById("subtype1").required = true;
           }
       }
     });
@@ -266,9 +275,16 @@
           secondCategory.options.length = 0;
 
           // Add new options based on data
+          console.log(data.subtypes);
+          let selectOpt = new Option("Select Subtype", "");
+          secondCategory.add(selectOpt);
           for (var option of data.options_list) {
               var opt = new Option(option.name, option.id);
               secondCategory.add(opt);
+          }
+          if(data.options_list.length > 0){
+            document.getElementById("subtype2_container").style.display = "block";
+            document.getElementById("subtype2").required = true;
           }
       }
     });

@@ -11,7 +11,7 @@
 
         <div class="mt-10 border-b border-gray-900/10 pb-12">
           <h2 class="text-base font-semibold leading-7 text-gray-900">
-            File Information
+            Process File Information
           </h2>
           <p class="mt-1 text-sm leading-6 text-gray-600">
             Fill all required fields.
@@ -27,6 +27,7 @@
               >
               <div class="mt-2">
                 <input
+                    required
                   type="text"
                   name="file_name"
                   id="file_name"
@@ -45,6 +46,7 @@
               >
               <div class="mt-2">
                 <select
+                    required
                   id="filetype"
                   name="filetype"
                   autocomplete="category_id"
@@ -59,11 +61,11 @@
             </div>
 
             <div
-            id="subtype1">
+            id="subtype1" class="hidden">
               <label
                 for="subtype"
                 class="text-sm font-medium leading-6 text-gray-900"
-                >Subtype</label
+                >Sub Type</label
               >
               <div class="mt-2">
                 <select
@@ -77,11 +79,13 @@
             </div>
 
             <div
-            id="subtype2">
+            id="subtype2"
+            class="hidden"
+            >
               <label
                 for="subsubtype"
                 class="text-sm font-medium leading-6 text-gray-900"
-                >Subsubtype</label
+                >Sub Subtype</label
               >
               <div class="mt-2">
                 <select
@@ -102,6 +106,7 @@
                 >
                 <div class="mt-2">
                   <input
+                    required
                     type="file"
                     name="uploaded_file"
                     id="uploaded_file"
@@ -119,6 +124,7 @@
                 >
                 <div class="mt-2">
                   <select
+                    required
                     id="region"
                     name="region"
                     autocomplete="region"
@@ -137,10 +143,10 @@
       </div>
 
       <div class="flex mt-10 px-3 py-3">
-        <div style="width: 50%;">
-          <button style="width: 100%;" class="text-sm font-semibold leading-6 text-gray-900">
+        <div style="width: 50%;" class="flex justify-center">
+          <a href="/processes/new_view" style="width: 100%;" class="text-sm text-center font-semibold leading-6 text-gray-900">
             CANCEL
-          </button>
+          </a>
         </div>
         <div style="width: 50%;">
           <button
@@ -171,9 +177,16 @@
           secondCategory.options.length = 0;
 
           // Add new options based on data
+          console.log(data.subtypes);
+          let selectOpt = new Option("Select Subtype", "");
+          secondCategory.add(selectOpt);
           for (var option of data.subtypes) {
               var opt = new Option(option.name, option.id);
               secondCategory.add(opt);
+          }
+          if(data.subtypes.length > 0){
+            document.getElementById("subtype1").style.display = "block";
+            document.getElementById("subtype").required = true;
           }
       }
     });
@@ -190,9 +203,15 @@
           secondCategory.options.length = 0;
 
           // Add new options based on data
+          let selectOpt = new Option("Select Sub Subtype", "");
+          secondCategory.add(selectOpt);
           for (var option of data.subsubtypes) {
               var opt = new Option(option.name, option.id);
               secondCategory.add(opt);
+          }
+          if(data.subsubtypes.length > 0){
+            document.getElementById("subtype2").style.display = "block";
+            document.getElementById("subsubtype").required = true;
           }
       }
     });
