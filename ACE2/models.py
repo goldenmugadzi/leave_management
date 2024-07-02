@@ -146,7 +146,7 @@ class Ace2(models.Model):
     currency = models.CharField(null=True, max_length=15, blank=True, choices=CURRENCY_CHOICES)
     # approval_code = models.IntegerField(null=True, max_length=5)
 
-    quantity = models.IntegerField(null=True, max_length=20)
+    quantity = models.IntegerField(null=True)
 
     process = models.ForeignKey(Process, on_delete=models.SET_NULL, blank=True, null=True)
     section = models.ForeignKey(Sections, on_delete=models.DO_NOTHING, blank=True, null=True)

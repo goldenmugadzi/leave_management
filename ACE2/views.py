@@ -295,6 +295,7 @@ def ace_awaiting_my_action(request):
             custom_user_roles["ace"] = role
     ace_role = str(custom_user_roles["ace"])
     requester = "create"
+    cashier = "process"
 
     print(ace_role)
 
@@ -346,7 +347,8 @@ def ace_awaiting_my_action(request):
 
     return render(request, 'finance/ace2/view_all_aces.html', {'aces': aces_to_process,
                                                                'ace_role': ace_role,
-                                                               'requester': requester})
+                                                               'requester': requester,
+                                                               'cashier':cashier})
 
 
 @login_required
@@ -558,22 +560,22 @@ def list_budgets(request):
     user_designation = Designations.objects.filter(
         id=user_profile.designation.id).first() if user_profile.designation else None
 
-    new_user = {
-        "id": user_profile.pk,
-        "username": user_profile.username,
-        "firstname": user_profile.first_name,
-        "lastname": user_profile.last_name,
-        "email": user_profile.email,
-        "section": section_used,
-        "depot": depot,
-        "district": district,
-        "region": region,
-        "roles": custom_user_roles,
-        "designation": user_designation,
-    }
+    # new_user = {
+    #     "id": user_profile.pk,
+    #     "username": user_profile.username,
+    #     "firstname": user_profile.first_name,
+    #     "lastname": user_profile.last_name,
+    #     "email": user_profile.email,
+    #     "section": section_used,
+    #     "depot": depot,
+    #     "district": district,
+    #     "region": region,
+    #     "roles": custom_user_roles,
+    #     "designation": user_designation,
+    # }
     user_title = request.user.get_full_name()
     print(section_used)
-    section_budget = Budget.objects.all()
+    section_budget = AssetBudget.objects.filter(region=region)
     # print(section_budget)
     user_title = request.user.get_full_name()
     l = request.user.groups.values_list('name', flat=True)
