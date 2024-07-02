@@ -146,6 +146,12 @@ def view_losscontrol(request):
         return render(request, 'competence_building/losscontrol.html', {
                       "url_path": url_path})
 
+def view_procurement(request):
+        
+        url_path = request.path.split("/")
+        return render(request, 'competence_building/procurement.html', {
+                      "url_path": url_path})
+
 def view_engineering(request):
         
         url_path = request.path.split("/")
@@ -250,51 +256,43 @@ def view_itjobdescription(request):
     return render(request, 'competence_building/itjobdescription.html', {"Documents": documents})
 
 def view_hrjobdescription(request):
-    category= Category.objects.filter(name="Job Description").first()
-    subcategory= Subcategory.objects.filter(name="Human Resource").first()
-    documents = Document.objects.filter(category=category, subcategory=subcategory).all()
-    return render(request, 'competence_building/itjobdescription.html', {"Documents": documents})
+         subcategory = Subcategory.objects.filter(name="Human Resource").first()
+         documents = Document.objects.filter(subcategory=subcategory).all()  # Fetch all documents
+         return render(request, 'competence_building/itjobdescription.html', {"Documents": documents})
 
 def view_srjobdescription(request):
-    category= Category.objects.filter(name="Job Description").first()
-    subcategory= Subcategory.objects.filter(name="Stakeholder Relations").first()
-    documents = Document.objects.filter(category=category, subcategory=subcategory).all()
-    return render(request, 'competence_building/itjobdescription.html', {"Documents": documents})
+         subcategory = Subcategory.objects.filter(name="Stakeholder Relations").first()
+         documents = Document.objects.filter(subcategory=subcategory).all()  
+         return render(request, 'competence_building/itjobdescription.html', {"Documents": documents})
 
 def view_riskjobdescription(request):
-    category= Category.objects.filter(name="Job Description").first()
-    subcategory= Subcategory.objects.filter(name="Stakeholder Relations").first()
-    documents = Document.objects.filter(category=category, subcategory=subcategory).all()
-    section = Sections.objects.filter(section="Risk Management").first()
-    documents = Document.objects.filter(section=section).all()  # Fetch all documents
-    return render(request, 'competence_building/itjobdescription.html', {"Documents": documents})
+         subcategory = Subcategory.objects.filter(name="Risk Management").first()
+         documents = Document.objects.filter(subcategory=subcategory).all()  
+         return render(request, 'competence_building/itjobdescription.html', {"Documents": documents})
 
 def view_procjobdescription(request):
-         section = Sections.objects.filter(section="Procurement").first()
-         documents = Document.objects.filter(section=section).all()  # Fetch all documents
+         subcategory = Subcategory.objects.filter(name="Procurement").first()
+         documents = Document.objects.filter(subcategory=subcategory).all()  
          return render(request, 'competence_building/itjobdescription.html', {"Documents": documents})
 
 def view_legaljobdescription(request):
-    category = Category.objects.filter(name="Job Description").first()
-    subcategories = Subcategory.objects.filter(name="Legal Service").first()
-    documents = Document.objects.filter(category=category,subcategory=subcategories).all()  # Fetch all documents
-    return render(request, 'competence_building/itjobdescription.html', {"Documents": documents})
+         subcategory = Subcategory.objects.filter(name="Legal Services").first()
+         documents = Document.objects.filter(subcategory=subcategory).all()  # Fetch all documents
+         return render(request, 'competence_building/itjobdescription.html', {"Documents": documents})
 
 def view_finjobdescription(request):
-    category = Category.objects.filter(name="Job Description").first()
-    subcategories = Subcategory.objects.filter(name="Finance").first()
-    documents = Document.objects.filter(category=category,subcategory=subcategories).all()  # Fetch all documents
-    return render(request, 'competence_building/itjobdescription.html', {"Documents": documents})
+         subcategory = Subcategory.objects.filter(name="Finance").first()
+         documents = Document.objects.filter(subcategory=subcategory).all()  
+         return render(request, 'competence_building/itjobdescription.html', {"Documents": documents})
 
 def view_engjobdescription(request):
-    category = Category.objects.filter(name="Job Description").first()
-    subcategories = Subcategory.objects.filter(name="Engineering").first()
-    documents = Document.objects.filter(category=category,subcategory=subcategories).all()  # Fetch all documents
-    return render(request, 'competence_building/itjobdescription.html', {"Documents": documents})
+         subcategory = Subcategory.objects.filter(name="Engineering").first()
+         documents = Document.objects.filter(subcategory=subcategory).all() 
+         return render(request, 'competence_building/itjobdescription.html', {"Documents": documents})
 
 def view_comjobdescription(request):
-         section = Sections.objects.filter(section="Commercial").first()
-         documents = Document.objects.filter(section=section).all()  # Fetch all documents
+         subcategory = Subcategory.objects.filter(name="Commercial").first()
+         documents = Document.objects.filter(subcategory=subcategory).all()  
          return render(request, 'competence_building/itjobdescription.html', {"Documents": documents})
 
 def view_infojobdescription(request):
@@ -350,11 +348,12 @@ def uploaded_jobs_view(request):
     for file in documents:
         new_file = {
         "id":file.id,
-        "region": file.region,
         "category": file.category,
+        "sub_category":file.subcategory,
+        "region": file.region,
         "archive": file.archive,
-        "file": file.file,
         "name": file.name,
+        "file": file.file,
         "created by": file.created_by,
         "created at": file.created_at,
         }
@@ -374,7 +373,7 @@ def archived_documents(request):
         "region": file.region,
         "category": file.category,
         "archive": file.archive,
-        "section": file.section,
+        # "section": file.section,
         "file": file.file,
         "name": file.name,
         "created by": file.created_by,

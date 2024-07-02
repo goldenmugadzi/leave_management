@@ -27,6 +27,7 @@ urlpatterns = [
     path('southglenview', view_southglenview, name='southglenview'),
     path('southwaterfalls', view_southwaterfalls, name='southwaterfalls'),
     path('southsales', view_southsales, name='southsales'),
+    path('procurement', view_procurement, name='procurement'),
     path('northdistrict', view_northdistrict, name='northdistrict'),
     path('northkuwadzana', view_northkuwadzana, name='northkuwadzana'),
     path('northmabelreign', view_northmabelreign, name='northmabelreign'),
