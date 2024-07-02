@@ -330,7 +330,9 @@ def view_upload_file(request):
                 file_name = request.FILES['file'].name
                 document.name = os.path.splitext(file_name)[0]  # Set document name from uploaded file
             document.save()  # Commit the changes to the database
-            return redirect('/') 
+            return redirect('/competence/upload_file') 
+        else:
+                print("error :")
     return render(request, 'competence_building/upload_file.html', {'form': DocumentForm()})
 
 def view_categories(request):
