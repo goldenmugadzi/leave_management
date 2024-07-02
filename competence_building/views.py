@@ -347,19 +347,22 @@ def uploaded_jobs_view(request):
     # Fetches job descriptions and renders them in a table.
     documents = Document.objects.filter(archive=False).all()  # Fetch all documents
     files_list = []
-    for file in documents:
-        new_file = {
-        "id":file.id,
-        "category": file.category,
-        "sub_category":file.subcategory,
-        "region": file.region,
-        "archive": file.archive,
-        "name": file.name,
-        "file": file.file,
-        "created by": file.created_by,
-        "created at": file.created_at,
-        }
-        files_list.append(new_file)
+    try:
+        for file in documents:
+            new_file = {
+            "id":file.id,
+            "category": file.category,
+            "sub_category":file.subcategory,
+            "region": file.region,
+            "archive": file.archive,
+            "name": file.name,
+            "file": file.file,
+            "created by": file.created_by,
+            "created at": file.created_at,
+            }
+            files_list.append(new_file)
+    except Exception as e:
+        print(e)
     
     context = json.dumps(files_list, default=str)
 #     context = {'documents': documents}
