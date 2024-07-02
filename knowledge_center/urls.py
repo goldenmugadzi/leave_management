@@ -19,7 +19,7 @@ urlpatterns = [
     path('legal_registers/<str:department>', views.legal_registers_departments, name='legal_registers_departments'),
     path('view/<str:filetype>/<str:subtype>/<str:subsubtype>', views.fetch_knowledge_center, name='fetch_knowledge_center'),
     
-    path('view_firstview', views.view_firstview, name='user_manual_view_advanced'),
+    path('categories', views.view_firstview, name='user_manual_view_advanced'),
     path('view_policies', views.view_policies, name='user_manual_view_policies'),
     path('view_index', views.view_index, name='user_manual_view_index'),
     path('view_1_10', views.view_1_10, name='user_manual_view_1_10'),
