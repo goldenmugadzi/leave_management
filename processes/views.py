@@ -50,21 +50,24 @@ def create(request):
         sub_category = ""
         _sub_category = ""
         _subsubtype = ""
-        print(_filetype)
-        if 'subtype' in request.POST:
-           sub_category=request.POST['subtype']
-           _sub_category = FileSubType.objects.filter(id=sub_category).first()
-           print(_sub_category)
-        else:
-            sub_category=""
-            sub_category = None
-        if 'subsubtype' in request.POST:
-           subsubtype=request.POST['subsubtype']
-           _subsubtype = SubSubType.objects.filter(id=subsubtype).first()
-           print(_subsubtype)
-        else:
-            subsubtype=""
-            _subsubtype = None
+        try:
+            print(_filetype)
+            if 'subtype' in request.POST:
+                sub_category=request.POST['subtype']
+                _sub_category = FileSubType.objects.filter(id=sub_category).first()
+                print(_sub_category)
+            else:
+                sub_category=""
+                sub_category = None
+            if 'subsubtype' in request.POST:
+                subsubtype=request.POST['subsubtype']
+                _subsubtype = SubSubType.objects.filter(id=subsubtype).first()
+                print(_subsubtype)
+            else:
+                subsubtype=""
+                _subsubtype = None
+        except Exception as ex:
+            print("Error:", ex)
             
         region=request.POST['region']
         section = secction
@@ -78,24 +81,23 @@ def create(request):
                 uploaded_file = request.FILES['uploaded_file']
                 file_path = 'uploads/processes/' + \
                     datetime.now().strftime("%Y%m%d%I%M%S%p") + uploaded_file.name
-                save_file(uploaded_file, file_path)
+                save_file(uploaded_file, file_path)        
+                processObj = Processes(
+                    filename= filename,
+                    filetype=_filetype.name if _filetype else None,
+                    department = _sub_category.name if _sub_category else "",
+                    region=region,
+                    filepath = file_path,
+                    sub_category= _subsubtype.name if _subsubtype else "",
+                    section = section,
+                    created_by = created_by,
+                    created_at=created_at,
+                    updated_at=updated_at,
+                    )
+                processObj.save()
                 
         except Exception as ex:
             print("Error:", ex)
-
-        processObj = Processes(
-            filename= filename,
-            filetype=_filetype.name if _filetype else None,
-            department = _sub_category.name if _sub_category else "",
-            region=region,
-            filepath = file_path,
-            sub_category= _subsubtype.name if _subsubtype else "",
-            section = section,
-            created_by = created_by,
-            created_at=created_at,
-            updated_at=updated_at,
-            )
-        processObj.save()
         
         return redirect('/processes/create')
 

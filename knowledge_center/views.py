@@ -28,13 +28,16 @@ def create(request):
         filename = request.POST['filename']
         filetype = request.POST['category_id']
         section = request.POST['section']
-        subtype1 = ""
-        if 'subtype1' in request.POST:
-            subtype1 = request.POST['subtype1']
-        subtype2 = ""
-        if 'subtype2' in request.POST:
-            subtype2 = request.POST['subtype2']
         region = request.POST['region']
+        subtype1 = ""
+        subtype2 = ""
+        try:
+            if 'subtype1' in request.POST:
+                subtype1 = request.POST['subtype1']
+            if 'subtype2' in request.POST:
+                subtype2 = request.POST['subtype2']
+        except Exception as ex:
+            print("Error:",ex)
         
         file_path = ''
         try:
