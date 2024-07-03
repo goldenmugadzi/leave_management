@@ -294,9 +294,16 @@ def business_applications(request):
 
     print("users_role: ", users_role)
     applications = APPLICATIONS
-    if users_role == "standard" or "":
+    if users_role == "standard" or users_role == "" or users_role == None:
         print("creating standard list ..")
         applications = [app for app in applications if app['name'] != 'users']
+    
+    user = request.user
+    
+    if user.region.region == "HARARE REGION" or user.region.region == "EASTERN REGION":
+        applications = applications
+    else:
+        applications = [app for app in applications if app['name'] == 'users' or app['name'] == 'non_conformity']
         
     url_path = request.path.split("/")
     return render(
