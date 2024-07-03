@@ -439,23 +439,6 @@ def dashboard_index(request):
         "id": month_id,
         "name": MONTHS[month_id-1]
     }
-    
-    # inspections = get_inspections(user_profile, month_id)
-    # maintenance_ = get_mmts(user_profile, month_id)
-    # mtn = get_mmt(user_profile, month_id)
-    # print("mtn: ", mtn)
-    
-    # keys_list, values_list = get_inspections_bargraph(user_profile, month_id)
-
-    # inspection_locations = keys_list
-    # inspections_count = values_list
-    
-    # # loop through maintences and foreach get record count from Files.
-    # maintenance_keys_list, maintenance_values_list = get_maintenance_linegraph(user_profile, month_id)
-    
-    # regions_json = json.dumps(list(regions.values('id', 'region')))
-    # districts_json = json.dumps(list(districts.values('id', 'district')))
-    # sections_json = json.dumps(list(sections.values('id', 'section')))
 
     return render(request, 
                   'dashboards/index.html', 
