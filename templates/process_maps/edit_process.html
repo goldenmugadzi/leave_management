@@ -55,8 +55,8 @@
                   autocomplete="category_id"
                   class="block w-full rounded-md border-0 py-2 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
                 >
-                  {% if record.filetype %}
-                    <option value="">{{ record.filetype }}</option>
+                  {% if record.filetype_id %}
+                    <option value="{{ record.filetype_id.id }}">{{ record.filetype_id.name }}</option>
                   {%endif%}
                   <option value="">Select File Category</option>
                   {% for option in filetypes %}
@@ -80,8 +80,8 @@
                 autocomplete="subtype"
                 class="block w-full rounded-md border-0 py-2 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
               >
-              {% if record.department %}
-                <option value="">{{ record.department }}</option>
+              {% if record.filesubtype_id %}
+                <option value="{{ record.filesubtype_id.id }}">{{ record.filesubtype_id.name }}</option>
               {%endif%}
               </select>
               </div>
@@ -101,8 +101,8 @@
                 autocomplete="subsubtype"
                 class="block w-full rounded-md border-0 py-2 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
               >
-              {% if record.sub_category %}
-                <option value="">{{ record.sub_category }}</option>
+              {% if record.subsubtype_id %}
+                <option value="{{ record.subsubtype_id.id }}">{{ record.subsubtype_id.name }}</option>
               {%endif%}
               </select>
               </div>
@@ -138,8 +138,8 @@
                     autocomplete="region"
                     class="block w-full rounded-md border-0 py-2 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
                   >
-                    {% if region_ %}
-                      <option value="">{{ region_.region }}</option>
+                    {% if record.region_id %}
+                      <option value="{{ record.region_id.id }}">{{ record.region_id.region }}</option>
                     {%endif%}
                     <option>Select Region</option>
                     {% for region in regions %}

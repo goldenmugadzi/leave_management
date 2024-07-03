@@ -93,8 +93,8 @@
       <thead>
         <tr>
           <th>ID</th>
-          <th>File Type</th>
           <th>Filename</th>
+          <th>File Type</th>
           <th>Date</th>
           <th>ACTION</th>
         </tr>
@@ -103,8 +103,8 @@
       <tfoot>
         <tr>
           <th>ID</th>
-          <th>File Type</th>
           <th>Filename</th>
+          <th>File Type</th>
           <th>Date</th>
           <th>ACTION</th>
         </tr>
@@ -124,15 +124,18 @@
       scrollX: true,
       columns: [
         {
-          data: "id",
-          width: "5%",
-        },
-        {
-          data: "filetype",
-          width: "30%",
+            data: null,
+            render: function (data, type, row, meta) {
+                return meta.row + 1; // meta.row is the row index starting from 0
+            },
+            width: "5%",
         },
         {
           data: "filename",
+          width: "30%",
+        },
+        {
+          data: "filetype",
           width: "30%",
         },
         {

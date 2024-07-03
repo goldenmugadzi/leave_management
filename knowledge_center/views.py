@@ -104,18 +104,28 @@ def create(request):
 @login_required
 def archive_file(request, file_id):
 
-    um = KnowledgeCenter.objects.filter(id=file_id).first()
-    um.archived=True
-    um.save()
+    try:
+        um = KnowledgeCenter.objects.filter(id=file_id).first()
+        um.archived=True
+        um.save()
+        messages.success(request, "File archived successfully")
+    except Exception as ex:
+        messages.error(request, "Error archiving file")
+        print("Error:",ex)
     
     return redirect('/knowledge_center/knowledge_center_files')
 
 @login_required
 def unarchive_file(request, file_id):
 
-    um = KnowledgeCenter.objects.filter(id=file_id).first()
-    um.archived=False
-    um.save()
+    try:
+        um = KnowledgeCenter.objects.filter(id=file_id).first()
+        um.archived=False
+        um.save()
+        messages.success(request, "File unarchived successfully")
+    except Exception as ex:
+        messages.error(request, "Error unarchiving file")
+        print("Error:",ex)
     
     return redirect('/knowledge_center/knowledge_center_files')
 
@@ -384,7 +394,7 @@ def view_legal_registers(request):
 @login_required
 def legal_registers_departments(request, department):
     
-    files = KnowledgeCenter.objects.filter(file_type="LEGISLATION", sub_category_1="Legal Registers", sub_category_2=department).all()
+    files = KnowledgeCenter.objects.filter(archived=False, file_type="LEGISLATION", sub_category_1="Legal Registers", sub_category_2=department).all()
     
     url_path = request.path.split("/")
     title = department + " Legal Registers"
@@ -395,7 +405,7 @@ def fetch_knowledge_center(request, filetype, subtype, subsubtype):
     
     files = []
     # if filetype and subtype and subsubtype:
-    files = KnowledgeCenter.objects.filter(file_type=filetype, sub_category_1=subtype, sub_category_2=subsubtype).all()
+    files = KnowledgeCenter.objects.filter(archived=False, file_type=filetype, sub_category_1=subtype, sub_category_2=subsubtype).all()
     url_path = request.path.split("/")
     title = (subsubtype + " " + subtype).capitalize()
     return render(request, 'knowledge-center/test.html',{"files": files, "page_title": title, "url_path": url_path})
@@ -403,7 +413,7 @@ def fetch_knowledge_center(request, filetype, subtype, subsubtype):
 @login_required
 def view_ea(request):
     
-    files = KnowledgeCenter.objects.filter(sub_category_1="Electricity Acts")
+    files = KnowledgeCenter.objects.filter(archived=False, sub_category_1="Electricity Acts")
     
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "Acts of Parliament", "url_path": url_path})
@@ -412,7 +422,7 @@ def view_ea(request):
 @login_required
 def view_gl(request):
     
-    files = KnowledgeCenter.objects.filter(sub_category_1="General Legislation")
+    files = KnowledgeCenter.objects.filter(archived=False, sub_category_1="General Legislation")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -424,7 +434,7 @@ def view_gl(request):
 @login_required
 def view_si(request):
     
-    files = KnowledgeCenter.objects.filter(sub_category_1="Statutory Instruments")
+    files = KnowledgeCenter.objects.filter(archived=False, sub_category_1="Statutory Instruments")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -458,7 +468,7 @@ def view_specifications(request):
 @login_required
 def view_commercial_spec(request):
     
-    files = KnowledgeCenter.objects.filter(file_type="SPECIFICATIONS", sub_category_1="Commercial")
+    files = KnowledgeCenter.objects.filter(archived=False, file_type="SPECIFICATIONS", sub_category_1="Commercial")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -470,7 +480,7 @@ def view_commercial_spec(request):
 @login_required
 def view_hr_spec(request):
     
-    files = KnowledgeCenter.objects.filter(file_type="SPECIFICATIONS", sub_category_1="Human Resources")
+    files = KnowledgeCenter.objects.filter(archived=False, file_type="SPECIFICATIONS", sub_category_1="Human Resources")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -482,7 +492,7 @@ def view_hr_spec(request):
 @login_required
 def view_engineering_spec(request):
     
-    files = KnowledgeCenter.objects.filter(file_type="SPECIFICATIONS", sub_category_1="Engineering")
+    files = KnowledgeCenter.objects.filter(archived=False, file_type="SPECIFICATIONS", sub_category_1="Engineering")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -495,7 +505,7 @@ def view_engineering_spec(request):
 @login_required
 def view_finance_spec(request):
     
-    files = KnowledgeCenter.objects.filter(file_type="SPECIFICATIONS", sub_category_1="Finance")
+    files = KnowledgeCenter.objects.filter(archived=False, file_type="SPECIFICATIONS", sub_category_1="Finance")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -508,7 +518,7 @@ def view_finance_spec(request):
 @login_required
 def view_ict_spec(request):
     
-    files = KnowledgeCenter.objects.filter(file_type="SPECIFICATIONS", sub_category_1="ICT")
+    files = KnowledgeCenter.objects.filter(archived=False, file_type="SPECIFICATIONS", sub_category_1="ICT")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -521,7 +531,7 @@ def view_ict_spec(request):
 @login_required
 def view_risk_spec(request):
     
-    files = KnowledgeCenter.objects.filter(file_type="SPECIFICATIONS", sub_category_1="Risk")
+    files = KnowledgeCenter.objects.filter(archived=False, file_type="SPECIFICATIONS", sub_category_1="Risk")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -533,7 +543,7 @@ def view_risk_spec(request):
 @login_required
 def view_relations_spec(request):
     
-    files = KnowledgeCenter.objects.filter(file_type="SPECIFICATIONS", sub_category_1="Stakeholder Relations")
+    files = KnowledgeCenter.objects.filter(archived=False, file_type="SPECIFICATIONS", sub_category_1="Stakeholder Relations")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -545,7 +555,7 @@ def view_relations_spec(request):
 @login_required
 def view_legal_spec(request):
     
-    files = KnowledgeCenter.objects.filter(file_type="SPECIFICATIONS", sub_category_1="Legal")
+    files = KnowledgeCenter.objects.filter(archived=False, file_type="SPECIFICATIONS", sub_category_1="Legal")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -557,7 +567,7 @@ def view_legal_spec(request):
 @login_required
 def view_procurement_spec(request):
     
-    files = KnowledgeCenter.objects.filter(file_type="SPECIFICATIONS", sub_category_1="Procurement")
+    files = KnowledgeCenter.objects.filter(archived=False, file_type="SPECIFICATIONS", sub_category_1="Procurement")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -577,7 +587,7 @@ def view_policies(request):
 @login_required
 def view_commercial_policies(request):
     
-    files = KnowledgeCenter.objects.filter(file_type="POLICIES & GUIDELINES", sub_category_1="Commercial").all()
+    files = KnowledgeCenter.objects.filter(archived=False, file_type="POLICIES & GUIDELINES", sub_category_1="Commercial").all()
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -589,7 +599,7 @@ def view_commercial_policies(request):
 @login_required
 def view_hr_policies(request):
     
-    files = KnowledgeCenter.objects.filter(file_type="POLICIES & GUIDELINES", sub_category_1="Human Resources")
+    files = KnowledgeCenter.objects.filter(archived=False, file_type="POLICIES & GUIDELINES", sub_category_1="Human Resources")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -601,7 +611,7 @@ def view_hr_policies(request):
 @login_required
 def view_engineering(request):
     
-    files = KnowledgeCenter.objects.filter(file_type="POLICIES & GUIDELINES", sub_category_1="Engineering")
+    files = KnowledgeCenter.objects.filter(archived=False, file_type="POLICIES & GUIDELINES", sub_category_1="Engineering")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -613,7 +623,7 @@ def view_engineering(request):
 @login_required
 def view_finance_policies(request):
     
-    files = KnowledgeCenter.objects.filter(file_type="POLICIES & GUIDELINES", sub_category_1="Finance")
+    files = KnowledgeCenter.objects.filter(archived=False, file_type="POLICIES & GUIDELINES", sub_category_1="Finance")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -625,7 +635,7 @@ def view_finance_policies(request):
 @login_required
 def view_ict_policies(request):
     
-    files = KnowledgeCenter.objects.filter(file_type="POLICIES & GUIDELINES", sub_category_1="ICT")
+    files = KnowledgeCenter.objects.filter(archived=False, file_type="POLICIES & GUIDELINES", sub_category_1="ICT")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -637,7 +647,7 @@ def view_ict_policies(request):
 @login_required
 def view_risk_policies(request):
     
-    files = KnowledgeCenter.objects.filter(file_type="POLICIES & GUIDELINES", sub_category_1="Risk")
+    files = KnowledgeCenter.objects.filter(archived=False, file_type="POLICIES & GUIDELINES", sub_category_1="Risk")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -657,7 +667,7 @@ def view_index(request):
 @login_required
 def view_reports(request):
     
-    files = KnowledgeCenter.objects.filter(sub_category_2="Reports")
+    files = KnowledgeCenter.objects.filter(archived=False, sub_category_2="Reports")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -669,7 +679,7 @@ def view_reports(request):
 @login_required
 def view_protection(request):
     
-    files = KnowledgeCenter.objects.filter(sub_category_2="Protection")
+    files = KnowledgeCenter.objects.filter(archived=False, sub_category_2="Protection")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -681,7 +691,7 @@ def view_protection(request):
 @login_required
 def view_earthing(request):
     
-    files = KnowledgeCenter.objects.filter(sub_category_2="Earthing")
+    files = KnowledgeCenter.objects.filter(archived=False, sub_category_2="Earthing")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -693,7 +703,7 @@ def view_earthing(request):
 @login_required
 def view_transformers(request):
     
-    files = KnowledgeCenter.objects.filter(sub_category_2="Transformers")
+    files = KnowledgeCenter.objects.filter(archived=False, sub_category_2="Transformers")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -705,7 +715,7 @@ def view_transformers(request):
 @login_required
 def view_fuses(request):
     
-    files = KnowledgeCenter.objects.filter(sub_category_2="Fuses")
+    files = KnowledgeCenter.objects.filter(archived=False, sub_category_2="Fuses")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -717,7 +727,7 @@ def view_fuses(request):
 @login_required
 def view_imm(request):
     
-    files = KnowledgeCenter.objects.filter(sub_category_2="Instruments, Meters and Metering")
+    files = KnowledgeCenter.objects.filter(archived=False, sub_category_2="Instruments, Meters and Metering")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -729,7 +739,7 @@ def view_imm(request):
 @login_required
 def view_tg(request):
     
-    files = KnowledgeCenter.objects.filter(sub_category_2="Transformer Gaskets")
+    files = KnowledgeCenter.objects.filter(archived=False, sub_category_2="Transformer Gaskets")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -741,7 +751,7 @@ def view_tg(request):
 @login_required
 def view_switchgear(request):
     
-    files = KnowledgeCenter.objects.filter(sub_category_2="Switchgear")
+    files = KnowledgeCenter.objects.filter(archived=False, sub_category_2="Switchgear")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -753,7 +763,7 @@ def view_switchgear(request):
 @login_required
 def view_por(request):
     
-    files = KnowledgeCenter.objects.filter(sub_category_2="Post Office Regulations")
+    files = KnowledgeCenter.objects.filter(archived=False, sub_category_2="Post Office Regulations")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -765,7 +775,7 @@ def view_por(request):
 @login_required
 def view_io(request):
     
-    files = KnowledgeCenter.objects.filter(sub_category_2="io")
+    files = KnowledgeCenter.objects.filter(archived=False, sub_category_2="io")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -793,7 +803,7 @@ def view_11_20(request):
 @login_required
 def view_clearance(request):
     
-    files = KnowledgeCenter.objects.filter(sub_category_2="Clearance Distances")
+    files = KnowledgeCenter.objects.filter(archived=False, sub_category_2="Clearance Distances")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -805,7 +815,7 @@ def view_clearance(request):
 @login_required
 def view_mines(request):
     
-    files = KnowledgeCenter.objects.filter(sub_category_2="Mines Department Regulations")
+    files = KnowledgeCenter.objects.filter(archived=False, sub_category_2="Mines Department Regulations")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -817,7 +827,7 @@ def view_mines(request):
 @login_required
 def view_supplies(request):
     
-    files = KnowledgeCenter.objects.filter(sub_category_2="Interruption of supply Notice to consumers")
+    files = KnowledgeCenter.objects.filter(archived=False, sub_category_2="Interruption of supply Notice to consumers")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -829,7 +839,7 @@ def view_supplies(request):
 @login_required
 def view_samples(request):
     
-    files = KnowledgeCenter.objects.filter(sub_category_2="Water Samples and Painting to Consumers")
+    files = KnowledgeCenter.objects.filter(archived=False, sub_category_2="Water Samples and Painting to Consumers")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -841,7 +851,7 @@ def view_samples(request):
 @login_required
 def view_cables(request):
     
-    files = KnowledgeCenter.objects.filter(sub_category_2="Cables")
+    files = KnowledgeCenter.objects.filter(archived=False, sub_category_2="Cables")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -853,7 +863,7 @@ def view_cables(request):
 @login_required
 def view_capital(request):
     
-    files = KnowledgeCenter.objects.filter(sub_category_2="Capital Works and Expenditure")
+    files = KnowledgeCenter.objects.filter(archived=False, sub_category_2="Capital Works and Expenditure")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -865,7 +875,7 @@ def view_capital(request):
 @login_required
 def view_government(request):
     
-    files = KnowledgeCenter.objects.filter(sub_category_2="Government planning and Wayleaves")
+    files = KnowledgeCenter.objects.filter(archived=False, sub_category_2="Government planning and Wayleaves")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -877,7 +887,7 @@ def view_government(request):
 @login_required
 def view_phases(request):
     
-    files = KnowledgeCenter.objects.filter(sub_category_2="Phase Rotation and Colouring")
+    files = KnowledgeCenter.objects.filter(archived=False, sub_category_2="Phase Rotation and Colouring")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -889,7 +899,7 @@ def view_phases(request):
 @login_required
 def view_insulators(request):
     
-    files = KnowledgeCenter.objects.filter(sub_category_2="Insulators and Bushings")
+    files = KnowledgeCenter.objects.filter(archived=False, sub_category_2="Insulators and Bushings")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -901,7 +911,7 @@ def view_insulators(request):
 @login_required
 def view_locks(request):
     
-    files = KnowledgeCenter.objects.filter(sub_category_2="Locks and Keys")
+    files = KnowledgeCenter.objects.filter(archived=False, sub_category_2="Locks and Keys")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -923,7 +933,7 @@ def view_21_30(request):
 @login_required
 def view_rmasts(request):
     
-    files = KnowledgeCenter.objects.filter(sub_category_2="RMasts, Poles, Stays and Crossarms")
+    files = KnowledgeCenter.objects.filter(archived=False, sub_category_2="RMasts, Poles, Stays and Crossarms")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -935,7 +945,7 @@ def view_rmasts(request):
 @login_required
 def view_substations(request):
     
-    files = KnowledgeCenter.objects.filter(sub_category_2="Substations")
+    files = KnowledgeCenter.objects.filter(archived=False, sub_category_2="Substations")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -946,7 +956,7 @@ def view_substations(request):
 @login_required
 def view_fire(request):
     
-    files = KnowledgeCenter.objects.filter(sub_category_2="Fire Fighting")
+    files = KnowledgeCenter.objects.filter(archived=False, sub_category_2="Fire Fighting")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -958,7 +968,7 @@ def view_fire(request):
 @login_required
 def view_defective(request):
     
-    files = KnowledgeCenter.objects.filter(sub_category_2="Defective and Damaged Equipment Insurance & Guarantees")
+    files = KnowledgeCenter.objects.filter(archived=False, sub_category_2="Defective and Damaged Equipment Insurance & Guarantees")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -970,7 +980,7 @@ def view_defective(request):
 @login_required
 def view_services(request):
     
-    files = KnowledgeCenter.objects.filter(sub_category_2="Services and Service Equipment")
+    files = KnowledgeCenter.objects.filter(archived=False, sub_category_2="Services and Service Equipment")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -982,7 +992,7 @@ def view_services(request):
 @login_required
 def view_consumers(request):
     
-    files = KnowledgeCenter.objects.filter(sub_category_2="Consumer's Equipment and installation")
+    files = KnowledgeCenter.objects.filter(archived=False, sub_category_2="Consumer's Equipment and installation")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -994,7 +1004,7 @@ def view_consumers(request):
 @login_required
 def view_lifting(request):
     
-    files = KnowledgeCenter.objects.filter(sub_category_2="Lifting Equipment")
+    files = KnowledgeCenter.objects.filter(archived=False, sub_category_2="Lifting Equipment")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -1006,7 +1016,7 @@ def view_lifting(request):
 @login_required
 def view_transport(request):
     
-    files = KnowledgeCenter.objects.filter(sub_category_2="Transport")
+    files = KnowledgeCenter.objects.filter(archived=False, sub_category_2="Transport")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -1018,7 +1028,7 @@ def view_transport(request):
 @login_required
 def view_lpa(request):
     
-    files = KnowledgeCenter.objects.filter(sub_category_2="Lighting Protection and Arrestors")
+    files = KnowledgeCenter.objects.filter(archived=False, sub_category_2="Lighting Protection and Arrestors")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -1030,7 +1040,7 @@ def view_lpa(request):
 @login_required
 def view_insulation(request):
     
-    files = KnowledgeCenter.objects.filter(sub_category_2="Insulation")
+    files = KnowledgeCenter.objects.filter(archived=False, sub_category_2="Insulation")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -1051,7 +1061,7 @@ def view_31_45(request):
 @login_required
 def view_cables(request):
     
-    files = KnowledgeCenter.objects.filter(sub_category_2="Cable Jointing Laying ")
+    files = KnowledgeCenter.objects.filter(archived=False, sub_category_2="Cable Jointing Laying ")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -1063,7 +1073,7 @@ def view_cables(request):
 @login_required
 def view_capacitors(request):
     
-    files = KnowledgeCenter.objects.filter(sub_category_2="Capacitors and Power Factor Correction")
+    files = KnowledgeCenter.objects.filter(archived=False, sub_category_2="Capacitors and Power Factor Correction")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -1075,7 +1085,7 @@ def view_capacitors(request):
 @login_required
 def view_explosive(request):
     
-    files = KnowledgeCenter.objects.filter(sub_category_2="Explosive and Magazine")
+    files = KnowledgeCenter.objects.filter(archived=False, sub_category_2="Explosive and Magazine")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -1087,7 +1097,7 @@ def view_explosive(request):
 @login_required
 def view_standard(request):
     
-    files = KnowledgeCenter.objects.filter(sub_category_2="Standard Stock Items")
+    files = KnowledgeCenter.objects.filter(archived=False, sub_category_2="Standard Stock Items")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -1099,7 +1109,7 @@ def view_standard(request):
 @login_required
 def view_cradles(request):
     
-    files = KnowledgeCenter.objects.filter(sub_category_2="Cradles and Guards")
+    files = KnowledgeCenter.objects.filter(archived=False, sub_category_2="Cradles and Guards")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -1111,7 +1121,7 @@ def view_cradles(request):
 @login_required
 def view_11kv(request):
     
-    files = KnowledgeCenter.objects.filter(sub_category_2="Standard 11Kv Line Construction")
+    files = KnowledgeCenter.objects.filter(archived=False, sub_category_2="Standard 11Kv Line Construction")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -1123,7 +1133,7 @@ def view_11kv(request):
 @login_required
 def view_conductors(request):
     
-    files = KnowledgeCenter.objects.filter(sub_category_2="Conductors, Earthwires and Accessories")
+    files = KnowledgeCenter.objects.filter(archived=False, sub_category_2="Conductors, Earthwires and Accessories")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -1135,7 +1145,7 @@ def view_conductors(request):
 @login_required
 def view_roads(request):
     
-    files = KnowledgeCenter.objects.filter(sub_category_2="Road, Rail, and Line Crossings")
+    files = KnowledgeCenter.objects.filter(archived=False, sub_category_2="Road, Rail, and Line Crossings")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -1147,7 +1157,7 @@ def view_roads(request):
 @login_required
 def view_zetdc(request):
     
-    files = KnowledgeCenter.objects.filter(sub_category_2="Z.E.T.D.C Regulations and Safety Precautions")
+    files = KnowledgeCenter.objects.filter(archived=False, sub_category_2="Z.E.T.D.C Regulations and Safety Precautions")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -1159,7 +1169,7 @@ def view_zetdc(request):
 @login_required
 def view_power(request):
     
-    files = KnowledgeCenter.objects.filter(sub_category_2="Power Stations")
+    files = KnowledgeCenter.objects.filter(archived=False, sub_category_2="Power Stations")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -1171,7 +1181,7 @@ def view_power(request):
 @login_required
 def view_substation(request):
     
-    files = KnowledgeCenter.objects.filter(sub_category_2="Substation Batteries")
+    files = KnowledgeCenter.objects.filter(archived=False, sub_category_2="Substation Batteries")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -1183,7 +1193,7 @@ def view_substation(request):
 @login_required
 def view_safety(request):
     
-    files = KnowledgeCenter.objects.filter(sub_category_2="Safety Rules for Operation and Maintenance Switching Authorization")
+    files = KnowledgeCenter.objects.filter(archived=False, sub_category_2="Safety Rules for Operation and Maintenance Switching Authorization")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -1195,7 +1205,7 @@ def view_safety(request):
 @login_required
 def view_lighting(request):
     
-    files = KnowledgeCenter.objects.filter(sub_category_2="High Mast Lighting")
+    files = KnowledgeCenter.objects.filter(archived=False, sub_category_2="High Mast Lighting")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -1207,7 +1217,7 @@ def view_lighting(request):
 @login_required
 def view_capacity(request):
     
-    files = KnowledgeCenter.objects.filter(sub_category_2="Planning Policy on Firm Capacity")
+    files = KnowledgeCenter.objects.filter(archived=False, sub_category_2="Planning Policy on Firm Capacity")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -1219,7 +1229,7 @@ def view_capacity(request):
 @login_required
 def view_procurement(request):
     
-    files = KnowledgeCenter.objects.filter(sub_category_2="Procurement")
+    files = KnowledgeCenter.objects.filter(archived=False, sub_category_2="Procurement")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -1240,7 +1250,7 @@ def view_user_manuals(request):
 @login_required
 def view_commercial_usermanuals(request):
     
-    files = KnowledgeCenter.objects.filter(file_type="USER MANUALS", sub_category_1="Commercial")
+    files = KnowledgeCenter.objects.filter(archived=False, file_type="USER MANUALS", sub_category_1="Commercial")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -1252,7 +1262,7 @@ def view_commercial_usermanuals(request):
 @login_required
 def view_hr_usermanuals(request):
     
-    files = KnowledgeCenter.objects.filter(file_type="USER MANUALS", sub_category_1="hr")
+    files = KnowledgeCenter.objects.filter(archived=False, file_type="USER MANUALS", sub_category_1="hr")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -1264,7 +1274,7 @@ def view_hr_usermanuals(request):
 @login_required
 def view_finance_usermanuals(request):
     
-    files = KnowledgeCenter.objects.filter(file_type="USER MANUALS", sub_category_1="Finance")
+    files = KnowledgeCenter.objects.filter(archived=False, file_type="USER MANUALS", sub_category_1="Finance")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -1276,7 +1286,7 @@ def view_finance_usermanuals(request):
 @login_required
 def view_ict_usermanuals(request):
     
-    files = KnowledgeCenter.objects.filter(file_type="USER MANUALS", sub_category_1="ICT")
+    files = KnowledgeCenter.objects.filter(archived=False, file_type="USER MANUALS", sub_category_1="ICT")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -1288,7 +1298,7 @@ def view_ict_usermanuals(request):
 @login_required
 def view_relations_usermanuals(request):
     
-    files = KnowledgeCenter.objects.filter(file_type="USER MANUALS", sub_category_1="Stakeholder Relations")
+    files = KnowledgeCenter.objects.filter(archived=False, file_type="USER MANUALS", sub_category_1="Stakeholder Relations")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -1300,7 +1310,7 @@ def view_relations_usermanuals(request):
 @login_required
 def view_legal_usermanuals(request):
     
-    files = KnowledgeCenter.objects.filter(file_type="USER MANUALS", sub_category_1="Legal")
+    files = KnowledgeCenter.objects.filter(archived=False, file_type="USER MANUALS", sub_category_1="Legal")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -1312,7 +1322,7 @@ def view_legal_usermanuals(request):
 @login_required
 def view_procurement_usermanuals(request):
     
-    files = KnowledgeCenter.objects.filter(file_type="USER MANUALS", sub_category_1="Procurement")
+    files = KnowledgeCenter.objects.filter(archived=False, file_type="USER MANUALS", sub_category_1="Procurement")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -1324,7 +1334,7 @@ def view_procurement_usermanuals(request):
 @login_required
 def view_risk_usermanuals(request):
     
-    files = KnowledgeCenter.objects.filter(file_type ="USER MANUALS", sub_category_1="Risk")
+    files = KnowledgeCenter.objects.filter(archived=False, file_type ="USER MANUALS", sub_category_1="Risk")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -1338,7 +1348,7 @@ def view_risk_usermanuals(request):
 @login_required
 def view_eng_manuals(request):
     
-    files = KnowledgeCenter.objects.filter(file_type='USER MANUALS', sub_category_1="Engineering").all()
+    files = KnowledgeCenter.objects.filter(archived=False, file_type='USER MANUALS', sub_category_1="Engineering").all()
     
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/view_eng_manuals.html', {"page_title": "USER MANUALS (Engineering)", "url_path": url_path, "files": files})
@@ -1346,7 +1356,7 @@ def view_eng_manuals(request):
 @login_required
 def view_switchgear(request):
     
-    files = KnowledgeCenter.objects.filter(sub_category_2="Switchgear")
+    files = KnowledgeCenter.objects.filter(archived=False, sub_category_2="Switchgear")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -1358,7 +1368,7 @@ def view_switchgear(request):
 @login_required
 def view_dtech(request):
     
-    files = KnowledgeCenter.objects.filter(sub_category_2="Drone Technology")
+    files = KnowledgeCenter.objects.filter(archived=False, sub_category_2="Drone Technology")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -1370,7 +1380,7 @@ def view_dtech(request):
 @login_required
 def view_ndm(request):
     
-    files = KnowledgeCenter.objects.filter(sub_category_2="NDM")
+    files = KnowledgeCenter.objects.filter(archived=False, sub_category_2="NDM")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -1382,7 +1392,7 @@ def view_ndm(request):
 @login_required
 def view_gis(request):
     
-    files = KnowledgeCenter.objects.filter(sub_category_2="GIS")
+    files = KnowledgeCenter.objects.filter(archived=False, sub_category_2="GIS")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -1394,7 +1404,7 @@ def view_gis(request):
 @login_required
 def view_itrack(request):
     
-    files = KnowledgeCenter.objects.filter(sub_category_2="iTrack Zimbabwe Geotrack Connect Manual")
+    files = KnowledgeCenter.objects.filter(archived=False, sub_category_2="iTrack Zimbabwe Geotrack Connect Manual")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -1406,7 +1416,7 @@ def view_itrack(request):
 @login_required
 def view_sap(request):
     
-    files = KnowledgeCenter.objects.filter(sub_category_2="SAP")
+    files = KnowledgeCenter.objects.filter(archived=False, sub_category_2="SAP")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -1418,7 +1428,7 @@ def view_sap(request):
 @login_required
 def view_oms(request):
     
-    files = KnowledgeCenter.objects.filter(sub_category_2="OMS")
+    files = KnowledgeCenter.objects.filter(archived=False, sub_category_2="OMS")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -1438,7 +1448,7 @@ def view_oms(request):
 @login_required
 def view_drawing(request):
     
-    files = KnowledgeCenter.objects.filter(file_type="Drawings")
+    files = KnowledgeCenter.objects.filter(archived=False, file_type="Drawings")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -1450,7 +1460,7 @@ def view_drawing(request):
 @login_required
 def view_standards(request):
     
-    files = KnowledgeCenter.objects.filter(file_type="Standards")
+    files = KnowledgeCenter.objects.filter(archived=False, file_type="Standards")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -1462,7 +1472,7 @@ def view_standards(request):
 # @login_required
 # def view_specifications(request):
     
-#     files = KnowledgeCenter.objects.filter(file_type="Specifications")
+#     files = KnowledgeCenter.objects.filter(archived=False, file_type="Specifications")
 
 #     print("files: ", files)
 #     new_dict = get_kc_dict(files)
@@ -1474,7 +1484,7 @@ def view_standards(request):
 @login_required
 def view_publications(request):
     
-    files = KnowledgeCenter.objects.filter(file_type="PUBLICATIONS")
+    files = KnowledgeCenter.objects.filter(archived=False, file_type="PUBLICATIONS")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -1486,7 +1496,7 @@ def view_publications(request):
 @login_required
 def view_external_docs(request):
     
-    files = KnowledgeCenter.objects.filter(file_type="Other External Documents")
+    files = KnowledgeCenter.objects.filter(archived=False, file_type="Other External Documents")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -1498,7 +1508,7 @@ def view_external_docs(request):
 @login_required
 def view_drone_tech(request):
     
-    files = KnowledgeCenter.objects.filter(file_type="Drone Technology")
+    files = KnowledgeCenter.objects.filter(archived=False, file_type="Drone Technology")
 
     print("files: ", files)
     new_dict = get_kc_dict(files)
@@ -1561,7 +1571,7 @@ def test(request):
 @login_required
 def view_risk_management(request):
     
-    files = KnowledgeCenter.objects.filter(file_type="PRINCE2 CENTRE OF EXCELLENCE", sub_category_1="Risk Management Strategy")
+    files = KnowledgeCenter.objects.filter(archived=False, file_type="PRINCE2 CENTRE OF EXCELLENCE", sub_category_1="Risk Management Strategy")
     
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "Risk Management Strategy Files", "url_path": url_path} )
@@ -1569,7 +1579,7 @@ def view_risk_management(request):
 @login_required
 def view_communication_management(request):
     
-    files = KnowledgeCenter.objects.filter(file_type="PRINCE2 CENTRE OF EXCELLENCE", sub_category_1="Communication Management Strategy")
+    files = KnowledgeCenter.objects.filter(archived=False, file_type="PRINCE2 CENTRE OF EXCELLENCE", sub_category_1="Communication Management Strategy")
     
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "Communications Management Strategy Files", "url_path": url_path} )
@@ -1577,7 +1587,7 @@ def view_communication_management(request):
 @login_required
 def view_quality_management(request):
     
-    files = KnowledgeCenter.objects.filter(file_type="PRINCE2 CENTRE OF EXCELLENCE", sub_category_1="Quality Management Strategy")
+    files = KnowledgeCenter.objects.filter(archived=False, file_type="PRINCE2 CENTRE OF EXCELLENCE", sub_category_1="Quality Management Strategy")
     
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "Quality Management Strategy Files", "url_path": url_path} )
@@ -1585,7 +1595,7 @@ def view_quality_management(request):
 @login_required
 def view_configuration_management(request):
     
-    files = KnowledgeCenter.objects.filter(file_type="PRINCE2 CENTRE OF EXCELLENCE", sub_category_1="Configuration Management Strategy")
+    files = KnowledgeCenter.objects.filter(archived=False, file_type="PRINCE2 CENTRE OF EXCELLENCE", sub_category_1="Configuration Management Strategy")
     
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "Configuration Management Strategy Files", "url_path": url_path} )
@@ -1593,7 +1603,7 @@ def view_configuration_management(request):
 @login_required
 def view_risk_register(request):
     
-    files = KnowledgeCenter.objects.filter(file_type="PRINCE2 CENTRE OF EXCELLENCE", sub_category_1="Risk Register Template")
+    files = KnowledgeCenter.objects.filter(archived=False, file_type="PRINCE2 CENTRE OF EXCELLENCE", sub_category_1="Risk Register Template")
     
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "Risk Register Template Files", "url_path": url_path} )
@@ -1601,7 +1611,7 @@ def view_risk_register(request):
 @login_required
 def view_lessons_learnt(request):
     
-    files = KnowledgeCenter.objects.filter(file_type="PRINCE2 CENTRE OF EXCELLENCE", sub_category_1="Lessons Learnt From Previous Projects")
+    files = KnowledgeCenter.objects.filter(archived=False, file_type="PRINCE2 CENTRE OF EXCELLENCE", sub_category_1="Lessons Learnt From Previous Projects")
     
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "Lessons Learnt From Previous Projects Files", "url_path": url_path} )
@@ -1609,7 +1619,7 @@ def view_lessons_learnt(request):
 @login_required
 def view_quality_register(request):
     
-    files = KnowledgeCenter.objects.filter(file_type="PRINCE2 CENTRE OF EXCELLENCE", sub_category_1="Quality Register Template")
+    files = KnowledgeCenter.objects.filter(archived=False, file_type="PRINCE2 CENTRE OF EXCELLENCE", sub_category_1="Quality Register Template")
     
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "Quality Register Template Files", "url_path": url_path} )
@@ -1617,7 +1627,7 @@ def view_quality_register(request):
 @login_required
 def view_configuration_item(request):
     
-    files = KnowledgeCenter.objects.filter(file_type="PRINCE2 CENTRE OF EXCELLENCE", sub_category_1="Configuration Item Record Template")
+    files = KnowledgeCenter.objects.filter(archived=False, file_type="PRINCE2 CENTRE OF EXCELLENCE", sub_category_1="Configuration Item Record Template")
     
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "Configuration Item Record Template Files", "url_path": url_path} )
@@ -1625,7 +1635,7 @@ def view_configuration_item(request):
 @login_required
 def view_current_projects(request):
     
-    files = KnowledgeCenter.objects.filter(file_type="PRINCE2 CENTRE OF EXCELLENCE", sub_category_1="Current Projects")
+    files = KnowledgeCenter.objects.filter(archived=False, file_type="PRINCE2 CENTRE OF EXCELLENCE", sub_category_1="Current Projects")
     
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "Current Projects Files", "url_path": url_path} )

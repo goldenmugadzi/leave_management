@@ -3,6 +3,8 @@ from django.shortcuts import render, redirect
 from django.http import FileResponse, JsonResponse
 from datetime import datetime
 from django.conf import settings
+from django.contrib import messages
+from django.core.files.storage import FileSystemStorage
 import json, os
 from it import users
 from it.users.models import Regions
@@ -38,7 +40,7 @@ def create(request):
     user_title = request.user.get_full_name()
     user_id = request.user.id
     user = UserProfile.objects.filter(id=user_id).first()
-    secction = user.section
+    section = user.section
     _filetypes = File_Type.objects.all()
     regions = Regions.objects.all()
     
@@ -50,19 +52,20 @@ def create(request):
         sub_category = ""
         _sub_category = ""
         _subsubtype = ""
+        
         try:
-            print(_filetype)
+            
             if 'subtype' in request.POST:
                 sub_category=request.POST['subtype']
                 _sub_category = FileSubType.objects.filter(id=sub_category).first()
-                print(_sub_category)
+
             else:
                 sub_category=""
                 sub_category = None
             if 'subsubtype' in request.POST:
                 subsubtype=request.POST['subsubtype']
                 _subsubtype = SubSubType.objects.filter(id=subsubtype).first()
-                print(_subsubtype)
+
             else:
                 subsubtype=""
                 _subsubtype = None
@@ -70,34 +73,47 @@ def create(request):
             print("Error:", ex)
             
         region=request.POST['region']
-        section = secction
-        created_by = request.user.username
         created_at = datetime.now()
         updated_at = datetime.now()
         
-        file_path = ""
+        file_url = ""
         try:
             if 'uploaded_file' in request.FILES:
                 uploaded_file = request.FILES['uploaded_file']
-                file_path = 'uploads/processes/' + \
-                    datetime.now().strftime("%Y%m%d%I%M%S%p") + uploaded_file.name
-                save_file(uploaded_file, file_path)        
+                root_dir = os.path.join(settings.BASE_DIR, 'uploads', 'processes')
+                fs = FileSystemStorage(location=root_dir)
+                filename_ = fs.save(uploaded_file.name, uploaded_file)
+                file_url = "uploads" + os.path.sep + "processes" + os.path.sep + filename_
+                
+                region_ = Regions.objects.filter(id=region).first()     
                 processObj = Processes(
                     filename= filename,
                     filetype=_filetype.name if _filetype else None,
+                    filetype_id = _filetype,
                     department = _sub_category.name if _sub_category else "",
+                    filesubtype_id = _sub_category,
                     region=region,
-                    filepath = file_path,
+                    region_id = region_,
+                    filepath = file_url,
                     sub_category= _subsubtype.name if _subsubtype else "",
+                    subsubtype_id = _subsubtype,
                     section = section,
-                    created_by = created_by,
+                    section_id = section,
+                    cost_center = user.cost_center if user.cost_center else None,
+                    created_by = user.username if user else None,
+                    done_by = user,
                     created_at=created_at,
+                    created_on=datetime.now(),
                     updated_at=updated_at,
+                    updated_on=datetime.now(),
                     )
                 processObj.save()
-                
+                messages.success(request, 'File uploaded successfully')
+            else:
+                messages.error(request, 'Error please upload a file')
         except Exception as ex:
             print("Error:", ex)
+            messages.error(request, 'Error uploading file')
         
         return redirect('/processes/create')
 
@@ -126,50 +142,66 @@ def update(request, file_id):
     _region = Regions.objects.filter(id=process.region).first() if process.region else None
     
     if request.method == 'POST':
-        id = request.POST['id']
-        filename = request.POST['file_name']
-        filetype = request.POST['filetype']
-        _filetype = File_Type.objects.filter(id=filetype).first()
+        # try:
+            id = request.POST['id']
+            filename = request.POST['file_name']
+            filetype = request.POST['filetype']
+            _filetype = File_Type.objects.filter(id=filetype).first() if filetype else None
 
-        if 'subtype' in request.POST:
-           sub_category=request.POST['subtype']
-           _sub_category = FileSubType.objects.filter(id=sub_category).first()
-           print(_sub_category)
-        else:
-            sub_category=""
-            sub_category = None
-        if 'subsubtype' in request.POST:
-           subsubtype=request.POST['subsubtype']
-           _subsubtype = SubSubType.objects.filter(id=subsubtype).first()
-           print(_subsubtype)
-        else:
-            subsubtype=""
-            _subsubtype = None
+            if 'subtype' in request.POST:
+                sub_category=request.POST['subtype']
+                _sub_category = FileSubType.objects.filter(id=sub_category).first() if sub_category else None
+                print(_sub_category)
+            else:
+                sub_category=""
+                sub_category = None
+            if 'subsubtype' in request.POST:
+                subsubtype=request.POST['subsubtype']
+                _subsubtype = SubSubType.objects.filter(id=subsubtype).first() if subsubtype else None
+                print(_subsubtype)
+            else:
+                subsubtype=""
+                _subsubtype = None
+                
+            region=request.POST['region']
+            updated_at = datetime.now()
             
-        region=request.POST['region']
-        updated_at = datetime.now()
+            file_url = ""
+            try:
+                if 'uploaded_file' in request.FILES:
+                    uploaded_file = request.FILES['uploaded_file']
+                    root_dir = os.path.join(settings.BASE_DIR, 'uploads', 'processes')
+                    fs = FileSystemStorage(location=root_dir)
+                    filename_ = fs.save(uploaded_file.name, uploaded_file)
+                    file_url = "uploads" + os.path.sep + "processes" + os.path.sep + filename_
+            except Exception as ex:
+                print("Error:", ex)
+            
+            region_ = Regions.objects.filter(id=region).first() if region else None
+            process = Processes.objects.filter(id=id).first()
+            if process:
+                
+                process.filename = filename if filename else process.filename
+                process.filetype = _filetype.name if _filetype else process.filetype
+                process.filetype_id = _filetype if _filetype else process.filetype_id
+                process.department = _sub_category.name if _sub_category else process.department
+                process.filesubtype_id = _sub_category if _sub_category else process.filesubtype_id
+                process.region = region if region else process.region
+                process.region_id = region_ if region_ else process.region_id
+                process.filepath = file_url if file_url else process.filepath
+                process.sub_category = _subsubtype.name if _subsubtype else process.sub_category
+                process.subsubtype_id = _subsubtype if _subsubtype else process.subsubtype_id
+                process.updated_at = updated_at
+                process.updated_on = datetime.now()
+                process.save()
+                messages.success(request, 'File updated successfully')
+            else:
+                messages.error(request, 'Process not found')
+        # except Exception as ex:
+        #     print("Error:", ex)
+        #     messages.error(request, 'Error updating file')
         
-        file_path = ""
-        try:
-            if 'uploaded_file' in request.FILES:
-                uploaded_file = request.FILES['uploaded_file']
-                file_path = 'uploads/processes/' + \
-                    datetime.now().strftime("%Y%m%d%I%M%S%p") + uploaded_file.name
-                save_file(uploaded_file, file_path)
-        except Exception as ex:
-            print("Error:", ex)
-        
-        process = Processes.objects.filter(id=id).first()
-        process.filename = filename if filename else process.filename
-        process.filetype = _filetype.name if _filetype else process.filetype
-        process.department = _sub_category.name if _sub_category else process.department
-        process.region = region if region else process.region
-        process.filepath = file_path if file_path else process.filepath
-        process.sub_category = _subsubtype.name if _subsubtype else process.sub_category
-        process.updated_at = updated_at
-        process.save()
-        
-        return redirect('/processes/table')
+            return redirect('/processes/process/update/'+str(id))
 
     return render(request,
                    'process_maps/edit_process.html',
@@ -218,23 +250,27 @@ def get_subsubtypes(request, subtype):
 @login_required
 def view_process_map_table(request):
     
+    # Processes.migrate_fields()
+    # Processes.migrate_duplicates()
+    # Processes.migrate_filetypes()
     files = Processes.objects.filter(archived=False).all()
     
     files_list = []
     for file in files:
         new_file = {
             "id": file.id,
-            "filetype": file.filetype,
+            "filetype": file.filetype_id.name if file.filetype_id else "",
             "filename": file.filename,
             "file": file.filepath,
-            "department": file.department,
-            "subcategory":file.sub_category,
-            "created_by": file.created_by,
+            "department": file.subsubtype_id.name if file.subsubtype_id else "",
+            "subcategory":file.filesubtype_id.name if file.filesubtype_id else "",
+            "created_by": file.done_by.first_name + " " + file.done_by.last_name if file.done_by else "",
             "archived": file.archived,
-            "created_at": file.created_at
+            "created_at": file.created_on.astimezone().strftime("%Y-%m-%d %H:%M:%S") if file.created_on else "",
         }
         files_list.append(new_file)
     
+    files_list = sorted(files_list, key=lambda x: x['created_at'], reverse=True)
     context = json.dumps(files_list, default=str)
     
     return render(request, 'process_maps/process_maps_table.html', {"context": context, "page": "processes_all"})
@@ -248,17 +284,18 @@ def view_archived_processes(request):
     for file in files:
         new_file = {
             "id": file.id,
-            "filetype": file.filetype,
+            "filetype": file.filetype_id.name if file.filetype_id else "",
             "filename": file.filename,
             "file": file.filepath,
-            "department": file.department,
-            "subcategory":file.sub_category,
-            "created_by": file.created_by,
+            "department": file.subsubtype_id.name if file.subsubtype_id else "",
+            "subcategory":file.filesubtype_id.name if file.filesubtype_id else "",
+            "created_by": file.done_by.first_name + " " + file.done_by.last_name if file.done_by else "",
             "archived": file.archived,
-            "created_at": file.created_at
+            "created_at": file.created_on.astimezone().strftime("%Y-%m-%d %H:%M:%S") if file.created_on else "",
         }
         files_list.append(new_file)
     
+    files_list = sorted(files_list, key=lambda x: x['created_at'], reverse=True)
     context = json.dumps(files_list, default=str)
     
     return render(request, 'process_maps/process_maps_table.html', {"context": context})
@@ -266,18 +303,28 @@ def view_archived_processes(request):
 @login_required
 def archive_file(request, file_id):
 
-    um = Processes.objects.filter(id=file_id).first()
-    um.archived=True
-    um.save()
+    try:
+        um = Processes.objects.filter(id=file_id).first()
+        um.archived=True
+        um.save()
+        messages.success(request, 'File archived successfully')
+    except Exception as ex:
+        print("Error:", ex)
+        messages.error(request, 'Error archiving file')
     
     return redirect('/processes/table')
 
 @login_required
 def unarchive_file(request, file_id):
 
-    um = Processes.objects.filter(id=file_id).first()
-    um.archived=False
-    um.save()
+    try:
+        um = Processes.objects.filter(id=file_id).first()
+        um.archived=False
+        um.save()
+        messages.success(request, 'File unarchived successfully')
+    except Exception as ex:
+        print("Error:", ex)
+        messages.error(request, 'Error unarchiving file')
     
     return redirect('/processes/table')
 
@@ -1424,12 +1471,12 @@ def download_file(request):
     # search for file in system
     try:
         base_directory_path = os.path.join(settings.BASE_DIR, file_path)
-
         return FileResponse(open(base_directory_path, 'rb'), content_type='application/pdf')
     except Exception as ex:
         print(ex)
+        messages.error(request, "File not found, please check and upload again")
 
-    return redirect('/process_maps/')
+    return redirect('/processes/table/')
     # return render(request, 'processes/view_process.html', {'results': results,})
 
 # ----------------------------
