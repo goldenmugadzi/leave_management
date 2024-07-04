@@ -332,6 +332,11 @@ class CreateCS extends React.Component {
       .then((data) => {
         console.log("data: ", data);
         if(data && data.success) {
+            let pr_items = data.pr_items ? data.pr_items : [];
+            if(pr_items.length < 1) {
+                alert(`Purchase Request ${pr_id} is either empty or has no items. Please check and try again.`);
+                return;
+            }
           let scope_of_work = data.scope_of_work ? data.scope_of_work : "";
           let proc_ref = data.proc_ref ? data.proc_ref : "";
           let proc_plan = data.proc_plan ? data.proc_plan : null;
@@ -339,7 +344,6 @@ class CreateCS extends React.Component {
           let currencies = data.currencies ? data.currencies : [];
           let uom = data.uom ? data.uom : "";
           let suppliers = data.suppliers ? data.suppliers : [];
-          let pr_items = data.pr_items ? data.pr_items : [];
           let pr_attachments = data.pr_attachments ? data.pr_attachments : [];
           let pr_id = data.pr_id ? data.pr_id : "";
           let pr_date = data.pr_date ? data.pr_date : "";
@@ -3707,7 +3711,7 @@ class CreateCS extends React.Component {
                     id="pr_number"
                     onChange={this.onFetchPrNumberChange}
                     defaultValue={this.state.pr_number}
-                    className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                    className="block w-full rounded-md border-0 py-2 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                   />
                 </div>
               </div>

@@ -47,6 +47,12 @@ def create_purchase_request(request):
         if not prexist :
             if  form.is_valid():
                 purchase_request = form.save(commit=False)
+                # check if the purchase request has items length > 0
+                formset = itemFormset(request.POST,instance=purchase_request)
+                
+                if not formset or len(formset) < 1:
+                    messages.error(request, 'You must add at least one item to the purchase request.')
+                    return render(request, 'finance/purchase_request/create_purchase_request.html', {'formset': itemFormset, 'form': form})
                 # purchase_request.process = intiate(request, 'purchase request')
                 purchase_request.requested_by = request.user
                 purchase_request.region = request.user.region
@@ -64,7 +70,7 @@ def create_purchase_request(request):
                             item = PrItem(item_required=data['Short Text'],purchase_request=purchase_request,quantity=data['Quantity requested'],unit_of_measurement=UnitOfMeasurement.objects.get(unit=data['Unit of Measure']) )
                             item.save()
                 except:pass
-                formset = itemFormset(request.POST,instance=purchase_request)
+                
                 if formset.is_valid():
                     for it in formset:
                         try:

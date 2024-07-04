@@ -6,6 +6,7 @@ from django.contrib.auth import logout
 from django.contrib import messages
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
+from decouple import config
 
 # from utils.helper_functions import get_dashboard_reports
 
@@ -284,9 +285,7 @@ def business_applications(request):
     user_title = request.user.get_full_name()
     l = request.user.groups.values_list('name',flat = True) # QuerySet Object
     user_groups = list(l)  
-    custom_user_roles = {
-        "users": {},
-    }
+
     user_profile = UserProfile.objects.filter(id=request.user.id).first()
     roles_ = user_profile.roles.all()
 
@@ -299,11 +298,17 @@ def business_applications(request):
         applications = [app for app in applications if app['name'] != 'users']
     
     user = request.user
-    
-    if user.region.region == "HARARE REGION" or user.region.region == "EASTERN REGION":
+    if config('HOST') == "172.16.8.20":
         applications = applications
     else:
-        applications = [app for app in applications if app['name'] == 'users' or app['name'] == 'non_conformity']
+        if user.region:
+            if user.region.region == "HARARE REGION" or user.region.region == "EASTERN REGION":
+                applications = applications
+            else:
+                applications = [app for app in applications if app['name'] == 'users' or app['name'] == 'non_conformity']
+        else:
+            messages.error(request, "Your region is missing on your account profile, Please contact the administrator")
+            applications = []
         
     url_path = request.path.split("/")
     return render(
@@ -373,7 +378,7 @@ def change_password(request):
                 security_question3.save()
             except Exception as e:
                 print("Error: ", e)
-                messages.error(request, "An error occurred")
+                messages.error(request, "An error occurred. Please try again.")
                 return redirect('/auth/change-password')
             
             try:
@@ -388,7 +393,7 @@ def change_password(request):
                 # Password is not valid
                 print(e.messages)
                 messages.error(request, e.messages)
-                return redirect('/accounts/login')
+                return redirect('/auth/change-password')
     else:
        questions = Question.objects.all()
        print("questions: ", questions)

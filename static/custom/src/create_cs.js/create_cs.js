@@ -215,6 +215,11 @@ var CreateCS = function (_React$Component) {
       }).then(function (data) {
         console.log("data: ", data);
         if (data && data.success) {
+          var pr_items = data.pr_items ? data.pr_items : [];
+          if (pr_items.length < 1) {
+            alert("Purchase Request " + _pr_id + " is either empty or has no items. Please check and try again.");
+            return;
+          }
           var scope_of_work = data.scope_of_work ? data.scope_of_work : "";
           var proc_ref = data.proc_ref ? data.proc_ref : "";
           var proc_plan = data.proc_plan ? data.proc_plan : null;
@@ -222,7 +227,6 @@ var CreateCS = function (_React$Component) {
           var currencies = data.currencies ? data.currencies : [];
           var uom = data.uom ? data.uom : "";
           var suppliers = data.suppliers ? data.suppliers : [];
-          var pr_items = data.pr_items ? data.pr_items : [];
           var pr_attachments = data.pr_attachments ? data.pr_attachments : [];
           var _pr_id = data.pr_id ? data.pr_id : "";
           var pr_date = data.pr_date ? data.pr_date : "";
@@ -4384,7 +4388,7 @@ var CreateCS = function (_React$Component) {
                       id: "pr_number",
                       onChange: this.onFetchPrNumberChange,
                       defaultValue: this.state.pr_number,
-                      className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                      className: "block w-full rounded-md border-0 py-2 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                     })
                   )
                 ),

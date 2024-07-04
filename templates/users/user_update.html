@@ -94,7 +94,7 @@
                   {% if user.designation %}
                   <option value="{{user.designation.id}}">{{user.designation.description}}</option>
                   {% endif %}
-                  <option>Select Designation</option>
+                  <option value="">Select Designation</option>
                   {% for design in user_designations %}
                   <option value="{{design.id}}">{{design.description}}</option>
                   {% endfor %}
@@ -138,7 +138,7 @@
                   {{ user.region.region }}
                 </option>
                 {% endif %}
-                <option>Select Region</option>
+                <option value="">Select Region</option>
                 {% for region in regions %}
                 <option value="{{region.id}}">{{region.region}}</option>
                 {% endfor %}
@@ -205,7 +205,7 @@
                   {% if user.section %}
                   <option value="{{user.section.code}}" >{{user.section.section}}</option>
                   {% endif %}
-                  <option>Select Section</option>
+                  <option value="">Select Section</option>
                   {% for section in sections %}
                   <option value="{{section.code}}">{{section.section}}</option>
                   {% endfor %}
@@ -230,7 +230,7 @@
                 {% if user.cost_center %}
                 <option value="{{user.cost_center.id}}" >{{user.cost_center.name}}</option>
                 {% endif %}
-                <option>Select Cost Centre</option>
+                <option value="">Select Cost Centre</option>
                 {% for cost_center in cost_centers %}
                 <option value="{{cost_center.id}}">{{cost_center.name}}</option>
                 {% endfor %}
@@ -272,7 +272,7 @@
                   </option>
                   {% endwith %}
                   {% endif %}
-                  <option>Select Role</option>
+                  <option value="">Select Role</option>
                   {% for role in user_roles|get_value:app.name %}
                   <option value="{{role.id}}">{{role.name}}</option>
                   {% endfor %}

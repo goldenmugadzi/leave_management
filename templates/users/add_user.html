@@ -100,7 +100,7 @@
                   autocomplete="region"
                   class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 px-2 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
                 >
-                  <option>Select Region</option>
+                  <option value="">Select Region</option>
                   {% for region in regions %}
                   <option value="{{region.id}}">{{region.region}}</option>
                   {% endfor %}
@@ -121,7 +121,7 @@
                     autocomplete="district"
                     class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 px-2 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
                   >
-                    <option>Select District</option>
+                    <option value="">Select District</option>
                   </select>
                 </div>
               </div>
@@ -139,7 +139,7 @@
                     autocomplete="depot"
                     class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 px-2 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
                   >
-                    <option>Select Depot</option>
+                    <option value="">Select Depot</option>
                   </select>
                 </div>
               </div>
@@ -157,7 +157,7 @@
                     autocomplete="section"
                     class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 px-2 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
                   >
-                    <option>Select Section</option>
+                    <option value="">Select Section</option>
                     {% for section in sections %}
                     <option value="{{section.code}}">{{section.section}}</option>
                     {% endfor %}
@@ -179,7 +179,7 @@
                   autocomplete="cost_center"
                   class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 px-2 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
                 >
-                  <option>Select Cost Centre</option>
+                  <option value="">Select Cost Centre</option>
                 </select>
               </div>
             </div>
@@ -197,7 +197,7 @@
                   autocomplete="designation"
                   class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 px-2 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
                 >
-                  <option>Select Designation</option>
+                  <option value="">Select Designation</option>
                   {% for design in user_designations %}
                   <option value="{{design.id}}">{{design.description}}</option>
                   {% endfor %}

@@ -222,12 +222,22 @@ def add_user(request):
             password1 = request.POST['password1']
             password2 = request.POST['password2']
             
-            region = Regions.objects.filter(id=region_).first()
-            cost_center_ = CostCenter.objects.filter(id=cost_center).first() if cost_center else None
-            district = Districts.objects.filter(code=district_).first() if district_ else None
-            depot = Depots.objects.filter(code=depots_).first() if depots_ else None
-            section = Sections.objects.filter(code=section_).first() if section_ else None
-            designation = Designations.objects.filter(id=designation_).first() if designation_ else None
+            region = None
+            cost_center_ = None
+            district = None
+            depot = None
+            section = None
+            designation = None
+            try:
+                region = Regions.objects.filter(id=region_).first() if region_ else None
+                cost_center_ = CostCenter.objects.filter(id=cost_center).first() if cost_center else None
+                district = Districts.objects.filter(code=district_).first() if district_ else None
+                depot = Depots.objects.filter(code=depots_).first() if depots_ else None
+                section = Sections.objects.filter(code=section_).first() if section_ else None
+                designation = Designations.objects.filter(id=designation_).first() if designation_ else None
+            except Exception as ex:
+                print("Error: ", ex)
+                messages.error(request, "An error occurred while saving the user: "+ex.messages)
             
             if password1 == password2:
                 user = UserProfile(
@@ -270,7 +280,7 @@ def add_user(request):
             messages.success(request, "User created successfully")
         except Exception as ex:
             print("save user error", ex)
-            messages.error(request, "An error occurred while saving the user")
+            messages.error(request, "An error occurred while saving the user: "+str(ex))
 
         return redirect("/users/users-index")
 
@@ -362,6 +372,23 @@ def update_user(request):
     if request.method == "GET":
         user_profile = UserProfile.objects.get(id=request.GET['i'])
         active_roles = {role.app_id.name: role for role in user_profile.roles.all() if role.app_id}
+        
+        section = None
+        depot = None
+        district = None
+        region = None
+        cost_center = None
+        user_designation = None
+        
+        try:
+            section = user_profile.section
+            depot = user_profile.depot
+            district = user_profile.district
+            region = user_profile.region
+            cost_center = user_profile.cost_center
+            user_designation = user_profile.designation
+        except Exception as ex:
+            print("Error: ", ex)
 
         new_user = {
             "id": user_profile.pk,
@@ -369,13 +396,13 @@ def update_user(request):
             "firstname": user_profile.first_name,
             "lastname": user_profile.last_name,
             "email": user_profile.email,
-            "section": Sections.objects.filter(id=user_profile.section.id).first() if user_profile.section else None,
-            "depot": Depots.objects.filter(id=user_profile.depot.id).first() if user_profile.depot else None,
-            "district": Districts.objects.filter(id=user_profile.district.id).first() if user_profile.district else None,
-            "region": Regions.objects.filter(id=user_profile.region.id).first() if user_profile.region else None,
-            "cost_center": CostCenter.objects.filter(id=user_profile.cost_center.id).first() if user_profile.cost_center else None,
+            "section": section,
+            "depot": depot,
+            "district": district,
+            "region": region,
+            "cost_center": cost_center,
             "roles": active_roles,
-            "designation": Designations.objects.filter(id=user_profile.designation.id).first() if user_profile.designation else None,
+            "designation": user_designation,
         }
 
         all_roles = {app.name: Roles.objects.filter(app_id=app.id).all() for app in Application.objects.all()}
@@ -399,17 +426,35 @@ def update_user(request):
     elif request.method == "POST":
         try:
             user_profile = UserProfile.objects.filter(id=request.POST['user_id']).first()
+            region = request.POST.get('region')
+            district = request.POST.get('district')
+            depot = request.POST.get('depot')
+            section = request.POST.get('section')
+            designation = request.POST.get('designation')
+            cost_center = request.POST.get('cost_center')
+            
+            region_, district_, depot_, section_, designation_, cost_center_ = None, None, None, None, None, None
+            try:
+                region_ = Regions.objects.filter(id=region).first() if region else None
+                district_ = Districts.objects.filter(id=district).first() if district else None
+                depot_ = Depots.objects.filter(id=depot).first() if depot else None
+                section_ = Sections.objects.filter(code=section).first() if section else None
+                designation_ = Designations.objects.filter(id=designation).first() if designation else None
+                cost_center_ = CostCenter.objects.filter(id=cost_center).first() if cost_center else None
+            except Exception as ex:
+                print("Error: ", ex)
+            
             user_data = {
                 'first_name': request.POST['firstname'],
                 'last_name': request.POST['lastname'],
                 'username': request.POST['username'],
                 'email': request.POST['email'],
-                'region': Regions.objects.filter(id=request.POST['region']).first(),
-                'cost_center': CostCenter.objects.filter(id=request.POST['cost_center']).first() if request.POST['cost_center'] not in ["Select Cost Center", ""] else None,
-                'district': Districts.objects.filter(id=request.POST['district']).first() if request.POST['district'] not in ["Select District", ""] else None,
-                'depot': Depots.objects.filter(id=request.POST['depot']).first() if request.POST['depot'] not in ["Select Depot", ""] else None,
-                'section': Sections.objects.filter(code=request.POST['section']).first(),
-                'designation': Designations.objects.filter(id=request.POST['designation']).first() if request.POST['designation'] not in ["Select Designation", ""] else None
+                'region': region_,
+                'cost_center': cost_center_,
+                'district': district_,
+                'depot': depot_,
+                'section': section_,
+                'designation': designation_
             }
 
             for field, value in user_data.items():
@@ -618,7 +663,7 @@ def reset_user_password(request):
                 user_profile.change_password = True
                 user_profile.set_password(password1)
                 user_profile.save()
-                messages.success(request, "Password reset successfully")
+                messages.success(request, "Password reset successfull")
                 return redirect('/users/users-index')
             except ValidationError as e:
                 # Password is not valid
