@@ -330,7 +330,6 @@ class CreateCS extends React.Component {
     fetch(`${BASE_URL}/comperative_schedule/create_data/${pr_id}`)
       .then((response) => response.json())
       .then((data) => {
-        console.log("data: ", data);
         if(data && data.success) {
             let pr_items = data.pr_items ? data.pr_items : [];
             if(pr_items.length < 1) {
