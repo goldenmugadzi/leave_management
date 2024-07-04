@@ -637,7 +637,7 @@ class CreateCS extends React.Component {
           if (approval === "Approved") {
             alert("Approval successfull");
             // reload page
-            window.location.reload();
+            window.history.back();
           } else {
             alert("Rejected successfully");
             window.location.reload();

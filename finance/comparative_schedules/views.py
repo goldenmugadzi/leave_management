@@ -711,7 +711,6 @@ def get_pending_fm_approval(request):
             "gm_role": gm_role,
             "procurement_role": procurement_role})
 
-
 def get_your_schedules(user_id, search_value=None, column_name=None, region=None):
     
     cs = ComparativeSchedules.objects.filter(
@@ -962,7 +961,6 @@ def datatable_data(request, view):
         'recordsFiltered': total,
         'data': data
     })
-
 
 @login_required
 def get_comperative_schedule(request, cs_id):

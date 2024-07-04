@@ -213,7 +213,6 @@ var CreateCS = function (_React$Component) {
       fetch(BASE_URL + "/comperative_schedule/create_data/" + pr_id).then(function (response) {
         return response.json();
       }).then(function (data) {
-        console.log("data: ", data);
         if (data && data.success) {
           var pr_items = data.pr_items ? data.pr_items : [];
           if (pr_items.length < 1) {
@@ -521,7 +520,7 @@ var CreateCS = function (_React$Component) {
           if (_approval === "Approved") {
             alert("Approval successfull");
             // reload page
-            window.location.reload();
+            window.history.back();
           } else {
             alert("Rejected successfully");
             window.location.reload();
