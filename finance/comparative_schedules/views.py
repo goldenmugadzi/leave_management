@@ -837,6 +837,7 @@ def get_all_schedules_table(user_id, search_value=None, column_name=None, region
 
 def add_details(cs):
     cs_list = []
+    committee_reject_reason = ""
     
     for c in cs:
         committee_approval = ""
@@ -863,14 +864,6 @@ def add_details(cs):
                 committee_approval = "Pending"
                 fm_approval = None
                 gm_approval = None
-            
-                committee_rejected = Committee.objects.filter(
-                cs_id=c,
-                    committee_approval="Rejected"
-                ).exists()
-
-                if committee_rejected:
-                    committee_approval = "Rejected"
                 
                 committee_pending = Committee.objects.filter(
                     cs_id=c,
@@ -879,6 +872,15 @@ def add_details(cs):
 
                 if committee_pending:
                     committee_approval = "Pending"
+            
+                committee_rejected = Committee.objects.filter(
+                cs_id=c,
+                    committee_approval="Rejected"
+                ).first()
+
+                if committee_rejected:
+                    committee_reject_reason = committee_rejected.justification
+                    committee_approval = "Rejected"
         else:
             committee_approval = "Pending"
             fm_approval = None
@@ -903,8 +905,11 @@ def add_details(cs):
             "tac_date": c.tac_date,
             "created_by": user.username,
             "committee_approval": committee_approval,
+            "committee_reject_reason": committee_reject_reason,
             "gm_approval": gm_approval.approval if gm_approval else "Pending",
+            "gm_reject_reason": gm_approval.justification if gm_approval else "",
             "fm_approval": fm_approval.approval if fm_approval else "Pending",
+            "fm_reject_reason": fm_approval.justification if fm_approval else "",
             "section": section.section if section else "",
             "region": region.region if region else "",
             "created_at": c.created_at.strftime("%Y-%m-%d %H:%M") if c.created_at else ""

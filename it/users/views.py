@@ -755,7 +755,8 @@ def get_filtered_centers(request, region_id):
         print("Region: ", region.code)
         cost_center = CostCenter.objects.filter(Q(code=region.code) | Q(code="CC"+region.code)).first()
         print("Cost Center: ", cost_center) 
-    filtered_centers = fetch_center_children(cost_center)                      
+    filtered_centers = fetch_center_children(cost_center)
+    filtered_centers = [center for center in filtered_centers if center['name'] != " >>> No valid master record"]                   
 
     return JsonResponse(filtered_centers, safe=False)
                         

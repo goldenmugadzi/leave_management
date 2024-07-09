@@ -239,7 +239,10 @@ def download_file(request):
         base_directory_path = os.path.join(settings.BASE_DIR, file_path)
         print("base_directory_path: ", base_directory_path)
         return FileResponse(open(base_directory_path, 'rb'), content_type='application/pdf')
+    except FileNotFoundError:
+        messages.error(request, "File not found, please contact the administrator")
     except Exception as ex:
+        messages.error(request, "Error downloading file")
         print(ex)
 
     return redirect('/knowledge_center/knowledge_center_files')

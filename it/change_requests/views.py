@@ -768,6 +768,13 @@ def approve_profile_request(request):
                         user.save()
                         messages.success(request, "Change Request applied successfully")
                         return redirect("/change_requests/change_request_index")
+                    
+                    if cr_type == "Profile Deactivation":
+                        profile_deactivation = change_request.profile_deactivation
+                        user = UserProfile.objects.filter(id=profile_deactivation.user.id).first()
+                        user.is_active = False
+                        user.save()
+                        messages.success(request, "Change Request applied successfully")
                     return redirect("/change_requests/change_request_index")
 
         except Exception as ex:

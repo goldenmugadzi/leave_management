@@ -67,7 +67,7 @@
     </a>
     {% endif %}
     </div>
-    <table id="comperative_schedules" class="display" style="width: 100%">
+    <table id="comperative_schedules" class="display">
       <thead>
         <tr>
           <th>ID</th>
@@ -122,39 +122,17 @@
   }
   $(document).ready(function () {
     var table = $("#comperative_schedules").DataTable({
-      dom: 'Bfrtip',
-      buttons: [
-          {
-              extend: 'csv',
-              text: 'Export to CSV',
-              className: "bg-gulf-blue-400 hover:bg-gulf-blue-800 text-gulf-blue-950 font-bold py-2 px-4 rounded"
-          },
-          {
-              extend: 'excel',
-              text: 'Export to Excel',
-              className: "bg-gulf-blue-400 hover:bg-gulf-blue-800 text-gulf-blue-950 font-bold py-2 px-4 rounded"
-          },
-          {
-              extend: 'pdf',
-              text: 'Export to PDF',
-              className: "bg-gulf-blue-400 hover:bg-gulf-blue-800 text-gulf-blue-950 font-bold py-2 px-4 rounded"
-          },
-          {
-              extend: 'print',
-              text: 'Print Table',
-              className: "bg-gulf-blue-400 hover:bg-gulf-blue-800 text-gulf-blue-950 font-bold py-2 px-4 rounded"
-          }
-      ],
       "processing": true,
       "serverSide": true,
       "ajax": {
         "url": url,
         "type": "GET"
       },
+      scrollX: true,
       columns: [
         {
           data: "cs_id",
-          width: "10%",
+          width: "150",
           render: function (data, type, row, meta) {
             return `
               <a type="button" class="btn btn-info" href='/comperative_schedule/comperative_schedule/${row.cs_id}' >
@@ -164,25 +142,38 @@
         },
         {
           data: "scope_of_work",
-          width: "40%",
+          width: "300",
         },
         {
           data: "committee_approval",
-          width: "15%",
+          width: "200",
           orderable: false,
           searchable: false,
           render: function (data, type, row, meta) {
             let approval_badge = ""
+            let committee_reject_reason = ""
+            if(row.committee_reject_reason){
+                console.log("row.committee_reject_reason: ", row.committee_reject_reason)
+              committee_reject_reason = `
+              <a type="button" class="bg-red-200 text-red-800 rounded px-1 py-2 w-full" href='/comperative_schedule/comperative_schedule/${row.cs_id}' >
+                ${"Rejected: " + row.committee_reject_reason}
+              </a>`
+              
+            } else {
+                committee_reject_reason = `
+              <a type="button" class="bg-red-200 text-red-800 rounded px-1 py-2 w-full text-center" href='/comperative_schedule/comperative_schedule/${row.cs_id}' >
+                ${data}
+              </a>`
+            }
+            console.log("committee_reject_reason: ", committee_reject_reason, "row: ", row.committee_reject_reason)
+
             if(data === "Approval Complete"){
               approval_badge = `
               <a type="button" class="bg-green-300 text-green-800 rounded px-1 py-2 w-full text-center" href='/comperative_schedule/comperative_schedule/${row.cs_id}' >
                 ${data}              
               </a>`
             } else if (data === "Rejected"){
-              approval_badge = `
-              <a type="button" class="bg-red-300 text-red-800 rounded px-1 py-2 w-full text-center" href='/comperative_schedule/comperative_schedule/${row.cs_id}' >
-                ${data}              
-              </a>`
+              approval_badge = committee_reject_reason
             } else {
               approval_badge = `
               <a type="button" class="bg-blue-300 text-blue-800 rounded px-1 py-2 w-full text-center" href='/comperative_schedule/comperative_schedule/${row.cs_id}' >
@@ -194,21 +185,31 @@
         },
         {
           data: "fm_approval",
-          width: "10%",
+          width: "200",
           orderable: false,
           searchable: false,
           render: function (data, type, row, meta) {
             let approval_badge = ""
+            let fm_reject_reason = ""
+            if(row.fm_reject_reason){
+              fm_reject_reason = `
+              <a type="button" class="bg-red-200 text-red-800 rounded px-1 py-2 w-full" href='/comperative_schedule/comperative_schedule/${row.cs_id}' >
+                ${"Rejected: " + row.fm_reject_reason}
+              </a>`
+              
+            } else {
+                fm_reject_reason = `
+              <a type="button" class="bg-red-200 text-red-800 rounded px-1 py-2 w-full text-center" href='/comperative_schedule/comperative_schedule/${row.cs_id}' >
+                ${data}
+              </a>`
+            }
             if(data === "Approved"){
               approval_badge = `
               <a type="button" class="bg-green-300 text-green-800 rounded px-1 py-2 w-full text-center" href='/comperative_schedule/comperative_schedule/${row.cs_id}' >
                 ${data}              
               </a>`
             } else if (data === "Rejected"){
-              approval_badge = `
-              <a type="button" class="bg-red-300 text-red-800 rounded px-1 py-2 w-full text-center" href='/comperative_schedule/comperative_schedule/${row.cs_id}' >
-                ${data}              
-              </a>`
+              approval_badge = fm_reject_reason
             } else {
               approval_badge = `
               <a type="button" class="bg-blue-300 text-blue-800 rounded px-1 py-2 w-full text-center" href='/comperative_schedule/comperative_schedule/${row.cs_id}' >
@@ -220,21 +221,32 @@
         },
         {
           data: "gm_approval",
-          width: "10%",
+          width: "200",
           orderable: false,
           searchable: false,
           render: function (data, type, row, meta) {
             let approval_badge = ""
+            let gm_reject_reason = ""
+            if(row.gm_reject_reason){
+              gm_reject_reason = `
+              <a type="button" class="bg-red-200 text-red-800 rounded px-1 py-2 w-full" href='/comperative_schedule/comperative_schedule/${row.cs_id}' >
+                ${"Rejected: " + row.gm_reject_reason}
+              </a>`
+              
+            } else {
+                gm_reject_reason = `
+              <a type="button" class="bg-red-200 text-red-800 rounded px-1 py-2 w-full text-center" href='/comperative_schedule/comperative_schedule/${row.cs_id}' >
+                ${data}
+              </a>`
+            }
             if(data === "Approved"){
               approval_badge = `
               <a type="button" class="bg-green-300 text-green-800 rounded px-1 py-2 w-full text-center" href='/comperative_schedule/comperative_schedule/${row.cs_id}' >
                 ${data}              
               </a>`
             } else if (data === "Rejected"){
-              approval_badge = `
-              <a type="button" class="bg-red-300 text-red-800 rounded px-1 py-2 w-full text-center" href='/comperative_schedule/comperative_schedule/${row.cs_id}' >
-                ${data}              
-              </a>`
+              approval_badge = gm_reject_reason          
+
             } else {
               approval_badge = `
               <a type="button" class="bg-blue-300 text-blue-800 rounded px-1 py-2 w-full text-center" href='/comperative_schedule/comperative_schedule/${row.cs_id}' >
@@ -246,7 +258,7 @@
         },
         {
           data: "created_at",
-          width: "15%",
+          width: "150",
         }
       ],
       order: [[5, 'desc']]
@@ -279,3 +291,27 @@
   });
 </script>
 {% endblock scripts %}
+
+{% comment %} dom: 'Bfrtip',
+buttons: [
+    {
+        extend: 'csv',
+        text: 'Export to CSV',
+        className: "bg-gulf-blue-400 hover:bg-gulf-blue-800 text-gulf-blue-950 font-bold py-2 px-4 rounded"
+    },
+    {
+        extend: 'excel',
+        text: 'Export to Excel',
+        className: "bg-gulf-blue-400 hover:bg-gulf-blue-800 text-gulf-blue-950 font-bold py-2 px-4 rounded"
+    },
+    {
+        extend: 'pdf',
+        text: 'Export to PDF',
+        className: "bg-gulf-blue-400 hover:bg-gulf-blue-800 text-gulf-blue-950 font-bold py-2 px-4 rounded"
+    },
+    {
+        extend: 'print',
+        text: 'Print Table',
+        className: "bg-gulf-blue-400 hover:bg-gulf-blue-800 text-gulf-blue-950 font-bold py-2 px-4 rounded"
+    }
+], {% endcomment %}
