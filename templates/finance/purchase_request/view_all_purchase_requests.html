@@ -15,7 +15,7 @@
         <div class="grid grid-cols-5 text-center container text-center">
           <a href="{% url 'purchase_request:create_purchase_request' %}"
              class="border-green-500 border border-1 text-green-400 inline-block rounded-full px-5 py-1 mx-auto font-bold ">Create New</a>
-          <form class="float-md-end  col-span-4 grid grid-cols-10"
+          <form id="search" class="float-md-end  col-span-4 grid grid-cols-10"
                 method="post">
             {% csrf_token %}
             <input type="text"
@@ -37,7 +37,6 @@
               <th>Scope of Work</th>
               <th>Requested By</th>
               <th>Section</th>
-              <th>Code of Expenditure</th>
               <th>Proc Plan Ref</th>
               <th>ACE</th>
             </tr>
@@ -60,8 +59,10 @@
                     {{ purchase_request.requested_by.get_full_name }}
                   {% endif %}
                 </td>
-                <td>{{ purchase_request.section|default_if_none:'' }}</td>
-                <td>{{ purchase_request.cost_center.name |default_if_none:'' }}</td>
+                <td>{% if purchase_request.cost_center %}
+                    {{ purchase_request.cost_center.name |default_if_none:'' }} {% else %}
+                    {{ purchase_request.section|default_if_none:'' }}
+                    {% endif %}</td>
                 <td>{{ purchase_request.procurement_plan_reference|default_if_none:'' }}</td>
                 <td>{{ purchase_request.ace|default_if_none:'' }}</td>
               </tr>
@@ -99,7 +100,30 @@
   
      
     });
+    const form = document.getElementById('search');
   
+    form.addEventListener("submit", function(event) {
+      event.preventDefault(); // Prevent default form submission
+  
+      const formData = new FormData(form);
+      const searchURL = form.action; // Assuming your form has an 'action' attribute
+      const headers = new Headers({
+        'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+      });
+  
+      fetch(searchURL, {
+        method: 'POST',
+        body: formData,
+        headers: headers,
+        credentials: 'same-origin' // Necessary for including CSRF token
+      })
+      .then(response => response.json()) // Assuming the server responds with JSON
+      .then(data => {
+        alert('Search results: ' + JSON.stringify(data));
+        console.log(data);
+      })
+      .catch(error => console.error('Error:', error));
+    });
   });
   </script>
 {% endblock scripts %}

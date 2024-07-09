@@ -47,6 +47,7 @@ class PurchaseRequestUpdateForm(forms.ModelForm):
 
             if isinstance(field.widget, forms.Textarea):
                 field.widget.attrs.update({'rows': '3'})
+                
 
 class PrItemForm(forms.ModelForm):
     class Meta:

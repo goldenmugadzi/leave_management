@@ -187,7 +187,16 @@ def create_token(request):
     }
     return render(request, "tokens/create_token.html", forms)
 
+def filter_CostCenter(request):
+    # Assuming search_text is a string of keywords, e.g., "John Doe"
+    search_text = "John Doe"  # Example search text
+    search_words = search_text.split()
 
+    # Filter ancestors whose names contain any of the search words
+    filtered_ancestor_names = ', '.join([ancestor.name for ancestor in self.get_all_ancestors() if any(word in ancestor.name for word in search_words)][:-2])
+
+    return f"{self.name} - [{filtered_ancestor_names}]"
+    return render(request, "tokens/cost_centers.html", {"cost_centers": cost_centers})
 @login_required
 def token_details(request, token_id):
     token = Token.objects.get(id=token_id)
