@@ -111,8 +111,7 @@ class CostCenter(models.Model):
     parent = models.ForeignKey('self', on_delete=models.CASCADE, blank=True, null=True, related_name='children')
 
     class Meta:
-        ordering = ['id']
-
+        ordering = ['parent__id']
    
     def get_all_children(self):
         children = list(self.children.all())
@@ -120,10 +119,11 @@ class CostCenter(models.Model):
     
     def get_all_ancestors(self):
         ancestors = []
-        if self.parent:
-            ancestors.append(self.parent)
-            ancestors += self.parent.get_all_ancestors()
-        return ancestors
+        current = self
+        while current.parent:
+            ancestors.append(current.parent)
+            current = current.parent
+        return ancestors[::-1]
     def get_all_ancestors_and_their_children(self):
         ancestors = []
         if self.parent:
@@ -134,8 +134,11 @@ class CostCenter(models.Model):
     def what_i_can_see(self):
         return self.get_all_ancestors_and_their_children() + [self]
     def __str__(self):
-        ancestor_names = ', '.join([ancestor.name for ancestor in self.get_all_ancestors()][:-2])
-        return f"{self.name}, {ancestor_names}"
+        ancestor_names = [ancestor.name for ancestor in self.get_all_ancestors()[1::]]
+        center = f"{', '.join(ancestor_names + [f'{self.name}({self.code})'])}"
+        center = ', '.join(dict.fromkeys(center.split(', ')))
+        return center
+    
 class UserProfile(AbstractUser):
     username = models.CharField(max_length=15, unique=True, verbose_name='EC Number',db_index=True)
     designation = models.ForeignKey(Designations, on_delete=models.DO_NOTHING, blank=True, null=True)

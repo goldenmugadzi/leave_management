@@ -2,10 +2,7 @@
 {% load static %}{% load custom_tags %}
 
 {% block content %}
-<head>
-  <!-- Select2 CSS -->
-<link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
-</head>
+
   <form class="row rounded py-4 border bg-gulf-blue-100 p-3 m-auto  container" method="post" action="" enctype="multipart/form-data">
     {% csrf_token %}
     <div class="rounded d-flex justify-content-center align-items-center p-3 gap-4  m-auto grid grid-cols-2">
@@ -58,19 +55,6 @@
 
 {% endblock content %}
 {% block scripts %}
-<!-- Select2 JS -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
-
 <script type="application/javascript" src="{% static 'assets/js/token.js' %}"></script>
-<script>
-  $(document).ready(function() {
-      // Initialize Select2 and add Tailwind CSS classes
-      $('.select2').select2().on('select2:open', () => {
-          // When Select2 is opened, apply Tailwind CSS to its elements
-          $(".select2-container--default .select2-selection--single").addClass('tailwind-class-here');
-          $(".select2-dropdown").addClass('tailwind-class-here');
-          // Add more Tailwind classes as needed
-      });
-  });
-  </script>
+
 {% endblock scripts %}

@@ -3,14 +3,14 @@
   {% load static %}
   {% load custom_tags %}
   <head>
+    <!-- Select2 CSS -->
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Business Excellence</title>
     <link rel="shortcut icon"
           href="{% static 'assets/images/website-logo.png' %}" />
-    <link type="text/css"
-          href="{% static 'assets/css/tailwind.css' %}"
-          rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
+    <link type="text/css" href="{% static 'assets/css/tailwind.css' %}" rel="stylesheet" />
     <link type="text/css"
           href="{% static 'assets/css/be.css' %}"
           rel="stylesheet" />
@@ -437,8 +437,20 @@
     <script type="text/javascript" src="{% static 'assets/cdn/jquery-3.7.1.min.js' %}" ></script>
     {% block scripts %}
     {% endblock scripts %}
-    <script>
-    </script>
+      <!-- Select2 JS -->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
+      
+      <script>
+        $(document).ready(function() {
+            // Initialize Select2 and add Tailwind CSS classes
+            $('.select2').select2().on('select2:open', () => {
+                // When Select2 is opened, apply Tailwind CSS to its elements
+                $(".select2-container--default .select2-selection--single").addClass('tailwind-class-here');
+                $(".select2-dropdown").addClass('tailwind-class-here');
+                // Add more Tailwind classes as needed
+            });
+        });
+        </script>
     
   <script>
     document.getElementById('id_classification').addEventListener('change', function() {
@@ -500,13 +512,6 @@
         }
       }
     </script>
-    <script>
-      /*      window.onload = function() {
-          console.log()
-          Alpine.data('requestPathData', {
-              path: "{{ request.path }}" // Example: "/product/123/edit"
-          });
-      };*/
-    </script>
+    
   </body>
 </html>
