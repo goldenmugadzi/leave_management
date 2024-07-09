@@ -171,7 +171,12 @@ def create_token(request):
         else:
             return render(request, "tokens/create_token.html", forms)
 
-    cost_center = CostCenter.objects.get(code=request.user.section.code)
+    cost_center = None
+    try:
+        cost_center = CostCenter.objects.get(code=request.user.section.code)
+    except Exception as e:
+        print(e)
+        
     forms = {
         "meter_form": MeterForm(),
         "customer_form": CustomerForm(),

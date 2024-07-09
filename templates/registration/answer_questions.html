@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html>
+  {% load static %}
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Business Excellence</title>
+    <link
+      rel="shortcut icon"
+      href="{% static 'assets/images/website-logo.png' %}"
+    />
+    <link href="{% static 'assets/css/tailwind.css' %}" rel="stylesheet" />
+    
+    <script src="//unpkg.com/alpinejs@3" defer></script>
+
+    <script>
+        document.addEventListener('alpine:init', () => {
+            let data = JSON.parse('{{ questions|escapejs }}');
+            console.log('data: ', data);
+            Alpine.data('securityQuestions', () => ({
+                questions: data,
+                selected: {
+                    q1: '',
+                    q2: '',
+                    q3: '',
+                    a1: '',
+                    a2: '',
+                    a3: ''
+                },
+                selectedQuestionIds: [],
+                length: 1,
+                validateBeforeSubmit() {
+                    if (this.selected.q1 === '') {
+                        alert('Please select all security questions.');
+                        return false; // Prevent form submission
+                    }
+                    console.log('Form submitted!')
+                    this.$el.submit(); // Manually submit the form
+                    return true; // Allow form submission
+                },
+              // Method to check if a question should be disabled
+              isQuestionDisabled(questionId) {
+                  // Check if the question ID is in the selectedQuestionIds array
+                  console.log('this.selectedQuestionIds.includes(questionId): ', this.selectedQuestionIds.includes(questionId), questionId, this.selectedQuestionIds)
+                  return this.selectedQuestionIds.map(String).includes(String(questionId))
+              },
+              // Method to handle question selection
+              selectQuestion(questionId, id) {
+                  // Add the question ID to the selectedQuestionIds array if not already present
+                  security_qstn_doc = document.getElementById(id);
+                  security_qstn_doc.value = questionId;
+                  console.log('security_qstn_doc: ', security_qstn_doc.value);
+                  if (!this.selectedQuestionIds.includes(questionId)) {
+                      this.selectedQuestionIds.push(questionId);
+                  }
+                  console.log('this.selectedQuestionIds: ', this.selectedQuestionIds);
+                  // Additional logic to handle question selection can be added here
+              }
+            }));
+        });
+    </script>
+  </head>
+  <body>
+    <main>
+      <div
+        style="height: 100vh"
+        class="flex justify-center items-center w-full bg-gray-100"
+      >
+        <div
+          style="width: 40%"
+          class="shadow bg-gray-200 h-auto shadow-gray-400 rounded-lg"
+        >
+          <div
+            style="display: flex; flex-direction: column"
+            class="flex px-4 py-4"
+          >
+            <div class="sm:mx-auto sm:w-full sm:max-w-sm">
+              <img
+                class="mx-auto h-28 w-auto"
+                src="{% static 'assets/images/website-logo.png' %}"
+                alt="Your Company"
+              />
+              <h2
+                class="mt-2 last:text-center text-2xl font-bold leading-9 tracking-tight text-blue-950"
+              >
+                Answer Security Questions
+              </h2>
+            </div>
+
+            <div x-data="securityQuestions">
+                <form class="space-y-6" name="loginForm" method="post" x-on:submit.prevent="validateBeforeSubmit()">
+                  {% csrf_token %}
+                  <div>
+                    <label
+                      for="username"
+                      class="block text-sm font-medium leading-6 text-gray-900 mt-2"
+                      >Username</label
+                    >
+                    <div class="mt-2">
+                      <input
+                        id="username"
+                        name="username"
+                        type="text"
+                        required
+                        class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-gray-500 sm:text-sm sm:leading-6"
+                      />
+                    </div>
+                </div>
+  
+                  <div>
+                    <template x-for="i in length">
+                      <div class="flex justify-between">
+                        <div style="width: 48%">
+                          <label
+                            x-bind:for="'security_question' + i"
+                            class="block text-sm font-medium leading-6 text-gray-900"
+                            >Security Question {{ i }}</label
+                          >
+                          <div class="mt-2">
+                            <select
+                              required
+                              x-model="selected['q' + i]"
+                              x-on:change="selectQuestion($event.target.value, 'security_question' + i)"
+                              class="security_question block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-gray-500 sm:text-sm sm:leading-6"
+                            >
+                              <template
+                                x-for="question in questions"
+                                :key="question.id"
+                              >
+                                <option
+                                  x-bind:value="question.id"
+                                  x-text="question.question" 
+                                  x-bind:disabled="isQuestionDisabled(question.id)"
+                                ></option>
+                              </template>
+                            </select>
+                          </div>
+                        </div>
+                        <input type="hidden" x-bind:id="'security_question' + i" x-bind:name="'security_question' + i" />
+                        <div style="width: 48%">
+                          <label
+                            x-bind:for="'security_answer' + i"
+                            class="block text-sm font-medium leading-6 text-gray-900"
+                            >Security Answer {{ i }}</label
+                          >
+                          <div class="mt-2">
+                            <input
+                              required
+                              x-bind:id="'security_answer' + i"
+                              x-bind:name="'security_answer' + i"
+                              type="text"
+                              x-model="selected['a' + i]"
+                              class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-gray-500 sm:text-sm sm:leading-6"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </template>
+                    <!-- Repeat for security_question2 and security_question3 with appropriate bindings -->
+                  </div>
+  
+                  <div>
+                    <button
+                      type="submit"
+                      name="login"
+                      class="flex w-full justify-center rounded-md bg-blue-925 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                    >
+                      Submit Answers
+                    </button>
+                  </div>
+                </form>
+
+              <p class="mt-10 text-center text-sm text-gray-500">
+                <a
+                  class="font-semibold leading-6 text-indigo-600 hover:text-indigo-500"
+                  href="/accounts/login/"
+                >Back to Login
+                </a>
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </body>
+</html>

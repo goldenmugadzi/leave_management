@@ -28,7 +28,26 @@ from django.contrib import messages
 from approve.decorators import allowed_roles
 from django.core.paginator import Paginator
 from decouple import config
+
 BASE_URL = "http://"+config('HOST')+":"+config('PORT')
+APP_NAME = "users"
+
+def getUserFMGMRoles(user):
+    print("user: ", user.username, user.id  )
+    fm_role, gm_role, procurement_role = False, False, False
+    for role in user.roles.all():
+        print("role id:", role.id)
+        user_ace_role_ = Roles.objects.filter(id=role.id).first() if role.id else None
+
+        if user_ace_role_.application == APP_NAME:
+            if user_ace_role_.role == "check":
+                fm_role = True
+            if user_ace_role_.role == "approve":
+                gm_role = True
+            if user_ace_role_.role == "procurement":
+                procurement_role = True
+    
+    return fm_role, gm_role, procurement_role
 
 def user_centers(request):
     users = UserProfile.objects.all()
@@ -204,11 +223,11 @@ def add_user(request):
             password2 = request.POST['password2']
             
             region = Regions.objects.filter(id=region_).first()
-            cost_center_ = CostCenter.objects.filter(id=cost_center).first()
-            district = Districts.objects.filter(code=district_).first()
-            depot = Depots.objects.filter(code=depots_).first()
-            section = Sections.objects.filter(code=section_).first()
-            designation = Designations.objects.filter(id=designation_).first()
+            cost_center_ = CostCenter.objects.filter(id=cost_center).first() if cost_center else None
+            district = Districts.objects.filter(code=district_).first() if district_ else None
+            depot = Depots.objects.filter(code=depots_).first() if depots_ else None
+            section = Sections.objects.filter(code=section_).first() if section_ else None
+            designation = Designations.objects.filter(id=designation_).first() if designation_ else None
             
             if password1 == password2:
                 user = UserProfile(
@@ -233,8 +252,17 @@ def add_user(request):
                 print("roles: ", roles)    
                 role_objects = Roles.objects.filter(id__in=roles)  # Example of retrieving roles
                 user.roles.add(*role_objects)
-                user.set_password(password1)
-                user.save()
+                try:
+                    validate_password(password1, user=user)
+                    user.set_password(password1)
+                    user.change_password = False
+                    user.save()
+                    # Password is valid
+                except ValidationError as e:
+                    # Password is not valid
+                    print(e.messages)
+                    messages.error(request, e.messages)
+                    return redirect("/users/users-index")
             else:
                 messages.error(request, "Passwords do not match")
                 return redirect("/users/users-index")
@@ -585,11 +613,18 @@ def reset_user_password(request):
 
         if password1 == password2:
             user_profile = UserProfile.objects.filter(id=id).first()
-            user_profile.set_password(password1)
-            user_profile.save()
-            print("saving done ....")
-        messages.success(request, "Password reset successfully")
-        return redirect('/users/users-index')
+            try:
+                validate_password(password1, user=user_profile)
+                user_profile.change_password = True
+                user_profile.set_password(password1)
+                user_profile.save()
+                messages.success(request, "Password reset successfully")
+                return redirect('/users/users-index')
+            except ValidationError as e:
+                # Password is not valid
+                print(e.messages)
+                messages.error(request, e.messages)
+                return redirect('/users/users-index')
 
     elif request.method == "GET":
 
@@ -622,9 +657,16 @@ def change_user_password(request):
         if password1 == password2:
             user_profile = UserProfile.objects.filter(id=user_id).first()
             if user_profile.check_password(current_password):
-                user_profile.set_password(password1)
-                user_profile.save()
-                print("Password changed successfully")
+                try:
+                    validate_password(password1, user=user_profile)
+                    user_profile.set_password(password1)
+                    user_profile.save()
+                    print("Password changed successfully")
+                except ValidationError as e:
+                    # Password is not valid
+                    print(e.messages)
+                    messages.error(request, e.messages)
+                    return redirect('/dashboards/overview/')
             else:
                 print("Current password is incorrect. Password not changed.")
 
@@ -647,7 +689,6 @@ def change_user_password(request):
             })
 
     return redirect('/dashboards/overview')
-
 
 # @login_required
 # @allowed_roles(['Administrator'], ['users'])

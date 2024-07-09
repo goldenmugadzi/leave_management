@@ -182,11 +182,10 @@
                     autocomplete="region"
                     class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm px-2 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
                   >
-                    <option>Select Region</option>
-                    <option value="1">Harare Region</option>
-                    <option value="2">East Region</option>
-                    <option value="3">South Region</option>
-                    <option value="4">West Region</option>
+                  <option>Select Region</option>
+                  {% for region in regions %}
+                  <option value="{{region.id}}">{{region.region}}</option>
+                  {% endfor %}
                   </select>
                 </div>
               </div>

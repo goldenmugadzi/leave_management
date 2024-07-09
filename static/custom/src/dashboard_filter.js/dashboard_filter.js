@@ -1371,7 +1371,7 @@ var DashboardFilter = function (_React$Component) {
                 React.createElement(
                   "div",
                   { className: "text-center text-lg font-bold text-gulf-blue-950 sm:truncate sm:tracking-tight" },
-                  "Maintanance breakdown"
+                  "Maintenance breakdown"
                 ),
                 React.createElement(
                   "div",
@@ -1401,7 +1401,7 @@ var DashboardFilter = function (_React$Component) {
                 React.createElement(
                   "div",
                   { className: "text-center text-lg font-bold text-gulf-blue-950 sm:truncate sm:tracking-tight" },
-                  "Maintanance"
+                  "Maintenance"
                 ),
                 React.createElement(
                   "div",

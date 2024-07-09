@@ -4,7 +4,6 @@ import shutil
 from django.shortcuts import render, redirect
 from django.http import FileResponse
 from django.views import View
-from django.contrib.auth.decorators import login_required
 
 from beii_v1 import settings
 from .models import *
@@ -12,8 +11,8 @@ from .forms import *
 from .models import Category
 import os
 from .forms import DocumentForm,editDocumentForm
+from .models import Subcategory
 
-@login_required
 def view_competence(request):
         
         url_path = request.path.split("/")
@@ -21,7 +20,6 @@ def view_competence(request):
         return render(request, 'competence_building/competence.html', {
                       "url_path": url_path})
 
-@login_required
 def bulk_create(request):
         user_id = request.user.id
         user = UserProfile.objects.filter(id=user_id).first()
@@ -83,7 +81,6 @@ def bulk_create(request):
 
 
 
-@login_required
 def download_file(request):
 
     file_id = request.GET['file_id']
@@ -101,98 +98,84 @@ def download_file(request):
     return redirect('/competence/competence')
 
 
-@login_required
 def view_charts(request):
         
         url_path = request.path.split("/")
         return render(request, 'competence_building/charts.html', {
                       "url_path": url_path})
 
-@login_required
 def view_headoffice(request):
         
         url_path = request.path.split("/")
         return render(request, 'competence_building/headoffice.html', {
                       "url_path": url_path})
 
-@login_required
 def view_regionaloffice(request):
         
         url_path = request.path.split("/")
         return render(request, 'competence_building/regionaloffice.html', {
                       "url_path": url_path})
 
-@login_required
 def view_jobdescription(request):
         
         url_path = request.path.split("/")
         return render(request, 'competence_building/jobdescription.html', {
                       "url_path": url_path})
 
-@login_required
 def view_IT(request):
         
         url_path = request.path.split("/")
         return render(request, 'competence_building/IT.html', {
                       "url_path": url_path})
 
-@login_required
 def view_finance(request):
         
         url_path = request.path.split("/")
         return render(request, 'competence_building/finance.html', {
                       "url_path": url_path})
-
-@login_required   
+   
 def view_humanresource(request):
         
         url_path = request.path.split("/")
         return render(request, 'competence_building/humanresource.html', {
                       "url_path": url_path})
 
-@login_required
 def view_losscontrol(request):
         
         url_path = request.path.split("/")
         return render(request, 'competence_building/losscontrol.html', {
                       "url_path": url_path})
 
-@login_required
 def view_engineering(request):
         
         url_path = request.path.split("/")
         return render(request, 'competence_building/engineering.html', {
                       "url_path": url_path})
 
-@login_required
 def view_commercial(request):
         
         url_path = request.path.split("/")
         return render(request, 'competence_building/commercial.html', {
                       "url_path": url_path})
 
-@login_required
 def view_district(request):
         
         url_path = request.path.split("/")
         return render(request, 'competence_building/district.html', {
                       "url_path": url_path})
 
-@login_required
 def view_sales(request):
         
         url_path = request.path.split("/")
         return render(request, 'competence_building/sales.html', {
                       "url_path": url_path})
 
-@login_required
 def view_networkdevelopment(request):
         
         url_path = request.path.split("/")
         return render(request, 'competence_building/networkdevelopment.html', {
                       "url_path": url_path})
 
-@login_required
 def view_operations(request):
         
         url_path = request.path.split("/")
@@ -200,174 +183,145 @@ def view_operations(request):
                       "url_path": url_path})
         return render(request, 'competence_building/operations.html')
 
-@login_required
 def view_suplies(request):
         return render(request, 'competence_building/suplies.html')
 
-@login_required
 def view_southdistrict(request):
         return render(request, 'competence_building/southdistrict.html')
 
-@login_required
 def view_southglenview(request):
         return render(request, 'competence_building/southglenview.html')
 
-@login_required
 def view_southwaterfalls(request):
         return render(request, 'competence_building/southwaterfalls.html')
 
-@login_required
 def view_southsales(request):
         return render(request, 'competence_building/southsales.html')
 
-@login_required
 def view_northdistrict(request):
         return render(request, 'competence_building/northdistrict.html')
 
-@login_required
 def view_northkuwadzana(request):
         return render(request, 'competence_building/northkuwadzana.html')
 
-@login_required
 def view_northmabelreign(request):
         return render(request, 'competence_building/northmabelreign.html')
 
-@login_required
 def view_northwarrenpark(request):
         return render(request, 'competence_building/northwarrenpark.html')
 
-@login_required
 def view_northsales(request):
         return render(request, 'competence_building/northsales.html')
 
-@login_required
 def view_eastdistrict(request):
         return render(request, 'competence_building/eastdistrict.html')
 
-@login_required
 def view_eastcbd(request):
         return render(request, 'competence_building/eastcbd.html')
 
-@login_required
 def view_eastborrowdale(request):
         return render(request, 'competence_building/eastborrowdale.html')
 
-@login_required
 def view_eastmabvuku(request):
         return render(request, 'competence_building/eastmabvuku.html')
 
-@login_required
 def view_eastruwa(request):
         return render(request, 'competence_building/eastruwa.html')
 
-@login_required
 def view_chitownsales(request):
         return render(request, 'competence_building/chitownsales.html')
 
-@login_required
 def view_eastsales(request):
         return render(request, 'competence_building/eastsales.html')
 
-@login_required
 def view_chitownseke(request):
         return render(request, 'competence_building/chitownseke.html')
 
-@login_required
 def view_chitownzengeza(request):
         return render(request, 'competence_building/chitownzengeza.html')
 
-@login_required
 def view_chitowndistrict(request):
         return render(request, 'competence_building/chitowndistrict.html')
 
-@login_required
 def view_itjobdescription(request):
-    section = Sections.objects.filter(section="Information Technology").first()
+    category= Category.objects.filter(name="Job Description").first()
+    subcategory= Subcategory.objects.filter(name="Information Technology").first()
+    documents = Document.objects.filter(category=category, subcategory=subcategory).all()
+    return render(request, 'competence_building/itjobdescription.html', {"Documents": documents})
+
+def view_hrjobdescription(request):
+    category= Category.objects.filter(name="Job Description").first()
+    subcategory= Subcategory.objects.filter(name="Human Resource").first()
+    documents = Document.objects.filter(category=category, subcategory=subcategory).all()
+    return render(request, 'competence_building/itjobdescription.html', {"Documents": documents})
+
+def view_srjobdescription(request):
+    category= Category.objects.filter(name="Job Description").first()
+    subcategory= Subcategory.objects.filter(name="Stakeholder Relations").first()
+    documents = Document.objects.filter(category=category, subcategory=subcategory).all()
+    return render(request, 'competence_building/itjobdescription.html', {"Documents": documents})
+
+def view_riskjobdescription(request):
+    category= Category.objects.filter(name="Job Description").first()
+    subcategory= Subcategory.objects.filter(name="Stakeholder Relations").first()
+    documents = Document.objects.filter(category=category, subcategory=subcategory).all()
+    section = Sections.objects.filter(section="Risk Management").first()
     documents = Document.objects.filter(section=section).all()  # Fetch all documents
     return render(request, 'competence_building/itjobdescription.html', {"Documents": documents})
 
-@login_required
-def view_hrjobdescription(request):
-         section = Sections.objects.filter(section="Human Resource").first()
-         documents = Document.objects.filter(section=section).all()  # Fetch all documents
-         return render(request, 'competence_building/itjobdescription.html', {"Documents": documents})
-
-@login_required
-def view_srjobdescription(request):
-         section = Sections.objects.filter(section="Stakeholder Relations").first()
-         documents = Document.objects.filter(section=section).all()  # Fetch all documents
-         return render(request, 'competence_building/itjobdescription.html', {"Documents": documents})
-
-@login_required
-def view_riskjobdescription(request):
-         section = Sections.objects.filter(section="Risk Management").first()
-         documents = Document.objects.filter(section=section).all()  # Fetch all documents
-         return render(request, 'competence_building/itjobdescription.html', {"Documents": documents})
-
-@login_required
 def view_procjobdescription(request):
          section = Sections.objects.filter(section="Procurement").first()
          documents = Document.objects.filter(section=section).all()  # Fetch all documents
          return render(request, 'competence_building/itjobdescription.html', {"Documents": documents})
 
-@login_required
 def view_legaljobdescription(request):
-         section = Sections.objects.filter(section="Legal Services").first()
-         documents = Document.objects.filter(section=section).all()  # Fetch all documents
-         return render(request, 'competence_building/itjobdescription.html', {"Documents": documents})
+    category = Category.objects.filter(name="Job Description").first()
+    subcategories = Subcategory.objects.filter(name="Legal Service").first()
+    documents = Document.objects.filter(category=category,subcategory=subcategories).all()  # Fetch all documents
+    return render(request, 'competence_building/itjobdescription.html', {"Documents": documents})
 
-@login_required
 def view_finjobdescription(request):
-         section = Sections.objects.filter(section="Finance").first()
-         documents = Document.objects.filter(section=section).all()  # Fetch all documents
-         return render(request, 'competence_building/itjobdescription.html', {"Documents": documents})
+    category = Category.objects.filter(name="Job Description").first()
+    subcategories = Subcategory.objects.filter(name="Finance").first()
+    documents = Document.objects.filter(category=category,subcategory=subcategories).all()  # Fetch all documents
+    return render(request, 'competence_building/itjobdescription.html', {"Documents": documents})
 
-@login_required
 def view_engjobdescription(request):
-         section = Sections.objects.filter(section="Engineering").first()
-         documents = Document.objects.filter(section=section).all()  # Fetch all documents
-         return render(request, 'competence_building/itjobdescription.html', {"Documents": documents})
+    category = Category.objects.filter(name="Job Description").first()
+    subcategories = Subcategory.objects.filter(name="Engineering").first()
+    documents = Document.objects.filter(category=category,subcategory=subcategories).all()  # Fetch all documents
+    return render(request, 'competence_building/itjobdescription.html', {"Documents": documents})
 
-@login_required
 def view_comjobdescription(request):
          section = Sections.objects.filter(section="Commercial").first()
          documents = Document.objects.filter(section=section).all()  # Fetch all documents
          return render(request, 'competence_building/itjobdescription.html', {"Documents": documents})
 
-@login_required
 def view_infojobdescription(request):
         return render(request, 'competence_building/infojobdescription.html')
 
-@login_required
 def view_eastengineering(request):
         return render(request, 'competence_building/eastengineering.html')
 
-@login_required
 def view_easternregion(request):
         return render(request, 'competence_building/easternregion.html')
 
-@login_required
 def view_chitownengineering(request):
         return render(request, 'competence_building/chitownengineering.html')
 
-@login_required
 def view_northengineering(request):
         return render(request, 'competence_building/northengineering.html')
 
-@login_required
 def view_southengineering(request):
         return render(request, 'competence_building/southengineering.html')
 
-@login_required
 def view_southertoncommercial(request):
         return render(request, 'competence_building/southertoncommercial.html')
 
-@login_required
 def view_rfqview(request):
         return render(request, 'competence_building/rfqview.html')
 
 
-@login_required
 def view_upload_file(request):
     if request.method == 'POST':
         form = DocumentForm(request.POST, request.FILES)
@@ -381,17 +335,14 @@ def view_upload_file(request):
             return redirect('/') 
     return render(request, 'competence_building/upload_file.html', {'form': DocumentForm()})
 
-@login_required
 def view_categories(request):
         return render(request, 'competence_building/categories.html', {'categories': Category.objects.all()})
 
-@login_required
 def view_files(request, category):
     category_obj = Category.objects.get(id=category)
     files = category_obj.document_set.all()
     return render(request, 'competence_building/files.html', {'files': files})
 
-@login_required
 def uploaded_jobs_view(request):
     # Fetches job descriptions and renders them in a table.
     documents = Document.objects.filter(archive=False).all()  # Fetch all documents
@@ -402,7 +353,6 @@ def uploaded_jobs_view(request):
         "region": file.region,
         "category": file.category,
         "archive": file.archive,
-        "section": file.section,
         "file": file.file,
         "name": file.name,
         "created by": file.created_by,
@@ -414,7 +364,6 @@ def uploaded_jobs_view(request):
 #     context = {'documents': documents}
     return render(request, 'competence_building/competence_index.html', {"context": context, 'page':'competence_index'})
 
-@login_required
 def archived_documents(request):
     # Fetches job descriptions and renders them in a table.
     documents = Document.objects.filter(archive=True).all()  # Fetch all documents
@@ -437,7 +386,6 @@ def archived_documents(request):
 #     context = {'documents': documents}
     return render(request, 'competence_building/competence_index.html', {"context": context})
 
-@login_required
 def archive_file(request, file_id):
 
     um = Document.objects.filter(id=file_id).first()
@@ -446,7 +394,6 @@ def archive_file(request, file_id):
     
     return redirect('/competence/competence_index')
 
-@login_required
 def unarchive_file(request, file_id):
 
     um = Document.objects.filter(id=file_id).first()
@@ -455,7 +402,6 @@ def unarchive_file(request, file_id):
     
     return redirect('/competence/archive')
 
-@login_required
 def edit_document(request, document_id):
     document = Document.objects.get(pk=document_id)
 
@@ -473,7 +419,6 @@ def edit_document(request, document_id):
     return render(request, 'competence_building/edit_document.html', context)
 
 
-@login_required
 def view_archived_documents(request):
 
   if request.method == 'POST':
@@ -482,6 +427,143 @@ def view_archived_documents(request):
   context = {'archive_document': archive_document}
   return render(request, 'archive_document', context) 
 
+
+def create_subcategory(request):
+    if request.method == 'POST':
+      
+        pass
+    else:
+        form = Subcategory()  
+    context = {'form': form, 'subcategories': Subcategory.objects.all()}
+    return render(request, 'competence_building/subcategory.html', context)
+
+def vacancies_view(request):
+    # Fetches job vacancies and renders them in a table.
+    category= Category.objects.filter(name="Vacancies").first()
+    vacancies = Document.objects.filter(category=category,archive=False).all()
+    vacancies_list = []
+    for vacancy in vacancies: 
+        new_vacancy = {
+        "id":vacancy.id,
+        "region": vacancy.region,
+        "subcategory":vacancy.subcategory,
+        # "department": vacancy.department,
+        "archive": vacancy.archive,
+        # "file": vacancy.file,
+        "name": vacancy.name,
+        "created_by": vacancy.created_by,
+        "created_at": vacancy.created_at,
+        }
+        vacancies_list.append(new_vacancy)
+    
+    context = json.dumps(vacancies_list, default=str)
+    return render(request, 'competence_building/vacancies.html', {"context": context, 'page':'vacancies'})
+
+def safetycircula_view(request):
+        category= Category.objects.filter(name="Safety and Healthy").first()
+        safetycircula = Document.objects.filter(category=category,archive=False).all()
+        safetycircula_list = []
+        for safety in safetycircula: 
+                new_safety = {
+                "id":safety.id,
+                "region": safety.region,
+                "archive": safety.archive,
+                "name": safety.name,
+                "subcategory": safety.subcategory,
+                "created_by": safety.created_by,
+                "created_at": safety.created_at,
+                }
+                safetycircula_list.append(new_safety)
+
+        context = json.dumps(safetycircula_list, default=str)
+        return render(request, 'competence_building/safety.html', {"context": context, 'page':'safety'})
+
+def trainingDevelopment_view(request):
+        category= Category.objects.filter(name="Training and Development").first()
+        trainingDevelopment = Document.objects.filter(category=category,archive=False).all()
+        trainingDevelopment_list = []
+        for training in trainingDevelopment: 
+                new_safety = {
+                "id":training.id,
+                "region": training.region,
+                # "department": training.department,
+                "archive": training.archive,
+                # "section": training.section,
+                "subcategory": training.subcategory,
+                "file": training.file,
+                "name":training.name,
+                "created_by": training.created_by,
+                "created_at": training.created_at,
+                }
+                trainingDevelopment_list.append(new_safety)
+
+        context = json.dumps(trainingDevelopment_list, default=str)
+        return render(request, 'competence_building/trainings.html', {"context": context, 'page':'training'})
+
+def upcomingEvents_view(request):
+        category= Category.objects.filter(name="Upcoming Events").first()
+        upcomingEvents = Document.objects.filter(category=category,archive=False).all()
+        upcomingEvents_list = []
+        for event in upcomingEvents: 
+                new_event = {
+                "id":event.id,
+                "region": event.region,
+                # "department": event.department,
+                "archive": event.archive,
+                # "section": event.section,
+                "subcategory": event.subcategory,
+                "file": event.file,
+                "name":event.name,
+                "created_by":event.created_by,
+                "created_at": event.created_at,
+                }
+                upcomingEvents_list.append(new_event)
+
+        context = json.dumps(upcomingEvents_list, default=str)
+        return render(request, 'competence_building/upcoming_events.html', {"context": context, 'page':'upcoming_events'})
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# def create_subcategory(request):
+#         return render(request, 'competence_building/subcategory.html', {'subcategory': Subcategory.objects.all()})
+
+# def create_subcategory(request, pk):
+#     if request.method == 'POST':
+#         subcategory = Category.objects.get(id=pk)
+#         form = Subcategory(request.POST)
+#         if form.is_valid():
+#             form.save()
+#             return redirect('subcategory.html') 
+#         else:
+#             pass
+#     else:
+#         form = Subcategory()  
+
+#     context = {'form': form}
+#     return render(request, 'subcategory.html', context)
 
 
 

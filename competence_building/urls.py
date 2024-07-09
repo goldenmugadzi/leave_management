@@ -67,6 +67,15 @@ urlpatterns = [
     path('archive', archived_documents, name='archive'),
     path('archive_file/<str:file_id>', archive_file, name='archive_file'),
     path('unarchive_file/<str:file_id>', unarchive_file, name='unarchive_file'),
+    path('create_subcategory/', create_subcategory, name='create_subcategory'),
+    path('subcategories/', Subcategory, name='subcategory'),
+    path('vacancies', vacancies_view, name='vacancies'),
+    path('safety', safetycircula_view, name ='safety'),
+    path('upcoming_events', upcomingEvents_view, name ='upcoming_events'),
+    path('trainings', trainingDevelopment_view, name ='trainigs'),
+
+    
+
 
     
 

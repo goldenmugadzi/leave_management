@@ -320,7 +320,7 @@
 
     region.addEventListener('change', (e) => {
       const regionId = e.target.value;
-      fetch(`http://{{HOST}}:{{PORT}}/users/filtered_centers/${regionId}`)
+      fetch(`{{BASE_URL}}/users/filtered_centers/${regionId}`)
         .then((res) => res.json())
         .then((data) => {
           console.log("var: ", data);
@@ -333,7 +333,7 @@
 
     region.addEventListener('change', (e) => {
         const regionId = e.target.value;
-        fetch(`http://{{HOST}}:{{PORT}}/users/filtered_districts/${regionId}`)
+        fetch(`{{BASE_URL}}/users/filtered_districts/${regionId}`)
           .then((res) => res.json())
           .then((data) => {
             console.log("var: ", data);
@@ -346,7 +346,7 @@
 
     district.addEventListener('change', (e) => {
       const districtId = e.target.value;
-      fetch(`http://{{HOST}}:{{PORT}}/users/filtered_depots/${districtId}`)
+      fetch(`{{BASE_URL}}/users/filtered_depots/${districtId}`)
         .then((res) => res.json())
         .then((data) => {
           console.log("depots: ", data);

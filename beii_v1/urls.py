@@ -42,7 +42,7 @@ urlpatterns = [
     # path('process_maps/',include('process_maps.urls'), name='process_maps'),
     path('competence/', include('competence_building.urls')),
     path('admin/', admin.site.urls),
-    path('accounts/', include('django.contrib.auth.urls')),
+    # path('accounts/', include('django.contrib.auth.urls')),
     path('ace/', include('ACE2.urls')),
 
     # path('ace/', include('finance.Ace.urls')),
