@@ -18,4 +18,8 @@ urlpatterns = [
     path('upload_ace', upload_aces_csv, name='upload_ace'),
     path('create_virament', create_virament, name='create_virament'),
     path('virament_detail/<str:virament_id>', virament_detail, name='virament_detail'),
+    path('viraments', view_all_viraments, name='view_all_viraments'),
+    path('viraments_awaiting_my_action', viraments_awaiting_my_action, name='viraments_awaiting_my_action'),
+    path('transactions', view_all_transactions, name='view_all_transactions'),
+    path('transactions_for_budget/<str:budget_id>', transactions_for_budget, name='transactions_for_budgets')
 ]

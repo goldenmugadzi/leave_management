@@ -20,10 +20,17 @@ APPLICATIONS = [
         "url": "/nonconformities/"
     },
     {
+        "name": "virament",
+        "title": "Virement",
+        "iconUrl": "assets/images/money.png",
+        "url": "/ace/viraments_awaiting_my_action"
+
+    },
+    {
         "name": "ace",
         "title": "ACE",
         "iconUrl": "assets/images/capital.png",
-        "url": "/ace/aces"
+        "url": "/ace/aces_awaiting_my_action"
     },
     {
         "name": "Token",
@@ -63,33 +70,32 @@ APPLICATIONS = [
     }
 ]
 
+
 # Create your views here.
 def index(request):
-    
     if request.user.is_authenticated:
-        
         user_title = request.user.get_full_name()
-        l = request.user.groups.values_list('name',flat = True) # QuerySet Object
+        l = request.user.groups.values_list('name', flat=True)  # QuerySet Object
         user_groups = list(l)
-        
+
         return redirect(
-            '/dashboards/overview', 
-            user_title, 
-            request, 
+            '/dashboards/overview',
+            user_title,
+            request,
             user_groups
-            )
-        
+        )
+
     return redirect('/accounts/login')
 
-def dashboard(request):
 
+def dashboard(request):
     user_page = 'dashboard.html'
     user_title = request.user.get_full_name()
     user = request.user
     user_profile = UserProfile.objects.filter(user_id=user.id).first()
-    l = request.user.groups.values_list('name',flat = True) # QuerySet Object
-    user_groups = list(l) 
-    
+    l = request.user.groups.values_list('name', flat=True)  # QuerySet Object
+    user_groups = list(l)
+
     custom_user_roles = {
         "non_conformity": {},
         "remittance_advice": {},
@@ -101,26 +107,26 @@ def dashboard(request):
         "users": {},
     }
 
-    user_group_ids = user_profile.roles 
+    user_group_ids = user_profile.roles
     user_group_ids = user_group_ids.split(",") if user_group_ids else []
     for id in user_group_ids:
         role = Roles.objects.filter(id=id).first()
 
         if role.application == "users":
             custom_user_roles["users"] = role
-        
+
         if role.application == "non_conformity":
             custom_user_roles["non_conformity"] = role
-            
+
         if role.application == "remittance_advice":
             custom_user_roles["remittance_advice"] = role
-        
+
         if role.application == "pettycash":
             custom_user_roles["pettycash"] = role
 
         if role.application == "adjudication":
             custom_user_roles["adjudication"] = role
-            
+
         if role.application == "tokens":
             custom_user_roles["tokens"] = role
 
@@ -129,7 +135,6 @@ def dashboard(request):
 
         if role.application == "ace":
             custom_user_roles["ace"] = role
-            
 
     region = Regions.objects.filter(id=user_profile.region).first()
     district = Districts.objects.filter(code=user_profile.district).first()
@@ -149,27 +154,27 @@ def dashboard(request):
         "region": region,
         "roles": custom_user_roles,
     }
-    
+
     dashboard_reports = get_dashboard_reports(user_profile.section)
 
     return render(
-        request, 
-        user_page, 
+        request,
+        user_page,
         {
-            "user_title": user_title, 
+            "user_title": user_title,
             "user_groups": user_groups,
             "user": custom_user
         })
 
-def home(request):
 
+def home(request):
     user_page = 'home/dashboard.html'
     user_title = request.user.get_full_name()
     user = request.user
     user_profile = UserProfile.objects.filter(user_id=user.id).first()
-    l = request.user.groups.values_list('name',flat = True) # QuerySet Object
-    user_groups = list(l) 
-    
+    l = request.user.groups.values_list('name', flat=True)  # QuerySet Object
+    user_groups = list(l)
+
     custom_user_roles = {
         "non_conformity": {},
         "remittance_advice": {},
@@ -180,7 +185,7 @@ def home(request):
         "ace": {},
         "users": {},
     }
-    
+
     region = None
     district = None
     depot = None
@@ -194,19 +199,19 @@ def home(request):
 
             if role.application == "users":
                 custom_user_roles["users"] = role
-            
+
             if role.application == "non_conformity":
                 custom_user_roles["non_conformity"] = role
-                
+
             if role.application == "remittance_advice":
                 custom_user_roles["remittance_advice"] = role
-            
+
             if role.application == "pettycash":
                 custom_user_roles["pettycash"] = role
 
             if role.application == "adjudication":
                 custom_user_roles["adjudication"] = role
-                
+
             if role.application == "tokens":
                 custom_user_roles["tokens"] = role
 
@@ -215,12 +220,13 @@ def home(request):
 
             if role.application == "ace":
                 custom_user_roles["ace"] = role
-                
+
         region = Regions.objects.filter(id=user_profile.region).first()
         district = Districts.objects.filter(code=user_profile.district).first()
         depot = Depots.objects.filter(code=user_profile.depot).first()
         section = Sections.objects.filter(code=user_profile.section).first()
-        user_designation = Designations.objects.filter(id=user_profile.designation).first() if user_profile.designation else None
+        user_designation = Designations.objects.filter(
+            id=user_profile.designation).first() if user_profile.designation else None
 
     custom_user = {
         "id": user.pk,
@@ -235,24 +241,24 @@ def home(request):
         "region": region,
         "roles": custom_user_roles,
     }
-        
+
     print("custom_user: ", custom_user)
 
     return render(
-        request, 
-        user_page, 
+        request,
+        user_page,
         {
-            "user_title": user_title, 
+            "user_title": user_title,
             "user_groups": user_groups,
             "user": custom_user
         })
-    
-def business_applications(request):
 
+
+def business_applications(request):
     user_page = 'business_applications.html'
     user_title = request.user.get_full_name()
-    l = request.user.groups.values_list('name',flat = True) # QuerySet Object
-    user_groups = list(l)  
+    l = request.user.groups.values_list('name', flat=True)  # QuerySet Object
+    user_groups = list(l)
     custom_user_roles = {
         "users": {},
     }
@@ -270,27 +276,26 @@ def business_applications(request):
     if users_role == "standard" or "":
         print("creating standard list ..")
         applications = [app for app in applications if app['name'] != 'users']
-        
+
     url_path = request.path.split("/")
     return render(
-        request, 
-        user_page, 
+        request,
+        user_page,
         {
             "user_title": user_title,
             "url_path": url_path,
-            "page_title": "Business Applications", 
+            "page_title": "Business Applications",
             "user_groups": user_groups,
             "apps": applications
         })
 
-def app_logout(request):
 
+def app_logout(request):
     logout(request)
     return redirect('/accounts/login')
 
+
 def get_dashboard_reports(section_code):
-    
     report = {}
-    
-    
+
     return report

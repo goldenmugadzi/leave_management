@@ -1150,3 +1150,20 @@ def viraments_awaiting_my_action(request):
     return render(request, 'finance/ace2/view_all_aces.html', {'aces': viraments_to_process,
                                                                'virement_role': virement_role,
                                                                'requester': requester})
+
+
+@login_required
+def view_all_transactions(request):
+    user_id = request.user.id
+    user_profile = UserProfile.objects.filter(id=user_id).first()
+    region = Regions.objects.filter(id=user_profile.region.id).first()
+    transactions = Transactions.objects.filter(region=region)
+    return render(request, 'finance/ace2/view_all_transactions.html', {'transactions': transactions})
+
+@login_required
+def transactions_for_budget(request, budget_id):
+    user_id = request.user.id
+    user_profile = UserProfile.objects.filter(id=user_id).first()
+    region = Regions.objects.filter(id=user_profile.region.id).first()
+    transactions = Transactions.objects.filter( budget_id=budget_id)
+    return render(request, 'finance/ace2/view_all_transactions.html', {'transactions': transactions})
