@@ -31,7 +31,7 @@ class Processes(models.Model):
     department = models.CharField(max_length=100, blank=True, null=True)
     filesubtype_id = models.ForeignKey(FileSubType,on_delete=models.CASCADE,related_name='filesubtype_process', null=True, blank=True, default=None)
     sub_category = models.CharField(max_length=100, blank=True, null=True)
-    subsubtype_id = models.ForeignKey(SubSubType,on_delete=models.CASCADE,related_name='subsubtype_process', null=True, blank=True, default=None)
+    subsubtype_id = models.ForeignKey(SubSubType,on_delete=models.CASCADE, related_name='subsubtype_process', null=True, blank=True, default=None)
     filepath = models.CharField(max_length=400, blank=True, null=True)
     section = models.CharField(max_length=100, blank=True, null=True)
     section_id = models.ForeignKey(Sections,on_delete=models.CASCADE,related_name='section_process', null=True, blank=True, default=None)

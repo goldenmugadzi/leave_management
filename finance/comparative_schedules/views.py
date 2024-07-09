@@ -15,6 +15,7 @@ import pandas as pd
 from django.core.paginator import Paginator
 from django.utils import timezone
 from django.contrib.auth.decorators import login_required
+import copy
 
 APP_NAME = "comparative_schedule"
 
@@ -1141,17 +1142,7 @@ def get_comperative_schedule_data(request, cs_id):
     except Exception as ex:
         print("Error: ", ex)
         
-    cs_owner = UserProfile.objects.filter(id=cs.created_by_id).first()
-    pr_item_list = []
-    for pr_item in pr_items:
-        pr_item_list.append({
-            "id": pr_item.id,
-            "item_required": pr_item.item_required,
-            "quantity": pr_item.quantity,
-            "unit_of_measurement": pr_item.unit_of_measurement.name if pr_item.unit_of_measurement else "",
-            "ordered": pr_item.ordered,
-        })
-        
+    cs_owner = UserProfile.objects.filter(id=cs.created_by_id).first()  
     pr_attachments = Attachment.objects.filter(purchase_request=pr).all()
     
     pr_at_list = []
@@ -1168,7 +1159,7 @@ def get_comperative_schedule_data(request, cs_id):
                 })
             except Exception as ex:
                 print("Error: ", ex)
-                
+      
     cs_item_list = []
     for cs_item in cs_items:
         cs_item_list.append({
@@ -1176,9 +1167,23 @@ def get_comperative_schedule_data(request, cs_id):
             "item_required": cs_item.item_name,
             "quantity": cs_item.quantity,
             "unit_of_measurement": cs_item.unit_of_measurement,
+            "ordered": True,
+        })
+    print("current cs_item_list: ", cs_item_list)
+        
+    # copy cs_item_list to pr_item_list
+    pr_item_list = copy.deepcopy(cs_item_list) if cs_item_list else []
+    for pr_item in pr_items:
+        pr_item_list.append({
+            "id": pr_item.id,
+            "item_required": pr_item.item_required,
+            "quantity": pr_item.quantity,
+            "unit_of_measurement": pr_item.unit_of_measurement.name if pr_item.unit_of_measurement else "",
+            "ordered": pr_item.ordered,
         })
 
     #print("current user role: ", user_comparative_schedule_role.role)
+    print("cs_items .....: ", cs_item_list)
     context = {
         "requester_role": user_comparative_schedule_role.role if user_comparative_schedule_role else "",
         "cs_id": cs.cs_id,
@@ -1207,6 +1212,8 @@ def get_comperative_schedule_data(request, cs_id):
         "ref_date": cs.ref_date,
         "cs_opened": cs.cs_opened,
         "tac_date": cs.tac_date,
+        "show_site_visit": cs.show_site_visit,
+        "show_samples_required": cs.show_sample_required,
         "created_by": user.username,
         "section": section.section if section else "",
         "region": region.region if region else "",
@@ -1260,6 +1267,9 @@ def save_file(f, file_path):
 @login_required    
 def get_create_data(request, pr_id):
 
+    # check is pr_id started with PR or not
+    if not pr_id.startswith("PR"):
+        pr_id = "PR" + pr_id
     purchase_request = PurchaseRequest.objects.filter(id=pr_id).first()
     if purchase_request:
         proc_plans = ProcPlan.objects.all()
@@ -1456,6 +1466,11 @@ def save_comparative_schedule(request):
     try:
         
         cs_id = "CS" + datetime.now().strftime("%Y%m%d%I%M%S")
+        cs_exists = ComparativeSchedules.objects.filter(cs_id=cs_id).first()
+        # @TODO try random number if cs_id exists or return error
+        if cs_exists:
+            cs_id = "CS" + datetime.now().strftime("%Y%m%d%I%M%S")
+            
         advert_files = request.FILES.getlist("advert", None)
         proc_ref = request.POST.get("proc_ref", "")
         print("proc plan: ", proc_ref)
@@ -1637,16 +1652,48 @@ def update_pritem_ordered(request):
         print("pr_item_id: ", pr_item_id)
         purchase_request = PurchaseRequest.objects.filter(id=pr_item_id).first()
         print("purchase request: ", purchase_request)
+        existing_items = CSRequiredItems.objects.filter(cs_id=cs_query).all()
+        
+        # Convert existing items to a list of dictionaries for easier comparison
+        existing_items_list = [
+            {
+                "id": item.id,
+                "item_name": item.item_name,
+                "quantity": item.quantity,
+                "unit_of_measurement": item.unit_of_measurement,
+                # Include other fields as necessary
+            }
+            for item in existing_items
+        ]
+        print("existing_items_list: ", existing_items_list)
 
-        for item in items:
-            # check if item exists
-            cs_item = CSItems.objects.filter(item_id=item['id'], cs_id=cs_query).first()
-            if cs_item:
-                cs_item.item_name = item['item_required']
-                cs_item.quantity = item['quantity']
-                cs_item.unit_of_measurement = item['unit_of_measurement']
-                cs_item.save()
-            else:
+        # Step 2: Identify items to add
+        # Convert provided list to a set of IDs for faster lookup
+        provided_ids = {item['item_required'] for item in items}
+        print("provided_ids: ", provided_ids)
+
+        # Find IDs in the provided list that are not in the existing items
+        ids_to_add = provided_ids - {item['item_name'] for item in existing_items_list}
+        print("ids_to_add: ", ids_to_add)
+
+        # Filter the provided list to get the items to add
+        items_to_add = [item for item in items if item['item_required'] in ids_to_add]
+        print("items_to_add: ", items_to_add)
+
+        # Step 3: Identify items to delete
+        # Find IDs in the existing items that are not in the provided list
+        ids_to_delete = {item['item_name'] for item in existing_items_list} - provided_ids
+        print("ids_to_delete: ", ids_to_delete)
+
+        # Step 4: Update the database
+        # Add new items
+        for item in items_to_add:
+            print("item: ", item)
+            pr_item = PrItem.objects.filter(item_required=item['item_required'], purchase_request=purchase_request).first()
+            if pr_item:
+                pr_item.ordered = True
+                pr_item.save()
+                print("item: ", item)
                 cs_required_items = CSRequiredItems(
                     cs_id = cs_query,
                     item_id = item['id'],
@@ -1655,21 +1702,16 @@ def update_pritem_ordered(request):
                     unit_of_measurement = item['unit_of_measurement'],
                 )
                 cs_required_items.save()
+                print("added ...")
 
-        
-        # set all items to ordered
-        for item in items:
+        # Delete items that no longer exist
+        for item in ids_to_delete:
             print("item: ", item)
-            pr_item = PrItem.objects.filter(item_required=item['item_required'], purchase_request=purchase_request).first()
+            pr_item = PrItem.objects.filter(item_required=item, purchase_request=purchase_request).first()
             if pr_item:
-                pr_item.ordered = True
+                pr_item.ordered = False
                 pr_item.save()
-            else:
-                return JsonResponse({
-                    "message": "PR Item not found",
-                    "success": False,
-                    }, safe=False)
-        
+                CSRequiredItems.objects.filter(item_name=item, cs_id=cs_query).delete()        
 
         return JsonResponse({
             "message": "PR Item updated successfully",
@@ -1770,6 +1812,7 @@ def save_cs_bid(request):
 
 @login_required
 def delete_cs_bid(request):
+    
     cs_id = request.POST.get("cs_id", "")
     supplier_name = request.POST.get("supplier_name", "")
     bid_no = request.POST.get("bid_count", "")
@@ -1793,14 +1836,21 @@ def delete_cs_bid(request):
         clear_approvals(cs_id)
         for bid in bid_query:
             # delete item
-            item = CSItems.objects.filter(item_id=bid.item_id).first()
+            item = bid.item_id if bid.item_id else None
+            print("items: ", item) 
             if item:
                 item.delete()
-            compliance = CSCompliance.objects.filter(cs_id=cs_query, supplier_id=supplier).first()
+                
+            compliance = CSCompliance.objects.filter(cs_id=cs_query, supplier_id=supplier)
             if compliance:
                 compliance.delete()
-            bid.delete()
+                
+            complianceRemark = CSComplianceRemarks.objects.filter(cs_id=cs_query, supplier_id=supplier)
+            if complianceRemark:
+                complianceRemark.delete()
             
+            bid.delete()
+
     return JsonResponse({
         "message": "Bid deleted successfully",
         "success": True,
@@ -1810,6 +1860,8 @@ def delete_cs_bid(request):
 def save_cs_compliance(request):
 
     cs_id = request.POST.get("cs_id", "")
+    show_site_visit = request.POST.get("show_site_visit", "")
+    show_sample_required = request.POST.get("show_sample_required", "")
     json_data = json.loads(request.POST.get("compliance", "{}"))
     print("json_data: ", json_data)
     compliances = json_data.get("compliance", [])
@@ -1825,7 +1877,10 @@ def save_cs_compliance(request):
             "message": "Comparative Schedule not found",
             "success": False,
             }, safe=False)
-      
+    
+    cs_query.show_site_visit = True if show_site_visit == "yes" else False
+    cs_query.show_sample_required = True if show_sample_required == "yes" else False
+    cs_query.save()
     # check if compliance exists
     compliance_query = CSCompliance.objects.filter(cs_id=cs_query).all()
     if compliance_query:
@@ -1965,7 +2020,8 @@ def save_cs_ranking(request):
             "decision": ranking.decision,
             "total": ranking.total,
         })
-        
+    
+    custom_rankings = sorted(custom_rankings, key=lambda x: x['rank'])
     return JsonResponse({
         "message": "Ranking saved successfully",
         "success": True,
@@ -1991,11 +2047,8 @@ def save_cs_committee(request):
         member_profile = UserProfile.objects.filter(username=member['memberUserName']).first()
         if member_profile:
             committee_query = Committee.objects.filter(cs_id=cs_query, user=member_profile).first()
-            if committee_query:
+            if not committee_query:
                 clear_approvals(cs_id)
-                committee_query.committee_position = member['memberPosition']
-                committee_query.save()
-            else:
                 committee_query = Committee(
                     cs_id = cs_query,
                     user = member_profile,
@@ -2005,7 +2058,7 @@ def save_cs_committee(request):
                 msg = "You have been added to the committee for RFQ " + cs_query.cs_id
                 url = "/comperative_schedule/comperative_schedule/" + cs_query.cs_id
                 notify_user(member_profile, msg, "RFQ", url, cs_query.cs_id)
-            committee_query.save()
+                committee_query.save()
             
         
     return JsonResponse({

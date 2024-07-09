@@ -78,6 +78,7 @@ APPLICATIONS = [
 ]
 
 # Create your views here.
+# @TODO: @login_required
 def login_user(request):
     
     if request.method == "POST":

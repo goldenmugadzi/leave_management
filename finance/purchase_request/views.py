@@ -2,6 +2,9 @@
 from django.contrib.auth.decorators import login_required
 
 from ACE2.models import Ace2
+from finance.comparative_schedules.models import ComparativeSchedules
+from finance.direct_purchase.models import DirectPurchase
+from finance.ristricted_bidding.models import RistricedBiddings
 from .forms import PurchaseRequestForm, acePurchaseRequestForm
 from django.views.generic import CreateView
 from django.urls import reverse_lazy
@@ -33,7 +36,32 @@ def purchase_request_detail(request, purchase_request_id):
     for role in request.user.roles.all():
         if role.name=="Requester" and role.app_id.name == 'comparative_schedules':
             can_cs = True
-    return render(request, 'finance/purchase_request/purchase_request_detail.html', {'purchase_request': purchase_request, 'can_cs':can_cs })#, 'approved_steps':approved_steps,'approvalForm': approvalForm,'to':to})
+    
+    schedules = []
+    cs_schedules = ComparativeSchedules.objects.filter(pr_id=purchase_request).all()
+    for schedule in cs_schedules:
+        schedules.append({
+            "cs_id": schedule.cs_id,
+            "url": '/comperative_schedule/comperative_schedule/'+schedule.cs_id
+        })
+        
+    dp_schedules = DirectPurchase.objects.filter(pr_id=purchase_request).all()
+    for schedule in dp_schedules:
+        schedules.append({
+            "cs_id": schedule.cs_id,
+            "url": '/direct_purchase/comperative_schedule/'+schedule.cs_id
+        })
+        
+    rb_schedules = RistricedBiddings.objects.filter(pr_id=purchase_request).all()
+    for schedule in rb_schedules:
+        schedules.append({
+            "cs_id": schedule.cs_id,
+            "url": '/ristricted_bidding/comperative_schedule/'+schedule.cs_id
+        })
+        
+    print("schedules: ", schedules)
+        
+    return render(request, 'finance/purchase_request/purchase_request_detail.html', {'purchase_request': purchase_request, 'can_cs':can_cs, "schedules": schedules })#, 'approved_steps':approved_steps,'approvalForm': approvalForm,'to':to})
     
 @login_required
 def create_purchase_request(request):

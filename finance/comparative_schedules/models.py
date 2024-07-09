@@ -34,6 +34,8 @@ class ComparativeSchedules(models.Model):
     closing_date = models.DateField()
     closing_time = models.CharField(max_length=10)
     advert = models.CharField(max_length=400)
+    show_site_visit = models.BooleanField(default=False, null=True, blank=True)
+    show_sample_required = models.BooleanField(default=False, null=True, blank=True)
     pr_number = models.CharField(max_length=100)
     currency = models.ForeignKey(Currency, on_delete=models.CASCADE, default=1)
     pr_date = models.DateField()
