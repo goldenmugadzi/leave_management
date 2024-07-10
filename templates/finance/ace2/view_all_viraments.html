@@ -43,7 +43,7 @@
             {% for ace in aces %}
             <tr class="h-1">
                 <td><a class="text-blue-500" href="/ace/ace_detail/{{ace.Ace_id2}}">{{ ace.virament_id|default_if_none:'' }}</a></td>
-                <td>{{ ace.details_of_expenditure }}</td>
+                <td>{{ ace.reason }}</td>
               <td>{{ ace.amount }}</td>
 
             <td>{% if ace.requested_by == user %} You {% else %} {{ace.requested_by.get_full_name }} {% endif %}</td>
