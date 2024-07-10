@@ -5,6 +5,7 @@ from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from decouple import config
 
+from it.beii_auth.models import Question, SecurityQuestions
 # from utils.helper_functions import get_dashboard_reports
 
 
@@ -261,17 +262,16 @@ def home(request):
 def business_applications(request):
     user_page = 'business_applications.html'
     user_title = request.user.get_full_name()
-<<<<<<< HEAD
+
     l = request.user.groups.values_list('name',flat = True) # QuerySet Object
     user_groups = list(l)  
 
-=======
     l = request.user.groups.values_list('name', flat=True)  # QuerySet Object
     user_groups = list(l)
     custom_user_roles = {
         "users": {},
     }
->>>>>>> development
+
     user_profile = UserProfile.objects.filter(id=request.user.id).first()
     roles_ = user_profile.roles.all()
     for _role in roles_:
@@ -286,7 +286,6 @@ def business_applications(request):
     if users_role == "standard" or users_role == "" or users_role == None:
         print("creating standard list ..")
         applications = [app for app in applications if app['name'] != 'users']
-<<<<<<< HEAD
     
     user = request.user
     if config('HOST') == "172.16.8.20":
@@ -300,10 +299,7 @@ def business_applications(request):
         else:
             messages.error(request, "Your region is missing on your account profile, Please contact the administrator")
             applications = []
-        
-=======
 
->>>>>>> development
     url_path = request.path.split("/")
     return render(
         request,
@@ -321,7 +317,6 @@ def app_logout(request):
     logout(request)
     return redirect('/accounts/login')
 
-<<<<<<< HEAD
 def change_password(request):
     if request.method == "POST":
         print("request.POST: ", request.POST)
@@ -483,8 +478,6 @@ def reset_password(request):
             return redirect('/auth/reset-password')
     else:
          return render(request, "registration/reset_password.html", {})
-=======
->>>>>>> development
 
 def get_dashboard_reports(section_code):
     report = {}
