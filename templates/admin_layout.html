@@ -2,6 +2,7 @@
 <html>
   {% load static %} {% load custom_tags %}
   <head>
+    <!-- Select2 CSS -->
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Business Excellence</title>
@@ -27,6 +28,10 @@
     />
     <link
       type="text/css"
+      href="{% static 'assets/cdn/select2.min.css' %}"
+      rel="stylesheet"
+    /> <link
+      type="text/css"
       href="{% static 'assets/cdn/tailwind.min.css' %}"
       rel="stylesheet"
     />
@@ -44,6 +49,7 @@
     {#
     <script src="{% static 'assets/precalc.js' %}"></script>
     #} {% endcomment %}
+      <script src="{% static 'assets/classification.js' %}"></script>
     <style>
       .scroll-container {
         position: relative;
@@ -641,6 +647,10 @@
       type="text/javascript"
       src="{% static 'assets/cdn/jquery-3.7.1.min.js' %}"
     ></script>
+    <script
+      type="text/javascript"
+      src="{% static 'assets/cdn/select2.min.js' %}"
+    ></script>
     {% block scripts %} {% endblock scripts %}
     <script></script>
 
@@ -678,20 +688,54 @@
           }
         });
     </script>
-    <script>
-      /*      const containerElement = document.querySelector("#scrolling-container");
-      let containerWidth = containerElement.scrollWidth;
-      const newsElement = document.querySelector("#scrolling-news-text");
-      let newsWidth = newsElement.scrollWidth; // Get news width
-      let newsPosition = 0;
+    {% load sweetify %}
+    {% sweetify %}
+      <script>
+        $(document).ready(function() {
+            // Initialize Select2 and add Tailwind CSS classes
+            $('.select2').select2().on('select2:open', () => {
+                // When Select2 is opened, apply Tailwind CSS to its elements
+                $(".select2-container--default .select2-selection--single").addClass('tailwind-class-here');
+                $(".select2-dropdown").addClass('tailwind-class-here');
+                // Add more Tailwind classes as needed
+            });
+        });
+        </script>
+    
+  <script>
+    document.getElementById('id_classification').addEventListener('change', function() {
+        const selectedValue = this.value;
+        // project fields
+        const field1 = document.getElementById('id_present_tariff');
+        const field2 = document.getElementById('id_present_fmc');
+        const field3 = document.getElementById('id_capital_contribution');
+        const field4 = document.getElementById('id_materials');
+        const field5 = document.getElementById('id_connection_fee');
+        const field6 = document.getElementById('id_labour');
+        const field7 = document.getElementById('id_transport');
 
-      const intervalIdContainer = setInterval(() => {
-        newsPosition += 2; // Adjust newsing speed
-        newsElement.style.newsIndent = `${newsPosition}px`;
-        if (newsPosition >= containerWidth) {
-          newsPosition = 0;
+        // hide these fields if the value Internal is selected
+        if (selectedValue === 'Internal') {
+            field1.style.display = 'none';
+            field2.style.display = 'none';
+            field3.style.display = 'none';
+            field4.style.display = 'none';
+            field5.style.display = 'none';
+            field6.style.display = 'none';
+            field7.style.display = 'none';
+        } else {
+            field1.style.display = 'block';
+            field2.style.display = 'block';
+            field3.style.display = 'block';
+            field4.style.display = 'block';
+            field5.style.display = 'block';
+            field6.style.display = 'block';
+            field7.style.display = 'block';
         }
-      }, 50);*/
+    });
+
+</script>
+    <script>
     </script>
     <script>
       const currentUrl = window.location.href;
@@ -705,13 +749,6 @@
         }
       }
     </script>
-    <script>
-      /*      window.onload = function() {
-          console.log()
-          Alpine.data('requestPathData', {
-              path: "{{ request.path }}" // Example: "/product/123/edit"
-          });
-      };*/
-    </script>
+    
   </body>
 </html>

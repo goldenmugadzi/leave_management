@@ -191,8 +191,6 @@ def create_token(request):
         "reconnection_form": ReconnectionForm(),
     }
     return render(request, "tokens/create_token.html", forms)
-
-
 @login_required
 def token_details(request, token_id):
     token = Token.objects.get(id=token_id)
