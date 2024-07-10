@@ -8,6 +8,7 @@ from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from decouple import config
 
+from it.beii_auth.models import Question, SecurityQuestions
 # from utils.helper_functions import get_dashboard_reports
 
 
