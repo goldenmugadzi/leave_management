@@ -282,7 +282,6 @@ def ace_awaiting_my_action(request):
     user_profile = UserProfile.objects.filter(id=user_id).first()
     region = Regions.objects.filter(id=user_profile.region.id).first()
 
-
     user_groups = user_profile.groups.values_list('name', flat=True)
 
     custom_user_roles = {
@@ -304,7 +303,7 @@ def ace_awaiting_my_action(request):
     if ace_role == "pass":
         # I want objects from 2024 upwards
 
-        for ace in Ace2.objects.filter(section=request.user.section, date_created__year__gte=2024,region=region):
+        for ace in Ace2.objects.filter(section=request.user.section, date_created__year__gte=2024, region=region):
             process = ace.process
 
             if process.approval_set.exists():
@@ -325,7 +324,7 @@ def ace_awaiting_my_action(request):
                     aces_to_process.remove(ace)
 
     else:
-        for ace in Ace2.objects.filter(date_created__year__gte=2024,region=region):
+        for ace in Ace2.objects.filter(date_created__year__gte=2024, region=region):
             process = ace.process
 
             if process.approval_set.exists():
@@ -350,7 +349,7 @@ def ace_awaiting_my_action(request):
     return render(request, 'finance/ace2/view_all_aces.html', {'aces': aces_to_process,
                                                                'ace_role': ace_role,
                                                                'requester': requester,
-                                                               'cashier':cashier})
+                                                               'cashier': cashier})
 
 
 @login_required
@@ -1112,8 +1111,8 @@ def viraments_awaiting_my_action(request):
     print(virement_role)
 
     if virement_role == "pass":
-        for ace in Asset_budget_Virament.objects.filter(section=request.user.section):
-            process = ace.process
+        for virement in Asset_budget_Virament.objects.filter(section=request.user.section):
+            process = virement.process
 
             if process.approval_set.exists():
                 last_approval = process.approval_set.last()
@@ -1127,11 +1126,11 @@ def viraments_awaiting_my_action(request):
             step = workflow.step_set.filter(step=next_step, approver__in=user_roles).first()
 
             if step:
-                viraments_to_process.append(ace)
+                viraments_to_process.append(virement)
 
     else:
-        for ace in Asset_budget_Virament.objects.all():
-            process = ace.process
+        for virement in Asset_budget_Virament.objects.all():
+            process = virement.process
 
             if process.approval_set.exists():
                 last_approval = process.approval_set.last()
@@ -1145,11 +1144,11 @@ def viraments_awaiting_my_action(request):
             step = workflow.step_set.filter(step=next_step, approver__in=user_roles).first()
 
             if step:
-                viraments_to_process.append(ace)
+                viraments_to_process.append(virement)
 
-    return render(request, 'finance/ace2/view_all_aces.html', {'aces': viraments_to_process,
-                                                               'virement_role': virement_role,
-                                                               'requester': requester})
+    return render(request, 'finance/ace2/view_all_viraments.html', {'aces': viraments_to_process,
+                                                                    'virement_role': virement_role,
+                                                                    'requester': requester})
 
 
 @login_required
@@ -1160,10 +1159,11 @@ def view_all_transactions(request):
     transactions = Transactions.objects.filter(region=region)
     return render(request, 'finance/ace2/view_all_transactions.html', {'transactions': transactions})
 
+
 @login_required
 def transactions_for_budget(request, budget_id):
     user_id = request.user.id
     user_profile = UserProfile.objects.filter(id=user_id).first()
     region = Regions.objects.filter(id=user_profile.region.id).first()
-    transactions = Transactions.objects.filter( budget_id=budget_id)
+    transactions = Transactions.objects.filter(budget_id=budget_id)
     return render(request, 'finance/ace2/view_all_transactions.html', {'transactions': transactions})
