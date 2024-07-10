@@ -1,4 +1,7 @@
+import json
 from django.shortcuts import render, redirect
+from django.contrib.auth import authenticate, login
+from django.contrib.auth.hashers import make_password, check_password
 from django.contrib.auth import logout
 from django.contrib import messages
 from django.contrib.auth.password_validation import validate_password
@@ -8,6 +11,7 @@ from decouple import config
 # from utils.helper_functions import get_dashboard_reports
 
 
+from it.beii_auth.models import Question, SecurityQuestions
 from it.users.models import UserProfile, Depots, Districts, Regions, Designations, Sections, Roles
 
 APPLICATIONS = [
@@ -24,17 +28,17 @@ APPLICATIONS = [
         "url": "/nonconformities/"
     },
     {
+        "name": "ace",
+        "title": "ACE",
+        "iconUrl": "assets/images/capital.png",
+        "url": "/ace/aces"
+    },
+    {
         "name": "virament",
         "title": "Virement",
         "iconUrl": "assets/images/money.png",
         "url": "/ace/viraments_awaiting_my_action"
 
-    },
-    {
-        "name": "ace",
-        "title": "ACE",
-        "iconUrl": "assets/images/capital.png",
-        "url": "/ace/aces_awaiting_my_action"
     },
     {
         "name": "Token",
@@ -71,35 +75,60 @@ APPLICATIONS = [
         "title": "Direct Purchases",
         "iconUrl": "assets/images/bid.png",
         "url": "/direct_purchase/comperative_schedules"
+    },
+    {
+        "name": "change_requests",
+        "title": "Change Requests",
+        "iconUrl": "assets/images/change.png",
+        "url": "/change_requests/change_request_index"
     }
 ]
 
-
 # Create your views here.
+def login_user(request):
+    
+    if request.method == "POST":
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        
+        user = authenticate(request, username=username, password=password)
+        if user is not None:
+            if user.change_password:
+                return redirect('/auth/change-password')
+            login(request, user)
+            return redirect('/dashboards/overview')
+        else:
+            return render(request, 'registration/login.html', {
+                "error_msg": "Invalid username or password"
+            })
+    return render(request, 'registration/login.html', {})
+
 def index(request):
+    
     if request.user.is_authenticated:
+        
         user_title = request.user.get_full_name()
-        l = request.user.groups.values_list('name', flat=True)  # QuerySet Object
+        l = request.user.groups.values_list('name',flat = True) # QuerySet Object
         user_groups = list(l)
-
+        
         return redirect(
-            '/dashboards/overview',
-            user_title,
-            request,
+            '/dashboards/overview', 
+            user_title, 
+            request, 
             user_groups
-        )
-
+            )
+        
     return redirect('/accounts/login')
 
-
 def dashboard(request):
+
     user_page = 'dashboard.html'
     user_title = request.user.get_full_name()
     user = request.user
     user_profile = UserProfile.objects.filter(user_id=user.id).first()
-    l = request.user.groups.values_list('name', flat=True)  # QuerySet Object
-    user_groups = list(l)
-
+    l = request.user.groups.values_list('name',flat = True) # QuerySet Object
+    user_groups = list(l) 
+    
     custom_user_roles = {
         "non_conformity": {},
         "remittance_advice": {},
@@ -111,26 +140,26 @@ def dashboard(request):
         "users": {},
     }
 
-    user_group_ids = user_profile.roles
+    user_group_ids = user_profile.roles 
     user_group_ids = user_group_ids.split(",") if user_group_ids else []
     for id in user_group_ids:
         role = Roles.objects.filter(id=id).first()
 
         if role.application == "users":
             custom_user_roles["users"] = role
-
+        
         if role.application == "non_conformity":
             custom_user_roles["non_conformity"] = role
-
+            
         if role.application == "remittance_advice":
             custom_user_roles["remittance_advice"] = role
-
+        
         if role.application == "pettycash":
             custom_user_roles["pettycash"] = role
 
         if role.application == "adjudication":
             custom_user_roles["adjudication"] = role
-
+            
         if role.application == "tokens":
             custom_user_roles["tokens"] = role
 
@@ -139,6 +168,7 @@ def dashboard(request):
 
         if role.application == "ace":
             custom_user_roles["ace"] = role
+            
 
     region = Regions.objects.filter(id=user_profile.region).first()
     district = Districts.objects.filter(code=user_profile.district).first()
@@ -158,27 +188,27 @@ def dashboard(request):
         "region": region,
         "roles": custom_user_roles,
     }
-
+    
     dashboard_reports = get_dashboard_reports(user_profile.section)
 
     return render(
-        request,
-        user_page,
+        request, 
+        user_page, 
         {
-            "user_title": user_title,
+            "user_title": user_title, 
             "user_groups": user_groups,
             "user": custom_user
         })
 
-
 def home(request):
+
     user_page = 'home/dashboard.html'
     user_title = request.user.get_full_name()
     user = request.user
     user_profile = UserProfile.objects.filter(user_id=user.id).first()
-    l = request.user.groups.values_list('name', flat=True)  # QuerySet Object
-    user_groups = list(l)
-
+    l = request.user.groups.values_list('name',flat = True) # QuerySet Object
+    user_groups = list(l) 
+    
     custom_user_roles = {
         "non_conformity": {},
         "remittance_advice": {},
@@ -189,7 +219,7 @@ def home(request):
         "ace": {},
         "users": {},
     }
-
+    
     region = None
     district = None
     depot = None
@@ -203,19 +233,19 @@ def home(request):
 
             if role.application == "users":
                 custom_user_roles["users"] = role
-
+            
             if role.application == "non_conformity":
                 custom_user_roles["non_conformity"] = role
-
+                
             if role.application == "remittance_advice":
                 custom_user_roles["remittance_advice"] = role
-
+            
             if role.application == "pettycash":
                 custom_user_roles["pettycash"] = role
 
             if role.application == "adjudication":
                 custom_user_roles["adjudication"] = role
-
+                
             if role.application == "tokens":
                 custom_user_roles["tokens"] = role
 
@@ -224,13 +254,12 @@ def home(request):
 
             if role.application == "ace":
                 custom_user_roles["ace"] = role
-
+                
         region = Regions.objects.filter(id=user_profile.region).first()
         district = Districts.objects.filter(code=user_profile.district).first()
         depot = Depots.objects.filter(code=user_profile.depot).first()
         section = Sections.objects.filter(code=user_profile.section).first()
-        user_designation = Designations.objects.filter(
-            id=user_profile.designation).first() if user_profile.designation else None
+        user_designation = Designations.objects.filter(id=user_profile.designation).first() if user_profile.designation else None
 
     custom_user = {
         "id": user.pk,
@@ -245,48 +274,35 @@ def home(request):
         "region": region,
         "roles": custom_user_roles,
     }
-
+        
     print("custom_user: ", custom_user)
 
     return render(
-        request,
-        user_page,
+        request, 
+        user_page, 
         {
-            "user_title": user_title,
+            "user_title": user_title, 
             "user_groups": user_groups,
             "user": custom_user
         })
-
-
+    
 def business_applications(request):
+
     user_page = 'business_applications.html'
     user_title = request.user.get_full_name()
-<<<<<<< HEAD
     l = request.user.groups.values_list('name',flat = True) # QuerySet Object
     user_groups = list(l)  
 
-=======
-    l = request.user.groups.values_list('name', flat=True)  # QuerySet Object
-    user_groups = list(l)
-    custom_user_roles = {
-        "users": {},
-    }
->>>>>>> development
     user_profile = UserProfile.objects.filter(id=request.user.id).first()
     roles_ = user_profile.roles.all()
-    for _role in roles_:
-        role = Roles.objects.filter(id=_role.id).first()
 
-        if role.application == "users":
-            custom_user_roles["users"] = role
-    users_role = str(custom_user_roles["users"])
+    users_role = user_profile.get_user_roles_for_application("users")
 
     print("users_role: ", users_role)
     applications = APPLICATIONS
     if users_role == "standard" or users_role == "" or users_role == None:
         print("creating standard list ..")
         applications = [app for app in applications if app['name'] != 'users']
-<<<<<<< HEAD
     
     user = request.user
     if config('HOST') == "172.16.8.20":
@@ -301,27 +317,23 @@ def business_applications(request):
             messages.error(request, "Your region is missing on your account profile, Please contact the administrator")
             applications = []
         
-=======
-
->>>>>>> development
     url_path = request.path.split("/")
     return render(
-        request,
-        user_page,
+        request, 
+        user_page, 
         {
             "user_title": user_title,
             "url_path": url_path,
-            "page_title": "Business Applications",
+            "page_title": "Business Applications", 
             "user_groups": user_groups,
             "apps": applications
         })
 
-
 def app_logout(request):
+
     logout(request)
     return redirect('/accounts/login')
 
-<<<<<<< HEAD
 def change_password(request):
     if request.method == "POST":
         print("request.POST: ", request.POST)
@@ -483,10 +495,10 @@ def reset_password(request):
             return redirect('/auth/reset-password')
     else:
          return render(request, "registration/reset_password.html", {})
-=======
->>>>>>> development
 
 def get_dashboard_reports(section_code):
+    
     report = {}
-
+    
+    
     return report

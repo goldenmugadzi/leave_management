@@ -14,3 +14,4 @@ urlpatterns = [
     path('migrate_tokens/', migrate_tokens, name='migrate_tokens'),
     
 ]
+  
