@@ -28,6 +28,10 @@
     />
     <link
       type="text/css"
+      href="{% static 'assets/cdn/select2.min.css' %}"
+      rel="stylesheet"
+    /> <link
+      type="text/css"
       href="{% static 'assets/cdn/tailwind.min.css' %}"
       rel="stylesheet"
     />
@@ -45,7 +49,6 @@
     {#
     <script src="{% static 'assets/precalc.js' %}"></script>
     #} {% endcomment %}
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
       <script src="{% static 'assets/classification.js' %}"></script>
     <style>
       .scroll-container {
@@ -643,6 +646,10 @@
     <script
       type="text/javascript"
       src="{% static 'assets/cdn/jquery-3.7.1.min.js' %}"
+    ></script>
+    <script
+      type="text/javascript"
+      src="{% static 'assets/cdn/select2.min.js' %}"
     ></script>
     {% block scripts %} {% endblock scripts %}
     <script></script>
