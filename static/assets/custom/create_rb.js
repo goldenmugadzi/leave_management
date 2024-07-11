@@ -17,16 +17,16 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 var e = React.createElement;
 var domContainer = document.querySelector("#create_comparative_schedule");
 var url = domContainer.getAttribute("data-baseurl");
-// const BASE_URL = "http://localhost:8000";
-var BASE_URL = url;
+// const BASE_URL = "http://localhost:8000/ristricted_bidding";
+var BASE_URL = url + "/ristricted_bidding";
 
-var CreateCS = function (_React$Component) {
-  _inherits(CreateCS, _React$Component);
+var CreateRB = function (_React$Component) {
+  _inherits(CreateRB, _React$Component);
 
-  function CreateCS(props) {
-    _classCallCheck(this, CreateCS);
+  function CreateRB(props) {
+    _classCallCheck(this, CreateRB);
 
-    var _this = _possibleConstructorReturn(this, (CreateCS.__proto__ || Object.getPrototypeOf(CreateCS)).call(this, props));
+    var _this = _possibleConstructorReturn(this, (CreateRB.__proto__ || Object.getPrototypeOf(CreateRB)).call(this, props));
 
     _this.onGetFileObjectUrl = function (fileData) {
       try {
@@ -51,7 +51,7 @@ var CreateCS = function (_React$Component) {
     };
 
     _this.getCSData = function (cs_id) {
-      fetch(BASE_URL + "/comperative_schedule/cs_data/" + cs_id).then(function (response) {
+      fetch(BASE_URL + "/cs_data/" + cs_id).then(function (response) {
         return response.json();
       }).then(function (data_) {
         var _Object$assign;
@@ -168,7 +168,7 @@ var CreateCS = function (_React$Component) {
     _this.getCreateData = function (pr_id) {
       console.log("cs pr_id: ", pr_id);
 
-      fetch(BASE_URL + "/comperative_schedule/create_data/" + pr_id).then(function (response) {
+      fetch(BASE_URL + "/create_data/" + pr_id).then(function (response) {
         return response.json();
       }).then(function (data) {
         console.log("data: ", data);
@@ -218,7 +218,7 @@ var CreateCS = function (_React$Component) {
     _this.onFetchPR = function (pr_id) {
       console.log("cs pr_id: ", pr_id);
 
-      fetch(BASE_URL + "/comperative_schedule/create_data/" + pr_id).then(function (response) {
+      fetch(BASE_URL + "/create_data/" + pr_id).then(function (response) {
         return response.json();
       }).then(function (data) {
         if (data && data.success) {
@@ -378,7 +378,7 @@ var CreateCS = function (_React$Component) {
       form_data.append("username", username);
       form_data.append("csrfmiddlewaretoken", _this.getCookie("csrftoken"));
 
-      fetch(BASE_URL + "/comperative_schedule/delete_committee_member", {
+      fetch(BASE_URL + "/delete_committee_member", {
         method: "POST",
         headers: {
           "X-CSRFToken": _this.getCookie("csrftoken")
@@ -430,7 +430,7 @@ var CreateCS = function (_React$Component) {
       form_data.append("justification", justification);
       form_data.append("csrfmiddlewaretoken", _this.getCookie("csrftoken"));
 
-      fetch(BASE_URL + "/comperative_schedule/committee_approve", {
+      fetch(BASE_URL + "/committee_approve", {
         method: "POST",
         headers: {
           "X-CSRFToken": _this.getCookie("csrftoken")
@@ -489,7 +489,7 @@ var CreateCS = function (_React$Component) {
       }));
       form_data.append("csrfmiddlewaretoken", _this.getCookie("csrftoken"));
 
-      fetch(BASE_URL + "/comperative_schedule/save_committee", {
+      fetch(BASE_URL + "/save_committee", {
         method: "POST",
         headers: {
           "X-CSRFToken": _this.getCookie("csrftoken")
@@ -521,7 +521,7 @@ var CreateCS = function (_React$Component) {
       form_data.append("justification", justification);
       form_data.append("csrfmiddlewaretoken", _this.getCookie("csrftoken"));
 
-      fetch(BASE_URL + "/comperative_schedule/approval_approve", {
+      fetch(BASE_URL + "/approval_approve", {
         method: "POST",
         headers: {
           "X-CSRFToken": _this.getCookie("csrftoken")
@@ -576,7 +576,7 @@ var CreateCS = function (_React$Component) {
       form_data.append("supplier_name", _this.state.newSupplier.supplier_name);
       form_data.append("csrfmiddlewaretoken", _this.getCookie("csrftoken"));
 
-      fetch(BASE_URL + "/comperative_schedule/save_supplier", {
+      fetch(BASE_URL + "/save_supplier", {
         method: "POST",
         headers: {
           "X-CSRFToken": _this.getCookie("csrftoken")
@@ -676,7 +676,7 @@ var CreateCS = function (_React$Component) {
       }));
       form_data.append("csrfmiddlewaretoken", _this.getCookie("csrftoken"));
 
-      fetch(BASE_URL + "/comperative_schedule/update_pritem_ordered", {
+      fetch(BASE_URL + "/update_pritem_ordered", {
         method: "POST",
         headers: {
           "X-CSRFToken": _this.getCookie("csrftoken")
@@ -914,7 +914,7 @@ var CreateCS = function (_React$Component) {
       form_data.append("bid_document", currentBid.bid_document);
       form_data.append("csrfmiddlewaretoken", _this.getCookie("csrftoken"));
 
-      fetch(BASE_URL + "/comperative_schedule/save_bid", {
+      fetch(BASE_URL + "/save_bid", {
         method: "POST",
         headers: {
           "X-CSRFToken": _this.getCookie("csrftoken")
@@ -1014,7 +1014,7 @@ var CreateCS = function (_React$Component) {
       form_data.append("advert", _this.state.advert);
       form_data.append("csrfmiddlewaretoken", _this.getCookie("csrftoken"));
 
-      fetch(BASE_URL + "/comperative_schedule/save", {
+      fetch(BASE_URL + "/save", {
         method: "POST",
         headers: {
           "X-CSRFToken": _this.getCookie("csrftoken")
@@ -1066,7 +1066,7 @@ var CreateCS = function (_React$Component) {
       form_data.append("advert", _this.state.advert);
       form_data.append("csrfmiddlewaretoken", _this.getCookie("csrftoken"));
 
-      fetch(BASE_URL + "/comperative_schedule/update", {
+      fetch(BASE_URL + "/update", {
         method: "POST",
         headers: {
           "X-CSRFToken": _this.getCookie("csrftoken")
@@ -1113,7 +1113,7 @@ var CreateCS = function (_React$Component) {
       form_data.append("supplier_name", supplier_name);
       form_data.append("csrfmiddlewaretoken", _this.getCookie("csrftoken"));
 
-      fetch(BASE_URL + "/comperative_schedule/delete_bid", {
+      fetch(BASE_URL + "/delete_bid", {
         method: "POST",
         headers: {
           "X-CSRFToken": _this.getCookie("csrftoken")
@@ -1406,7 +1406,7 @@ var CreateCS = function (_React$Component) {
       }));
       form_data.append("csrfmiddlewaretoken", _this.getCookie("csrftoken"));
 
-      fetch(BASE_URL + "/comperative_schedule/save_compliance", {
+      fetch(BASE_URL + "/save_compliance", {
         method: "POST",
         headers: {
           "X-CSRFToken": _this.getCookie("csrftoken")
@@ -1429,7 +1429,7 @@ var CreateCS = function (_React$Component) {
       form_data.append("cs_id", _this.state.cs_id);
       form_data.append("csrfmiddlewaretoken", _this.getCookie("csrftoken"));
 
-      fetch(BASE_URL + "/comperative_schedule/close_compliance", {
+      fetch(BASE_URL + "/close_compliance", {
         method: "POST",
         headers: {
           "X-CSRFToken": _this.getCookie("csrftoken")
@@ -1516,7 +1516,7 @@ var CreateCS = function (_React$Component) {
       form_data.append("additional_notes", _this.state.additionalNotes);
       form_data.append("csrfmiddlewaretoken", _this.getCookie("csrftoken"));
 
-      fetch(BASE_URL + "/comperative_schedule/save_additional_notes", {
+      fetch(BASE_URL + "/save_additional_notes", {
         method: "POST",
         headers: {
           "X-CSRFToken": _this.getCookie("csrftoken")
@@ -1642,7 +1642,7 @@ var CreateCS = function (_React$Component) {
     return _this;
   }
 
-  _createClass(CreateCS, [{
+  _createClass(CreateRB, [{
     key: "componentDidMount",
     value: function componentDidMount() {
       console.log("props: ", this.props);
@@ -5053,8 +5053,8 @@ var CreateCS = function (_React$Component) {
             )
           ) : "",
           this.state.rankings.length > 0 ? rankingTable : "",
-          this.state.rankings.length > 0 ? committeeTable : "",
           additionalInfo,
+          this.state.rankings.length > 0 ? committeeTable : "",
           this.state.committeeMembers.length > 0 && this.state.username === this.state.cs_owner && !this.state.approvalsComplete ? React.createElement(
             "div",
             { className: "m-2" },
@@ -5101,10 +5101,10 @@ var CreateCS = function (_React$Component) {
     }
   }]);
 
-  return CreateCS;
+  return CreateRB;
 }(React.Component);
 
 var username = domContainer.getAttribute("data-username");
 var prid = domContainer.getAttribute("data-prid");
 var csid = domContainer.getAttribute("data-csid");
-ReactDOM.render(e(CreateCS, { username: username, prid: prid, csid: csid }), domContainer);
+ReactDOM.render(e(CreateRB, { username: username, prid: prid, csid: csid }), domContainer);

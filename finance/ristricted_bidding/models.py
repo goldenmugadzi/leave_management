@@ -28,13 +28,18 @@ class RistricedBiddings(models.Model):
     closing_date = models.DateField()
     closing_time = models.CharField(max_length=10)
     advert = models.CharField(max_length=400)
+    show_site_visit = models.BooleanField(default=False, null=True, blank=True)
+    show_sample_required = models.BooleanField(default=False, null=True, blank=True)
     pr_number = models.CharField(max_length=100)
     pr_date = models.DateField()
     cs_opened = models.DateField()
     tac_date = models.DateField()
     created_by = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
+    cost_center = models.ForeignKey(CostCenter, on_delete=models.CASCADE, blank=True, null=True)
     section = models.ForeignKey(Sections, on_delete=models.CASCADE, blank=True, null=True)
     region = models.ForeignKey(Regions, on_delete=models.CASCADE, blank=True, null=True)
+    cancelled = models.BooleanField(default=False)
+    additional_notes = models.CharField(max_length=400, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
 class RBRequiredItems(models.Model):

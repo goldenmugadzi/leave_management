@@ -566,7 +566,6 @@ def getUserFMGMRoles(user):
     fm_role, gm_role, procurement_role = False, False, False
     
     user_comparative_schedule_role = user.roles.filter(application=APP_NAME).first()
-    print("user_comparative_schedule_role: ", user_comparative_schedule_role)
 
     if user_comparative_schedule_role.application == APP_NAME:
         if user_comparative_schedule_role.role == "check":
@@ -995,17 +994,8 @@ def get_comperative_schedule_data(request, cs_id):
     
     request_user = request.user
     request_user_profile = UserProfile.objects.filter(id=request_user.id).first()
-    user_comparative_schedule_role = request_user_profile.roles.filter(application=APP_NAME).first()
-    print("user_comparative_schedule_role: ", user_comparative_schedule_role)
-    
-    user_comparative_schedule_role = None
-    for role in request_user_profile.roles.all():
-        print("role id:", role.id)
-        user_ace_role_ = Roles.objects.filter(id=role.id).first() if role.id else None
-        print("role application:", user_ace_role_.application)
-        if user_ace_role_.application == APP_NAME:
-            user_comparative_schedule_role = user_ace_role_
-            
+    user_comparative_schedule_role = request_user_profile.get_user_role_for_application(APP_NAME)
+    print("user_comparative_schedule_role: ", user_comparative_schedule_role)            
 
     cs = ComparativeSchedules.objects.filter(cs_id=cs_id).first()
     pr = None

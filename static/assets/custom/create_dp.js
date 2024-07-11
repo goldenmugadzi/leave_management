@@ -17,16 +17,16 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 var e = React.createElement;
 var domContainer = document.querySelector("#create_comparative_schedule");
 var url = domContainer.getAttribute("data-baseurl");
-// const BASE_URL = "http://localhost:8000/ristricted_bidding";
-var BASE_URL = url + "/ristricted_bidding";
+// const BASE_URL = "http://localhost:8000/direct_purchase";
+var BASE_URL = url + "/direct_purchase";
 
-var CreateRB = function (_React$Component) {
-  _inherits(CreateRB, _React$Component);
+var CreateDP = function (_React$Component) {
+  _inherits(CreateDP, _React$Component);
 
-  function CreateRB(props) {
-    _classCallCheck(this, CreateRB);
+  function CreateDP(props) {
+    _classCallCheck(this, CreateDP);
 
-    var _this = _possibleConstructorReturn(this, (CreateRB.__proto__ || Object.getPrototypeOf(CreateRB)).call(this, props));
+    var _this = _possibleConstructorReturn(this, (CreateDP.__proto__ || Object.getPrototypeOf(CreateDP)).call(this, props));
 
     _this.onGetFileObjectUrl = function (fileData) {
       try {
@@ -78,6 +78,9 @@ var CreateRB = function (_React$Component) {
         var compliance = data.compliance ? data.compliance : [];
         var complianceRemarks = data.complianceRemarks ? data.complianceRemarks : [];
         var rankings = data.rankings ? data.rankings : [];
+        rankings.sort(function (a, b) {
+          return a.rank - b.rank;
+        });
         var committee = data.committee ? data.committee : [];
         var gm_approval = data.gm_approval ? data.gm_approval : null;
         var fm_approval = data.fm_approval ? data.fm_approval : null;
@@ -91,12 +94,14 @@ var CreateRB = function (_React$Component) {
         var closing_time = data.closing_time ? data.closing_time : "";
         var tender_adjudication_committee_date = data.tac_date ? data.tac_date : "";
         var cs_opened = data.cs_opened ? data.cs_opened : false;
+        var additionalNotes = data.additional_notes ? data.additional_notes : "";
 
         var proc_plans = data.proc_plans ? data.proc_plans : [];
         var uom = data.uom ? data.uom : [];
         var suppliers = data.suppliers ? data.suppliers : [];
         var pr_items = data.pr_items ? data.pr_items : [];
         var pr_attachments = data.pr_attachments ? data.pr_attachments : [];
+        console.log("cs items data: ", data.cs_items);
         var cs_items = data.cs_items ? data.cs_items : [];
         var users = data.users ? data.users : [];
         // Sort users by full name (first_name + " " + last_name)
@@ -126,7 +131,11 @@ var CreateRB = function (_React$Component) {
         console.log("gm_approval: ", gm_approval, fm_approval, gm_approval.approval, fm_approval.approval);
         var approvalsComplete = gm_approval.approval !== "" && fm_approval.approval !== "" && gm_approval.approval !== undefined && fm_approval.approval !== undefined;
 
+        var showSiteVisit = data.show_site_visit === true ? "yes" : "no";
+        var showSamples = data.show_samples_required === true ? "yes" : "no";
+
         _this.setState(Object.assign({}, _this.state, (_Object$assign = {
+          additionalNotes: additionalNotes,
           requester_role: requester_role,
           creator: creator,
           created_at: created_at,
@@ -150,7 +159,7 @@ var CreateRB = function (_React$Component) {
           pr_date: pr_date,
           closing_date: closing_date,
           closing_time: closing_time
-        }, _defineProperty(_Object$assign, "ref_date", ref_date), _defineProperty(_Object$assign, "tender_adjudication_committee_date", tender_adjudication_committee_date), _defineProperty(_Object$assign, "advert", advert), _defineProperty(_Object$assign, "advert_url", advert_url), _defineProperty(_Object$assign, "bids", sorted_bids), _defineProperty(_Object$assign, "cs_items", cs_items), _defineProperty(_Object$assign, "compliance", compliance), _defineProperty(_Object$assign, "complianceRemarks", complianceRemarks), _defineProperty(_Object$assign, "rankings", rankings), _defineProperty(_Object$assign, "committeeMembers", committee), _defineProperty(_Object$assign, "gmApproval", gm_approval), _defineProperty(_Object$assign, "fmApproval", fm_approval), _defineProperty(_Object$assign, "pr_items", pr_items), _defineProperty(_Object$assign, "pr_attachments", pr_at_list), _Object$assign)));
+        }, _defineProperty(_Object$assign, "ref_date", ref_date), _defineProperty(_Object$assign, "tender_adjudication_committee_date", tender_adjudication_committee_date), _defineProperty(_Object$assign, "advert", advert), _defineProperty(_Object$assign, "advert_url", advert_url), _defineProperty(_Object$assign, "bids", sorted_bids), _defineProperty(_Object$assign, "cs_items", cs_items), _defineProperty(_Object$assign, "compliance", compliance), _defineProperty(_Object$assign, "complianceRemarks", complianceRemarks), _defineProperty(_Object$assign, "rankings", rankings), _defineProperty(_Object$assign, "committeeMembers", committee), _defineProperty(_Object$assign, "gmApproval", gm_approval), _defineProperty(_Object$assign, "fmApproval", fm_approval), _defineProperty(_Object$assign, "pr_items", pr_items), _defineProperty(_Object$assign, "pr_attachments", pr_at_list), _defineProperty(_Object$assign, "showSamples", showSiteVisit), _defineProperty(_Object$assign, "showSiteVisit", showSamples), _Object$assign)));
       }).catch(function (error) {
         return console.log("error: ", error);
       });
@@ -212,8 +221,13 @@ var CreateRB = function (_React$Component) {
       fetch(BASE_URL + "/create_data/" + pr_id).then(function (response) {
         return response.json();
       }).then(function (data) {
-        console.log("data: ", data);
         if (data && data.success) {
+          var pr_items = data.pr_items ? data.pr_items : [];
+          if (pr_items.length < 1) {
+            // set response message
+            _this.onOpenResponse("Fetch PR Error", "This Purchase Request is either empty or has no items. Please check and try again.", false);
+            return;
+          }
           var scope_of_work = data.scope_of_work ? data.scope_of_work : "";
           var proc_ref = data.proc_ref ? data.proc_ref : "";
           var proc_plan = data.proc_plan ? data.proc_plan : null;
@@ -221,7 +235,6 @@ var CreateRB = function (_React$Component) {
           var currencies = data.currencies ? data.currencies : [];
           var uom = data.uom ? data.uom : "";
           var suppliers = data.suppliers ? data.suppliers : [];
-          var pr_items = data.pr_items ? data.pr_items : [];
           var pr_attachments = data.pr_attachments ? data.pr_attachments : [];
           var _pr_id = data.pr_id ? data.pr_id : "";
           var pr_date = data.pr_date ? data.pr_date : "";
@@ -253,10 +266,9 @@ var CreateRB = function (_React$Component) {
             users: users,
             fetchPR: false
           });
-
-          alert("PR fetched successfully");
+          _this.onOpenResponse("Fetch PR Success", "Purchase Request fetched successfully", true);
         } else {
-          alert("PR Number not found");
+          _this.onOpenResponse("Fetch PR Error", "PR Number not found. Please try again.", false);
         }
       }).catch(function (error) {
         return console.log("error: ", error);
@@ -294,11 +306,30 @@ var CreateRB = function (_React$Component) {
       }));
     };
 
+    _this.onCommitteeSelect = function (name_, username) {
+      var member = _this.state.member;
+      var fullname = "";
+      if (name_ === "memberUserName") {
+        var user = _this.state.users.find(function (user) {
+          return user.username === username;
+        });
+        fullname = user.first_name + " " + user.last_name;
+        member.memberName = fullname;
+        member[name_] = username;
+      }
+      _this.setState(Object.assign({}, _this.state, {
+        member: member,
+        searchedUser: fullname,
+        selectedUser: null,
+        filteredUsers: []
+      }));
+    };
+
     _this.onAddCommitteeMembers = function () {
       var members = _this.state.committeeMembers;
       var member_ = _this.state.member;
       if (member_.memberUserName === "" || member_.memberPosition === "") {
-        alert("Please select a user");
+        _this.onOpenResponse("Add Committee Member Error", "Please select a user", false);
       }
       // check if memberUserName exists
       var member = members.find(function (_member) {
@@ -310,11 +341,11 @@ var CreateRB = function (_React$Component) {
         return _member.memberPosition === _this.state.member.memberPosition;
       });
       if (member) {
-        alert("Committee Member already added.");
+        _this.onOpenResponse("Add Committee Member Error", "Committee Member already added.", false);
       } else if (currentUserFlag) {
-        alert("You cannot add yourself. Please choose another user.");
+        _this.onOpenResponse("Add Committee Member Error", "You cannot add yourself. Please choose another user.", false);
       } else if (positionFlag) {
-        alert(_this.state.member.memberPosition + ", already exists, please add a different one.");
+        _this.onOpenResponse("Add Committee Member Error", _this.state.member.memberPosition + ", already exists, please add a different one.", false);
       } else {
         members.push(_this.state.member);
         _this.setState(Object.assign({}, _this.state, {
@@ -358,9 +389,9 @@ var CreateRB = function (_React$Component) {
       }).then(function (data) {
         console.log("data: ", data);
         if (data.success) {
-          alert("Committee member deleted successfully");
+          _this.onOpenResponse("Remove Committee Member Success", "Committee member removed successfully", true);
         } else {
-          alert("Error deleting Committee member");
+          _this.onOpenResponse("Remove Committee Member Error", "Error deleting Committee member", false);
         }
       });
     };
@@ -390,7 +421,7 @@ var CreateRB = function (_React$Component) {
       var form_data = new FormData();
       console.log("approval: ", approval, justification);
       if (approval === "Rejected" && justification === "") {
-        alert("Please enter justification");
+        _this.onOpenResponse("Committee Member Approval Error", "Justification is required. Please add justification before submitting.", false);
         return;
       }
       form_data.append("cs_id", _this.state.cs_id);
@@ -427,9 +458,10 @@ var CreateRB = function (_React$Component) {
             committeeMembers: members
           }));
           console.log("committeeApproval: ", committeeApproval, justification);
-          alert("Approval Done!!");
+          // @TODO: check committee approval value
+          _this.onOpenResponse("Committee Member Approval Success", "You have successfully approved this schedule.", true);
           // reload page
-          window.location.reload();
+          window.location.href = BASE_URL + "/comperative_schedule/comperative_schedules";
           //   if (committeeApproval === "Approved") {
           //     alert("Committee approved successfully");
           //     // reload page
@@ -442,8 +474,10 @@ var CreateRB = function (_React$Component) {
           //     // window.location.reload();
           //   }
         } else {
-          alert("Error approving Committee");
+          _this.onOpenResponse("Committee Member Approval Error", "Failed to submit your approval please try again.", false);
         }
+      }).catch(function (err) {
+        return console.log("onCommitteeApprove error: ", err);
       });
     };
 
@@ -466,9 +500,9 @@ var CreateRB = function (_React$Component) {
       }).then(function (data) {
         console.log("data: ", data);
         if (data.success) {
-          alert("Committee saved successfully");
+          _this.onOpenResponse("Submit Committee Member Success", "You have successfully submitted this committee", true);
         } else {
-          alert("Error saving Committee");
+          _this.onOpenResponse("Submit Committee Member Error", "Failed to submit this committee please try again", false);
         }
       });
     };
@@ -476,7 +510,7 @@ var CreateRB = function (_React$Component) {
     _this.onApprovalApprove = function (role, username, approval, justification) {
       console.log("approval: ", approval, justification);
       if (approval === "Rejected" && justification === "") {
-        alert("Please enter justification");
+        _this.onOpenResponse("Approval Error", "Justification is required. Please add justification before submitting.", false);
         return;
       }
       var form_data = new FormData();
@@ -512,15 +546,16 @@ var CreateRB = function (_React$Component) {
             });
           }
           if (_approval === "Approved") {
-            alert("Approval successfull");
+            _this.onOpenResponse("Approval Success", "You have successfully approved this RFQ.", true);
+
             // reload page
-            window.location.reload();
+            window.location.href = BASE_URL + "/comperative_schedule/comperative_schedules";
           } else {
-            alert("Rejected successfully");
-            window.location.reload();
+            _this.onOpenResponse("Approval Success", "You have successfully rejected this RFQ.", true);
+            window.location.href = BASE_URL + "/comperative_schedule/comperative_schedules";
           }
         } else {
-          alert("Error approving Approval");
+          _this.onOpenResponse("Approval Error", "Failed to submit your approval. Please try again.", false);
         }
       });
     };
@@ -552,7 +587,7 @@ var CreateRB = function (_React$Component) {
       }).then(function (data) {
         console.log("data: ", data);
         if (data.success) {
-          alert("Supplier saved successfully");
+          _this.onOpenResponse("Add New Supplier Success", "New supplier added successfully", true);
           _this.setState(Object.assign({}, _this.state, {
             onAddSupplier: false,
             newSupplier: {
@@ -563,7 +598,7 @@ var CreateRB = function (_React$Component) {
             }
           }));
         } else {
-          alert("Error saving Supplier");
+          _this.onOpenResponse("Add New Supplier Error", "Failed to add new supplier, please try again.", false);
         }
       });
     };
@@ -589,15 +624,12 @@ var CreateRB = function (_React$Component) {
         // update item selected to false
         item.ordered = false;
         // update pr_items
-        var pr_items = [];
-        if (_this.state.pr_items && _this.state.pr_items.length > 0) {
-          pr_items = _this.state.pr_items.map(function (_item) {
-            if (_item.id === item_id) {
-              return item;
-            }
-            return _item;
-          });
-        }
+        var pr_items = _this.state.pr_items.map(function (_item) {
+          if (_item.id === item_id) {
+            return item;
+          }
+          return _item;
+        });
         // remove item
         var items = _this.state.cs_items.filter(function (item) {
           return item.id !== item_id;
@@ -611,23 +643,16 @@ var CreateRB = function (_React$Component) {
         var _item2 = _this.state.pr_items.find(function (item) {
           return item.id === item_id;
         });
-        if (_item2.item_required === undefined || _item2.quantity === undefined || _item2.unit_of_measurement === undefined) {
-          alert("Item selected has missing fields. Please correct the PR items first.");
-          return;
-        }
         // update pr_item selected to added
         _item2.ordered = true;
-        _item2.item_required = _item2.item_required;
+        _item2.item_name = _item2.item_required;
         // update pr_items
-        var _pr_items = [];
-        if (_this.state.pr_items && _this.state.pr_items.length > 0) {
-          _pr_items = _this.state.pr_items.map(function (_item) {
-            if (_item.id === item_id) {
-              return _item2;
-            }
-            return _item;
-          });
-        }
+        var _pr_items = _this.state.pr_items.map(function (_item) {
+          if (_item.id === item_id) {
+            return _item2;
+          }
+          return _item;
+        });
 
         var item_count = _this.state.cs_item_count + 1;
         _this.setState(Object.assign({}, _this.state, {
@@ -640,7 +665,7 @@ var CreateRB = function (_React$Component) {
 
     _this.onSubmitCSItems = function () {
       if (_this.state.cs_items.length === 0) {
-        alert("Please add items to the Comparative Schedule");
+        _this.onOpenResponse("Submit Schedule Items Error", "Please add items to the Comparative Schedule", false);
         return;
       }
       var form_data = new FormData();
@@ -662,9 +687,9 @@ var CreateRB = function (_React$Component) {
       }).then(function (data) {
         console.log("data: ", data);
         if (data.success) {
-          alert("Items saved successfully");
+          _this.onOpenResponse("Submit Schedule Items Success", "Items submitted successfully", true);
         } else {
-          alert("Error saving Items");
+          _this.onOpenResponse("Submit Schedule Items Error", "Failed to submit schedule items, please try again.", false);
         }
       });
       _this.setState(Object.assign({}, _this.state, {
@@ -786,13 +811,13 @@ var CreateRB = function (_React$Component) {
     _this.onCurrentBidSave = function () {
       var currentBid = _this.state.currentBid;
       if (currentBid.supplier_name === "" || currentBid.supplier_name === undefined) {
-        alert("Please select a supplier");
+        _this.onOpenResponse("Submit Bid Error", "Please select a supplier", false);
         return;
       } else if (currentBid.bid_date === "" || currentBid.bid_date === undefined) {
-        alert("Please select a bid date");
+        _this.onOpenResponse("Submit Bid Error", "Please select a bid date", false);
         return;
       } else if (currentBid.bid_document === "" || currentBid.bid_document === undefined) {
-        alert("Please select a bid document");
+        _this.onOpenResponse("Submit Bid Error", "Please select a bid document", false);
         return;
       } else {
         // check if current bid already exists
@@ -818,7 +843,7 @@ var CreateRB = function (_React$Component) {
             });
 
             if (missingFields.length > 0) {
-              alert("Please fill in all required fields");
+              _this.onOpenResponse("Submit Bid Error", "Please fill in all required fields", false);
               return;
             }
             currentBid.items = items;
@@ -853,7 +878,7 @@ var CreateRB = function (_React$Component) {
             });
 
             if (_missingFields.length > 0) {
-              alert("Please fill in all required fields");
+              _this.onOpenResponse("Submit Bid Error", "Please fill in all required fields", false);
               return;
             }
             // update current bid items
@@ -865,52 +890,10 @@ var CreateRB = function (_React$Component) {
             _bids.sort(function (a, b) {
               return a.bid_count - b.bid_count;
             });
-
-            // check if compliance for supplier exists
-            var compliances = _this.state.compliance;
-            var compliance = compliances.find(function (compliance) {
-              return compliance.supplier_name === currentBid.supplier_name;
-            });
-            var compliance_ = {};
-            if (!compliance) {
-              compliance_ = {
-                bid_no: currentBid.bid_count,
-                supplier: currentBid.supplier,
-                supplier_name: currentBid.supplier_name,
-                payment_terms: false,
-                bid_validity: false,
-                delivery_period: false,
-                technical_specifications: false,
-                valid_tax_clearance: false,
-                registered_with_praz: false,
-                tax_status: false,
-                site_visit: false,
-                samples_required: false,
-                decision: false,
-                reject: true,
-                remarks: ""
-              };
-              compliances.push(compliance_);
-            }
-
-            var complianceRemarks = _this.state.complianceRemarks;
-            var complianceRemark = complianceRemarks.find(function (complianceRemark) {
-              return complianceRemark.supplier_name === currentBid.supplier_name;
-            });
-
-            if (!complianceRemark) {
-              var complianceRemark_ = {
-                bid_count: currentBid.bid_count,
-                supplier: currentBid.supplier,
-                supplier_name: currentBid.supplier_name,
-                remarks: ""
-              };
-              complianceRemarks.push(complianceRemark_);
-            }
-            _this.onSaveBid(currentBid, _bids, compliance, complianceRemarks);
+            _this.onSaveBid(currentBid, _bids);
           }
         } else {
-          alert("Please add items to the bid");
+          _this.onOpenResponse("Submit Bid Error", "Please add items to the bid", false);
         }
       }
     };
@@ -942,15 +925,57 @@ var CreateRB = function (_React$Component) {
       }).then(function (data) {
         console.log("data: ", data);
         if (data.success) {
+          // check if compliance for supplier exists
+          var _compliances = _this.state.compliance;
+          var compliance = _compliances.find(function (compliance) {
+            return compliance.supplier_name === currentBid.supplier_name;
+          });
+          var compliance_ = {};
+          if (!compliance) {
+            compliance_ = {
+              bid_no: currentBid.bid_count,
+              supplier: currentBid.supplier,
+              supplier_name: currentBid.supplier_name,
+              payment_terms: false,
+              bid_validity: false,
+              delivery_period: false,
+              technical_specifications: false,
+              valid_tax_clearance: false,
+              registered_with_praz: false,
+              tax_status: false,
+              site_visit: false,
+              samples_required: false,
+              decision: false,
+              reject: true,
+              remarks: ""
+            };
+            _compliances.push(compliance_);
+          }
+
+          var _complianceRemarks = _this.state.complianceRemarks;
+          var complianceRemark = _complianceRemarks.find(function (complianceRemark) {
+            return complianceRemark.supplier_name === currentBid.supplier_name;
+          });
+
+          if (!complianceRemark) {
+            var complianceRemark_ = {
+              bid_count: currentBid.bid_count,
+              supplier: currentBid.supplier,
+              supplier_name: currentBid.supplier_name,
+              remarks: ""
+            };
+            _complianceRemarks.push(complianceRemark_);
+          }
+
           _this.setState(Object.assign({}, _this.state, {
             bids: bids ? bids : _this.state.bids,
-            compliance: compliances ? compliances : _this.state.compliance,
-            complianceRemarks: complianceRemarks ? complianceRemarks : _this.state.complianceRemarks
+            compliance: _compliances ? _compliances : _this.state.compliance,
+            complianceRemarks: _complianceRemarks ? _complianceRemarks : _this.state.complianceRemarks
           }));
 
-          alert("Bid saved successfully");
+          _this.onOpenResponse("Submit Bid Successful", "Bid submitted successfully", true);
         } else {
-          alert("Error saving Bid");
+          _this.onOpenResponse("Submit Bid Error", "Failed to submit bid, please try again", false);
         }
       }).catch(function (err) {
         return console.log("onSaveBid: ", err);
@@ -964,11 +989,11 @@ var CreateRB = function (_React$Component) {
 
     _this.onSaveSchedule = function () {
       if (!_this.state.currency || !_this.state.proc_ref || !_this.state.scope_of_work || !_this.state.pr_number || !_this.state.pr_date || !_this.state.closing_date || !_this.state.ref_date || !_this.state.closing_time || !_this.state.date_tender_opened || !_this.state.tender_adjudication_committee_date) {
-        alert("Please fill in all required fields");
+        _this.onOpenResponse("Submit Schedule Error", "Please fill in all required fields", false);
         return;
       }
       if (_this.state.pr_items.length === 0) {
-        alert("Cannot create a Comparative Schedule without Purchase Request items.");
+        _this.onOpenResponse("Submit Schedule Error", "Cannot create a Comparative Schedule without Purchase Request items.", false);
         return;
       }
       var form_data = new FormData();
@@ -1000,13 +1025,13 @@ var CreateRB = function (_React$Component) {
       }).then(function (data) {
         console.log("comperative schedule saved data: ", data);
         if (data.success) {
-          alert("Comparative Schedule saved successfully" + " " + data.cs_id);
+          _this.onOpenResponse("Submit Schedule Successful", "Comparative Schedule saved successfully", true);
           _this.setState(Object.assign({}, _this.state, {
             cs_id: data.cs_id,
             cs_owner: data.cs_owner
           }));
         } else {
-          alert("Error saving Comparative Schedule");
+          _this.onOpenResponse("Submit Schedule Error", "Failed to submit schedule, please try again.", false);
         }
       }).catch(function (err) {
         return console.log("onSaveSchedule: ", err);
@@ -1015,11 +1040,11 @@ var CreateRB = function (_React$Component) {
 
     _this.onUpdateSchedule = function () {
       if (_this.state.cs_id === "" || _this.state.cs_id === undefined) {
-        alert("Please save the Comparative Schedule first");
+        _this.onOpenResponse("Update Schedule Error", "Please save the Comparative Schedule first", false);
         return;
       }
       if (!_this.state.currency || !_this.state.proc_ref || !_this.state.scope_of_work || !_this.state.pr_number || !_this.state.pr_date || !_this.state.closing_date || !_this.state.ref_date || !_this.state.closing_time || !_this.state.date_tender_opened || !_this.state.tender_adjudication_committee_date) {
-        alert("Please fill in all required fields");
+        _this.onOpenResponse("Update Schedule Error", "Please fill in all required fields", false);
         return;
       }
       var form_data = new FormData();
@@ -1052,9 +1077,9 @@ var CreateRB = function (_React$Component) {
       }).then(function (data) {
         console.log("data: ", data);
         if (data.success) {
-          alert("Comparative Schedule updated successfully" + " " + data.cs_id);
+          _this.onOpenResponse("Update Schedule Successful", "Comparative Schedule updated successfully", false);
         } else {
-          alert("Error updating Comparative Schedule");
+          _this.onOpenResponse("Update Schedule Error", "Failed to submit schedule, please try again.", false);
         }
       }).catch(function (err) {
         return console.log("onUpdateSchedule: ", err);
@@ -1062,6 +1087,8 @@ var CreateRB = function (_React$Component) {
     };
 
     _this.onDeleteBidModal = function (bid_count, supplier_name) {
+      _this.onOpenResponse("Delete Bid", "Are you sure you want to delete this bid? This action cannot be undone", false);
+
       // reset bid no index
       var bid_count_ = _this.state.bid_count - 1;
       var bids = _this.state.bids.filter(function (bid) {
@@ -1097,9 +1124,25 @@ var CreateRB = function (_React$Component) {
       }).then(function (data) {
         console.log("data: ", data);
         if (data.success) {
-          alert("Bid deleted successfully");
+          var compliances = _this.state.compliance;
+          // delete compliance if bid_no and supplier_name
+          var compliance = compliances.filter(function (compliance_) {
+            return compliance_.supplier_name !== supplier_name && compliance_.bid_no !== bid_count;
+          });
+          var complianceRemarks = _this.state.complianceRemarks;
+          var complianceRemark = complianceRemarks.filter(function (complianceRemark_) {
+            return complianceRemark_.supplier_name !== supplier_name && complianceRemark_.bid_no !== bid_count;
+          });
+          _this.setState(Object.assign({
+            compliance: compliance,
+            complianceRemarks: complianceRemark
+          }, _this.state));
+          _this.onOpenResponse("Delete Bid Successful", "Bid deleted successfully", true);
         } else {
-          alert("Error deleting Bid");
+          _this.onOpenResponse("Delete Bid Error", "Failed to delete schedule", false);
+        }
+        if (!_this.state.response.open) {
+          window.location.reload();
         }
       });
     };
@@ -1146,36 +1189,52 @@ var CreateRB = function (_React$Component) {
     _this.onAddComplianceTable = function () {
       // add bid compliance
       if (_this.state.bids.length === 0) {
-        alert("Please add bids first");
+        _this.onOpenResponse("Add Compliance Table Error", "Please add bids first", false);
         return;
       }
       var compliances = _this.state.bids.map(function (bid) {
-        return {
-          bid_no: bid.bid_count,
-          supplier: bid.supplier,
-          supplier_name: bid.supplier_name,
-          payment_terms: false,
-          bid_validity: false,
-          delivery_period: false,
-          technical_specifications: false,
-          valid_tax_clearance: false,
-          registered_with_praz: false,
-          tax_status: false,
-          site_visit: false,
-          samples_required: false,
-          decision: false,
-          reject: true,
-          remarks: ""
-        };
+        // check is compliance already exists
+        var comp = _this.state.compliance.find(function (compliance) {
+          return compliance.supplier_name === bid.supplier_name;
+        });
+        if (comp) {
+          return comp;
+        } else {
+          return {
+            bid_no: bid.bid_count,
+            supplier: bid.supplier,
+            supplier_name: bid.supplier_name,
+            payment_terms: false,
+            bid_validity: false,
+            delivery_period: false,
+            technical_specifications: false,
+            valid_tax_clearance: false,
+            registered_with_praz: false,
+            tax_status: false,
+            site_visit: false,
+            samples_required: false,
+            decision: false,
+            reject: true,
+            remarks: ""
+          };
+        }
       });
 
       var complianceRemarks = _this.state.bids.map(function (bid) {
-        return {
-          bid_count: bid.bid_count,
-          supplier: bid.supplier,
-          supplier_name: bid.supplier_name,
-          remarks: ""
-        };
+        // check is compliance already exists
+        var comp = _this.state.complianceRemarks.find(function (compR) {
+          return compR.supplier_name === bid.supplier_name;
+        });
+        if (comp) {
+          return comp;
+        } else {
+          return {
+            bid_count: bid.bid_count,
+            supplier: bid.supplier,
+            supplier_name: bid.supplier_name,
+            remarks: ""
+          };
+        }
       });
 
       _this.setState(Object.assign({}, _this.state, {
@@ -1195,7 +1254,7 @@ var CreateRB = function (_React$Component) {
       console.log("name: ", name, "value: ", value);
       var compliance = _this.state.compliance;
       if (compliance.length === 0) {
-        alert("Please add bids first");
+        _this.onOpenResponse("Add Compliance Table Error", "Please add bids first", false);
         return;
       }
       console.log("showSamples: ", _this.state.showSamples, "showSiteVisit: ", _this.state.showSiteVisit, value, name);
@@ -1259,81 +1318,48 @@ var CreateRB = function (_React$Component) {
       console.log("name: ", name, "checked: ", checked);
       var compliance = _this.state.compliance;
       compliance[index][name] = checked;
-      // // filter decision and reject from list
-      // let _compliance = {};
-      // if (this.state.showSamples && this.state.showSiteVisit) {
-      //   _compliance = {
-      //     payment_terms: compliance[index].payment_terms,
-      //     bid_validity: compliance[index].bid_validity,
-      //     delivery_period: compliance[index].delivery_period,
-      //     technical_specifications: compliance[index].technical_specifications,
-      //     valid_tax_clearance: compliance[index].valid_tax_clearance,
-      //     registered_with_praz: compliance[index].registered_with_praz,
-      //     site_visit: compliance[index].site_visit,
-      //     samples_required: compliance[index].samples_required,
-      //   };
-      // } else if (this.state.showSamples && !this.state.showSiteVisit) {
-      //   _compliance = {
-      //     payment_terms: compliance[index].payment_terms,
-      //     bid_validity: compliance[index].bid_validity,
-      //     delivery_period: compliance[index].delivery_period,
-      //     technical_specifications: compliance[index].technical_specifications,
-      //     valid_tax_clearance: compliance[index].valid_tax_clearance,
-      //     registered_with_praz: compliance[index].registered_with_praz,
-      //     samples_required: compliance[index].samples_required,
-      //   };
-      // } else if (!this.state.showSamples && this.state.showSiteVisit) {
-      //   _compliance = {
-      //     payment_terms: compliance[index].payment_terms,
-      //     bid_validity: compliance[index].bid_validity,
-      //     delivery_period: compliance[index].delivery_period,
-      //     technical_specifications: compliance[index].technical_specifications,
-      //     valid_tax_clearance: compliance[index].valid_tax_clearance,
-      //     registered_with_praz: compliance[index].registered_with_praz,
-      //     site_visit: compliance[index].site_visit,
-      //   };
-      // } else {
-      //   _compliance = {
-      //     payment_terms: compliance[index].payment_terms,
-      //     bid_validity: compliance[index].bid_validity,
-      //     delivery_period: compliance[index].delivery_period,
-      //     technical_specifications: compliance[index].technical_specifications,
-      //     valid_tax_clearance: compliance[index].valid_tax_clearance,
-      //     registered_with_praz: compliance[index].registered_with_praz,
-      //   };
-      // }
 
-      // // set compliance[index]['decision'] to true if all compliance are true
-      // let compliance_values = Object.values(_compliance);
-      // console.log("compliances: ", compliance_values);
-      // let decision = compliance_values.every((value) => value === true);
-      var _compliance = {
-        payment_terms: compliance[index].payment_terms,
-        bid_validity: compliance[index].bid_validity,
-        delivery_period: compliance[index].delivery_period,
-        technical_specifications: compliance[index].technical_specifications,
-        valid_tax_clearance: compliance[index].valid_tax_clearance,
-        registered_with_praz: compliance[index].registered_with_praz,
-        site_visit: compliance[index].site_visit,
-        samples_required: compliance[index].samples_required
-      };
+      if (name === "decision") {
+        compliance[index]["reject"] = !checked;
+        compliance[index]["decision"] = checked;
+        compliance[index]["payment_terms"] = checked;
+        compliance[index]["bid_validity"] = checked;
+        compliance[index]["delivery_period"] = checked;
+        compliance[index]["technical_specifications"] = checked;
+        compliance[index]["valid_tax_clearance"] = checked;
+        compliance[index]["registered_with_praz"] = checked;
+        compliance[index]["tax_status"] = checked;
+        compliance[index]["site_visit_done"] = checked;
+        compliance[index]["samples_delivered"] = checked;
+      } else {
+        var _compliance = {
+          payment_terms: compliance[index].payment_terms,
+          bid_validity: compliance[index].bid_validity,
+          delivery_period: compliance[index].delivery_period,
+          technical_specifications: compliance[index].technical_specifications,
+          valid_tax_clearance: compliance[index].valid_tax_clearance,
+          registered_with_praz: compliance[index].registered_with_praz,
+          site_visit: compliance[index].site_visit,
+          samples_required: compliance[index].samples_required
+        };
 
-      // set compliance_['decision'] to true if all compliance are true
-      var allValuesTrue = true;
-      for (var key in _compliance) {
-        if (_compliance.hasOwnProperty(key)) {
-          if (key === "site_visit" && _this.state.showSiteVisit === "no") {
-            continue;
-          } else if (key === "samples_required" && _this.state.showSamples === "no") {
-            continue;
-          } else if (!_compliance[key]) {
-            allValuesTrue = false;
-            break;
+        // set compliance_['decision'] to true if all compliance are true
+        var allValuesTrue = true;
+        for (var key in _compliance) {
+          if (_compliance.hasOwnProperty(key)) {
+            if (key === "site_visit" && _this.state.showSiteVisit === "no") {
+              continue;
+            } else if (key === "samples_required" && _this.state.showSamples === "no") {
+              continue;
+            } else if (!_compliance[key]) {
+              allValuesTrue = false;
+              break;
+            }
           }
         }
+        compliance[index]["decision"] = allValuesTrue;
+        compliance[index]["reject"] = !allValuesTrue;
       }
-      compliance[index]["decision"] = allValuesTrue;
-      compliance[index]["reject"] = !allValuesTrue;
 
       _this.setState(Object.assign({}, _this.state, {
         compliance: compliance
@@ -1369,6 +1395,8 @@ var CreateRB = function (_React$Component) {
     _this.onSaveCompliance = function () {
       var form_data = new FormData();
       form_data.append("cs_id", _this.state.cs_id);
+      form_data.append("show_site_visit", _this.state.showSiteVisit);
+      form_data.append("show_samples_required", _this.state.showSamples);
       form_data.append("compliance", JSON.stringify({
         compliance: _this.state.compliance
       }));
@@ -1388,9 +1416,9 @@ var CreateRB = function (_React$Component) {
       }).then(function (data) {
         console.log("data: ", data);
         if (data.success) {
-          alert("Compliance saved successfully");
+          _this.onOpenResponse("Submit Compliances Successful", "Compliances submitted successfully", true);
         } else {
-          alert("Error saving Compliance");
+          _this.onOpenResponse("Submit Compliances Error", "Failed to submit compiances, please try again.", false);
         }
       });
     };
@@ -1416,9 +1444,91 @@ var CreateRB = function (_React$Component) {
             rankings: rankings,
             rankingTable: true
           }));
-          alert("Schedule closed successfully");
+          _this.onOpenResponse("Rank Bids Successful", "Bids ranked successfully", true);
         } else {
-          alert("Error saving Schedule");
+          _this.onOpenResponse("Rank Bids Error", "Failed to rank bids, please try again", false);
+        }
+      });
+    };
+
+    _this.onOpenResponse = function (title, message, success) {
+      _this.setState(Object.assign({}, _this.state, {
+        response: {
+          open: true,
+          title: title,
+          message: message,
+          success: success
+        }
+      }));
+    };
+
+    _this.onCloseResponse = function () {
+      _this.setState(Object.assign({}, _this.state, {
+        response: {
+          open: false,
+          success: false,
+          message: "",
+          title: ""
+        }
+      }));
+    };
+
+    _this.onSearchUser = function (event) {
+      console.log("searching user ...");
+      var _event$target11 = event.target,
+          name = _event$target11.name,
+          value = _event$target11.value;
+
+      console.log("valued: ", value);
+
+      if (value.length > 3) {
+        var filteredOptions = _this.state.users.filter(function (user) {
+          console.log("user: ", user);
+          return (user.first_name.toLowerCase() || "").includes(value.toLowerCase()) || (user.last_name.toLowerCase() || "").includes(value.toLowerCase());
+        });
+
+        _this.setState(Object.assign({}, _this.state, {
+          searchedUser: value,
+          filteredUsers: filteredOptions
+        }));
+      } else {
+        _this.setState(Object.assign({}, _this.state, {
+          searchedUser: value,
+          filteredUsers: []
+        }));
+      }
+    };
+
+    _this.onAdditionalNotesChange = function (event) {
+      var _event$target12 = event.target,
+          name = _event$target12.name,
+          value = _event$target12.value;
+
+      _this.setState(Object.assign({}, _this.state, {
+        additionalNotes: value
+      }));
+    };
+
+    _this.onAdditionalNotesSubmit = function () {
+      var form_data = new FormData();
+      form_data.append("cs_id", _this.state.cs_id);
+      form_data.append("additional_notes", _this.state.additionalNotes);
+      form_data.append("csrfmiddlewaretoken", _this.getCookie("csrftoken"));
+
+      fetch(BASE_URL + "/save_additional_notes", {
+        method: "POST",
+        headers: {
+          "X-CSRFToken": _this.getCookie("csrftoken")
+        },
+        body: form_data
+      }).then(function (response) {
+        return response.json();
+      }).then(function (data) {
+        console.log("data: ", data);
+        if (data.success) {
+          _this.onOpenResponse("Additional Notes Saved", "Additional notes saved successfully", true);
+        } else {
+          _this.onOpenResponse("Additional Notes Error", "Failed to save additional notes, please try again", false);
         }
       });
     };
@@ -1479,6 +1589,10 @@ var CreateRB = function (_React$Component) {
       approvalsComplete: false,
       approvalsJustificationModal: false,
       users: [],
+      selectUserOptions: [{ value: "chairman", label: "Chairman" }, { value: "finance", label: "Finance" }, { value: "procurement", label: "Procurement" }, { value: "user", label: "User" }, { value: "other", label: "Other" }],
+      searchedUser: "",
+      selectedUser: null,
+      filteredUsers: [],
       currentApprover: {
         username: "",
         justification: "",
@@ -1499,8 +1613,15 @@ var CreateRB = function (_React$Component) {
         supplier_contact: "",
         supplier_email: "",
         supplier_address: ""
-      }
+      },
+      response: {
+        open: false,
+        message: "",
+        title: ""
+      },
+      additionalNotes: ""
     };
+
     _this.getCreateData = _this.getCreateData.bind(_this);
     _this.onAddBid = _this.onAddBid.bind(_this);
     _this.onUpdateBidModal = _this.onUpdateBidModal.bind(_this);
@@ -1515,10 +1636,12 @@ var CreateRB = function (_React$Component) {
     _this.onApprovalJustificationModal = _this.onApprovalJustificationModal.bind(_this);
     _this.onApprovalJustificationChange = _this.onApprovalJustificationChange.bind(_this);
     _this.onSupplierChange = _this.onSupplierChange.bind(_this);
+    _this.onSearchUser = _this.onSearchUser.bind(_this);
+    _this.onCommitteeSelect = _this.onCommitteeSelect.bind(_this);
     return _this;
   }
 
-  _createClass(CreateRB, [{
+  _createClass(CreateDP, [{
     key: "componentDidMount",
     value: function componentDidMount() {
       console.log("props: ", this.props);
@@ -1544,18 +1667,18 @@ var CreateRB = function (_React$Component) {
   }, {
     key: "onSelectChange",
     value: function onSelectChange(name_, event) {
-      var _event$target11 = event.target,
-          name = _event$target11.name,
-          value = _event$target11.value;
+      var _event$target13 = event.target,
+          name = _event$target13.name,
+          value = _event$target13.value;
 
       this.setState(Object.assign({}, this.state, _defineProperty({}, name_, value)));
     }
   }, {
     key: "onFilterSelectCenters",
     value: function onFilterSelectCenters(name_, event) {
-      var _event$target12 = event.target,
-          name = _event$target12.name,
-          value = _event$target12.value;
+      var _event$target14 = event.target,
+          name = _event$target14.name,
+          value = _event$target14.value;
 
       if (name_ === "region") {
         var dist = this.state.allDistricts.filter(function (_district) {
@@ -1624,6 +1747,106 @@ var CreateRB = function (_React$Component) {
       var approvalsTable = null;
       var rejectApprovalJustification = null;
       var supplierModal = null;
+      var responseModal = null;
+      var additionalInfo = null;
+
+      if (this.state.response.open) {
+        responseModal = React.createElement(
+          "div",
+          { className: "fixed inset-0 z-50 overflow-y-auto" },
+          React.createElement(
+            "div",
+            { className: "flex items-end justify-center min-h-screen px-4 text-center md:items-center sm:block sm:p-0" },
+            React.createElement("div", {
+              enter: "transition ease-out duration-300 transform",
+              enterStart: "opacity-0",
+              enterEnd: "opacity-100",
+              leave: "transition ease-in duration-200 transform",
+              leaveStart: "opacity-100",
+              leaveEnd: "opacity-0",
+              className: "fixed inset-0 transition-opacity bg-gray-500 bg-opacity-40"
+            }),
+            React.createElement(
+              "div",
+              {
+                enter: "transition ease-out duration-300 transform",
+                enterStart: "opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95",
+                enterEnd: "opacity-100 translate-y-0 sm:scale-100",
+                leave: "transition ease-in duration-200 transform",
+                leaveStart: "opacity-100 translate-y-0 sm:scale-100",
+                leaveEnd: "opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95",
+                className: "inline-block w-full max-w-xl p-8 my-20 overflow-hidden text-left transition-all transform bg-white rounded-lg shadow-xl 2xl:max-w-2xl"
+              },
+              React.createElement(
+                "div",
+                { className: "flex items-center justify-between space-x-4" },
+                React.createElement(
+                  "h1",
+                  { className: "text-xl font-medium text-gray-800" },
+                  this.state.response.title
+                ),
+                React.createElement(
+                  "button",
+                  {
+                    type: "button",
+                    onClick: this.onCloseResponse,
+                    className: "text-gray-600 focus:outline-none hover:text-gray-700"
+                  },
+                  React.createElement(
+                    "svg",
+                    {
+                      xmlns: "http://www.w3.org/2000/svg",
+                      className: "w-6 h-6",
+                      fill: "none",
+                      viewBox: "0 0 24 24",
+                      stroke: "currentColor"
+                    },
+                    React.createElement("path", {
+                      strokeLinecap: "round",
+                      strokeLinejoin: "round",
+                      strokeWidth: "2",
+                      d: "M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
+                    })
+                  )
+                )
+              ),
+              React.createElement(
+                "p",
+                {
+                  className: "mt-5 text-sm p-2 rounded-md " + (this.state.response.success ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700")
+                },
+                this.state.response.message
+              ),
+              React.createElement(
+                "form",
+                null,
+                React.createElement(
+                  "div",
+                  { className: "flex justify-evenly mt-6" },
+                  React.createElement(
+                    "button",
+                    {
+                      type: "button",
+                      onClick: this.onCloseResponse,
+                      className: "px-3 py-2 text-sm tracking-wide text-gulf-blue-900 capitalize transition-colors duration-200 transform focus:outline-none focus:ring-opacity-50"
+                    },
+                    "Cancel"
+                  ),
+                  React.createElement(
+                    "button",
+                    {
+                      type: "button",
+                      onClick: this.onCloseResponse,
+                      className: "px-3 py-2 text-sm tracking-wide text-white capitalize transition-colors duration-200 transform bg-gulf-blue-600 rounded-md dark:bg-gulf-blue-800 dark:hover:bg-gulf-blue-700 dark:focus:bg-gulf-blue-700 hover:bg-gulf-blue-600 focus:outline-none focus:bg-gulf-blue-500 focus:ring focus:ring-gulf-blue-300 focus:ring-opacity-50"
+                    },
+                    "DISMISS"
+                  )
+                )
+              )
+            )
+          )
+        );
+      }
 
       if (this.state.onAddSupplier) {
         supplierModal = React.createElement(
@@ -2022,17 +2245,17 @@ var CreateRB = function (_React$Component) {
                     React.createElement(
                       "th",
                       { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
-                      "Select"
-                    ),
-                    React.createElement(
-                      "th",
-                      { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
                       "Item"
                     ),
                     React.createElement(
                       "th",
                       { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
                       "Quantity"
+                    ),
+                    React.createElement(
+                      "th",
+                      { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                      "Action"
                     )
                   )
                 ),
@@ -2046,6 +2269,16 @@ var CreateRB = function (_React$Component) {
                       React.createElement(
                         "td",
                         { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                        item.item_required
+                      ),
+                      React.createElement(
+                        "td",
+                        { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                        item.quantity
+                      ),
+                      React.createElement(
+                        "td",
+                        { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
                         React.createElement("input", {
                           type: "checkbox",
                           checked: item.ordered ? item.ordered : false,
@@ -2053,16 +2286,6 @@ var CreateRB = function (_React$Component) {
                             return _this2.onAddCSItem(item.id, item.ordered);
                           }
                         })
-                      ),
-                      React.createElement(
-                        "td",
-                        { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
-                        item.item_required
-                      ),
-                      React.createElement(
-                        "td",
-                        { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
-                        item.quantity
                       )
                     );
                   })
@@ -2944,8 +3167,13 @@ var CreateRB = function (_React$Component) {
                       },
                       disabled: this.state.username === this.state.cs_owner || this.state.cs_owner === "" ? false : true,
                       autoComplete: "site_visit",
-                      className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
+                      className: "block w-full rounded-md border-0 py-2 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
                     },
+                    this.state.showSiteVisit ? React.createElement(
+                      "option",
+                      { value: this.state.showSiteVisit },
+                      this.state.showSiteVisit
+                    ) : "",
                     React.createElement(
                       "option",
                       { value: "" },
@@ -2991,8 +3219,13 @@ var CreateRB = function (_React$Component) {
                         },
                         disabled: this.state.username === this.state.cs_owner || this.state.cs_owner === "" ? false : true,
                         autoComplete: "samples",
-                        className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
+                        className: "block w-full rounded-md border-0 py-2 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
                       },
+                      this.state.showSamples ? React.createElement(
+                        "option",
+                        { value: this.state.showSamples },
+                        this.state.showSamples
+                      ) : "",
                       React.createElement(
                         "option",
                         { value: "" },
@@ -3218,7 +3451,7 @@ var CreateRB = function (_React$Component) {
                         },
                         React.createElement("input", {
                           name: "site_visit",
-                          checked: comp.site_visit ? comp.site_visit : false,
+                          checked: comp.site_visit_done ? comp.site_visit_done : false,
                           onChange: function onChange(e) {
                             return _this2.onComplianceChange(key, e);
                           },
@@ -3235,7 +3468,7 @@ var CreateRB = function (_React$Component) {
                         },
                         React.createElement("input", {
                           name: "samples_required",
-                          checked: comp.samples_required ? comp.samples_required : false,
+                          checked: comp.samples_delivered ? comp.samples_delivered : false,
                           onChange: function onChange(e) {
                             return _this2.onComplianceChange(key, e);
                           },
@@ -3307,7 +3540,7 @@ var CreateRB = function (_React$Component) {
                   this.state.complianceRemarks && this.state.complianceRemarks.map(function (bid, key) {
                     return React.createElement(
                       "tr",
-                      null,
+                      { key: "cr" + key },
                       React.createElement(
                         "td",
                         { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
@@ -3548,31 +3781,46 @@ var CreateRB = function (_React$Component) {
                           "div",
                           { className: "mt-2" },
                           this.state.username === this.state.cs_owner ? React.createElement(
-                            "select",
-                            {
-                              onChange: function onChange(text) {
-                                return _this2.onCommitteeChange("memberUserName", text);
-                              },
+                            "div",
+                            { className: "relative" },
+                            React.createElement("input", {
                               id: "memberUserName",
                               name: "memberUserName",
                               autoComplete: "memberUserName",
-                              className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
-                            },
+                              className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select",
+                              type: "text",
+                              value: this.state.searchedUser,
+                              onChange: this.onSearchUser,
+                              placeholder: "Search Member Name"
+                            }),
                             React.createElement(
-                              "option",
-                              { value: "" },
-                              "Select User"
-                            ),
-                            this.state.users ? this.state.users.map(function (user) {
-                              return React.createElement(
-                                "option",
-                                { value: user.username },
-                                user.first_name + " " + user.last_name
-                              );
-                            }) : React.createElement(
-                              "option",
-                              { value: "" },
-                              "No Users"
+                              "div",
+                              null,
+                              this.state.filteredUsers.length > 0 ? React.createElement(
+                                "ul",
+                                {
+                                  className: "absolute z-50 mt-1 w-full max-h-96 overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm",
+                                  tabindex: "-1",
+                                  role: "listbox",
+                                  "aria-labelledby": "listbox-label",
+                                  "aria-activedescendant": "listbox-option-3"
+                                },
+                                this.state.filteredUsers.map(function (user) {
+                                  return React.createElement(
+                                    "li",
+                                    {
+                                      "class": "relative cursor-default select-none py-2 pl-3 pr-9 text-gray-900 my-2",
+                                      role: "option",
+                                      key: user.username,
+                                      onClick: function onClick() {
+                                        return _this2.onCommitteeSelect("memberUserName", user.username);
+                                      },
+                                      className: "cursor-pointer hover:bg-gulf-blue-100 ml-3 p-2 block truncate font-normal"
+                                    },
+                                    (user.first_name || "") + " " + (user.last_name || "")
+                                  );
+                                })
+                              ) : ""
                             )
                           ) : ""
                         )
@@ -3750,6 +3998,11 @@ var CreateRB = function (_React$Component) {
                     React.createElement(
                       "td",
                       { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                      this.state.fmApproval && this.state.fmApproval.approver_name
+                    ),
+                    React.createElement(
+                      "td",
+                      { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
                       this.state.fmApproval && this.state.fmApproval.approval === "Rejected" && this.state.fmApproval.justification
                     ),
                     React.createElement(
@@ -3809,6 +4062,11 @@ var CreateRB = function (_React$Component) {
                       "td",
                       { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
                       "GENERAL MANAGER"
+                    ),
+                    React.createElement(
+                      "td",
+                      { className: "border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2" },
+                      this.state.gmApproval && this.state.gmApproval.approver_name
                     ),
                     React.createElement(
                       "td",
@@ -4069,7 +4327,7 @@ var CreateRB = function (_React$Component) {
                     return _this2.onSelectChange("proc_ref", e);
                   },
                   disabled: this.state.username === this.state.cs_owner || this.state.cs_owner === "" ? false : true,
-                  className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
+                  className: "block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
                 },
                 this.state.proc_plan ? React.createElement(
                   "option",
@@ -4319,6 +4577,63 @@ var CreateRB = function (_React$Component) {
         ) : ""
       );
 
+      additionalInfo = React.createElement(
+        "div",
+        { className: "p-8 mt-6 bg-gulf-blue-300 rounded-md border-t border-gray-100 border-gray-900/10" },
+        React.createElement(
+          "h2",
+          { className: "text-base font-semibold leading-6 text-gray-900" },
+          "Additional Information (For Procurement Admin Only)"
+        ),
+        React.createElement(
+          "div",
+          { className: "flex justify-evenly mt-5  px-2 py-2 rounded-md" },
+          React.createElement(
+            "div",
+            { className: "flex-1 w-100" },
+            React.createElement(
+              "label",
+              {
+                htmlFor: "additionalNotes",
+                className: "block text-sm font-medium leading-6 text-gray-900"
+              },
+              "Notes"
+            ),
+            React.createElement(
+              "div",
+              { className: "mt-2" },
+              React.createElement("textarea", {
+                id: "additionalNotes",
+                name: "additionalNotes",
+                type: "additionalNotes",
+                value: this.state.additionalNotes,
+                disabled: this.state.requester_role === "verify" ? false : true,
+                onChange: this.onAdditionalNotesChange,
+                className: "block w-full rounded-md border-0 py-2 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+              })
+            )
+          )
+        ),
+        this.state.requester_role === "verify" && this.state.additionalNotes ? React.createElement(
+          "div",
+          { className: "flex justify-center mt-2 px-3 py-3" },
+          React.createElement(
+            "div",
+            { className: "w-50 m-2" },
+            React.createElement(
+              "button",
+              {
+                style: { width: "100%" },
+                onClick: this.onAdditionalNotesSubmit,
+                name: "save_next",
+                className: "rounded-md bg-blue-700 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+              },
+              "SUBMIT NOTES"
+            )
+          )
+        ) : ""
+      );
+
       return React.createElement(
         "div",
         null,
@@ -4328,6 +4643,7 @@ var CreateRB = function (_React$Component) {
         updateBidModal,
         rejectJustification,
         rejectApprovalJustification,
+        responseModal,
         React.createElement(
           "div",
           { className: "space-y-12 px-5 py-5" },
@@ -4383,7 +4699,7 @@ var CreateRB = function (_React$Component) {
                       id: "pr_number",
                       onChange: this.onFetchPrNumberChange,
                       defaultValue: this.state.pr_number,
-                      className: "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                      className: "block w-full rounded-md border-0 py-2 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                     })
                   )
                 ),
@@ -4694,7 +5010,7 @@ var CreateRB = function (_React$Component) {
                         return _this2.onDeleteBidModal(bid.bid_count, bid.supplier_name);
                       },
                       type: "submit",
-                      className: "rounded-md bg-red-danger hover:bg-orange-500 text-sm font-semibold px-3 py-2 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                      className: "rounded-md bg-red-600 hover:bg-red-400 text-sm font-semibold px-3 py-2 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
                     },
                     "DELETE BID"
                   )
@@ -4702,7 +5018,7 @@ var CreateRB = function (_React$Component) {
               ) : ""
             );
           }),
-          this.state.cs_items.length > 0 && this.state.username === this.state.cs_owner && !this.state.approvalsComplete ? React.createElement(
+          this.state.cs_items.length > 0 && this.state.bids.length < 1 && this.state.username === this.state.cs_owner && !this.state.approvalsComplete ? React.createElement(
             "div",
             { className: "m-2" },
             React.createElement(
@@ -4715,7 +5031,7 @@ var CreateRB = function (_React$Component) {
               "ADD BID"
             )
           ) : "",
-          this.state.bids.length > 0 && this.state.compliance.length < 1 && this.state.username === this.state.cs_owner && !this.state.approvalsComplete ? React.createElement(
+          this.state.bids.length > 0 && this.state.username === this.state.cs_owner && !this.state.approvalsComplete ? React.createElement(
             "div",
             { className: "m-2" },
             React.createElement(
@@ -4743,6 +5059,7 @@ var CreateRB = function (_React$Component) {
             )
           ) : "",
           this.state.rankings.length > 0 ? rankingTable : "",
+          additionalInfo,
           this.state.rankings.length > 0 ? committeeTable : "",
           this.state.committeeMembers.length > 0 && this.state.username === this.state.cs_owner && !this.state.approvalsComplete ? React.createElement(
             "div",
@@ -4760,18 +5077,29 @@ var CreateRB = function (_React$Component) {
           this.state.committeeMembers.length > 2 ? approvalsTable : "",
           React.createElement(
             "div",
-            { className: "m-2" },
+            { className: "flex m-2" },
             React.createElement(
               "button",
               {
-                style: { width: "100%" },
+                style: { width: "50%" },
                 onClick: function onClick() {
                   console.log("going back ...");
                   window.history.back();
                 },
-                className: "rounded-md bg-nepal-950 hover:bg-nepal-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                className: "rounded-md bg-nepal-950 hover:bg-nepal-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 m-1"
               },
               "GO BACK TO SCHEDULES"
+            ),
+            React.createElement(
+              "button",
+              {
+                style: { width: "50%" },
+                onClick: function onClick() {
+                  window.location.href = "/comperative_schedule/cancel_schedule/" + _this2.state.cs_id;
+                },
+                className: "rounded-md bg-red-800 hover:bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600 m-1"
+              },
+              "CANCEL SCHEDULE"
             )
           )
         )
@@ -4779,10 +5107,10 @@ var CreateRB = function (_React$Component) {
     }
   }]);
 
-  return CreateRB;
+  return CreateDP;
 }(React.Component);
 
 var username = domContainer.getAttribute("data-username");
 var prid = domContainer.getAttribute("data-prid");
 var csid = domContainer.getAttribute("data-csid");
-ReactDOM.render(e(CreateRB, { username: username, prid: prid, csid: csid }), domContainer);
+ReactDOM.render(e(CreateDP, { username: username, prid: prid, csid: csid }), domContainer);
