@@ -1076,8 +1076,10 @@ def view_all_viraments(request):
     user_id = request.user.id
     user_profile = UserProfile.objects.filter(id=user_id).first()
     region = Regions.objects.filter(id=user_profile.region.id).first()
-    viraments = Asset_budget_Virament.objects.all()
-    return render(request, 'finance/ace2/view_all_viraments.html', {'aces': viraments})
+    viraments = Asset_budget_Virament.objects.filter(region=region).order_by('-date_created')
+    return render(request,
+                  'finance/ace2/view_all_viraments.html',
+                  {'aces': viraments})
 
 
 @login_required

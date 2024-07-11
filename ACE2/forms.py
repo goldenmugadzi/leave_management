@@ -25,7 +25,11 @@ class AceForm(forms.ModelForm):
                    ]
 
         def __init__(self, *args, **kwargs):
+
+            user = kwargs.pop('user', None)
             super().__init__(*args, **kwargs)
+
+
 
             for field_name, field in self.fields.items():
                 # for the field budget i want it to display its balance attribute when it selected
@@ -46,6 +50,12 @@ class AceForm(forms.ModelForm):
                 #                   'ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 '
                 #                   'focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm '
                 #                   'sm:leading-6'})
+
+                if user:
+                    current_year = timezone.now().year
+                    user_profile = UserProfile.objects.filter(id=user.id).first()
+                    region = Regions.objects.filter(id=user_profile.region.id).first()
+                    self.fields['budget'].queryset = Budget.objects.filter(period=current_year, region=region)
 
                 if isinstance(field.widget, forms.Textarea):
                     field.widget.attrs.update({'rows': '3'})
