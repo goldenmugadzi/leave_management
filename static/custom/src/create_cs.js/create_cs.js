@@ -94,6 +94,7 @@ var CreateCS = function (_React$Component) {
         var closing_time = data.closing_time ? data.closing_time : "";
         var tender_adjudication_committee_date = data.tac_date ? data.tac_date : "";
         var cs_opened = data.cs_opened ? data.cs_opened : false;
+        var additionalNotes = data.additional_notes ? data.additional_notes : "";
 
         var proc_plans = data.proc_plans ? data.proc_plans : [];
         var uom = data.uom ? data.uom : [];
@@ -134,6 +135,7 @@ var CreateCS = function (_React$Component) {
         var showSamples = data.show_samples_required === true ? "yes" : "no";
 
         _this.setState(Object.assign({}, _this.state, (_Object$assign = {
+          additionalNotes: additionalNotes,
           requester_role: requester_role,
           creator: creator,
           created_at: created_at,
@@ -1498,6 +1500,40 @@ var CreateCS = function (_React$Component) {
       }
     };
 
+    _this.onAdditionalNotesChange = function (event) {
+      var _event$target12 = event.target,
+          name = _event$target12.name,
+          value = _event$target12.value;
+
+      _this.setState(Object.assign({}, _this.state, {
+        additionalNotes: value
+      }));
+    };
+
+    _this.onAdditionalNotesSubmit = function () {
+      var form_data = new FormData();
+      form_data.append("cs_id", _this.state.cs_id);
+      form_data.append("additional_notes", _this.state.additionalNotes);
+      form_data.append("csrfmiddlewaretoken", _this.getCookie("csrftoken"));
+
+      fetch(BASE_URL + "/comperative_schedule/save_additional_notes", {
+        method: "POST",
+        headers: {
+          "X-CSRFToken": _this.getCookie("csrftoken")
+        },
+        body: form_data
+      }).then(function (response) {
+        return response.json();
+      }).then(function (data) {
+        console.log("data: ", data);
+        if (data.success) {
+          _this.onOpenResponse("Additional Notes Saved", "Additional notes saved successfully", true);
+        } else {
+          _this.onOpenResponse("Additional Notes Error", "Failed to save additional notes, please try again", false);
+        }
+      });
+    };
+
     _this.state = {
       requester_role: "",
       cs_id: "",
@@ -1583,8 +1619,10 @@ var CreateCS = function (_React$Component) {
         open: false,
         message: "",
         title: ""
-      }
+      },
+      additionalNotes: ""
     };
+
     _this.getCreateData = _this.getCreateData.bind(_this);
     _this.onAddBid = _this.onAddBid.bind(_this);
     _this.onUpdateBidModal = _this.onUpdateBidModal.bind(_this);
@@ -1630,18 +1668,18 @@ var CreateCS = function (_React$Component) {
   }, {
     key: "onSelectChange",
     value: function onSelectChange(name_, event) {
-      var _event$target12 = event.target,
-          name = _event$target12.name,
-          value = _event$target12.value;
+      var _event$target13 = event.target,
+          name = _event$target13.name,
+          value = _event$target13.value;
 
       this.setState(Object.assign({}, this.state, _defineProperty({}, name_, value)));
     }
   }, {
     key: "onFilterSelectCenters",
     value: function onFilterSelectCenters(name_, event) {
-      var _event$target13 = event.target,
-          name = _event$target13.name,
-          value = _event$target13.value;
+      var _event$target14 = event.target,
+          name = _event$target14.name,
+          value = _event$target14.value;
 
       if (name_ === "region") {
         var dist = this.state.allDistricts.filter(function (_district) {
@@ -1711,6 +1749,7 @@ var CreateCS = function (_React$Component) {
       var rejectApprovalJustification = null;
       var supplierModal = null;
       var responseModal = null;
+      var additionalInfo = null;
 
       if (this.state.response.open) {
         responseModal = React.createElement(
@@ -4532,6 +4571,63 @@ var CreateCS = function (_React$Component) {
         ) : ""
       );
 
+      additionalInfo = React.createElement(
+        "div",
+        { className: "p-8 mt-6 bg-gulf-blue-300 rounded-md border-t border-gray-100 border-gray-900/10" },
+        React.createElement(
+          "h2",
+          { className: "text-base font-semibold leading-6 text-gray-900" },
+          "Additional Information (For Procurement Admin Only)"
+        ),
+        React.createElement(
+          "div",
+          { className: "flex justify-evenly mt-5  px-2 py-2 rounded-md" },
+          React.createElement(
+            "div",
+            { className: "flex-1 w-100" },
+            React.createElement(
+              "label",
+              {
+                htmlFor: "additionalNotes",
+                className: "block text-sm font-medium leading-6 text-gray-900"
+              },
+              "Notes"
+            ),
+            React.createElement(
+              "div",
+              { className: "mt-2" },
+              React.createElement("textarea", {
+                id: "additionalNotes",
+                name: "additionalNotes",
+                type: "additionalNotes",
+                value: this.state.additionalNotes,
+                disabled: this.state.requester_role === "verify" ? false : true,
+                onChange: this.onAdditionalNotesChange,
+                className: "block w-full rounded-md border-0 py-2 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+              })
+            )
+          )
+        ),
+        this.state.requester_role === "verify" && this.state.additionalNotes ? React.createElement(
+          "div",
+          { className: "flex justify-center mt-2 px-3 py-3" },
+          React.createElement(
+            "div",
+            { className: "w-50 m-2" },
+            React.createElement(
+              "button",
+              {
+                style: { width: "100%" },
+                onClick: this.onAdditionalNotesSubmit,
+                name: "save_next",
+                className: "rounded-md bg-blue-700 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+              },
+              "SUBMIT NOTES"
+            )
+          )
+        ) : ""
+      );
+
       return React.createElement(
         "div",
         null,
@@ -4958,6 +5054,7 @@ var CreateCS = function (_React$Component) {
           ) : "",
           this.state.rankings.length > 0 ? rankingTable : "",
           this.state.rankings.length > 0 ? committeeTable : "",
+          additionalInfo,
           this.state.committeeMembers.length > 0 && this.state.username === this.state.cs_owner && !this.state.approvalsComplete ? React.createElement(
             "div",
             { className: "m-2" },
@@ -4974,18 +5071,29 @@ var CreateCS = function (_React$Component) {
           this.state.committeeMembers.length > 2 ? approvalsTable : "",
           React.createElement(
             "div",
-            { className: "m-2" },
+            { className: "flex m-2" },
             React.createElement(
               "button",
               {
-                style: { width: "100%" },
+                style: { width: "50%" },
                 onClick: function onClick() {
                   console.log("going back ...");
                   window.history.back();
                 },
-                className: "rounded-md bg-nepal-950 hover:bg-nepal-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                className: "rounded-md bg-nepal-950 hover:bg-nepal-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 m-1"
               },
               "GO BACK TO SCHEDULES"
+            ),
+            React.createElement(
+              "button",
+              {
+                style: { width: "50%" },
+                onClick: function onClick() {
+                  window.location.href = "/comperative_schedule/cancel_schedule/" + _this2.state.cs_id;
+                },
+                className: "rounded-md bg-red-800 hover:bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600 m-1"
+              },
+              "CANCEL SCHEDULE"
             )
           )
         )

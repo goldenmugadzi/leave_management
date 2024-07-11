@@ -45,6 +45,8 @@ class ComparativeSchedules(models.Model):
     cost_center = models.ForeignKey(CostCenter, on_delete=models.CASCADE, blank=True, null=True)
     section = models.ForeignKey(Sections, on_delete=models.CASCADE, blank=True, null=True)
     region = models.ForeignKey(Regions, on_delete=models.CASCADE, blank=True, null=True)
+    cancelled = models.BooleanField(default=False)
+    additional_notes = models.CharField(max_length=400, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     
     # add a function to get logged in user's cost center
@@ -68,7 +70,6 @@ class CSItems(models.Model):
     unit_of_measurement = models.CharField(max_length=50)
     created_at = models.DateTimeField(auto_now_add=True)
 
-
 class Bids(models.Model):
     cs_id = models.ForeignKey(ComparativeSchedules, on_delete=models.CASCADE)
     item_id = models.ForeignKey(CSItems, on_delete=models.CASCADE)
@@ -81,7 +82,6 @@ class Bids(models.Model):
     total = models.CharField(max_length=50)
     bid_document = models.CharField(max_length=400)
     created_at = models.DateTimeField(auto_now_add=True)
-
 
 class CSCompliance(models.Model):
     cs_id = models.ForeignKey(ComparativeSchedules, on_delete=models.CASCADE)

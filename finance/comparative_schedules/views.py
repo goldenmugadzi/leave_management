@@ -17,6 +17,7 @@ from django.utils import timezone
 from django.contrib.auth.decorators import login_required
 import copy
 
+from django.contrib import messages
 APP_NAME = "comparative_schedule"
 
 def add_cost_center(request):
@@ -563,17 +564,17 @@ def clear_approvals(cs_id):
 def getUserFMGMRoles(user):
     print("user: ", user.username, user.id  )
     fm_role, gm_role, procurement_role = False, False, False
-    for role in user.roles.all():
-        print("role id:", role.id)
-        user_ace_role_ = Roles.objects.filter(id=role.id).first() if role.id else None
+    
+    user_comparative_schedule_role = user.roles.filter(application=APP_NAME).first()
+    print("user_comparative_schedule_role: ", user_comparative_schedule_role)
 
-        if user_ace_role_.application == APP_NAME:
-            if user_ace_role_.role == "check":
-                fm_role = True
-            if user_ace_role_.role == "approve":
-                gm_role = True
-            if user_ace_role_.role == "procurement":
-                procurement_role = True
+    if user_comparative_schedule_role.application == APP_NAME:
+        if user_comparative_schedule_role.role == "check":
+            fm_role = True
+        if user_comparative_schedule_role.role == "approve":
+            gm_role = True
+        if user_comparative_schedule_role.role == "procurement":
+            procurement_role = True
     
     return fm_role, gm_role, procurement_role
 
@@ -716,6 +717,7 @@ def get_your_schedules(user_id, search_value=None, column_name=None, region=None
     
     cs = ComparativeSchedules.objects.filter(
         created_by_id=user_id,
+        cancelled=False
     ).all()
 
     # Filter based on search value
@@ -735,7 +737,8 @@ def get_pending_committee_table(user_id, search_value=None, column_name=None, re
     # fetch schedules if user exists in the committee and has not yet approved
     cs = ComparativeSchedules.objects.filter(
         Q(committee__committee_approval=None) | Q(committee__committee_approval=""),
-        Q(committee__user_id=user_id)
+        Q(committee__user_id=user_id),
+        cancelled = False
     ).all()
 
     # Filter based on search value
@@ -762,7 +765,8 @@ def get_finance_manager(user_id, search_value=None, column_name=None, region=Non
         committee_count__gt=2,
         not_approved_count=0,
         rejected_count=0,
-        csapproval__approval=None
+        csapproval__approval=None,
+        cancelled = False
     ).distinct()
 
     # Filter based on search value
@@ -804,7 +808,8 @@ def get_general_manager(user_id, search_value=None, column_name=None, region=Non
         any_not_approved=True,
         gm_approved=False,
         csapproval__approver_role="finance_manager",
-        csapproval__approval="Approved"
+        csapproval__approval="Approved",
+        cancelled=False
     ).distinct()
     
     # Filter based on search value
@@ -821,7 +826,7 @@ def get_general_manager(user_id, search_value=None, column_name=None, region=Non
 
 def get_all_schedules_table(user_id, search_value=None, column_name=None, region=None):
     
-    cs = ComparativeSchedules.objects.filter(region=region).all()
+    cs = ComparativeSchedules.objects.filter(region=region, cancelled=False).all()
     
     # Filter based on search value
     if search_value:
@@ -830,7 +835,7 @@ def get_all_schedules_table(user_id, search_value=None, column_name=None, region
         Q(scope_of_work__icontains=search_value) 
         )
     
-    if column_name:    
+    if column_name:
         cs = cs.order_by(column_name)
 
     return cs
@@ -990,6 +995,8 @@ def get_comperative_schedule_data(request, cs_id):
     
     request_user = request.user
     request_user_profile = UserProfile.objects.filter(id=request_user.id).first()
+    user_comparative_schedule_role = request_user_profile.roles.filter(application=APP_NAME).first()
+    print("user_comparative_schedule_role: ", user_comparative_schedule_role)
     
     user_comparative_schedule_role = None
     for role in request_user_profile.roles.all():
@@ -999,6 +1006,7 @@ def get_comperative_schedule_data(request, cs_id):
         if user_ace_role_.application == APP_NAME:
             user_comparative_schedule_role = user_ace_role_
             
+
     cs = ComparativeSchedules.objects.filter(cs_id=cs_id).first()
     pr = None
     if cs:
@@ -1197,6 +1205,7 @@ def get_comperative_schedule_data(request, cs_id):
         "pr_id": pr.id,
         "pr_number": cs.pr_number,
         "pr_date": cs.pr_date,
+        "additional_notes": cs.additional_notes,
         "proc_plan": {
             "id": proc_plan.id,
             "proc_ref": proc_plan.proc_ref,
@@ -2474,3 +2483,45 @@ def cs_compliance_table(request, cs_id):
 
 
     return render(request, 'finance/comparative_schedules/cs_compliance_table.html', {"bids_items": bids_dict})
+
+def save_additional_notes(request):
+    cs_id = request.POST.get("cs_id", "")
+    additional_notes = request.POST.get("additional_notes", "")
+    cs_query = ComparativeSchedules.objects.filter(cs_id=cs_id).first()
+    if cs_query:
+        cs_query.additional_notes = additional_notes
+        cs_query.save()
+        return JsonResponse({
+            "message": "Additional notes saved successfully",
+            "success": True,
+        })
+    else:
+        return JsonResponse({
+            "message": "Comparative Schedule not found",
+            "success": False,
+        })
+
+@login_required
+def cancel_schedule(request, cs_id):
+    print("cs_id: ", cs_id)
+    try:
+        cs_query = ComparativeSchedules.objects.filter(cs_id=cs_id).first()
+        if cs_query:
+            cs_query.cancelled = True
+            cs_query.scope_of_work = "Cancelled Schedule: " + cs_query.scope_of_work
+            cs_query.save()
+            print("cs_query: ", cs_query, cs_query.cancelled, "scope: ", cs_query.scope_of_work, cs_query.pr_number)
+            required_items = CSRequiredItems.objects.filter(cs_id=cs_query).all()
+            pr_query = PurchaseRequest.objects.filter(id=cs_query.pr_number).first()
+            for item in required_items:
+                pr_item = PrItem.objects.filter(id=item.item_id, purchase_request=pr_query).first()
+                pr_item.ordered = False
+                pr_item.save()
+                item.delete()
+
+    except Exception as ex:
+        print("Error: ", ex)
+        messages.error(request, "Error cancelling Comparative Schedule", str(ex))
+    
+    messages.success(request, "Comparative Schedule cancelled successfully")
+    return redirect('/comperative_schedule/comperative_schedules')

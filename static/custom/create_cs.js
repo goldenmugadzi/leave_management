@@ -101,7 +101,9 @@ class CreateCS extends React.Component {
         message: "",
         title: "",
       },
+      additionalNotes: "",
     };
+
     this.getCreateData = this.getCreateData.bind(this);
     this.onAddBid = this.onAddBid.bind(this);
     this.onUpdateBidModal = this.onUpdateBidModal.bind(this);
@@ -211,6 +213,7 @@ class CreateCS extends React.Component {
           ? data.tac_date
           : "";
         let cs_opened = data.cs_opened ? data.cs_opened : false;
+        let additionalNotes = data.additional_notes ? data.additional_notes : "";
 
         let proc_plans = data.proc_plans ? data.proc_plans : [];
         let uom = data.uom ? data.uom : [];
@@ -268,6 +271,7 @@ class CreateCS extends React.Component {
 
         this.setState({
           ...this.state,
+          additionalNotes: additionalNotes,
           requester_role: requester_role,
           creator: creator,
           created_at: created_at,
@@ -2025,6 +2029,46 @@ class CreateCS extends React.Component {
     }
   };
 
+  onAdditionalNotesChange = (event) => {
+    let { name, value } = event.target;
+    this.setState({
+      ...this.state,
+      additionalNotes: value,
+    });
+  }
+
+  onAdditionalNotesSubmit = () => {
+    let form_data = new FormData();
+    form_data.append("cs_id", this.state.cs_id);
+    form_data.append("additional_notes", this.state.additionalNotes);
+    form_data.append("csrfmiddlewaretoken", this.getCookie("csrftoken"));
+
+    fetch(`${BASE_URL}/comperative_schedule/save_additional_notes`, {
+      method: "POST",
+      headers: {
+        "X-CSRFToken": this.getCookie("csrftoken"),
+      },
+      body: form_data,
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        console.log("data: ", data);
+        if (data.success) {
+          this.onOpenResponse(
+            "Additional Notes Saved",
+            "Additional notes saved successfully",
+            true
+          );
+        } else {
+          this.onOpenResponse(
+            "Additional Notes Error",
+            "Failed to save additional notes, please try again",
+            false
+          );
+        }
+      });
+  }
+
   render() {
     var itemsModal = null;
     var bidsModal = null;
@@ -2037,6 +2081,7 @@ class CreateCS extends React.Component {
     var rejectApprovalJustification = null;
     var supplierModal = null;
     var responseModal = null;
+    var additionalInfo = null;
 
     if (this.state.response.open) {
       responseModal = (
@@ -4320,6 +4365,54 @@ class CreateCS extends React.Component {
       </div>
     );
 
+    additionalInfo = (
+        <div className="p-8 mt-6 bg-gulf-blue-300 rounded-md border-t border-gray-100 border-gray-900/10">
+        <h2 className="text-base font-semibold leading-6 text-gray-900">
+          Additional Information (For Procurement Admin Only)
+        </h2>
+
+        <div className="flex justify-evenly mt-5  px-2 py-2 rounded-md">
+          <div className="flex-1 w-100">
+            <label
+              htmlFor="additionalNotes"
+              className="block text-sm font-medium leading-6 text-gray-900"
+            >
+              Notes
+            </label>
+            <div className="mt-2">
+              <textarea
+                id="additionalNotes"
+                name="additionalNotes"
+                type="additionalNotes"
+                value={this.state.additionalNotes}
+                disabled={this.state.requester_role === "verify" ? false : true}
+                onChange={this.onAdditionalNotesChange}
+                className="block w-full rounded-md border-0 py-2 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+              ></textarea>
+            </div>
+          </div>
+        </div>
+
+        {(this.state.requester_role === "verify") &&
+        this.state.additionalNotes ? (
+          <div className="flex justify-center mt-2 px-3 py-3">
+              <div className="w-50 m-2">
+                <button
+                  style={{ width: "100%" }}
+                  onClick={this.onAdditionalNotesSubmit}
+                  name="save_next"
+                  className="rounded-md bg-blue-700 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                >
+                  SUBMIT NOTES
+                </button>
+              </div>
+          </div>
+        ) : (
+          ""
+        )}
+      </div>
+    )
+
     return (
       <div>
         {itemsModal}
@@ -4625,6 +4718,8 @@ class CreateCS extends React.Component {
 
           {this.state.rankings.length > 0 ? committeeTable : ""}
 
+          {additionalInfo}
+
           {this.state.committeeMembers.length > 0 &&
           this.state.username === this.state.cs_owner &&
           !this.state.approvalsComplete ? (
@@ -4642,16 +4737,25 @@ class CreateCS extends React.Component {
           )}
           {this.state.committeeMembers.length > 2 ? approvalsTable : ""}
 
-          <div className="m-2">
+          <div className="flex m-2">
             <button
-              style={{ width: "100%" }}
+              style={{ width: "50%" }}
               onClick={() => {
                 console.log("going back ...");
                 window.history.back();
               }}
-              className="rounded-md bg-nepal-950 hover:bg-nepal-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+              className="rounded-md bg-nepal-950 hover:bg-nepal-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 m-1"
             >
               GO BACK TO SCHEDULES
+            </button>
+            <button
+              style={{ width: "50%" }}
+              onClick={() => {
+                window.location.href = "/comperative_schedule/cancel_schedule/"+this.state.cs_id;
+              }}
+              className="rounded-md bg-red-800 hover:bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600 m-1"
+            >
+              CANCEL SCHEDULE
             </button>
           </div>
         </div>
