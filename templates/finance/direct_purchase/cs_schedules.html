@@ -122,29 +122,6 @@
   }
   $(document).ready(function () {
     var table = $("#direct_purchase").DataTable({
-      dom: 'Bfrtip',
-      buttons: [
-          {
-              extend: 'csv',
-              text: 'Export to CSV',
-              className: "bg-gulf-blue-400 hover:bg-gulf-blue-800 text-gulf-blue-950 font-bold py-2 px-4 rounded"
-          },
-          {
-              extend: 'excel',
-              text: 'Export to Excel',
-              className: "bg-gulf-blue-400 hover:bg-gulf-blue-800 text-gulf-blue-950 font-bold py-2 px-4 rounded"
-          },
-          {
-              extend: 'pdf',
-              text: 'Export to PDF',
-              className: "bg-gulf-blue-400 hover:bg-gulf-blue-800 text-gulf-blue-950 font-bold py-2 px-4 rounded"
-          },
-          {
-              extend: 'print',
-              text: 'Print Table',
-              className: "bg-gulf-blue-400 hover:bg-gulf-blue-800 text-gulf-blue-950 font-bold py-2 px-4 rounded"
-          }
-      ],
       "processing": true,
       "serverSide": true,
       "ajax": {
