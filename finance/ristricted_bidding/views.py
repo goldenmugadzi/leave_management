@@ -248,8 +248,9 @@ def get_general_manager(search_value=None, column_name=None):
         all_approved=True,
         any_not_approved=True,
         gm_approved=False,
-        csapproval__approver_role="finance_manager",
-        csapproval__approval="Approved"
+        rbapproval__approver_role="finance_manager",
+        rbapproval__approval="Approved",
+        any_reject=False
     ).distinct()
     
     # Filter based on search value
