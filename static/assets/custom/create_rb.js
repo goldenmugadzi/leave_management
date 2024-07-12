@@ -17,8 +17,8 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 var e = React.createElement;
 var domContainer = document.querySelector("#create_comparative_schedule");
 var url = domContainer.getAttribute("data-baseurl");
-// const BASE_URL = "http://localhost:8000/ristricted_bidding";
-var BASE_URL = url + "/ristricted_bidding";
+// const BASE_URL = "http://localhost:8000/restricted_bidding";
+var BASE_URL = url + "/restricted_bidding";
 
 var CreateRB = function (_React$Component) {
   _inherits(CreateRB, _React$Component);
@@ -461,7 +461,7 @@ var CreateRB = function (_React$Component) {
           // @TODO: check committee approval value
           _this.onOpenResponse("Committee Member Approval Success", "You have successfully approved this schedule.", true);
           // reload page
-          window.location.href = BASE_URL + "/comperative_schedule/comperative_schedules";
+          window.location.href = BASE_URL + "/comperative_schedules";
           //   if (committeeApproval === "Approved") {
           //     alert("Committee approved successfully");
           //     // reload page
@@ -549,10 +549,10 @@ var CreateRB = function (_React$Component) {
             _this.onOpenResponse("Approval Success", "You have successfully approved this RFQ.", true);
 
             // reload page
-            window.location.href = BASE_URL + "/comperative_schedule/comperative_schedules";
+            window.location.href = BASE_URL + "/comperative_schedules";
           } else {
             _this.onOpenResponse("Approval Success", "You have successfully rejected this RFQ.", true);
-            window.location.href = BASE_URL + "/comperative_schedule/comperative_schedules";
+            window.location.href = BASE_URL + "/comperative_schedules";
           }
         } else {
           _this.onOpenResponse("Approval Error", "Failed to submit your approval. Please try again.", false);
@@ -1077,7 +1077,7 @@ var CreateRB = function (_React$Component) {
       }).then(function (data) {
         console.log("data: ", data);
         if (data.success) {
-          _this.onOpenResponse("Update Schedule Successful", "Comparative Schedule updated successfully", false);
+          _this.onOpenResponse("Update Schedule Successful", "Comparative Schedule updated successfully", true);
         } else {
           _this.onOpenResponse("Update Schedule Error", "Failed to submit schedule, please try again.", false);
         }
@@ -5089,7 +5089,7 @@ var CreateRB = function (_React$Component) {
               {
                 style: { width: "50%" },
                 onClick: function onClick() {
-                  window.location.href = "/comperative_schedule/cancel_schedule/" + _this2.state.cs_id;
+                  window.location.href = "/cancel_schedule/" + _this2.state.cs_id;
                 },
                 className: "rounded-md bg-red-800 hover:bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600 m-1"
               },

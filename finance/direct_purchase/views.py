@@ -22,6 +22,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 
 from django.utils import timezone
+from django.contrib import messages
 APP_NAME = "direct_purchases"
 
 def import_old_dp(request):
@@ -540,12 +541,19 @@ def get_general_manager(search_value=None, column_name=None):
                 approval="Approved"
             )
         ),
+        any_reject=Exists(
+            DPApproval.objects.filter(
+                cs_id=OuterRef('pk'),
+                approval="Rejected"
+            )
+        ),
     ).filter(
         all_approved=True,
         any_not_approved=True,
         gm_approved=False,
         dpapproval__approver_role="finance_manager",
-        dpapproval__approval="Approved"
+        dpapproval__approval="Approved",
+        any_reject=False
     ).distinct()
     
     # Filter based on search value
@@ -1311,13 +1319,8 @@ def update_comparative_schedule(request):
                 save_file(advert_file, advert_path)
         except Exception as ex:
             print("Error: ", ex)
-        
-        # save cs details
-        # fetch purchase request
-        pr = PurchaseRequest.objects.filter(id=pr_number).first()
 
         # fetch user
-        user = UserProfile.objects.filter(username=username).first()
         currency = Currency.objects.filter(id=currency).first() if currency else None
         # region_ = Regions.objects.filter(region=pr.region).first() if 'region' in pr else None
         # section = Sections.objects.filter(section=pr.section).first() if 'section' in pr else None
@@ -2245,4 +2248,4 @@ def cancel_schedule(request, cs_id):
         messages.error(request, "Error cancelling Comparative Schedule", str(ex))
     
     messages.success(request, "Comparative Schedule cancelled successfully")
-    return redirect('/comperative_schedule/comperative_schedules')
+    return redirect('/direct_purchase/comperative_schedules')

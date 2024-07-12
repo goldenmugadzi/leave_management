@@ -56,7 +56,7 @@ def purchase_request_detail(request, purchase_request_id):
     for schedule in rb_schedules:
         schedules.append({
             "cs_id": schedule.cs_id,
-            "url": '/ristricted_bidding/comperative_schedule/'+schedule.cs_id
+            "url": '/restricted_bidding/comperative_schedule/'+schedule.cs_id
         })
         
     print("schedules: ", schedules)

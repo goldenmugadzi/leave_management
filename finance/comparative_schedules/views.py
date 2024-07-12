@@ -802,13 +802,20 @@ def get_general_manager(user_id, search_value=None, column_name=None, region=Non
                 approval="Approved"
             )
         ),
+        any_reject=Exists(
+            CSApproval.objects.filter(
+                cs_id=OuterRef('pk'),
+                approval="Rejected"
+            )
+        ),
     ).filter(
         all_approved=True,
         any_not_approved=True,
         gm_approved=False,
         csapproval__approver_role="finance_manager",
         csapproval__approval="Approved",
-        cancelled=False
+        cancelled=False,
+        any_reject=False
     ).distinct()
     
     # Filter based on search value
@@ -1588,12 +1595,9 @@ def update_comparative_schedule(request):
         except Exception as ex:
             print("Error: ", ex)
         
-        # save cs details
-        # fetch purchase request
-        pr = PurchaseRequest.objects.filter(id=pr_number).first()
-
         # fetch user
-        user = UserProfile.objects.filter(username=username).first()
+        print("pr number: ", pr_number)
+        print("currency: ", currency)
         currency = Currency.objects.filter(id=currency).first() if currency else None
         # region_ = Regions.objects.filter(region=pr.region).first() if 'region' in pr else None
         # section = Sections.objects.filter(section=pr.section).first() if 'section' in pr else None

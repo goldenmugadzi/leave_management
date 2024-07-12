@@ -49,7 +49,7 @@ urlpatterns = [
     path('direct_purchases/', include('finance.Direct_purchases.urls')),
     path('pettycash/', include('finance.PettyCash.urls')),
     path('comperative_schedule/', include('finance.comparative_schedules.urls')),
-    path('ristricted_bidding/', include('finance.ristricted_bidding.urls')),
+    path('restricted_bidding/', include('finance.ristricted_bidding.urls')),
     path('direct_purchase/', include('finance.direct_purchase.urls')),
     path('reports/', include('reports.urls')),
     path('api-auth/', include('rest_framework.urls')),

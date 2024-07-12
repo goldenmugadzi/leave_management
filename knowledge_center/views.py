@@ -335,7 +335,6 @@ def edit_file(request, file_id):
     
     return render(request, 'knowledge-center/edit_file.html', {"url_path": url_path, "regions": regions, "sections": sections, "cost_centers": cost_centers, "filetypes": filetypes})
 
-
 @login_required
 def get_files(request, file_type_id):
     if request.method == "GET":
@@ -381,7 +380,6 @@ def get_cat2(request, file_type, selected_cat):
 
         return JsonResponse({"options_list": list(options_list)})
     
-
 @login_required
 def view_legislation(request):
     
@@ -1451,14 +1449,38 @@ def view_oms(request):
 @login_required
 def view_drawing(request):
     
-    files = KnowledgeCenter.objects.filter(archived=False, file_type="Drawings")
+    file_type = Filetype.objects.filter(name="Drawings").first()
+    first_category = First_Category.objects.filter(file_type=file_type).all()
+    folders_list = []
+    for folder in first_category:
+        url = ""
+        if folder.name.count(" ") > 0:
+            url = folder.name.replace(" ", "_").lower()
+        else:
+            url = folder.name.lower()  
+            
+        temp = {
+            "id": folder.id,
+            "name": folder.name,
+            "url": url
+        }
+        folders_list.append(temp)
 
-    print("files: ", files)
-    new_dict = get_kc_dict(files)
-    print("new_dict: ", new_dict)
+    url_path = request.path.split("/")
+    return render(request, 'knowledge-center/drawings.html',{"folders": folders_list, "page_title": "Drawings Documents", "url_path": url_path} )
+
+@login_required
+def view_drawings(request, folder_name):
+    name = ""
+    if folder_name.count("_") > 0:
+        name = folder_name.replace("_", " ").lower()
+    else:
+        name = folder_name.lower()
+        
+    files = KnowledgeCenter.objects.filter(archived=False, file_type="Drawings", sub_category_1=name).all()
     
     url_path = request.path.split("/")
-    return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "Drawings Files", "url_path": url_path} )
+    return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "Drawings Documents", "url_path": url_path} )
 
 @login_required
 def view_standards(request):
@@ -1471,18 +1493,6 @@ def view_standards(request):
     
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "Standards Files", "url_path": url_path} )
-
-# @login_required
-# def view_specifications(request):
-    
-#     files = KnowledgeCenter.objects.filter(archived=False, file_type="Specifications")
-
-#     print("files: ", files)
-#     new_dict = get_kc_dict(files)
-#     print("new_dict: ", new_dict)
-    
-#     url_path = request.path.split("/")    
-# return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "Specifications Files", "url_path": url_path} )
 
 @login_required
 def view_publications(request):

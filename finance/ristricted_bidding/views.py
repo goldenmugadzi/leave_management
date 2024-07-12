@@ -73,13 +73,13 @@ def get_comperative_schedules(request):
     print("fm_role: ", fm_role, "gm_role: ", gm_role, "procurement_role: ", procurement_role)
     
     if fm_role == True:
-        return redirect('/ristricted_bidding/pending_fm_approval')
+        return redirect('/restricted_bidding/pending_fm_approval')
     elif gm_role == True:
-        return redirect('/ristricted_bidding/pending_gm_approval')
+        return redirect('/restricted_bidding/pending_gm_approval')
     elif procurement_role == True:
-        return redirect('/ristricted_bidding/your_schedules')
+        return redirect('/restricted_bidding/your_schedules')
     else:
-        return redirect('/ristricted_bidding/pending_commitee')
+        return redirect('/restricted_bidding/pending_commitee')
 
 @login_required
 def your_comperative_schedules(request):
@@ -89,7 +89,7 @@ def your_comperative_schedules(request):
     fm_role, gm_role = False, False
     fm_role, gm_role, procurement_role = getUserFMGMRoles(user)
     
-    user_page = 'finance/ristricted_bidding/cs_schedules.html'
+    user_page = 'finance/restricted_bidding/cs_schedules.html'
     print("roles: ", fm_role, gm_role)
     return render(request, user_page, {
             "fm_role": fm_role,
@@ -108,7 +108,7 @@ def get_all_schedules(request):
     fm_role, gm_role, procurement_role = getUserFMGMRoles(user_profile)
     
     print("roles: ", fm_role, gm_role)
-    user_page = 'finance/ristricted_bidding/cs_schedules.html'
+    user_page = 'finance/restricted_bidding/cs_schedules.html'
     return render(request, user_page, {"procurement_role": procurement_role, "fm_role": fm_role, "gm_role": gm_role})
 
 @login_required
@@ -121,7 +121,7 @@ def get_pending_committee(request):
     fm_role, gm_role, procurement_role = getUserFMGMRoles(user_profile)
     
     print("roles: ", fm_role, gm_role)
-    user_page = 'finance/ristricted_bidding/cs_schedules.html'
+    user_page = 'finance/restricted_bidding/cs_schedules.html'
     print("roles: ", fm_role, gm_role)
     return render(request, user_page, {"procurement_role": procurement_role, 
             "fm_role": fm_role,
@@ -134,7 +134,7 @@ def get_pending_gm_approval(request):
     user_profile = UserProfile.objects.filter(id=user_id).first()
     fm_role, gm_role = False, False
     fm_role, gm_role, procurement_role = getUserFMGMRoles(user_profile)
-    user_page = 'finance/ristricted_bidding/cs_schedules.html'
+    user_page = 'finance/restricted_bidding/cs_schedules.html'
     print("roles: ", fm_role, gm_role)
     return render(request, user_page, {"procurement_role": procurement_role, 
             "fm_role": fm_role,
@@ -147,7 +147,7 @@ def get_pending_fm_approval(request):
     user_profile = UserProfile.objects.filter(id=user_id).first()
     fm_role, gm_role = False, False
     fm_role, gm_role, procurement_role = getUserFMGMRoles(user_profile)
-    user_page = 'finance/ristricted_bidding/cs_schedules.html'
+    user_page = 'finance/restricted_bidding/cs_schedules.html'
     print("roles: ", fm_role, gm_role)
     return render(request, user_page, {"procurement_role": procurement_role, 
             "fm_role": fm_role,
@@ -236,6 +236,12 @@ def get_general_manager(search_value=None, column_name=None):
                 cs_id=OuterRef('pk'),
                 approver_role="general_manager",
                 approval="Approved"
+            )
+        ),
+        any_reject=Exists(
+            RBApproval.objects.filter(
+                cs_id=OuterRef('pk'),
+                approval="Rejected"
             )
         ),
     ).filter(
@@ -412,7 +418,7 @@ def datatable_data(request, view):
 def get_comperative_schedule(request, cs_id):
     
     username = request.user.username
-    return render(request, 'finance/ristricted_bidding/rb_create.html', {
+    return render(request, 'finance/restricted_bidding/rb_create.html', {
         "cs_id": cs_id,
         "username": username,
     })
@@ -421,7 +427,7 @@ def get_comperative_schedule(request, cs_id):
 def create_comperative_schedule(request):
 
     username = request.user.username
-    return render(request, 'finance/ristricted_bidding/rb_create.html', {
+    return render(request, 'finance/restricted_bidding/rb_create.html', {
         "username": username,
     })
 
@@ -773,7 +779,7 @@ def get_create_cs(request, pr_id):
     proc_plans = RBProcPlan.objects.all()
     username = request.user.username
     
-    return render(request, 'finance/ristricted_bidding/rb_create.html', {
+    return render(request, 'finance/restricted_bidding/rb_create.html', {
         "proc_plans": proc_plans,
         "username": username,
         "pr_id": pr_id,
@@ -891,7 +897,7 @@ def create(request):
         if 'add_supplier' in request.POST:
             return redirect('add_supplier', tender_id=tender_id)
             
-        return render(request, 'finance/ristricted_bidding/rb_create.html', {
+        return render(request, 'finance/restricted_bidding/rb_create.html', {
             "proc_plans": None,
         })
         
@@ -1491,7 +1497,7 @@ def save_cs_committee(request):
                     committee_date = datetime.now(),
                 )
                 msg = "You have been added to the committee for Restricted Bid " + cs_query.cs_id
-                url = "/ristricted_bidding/comperative_schedule/" + cs_query.cs_id
+                url = "/restricted_bidding/comperative_schedule/" + cs_query.cs_id
                 notify_user(member_profile, msg, "Restricted Bid", url, cs_query.cs_id)
             committee_query.save()
         
@@ -1566,7 +1572,7 @@ def approve_cs_committee(request):
                 fm_user = UserProfile.objects.filter(roles=fm_role).first()
                 print("fm user: ", fm_user.username, fm_user.id)
                 msg = "Restricted is ready for your approval " + cs_query.cs_id
-                url = "/ristricted_bidding/comperative_schedule/" + cs_query.cs_id
+                url = "/restricted_bidding/comperative_schedule/" + cs_query.cs_id
                 notify_user(fm_user, msg, "Restricted Bid", url, cs_query.cs_id)
             
             return JsonResponse({
@@ -1650,7 +1656,7 @@ def approve_cs(request):
                 print("gm role: ", gm_role)
                 gm_user = UserProfile.objects.filter(roles=gm_role).first()
                 print("gm user: ", gm_user.username, gm_user.id)
-                notify_user(gm_user, "Restricted Bid is ready for your approval " + cs_query.cs_id, "Restricted Bid", "/ristricted_bidding/comperative_schedule/" + cs_query.cs_id, cs_query.cs_id)
+                notify_user(gm_user, "Restricted Bid is ready for your approval " + cs_query.cs_id, "Restricted Bid", "/restricted_bidding/comperative_schedule/" + cs_query.cs_id, cs_query.cs_id)
         
             return JsonResponse({
                 "message": "FM approval saved successfully",
@@ -1902,7 +1908,7 @@ def cs_compliance_table(request, cs_id):
         return redirect('tender_compliance', tender_id=document_id)
 
 
-    return render(request, 'finance/ristricted_bidding/cs_compliance_table.html', {"bids_items": bids_dict})
+    return render(request, 'finance/restricted_bidding/cs_compliance_table.html', {"bids_items": bids_dict})
 
 def save_additional_notes(request):
     cs_id = request.POST.get("cs_id", "")
@@ -1945,4 +1951,4 @@ def cancel_schedule(request, cs_id):
         messages.error(request, "Error cancelling Comparative Schedule", str(ex))
     
     messages.success(request, "Comparative Schedule cancelled successfully")
-    return redirect('/ristricted_bidding/comperative_schedules')
+    return redirect('/restricted_bidding/comperative_schedules')

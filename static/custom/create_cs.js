@@ -660,7 +660,7 @@ class CreateCS extends React.Component {
           );
           // reload page
           window.location.href =
-            BASE_URL + "/comperative_schedule/comperative_schedules";
+            BASE_URL + "/comperative_schedules";
           //   if (committeeApproval === "Approved") {
           //     alert("Committee approved successfully");
           //     // reload page
@@ -771,7 +771,7 @@ class CreateCS extends React.Component {
 
             // reload page
             window.location.href =
-              BASE_URL + "/comperative_schedule/comperative_schedules";
+              BASE_URL + "/comperative_schedules";
           } else {
             this.onOpenResponse(
               "Approval Success",
@@ -779,7 +779,7 @@ class CreateCS extends React.Component {
               true
             );
             window.location.href =
-              BASE_URL + "/comperative_schedule/comperative_schedules";
+              BASE_URL + "/comperative_schedules";
           }
         } else {
           this.onOpenResponse(
@@ -1424,6 +1424,7 @@ class CreateCS extends React.Component {
       return;
     }
     let form_data = new FormData();
+    console.log("currency: ", this.state.currency.id);
     // add enctype to form data
     form_data.enctype = "multipart/form-data";
     form_data.append("cs_id", this.state.cs_id);
@@ -1459,7 +1460,7 @@ class CreateCS extends React.Component {
           this.onOpenResponse(
             "Update Schedule Successful",
             "Comparative Schedule updated successfully",
-            false
+            true
           );
         } else {
           this.onOpenResponse(
@@ -4716,7 +4717,7 @@ class CreateCS extends React.Component {
 
           {this.state.rankings.length > 0 ? rankingTable : ""}
 
-          {additionalInfo}
+          {this.state.rankingTable.length > 0 ? additionalInfo: ""}
 
           {this.state.rankings.length > 0 ? committeeTable : ""}
 
@@ -4751,7 +4752,7 @@ class CreateCS extends React.Component {
             <button
               style={{ width: "50%" }}
               onClick={() => {
-                window.location.href = "/comperative_schedule/cancel_schedule/"+this.state.cs_id;
+                window.location.href = "/cancel_schedule/"+this.state.cs_id;
               }}
               className="rounded-md bg-red-800 hover:bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600 m-1"
             >
