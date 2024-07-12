@@ -1424,7 +1424,7 @@ class CreateCS extends React.Component {
       return;
     }
     let form_data = new FormData();
-    console.log("currency ...", this.state.currency);
+    console.log("currency ...", this.state);
     // add enctype to form data
     form_data.enctype = "multipart/form-data";
     form_data.append("cs_id", this.state.cs_id);

@@ -1048,13 +1048,13 @@ var CreateCS = function (_React$Component) {
         return;
       }
       var form_data = new FormData();
-      console.log("currency: ", _this.state.currency.id);
+      console.log("currency ...", _this.state);
       // add enctype to form data
       form_data.enctype = "multipart/form-data";
       form_data.append("cs_id", _this.state.cs_id);
       form_data.append("proc_ref", _this.state.proc_ref);
       form_data.append("scope_of_work", _this.state.scope_of_work);
-      form_data.append("currency", _this.state.currency.id);
+      form_data.append("currency", _this.state.currency);
       form_data.append("pr_number", _this.state.pr_number);
       form_data.append("quantity", _this.state.quantity);
       form_data.append("pr_date", _this.state.pr_date);
