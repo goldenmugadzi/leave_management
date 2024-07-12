@@ -107,8 +107,8 @@
                         <p class="font-bold mb-2">Section:{{ virament.section }}</p>
                         <p class="font-bold mb-2">
                             {% for attachment in virament.quotation_set.all %}
-                                <a href="/acee/attachment/ {{attachment}}"><button class=" hover:text-green-600 text-green-300 font-bold py-2 px-4 rounded"
-                                        href="/acee/attachment/ {{attachment}}">
+                                <a href="/ace/attachment/ {{attachment}}"><button class=" hover:text-green-600 text-green-300 font-bold py-2 px-4 rounded"
+                                        href="/ace/attachment/ {{attachment}}">
                                     {{ attachment.quotation_file.name|basename }}
                                 </button>
                                 </a>
