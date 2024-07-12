@@ -202,7 +202,7 @@ def get_finance_manager(search_value=None, column_name=None):
         committee_count__gt=2,
         not_approved_count=0,
         rejected_count=0,
-        approval__approval=None
+        rbapproval__approval=None
     ).distinct()
 
     # Filter based on search value
