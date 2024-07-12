@@ -69,7 +69,7 @@ APPLICATIONS = [
         "name": "ristricted_bidding",
         "title": "Restricted Biddings",
         "iconUrl": "assets/images/direct_bid.png",
-        "url": "/ristricted_bidding/comperative_schedules"
+        "url": "/restricted_bidding/comperative_schedules"
     },
     {
         "name": "direct_purchases",
@@ -86,6 +86,7 @@ APPLICATIONS = [
 ]
 
 # Create your views here.
+# @TODO: @login_required
 def login_user(request):
     
     if request.method == "POST":

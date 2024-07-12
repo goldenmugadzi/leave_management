@@ -94,6 +94,9 @@ SIMPLE_JWT = {
     "SLIDING_TOKEN_REFRESH_SERIALIZER": "rest_framework_simplejwt.serializers.TokenRefreshSlidingSerializer",
 }
 
+# Set session to expire after 30 minutes of inactivity
+SESSION_COOKIE_AGE = 30 * 60  # 30 minutes * 60 seconds
+
 # Application definition
 sys.path.insert(1, os.path.join(BASE_DIR, 'engineering'))
 sys.path.insert(2, os.path.join(BASE_DIR, 'commercials'))

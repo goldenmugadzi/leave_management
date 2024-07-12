@@ -89,16 +89,16 @@ def create(request):
                 processObj = Processes(
                     filename= filename,
                     filetype=_filetype.name if _filetype else None,
-                    filetype_id = _filetype,
+                    filetype_id = _filetype if _filetype else None,
                     department = _sub_category.name if _sub_category else "",
-                    filesubtype_id = _sub_category,
+                    filesubtype_id = _sub_category if _sub_category else None,
                     region=region,
-                    region_id = region_,
+                    region_id = region_ if region_ else None,
                     filepath = file_url,
                     sub_category= _subsubtype.name if _subsubtype else "",
-                    subsubtype_id = _subsubtype,
+                    subsubtype_id = _subsubtype if _subsubtype else None,
                     section = section,
-                    section_id = section,
+                    section_id = section if section else None,
                     cost_center = user.cost_center if user.cost_center else None,
                     created_by = user.username if user else None,
                     done_by = user,
@@ -1584,8 +1584,43 @@ def view_Commercial(request):
     
 @login_required
 def view_management(request):
+    file_type = File_Type.objects.filter(name="PROCESS_MAPS").first()
+    print("file_type: ", file_type)
+    file_subtype = FileSubType.objects.filter(name="Management", filetype_id=file_type).first()
+    print("file_subtype: ", file_subtype)
+    file_subsubtype = SubSubType.objects.filter(file_subtype_id=file_subtype.id, file_type_id=file_type).all()
+    print("file_subsubtype: ", file_subsubtype)
+
+    folders_list = []
+    for folder in file_subsubtype:
+        url = ""
+        if folder.name.count(" ") > 0:
+            url = folder.name.replace(" ", "_").lower()
+        else:
+            url = folder.name.lower()  
+            
+        temp = {
+            "id": folder.id,
+            "name": folder.name,
+            "url": url
+        }
+        folders_list.append(temp)
+    url_path = request.path.split("/")
     
-    files = Processes.objects.filter(archived=False, filetype="PROCESS_MAPS", department="Management")
+    print("folders_list: ", folders_list)
+    return render(request, 'process_maps/management.html',{
+        "folders": folders_list,  "page_title": "Management Documents", "url_path": url_path} )
+    
+    
+@login_required
+def view_managements(request, folder_name):
+    name = ""
+    if folder_name.count("_") > 0:
+        name = folder_name.replace("_", " ").lower()
+    else:
+        name = folder_name.lower()
+    
+    files = Processes.objects.filter(archived=False, filetype="PROCESS_MAPS", department="Management", sub_category=name).all()
 
     url_path = request.path.split("/")
     return render(request, 'process_maps/ict.html',{

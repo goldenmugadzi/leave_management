@@ -125,11 +125,17 @@ def profile_modification_request(request):
         print("username: ", profile_username)
         user = UserProfile.objects.filter(username=profile_username).first()
         if user:
-            print("user: ", user)
+            region, cost_center = None, None
+            try:
+                region = user.region
+                cost_center = user.cost_center
+            except Exception as ex:
+                print("error: ", ex)
+                messages.error(request, "User does not have a region or cost center")
+                return redirect("/change_requests/change_request_index")
+
             roles = [role for role in [request.POST.get(app.name) for app in Application.objects.all() if request.POST.get(app.name) != 'Select Role'] if role and role != ""]
-            print("roles: ", roles)
             
-            print("roles__: ", Roles.objects.filter(id__in=roles))
             profile_mod = ProfileChange(
                 user=user,
                 change_date=datetime.now(),
@@ -139,6 +145,7 @@ def profile_modification_request(request):
             profile_mod.role_to_assign.set(Roles.objects.filter(id__in=roles))
             
             cr_id = "CR-" + datetime.now().strftime("%Y%m%d%I%M%S")
+            
             change_request = ChangeRequest(
                 cr_id=cr_id,
                 change_type="Profile Modification",
@@ -147,8 +154,8 @@ def profile_modification_request(request):
                 change_reason=change_reason,
                 creator_designation=user.designation,
                 created_by=request.user,
-                region=user.region,
-                cost_center=user.cost_center,
+                region=region if region else None,
+                cost_center= cost_center if cost_center else None,
                 created_at=datetime.now()
             )
             change_request.save()
@@ -761,6 +768,13 @@ def approve_profile_request(request):
                         user.save()
                         messages.success(request, "Change Request applied successfully")
                         return redirect("/change_requests/change_request_index")
+                    
+                    if cr_type == "Profile Deactivation":
+                        profile_deactivation = change_request.profile_deactivation
+                        user = UserProfile.objects.filter(id=profile_deactivation.user.id).first()
+                        user.is_active = False
+                        user.save()
+                        messages.success(request, "Change Request applied successfully")
                     return redirect("/change_requests/change_request_index")
 
         except Exception as ex:

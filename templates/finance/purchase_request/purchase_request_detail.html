@@ -92,6 +92,32 @@
                                     </div>
                                 {% endif %}
                             </div>
+                            
+                            <div class="card-body m-auto mb-5 pt-5 bg-gulf-blue-200 ed p-3 border rounded    container rounded  shadow-lg">
+                                <div class="flex justify-between">
+                                    <span class="font-bold text-lg">
+                                        Adopted Schedules
+                                    </span>
+                                    <div class="">
+                                        {% comment %} <a
+                                        href="/comperative_schedule/create_comperative_schedule/"
+                                        class="border-gulf-blue-600 hover:bg-gulf-blue-400 hover:text-gulf-blue-50 font-bold py-2 px-4 rounded m-2"
+                                        >
+                                        Create Schedule
+                                      </a> {% endcomment %}
+                                    </div>
+                                </div>
+                                
+                                <div class="card-body m-auto mb-5 mt-5 p-3 border rounded grid grid-cols-2 gap-2 container rounded  shadow-lg">
+                                    {% for schedule in schedules %}
+                                        <div class="rounded  bg-white border border-1 shadow-lg  row text-center m-2">
+                                            <a href="{{ schedule.url }}"
+                                            class=" text-center text-blue-600  p-3 sm "
+                                            name>{{schedule.cs_id}}</a>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
                             <div class="card-body m-auto mb-5 bg-gulf-blue-200 ed p-3 border rounded    container rounded  shadow-lg">
                                 <h1 class="text-center mb-4 font-bold text-xl  mb-2">Items</h1>
                                 <div class="my-4 p-4 gap-2 grid grid-cols-3 mb-3 underline">

@@ -26,6 +26,8 @@ class DirectPurchase(models.Model):
     closing_date = models.DateField(blank=True, null=True)
     closing_time = models.CharField(max_length=10)
     advert = models.CharField(max_length=400)
+    show_site_visit = models.BooleanField(default=False, null=True, blank=True)
+    show_sample_required = models.BooleanField(default=False, null=True, blank=True)
     pr_number = models.CharField(max_length=100)
     currency = models.ForeignKey(Currency, on_delete=models.CASCADE, default=1)
     pr_date = models.DateField(blank=True, null=True)
@@ -36,6 +38,12 @@ class DirectPurchase(models.Model):
     section = models.ForeignKey(Sections, on_delete=models.CASCADE, blank=True, null=True)
     region = models.ForeignKey(Regions, on_delete=models.CASCADE, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    cancelled = models.BooleanField(default=False)
+    additional_notes = models.CharField(max_length=400, blank=True, null=True)
+    
+    # add a function to get logged in user's cost center
+    def get_logged_in_user_cost_center(self):
+        return self.created_by.cost_center
 
 class DPRequiredItems(models.Model):
     cs_id = models.ForeignKey(DirectPurchase, on_delete=models.CASCADE)

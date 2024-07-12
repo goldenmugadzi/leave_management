@@ -19,7 +19,7 @@
       <div class="flex justify-end items-center">
         {% if procurement_role %}
       <a
-      href="/ristricted_bidding/create_comperative_schedule/"
+      href="/restricted_bidding/create_comperative_schedule/"
       class="border-gulf-blue-600 hover:bg-gulf-blue-400 hover:text-gulf-blue-50 font-bold py-2 px-4 rounded m-2"
       >
       Create Schedule
@@ -112,39 +112,16 @@
 
   console.log("current user roles: ", procurement, fm, gm)
   if(procurement === "True"){
-    url = '/ristricted_bidding/datatables/your_schedules'
+    url = '/restricted_bidding/datatables/your_schedules'
   } else if(fm === "True"){
-    url = '/ristricted_bidding/datatables/pending_fm'
+    url = '/restricted_bidding/datatables/pending_fm'
   } else if(gm === "True"){
-    url = '/ristricted_bidding/datatables/pending_gm'
+    url = '/restricted_bidding/datatables/pending_gm'
   } else {
-    url = '/ristricted_bidding/datatables/pending_committee'
+    url = '/restricted_bidding/datatables/pending_committee'
   }
   $(document).ready(function () {
     var table = $("#ristricted_bidding").DataTable({
-      dom: 'Bfrtip',
-      buttons: [
-          {
-              extend: 'csv',
-              text: 'Export to CSV',
-              className: "bg-gulf-blue-400 hover:bg-gulf-blue-800 text-gulf-blue-950 font-bold py-2 px-4 rounded"
-          },
-          {
-              extend: 'excel',
-              text: 'Export to Excel',
-              className: "bg-gulf-blue-400 hover:bg-gulf-blue-800 text-gulf-blue-950 font-bold py-2 px-4 rounded"
-          },
-          {
-              extend: 'pdf',
-              text: 'Export to PDF',
-              className: "bg-gulf-blue-400 hover:bg-gulf-blue-800 text-gulf-blue-950 font-bold py-2 px-4 rounded"
-          },
-          {
-              extend: 'print',
-              text: 'Print Table',
-              className: "bg-gulf-blue-400 hover:bg-gulf-blue-800 text-gulf-blue-950 font-bold py-2 px-4 rounded"
-          }
-      ],
       "processing": true,
       "serverSide": true,
       "ajax": {
@@ -157,7 +134,7 @@
           width: "10%",
           render: function (data, type, row, meta) {
             return `
-              <a type="button" class="btn btn-info" href='/ristricted_bidding/comperative_schedule/${row.cs_id}' >
+              <a type="button" class="btn btn-info" href='/restricted_bidding/comperative_schedule/${row.cs_id}' >
                 ${data}              
               </a>`;
           },
@@ -175,17 +152,17 @@
             let approval_badge = ""
             if(data === "Approval Complete"){
               approval_badge = `
-              <a type="button" class="bg-green-300 text-green-800 rounded px-1 py-2 w-full text-center" href='/ristricted_bidding/comperative_schedule/${row.cs_id}' >
+              <a type="button" class="bg-green-300 text-green-800 rounded px-1 py-2 w-full text-center" href='/restricted_bidding/comperative_schedule/${row.cs_id}' >
                 ${data}              
               </a>`
             } else if (data === "Rejected"){
               approval_badge = `
-              <a type="button" class="bg-red-300 text-red-800 rounded px-1 py-2 w-full text-center" href='/ristricted_bidding/comperative_schedule/${row.cs_id}' >
+              <a type="button" class="bg-red-300 text-red-800 rounded px-1 py-2 w-full text-center" href='/restricted_bidding/comperative_schedule/${row.cs_id}' >
                 ${data}              
               </a>`
             } else {
               approval_badge = `
-              <a type="button" class="bg-blue-300 text-blue-800 rounded px-1 py-2 w-full text-center" href='/ristricted_bidding/comperative_schedule/${row.cs_id}' >
+              <a type="button" class="bg-blue-300 text-blue-800 rounded px-1 py-2 w-full text-center" href='/restricted_bidding/comperative_schedule/${row.cs_id}' >
                 ${data}              
               </a>`
             }
@@ -253,27 +230,27 @@
     });
 
     $('#all_schedules').on('click', function() {
-      var newUrl = '/ristricted_bidding/datatables/all_schedules';
+      var newUrl = '/restricted_bidding/datatables/all_schedules';
       table.ajax.url(newUrl).load();
     });
 
     $('#your_schedules').on('click', function() {
-      var newUrl = '/ristricted_bidding/datatables/your_schedules';
+      var newUrl = '/restricted_bidding/datatables/your_schedules';
       table.ajax.url(newUrl).load();
     });
 
     $('#pending_committee').on('click', function() {
-      var newUrl = '/ristricted_bidding/datatables/pending_committee';
+      var newUrl = '/restricted_bidding/datatables/pending_committee';
       table.ajax.url(newUrl).load();
     });
 
     $('#pending_fm').on('click', function() {
-      var newUrl = '/ristricted_bidding/datatables/pending_fm';
+      var newUrl = '/restricted_bidding/datatables/pending_fm';
       table.ajax.url(newUrl).load();
     });
 
     $('#pending_gm').on('click', function() {
-      var newUrl = '/ristricted_bidding/datatables/pending_gm';
+      var newUrl = '/restricted_bidding/datatables/pending_gm';
       table.ajax.url(newUrl).load();
     });
   });

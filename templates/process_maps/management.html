@@ -28,12 +28,12 @@
 </head> 
 
 <div style="margin-bottom: 25px" class="content-wrapper p-2 m-px text-gray-800">
-  <div class="grid grid-cols-4 gap-4">
-  {% for f in files %} {% with forloop.counter as loop_index %} {% if loop_index|divisibleby:2%}
+  <div class="grid grid-cols-3 gap-4">
+  {% for folder in folders %} {% with forloop.counter as loop_index %} {% if loop_index|divisibleby:2%}
   <div
     class="w-auto bg-gulf-blue-300 text-center shadow shadow-nepal-300 text-gray-700 rounded px-10 py-4"
   >
-    <a tabindex="-1" href="/knowledge_center/download_file?file_id={{f.id}}">
+    <a tabindex="-1" href="/processes/management/{{folder.url}}">
       <div class="sm:flex lg:items-center lg:justify-between">
         <div class="min-w-0 flex-1">
           <div class="">
@@ -41,14 +41,14 @@
               <div class="group relative">
                 <div class="flex justify-between items-center">
                   <img
-                    src="{% static 'assets/images/pdf.png' %}"
+                    src="{% static 'assets/images/folder.png' %}"
                     alt=""
                     class="h-1/5 w-1/5 object-cover object-center"
                   />
                   <span
-                    title="{{f.filename}}"
+                    title="{{folder.name}}"
                     class="text-ellipsis pr-1 font-semibold flex-1 text-left text-gray-800 px-2 overflow-hidden whitespace-nowrap overflow-ellipsis"
-                    >{{f.filename}}</span
+                    >{{folder.name}}</span
                   >
                 </div>
               </div>
@@ -62,7 +62,7 @@
   <div
     class="w-auto bg-citron-200 text-center shadow shadow-nepal-300 text-gray-700 rounded px-10 py-4"
   >
-  <a tabindex="-1" href="/knowledge_center/download_file?file_id={{f.id}}">
+  <a tabindex="-1" href="/processes/management/{{folder.url}}">
     <div class="sm:flex lg:items-center lg:justify-between">
       <div class="min-w-0 flex-1">
         <div class="">
@@ -70,13 +70,14 @@
             <div class="group relative">
               <div class="flex justify-between items-center overflow-hidden">
                 <img
-                  src="{% static 'assets/images/pdf.png' %}"
+                  src="{% static 'assets/images/folder.png' %}"
                   alt=""
                   class="h-1/5 w-1/5 object-cover object-center"
                 />
                 <span
-                  class="text-ellipsis pr-1 font-semibold flex-1 text-left text-gray-800 px-2"
-                  >{{f.filename}}</span
+                  title="{{folder.name}}"
+                  class="text-ellipsis pr-1 font-semibold flex-1 text-left text-gray-800 px-2 overflow-hidden whitespace-nowrap overflow-ellipsis"
+                  >{{folder.name}}</span
                 >
               </div>
             </div>
