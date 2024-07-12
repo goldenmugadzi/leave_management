@@ -40,6 +40,7 @@ urlpatterns =[
     
     path('commercial/',views.view_Commercial,name='Commercial Processes'),
     path('management/',views.view_management,name='Management Processes'),
+    path('management/<str:folder_name>',views.view_managements,name='Management Processes Files'),
     path('stakeholder_relations/',views.view_stakeholder_relations,name='Stakeholder Relations Processes'),
     path('legal_services/',views.view_legal_services,name='Legal Services Processes'),
     path('view/<str:filetype>/<str:subtype>/<str:subsubtype>',views.fetch_processes,name='Fetch Processes'),
