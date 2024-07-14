@@ -77,12 +77,38 @@
 
             <div>
               <label
+                for="report_type"
+                class="block text-sm font-medium leading-6 text-gray-900"
+                >Plan or Report</label
+              >
+              <div class="mt-2">
+                <select
+                    required
+                    id="report_type"
+                    name="report_type"
+                    autocomplete="report_type"
+                    class="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+                  >
+                  {% if report.report_type %}
+                      <option value="{{ report.report_type }}">{{ report.report_type }}</option>
+                    {% endif %}
+                    <option>Select Type</option>
+                    <option value="Report">Report</option>
+                    <option value="Plan">Plan</option>
+                  </select>
+              </div>
+            </div>
+
+
+            <div>
+              <label
                 for="filename"
                 class="block text-sm font-medium leading-6 text-gray-900"
                 >Report Period</label
               >
               <div class="mt-2">
                 <select
+                    required
                     id="report_period"
                     name="report_period"
                     autocomplete="report_period"
@@ -174,7 +200,7 @@
 
       <div class="flex mt-10 px-3 py-3">
         <div style="width: 50%;" class="flex justify-center">
-            <a href="/reports/reports_index/" style="width: 100%;" class="text-sm text-center font-semibold leading-6 text-gray-900">
+            <a href="/reports/plans_n_reports/" style="width: 100%;" class="text-sm text-center font-semibold leading-6 text-gray-900">
               CANCEL
             </a>
         </div>

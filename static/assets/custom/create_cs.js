@@ -51,6 +51,9 @@ var CreateCS = function (_React$Component) {
     };
 
     _this.getCSData = function (cs_id) {
+      _this.setState(Object.assign({}, _this.state, {
+        loading: true
+      }));
       fetch(BASE_URL + "/cs_data/" + cs_id).then(function (response) {
         return response.json();
       }).then(function (data_) {
@@ -135,6 +138,7 @@ var CreateCS = function (_React$Component) {
         var showSamples = data.show_samples_required === true ? "yes" : "no";
 
         _this.setState(Object.assign({}, _this.state, (_Object$assign = {
+          loading: false,
           additionalNotes: additionalNotes,
           requester_role: requester_role,
           creator: creator,
@@ -1536,6 +1540,7 @@ var CreateCS = function (_React$Component) {
     };
 
     _this.state = {
+      loading: false,
       requester_role: "",
       cs_id: "",
       cs_owner: "",
@@ -1750,6 +1755,7 @@ var CreateCS = function (_React$Component) {
       var rejectApprovalJustification = null;
       var supplierModal = null;
       var responseModal = null;
+      var loadingModal = null;
       var additionalInfo = null;
 
       if (this.state.response.open) {
@@ -1844,6 +1850,54 @@ var CreateCS = function (_React$Component) {
                     "DISMISS"
                   )
                 )
+              )
+            )
+          )
+        );
+      }
+
+      if (this.state.loading) {
+        loadingModal = React.createElement(
+          "div",
+          { className: "fixed inset-0 z-50 overflow-y-auto" },
+          React.createElement(
+            "div",
+            { className: "flex items-end justify-center min-h-screen px-4 text-center md:items-center sm:block sm:p-0" },
+            React.createElement("div", {
+              enter: "transition ease-out duration-300 transform",
+              enterStart: "opacity-0",
+              enterEnd: "opacity-100",
+              leave: "transition ease-in duration-200 transform",
+              leaveStart: "opacity-100",
+              leaveEnd: "opacity-0",
+              className: "fixed inset-0 transition-opacity bg-gray-500 bg-opacity-40"
+            }),
+            React.createElement(
+              "div",
+              {
+                enter: "transition ease-out duration-300 transform",
+                enterStart: "opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95",
+                enterEnd: "opacity-100 translate-y-0 sm:scale-100",
+                leave: "transition ease-in duration-200 transform",
+                leaveStart: "opacity-100 translate-y-0 sm:scale-100",
+                leaveEnd: "opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95",
+                className: "inline-block w-full max-w-xl p-8 my-20 overflow-hidden text-left transition-all transform bg-white rounded-lg shadow-xl 2xl:max-w-2xl"
+              },
+              React.createElement(
+                "div",
+                { className: "flex items-center justify-between space-x-4" },
+                React.createElement(
+                  "h1",
+                  { className: "text-xl font-medium text-gray-800" },
+                  "Loading ..."
+                )
+              ),
+              React.createElement(
+                "p",
+                {
+                  className: "mt-5 text-sm p-2 rounded-md bg-gulf-blue-100 text-gulf-blue-700"
+                },
+                "Please wait ..."
               )
             )
           )
@@ -4639,6 +4693,7 @@ var CreateCS = function (_React$Component) {
         rejectJustification,
         rejectApprovalJustification,
         responseModal,
+        loadingModal,
         React.createElement(
           "div",
           { className: "space-y-12 px-5 py-5" },

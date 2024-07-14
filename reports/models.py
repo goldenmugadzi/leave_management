@@ -4,6 +4,7 @@ from it.users.models import *
 # Create your models here.
 class Report(models.Model):
     uploaded_by = models.ForeignKey(UserProfile, on_delete=models.DO_NOTHING)
+    report_type = models.CharField(max_length=100, blank=True, null=True)
     region = models.ForeignKey(Regions, on_delete=models.DO_NOTHING)
     section = models.ForeignKey(Sections, on_delete=models.DO_NOTHING)
     report_period = models.CharField(max_length=100, blank=True, null=True)
@@ -11,6 +12,7 @@ class Report(models.Model):
     date_updated = models.DateTimeField(auto_now=True)
     file_name = models.CharField(max_length=100, blank=True, null=True)
     file_path = models.CharField(max_length=300, blank=True, null=True)
+    archived = models.BooleanField(default=False)
     created_by = models.ForeignKey(UserProfile, on_delete=models.DO_NOTHING, related_name='created_by')
 
     def __str__(self):

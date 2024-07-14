@@ -10,6 +10,7 @@ class CreateCS extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
+        loading: false,
       requester_role: "",
       cs_id: "",
       cs_owner: "",
@@ -171,6 +172,10 @@ class CreateCS extends React.Component {
   };
 
   getCSData = (cs_id) => {
+    this.setState({
+        ...this.state,
+        loading: true,
+    });
     fetch(`${BASE_URL}/cs_data/${cs_id}`)
       .then((response) => response.json())
       .then((data_) => {
@@ -271,6 +276,7 @@ class CreateCS extends React.Component {
 
         this.setState({
           ...this.state,
+          loading: false,
           additionalNotes: additionalNotes,
           requester_role: requester_role,
           creator: creator,
@@ -313,6 +319,7 @@ class CreateCS extends React.Component {
           showSamples: showSiteVisit,
           showSiteVisit: showSamples,
         });
+
       })
       .catch((error) => console.log("error: ", error));
   };
@@ -2082,6 +2089,7 @@ class CreateCS extends React.Component {
     var rejectApprovalJustification = null;
     var supplierModal = null;
     var responseModal = null;
+    var loadingModal = null;
     var additionalInfo = null;
 
     if (this.state.response.open) {
@@ -2166,6 +2174,46 @@ class CreateCS extends React.Component {
           </div>
         </div>
       );
+    }
+
+    if (this.state.loading) {
+        loadingModal = (
+            <div className="fixed inset-0 z-50 overflow-y-auto">
+              <div className="flex items-end justify-center min-h-screen px-4 text-center md:items-center sm:block sm:p-0">
+                <div
+                  enter="transition ease-out duration-300 transform"
+                  enterStart="opacity-0"
+                  enterEnd="opacity-100"
+                  leave="transition ease-in duration-200 transform"
+                  leaveStart="opacity-100"
+                  leaveEnd="opacity-0"
+                  className="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-40"
+                ></div>
+    
+                <div
+                  enter="transition ease-out duration-300 transform"
+                  enterStart="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                  enterEnd="opacity-100 translate-y-0 sm:scale-100"
+                  leave="transition ease-in duration-200 transform"
+                  leaveStart="opacity-100 translate-y-0 sm:scale-100"
+                  leaveEnd="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                  className="inline-block w-full max-w-xl p-8 my-20 overflow-hidden text-left transition-all transform bg-white rounded-lg shadow-xl 2xl:max-w-2xl"
+                >
+                  <div className="flex items-center justify-between space-x-4">
+                    <h1 className="text-xl font-medium text-gray-800">
+                        Loading ...
+                    </h1>
+                  </div>
+    
+                  <p
+                    className={`mt-5 text-sm p-2 rounded-md bg-gulf-blue-100 text-gulf-blue-700`}
+                  >
+                    Please wait ...
+                  </p>
+                </div>
+              </div>
+            </div>
+          );
     }
 
     if (this.state.onAddSupplier) {
@@ -4423,6 +4471,7 @@ class CreateCS extends React.Component {
         {rejectJustification}
         {rejectApprovalJustification}
         {responseModal}
+        {loadingModal}
         <div className="space-y-12 px-5 py-5">
           <div className="px-4 sm:px-0">
             <h3 className="text-base font-semibold leading-7 text-gray-900">
