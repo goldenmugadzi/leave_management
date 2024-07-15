@@ -1747,15 +1747,6 @@ class CreateCS extends React.Component {
       let _compliance = {};
       let site_visit = compliance_.site_visit;
       let samples_required = compliance_.samples_required;
-      if (name === "showSiteVisit") {
-        if (value === "no") {
-          site_visit = false;
-        }
-      } else if (name === "showSamples") {
-        if (value === "no") {
-          samples_required = false;
-        }
-      }
 
       console.log("other value: ", value);
       console.log(
@@ -1825,8 +1816,8 @@ class CreateCS extends React.Component {
         compliance[index]["valid_tax_clearance"] = checked;
         compliance[index]["registered_with_praz"] = checked;
         compliance[index]["tax_status"] = checked;
-        compliance[index]["site_visit_done"] = checked;
-        compliance[index]["samples_delivered"] = checked;
+        compliance[index]["site_visit"] = checked;
+        compliance[index]["samples_required"] = checked;
     } else {
 
     let _compliance = {
@@ -3297,7 +3288,7 @@ class CreateCS extends React.Component {
                         className="samples-header border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2"
                       >
                         Samples <br />
-                        Delivered?
+                        Required?
                       </th>
                     ) : (
                       ""
@@ -3440,7 +3431,7 @@ class CreateCS extends React.Component {
                               <input
                                 name="site_visit"
                                 checked={
-                                  comp.site_visit_done ? comp.site_visit_done : false
+                                  comp.site_visit ? comp.site_visit : false
                                 }
                                 onChange={(e) =>
                                   this.onComplianceChange(key, e)
@@ -3466,8 +3457,8 @@ class CreateCS extends React.Component {
                               <input
                                 name="samples_required"
                                 checked={
-                                  comp.samples_delivered
-                                    ? comp.samples_delivered
+                                  comp.samples_required
+                                    ? comp.samples_required
                                     : false
                                 }
                                 onChange={(e) =>
@@ -4796,7 +4787,7 @@ class CreateCS extends React.Component {
             <button
               style={{ width: "50%" }}
               onClick={() => {
-                window.location.href = "/cancel_schedule/"+this.state.cs_id;
+                window.location.href = BASE_URL+"/cancel_schedule/"+this.state.cs_id;
               }}
               className="rounded-md bg-red-800 hover:bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600 m-1"
             >

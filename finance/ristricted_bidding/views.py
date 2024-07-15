@@ -50,16 +50,19 @@ def clear_approvals(cs_id):
 
 def getUserFMGMRoles(user):
     fm_role, gm_role, procurement_role = False, False, False
-    user_comparative_schedule_role = user.roles.filter(application=APP_NAME).first()
-    
-    if user_comparative_schedule_role.application == APP_NAME:
-        if user_comparative_schedule_role.role == "check":
-            fm_role = True
-        if user_comparative_schedule_role.role == "approve":
-            gm_role = True
-        if user_comparative_schedule_role.role == "procurement":
-            procurement_role = True
-    
+    try:
+        user_comparative_schedule_role = user.roles.filter(application=APP_NAME).first()
+        
+        if user_comparative_schedule_role.application == APP_NAME:
+            if user_comparative_schedule_role.role == "check":
+                fm_role = True
+            if user_comparative_schedule_role.role == "approve":
+                gm_role = True
+            if user_comparative_schedule_role.role == "procurement":
+                procurement_role = True
+    except Exception as ex:
+        print("Error: ", ex)
+            
     return fm_role, gm_role, procurement_role
 
 @login_required

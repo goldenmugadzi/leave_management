@@ -565,15 +565,20 @@ def getUserFMGMRoles(user):
     print("user: ", user.username, user.id  )
     fm_role, gm_role, procurement_role = False, False, False
     
-    user_comparative_schedule_role = user.roles.filter(application=APP_NAME).first()
+    try:
+        user_comparative_schedule_role = user.roles.filter(application=APP_NAME).first()
 
-    if user_comparative_schedule_role.application == APP_NAME:
-        if user_comparative_schedule_role.role == "check":
-            fm_role = True
-        if user_comparative_schedule_role.role == "approve":
-            gm_role = True
-        if user_comparative_schedule_role.role == "procurement":
-            procurement_role = True
+        if user_comparative_schedule_role.application == APP_NAME:
+            if user_comparative_schedule_role.role == "check":
+                fm_role = True
+            if user_comparative_schedule_role.role == "approve":
+                gm_role = True
+            if user_comparative_schedule_role.role == "procurement":
+                procurement_role = True
+        
+    except Exception as ex:
+        # messages.error(request, "Warning: Please not that you do not have the required roles to access this page.")
+        print("Error: ", ex)
     
     return fm_role, gm_role, procurement_role
 
@@ -1097,8 +1102,8 @@ def get_comperative_schedule_data(request, cs_id):
                 "technical_specifications": comp.technical_specifications,
                 "valid_tax_clearance": comp.valid_tax_clearance,
                 "registered_with_praz": comp.registered_with_praz,
-                "site_visit_done": comp.site_visit_done,
-                "samples_delivered": comp.samples_delivered,
+                "site_visit": comp.site_visit_done,
+                "samples_required": comp.samples_delivered,
                 "decision": comp.decision,
                 "remarks": comp.remarks,
                 "created_at": comp.created_at,

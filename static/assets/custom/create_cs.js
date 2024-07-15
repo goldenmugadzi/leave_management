@@ -1263,15 +1263,6 @@ var CreateCS = function (_React$Component) {
         var _compliance = {};
         var site_visit = compliance_.site_visit;
         var samples_required = compliance_.samples_required;
-        if (name === "showSiteVisit") {
-          if (value === "no") {
-            site_visit = false;
-          }
-        } else if (name === "showSamples") {
-          if (value === "no") {
-            samples_required = false;
-          }
-        }
 
         console.log("other value: ", value);
         console.log("site_visit: ", site_visit, "samples_required: ", samples_required);
@@ -1330,8 +1321,8 @@ var CreateCS = function (_React$Component) {
         compliance[index]["valid_tax_clearance"] = checked;
         compliance[index]["registered_with_praz"] = checked;
         compliance[index]["tax_status"] = checked;
-        compliance[index]["site_visit_done"] = checked;
-        compliance[index]["samples_delivered"] = checked;
+        compliance[index]["site_visit"] = checked;
+        compliance[index]["samples_required"] = checked;
       } else {
 
         var _compliance = {
@@ -3380,7 +3371,7 @@ var CreateCS = function (_React$Component) {
                       },
                       "Samples ",
                       React.createElement("br", null),
-                      "Delivered?"
+                      "Required?"
                     ) : "",
                     React.createElement(
                       "th",
@@ -3503,7 +3494,7 @@ var CreateCS = function (_React$Component) {
                         },
                         React.createElement("input", {
                           name: "site_visit",
-                          checked: comp.site_visit_done ? comp.site_visit_done : false,
+                          checked: comp.site_visit ? comp.site_visit : false,
                           onChange: function onChange(e) {
                             return _this2.onComplianceChange(key, e);
                           },
@@ -3520,7 +3511,7 @@ var CreateCS = function (_React$Component) {
                         },
                         React.createElement("input", {
                           name: "samples_required",
-                          checked: comp.samples_delivered ? comp.samples_delivered : false,
+                          checked: comp.samples_required ? comp.samples_required : false,
                           onChange: function onChange(e) {
                             return _this2.onComplianceChange(key, e);
                           },
@@ -5141,7 +5132,7 @@ var CreateCS = function (_React$Component) {
               {
                 style: { width: "50%" },
                 onClick: function onClick() {
-                  window.location.href = "/cancel_schedule/" + _this2.state.cs_id;
+                  window.location.href = BASE_URL + "/cancel_schedule/" + _this2.state.cs_id;
                 },
                 className: "rounded-md bg-red-800 hover:bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600 m-1"
               },
