@@ -8,6 +8,7 @@ from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from decouple import config
 
+from django.contrib.auth.decorators import login_required
 from it.beii_auth.models import Question, SecurityQuestions
 # from utils.helper_functions import get_dashboard_reports
 
@@ -105,6 +106,7 @@ def login_user(request):
             })
     return render(request, 'registration/login.html', {})
 
+@login_required(login_url='/accounts/login')
 def index(request):
     
     if request.user.is_authenticated:
@@ -122,6 +124,7 @@ def index(request):
         
     return redirect('/accounts/login')
 
+@login_required(login_url='/accounts/login')
 def dashboard(request):
 
     user_page = 'dashboard.html'
@@ -202,6 +205,7 @@ def dashboard(request):
             "user": custom_user
         })
 
+@login_required(login_url='/accounts/login')
 def home(request):
 
     user_page = 'home/dashboard.html'
@@ -287,7 +291,8 @@ def home(request):
             "user_groups": user_groups,
             "user": custom_user
         })
-    
+ 
+@login_required(login_url='/accounts/login')   
 def business_applications(request):
 
     user_page = 'business_applications.html'
@@ -336,6 +341,7 @@ def app_logout(request):
     logout(request)
     return redirect('/accounts/login')
 
+@login_required(login_url='/accounts/login')
 def change_password(request):
     if request.method == "POST":
         print("request.POST: ", request.POST)
@@ -412,6 +418,7 @@ def change_password(request):
            "questions": questions_json
        })
 
+@login_required(login_url='/accounts/login')
 def security_questions(request):
    if request.method == "POST":
 
@@ -454,14 +461,16 @@ def security_questions(request):
        return render(request, "registration/answer_questions.html", {
            "questions": questions_json
        }) 
-   
+
+@login_required(login_url='/accounts/login')   
 def reset_email(request):
     if request.method == "POST":
          
          return redirect('/accounts/login')
     else:
          return render(request, "registration/change_password_email.html", {})
-     
+
+@login_required(login_url='/accounts/login')    
 def reset_password(request):
     if request.method == "POST":
          

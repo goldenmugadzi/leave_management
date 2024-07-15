@@ -1827,19 +1827,11 @@ var CreateDP = function (_React$Component) {
                     "button",
                     {
                       type: "button",
-                      onClick: this.onCloseResponse,
-                      className: "px-3 py-2 text-sm tracking-wide text-gulf-blue-900 capitalize transition-colors duration-200 transform focus:outline-none focus:ring-opacity-50"
-                    },
-                    "Cancel"
-                  ),
-                  React.createElement(
-                    "button",
-                    {
-                      type: "button",
+                      style: { width: "100%" },
                       onClick: this.onCloseResponse,
                       className: "px-3 py-2 text-sm tracking-wide text-white capitalize transition-colors duration-200 transform bg-gulf-blue-600 rounded-md dark:bg-gulf-blue-800 dark:hover:bg-gulf-blue-700 dark:focus:bg-gulf-blue-700 hover:bg-gulf-blue-600 focus:outline-none focus:bg-gulf-blue-500 focus:ring focus:ring-gulf-blue-300 focus:ring-opacity-50"
                     },
-                    "DISMISS"
+                    "CLOSE"
                   )
                 )
               )
@@ -5081,7 +5073,7 @@ var CreateDP = function (_React$Component) {
             React.createElement(
               "button",
               {
-                style: { width: "50%" },
+                style: { width: this.state.username === this.state.cs_owner ? "50%" : "100%" },
                 onClick: function onClick() {
                   console.log("going back ...");
                   window.history.back();
@@ -5090,7 +5082,7 @@ var CreateDP = function (_React$Component) {
               },
               "GO BACK TO SCHEDULES"
             ),
-            React.createElement(
+            this.state.username === this.state.cs_owner && React.createElement(
               "button",
               {
                 style: { width: "50%" },
@@ -5099,7 +5091,7 @@ var CreateDP = function (_React$Component) {
                 },
                 className: "rounded-md bg-red-800 hover:bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600 m-1"
               },
-              "CANCEL SCHEDULE"
+              "DELETE SCHEDULE"
             )
           )
         )
