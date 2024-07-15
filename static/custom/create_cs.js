@@ -4761,7 +4761,7 @@ class CreateCS extends React.Component {
 
           {this.state.rankings.length > 0 ? rankingTable : ""}
 
-          {this.state.rankingTable.length > 0 ? additionalInfo: ""}
+          {additionalInfo}
 
           {this.state.rankings.length > 0 ? committeeTable : ""}
 

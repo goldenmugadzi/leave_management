@@ -5105,7 +5105,7 @@ var CreateCS = function (_React$Component) {
             )
           ) : "",
           this.state.rankings.length > 0 ? rankingTable : "",
-          this.state.rankingTable.length > 0 ? additionalInfo : "",
+          additionalInfo,
           this.state.rankings.length > 0 ? committeeTable : "",
           this.state.committeeMembers.length > 0 && this.state.username === this.state.cs_owner && !this.state.approvalsComplete ? React.createElement(
             "div",
