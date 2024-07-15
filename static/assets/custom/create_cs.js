@@ -51,9 +51,6 @@ var CreateCS = function (_React$Component) {
     };
 
     _this.getCSData = function (cs_id) {
-      _this.setState(Object.assign({}, _this.state, {
-        loading: true
-      }));
       fetch(BASE_URL + "/cs_data/" + cs_id).then(function (response) {
         return response.json();
       }).then(function (data_) {
@@ -138,7 +135,6 @@ var CreateCS = function (_React$Component) {
         var showSamples = data.show_samples_required === true ? "yes" : "no";
 
         _this.setState(Object.assign({}, _this.state, (_Object$assign = {
-          loading: false,
           additionalNotes: additionalNotes,
           requester_role: requester_role,
           creator: creator,

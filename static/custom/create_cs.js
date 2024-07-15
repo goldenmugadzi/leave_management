@@ -172,10 +172,6 @@ class CreateCS extends React.Component {
   };
 
   getCSData = (cs_id) => {
-    this.setState({
-        ...this.state,
-        loading: true,
-    });
     fetch(`${BASE_URL}/cs_data/${cs_id}`)
       .then((response) => response.json())
       .then((data_) => {
@@ -276,7 +272,6 @@ class CreateCS extends React.Component {
 
         this.setState({
           ...this.state,
-          loading: false,
           additionalNotes: additionalNotes,
           requester_role: requester_role,
           creator: creator,
