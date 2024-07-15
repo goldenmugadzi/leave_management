@@ -341,7 +341,7 @@ def app_logout(request):
     logout(request)
     return redirect('/accounts/login')
 
-@login_required(login_url='/accounts/login')
+# @login_required(login_url='/accounts/login')
 def change_password(request):
     if request.method == "POST":
         print("request.POST: ", request.POST)
@@ -418,7 +418,7 @@ def change_password(request):
            "questions": questions_json
        })
 
-@login_required(login_url='/accounts/login')
+# @login_required(login_url='/accounts/login')
 def security_questions(request):
    if request.method == "POST":
 
@@ -462,7 +462,7 @@ def security_questions(request):
            "questions": questions_json
        }) 
 
-@login_required(login_url='/accounts/login')   
+# @login_required(login_url='/accounts/login')   
 def reset_email(request):
     if request.method == "POST":
          
@@ -470,7 +470,7 @@ def reset_email(request):
     else:
          return render(request, "registration/change_password_email.html", {})
 
-@login_required(login_url='/accounts/login')    
+# @login_required(login_url='/accounts/login')    
 def reset_password(request):
     if request.method == "POST":
          
