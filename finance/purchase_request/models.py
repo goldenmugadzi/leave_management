@@ -9,6 +9,8 @@ class ProcurementPlanReference(models.Model):
     name = models.CharField(max_length=100)
     created_at = models.DateTimeField(auto_now_add=True, blank=True, null=True)
     created_by = models.ForeignKey(UserProfile, on_delete=models.CASCADE,blank=True, null=True)
+    class Meta:
+        ordering = ['name']
     def __str__(self):
         return f"{self.name} - [{self.id}]"
 
@@ -73,6 +75,8 @@ class UnitOfMeasurement(models.Model):
     name = models.CharField(max_length=50, blank=True)
     created_at = models.DateTimeField(auto_now_add=True, blank=True, null=True)
     created_by = models.ForeignKey(UserProfile, on_delete=models.CASCADE,blank=True, null=True)
+    class Meta:
+        ordering = ['name']
     def __str__(self):
         return self.name
 

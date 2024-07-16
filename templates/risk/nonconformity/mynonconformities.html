@@ -32,6 +32,7 @@
             <th>Status</th>
           </tr>
         </thead>
+          
         <tbody>
           {% for nonconformity in nonconformities %}
           <tr class="h-1">
@@ -44,9 +45,15 @@
             <td>{% if nonconformity.closed == 1 %}Closed{% elif nonconformity.resolved == 1 %}Resolved{% elif nonconformity.accepted == 1 %}Accepted {% elif nonconformity.accepted == 0 %} Rejected {% else %}  Created  {% endif %}</td>
           </tr>
           {% endfor %}
-        </tbody>
+          <p>
+           </p> </tbody>
+        
       </table>
-
+      <div class=" container text-center ">
+          <span class="text-blue-400  mx-4 rounded border-2 border border-red-300 px-1  font-bold rounded">
+            There are {{ count }} nonconformity records including those displayed
+          </span>
+      </div>
     </div>
   </div>
 </div>

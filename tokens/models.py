@@ -19,7 +19,7 @@ class Customer(models.Model):
     address = models.CharField(max_length=200 , blank=True,null=True )
     stand_number = models.CharField(max_length=100 , blank=True,null=True )
     contact_number = models.CharField(max_length=10, blank=True,null=True , validators=[RegexValidator(r'^\+?1?\d{9,15}$', 'Enter a valid phone number.')])
-
+ 
     def __str__(self):
         return self.name
 

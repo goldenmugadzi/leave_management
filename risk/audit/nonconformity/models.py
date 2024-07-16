@@ -38,8 +38,8 @@ class Nonconformity(models.Model):
     root_cause = models.TextField(max_length=400, blank=True, null=True)
     recommended_corrective_action = models.CharField(max_length=300, blank=True, null=True, help_text='Recommend a corrective action')
     accepted = models.BooleanField( blank=True, null=True)
-    resolved = models.BooleanField(default=False)
-    closed = models.BooleanField(default=False)
+    resolved = models.BooleanField(blank=True, null=True)
+    closed = models.BooleanField(blank=True, null=True)
     
     def __str__(self):
         return self.id

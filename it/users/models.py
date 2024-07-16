@@ -151,10 +151,12 @@ class UserProfile(AbstractUser):
     region = models.ForeignKey(Regions, on_delete=models.DO_NOTHING, blank=True, null=True)
     status = models.CharField(max_length=30, blank=True)
     last_reset = models.DateField(default=date.today())
+    class Meta:
+        ordering = ['last_name','first_name','username']
 
     def __str__(self):
         if self.first_name and self.last_name:
-            return f"{self.first_name} {self.last_name}"
+            return f"{self.last_name} {self.first_name}"
         else:
             return self.username
 
