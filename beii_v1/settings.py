@@ -130,7 +130,7 @@ INSTALLED_APPS = [
     'finance.direct_purchase',
     'finance.Direct_purchases',
     'ACE2',
-
+    'esearch',
     'finance.comperative_schedule',
 
     'reports',

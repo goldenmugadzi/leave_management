@@ -203,9 +203,7 @@ def nonconformity_details(request, nonconformity_id):
 @login_required
 def view_notifications(request):
     user = request.user  # Assuming you have authentication enabled
-    notifications = Notification.objects.filter(user=user).order_by(
-        "is_read", "-created_at"
-    )
+    notifications = Notification.objects.filter(user=user).order_by( "-id" )
     return render(
         request, "risk/nonconformity/inbox.html", {"notifications": notifications}
     )
@@ -265,7 +263,7 @@ def awaiting_my_action(request):
     return render(
         request,
         "risk/nonconformity/nonconformities.html",
-        {"nonconformities": nonconformities},
+        {"nonconformities": nonconformities.order_by("-id")},
     )
 
 
