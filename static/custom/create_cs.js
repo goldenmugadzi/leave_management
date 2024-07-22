@@ -3,7 +3,6 @@
 const e = React.createElement;
 const domContainer = document.querySelector("#create_comparative_schedule");
 const url = domContainer.getAttribute("data-baseurl");
-// const BASE_URL = "http://localhost:8000";
 const BASE_URL = url+'/comperative_schedule';
 
 class CreateCS extends React.Component {
