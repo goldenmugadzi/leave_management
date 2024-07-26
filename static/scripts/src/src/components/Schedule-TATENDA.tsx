@@ -5,11 +5,6 @@ interface ICurrency {
   currency?: string;
 }
 
-interface ICsProcPlan {
-    id: string;
-    name: string;
-}
-
 interface IProcPlan {
   id: number;
   proc_ref: string;
@@ -29,7 +24,6 @@ interface IBid {
   supplier?: string;
   supplier_name?: string;
   bid_date?: string;
-  encoded_bid_document?: string;
   bid_document?: File|null;
   bid_document_url?: string;
   bid_count?: number;
@@ -62,7 +56,8 @@ interface ICompliance {
   samples_required?: boolean;
   decision?: boolean;
   reject?: boolean;
-  [key: string]: unknown; // Add an index signature to allow dynamic properties
+  remarks?: string;
+  [key: string]: any; // Add an index signature to allow dynamic properties
 }
 
 interface IComplianceRemark {
@@ -137,8 +132,8 @@ interface ICurrentApprover {
 interface IPrItems {
   id?: number;
   item_required?: string;
-  quantity?: number;
   unit_of_measurement?: string;
+  quantity?: number;
   ordered?: boolean;
 }
 
@@ -207,7 +202,7 @@ export default function Schedule({
   const [procRef, setProcRef] = useState<string>("");
   const [currency, setCurrency] = useState<ICurrency>();
   const [currencies, setCurrencies] = useState<ICurrency[]>();
-  const [procPlan, setProcPlan] = useState<ICsProcPlan>();
+  const [procPlan, setProcPlan] = useState<IProcPlan>();
   const [scopeOfWork, setScopeOfWork] = useState<string>("");
   const [prNumber, setPrNumber] = useState<string>("");
   const [prAttachments, setPrAttachments] = useState<IPRAttachment[]>();
@@ -339,7 +334,7 @@ export default function Schedule({
             const new_obj: IBid = bids_object[parseInt(key)];
             return {
               ...new_obj,
-              bid_document_url: onGetFileObjectUrl(new_obj.encoded_bid_document??undefined)?? "",
+              bid_document_url: onGetFileObjectUrl(new_obj.bid_document??undefined)?? "",
             };
           });
         }
@@ -382,8 +377,8 @@ export default function Schedule({
           ? (data as { pr_date?: string }).pr_date
           : "";
         setPrDate(pr_date ?? "");
-        const proc_plan = (data as { proc_plan?: ICsProcPlan }).proc_plan
-          ? (data as { proc_plan?: ICsProcPlan }).proc_plan
+        const proc_plan = (data as { proc_plan?: IProcPlan }).proc_plan
+          ? (data as { proc_plan?: IProcPlan }).proc_plan
           : undefined;
         setProcPlan(proc_plan);
         const scope_of_work = (data as { scope_of_work?: string }).scope_of_work
@@ -602,7 +597,6 @@ export default function Schedule({
     fetch(`${base_url}/create_data/${pr_id}`)
       .then((response) => response.json())
       .then((data) => {
-        console.log("data: ", data);
         if (data && data.success) {
           const pr_items = (data as { pr_items?: IPrItems[] }).pr_items
             ? (data as { pr_items?: IPrItems[] }).pr_items
@@ -616,7 +610,6 @@ export default function Schedule({
             );
             return;
           }
-          setPrItems(pr_items);
           const scope_of_work = (data as { scope_of_work?: string })
             .scope_of_work
             ? (data as { scope_of_work?: string }).scope_of_work
@@ -626,8 +619,8 @@ export default function Schedule({
             ? (data as { proc_ref?: string }).proc_ref
             : "";
             setProcRef(proc_ref ?? "");
-          const proc_plan = (data as { proc_plan?: ICsProcPlan }).proc_plan
-            ? (data as { proc_plan?: ICsProcPlan }).proc_plan
+          const proc_plan = (data as { proc_plan?: IProcPlan }).proc_plan
+            ? (data as { proc_plan?: IProcPlan }).proc_plan
             : undefined;
           setProcPlan(proc_plan);
           const plans = (data as { proc_plans?: IProcPlan[] }).proc_plans
@@ -1178,7 +1171,7 @@ export default function Schedule({
           );
         }
       });
-    setAddItemsModal(false);
+    setAddBidModal(false);
   };
 
   const onAddSuppliersModal = () => {
@@ -1201,8 +1194,6 @@ export default function Schedule({
       bid_count: bid_count,
       items: csItems,
     });
-    setAddBidModal(!addBidModal);
-    console.log("currentBid: ", currentBid, addBidModal);
   };
 
   const onUpdateBidModal = (bid_count: number) => {
@@ -1373,26 +1364,25 @@ export default function Schedule({
             }
             currentBid.items = items;
             console.log("currentBid: ", currentBid);
-            let bids_: IBid[] = [];
+            let bids: IBid[] = [];
             if (bids && bids.length > 0) {
-              bids_ = bids.map((bid) => {
+              bids = bids.map((bid) => {
                 if (bid.bid_count === currentBid.bid_count) {
                   return {
                     ...currentBid,
                     bid_document: currentBid.bid_document
                       ? currentBid.bid_document
                       : bid.bid_document,
-                    bid_document_url: onGetFileObjectUrl(currentBid.bid_document??undefined),
                   };
                 }
                 return bid;
               });
 
-              bids_.sort((a, b) =>
+              bids.sort((a, b) =>
                 a.bid_count && b.bid_count ? a.bid_count - b.bid_count : 0
               );
-              onSaveBid(currentBid, bids_, undefined);
             }
+            onSaveBid(currentBid, bids, undefined);
           }
         } else {
           // calculate total price for each item
@@ -1429,6 +1419,7 @@ export default function Schedule({
           // update current bid items
           currentBid.items = items;
 
+          setBids(bids);
           bids?.sort((a, b) =>
             a.bid_count && b.bid_count ? a.bid_count - b.bid_count : 0
           );
@@ -1449,13 +1440,10 @@ export default function Schedule({
     bids: IBid[],
     bid_count?: number
   ) => {
-    console.log("bid_count: ", bid_count);
     const form_data: FormData = new FormData();
-
     form_data.append("cs_id", csId);
-    form_data.append("bid_count", bid?.bid_count ? bid?.bid_count?.toString() : "");
+    form_data.append("bid_count", bid_count ? bid_count.toString() : "");
     form_data.append("supplier", bid.supplier??"");
-    form_data.append("supplier_name", bid.supplier_name??"");
     form_data.append("bid_date", bid.bid_date?? "");
     form_data.append("bid_document", bid.bid_document?? "");
     form_data.append(
@@ -1465,7 +1453,6 @@ export default function Schedule({
       })
     );
     form_data.append("csrfmiddlewaretoken", getCookie("csrftoken")??"");
-    console.log("formData: ", form_data);
 
     fetch(`${base_url}/save_bid`, {
       method: "POST",
@@ -1476,10 +1463,10 @@ export default function Schedule({
     })
       .then((response) => response.json())
       .then((data) => {
-        console.log("data: ", data, bids);
+        console.log("data: ", data);
         if (data.success) {
           onOpenResponse("Save Bid Success", "Bid saved successfully", true);
-          setBids([...bids, bid]);
+          setBids(bids);
           setAddBidModal(false);
           setUpdateBidModal(false);
           setCurrentBid({});
@@ -1960,94 +1947,55 @@ export default function Schedule({
 
   const onComplianceChange = (index: number, event: { target: { name: string; checked: boolean; }; }) => {
     const { name, checked } = event.target;
-    console.log("name item: ", name, "checked: ", checked);
-    console.log("compliance: ", compliance);
-    if(compliance && compliance.length > 0) {
-        const currentCompliances = compliance;
-        const currentCompliance = currentCompliances[index];
-        console.log("currentCompliance: ", currentCompliance);
-        currentCompliance[name] = checked;
-        console.log("currentCompliance: ", name, currentCompliance);
-        // currentCompliances[index][name] = checked;
+    console.log("name: ", name, "checked: ", checked);
+
+    if(compliance && compliance.length === 0){
+        compliance[index][name] = checked;
 
         if(name === "decision") {
-            // currentCompliances[index]["reject"] = !checked;
-            // currentCompliances[index]["decision"] = checked;
-            // currentCompliances[index]["payment_terms"] = checked;
-            // currentCompliances[index]["bid_validity"] = checked;
-            // currentCompliances[index]["delivery_period"] = checked;
-            // currentCompliances[index]["technical_specifications"] = checked;
-            // currentCompliances[index]["valid_tax_clearance"] = checked;
-            // currentCompliances[index]["registered_with_praz"] = checked;
-            // currentCompliances[index]["tax_status"] = checked;
-            // currentCompliances[index]["site_visit"] = checked;
-            // currentCompliances[index]["samples_required"] = checked;
-            const updatedCompliances = currentCompliances.map((compliance_) => {
-                if (compliance_.supplier_name === currentCompliance.supplier_name) {
-                    return {
-                        ...compliance_,
-                        decision: checked,
-                        reject: !checked,
-                        payment_terms: checked,
-                        bid_validity: checked,
-                        delivery_period: checked,
-                        technical_specifications: checked,
-                        valid_tax_clearance: checked,
-                        registered_with_praz: checked,
-                        tax_status: checked,
-                        site_visit: checked,
-                        samples_required: checked,
-                    };
-                } else {
-                    return compliance_;
-                }
-            });
-            setCompliance(updatedCompliances);
+            compliance[index]["reject"] = !checked;
+            compliance[index]["decision"] = checked;
+            compliance[index]["payment_terms"] = checked;
+            compliance[index]["bid_validity"] = checked;
+            compliance[index]["delivery_period"] = checked;
+            compliance[index]["technical_specifications"] = checked;
+            compliance[index]["valid_tax_clearance"] = checked;
+            compliance[index]["registered_with_praz"] = checked;
+            compliance[index]["tax_status"] = checked;
+            compliance[index]["site_visit"] = checked;
+            compliance[index]["samples_required"] = checked;
         } else {
 
-        // const _compliance = {
-        // payment_terms: compliance[index].payment_terms,
-        // bid_validity: compliance[index].bid_validity,
-        // delivery_period: compliance[index].delivery_period,
-        // technical_specifications: compliance[index].technical_specifications,
-        // valid_tax_clearance: compliance[index].valid_tax_clearance,
-        // registered_with_praz: compliance[index].registered_with_praz,
-        // site_visit: compliance[index].site_visit,
-        // samples_required: compliance[index].samples_required,
-        // };
+        const _compliance = {
+        payment_terms: compliance[index].payment_terms,
+        bid_validity: compliance[index].bid_validity,
+        delivery_period: compliance[index].delivery_period,
+        technical_specifications: compliance[index].technical_specifications,
+        valid_tax_clearance: compliance[index].valid_tax_clearance,
+        registered_with_praz: compliance[index].registered_with_praz,
+        site_visit: compliance[index].site_visit,
+        samples_required: compliance[index].samples_required,
+        };
 
         // set compliance_['decision'] to true if all compliance are true
-        let allValuesTrue = false;
-        Object.entries(currentCompliance).forEach((value_) => {
-            const key = value_[0];
-            console.log("value_: ", currentCompliance[key], "key: ", key);
-            if (!currentCompliance[key]) {
-                // If value_ is falsy, set allValuesTrue to false and stop iteration
-                allValuesTrue = false;
-                return;
-            } else if ((key === "site_visit" && showSiteVisit === "yes")) {
-                // If the condition for 'site_visit' or 'samples_required' being 'no' is met, skip this iteration
-                allValuesTrue = currentCompliance?.site_visit? true: false;
-                return;
-            } else if ((key === "samples_required" && showSamples === "yes")) {
-                // If the condition for 'site_visit' or 'samples_required' being 'no' is met, skip this iteration
-                allValuesTrue = currentCompliance?.site_visit? true: false;
-                return;
-              }
+        let allValuesTrue = true;
+        Object.entries(_compliance).every(([value_]) => {
+          
+            if ((showSiteVisit === "no" || showSamples === "no")) {
+              // If the condition for 'site_visit' or 'samples_required' being 'no' is met, skip this iteration
+              return true;
+            } else if (!value_) {
+              // If value_ is falsy, set allValuesTrue to false and stop iteration
+              allValuesTrue = false;
+              return false;
+            }
             return true; // Continue iteration
           });
-        currentCompliance["decision"] = allValuesTrue;
-        currentCompliance["reject"] = !allValuesTrue;
-
-        const updatedCompliances = currentCompliances.map((compliance_) => {
-            if (compliance_.supplier_name === currentCompliance.supplier_name) {
-                return currentCompliance;
-            } else {
-                return compliance_;
-            }
-        });
-        setCompliance(updatedCompliances);
+        compliance[index]["decision"] = allValuesTrue;
+        compliance[index]["reject"] = !allValuesTrue;
         }
+
+        setCompliance(compliance);
     }
   };
 
@@ -3505,7 +3453,7 @@ export default function Schedule({
                   <input
                     name="supplier[bid][0]"
                     type="number"
-                    value={currentBid?.bid_count}
+                    value="1"
                     id="bid"
                     required
                     readOnly
@@ -3525,7 +3473,7 @@ export default function Schedule({
                     name="bid_document"
                     type="file"
                     onChange={(e) =>
-                        onBidDocumentChange(e)
+                      onCurrentBidChange("bid_document", e)
                     }
                     className="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                   />
@@ -4043,8 +3991,8 @@ export default function Schedule({
               className="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
             >
               {procPlan ? (
-                <option value={procPlan?.id}>
-                  {procPlan?.name}
+                <option value={procPlan?.proc_ref}>
+                  {procPlan?.description}
                 </option>
               ) : (
                 ""
@@ -4664,7 +4612,7 @@ export default function Schedule({
         )}
 
         {bids &&
-          bids.map((loopBid) => {
+          bids.map((bid) => {
             return (
               <div
                 id="opening_rfq"
@@ -4680,7 +4628,7 @@ export default function Schedule({
                         Supplier
                       </label>
                       <div className="mt-2">
-                        <p>{loopBid.supplier_name}</p>
+                        <p>{bid.supplier_name}</p>
                       </div>
                     </div>
                     <div className="flex-1 w-20 ml-1">
@@ -4691,7 +4639,7 @@ export default function Schedule({
                         Bid Date
                       </label>
                       <div className="mt-2">
-                        <p>{loopBid.bid_date}</p>
+                        <p>{bid.bid_date}</p>
                       </div>
                     </div>
                     <div className="flex-1 w-20 ml-1">
@@ -4702,7 +4650,7 @@ export default function Schedule({
                         Bid No.
                       </label>
                       <div className="mt-2">
-                        <p>{loopBid?.bid_count}</p>
+                        <p>{bid.bid_count}</p>
                       </div>
                     </div>
                     <div className="flex-1 w-40 ml-1">
@@ -4714,17 +4662,17 @@ export default function Schedule({
                       </label>
                       <div className="mt-2">
                         <a
-                          href={(loopBid?.encoded_bid_document || currentBid?.bid_document || loopBid?.bid_document || loopBid?.bid_document_url) ? loopBid.bid_document_url: "#"}
+                          href={bid.bid_document_url}
                           target="_blank"
                           rel="noopener noreferrer"
                         >
-                          { (loopBid?.encoded_bid_document || currentBid?.bid_document || loopBid?.bid_document || loopBid?.bid_document_url) ? "View Document": "NO DOCUMENT"}
+                          View Document
                         </a>
                       </div>
                     </div>
                   </div>
 
-                  {loopBid?.items?.map((item) => {
+                  {bid?.items?.map((item) => {
                     return (
                       <div className="flex justify-evenly mt-5  px-2 py-2 rounded-md">
                         <div className="flex-1 w-15 ml-1">
@@ -4807,7 +4755,7 @@ export default function Schedule({
                   <div className="flex justify-center mt-5 px-3 py-3">
                     <div className="m-2">
                       <button
-                        onClick={() => onUpdateBidModal(loopBid?.bid_count??0)}
+                        onClick={() => onUpdateBidModal(bid?.bid_count??0)}
                         className="rounded-md text-gray-50 text-sm bg-blue-925 hover:bg-blue-550 px-3 py-2 font-semibold leading-6"
                       >
                         UPDATE BID
@@ -4817,8 +4765,8 @@ export default function Schedule({
                       <button
                         onClick={() =>
                           onDeleteBidModal(
-                            loopBid.bid_count,
-                            loopBid.supplier_name
+                            bid.bid_count,
+                            bid.supplier_name
                           )
                         }
                         type="submit"

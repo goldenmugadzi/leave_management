@@ -47,13 +47,13 @@ def debug_time(request):
 
 @login_required
 def import_old_rfq(request):
-    tender_csv = 'tender.csv'
-    rfq_csv = 'rfq.csv'
-    bid_update_csv = 'bid_update.csv'
-    bids_csv = 'bids.csv'
-    items_csv = 'items.csv'
-    required_items_csv = 'required_items.csv'
-    suppliers_csv = 'suppliers.csv'
+    tender_csv = 'tender2.csv'
+    rfq_csv = 'rfq2.csv'
+    bid_update_csv = 'bid_update2.csv'
+    bids_csv = 'bids2.csv'
+    items_csv = 'items2.csv'
+    required_items_csv = 'required_items2.csv'
+    suppliers_csv = 'suppliers2.csv'
     
     # Read the tender CSV file using pandas
     tender_data = pd.read_csv(tender_csv)
@@ -1018,6 +1018,10 @@ def get_comperative_schedule_data(request, cs_id):
     proc_plan = ""
     try:
         proc_plan = cs.proc_plan if cs.proc_plan else ""
+        proc_plans = proc_plans.annotate(
+            id=F('proc_ref'),
+            name=F('description')
+        ).values('id', 'name')
     except Exception as ex:
         print("Error: ", ex)
     user = UserProfile.objects.filter(id=cs.created_by_id).first()
@@ -1055,34 +1059,38 @@ def get_comperative_schedule_data(request, cs_id):
     grouped_by_bid = {}
     grouped_data = {}
     for bid in bids:
-        bid_no = bid.bid_no
-        if bid_no not in grouped_data:
-            encoded_file_data = ""
-            if bid.bid_document:
-                try:
-                    with open(bid.bid_document, 'rb') as f:
-                        file_data = f.read()
-                    encoded_file_data = base64.b64encode(file_data).decode('utf-8')
-                except Exception as ex:
-                    print("Error: ", ex)
-            grouped_data[bid_no] = {
-                'bid_count': bid.bid_no,
-                'supplier_name': bid.sup_id.name,
-                'bid_no': bid.bid_no,
-                'bid_date': bid.quote_date,
-                'bid_document': encoded_file_data,
-                'items': []
-            }
-        grouped_data[bid_no]['items'].append({
-            'item_id': bid.item_id.item_id,
-            'item_required': bid.item_id.item_name,  # assume this is constant
-            'quantity': bid.item_id.quantity,
-            'unit_of_measurement': bid.item_id.unit_of_measurement,
-            'unit_price': bid.unit_price,
-            'vat': bid.vat,
-            'total_price': bid.total,
-        })
-
+        print("bid: ", bid.sup_id.name, bid.bid_no)
+        try:
+            bid_no = bid.bid_no
+            if bid_no not in grouped_data:
+                encoded_file_data = ""
+                if bid.bid_document:
+                    try:
+                        with open(bid.bid_document, 'rb') as f:
+                            file_data = f.read()
+                        encoded_file_data = base64.b64encode(file_data).decode('utf-8')
+                    except Exception as ex:
+                        print("Error: ", ex)
+                grouped_data[bid_no] = {
+                    'bid_count': bid.bid_no,
+                    'supplier_name': bid.sup_id.name,
+                    'bid_count': bid.bid_no,
+                    'bid_date': bid.quote_date,
+                    'encoded_bid_document': encoded_file_data,
+                    'bid_document': None,
+                    'items': []
+                }
+            grouped_data[bid_no]['items'].append({
+                'item_id': bid.item_id.item_id,
+                'item_required': bid.item_id.item_name,  # assume this is constant
+                'quantity': bid.item_id.quantity,
+                'unit_of_measurement': bid.item_id.unit_of_measurement,
+                'unit_price': bid.unit_price,
+                'vat': bid.vat,
+                'total_price': bid.total,
+            })
+        except Exception as ex:
+            print("Error: ", ex)
     result = list(grouped_data.values())
         
     compliance_list = []
@@ -1197,6 +1205,7 @@ def get_comperative_schedule_data(request, cs_id):
             "ordered": pr_item.ordered,
         })
 
+
     #print("current user role: ", user_comparative_schedule_role.role)
     print("cs_items .....: ", cs_item_list)
     context = {
@@ -1207,18 +1216,7 @@ def get_comperative_schedule_data(request, cs_id):
         "pr_id": pr.id,
         "pr_number": cs.pr_number,
         "pr_date": cs.pr_date,
-        "additional_notes": cs.additional_notes,
-        "proc_plan": {
-            "id": proc_plan.id,
-            "proc_ref": proc_plan.proc_ref,
-            "description": proc_plan.description,
-            } if proc_plan else {},
-        "proc_plans": list(proc_plans.values('id', 'proc_ref', 'description')),
-        "currencies": list(currencies.values('id', 'currency')),
-        "currency": {
-            "id": cs.currency.id,
-            "currency": cs.currency.currency,
-            } if cs.currency else {},
+        "additional_notes": cs.additional_notes,        
         "scope_of_work": cs.scope_of_work,
         "closing_date": cs.closing_date,
         "closing_time": cs.closing_time,
@@ -1234,12 +1232,17 @@ def get_comperative_schedule_data(request, cs_id):
         "section": section.section if section else "",
         "region": region.region if region else "",
         "created_at": cs.created_at,
-        "items": items_list,
-        "bids": result,
-        "compliance": compliance_list,
-        "complianceRemarks": compliance_remarks,
-        "rankings": rankings_list,
-        "committee": committee_list,
+        "proc_plan": {
+            "id": proc_plan.id,
+            "proc_ref": proc_plan.proc_ref,
+            "description": proc_plan.description,
+            } if proc_plan else {},
+        "proc_plans": list(proc_plans.values('id', 'proc_ref', 'description')),
+        "currencies": list(currencies.values('id', 'currency')),
+        "currency": {
+            "id": cs.currency.id,
+            "currency": cs.currency.currency,
+            } if cs.currency else {},
         "gm_approval": {
             "id": gm_approval.id,
             "approver": gm_approval.user.username if gm_approval.user else "",
@@ -1265,6 +1268,12 @@ def get_comperative_schedule_data(request, cs_id):
         "proc_plans": list(proc_plans.values('id', 'proc_ref', 'description')),
         "suppliers": list(suppliers.values('id', 'name')),
         "users": list(users.values('id', 'username', 'first_name', 'last_name')),
+        "items": items_list,
+        "bids": result,
+        "compliance": compliance_list,
+        "complianceRemarks": compliance_remarks,
+        "rankings": rankings_list,
+        "committee": committee_list,
     }
     
     context = json.dumps(context, default=str)
@@ -1740,17 +1749,18 @@ def update_pritem_ordered(request):
 def save_cs_bid(request):
 
     cs_id = request.POST.get("cs_id", "")
-    bid_no = request.POST.get("bid_no", "")
+    bid_no = request.POST.get("bid_count", "")
     print("bid_no: ", bid_no)
     
     bid_docs = request.FILES.get("bid_document", None)
     bid_date = request.POST.get("bid_date", "")
     supplier_id = request.POST.get("supplier_id", "")
     supplier_name = request.POST.get("supplier_name", "")
+    print("supplier_name: ", supplier_name)
     # get items json
     json_data = json.loads(request.POST.get("json_data", "{}"))
     print("json_data: ", json_data)
-    items = json_data.get("bid_items", [])
+    items = json_data.get("items", [])
     print("items ", items, type(items))
     
     cs_query = ComparativeSchedules.objects.filter(cs_id=cs_id).first()
@@ -1761,12 +1771,13 @@ def save_cs_bid(request):
             }, safe=False)
       
     supplier = Supplier.objects.filter(name=supplier_name).first()
+    print("supplier: ", supplier)
     if not supplier:
         supplier_ = Supplier(
             name = supplier_name
         )
         supplier_.save()
-        supplier = supplier_   
+        supplier = supplier_  
         
     # check if bid exists
     bid_query = Bids.objects.filter(cs_id=cs_query, sup_id=supplier, bid_no=bid_no).all()
