@@ -47,13 +47,13 @@ def debug_time(request):
 
 @login_required
 def import_old_rfq(request):
-    tender_csv = 'tender.csv'
-    rfq_csv = 'rfq.csv'
-    bid_update_csv = 'bid_update.csv'
-    bids_csv = 'bids.csv'
-    items_csv = 'items.csv'
-    required_items_csv = 'required_items.csv'
-    suppliers_csv = 'suppliers.csv'
+    tender_csv = 'tender2.csv'
+    rfq_csv = 'rfq2.csv'
+    bid_update_csv = 'bid_update2.csv'
+    bids_csv = 'bids2.csv'
+    items_csv = 'items2.csv'
+    required_items_csv = 'required_items2.csv'
+    suppliers_csv = 'suppliers2.csv'
     
     # Read the tender CSV file using pandas
     tender_data = pd.read_csv(tender_csv)
