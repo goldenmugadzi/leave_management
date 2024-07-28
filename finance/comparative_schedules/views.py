@@ -1018,10 +1018,6 @@ def get_comperative_schedule_data(request, cs_id):
     proc_plan = ""
     try:
         proc_plan = cs.proc_plan if cs.proc_plan else ""
-        proc_plans = proc_plans.annotate(
-            id=F('proc_ref'),
-            name=F('description')
-        ).values('id', 'name')
     except Exception as ex:
         print("Error: ", ex)
     user = UserProfile.objects.filter(id=cs.created_by_id).first()
@@ -1338,7 +1334,8 @@ def get_create_data(request, pr_id):
                 "proc_ref": purchase_request.procurement_plan_reference.id if purchase_request.procurement_plan_reference else "",
                 "proc_plan": {
                     "id": purchase_request.procurement_plan_reference.id if purchase_request.procurement_plan_reference else "",
-                    "name": purchase_request.procurement_plan_reference.name if purchase_request.procurement_plan_reference else ""
+                    "proc_ref": purchase_request.procurement_plan_reference.id if purchase_request.procurement_plan_reference else "",
+                    "description": purchase_request.procurement_plan_reference.name if purchase_request.procurement_plan_reference else "",
                 } if purchase_request.procurement_plan_reference else {},
                 "pr_date": purchase_request.created_at.strftime("%Y-%m-%d") if purchase_request.created_at else "",
                 "pr_items": pr_item_list,
@@ -1885,7 +1882,7 @@ def save_cs_compliance(request):
 
     cs_id = request.POST.get("cs_id", "")
     show_site_visit = request.POST.get("show_site_visit", "")
-    show_sample_required = request.POST.get("show_sample_required", "")
+    show_sample_required = request.POST.get("show_samples_required", "")
     json_data = json.loads(request.POST.get("compliance", "{}"))
     print("json_data: ", json_data)
     compliances = json_data.get("compliance", [])

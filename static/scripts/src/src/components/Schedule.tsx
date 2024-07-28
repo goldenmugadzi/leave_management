@@ -1,20 +1,20 @@
 import React, { useEffect, useState } from "react";
+import Select, { GroupBase, StylesConfig } from 'react-select';
 
 interface ICurrency {
   id: number;
   currency?: string;
 }
 
-interface ICsProcPlan {
-    id: string;
-    name: string;
-}
+// interface ICsProcPlan {
+//     id: string;
+//     name: string;
+// }
 
 interface IProcPlan {
   id: number;
   proc_ref: string;
   description: string;
-  plan?: string;
 }
 
 interface IPRAttachment {
@@ -57,7 +57,6 @@ interface ICompliance {
   technical_specifications?: boolean;
   valid_tax_clearance?: boolean;
   registered_with_praz?: boolean;
-  tax_status?: boolean;
   site_visit?: boolean;
   samples_required?: boolean;
   decision?: boolean;
@@ -160,6 +159,11 @@ interface IResponse {
   success: boolean;
 }
 
+interface IUserOptions {
+    value: string;
+    label: string;
+}
+
 // interface IScheduleDetails {
 //   requester_role: string;
 //   cs_id: string;
@@ -207,7 +211,7 @@ export default function Schedule({
   const [procRef, setProcRef] = useState<string>("");
   const [currency, setCurrency] = useState<ICurrency>();
   const [currencies, setCurrencies] = useState<ICurrency[]>();
-  const [procPlan, setProcPlan] = useState<ICsProcPlan>();
+  const [procPlan, setProcPlan] = useState<IProcPlan>();
   const [scopeOfWork, setScopeOfWork] = useState<string>("");
   const [prNumber, setPrNumber] = useState<string>("");
   const [prAttachments, setPrAttachments] = useState<IPRAttachment[]>();
@@ -287,6 +291,53 @@ export default function Schedule({
       setFetchPR(true);
     }
   }, [username_, csid, prid]);
+
+  const userOptions: IUserOptions[]| undefined = users?.map((user) => {
+    return {
+      value: user.username,
+      label: user.first_name + " " + user.last_name + ":- " + user.username,
+    };
+  });
+
+  const customStyles: StylesConfig<IUserOptions, false, GroupBase<IUserOptions>> = {
+    control: (provided) => ({
+      ...provided,
+      backgroundColor: 'white',
+      borderColor: 'gray',
+      minHeight: '40px',
+      height: '40px',
+      boxShadow: 'none',
+    }),
+    valueContainer: (provided) => ({
+      ...provided,
+      height: '40px',
+      padding: '0 6px',
+    }),
+    input: (provided) => ({
+      ...provided,
+      margin: '0px',
+    }),
+    indicatorSeparator: () => ({
+      display: 'none',
+    }),
+    indicatorsContainer: (provided) => ({
+      ...provided,
+      height: '40px',
+    }),
+    menu: (provided) => ({
+      ...provided,
+      zIndex: 9999,
+      height: '200px',
+    }),
+    option: (provided, state) => ({
+      ...provided,
+      backgroundColor: state.isSelected ? 'lightgray' : 'white',
+      color: 'black',
+      '&:hover': {
+        backgroundColor: 'lightblue',
+      },
+    }),
+  };  
 
   const onGetFileObjectUrl = (fileData: string | File | undefined) => {
     try {
@@ -382,8 +433,8 @@ export default function Schedule({
           ? (data as { pr_date?: string }).pr_date
           : "";
         setPrDate(pr_date ?? "");
-        const proc_plan = (data as { proc_plan?: ICsProcPlan }).proc_plan
-          ? (data as { proc_plan?: ICsProcPlan }).proc_plan
+        const proc_plan = (data as { proc_plan?: IProcPlan }).proc_plan
+          ? (data as { proc_plan?: IProcPlan }).proc_plan
           : undefined;
         setProcPlan(proc_plan);
         const scope_of_work = (data as { scope_of_work?: string }).scope_of_work
@@ -626,8 +677,8 @@ export default function Schedule({
             ? (data as { proc_ref?: string }).proc_ref
             : "";
             setProcRef(proc_ref ?? "");
-          const proc_plan = (data as { proc_plan?: ICsProcPlan }).proc_plan
-            ? (data as { proc_plan?: ICsProcPlan }).proc_plan
+          const proc_plan = (data as { proc_plan?: IProcPlan }).proc_plan
+            ? (data as { proc_plan?: IProcPlan }).proc_plan
             : undefined;
           setProcPlan(proc_plan);
           const plans = (data as { proc_plans?: IProcPlan[] }).proc_plans
@@ -717,6 +768,17 @@ export default function Schedule({
         ...member,
       };
       setMember(thisMember);
+    } else if(name_ === "memberPosition") {
+      // member_[name_] = value;
+      memberValue = value;
+      const thisMember: IMember = {
+        ...member,
+        memberName: member?.memberName??"",
+        memberUserName: member?.memberUserName??"",
+        memberPosition: memberValue?? undefined,
+      };
+      setMember(thisMember);
+
     } else {
       // member_[name_] = value;
       memberValue = value;
@@ -730,6 +792,7 @@ export default function Schedule({
   };
 
   const onCommitteeSelect = (name_: string, username: string) => {
+    console.log(filteredUsers, onSearchUser, searchedUser);
     let fullname: string = "";
     let memberName: string = "";
     let memberUserName: string = "";
@@ -741,13 +804,12 @@ export default function Schedule({
       memberName = fullname;
       memberUserName = username;
     }
-    setCommitteeMembers((committeeMembers) => {
-      const newMember: ICommittee = {
-        memberName: memberName,
-        memberUserName: memberUserName,
-      };
-      return [...(committeeMembers ?? []), newMember];
-    });
+    const thisMember: IMember = {
+        ...member,
+      memberName: memberName,
+      memberUserName: memberUserName,
+    };
+    setMember(thisMember);
     setSearchedUser(fullname);
     // setSelectedUser(undefined);
     setFilteredUsers([]);
@@ -1755,23 +1817,26 @@ export default function Schedule({
 
   const onAddCommitteeMembers = () => {
 
-    if (member?.memberUserName === "" || member?.memberPosition === "") {
+    if (!member?.memberUserName || !member?.memberPosition) {
       onOpenResponse(
         "Add Committee Member Error",
         "Please select a user",
         false
       );
-    }
+      
+    } else {
     // check if memberUserName exists
     const member_ = committeeMembers?.find(
       (_member) => _member.memberUserName === member?.memberUserName
     );
     // check if memberUserName is the one creating
-    const currentUserFlag =
-        member_?.memberUserName === username;
+    const currentUserFlag = member?.memberUserName === username;
+    // check if memberPosition exists
     const positionFlag = committeeMembers?.find(
-      (_member) => _member.memberPosition === member_?.memberPosition
+      (_member) => _member.memberPosition === member?.memberPosition
     );
+    console.log("member_: ", member_, "currentUserFlag: ", currentUserFlag, "positionFlag: ", positionFlag);
+    console.log("owner: ", username, "member: ", member?.memberUserName);
     if (member_) {
       onOpenResponse(
         "Add Committee Member Error",
@@ -1805,6 +1870,8 @@ export default function Schedule({
             memberPosition: "",
             memberApproval: "",
         })
+        setSearchedUser("");
+    }
     }
   };
 
@@ -1862,7 +1929,6 @@ export default function Schedule({
           technical_specifications: false,
           valid_tax_clearance: false,
           registered_with_praz: false,
-          tax_status: false,
           site_visit: false,
           samples_required: false,
           decision: false,
@@ -1897,6 +1963,11 @@ export default function Schedule({
   const onComplianceItemsChange = (name_: string, event: { target: { name: string; value: string; }; }) => {
     const { name, value } = event.target;
     console.log("name: ", name, "value: ", value);
+    if(name_ === "showSiteVisit"){
+        setShowSiteVisit(value);
+        } else if(name_ === "showSamples"){
+        setShowSamples(value);
+    }
 
     if (compliance && compliance.length === 0) {
       onOpenResponse(
@@ -1906,14 +1977,7 @@ export default function Schedule({
       );
       return;
     }
-    console.log(
-      "showSamples: ",
-      showSamples,
-      "showSiteVisit: ",
-      showSiteVisit,
-      value,
-      name
-    );
+    
     const updatedComplianceList = compliance?.map((compliance_) => {
       let _compliance = {};
       const site_visit = compliance_.site_visit;
@@ -1931,19 +1995,13 @@ export default function Schedule({
       };
 
       // set compliance_['decision'] to true if all compliance are true
-      let allValuesTrue = true;
-      Object.entries(_compliance).map(([key, value_]) => {
-        if (key === "site_visit" && value === "no") {
-            return;
-        } else if (key === "samples_required" && value === "no") {
-            return;
-        } else if (!value_) {
-            allValuesTrue = false;
-            return;
-        }
-        return;
+      const keysToCheck = Object.keys(_compliance).filter(key => key !== "decision" && key !== "reject" && key !== "remarks" && key !== "supplier_name" && key !== "bid_no" && key !== "supplier"); 
+      console.log("keysToCheck: ", keysToCheck);
+      const allValuesTrue = keysToCheck.every(key => {
+          if (key === "site_visit" && showSiteVisit === "no") return true;
+          if (key === "samples_required" && showSamples === "no") return true;
+          return compliance_[key];
       });
-
       compliance_["decision"] = allValuesTrue;
       compliance_["reject"] = !allValuesTrue;
 
@@ -1951,16 +2009,11 @@ export default function Schedule({
     });
 
     setCompliance(updatedComplianceList);
-    if(name_ === "showSiteVisit"){
-        setShowSiteVisit(value);
-        } else if(name_ === "showSamples"){
-        setShowSamples(value);
-    }
   };
 
   const onComplianceChange = (index: number, event: { target: { name: string; checked: boolean; }; }) => {
     const { name, checked } = event.target;
-    console.log("name item: ", name, "checked: ", checked);
+    console.log("name : ", name, "checked: ", checked);
     console.log("compliance: ", compliance);
     if(compliance && compliance.length > 0) {
         const currentCompliances = compliance;
@@ -1968,20 +2021,8 @@ export default function Schedule({
         console.log("currentCompliance: ", currentCompliance);
         currentCompliance[name] = checked;
         console.log("currentCompliance: ", name, currentCompliance);
-        // currentCompliances[index][name] = checked;
 
         if(name === "decision") {
-            // currentCompliances[index]["reject"] = !checked;
-            // currentCompliances[index]["decision"] = checked;
-            // currentCompliances[index]["payment_terms"] = checked;
-            // currentCompliances[index]["bid_validity"] = checked;
-            // currentCompliances[index]["delivery_period"] = checked;
-            // currentCompliances[index]["technical_specifications"] = checked;
-            // currentCompliances[index]["valid_tax_clearance"] = checked;
-            // currentCompliances[index]["registered_with_praz"] = checked;
-            // currentCompliances[index]["tax_status"] = checked;
-            // currentCompliances[index]["site_visit"] = checked;
-            // currentCompliances[index]["samples_required"] = checked;
             const updatedCompliances = currentCompliances.map((compliance_) => {
                 if (compliance_.supplier_name === currentCompliance.supplier_name) {
                     return {
@@ -1994,9 +2035,8 @@ export default function Schedule({
                         technical_specifications: checked,
                         valid_tax_clearance: checked,
                         registered_with_praz: checked,
-                        tax_status: checked,
-                        site_visit: checked,
-                        samples_required: checked,
+                        site_visit: (showSiteVisit === "yes")? checked: false,
+                        samples_required: (showSamples === "yes")? checked: false,
                     };
                 } else {
                     return compliance_;
@@ -2004,49 +2044,25 @@ export default function Schedule({
             });
             setCompliance(updatedCompliances);
         } else {
+            console.log("currentCompliance else: ", currentCompliance);
+            const keysToCheck = Object.keys(currentCompliance).filter(key => key !== "decision" && key !== "reject" && key !== "remarks" && key !== "supplier_name" && key !== "bid_no" && key !== "supplier"); 
+            console.log("keysToCheck: ", keysToCheck);
+            const allValuesTrue = keysToCheck.every(key => {
+                if (key === "site_visit" && showSiteVisit === "no") return true;
+                if (key === "samples_required" && showSamples === "no") return true;
+                return currentCompliance[key];
+            });
+            currentCompliance["decision"] = allValuesTrue;
+            currentCompliance["reject"] = !allValuesTrue;
 
-        // const _compliance = {
-        // payment_terms: compliance[index].payment_terms,
-        // bid_validity: compliance[index].bid_validity,
-        // delivery_period: compliance[index].delivery_period,
-        // technical_specifications: compliance[index].technical_specifications,
-        // valid_tax_clearance: compliance[index].valid_tax_clearance,
-        // registered_with_praz: compliance[index].registered_with_praz,
-        // site_visit: compliance[index].site_visit,
-        // samples_required: compliance[index].samples_required,
-        // };
-
-        // set compliance_['decision'] to true if all compliance are true
-        let allValuesTrue = false;
-        Object.entries(currentCompliance).forEach((value_) => {
-            const key = value_[0];
-            console.log("value_: ", currentCompliance[key], "key: ", key);
-            if (!currentCompliance[key]) {
-                // If value_ is falsy, set allValuesTrue to false and stop iteration
-                allValuesTrue = false;
-                return;
-            } else if ((key === "site_visit" && showSiteVisit === "yes")) {
-                // If the condition for 'site_visit' or 'samples_required' being 'no' is met, skip this iteration
-                allValuesTrue = currentCompliance?.site_visit? true: false;
-                return;
-            } else if ((key === "samples_required" && showSamples === "yes")) {
-                // If the condition for 'site_visit' or 'samples_required' being 'no' is met, skip this iteration
-                allValuesTrue = currentCompliance?.site_visit? true: false;
-                return;
-              }
-            return true; // Continue iteration
-          });
-        currentCompliance["decision"] = allValuesTrue;
-        currentCompliance["reject"] = !allValuesTrue;
-
-        const updatedCompliances = currentCompliances.map((compliance_) => {
-            if (compliance_.supplier_name === currentCompliance.supplier_name) {
-                return currentCompliance;
-            } else {
-                return compliance_;
-            }
-        });
-        setCompliance(updatedCompliances);
+            const updatedCompliances = currentCompliances.map((compliance_) => {
+                if (compliance_.supplier_name === currentCompliance.supplier_name) {
+                    return currentCompliance;
+                } else {
+                    return compliance_;
+                }
+            });
+            setCompliance(updatedCompliances);
         }
     }
   };
@@ -4044,7 +4060,7 @@ export default function Schedule({
             >
               {procPlan ? (
                 <option value={procPlan?.id}>
-                  {procPlan?.name}
+                  {procPlan?.description}
                 </option>
               ) : (
                 ""
@@ -4207,7 +4223,7 @@ export default function Schedule({
         </div>
       </div>
       <div className="flex justify-evenly mt-5  px-2 py-2 rounded-md">
-        {(prAttachments?.length ?? 0 > 0) &&
+        {(prAttachments && prAttachments?.length > 0) &&
           prAttachments?.map((attachment) => {
             return (
               <div className="flex-1 w-20 ml-1">
@@ -4314,7 +4330,7 @@ export default function Schedule({
             Committee Members
           </h2>
 
-          <div className="overflow-auto px-2 py-2 mt-5 rounded-md bg-gulf-blue-300">
+          <div className="px-2 py-2 mt-5 rounded-md bg-gulf-blue-300">
             <table className="table-auto w-full text-left">
               <tbody>
                 <tr className="text-gray-900">
@@ -4348,36 +4364,49 @@ export default function Schedule({
                     <div>
                       <div className="mt-2">
                         {username === csOwner ? (   
-                          <div className="relative">     
-                          <input
+                        //   <div className="relative">     
+                        //   <input
+                        //     id="memberUserName"
+                        //     name="memberUserName"
+                        //     className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
+                        //       type="text"
+                        //       value={searchedUser}
+                        //       onChange={onSearchUser}
+                        //       placeholder="Search Member Name"
+                        //   />
+                        //   <div>
+                        //   {(filteredUsers?.length??0 > 0) ? (
+                        //   <ul className="absolute z-50 mt-1 w-full max-h-96 overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm" tabIndex={-1} role="listbox" aria-labelledby="listbox-label" aria-activedescendant="listbox-option-3">
+                        //   {filteredUsers?.map((user) => (
+                        //       <li
+                        //       className="relative cursor-default select-none py-2 pl-3 pr-9 text-gray-900 my-2" role="option"
+                        //       key={user.username}
+                        //       onClick={() =>
+                        //           onCommitteeSelect("memberUserName", user.username)
+                        //       }>
+                        //       {(user.first_name || '') + " " + (user.last_name || '')}
+                        //       </li>
+                        //   ))}
+                        //   </ul>
+                        //   ) : (
+                        //   ""
+                        //   )}
+                        //   </div>
+                        //   </div>
+                        
+                        <div>
+                        {username === csOwner && (
+                          <Select
                             id="memberUserName"
                             name="memberUserName"
-                            autoComplete="memberUserName"
                             className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
-                              type="text"
-                              value={searchedUser}
-                              onChange={onSearchUser}
-                              placeholder="Search Member Name"
+                            options={userOptions}
+                            styles={customStyles}
+                            onChange={(option) => onCommitteeSelect("memberUserName", option?.value??"")}
+                            placeholder="Search Member Name"
                           />
-                          <div>
-                          {(filteredUsers?.length??0 > 0) ? (
-                          <ul className="absolute z-50 mt-1 w-full max-h-96 overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm" tabIndex={-1} role="listbox" aria-labelledby="listbox-label" aria-activedescendant="listbox-option-3">
-                          {filteredUsers?.map((user) => (
-                              <li
-                              className="relative cursor-default select-none py-2 pl-3 pr-9 text-gray-900 my-2" role="option"
-                              key={user.username}
-                              onClick={() =>
-                                  onCommitteeSelect("memberUserName", user.username)
-                              }>
-                              {(user.first_name || '') + " " + (user.last_name || '')}
-                              </li>
-                          ))}
-                          </ul>
-                          ) : (
-                          ""
-                          )}
-                          </div>
-                          </div>
+                        )}
+                      </div>
                         ) : (
                           ""
                         )}
@@ -4388,8 +4417,8 @@ export default function Schedule({
                   <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
                     {username === csOwner &&
                     !approvalsComplete &&
-                    member?.memberPosition !== "" &&
-                    member?.memberUserName !== "" ? (
+                    member?.memberPosition &&
+                    member?.memberUserName ? (
                       <div className="w-30">
                         <button
                           style={{ width: "100%" }}

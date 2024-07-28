@@ -95,7 +95,7 @@ SIMPLE_JWT = {
 }
 
 # Set session to expire after 30 minutes of inactivity
-SESSION_COOKIE_AGE = 30 * 60  # 30 minutes * 60 seconds
+# SESSION_COOKIE_AGE = 30 * 60  # 30 minutes * 60 seconds
 
 # Application definition
 sys.path.insert(1, os.path.join(BASE_DIR, 'engineering'))
