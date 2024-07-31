@@ -146,11 +146,16 @@
                                         </a>
                                     {% endif %}
                                 {% elif token.type == 'CLEAR CREDIT' %}
-                                    {% if  token.clearcredit_set.last %}
+                                    {% if  token.clearcredit_set.last.amount > 0 and token.clearcredit_set.last.receipt  %}
                                         <a class="text-blue-900 m-auto shadow-lg mb-2 p-2 border-yellow-500 border border-1 font-bold inline-block text-start rounded-full text-sm"
                                            href="/media/{{ token.clearcredit_set.last.receipt }}">
                                             Pernalty paid : ${{ token.clearcredit_set.last.amount|default_if_none:'' }}
                                         </a>
+                                        {% elif token.clearcredit_set.last.amount > 0  %}
+                                        <div class="font-bold text-center ">
+                                            <p class="font-bold mb-2">Pernalty paid : ${{ token.clearcredit_set.last.amount|default_if_none:'' }}</p>
+                                        </div>
+                                        
                                     {% endif %}
                                 {% endif %}
                             </div>

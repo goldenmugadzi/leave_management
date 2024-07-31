@@ -1,15 +1,16 @@
-from django.shortcuts import render, redirect, HttpResponse
+from django.shortcuts import render, redirect, HttpResponse, get_object_or_404
 from .forms import *
 from .models import *
 from django.contrib import messages
-from approve.views import intiate, approve_step, get_my_roles_for_apps
+from approve.views import intiate, approve_step, get_my_roles_for_apps, get_approver
 from approve.models import Step
 from approve.forms import ApprovalForm
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from approve.decorators import allowed_roles
 from django.db.models import Q
-import os, json,re
+import os, json, re
+import mysql.connector
 
 
 # check update
@@ -186,6 +187,8 @@ def create_token(request):
         "reconnection_form": ReconnectionForm(),
     }
     return render(request, "tokens/create_token.html", forms)
+
+
 @login_required
 def token_details(request, token_id):
     token = Token.objects.get(id=token_id)
@@ -240,7 +243,9 @@ def token_details(request, token_id):
     approved_steps = token.process.approval_set.all().values_list(
         "step__step", flat=True
     )
-
+   
+    token = get_object_or_404(Token, id=token_id)
+    print(get_approver(token.cost_center, token.process))
     return render(
         request,
         "tokens/token_detail.html",
@@ -255,12 +260,40 @@ def token_details(request, token_id):
     )
 
 
+@login_required
 def view_all_tokens(request):
+    if request.method == "POST":
+        sentance = request.POST.get("search_term")
+        words = sentance.split()
+        """search for tokens by meter number, customer name, stand number, address, cost center, created by,  process workflow name comparing them based on words in the search term and order results by frequency of the words in the search term"""
+        search = request.POST.get("search_term")
+        tokens = Token.objects.filter(
+            Q(meter__number__icontains=search)
+            | Q(customer__name__icontains=search)
+            | Q(customer__stand_number__icontains=search)
+            | Q(id=search)
+            | Q(customer__address__icontains=search)
+            | Q(cost_center__name__icontains=search)
+            | Q(created_by__username__icontains=search)
+            | Q(created_by__first_name__icontains=search)
+            | Q(process__workflow__name__icontains=search)
+        )
+        return render(
+            request,
+            "tokens/tokens.html",
+            {
+                "tokens": tokens.order_by("-created_at")[:10],
+                "roles": get_my_roles_for_apps(
+                    request.user, ["temper", "reimbursement", "clear credit"]
+                ),
+                "all": True,
+            },
+        )
     return render(
         request,
         "tokens/tokens.html",
         {
-            "tokens": Token.objects.all(),
+            "tokens": Token.objects.all().order_by("-created_at")[:10],
             "all": True,
             "roles": get_my_roles_for_apps(
                 request.user, ["temper", "reimbursement", "clear credit"]
@@ -278,8 +311,12 @@ def awaiting_my_action(request):
     tokens_to_process = []
     user_roles = request.user.roles.all()
     mytokens = Token.objects.filter(
-        Q(section=request.user.section) & Q(region=request.user.region) | Q(created_by__district=request.user.district)
+        Q(section=request.user.section) & Q(region=request.user.region)
+        | Q(created_by__district=request.user.district)
     )
+    count = mytokens.count()
+
+    mytokens = mytokens.order_by("-created_at")[:10]
     for token in mytokens:
         process = token.process
 
@@ -303,6 +340,7 @@ def awaiting_my_action(request):
         {
             "tokens": tokens_to_process,
             "all": False,
+            "count": count,
             "roles": get_my_roles_for_apps(
                 request.user, ["temper", "tokens", "reimbursement", "clear credit"]
             ),
@@ -333,17 +371,16 @@ def addsection(request):
     return redirect("tokens:tokens")
 
 
-
 def process_file(file_path):
     if not os.path.isfile(file_path):
         raise FileNotFoundError("File not found!")
 
     with open(file_path, "r") as file:
         cont = file.readlines()
-        roots=[] 
-        p_t=None
-        c_t=None
-        n_t=None
+        roots = []
+        p_t = None
+        c_t = None
+        n_t = None
         p_name = None
         c_name = None
         n_name = None
@@ -357,72 +394,87 @@ def process_file(file_path):
         b4 = 0
         after = 0
         for a in range(len(cont)):
-            if a > 0:prev = cont[a-1].rstrip()
-            curent = cont[a].rstrip()
-            if a < (len(cont)-1): next = cont[a+1].rstrip()
-
-            if prev: p_t = len(prev) - len(prev.lstrip('\t'))
-            c_t = len(curent) - len(curent.lstrip('\t'))
-            if next: n_t = len(next) - len(next.lstrip('\t'))
-
-            if prev:p_id, *pname = prev.strip().split('\t')
-            c_id, *cname = curent.strip().split('\t')
-            n_id, *nname = next.strip().split('\t')
-
-            if prev:p_name = ' '.join(pname).replace('\t', '').replace(' ', '')
-            c_name = ' '.join(cname).replace('\t', '').replace('   ', '')
-            n_name = ' '.join(nname).replace('\t', '').replace('   ', '')
-
-            tkn = n_t>c_t
             if a > 0:
-                pp = c_t>p_t
+                prev = cont[a - 1].rstrip()
+            curent = cont[a].rstrip()
+            if a < (len(cont) - 1):
+                next = cont[a + 1].rstrip()
+
+            if prev:
+                p_t = len(prev) - len(prev.lstrip("\t"))
+            c_t = len(curent) - len(curent.lstrip("\t"))
+            if next:
+                n_t = len(next) - len(next.lstrip("\t"))
+
+            if prev:
+                p_id, *pname = prev.strip().split("\t")
+            c_id, *cname = curent.strip().split("\t")
+            n_id, *nname = next.strip().split("\t")
+
+            if prev:
+                p_name = " ".join(pname).replace("\t", "").replace(" ", "")
+            c_name = " ".join(cname).replace("\t", "").replace("   ", "")
+            n_name = " ".join(nname).replace("\t", "").replace("   ", "")
+
+            tkn = n_t > c_t
+            if a > 0:
+                pp = c_t > p_t
                 b4 = c_t - p_t
                 after = n_t - c_t
 
-
-
-            
-            if pp and b4 > 0: 
+            if pp and b4 > 0:
                 root = CostCenter.objects.get(code=p_id)
-                CostCenter.objects.create(name=c_name,code=c_id, parent=root)
+                CostCenter.objects.create(name=c_name, code=c_id, parent=root)
             elif tkn and b4 > 0:
-                if a>0:
+                if a > 0:
                     CostCenter.objects.create(name=c_name, code=c_id, parent=root)
                 else:
                     CostCenter.objects.create(name=c_name, code=c_id, parent=root)
-         
+
             elif not pp and tkn:
-               
+
                 if b4 < 0:
-                    b4 = -1*b4
-                    root = root 
-                    for i in range(b4): 
-                        root = root.parent 
+                    b4 = -1 * b4
+                    root = root
+                    for i in range(b4):
+                        root = root.parent
                     CostCenter.objects.create(name=c_name, code=c_id, parent=root)
                 if b4 == 0:
-                    if a>0:
+                    if a > 0:
                         root = CostCenter.objects.get(code=p_id).parent
                         CostCenter.objects.create(name=c_name, code=c_id, parent=root)
                     else:
                         CostCenter.objects.create(name=c_name, code=c_id, parent=None)
 
-                
             elif not pp and not tkn:
                 if b4 < 0:
-                    b4 = -1*b4
-                    root = root 
-                    for i in range(b4): 
-                        root = root.parent 
+                    b4 = -1 * b4
+                    root = root
+                    for i in range(b4):
+                        root = root.parent
                 CostCenter.objects.create(name=c_name, code=c_id, parent=root)
             else:
                 CostCenter.objects.create(name=c_name, code=c_id, parent=None)
-           
-               
-            state = { 'p_t': p_t, 'c_t': c_t, 'n_t': n_t,'b4':b4, 'tkn': tkn, 'pp': pp,'c_name': c_name  }
-            print(state)
-    return 'json_data'
 
-def cost_centers(request):return render(request, "tokens/cost_centers.html", {"cost_centers": CostCenter.objects.all()})
+            state = {
+                "p_t": p_t,
+                "c_t": c_t,
+                "n_t": n_t,
+                "b4": b4,
+                "tkn": tkn,
+                "pp": pp,
+                "c_name": c_name,
+            }
+            print(state)
+    return "json_data"
+
+
+def cost_centers(request):
+    return render(
+        request, "tokens/cost_centers.html", {"cost_centers": CostCenter.objects.all()}
+    )
+
+
 def upload_centers(request):
     CostCenter.objects.all().delete()
     file_path = "tokens/cc.txt"
@@ -432,119 +484,583 @@ def upload_centers(request):
         print(e)
     return redirect("tokens:cost_centers")
 
+
 """get ancestors of the cost center and all its children and merge them into cost_centers"""
-def cost_center(request, cost_center_id ):
+
+
+def cost_center(request, cost_center_id):
     cost_center = CostCenter.objects.get(id=cost_center_id)
-    return render(request, "tokens/cost_centers.html", {'ancestors':cost_center.get_all_ancestors(), "cost_centers": cost_center.get_all_ancestors_and_their_children()}) 
+    return render(
+        request,
+        "tokens/cost_centers.html",
+        {
+            "ancestors": cost_center.get_all_ancestors(),
+            "cost_centers": cost_center.get_all_ancestors_and_their_children(),
+        },
+    )
+
 
 def migrate_tokens(request):
-    import mysql.connector 
+    import mysql.connector
 
     # Connect to the MySQL database
+    # cnx = mysql.connector.connect(
+    #     host="172.16.8.10", user="root", password="", database="harare"
+    # )
     cnx = mysql.connector.connect(
-        host="172.16.8.10",
-        user="root",
-        password="",
-        database="harare"
+        host="127.0.0.1", user="root", password="", database="dms1"
     )
     cursor = cnx.cursor()
-    sql_query = """SELECT * FROM tamper_token AS tt JOIN tamper_token_update AS ttu ON tt.request_id = ttu.request_id where `tt`.`section_code` !="" ORDER BY `tt`.`section_code` ASC
+    sql_query = """SELECT * FROM tamper_token AS tt JOIN centre AS cc on cc.scode = tt.section_code JOIN tamper_token_update AS ttu ON tt.request_id = ttu.request_id where `tt`.`section_code` !="" ORDER BY `tt`.`section_code` ASC
 """
-    tkns =[]
+    tkns = []
     try:
         cursor.execute(sql_query)
         tkns = cursor.fetchall()
     except mysql.connector.Error as err:
         print("Error executing SQL query:", err)
-    token={}
-    Token.objects.all().delete()
-    Token._meta.get_field('created_at').auto_now_add = False
+    token = {}
+    # Token.objects.all().delete()
+    Token._meta.get_field("created_at").auto_now_add = False
 
     for nc_dict in tkns:
-        recipient = None
         created_by = None
         tkn = dict(zip(cursor.column_names, nc_dict))
-        if tkn['requester'] is not None:
-            try: created_by = UserProfile.objects.get(username = tkn['requester'])
-            except :
-                print(created_by , "Error executing SQL query:", tkn['requester'])
-                if not tkn['requester'].startswith('ze') and not tkn['requester'].startswith('ZE'):
-                    print(tkn['requester'],'requester')
-                    try: created_by = UserProfile.objects.get(username = 'ze'+tkn['requester'])
+        if tkn["requester"] is not None:
+            try:
+                created_by = UserProfile.objects.get(username=tkn["requester"])
+            except:
+                # print(created_by, "Error executing SQL query:", tkn["requester"])
+                if not tkn["requester"].startswith("ze") and not tkn[
+                    "requester"
+                ].startswith("ZE"):
+                    # print(tkn["requester"], "requester")
+                    try:
+                        created_by = UserProfile.objects.get(
+                            username="ze" + tkn["requester"]
+                        )
                     except Exception as e:
-                        print(created_by ,e, "Error executing SQL query:", tkn['requester'])
+                        print(
+                            created_by,
+                            e,
+                            "Error executing SQL query:",
+                            tkn["requester"],
+                        )
 
             customer = None
-            meter, created = Meter.objects.get_or_create(number= tkn['meter_number'] ,defaults={'kilowatt_hours': tkn['kilowatts'], 'phase': tkn['type']}) 
-            customer = Customer.objects.filter(name= tkn['customer_name'], address= tkn['stand_number'], stand_number= tkn['stand_number']).first()
+            meter, created = Meter.objects.get_or_create(
+                number=tkn["meter_number"],
+                defaults={"kilowatt_hours": tkn["kilowatts"], "phase": tkn["type"]},
+            )
+            customer = Customer.objects.filter(
+                name=tkn["customer_name"],
+                address=tkn["stand_number"],
+                stand_number=tkn["stand_number"],
+            ).first()
             if customer is None:
-                customer, created = Customer.objects.get_or_create(name= tkn['customer_name'],defaults={'address': tkn['stand_number'], 'stand_number': tkn['stand_number']})
-        
-            create_date = timezone.make_aware(tkn['requested_date'])
-            token['id'] = tkn['request_id']
-            token['meter'] = meter
-            token['created_by'] = created_by
-            token['reason'] = tkn['reason'] 
-            token['created_at'] = create_date
-            token['customer'] = customer
-            cost_center_query = CostCenter.objects.filter(code= tkn['section_code'])
-            token['cost_center'] = cost_center_query.get() if cost_center_query.exists() else None
+                customer, created = Customer.objects.get_or_create(
+                    name=tkn["customer_name"],
+                    defaults={
+                        "address": tkn["stand_number"],
+                        "stand_number": tkn["stand_number"],
+                    },
+                )
+
+            create_date = timezone.make_aware(tkn["requested_date"])
+            token["meter"] = meter
+            token["created_by"] = created_by
+            token["reason"] = tkn["reason"]
+            token["created_at"] = create_date
+            token["customer"] = customer
+            cost_center_query = CostCenter.objects.filter(
+                code=tkn["section_code"]
+            ).first()
+            if not cost_center_query:
+                cost_center_query = CostCenter.objects.filter(
+                    code=tkn["allocation_code"]
+                ).first()
+
+            token["cost_center"] = (
+                cost_center_query
+                if cost_center_query
+                else CostCenter.objects.get(code=tkn["allocation_code"])
+            )
             if created_by is not None:
-                token['region'] = created_by.region
+                token["region"] = created_by.region
             else:
-                token['region'] = None 
-            token['type'] = 'TEMPER' 
-            purpose= tkn['purpose']
-            process = intiate(request, 'temper')
-            token['process'] = process
-            crted_token = Token.objects.create(**token)
-            if str(purpose) == 'fault_maintanance':
-                print(' got here', purpose,  token['id'])
-                fault_number_str = tkn['fault_number']
-                numbers = re.findall(r'\d+', fault_number_str)
+                token["region"] = None
+            token["type"] = "TEMPER"
+            purpose = tkn["purpose"]
+            process = intiate(request, "temper")
+            token["process"] = process
+            crted_token, created = Token.objects.get_or_create(
+                id=tkn["request_id"], defaults=token
+            )
+            if str(purpose) == "fault_maintanance":
+                fault_number_str = tkn["fault_number"]
+                numbers = re.findall(r"\d+", fault_number_str)
                 code = int(numbers[0]) if numbers else None
-                FaultMaintanance.objects.create(token=crted_token, code = code)
-            elif str(purpose) == 'reconnection':
-                print(' got here', purpose,  token['id'])
+                FaultMaintanance.objects.create(token=crted_token, code=code)
+                TAMPERTOKEN.objects.create(
+                    token=crted_token, is_for="Fauty Maintanance"
+                )
+            elif str(purpose) == "reconnection":
                 Reconnection.objects.create(token=crted_token)
-            elif str(purpose) == 'recovered_meter':
-                print(' got here', purpose,  token['id'])
+                TAMPERTOKEN.objects.create(token=crted_token, is_for="Reconnection")
+            elif str(purpose) == "recovered_meter":
                 RecoveredMeter.objects.create(token=crted_token)
+                TAMPERTOKEN.objects.create(token=crted_token, is_for="Recovered Meter")
             else:
-                print('invalid purpose', purpose,token['id'])
+                print("invalid purpose", purpose, token["id"])
             if process.approval_set.exists():
                 last_apporoved_step = process.approval_set.last().step
             else:
                 last_apporoved_step = 0
-            
+
             if process.workflow.step_set.last().step != last_apporoved_step:
-                next_approval_step = process.workflow.step_set.get(step=last_apporoved_step+1)
-            
-            if tkn['update_user2'] is not None:
+                next_approval_step = process.workflow.step_set.get(
+                    step=last_apporoved_step + 1
+                )
+
+            if tkn["update_user2"] is not None:
                 try:
-                    try: user = UserProfile.objects.get(username = tkn['update_user2'])
+                    try:
+                        user = UserProfile.objects.get(username=tkn["update_user2"])
                     except Exception as e:
-                        user = UserProfile.objects.get(username = 'ze'+tkn['update_user2'])
-                    next2_approval_step = process.workflow.step_set.get(step=last_apporoved_step+2)
-                    next3_approval_step = process.workflow.step_set.get(step=last_apporoved_step+3)
-                    if tkn['reject_reason'] is not None :
-                          Approval.objects.create(step=next2_approval_step, user=user, process=process, comment=tkn['reject_reason'], approved='Rejected', approved_at=timezone.now())
-                    elif tkn['reject_reason'] is None :
-                          Approval.objects.create(step=next2_approval_step, user=user, process=process, approved='Approved', approved_at=timezone.now())
-                          Approval.objects.create(step=next3_approval_step, user=user, process=process, approved='Approved', approved_at=timezone.now())
-                except Exception as e : print(tkn['update_user2'],'l2 appproval error', e)
-            if tkn['update_user1'] is not None:
+                        user = UserProfile.objects.get(
+                            username="ze" + tkn["update_user2"]
+                        )
+                    next2_approval_step = process.workflow.step_set.get(
+                        step=last_apporoved_step + 2
+                    )
+                    next3_approval_step = process.workflow.step_set.get(
+                        step=last_apporoved_step + 3
+                    )
+                    if tkn["reject_reason"] is not None:
+                        Approval.objects.create(
+                            step=next2_approval_step,
+                            user=user,
+                            process=process,
+                            comment=tkn["reject_reason"],
+                            approved="Rejected",
+                            approved_at=timezone.now(),
+                        )
+                    elif tkn["reject_reason"] is None:
+                        Approval.objects.create(
+                            step=next2_approval_step,
+                            user=user,
+                            process=process,
+                            approved="Approved",
+                            approved_at=timezone.now(),
+                        )
+                        Approval.objects.create(
+                            step=next3_approval_step,
+                            user=user,
+                            process=process,
+                            approved="Approved",
+                            approved_at=timezone.now(),
+                        )
+                except Exception as e:
+                    pass
+                    # print(tkn["update_user2"], "l2 appproval error", e)
+            if tkn["update_user1"] is not None:
                 try:
-                    try: user = UserProfile.objects.get(username = 'ze'+tkn['update_user1'])
+                    try:
+                        user = UserProfile.objects.get(
+                            username="ze" + tkn["update_user1"]
+                        )
                     except Exception as e:
-                        user = UserProfile.objects.get(username = tkn['update_user1'])
-                    if tkn['reject_reason'] is not None and tkn['update_user2'] is None :
-                         Approval.objects.create(step=next_approval_step , user=user, process=process, comment=tkn['reject_reason'], approved='Rejected', approved_at=timezone.now())
-                    else :
-                          Approval.objects.create(step=next_approval_step, user=user, process=process, approved='Approved', approved_at=timezone.now())
-                except Exception as e : print(tkn['update_user1'],'l1 appproval error', e)
-        Token._meta.get_field('created_at').auto_now_add = True
+                        user = UserProfile.objects.get(username=tkn["update_user1"])
+                    if tkn["reject_reason"] is not None and tkn["update_user2"] is None:
+                        Approval.objects.create(
+                            step=next_approval_step,
+                            user=user,
+                            process=process,
+                            comment=tkn["reject_reason"],
+                            approved="Rejected",
+                            approved_at=timezone.now(),
+                        )
+                    else:
+                        Approval.objects.create(
+                            step=next_approval_step,
+                            user=user,
+                            process=process,
+                            approved="Approved",
+                            approved_at=timezone.now(),
+                        )
+                except Exception as e:
+                    pass
+                    # print(tkn["update_user1"], "l1 appproval error", e)
+        Token._meta.get_field("created_at").auto_now_add = True
         cursor.close()
         cnx.close()
-    
+
     return HttpResponse(tkns)
+
+
+@login_required
+def migrate_reimbursement_tokens(request):
+
+    cnx = mysql.connector.connect(
+        host="127.0.0.1", user="root", password="", database="dms1"
+    )
+    cursor = cnx.cursor()
+    sql_query = """SELECT * FROM `reimbursement_token` as rt JOIN centre AS cc on cc.scode = rt.section_code JOIN `reimbursement_token_update` as rtu ON rt.request_id = rtu.request_id where `rt`.`section_code` !="" ORDER BY `rt`.`section_code` ASC"""
+    tkns = []
+    try:
+        cursor.execute(sql_query)
+        tkns = cursor.fetchall()
+    except mysql.connector.Error as err:
+        print("Error executing SQL query:", err)
+    token = {}
+    Token._meta.get_field("created_at").auto_now_add = False
+    for nc_dict in tkns:
+        created_by = None
+        tkn = dict(zip(cursor.column_names, nc_dict))
+        if tkn["requester"] is not None:
+            try:
+                created_by = UserProfile.objects.get(username=tkn["requester"])
+            except:
+                print(created_by, "Error executing SQL query:", tkn["requester"])
+                if not tkn["requester"].startswith("ze") and not tkn[
+                    "requester"
+                ].startswith("ZE"):
+                    print(tkn["requester"], "requester")
+                    try:
+                        created_by = UserProfile.objects.get(
+                            username="ze" + tkn["requester"]
+                        )
+                    except Exception as e:
+                        print(
+                            created_by,
+                            e,
+                            "Error executing SQL query:",
+                            tkn["requester"],
+                        )
+
+            customer = None
+            meter, created = Meter.objects.get_or_create(
+                number=tkn["meter_number"],
+                defaults={"kilowatt_hours": tkn["kilowatts"], "phase": tkn["type"]},
+            )
+            customer = Customer.objects.filter(
+                name=tkn["customer_name"],
+                address=tkn["stand_number"],
+                stand_number=tkn["stand_number"],
+            ).first()
+            if customer is None:
+                customer, created = Customer.objects.get_or_create(
+                    name=tkn["customer_name"],
+                    defaults={
+                        "address": tkn["stand_number"],
+                        "stand_number": tkn["stand_number"],
+                    },
+                )
+
+            create_date = timezone.make_aware(tkn["requested_date"])
+            token["id"] = tkn["request_id"]
+            token["meter"] = meter
+            token["created_by"] = created_by
+            token["reason"] = tkn["reason"]
+            token["created_at"] = create_date
+            token["customer"] = customer
+            cost_center_query = CostCenter.objects.filter(
+                code=tkn["section_code"]
+            ).first()
+            if cost_center_query is None:
+                cost_center_query = CostCenter.objects.filter(
+                    code=tkn["allocation_code"]
+                ).first()
+
+            token["cost_center"] = cost_center_query
+            try:
+                if created_by is not None:
+                    token["region"] = created_by.region
+                else:
+                    token["region"] = None
+                print("token", token)
+                token["type"] = "REIMBURSEMENT"
+                purpose = tkn["recovered_fault"]
+                process = intiate(request, "reimbursement")
+                token["process"] = process
+                crted_token, created = Token.objects.get_or_create(
+                    id=tkn["request_id"], defaults=token
+                )
+                if str(purpose) == "faulty_meter":
+                    fault_number_str = tkn["fault_number"]
+                    numbers = re.findall(r"\d+", fault_number_str)
+                    code = int(numbers[0]) if numbers else None
+                    FaultMeter.objects.create(token=crted_token, code=code)
+                    REIMBURSEMENT.objects.create(
+                        token=crted_token, purpose="Faulty Meter"
+                    )
+                elif str(purpose) == "recovered_meter":
+                    RecoveredMeter.objects.create(token=crted_token)
+                    REIMBURSEMENT.objects.create(
+                        token=crted_token, purpose="Recovered Meter"
+                    )
+                elif str(purpose) == "old_token":
+                    OldToken.objects.create(token=crted_token)
+                    REIMBURSEMENT.objects.create(token=crted_token, purpose="Old Token")
+                else:
+                    print("invalid purpose", purpose, token["id"])
+                if process.approval_set.exists():
+                    last_apporoved_step = process.approval_set.last().step
+                else:
+                    last_apporoved_step = 0
+                if process.workflow.step_set.last().step != last_apporoved_step:
+                    next_approval_step = process.workflow.step_set.get(
+                        step=last_apporoved_step + 1
+                    )
+                if tkn["update_user2"] is not None:
+                    try:
+                        try:
+                            user = UserProfile.objects.get(username=tkn["update_user2"])
+                        except Exception as e:
+                            user = UserProfile.objects.get(
+                                username="ze" + tkn["update_user2"]
+                            )
+                        next2_approval_step = process.workflow.step_set.get(
+                            step=last_apporoved_step + 2
+                        )
+                        next3_approval_step = process.workflow.step_set.get(
+                            step=last_apporoved_step + 3
+                        )
+                        if tkn["reject_reason"] is not None:
+                            Approval.objects.create(
+                                step=next2_approval_step,
+                                user=user,
+                                process=process,
+                                comment=tkn["reject_reason"],
+                                approved="Rejected",
+                                approved_at=timezone.now(),
+                            )
+                        elif tkn["reject_reason"] is None:
+                            Approval.objects.create(
+                                step=next2_approval_step,
+                                user=user,
+                                process=process,
+                                approved="Approved",
+                                approved_at=timezone.now(),
+                            )
+                            Approval.objects.create(
+                                step=next3_approval_step,
+                                user=user,
+                                process=process,
+                                approved="Approved",
+                                approved_at=timezone.now(),
+                            )
+                    except Exception as e:
+                        print(tkn["update_user2"], "l2 appproval error", e)
+                if tkn["update_user1"] is not None:
+                    try:
+                        try:
+                            user = UserProfile.objects.get(
+                                username="ze" + tkn["update_user1"]
+                            )
+                        except Exception as e:
+                            user = UserProfile.objects.get(username=tkn["update_user1"])
+                        if (
+                            tkn["reject_reason"] is not None
+                            and tkn["update_user2"] is None
+                        ):
+                            Approval.objects.create(
+                                step=next_approval_step,
+                                user=user,
+                                process=process,
+                                comment=tkn["reject_reason"],
+                                approved="Rejected",
+                                approved_at=timezone.now(),
+                            )
+                        else:
+                            Approval.objects.create(
+                                step=next_approval_step,
+                                user=user,
+                                process=process,
+                                approved="Approved",
+                                approved_at=timezone.now(),
+                            )
+                    except Exception as e:
+                        print(tkn["update_user1"], "l1 appproval error", e)
+            except Exception as e:
+                print(e, "error")
+        Token._meta.get_field("created_at").auto_now_add = True
+        cursor.close()
+        cnx.close()
+    return redirect("tokens:tokens")
+
+
+@login_required
+def migrate_clear_credit_tokens(request):
+    cnx = mysql.connector.connect(
+        host="127.0.0.1", user="root", password="", database="dms1"
+    )
+    cursor = cnx.cursor()
+    sql_query = """SELECT * FROM `credit_request` as cct JOIN centre AS cc on cc.scode = cct.section_code JOIN `credit_request_update` as cctu ON cct.request_id = cctu.request_id where `cct`.`section_code` !="" ORDER BY `cct`.`section_code` ASC"""
+    tkns = []
+    try:
+        cursor.execute(sql_query)
+        tkns = cursor.fetchall()
+    except mysql.connector.Error as err:
+        print("Error executing SQL query:", err)
+    token = {}
+    Token._meta.get_field("created_at").auto_now_add = False
+    for nc_dict in tkns:
+        created_by = None
+        tkn = dict(zip(cursor.column_names, nc_dict))
+        if tkn["requester"] is not None:
+            try:
+                created_by = UserProfile.objects.get(username=tkn["requester"])
+            except:
+                print(created_by, "Error executing SQL query:", tkn["requester"])
+                if not tkn["requester"].startswith("ze") and not tkn[
+                    "requester"
+                ].startswith("ZE"):
+                    print(tkn["requester"], "requester")
+                    try:
+                        created_by = UserProfile.objects.get(
+                            username="ze" + tkn["requester"]
+                        )
+                    except Exception as e:
+                        print(
+                            created_by,
+                            e,
+                            "Error executing SQL query:",
+                            tkn["requester"],
+                        )
+
+            customer = None
+            meter, created = Meter.objects.get_or_create(
+                number=tkn["meter_number"],
+                defaults={"kilowatt_hours": tkn["kilowatts"], "phase": tkn["type"]},
+            )
+            customer = Customer.objects.filter(
+                name=tkn["customer_name"],
+                address=tkn["stand_number"],
+                stand_number=tkn["stand_number"],
+            ).first()
+            if customer is None:
+                customer, created = Customer.objects.get_or_create(
+                    name=tkn["customer_name"],
+                    defaults={
+                        "address": tkn["stand_number"],
+                        "stand_number": tkn["stand_number"],
+                    },
+                )
+
+            create_date = timezone.make_aware(tkn["requested_date"])
+            token["id"] = tkn["request_id"]
+            token["meter"] = meter
+            token["created_by"] = created_by
+            token["reason"] = tkn["reason"]
+            token["created_at"] = create_date
+            token["customer"] = customer
+            cost_center_query = CostCenter.objects.filter(
+                code=tkn["section_code"]
+            ).first()
+            if cost_center_query is None:
+                cost_center_query = CostCenter.objects.filter(
+                    code=tkn["allocation_code"]
+                ).first()
+
+            token["cost_center"] = cost_center_query
+            try:
+                if created_by is not None:
+                    token["region"] = created_by.region
+                else:
+                    token["region"] = None
+                print("token", token)
+                token["type"] = "CLEAR CREDIT"
+                process = intiate(request, "clear credit")
+                token["process"] = process
+                crted_token, created = Token.objects.get_or_create(
+                    id=tkn["request_id"], defaults=token
+                )
+                clear_credit, crtd = CLEARCREDIT.objects.get_or_create(
+                    token=crted_token, amount=tkn["amount"]
+                )
+
+                if process.approval_set.exists():
+                    last_apporoved_step = process.approval_set.last().step
+                else:
+                    last_apporoved_step = 0
+                if process.workflow.step_set.last().step != last_apporoved_step:
+                    next_approval_step = process.workflow.step_set.get(
+                        step=last_apporoved_step + 1
+                    )
+                if tkn["update_user2"] is not None:
+                    try:
+                        try:
+                            user = UserProfile.objects.get(username=tkn["update_user2"])
+                        except Exception as e:
+                            user = UserProfile.objects.get(
+                                username="ze" + tkn["update_user2"]
+                            )
+                        next2_approval_step = process.workflow.step_set.get(
+                            step=last_apporoved_step + 2
+                        )
+                        next3_approval_step = process.workflow.step_set.get(
+                            step=last_apporoved_step + 3
+                        )
+                        if tkn["reject_reason"] is not None:
+                            Approval.objects.create(
+                                step=next2_approval_step,
+                                user=user,
+                                process=process,
+                                comment=tkn["reject_reason"],
+                                approved="Rejected",
+                                approved_at=timezone.now(),
+                            )
+                        elif tkn["reject_reason"] is None:
+                            Approval.objects.create(
+                                step=next2_approval_step,
+                                user=user,
+                                process=process,
+                                approved="Approved",
+                                approved_at=timezone.now(),
+                            )
+                            Approval.objects.create(
+                                step=next3_approval_step,
+                                user=user,
+                                process=process,
+                                approved="Approved",
+                                approved_at=timezone.now(),
+                            )
+                    except Exception as e:
+                        print(tkn["update_user2"], "l2 appproval error", e)
+                if tkn["update_user1"] is not None:
+                    try:
+                        try:
+                            user = UserProfile.objects.get(
+                                username="ze" + tkn["update_user1"]
+                            )
+                        except Exception as e:
+                            user = UserProfile.objects.get(username=tkn["update_user1"])
+                        if (
+                            tkn["reject_reason"] is not None
+                            and tkn["update_user2"] is None
+                        ):
+                            Approval.objects.create(
+                                step=next_approval_step,
+                                user=user,
+                                process=process,
+                                comment=tkn["reject_reason"],
+                                approved="Rejected",
+                                approved_at=timezone.now(),
+                            )
+                        else:
+                            Approval.objects.create(
+                                step=next_approval_step,
+                                user=user,
+                                process=process,
+                                approved="Approved",
+                                approved_at=timezone.now(),
+                            )
+                    except Exception as e:
+                        print(tkn["update_user1"], "l1 appproval error", e)
+            except Exception as e:
+                print(e, "error")
+        Token._meta.get_field("created_at").auto_now_add = True
+        cursor.close()
+        cnx.close()
+    return redirect("tokens:tokens")

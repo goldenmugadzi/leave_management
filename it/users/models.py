@@ -109,7 +109,7 @@ class CostCenter(models.Model):
     code = models.CharField(max_length=30)
     name = models.CharField(max_length=100, blank=True, null=True)
     parent = models.ForeignKey('self', on_delete=models.CASCADE, blank=True, null=True, related_name='children')
-
+  
     class Meta:
         ordering = ['parent__id']
    
@@ -138,7 +138,6 @@ class CostCenter(models.Model):
         center = f"{', '.join(ancestor_names + [f'{self.name}({self.code})'])}"
         center = ', '.join(dict.fromkeys(center.split(', ')))
         return center
-    
 class UserProfile(AbstractUser):
     username = models.CharField(max_length=15, unique=True, verbose_name='EC Number',db_index=True)
     designation = models.ForeignKey(Designations, on_delete=models.DO_NOTHING, blank=True, null=True)
@@ -159,7 +158,7 @@ class UserProfile(AbstractUser):
             return f"{self.last_name} {self.first_name}"
         else:
             return self.username
-
+    
 
 class Notification(models.Model):
     user = models.ForeignKey(UserProfile, on_delete=models.CASCADE)

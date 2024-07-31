@@ -12,18 +12,28 @@
     <div class="grid grid-cols-1">
       <div class="bg-gulf-blue-100 shadow-lg rounded-lg p-6">
         <h3 class="text-center font-bold mb-4">Tokens</h3>
-        <div class=" grid grid-cols-4 container text-center ">
+        <div class=" grid grid-cols-5 m-auto container text-center ">
           <a href="{% url 'tokens:create_token' %}"
-             class="bg-blue-500 hover:bg-blue-700 inline-block rounded-full mx-3 text-white py-2 px-4 rounded"> New Request</a>
-          {% comment %} <a href="{% url 'nonconformity:checklist' %}" class="bg-blue-500 hover:bg-blue-700 inline-block rounded-full mx-3 text-white py-2 px-4 rounded">Create from checklist</a> {% endcomment %}
-         {% if all %} <a href="{% url 'tokens:tokens_awaiting_my_action' %}" class="bg-gray-500 hover:bg-gray-700 inline-block rounded-full mx-3 text-white py-2 px-4 rounded">Awaiting my action </a>
-         {% else %}
-         <a href="{% url 'tokens:tokens' %}" class="bg-gray-500 hover:bg-gray-700 inline-block rounded-full mx-3 text-white py-2 px-4 rounded"> All tokens </a>
+             class="bg-blue-500 hover:bg-blue-700 inline-block rounded-full m-auto text-white py-2 px-4 rounded"> New Request</a>
+          {% if all %}
+            <a href="{% url 'tokens:tokens_awaiting_my_action' %}"
+               class="bg-gray-500 hover:bg-gray-700 inline-block rounded-full m-auto text-white py-2 px-4 rounded">Awaiting my action </a>
+          {% else %}
+            <a href="{% url 'tokens:tokens' %}"
+               class="bg-gray-500 hover:bg-gray-700 inline-block rounded-full m-auto  text-white py-2 px-4 rounded"> All tokens </a>
           {% endif %}
-
-          
+          <form class="float-md-end my-3 col-span-3 grid grid-cols-3" method="post">
+            {% csrf_token %}
+            <input type="text"
+                   class="border border-gray-300 col-span-2 border-blue-500 border border-1 rounded-full"
+                   name="search_term"
+                   placeholder="Search...">
+            <button type="submit"
+                    class="text-blue-700 border-blue-500 border border-1 ml-1 mx-auto px-3  font-bold rounded-full">
+              <i class="fa fa-search"></i>
+            </button>
+          </form>
         </div>
-      
         <br>
         <table id="tokens" class="table table-striped stripe table-bordered">
           <thead>
@@ -40,28 +50,29 @@
           <tbody>
             {% for token in tokens %}
               <tr class="h-1">
-                  <td><a class="text-blue-500" href="{% url 'tokens:token' token.id %}">{{ token.id|default_if_none:'' }}</a></td>
-                  <td>{{ token.reason|default_if_none:'' }}</td>
-                  <td>{{ token.type|default_if_none:'' }}</td>
-                <td>{{ token.created_at|date:'d/m/Y' }}</td>
+                <td>
+                  <a class="text-blue-500" href="{% url 'tokens:token' token.id %}">{{ token.id|default_if_none:'' }}</a>
+                </td>
+                <td>{{ token.reason|default_if_none:'' }}</td>
+                <td>{{ token.type|default_if_none:'' }}</td>
+                <td>{{ token.created_at|date }}</td>
                 <td>{{ token.customer.name|default_if_none:'' }}</td>
-                <td><span title="{{ token.meter.meter_type }}">{{ token.meter.number }}</span></td>
+                <td>
+                  <span title="{{ token.meter.meter_type }}">{{ token.meter.number }}</span>
+                </td>
                 <td>{{ token.process.approval_set.last|default_if_none:'' }}</td>
               </tr>
             {% endfor %}
           </tbody>
         </table>
         <div class=" container text-center ">
-        
-
           {% if roles %}
             {% for app_roles in roles %}
-            <span class="text-blue-400  mx-4 rounded border-2 border border-red-300 px-1  font-bold rounded">
-              {{app_roles}} </span>
-                {% endfor %}
-        {% endif %}
-          
-        </div></div>
+              <span class="text-blue-400  mx-4 rounded border-2 border border-red-300 px-1  font-bold rounded">{{ app_roles }}</span>
+            {% endfor %}
+          {% endif %}
+        </div>
+      </div>
     </div>
   </div>
 {% endblock %}

@@ -4,7 +4,7 @@ from django.contrib import messages
 from .models import *
 from .forms import *
 from django.views.generic.detail import DetailView
-from django.shortcuts import render, redirect, HttpResponse
+from django.shortcuts import render, redirect,  get_object_or_404
 from django.urls import reverse
 
 
@@ -160,3 +160,11 @@ def approve_step(request, process_id):
 
     else:
         return redirect('approve:workflow_detail', process.workflow.id)
+
+
+def get_approver(cost_center, process):
+    step = get_object_or_404(Step, workflow=process.workflow, step=process.approval_set.count() + 1)
+    if process.approval_set.last().approved == 'Rejected':
+        return UserProfile.objects.none()
+    approvers = UserProfile.objects.filter(roles=step.approver, cost_center=cost_center)
+    return approvers

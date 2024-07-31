@@ -12,6 +12,7 @@ urlpatterns = [
     path('cost_centers/', cost_centers, name='cost_centers'),
     path('cost_center/<str:cost_center_id>/', cost_center, name='cost_center'),
     path('migrate_tokens/', migrate_tokens, name='migrate_tokens'),
-    
+    path('migrate_reimbursement_tokens/', migrate_reimbursement_tokens, name='migrate_reimbursement_tokens'),
+    path('migrate_clear_credit_tokens/', migrate_clear_credit_tokens, name='migrate_clear_credit_tokens'),
 ]
   
