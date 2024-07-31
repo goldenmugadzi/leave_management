@@ -5,6 +5,7 @@ app_name ='direct_purchase'
 urlpatterns = [
     path('schedule/<str:pr_id>', get_create_cs, name='adopt_schedule'),
     path('save_additional_notes', save_additional_notes, name='save_additional_notes'),
+    path('save_buyers_notes', save_buyers_notes, name='save_buyers_notes'),
     path('cancel_schedule/<str:cs_id>', cancel_schedule, name='cancel_schedule'),
     path('create_comperative_schedule/', create_comperative_schedule, name='create_comperative_schedule'),
     path('create_schedule/', create, name='create_schedule'),

@@ -6,6 +6,8 @@ from django.shortcuts import redirect, render
 import json
 from datetime import datetime
 from django.db.models import Sum
+from django.core.files.storage import FileSystemStorage
+from django.conf import settings
 
 from finance.comparative_schedules.models import Currency, ProcPlan
 from finance.comparative_schedules.views import notification_update, notify_user
@@ -742,20 +744,19 @@ def get_comperative_schedule_data(request, cs_id):
     request_user = request.user
     request_user_profile = UserProfile.objects.filter(id=request_user.id).first()
     user_comparative_schedule_role = request_user_profile.get_user_role_for_application(APP_NAME)
-    print("user_comparative_schedule_role: ", user_comparative_schedule_role) 
             
     cs = DirectPurchase.objects.filter(cs_id=cs_id).first()
     pr = None
-    if cs.pr_id_id:
-        pr = PurchaseRequest.objects.filter(id=cs.pr_id_id).first()
+    proc_plan = ""
+    if cs:
+        try:
+            pr = PurchaseRequest.objects.filter(id=cs.pr_id_id).first()
+            proc_plan = cs.proc_plan if cs.proc_plan else ""
+        except Exception as ex:
+            print("Error: ", ex)
     
     proc_plans = DPProcPlan.objects.all()
     currencies = Currency.objects.all()
-    proc_plan = ""
-    try:
-        proc_plan = cs.proc_plan if cs.proc_plan else ""
-    except Exception as ex:
-        print("Error: ", ex)
     user = UserProfile.objects.filter(id=cs.created_by_id).first()
     region = Regions.objects.filter(id=cs.region_id).first()
     section = Sections.objects.filter(id=cs.section_id).first()
@@ -800,7 +801,6 @@ def get_comperative_schedule_data(request, cs_id):
             grouped_data[bid_no] = {
                 'bid_count': bid.bid_no,
                 'supplier_name': bid.sup_id.name,
-                'bid_no': bid.bid_no,
                 'bid_date': bid.quote_date,
                 'bid_document': encoded_file_data,
                 'items': []
@@ -828,8 +828,8 @@ def get_comperative_schedule_data(request, cs_id):
             "technical_specifications": comp.technical_specifications,
             "valid_tax_clearance": comp.valid_tax_clearance,
             "registered_with_praz": comp.registered_with_praz,
-            "site_visit_done": comp.site_visit_done,
-            "samples_delivered": comp.samples_delivered,
+            "site_visit": comp.site_visit_done,
+            "samples_required": comp.samples_delivered,
             "decision": comp.decision,
             "remarks": comp.remarks,
             "created_at": comp.created_at,
@@ -837,36 +837,45 @@ def get_comperative_schedule_data(request, cs_id):
     
     compliance_remarks = []
     for remark in complianceRemarks:
-        compliance_remarks.append({
-        "supplier": remark.supplier_id.id,
-        "supplier_name": remark.supplier_id.name,
-        "remarks": remark.remarks,
-        })
+        try:
+            compliance_remarks.append({
+            "supplier": remark.supplier_id.id,
+            "supplier_name": remark.supplier_id.name,
+            "remarks": remark.remarks,
+            })
+        except Exception as ex:
+            print("Error: ", ex)
         
     rankings_list = []
     for rank in rankings:
-        supplier = Supplier.objects.filter(id=rank.supplier_id.id).first()
-        rankings_list.append({
-            "supplier_name": supplier.name if supplier else "",
-            "rank": rank.rank,
-            "remarks": rank.remarks,
-            "decision": rank.decision,
-            "total": rank.total,
-            "created_at": rank.created_at,
-        })
+        try:
+            supplier = Supplier.objects.filter(id=rank.supplier_id.id).first()
+            rankings_list.append({
+                "supplier_name": supplier.name if supplier else "",
+                "rank": rank.rank,
+                "remarks": rank.remarks,
+                "decision": rank.decision,
+                "total": rank.total,
+                "created_at": rank.created_at,
+            })
+        except Exception as ex:
+            print("Error: ", ex)
         
     committee_list = []
     for member in committee:
-        if member.user:
-            committee_list.append({
-                "memberUserName": member.user.username if member.user else "",
-                "memberName": member.user.first_name + " " + member.user.last_name if member.user else "",
-                "memberPosition": member.committee_position,
-                "committeeStatus": member.committee_status,
-                "memberApproval": member.committee_approval if member.committee_approval else "",
-                "committeeJustification": member.justification,
-                "committeeDate": member.committee_date,
-            }) 
+        try:
+            if member.user:
+                committee_list.append({
+                    "memberUserName": member.user.username if member.user else "",
+                    "memberName": member.user.first_name + " " + member.user.last_name if member.user else "",
+                    "memberPosition": member.committee_position,
+                    "committeeStatus": member.committee_status,
+                    "memberApproval": member.committee_approval if member.committee_approval else "",
+                    "committeeJustification": member.justification,
+                    "committeeDate": member.committee_date,
+                }) 
+        except Exception as ex:
+            print("commitee_list Error: ", ex)
     
     encoded_advert_file = ""
     try:
@@ -922,6 +931,7 @@ def get_comperative_schedule_data(request, cs_id):
             "item_required": cs_item.item_name,
             "quantity": cs_item.quantity,
             "unit_of_measurement": cs_item.unit_of_measurement,
+            "ordered": True,
         })
 
     context = {
@@ -932,18 +942,7 @@ def get_comperative_schedule_data(request, cs_id):
         "pr_id": pr.id,
         "pr_number": cs.pr_number,
         "pr_date": cs.pr_date,
-        "additional_notes": cs.additional_notes,
-        "proc_plan": {
-            "id": proc_plan.id,
-            "proc_ref": proc_plan.proc_ref,
-            "description": proc_plan.description,
-            } if proc_plan else {},
-        "proc_plans": list(proc_plans.values('id', 'proc_ref', 'description')),
-        "currencies": list(currencies.values('id', 'currency')),
-        "currency": {
-            "id": cs.currency.id,
-            "currency": cs.currency.currency,
-            } if cs.currency else {},
+        "additional_notes": cs.additional_notes,        
         "scope_of_work": cs.scope_of_work,
         "closing_date": cs.closing_date,
         "closing_time": cs.closing_time,
@@ -959,12 +958,17 @@ def get_comperative_schedule_data(request, cs_id):
         "section": section.section if section else "",
         "region": region.region if region else "",
         "created_at": cs.created_at,
-        "items": items_list,
-        "bids": result,
-        "compliance": compliance_list,
-        "complianceRemarks": compliance_remarks,
-        "rankings": rankings_list,
-        "committee": committee_list,
+        "proc_plan": {
+            "id": proc_plan.id,
+            "proc_ref": proc_plan.proc_ref,
+            "description": proc_plan.description,
+            } if proc_plan else {},
+        "proc_plans": list(proc_plans.values('id', 'proc_ref', 'description')),
+        "currencies": list(currencies.values('id', 'currency')),
+        "currency": {
+            "id": cs.currency.id,
+            "currency": cs.currency.currency,
+            } if cs.currency else {},
         "gm_approval": {
             "id": gm_approval.id,
             "approver": gm_approval.user.username if gm_approval.user else "",
@@ -990,6 +994,12 @@ def get_comperative_schedule_data(request, cs_id):
         "proc_plans": list(proc_plans.values('id', 'proc_ref', 'description')),
         "suppliers": list(suppliers.values('id', 'name')),
         "users": list(users.values('id', 'username', 'first_name', 'last_name')),
+        "items": items_list,
+        "bids": result,
+        "compliance": compliance_list,
+        "complianceRemarks": compliance_remarks,
+        "rankings": rankings_list,
+        "committee": committee_list,
     }
     
     context = json.dumps(context, default=str)
@@ -1054,7 +1064,8 @@ def get_create_data(request, pr_id):
                 "proc_ref": purchase_request.procurement_plan_reference.id if purchase_request.procurement_plan_reference else "",
                 "proc_plan": {
                     "id": purchase_request.procurement_plan_reference.id if purchase_request.procurement_plan_reference else "",
-                    "name": purchase_request.procurement_plan_reference.name if purchase_request.procurement_plan_reference else ""
+                    "proc_ref": purchase_request.procurement_plan_reference.id if purchase_request.procurement_plan_reference else "",
+                    "description": purchase_request.procurement_plan_reference.name if purchase_request.procurement_plan_reference else "",
                 } if purchase_request.procurement_plan_reference else {},
                 "pr_date": purchase_request.created_at.strftime("%Y-%m-%d") if purchase_request.created_at else "",
                 "pr_items": pr_item_list,
@@ -1115,15 +1126,19 @@ def create(request):
         try:
             if 'advert' in request.FILES:
                 advert_file = request.FILES['advert']
-                advert_path = 'uploads/finance/cs/adverts/' + \
-                                  datetime.now().strftime("%Y%m%d%I%M%S%p") + advert_file.name
-                save_file(advert_file, advert_path)
+                root_dir = os.path.join(settings.BASE_DIR, 'uploads', 'finance', 'cs', 'adverts')
+                fs = FileSystemStorage(location=root_dir)
+                filename_ = fs.save(advert_file.name, advert_file)
+                advert_path = "uploads" + os.path.sep + "finance" + os.path.sep + "cs" + os.path.sep + "adverts" + os.path.sep + filename_
+                # save_file(advert_file, advert_path)
                 
             if 'bid_document' in request.FILES:
                 bid_document_file = request.FILES['bid_document']
-                bid_document_path = 'uploads/finance/cs/bids/' + \
-                                  datetime.now().strftime("%Y%m%d%I%M%S%p") + bid_document_file.name
-                save_file(bid_document_file, bid_document_path)
+                root_dir = os.path.join(settings.BASE_DIR, 'uploads', 'finance', 'cs', 'bids')
+                fs = FileSystemStorage(location=root_dir)
+                filename_ = fs.save(bid_document_file.name, bid_document_file)
+                bid_document_path = "uploads" + os.path.sep + "finance" + os.path.sep + "cs" + os.path.sep + "bids" + os.path.sep + filename_
+                # save_file(bid_document_file, bid_document_path)
         
         except Exception as ex:
             print("Error: ", ex)
@@ -1238,10 +1253,10 @@ def save_comparative_schedule(request):
         try:
             if advert_files:
                 advert_file = advert_files[0]
-                advert_path = 'uploads/comparative/adverts/' + \
-                                datetime.now().strftime("%Y%m%d%I%M%S%p") + advert_file.name
-                print("Advert path: ", advert_path)
-                save_file(advert_file, advert_path)
+                root_dir = os.path.join(settings.BASE_DIR, 'uploads', 'comparative', 'adverts')
+                fs = FileSystemStorage(location=root_dir)
+                filename_ = fs.save(advert_file.name, advert_file)
+                advert_path = "uploads" + os.path.sep + "comparative" + os.path.sep + "adverts" + os.path.sep + filename_
         except Exception as ex:
             print("Error: ", ex)
         
@@ -1316,10 +1331,10 @@ def update_comparative_schedule(request):
         try:
             if advert_files:
                 advert_file = advert_files[0]
-                advert_path = 'uploads/comparative/adverts/' + \
-                                datetime.now().strftime("%Y%m%d%I%M%S%p") + advert_file.name
-                print("Advert path: ", advert_path)
-                save_file(advert_file, advert_path)
+                root_dir = os.path.join(settings.BASE_DIR, 'uploads', 'comparative', 'adverts')
+                fs = FileSystemStorage(location=root_dir)
+                filename_ = fs.save(advert_file.name, advert_file)
+                advert_path = "uploads" + os.path.sep + "comparative" + os.path.sep + "adverts" + os.path.sep + filename_
         except Exception as ex:
             print("Error: ", ex)
 
@@ -1462,18 +1477,14 @@ def update_pritem_ordered(request):
 def save_cs_bid(request):
 
     cs_id = request.POST.get("cs_id", "")
-    bid_no = request.POST.get("bid_no", "")
-    print("bid_no: ", bid_no)
+    bid_no = request.POST.get("bid_count", "")
     
     bid_docs = request.FILES.get("bid_document", None)
     bid_date = request.POST.get("bid_date", "")
-    supplier_id = request.POST.get("supplier_id", "")
     supplier_name = request.POST.get("supplier_name", "")
     # get items json
     json_data = json.loads(request.POST.get("json_data", "{}"))
-    print("json_data: ", json_data)
-    items = json_data.get("bid_items", [])
-    print("items ", items, type(items))
+    items = json_data.get("items", [])
     
     cs_query = DirectPurchase.objects.filter(cs_id=cs_id).first()
     if not cs_query:
@@ -1493,7 +1504,7 @@ def save_cs_bid(request):
     # check if bid exists
     bid_query = DPBids.objects.filter(cs_id=cs_query, sup_id=supplier, bid_no=bid_no).all()
     if bid_query:
-        clear_approval = clear_approvals(cs_id)
+        clear_approvals(cs_id)
         for bid in bid_query:
             # delete item
             item = DPItems.objects.filter(item_id=bid.item_id).first()
@@ -1506,15 +1517,14 @@ def save_cs_bid(request):
     try:
         if bid_docs:
             bid_doc = bid_docs
-            bid_doc_path = 'uploads/comparative/adverts/' + \
-                            datetime.now().strftime("%Y%m%d%I%M%S%p") + bid_doc.name
-            print("Advert path: ", bid_doc_path)
-            save_file(bid_doc, bid_doc_path)
+            root_dir = os.path.join(settings.BASE_DIR, 'uploads', 'comparative', 'adverts')
+            fs = FileSystemStorage(location=root_dir)
+            filename_ = fs.save(bid_doc.name, bid_doc)
+            bid_doc_path = "uploads" + os.path.sep + "comparative" + os.path.sep + "adverts" + os.path.sep + filename_
     except Exception as ex:
         print("Error: ", ex)
         
     for item in items:
-        print("item: ", item)
         item_id = "Item" + datetime.now().strftime("%Y%m%d%I%M%S%p")
         item_query = DPItems(
             cs_id = cs_query,
@@ -1525,7 +1535,6 @@ def save_cs_bid(request):
         )
         item_query.save()    
         
-        print("bid_no", bid_no)
         bid = DPBids(
             cs_id = cs_query,
             item_id = item_query,
@@ -1597,13 +1606,12 @@ def save_cs_compliance(request):
     show_site_visit = request.POST.get("show_site_visit", "")
     show_sample_required = request.POST.get("show_sample_required", "")
     json_data = json.loads(request.POST.get("compliance", "{}"))
-    print("json_data: ", json_data)
+
     compliances = json_data.get("compliance", [])
-    print("items ", compliances, type(compliances))
+
     json_data_ = json.loads(request.POST.get("complianceRemarks", "{}"))
-    print("json_data_: ", json_data_)
+
     compliance_remarks = json_data_.get("complianceRemarks", [])
-    print("compliance_remarks ", compliance_remarks, type(compliance_remarks))
     
     cs_query = DirectPurchase.objects.filter(cs_id=cs_id).first()
     if not cs_query:
@@ -2227,6 +2235,26 @@ def save_additional_notes(request):
             "message": "Comparative Schedule not found",
             "success": False,
         })
+
+def save_buyers_notes(request):
+    cs_id = request.POST.get("cs_id", "")
+    buyers_notes = request.POST.get("buyers_notes", "")
+    print("buyers_notes: ", buyers_notes)
+    cs_query = DirectPurchase.objects.filter(cs_id=cs_id).first()
+    if cs_query:
+        ranking = DPRanking.objects.filter(cs_id=cs_query, rank=1).first()
+        ranking.remarks = buyers_notes if buyers_notes else "Supplier has been awarded being the lowest bidder having complied with all the requirements is recommended to provide the goods/service"
+        ranking.save()
+        return JsonResponse({
+            "message": "Buyers notes saved successfully",
+            "success": True,
+        })
+    else:
+        return JsonResponse({
+            "message": "Comparative Schedule not found",
+            "success": False,
+        })
+
 
 @login_required
 def cancel_schedule(request, cs_id):

@@ -114,6 +114,7 @@ urlpatterns = [
     path('drawings', views.view_drawing, name='view_drawing'),
     path('drawings/<str:folder_name>', views.view_drawings, name='view_drawings'),
     path('view_legislation/standards', views.view_standards, name='view_standards'),
+    path('contractors', views.view_contractors, name='view_contractors'),
     # path('view_legislation/specifications', views.view_specifications, name='view_specifications'),
     path('view_legislation/risk_management', views.view_risk_management, name='view_risk_management'),
     path('view_legislation/communication_management', views.view_communication_management, name='view_communication_management'),

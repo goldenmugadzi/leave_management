@@ -6,6 +6,8 @@ from .views import *
 urlpatterns = [
     path('competence', view_competence, name='competence'),
     path('charts', view_charts, name='charts'),
+    path('qualifications', view_qualifications, name='qualifications'),
+    path('qualifications/<str:folder_name>', view_qualifications_files, name='view_qualifications_files'),
     path('headoffice', view_headoffice, name='headoffice'),
     path('regionaloffice', view_regionaloffice, name='regionaloffice'),
     path('jobdescription', view_jobdescription, name='jobdescription'),
