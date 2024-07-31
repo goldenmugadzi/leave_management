@@ -33,40 +33,31 @@
         <thead>
           <tr>
             <tr>
-                <th>Budget ID</th>
-                <th>Section Code</th>
-                <th>section</th>
-                <th>Budget Name</th>
+                <th>ACE ID</th>
+                <th>Virament ID</th>
+                <th>ACE Details</th>
+                <th>Amount</th>
                 
-                <th>Allocated</th>
-                <th>Awaiting Sanctioning</th>
-                <th>Withdrawn</th>
-              <th>TO be withdrawn</th>
-              <th>Balance</th>
-              <th>Withdrawal Date</th>
-              <th>Period</th>
-              <th>Region</th>
-              <th>Created date</th>
-              <th>Budget Note</th>
+                <th>Requested By</th>
+                <th>Created At</th>
+                <th>Section</th>
+              <th>Allocation Code of Expenditure</th>
+              <th>Status</th>
           </tr>
         </thead>
         <tbody>
             {% for ace in context %}
             <tr class="h-1">
-                <td><a class="text-blue-500" href="/ace/ace_detail/{{ace.budget_id}}">{{ ace.budget_id|default_if_none:'' }}</a></td>
-                <td>{{ ace.section_code }}</td>
-              <td>{{ ace.section}}</td>
-                <td>{{ ace.budget }}</td>
-                <td>{{ ace.allocated }}</td>
-                <td>{{ ace.awaiting_sanctioning }}</td>
-                <td>{{ ace.withdrawn }}</td>
-                <td>{{ ace.to_be_withdrawn }}</td>
-                <td>{{ ace.balance }}</td>
-                <td>{{ ace.withdrawal_date }}</td>
-                <td>{{ ace.period }}</td>
-                <td>{{ ace.region }}</td>
-                <td>{{ ace.created_date }}</td>
-                <td>{{ ace.budget_note }}</td>
+                <td><a class="text-blue-500" href="/ace/ace_detail/{{ace.Ace_id2}}">{{ ace.Ace_id2|default_if_none:'' }}</a></td>
+                <td>{{ ace.details_of_expenditure }}</td>
+              <td>{{ ace.amount }}</td>
+
+            <td>{% if ace.requested_by == user %} You {% else %} {{ace.requested_by.get_full_name }} {% endif %}</td>
+              <td>{{ ace.date_created }}</td>
+              <td>{{ ace.section }}</td>
+            <td>{{ ace.section.code }}</td>
+            <td>{{ ace.process.approval_set.last|default_if_none:'' }}</td>
+              {% comment %} <td>{{ ace.process }}</td> {% endcomment %}
             </tr>
           {% endfor %}
         </tbody>

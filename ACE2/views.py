@@ -577,19 +577,19 @@ def list_budgets(request):
     # }
     user_title = request.user.get_full_name()
     print(section_used)
-    section_budget = AssetBudget.objects.filter(region=region)
+    section_budget = AssetBudget.objects.filter(region=region).order_by('period')
     # print(section_budget)
     user_title = request.user.get_full_name()
     l = request.user.groups.values_list('name', flat=True)
 
     # QuerySet Object
-    context = serializers.serialize('json', section_budget)
+
 
     user_page = 'ace/budgets_index.html'
-    print(context)
+    print(section_budget)
 
     return render(request, user_page, {"title": "All Records",
-                                       "context": context,
+                                       "context": section_budget,
                                        "user_title": user_title,
                                        "user_groups": user_groups})
 
@@ -709,14 +709,22 @@ def upload_aces_csv(request):
                 # fetch from remote budgets model
                 budget_obj = RemoteBudget.objects.using('remote').filter(budget_id=item_division).first()
                 # create assetbudget object using this information if asset budget doesn't exist
-                assetbudget = AssetBudget.objects.filter(budget_name=budget_obj.budget,
-                                                         period=budget_obj.period).first()
-                region = Regions.objects.filter(region='Harare Region').first()
-                section = Sections.objects.filter(code=str(budget_obj.section_code)).first()
-                if section:
-                    section_code = section.code
-                # else:
-                #     section_code = None
+                print('budget', budget_obj)
+                if budget_obj:
+                    assetbudget = AssetBudget.objects.filter(budget_name=budget_obj.budget,
+                                                             period=budget_obj.period).first()
+                region = Regions.objects.filter(region='Eastern Region').first()
+                if budget_obj:
+                    section = Sections.objects.filter(code=str(budget_obj.section_code)).first()
+                    print('section', section.section)
+                    if section:
+                        if section.code is None:
+                            section.code = budget_obj.section_code
+                            section.save()
+                        print('section code', section.code)
+                        section_code = section.code
+                    else:
+                        section_code = None
                 if assetbudget:
                     assetbudget = assetbudget
                 else:

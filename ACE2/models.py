@@ -22,7 +22,7 @@ class RemoteBudget(models.Model):
     withdrawal_date = models.DateField(blank=True, null=True)
     awaiting_sanctioning = models.FloatField(blank=True, null=True, default=0)
     period = models.PositiveIntegerField(validators=[MinValueValidator(1), MaxValueValidator(9999)])
-    region = models.CharField(max_length=36, blank=True, null=True)
+    # region = models.CharField(max_length=36, blank=True, null=True)
 
     # Add other fields based on the columns in the remote table
 
