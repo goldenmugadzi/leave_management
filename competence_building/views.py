@@ -20,6 +20,48 @@ def view_competence(request):
         return render(request, 'competence_building/competence.html', {
                       "url_path": url_path})
 
+# @login_required
+def view_qualifications(request):
+    
+    file_type = Category.objects.filter(name="Qualifications").first()
+    first_category = Subcategory.objects.filter(category=file_type).all()
+    folders_list = []
+    for folder in first_category:
+        url = ""
+        if folder.name.count(" ") > 0:
+            url = folder.name.replace(" ", "_").lower()
+        else:
+            url = folder.name.lower()  
+            
+        temp = {
+            "id": folder.id,
+            "name": folder.name,
+            "url": url
+        }
+        folders_list.append(temp)
+
+    url_path = request.path.split("/")
+    return render(request, 'competence_building/qualifications.html',{"folders": folders_list, "page_title": "Qualifications Documents", "url_path": url_path} )
+
+# @login_required
+def view_qualifications_files(request, folder_name):
+    name = ""
+    if folder_name.count("_") > 0:
+        name = folder_name.replace("_", " ").lower()
+    else:
+        name = folder_name.lower()
+    
+    file_type = Category.objects.filter(name="Qualifications").first()
+    print("file type: ", file_type.id)
+    first_category = Subcategory.objects.filter(category=file_type, name=name).first()
+    print("subcate: ", first_category.id)
+    files = Document.objects.filter(archive=False, category=file_type, subcategory=first_category).all()
+    print("files: ", files)
+    
+    url_path = request.path.split("/")
+    return render(request, 'competence_building/itjobdescription.html',{"Documents": files, "page_title": "Qualifications Documents", "url_path": url_path} )
+
+
 def bulk_create(request):
         user_id = request.user.id
         user = UserProfile.objects.filter(id=user_id).first()

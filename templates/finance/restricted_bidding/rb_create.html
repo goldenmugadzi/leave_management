@@ -1,6 +1,10 @@
 <!--users/templates/users/add_user.html-->
 
-{% extends 'admin_layout.html' %} {% load static %} {% block content %}
+{% extends 'admin_layout.html' %} {% load static %} 
+{% block styles %}
+<script type="module" src="{% static 'scripts/dist/main.js' %}"></script>
+{% endblock styles %}
+{% block content %}
 <div class="content-wrapper">
   <div
     class="bg-gulf-blue-200 shadow shadow-nepal-200 text-gulf-blue-700 rounded px-2 py-2"
@@ -14,9 +18,9 @@
   integrity="sha256-lSjKY0/srUM9BE3dPm+c4fBo1dky2v27Gdjm2uoZaL0="
   crossorigin="anonymous"
 ></script>
-<script src="{% static 'assets/cdn/react.development.js' %}"></script>
+{% comment %} <script src="{% static 'assets/cdn/react.development.js' %}"></script>
 <script src="{% static 'assets/cdn/react-dom.development.js' %}"></script>
 <script src="{% static 'assets/cdn/babel.min.js' %}"></script>
-<script type="text/javascript" src="{% static 'assets/custom/create_rb.js' %}"></script>
+<script type="text/javascript" src="{% static 'assets/custom/create_rb.js' %}"></script> {% endcomment %}
 
 {% endblock scripts %}

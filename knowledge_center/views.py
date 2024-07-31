@@ -48,9 +48,7 @@ def create(request):
                 root_dir = os.path.join(settings.BASE_DIR, 'uploads', 'knowledge_center')
                 fs = FileSystemStorage(location=root_dir)
                 filename_ = fs.save(uploaded_file.name, uploaded_file)
-                file_url = "uploads" + os.path.sep + "knowledge_center" + os.path.sep + filename_
-                print("file_url: ", file_url)
-                # save_file(uploaded_file,file_path)        
+                file_url = "uploads" + os.path.sep + "knowledge_center" + os.path.sep + filename_      
                 file_type= Filetype.objects.filter(id=filetype).first() if filetype else None
                 subtype1_ = First_Category.objects.filter(id=subtype1).first() if subtype1 else None
                 subtype2_ = Secondary_Category.objects.filter(id=subtype2).first() if subtype2 else None
@@ -1493,6 +1491,13 @@ def view_standards(request):
     
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "Standards Files", "url_path": url_path} )
+
+def view_contractors(request):
+    
+    files = KnowledgeCenter.objects.filter(archived=False, file_type="CONTRACTORS")
+    
+    url_path = request.path.split("/")
+    return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "Contactors Files", "url_path": url_path} )
 
 @login_required
 def view_publications(request):

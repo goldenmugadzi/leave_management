@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import Select, { GroupBase, StylesConfig } from 'react-select';
+import Select, { GroupBase, StylesConfig } from "react-select";
 
 interface ICurrency {
   id: number;
@@ -30,7 +30,7 @@ interface IBid {
   supplier_name?: string;
   bid_date?: string;
   encoded_bid_document?: string;
-  bid_document?: File|null;
+  bid_document?: File | null;
   bid_document_url?: string;
   bid_count?: number;
   items?: IBidItem[];
@@ -160,8 +160,8 @@ interface IResponse {
 }
 
 interface IUserOptions {
-    value: string;
-    label: string;
+  value: string;
+  label: string;
 }
 
 // interface IScheduleDetails {
@@ -199,7 +199,7 @@ export default function Schedule({
   prid: string | null;
   csid: string | null;
 }) {
-//   const [loading, setLoading] = useState<boolean>(false);
+  //   const [loading, setLoading] = useState<boolean>(false);
   const [requesterRole, setRequesterRole] = useState<string>("");
   const [csId, setCsId] = useState<string>("");
   const [csOwner, setCsOwner] = useState<string>("");
@@ -207,7 +207,7 @@ export default function Schedule({
   const [createdAt, setCreatedAt] = useState<string>("");
   const [committeeApprovalComplete, setCommitteeApprovalComplete] =
     useState<boolean>(false);
-//   const [planRef, setPlanRef] = useState<string>("");
+  //   const [planRef, setPlanRef] = useState<string>("");
   const [procRef, setProcRef] = useState<string>("");
   const [currency, setCurrency] = useState<ICurrency>();
   const [currencies, setCurrencies] = useState<ICurrency[]>();
@@ -239,9 +239,9 @@ export default function Schedule({
     useState<IComplianceRemark[]>();
   const [showSamples, setShowSamples] = useState<string>("no");
   const [showSiteVisit, setShowSiteVisit] = useState<string>("no");
-//   const [rankingTable, setRankingTable] = useState<boolean>(false);
+  //   const [rankingTable, setRankingTable] = useState<boolean>(false);
   const [rankings, setRankings] = useState<IRank[]>();
-//   const [committeeTable, setCommitteeTable] = useState<boolean>(false);
+  //   const [committeeTable, setCommitteeTable] = useState<boolean>(false);
   const [committeeMembers, setCommitteeMembers] = useState<ICommittee[]>();
   const [committeeJustificationModal, setCommitteeJustificationModal] =
     useState<boolean>(false);
@@ -252,28 +252,30 @@ export default function Schedule({
   const [approvalsJustificationModal, setApprovalsJustificationModal] =
     useState<boolean>(false);
   const [users, setUsers] = useState<IUser[]>();
-//   const [selectUserOptions, setSelectUserOptions] = useState<IMemberOptions[]>([
-//     { value: "chairman", label: "Chairman" },
-//     { value: "finance", label: "Finance" },
-//     { value: "procurement", label: "Procurement" },
-//     { value: "user", label: "User" },
-//     { value: "other", label: "Other" },
-//   ]);
+  //   const [selectUserOptions, setSelectUserOptions] = useState<IMemberOptions[]>([
+  //     { value: "chairman", label: "Chairman" },
+  //     { value: "finance", label: "Finance" },
+  //     { value: "procurement", label: "Procurement" },
+  //     { value: "user", label: "User" },
+  //     { value: "other", label: "Other" },
+  //   ]);
   const [searchedUser, setSearchedUser] = useState<string>("");
-//   const [selectedUser, setSelectedUser] = useState<IUser>();
+  //   const [selectedUser, setSelectedUser] = useState<IUser>();
   const [filteredUsers, setFilteredUsers] = useState<IUser[]>();
   const [currentApprover, setCurrentApprover] = useState<ICurrentApprover>();
   const [prItems, setPrItems] = useState<IPrItems[]>();
   const [suppliers, setSuppliers] = useState<ISupplier[]>();
   const [procPlans, setProcPlans] = useState<IProcPlan[]>();
   const [uom, setUom] = useState<IUom[]>();
-//   const [authUser, setAuthUser] = useState<IUser>();
+  //   const [authUser, setAuthUser] = useState<IUser>();
   const [username, setUsername] = useState<string>("");
   const [fetchPR, setFetchPR] = useState<boolean>(false);
   const [onAddSupplier, setOnAddSupplier] = useState<boolean>(false);
   const [newSupplier, setNewSupplier] = useState<ISupplier>();
   const [response, setResponse] = useState<IResponse>();
   const [additionalNotes, setAdditionalNotes] = useState<string>("");
+  const [buyersNotes, setBuyersNotes] = useState<string>("");
+  const [directPurchaseLimit, setDirectPurchaseLimit] = useState<boolean>(true)
 
   useEffect(() => {
     if (csid) {
@@ -292,52 +294,60 @@ export default function Schedule({
     }
   }, [username_, csid, prid]);
 
-  const userOptions: IUserOptions[]| undefined = users?.map((user) => {
+  const userOptions: IUserOptions[] | undefined = users?.map((user) => {
     return {
       value: user.username,
       label: user.first_name + " " + user.last_name + ":- " + user.username,
     };
   });
 
-  const customStyles: StylesConfig<IUserOptions, false, GroupBase<IUserOptions>> = {
+  const customStyles: StylesConfig<
+    IUserOptions,
+    false,
+    GroupBase<IUserOptions>
+  > = {
     control: (provided) => ({
       ...provided,
-      backgroundColor: 'white',
-      borderColor: 'gray',
-      minHeight: '40px',
-      height: '40px',
-      boxShadow: 'none',
+      backgroundColor: "white",
+      borderColor: "gray",
+      minHeight: "40px",
+      height: "40px",
+      boxShadow: "none",
     }),
     valueContainer: (provided) => ({
       ...provided,
-      height: '40px',
-      padding: '0 6px',
+      height: "40px",
+      padding: "0 6px",
     }),
     input: (provided) => ({
       ...provided,
-      margin: '0px',
+      margin: "0px",
     }),
     indicatorSeparator: () => ({
-      display: 'none',
+      display: "none",
     }),
     indicatorsContainer: (provided) => ({
       ...provided,
-      height: '40px',
+      height: "40px",
     }),
     menu: (provided) => ({
       ...provided,
       zIndex: 9999,
-      height: '200px',
+      height: "200px",
     }),
     option: (provided, state) => ({
       ...provided,
-      backgroundColor: state.isSelected ? 'lightgray' : 'white',
-      color: 'black',
-      '&:hover': {
-        backgroundColor: 'lightblue',
+      backgroundColor: state.isSelected ? "lightgray" : "white",
+      color: "black",
+      "&:hover": {
+        backgroundColor: "lightblue",
       },
     }),
-  };  
+  };
+
+  const onSetDirectPurchaseLimit = () => {
+    onSetDirectPurchaseLimit()
+  }
 
   const onGetFileObjectUrl = (fileData: string | File | undefined) => {
     try {
@@ -390,14 +400,23 @@ export default function Schedule({
             const new_obj: IBid = bids_object[parseInt(key)];
             return {
               ...new_obj,
-              bid_document_url: onGetFileObjectUrl(new_obj.encoded_bid_document??undefined)?? "",
+              bid_document_url:
+                onGetFileObjectUrl(new_obj.encoded_bid_document ?? undefined) ??
+                "",
             };
           });
         }
         const sorted_bids: IBid[] = bids.sort(
-          (a: IBid, b: IBid) => (a.bid_count??0) - (b?.bid_count??0)
+          (a: IBid, b: IBid) => (a.bid_count ?? 0) - (b?.bid_count ?? 0)
         );
         setBids(sorted_bids);
+        const bid_count: number = bids?.length ?? 0;
+        setBidCount(bid_count);
+        
+        if(base_url === "/direct_purchase"){
+            const limit: boolean = bids?.length??0 >= 1 ? false : true;
+            setDirectPurchaseLimit(limit)
+        }
 
         const compliance = (data as { compliance?: ICompliance[] }).compliance
           ? (data as { compliance?: ICompliance[] }).compliance
@@ -478,6 +497,10 @@ export default function Schedule({
           ? (data as { additional_notes?: string }).additional_notes
           : "";
         setAdditionalNotes(additionalNotes ?? "");
+        const buyersNotes = (data as { buyers_notes?: string }).buyers_notes
+          ? (data as { buyers_notes?: string }).buyers_notes
+          : "";
+        setBuyersNotes(buyersNotes ?? "");
 
         const proc_plans = (data as { proc_plans?: IProcPlan[] }).proc_plans
           ? (data as { proc_plans?: IProcPlan[] }).proc_plans
@@ -487,10 +510,10 @@ export default function Schedule({
           ? (data as { uom?: IUom[] }).uom
           : undefined;
         setUom(uom);
-        const suppliers = (data as { suppliers?: ISupplier[] }).suppliers
+        const suppliers_ = (data as { suppliers?: ISupplier[] }).suppliers
           ? (data as { suppliers?: ISupplier[] }).suppliers
           : [];
-        setSuppliers(suppliers);
+        setSuppliers(suppliers_);
         const pr_items = (data as { pr_items?: IPrItems[] }).pr_items
           ? (data as { pr_items?: IPrItems[] }).pr_items
           : [];
@@ -638,7 +661,7 @@ export default function Schedule({
             pr_attachments?.map((pr_attachment) => {
               return {
                 ...pr_attachment,
-                attachment_url: onGetFileObjectUrl(pr_attachment.file)??"",
+                attachment_url: onGetFileObjectUrl(pr_attachment.file) ?? "",
               };
             }) ?? [];
           setPrAttachments(pr_at_list);
@@ -676,7 +699,7 @@ export default function Schedule({
           const proc_ref = (data as { proc_ref?: string }).proc_ref
             ? (data as { proc_ref?: string }).proc_ref
             : "";
-            setProcRef(proc_ref ?? "");
+          setProcRef(proc_ref ?? "");
           const proc_plan = (data as { proc_plan?: IProcPlan }).proc_plan
             ? (data as { proc_plan?: IProcPlan }).proc_plan
             : undefined;
@@ -690,7 +713,7 @@ export default function Schedule({
             : [];
           setCurrencies(currencies);
           const uom = (data as { uom?: IUom[] }).uom
-            ? (data as { uom?: IUom []}).uom
+            ? (data as { uom?: IUom[] }).uom
             : undefined;
           setUom(uom);
           const suppliers = (data as { suppliers?: ISupplier[] }).suppliers
@@ -719,7 +742,7 @@ export default function Schedule({
               pr_attachments?.map((pr_attachment) => {
                 return {
                   ...pr_attachment,
-                  attachment_url: onGetFileObjectUrl(pr_attachment.file)??"",
+                  attachment_url: onGetFileObjectUrl(pr_attachment.file) ?? "",
                 };
               }) ?? undefined;
             setPrAttachments(pr_at_list);
@@ -768,23 +791,22 @@ export default function Schedule({
         ...member,
       };
       setMember(thisMember);
-    } else if(name_ === "memberPosition") {
+    } else if (name_ === "memberPosition") {
       // member_[name_] = value;
       memberValue = value;
       const thisMember: IMember = {
         ...member,
-        memberName: member?.memberName??"",
-        memberUserName: member?.memberUserName??"",
-        memberPosition: memberValue?? undefined,
+        memberName: member?.memberName ?? "",
+        memberUserName: member?.memberUserName ?? "",
+        memberPosition: memberValue ?? undefined,
       };
       setMember(thisMember);
-
     } else {
       // member_[name_] = value;
       memberValue = value;
       const thisMember: IMember = {
-        memberUserName: memberValue??"",
-        memberName: member?.memberName??"",
+        memberUserName: memberValue ?? "",
+        memberName: member?.memberName ?? "",
         ...member,
       };
       setMember(thisMember);
@@ -805,7 +827,7 @@ export default function Schedule({
       memberUserName = username;
     }
     const thisMember: IMember = {
-        ...member,
+      ...member,
       memberName: memberName,
       memberUserName: memberUserName,
     };
@@ -816,9 +838,7 @@ export default function Schedule({
   };
 
   const onRemoveCommitteeMember = (index: number, username: string) => {
-    const members = committeeMembers?.filter(
-      (_,_index) => _index !== index
-    );
+    const members = committeeMembers?.filter((_, _index) => _index !== index);
     if (
       members &&
       committeeMembers &&
@@ -833,12 +853,12 @@ export default function Schedule({
     const form_data: FormData = new FormData();
     form_data.append("cs_id", csId);
     form_data.append("username", username);
-    form_data.append("csrfmiddlewaretoken", getCookie("csrftoken")??"");
+    form_data.append("csrfmiddlewaretoken", getCookie("csrftoken") ?? "");
 
     fetch(`${base_url}/delete_committee_member`, {
       method: "POST",
       headers: {
-        "X-CSRFToken": getCookie("csrftoken")??"",
+        "X-CSRFToken": getCookie("csrftoken") ?? "",
       },
       body: form_data,
     })
@@ -872,16 +892,16 @@ export default function Schedule({
 
   const onCommitteeJustificationModalClose = () => {
     setCurrentApprover({
-        justification: "",
-        username: "",
-        role: "",
+      justification: "",
+      username: "",
+      role: "",
     });
     setCommitteeJustificationModal(!committeeJustificationModal);
   };
 
-  const onCommitteeJustificationChange = (
-    event: { target: { value: string } }
-  ) => {
+  const onCommitteeJustificationChange = (event: {
+    target: { value: string };
+  }) => {
     console.log("event: ", event);
     const { value } = event.target;
     const justification: string = value;
@@ -910,12 +930,12 @@ export default function Schedule({
     form_data.append("username", username);
     form_data.append("approval", approval);
     form_data.append("justification", justification);
-    form_data.append("csrfmiddlewaretoken", getCookie("csrftoken")??"");
+    form_data.append("csrfmiddlewaretoken", getCookie("csrftoken") ?? "");
 
     fetch(`${base_url}/committee_approve`, {
       method: "POST",
       headers: {
-        "X-CSRFToken": getCookie("csrftoken")??"",
+        "X-CSRFToken": getCookie("csrftoken") ?? "",
       },
       body: form_data,
     })
@@ -931,9 +951,9 @@ export default function Schedule({
             .committee_approval
             ? (data as { committee_approval?: string }).committee_approval
             : "";
-        //   const memberName = (data as { member_name?: string }).member_name
-        //     ? (data as { member_name?: string }).member_name
-        //     : "";
+          //   const memberName = (data as { member_name?: string }).member_name
+          //     ? (data as { member_name?: string }).member_name
+          //     : "";
           let members: ICommittee[] = [];
           if (committeeMembers && committeeMembers.length > 0) {
             members = committeeMembers.map((member) => {
@@ -973,12 +993,12 @@ export default function Schedule({
         committee: committeeMembers,
       })
     );
-    form_data.append("csrfmiddlewaretoken", getCookie("csrftoken")??"");
+    form_data.append("csrfmiddlewaretoken", getCookie("csrftoken") ?? "");
 
     fetch(`${base_url}/save_committee`, {
       method: "POST",
       headers: {
-        "X-CSRFToken": getCookie("csrftoken")??"",
+        "X-CSRFToken": getCookie("csrftoken") ?? "",
       },
       body: form_data,
     })
@@ -1022,12 +1042,12 @@ export default function Schedule({
     form_data.append("username", username);
     form_data.append("approval", approval);
     form_data.append("justification", justification);
-    form_data.append("csrfmiddlewaretoken", getCookie("csrftoken")??"");
+    form_data.append("csrfmiddlewaretoken", getCookie("csrftoken") ?? "");
 
     fetch(`${base_url}/approval_approve`, {
       method: "POST",
       headers: {
-        "X-CSRFToken": getCookie("csrftoken")??"",
+        "X-CSRFToken": getCookie("csrftoken") ?? "",
       },
       body: form_data,
     })
@@ -1101,13 +1121,13 @@ export default function Schedule({
 
   const onSaveSupplier = () => {
     const form_data: FormData = new FormData();
-    form_data.append("supplier_name", newSupplier?.supplier_name??"");
-    form_data.append("csrfmiddlewaretoken", getCookie("csrftoken")??"");
+    form_data.append("supplier_name", newSupplier?.supplier_name ?? "");
+    form_data.append("csrfmiddlewaretoken", getCookie("csrftoken") ?? "");
 
     fetch(`${base_url}/save_supplier`, {
       method: "POST",
       headers: {
-        "X-CSRFToken": getCookie("csrftoken")??"",
+        "X-CSRFToken": getCookie("csrftoken") ?? "",
       },
       body: form_data,
     })
@@ -1126,6 +1146,10 @@ export default function Schedule({
             name: "",
             supplier_name: "",
           });
+          const suppliers_ = (data as { suppliers?: ISupplier[] }).suppliers
+            ? (data as { suppliers?: ISupplier[] }).suppliers
+            : [];
+          setSuppliers(suppliers_);
         } else {
           onOpenResponse(
             "Add New Supplier Error",
@@ -1136,9 +1160,9 @@ export default function Schedule({
       });
   };
 
-  const onApprovalJustificationChange = (
-    event: { target: { value: string } }
-  ) => {
+  const onApprovalJustificationChange = (event: {
+    target: { value: string };
+  }) => {
     console.log("event: ", event);
     const { value } = event.target;
     const justification = value;
@@ -1214,12 +1238,12 @@ export default function Schedule({
         cs_items: csItems,
       })
     );
-    form_data.append("csrfmiddlewaretoken", getCookie("csrftoken")??"");
+    form_data.append("csrfmiddlewaretoken", getCookie("csrftoken") ?? "");
 
     fetch(`${base_url}/update_pritem_ordered`, {
       method: "POST",
       headers: {
-        "X-CSRFToken": getCookie("csrftoken")??"",
+        "X-CSRFToken": getCookie("csrftoken") ?? "",
       },
       body: form_data,
     })
@@ -1247,9 +1271,9 @@ export default function Schedule({
     setOnAddSupplier(!onAddSupplier);
   };
 
-  const onSupplierChange = (
-    event: { target: { name: string; value: string } }
-  ) => {
+  const onSupplierChange = (event: {
+    target: { name: string; value: string };
+  }) => {
     const { name, value } = event.target;
     setNewSupplier({
       ...newSupplier,
@@ -1258,11 +1282,10 @@ export default function Schedule({
   };
 
   const onAddBidModal = () => {
-    const bid_count = bids ? bids.length + 1 : 0;
     setCurrentBid({
-      bid_count: bid_count,
-      items: csItems,
-    });
+        bid_count: bidCount + 1,
+        items: csItems,
+        });
     setAddBidModal(!addBidModal);
     console.log("currentBid: ", currentBid, addBidModal);
   };
@@ -1274,11 +1297,9 @@ export default function Schedule({
   };
 
   const onCloseCurrentBid = () => {
-    const bid_count = bids ? bids.length - 1 : 0;
     setUpdateBidModal(false);
     setAddBidModal(false);
     setCurrentBid({});
-    setBidCount(bid_count);
   };
 
   const onCloseUpdateBidBid = () => {
@@ -1335,17 +1356,15 @@ export default function Schedule({
   };
 
   const onBidDocumentChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-
     const bid_file = event.target.files && event.target.files[0];
     const bid_document_url = onGetFileObjectUrl(bid_file ?? undefined);
     const bid_document: File | null = bid_file;
     setCurrentBid({
-        ...currentBid,
-        bid_document: bid_document,
-        bid_document_url: bid_document_url || "",
+      ...currentBid,
+      bid_document: bid_document,
+      bid_document_url: bid_document_url || "",
     });
-
-    }
+  };
 
   const onCurrentBidItemChange = (
     description: string,
@@ -1444,7 +1463,9 @@ export default function Schedule({
                     bid_document: currentBid.bid_document
                       ? currentBid.bid_document
                       : bid.bid_document,
-                    bid_document_url: onGetFileObjectUrl(currentBid.bid_document??undefined),
+                    bid_document_url: onGetFileObjectUrl(
+                      currentBid.bid_document ?? undefined
+                    ),
                   };
                 }
                 return bid;
@@ -1494,7 +1515,7 @@ export default function Schedule({
           bids?.sort((a, b) =>
             a.bid_count && b.bid_count ? a.bid_count - b.bid_count : 0
           );
-          onSaveBid(currentBid, bids??[]);
+          onSaveBid(currentBid, bids ?? []);
         }
       } else {
         onOpenResponse(
@@ -1506,33 +1527,31 @@ export default function Schedule({
     }
   };
 
-  const onSaveBid = (
-    bid: IBid,
-    bids: IBid[],
-    bid_count?: number
-  ) => {
+  const onSaveBid = (bid: IBid, bids: IBid[], bid_count?: number) => {
     console.log("bid_count: ", bid_count);
     const form_data: FormData = new FormData();
 
     form_data.append("cs_id", csId);
-    form_data.append("bid_count", bid?.bid_count ? bid?.bid_count?.toString() : "");
-    form_data.append("supplier", bid.supplier??"");
-    form_data.append("supplier_name", bid.supplier_name??"");
-    form_data.append("bid_date", bid.bid_date?? "");
-    form_data.append("bid_document", bid.bid_document?? "");
+    form_data.append(
+      "bid_count",
+      bid?.bid_count ? bid?.bid_count?.toString() : ""
+    );
+    form_data.append("supplier", bid.supplier ?? "");
+    form_data.append("supplier_name", bid.supplier_name ?? "");
+    form_data.append("bid_date", bid.bid_date ?? "");
+    form_data.append("bid_document", bid.bid_document ?? "");
     form_data.append(
       "json_data",
       JSON.stringify({
         items: bid.items,
       })
     );
-    form_data.append("csrfmiddlewaretoken", getCookie("csrftoken")??"");
-    console.log("formData: ", form_data);
+    form_data.append("csrfmiddlewaretoken", getCookie("csrftoken") ?? "");
 
     fetch(`${base_url}/save_bid`, {
       method: "POST",
       headers: {
-        "X-CSRFToken": getCookie("csrftoken")??"",
+        "X-CSRFToken": getCookie("csrftoken") ?? "",
       },
       body: form_data,
     })
@@ -1545,7 +1564,11 @@ export default function Schedule({
           setAddBidModal(false);
           setUpdateBidModal(false);
           setCurrentBid({});
-          setBidCount(bids ? bids.length : 0);
+          setBidCount(bidCount+1);
+          if(base_url === "/direct_purchase"){
+              const limit: boolean = bids?.length??0 >= 1 ? false : true;
+              setDirectPurchaseLimit(limit)
+          }
         } else {
           onOpenResponse(
             "Save Bid Error",
@@ -1556,24 +1579,17 @@ export default function Schedule({
       });
   };
 
-  const onDeleteBidModal = (bid_count: number | undefined, supplier_name: string | undefined) => {
+  const onDeleteBidModal = (
+    bid_count: number | undefined,
+    supplier_name: string | undefined
+  ) => {
     onOpenResponse(
       "Delete Bid",
       "Are you sure you want to delete this bid? This action cannot be undone",
       false
     );
-
-    // reset bid no index
-    const bid_count_ = bidCount - 1;
-    const newBids = bids?.filter((bid) => bid.bid_count !== bid_count);
-    // update bid_count index for all bids sequentially
-    const updatedBids = newBids?.map((bid, index) => {
-      bid.bid_count = index + 1;
-      return bid;
-    });
-    setBidCount(bid_count_);
-    setBids(updatedBids);
-    deleteBid(bid_count??0, supplier_name??"");
+    deleteBid(bid_count ?? 0, supplier_name ?? "");
+    onSetDirectPurchaseLimit()
   };
 
   const onSaveSchedule = () => {
@@ -1617,18 +1633,18 @@ export default function Schedule({
     form_data.append("ref_date", refDate);
     form_data.append("closing_time", closingTime);
     form_data.append("date_tender_opened", dateTenderOpened);
-    form_data.append("username", username?? "");
+    form_data.append("username", username ?? "");
     form_data.append(
       "tender_adjudication_committee_date",
       tenderAdjudicationCommitteeDate
     );
     form_data.append("advert", JSON.stringify(advert));
-    form_data.append("csrfmiddlewaretoken", getCookie("csrftoken")??"");
+    form_data.append("csrfmiddlewaretoken", getCookie("csrftoken") ?? "");
 
     fetch(`${base_url}/save`, {
       method: "POST",
       headers: {
-        "X-CSRFToken": getCookie("csrftoken")??"",
+        "X-CSRFToken": getCookie("csrftoken") ?? "",
       },
       body: form_data,
     })
@@ -1697,18 +1713,18 @@ export default function Schedule({
     form_data.append("ref_date", refDate);
     form_data.append("closing_time", closingTime);
     form_data.append("date_tender_opened", dateTenderOpened);
-    form_data.append("username", username?? "");
+    form_data.append("username", username ?? "");
     form_data.append(
       "tender_adjudication_committee_date",
       tenderAdjudicationCommitteeDate
     );
     form_data.append("advert", JSON.stringify(advert));
-    form_data.append("csrfmiddlewaretoken", getCookie("csrftoken")??"");
+    form_data.append("csrfmiddlewaretoken", getCookie("csrftoken") ?? "");
 
     fetch(`${base_url}/update`, {
       method: "POST",
       headers: {
-        "X-CSRFToken": getCookie("csrftoken")??"",
+        "X-CSRFToken": getCookie("csrftoken") ?? "",
       },
       body: form_data,
     })
@@ -1737,12 +1753,12 @@ export default function Schedule({
     form_data.append("cs_id", csId);
     form_data.append("bid_count", JSON.stringify(bid_count));
     form_data.append("supplier_name", supplier_name);
-    form_data.append("csrfmiddlewaretoken", getCookie("csrftoken")??"");
+    form_data.append("csrfmiddlewaretoken", getCookie("csrftoken") ?? "");
 
     fetch(`${base_url}/delete_bid`, {
       method: "POST",
       headers: {
-        "X-CSRFToken": getCookie("csrftoken")??"",
+        "X-CSRFToken": getCookie("csrftoken") ?? "",
       },
       body: form_data,
     })
@@ -1776,114 +1792,124 @@ export default function Schedule({
             false
           );
         }
+        
         if (response?.open) {
           window.location.reload();
         }
+
+        // reset bid no index
+        const bid_count_ = bidCount > 0? bidCount - 1: 0;
+        const newBids = bids?.filter((bid) => bid.bid_count !== bid_count);
+        // update bid_count index for all bids sequentially
+        const updatedBids = newBids?.map((bid, index) => {
+          bid.bid_count = index + 1;
+          return bid;
+        });
+        setBidCount(bid_count_);
+        setBids(updatedBids);
       });
   };
-
-//   const onAddBid = () => {
-//     const bid_count = bidCount + 1;
-//     setBidCount(bid_count);
-//     setBids([
-//         ...bids ?? [],
-//         {
-//             supplier: "",
-//             bid_date: "",
-//             bid_count: bid_count,
-//             bid_document: undefined,
-//             items: [],
-//         },
-//         ]);
-//   };
 
   const onAddItemsModal = () => {
     setAddItemsModal(!addItemsModal);
   };
 
-  const onSelectChange = (name_: string, event: React.ChangeEvent<HTMLSelectElement>) => {
+  const onSelectChange = (
+    name_: string,
+    event: React.ChangeEvent<HTMLSelectElement>
+  ) => {
     const { value } = event.target;
 
-    if (name_ === "closing_time"){
-        setClosingTime(value);
-    } else if (name_ === "proc_ref"){
-        setProcRef(value);
-    } else if (name_ === "currency"){
-        setCurrency({
-            id: parseInt(value),
-        });
+    if (name_ === "closing_time") {
+      setClosingTime(value);
+    } else if (name_ === "proc_ref") {
+      setProcRef(value);
+    } else if (name_ === "currency") {
+      setCurrency({
+        id: parseInt(value),
+      });
     }
   };
 
   const onAddCommitteeMembers = () => {
-
     if (!member?.memberUserName || !member?.memberPosition) {
       onOpenResponse(
         "Add Committee Member Error",
         "Please select a user",
         false
       );
-      
     } else {
-    // check if memberUserName exists
-    const member_ = committeeMembers?.find(
-      (_member) => _member.memberUserName === member?.memberUserName
-    );
-    // check if memberUserName is the one creating
-    const currentUserFlag = member?.memberUserName === username;
-    // check if memberPosition exists
-    const positionFlag = committeeMembers?.find(
-      (_member) => _member.memberPosition === member?.memberPosition
-    );
-    console.log("member_: ", member_, "currentUserFlag: ", currentUserFlag, "positionFlag: ", positionFlag);
-    console.log("owner: ", username, "member: ", member?.memberUserName);
-    if (member_) {
-      onOpenResponse(
-        "Add Committee Member Error",
-        "Committee Member already added.",
-        false
+      // check if memberUserName exists
+      const member_ = committeeMembers?.find(
+        (_member) => _member.memberUserName === member?.memberUserName
       );
-    } else if (currentUserFlag) {
-      onOpenResponse(
-        "Add Committee Member Error",
-        "You cannot add yourself. Please choose another user.",
-        false
+      // check if memberUserName is the one creating
+      const currentUserFlag = member?.memberUserName === username;
+      // check if memberPosition exists
+      const positionFlag = committeeMembers?.find(
+        (_member) => _member.memberPosition === member?.memberPosition
       );
-    } else if (positionFlag) {
-      onOpenResponse(
-        "Add Committee Member Error",
-        member?.memberPosition +
-          ", already exists, please add a different one.",
-        false
+      console.log(
+        "member_: ",
+        member_,
+        "currentUserFlag: ",
+        currentUserFlag,
+        "positionFlag: ",
+        positionFlag
       );
-    } else {
-        const members = [...committeeMembers??[], {
+      console.log("owner: ", username, "member: ", member?.memberUserName);
+      if (member_) {
+        onOpenResponse(
+          "Add Committee Member Error",
+          "Committee Member already added.",
+          false
+        );
+      } else if (currentUserFlag) {
+        onOpenResponse(
+          "Add Committee Member Error",
+          "You cannot add yourself. Please choose another user.",
+          false
+        );
+      } else if (positionFlag) {
+        onOpenResponse(
+          "Add Committee Member Error",
+          member?.memberPosition +
+            ", already exists, please add a different one.",
+          false
+        );
+      } else {
+        const members = [
+          ...(committeeMembers ?? []),
+          {
             memberUserName: member?.memberUserName ?? "",
             memberName: member?.memberName ?? "",
             memberPosition: member?.memberPosition ?? "",
             memberApproval: "",
-        }];
+          },
+        ];
         setCommitteeMembers(members);
         setMember({
-            memberUserName: "",
-            memberName: "",
-            memberPosition: "",
-            memberApproval: "",
-        })
+          memberUserName: "",
+          memberName: "",
+          memberPosition: "",
+          memberApproval: "",
+        });
         setSearchedUser("");
-    }
+      }
     }
   };
 
-  const onFileInputChange = (name_: string, event: React.ChangeEvent<HTMLInputElement>) => {
+  const onFileInputChange = (
+    name_: string,
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     console.log(event);
-    const file = event?.target?.files? event?.target?.files[0]: undefined;
+    const file = event?.target?.files ? event?.target?.files[0] : undefined;
     const fileUrl = onGetFileObjectUrl(file);
-    if (name_ === "advert"){
-        setAdvert(file);
-        setAdvertUrl(fileUrl);
+    if (name_ === "advert") {
+      setAdvert(file);
+      setAdvertUrl(fileUrl);
     }
-
   };
 
   const getCookie = (name: string) => {
@@ -1899,7 +1925,7 @@ export default function Schedule({
       }
     }
     return cookieValue;
-  }
+  };
 
   const onAddComplianceTable = () => {
     // add bid compliance
@@ -1960,13 +1986,16 @@ export default function Schedule({
     setComplianceTable(!complianceTable);
   };
 
-  const onComplianceItemsChange = (name_: string, event: { target: { name: string; value: string; }; }) => {
+  const onComplianceItemsChange = (
+    name_: string,
+    event: { target: { name: string; value: string } }
+  ) => {
     const { name, value } = event.target;
     console.log("name: ", name, "value: ", value);
-    if(name_ === "showSiteVisit"){
-        setShowSiteVisit(value);
-        } else if(name_ === "showSamples"){
-        setShowSamples(value);
+    if (name_ === "showSiteVisit") {
+      setShowSiteVisit(value);
+    } else if (name_ === "showSamples") {
+      setShowSamples(value);
     }
 
     if (compliance && compliance.length === 0) {
@@ -1977,7 +2006,7 @@ export default function Schedule({
       );
       return;
     }
-    
+
     const updatedComplianceList = compliance?.map((compliance_) => {
       let _compliance = {};
       const site_visit = compliance_.site_visit;
@@ -1995,12 +2024,20 @@ export default function Schedule({
       };
 
       // set compliance_['decision'] to true if all compliance are true
-      const keysToCheck = Object.keys(_compliance).filter(key => key !== "decision" && key !== "reject" && key !== "remarks" && key !== "supplier_name" && key !== "bid_no" && key !== "supplier"); 
+      const keysToCheck = Object.keys(_compliance).filter(
+        (key) =>
+          key !== "decision" &&
+          key !== "reject" &&
+          key !== "remarks" &&
+          key !== "supplier_name" &&
+          key !== "bid_no" &&
+          key !== "supplier"
+      );
       console.log("keysToCheck: ", keysToCheck);
-      const allValuesTrue = keysToCheck.every(key => {
-          if (key === "site_visit" && showSiteVisit === "no") return true;
-          if (key === "samples_required" && showSamples === "no") return true;
-          return compliance_[key];
+      const allValuesTrue = keysToCheck.every((key) => {
+        if (key === "site_visit" && showSiteVisit === "no") return true;
+        if (key === "samples_required" && showSamples === "no") return true;
+        return compliance_[key];
       });
       compliance_["decision"] = allValuesTrue;
       compliance_["reject"] = !allValuesTrue;
@@ -2011,63 +2048,77 @@ export default function Schedule({
     setCompliance(updatedComplianceList);
   };
 
-  const onComplianceChange = (index: number, event: { target: { name: string; checked: boolean; }; }) => {
+  const onComplianceChange = (
+    index: number,
+    event: { target: { name: string; checked: boolean } }
+  ) => {
     const { name, checked } = event.target;
     console.log("name : ", name, "checked: ", checked);
     console.log("compliance: ", compliance);
-    if(compliance && compliance.length > 0) {
-        const currentCompliances = compliance;
-        const currentCompliance = currentCompliances[index];
-        console.log("currentCompliance: ", currentCompliance);
-        currentCompliance[name] = checked;
-        console.log("currentCompliance: ", name, currentCompliance);
+    if (compliance && compliance.length > 0) {
+      const currentCompliances = compliance;
+      const currentCompliance = currentCompliances[index];
+      console.log("currentCompliance: ", currentCompliance);
+      currentCompliance[name] = checked;
+      console.log("currentCompliance: ", name, currentCompliance);
 
-        if(name === "decision") {
-            const updatedCompliances = currentCompliances.map((compliance_) => {
-                if (compliance_.supplier_name === currentCompliance.supplier_name) {
-                    return {
-                        ...compliance_,
-                        decision: checked,
-                        reject: !checked,
-                        payment_terms: checked,
-                        bid_validity: checked,
-                        delivery_period: checked,
-                        technical_specifications: checked,
-                        valid_tax_clearance: checked,
-                        registered_with_praz: checked,
-                        site_visit: (showSiteVisit === "yes")? checked: false,
-                        samples_required: (showSamples === "yes")? checked: false,
-                    };
-                } else {
-                    return compliance_;
-                }
-            });
-            setCompliance(updatedCompliances);
-        } else {
-            console.log("currentCompliance else: ", currentCompliance);
-            const keysToCheck = Object.keys(currentCompliance).filter(key => key !== "decision" && key !== "reject" && key !== "remarks" && key !== "supplier_name" && key !== "bid_no" && key !== "supplier"); 
-            console.log("keysToCheck: ", keysToCheck);
-            const allValuesTrue = keysToCheck.every(key => {
-                if (key === "site_visit" && showSiteVisit === "no") return true;
-                if (key === "samples_required" && showSamples === "no") return true;
-                return currentCompliance[key];
-            });
-            currentCompliance["decision"] = allValuesTrue;
-            currentCompliance["reject"] = !allValuesTrue;
+      if (name === "decision") {
+        const updatedCompliances = currentCompliances.map((compliance_) => {
+          if (compliance_.supplier_name === currentCompliance.supplier_name) {
+            return {
+              ...compliance_,
+              decision: checked,
+              reject: !checked,
+              payment_terms: checked,
+              bid_validity: checked,
+              delivery_period: checked,
+              technical_specifications: checked,
+              valid_tax_clearance: checked,
+              registered_with_praz: checked,
+              site_visit: showSiteVisit === "yes" ? checked : false,
+              samples_required: showSamples === "yes" ? checked : false,
+            };
+          } else {
+            return compliance_;
+          }
+        });
+        setCompliance(updatedCompliances);
+      } else {
+        console.log("currentCompliance else: ", currentCompliance);
+        const keysToCheck = Object.keys(currentCompliance).filter(
+          (key) =>
+            key !== "decision" &&
+            key !== "reject" &&
+            key !== "remarks" &&
+            key !== "supplier_name" &&
+            key !== "bid_no" &&
+            key !== "supplier"
+        );
+        console.log("keysToCheck: ", keysToCheck);
+        const allValuesTrue = keysToCheck.every((key) => {
+          if (key === "site_visit" && showSiteVisit === "no") return true;
+          if (key === "samples_required" && showSamples === "no") return true;
+          return currentCompliance[key];
+        });
+        currentCompliance["decision"] = allValuesTrue;
+        currentCompliance["reject"] = !allValuesTrue;
 
-            const updatedCompliances = currentCompliances.map((compliance_) => {
-                if (compliance_.supplier_name === currentCompliance.supplier_name) {
-                    return currentCompliance;
-                } else {
-                    return compliance_;
-                }
-            });
-            setCompliance(updatedCompliances);
-        }
+        const updatedCompliances = currentCompliances.map((compliance_) => {
+          if (compliance_.supplier_name === currentCompliance.supplier_name) {
+            return currentCompliance;
+          } else {
+            return compliance_;
+          }
+        });
+        setCompliance(updatedCompliances);
+      }
     }
   };
 
-  const onComplianceRemarksChange = (supplier_name: string, event: { target: { name: string; value: string; }; }) => {
+  const onComplianceRemarksChange = (
+    supplier_name: string,
+    event: { target: { name: string; value: string } }
+  ) => {
     const { name, value } = event.target;
     console.log(
       "name: ",
@@ -2082,15 +2133,16 @@ export default function Schedule({
       (item) => item.supplier_name === supplier_name
     );
     if (index !== -1) {
-
-        const updatedComplianceRemarks = Object.entries(complianceRemarks?? {}).map(([key, value_]) => {
-            if (key === String(index)){
-                value_.remarks = value;
-                return value_;
-            }
-            return value_;
-        });
-        setComplianceRemarks(updatedComplianceRemarks);
+      const updatedComplianceRemarks = Object.entries(
+        complianceRemarks ?? {}
+      ).map(([key, value_]) => {
+        if (key === String(index)) {
+          value_.remarks = value;
+          return value_;
+        }
+        return value_;
+      });
+      setComplianceRemarks(updatedComplianceRemarks);
     } else {
       complianceRemarks?.push({
         supplier_name: supplier_name,
@@ -2118,12 +2170,12 @@ export default function Schedule({
         complianceRemarks: complianceRemarks,
       })
     );
-    form_data.append("csrfmiddlewaretoken", getCookie("csrftoken")??"");
+    form_data.append("csrfmiddlewaretoken", getCookie("csrftoken") ?? "");
 
     fetch(`${base_url}/save_compliance`, {
       method: "POST",
       headers: {
-        "X-CSRFToken": getCookie("csrftoken")??"",
+        "X-CSRFToken": getCookie("csrftoken") ?? "",
       },
       body: form_data,
     })
@@ -2149,12 +2201,12 @@ export default function Schedule({
   const onCloseCS = () => {
     const form_data: FormData = new FormData();
     form_data.append("cs_id", csId);
-    form_data.append("csrfmiddlewaretoken", getCookie("csrftoken")??"");
+    form_data.append("csrfmiddlewaretoken", getCookie("csrftoken") ?? "");
 
     fetch(`${base_url}/close_compliance`, {
       method: "POST",
       headers: {
-        "X-CSRFToken": getCookie("csrftoken")??"",
+        "X-CSRFToken": getCookie("csrftoken") ?? "",
       },
       body: form_data,
     })
@@ -2164,7 +2216,7 @@ export default function Schedule({
         if (data.success) {
           const rankings = data.rankings;
           setRankings(rankings);
-        //   setRankingTable(true);
+          //   setRankingTable(true);
           onOpenResponse(
             "Rank Bids Successful",
             "Bids ranked successfully",
@@ -2182,58 +2234,61 @@ export default function Schedule({
 
   const onOpenResponse = (title: string, message: string, success: boolean) => {
     setResponse({
-        open: true,
-        title: title,
-        message: message,
-        success: success,
-        });
+      open: true,
+      title: title,
+      message: message,
+      success: success,
+    });
   };
 
   const onCloseResponse = () => {
     setResponse({
-        open: false,
-        title: "",
-        message: "",
-        success: false,
-        });
+      open: false,
+      title: "",
+      message: "",
+      success: false,
+    });
   };
 
-  const onSearchUser = (event: { target: { name: string; value: string; }; }) => {
+  const onSearchUser = (event: { target: { name: string; value: string } }) => {
     console.log("searching user ...");
     const { value } = event.target;
     console.log("valued: ", value);
 
     if (value.length > 3) {
-        const filteredOptions = users?.filter(user => {
-            console.log("user: ", user);
-           return (user.first_name.toLowerCase() || '').includes(value.toLowerCase()) ||
-            (user.last_name.toLowerCase() || '').includes(value.toLowerCase())
-        }
+      const filteredOptions = users?.filter((user) => {
+        console.log("user: ", user);
+        return (
+          (user.first_name.toLowerCase() || "").includes(value.toLowerCase()) ||
+          (user.last_name.toLowerCase() || "").includes(value.toLowerCase())
         );
-        
-        setSearchedUser(value);
-        setFilteredUsers(filteredOptions);
+      });
+
+      setSearchedUser(value);
+      setFilteredUsers(filteredOptions);
     } else {
-        setSearchedUser(value);
-        setFilteredUsers([]);
+      setSearchedUser(value);
+      setFilteredUsers([]);
     }
   };
 
-  const onAdditionalNotesChange = (event: { target: { name: string; value: string; }; }) => {
+  const onAdditionalNotesChange = (event: {
+    target: { name: string; value: string };
+  }) => {
     const { value } = event.target;
     setAdditionalNotes(value);
-  }
+  };
 
   const onAdditionalNotesSubmit = () => {
     const form_data: FormData = new FormData();
     form_data.append("cs_id", csId);
     form_data.append("additional_notes", additionalNotes);
-    form_data.append("csrfmiddlewaretoken", getCookie("csrftoken")??"");
+    form_data.append("csrfmiddlewaretoken", getCookie("csrftoken") ?? "");
 
     fetch(`${base_url}/save_additional_notes`, {
       method: "POST",
       headers: {
-        "X-CSRFToken": getCookie("csrftoken")??"",
+        "X-CSRFToken": getCookie("csrftoken") ?? "",
       },
       body: form_data,
     })
@@ -2254,11 +2309,72 @@ export default function Schedule({
           );
         }
       });
-  }
+  };
+
+  const onBuyersNotesChange = (event: {
+    target: { name: string; value: string };
+  }) => {
+    const { value } = event.target;
+    setBuyersNotes(value);
+  };
+
+  const onBuyersNotesSubmit = () => {
+    const form_data: FormData = new FormData();
+    form_data.append("cs_id", csId);
+    form_data.append("buyers_notes", buyersNotes);
+    form_data.append("csrfmiddlewaretoken", getCookie("csrftoken") ?? "");
+
+    fetch(`${base_url}/save_buyers_notes`, {
+      method: "POST",
+      headers: {
+        "X-CSRFToken": getCookie("csrftoken") ?? "",
+      },
+      body: form_data,
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        console.log("data: ", data);
+        if (data.success) {
+          onOpenResponse(
+            "Buyer's Notes Saved",
+            "Buyer's notes saved successfully",
+            true
+          );
+        } else {
+          onOpenResponse(
+            "Buyer's Notes Error",
+            "Failed to save Buyer's notes, please try again",
+            false
+          );
+        }
+      });
+  };
+
+  const getCommitteeClassNames = (approvalStatus: string) => {
+    const baseClasses = "grid grid-cols-5 gap-4 px-2 py-2 m-2 rounded-md";
+    let statusClasses = "";
+  
+    switch (approvalStatus) {
+      case "Approved":
+        statusClasses = "bg-green-100 hover:bg-green-200 text-green-700 hover:text-green-900 border before:border-green-400 after:border-green-700 border-green-400";
+        break;
+      case "Rejected":
+        statusClasses = "bg-red-100 hover:bg-red-200 text-red-700 hover:text-red-900 border before:border-red-400 after:border-red-700 border-red-400";
+        break;
+      case "":
+        statusClasses = "bg-blue-100 hover:bg-blue-200 text-blue-700 hover:text-blue-900 border before:border-gray-400 after:border-gray-700 border-gray-400";
+        break;
+      default:
+        statusClasses = "bg-blue-100 hover:bg-blue-200 text-blue-700 hover:text-blue-900 border before:border-gray-400 after:border-gray-700 border-gray-400";
+        break;
+    }
+  
+    return `${statusClasses} ${baseClasses}`;
+  };
 
   const itemsModal = (
     <div className="fixed inset-0 flex items-center justify-center z-50 pt-10 pb-20">
-      <div className="bg-gulf-blue-100 rounded-lg shadow-lg p-6 max-h-screen overflow-y-auto">
+      <div className="bg-gulf-blue-50 rounded-lg shadow-lg p-6 h-5/6">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-medium">SELECT SCHEDULE ITEMS</h3>
           <button
@@ -2281,7 +2397,7 @@ export default function Schedule({
             </svg>
           </button>
         </div>
-        <div className="overflow-auto px-2 py-2 mt-5 rounded-md bg-gulf-blue-300">
+        <div className="px-2 py-2 mt-3 rounded-md bg-gulf-blue-300 h-4/5 overflow-y-auto">
           <table
             style={{ width: "100%" }}
             className="table-auto w-full text-left"
@@ -2314,9 +2430,7 @@ export default function Schedule({
                         <input
                           type="checkbox"
                           checked={item.ordered ? item.ordered : false}
-                          onChange={() =>
-                            onAddCSItem(item.id?? 0)
-                          }
+                          onChange={() => onAddCSItem(item.id ?? 0)}
                         />
                       </td>
                     </tr>
@@ -2324,8 +2438,8 @@ export default function Schedule({
                 })}
             </tbody>
           </table>
-
-          <div className="flex justify-center mt-5 px-3 py-3">
+        </div>
+        <div className="flex justify-center mt-1 px-3 py-3">
             <div className="m-2">
               <button
                 onClick={onSubmitCSItems}
@@ -2335,17 +2449,16 @@ export default function Schedule({
               </button>
             </div>
           </div>
-        </div>
       </div>
     </div>
-  )
+  );
 
   const bidsModal = (
     <div
       id={"bid-" + currentBid?.bid_count}
       className="fixed inset-0 flex items-center justify-center z-50 pt-10 pb-20"
     >
-      <div className="bg-gulf-blue-100 rounded-lg shadow-lg p-6 max-h-screen min-w-max overflow-y-auto">
+      <div className="transition-all duration-300 bg-gulf-blue-50 p-4 rounded-lg border-l-4 border-blue-600 rounded-lg shadow-lg p-6 max-h-screen min-w-max overflow-y-auto">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-medium">ADD BID DETAILS</h3>
           <button
@@ -2368,7 +2481,7 @@ export default function Schedule({
             </svg>
           </button>
         </div>
-        <div className="px-4 sm:px-0 mt-6 bg-gulf-blue-300 rounded-md border-t border-gray-100 border-b border-gray-900/10 pb-12">
+        <div className="px-4 sm:px-0 mt-6 rounded-md border-t border-gray-100 border-b border-gray-900/10 pb-12">
           <div id="bid_container" className=" rounded-md">
             <div className="flex justify-evenly mt-5  px-2 py-2 rounded-md">
               <div className="flex-1 w-20 ml-1">
@@ -2382,7 +2495,7 @@ export default function Schedule({
                   <select
                     id="supplier"
                     onChange={(e) => onCurrentBidSupplierChange("supplier", e)}
-                    className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
+                    className="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
                   >
                     {currentBid?.supplier_name ? (
                       <option
@@ -2400,9 +2513,7 @@ export default function Schedule({
                     <option>Select Supplier</option>
                     {suppliers
                       ? suppliers?.map((supplier) => (
-                          <option
-                            value={supplier?.id + "-#-" + supplier?.name}
-                          >
+                          <option value={supplier?.id + "-#-" + supplier?.name}>
                             {supplier.name}
                           </option>
                         ))
@@ -2424,7 +2535,7 @@ export default function Schedule({
                     onChange={(e) => onCurrentBidChange("bid_date", e)}
                     type="date"
                     required
-                    className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                    className="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                   />
                 </div>
               </div>
@@ -2439,11 +2550,11 @@ export default function Schedule({
                   <input
                     name=""
                     type="number"
-                    value={currentBid?.bid_count}
+                    value={bidCount+1}
                     id="bid"
                     required
                     readOnly
-                    className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                    className="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                   />
                 </div>
               </div>
@@ -2458,9 +2569,7 @@ export default function Schedule({
                   <input
                     name="bid_document"
                     type="file"
-                    onChange={(e) =>
-                      onBidDocumentChange(e)
-                    }
+                    onChange={(e) => onBidDocumentChange(e)}
                     className="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                   />
                 </div>
@@ -2484,7 +2593,7 @@ export default function Schedule({
                           defaultValue={item.item_required}
                           onChange={(e) =>
                             onCurrentBidItemChange(
-                              item.item_required?? "",
+                              item.item_required ?? "",
                               "item_required",
                               e,
                               currentBid?.bid_count?.toString() ?? ""
@@ -2492,7 +2601,7 @@ export default function Schedule({
                           }
                           id="item_description"
                           required
-                          className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                          className="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                         />
                       </div>
                     </div>
@@ -2518,7 +2627,7 @@ export default function Schedule({
                           }
                           type="number"
                           id="quantity"
-                          className="block inpt w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                          className="block inpt w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                         />
                       </div>
                     </div>
@@ -2538,11 +2647,11 @@ export default function Schedule({
                                 item.item_required ?? "",
                                 "unit_of_measurement",
                                 e,
-                              currentBid?.bid_count?.toString() ?? ""
+                                currentBid?.bid_count?.toString() ?? ""
                               )
                             }
                             autoComplete="unit_of_measurement"
-                            className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+                            className="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
                           >
                             {item.unit_of_measurement ? (
                               <option value={item.unit_of_measurement}>
@@ -2582,7 +2691,7 @@ export default function Schedule({
                               )
                             }
                             autoComplete="vat"
-                            className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+                            className="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
                           >
                             {item.vat ? (
                               <option value={item.vat}>{item.vat}</option>
@@ -2618,7 +2727,7 @@ export default function Schedule({
                           type="text"
                           id="unit_price"
                           required
-                          className="block inpt w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                          className="block inpt w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                         />
                       </div>
                     </div>
@@ -2630,47 +2739,47 @@ export default function Schedule({
           <div className="flex justify-center mt-5 px-3 py-3">
             <div className="m-2">
               <button
-                onClick={onCurrentBidSave}
-                className="rounded-md text-gray-50 text-sm bg-blue-925 hover:bg-blue-550 px-3 py-2 font-semibold leading-6"
+                onClick={onCloseCurrentBid}
+                type="submit"
+                className="rounded-md bg-gray-700 hover:bg-gray-600 text-sm font-semibold px-3 py-2 text-white shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
               >
-                <span className="ml-2">SAVE BID</span>
+                <span className="ml-2">CANCEL</span>
               </button>
             </div>
             <div className="m-2">
               <button
-                onClick={onCloseCurrentBid}
-                type="submit"
-                className="rounded-md bg-red-danger hover:bg-orange-500 text-sm font-semibold px-3 py-2 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                onClick={onCurrentBidSave}
+                className="rounded-md text-blue-50 text-sm bg-blue-600 hover:bg-blue-500 px-3 py-2 font-semibold leading-6"
               >
-                <span className="ml-2">CANCEL</span>
+                <span className="ml-2">SAVE BID</span>
               </button>
             </div>
           </div>
         </div>
       </div>
     </div>
-  )
+  );
 
   const responseModal = (
     <div className="fixed inset-0 z-50 overflow-y-auto">
       <div className="flex items-end justify-center min-h-screen px-4 text-center md:items-center sm:block sm:p-0">
         <div
-        //   enter="transition ease-out duration-300 transform"
-        //   enterStart="opacity-0"
-        //   enterEnd="opacity-100"
-        //   leave="transition ease-in duration-200 transform"
-        //   leaveStart="opacity-100"
-        //   leaveEnd="opacity-0"
+          //   enter="transition ease-out duration-300 transform"
+          //   enterStart="opacity-0"
+          //   enterEnd="opacity-100"
+          //   leave="transition ease-in duration-200 transform"
+          //   leaveStart="opacity-100"
+          //   leaveEnd="opacity-0"
           className="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-40"
         ></div>
 
         <div
-        //   enter="transition ease-out duration-300 transform"
-        //   enterStart="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-        //   enterEnd="opacity-100 translate-y-0 sm:scale-100"
-        //   leave="transition ease-in duration-200 transform"
-        //   leaveStart="opacity-100 translate-y-0 sm:scale-100"
-        //   leaveEnd="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+          //   enter="transition ease-out duration-300 transform"
+          //   enterStart="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+          //   enterEnd="opacity-100 translate-y-0 sm:scale-100"
+          //   leave="transition ease-in duration-200 transform"
+          //   leaveStart="opacity-100 translate-y-0 sm:scale-100"
+          //   leaveEnd="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
           className="inline-block w-full max-w-xl p-8 my-20 overflow-hidden text-left transition-all transform bg-white rounded-lg shadow-xl 2xl:max-w-2xl"
         >
           <div className="flex items-center justify-between space-x-4">
@@ -2728,7 +2837,7 @@ export default function Schedule({
   );
 
   const complianceTableComp = (
-    <div className="bg-gulf-blue-300 shadow shadow-nepal-300 text-gray-700 rounded px-2 py-2">
+    <div className="transition-all duration-300 bg-gulf-blue-100 p-4 rounded-lg border-l-4 border-blue-600">
       <div className="space-y-12 px-5 py-5">
         <div className="px-4 sm:px-0 mt-6 border-t border-gray-100 border-gray-900/10">
           <h2 className="text-base font-semibold leading-6 text-gray-900">
@@ -2737,7 +2846,7 @@ export default function Schedule({
           <p className="mt-1 max-w-2xl text-sm leading-6 text-gray-500">
             Key: Comply/ Not Comply (Y/ N), Not Stated (NS)
           </p>
-          <div className="flex justify-evenly mt-5 bg-gulf-blue-300 px-2 py-2 rounded-md">
+          <div className="flex justify-evenly mt-5  px-2 py-2 rounded-md">
             <div className="flex-1 w-45">
               <label
                 htmlFor="site_visit"
@@ -2749,25 +2858,18 @@ export default function Schedule({
                 <select
                   id="site_visit"
                   name="showSiteVisit"
-                  onChange={(e) =>
-                    onComplianceItemsChange("showSiteVisit", e)
-                  }
+                  onChange={(e) => onComplianceItemsChange("showSiteVisit", e)}
                   disabled={
-                    username === csOwner ||
-                    csOwner === ""
-                      ? false
-                      : true
+                    username === csOwner || csOwner === "" ? false : true
                   }
                   autoComplete="site_visit"
                   className="block w-full rounded-md border-0 py-2 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
                 >
-                {showSiteVisit? (
-                   <option value={showSiteVisit}>
-                   {showSiteVisit}
-                   </option>
-                   ) : (
-                   ""
-                   )}
+                  {showSiteVisit ? (
+                    <option value={showSiteVisit}>{showSiteVisit}</option>
+                  ) : (
+                    ""
+                  )}
                   <option value="">Select Option</option>
                   <option value="yes">Yes</option>
                   <option value="no">No</option>
@@ -2786,25 +2888,18 @@ export default function Schedule({
                   <select
                     id="samples"
                     name="showSamples"
-                    onChange={(e) =>
-                      onComplianceItemsChange("showSamples", e)
-                    }
+                    onChange={(e) => onComplianceItemsChange("showSamples", e)}
                     disabled={
-                      username === csOwner ||
-                      csOwner === ""
-                        ? false
-                        : true
+                      username === csOwner || csOwner === "" ? false : true
                     }
                     autoComplete="samples"
                     className="block w-full rounded-md border-0 py-2 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
                   >
-                   {showSamples? (
-                      <option value={showSamples}>
-                      {showSamples}
-                      </option>
-                      ) : (
+                    {showSamples ? (
+                      <option value={showSamples}>{showSamples}</option>
+                    ) : (
                       ""
-                      )}
+                    )}
                     <option value="">Select Option</option>
                     <option value="yes">Yes</option>
                     <option value="no">No</option>
@@ -2814,7 +2909,7 @@ export default function Schedule({
             </div>
           </div>
 
-          <div className="overflow-auto px-2 py-2 mt-5 rounded-md bg-gulf-blue-300">
+          <div className="overflow-auto px-2 py-2 mt-5 rounded-md ">
             <table className="table-auto w-full text-left">
               <thead>
                 <tr className="text-gray-900">
@@ -2899,8 +2994,7 @@ export default function Schedule({
                             }
                             onChange={(e) => onComplianceChange(key, e)}
                             disabled={
-                              username === csOwner ||
-                              csOwner === ""
+                              username === csOwner || csOwner === ""
                                 ? false
                                 : true
                             }
@@ -2916,8 +3010,7 @@ export default function Schedule({
                             }
                             onChange={(e) => onComplianceChange(key, e)}
                             disabled={
-                              username === csOwner ||
-                              csOwner === ""
+                              username === csOwner || csOwner === ""
                                 ? false
                                 : true
                             }
@@ -2935,8 +3028,7 @@ export default function Schedule({
                             }
                             onChange={(e) => onComplianceChange(key, e)}
                             disabled={
-                              username === csOwner ||
-                              csOwner === ""
+                              username === csOwner || csOwner === ""
                                 ? false
                                 : true
                             }
@@ -2954,8 +3046,7 @@ export default function Schedule({
                             }
                             onChange={(e) => onComplianceChange(key, e)}
                             disabled={
-                              username === csOwner ||
-                              csOwner === ""
+                              username === csOwner || csOwner === ""
                                 ? false
                                 : true
                             }
@@ -2973,8 +3064,7 @@ export default function Schedule({
                             }
                             onChange={(e) => onComplianceChange(key, e)}
                             disabled={
-                              username === csOwner ||
-                              csOwner === ""
+                              username === csOwner || csOwner === ""
                                 ? false
                                 : true
                             }
@@ -2992,8 +3082,7 @@ export default function Schedule({
                             }
                             onChange={(e) => onComplianceChange(key, e)}
                             disabled={
-                              username === csOwner ||
-                              csOwner === ""
+                              username === csOwner || csOwner === ""
                                 ? false
                                 : true
                             }
@@ -3011,12 +3100,9 @@ export default function Schedule({
                               checked={
                                 comp.site_visit ? comp.site_visit : false
                               }
-                              onChange={(e) =>
-                                onComplianceChange(key, e)
-                              }
+                              onChange={(e) => onComplianceChange(key, e)}
                               disabled={
-                                username === csOwner ||
-                                csOwner === ""
+                                username === csOwner || csOwner === ""
                                   ? false
                                   : true
                               }
@@ -3039,12 +3125,9 @@ export default function Schedule({
                                   ? comp.samples_required
                                   : false
                               }
-                              onChange={(e) =>
-                                onComplianceChange(key, e)
-                              }
+                              onChange={(e) => onComplianceChange(key, e)}
                               disabled={
-                                username === csOwner ||
-                                csOwner === ""
+                                username === csOwner || csOwner === ""
                                   ? false
                                   : true
                               }
@@ -3061,8 +3144,7 @@ export default function Schedule({
                             checked={comp.decision ? comp.decision : false}
                             onChange={(e) => onComplianceChange(key, e)}
                             disabled={
-                              username === csOwner ||
-                              csOwner === ""
+                              username === csOwner || csOwner === ""
                                 ? false
                                 : true
                             }
@@ -3076,8 +3158,7 @@ export default function Schedule({
                             checked={comp.reject ? comp.reject : false}
                             onChange={(e) => onComplianceChange(key, e)}
                             disabled={
-                              username === csOwner ||
-                              csOwner === ""
+                              username === csOwner || csOwner === ""
                                 ? false
                                 : true
                             }
@@ -3091,7 +3172,7 @@ export default function Schedule({
               </tbody>
             </table>
           </div>
-          <div className="px-2 py-2 mt-5 rounded-sm bg-gulf-blue-300">
+          <div className="px-2 py-2 mt-5 rounded-sm ">
             <table className="table-auto w-full text-left">
               <thead>
                 <tr className="text-gray-900">
@@ -3117,18 +3198,17 @@ export default function Schedule({
                             defaultValue={bid.remarks}
                             onChange={(e) =>
                               onComplianceRemarksChange(
-                                bid.supplier_name??"",
+                                bid.supplier_name ?? "",
                                 e
                               )
                             }
                             disabled={
-                              username === csOwner ||
-                              csOwner === ""
+                              username === csOwner || csOwner === ""
                                 ? false
                                 : true
                             }
                             type="text"
-                            className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
+                            className="block w-full rounded-md border-0 py-1.5 text-gray-900 px-2 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
                           />
                         </td>
                       </tr>
@@ -3140,8 +3220,7 @@ export default function Schedule({
         </div>
       </div>
 
-      {username === csOwner &&
-      !approvalsComplete ? (
+      {username === csOwner && !approvalsComplete ? (
         <div className="flex justify-center mt-5 px-3 py-3">
           <div className="flex-1 m-2">
             <button
@@ -3160,43 +3239,43 @@ export default function Schedule({
     </div>
   );
 
-//   const loadingModal = (
-//     <div className="fixed inset-0 z-50 overflow-y-auto">
-//       <div className="flex items-end justify-center min-h-screen px-4 text-center md:items-center sm:block sm:p-0">
-//         <div
-//         //   enter="transition ease-out duration-300 transform"
-//         //   enterStart="opacity-0"
-//         //   enterEnd="opacity-100"
-//         //   leave="transition ease-in duration-200 transform"
-//         //   leaveStart="opacity-100"
-//         //   leaveEnd="opacity-0"
-//           className="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-40"
-//         ></div>
+  //   const loadingModal = (
+  //     <div className="fixed inset-0 z-50 overflow-y-auto">
+  //       <div className="flex items-end justify-center min-h-screen px-4 text-center md:items-center sm:block sm:p-0">
+  //         <div
+  //         //   enter="transition ease-out duration-300 transform"
+  //         //   enterStart="opacity-0"
+  //         //   enterEnd="opacity-100"
+  //         //   leave="transition ease-in duration-200 transform"
+  //         //   leaveStart="opacity-100"
+  //         //   leaveEnd="opacity-0"
+  //           className="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-40"
+  //         ></div>
 
-//         <div
-//         //   enter="transition ease-out duration-300 transform"
-//         //   enterStart="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-//         //   enterEnd="opacity-100 translate-y-0 sm:scale-100"
-//         //   leave="transition ease-in duration-200 transform"
-//         //   leaveStart="opacity-100 translate-y-0 sm:scale-100"
-//         //   leaveEnd="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-//           className="inline-block w-full max-w-xl p-8 my-20 overflow-hidden text-left transition-all transform bg-white rounded-lg shadow-xl 2xl:max-w-2xl"
-//         >
-//           <div className="flex items-center justify-between space-x-4">
-//             <h1 className="text-xl font-medium text-gray-800">
-//                 Loading ...
-//             </h1>
-//           </div>
+  //         <div
+  //         //   enter="transition ease-out duration-300 transform"
+  //         //   enterStart="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+  //         //   enterEnd="opacity-100 translate-y-0 sm:scale-100"
+  //         //   leave="transition ease-in duration-200 transform"
+  //         //   leaveStart="opacity-100 translate-y-0 sm:scale-100"
+  //         //   leaveEnd="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+  //           className="inline-block w-full max-w-xl p-8 my-20 overflow-hidden text-left transition-all transform bg-white rounded-lg shadow-xl 2xl:max-w-2xl"
+  //         >
+  //           <div className="flex items-center justify-between space-x-4">
+  //             <h1 className="text-xl font-medium text-gray-800">
+  //                 Loading ...
+  //             </h1>
+  //           </div>
 
-//           <p
-//             className={`mt-5 text-sm p-2 rounded-md bg-gulf-blue-100 text-gulf-blue-700`}
-//           >
-//             Please wait ...
-//           </p>
-//         </div>
-//       </div>
-//     </div>
-//   );
+  //           <p
+  //             className={`mt-5 text-sm p-2 rounded-md bg-gulf-blue-100 text-gulf-blue-700`}
+  //           >
+  //             Please wait ...
+  //           </p>
+  //         </div>
+  //       </div>
+  //     </div>
+  //   );
 
   const supplierModal = (
     <div className="fixed inset-0 flex items-center justify-center z-50 pt-10 pb-20">
@@ -3235,12 +3314,10 @@ export default function Schedule({
               <div className="mt-2">
                 <input
                   name="supplier_name"
-                  onChange={(e) =>
-                    onSupplierChange(e)
-                  }
+                  onChange={(e) => onSupplierChange(e)}
                   type="text"
                   required
-                  className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                  className="block w-full rounded-md border-0 py-1.5 text-gray-900 px-2 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                 />
               </div>
             </div>
@@ -3306,11 +3383,9 @@ export default function Schedule({
               <div className="mt-2">
                 <textarea
                   name="justification"
-                  onChange={(e) =>
-                    onApprovalJustificationChange(e)
-                  }
+                  onChange={(e) => onApprovalJustificationChange(e)}
                   required
-                  className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                  className="block w-full rounded-md border-0 py-1.5 text-gray-900 px-2 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                 />
               </div>
             </div>
@@ -3329,10 +3404,10 @@ export default function Schedule({
               <button
                 onClick={() =>
                   onApprovalApprove(
-                    currentApprover?.role??"",
-                    currentApprover?.username??"",
+                    currentApprover?.role ?? "",
+                    currentApprover?.username ?? "",
                     "Rejected",
-                    currentApprover?.justification??""
+                    currentApprover?.justification ?? ""
                   )
                 }
                 className="rounded-md text-gray-50 text-sm bg-blue-925 hover:bg-blue-550 px-3 py-2 font-semibold leading-6"
@@ -3383,11 +3458,9 @@ export default function Schedule({
               <div className="mt-2">
                 <textarea
                   name="justification"
-                  onChange={(e) =>
-                    onCommitteeJustificationChange(e)
-                  }
+                  onChange={(e) => onCommitteeJustificationChange(e)}
                   required
-                  className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                  className="block w-full rounded-md border-0 py-1.5 text-gray-900 px-2 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                 />
               </div>
             </div>
@@ -3406,9 +3479,9 @@ export default function Schedule({
               <button
                 onClick={() =>
                   onCommitteeApprove(
-                    currentApprover?.username??"",
+                    currentApprover?.username ?? "",
                     "Rejected",
-                    currentApprover?.justification??""
+                    currentApprover?.justification ?? ""
                   )
                 }
                 className="rounded-md text-gray-50 text-sm bg-blue-925 hover:bg-blue-550 px-3 py-2 font-semibold leading-6"
@@ -3427,7 +3500,7 @@ export default function Schedule({
       id={"bid-" + currentBid?.bid_count}
       className="fixed inset-0 flex items-center justify-center z-50 pt-10 pb-20"
     >
-      <div className="bg-white rounded-lg shadow-lg p-6 max-h-screen min-w-max overflow-y-auto">
+      <div className="transition-all duration-300 bg-gulf-blue-50 p-4 rounded-lg border-l-4 border-blue-600 rounded-lg shadow-lg p-6 max-h-screen min-w-max overflow-y-auto">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-medium">Update Bid</h3>
           <button
@@ -3450,7 +3523,7 @@ export default function Schedule({
             </svg>
           </button>
         </div>
-        <div className="px-4 sm:px-0 mt-6 bg-gulf-blue-300 rounded-md border-t border-gray-100 border-b border-gray-900/10 pb-12">
+        <div className="px-4 sm:px-0 mt-6 rounded-md border-t border-gray-100 border-b border-gray-900/10 pb-12">
           <div id="bid_container" className=" rounded-md">
             <div className="flex justify-evenly mt-5  px-2 py-2 rounded-md">
               <div className="flex-1 w-20 ml-1">
@@ -3464,7 +3537,7 @@ export default function Schedule({
                   <select
                     id="supplier"
                     onChange={(e) => onCurrentBidSupplierChange("supplier", e)}
-                    className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
+                    className="block w-full rounded-md border-0 py-1.5 text-gray-900 px-2 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
                   >
                     {currentBid?.supplier_name ? (
                       <option
@@ -3482,9 +3555,7 @@ export default function Schedule({
                     <option>Select Supplier</option>
                     {suppliers
                       ? suppliers.map((supplier) => (
-                          <option
-                            value={supplier.id + "-#-" + supplier.name}
-                          >
+                          <option value={supplier.id + "-#-" + supplier.name}>
                             {supplier.name}
                           </option>
                         ))
@@ -3506,7 +3577,7 @@ export default function Schedule({
                     onChange={(e) => onCurrentBidChange("bid_date", e)}
                     type="date"
                     required
-                    className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                    className="block w-full rounded-md border-0 py-1.5 text-gray-900 px-2 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                   />
                 </div>
               </div>
@@ -3525,7 +3596,7 @@ export default function Schedule({
                     id="bid"
                     required
                     readOnly
-                    className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                    className="block w-full rounded-md border-0 py-1.5 text-gray-900 px-2 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                   />
                 </div>
               </div>
@@ -3540,9 +3611,7 @@ export default function Schedule({
                   <input
                     name="bid_document"
                     type="file"
-                    onChange={(e) =>
-                        onBidDocumentChange(e)
-                    }
+                    onChange={(e) => onBidDocumentChange(e)}
                     className="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                   />
                 </div>
@@ -3569,7 +3638,7 @@ export default function Schedule({
                           defaultValue={item.item_required}
                           onChange={(e) =>
                             onCurrentBidItemChange(
-                              item.item_required?? "",
+                              item.item_required ?? "",
                               "item_required",
                               e,
                               currentBid?.bid_count?.toString() ?? ""
@@ -3577,7 +3646,7 @@ export default function Schedule({
                           }
                           id="item_description"
                           required
-                          className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                          className="block w-full rounded-md border-0 py-1.5 text-gray-900 px-2 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                         />
                       </div>
                     </div>
@@ -3594,7 +3663,7 @@ export default function Schedule({
                           defaultValue={item.quantity}
                           onChange={(e) =>
                             onCurrentBidItemChange(
-                              item.item_required?? "",
+                              item.item_required ?? "",
                               "quantity",
                               e,
                               currentBid?.bid_count?.toString() ?? ""
@@ -3602,7 +3671,7 @@ export default function Schedule({
                           }
                           type="number"
                           id="quantity"
-                          className="block inpt w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                          className="block inpt w-full rounded-md border-0 py-1.5 text-gray-900 px-2 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                         />
                       </div>
                     </div>
@@ -3620,14 +3689,14 @@ export default function Schedule({
                             defaultValue={item.unit_of_measurement}
                             onChange={(e) =>
                               onCurrentBidItemChange(
-                                item.item_required?? "",
+                                item.item_required ?? "",
                                 "unit_of_measurement",
                                 e,
-                              currentBid?.bid_count?.toString() ?? ""
+                                currentBid?.bid_count?.toString() ?? ""
                               )
                             }
                             autoComplete="unit_of_measurement"
-                            className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+                            className="block w-full rounded-md border-0 py-1.5 text-gray-900 px-2 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
                           >
                             {item.unit_of_measurement ? (
                               <option value={item.unit_of_measurement}>
@@ -3661,14 +3730,14 @@ export default function Schedule({
                             defaultValue={item.vat}
                             onChange={(e) =>
                               onCurrentBidItemChange(
-                                item.item_required?? "",
+                                item.item_required ?? "",
                                 "vat",
                                 e,
-                              currentBid?.bid_count?.toString() ?? ""
+                                currentBid?.bid_count?.toString() ?? ""
                               )
                             }
                             autoComplete="vat"
-                            className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+                            className="block w-full rounded-md border-0 py-1.5 text-gray-900 px-2 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
                           >
                             {item.vat ? (
                               <option value={item.vat}>{item.vat}</option>
@@ -3695,7 +3764,7 @@ export default function Schedule({
                           defaultValue={item.unit_price}
                           onChange={(e) =>
                             onCurrentBidItemChange(
-                              item.item_required?? "",
+                              item.item_required ?? "",
                               "unit_price",
                               e,
                               currentBid?.bid_count?.toString() ?? ""
@@ -3704,7 +3773,7 @@ export default function Schedule({
                           type="text"
                           id="unit_price"
                           required
-                          className="block inpt w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                          className="block inpt w-full rounded-md border-0 py-1.5 text-gray-900 px-2 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                         />
                       </div>
                     </div>
@@ -3716,19 +3785,19 @@ export default function Schedule({
           <div className="flex justify-center mt-5 px-3 py-3">
             <div className="m-2">
               <button
-                onClick={onCurrentBidSave}
-                className="rounded-md text-gray-50 text-sm bg-blue-925 hover:bg-blue-550 px-3 py-2 font-semibold leading-6"
+                onClick={onCloseCurrentBid}
+                type="submit"
+                className="rounded-md bg-gray-700 hover:bg-gray-600 text-sm font-semibold px-3 py-2 text-white shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
               >
-                <span className="ml-2">SAVE BID</span>
+                <span className="ml-2">CANCEL</span>
               </button>
             </div>
             <div className="m-2">
               <button
-                onClick={onCloseCurrentBid}
-                type="submit"
-                className="rounded-md bg-red-danger hover:bg-orange-500 text-sm font-semibold px-3 py-2 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                onClick={onCurrentBidSave}
+                className="rounded-md text-blue-50 text-sm bg-blue-600 hover:bg-blue-500 px-3 py-2 font-semibold leading-6"
               >
-                <span className="ml-2">CANCEL</span>
+                <span className="ml-2">SAVE BID</span>
               </button>
             </div>
           </div>
@@ -3738,14 +3807,14 @@ export default function Schedule({
   );
 
   const approvalsTable = (
-    <div className="bg-gulf-blue-300 shadow shadow-nepal-300 text-gray-700 rounded px-2 py-2">
+    <div className="transition-all duration-300 bg-gulf-blue-100 p-4 rounded-lg border-l-4 border-blue-600">
       <div className="space-y-12 px-5 py-5">
         <div className="px-4 sm:px-0 mt-6 border-t border-gray-100 border-gray-900/10">
           <h2 className="text-base font-semibold leading-6 text-gray-900">
             Approvals
           </h2>
 
-          <div className="overflow-auto px-2 py-2 mt-5 rounded-md bg-gulf-blue-300">
+          <div className="overflow-auto px-2 py-2 mt-5 rounded-md">
             <table className="table-auto w-full text-left">
               <tbody>
                 <tr className="text-gray-900">
@@ -3753,8 +3822,7 @@ export default function Schedule({
                     FINANCE MANAGER
                   </td>
                   <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                    {fmApproval &&
-                      fmApproval?.approver_name}
+                    {fmApproval && fmApproval?.approver_name}
                   </td>
                   <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
                     {fmApproval &&
@@ -3771,14 +3839,14 @@ export default function Schedule({
                     {committeeApprovalComplete && (
                       <div className="flex justify-content-evenly">
                         {requesterRole === "check" &&
-                        Object.keys(fmApproval?? {}).length === 0 ? (
+                        Object.keys(fmApproval ?? {}).length === 0 ? (
                           <div className="flex justify-content-evenly">
                             <div className="m-2">
                               <button
                                 onClick={() =>
                                   onApprovalApprove(
                                     "finance_manager",
-                                    username?? "",
+                                    username ?? "",
                                     "Approved",
                                     ""
                                   )
@@ -3793,7 +3861,7 @@ export default function Schedule({
                               <button
                                 onClick={() =>
                                   onApprovalJustificationModal(
-                                    username?? "",
+                                    username ?? "",
                                     "finance_manager"
                                   )
                                 }
@@ -3811,8 +3879,7 @@ export default function Schedule({
                     )}
                   </td>
                   <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                    {fmApproval &&
-                    fmApproval?.approval_date
+                    {fmApproval && fmApproval?.approval_date
                       ? fmApproval?.approval_date.split(".")[0]
                       : ""}
                   </td>
@@ -3822,8 +3889,7 @@ export default function Schedule({
                     GENERAL MANAGER
                   </td>
                   <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                    {gmApproval &&
-                      gmApproval.approver_name}
+                    {gmApproval && gmApproval.approver_name}
                   </td>
                   <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
                     {gmApproval &&
@@ -3842,14 +3908,14 @@ export default function Schedule({
                         {fmApproval &&
                         fmApproval?.approval === "Approved" &&
                         requesterRole === "approve" &&
-                        Object.keys(gmApproval??{}).length === 0 ? (
+                        Object.keys(gmApproval ?? {}).length === 0 ? (
                           <div className="flex justify-content-evenly">
                             <div className="m-2">
                               <button
                                 onClick={() =>
                                   onApprovalApprove(
                                     "general_manager",
-                                    username?? "",
+                                    username ?? "",
                                     "Approved",
                                     ""
                                   )
@@ -3864,7 +3930,7 @@ export default function Schedule({
                               <button
                                 onClick={() =>
                                   onApprovalJustificationModal(
-                                    username?? "",
+                                    username ?? "",
                                     "general_manager"
                                   )
                                 }
@@ -3882,8 +3948,7 @@ export default function Schedule({
                     }
                   </td>
                   <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                    {gmApproval &&
-                    gmApproval.approval_date
+                    {gmApproval && gmApproval.approval_date
                       ? gmApproval.approval_date.split(".")[0]
                       : ""}
                   </td>
@@ -3897,10 +3962,13 @@ export default function Schedule({
   );
 
   const csDetailsView = (
-    <div className="px-4 sm:px-0 mt-6 bg-gulf-blue-300 rounded-md border-t border-gray-100 border-gray-900/10">
+    <div className="transition-all duration-300 bg-gulf-blue-100 p-4 rounded-lg border-l-4 border-blue-600">
       <h2 className="text-base font-semibold leading-6 text-gray-900">
         COMPERATIVE SCHEDULE DETAILS
       </h2>
+      <p className="mt-1 max-w-2xl text-sm leading-6 text-gray-500">
+        CS NO: {csId}
+      </p>
 
       <div className="flex justify-evenly mt-5  px-2 py-2 rounded-md">
         <div className="flex-1 w-100">
@@ -3915,14 +3983,9 @@ export default function Schedule({
               id="scope"
               name="scope_of_work"
               value={scopeOfWork}
-              disabled={
-                username === csOwner ||
-                csOwner === ""
-                  ? false
-                  : true
-              }
-              onChange={(e) => setCsOwner(e.target.value)}
-              className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+              disabled={username === csOwner || csOwner === "" ? false : true}
+              onChange={(e) => setScopeOfWork(e.target.value)}
+              className="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
             ></textarea>
           </div>
         </div>
@@ -3940,15 +4003,10 @@ export default function Schedule({
               name="pr_number"
               value={prNumber}
               onChange={(e) => setCsOwner(e.target.value)}
-              disabled={
-                username === csOwner ||
-                csOwner === ""
-                  ? false
-                  : true
-              }
+              disabled={username === csOwner || csOwner === "" ? false : true}
               id="pr_number"
               required
-              className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+              className="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
             />
           </div>
         </div>
@@ -3964,15 +4022,10 @@ export default function Schedule({
               name="pr_date"
               value={prDate}
               onChange={(e) => setPrDate(e.target.value)}
-              disabled={
-                username === csOwner ||
-                csOwner === ""
-                  ? false
-                  : true
-              }
+              disabled={username === csOwner || csOwner === "" ? false : true}
               type="date"
               required
-              className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+              className="block w-full rounded-md border-0 py-1.5 text-gray-900 px-2 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
             />
           </div>
         </div>
@@ -3988,15 +4041,10 @@ export default function Schedule({
               name="closing_date"
               value={closingDate}
               onChange={(e) => setClosingDate(e.target.value)}
-              disabled={
-                username === csOwner ||
-                csOwner === ""
-                  ? false
-                  : true
-              }
+              disabled={username === csOwner || csOwner === "" ? false : true}
               type="date"
               required
-              className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+              className="block w-full rounded-md border-0 py-1.5 text-gray-900 px-2 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
             />
           </div>
         </div>
@@ -4014,17 +4062,12 @@ export default function Schedule({
                   name="closing_time"
                   onChange={(e) => setClosingTime(e.target.value)}
                   disabled={
-                    username === csOwner ||
-                    csOwner === ""
-                      ? false
-                      : true
+                    username === csOwner || csOwner === "" ? false : true
                   }
-                  className="rounded-md block border-none w-full py-1.5 text-gray-900 sm:max-w-xs sm:text-sm sm:leading-6"
+                  className="rounded-md block border-none w-full py-1.5 px-2 text-gray-900 sm:max-w-xs sm:text-sm sm:leading-6"
                 >
                   {closingTime ? (
-                    <option value={closingTime}>
-                      {closingTime}
-                    </option>
+                    <option value={closingTime}>{closingTime}</option>
                   ) : (
                     <option value="">Select Closing Time</option>
                   )}
@@ -4050,18 +4093,11 @@ export default function Schedule({
               name="proc_plan"
               autoComplete="proc_plan"
               onChange={(e) => onSelectChange("proc_ref", e)}
-              disabled={
-                username === csOwner ||
-                csOwner === ""
-                  ? false
-                  : true
-              }
+              disabled={username === csOwner || csOwner === "" ? false : true}
               className="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
             >
               {procPlan ? (
-                <option value={procPlan?.id}>
-                  {procPlan?.description}
-                </option>
+                <option value={procPlan?.id}>{procPlan?.description}</option>
               ) : (
                 ""
               )}
@@ -4086,18 +4122,11 @@ export default function Schedule({
               name="currency"
               autoComplete="currency"
               onChange={(e) => onSelectChange("currency", e)}
-              disabled={
-                username === csOwner ||
-                csOwner === ""
-                  ? false
-                  : true
-              }
+              disabled={username === csOwner || csOwner === "" ? false : true}
               className="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
             >
               {currency ? (
-                <option value={currency.id}>
-                  {currency.currency}
-                </option>
+                <option value={currency.id}>{currency.currency}</option>
               ) : (
                 <option value="">Select Currency</option>
               )}
@@ -4121,15 +4150,10 @@ export default function Schedule({
               name="ref_date"
               value={refDate}
               onChange={(e) => setRefDate(e.target.value)}
-              disabled={
-                username === csOwner ||
-                csOwner === ""
-                  ? false
-                  : true
-              }
+              disabled={username === csOwner || csOwner === "" ? false : true}
               type="date"
               required
-              className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+              className="block w-full rounded-md border-0 py-1.5 text-gray-900 px-2 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
             />
           </div>
         </div>
@@ -4145,15 +4169,10 @@ export default function Schedule({
               name="date_tender_opened"
               value={dateTenderOpened}
               onChange={(e) => setDateTenderOpened(e.target.value)}
-              disabled={
-                username === csOwner ||
-                csOwner === ""
-                  ? false
-                  : true
-              }
+              disabled={username === csOwner || csOwner === "" ? false : true}
               type="date"
               required
-              className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+              className="block w-full rounded-md border-0 py-1.5 text-gray-900 px-2 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
             />
           </div>
         </div>
@@ -4168,16 +4187,13 @@ export default function Schedule({
             <input
               name="tender_adjudication_committee_date"
               value={tenderAdjudicationCommitteeDate}
-              onChange={(e) => setTenderAdjudicationCommitteeDate(e.target.value)}
-              disabled={
-                username === csOwner ||
-                csOwner === ""
-                  ? false
-                  : true
+              onChange={(e) =>
+                setTenderAdjudicationCommitteeDate(e.target.value)
               }
+              disabled={username === csOwner || csOwner === "" ? false : true}
               type="date"
               required
-              className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+              className="block w-full rounded-md border-0 py-1.5 text-gray-900 px-2 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
             />
           </div>
         </div>
@@ -4194,12 +4210,7 @@ export default function Schedule({
             <input
               name="advert"
               onChange={(e) => onFileInputChange("advert", e)}
-              disabled={
-                username === csOwner ||
-                csOwner === ""
-                  ? false
-                  : true
-              }
+              disabled={username === csOwner || csOwner === "" ? false : true}
               type="file"
               id="advert"
               required
@@ -4223,7 +4234,8 @@ export default function Schedule({
         </div>
       </div>
       <div className="flex justify-evenly mt-5  px-2 py-2 rounded-md">
-        {(prAttachments && prAttachments?.length > 0) &&
+        {prAttachments &&
+          prAttachments?.length > 0 &&
           prAttachments?.map((attachment) => {
             return (
               <div className="flex-1 w-20 ml-1">
@@ -4242,8 +4254,7 @@ export default function Schedule({
           })}
       </div>
 
-      {(username === csOwner || !csid) &&
-      !approvalsComplete ? (
+      {(username === csOwner || !csid) && !approvalsComplete ? (
         <div className="flex justify-center mt-10 px-3 py-3">
           {csid ? (
             <div className="w-30 m-2">
@@ -4276,35 +4287,34 @@ export default function Schedule({
   );
 
   const additionalInfo = (
-    <div className="p-8 mt-6 bg-gulf-blue-300 rounded-md border-t border-gray-100 border-gray-900/10">
-    <h2 className="text-base font-semibold leading-6 text-gray-900">
-      Additional Information (For Procurement Admin Only)
-    </h2>
+    <div className="transition-all duration-300 bg-gulf-blue-100 p-4 rounded-lg border-l-4 border-blue-600">
+      <h2 className="text-base font-semibold leading-6 text-gray-900">
+        Additional Information (For Procurement Admin Only)
+      </h2>
 
-    <div className="flex justify-evenly mt-5  px-2 py-2 rounded-md">
-      <div className="flex-1 w-100">
-        <label
-          htmlFor="additionalNotes"
-          className="block text-sm font-medium leading-6 text-gray-900"
-        >
-          Notes
-        </label>
-        <div className="mt-2">
-          <textarea
-            id="additionalNotes"
-            name="additionalNotes"
-            value={additionalNotes}
-            disabled={requesterRole === "verify" ? false : true}
-            onChange={onAdditionalNotesChange}
-            className="block w-full rounded-md border-0 py-2 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-          ></textarea>
+      <div className="flex justify-evenly mt-5  px-2 py-2 rounded-md">
+        <div className="flex-1 w-100">
+          <label
+            htmlFor="additionalNotes"
+            className="block text-sm font-medium leading-6 text-gray-900"
+          >
+            Notes
+          </label>
+          <div className="mt-2">
+            <textarea
+              id="additionalNotes"
+              name="additionalNotes"
+              value={additionalNotes}
+              disabled={requesterRole === "verify" ? false : true}
+              onChange={onAdditionalNotesChange}
+              className="block w-full rounded-md border-0 py-2 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+            ></textarea>
+          </div>
         </div>
       </div>
-    </div>
 
-    {(requesterRole === "verify") &&
-    additionalNotes ? (
-      <div className="flex justify-center mt-2 px-3 py-3">
+      {requesterRole === "verify" && additionalNotes ? (
+        <div className="flex justify-center mt-2 px-3 py-3">
           <div className="w-50 m-2">
             <button
               style={{ width: "100%" }}
@@ -4315,231 +4325,246 @@ export default function Schedule({
               SUBMIT NOTES
             </button>
           </div>
+        </div>
+      ) : (
+        ""
+      )}
+    </div>
+  );
+
+  const buyersInfo = (
+    <div className="transition-all duration-300 bg-gulf-blue-100 p-4 rounded-lg border-l-4 border-blue-600">
+      <h2 className="text-base font-semibold leading-6 text-gray-900">
+        Buyer's Award Notes (For Buyers Only)
+      </h2>
+
+      <div className="flex justify-evenly mt-5  px-2 py-2 rounded-md">
+        <div className="flex-1 w-100">
+          <label
+            htmlFor="buyersNotes"
+            className="block text-sm font-medium leading-6 text-gray-900"
+          >
+            Notes
+          </label>
+          <div className="mt-2">
+            <textarea
+              id="buyersNotes"
+              name="buyersNotes"
+              value={buyersNotes}
+              disabled={requesterRole === "procurement" ? false : true}
+              onChange={onBuyersNotesChange}
+              className="block w-full rounded-md border-0 py-2 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+            ></textarea>
+          </div>
+        </div>
       </div>
-    ) : (
-      ""
-    )}
-  </div>
-  )
+
+      {requesterRole === "procurement" && buyersNotes ? (
+        <div className="flex justify-center mt-2 px-3 py-3">
+          <div className="w-50 m-2">
+            <button
+              style={{ width: "100%" }}
+              onClick={onBuyersNotesSubmit}
+              name="save_next"
+              className="rounded-md bg-blue-700 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+            >
+              SUBMIT NOTES
+            </button>
+          </div>
+        </div>
+      ) : (
+        ""
+      )}
+    </div>
+  );
 
   const committeeTableComp = (
-    <div className="bg-gulf-blue-300 shadow shadow-nepal-300 text-gray-700 rounded px-2 py-2">
+    <div className="transition-all duration-300 bg-gulf-blue-100 p-4 rounded-lg border-l-4 border-blue-600">
       <div className="space-y-12 px-5 py-5">
         <div className="px-4 sm:px-0 mt-6 border-t border-gray-100 border-gray-900/10">
           <h2 className="text-base font-semibold leading-6 text-gray-900">
             Committee Members
           </h2>
 
-          <div className="px-2 py-2 mt-5 rounded-md bg-gulf-blue-300">
-            <table className="table-auto w-full text-left">
-              <tbody>
-                <tr className="text-gray-900">
-                  <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
+          <div className="px-2 py-2 mt-5 rounded-md">
+            <div className="grid grid-cols-3 gap-4 px-2 py-2 items-center">
+              <div>
+                <div className="mt-2">
+                  {username === csOwner ? (
+                    <select
+                      onChange={(text) =>
+                        onCommitteeChange("memberPosition", text)
+                      }
+                      id="memberPosition"
+                      name="memberPosition"
+                      className="block w-full rounded-md border-0 py-2 px-2 text-gray-900 shadow-sm sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
+                    >
+                      <option value="">Select Member Position</option>
+                      <option value="chairman">Chairman</option>
+                      <option value="finance">Finance</option>
+                      <option value="procurement">Procurement</option>
+                      <option value="user">User</option>
+                      <option value="other">Other</option>
+                    </select>
+                  ) : (
+                    ""
+                  )}
+                </div>
+              </div>
+              <div>
+                <div className="mt-2">
+                  {username === csOwner ? (
                     <div>
-                      <div className="mt-2">
-                        {username === csOwner ? (
-                          <select
-                            onChange={(text) =>
-                              onCommitteeChange("memberPosition", text)
-                            }
-                            id="memberPosition"
-                            name="memberPosition"
-                            autoComplete="memberPosition"
-                            className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
-                          >
-                            <option value="">Select Member Position</option>
-                            <option value="chairman">Chairman</option>
-                            <option value="finance">Finance</option>
-                            <option value="procurement">Procurement</option>
-                            <option value="user">User</option>
-                            <option value="other">Other</option>
-                          </select>
-                        ) : (
-                          ""
-                        )}
-                      </div>
+                      {username === csOwner && (
+                        <Select
+                          id="memberUserName"
+                          name="memberUserName"
+                          className="block w-full rounded-md border-0 py-2 text-gray-900 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
+                          options={userOptions}
+                          styles={customStyles}
+                          onChange={(option) =>
+                            onCommitteeSelect(
+                              "memberUserName",
+                              option?.value ?? ""
+                            )
+                          }
+                          placeholder="Search Member Name"
+                        />
+                      )}
                     </div>
-                  </td>
-                  <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                    <div>
-                      <div className="mt-2">
-                        {username === csOwner ? (   
-                        //   <div className="relative">     
-                        //   <input
-                        //     id="memberUserName"
-                        //     name="memberUserName"
-                        //     className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
-                        //       type="text"
-                        //       value={searchedUser}
-                        //       onChange={onSearchUser}
-                        //       placeholder="Search Member Name"
-                        //   />
-                        //   <div>
-                        //   {(filteredUsers?.length??0 > 0) ? (
-                        //   <ul className="absolute z-50 mt-1 w-full max-h-96 overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm" tabIndex={-1} role="listbox" aria-labelledby="listbox-label" aria-activedescendant="listbox-option-3">
-                        //   {filteredUsers?.map((user) => (
-                        //       <li
-                        //       className="relative cursor-default select-none py-2 pl-3 pr-9 text-gray-900 my-2" role="option"
-                        //       key={user.username}
-                        //       onClick={() =>
-                        //           onCommitteeSelect("memberUserName", user.username)
-                        //       }>
-                        //       {(user.first_name || '') + " " + (user.last_name || '')}
-                        //       </li>
-                        //   ))}
-                        //   </ul>
-                        //   ) : (
-                        //   ""
-                        //   )}
-                        //   </div>
-                        //   </div>
-                        
-                        <div>
-                        {username === csOwner && (
-                          <Select
-                            id="memberUserName"
-                            name="memberUserName"
-                            className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
-                            options={userOptions}
-                            styles={customStyles}
-                            onChange={(option) => onCommitteeSelect("memberUserName", option?.value??"")}
-                            placeholder="Search Member Name"
-                          />
-                        )}
-                      </div>
-                        ) : (
-                          ""
-                        )}
-                      </div>
+                  ) : (
+                    ""
+                  )}
+                </div>
+              </div>
+              {username === csOwner &&
+              !approvalsComplete &&
+              member?.memberPosition &&
+              member?.memberUserName ? (
+                <div className="w-30">
+                  <button
+                    style={{ width: "100%" }}
+                    onClick={onAddCommitteeMembers}
+                    name="save_next"
+                    className="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                  >
+                    ADD MEMBER
+                  </button>
+                </div>
+              ) : (
+                ""
+              )}
+            </div>
+            <div className="grid grid-cols-3 gap-4 bg-blue-100 border before:border-blue-400 after:border-blue-700 border-blue-400 px-2 py-2 m-2 rounded-md">
+              <div style={{ width: "100%" }}>
+                <p className="font-medium leading-6 text-gray-900">CREATED BY</p>
+                <p>{creator}</p>
+              </div>
+              <div style={{ width: "100%" }}>
+                <p className="font-medium leading-6 text-gray-900">ACTION</p>
+                <p>INITIATED</p>
+              </div>
+              <div style={{ width: "100%" }}>
+                <p className="font-medium leading-6 text-gray-900">DATE</p>
+                <p>{createdAt ? createdAt.split(".")[0] : ""}</p>
+              </div>
+            </div>
+
+            {committeeMembers &&
+              committeeMembers.map((member, key) => {
+                return (
+                  <div className={getCommitteeClassNames(member.memberApproval??"")}>
+                    <div style={{ width: "100%" }}>
+                      <p className="font-medium leading-6 text-gray-900">ROLE</p>
+                      <p>{member?.memberPosition?.toUpperCase()}</p>
                     </div>
-                  </td>
-                  <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2"></td>
-                  <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                    {username === csOwner &&
-                    !approvalsComplete &&
-                    member?.memberPosition &&
-                    member?.memberUserName ? (
-                      <div className="w-30">
-                        <button
-                          style={{ width: "100%" }}
-                          onClick={onAddCommitteeMembers}
-                          name="save_next"
-                          className="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                        >
-                          ADD MEMBER
-                        </button>
-                      </div>
-                    ) : (
-                      ""
-                    )}
-                  </td>
-                  <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2"></td>
-                </tr>
-                <tr className="text-gray-900">
-                  <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                    CREATED BY
-                  </td>
-                  <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                    {creator}
-                  </td>
-                  <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                    INITIATED
-                  </td>
-                  <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2"></td>
-                  <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                    {createdAt
-                      ? createdAt.split(".")[0]
-                      : ""}
-                  </td>
-                </tr>
-                {committeeMembers &&
-                  committeeMembers.map((member, key) => {
-                    return (
-                      <tr className="text-gray-900">
-                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                          {member?.memberPosition?.toUpperCase()}
-                        </td>
-                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                          {member.memberName
-                            ? member.memberName
-                            : member.memberUserName}
-                        </td>
-                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                          {member.memberApproval === "Approved" && "APPROVED"}
-                          {member.memberApproval === "Rejected" && "REJECTED"}
-                          {(member.memberApproval === "" ||
-                            member.memberApproval === null) && (
-                            <div className="flex justify-content-evenly">
-                              {username === csOwner &&
-                              !approvalsComplete ? (
-                                <div className="m-2">
+                    <div style={{ width: "100%" }}>
+                      <p className="font-medium leading-6 text-gray-900">MEMBER</p>
+                      <p>
+                        {member.memberName
+                          ? member.memberName
+                          : member.memberUserName}
+                      </p>
+                    </div>
+                    <div style={{ width: "100%" }}>
+                      <p className="font-medium leading-6 text-gray-900">Comment</p>
+                      <p>{member.committeeJustification}</p>
+                    </div>
+                    <div style={{ width: "100%" }}>
+                      <p className="font-medium leading-6 text-gray-900">DATE</p>
+                      <p>
+                        {member.committeeDate
+                          ? member.committeeDate.split(".")[0]
+                          : ""}
+                      </p>
+                    </div>
+                    <div style={{ width: "100%" }} className="text-center">
+                      <p className="font-medium leading-6 text-gray-900">ACTION</p>
+                      <p>
+                        {member.memberApproval === "Approved" && "APPROVED"}
+                        {member.memberApproval === "Rejected" && "REJECTED"}
+                        {(member.memberApproval === "" ||
+                          member.memberApproval === null) && (
+                          <div style={{ width: "100%" }} className="flex justify-center">
+                            {username === csOwner && !approvalsComplete ? (
+                              <div style={{ width: "100%" }} className="m-1">
+                                <button
+                                  onClick={() =>
+                                    onRemoveCommitteeMember(
+                                      key,
+                                      member.memberUserName
+                                    )
+                                  }
+                                  name="save_next"
+                                  className="rounded-md bg-red-600 hover:bg-red-500 px-3 py-2 text-sm font-semibold text-white shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+                                >
+                                  REMOVE
+                                </button>
+                              </div>
+                            ) : (
+                              ""
+                            )}
+                            {username === member.memberUserName ? (
+                              <div style={{ width: "100%" }} className="flex justify-content-between">
+                                <div style={{ width: "45%" }} className="m-1">
                                   <button
                                     onClick={() =>
-                                      onRemoveCommitteeMember(
-                                        key,
-                                        member.memberUserName
+                                      onCommitteeApprove(
+                                        member.memberUserName,
+                                        "Approved",
+                                        ""
                                       )
                                     }
                                     name="save_next"
-                                    className="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                                    className="rounded-md bg-blue-600 hover:bg-blue-400 px-3 py-2 text-sm font-semibold text-white shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
                                   >
-                                    REMOVE
+                                    APPROVE
                                   </button>
                                 </div>
-                              ) : (
-                                ""
-                              )}
-                              {username ===
-                              member.memberUserName ? (
-                                <div className="flex justify-content-evenly">
-                                  <div className="m-2">
-                                    <button
-                                      onClick={() =>
-                                        onCommitteeApprove(
-                                          member.memberUserName,
-                                          "Approved",
-                                          ""
-                                        )
-                                      }
-                                      name="save_next"
-                                      className="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                                    >
-                                      APPROVE
-                                    </button>
-                                  </div>
-                                  <div className="m-2">
-                                    <button
-                                      onClick={() =>
-                                        onCommitteeJustificationModal(
-                                          member?.memberUserName
-                                        )
-                                      }
-                                      name="save_next"
-                                      className="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                                    >
-                                      REJECT
-                                    </button>
-                                  </div>
+                                <div style={{ width: "45%" }} className="m-1">
+                                  <button
+                                    onClick={() =>
+                                      onCommitteeJustificationModal(
+                                        member?.memberUserName
+                                      )
+                                    }
+                                    name="save_next"
+                                    className="rounded-md bg-red-600 hover:bg-red-400 px-2 py-2 text-sm font-semibold text-white shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                                  >
+                                    REJECT
+                                  </button>
                                 </div>
-                              ) : (
-                                ""
-                              )}
-                            </div>
-                          )}
-                        </td>
-                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                          {member.committeeJustification}
-                        </td>
-                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                          {member.committeeDate
-                            ? member.committeeDate.split(".")[0]
-                            : ""}
-                        </td>
-                      </tr>
-                    );
-                  })}
-              </tbody>
-            </table>
+                              </div>
+                            ) : (
+                              ""
+                            )}
+                          </div>
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
           </div>
         </div>
       </div>
@@ -4547,14 +4572,14 @@ export default function Schedule({
   );
 
   const rankingTableComp = (
-    <div className="bg-gulf-blue-300 shadow shadow-nepal-300 text-gray-700 rounded px-2 py-2">
+    <div className="transition-all duration-300 bg-gulf-blue-100 p-4 rounded-lg border-l-4 border-blue-600">
       <div className="space-y-12 px-5 py-5">
         <div className="px-4 sm:px-0 mt-6 border-t border-gray-100 border-gray-900/10">
           <h2 className="text-base font-semibold leading-6 text-gray-900">
             RANKING TABLE
           </h2>
 
-          <div className="overflow-auto px-2 py-2 mt-5 rounded-md bg-gulf-blue-300">
+          <div className="overflow-auto px-2 py-2 mt-5 rounded-md">
             <table className="table-auto w-full text-left">
               <thead>
                 <tr className="text-gray-900">
@@ -4624,24 +4649,18 @@ export default function Schedule({
       {/* {loadingModal} */}
       <div className="space-y-12 px-5 py-5">
         <div className="px-4 sm:px-0">
-          <h3 className="text-base font-semibold leading-7 text-gray-900">
-            COMPARATIVE SCHEDULE
-          </h3>
-          <p className="mt-1 max-w-2xl text-sm leading-6 text-gray-500">
-            CS NO: {csId}
-          </p>
+            <div className="m-2">
+            <button
+                style={{ width: "100%" }}
+                onClick={onAddSuppliersModal}
+                className="rounded-md bg-nepal-950 hover:bg-nepal-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+            >
+                ADD NEW SUPPLIER
+            </button>
+            </div>
           {fetchPR && (
-            <div>
-              <div className="m-2">
-                <button
-                  style={{ width: "100%" }}
-                  onClick={onAddSuppliersModal}
-                  className="rounded-md bg-nepal-950 hover:bg-nepal-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                >
-                  ADD NEW SUPPLIER
-                </button>
-              </div>
-              <div className="flex justify-evenly items-end mt-5 px-2 py-2">
+            <div className="transition-all duration-300 bg-gulf-blue-100 p-4 rounded-lg border-l-4 border-blue-600 mt-5 mb-5">
+              <div className="flex justify-evenly items-end mt-3 px-2 py-2">
                 <div className="flex-1 w-40">
                   <label
                     htmlFor="pr_number"
@@ -4677,8 +4696,7 @@ export default function Schedule({
           {csDetailsView}
         </div>
 
-        {(username === csOwner) &&
-        (bids?.length?? 0 < 1) ? (
+        {username === csOwner && (bids?.length ?? 0 < 1) ? (
           <div className="m-2">
             <button
               style={{ width: "100%" }}
@@ -4697,7 +4715,7 @@ export default function Schedule({
             return (
               <div
                 id="opening_rfq"
-                className="px-4 sm:px-0 mt-6 bg-gulf-blue-300 rounded-md border-t border-gray-100 border-b border-gray-900/10 pb-12"
+                className="transition-all duration-300 bg-gulf-blue-100 p-4 rounded-lg border-l-4 border-blue-600 pb-12"
               >
                 <div id="bid_container" className=" rounded-md">
                   <div className="flex justify-evenly mt-5  px-2 py-2 rounded-md">
@@ -4743,11 +4761,23 @@ export default function Schedule({
                       </label>
                       <div className="mt-2">
                         <a
-                          href={(loopBid?.encoded_bid_document || currentBid?.bid_document || loopBid?.bid_document || loopBid?.bid_document_url) ? loopBid.bid_document_url: "#"}
+                          href={
+                            loopBid?.encoded_bid_document ||
+                            currentBid?.bid_document ||
+                            loopBid?.bid_document ||
+                            loopBid?.bid_document_url
+                              ? loopBid.bid_document_url
+                              : "#"
+                          }
                           target="_blank"
                           rel="noopener noreferrer"
                         >
-                          { (loopBid?.encoded_bid_document || currentBid?.bid_document || loopBid?.bid_document || loopBid?.bid_document_url) ? "View Document": "NO DOCUMENT"}
+                          {loopBid?.encoded_bid_document ||
+                          currentBid?.bid_document ||
+                          loopBid?.bid_document ||
+                          loopBid?.bid_document_url
+                            ? "View Document"
+                            : "NO DOCUMENT"}
                         </a>
                       </div>
                     </div>
@@ -4831,12 +4861,13 @@ export default function Schedule({
                   })}
                 </div>
 
-                {username === csOwner &&
-                !approvalsComplete ? (
+                {username === csOwner && !approvalsComplete ? (
                   <div className="flex justify-center mt-5 px-3 py-3">
                     <div className="m-2">
                       <button
-                        onClick={() => onUpdateBidModal(loopBid?.bid_count??0)}
+                        onClick={() =>
+                          onUpdateBidModal(loopBid?.bid_count ?? 0)
+                        }
                         className="rounded-md text-gray-50 text-sm bg-blue-925 hover:bg-blue-550 px-3 py-2 font-semibold leading-6"
                       >
                         UPDATE BID
@@ -4864,8 +4895,9 @@ export default function Schedule({
             );
           })}
 
-        {(csItems?.length??0 > 0) &&
-        (username === csOwner) &&
+        {(csItems?.length ?? 0 > 0) &&
+        (directPurchaseLimit) &&
+        username === csOwner &&
         !approvalsComplete ? (
           <div className="m-2">
             <button
@@ -4880,8 +4912,8 @@ export default function Schedule({
           ""
         )}
 
-        {(bids?.length??0 > 0) &&
-        (username === csOwner) &&
+        {(bids?.length ?? 0 > 0) &&
+        username === csOwner &&
         !approvalsComplete ? (
           <div className="m-2">
             <button
@@ -4896,9 +4928,9 @@ export default function Schedule({
           ""
         )}
 
-        {(compliance?.length??0 > 0) ? complianceTableComp : ""}
+        {compliance?.length ?? 0 > 0 ? complianceTableComp : ""}
 
-        {(compliance?.length??0 > 0) &&
+        {(compliance?.length ?? 0 > 0) &&
         username === csOwner &&
         !approvalsComplete ? (
           <div className="m-2">
@@ -4914,13 +4946,15 @@ export default function Schedule({
           ""
         )}
 
-        {rankings?.length??0 > 0 ? rankingTableComp : ""}
+        {rankings?.length ?? 0 > 0 ? rankingTableComp : ""}
 
-        {additionalInfo}
+        {requesterRole === "verify" ? additionalInfo: ""}
 
-        {rankings?.length??0 > 0 ? committeeTableComp : ""}
+        {requesterRole === "procurement" ? buyersInfo: ""}
 
-        {(committeeMembers?.length??0 > 0) &&
+        {rankings?.length ?? 0 > 0 ? committeeTableComp : ""}
+
+        {(committeeMembers?.length ?? 0 > 0) &&
         username === csOwner &&
         !approvalsComplete ? (
           <div className="m-2">
@@ -4935,11 +4969,11 @@ export default function Schedule({
         ) : (
           ""
         )}
-        {committeeMembers?.length??0 > 2 ? approvalsTable : ""}
+        {committeeMembers?.length ?? 0 > 2 ? approvalsTable : ""}
 
         <div className="flex m-2">
           <button
-            style={{ width: username === csOwner? "50%": "100%" }}
+            style={{ width: username === csOwner ? "50%" : "100%" }}
             onClick={() => {
               console.log("going back ...");
               window.history.back();
@@ -4949,15 +4983,15 @@ export default function Schedule({
             GO BACK TO SCHEDULES
           </button>
           {username === csOwner && (
-          <button
-            style={{ width: "50%" }}
-            onClick={() => {
-              window.location.href = base_url+"/cancel_schedule/"+csId;
-            }}
-            className="rounded-md bg-red-800 hover:bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600 m-1"
-          >
-            DELETE SCHEDULE
-          </button>
+            <button
+              style={{ width: "50%" }}
+              onClick={() => {
+                window.location.href = base_url + "/cancel_schedule/" + csId;
+              }}
+              className="rounded-md bg-red-800 hover:bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600 m-1"
+            >
+              DELETE SCHEDULE
+            </button>
           )}
         </div>
       </div>

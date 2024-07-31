@@ -1,9 +1,6 @@
-{%extends 'admin_layout.html'%}
-{%load static%}
-
-{%block content%}
-<div> <strong>COMPETENCE </strong></div>
-<div style="display: flex; justify-content: flex-end" class = "">
+{%extends 'admin_layout.html'%} {%load static%} {%block content%}
+<div><strong>COMPETENCE </strong></div>
+<div style="display: flex; justify-content: flex-end" class="">
   <a href="upload_file">
     <button
       style="
@@ -11,8 +8,10 @@
         height: 3rem;
         background-color: #0c4a6e;
         margin-right: 20px;
-        border-radius: 1.5rem;"
-      class="w-28 bg-gulf-blue-300 hover:bg-blue-900 outline-none focus:outline-none border px-3 py-1 rounded flex items-center">
+        border-radius: 1.5rem;
+      "
+      class="w-28 bg-gulf-blue-300 hover:bg-blue-900 outline-none focus:outline-none border px-3 py-1 rounded flex items-center"
+    >
       <span class="pr-1 font-semibold flex-1 text-blue-50">CREATE</span>
     </button>
   </a>
@@ -23,190 +22,251 @@
         height: 3rem;
         background-color: #0c4a6e;
         margin-right: 18px;
-        border-radius: 1.5rem;"
-      class="w-28 bg-gulf-blue-300 hover:bg-blue-900 outline-none focus:outline-none border px-3 py-1 rounded flex items-center">
+        border-radius: 1.5rem;
+      "
+      class="w-28 bg-gulf-blue-300 hover:bg-blue-900 outline-none focus:outline-none border px-3 py-1 rounded flex items-center"
+    >
       <span class="pr-1 font-semibold flex-1 text-blue-50">VIEW</span>
     </button>
   </a>
 </div>
 <div class="mt-5"></div>
 
-
-    
-
-
-          <div class="grid grid-cols-3 gap-4">
-            <div class="sm:flex lg:items-center lg:justify-between">
-              <div class="min-w-0 flex-1">
-                <div class="">
-                  <div class="mx-auto">
-                    <div class="group relative">
-                      <div
-                        class="aspect-h-1 aspect-w-1 w-full overflow-hidden rounded-md bg-gray-200 lg:aspect-none group-hover:opacity-75 lg:h-40">
-                        <img
-                          src="{% static 'assets\images\orgchart.png' %}"
-                          alt=""
-                          class="h-full w-full object-cover object-center lg:h-full lg:w-full"
-                        />
-                      </div>
-                      <div class="mt-4 flex justify-center">
-                        <div class="w-full">
-                          <div class="dropdown-group inline-block w-full text-blue-50">
-                            <a href="charts" class="w-full bg-gulf-blue-900 hover:bg-blue-800 outline-none focus:outline-none border px-3 py-1 rounded flex items-center">
-                              <button class="pr-1 font-semibold flex-1 text-blue-50">ORGANISATIONAL CHARTS</button>
-                            </a>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+<div class="grid grid-cols-3 gap-4">
+  <div class="sm:flex lg:items-center lg:justify-between">
+    <div class="min-w-0 flex-1">
+      <div class="">
+        <div class="mx-auto">
+          <div class="group relative">
+            <div
+              class="aspect-h-1 aspect-w-1 w-full overflow-hidden rounded-md bg-gray-200 lg:aspect-none group-hover:opacity-75 lg:h-40"
+            >
+              <img
+                src="{% static 'assets\images\orgchart.png' %}"
+                alt=""
+                class="h-full w-full object-cover object-center lg:h-full lg:w-full"
+              />
+            </div>
+            <div class="mt-4 flex justify-center">
+              <div class="w-full">
+                <div class="dropdown-group inline-block w-full text-blue-50">
+                  <a
+                    href="charts"
+                    class="w-full bg-gulf-blue-900 hover:bg-blue-800 outline-none focus:outline-none border px-3 py-1 rounded flex items-center"
+                  >
+                    <button class="pr-1 font-semibold flex-1 text-blue-50">
+                      ORGANISATIONAL CHARTS
+                    </button>
+                  </a>
                 </div>
               </div>
             </div>
-          
-            <div class="sm:flex lg:items-center lg:justify-between">
-              <div class="min-w-0 flex-1">
-                <div class="">
-                  <div class="mx-auto">
-                    <div class="group relative">
-                      <div
-                        class="aspect-h-1 aspect-w-1 w-full overflow-hidden rounded-md bg-gray-200 lg:aspect-none group-hover:opacity-75 lg:h-40">
-                        <img
-                          src="{% static 'assets\images\training-and-development.jpeg' %}"
-                          alt=""
-                          class="h-full w-full object-cover object-center lg:h-full lg:w-full"
-                        />
-                      </div>
-                      <div class="mt-4 flex justify-center">
-                        <div class="w-full">
-                          <div class="dropdown-group inline-block w-full text-blue-50">
-                            <a href="trainings" class="w-full bg-gulf-blue-900 hover:bg-blue-800 outline-none focus:outline-none border px-3 py-1 rounded flex items-center">
-                              <button class="pr-1 font-semibold flex-1 text-blue-50">TRAINING & DEVELOPMENT</button>
-                            </a>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>  
-            
-            
-              <div class="sm:flex lg:items-center lg:justify-between">
-                <div class="min-w-0 flex-1">
-                  <div class="">
-                    <div class="mx-auto">
-                      <div class="group relative">
-                        <div
-                          class="aspect-h-1 aspect-w-1 w-full overflow-hidden rounded-md bg-gray-200 lg:aspect-none group-hover:opacity-75 lg:h-40">
-                          <img
-                            src="{% static 'assets\images\upcoming-events.png' %}"
-                            alt=""
-                            class="h-full w-full object-cover object-center lg:h-full lg:w-full"
-                          />
-                        </div>
-                        <div class="mt-4 flex justify-center">
-                          <div class="w-full">
-                            <div class="dropdown-group inline-block w-full text-blue-50">
-                              <a href="upcoming_events" class="w-full bg-gulf-blue-900 hover:bg-blue-800 outline-none focus:outline-none border px-3 py-1 rounded flex items-center">
-                                <button class="pr-1 font-semibold flex-1 text-blue-50">UPCOMING EVENTS</button>
-                              </a>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            
-              <div class="sm:flex lg:items-center lg:justify-between">
-                <div class="min-w-0 flex-1">
-                  <div class="">
-                    <div class="mx-auto">
-                      <div class="group relative">
-                        <div
-                          class="aspect-h-1 aspect-w-1 w-full overflow-hidden rounded-md bg-gray-200 lg:aspect-none group-hover:opacity-75 lg:h-40">
-                          <img
-                            src="{% static 'assets\images\job-descriptions.png' %}" 
-                            alt=""
-                            class="h-full w-full object-cover object-center lg:h-full lg:w-full"
-                          />
-                        </div>
-                        <div class="mt-4 flex justify-center">
-                          <div class="w-full">
-                            <div class="dropdown-group inline-block w-full text-blue-50">
-                              <a href="jobdescription" class="w-full bg-gulf-blue-900 hover:bg-blue-800 outline-none focus:outline-none border px-3 py-1 rounded flex items-center">
-                                <button class="pr-1 font-semibold flex-1 text-blue-50">JOB DESCRIPTION</button>
-                              </a>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-             
-                <div class="sm:flex lg:items-center lg:justify-between">
-                  <div class="min-w-0 flex-1">
-                    <div class="">
-                      <div class="mx-auto">
-                        <div class="group relative">
-                          <div
-                            class="aspect-h-1 aspect-w-1 w-full overflow-hidden rounded-md bg-gray-200 lg:aspect-none group-hover:opacity-75 lg:h-40">
-                            <img
-                              src="{% static 'assets\images\vacancies1.png' %}"
-                              alt=""
-                              class="h-full w-full object-cover object-center lg:h-full lg:w-full"
-                            />
-                          </div>
-                          <div class="mt-4 flex justify-center">
-                            <div class="w-full">
-                              <div class="dropdown-group inline-block w-full text-blue-50">
-                                <a href="vacancies" class="w-full bg-gulf-blue-900 hover:bg-blue-800 outline-none focus:outline-none border px-3 py-1 rounded flex items-center">
-                                  <button class="pr-1 font-semibold flex-1 text-blue-50">VACANCIES</button>
-                                </a>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              
-                <div class="sm:flex lg:items-center lg:justify-between">
-                  <div class="min-w-0 flex-1">
-                    <div class="">
-                      <div class="mx-auto">
-                        <div class="group relative">
-                          <div
-                            class="aspect-h-1 aspect-w-1 w-full overflow-hidden rounded-md bg-gray-200 lg:aspect-none group-hover:opacity-75 lg:h-40">
-                            <img
-                            src="{% static 'assets\images\safety_circular.jpg' %}"
-                              alt=""
-                              class="h-full w-full object-cover object-center lg:h-full lg:w-full"
-                            />
-                          </div>
-                          <div class="mt-4 flex justify-center">
-                            <div class="w-full">
-                              <div class="dropdown-group inline-block w-full text-blue-50">
-                                <a href="safety" class="w-full bg-gulf-blue-900 hover:bg-blue-800 outline-none focus:outline-none border px-3 py-1 rounded flex items-center">
-                                  <button class="pr-1 font-semibold flex-1 text-blue-50">SAFETY CIRCULAR</button>
-                                </a>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
           </div>
-<div> </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sm:flex lg:items-center lg:justify-between">
+    <div class="min-w-0 flex-1">
+      <div class="">
+        <div class="mx-auto">
+          <div class="group relative">
+            <div
+              class="aspect-h-1 aspect-w-1 w-full overflow-hidden rounded-md bg-gray-200 lg:aspect-none group-hover:opacity-75 lg:h-40"
+            >
+              <img
+                src="{% static 'assets\images\training-and-development.jpeg' %}"
+                alt=""
+                class="h-full w-full object-cover object-center lg:h-full lg:w-full"
+              />
+            </div>
+            <div class="mt-4 flex justify-center">
+              <div class="w-full">
+                <div class="dropdown-group inline-block w-full text-blue-50">
+                  <a
+                    href="trainings"
+                    class="w-full bg-gulf-blue-900 hover:bg-blue-800 outline-none focus:outline-none border px-3 py-1 rounded flex items-center"
+                  >
+                    <button class="pr-1 font-semibold flex-1 text-blue-50">
+                      TRAINING & DEVELOPMENT
+                    </button>
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sm:flex lg:items-center lg:justify-between">
+    <div class="min-w-0 flex-1">
+      <div class="">
+        <div class="mx-auto">
+          <div class="group relative">
+            <div
+              class="aspect-h-1 aspect-w-1 w-full overflow-hidden rounded-md bg-gray-200 lg:aspect-none group-hover:opacity-75 lg:h-40"
+            >
+              <img
+                src="{% static 'assets\images\upcoming-events.png' %}"
+                alt=""
+                class="h-full w-full object-cover object-center lg:h-full lg:w-full"
+              />
+            </div>
+            <div class="mt-4 flex justify-center">
+              <div class="w-full">
+                <div class="dropdown-group inline-block w-full text-blue-50">
+                  <a
+                    href="upcoming_events"
+                    class="w-full bg-gulf-blue-900 hover:bg-blue-800 outline-none focus:outline-none border px-3 py-1 rounded flex items-center"
+                  >
+                    <button class="pr-1 font-semibold flex-1 text-blue-50">
+                      UPCOMING EVENTS
+                    </button>
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sm:flex lg:items-center lg:justify-between">
+    <div class="min-w-0 flex-1">
+      <div class="">
+        <div class="mx-auto">
+          <div class="group relative">
+            <div
+              class="aspect-h-1 aspect-w-1 w-full overflow-hidden rounded-md bg-gray-200 lg:aspect-none group-hover:opacity-75 lg:h-40"
+            >
+              <img
+                src="{% static 'assets\images\job-descriptions.png' %}"
+                alt=""
+                class="h-full w-full object-cover object-center lg:h-full lg:w-full"
+              />
+            </div>
+            <div class="mt-4 flex justify-center">
+              <div class="w-full">
+                <div class="dropdown-group inline-block w-full text-blue-50">
+                  <a
+                    href="jobdescription"
+                    class="w-full bg-gulf-blue-900 hover:bg-blue-800 outline-none focus:outline-none border px-3 py-1 rounded flex items-center"
+                  >
+                    <button class="pr-1 font-semibold flex-1 text-blue-50">
+                      JOB DESCRIPTION
+                    </button>
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sm:flex lg:items-center lg:justify-between">
+    <div class="min-w-0 flex-1">
+      <div class="">
+        <div class="mx-auto">
+          <div class="group relative">
+            <div
+              class="aspect-h-1 aspect-w-1 w-full overflow-hidden rounded-md bg-gray-200 lg:aspect-none group-hover:opacity-75 lg:h-40"
+            >
+              <img
+                src="{% static 'assets\images\vacancies1.png' %}"
+                alt=""
+                class="h-full w-full object-cover object-center lg:h-full lg:w-full"
+              />
+            </div>
+            <div class="mt-4 flex justify-center">
+              <div class="w-full">
+                <div class="dropdown-group inline-block w-full text-blue-50">
+                  <a
+                    href="vacancies"
+                    class="w-full bg-gulf-blue-900 hover:bg-blue-800 outline-none focus:outline-none border px-3 py-1 rounded flex items-center"
+                  >
+                    <button class="pr-1 font-semibold flex-1 text-blue-50">
+                      VACANCIES
+                    </button>
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sm:flex lg:items-center lg:justify-between">
+    <div class="min-w-0 flex-1">
+      <div class="">
+        <div class="mx-auto">
+          <div class="group relative">
+            <div
+              class="aspect-h-1 aspect-w-1 w-full overflow-hidden rounded-md bg-gray-200 lg:aspect-none group-hover:opacity-75 lg:h-40"
+            >
+              <img
+                src="{% static 'assets\images\safety_circular.jpg' %}"
+                alt=""
+                class="h-full w-full object-cover object-center lg:h-full lg:w-full"
+              />
+            </div>
+            <div class="mt-4 flex justify-center">
+              <div class="w-full">
+                <div class="dropdown-group inline-block w-full text-blue-50">
+                  <a
+                    href="safety"
+                    class="w-full bg-gulf-blue-900 hover:bg-blue-800 outline-none focus:outline-none border px-3 py-1 rounded flex items-center"
+                  >
+                    <button class="pr-1 font-semibold flex-1 text-blue-50">
+                      SAFETY CIRCULAR
+                    </button>
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  
+  <div class="sm:flex lg:items-center lg:justify-between">
+    <div class="min-w-0 flex-1">
+      <div class="">
+        <div class="mx-auto">
+          <div class="group relative">
+            <div
+              class="aspect-h-1 aspect-w-1 w-full overflow-hidden rounded-md bg-gray-200 lg:aspect-none group-hover:opacity-75 lg:h-40">
+              <img
+                src="{% static 'assets\images\orgchart.png' %}"
+                alt=""
+                class="h-full w-full object-cover object-center lg:h-full lg:w-full"
+              />
+            </div>
+            <div class="mt-4 flex justify-center">
+              <div class="w-full">
+                <div class="dropdown-group inline-block w-full text-blue-50">
+                  <a href="qualifications" class="w-full bg-gulf-blue-900 hover:bg-blue-800 outline-none focus:outline-none border px-3 py-1 rounded flex items-center">
+                    <button class="pr-1 font-semibold flex-1 text-blue-50">QUALIFICATIONS</button>
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div></div>
 <div>
   <a href="/">
     <button
@@ -222,6 +282,5 @@
       <span class="pr-1 font-semibold flex-1 text-blue-50">Back</span>
     </button>
   </a>
-  
 </div>
-  {%endblock %}
+{%endblock %}

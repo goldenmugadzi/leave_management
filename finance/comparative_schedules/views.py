@@ -966,10 +966,8 @@ def datatable_data(request, view):
     elif view == "all_schedules":
         data = get_all_schedules_table(user_id, search_value, column_name, user_region)
     
-
     # Total number of records before filtering
     total = len(data)
-    print("total: ", total)
     # Pagination
     paginator = Paginator(data, length)
     page_number = start // length + 1
@@ -1006,32 +1004,29 @@ def get_comperative_schedule_data(request, cs_id):
     
     request_user = request.user
     request_user_profile = UserProfile.objects.filter(id=request_user.id).first()
-    user_comparative_schedule_role = request_user_profile.get_user_role_for_application(APP_NAME)
-    print("user_comparative_schedule_role: ", user_comparative_schedule_role)            
+    user_comparative_schedule_role = request_user_profile.get_user_role_for_application(APP_NAME)           
 
     cs = ComparativeSchedules.objects.filter(cs_id=cs_id).first()
     pr = None
+    proc_plan = ""
     if cs:
-        pr = PurchaseRequest.objects.filter(id=cs.pr_id_id).first()
+        try:
+            pr = PurchaseRequest.objects.filter(id=cs.pr_id_id).first()
+            proc_plan = cs.proc_plan if cs.proc_plan else ""
+        except Exception as ex:
+            print("Error: ", ex)
+            
     proc_plans = ProcPlan.objects.all()
     currencies = Currency.objects.all()
-    proc_plan = ""
-    try:
-        proc_plan = cs.proc_plan if cs.proc_plan else ""
-    except Exception as ex:
-        print("Error: ", ex)
     user = UserProfile.objects.filter(id=cs.created_by_id).first()
     region = Regions.objects.filter(id=cs.region_id).first()
     section = Sections.objects.filter(id=cs.section_id).first()
     items = CSItems.objects.filter(cs_id=cs).all()
     cs_items = CSRequiredItems.objects.filter(cs_id=cs).all()
     bids = Bids.objects.filter(cs_id=cs).all()
-    print("bids: ", bids)
+
     compliance = CSCompliance.objects.filter(cs_id=cs).all()
-    print("compliance: ", compliance)
     complianceRemarks = CSComplianceRemarks.objects.filter(cs_id=cs).all()
-    print("compliance remarks: ", complianceRemarks)
-    # compliance remarks
     
     rankings = Ranking.objects.filter(cs_id=cs).all()
     committee = Committee.objects.filter(cs_id=cs).all()
@@ -1070,7 +1065,6 @@ def get_comperative_schedule_data(request, cs_id):
                 grouped_data[bid_no] = {
                     'bid_count': bid.bid_no,
                     'supplier_name': bid.sup_id.name,
-                    'bid_count': bid.bid_no,
                     'bid_date': bid.quote_date,
                     'encoded_bid_document': encoded_file_data,
                     'bid_document': None,
@@ -1141,16 +1135,19 @@ def get_comperative_schedule_data(request, cs_id):
         
     committee_list = []
     for member in committee:
-        if member.user:
-            committee_list.append({
-                "memberUserName": member.user.username if member.user else "",
-                "memberName": member.user.first_name + " " + member.user.last_name if member.user else "",
-                "memberPosition": member.committee_position,
-                "committeeStatus": member.committee_status,
-                "memberApproval": member.committee_approval if member.committee_approval else "",
-                "committeeJustification": member.justification,
-                "committeeDate": member.committee_date.astimezone() if member.committee_date else "",
-            }) 
+        try:
+            if member.user:
+                committee_list.append({
+                    "memberUserName": member.user.username if member.user else "",
+                    "memberName": member.user.first_name + " " + member.user.last_name if member.user else "",
+                    "memberPosition": member.committee_position,
+                    "committeeStatus": member.committee_status,
+                    "memberApproval": member.committee_approval if member.committee_approval else "",
+                    "committeeJustification": member.justification,
+                    "committeeDate": member.committee_date,
+                }) 
+        except Exception as ex:
+            print("commitee_list Error: ", ex) 
     
     encoded_advert_file = ""
     try:
@@ -1188,7 +1185,6 @@ def get_comperative_schedule_data(request, cs_id):
             "unit_of_measurement": cs_item.unit_of_measurement,
             "ordered": True,
         })
-    print("current cs_item_list: ", cs_item_list)
         
     # copy cs_item_list to pr_item_list
     pr_item_list = copy.deepcopy(cs_item_list) if cs_item_list else []
@@ -1201,9 +1197,6 @@ def get_comperative_schedule_data(request, cs_id):
             "ordered": pr_item.ordered,
         })
 
-
-    #print("current user role: ", user_comparative_schedule_role.role)
-    print("cs_items .....: ", cs_item_list)
     context = {
         "requester_role": user_comparative_schedule_role.role if user_comparative_schedule_role else "",
         "cs_id": cs.cs_id,
@@ -1521,10 +1514,10 @@ def save_comparative_schedule(request):
         try:
             if advert_files:
                 advert_file = advert_files[0]
-                advert_path = 'uploads/comparative/adverts/' + \
-                                datetime.now().strftime("%Y%m%d%I%M%S%p") + advert_file.name
-                print("Advert path: ", advert_path)
-                save_file(advert_file, advert_path)
+                root_dir = os.path.join(settings.BASE_DIR, 'uploads', 'comparative', 'adverts')
+                fs = FileSystemStorage(location=root_dir)
+                filename_ = fs.save(advert_file.name, advert_file)
+                advert_path = "uploads" + os.path.sep + "comparative" + os.path.sep + "adverts" + os.path.sep + filename_
         except Exception as ex:
             print("Error: ", ex)
         
@@ -1599,10 +1592,10 @@ def update_comparative_schedule(request):
         try:
             if advert_files:
                 advert_file = advert_files[0]
-                advert_path = 'uploads/comparative/adverts/' + \
-                                datetime.now().strftime("%Y%m%d%I%M%S%p") + advert_file.name
-                print("Advert path: ", advert_path)
-                save_file(advert_file, advert_path)
+                root_dir = os.path.join(settings.BASE_DIR, 'uploads', 'comparative', 'adverts')
+                fs = FileSystemStorage(location=root_dir)
+                filename_ = fs.save(advert_file.name, advert_file)
+                advert_path = "uploads" + os.path.sep + "comparative" + os.path.sep + "adverts" + os.path.sep + filename_
         except Exception as ex:
             print("Error: ", ex)
         
@@ -1751,14 +1744,10 @@ def save_cs_bid(request):
     
     bid_docs = request.FILES.get("bid_document", None)
     bid_date = request.POST.get("bid_date", "")
-    supplier_id = request.POST.get("supplier_id", "")
     supplier_name = request.POST.get("supplier_name", "")
-    print("supplier_name: ", supplier_name)
     # get items json
     json_data = json.loads(request.POST.get("json_data", "{}"))
-    print("json_data: ", json_data)
     items = json_data.get("items", [])
-    print("items ", items, type(items))
     
     cs_query = ComparativeSchedules.objects.filter(cs_id=cs_id).first()
     if not cs_query:
@@ -1768,7 +1757,6 @@ def save_cs_bid(request):
             }, safe=False)
       
     supplier = Supplier.objects.filter(name=supplier_name).first()
-    print("supplier: ", supplier)
     if not supplier:
         supplier_ = Supplier(
             name = supplier_name
@@ -1792,15 +1780,14 @@ def save_cs_bid(request):
     try:
         if bid_docs:
             bid_doc = bid_docs
-            bid_doc_path = 'uploads/comparative/adverts/' + \
-                            datetime.now().strftime("%Y%m%d%I%M%S%p") + bid_doc.name
-            print("Advert path: ", bid_doc_path)
-            save_file(bid_doc, bid_doc_path)
+            root_dir = os.path.join(settings.BASE_DIR, 'uploads', 'comparative', 'adverts')
+            fs = FileSystemStorage(location=root_dir)
+            filename_ = fs.save(bid_doc.name, bid_doc)
+            bid_doc_path = "uploads" + os.path.sep + "comparative" + os.path.sep + "adverts" + os.path.sep + filename_
     except Exception as ex:
         print("Error: ", ex)
         
     for item in items:
-        print("item: ", item)
         item_id = "Item" + datetime.now().strftime("%Y%m%d%I%M%S%p")
         item_query = CSItems(
             cs_id = cs_query,
@@ -1811,7 +1798,6 @@ def save_cs_bid(request):
         )
         item_query.save()    
         
-        print("bid_no", bid_no)
         bid = Bids(
             cs_id = cs_query,
             item_id = item_query,
@@ -1884,13 +1870,12 @@ def save_cs_compliance(request):
     show_site_visit = request.POST.get("show_site_visit", "")
     show_sample_required = request.POST.get("show_samples_required", "")
     json_data = json.loads(request.POST.get("compliance", "{}"))
-    print("json_data: ", json_data)
+
     compliances = json_data.get("compliance", [])
-    print("items ", compliances, type(compliances))
+
     json_data_ = json.loads(request.POST.get("complianceRemarks", "{}"))
-    print("json_data_: ", json_data_)
+
     compliance_remarks = json_data_.get("complianceRemarks", [])
-    print("compliance_remarks ", compliance_remarks, type(compliance_remarks))
     
     cs_query = ComparativeSchedules.objects.filter(cs_id=cs_id).first()
     if not cs_query:
@@ -1974,9 +1959,11 @@ def save_supplier(request):
             name = supplier_name
         )
         supplier_query.save()
-        
+    
+    suppliers = Supplier.objects.all()
     return JsonResponse({
         "message": "Supplier saved successfully",
+        "suppliers": list(suppliers.values('id', 'name')),
         "success": True,
     })
 
@@ -2016,7 +2003,7 @@ def save_cs_ranking(request):
         remarks = ""
         decision = ""
         if rank == 1:
-            decision = "Awarded " + supplier.name + " being the lowest bidder having complied with all the requirements is recommended to provide the goods/service at a total cost of " + cs_query.currency.currency + " " + str(total) + " excluding VAT."
+            decision = "Awarded " + supplier.name + cs_query.currency.currency + " " + str(total)
         ranking_query = Ranking(
             cs_id = cs_query,
             supplier_id = supplier,
@@ -2151,11 +2138,12 @@ def approve_cs_committee(request):
         if committee_approved:
             fm_role = Roles.objects.filter(name="Finance Manager", application=APP_NAME).first()
             print("fm role: ", fm_role)
-            fm_user = UserProfile.objects.filter(roles=fm_role).first()
-            print("fm user: ", fm_user.username, fm_user.id)
+            fm_users = UserProfile.objects.filter(roles=fm_role, region=cs_query.region).all()
+            print("fm user: ", fm_users)
             msg = "Comperative Schedule is ready for your approval " + cs_query.cs_id
             url = "/comperative_schedule/comperative_schedule/" + cs_query.cs_id
-            notify_user(fm_user, msg, "RFQ", url, cs_query.cs_id)
+            for user_ in fm_users:  
+                notify_user(user_, msg, "RFQ", url, cs_query.cs_id)
 
         return JsonResponse({
             "message": "Committee member approved successfully",
@@ -2201,7 +2189,10 @@ def approve_cs(request):
                 created_at = timezone.now(),
             )
             gm_approval.save()
-            notification_update(user, cs_query.cs_id)
+            gm_role = Roles.objects.filter(name="General Manager", application=APP_NAME).first()
+            gm_users = UserProfile.objects.filter(roles=gm_role, region=cs_query.region).all()
+            for user_ in gm_users:
+                notification_update(user_, cs_query.cs_id)
             
             return JsonResponse({
                 "message": "GM approval saved successfully",
@@ -2229,15 +2220,18 @@ def approve_cs(request):
                 created_at = timezone.now(),
             )
             fm_approval.save()
-            notification_update(user, cs_query.cs_id)
+            gm_role = Roles.objects.filter(name="Finance Manager", application=APP_NAME).first()
+            gm_users = UserProfile.objects.filter(roles=gm_role, region=cs_query.region).all()
+            for user_ in gm_users:
+                notification_update(user_, cs_query.cs_id)
                 
             committee_approved = all([c.committee_approval == "Approved" for c in committees])
             if committee_approved and approval == "Approved":
-                gm_role = Roles.objects.filter(name="General Manager", application=APP_NAME).first()
+                gm_role = Roles.objects.filter(name="Finance Manager", application=APP_NAME).first()
                 print("gm role: ", gm_role)
-                gm_user = UserProfile.objects.filter(roles=gm_role).first()
-                print("gm user: ", gm_user.username, gm_user.id)
-                notify_user(gm_user, "Comperative Schedule is ready for your approval " + cs_query.cs_id, "RFQ", "/comperative_schedule/comperative_schedule/" + cs_query.cs_id, cs_query.cs_id)
+                gm_users = UserProfile.objects.filter(roles=gm_role, region=cs_query.region).all()
+                for user_ in gm_users:
+                    notify_user(user_, "Comperative Schedule is ready for your approval " + cs_query.cs_id, "RFQ", "/comperative_schedule/comperative_schedule/" + cs_query.cs_id, cs_query.cs_id)
         
             return JsonResponse({
                 "message": "FM approval saved successfully",
@@ -2292,6 +2286,68 @@ def save_cs_decision(request):
         "message": "Committee decision saved successfully",
         "success": True,
     })   
+
+def save_additional_notes(request):
+    cs_id = request.POST.get("cs_id", "")
+    additional_notes = request.POST.get("additional_notes", "")
+    cs_query = ComparativeSchedules.objects.filter(cs_id=cs_id).first()
+    if cs_query:
+        cs_query.additional_notes = additional_notes
+        cs_query.save()
+        return JsonResponse({
+            "message": "Additional notes saved successfully",
+            "success": True,
+        })
+    else:
+        return JsonResponse({
+            "message": "Comparative Schedule not found",
+            "success": False,
+        })
+
+def save_buyers_notes(request):
+    cs_id = request.POST.get("cs_id", "")
+    buyers_notes = request.POST.get("buyers_notes", "")
+    print("buyers_notes: ", buyers_notes)
+    cs_query = ComparativeSchedules.objects.filter(cs_id=cs_id).first()
+    if cs_query:
+        ranking = Ranking.objects.filter(cs_id=cs_query, rank=1).first()
+        ranking.remarks = buyers_notes if buyers_notes else "Supplier has been awarded being the lowest bidder having complied with all the requirements is recommended to provide the goods/service"
+        ranking.save()
+        return JsonResponse({
+            "message": "Buyers notes saved successfully",
+            "success": True,
+        })
+    else:
+        return JsonResponse({
+            "message": "Comparative Schedule not found",
+            "success": False,
+        })
+
+
+@login_required
+def cancel_schedule(request, cs_id):
+    print("cs_id: ", cs_id)
+    try:
+        cs_query = ComparativeSchedules.objects.filter(cs_id=cs_id).first()
+        if cs_query:
+            cs_query.cancelled = True
+            cs_query.scope_of_work = "Cancelled Schedule: " + cs_query.scope_of_work
+            cs_query.save()
+            print("cs_query: ", cs_query, cs_query.cancelled, "scope: ", cs_query.scope_of_work, cs_query.pr_number)
+            required_items = CSRequiredItems.objects.filter(cs_id=cs_query).all()
+            pr_query = PurchaseRequest.objects.filter(id=cs_query.pr_number).first()
+            for item in required_items:
+                pr_item = PrItem.objects.filter(id=item.item_id, purchase_request=pr_query).first()
+                pr_item.ordered = False
+                pr_item.save()
+                item.delete()
+
+    except Exception as ex:
+        print("Error: ", ex)
+        messages.error(request, "Error cancelling Comparative Schedule", str(ex))
+    
+    messages.success(request, "Comparative Schedule cancelled successfully")
+    return redirect('/comperative_schedule/comperative_schedules')
 
 @login_required        
 def cs_add_supplier(request, cs_id):
@@ -2490,45 +2546,3 @@ def cs_compliance_table(request, cs_id):
 
 
     return render(request, 'finance/comparative_schedules/cs_compliance_table.html', {"bids_items": bids_dict})
-
-def save_additional_notes(request):
-    cs_id = request.POST.get("cs_id", "")
-    additional_notes = request.POST.get("additional_notes", "")
-    cs_query = ComparativeSchedules.objects.filter(cs_id=cs_id).first()
-    if cs_query:
-        cs_query.additional_notes = additional_notes
-        cs_query.save()
-        return JsonResponse({
-            "message": "Additional notes saved successfully",
-            "success": True,
-        })
-    else:
-        return JsonResponse({
-            "message": "Comparative Schedule not found",
-            "success": False,
-        })
-
-@login_required
-def cancel_schedule(request, cs_id):
-    print("cs_id: ", cs_id)
-    try:
-        cs_query = ComparativeSchedules.objects.filter(cs_id=cs_id).first()
-        if cs_query:
-            cs_query.cancelled = True
-            cs_query.scope_of_work = "Cancelled Schedule: " + cs_query.scope_of_work
-            cs_query.save()
-            print("cs_query: ", cs_query, cs_query.cancelled, "scope: ", cs_query.scope_of_work, cs_query.pr_number)
-            required_items = CSRequiredItems.objects.filter(cs_id=cs_query).all()
-            pr_query = PurchaseRequest.objects.filter(id=cs_query.pr_number).first()
-            for item in required_items:
-                pr_item = PrItem.objects.filter(id=item.item_id, purchase_request=pr_query).first()
-                pr_item.ordered = False
-                pr_item.save()
-                item.delete()
-
-    except Exception as ex:
-        print("Error: ", ex)
-        messages.error(request, "Error cancelling Comparative Schedule", str(ex))
-    
-    messages.success(request, "Comparative Schedule cancelled successfully")
-    return redirect('/comperative_schedule/comperative_schedules')
