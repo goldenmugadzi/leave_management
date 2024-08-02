@@ -896,7 +896,6 @@ def get_user_all_groups(request):
             }
         )
 
-
 @login_required
 @allowed_roles(['administrator'], ['users'])
 def import_users(request):
@@ -912,19 +911,19 @@ def import_users(request):
                     #  extension, section_code, createdon, region) = row
                     username = row['username'].replace(" ", "")
                     Designation = row['Designation'].replace(" ", "")
-                    centre = row['centre'].replace(" ", "")
-                    descr = row['descr'].replace(" ", "")
+                    # centre = row['centre'].replace(" ", "")
+                    # descr = row['descr'].replace(" ", "")
                     surname = row['surname'].replace(" ", "")
                     firstname = row['firstname'].replace(" ", "")
-                    initials = row['initials'].replace(" ", "")
-                    status = row['status'].replace(" ", "")
+                    # initials = row['initials'].replace(" ", "")
+                    # status = row['status'].replace(" ", "")
                     section = row['section'].replace(" ", "")
                     email = row['email'].replace(" ", "")
-                    phone = row['phone'].replace(" ", "")
-                    extension = row['extension'].replace(" ", "")
-                    section_code = row['section_code'].replace(" ", "")
-                    createdon = row['createdon'].replace(" ", "")
-                    region = row['region'].replace(" ", "")
+                    # phone = row['phone'].replace(" ", "")
+                    # extension = row['extension'].replace(" ", "")
+                    # section_code = row['section_code'].replace(" ", "")
+                    # createdon = row['createdon'].replace(" ", "")
+                    region = row['region']
 
                     section = Sections.objects.filter(code=section).first()
                     # search designation by description if not found create a new one

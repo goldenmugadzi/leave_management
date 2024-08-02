@@ -16,6 +16,8 @@ from django.core.paginator import Paginator
 from django.utils import timezone
 from django.contrib.auth.decorators import login_required
 import copy
+from django.conf import settings
+from django.core.files.storage import FileSystemStorage
 
 from django.contrib import messages
 APP_NAME = "comparative_schedule"
