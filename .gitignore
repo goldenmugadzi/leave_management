@@ -25,7 +25,6 @@ fscrawler-2.10/
 .Python
 build/
 develop-eggs/
-dist/
 media/
 downloads/
 eggs/
