@@ -164,7 +164,21 @@ def approve_step(request, process_id):
 
 def get_approver(cost_center, process):
     step = get_object_or_404(Step, workflow=process.workflow, step=process.approval_set.count() + 1)
-    if process.approval_set.last().approved == 'Rejected':
+    if process.approval_set.exists() and process.approval_set.last().approved == 'Rejected':
         return UserProfile.objects.none()
-    approvers = UserProfile.objects.filter(roles=step.approver, cost_center=cost_center)
+    
+    possible_approver_cost_centers = cost_center.get_all_ancestors()
+    approvers = UserProfile.objects.filter(roles=step.approver, cost_center__in=possible_approver_cost_centers)
     return approvers
+def send_notification(app, object):
+    cost_center = CostCenter.objects.get(id=object.cost_center.id)
+    possible_approvers = get_approver(cost_center.id, object.process)
+    print("object.cost_center   ",cost_center.id, "    object.process", possible_approvers)
+    for approver in possible_approvers:
+        url=reverse("tokens:token", args=[object.id]),
+        subject = f"New approval request for {object.process.workflow.name}"
+        message = f"You have a new approval request for {object.process.workflow.name}.\n\nClick here to view the request: {url}"
+        Notification.objects.create(user=approver, message=message, url=url,notification_type= app ,notification_id=object.id)
+        approver.email_user(subject, message)
+    return possible_approvers
+

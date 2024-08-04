@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect, HttpResponse, get_object_or_404
 from .forms import *
 from .models import *
 from django.contrib import messages
-from approve.views import intiate, approve_step, get_my_roles_for_apps, get_approver
+from approve.views import intiate, approve_step, get_my_roles_for_apps, get_approver,send_notification
 from approve.models import Step
 from approve.forms import ApprovalForm
 from django.contrib.auth.decorators import login_required
@@ -167,6 +167,7 @@ def create_token(request):
             else:
                 return render(request, "tokens/create_token.html", forms)
 
+            send_notification("token", token)
             return redirect("tokens:tokens")
 
         else:
@@ -258,31 +259,42 @@ def token_details(request, token_id):
             "to": to,
         },
     )
-
-
 @login_required
 def view_all_tokens(request):
     if request.method == "POST":
-        sentance = request.POST.get("search_term")
-        words = sentance.split()
-        """search for tokens by meter number, customer name, stand number, address, cost center, created by,  process workflow name comparing them based on words in the search term and order results by frequency of the words in the search term"""
-        search = request.POST.get("search_term")
-        tokens = Token.objects.filter(
-            Q(meter__number__icontains=search)
-            | Q(customer__name__icontains=search)
-            | Q(customer__stand_number__icontains=search)
-            | Q(id=search)
-            | Q(customer__address__icontains=search)
-            | Q(cost_center__name__icontains=search)
-            | Q(created_by__username__icontains=search)
-            | Q(created_by__first_name__icontains=search)
-            | Q(process__workflow__name__icontains=search)
-        )
+        tkns = {}
+        tockens = Token.objects.none()
+        search_term = request.POST.get("search_term", "")
+        
+        for word in search_term.split():
+            print(word)
+            word_tkns = Token.objects.filter(
+                Q(meter__number__icontains=word) |
+                Q(customer__name__icontains=word) |
+                Q(customer__stand_number__icontains=word) |
+                Q(reason__icontains=word) |
+                Q(created_by__username__icontains=word) |
+                Q(cost_center__name__icontains=word) |
+                Q(cost_center__code__iexact=word) |
+                Q(id__iexact=word) |
+                Q(created_at__icontains=word)
+            )
+            for tkn in word_tkns:
+                if tkn.id in tkns:
+                    tkns[tkn.id]['count'] += 1
+                else:
+                    tkns[tkn.id] = {
+                        "token": tkn,
+                        'count': 1
+                    }  
+        sorted_tokens = sorted(tkns.values(), key=lambda x: x['count'], reverse=True)
+        sorted_token_ids = [token['token'].id for token in sorted_tokens]
+        sorted_tokens_queryset = Token.objects.filter(id__in=sorted_token_ids)
         return render(
             request,
             "tokens/tokens.html",
             {
-                "tokens": tokens.order_by("-created_at")[:10],
+                "tokens": sorted_tokens_queryset.order_by("-created_at")[:100],
                 "roles": get_my_roles_for_apps(
                     request.user, ["temper", "reimbursement", "clear credit"]
                 ),
@@ -300,8 +312,6 @@ def view_all_tokens(request):
             ),
         },
     )
-
-
 @login_required
 def awaiting_my_action(request):
     """
@@ -346,8 +356,6 @@ def awaiting_my_action(request):
             ),
         },
     )
-
-
 def addsection(request):
     for token in Token.objects.all():
         try:
@@ -369,8 +377,6 @@ def addsection(request):
         except:
             pass
     return redirect("tokens:tokens")
-
-
 def process_file(file_path):
     if not os.path.isfile(file_path):
         raise FileNotFoundError("File not found!")
@@ -467,14 +473,10 @@ def process_file(file_path):
             }
             print(state)
     return "json_data"
-
-
 def cost_centers(request):
     return render(
         request, "tokens/cost_centers.html", {"cost_centers": CostCenter.objects.all()}
     )
-
-
 def upload_centers(request):
     CostCenter.objects.all().delete()
     file_path = "tokens/cc.txt"
@@ -483,11 +485,7 @@ def upload_centers(request):
     except FileNotFoundError as e:
         print(e)
     return redirect("tokens:cost_centers")
-
-
 """get ancestors of the cost center and all its children and merge them into cost_centers"""
-
-
 def cost_center(request, cost_center_id):
     cost_center = CostCenter.objects.get(id=cost_center_id)
     return render(
@@ -498,8 +496,6 @@ def cost_center(request, cost_center_id):
             "cost_centers": cost_center.get_all_ancestors_and_their_children(),
         },
     )
-
-
 def migrate_tokens(request):
     import mysql.connector
 

@@ -22,17 +22,18 @@
             <a href="{% url 'tokens:tokens' %}"
                class="bg-gray-500 hover:bg-gray-700 inline-block rounded-full m-auto  text-white py-2 px-4 rounded"> All tokens </a>
           {% endif %}
-          <form class="float-md-end my-3 col-span-3 grid grid-cols-3" method="post">
+          <form id="search-form" class="float-md-end my-3 col-span-3 grid grid-cols-3" method="post">
             {% csrf_token %}
             <input type="text"
+                   id="search-input"
                    class="border border-gray-300 col-span-2 border-blue-500 border border-1 rounded-full"
                    name="search_term"
-                   placeholder="Search...">
+                   placeholder="Search Token ...">
             <button type="submit"
-                    class="text-blue-700 border-blue-500 border border-1 ml-1 mx-auto px-3  font-bold rounded-full">
+                    class="text-blue-700 border-blue-500 bg-gray-400 hover:bg-gray-700 border border-1 ml-1 mx-auto px-3 font-bold rounded-full">
               <i class="fa fa-search"></i>
             </button>
-          </form>
+        </form>
         </div>
         <br>
         <table id="tokens" class="table table-striped stripe table-bordered">
@@ -60,7 +61,7 @@
                 <td>
                   <span title="{{ token.meter.meter_type }}">{{ token.meter.number }}</span>
                 </td>
-                <td>{{ token.process.approval_set.last|default_if_none:'' }}</td>
+                <td>{{ token.process.approval_set.last|default_if_none:"No Approval" }}</td>
               </tr>
             {% endfor %}
           </tbody>
@@ -83,9 +84,10 @@
   $(document).ready(function () {
     $("#tokens").DataTable({
       "pageLength": 10,
-      "columnDefs": [{ "orderable": true, "targets": [0, 1, 2] }],
-      "searching": true,
+      "columnDefs": [{ "orderable": true, "targets": [0, 1, 2,3,4] }],
       "responsive": true,
+      "searching": true,
+
     });
   });
   </script>

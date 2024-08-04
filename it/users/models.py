@@ -133,17 +133,19 @@ class CostCenter(models.Model):
         return ancestors  + children
     def what_i_can_see(self):
         return self.get_all_ancestors_and_their_children() + [self]
+    
     def __str__(self):
         ancestor_names = [ancestor.name for ancestor in self.get_all_ancestors()[1::]]
         center = f"{', '.join(ancestor_names + [f'{self.name}({self.code})'])}"
         center = ', '.join(dict.fromkeys(center.split(', ')))
         return center
+    
+
 class UserProfile(AbstractUser):
     username = models.CharField(max_length=15, unique=True, verbose_name='EC Number',db_index=True)
     designation = models.ForeignKey(Designations, on_delete=models.DO_NOTHING, blank=True, null=True)
     section = models.ForeignKey(Sections, on_delete=models.DO_NOTHING, blank=True, null=True)
     cost_center = models.ForeignKey(CostCenter, on_delete=models.DO_NOTHING, blank=True, null=True)
-    
     depot = models.ForeignKey(Depots, on_delete=models.DO_NOTHING, blank=True, null=True)
     district = models.ForeignKey(Districts, on_delete=models.DO_NOTHING, blank=True, null=True)
     roles = models.ManyToManyField(Roles, blank=True, null=True)
@@ -171,10 +173,6 @@ class Notification(models.Model):
 
     def __str__(self):
         return self.message
-
-    class Meta:
-        app_label = 'users'
-
 
 class Supplier(models.Model):
     id = models.CharField(primary_key=True, max_length=20, editable=False)
