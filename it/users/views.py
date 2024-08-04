@@ -1025,19 +1025,21 @@ def import_old_users(request):
                 cost_center = CostCenter.objects.filter(code=section.section).first()
             designation = Designations.objects.filter(description=row['Designation']).first()
             region = Regions.objects.filter(region='EASTERN REGION').first()
-            user = UserProfile(
-                username=row['username'],
-                first_name=row['firstname'],
-                last_name=row['surname'],
-                email=row['email'],
-                designation=designation,
-                section=section,
-                cost_center=cost_center,
-                status=row['status'],
-                region=region
-            )
-            user.set_password("Business@2024")
-            user.save()
+            user_ = UserProfile.objects.filter(username=row['username']).first()
+            if not user_:
+                user = UserProfile(
+                    username=row['username'],
+                    first_name=row['firstname'],
+                    last_name=row['surname'],
+                    email=row['email'],
+                    designation=designation,
+                    section=section,
+                    cost_center=cost_center,
+                    status=row['status'],
+                    region=region
+                )
+                user.set_password("Business@2024")
+                user.save()
     except Exception as ex:
         print("Error: ", ex)
     
