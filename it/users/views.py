@@ -96,7 +96,7 @@ def ms_exhange_test(request):
     return JsonResponse({"status": "success", "message": "Email sent successfully"})
 
 @login_required
-@allowed_roles(['administrator'], ['users'])
+# @allowed_roles(['administrator'], ['users'])
 def add_centers(request):
     
     for region in REGIONS:
@@ -169,7 +169,7 @@ def add_centers(request):
 
 
 @login_required
-@allowed_roles(['administrator'], ['users'])
+# @allowed_roles(['administrator'], ['users'])
 def add_user(request):
     if request.method == "GET":
 
@@ -286,7 +286,7 @@ def add_user(request):
 
 
 @login_required
-@allowed_roles(['administrator'], ['users'])
+# @allowed_roles(['administrator'], ['users'])
 def get_user_records(request):
 
     user_page = 'users/user_index.html'
@@ -367,7 +367,7 @@ def datatable_data(request):
         })
 
 @login_required
-@allowed_roles(['administrator'], ['users'])
+# @allowed_roles(['administrator'], ['users'])
 def update_user(request):
     if request.method == "GET":
         user_profile = UserProfile.objects.get(id=request.GET['i'])
@@ -514,7 +514,7 @@ def view_user(request):
         )
         
 @login_required
-@allowed_roles(['administrator'], ['users'])
+# @allowed_roles(['administrator'], ['users'])
 def update_userx(request):
     if request.method == "GET":
 
@@ -648,7 +648,7 @@ def update_userx(request):
 
 
 @login_required
-@allowed_roles(['administrator'], ['users'])
+# @allowed_roles(['administrator'], ['users'])
 def reset_user_password(request):
     if request.method == "POST":
 
@@ -746,7 +746,6 @@ def change_user_password(request):
 #     return redirect('/users/users-index')
 
 @login_required
-@allowed_roles(['administrator'], ['users'])
 def get_filtered_centers(request, region_id):
     
     region = Regions.objects.filter(id=region_id).first()
@@ -808,7 +807,7 @@ def fetch_center_parents(cost_center):
     return filtered_centers
 
 @login_required
-@allowed_roles(['administrator'], ['users'])
+# @allowed_roles(['administrator'], ['users'])
 def get_filtered_districts(request, region_id):
     
     districts = Districts.objects.filter(region_id=region_id).all()
@@ -816,7 +815,7 @@ def get_filtered_districts(request, region_id):
     return JsonResponse(list(districts.values('id', 'district')), safe=False)
 
 @login_required
-@allowed_roles(['administrator'], ['users'])
+# @allowed_roles(['administrator'], ['users'])
 def get_filtered_depots(request, district_id):
         
     print("District ID: ", district_id)
@@ -826,7 +825,7 @@ def get_filtered_depots(request, district_id):
     return JsonResponse(list(depots.values('id', 'depot')), safe=False)
 
 @login_required
-@allowed_roles(['administrator'], ['users'])
+# @allowed_roles(['administrator'], ['users'])
 def get_user_all_groups(request):
     if request.method == "GET":
         user_title = request.user.get_full_name()
@@ -897,7 +896,7 @@ def get_user_all_groups(request):
         )
 
 @login_required
-@allowed_roles(['administrator'], ['users'])
+# @allowed_roles(['administrator'], ['users'])
 def import_users(request):
     if request.method == "POST":
         file = request.FILES['file']
@@ -997,26 +996,29 @@ def import_old_users(request):
         sections_csv = pd.read_csv(sections_csv)
         designations_csv = pd.read_csv(designations_csv)
         
-        # for _, row in designations_csv.iterrows():
-        #     design = Designations.objects.filter(description=row['description']).first()
-        #     if not design:
-        #         designation = Designations(
-        #             description=row['description'],
-        #             chk=row['chk']
-        #         )
-        #         designation.save()
+        region = Regions.objects.filter(region='EASTERN REGION').first()
+        for _, row in designations_csv.iterrows():
+            design = Designations.objects.filter(description=row['description'], region=region).first()
+            if not design:
+                designation = Designations(
+                    description=row['description'],
+                    chk=row['chk'],
+                    region=region
+                )
+                designation.save()
         
-        # for _, row in sections_csv.iterrows():
-        #     section = Sections.objects.filter(section=row['description']).first()
-        #     if not section:
-        #         section = Sections(
-        #             section='Eastern ' + row['description'],
-        #             code=row['section_code']
-        #         )
-        #         section.save()
+        for _, row in sections_csv.iterrows():
+            section = Sections.objects.filter(section=row['description'], region_id='2').first()
+            if not section:
+                section = Sections(
+                    section='Eastern ' + row['description'],
+                    code=row['section_code'],
+                    region_id='2'
+                )
+                section.save()
         
         for _, row in users_csv.iterrows():
-            section = Sections.objects.filter(code=row['section']).first()
+            section = Sections.objects.filter(code=row['section'], region_id='2').first()
             cost_center = None
             if section:
                 cost_center = CostCenter.objects.filter(code=section.section).first()
