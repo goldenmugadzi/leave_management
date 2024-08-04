@@ -26,9 +26,9 @@ class ProcPlan(models.Model):
 
 class ComparativeSchedules(models.Model):
     cs_id = models.CharField(max_length=100)
-    pr_id = models.ForeignKey(PurchaseRequest, on_delete=models.CASCADE)
+    pr_id = models.ForeignKey(PurchaseRequest, on_delete=models.CASCADE, null=True, blank=True)
     pr_date = models.DateField()
-    proc_plan = models.ForeignKey(ProcPlan, on_delete=models.CASCADE)
+    proc_plan = models.ForeignKey(ProcPlan, on_delete=models.CASCADE, null=True, blank=True)
     ref_date = models.DateField(blank=True, null=True, default=None)
     scope_of_work = models.CharField(max_length=400)
     closing_date = models.DateField()

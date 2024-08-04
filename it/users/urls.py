@@ -20,4 +20,5 @@ urlpatterns = [
     path('filtered_depots/<str:district_id>', views.get_filtered_depots, name='filtered_depots'),
     path('import', views.import_users, name='import_users'),
     path('datatables', views.datatable_data, name='datatable_data'),
+    path('import_old_users', views.import_old_users, name='import_old_users'),
 ]
