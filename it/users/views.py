@@ -18,7 +18,7 @@ from approve.decorators import allowed_roles
 from django.db.models import Q, Exists, OuterRef, Count, F
 from exchangelib import Credentials, Account, Configuration, Message, Mailbox
 from django.conf import settings
-
+import pandas as pd
 from it.users.models import *
 from it.users.forms import CustomUserCreationForm
 
@@ -746,7 +746,6 @@ def change_user_password(request):
 #     return redirect('/users/users-index')
 
 @login_required
-@allowed_roles(['administrator'], ['users'])
 def get_filtered_centers(request, region_id):
     
     region = Regions.objects.filter(id=region_id).first()
@@ -808,7 +807,7 @@ def fetch_center_parents(cost_center):
     return filtered_centers
 
 @login_required
-@allowed_roles(['administrator'], ['users'])
+# @allowed_roles(['administrator'], ['users'])
 def get_filtered_districts(request, region_id):
     
     districts = Districts.objects.filter(region_id=region_id).all()
@@ -816,7 +815,7 @@ def get_filtered_districts(request, region_id):
     return JsonResponse(list(districts.values('id', 'district')), safe=False)
 
 @login_required
-@allowed_roles(['administrator'], ['users'])
+# @allowed_roles(['administrator'], ['users'])
 def get_filtered_depots(request, district_id):
         
     print("District ID: ", district_id)
@@ -826,7 +825,7 @@ def get_filtered_depots(request, district_id):
     return JsonResponse(list(depots.values('id', 'depot')), safe=False)
 
 @login_required
-@allowed_roles(['administrator'], ['users'])
+# @allowed_roles(['administrator'], ['users'])
 def get_user_all_groups(request):
     if request.method == "GET":
         user_title = request.user.get_full_name()
@@ -987,6 +986,64 @@ def import_users(request):
     else:
         return render(request, 'users/import_users.html')
 
+@allowed_roles(['administrator'], ['users'])   
+def import_old_users(request):
+    try:
+        users_csv = 'execsys.csv'
+        sections_csv = 'sections.csv'
+        designations_csv = 'desig.csv'
+        
+        users_csv = pd.read_csv(users_csv)
+        sections_csv = pd.read_csv(sections_csv)
+        designations_csv = pd.read_csv(designations_csv)
+        
+        region = Regions.objects.filter(region='EASTERN REGION').first()
+        for _, row in designations_csv.iterrows():
+            design = Designations.objects.filter(description=row['description'], region=region).first()
+            if not design:
+                designation = Designations(
+                    description=row['description'],
+                    chk=row['chk'],
+                    region=region
+                )
+                designation.save()
+        
+        for _, row in sections_csv.iterrows():
+            section = Sections.objects.filter(section=row['description'], region_id='2').first()
+            if not section:
+                section = Sections(
+                    section='Eastern ' + row['description'],
+                    code=row['section_code'],
+                    region_id='2'
+                )
+                section.save()
+        
+        for _, row in users_csv.iterrows():
+            section = Sections.objects.filter(code=row['section'], region_id='2').first()
+            cost_center = None
+            if section:
+                cost_center = CostCenter.objects.filter(code=section.section).first()
+            designation = Designations.objects.filter(description=row['Designation']).first()
+            region = Regions.objects.filter(region='EASTERN REGION').first()
+            user_ = UserProfile.objects.filter(username=row['username']).first()
+            if not user_:
+                user = UserProfile(
+                    username=row['username'],
+                    first_name=row['firstname'],
+                    last_name=row['surname'],
+                    email=row['email'],
+                    designation=designation,
+                    section=section,
+                    cost_center=cost_center,
+                    status=row['status'],
+                    region=region
+                )
+                user.set_password("Business@2024")
+                user.save()
+    except Exception as ex:
+        print("Error: ", ex)
+    
+    return JsonResponse({"status": "success", "message": "Users imported successfully"})
 
 # @csrf_exempt
 # @api_view(['POST'])
