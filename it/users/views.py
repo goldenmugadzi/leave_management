@@ -96,7 +96,7 @@ def ms_exhange_test(request):
     return JsonResponse({"status": "success", "message": "Email sent successfully"})
 
 @login_required
-# @allowed_roles(['administrator'], ['users'])
+@allowed_roles(['administrator'], ['users'])
 def add_centers(request):
     
     for region in REGIONS:
@@ -169,7 +169,7 @@ def add_centers(request):
 
 
 @login_required
-# @allowed_roles(['administrator'], ['users'])
+@allowed_roles(['administrator'], ['users'])
 def add_user(request):
     if request.method == "GET":
 
@@ -286,7 +286,7 @@ def add_user(request):
 
 
 @login_required
-# @allowed_roles(['administrator'], ['users'])
+@allowed_roles(['administrator'], ['users'])
 def get_user_records(request):
 
     user_page = 'users/user_index.html'
@@ -367,7 +367,7 @@ def datatable_data(request):
         })
 
 @login_required
-# @allowed_roles(['administrator'], ['users'])
+@allowed_roles(['administrator'], ['users'])
 def update_user(request):
     if request.method == "GET":
         user_profile = UserProfile.objects.get(id=request.GET['i'])
@@ -514,7 +514,7 @@ def view_user(request):
         )
         
 @login_required
-# @allowed_roles(['administrator'], ['users'])
+@allowed_roles(['administrator'], ['users'])
 def update_userx(request):
     if request.method == "GET":
 
@@ -648,7 +648,7 @@ def update_userx(request):
 
 
 @login_required
-# @allowed_roles(['administrator'], ['users'])
+@allowed_roles(['administrator'], ['users'])
 def reset_user_password(request):
     if request.method == "POST":
 
@@ -896,7 +896,7 @@ def get_user_all_groups(request):
         )
 
 @login_required
-# @allowed_roles(['administrator'], ['users'])
+@allowed_roles(['administrator'], ['users'])
 def import_users(request):
     if request.method == "POST":
         file = request.FILES['file']
@@ -985,7 +985,8 @@ def import_users(request):
             return render(request, 'users/import_users.html')
     else:
         return render(request, 'users/import_users.html')
-    
+
+@allowed_roles(['administrator'], ['users'])   
 def import_old_users(request):
     try:
         users_csv = 'execsys.csv'

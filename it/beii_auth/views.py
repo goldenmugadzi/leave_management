@@ -307,9 +307,9 @@ def business_applications(request):
 
     print("users_role: ", users_role)
     applications = APPLICATIONS
-    # if users_role == "standard" or users_role == "" or users_role == None:
-    #     print("creating standard list ..")
-    #     applications = [app for app in applications if app['name'] != 'users']
+    if users_role == "standard" or users_role == "" or users_role == None:
+        print("creating standard list ..")
+        applications = [app for app in applications if app['name'] != 'users']
     
     user = request.user
     if config('HOST') == "172.16.8.20":
