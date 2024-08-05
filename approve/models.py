@@ -1,5 +1,5 @@
 from django.db import models
-from it.users.models import Roles, UserProfile,Application
+from it.users.models import Roles, UserProfile,Application,CostCenter,Notification
 
 
 class Workflow(models.Model):
@@ -46,3 +46,11 @@ class Approval(models.Model):
 
     def __str__(self):
         return f"{self.approved} by {self.step}"
+    
+"""create a model to map a role matrix for step role against the cost center and its descendent cost centers"""
+class RoleMatrix(models.Model):
+    step = models.ForeignKey(Step, on_delete=models.CASCADE)
+    cost_center = models.ForeignKey(CostCenter, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f"{self.step.approver.role} for {self.cost_center}"

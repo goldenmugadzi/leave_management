@@ -260,8 +260,8 @@ def view_all_purchase_requests(request):
     search_term = request.POST.get('search_term')
     if request.method == 'POST' and search_term :
         purchase_requests = PurchaseRequest.objects.filter(Q(cost_center__name__icontains=search_term) | Q(section__section__icontains=search_term) | Q(requested_by__last_name__icontains=search_term) | Q(scope_of_work__icontains=search_term) | Q(id=search_term) | Q(pr_no__icontains=search_term)| Q(created_at__icontains=search_term)  )
-        return render(request, 'finance/purchase_request/view_all_purchase_requests.html', {'purchase_requests': purchase_requests})
-    purchase_requests = PurchaseRequest.objects.order_by('-created_at')[:10]
+        return render(request, 'finance/purchase_request/view_all_purchase_requests.html', {'purchase_requests': purchase_requests.order_by('-id')[:10]})
+    purchase_requests = PurchaseRequest.objects.order_by('-id')[:10]
     return render(request, 'finance/purchase_request/view_all_purchase_requests.html', {'purchase_requests': purchase_requests})
 
 @login_required

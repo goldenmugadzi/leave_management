@@ -62,177 +62,250 @@
             </p>
         </div>
         {% if request.user.username == nonconformity.recipient.username or request.user.username == nonconformity.created_by.username %}
-            {% if acceptanceForm or rejectionForm or form %}
-                <form class="row rounded py-4 border bg-gulf-blue-100 col-6 m-auto p-3 container"
-                      enctype="multipart/form-data"
-                      id="form"
-                      method="post"
-                      name="form">
-                    {% csrf_token %}
-                    <div class="{% if nonconformityform.accepted == True %} {% else %} hidden{% endif %}"
-                         id="acceptForm">
-                        {% for field in acceptanceForm %}
-                            <div>
-                                {% if field.is_hidden %}
-                                    {{ field }}
-                                {% elif field.name == 'attachment' %}
-                                    <div class="rounded grid grid-cols-2 pr-5">
-                                        <div>
-                                            <p class="text-center">Attach files</p>
-                                        </div>
-                                        <input class="block w-full rounded-md border-0 py-1.5 mb-3 flex justify-center items-align-center text-gray-900 shadow-sm ring-1 ring-inset form-control-file"
-                                               multiple
-                                               name="attachments"
-                                               type="file">
+            <form class="row rounded py-4 border bg-gulf-blue-100 col-6 m-auto p-3 container"
+                  enctype="multipart/form-data"
+                  id="form"
+                  method="post"
+                  name="form">
+                {% csrf_token %}
+                <div class="{% if nonconformityform.accepted == True %} {% else %} hidden{% endif %}"
+                     id="acceptForm">
+                    {% for field in acceptanceForm %}
+                        <div>
+                            {% if field.is_hidden %}
+                                {{ field }}
+                            {% elif field.name == 'attachment' %}
+                                <div class="rounded grid grid-cols-2 pr-5">
+                                    <div>
+                                        <p class="text-center">Attach files</p>
                                     </div>
-                                {% else %}
-                                    <div class="m-auto text-center grid grid-cols-2 pr-5">
-                                        <div>
-                                            {{ field.label }}
-                                            <div class="text-blue-500">{{ field.help_text }}</div>
-                                            <div class="text-red-500 text-red-500">{{ field.errors }}</div>
-                                        </div>
-                                        {{ field }}
-                                    </div>
-                                {% endif %}
-                            </div>
-                        {% endfor %}
-                        {% if acceptanceForm %}
-                            <div class="rounded grid grid-cols-2 pr-5">
-                                <div>
-                                    <p class="text-center">Attach files</p>
+                                    <input class="block w-full rounded-md border-0 py-1.5 mb-3 flex justify-center items-align-center text-gray-900 shadow-sm ring-1 ring-inset form-control-file"
+                                           multiple
+                                           name="attachments"
+                                           type="file">
                                 </div>
-                                <input class="block w-full rounded-md border-0 py-1.5 mb-3 flex justify-center items-align-center text-gray-900 shadow-sm ring-1 ring-inset form-control-file"
-                                       multiple
-                                       name="attachments"
-                                       type="file">
-                            </div>
-                        {% endif %}
-                    </div>
-                    <div class="{% if nonconformityform.accepted == False %} {% else %} hidden{% endif %}"
-                         id="rejectForm">
-                        {% for field in rejectionForm %}
-                            <div>
-                                {% if field.is_hidden %}
-                                    {{ field }}
-                                {% else %}
-                                    <div class="m-auto text-center grid grid-cols-2 pr-5">
-                                        <div>
-                                            {{ field.label }}
-                                            <div class="text-blue-500">{{ field.help_text }}</div>
-                                            <div class="text-red-500 text-red-500">{{ field.errors }}</div>
-                                        </div>
-                                        {{ field }}
+                            {% else %}
+                                <div class="m-auto text-center grid grid-cols-2 pr-5">
+                                    <div>
+                                        {{ field.label }}
+                                        <div class="text-blue-500">{{ field.help_text }}</div>
+                                        <div class="text-red-500 text-red-500">{{ field.errors }}</div>
                                     </div>
-                                {% endif %}
-                            </div>
-                        {% endfor %}
-                        {% if rejectionForm %}
-                            <div class="rounded grid grid-cols-2 pr-5">
-                                <div>
-                                    <p class="text-center">Attach files</p>
+                                    {{ field }}
                                 </div>
-                                <input class="block w-full rounded-md border-0 py-1.5 mb-3 flex justify-center items-align-center text-gray-900 shadow-sm ring-1 ring-inset form-control-file"
-                                       multiple
-                                       name="attachments"
-                                       type="file">
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                    {% if acceptanceForm %}
+                        <div class="rounded grid grid-cols-2 pr-5">
+                            <div>
+                                <p class="text-center">Attach files</p>
                             </div>
-                        {% endif %}
-                    </div>
-                    {% for field in form %}
+                            <input class="block w-full rounded-md border-0 py-1.5 mb-3 flex justify-center items-align-center text-gray-900 shadow-sm ring-1 ring-inset form-control-file"
+                                   multiple
+                                   name="attachments"
+                                   type="file">
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="{% if nonconformityform.accepted == False %} {% else %} hidden{% endif %}"
+                     id="rejectForm">
+                    {% for field in rejectionForm %}
                         <div>
                             {% if field.is_hidden %}
                                 {{ field }}
                             {% else %}
-                                {{ field.label_tag }} {{ field }}
-                                <div class="text-red-500">{{ field.errors }}</div>
+                                <div class="m-auto text-center grid grid-cols-2 pr-5">
+                                    <div>
+                                        {{ field.label }}
+                                        <div class="text-blue-500">{{ field.help_text }}</div>
+                                        <div class="text-red-500 text-red-500">{{ field.errors }}</div>
+                                    </div>
+                                    {{ field }}
+                                </div>
                             {% endif %}
                         </div>
                     {% endfor %}
-                    <input id='accepted' name="accepted" type="hidden" value="">
-                    <div class="row rounded py-4 border text-center containerflex justify-center space-x-4">
-                        {% if form %}
+                    {% if rejectionForm %}
+                        <div class="rounded grid grid-cols-2 pr-5">
+                            <div>
+                                <p class="text-center">Attach files</p>
+                            </div>
+                            <input class="block w-full rounded-md border-0 py-1.5 mb-3 flex justify-center items-align-center text-gray-900 shadow-sm ring-1 ring-inset form-control-file"
+                                   multiple
+                                   name="attachments"
+                                   type="file">
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="row rounded py-4 border text-center containerflex justify-center space-x-4">
+                    {% if editform %}
+                        <button class="bg-yellow-500 hover:bg-red-200 text-white font-bold py-2 px-4 rounded"
+                                id="editButton"
+                                onclick="$('#closeformcontainer').hide();$('#editformcontainer').show();"
+                                type="button">Edit or Redirect</button>
+                    {% endif %}
+                    {% if closeform and nonconformity.accepted != null %}
+                        <button class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
+                                id="closeButton"
+                                type="button"
+                                onclick="$('#closeformcontainer').show();$('#editformcontainer').hide();">
+                            Close Nonconformity
+                        </button>
+                    {% endif %}
+                    <input name="rejected" id="rejected" type="hidden" value="">
+                    {% if closeform and nonconformity.accepted != null %}
+                    {% comment %} {% if closeform and nonconformity.accepted %} {% endcomment %}
+                        <div id="closeformcontainer" class="hidden">
+                            {% for field in closeform %}
+                                <div class="rounded row text-center py-2 my-3">
+                                    {% if field.is_hidden %}
+                                        {{ field }}
+                                    {% else %}
+                                        <div class=" m-auto grid grid-cols-2 pr-5">
+                                            <div>
+                                                {{ field.label }}
+                                                <div class="text-blue-500">{{ field.help_text }}</div>
+                                                <div class="text-red-500 text-red-500 ">{{ field.errors }}</div>
+                                            </div>
+                                            {{ field }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            {% endfor %}
                             <input class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded"
-                                   type="submit"
+                                   onclick="$('#rejected').val('close'); $('#form').submit();"
+                                   type="button"
                                    value="Submit">
-                        {% else %}
-                            <button class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
-                                    id="rejectButton"
-                                    type="button">Reject</button>
-                            <button class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
-                                    id="acceptButton"
-                                    type="button">Accept</button>
+                        </div>
+                    {% endif %}
+                    {% if editform %}
+                        <div id="editformcontainer" class="hidden">
+                            {% for field in editform %}
+                                <div class="rounded row text-center py-2 my-3">
+                                    {% if field.is_hidden %}
+                                        {{ field }}
+                                    {% else %}
+                                        <div class=" m-auto grid grid-cols-2 pr-5">
+                                            <div>
+                                                {{ field.label }}
+                                                <div class="text-blue-500">{{ field.help_text }}</div>
+                                                <div class="text-red-500 text-red-500 ">{{ field.errors }}</div>
+                                            </div>
+                                            {{ field }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            {% endfor %}
+                            <input class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded"
+                                   onclick="$('#rejected').val('edit'); $('#form').submit();"
+                                   type="button"
+                                   value="Submit">
+                        </div>
+                    {% endif %}
+                    {% if form %}
+                    {% comment %} <div id="editformcontainer" class="hidden"> {% endcomment %}
+                        {% for field in form %}
+                            <div class="rounded row text-center py-2 my-3">
+                                {% if field.is_hidden %}
+                                    {{ field }}
+                                {% else %}
+                                    <div class=" m-auto grid grid-cols-2 pr-5">
+                                        <div>
+                                            {{ field.label }}
+                                            <div class="text-blue-500">{{ field.help_text }}</div>
+                                            <div class="text-red-500 text-red-500 ">{{ field.errors }}</div>
+                                        </div>
+                                        {{ field }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    
+                    {% comment %} </div> {% endcomment %}
+                {% endif %}
+                    {% if form %}
+                    <input class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded"
+                           type="submit"
+                           value="Submit">
+                {% elif acceptanceForm or rejectionForm %}
+                    <button class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
+                            id="rejectButton"
+                            type="button">Reject</button>
+                    <button class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
+                            id="acceptButton"
+                            type="button">Accept</button>
+                {% endif %}
+            </div>
+            <input name="is_read" type="hidden" value="True">
+            <input id='accepted' name="accepted" type="hidden" value="">
+        </form>
+    {% endif %}
+</div>
+<div class="card-body m-2 border-1 border  border-gulf-blue-400 px-2 rounded">
+    <div class="font-bold text-xl text-center">Responses</div>
+    <div style="max-height: 40rem; overflow-y: auto;">
+        {% for response in nonconformity.rejection_set.all %}
+            <div class="card-body  rounded-lg rounded-md rounded-sm">
+                <div class="card mb-3 row rounded py-4 border-1 bg-gray-200 border border-red-500 p-3 m-auto container">
+                    <div class="card-body font-bold">
+                        {% if response.comment %}<p class="card-text">Comment: {{ response.comment }}</p>{% endif %}
+                        {% if response.rejection_reason %}
+                            <p class="card-text">Rejection reason: {{ response.rejection_reason }}</p>
                         {% endif %}
                     </div>
-                    <input name="is_read" type="hidden" value="True">
-                </form>
-            {% endif %}
-        {% endif %}
-    </div>
-    <div class="card-body m-2 border-1 border  border-gulf-blue-400 px-2 rounded">
-        <div class="font-bold text-xl text-center">Responses</div>
-        <div style="max-height: 40rem; overflow-y: auto;">
-            {% for response in nonconformity.rejection_set.all %}
-                <div class="card-body  rounded-lg rounded-md rounded-sm">
-                    <div class="card mb-3 row rounded py-4 border-1 bg-gray-200 border border-red-500 p-3 m-auto container">
-                        <div class="card-body font-bold">
-                            {% if response.comment %}<p class="card-text">Comment: {{ response.comment }}</p>{% endif %}
-                            {% if response.rejection_reason %}
-                                <p class="card-text">Rejection reason: {{ response.rejection_reason }}</p>
+                    <p class="flex flex-row text-sm">
+                        {% for attachment in response.rejectionattachment_set.all %}
+                            <a class="rounded shadow-md p-1 m-1 bg-white text-center text-blue-600"
+                               href="{{ attachment.attachment.url }}"
+                               name="">{{ attachment.attachment.name|basename }}</a>
+                        {% endfor %}
+                    </p>
+                    <p class="flex flex-row text-sm flex justify-between ">
+                        <span class="text-sm text-left">
+                            {% if response.user.get_full_name %}
+                                {{ response.user.get_full_name }}
+                            {% else %}
+                                {{ response.user.username }}
                             {% endif %}
-                        </div>
-                        <p class="flex flex-row text-sm">
-                            {% for attachment in response.rejectionattachment_set.all %}
-                                <a class="rounded shadow-md p-1 m-1 bg-white text-center text-blue-600"
-                                   href="{{ attachment.attachment.url }}"
-                                   name="">{{ attachment.attachment.name|basename }}</a>
-                            {% endfor %}
-                        </p>
-                        <p class="flex flex-row text-sm flex justify-between ">
-                            <span class="text-sm text-left">
-                                {% if response.user.get_full_name %}
-                                    {{ response.user.get_full_name }}
-                                {% else %}
-                                    {{ response.user.username }}
-                                {% endif %}
-                            </span> <span class="text-smtext-right">Rejected @ {{ response.dated }}</span>
-                        </p>
-                    </div>
+                        </span> <span class="text-smtext-right">Rejected @ {{ response.dated }}</span>
+                    </p>
                 </div>
-            {% endfor %}
-            {% for response in nonconformity.acceptance_set.all %}
-                <div class="card-body  rounded-lg rounded-md rounded-sm">
-                    <div class="card mb-3 row rounded py-4 border-3 border bg-gray-200 border-green-400 p-3 m-auto container">
-                        <div class="card-body font-bold">
-                            {% if response.cause %}<p class="card-text">Cause: {{ response.cause }}</p>{% endif %}
-                            {% if response.corrective_action %}
-                                <p class="card-text">Corrective Action: {{ response.corrective_action }}</p>
-                            {% endif %}
-                            {% if response.expected_completion_date %}
-                                <p class="card-text">Expected Completion Date: {{ response.expected_completion_date }}</p>
-                            {% endif %}
-                        </div>
-                        <p class="flex flex-row text-sm">
-                            {% for attachment in response.acceptanceattachment_set.all %}
-                                <a class="rounded shadow-md p-1 m-1 bg-white text-center text-blue-600"
-                                   href="{{ attachment.attachment.url }}"
-                                   name="">{{ attachment.attachment.name|basename }}</a>
-                            {% endfor %}
-                        </p>
-                        <p class="flex flex-row text-sm flex justify-between ">
-                            <span class="text-sm text-left">
-                                {% if response.user.get_full_name %}
-                                    {{ response.user.get_full_name }}
-                                {% else %}
-                                    {{ response.user.username }}
-                                {% endif %}
-                            </span> <span class="text-smtext-right">Accepted @ {{ response.dated }}</span>
-                        </p>
+            </div>
+        {% endfor %}
+        {% for response in nonconformity.acceptance_set.all %}
+            <div class="card-body  rounded-lg rounded-md rounded-sm">
+                <div class="card mb-3 row rounded py-4 border-3 border bg-gray-200 border-green-400 p-3 m-auto container">
+                    <div class="card-body font-bold">
+                        {% if response.cause %}<p class="card-text">Cause: {{ response.cause }}</p>{% endif %}
+                        {% if response.corrective_action %}
+                            <p class="card-text">Corrective Action: {{ response.corrective_action }}</p>
+                        {% endif %}
+                        {% if response.expected_completion_date %}
+                            <p class="card-text">Expected Completion Date: {{ response.expected_completion_date }}</p>
+                        {% endif %}
                     </div>
+                    <p class="flex flex-row text-sm">
+                        {% for attachment in response.acceptanceattachment_set.all %}
+                            <a class="rounded shadow-md p-1 m-1 bg-white text-center text-blue-600"
+                               href="{{ attachment.attachment.url }}"
+                               name="">{{ attachment.attachment.name|basename }}</a>
+                        {% endfor %}
+                    </p>
+                    <p class="flex flex-row text-sm flex justify-between ">
+                        <span class="text-sm text-left">
+                            {% if response.user.get_full_name %}
+                                {{ response.user.get_full_name }}
+                            {% else %}
+                                {{ response.user.username }}
+                            {% endif %}
+                        </span> <span class="text-smtext-right">Accepted @ {{ response.dated }}</span>
+                    </p>
                 </div>
-            {% endfor %}
-        </div>
+            </div>
+        {% endfor %}
     </div>
+</div>
 </div>
 {% endblock %}
 {% block scripts %}

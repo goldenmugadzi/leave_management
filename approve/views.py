@@ -4,7 +4,7 @@ from django.contrib import messages
 from .models import *
 from .forms import *
 from django.views.generic.detail import DetailView
-from django.shortcuts import render, redirect, HttpResponse
+from django.shortcuts import render, redirect,  get_object_or_404
 from django.urls import reverse
 
 
@@ -160,3 +160,25 @@ def approve_step(request, process_id):
 
     else:
         return redirect('approve:workflow_detail', process.workflow.id)
+
+
+def approvers( object):
+    ancestors = []
+    current = object.cost_center
+    while current.parent:
+        ancestors.append(current.id)
+        current = current.parent
+    step = get_object_or_404(Step, workflow=object.process.workflow, step=object.process.approval_set.count() + 1)
+    return UserProfile.objects.filter(cost_center__id__in=ancestors,roles__role=step.approver.role)
+
+def allowed_to_approve(user,object):
+    possible_approvers = approvers(object)
+    return  user in possible_approvers
+
+def send_notification(app, object):
+    possible_approvers = approvers(object)
+    for approver in possible_approvers:
+         Notification.objects.create(user=approver,message=f"Approval request for {object.process.workflow.name}.",url=reverse("tokens:token", args=[object.id]),notification_type= app ,notification_id=object.id)
+    return possible_approvers
+
+

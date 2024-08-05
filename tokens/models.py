@@ -19,7 +19,7 @@ class Customer(models.Model):
     address = models.CharField(max_length=200 , blank=True,null=True )
     stand_number = models.CharField(max_length=100 , blank=True,null=True )
     contact_number = models.CharField(max_length=10, blank=True,null=True , validators=[RegexValidator(r'^\+?1?\d{9,15}$', 'Enter a valid phone number.')])
-
+ 
     def __str__(self):
         return self.name
 
@@ -85,6 +85,7 @@ class RecoveredMeter(models.Model):
 class FaultMaintanance(models.Model): 
     token = models.ForeignKey(Token, on_delete=models.CASCADE)
     code = models.IntegerField(help_text="fault number displayed", blank=True, null=True )
+    photo= models.FileField(upload_to='uploads/Tokens/FaultMaintanance',help_text="Evidence ", blank=True, null=True)
     def __str__(self):
         return str(self.token.meter.number)
 

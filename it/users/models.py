@@ -118,7 +118,7 @@ class CostCenter(models.Model):
     code = models.CharField(max_length=30)
     name = models.CharField(max_length=100, blank=True, null=True)
     parent = models.ForeignKey('self', on_delete=models.CASCADE, blank=True, null=True, related_name='children')
-
+  
     class Meta:
         ordering = ['parent__id']
    
@@ -140,20 +140,31 @@ class CostCenter(models.Model):
             ancestors += self.parent.get_all_ancestors_and_their_children()
         children = self.get_all_children()
         return ancestors  + children
-    def what_i_can_see(self):
-        return self.get_all_ancestors_and_their_children() + [self]
+    # def what_i_can_see(self):
+    #     return self.get_all_ancestors_and_their_children() + [self]
+    def get_view(self):
+        """ return a list of cost centers involving children, grand children, brothers ,parent , parent brothers, grand parent"""
+        cost_centers=[]
+        i=0
+        while self.parent and i<2:
+            cost_centers.append(self)
+            cost_centers += self.get_all_children()
+            self = self.parent
+            i+=1
+        return cost_centers
+    
     def __str__(self):
         ancestor_names = [ancestor.name for ancestor in self.get_all_ancestors()[1::]]
         center = f"{', '.join(ancestor_names + [f'{self.name}({self.code})'])}"
         center = ', '.join(dict.fromkeys(center.split(', ')))
         return center
     
+
 class UserProfile(AbstractUser):
     username = models.CharField(max_length=15, unique=True, verbose_name='EC Number',db_index=True)
     designation = models.ForeignKey(Designations, on_delete=models.DO_NOTHING, blank=True, null=True)
     section = models.ForeignKey(Sections, on_delete=models.DO_NOTHING, blank=True, null=True)
     cost_center = models.ForeignKey(CostCenter, on_delete=models.DO_NOTHING, blank=True, null=True)
-    
     depot = models.ForeignKey(Depots, on_delete=models.DO_NOTHING, blank=True, null=True)
     district = models.ForeignKey(Districts, on_delete=models.DO_NOTHING, blank=True, null=True)
     roles = models.ManyToManyField(Roles, blank=True, null=True)
@@ -161,10 +172,12 @@ class UserProfile(AbstractUser):
     status = models.CharField(max_length=30, blank=True)
     last_reset = models.DateField(default=date.today())
     change_password = models.BooleanField(default=False, null=True, blank=True)
+    class Meta:
+        ordering = ['last_name','first_name','username']
 
     def __str__(self):
         if self.first_name and self.last_name:
-            return f"{self.first_name} {self.last_name}"
+            return f"{self.last_name} {self.first_name}"
         else:
             return f"{self.username}"
     
@@ -206,10 +219,6 @@ class Notification(models.Model):
 
     def __str__(self):
         return self.message
-
-    class Meta:
-        app_label = 'users'
-
 
 class Supplier(models.Model):
     id = models.CharField(primary_key=True, max_length=20, editable=False)
