@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect, HttpResponse, get_object_or_404
 from .forms import *
 from .models import *
 from django.contrib import messages
-from approve.views import intiate, approve_step, get_my_roles_for_apps, get_approver,send_notification
+from approve.views import intiate, approve_step, get_my_roles_for_apps,send_notification,allowed_to_approve
 from approve.models import Step
 from approve.forms import ApprovalForm
 from django.contrib.auth.decorators import login_required
@@ -222,7 +222,8 @@ def token_details(request, token_id):
     to = None
     completed = False
     user_roles = request.user.roles.all()
-    if not token.process.approval_set.filter(approved="Rejected").exists():
+    allowed = allowed_to_approve(request.user,token)
+    if not token.process.approval_set.filter(approved="Rejected").exists() and allowed:
         try:
             last_approved = token.process.approval_set.last().step.step
         except AttributeError:
@@ -241,12 +242,9 @@ def token_details(request, token_id):
             pass
 
         completed = token.process.workflow.step_set.last().step == last_approved
-    approved_steps = token.process.approval_set.all().values_list(
-        "step__step", flat=True
-    )
+    approved_steps = token.process.approval_set.all().values_list("step__step", flat=True)
    
     token = get_object_or_404(Token, id=token_id)
-    print(get_approver(token.cost_center, token.process))
     return render(
         request,
         "tokens/token_detail.html",

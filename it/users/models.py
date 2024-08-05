@@ -131,8 +131,18 @@ class CostCenter(models.Model):
             ancestors += self.parent.get_all_ancestors_and_their_children()
         children = self.get_all_children()
         return ancestors  + children
-    def what_i_can_see(self):
-        return self.get_all_ancestors_and_their_children() + [self]
+    # def what_i_can_see(self):
+    #     return self.get_all_ancestors_and_their_children() + [self]
+    def get_view(self):
+        """ return a list of cost centers involving children, grand children, brothers ,parent , parent brothers, grand parent"""
+        cost_centers=[]
+        i=0
+        while self.parent and i<2:
+            cost_centers.append(self)
+            cost_centers += self.get_all_children()
+            self = self.parent
+            i+=1
+        return cost_centers
     
     def __str__(self):
         ancestor_names = [ancestor.name for ancestor in self.get_all_ancestors()[1::]]

@@ -28,6 +28,7 @@ from django.contrib import messages
 from approve.decorators import allowed_roles
 from django.core.paginator import Paginator
 from decouple import config
+from django.core import serializers
 BASE_URL = "http://"+config('HOST')+":"+config('PORT')
 
 def user_centers(request):
@@ -351,11 +352,15 @@ def update_user(request):
         }
 
         all_roles = {app.name: Roles.objects.filter(app_id=app.id).all() for app in Application.objects.all()}
-
+        cost_center = user_profile.cost_center
+        if cost_center:
+           cost_centers= cost_center.get_view()
+        else:
+            cost_centers = CostCenter.objects.first().get_view()
         return render(
             request,
             "users/user_update.html",
-            {
+            {"cost_centers": cost_centers,
                 "form": CustomUserCreationForm,
                 "user_roles": all_roles,
                 "user_applications": Application.objects.all(),
@@ -917,3 +922,20 @@ def import_users(request):
 #         "code": 201,
 #         "data": serializer.data
 #     })
+# @login_required
+def get_center_filter(request, id):
+    cost_centers = CostCenter.objects.get(id=id).get_view()
+    json_centers = []
+    for cost_center in cost_centers:
+        json_center= {
+            "id":cost_center.id,
+            "name":cost_center.name,
+            "parent":cost_center.parent.id,
+            "code":cost_center.code
+        }
+        
+        json_centers.append(json_center)
+    return JsonResponse(json_centers, safe=False)
+    # data = serializers.serialize('json', centers)
+    # return JsonResponse(data, safe=False)
+    # return JsonResponse(centers, safe=False)

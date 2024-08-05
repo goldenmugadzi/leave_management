@@ -20,4 +20,5 @@ urlpatterns = [
     path('filtered_depots/<str:district_id>', views.get_filtered_depots, name='filtered_depots'),
     path('import', views.import_users, name='import_users'),
     path('datatables', views.datatable_data, name='datatable_data'),
+    path('centfilter/<str:id>', views.get_center_filter, name='get_center_filter'),
 ]

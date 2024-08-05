@@ -162,23 +162,23 @@ def approve_step(request, process_id):
         return redirect('approve:workflow_detail', process.workflow.id)
 
 
-def get_approver(cost_center, process):
-    step = get_object_or_404(Step, workflow=process.workflow, step=process.approval_set.count() + 1)
-    if process.approval_set.exists() and process.approval_set.last().approved == 'Rejected':
-        return UserProfile.objects.none()
-    
-    possible_approver_cost_centers = cost_center.get_all_ancestors()
-    approvers = UserProfile.objects.filter(roles=step.approver, cost_center__in=possible_approver_cost_centers)
-    return approvers
+def approvers( object):
+    ancestors = []
+    current = object.cost_center
+    while current.parent:
+        ancestors.append(current.id)
+        current = current.parent
+    step = get_object_or_404(Step, workflow=object.process.workflow, step=object.process.approval_set.count() + 1)
+    return UserProfile.objects.filter(cost_center__id__in=ancestors,roles__role=step.approver.role)
+
+def allowed_to_approve(user,object):
+    possible_approvers = approvers(object)
+    return  user in possible_approvers
+
 def send_notification(app, object):
-    cost_center = CostCenter.objects.get(id=object.cost_center.id)
-    possible_approvers = get_approver(cost_center.id, object.process)
-    print("object.cost_center   ",cost_center.id, "    object.process", possible_approvers)
+    possible_approvers = approvers(object)
     for approver in possible_approvers:
-        url=reverse("tokens:token", args=[object.id]),
-        subject = f"New approval request for {object.process.workflow.name}"
-        message = f"You have a new approval request for {object.process.workflow.name}.\n\nClick here to view the request: {url}"
-        Notification.objects.create(user=approver, message=message, url=url,notification_type= app ,notification_id=object.id)
-        approver.email_user(subject, message)
+         Notification.objects.create(user=approver,message=f"Approval request for {object.process.workflow.name}.",url=reverse("tokens:token", args=[object.id]),notification_type= app ,notification_id=object.id)
     return possible_approvers
+
 
