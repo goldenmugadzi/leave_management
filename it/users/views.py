@@ -998,25 +998,25 @@ def import_old_users(request):
         designations_csv = pd.read_csv(designations_csv)
         
         region = Regions.objects.filter(region='EASTERN REGION').first()
-        for _, row in designations_csv.iterrows():
-            design = Designations.objects.filter(description=row['description'], region=region).first()
-            if not design:
-                designation = Designations(
-                    description=row['description'],
-                    chk=row['chk'],
-                    region=region
-                )
-                designation.save()
+        # for _, row in designations_csv.iterrows():
+        #     design = Designations.objects.filter(description=row['description'], region=region).first()
+        #     if not design:
+        #         designation = Designations(
+        #             description=row['description'],
+        #             chk=row['chk'],
+        #             region=region
+        #         )
+        #         designation.save()
         
-        for _, row in sections_csv.iterrows():
-            section = Sections.objects.filter(section=row['description'], region_id='2').first()
-            if not section:
-                section = Sections(
-                    section='Eastern ' + row['description'],
-                    code=row['section_code'],
-                    region_id='2'
-                )
-                section.save()
+        # for _, row in sections_csv.iterrows():
+        #     section = Sections.objects.filter(section=row['description'], region_id='2').first()
+        #     if not section:
+        #         section = Sections(
+        #             section='Eastern ' + row['description'],
+        #             code=row['section_code'],
+        #             region_id='2'
+        #         )
+        #         section.save()
         
         for _, row in users_csv.iterrows():
             section = Sections.objects.filter(code=row['section'], region_id='2').first()

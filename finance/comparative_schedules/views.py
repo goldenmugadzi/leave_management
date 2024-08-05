@@ -1484,6 +1484,7 @@ def datatable_data(request, view):
         user_region = request.user.region
     except Exception as ex:
         user_region = None
+        print("error: ",  ex)
     draw = int(request.GET.get('draw', default=1))
     start = int(request.GET.get('start', default=0))
     length = int(request.GET.get('length', default=10))

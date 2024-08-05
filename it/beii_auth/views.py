@@ -97,6 +97,7 @@ def login_user(request):
         user = authenticate(request, username=username, password=password)
         if user is not None:
             if user.change_password:
+                login(request, user)
                 return redirect('/auth/change-password')
             login(request, user)
             return redirect('/dashboards/overview')
@@ -341,18 +342,26 @@ def app_logout(request):
     logout(request)
     return redirect('/accounts/login')
 
-# @login_required(login_url='/accounts/login')
+@login_required(login_url='/accounts/login')
 def change_password(request):
     if request.method == "POST":
         print("request.POST: ", request.POST)
-        username = request.POST.get('username')
+        
+        username = request.user.username
         user_profile = UserProfile.objects.filter(username=username).first()
+        questions = Question.objects.all()
+        print("questions: ", questions)
+        questions_json = json.dumps([{"id": q.id, "question": q.question} for q in questions])
+        print("questions_json: ", questions_json)
         if user_profile:
             password = request.POST.get('password')
             password_confirm = request.POST.get('password_confirm')
             if password != password_confirm:
                 messages.error(request, "Passwords do not match")
-                return redirect('/auth/change-password')
+                return render(request, "registration/change_password.html", {
+                    "questions": questions_json,
+                    "username": username
+                })
             question1 = request.POST.get('security_question1')
             question2 = request.POST.get('security_question2')
             question3 = request.POST.get('security_question3')
@@ -394,7 +403,10 @@ def change_password(request):
             except Exception as e:
                 print("Error: ", e)
                 messages.error(request, "An error occurred. Please try again.")
-                return redirect('/auth/change-password')
+                return render(request, "registration/change_password.html", {
+                    "questions": questions_json,
+                    "username": username
+                })
             
             try:
                 validate_password(password, user=user_profile)
@@ -408,15 +420,27 @@ def change_password(request):
                 # Password is not valid
                 print(e.messages)
                 messages.error(request, e.messages)
-                return redirect('/auth/change-password')
+                return render(request, "registration/change_password.html", {
+                    "questions": questions_json,
+                    "username": username
+                })
+        else:
+            messages.error(request, "User not found")
+            return redirect('/accounts/login')
     else:
-       questions = Question.objects.all()
-       print("questions: ", questions)
-       questions_json = json.dumps([{"id": q.id, "question": q.question} for q in questions])
-       print("questions_json: ", questions_json)
-       return render(request, "registration/change_password.html", {
-           "questions": questions_json
-       })
+        if not request.user:
+            return redirect('/accounts/login')
+        print("user : ", request.user.username)
+        username = request.user.username
+        questions = Question.objects.all()
+        print("questions: ", questions)
+        questions_json = json.dumps([{"id": q.id, "question": q.question} for q in questions])
+        print("questions_json: ", questions_json)
+        return render(request, "registration/change_password.html", {
+            "questions": questions_json,
+            "username": username
+        })
+            
 
 # @login_required(login_url='/accounts/login')
 def security_questions(request):
