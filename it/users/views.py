@@ -437,6 +437,7 @@ def update_user(request):
             section = request.POST.get('section')
             designation = request.POST.get('designation')
             cost_center = request.POST.get('cost_center')
+            print("cost_center: ", cost_center)
             
             region_, district_, depot_, section_, designation_, cost_center_ = None, None, None, None, None, None
             try:

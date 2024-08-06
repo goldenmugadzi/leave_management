@@ -1381,6 +1381,8 @@ def get_general_manager(user_id, search_value=None, column_name=None, region=Non
 
 def get_all_schedules_table(user_id, search_value=None, column_name=None, region=None):
     
+    print("region: ", region)
+    
     cs = ComparativeSchedules.objects.filter(region=region, cancelled=False).all()
     
     # Filter based on search value
@@ -1481,7 +1483,7 @@ def datatable_data(request, view):
     
     user_id = request.user.id
     try:
-        user_region = request.user.region
+        user_region = Regions.objects.filter(region=request.user.region).first()
     except Exception as ex:
         user_region = None
         print("error: ",  ex)
