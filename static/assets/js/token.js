@@ -1,56 +1,76 @@
-$(document).on('change', '#id_type', function() {
-  var selectedValue = $(this).val();
-  $('#clear_credit_form').hide();
-  $('#tamper_token_form').hide();
-  $('#reimbursement_form').hide();
 
+document.getElementById('id_type').addEventListener('change', () => {
+
+  var selectedValue = document.getElementById('id_type').value;
+  console.log(selectedValue);
+  document.getElementById('clear_credit_form').style.display = 'none';
+  document.getElementById('tamper_token_form').style.display = 'none';
+  document.getElementById('reimbursement_form').style.display = 'none';
+  document.getElementById('fault_maintanance_form').style.display = 'none';
+  document.getElementById('reconnection_form').style.display = 'none';
+  document.getElementById('faulty_meter_form').style.display = 'none';
+  document.getElementById('recovered_meter_form').style.display = 'none';
+  document.getElementById('old_token_form').style.display = 'none';
   switch (selectedValue) {
     case 'CLEAR CREDIT':
-      $('#clear_credit_form').show();
+      document.getElementById('clear_credit_form').style.display = 'block';
       break;
     case 'REIMBURSEMENT':
-      $('#reimbursement_form').show();
+      document.getElementById('reimbursement_form').style.display = 'block';
       break;
     case 'TEMPER':
-      $('#tamper_token_form').show();
+      document.getElementById('tamper_token_form').style.display = 'block';
       break;
   }
-});
+}
+);
+document.getElementById('id_purpose').addEventListener('change', () => {
 
-$(document).on('change', '#id_is_for', function() {
-  var selectedValue = $(this).val();
-  $('#fault_maintanance_form').hide();
-  $('#reconnection_form').hide();
-  $('#faulty_meter_form').hide();
-  $('#recovered_meter_form').hide();
-  $('#old_token_form').hide();
-  switch (selectedValue) {
-    case 'Fauty Maintanance':
-      $('#fault_maintanance_form').show();
-      break;
-    case 'Recovered Meter':
-      $('#recovered_meter_form').show();
-      break;
-    case 'Reconnection':
-      $('#reconnection_form').show();
-      break;
-  }
-});$(document).on('change', '#id_purpose', function() {
-  var selectedValue = $(this).val();
-  $('#fault_maintanance_form').hide();
-  $('#reconnection_form').hide();
-  $('#faulty_meter_form').hide();
-  $('#recovered_meter_form').hide();
-  $('#old_token_form').hide();
+  var selectedValue = document.getElementById('id_purpose').value;
+  console.log(selectedValue);
+  document.getElementById('clear_credit_form').style.display = 'none';
+  document.getElementById('tamper_token_form').style.display = 'none';
+  document.getElementById('fault_maintanance_form').style.display = 'none';
+  document.getElementById('reconnection_form').style.display = 'none';
+  document.getElementById('faulty_meter_form').style.display = 'none';
+  document.getElementById('recovered_meter_form').style.display = 'none';
+  document.getElementById('old_token_form').style.display = 'none';
   switch (selectedValue) {
     case 'Faulty Meter':
-      $('#faulty_meter_form').show();
+      document.getElementById('faulty_meter_form').style.display = 'block';
       break;
     case 'Recovered Meter':
-      $('#recovered_meter_form').show();
+      document.getElementById('recovered_meter_form').style.display = 'block';
       break;
     case 'Old Token':
-      $('#old_token_form').show();
+      document.getElementById('old_token_form').style.display = 'block';
       break;
   }
-});
+}
+);
+
+document.getElementById('id_is_for').addEventListener('change', () => {
+
+  var selectedValue = document.getElementById('id_is_for').value;
+  console.log(selectedValue);
+  document.getElementById('clear_credit_form').style.display = 'none';
+  document.getElementById('reimbursement_form').style.display = 'none';
+  document.getElementById('fault_maintanance_form').style.display = 'none';
+  document.getElementById('reconnection_form').style.display = 'none';
+  document.getElementById('faulty_meter_form').style.display = 'none';
+  document.getElementById('recovered_meter_form').style.display = 'none';
+  document.getElementById('old_token_form').style.display = 'none';
+  switch (selectedValue) {
+    case 'Fauty Maintanance':
+      document.getElementById('fault_maintanance_form').style.display = 'block';
+      break;
+    case 'Recovered Meter':
+      document.getElementById('recovered_meter_form').style.display = 'block';
+      break;
+    case 'Reconnection':
+      document.getElementById('reconnection_form').style.display = 'block';
+      break;
+  }
+}
+);
+

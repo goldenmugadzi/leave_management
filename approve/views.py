@@ -79,12 +79,12 @@ def intiate(request, app):
 
 
 def approve_step(request, process_id):
-    """
+    """ 
     This view function is used to approve a step in a process.
     if method is GET, get the last approval with this process id ordered by step and add 1 to its step to get next step.
     use  it to check if user.role == step(with the next step and process.workflow).approver  
     else, the step is approved and the user is redirected to the workflow detail page.
-
+ 
     """
     process = Process.objects.get(id=process_id)
     try:
