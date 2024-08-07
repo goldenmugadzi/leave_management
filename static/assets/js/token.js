@@ -3,7 +3,11 @@ $(document).on('change', '#id_type', function() {
   $('#clear_credit_form').hide();
   $('#tamper_token_form').hide();
   $('#reimbursement_form').hide();
-
+ $('#fault_maintanance_form').hide();
+  $('#reconnection_form').hide();
+  $('#faulty_meter_form').hide();
+  $('#recovered_meter_form').hide();
+  $('#old_token_form').hide();
   switch (selectedValue) {
     case 'CLEAR CREDIT':
       $('#clear_credit_form').show();

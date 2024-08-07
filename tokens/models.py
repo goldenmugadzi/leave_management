@@ -31,7 +31,7 @@ class Token(models.Model):
     created_by = models.ForeignKey(UserProfile, on_delete=models.CASCADE, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     process=models.ForeignKey(Process, on_delete=models.CASCADE, blank=True, null=True)
-    section=models.ForeignKey(Sections, on_delete=models.CASCADE, blank=True, null=True)
+    # section=models.ForeignKey(Sections, on_delete=models.CASCADE, blank=True, null=True)
     region=models.ForeignKey(Regions, on_delete=models.CASCADE, blank=True, null=True)
     cost_center=models.ForeignKey(CostCenter, on_delete=models.CASCADE)
      
