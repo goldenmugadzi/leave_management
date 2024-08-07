@@ -324,7 +324,7 @@ def awaiting_my_action(request):
     tokens_to_process = []
     user_roles = request.user.roles.all()
     mytokens = Token.objects.filter(
-        Q(section=request.user.section) & Q(region=request.user.region)
+        Q(region=request.user.region)
         | Q(created_by__district=request.user.district)
     )
     count = mytokens.count()
