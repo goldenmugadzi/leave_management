@@ -59,7 +59,7 @@ class ChangeRequest(models.Model):
     creator_designation = models.ForeignKey(Designations, on_delete=models.CASCADE, related_name='cr_creator_designation')
     created_by = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='cr_created_by')
     region = models.ForeignKey(Regions, on_delete=models.CASCADE)
-    cost_center = models.ForeignKey(CostCenter, on_delete=models.CASCADE)
+    cost_center = models.ForeignKey(CostCenter, on_delete=models.CASCADE, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     
     def __str__(self):

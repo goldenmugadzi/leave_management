@@ -452,6 +452,10 @@ export default function Schedule({
           ? (data as { pr_date?: string }).pr_date
           : "";
         setPrDate(pr_date ?? "");
+        const proc_ref = (data as { proc_ref?: string }).proc_ref
+          ? (data as { proc_ref?: string }).proc_ref
+          : "";
+        setProcRef(proc_ref ?? "");
         const proc_plan = (data as { proc_plan?: IProcPlan }).proc_plan
           ? (data as { proc_plan?: IProcPlan }).proc_plan
           : undefined;
@@ -1679,9 +1683,11 @@ export default function Schedule({
       );
       return;
     }
+    setProcRef(procPlan?.proc_ref??"")
+    console.log("currency ...", currency, "procRef: ", procPlan?.proc_ref, "scopeOfWork: ", scopeOfWork, "prNumber: ", prNumber, "prDate: ", prDate, "closingDate: ", closingDate, "refDate: ", refDate, "closingTime: ", closingTime, "dateTenderOpened: ", dateTenderOpened, "tenderAdjudicationCommitteeDate: ", tenderAdjudicationCommitteeDate);
     if (
       !currency ||
-      !procRef ||
+      !procPlan ||
       !scopeOfWork ||
       !prNumber ||
       !prDate ||
@@ -1703,7 +1709,7 @@ export default function Schedule({
     // add enctype to form data
     // form_data.enctype = "multipart/form-data";
     form_data.append("cs_id", csId);
-    form_data.append("proc_ref", procRef);
+    form_data.append("proc_ref", procPlan?.proc_ref ?? "");
     form_data.append("scope_of_work", scopeOfWork);
     form_data.append("currency", JSON.stringify(currency.id));
     form_data.append("pr_number", prNumber);
@@ -4097,7 +4103,7 @@ export default function Schedule({
               className="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
             >
               {procPlan ? (
-                <option value={procPlan?.id}>{procPlan?.description}</option>
+                <option value={procPlan?.proc_ref}>{procPlan?.description}</option>
               ) : (
                 ""
               )}
@@ -4696,7 +4702,7 @@ export default function Schedule({
           {csDetailsView}
         </div>
 
-        {username === csOwner && (bids?.length ?? 0 < 1) ? (
+        {username === csOwner ? (
           <div className="m-2">
             <button
               style={{ width: "100%" }}

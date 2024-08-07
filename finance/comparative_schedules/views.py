@@ -1078,7 +1078,6 @@ def import_old_rfqX(request):
         # "data": item_df.to_json()
         }, safe=False)
 
-
 def clear_approvals(cs_id):
 
     cs_query = ComparativeSchedules.objects.filter(cs_id=cs_id).first()
@@ -1264,6 +1263,7 @@ def get_pending_fm_approval(request):
 def get_your_schedules(user_id, search_value=None, column_name=None, region=None):
     
     cs = ComparativeSchedules.objects.filter(
+        region=region,
         created_by_id=user_id,
         cancelled=False
     ).all()
@@ -1286,7 +1286,8 @@ def get_pending_committee_table(user_id, search_value=None, column_name=None, re
     cs = ComparativeSchedules.objects.filter(
         Q(committee__committee_approval=None) | Q(committee__committee_approval=""),
         Q(committee__user_id=user_id),
-        cancelled = False
+        cancelled = False,
+        region=region,
     ).all()
 
     # Filter based on search value
@@ -1314,7 +1315,8 @@ def get_finance_manager(user_id, search_value=None, column_name=None, region=Non
         not_approved_count=0,
         rejected_count=0,
         csapproval__approval=None,
-        cancelled = False
+        cancelled = False,
+        region=region
     ).distinct()
 
     # Filter based on search value
@@ -1364,7 +1366,8 @@ def get_general_manager(user_id, search_value=None, column_name=None, region=Non
         csapproval__approver_role="finance_manager",
         csapproval__approval="Approved",
         cancelled=False,
-        any_reject=False
+        any_reject=False,
+        region=region
     ).distinct()
     
     # Filter based on search value
@@ -1381,8 +1384,6 @@ def get_general_manager(user_id, search_value=None, column_name=None, region=Non
 
 def get_all_schedules_table(user_id, search_value=None, column_name=None, region=None):
     
-    print("region: ", region)
-    
     cs = ComparativeSchedules.objects.filter(region=region, cancelled=False).all()
     
     # Filter based on search value
@@ -1391,9 +1392,10 @@ def get_all_schedules_table(user_id, search_value=None, column_name=None, region
         Q(cs_id__icontains=search_value) |
         Q(scope_of_work__icontains=search_value) 
         )
-    
+
     if column_name:
         cs = cs.order_by(column_name)
+
 
     return cs
 
@@ -1447,36 +1449,41 @@ def add_details(cs):
             committee_approval = "Pending"
             fm_approval = None
             gm_approval = None
-            
+        
+        print("c.pr_id_id: ", c.pr_id_id)
         pr = PurchaseRequest.objects.filter(id=c.pr_id_id).first()
         user = UserProfile.objects.filter(id=c.created_by_id).first()
         region = Regions.objects.filter(id=c.region_id).first()
         section = Sections.objects.filter(id=c.section_id).first()
-        cs_list.append({
-            "cs_id": c.cs_id,
-            "pr_id": pr.id if pr else "",
-            "pr_number": c.pr_number,
-            "pr_date": c.pr_date,
-            "scope_of_work": c.scope_of_work,
-            "closing_date": c.closing_date,
-            "closing_time": c.closing_time,
-            "advert": c.advert,
-            "pr_number": c.pr_number,
-            "pr_date": c.pr_date,
-            "cs_opened": c.cs_opened,
-            "tac_date": c.tac_date,
-            "created_by": user.username,
-            "committee_approval": committee_approval,
-            "committee_reject_reason": committee_reject_reason,
-            "gm_approval": gm_approval.approval if gm_approval else "Pending",
-            "gm_reject_reason": gm_approval.justification if gm_approval else "",
-            "fm_approval": fm_approval.approval if fm_approval else "Pending",
-            "fm_reject_reason": fm_approval.justification if fm_approval else "",
-            "section": section.section if section else "",
-            "region": region.region if region else "",
-            "created_at": c.created_at.strftime("%Y-%m-%d %H:%M") if c.created_at else ""
-        })
-
+               
+        try:
+            cs_list.append({
+                "cs_id": c.cs_id,
+                "pr_id": pr.id if pr else "",
+                "pr_number": c.pr_number,
+                "pr_date": c.pr_date,
+                "scope_of_work": c.scope_of_work,
+                "closing_date": c.closing_date,
+                "closing_time": c.closing_time,
+                "advert": c.advert,
+                "pr_number": c.pr_number,
+                "pr_date": c.pr_date,
+                "cs_opened": c.cs_opened,
+                "tac_date": c.tac_date,
+                "created_by": user.username if user else None,
+                "committee_approval": committee_approval,
+                "committee_reject_reason": committee_reject_reason,
+                "gm_approval": gm_approval.approval if gm_approval else "Pending",
+                "gm_reject_reason": gm_approval.justification if gm_approval else "",
+                "fm_approval": fm_approval.approval if fm_approval else "Pending",
+                "fm_reject_reason": fm_approval.justification if fm_approval else "",
+                "section": section.section if section else "",
+                "region": region.region if region else "",
+                "created_at": c.created_at.strftime("%Y-%m-%d %H:%M") if c.created_at else ""
+            })
+        except Exception as ex:
+            print("Error: ", ex)
+            
     return cs_list
 
 def datatable_data(request, view):
@@ -1511,16 +1518,19 @@ def datatable_data(request, view):
     elif view == "pending_gm":
         data = get_general_manager(user_id, search_value, column_name, user_region)
     elif view == "all_schedules":
+        print("region inside: ", user_region)
         data = get_all_schedules_table(user_id, search_value, column_name, user_region)
     
     # Total number of records before filtering
     total = len(data)
+    print("total: ", total)
     # Pagination
     paginator = Paginator(data, length)
     page_number = start // length + 1
     page_obj = paginator.get_page(page_number)
 
     # Prepare response
+    print("adding details")
     data = add_details(page_obj.object_list)
     return JsonResponse({
         'draw': draw,
@@ -1582,7 +1592,7 @@ def get_comperative_schedule_data(request, cs_id):
     
     suppliers = Supplier.objects.all()
     pr_items = PrItem.objects.filter(purchase_request=cs.pr_id_id, ordered=False).all()
-    users = UserProfile.objects.all()
+    users = UserProfile.objects.filter(region=cs.region).all()
     
     items_list = []
     for item in items:
@@ -1810,6 +1820,7 @@ def get_comperative_schedule_data(request, cs_id):
         "complianceRemarks": compliance_remarks,
         "rankings": rankings_list,
         "committee": committee_list,
+        "proc_ref": cs.proc_plan.proc_ref if cs.proc_plan else "",
     }
     
     context = json.dumps(context, default=str)

@@ -462,10 +462,12 @@ def get_pending_fm_approval(request):
             "gm_role": gm_role,
             "procurement_role": procurement_role})
 
-def get_your_schedules(user_id, search_value=None, column_name=None):
+def get_your_schedules(user_id, search_value=None, column_name=None, region=None):
     
     cs = DirectPurchase.objects.filter(
+        region=region,
         created_by_id=user_id,
+        cancelled = False,
     ).all()
 
     # Filter based on search value
@@ -478,13 +480,15 @@ def get_your_schedules(user_id, search_value=None, column_name=None):
         cs = cs.order_by(column_name)
     return cs
 
-def get_pending_committee_table(user_id, search_value=None, column_name=None):
+def get_pending_committee_table(user_id, search_value=None, column_name=None, region=None):
 
     print("user id: ", user_id)
     # fetch schedules if user exists in the committee and has not yet approved
     cs = DirectPurchase.objects.filter(
         Q(dpcommittee__committee_approval=None) | Q(dpcommittee__committee_approval=""),
-        Q(dpcommittee__user_id=user_id)
+        Q(dpcommittee__user_id=user_id),
+        cancelled = False,
+        region=region
     ).all()
 
     # Filter based on search value
@@ -498,7 +502,7 @@ def get_pending_committee_table(user_id, search_value=None, column_name=None):
         cs = cs.order_by(column_name)
     return cs
 
-def get_finance_manager(search_value=None, column_name=None):
+def get_finance_manager(user_id, search_value=None, column_name=None, region=None):
     
     cs = DirectPurchase.objects.annotate(
         approved_count=Count('dpcommittee', filter=Q(dpcommittee__committee_approval="Approved")),
@@ -510,7 +514,8 @@ def get_finance_manager(search_value=None, column_name=None):
         committee_count__gt=2,
         not_approved_count=0,
         rejected_count=0,
-        dpapproval__approval=None
+        dpapproval__approval=None,
+        region=region, cancelled=False
     ).distinct()
 
     # Filter based on search value
@@ -524,7 +529,7 @@ def get_finance_manager(search_value=None, column_name=None):
         cs = cs.order_by(column_name)
     return cs
 
-def get_general_manager(search_value=None, column_name=None):
+def get_general_manager(user_id, search_value=None, column_name=None, region=None):
     # fetch all pending approvals
     cs = DirectPurchase.objects.annotate(
         all_approved=Exists(
@@ -558,7 +563,8 @@ def get_general_manager(search_value=None, column_name=None):
         gm_approved=False,
         dpapproval__approver_role="finance_manager",
         dpapproval__approval="Approved",
-        any_reject=False
+        any_reject=False,
+        region=region, cancelled=False
     ).distinct()
     
     # Filter based on search value
@@ -572,8 +578,8 @@ def get_general_manager(search_value=None, column_name=None):
         cs = cs.order_by(column_name)
     return cs
 
-def get_all_schedules_table(search_value=None, column_name=None):
-    cs = DirectPurchase.objects.all()
+def get_all_schedules_table(user_id, search_value=None, column_name=None, region=None):
+    cs = DirectPurchase.objects.filter(region=region, cancelled=False).all()
     
     # Filter based on search value
     if search_value:
@@ -653,7 +659,7 @@ def add_details(cs):
             "pr_date": c.pr_date,
             "cs_opened": c.cs_opened,
             "tac_date": c.tac_date,
-            "created_by": user.username,
+            "created_by": user.username if user else "",
             "committee_approval": committee_approval,
             "committee_reject_reason": committee_reject_reason,
             "gm_approval": gm_approval.approval if gm_approval else "Pending",
@@ -668,6 +674,11 @@ def add_details(cs):
 def datatable_data(request, view):
     
     user_id = request.user.id
+    try:
+        user_region = Regions.objects.filter(region=request.user.region).first()
+    except Exception as ex:
+        user_region = None
+        print("error: ",  ex)
     draw = int(request.GET.get('draw', default=1))
     start = int(request.GET.get('start', default=0))
     length = int(request.GET.get('length', default=10))
@@ -682,26 +693,19 @@ def datatable_data(request, view):
         if order == 'desc':
             column_name = f'-{column_name}'
 
-    # Fetch your data from the
-    print("view: ", view) 
     data = []
     if view == "your_schedules":
-        print("your schedules ...")
-        data = get_your_schedules(user_id, search_value, column_name)
+        data = get_your_schedules(user_id, search_value, column_name, user_region)
     elif view == "pending_committee":
-        print("pending_committee schedules ...", user_id)
-        data = get_pending_committee_table(user_id, search_value, column_name)
+        data = get_pending_committee_table(user_id, search_value, column_name, user_region)
     elif view == "pending_fm":
-        print("pending_fm schedules ...")
-        data = get_finance_manager(search_value, column_name)
+        data = get_finance_manager(user_id, search_value, column_name, user_region)
     elif view == "pending_gm":
-        print("pending_gm schedules ...")
-        data = get_general_manager(search_value, column_name)
+        data = get_general_manager(user_id, search_value, column_name, user_region)
     elif view == "all_schedules":
-        print("all__schedules schedules ...")
-        data = get_all_schedules_table(search_value, column_name)
+        print("region inside: ", user_region)
+        data = get_all_schedules_table(user_id, search_value, column_name, user_region)
     
-
     # Total number of records before filtering
     total = len(data)
     print("total: ", total)
@@ -711,8 +715,8 @@ def datatable_data(request, view):
     page_obj = paginator.get_page(page_number)
 
     # Prepare response
+    print("adding details")
     data = add_details(page_obj.object_list)
-
     return JsonResponse({
         'draw': draw,
         'recordsTotal': total,
@@ -1869,7 +1873,7 @@ def approve_cs_committee(request):
         if committee_approved:
             fm_role = Roles.objects.filter(name="Finance Manager", application=APP_NAME).first()
             print("fm role: ", fm_role)
-            fm_user = UserProfile.objects.filter(roles=fm_role).first()
+            fm_user = UserProfile.objects.filter(region=cs_query.region, roles=fm_role).first()
             print("fm user: ", fm_user.username, fm_user.id)
             msg = cs_query.cs_id + " Direct Purchase is ready for your approval "
             url = "/direct_purchase/comperative_schedule/" + cs_query.cs_id
@@ -1907,7 +1911,7 @@ def approve_cs(request):
             }, safe=False)
     
     committees = DPCommittee.objects.filter(cs_id=cs_query)
-    user = UserProfile.objects.filter(username=username).first()
+    user = UserProfile.objects.filter(region=cs_query.region, username=username).first()
     if user:
         if role == "general_manager":
             gm_approval = DPApproval(
@@ -1962,7 +1966,7 @@ def approve_cs(request):
             if committee_approved and approval == "Approved":
                 gm_role = Roles.objects.filter(name="General Manager", application=APP_NAME).first()
                 print("gm role: ", gm_role)
-                gm_user = UserProfile.objects.filter(roles=gm_role).first()
+                gm_user = UserProfile.objects.filter(region=cs_query.region, roles=gm_role).first()
                 print("gm user: ", gm_user.username, gm_user.id)
                 notify_user(gm_user, "Direct Purchase is ready for your approval " + cs_query.cs_id, "Direct Purchase", "/direct_purchase/comperative_schedule/" + cs_query.cs_id, cs_query.cs_id)
         

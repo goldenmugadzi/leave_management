@@ -105,7 +105,7 @@ class Designations(models.Model):
     description = models.CharField(max_length=100, blank=True)
     chk = models.CharField(max_length=100, blank=True)
     section = models.ForeignKey(Sections, on_delete=models.DO_NOTHING, blank=True, null=True)
-    region = models.ForeignKey(Regions, on_delete=models.DO_NOTHING, blank=True, null=True)
+    # region = models.ForeignKey(Regions, on_delete=models.DO_NOTHING, blank=True, null=True)
 
     def __str__(self):
         return self.identifier

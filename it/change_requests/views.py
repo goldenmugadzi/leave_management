@@ -17,7 +17,9 @@ from django.contrib.auth.decorators import login_required
 
 @login_required
 def create_change_request(request):
+    
     user_title = request.user.get_full_name()
+    user = request.user
     l = request.user.groups.values_list('name', flat=True)  # QuerySet Object
     user_groups = list(l)
 
@@ -34,7 +36,7 @@ def create_change_request(request):
     cost_centers = CostCenter.objects.all()
     districts = Districts.objects.all()
     regions = Regions.objects.all()
-    users = UserProfile.objects.all()
+    users = UserProfile.objects.filter(region=user.region).all()
     
     return render(request, 'change_requests/create_change_request.html',
             {
@@ -112,7 +114,7 @@ def create_new_profile(request):
         messages.success(request, "Change request submitted successfully")
     except Exception as ex:
         print("error: ", ex)
-        messages.error(request, "An error occurred while submitting the change request")
+        messages.error(request, "An error occurred while submitting the change request"+str(ex))
         
     return redirect("/change_requests/create_change_request")
 
@@ -122,16 +124,17 @@ def profile_modification_request(request):
         change_reason = request.POST.get("change_reason")
         change_description = request.POST.get("change_description")
         profile_username = request.POST.get("user_profile")
+        auth_user = request.user
         print("username: ", profile_username)
         user = UserProfile.objects.filter(username=profile_username).first()
         if user:
             region, cost_center = None, None
             try:
-                region = user.region
-                cost_center = user.cost_center
+                region = auth_user.region
+                cost_center = auth_user.cost_center
             except Exception as ex:
                 print("error: ", ex)
-                messages.error(request, "User does not have a region or cost center")
+                messages.error(request, "You does not have a region or cost center")
                 return redirect("/change_requests/change_request_index")
 
             roles = [role for role in [request.POST.get(app.name) for app in Application.objects.all() if request.POST.get(app.name) != 'Select Role'] if role and role != ""]
@@ -175,9 +178,10 @@ def profile_deactivation_request(request):
         profile_username = request.POST.get('user_profile')
         application = request.POST.get('application')
         user = UserProfile.objects.filter(username=profile_username).first()
+        auth_user = request.user
         if user:
             
-            if not user.cost_center:
+            if not auth_user.cost_center:
                 messages.error(request, "User does not have a cost center")
                 return redirect("/change_requests/change_request_index")
             profile_deactivation = ProfileDeactivation(
@@ -197,8 +201,8 @@ def profile_deactivation_request(request):
                 change_reason=change_reason,
                 creator_designation=user.designation,
                 created_by=request.user,
-                region=user.region,
-                cost_center=user.cost_center if user.cost_center else None,
+                region=auth_user.region,
+                cost_center=auth_user.cost_center if auth_user.cost_center else None,
                 created_at=datetime.now()
             )
             change_request.save()

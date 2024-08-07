@@ -157,10 +157,12 @@ def get_pending_fm_approval(request):
             "gm_role": gm_role,})
 
 
-def get_your_schedules(user_id, search_value=None, column_name=None):
+def get_your_schedules(user_id, search_value=None, column_name=None, region=None):
     
     cs = RistricedBiddings.objects.filter(
+        region=region,
         created_by_id=user_id,
+        cancelled = False,
     ).all()
 
     # Filter based on search value
@@ -173,13 +175,15 @@ def get_your_schedules(user_id, search_value=None, column_name=None):
         cs = cs.order_by(column_name)
     return cs
 
-def get_pending_committee_table(user_id, search_value=None, column_name=None):
+def get_pending_committee_table(user_id, search_value=None, column_name=None, region=None):
 
     print("user id: ", user_id)
     # fetch schedules if user exists in the committee and has not yet approved
     cs = RistricedBiddings.objects.filter(
         Q(rbcommittee__committee_approval=None) | Q(rbcommittee__committee_approval=""),
-        Q(rbcommittee__user_id=user_id)
+        Q(rbcommittee__user_id=user_id),
+        cancelled = False,
+        region=region
     ).all()
 
     # Filter based on search value
@@ -193,7 +197,7 @@ def get_pending_committee_table(user_id, search_value=None, column_name=None):
         cs = cs.order_by(column_name)
     return cs
 
-def get_finance_manager(search_value=None, column_name=None):
+def get_finance_manager(user_id, search_value=None, column_name=None, region=None):
     
     cs = RistricedBiddings.objects.annotate(
         approved_count=Count('rbcommittee', filter=Q(rbcommittee__committee_approval="Approved")),
@@ -205,7 +209,8 @@ def get_finance_manager(search_value=None, column_name=None):
         committee_count__gt=2,
         not_approved_count=0,
         rejected_count=0,
-        rbapproval__approval=None
+        rbapproval__approval=None,
+        region=region, cancelled=False
     ).distinct()
 
     # Filter based on search value
@@ -219,7 +224,7 @@ def get_finance_manager(search_value=None, column_name=None):
         cs = cs.order_by(column_name)
     return cs
 
-def get_general_manager(search_value=None, column_name=None):
+def get_general_manager(user_id, search_value=None, column_name=None, region=None):
     # fetch all pending approvals
     cs = RistricedBiddings.objects.annotate(
         all_approved=Exists(
@@ -253,7 +258,8 @@ def get_general_manager(search_value=None, column_name=None):
         gm_approved=False,
         rbapproval__approver_role="finance_manager",
         rbapproval__approval="Approved",
-        any_reject=False
+        any_reject=False,
+        region=region, cancelled=False
     ).distinct()
     
     # Filter based on search value
@@ -267,8 +273,8 @@ def get_general_manager(search_value=None, column_name=None):
         cs = cs.order_by(column_name)
     return cs
 
-def get_all_schedules_table(search_value=None, column_name=None):
-    cs = RistricedBiddings.objects.all()
+def get_all_schedules_table(user_id, search_value=None, column_name=None, region=None):
+    cs = RistricedBiddings.objects.filter(region=region, cancelled=False).all()
     
     # Filter based on search value
     if search_value:
@@ -349,7 +355,7 @@ def add_details(cs):
             "pr_date": c.pr_date,
             "cs_opened": c.cs_opened,
             "tac_date": c.tac_date,
-            "created_by": user.username,
+            "created_by": user.username if user else None,
             "committee_approval": committee_approval,
             "committee_reject_reason": committee_reject_reason,
             "gm_approval": gm_approval.approval if gm_approval else "Pending",
@@ -366,6 +372,11 @@ def add_details(cs):
 def datatable_data(request, view):
     
     user_id = request.user.id
+    try:
+        user_region = Regions.objects.filter(region=request.user.region).first()
+    except Exception as ex:
+        user_region = None
+        print("error: ",  ex)
     draw = int(request.GET.get('draw', default=1))
     start = int(request.GET.get('start', default=0))
     length = int(request.GET.get('length', default=10))
@@ -380,26 +391,19 @@ def datatable_data(request, view):
         if order == 'desc':
             column_name = f'-{column_name}'
 
-    # Fetch your data from the
-    print("view: ", view) 
     data = []
     if view == "your_schedules":
-        print("your schedules ...")
-        data = get_your_schedules(user_id, search_value, column_name)
+        data = get_your_schedules(user_id, search_value, column_name, user_region)
     elif view == "pending_committee":
-        print("pending_committee schedules ...", user_id)
-        data = get_pending_committee_table(user_id, search_value, column_name)
+        data = get_pending_committee_table(user_id, search_value, column_name, user_region)
     elif view == "pending_fm":
-        print("pending_fm schedules ...")
-        data = get_finance_manager(search_value, column_name)
+        data = get_finance_manager(user_id, search_value, column_name, user_region)
     elif view == "pending_gm":
-        print("pending_gm schedules ...")
-        data = get_general_manager(search_value, column_name)
+        data = get_general_manager(user_id, search_value, column_name, user_region)
     elif view == "all_schedules":
-        print("all__schedules schedules ...")
-        data = get_all_schedules_table(search_value, column_name)
+        print("region inside: ", user_region)
+        data = get_all_schedules_table(user_id, search_value, column_name, user_region)
     
-
     # Total number of records before filtering
     total = len(data)
     print("total: ", total)
@@ -409,15 +413,15 @@ def datatable_data(request, view):
     page_obj = paginator.get_page(page_number)
 
     # Prepare response
+    print("adding details")
     data = add_details(page_obj.object_list)
-
     return JsonResponse({
         'draw': draw,
         'recordsTotal': total,
         'recordsFiltered': total,
         'data': data
     })
-    
+
 @login_required
 def get_comperative_schedule(request, cs_id):
     
@@ -1573,7 +1577,7 @@ def approve_cs_committee(request):
             if committee_approved:
                 fm_role = Roles.objects.filter(name="Finance Manager", application=APP_NAME).first()
                 print("fm role: ", fm_role)
-                fm_user = UserProfile.objects.filter(roles=fm_role).first()
+                fm_user = UserProfile.objects.filter(region=cs_query.region, roles=fm_role).first()
                 print("fm user: ", fm_user.username, fm_user.id)
                 msg = "Restricted is ready for your approval " + cs_query.cs_id
                 url = "/restricted_bidding/comperative_schedule/" + cs_query.cs_id
@@ -1610,7 +1614,7 @@ def approve_cs(request):
             "success": False,
             }, safe=False)
     
-    user = UserProfile.objects.filter(username=username).first()
+    user = UserProfile.objects.filter(region=cs_query.region, username=username).first()
     if user:
         if role == "general_manager":
             gm_approval = RBApproval(
