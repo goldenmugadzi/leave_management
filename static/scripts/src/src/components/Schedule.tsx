@@ -4655,6 +4655,7 @@ export default function Schedule({
       {/* {loadingModal} */}
       <div className="space-y-12 px-5 py-5">
         <div className="px-4 sm:px-0">
+            {(username === csOwner || !csId) ? (
             <div className="m-2">
             <button
                 style={{ width: "100%" }}
@@ -4663,7 +4664,7 @@ export default function Schedule({
             >
                 ADD NEW SUPPLIER
             </button>
-            </div>
+            </div>): ""}
           {fetchPR && (
             <div className="transition-all duration-300 bg-gulf-blue-100 p-4 rounded-lg border-l-4 border-blue-600 mt-5 mb-5">
               <div className="flex justify-evenly items-end mt-3 px-2 py-2">
