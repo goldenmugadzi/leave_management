@@ -408,21 +408,28 @@ def update_user(request):
         }
 
         all_roles = {app.name: Roles.objects.filter(app_id=app.id).all() for app in Application.objects.all()}
-        cost_center = user_profile.cost_center
-        if not cost_center:
-            try:  cost_center = CostCenter.objects.filter(code=depot.code).first()
-            except: pass
-        if not cost_center:
-            try:  cost_center = CostCenter.objects.filter(code=section.code).first()
-            except: pass
-        if not cost_center:
-            try:  cost_center = CostCenter.objects.filter(code=district.code).first()
-            except: pass
-        if not cost_center:
-            try:  cost_center = CostCenter.objects.filter(code=region.code).first()
-            except: pass
-        if cost_center:
-           cost_centers= cost_center.get_view()
+        
+        try:
+            cost_center = user_profile.cost_center
+            if not cost_center:
+                try:  cost_center = CostCenter.objects.filter(code=depot.code).first()
+                except: pass
+            if not cost_center:
+                try:  cost_center = CostCenter.objects.filter(code=section.code).first()
+                except: pass
+            if not cost_center:
+                try:  cost_center = CostCenter.objects.filter(code=district.code).first()
+                except: pass
+            if not cost_center:
+                try:  cost_center = CostCenter.objects.filter(code=region.code).first()
+                except: pass
+            if cost_center:
+                cost_centers= cost_center.get_view()
+            else:
+                cost_centers = []
+        except Exception as ex:
+            print("Error: ", ex)
+            cost_centers = []
         return render(
             request,
             "users/user_update.html",
