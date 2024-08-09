@@ -268,6 +268,20 @@ def view_all_tokens(request):
         tkns = {}
         tockens = Token.objects.none()
         search_term = request.POST.get("search_term", "")
+        """for all the words that are in the search term, make all possible combinations of the words and search for them in the database and order them by the number of times they appear in the search term giving && query the highest priority when ranking the results"""
+        words = search_term.split() 
+        field_names = ["meter__number", "customer__name", "customer__stand_number", "reason", "created_by__username", "cost_center__name", "cost_center__code", "id", "created_at"]
+        for word in words:
+            for field_name in field_names:
+                word_tkns = Token.objects.filter(Q(**{field_name + "__icontains": word}))
+                for tkn in word_tkns:
+                    if tkn.id in tkns:
+                        tkns[tkn.id]['count'] += 1
+                    else:
+                        tkns[tkn.id] = {
+                            "token": tkn,
+                            'count': 1
+                        }
         
         for word in search_term.split():
             print(word)
@@ -290,20 +304,31 @@ def view_all_tokens(request):
                         "token": tkn,
                         'count': 1
                     }  
+        user_cost_center = request.user.section.id
+        print(user_cost_center)
+        print(Token.objects.filter(cost_center=user_cost_center))
+
         sorted_tokens = sorted(tkns.values(), key=lambda x: x['count'], reverse=True)
         sorted_token_ids = [token['token'].id for token in sorted_tokens]
-        sorted_tokens_queryset = Token.objects.filter(id__in=sorted_token_ids)
-        return render(
-            request,
-            "tokens/tokens.html",
-            {
-                "tokens": sorted_tokens_queryset.order_by("-created_at")[:100],
-                "roles": get_my_roles_for_apps(
-                    request.user, ["temper", "reimbursement", "clear credit"]
-                ),
-                "all": True,
-            },
-        )
+        if user_cost_center:
+            tockens = Token.objects.filter(Q(id__in=sorted_token_ids) & Q(cost_center=user_cost_center))
+            return render(
+                request,
+                "tokens/tokens.html",
+                {
+                    "tokens": tockens.order_by("-created_at")[:100],
+                    "roles": get_my_roles_for_apps(
+                        request.user, ["temper", "reimbursement", "clear credit"]
+                    ),
+                    "all": True,
+                },
+            )
+        else:
+            messages.error(request, "You do not have a cost center assigned to you. \n Please contact the administrator.")
+            return redirect("tokens:tokens")
+
+
+       
     return render(
         request,
         "tokens/tokens.html",

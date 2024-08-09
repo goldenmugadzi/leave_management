@@ -24,28 +24,60 @@
           {% endif %}
           <form id="search-form" class="float-md-end my-3 col-span-3 grid grid-cols-3" method="post">
             {% csrf_token %}
-            <input type="text"
-                   id="search-input"
-                   class="border border-gray-300 col-span-2 border-blue-500 border border-1 rounded-full"
-                   name="search_term"
-                   placeholder="Search Token ...">
-            <button type="submit"
-                    class="text-blue-700 border-blue-500 bg-gray-400 hover:bg-gray-700 border border-1 ml-1 mx-auto px-3 font-bold rounded-full">
-              <i class="fa fa-search"></i>
-            </button>
-        </form>
+            
         </div>
-        <br>
         <table id="tokens" class="table table-striped stripe table-bordered">
           <thead>
             <tr>
-              <th>ID</th>
-              <th>Reason</th>
-              <th>Type</th>
-              <th>Date</th>
-              <th>Customer</th>
-              <th>Meter number</th>
-              <th>Status</th>
+              <th>ID 
+                <input type="text"
+                   id="id"
+                   class="border  border-gray-300 border-blue-500 border border-1 rounded-full"
+                   name="id"
+                   placeholder="id">
+              </th>
+              <th>Reason
+                <input type="text"
+                   id="reason"
+                   class="border  border-gray-300 border-blue-500 border border-1 rounded-full"
+                   name="reason"
+                   placeholder="reason">
+              </th>
+              <th>Type
+                <input type="text"
+                   id="type"
+                   class="border  border-gray-300 border-blue-500 border border-1 rounded-full"
+                   name="type"
+                   placeholder="type">
+              </th>
+              <th>Date
+                <input type="text"
+                   id="date"
+                   class="border  border-gray-300 border-blue-500 border border-1 rounded-full"
+                   name="date"
+                   placeholder="date">
+              </th>
+              <th>Customer
+                <input type="text"
+                   id="customer"
+                   class="border  border-gray-300 border-blue-500 border border-1 rounded-full"
+                   name="customer"
+                   placeholder="customer">
+              </th>
+              <th>Meter number
+                <input type="text"
+                   id="meter_number"
+                   class="border  border-gray-300 border-blue-500 border border-1 rounded-full"
+                   name="meter_number"
+                   placeholder="meter number">
+              </th>
+              <th>Status
+                <input type="text"
+                   id="status"
+                   class="border  border-gray-300 border-blue-500 border border-1 rounded-full"
+                   name="status"
+                   placeholder="status">
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -73,6 +105,19 @@
             {% endfor %}
           {% endif %}
         </div>
+      <div class=" container grid grid-cols-2 mt-2">
+        <input type="text"
+        id="search-input"
+        class="border border-gray-300 border-blue-500 border border-1 rounded-full"
+        name="search_term"
+        placeholder="Extra filtering keywords here ...">
+
+ <button type="submit"
+        class="text-blue-700 border-blue-500 bg-gray-400 hover:bg-gray-700 border border-1 ml-1 mx-auto px-3 font-bold rounded-full">
+  <i class="fa fa-search"></i> Search
+</button>
+      </div>
+</form>
       </div>
     </div>
   </div>
