@@ -1,5 +1,8 @@
 from django import forms
 from django.contrib.auth.models import User
+
+from ACE2.models import AssetBudget
+from it.users.models import UserProfile, Regions, Sections
 from .models import Pettycash, Quotation
 from django.forms import formset_factory
 
@@ -21,7 +24,18 @@ class PettycashForm(forms.ModelForm):
                    'amount_disbursed', 'receipt_file', 'old_version', 'amount_used']
 
     def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
+        print("user", user)
+
+        if user:
+            user_profile = UserProfile.objects.filter(username=user.username).first()
+            if user_profile:
+                region = user_profile.region
+                region_id = Regions.objects.filter(region=region).first()
+
+                print("region", region)
+                self.fields['section'].queryset = Sections.objects.filter(region_id=region_id.id)
 
         for field_name, field in self.fields.items():
             field.widget.attrs.update({
@@ -46,6 +60,12 @@ class PettycashForm(forms.ModelForm):
                                            })
                 # set maximum to 2600
                 field.widget.attrs.update({'max': '3000'})
+            if field_name == 'section':
+                field.widget.attrs.update({
+                    'class': "select2 block w-full rounded-md border-0 py-1.5 text-gray-900 "
+                             "shadow-sm ring-1 ring-inset ring-gray-300 "
+                             "placeholder:text-gray-400 focus:ring-2 focus:ring-inset "
+                             "focus:ring-indigo-600 sm:text-sm sm:leading-6", })
 
             if isinstance(field.widget, forms.Textarea):
                 field.widget.attrs.update({'rows': '3'})
