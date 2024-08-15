@@ -2,6 +2,7 @@ from django import forms
 from django.contrib.auth.models import User
 from .models import *
 from django.forms import formset_factory
+from it.users.models import UserProfile, Regions, Sections, Designations
 
 
 class QuotationForm(forms.ModelForm):
@@ -14,6 +15,8 @@ QuotationFormSet = formset_factory(QuotationForm, extra=0, min_num=1, validate_m
 
 
 class AceForm(forms.ModelForm):
+    print("AceForm1")
+
     class Meta:
         model = Ace2
         fields = '__all__'
@@ -24,58 +27,89 @@ class AceForm(forms.ModelForm):
                    'connection_fee', 'transport', 'present_tariff', 'present_fmc', 'total_connection_fee'
                    ]
 
-        def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
 
-            user = kwargs.pop('user', None)
-            super().__init__(*args, **kwargs)
+        user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+        print("user", user)
 
+        if user:
+            user_profile = UserProfile.objects.filter(username=user.username).first()
+            if user_profile:
+                region = user_profile.region
+                region_id = Regions.objects.filter(region=region).first()
 
+                print("region", region)
+                self.fields['budget_id'].queryset = AssetBudget.objects.filter(period=2024, region=region)
+                self.fields['section'].queryset = Sections.objects.filter(region_id=region_id.id)
 
-            for field_name, field in self.fields.items():
-                # for the field budget i want it to display its balance attribute when it selected
+        for field_name, field in self.fields.items():
+            field.widget.attrs.update({
+                'class': "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset "
+                         "ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 "
+                         "sm:text-sm sm:leading-6",
+            })
+            # self.fields['budget_id'].queryset = AssetBudget.objects.filter(period=2024)
 
+            if (field_name == 'budget_id') or (field_name == 'section'):
                 field.widget.attrs.update({
-                    'class': "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset "
-                             "ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset "
-                             "focus:ring-indigo-600"
-                             "sm:text-sm sm:leading-6",
-                })
-                # if field is budgets display budget.balance on the label
+                    'class': "select2 block w-full rounded-md border-0 py-1.5 text-gray-900 "
+                             "shadow-sm ring-1 ring-inset ring-gray-300 "
+                             "placeholder:text-gray-400 focus:ring-2 focus:ring-inset "
+                             "focus:ring-indigo-600 sm:text-sm sm:leading-6", })
+            if isinstance(field.widget, forms.Textarea):
+                field.widget.attrs.update({'rows': '3'})
 
-                # if field_name == 'budget':
-                #     choices = [(currency, currency) for currency in ['ZIG', 'USD']]
-                #     field.choices = choices
-                #     field.widget.attrs.update(
-                #         {'class': 'block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm '
-                #                   'ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 '
-                #                   'focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm '
-                #                   'sm:leading-6'})
+            # for field_name, field in self.fields.items():
+        #     # for the field budget i want it to display its balance attribute when it selected
+        #     print("field_name", field_name)
+        #
+        #     field.widget.attrs.update({
+        #         'class': "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset "
+        #                  "ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset "
+        #                  "focus:ring-indigo-600"
+        #                  "sm:text-sm sm:leading-6",
+        #     })
+        #     if field_name == 'budget_id':
+        #         print('budget_id')
+        #         field.widget.attrs.update({
+        #             'class': "select2 block w-full rounded-md border-0 py-1.5 "
+        #                      "text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 "
+        #                      "placeholder:text-gray-400 focus:ring-2 focus:ring-inset "
+        #                      "focus:ring-indigo-600 sm:text-sm sm:leading-6", })
 
-                if user:
-                    current_year = timezone.now().year
-                    user_profile = UserProfile.objects.filter(id=user.id).first()
-                    region = Regions.objects.filter(id=user_profile.region.id).first()
-                    self.fields['budget'].queryset = Budget.objects.filter(period=current_year, region=region)
+        # if field is budgets display budget.balance on the label
 
-                if isinstance(field.widget, forms.Textarea):
-                    field.widget.attrs.update({'rows': '3'})
+        # if field_name == 'budget':
+        #     choices = [(currency, currency) for currency in ['ZIG', 'USD']]
+        #     field.choices = choices
+        #     field.widget.attrs.update(
+        #         {'class': 'block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm '
+        #                   'ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 '
+        #                   'focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm '
+        #                   'sm:leading-6'})
+        #
+        #
+        #     if isinstance(field.widget, forms.Textarea):
+        #         field.widget.attrs.update({'rows': '3'})
+        #
+        #     field.label = field.label or self.humanize_field_name(field_name)
+        #     field.label_attrs = {'class': 'block text-sm font-medium leading-6 text-gray-900'}
+        #
+        # self.formset = QuotationForm(*args, **kwargs)
+        #
+        # for i, quotation_form in enumerate(self.formset.forms):
+        #     quotation_form.fields['quotation_file'].widget.attrs.update({
+        #         'class': "block w-full rounded-md border-0 py-1.5 text-gray-900 bg-white shadow-sm ring-1 "
+        #                  "ring-inset"
+        #                  "ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset "
+        #                  "focus:ring-indigo-600"
+        #                  "sm:text-sm sm:leading-6",
+        #     })
 
-                field.label = field.label or self.humanize_field_name(field_name)
-                field.label_attrs = {'class': 'block text-sm font-medium leading-6 text-gray-900'}
+    # quotation_form.fields['quotation_file'].label = self.get_quotation_label(i + 1)
 
-            self.formset = QuotationForm(*args, **kwargs)
-
-            for i, quotation_form in enumerate(self.formset.forms):
-                quotation_form.fields['quotation_file'].widget.attrs.update({
-                    'class': "block w-full rounded-md border-0 py-1.5 text-gray-900 bg-white shadow-sm ring-1 "
-                             "ring-inset"
-                             "ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset "
-                             "focus:ring-indigo-600"
-                             "sm:text-sm sm:leading-6",
-                })
-                quotation_form.fields['quotation_file'].label = self.get_quotation_label(i + 1)
-
-            # if field is budget display the balnce and name
+    # if field is budget display the balnce and name
 
     def humanize_field_name(self, field_name):
         words = field_name.split('_')

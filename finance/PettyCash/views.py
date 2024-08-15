@@ -215,12 +215,13 @@ def pettycash_awaiting_my_action(request):
     pettycash_role = str(custom_user_roles["pettycash"])
     requester = 'create'
     current_year = datetime.now(timezone.utc).year
+    region = Regions.objects.filter(id=user_profile.region.id).first()
 
     # Calculate the starting year
     starting_year = current_year
 
     if pettycash_role == "approve":
-        for pettycash in Pettycash.objects.filter(section=request.user.section,
+        for pettycash in Pettycash.objects.filter(region=region, section=request.user.section,
                                                   date_created__year__gte=starting_year).only('petty_id',
                                                                                               'date_created').order_by(
             'old_version', '-date_created', 'petty_id')[:800]:
@@ -240,7 +241,7 @@ def pettycash_awaiting_my_action(request):
             if step:
                 pettycashs_to_process.append(pettycash)
     elif pettycash_role == requester:
-        for pettycash in Pettycash.objects.filter(section=request.user.section,
+        for pettycash in Pettycash.objects.filter(section=request.user.section, region=region,
                                                   date_created__year__gte=starting_year).only('petty_id',
                                                                                               'date_created').order_by(
             'old_version', '-date_created', 'petty_id')[:800]:
@@ -261,9 +262,7 @@ def pettycash_awaiting_my_action(request):
                 pettycashs_to_process.append(pettycash)
 
     else:
-        for pettycash in Pettycash.objects.filter(date_created__year__gte=starting_year).only('petty_id',
-                                                                                              'date_created').order_by(
-            'old_version', '-date_created', 'petty_id')[:800]:
+        for pettycash in Pettycash.objects.filter(region=region).order_by('-date_created', 'petty_id')[:1600]:
             process = pettycash.process
 
             if process.approval_set.exists():
@@ -292,6 +291,7 @@ def view_all_pettycashs(request):
 
     user_id = request.user.id
     user_profile = UserProfile.objects.prefetch_related('roles').filter(id=user_id).first()
+    region = Regions.objects.filter(id=user_profile.region.id).first()
 
     user_groups = user_profile.groups.values_list('name', flat=True)
 
@@ -313,14 +313,13 @@ def view_all_pettycashs(request):
     starting_year = current_year - 2
 
     if pettycash_role == "create":
-        pettycashs = Pettycash.objects.filter(requested_by=request.user)
+        pettycashs = Pettycash.objects.filter(region=region, requested_by=request.user)
     elif pettycash_role == "approve":
-        pettycashs = Pettycash.objects.filter(section=request.user.section).only('petty_id', 'date_created').order_by(
-            'old_version', '-date_created', 'petty_id')[:800]
+        pettycashs = Pettycash.objects.filter(region=region, section=request.user.section).order_by('-date_created',
+                                                                                                    'petty_id')[:800]
     else:
-        pettycashs = Pettycash.objects.filter(date_created__year__gte=starting_year).only('petty_id',
-                                                                                          'date_created').order_by(
-            'old_version', '-date_created', 'petty_id')[:800]
+        pettycashs = Pettycash.objects.filter(region=region).only('petty_id', 'date_created').order_by('-date_created',
+                                                                                                       'petty_id')[:1200]
     return render(request, 'finance/pettycash/view_all_pettycashs.html', {'pettycashs': pettycashs,
                                                                           'requester': requester})
 
@@ -350,9 +349,9 @@ def import_pettycash(request):
                     section = row['section']
                     allocation_code1 = row['allocation_code1']
                     description = row['description']
-                    quotation_1 = row['quotation_1']
-                    quotation_2 = row['quotation_2']
-                    quotation_3 = row['quotation_3']
+                    # quotation_1 = row['quotation_1']
+                    # quotation_2 = row['quotation_2']
+                    # quotation_3 = row['quotation_3']
                     amount = row['amount']
                     requester = row['requester']
                     payment_mode = row['payment_mode']
@@ -433,12 +432,12 @@ def import_pettycash(request):
                         pettycash.date_created = date
                         pettycash.save()
                         # check if quotation_1 isnt empty
-                        if quotation_1 != '' or quotation_1 == '0':
-                            qoutation_1 = Quotation.objects.create(
-                                pettycash=pettycash,
-                                quotation_file=quotation_1,
-                            )
-                            qoutation_1.save()
+                        # if quotation_1 != '' or quotation_1 == '0':
+                        #     qoutation_1 = Quotation.objects.create(
+                        #         pettycash=pettycash,
+                        #         quotation_file=quotation_1,
+                        #     )
+                        #     qoutation_1.save()
                         # qoutation_2 = Quotation.objects.create(
                         #     pettycash=pettycash,
                         #     quotation_file=quotation_2,
@@ -460,49 +459,49 @@ def import_pettycash(request):
                     status_1 = row1['status_1']
                     status_2 = row1['status_2']
                     status_3 = row1['status_3']
-                    status_4 = row1['status_4']
-                    status_5 = row1['status_5']
+                    # status_4 = row1['status_4']
+                    # status_5 = row1['status_5']
                     status_6 = row1['status_6']
-                    status_7 = row1['status_7']
+                    # status_7 = row1['status_7']
                     update_user1 = row1['update_user1']
                     update_user2 = row1['update_user2']
                     update_user3 = row1['update_user3']
-                    update_user4 = row1['update_user4']
-                    update_user5 = row1['update_user5']
+                    # update_user4 = row1['update_user4']
+                    update_user5 = row1['update_user4']
                     update_date1 = row1['update_date1']
                     update_date2 = row1['update_date2']
                     update_date3 = row1['update_date3']
-                    update_date4 = row1['update_date4']
-                    reason_1 = row1['reason_1']
-                    reason_2 = row1['reason_2']
-                    auth_signature = row1['auth_signature']
-                    received_by = row1['received_by']
-                    ecno = row1['ecno']
-                    date_received = row1['date_received']
+                    # update_date4 = row1['update_date4']
+                    # reason_1 = row1['reason_1']
+                    # reason_2 = row1['reason_2']
+                    # auth_signature = row1['auth_signature']
+                    # received_by = row1['received_by']
+                    # ecno = row1['ecno']
+                    # date_received = row1['date_received']
                     payment_method = row1['payment_method']
-                    ecocash_charge = row1['ecocash_charge']
-                    total_disbursed = row1['total_disbursed']
-                    actual_amount = row1['actual_amount']
-                    ecocash_confirmation = row1['ecocash_confirmation']
-                    allocation_code = row1['allocation_code']
-                    receipt = row1['receipt']
-                    receipt_date = row1['receipt_date']
-                    acquittal_date = row1['acquittal_date']
-                    checked_by = row1['checked_by']
-                    checked_on = row1['checked_on']
-                    checked_status = row1['checked_status']
-                    reason_3 = row1['reason_3']
-                    reason_4 = row1['reason_4']
-                    reason_5 = row1['reason_5']
-                    requestor_cleared_by = row1['requestor_cleared_by']
-                    cashier_cleared_by = row1['cashier_cleared_by']
-                    disbursement_remarks = row1['disbursement_remarks']
-                    acquittal_remarks = row1['acquittal_remarks']
-                    requestor_remarks = row1['requestor_remarks']
-                    returned_by = row1['returned_by']
-                    date_returned = row1['date_returned']
-                    return_remarks = row1['return_remarks']
-                    imt_tax = row1['imt_tax']
+                    # ecocash_charge = row1['ecocash_charge']
+                    # total_disbursed = row1['total_disbursed']
+                    # actual_amount = row1['actual_amount']
+                    # ecocash_confirmation = row1['ecocash_confirmation']
+                    # allocation_code = row1['allocation_code']
+                    # receipt = row1['receipt']
+                    # receipt_date = row1['receipt_date']
+                    # acquittal_date = row1['acquittal_date']
+                    # checked_by = row1['checked_by']
+                    # checked_on = row1['checked_on']
+                    # checked_status = row1['checked_status']
+                    # reason_3 = row1['reason_3']
+                    # reason_4 = row1['reason_4']
+                    # reason_5 = row1['reason_5']
+                    # requestor_cleared_by = row1['requestor_cleared_by']
+                    # cashier_cleared_by = row1['cashier_cleared_by']
+                    # disbursement_remarks = row1['disbursement_remarks']
+                    # acquittal_remarks = row1['acquittal_remarks']
+                    # requestor_remarks = row1['requestor_remarks']
+                    # returned_by = row1['returned_by']
+                    # date_returned = row1['date_returned']
+                    # return_remarks = row1['return_remarks']
+                    # imt_tax = row1['imt_tax']
                     # print("now dealing with approvals")
                     # add the date created to the pettycash process
                     pettycash = Pettycash.objects.filter(petty_id=voucher_id).first()
@@ -550,7 +549,7 @@ def import_pettycash(request):
                                     else:
                                         print('user not found')
                                 status_3 = int(status_3)
-                                status_7 = int(status_7)
+                                status_7 = int(status_6)
                                 if update_user5 != '' and status_3 == 3 and status_7 == 7:
                                     update_user5 = update_user5.strip()
                                     user = UserProfile.objects.filter(username=update_user5).first()
@@ -572,6 +571,24 @@ def import_pettycash(request):
                         pettycash.payment_mode = payment_method
                         pettycash.currency = 'ZWL'
                         pettycash.save()
+
+                        date_str = pettycash.petty_id[2:8]
+                        print(date_str, 'date_str')
+                        #check length of date string
+                        if len(date_str) == 6:
+                            # Convert the date string to a datetime object
+                            # If the year is less than 20, we assume it's 2000s, otherwise it's 1900s
+                            year = int(date_str[:2])
+                            print(year, 'year1')
+                            year += 2000
+                            print(year, 'year')
+
+                            date_str = str(year) + date_str[2:]
+                            day_created = datetime.strptime(date_str, '%Y%m%d')
+                            # format into date format not date time
+                            day_created = day_created.strftime('%Y-%m-%d')
+                            pettycash.date_created = day_created
+                            pettycash.save()
 
                 print('done')
                 return redirect('/pettycash/pettycashs')

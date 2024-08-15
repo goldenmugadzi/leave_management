@@ -143,9 +143,16 @@ def Ace_detail(request, Ace_id2):
 
 @login_required
 def create_Ace(request):
+    print('create ace')
     global ace_role
     QuotationFormSet()
-    form = AceForm()
+    # form = AceForm()
+    user_id = request.user.id
+    user_profile = UserProfile.objects.filter(id=user_id).first()
+
+    form = AceForm(user=user_profile)
+
+    # print(form)
     formset = QuotationFormSet()
     if request.method == 'POST':
         form = AceForm(request.POST, request.FILES)
@@ -257,13 +264,13 @@ def create_Ace(request):
                     return render(request, 'finance/ace2/create_ace.html',
                                   {'form': form, 'formset': formset, 'error_message': "Insufficient Balance"})
             else:
-                form = AceForm()
+                form = AceForm(user=user_profile)
                 formset = QuotationFormSet()
         else:
             sweetify.error(request, "You are not allowed to create Ace")
             messages.error(request, "You are not allowed to create")
             # url = reverse('/acee/aces')
-            return redirect('/acee/aces')
+            return redirect('/ace/aces')
 
     return render(request, 'finance/ace2/create_ace.html', {'form': form, 'formset': formset})
 
@@ -583,7 +590,6 @@ def list_budgets(request):
     l = request.user.groups.values_list('name', flat=True)
 
     # QuerySet Object
-
 
     user_page = 'ace/budgets_index.html'
     print(section_budget)
