@@ -29,54 +29,24 @@
         <table id="tokens" class="table table-striped stripe table-bordered">
           <thead>
             <tr>
-              <th>ID 
-                <input type="text"
-                   id="id"
-                   class="border  border-gray-300 border-blue-500 border border-1 rounded-full"
-                   name="id"
-                   placeholder="id">
-              </th>
+              <th>ID </th>
               <th>Reason
-                <input type="text"
-                   id="reason"
-                   class="border  border-gray-300 border-blue-500 border border-1 rounded-full"
-                   name="reason"
-                   placeholder="reason">
+              
               </th>
               <th>Type
-                <input type="text"
-                   id="type"
-                   class="border  border-gray-300 border-blue-500 border border-1 rounded-full"
-                   name="type"
-                   placeholder="type">
+          
               </th>
               <th>Date
-                <input type="text"
-                   id="date"
-                   class="border  border-gray-300 border-blue-500 border border-1 rounded-full"
-                   name="date"
-                   placeholder="date">
+               
               </th>
               <th>Customer
-                <input type="text"
-                   id="customer"
-                   class="border  border-gray-300 border-blue-500 border border-1 rounded-full"
-                   name="customer"
-                   placeholder="customer">
+            
               </th>
               <th>Meter number
-                <input type="text"
-                   id="meter_number"
-                   class="border  border-gray-300 border-blue-500 border border-1 rounded-full"
-                   name="meter_number"
-                   placeholder="meter number">
+            
               </th>
               <th>Status
-                <input type="text"
-                   id="status"
-                   class="border  border-gray-300 border-blue-500 border border-1 rounded-full"
-                   name="status"
-                   placeholder="status">
+             
               </th>
             </tr>
           </thead>
@@ -95,7 +65,7 @@
                 </td>
                 <td>{{ token.process.approval_set.last|default_if_none:"No Approval" }}</td>
               </tr>
-            {% endfor %}
+            {% endfor %} 
           </tbody>
         </table>
         <div class=" container text-center ">
@@ -105,13 +75,38 @@
             {% endfor %}
           {% endif %}
         </div>
-      <div class=" container grid grid-cols-2 mt-2">
+      <div class=" container grid grid-cols-5 mt-2 bg-blue-500">
         <input type="text"
+                   id="reason"
+                   class="border  border-gray-300 border-blue-500 border border-1 rounded-full"
+                   name="reason"
+                   placeholder="reason">  <input type="text"
+        id="type"
+        class="border  border-gray-300 border-blue-500 border border-1 rounded-full"
+        name="type"
+        placeholder="type">  <input type="text"
+        id="customer"
+        class="border  border-gray-300 border-blue-500 border border-1 rounded-full"
+        name="customer"
+        placeholder="customer">   <input type="text"
+        id="id"
+        class="border  border-gray-300 border-blue-500 border border-1 rounded-full"
+        name="id"
+        placeholder="id">  <input type="text"
         id="search-input"
         class="border border-gray-300 border-blue-500 border border-1 rounded-full"
         name="search_term"
         placeholder="Extra filtering keywords here ...">
-
+        <input type="text"
+        id="status"
+        class="border  border-gray-300 border-blue-500 border border-1 rounded-full"
+        name="status"
+        placeholder="status">
+        <input type="text"
+        id="meter_number"
+        class="border  border-gray-300 border-blue-500 border border-1 rounded-full"
+        name="meter_number"
+        placeholder="meter number">
  <button type="submit"
         class="text-blue-700 border-blue-500 bg-gray-400 hover:bg-gray-700 border border-1 ml-1 mx-auto px-3 font-bold rounded-full">
   <i class="fa fa-search"></i> Search
