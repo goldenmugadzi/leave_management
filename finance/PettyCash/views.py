@@ -130,6 +130,8 @@ def pettyCash_detail(request, petty_id):
 
 @login_required
 def create_pettycash(request):
+    user_id = request.user.id
+    user_profile = UserProfile.objects.filter(id=user_id).first()
     if request.method == 'POST':
         form = PettycashForm(request.POST, request.FILES)
         formset = QuotationFormSet(request.POST, request.FILES)
@@ -173,7 +175,7 @@ def create_pettycash(request):
                 url = reverse('pettycash:pettycash_detail', args=[pettycash.petty_id])
                 return redirect(url)
             else:
-                form = PettycashForm()
+                form = PettycashForm(user=user_profile)
                 formset = QuotationFormSet()
         else:
             sweetify.error(request, "You are not authorized to create a new pettycash")
@@ -181,7 +183,7 @@ def create_pettycash(request):
             return redirect('/pettycash/pettycashs')
 
     else:
-        form = PettycashForm()
+        form = PettycashForm(user=user_profile)
         formset = QuotationFormSet()
 
     return render(request, 'finance/pettycash/create_pettycash.html', {'form': form, 'formset': formset})
