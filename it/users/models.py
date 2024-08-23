@@ -36,10 +36,6 @@ class Regions(models.Model):
     def __str__(self):
         return self.region
 
-    class Meta:
-        app_label = 'users'
-
-
 class Districts(models.Model):
     district = models.CharField(max_length=100)
     code = models.CharField(max_length=100)
@@ -47,9 +43,6 @@ class Districts(models.Model):
 
     def __str__(self):
         return self.district
-
-    class Meta:
-        app_label = 'users'
 
 
 class Sections(models.Model):
@@ -61,10 +54,6 @@ class Sections(models.Model):
     def __str__(self):
         return self.section
 
-    class Meta:
-        app_label = 'users'
-
-
 class Depots(models.Model):
     depot = models.CharField(max_length=100)
     code = models.CharField(max_length=100)
@@ -73,9 +62,6 @@ class Depots(models.Model):
 
     def __str__(self):
         return self.depot
-
-    class Meta:
-        app_label = 'users'
 
 
 class Application(models.Model):
@@ -94,11 +80,7 @@ class Roles(models.Model):
     app_id = models.ForeignKey(Application, on_delete=models.DO_NOTHING, blank=True, null=True)
 
     def __str__(self):
-        return self.role
-
-    class Meta:
-        app_label = 'users'
-
+        return f"{self.role} - {self.app_id.name}"
 
 class Designations(models.Model):
     identifier = models.CharField(max_length=100, blank=True)
@@ -109,9 +91,6 @@ class Designations(models.Model):
 
     def __str__(self):
         return self.identifier
-
-    class Meta:
-        app_label = 'users'
 
 class CostCenter(models.Model):
     id = models.CharField(primary_key=True, max_length=20, editable=False)
@@ -125,7 +104,12 @@ class CostCenter(models.Model):
     def get_all_children(self):
         children = list(self.children.all())
         return children
-    
+    def get_decendance(self):
+        children = self.children.all()
+        decendance = children
+        for child in children:
+            decendance |= child.children.all()
+        return decendance
     def get_all_ancestors(self):
         ancestors = []
         current = self
@@ -133,15 +117,18 @@ class CostCenter(models.Model):
             ancestors.append(current.parent)
             current = current.parent
         return ancestors[::-1]
+    def get_region(self):
+        cc=self
+        ancestors = cc.get_all_ancestors()
+
+        return ancestors[2]
     def get_all_ancestors_and_their_children(self):
-        ancestors = []
+        ancestors = CostCenter.objects.none()
         if self.parent:
             ancestors.append(self.parent)
             ancestors += self.parent.get_all_ancestors_and_their_children()
         children = self.get_all_children()
         return ancestors  + children
-    # def what_i_can_see(self):
-    #     return self.get_all_ancestors_and_their_children() + [self]
     def get_view(self):
         """ return a list of cost centers involving children, grand children, brothers ,parent , parent brothers, grand parent"""
         cost_centers=[]
@@ -152,13 +139,14 @@ class CostCenter(models.Model):
             self = self.parent
             i+=1
         return cost_centers
+     
     
     def __str__(self):
-        ancestor_names = [ancestor.name for ancestor in self.get_all_ancestors()[1::]]
-        center = f"{', '.join(ancestor_names + [f'{self.name}({self.code})'])}"
-        center = ', '.join(dict.fromkeys(center.split(', ')))
-        return center
-    
+        # ancestor_names = [ancestor.name for ancestor in self.get_all_ancestors()[1::]]
+        # center = f"{', '.join(ancestor_names + [f'{self.name}({self.code})'])}"
+        # center = ', '.join(dict.fromkeys(center.split(', ')))
+        # return center
+        return f"{self.name} ({self.code})"
 
 class UserProfile(AbstractUser):
     username = models.CharField(max_length=15, unique=True, verbose_name='EC Number',db_index=True)
@@ -239,3 +227,10 @@ class Supplier(models.Model):
             random_number = str(random.randint(10000, 99999))
             self.id = "splr" + timestamp + random_number
         super().save(*args, **kwargs)
+
+class Responsibilities(models.Model):
+    role = models.ForeignKey(Roles, on_delete=models.CASCADE, blank=True, null=True)
+    cost_centers = models.ManyToManyField(CostCenter, blank=True)
+
+    def __str__(self):
+        return self.role.role

@@ -327,14 +327,14 @@ def view_all_tokens(request):
         else:
             messages.error(request, "You do not have a cost center assigned to you. \n Please contact the administrator.")
             return redirect("tokens:tokens")
-
+    TokenFilterForm = TokenFilterForm()
 
        
     return render(
         request,
         "tokens/tokens.html",
         {
-            "tokens": Token.objects.all().order_by("-created_at")[:10],
+            "tokens": Token.objects.all().order_by("-created_at"),#[:10],
             "all": True,
             "roles": get_my_roles_for_apps(
                 request.user, ["temper", "reimbursement", "clear credit"]
@@ -355,12 +355,12 @@ def awaiting_my_action(request):
     )
     count = mytokens.count()
 
-    mytokens = mytokens.order_by("-created_at")[:10]
+    mytokens = mytokens.order_by("-created_at")#[:10]
     for token in mytokens:
         process = token.process
 
         if process.approval_set.exists():
-            last_approval = process.approval_set.last()
+            last_approval = process.approval_set.last() 
             current_step = last_approval.step.step
         else:
             current_step = 0

@@ -28,7 +28,8 @@ from django.contrib import messages
 from approve.decorators import allowed_roles
 from django.core.paginator import Paginator
 from decouple import config
-
+from django.forms import inlineformset_factory
+from .forms import ResponsibilitiesForm
 from django.core import serializers
 BASE_URL = "http://"+config('HOST')+":"+config('PORT')
 APP_NAME = "users"
@@ -430,6 +431,9 @@ def update_user(request):
         except Exception as ex:
             print("Error: ", ex)
             cost_centers = []
+        """for every application, initialize the responsibility formset for the user to be assigned roles and cost centers""" 
+
+
         return render(
             request,
             "users/user_update.html",
@@ -1069,22 +1073,6 @@ def import_old_users(request):
     
     return JsonResponse({"status": "success", "message": "Users imported successfully"})
 
-# @csrf_exempt
-# @api_view(['POST'])
-# @parser_classes([JSONParser])
-# def create_user(request):
-#     print(request.data)
-#     serializer = UserSerializer(request.data)
-#     area = serializer.create(serializer.data)
-#     area.save()
-#
-#     return Response({
-#         "status": "success",
-#         "message": "Successfully created area",
-#         "code": 201,
-#         "data": serializer.data
-#     })
-# @login_required
 def get_center_filter(request, id):
     cost_centers = CostCenter.objects.get(id=id).get_view()
     json_centers = []
@@ -1098,3 +1086,30 @@ def get_center_filter(request, id):
         
         json_centers.append(json_center)
     return JsonResponse(json_centers, safe=False)
+def remove_duplicates():
+    duplicates = (
+        Roles.objects.values('role', 'app_id')
+        .annotate(count_id=models.Count('id'))
+        .filter(count_id__gt=1)
+    )
+
+    for duplicate in duplicates:
+        roles = Roles.objects.filter(role=duplicate['role'], app_id=duplicate['app_id'])
+        roles.exclude(id=roles.first().id).delete()
+
+@login_required
+def roles_modal(request):
+
+    remove_duplicates()
+    userid = request.GET['user_id']
+    appid = request.GET['app_id']
+    user = UserProfile.objects.get(id=userid)
+    roles = Roles.objects.filter(app_id=appid)
+    user_roles = user.roles.filter(app_id=appid)
+    """use a model form to assign roles to the user"""
+    regioncc=user.cost_center.get_region().get_decendance()
+    form = ResponsibilitiesForm(roles_queryset=roles,cost_centers_queryset=regioncc)
+    regioncc_list = list(regioncc.values('id', 'code', 'name', 'parent_id'))
+
+
+    return JsonResponse({"roles": list(roles.values()),"form":form.as_p(),"regioncc":list(regioncc_list), "user_roles": list(user_roles.values())}, safe=False)

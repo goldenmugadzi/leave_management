@@ -1,5 +1,7 @@
 <!--users/templates/users/add_user.html-->
-{% extends 'admin_layout.html' %} {% load static %} {% load custom_filters %}
+{% extends 'admin_layout.html' %}
+{% load static %}
+{% load custom_filters %}
 <style>
   .google-visualization-orgchart-linebottom {
     border-bottom: 1px solid #3388dd;
@@ -11,319 +13,231 @@
   }
 </style>
 {% block content %}
-<div class="content-wrapper">
-  <div
-    class="bg-gulf-blue-100 shadow shadow-gulf-blue-300 text-gulf-blue-900 rounded px-2 py-2"
-  >
-    <form method="post">
-      <input type="hidden" name="user_id" value="{{user.id}}" />
-      {% csrf_token %}
-      <div class="space-y-12 px-5 py-5">
-        <div class="mt-10 border-b border-gulf-blue-900/10 pb-12">
-          <h2 class="text-base font-semibold leading-7 text-gulf-blue-900">
-            User Information
-          </h2>
-          <p class="mt-1 text-sm leading-6 text-gulf-blue-900">
-            Update relevant fields.
-          </p>
-
-          <div class="mt-10 grid grid-cols-3 gap-4">
-            <div>
-              <label
-                for="firstname"
-                class="block text-sm font-medium leading-6 text-gray-900"
-                >First name</label
-              >
-              <div class="mt-2">
-                <input
-                  type="text"
-                  name="firstname"
-                  id="firstname"
-                  value="{{user.firstname}}"
-                  autocomplete="firstname"
-                  class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label
-                for="lastname"
-                class="block text-sm font-medium leading-6 text-gray-900"
-                >Last name</label
-              >
-              <div class="mt-2">
-                <input
-                  type="text"
-                  name="lastname"
-                  id="lastname"
-                  value="{{user.lastname}}"
-                  autocomplete="family-name"
-                  class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label
-                for="username"
-                class="block text-sm font-medium leading-6 text-gray-900"
-                >Username</label
-              >
-              <div class="mt-2">
-                <input
-                  type="text"
-                  name="username"
-                  id="username"
-                  value="{{user.username}}"
-                  autocomplete="family-name"
-                  class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label
-                for="designation"
-                class="block text-sm font-medium leading-6 text-gray-900"
-                >Designations</label
-              >
-              <div class="mt-2">
-                <select
-                  id="designation"
-                  name="designation"
-                  autocomplete="designation"
-                  class="block w-full rounded-md border-0 px-2 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
-                >
-                  {% if user.designation %}
-                  <option value="{{user.designation.id}}">
-                    {{user.designation.description}}
-                  </option>
-                  {% endif %}
-                  <option value="">Select Designation</option>
-                  {% for design in user_designations %}
-                  <option value="{{design.id}}">{{design.description}}</option>
-                  {% endfor %}
-                </select>
-              </div>
-            </div>
-
-            <div>
-              <label
-                for="email"
-                class="block text-sm font-medium leading-6 text-gray-900"
-                >Email address</label
-              >
-              <div class="mt-2">
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  value="{{user.email}}"
-                  autocomplete="email"
-                  class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label
-                for="region"
-                class="block text-sm font-medium leading-6 text-gray-900"
-                >Region</label
-              >
-              <div class="mt-2">
-                <select
-                  id="region"
-                  name="region"
-                  autocomplete="region"
-                  class="block w-full rounded-md border-0 px-2 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
-                >
-                  {% if user.region %}
-                  <option value="{{ user.region.id }}" selected>
-                    {{ user.region.region }}
-                  </option>
-                  {% endif %}
-                  <option value="">Select Region</option>
-                  {% for region in regions %}
-                  <option value="{{region.id}}">{{region.region}}</option>
-                  {% endfor %}
-                </select>
-              </div>
-            </div>
-
-            <div>
-              <label
-                for="district"
-                class="block text-sm font-medium leading-6 text-gray-900"
-                >District</label
-              >
-              <div class="mt-2">
-                <select
-                  id="district"
-                  name="district"
-                  autocomplete="district"
-                  class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 px-2 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
-                >
-                  {% if user.district %}
-                  <option value="{{ user.district.id }}" selected>
-                    {{ user.district.district }}
-                  </option>
-                  {% endif %}
-                </select>
-              </div>
-            </div>
-
-            <div>
-                <label
-                  for="cost_center"
-                  class="block text-sm font-medium leading-6 text-gray-900"
-                  >Cost Centre</label
-                >
+  <div class="content-wrapper">
+    <div class="bg-gulf-blue-100 shadow shadow-gulf-blue-300 text-gulf-blue-900 rounded px-2 py-2">
+      <form method="post">
+        <input type="hidden" name="user_id" value="{{ user.id }}" />
+        {% csrf_token %}
+        <div class="space-y-12 px-5 py-5">
+          <div class="mt-10 border-b border-gulf-blue-900/10 pb-12">
+            <h2 class="text-base font-semibold leading-7 text-gulf-blue-900">User Information</h2>
+            <p class="mt-1 text-sm leading-6 text-gulf-blue-900">Update relevant fields.</p>
+            <div class="mt-10 grid grid-cols-3 gap-4">
+              <div>
+                <label for="firstname"
+                       class="block text-sm font-medium leading-6 text-gray-900">First name</label>
                 <div class="mt-2">
-                  <select
-                    id="cost_center"
-                    name="cost_center"
-                    autocomplete="cost_center"
-                    class="block w-full rounded-md border-0 px-2 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
-                  >
-                    {% if user.cost_center %}
-                    <option value="{{user.cost_center.id}}">
-                      {{user.cost_center.name}}
-                    </option>
+                  <input type="text"
+                         name="firstname"
+                         id="firstname"
+                         value="{{ user.firstname }}"
+                         autocomplete="firstname"
+                         class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" />
+                </div>
+              </div>
+              <div>
+                <label for="lastname"
+                       class="block text-sm font-medium leading-6 text-gray-900">Last name</label>
+                <div class="mt-2">
+                  <input type="text"
+                         name="lastname"
+                         id="lastname"
+                         value="{{ user.lastname }}"
+                         autocomplete="family-name"
+                         class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" />
+                </div>
+              </div>
+              <div>
+                <label for="username"
+                       class="block text-sm font-medium leading-6 text-gray-900">Username</label>
+                <div class="mt-2">
+                  <input type="text"
+                         name="username"
+                         id="username"
+                         value="{{ user.username }}"
+                         autocomplete="family-name"
+                         class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" />
+                </div>
+              </div>
+              <div>
+                <label for="designation"
+                       class="block text-sm font-medium leading-6 text-gray-900">Designations</label>
+                <div class="mt-2">
+                  <select id="designation"
+                          name="designation"
+                          autocomplete="designation"
+                          class="block w-full rounded-md border-0 px-2 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6">
+                    {% if user.designation %}
+                      <option value="{{ user.designation.id }}">{{ user.designation.description }}</option>
                     {% endif %}
+                    <option value="">Select Designation</option>
+                    {% for design in user_designations %}<option value="{{ design.id }}">{{ design.description }}</option>{% endfor %}
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label for="email" class="block text-sm font-medium leading-6 text-gray-900">Email address</label>
+                <div class="mt-2">
+                  <input id="email"
+                         name="email"
+                         type="email"
+                         value="{{ user.email }}"
+                         autocomplete="email"
+                         class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" />
+                </div>
+              </div>
+              <div>
+                <label for="region"
+                       class="block text-sm font-medium leading-6 text-gray-900">Region</label>
+                <div class="mt-2">
+                  <select id="region"
+                          name="region"
+                          autocomplete="region"
+                          class="block w-full rounded-md border-0 px-2 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6">
+                    {% if user.region %}<option value="{{ user.region.id }}" selected>{{ user.region.region }}</option>{% endif %}
+                    <option value="">Select Region</option>
+                    {% for region in regions %}<option value="{{ region.id }}">{{ region.region }}</option>{% endfor %}
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label for="district"
+                       class="block text-sm font-medium leading-6 text-gray-900">District</label>
+                <div class="mt-2">
+                  <select id="district"
+                          name="district"
+                          autocomplete="district"
+                          class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 px-2 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6">
+                    {% if user.district %}<option value="{{ user.district.id }}" selected>{{ user.district.district }}</option>{% endif %}
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label for="cost_center"
+                       class="block text-sm font-medium leading-6 text-gray-900">Cost Centre</label>
+                <div class="mt-2">
+                  <select id="cost_center"
+                          name="cost_center"
+                          autocomplete="cost_center"
+                          class="block w-full rounded-md border-0 px-2 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6">
+                    {% if user.cost_center %}<option value="{{ user.cost_center.id }}">{{ user.cost_center.name }}</option>{% endif %}
                     <option value="">Select Cost Centre</option>
                   </select>
                 </div>
-            </div>
-
-            <div>
-                <label
-                  for="depot"
-                  class="block text-sm font-medium leading-6 text-gray-900"
-                  >Depot</label
-                >
-                <div class="mt-2">
-                  <select
-                    id="depot"
-                    name="depot"
-                    autocomplete="depot"
-                    class="block w-full rounded-md border-0 px-2 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
-                  >
-                  {% if user.depot %}
-                  <option value="{{user.depot.id}}" >{{user.depot.depot}}</option>
-                  {% endif %}
-                  <option value="" >select depot</option>
-                  </select>
-                </div>
               </div>
-  
               <div>
-                <label
-                  for="section"
-                  class="block text-sm font-medium leading-6 text-gray-900"
-                  >Section</label
-                >
+                <label for="depot" class="block text-sm font-medium leading-6 text-gray-900">Depot</label>
                 <div class="mt-2">
-                  <select
-                    id="section"
-                    name="section"
-                    autocomplete="section"
-                    class="block w-full rounded-md border-0 px-2 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
-                  >
-                  {% if user.section %}
-                  <option value="{{user.section.code}}" >{{user.section.section}}</option>
-                  {% endif %}
-                  <option value="">Select Section</option>
-                  {% for section in sections %}
-                  <option value="{{section.code}}">{{section.section}}</option>
-                  {% endfor %}
+                  <select id="depot"
+                          name="depot"
+                          autocomplete="depot"
+                          class="block w-full rounded-md border-0 px-2 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6">
+                    {% if user.depot %}<option value="{{ user.depot.id }}">{{ user.depot.depot }}</option>{% endif %}
+                    <option value="">select depot</option>
                   </select>
                 </div>
               </div>
-            
-          </div>
-          <div class="mt-10 overflow-x-scroll">
-            <h2 class="text-base text-center font-semibold leading-7 text-gulf-blue-900">
-                Pick Cost Center
-            </h2>
-            <div id="chart_div" class="py-10 px-5"></div>
-          </div>
-        </div>
-
-        <div class="mt-10 border-b border-gray-900/10 pb-12">
-          <h2 class="text-base font-semibold leading-7 text-gray-900">
-            User Roles
-          </h2>
-          <p class="mt-1 text-sm leading-6 text-gray-600">
-            Select user roles for the following application modules.
-          </p>
-          <div class="mt-10 grid grid-cols-3 gap-4">
-            {% for app in user_applications %}
-            <div>
-              <label
-                for="{{ app.name }}"
-                class="block text-sm font-medium leading-6 text-gray-900"
-                >{{ app.fullname }}</label
-              >
-              <div class="mt-2">
-                <select
-                  id="{{ app.name }}"
-                  name="{{ app.name }}"
-                  autocomplete="{{ app.name }}"
-                  class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 px-2 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
-                >
-                  {% if user.roles|get_value:app.name %} {% with app_role=user.roles|get_value:app.name %}
-                  <option value="{{ app_role.id }}">
-                    {{ app_role.name }}
-                  </option>
-                  {% endwith %} {% endif %}
-                  <option>Select Role</option>
-                  {% for role in user_roles|get_value:app.name %}
-                  <option value="{{ role.id }}">{{ role.name }}</option>
-                  {% endfor %}
-                </select>
+              <div>
+                <label for="section"
+                       class="block text-sm font-medium leading-6 text-gray-900">Section</label>
+                <div class="mt-2">
+                  <select id="section"
+                          name="section"
+                          autocomplete="section"
+                          class="block w-full rounded-md border-0 px-2 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6">
+                    {% if user.section %}<option value="{{ user.section.code }}">{{ user.section.section }}</option>{% endif %}
+                    <option value="">Select Section</option>
+                    {% for section in sections %}<option value="{{ section.code }}">{{ section.section }}</option>{% endfor %}
+                  </select>
+                </div>
               </div>
             </div>
-            {% endfor %}
+            <div class="mt-10 overflow-x-scroll">
+              <h2 class="text-base text-center font-semibold leading-7 text-gulf-blue-900">Pick Cost Center</h2>
+              <div id="chart_div" class="py-10 px-5"></div>
+            </div>
+          </div>
+          <div class="mt-10 border-b border-gray-900/10 pb-12">
+            <h2 class="text-base font-semibold leading-7 text-gray-900">User Roles</h2>
+            <p class="mt-1 text-sm leading-6 text-gray-600">Select user roles for the following application modules.</p>
+            <div class="mt-10 grid grid-cols-3 gap-4">
+              {% for app in user_applications %}
+                <div>
+                  <form method="post" id="role_form">
+                    {% csrf_token %}
+                    <input type="hidden" name="user_id" value="{{ user.id }}" />
+                    <input type="hidden" name="app_id" value="{{ app.id }}" />
+                    <input type="hidden" name="name" value="{{ app.name }}" />
+                    <button class="block rolebtn text-sm font-medium border-gulf-blue-700 rounded px-2 border-1 border leading-6 text-gray-900"
+                            type="button">{{ app.fullname }}</button>
+                  </form>
+                  <div class="mt-2">
+                    <select id="{{ app.name }}"
+                            name="{{ app.name }}"
+                            autocomplete="{{ app.name }}"
+                            class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 px-2 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6">
+                      {% if user.roles|get_value:app.name %}
+                        {% with app_role=user.roles|get_value:app.name %}
+                          <option value="{{ app_role.id }}">{{ app_role.name }}</option>
+                        {% endwith %}
+                      {% endif %}
+                      <option>Select Role</option>
+                      {% for role in user_roles|get_value:app.name %}<option value="{{ role.id }}">{{ role.name }}</option>{% endfor %}
+                    </select>
+                  </div>
+                  {% comment %} <div>
+                {{formset.management_form}}
+                {% for form in formset %}{{form}}{% endfor %}
+                  </div> {% endcomment %}
+                </div>
+              {% endfor %}
+            </div>
           </div>
         </div>
-      </div>
-
-      <div class="flex mt-10 px-3 py-3">
-        <div style="width: 50%">
-          <button
-            style="width: 100%"
-            class="text-sm font-semibold leading-6 text-gray-900"
-          >
-            CANCEL
-          </button>
+        <div class="modal fade"
+             id="rolesModal"
+             tabindex="-1"
+             aria-labelledby="rolesModalLabel"
+             aria-hidden="true">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title" id="rolesModalLabel">Roles</h5>
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+              </div>
+              <div 
+             id="rolesModalBody"
+             class="modal-body">
+            </div>
+              <div  id='cc_chart_div'>
+               </div>
+            </div>
+          </div>
         </div>
-        <div style="width: 50%">
-          <button
-            style="width: 100%"
-            type="submit"
-            class="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-          >
-            SAVE USER
-          </button>
+        <div class="flex mt-10 px-3 py-3">
+          <div style="width: 50%">
+            <button style="width: 100%"
+                    class="text-sm font-semibold leading-6 text-gray-900">CANCEL</button>
+          </div>
+          <div style="width: 50%">
+            <button style="width: 100%"
+                    type="submit"
+                    class="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+              SAVE USER
+            </button>
+          </div>
         </div>
-      </div>
-    </form>
+      </form>
+    </div>
   </div>
-</div>
-{% endblock content %} {% block scripts %}
-<script
-  type="text/javascript"
-  src="{% static 'assets/js/loader.js' %}"
-></script>
-{% comment %}
-<script
-  type="text/javascript"
-  src="https://www.gstatic.com/charts/loader.js"
-></script>
-{% endcomment %}
-<script type="text/javascript">
+{% endblock content %}
+{% block scripts %}
+  <script type="text/javascript" src="{% static 'assets/js/loader.js' %}"></script>
+  <script type="text/javascript" src="{% static 'assets/js/roleajax.js' %}"></script>
+  <script type="text/javascript">
     google.charts.load('current', {packages:["orgchart"]});
    function assignCostCenter(id) {
       document.getElementById('cost_center').value = id;
@@ -416,5 +330,5 @@
         });
     });
   });
-</script>
+  </script>
 {% endblock scripts %}

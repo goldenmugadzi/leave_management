@@ -36,3 +36,7 @@ class NotificationAdmin(admin.ModelAdmin):
 @admin.register(CostCenter)
 class CostCenterAdmin(admin.ModelAdmin):
     list_display = ('code', 'name', 'parent')
+
+@admin.register(Responsibilities)
+class ResponsibilitiesAdmin(admin.ModelAdmin):
+    list_display = ('id','role', )
