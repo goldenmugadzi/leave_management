@@ -105,11 +105,14 @@ class CostCenter(models.Model):
         children = list(self.children.all())
         return children
     def get_decendance(self):
-        children = self.children.all()
-        decendance = children
-        for child in children:
-            decendance |= child.children.all()
-        return decendance
+        def _get_all_descendants(node):
+            descendants = node.children.all()
+            for child in descendants:
+                descendants |= _get_all_descendants(child)
+            return descendants
+
+        descendants = _get_all_descendants(self)
+        return descendants | self.__class__.objects.filter(pk=self.pk)
     def get_all_ancestors(self):
         ancestors = []
         current = self
@@ -229,6 +232,7 @@ class Supplier(models.Model):
         super().save(*args, **kwargs)
 
 class Responsibilities(models.Model):
+    user = models.ForeignKey(UserProfile, on_delete=models.CASCADE, blank=True, null=True , related_name='responsibilities')
     role = models.ForeignKey(Roles, on_delete=models.CASCADE, blank=True, null=True)
     cost_centers = models.ManyToManyField(CostCenter, blank=True)
 

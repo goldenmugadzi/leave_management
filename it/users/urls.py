@@ -23,5 +23,5 @@ urlpatterns = [
     path('import_old_users', views.import_old_users, name='import_old_users'),
     path('centfilter/<str:id>', views.get_center_filter, name='get_center_filter'),
 
-    path('getroles', views.roles_modal, name='getroles'),
+    path('setroles', views.roles_modal, name='setroles'),
 ]

@@ -433,7 +433,6 @@ def update_user(request):
             cost_centers = []
         """for every application, initialize the responsibility formset for the user to be assigned roles and cost centers""" 
 
-
         return render(
             request,
             "users/user_update.html",
@@ -447,7 +446,8 @@ def update_user(request):
                 "regions": Regions.objects.all(),
                 "user_title": request.user.get_full_name(),
                 "user_groups": list(request.user.groups.values_list('name', flat=True)),
-                "user": new_user
+                "user": new_user,
+                "user_profile": user_profile
             }
         )
     elif request.method == "POST":
@@ -1099,17 +1099,32 @@ def remove_duplicates():
 
 @login_required
 def roles_modal(request):
-
+    if request.method == "POST":
+        user = UserProfile.objects.get(id=request.POST['user_id'])
+        
+        role = Roles.objects.get(id=request.POST['role'])
+        responsibility = user.responsibilities.filter(role__app_id=role.app_id.id).first()
+        responsibilityForm = ResponsibilitiesForm(request.POST, instance=responsibility)
+        if responsibilityForm.is_valid():
+            res= responsibilityForm.save()
+            res.user = user
+            res.save()
+            print("Role added successfully",{ "appid":Application.objects.get(id=res.role.app_id.id) })
+            return JsonResponse({"status": "success", "appid":res.role.app_id.id , "role":res.role.role }, safe=False)
+        else:
+            user = UserProfile.objects.get(id=userid)
+            regioncc=user.cost_center.get_region().get_decendance()
+            regioncc_list = list(regioncc.values('id', 'code', 'name', 'parent'))
+            return JsonResponse({"form":responsibilityForm.as_p(),"regioncc":regioncc_list, "app":Application.objects.get(id=appid ).fullname }, safe=False)
+    
     remove_duplicates()
     userid = request.GET['user_id']
     appid = request.GET['app_id']
     user = UserProfile.objects.get(id=userid)
     roles = Roles.objects.filter(app_id=appid)
-    user_roles = user.roles.filter(app_id=appid)
     """use a model form to assign roles to the user"""
     regioncc=user.cost_center.get_region().get_decendance()
-    form = ResponsibilitiesForm(roles_queryset=roles,cost_centers_queryset=regioncc)
-    regioncc_list = list(regioncc.values('id', 'code', 'name', 'parent_id'))
-
-
-    return JsonResponse({"roles": list(roles.values()),"form":form.as_p(),"regioncc":list(regioncc_list), "user_roles": list(user_roles.values())}, safe=False)
+    responsibility = user.responsibilities.filter(role__app_id=appid).first()
+    form = ResponsibilitiesForm(roles_queryset=roles,cost_centers_queryset=regioncc, instance=responsibility)
+    regioncc_list = list(regioncc.values('id', 'code', 'name', 'parent'))
+    return JsonResponse({"form":form.as_p(),"regioncc":regioncc_list,"app":Application.objects.get(id=appid ).fullname }, safe=False)
