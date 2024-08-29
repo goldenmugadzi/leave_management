@@ -134,3 +134,8 @@ document.getElementById("save_role").addEventListener("click", function (e) {
     },
   });
 });
+document.getElementById("save_update").addEventListener("click", function (e) {
+  e.preventDefault();
+  let form = document.getElementById("user_form");
+  form.submit();
+});

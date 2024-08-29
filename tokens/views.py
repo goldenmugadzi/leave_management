@@ -327,14 +327,20 @@ def view_all_tokens(request):
         else:
             messages.error(request, "You do not have a cost center assigned to you. \n Please contact the administrator.")
             return redirect("tokens:tokens")
-    TokenFilterForm = TokenFilterForm()
 
-       
+    user = request.user
+    application_names = ["temper", "reimbursement", "clear credit"]
+    cost_centers = user.cost_centers_for(application_names)
+    try:
+        mytokens = Token.objects.filter(cost_center__in=cost_centers)
+    except:
+        mytokens = Token.objects.none()
+
     return render(
         request,
         "tokens/tokens.html",
         {
-            "tokens": Token.objects.all().order_by("-created_at"),#[:10],
+            "tokens": mytokens,
             "all": True,
             "roles": get_my_roles_for_apps(
                 request.user, ["temper", "reimbursement", "clear credit"]
@@ -347,12 +353,17 @@ def awaiting_my_action(request):
     for each token.process in the tokens,  let curent_step = the last token.process.approval if any else 0 and let next_step =curent_step+1
     then check if  next_step=step.step for token.process.workflow.step_set filtered by approcer = user.roles.all.
     """
+    user = request.user
+    application_names = ["temper", "reimbursement", "clear credit"]
+    cost_centers = user.cost_centers_for(application_names)
+    print(cost_centers)
     tokens_to_process = []
     user_roles = request.user.roles.all()
-    mytokens = Token.objects.filter(
-        Q(region=request.user.region)
-        | Q(created_by__district=request.user.district)
-    )
+    try:
+        mytokens = Token.objects.filter(cost_center__in=cost_centers)
+    except:
+        mytokens = Token.objects.none()
+       
     count = mytokens.count()
 
     mytokens = mytokens.order_by("-created_at")#[:10]

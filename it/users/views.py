@@ -392,6 +392,12 @@ def update_user(request):
             user_designation = user_profile.designation
         except Exception as ex:
             print("Error: ", ex)
+        if not cost_center:
+            try:  cost_center = CostCenter.objects.filter(code=region.code).first()
+            except: pass
+        if not cost_center:
+            try:  cost_center = CostCenter.objects.filter(code='zesa').first()
+            except: pass
 
         new_user = {
             "id": user_profile.pk,

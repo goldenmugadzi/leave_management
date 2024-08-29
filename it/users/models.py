@@ -132,7 +132,7 @@ class CostCenter(models.Model):
             ancestors += self.parent.get_all_ancestors_and_their_children()
         children = self.get_all_children()
         return ancestors  + children
-    def get_view(self):
+    def  get_view(self):
         """ return a list of cost centers involving children, grand children, brothers ,parent , parent brothers, grand parent"""
         cost_centers=[]
         i=0
@@ -197,8 +197,14 @@ class UserProfile(AbstractUser):
                 return user_roles[0]
         else:
             return None
-
-
+    def cost_centers_for(self, app_names):
+        responsibilities = self.responsibilities.filter(role__app_id__name__in=app_names)
+        if responsibilities.exists():
+            cost_centers = set()
+            for responsibility in responsibilities:
+                cost_centers.update(responsibility.cost_centers.all())
+            return cost_centers
+        return None
 class Notification(models.Model):
     user = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
     message = models.TextField()
@@ -238,3 +244,4 @@ class Responsibilities(models.Model):
 
     def __str__(self):
         return self.role.role
+   
