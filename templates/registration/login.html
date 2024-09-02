@@ -39,7 +39,9 @@
             </div>
 
             <div class="sm:mx-auto sm:w-full sm:max-w-sm">
-                
+                {% if request.session.logout_page %}
+                    <p>You were logged out from {{ request.session.logout_page }}.</p>
+                {% endif %}
           {% if messages %}
           <ul class="space-y-4 m-5">
             {% for message in messages %}

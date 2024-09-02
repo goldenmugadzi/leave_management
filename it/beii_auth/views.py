@@ -1,3 +1,4 @@
+from datetime import datetime
 import json
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login
@@ -96,10 +97,16 @@ def login_user(request):
         
         user = authenticate(request, username=username, password=password)
         if user is not None:
+            if user.password_expiry_date and user.password_expiry_date <= datetime.now().date():
+                login(request, user)
+                return redirect('/auth/change-password')
             if user.change_password:
                 login(request, user)
                 return redirect('/auth/change-password')
             login(request, user)
+            last_page = request.session.get('logout_page')
+            if last_page:
+                return redirect(last_page)
             return redirect('/dashboards/overview')
         else:
             return render(request, 'registration/login.html', {
@@ -317,7 +324,7 @@ def business_applications(request):
         applications = applications
     else:
         if user.region:
-            if user.region.region == "HARARE REGION" or user.region.region == "EASTERN REGION":
+            if user.region.region == "HARARE REGION" or user.region.region == "EASTERN REGION" or user.region.region == "NORTHERN REGION":
                 applications = applications
             else:
                 applications = [app for app in applications if app['name'] == 'users' or app['name'] == 'non_conformity']
@@ -441,7 +448,6 @@ def change_password(request):
             "username": username
         })
             
-
 # @login_required(login_url='/accounts/login')
 def security_questions(request):
    if request.method == "POST":

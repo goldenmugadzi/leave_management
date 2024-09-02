@@ -4627,7 +4627,7 @@ export default function Schedule({
                           {rank.decision}
                         </td>
                         <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                          {rank.remarks}
+                          {rank.rank == 1? additionalNotes: rank.remarks}
                         </td>
                         <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
                           {rank.total}

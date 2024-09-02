@@ -182,33 +182,31 @@ def view_archived_files(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/view_files.html', {"context": context, "url_path": url_path, "page": "kc_archived"})
 
+
 @login_required
-def view_by_category(request):
+def view_firstview(request):
+    
+    url_path = request.path.split("/")
+    
+    return render(request, 'knowledge-center/view_firstview.html', {
+        "url_path": url_path,
+        "page_title": "KNOWLEDGE CENTRE", 
+        "results": []})
+    
+@login_required
+def view_user_manuals(request):
     
     files = KnowledgeCenter.objects.all()
     
-    print("files: ", files)
-    new_dict = get_kc_dict(files)
-    print("new_dict: ", new_dict)
-    
-    # for file in files:
-    #     new_file = {
-    #         "id": file.id,
-    #         "filename": file.filename,
-    #         "filetype": file.file_type,
-    #         "section": file.section,
-    #         "subcategory1": file.sub_category_1,
-    #         "subcategory2": file.sub_category_2,
-    #         "region": file.region,
-    #         "created_by": file.created_by,
-    #         "created_at": file.created_at,
-    #     }
-    #     files_list.append(new_file)
-    
-    # context = json.dumps(files_list, default=str)
+    url_path = request.path.split("/")
+    return render(request, 'knowledge-center/view_user_manuals.html', {"page_title": "USER MANUALS", "url_path": url_path})
+
+
+@login_required
+def view_by_category(request):
     
     url_path = request.path.split("/")
-    return render(request, 'knowledge-center/view_myfiles.html', {"context": new_dict, "url_path": url_path})
+    return render(request, 'knowledge-center/view_myfiles.html', {"url_path": url_path})
 
 @login_required
 def get_category(request, file_type, cat_1, cat_2):
@@ -377,7 +375,21 @@ def get_cat2(request, file_type, selected_cat):
         print("option_list: ", options_list)
 
         return JsonResponse({"options_list": list(options_list)})
+
+@login_required
+def view_audit(request):
     
+    url_path = request.path.split("/")
+    return render(request, 'knowledge-center/view_audit.html', {"url_path": url_path})
+
+def view_audit_departments(request, department):
+    
+    files = KnowledgeCenter.objects.filter(archived=False, file_type="AUDIT", sub_category_1=department).all()
+    
+    url_path = request.path.split("/")
+    title = department + " Audit"
+    return render(request, 'knowledge-center/test.html',{"files": files, "page_title": title, "url_path": url_path})
+  
 @login_required
 def view_legislation(request):
     
@@ -441,20 +453,6 @@ def view_si(request):
     
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files, "page_title": "Statutory Instruments files", "url_path": url_path} )
-
-
-@login_required
-def view_firstview(request):
-    
-    files = KnowledgeCenter.objects.all()
-    
-    url_path = request.path.split("/")
-    
-    return render(request, 'knowledge-center/view_firstview.html', {
-        "url_path": url_path,
-        "page_title": "KNOWLEDGE CENTRE", 
-        "results": []})
-
 
 @login_required
 def view_specifications(request):
@@ -1236,7 +1234,6 @@ def view_procurement(request):
     
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/test.html',{"files": files, "url_path": url_path, "page_title": "Engineering Instructions Main Index Procurement Files"} )
-
 
 @login_required
 def view_user_manuals(request):

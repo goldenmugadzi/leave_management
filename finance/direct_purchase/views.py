@@ -637,6 +637,7 @@ def add_details(cs):
 
                 if committee_pending:
                     committee_approval = "Pending"
+                    
         else:
             committee_approval = "Pending"
             fm_approval = None

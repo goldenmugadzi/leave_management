@@ -1,5 +1,6 @@
 # users/views.py
 
+from datetime import timedelta
 import json
 import csv
 from django.contrib.auth import login
@@ -685,6 +686,8 @@ def reset_user_password(request):
             try:
                 validate_password(password1, user=user_profile)
                 user_profile.change_password = True
+                user_profile.password_expiry_date = date.today() + timedelta(days=user_profile.password_expiry_days)
+                user_profile.save()
                 user_profile.set_password(password1)
                 user_profile.save()
                 messages.success(request, "Password reset successfull")

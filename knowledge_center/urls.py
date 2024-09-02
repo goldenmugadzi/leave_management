@@ -14,6 +14,9 @@ urlpatterns = [
     path('get-files/<int:file_type_id>/', views.get_files, name='get_files'),
     path('get-cat2/<int:file_type>/<int:selected_cat>', views.get_cat2, name='get_cat2'),
     
+    path('view/audit', views.view_audit, name='view_audit'),
+    path('view/audit/<str:department>', views.view_audit_departments, name='view_audit_departments'),
+    
     path('view_legislation', views.view_legislation, name='user_manual_view_legislation'),
     path('legal_registers', views.view_legal_registers, name='legal_registers'),
     path('legal_registers/<str:department>', views.legal_registers_departments, name='legal_registers_departments'),
