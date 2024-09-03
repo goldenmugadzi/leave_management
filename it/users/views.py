@@ -762,15 +762,17 @@ def change_user_password(request):
 
     return redirect('/dashboards/overview')
 
-# @login_required
-# @allowed_roles(['Administrator'], ['users'])
-# def delete_user(request):
-#     if request.method == "GET":
-#         id = request.GET['i']
-#         user_profile = UserProfile.objects.filter(id=id).first()
-#         user_profile.delete()
+def get_sections(request):
+    sections = Sections.objects.all()
+    return JsonResponse(list(sections.values('id', 'section')), safe=False)
 
-#     return redirect('/users/users-index')
+def get_cost_centers(request):
+    cost_centers = CostCenter.objects.all()
+    return JsonResponse(list(cost_centers.values('id', 'name')), safe=False)
+
+def get_regions(request):
+    regions = Regions.objects.all()
+    return JsonResponse(list(regions.values('id', 'region')), safe=False)
 
 @login_required
 def get_filtered_centers(request, region_id):
