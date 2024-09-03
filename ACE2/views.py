@@ -116,6 +116,7 @@ def Ace_detail(request, Ace_id2):
         budget = AssetBudget.objects.get(budget_id=budget)
         print("ace: ", ace_item.Ace_id)
         transaction = Transactions.objects.filter(Ace_id2=str(ace_item.Ace_id)).first()
+        # print('transaction: ', transaction)
         # print("transaction: ", transaction)
         print("transaction: ", str(transaction.approval_status))
 
@@ -1183,3 +1184,28 @@ def transactions_for_budget(request, budget_id):
     region = Regions.objects.filter(id=user_profile.region.id).first()
     transactions = Transactions.objects.filter(budget_id=budget_id)
     return render(request, 'finance/ace2/view_all_transactions.html', {'transactions': transactions})
+
+@login_required
+def ace_reports(request):
+    user_id = request.user.id
+    user_profile = UserProfile.objects.filter(id=user_id).first()
+
+    ace_report_form = AceReportForm(user=user_profile)
+
+    if request.method == 'POST':
+        ace_report_form = AceReportForm(request.POST)
+        if ace_report_form.is_valid():
+            start_date = ace_report_form.cleaned_data['start_date']
+            end_date = ace_report_form.cleaned_data['end_date']
+            region = ace_report_form.cleaned_data['region']
+            budget = ace_report_form.cleaned_data['budget_id']
+            report = ace_report_form.save(commit=False)
+            report.start_date=start_date
+            report.end_date=end_date
+            report.region
+            aces = Ace2.objects.filter(date_created__range=[start_date, end_date], region=region, budget_id=budget)
+            print(aces)
+            return render(request, 'finance/ace2/ace_reports.html', {'aces': aces})
+    return render(request, 'finance/ace2/ace_create_reports.html', {'ace_report_form': ace_report_form})
+
+

@@ -198,3 +198,10 @@ class Quotation(models.Model):
 
     def __str__(self):
         return str(self.pk)
+
+# class Report(models.Model):
+#     start_date=models.DateField(auto_now=True,blank=True,null=True)
+#     end_date=models.DateField(auto_now=True,blank=True,null=True)
+#     region=models.ForeignKey(Regions,on_delete=models.DO_NOTHING,blank=True,null=True)
+#     budget=models.ForeignKey(AssetBudget,on_delete=models.DO_NOTHING,blank=True,null=True)
+#     section=models.ForeignKey(Sections,on_delete=models.DO_NOTHING,blank=True,null=True)

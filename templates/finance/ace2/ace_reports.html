@@ -1,0 +1,88 @@
+{% extends "admin_layout.html" %}
+{% load static %}
+{% load humanize %}{% load custom_tags %}
+
+{% block styles %}
+<link  rel="stylesheet"  href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css"/>
+<style>
+  .dataTables_wrapper .dataTables_length select {
+    width: 4rem;
+  }
+</style>
+{% endblock %}
+{% block content %}
+<div class="content-wrapper">
+  <div class="grid grid-cols-1">
+    <div class="bg-gulf-blue-100 shadow-lg rounded-lg p-6">
+     
+       <h3 class="text-center font-bold  mb-4">All ACEs</h3>
+      <div class=" grid grid-cols-4 container text-center ">
+{#        {% comment %} <a href="{% url 'nonconformity:checklist' %}" class="bg-blue-500 hover:bg-blue-700 inline-block rounded-full mx-3 text-white py-2 px-4 rounded">Create from checklist</a> {% endcomment %}#}
+          <a href="/ace/print_report_csv" class="bg-green-500 hover:bg-green-900 inline-block rounded-full mx-3 text-white py-2 px-4 rounded">CSV report</a>
+          <a href="/ace/print_report_pdf" class="bg-yellow-500 hover:bg-red-900 inline-block rounded-full mx-3 text-white py-2 px-4 rounded">PDF report</a>
+      </div>
+      <br> <table id="nonconformity" class="table table-striped stripe table-bordered">
+        <thead>
+          <tr>
+            <tr>
+                <th>ACE ID</th>
+                <th>ACE Details</th>
+                <th>Amount</th>
+                
+                <th>Requested By</th>
+                <th>Created At</th>
+                <th>Section</th>
+              <th>Allocation Code of Expenditure</th>
+              <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+            {% for ace in aces %}
+            <tr class="h-1">
+                <td><a class="text-blue-500" href="/ace/ace_detail/{{ace.Ace_id2}}">{{ ace.Ace_id2|default_if_none:'' }}</a></td>
+                <td>{{ ace.details_of_expenditure }}</td>
+              <td>{{ ace.amount }}</td>
+
+            <td>{% if ace.requested_by == user %} You {% else %} {{ace.requested_by.get_full_name }} {% endif %}</td>
+              <td>{{ ace.date_created }}</td>
+              <td>{{ ace.section }}</td>
+            <td>{{ ace.section.code }}</td>
+            <td>{{ ace.process.approval_set.last|default_if_none:'' }}</td>
+              {% comment %} <td>{{ ace.process }}</td> {% endcomment %}
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script>
+  $(document).ready(function () {
+    // Initialize the DataTable with options and Tailwind CSS classes
+    $("#nonconformity").DataTable({
+      // Set the number of rows to display per page
+      "pageLength": 10,
+  
+      // Enable sorting on the specified columns
+      "columnDefs": [
+        { "orderable": true, "targets": [0, 1, 2] }
+      ],
+  
+      // Enable searching within the table
+      "searching": true,
+  
+      // Display the DataTable in a responsive manner
+      "responsive": true,
+  
+     
+    });
+  });
+</script>
+{% endblock %}
