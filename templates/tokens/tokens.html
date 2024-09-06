@@ -8,13 +8,14 @@
   <style>.dataTables_wrapper .dataTables_length select { width: 4rem; }</style>
 {% endblock %}
 {% block content %}
-  <div class="content-wrapper">
+<title>Tokens</title>
+<div class="content-wrapper">
     <div class="grid grid-cols-1">
       <div class="bg-gulf-blue-100 shadow-lg rounded-lg p-6">
-        <h3 class="text-center font-bold mb-4">Tokens</h3>
-        <div class=" grid grid-cols-5 m-auto container text-center ">
-          <a href="{% url 'tokens:create_token' %}"
-             class="bg-blue-500 hover:bg-blue-700 inline-block rounded-full m-auto text-white py-2 px-4 rounded"> New Request</a>
+        <a href="{% url 'tokens:create_token' %}"
+        class="bg-blue-500 hover:bg-blue-700 inline-block rounded-full m-auto text-white py-2 px-4 rounded"> New Request</a>
+      <h3 class="text-center font-bold mb-4">Tokens</h3>
+        {% comment %} <div class=" grid grid-cols-5 m-auto container text-center ">
           {% if all %}
             <a href="{% url 'tokens:tokens_awaiting_my_action' %}"
                class="bg-gray-500 hover:bg-gray-700 inline-block rounded-full m-auto text-white py-2 px-4 rounded">Awaiting my action </a>
@@ -22,89 +23,82 @@
             <a href="{% url 'tokens:tokens' %}"
                class="bg-gray-500 hover:bg-gray-700 inline-block rounded-full m-auto  text-white py-2 px-4 rounded"> All tokens </a>
           {% endif %}
-          </div>
-          <form id="search-form"
-           class="  grid grid-cols-5 mt-2"
-          method="post">
-            {% csrf_token %}
-            <input type="text"
-                   id="reason"
-                   class="border  border-gray-300 border-blue-500 border border-1 rounded-full"
-                   name="reason"
-                   placeholder="Description">
-            <input type="text"
-                   id="type"
-                   class="border  border-gray-300 border-blue-500 border border-1 rounded-full"
-                   name="type"
-                   placeholder="type">
-            <input type="text"
-                   id="customer"
-                   class="border  border-gray-300 border-blue-500 border border-1 rounded-full"
-                   name="customer"
-                   placeholder="customer">
-            <input type="text"
-                   id="id"
-                   class="border  border-gray-300 border-blue-500 border border-1 rounded-full"
-                   name="id"
-                   placeholder="id">
-            <input type="text"
-                   id="search-input"
-                   class="border border-gray-300 border-blue-500 border border-1 rounded-full"
-                   name="search_term"
-                   placeholder="Extra filtering keywords here ...">
-            <input type="text"
-                   id="status"
-                   class="border  border-gray-300 border-blue-500 border border-1 rounded-full"
-                   name="status"
-                   placeholder="status">
-            <input type="text"
-                   id="meter_number"
-                   class="border  border-gray-300 border-blue-500 border border-1 rounded-full"
-                   name="meter_number"
-                   placeholder="meter number">
-            <button type="submit"
-                    class="text-blue-700 border-blue-500 bg-gray-400 hover:bg-gray-700 border border-1 ml-1 mx-auto px-3 font-bold rounded-full">
-              <i class="fa fa-search"></i> Search
-            </button>
-        </form>  <table id="tokens" class="table table-striped stripe table-bordered">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Description</th>
-                <th>Type</th>
-                <th>Date</th>
-                <th>Customer</th>
-                <th>Meter number</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for token in tokens %}
-                <tr class="h-1">
-                  <td>
-                    <a class="text-blue-500" href="{% url 'tokens:token' token.id %}">{{ token.id|default_if_none:'' }}</a>
-                  </td>
-                  <td>{{ token.reason|default_if_none:'' }}</td>
-                  <td>{{ token.type|default_if_none:'' }}</td>
-                  <td>{{ token.created_at|date }}</td>
-                  <td>{{ token.customer.name|default_if_none:'' }}</td>
-                  <td>
-                    <span title="{{ token.meter.meter_type }}">{{ token.meter.number }}</span>
-                  </td>
-                  <td>{{ token.process.approval_set.last|default_if_none:"No Approval" }}</td>
-                </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-          <div class=" container text-center ">
-            {% if roles %}
-              {% for app_roles in roles %}
-                <span class="text-blue-400  mx-4 rounded border-2 border border-red-300 px-1  font-bold rounded">{{ app_roles }}</span>
-              {% endfor %}
-            {% endif %}
-          </div>
+        </div> {% endcomment %}
+        <form id="search-form" class="  grid grid-cols-5 my -2 " method="post">
+          {% csrf_token %}
+     
+          <input type="text"
+                 id="customer"
+                 class="border  border-gray-300 mx-2 py-1 border-1 rounded"
+                 name="customer"
+                 placeholder="customer">
+          <input type="text"
+                 id="id"
+                 class="border  border-gray-300 mx-2 py-1 border-1 rounded"
+                 name="id"
+                 placeholder="id">
+          <input type="text"
+                 id="search-input"
+                 class="border border-gray-300 mx-2 py-1 border-1 rounded"
+                 name="search_term"
+                 placeholder="Extra filtering keywords here ...">
           
-
+          <input type="text"
+                 id="meter_number"
+                 class="border  border-gray-300 mx-2 py-1 border-1 rounded"
+                 name="meter_number"
+                 placeholder="meter number">
+                 <div class=" mx-2 py-1">
+<select name="type" id="" class="rounded">
+  <option value="all">All</option>
+  {% for type in types %}
+  <option value="{{ type }}">{{ type }}</option>
+{% endfor %} </select>
+          <button type="submit"
+                  class="text-blue-700 border-blue-500 bg-gray-400 hover:bg-gray-700 border border-1 ml-1 mx-auto px-3 font-bold rounded-full">
+            <i class="fa fa-search"></i> Search
+          </button>
+        </div>
+        </form>
+        <table id="tokens" class="table table-striped stripe mt-3 table-bordered">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Description</th>
+              <th>Type</th>
+              <th>Date</th>
+              <th>Cost Center</th>
+              <th>Customer</th>
+              <th>Meter number</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for token in tokens %}
+              <tr class="h-1">
+                <td>
+                  <a class="text-blue-500" href="{% url 'tokens:token' token.id %}">{{ token.id|default_if_none:'' }}</a>
+                </td>
+                <td>{{ token.reason|default_if_none:'' }}</td>
+                <td>{{ token.type|default_if_none:'' }}</td>
+                <td>{{ token.created_at|date }}</td>
+                <td>{{ token.cost_center}}</td>
+                <td>{{ token.customer.name|default_if_none:'' }}</td>
+                <td>
+                  <span title="{{ token.meter.meter_type }}">{{ token.meter.number }}</span>
+                </td>
+                <td>{{ token.process.approval_set.last|default_if_none:"No Approval" }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        <div class=" container text-center ">
+          {% if roles %}
+            {% for app_roles in roles %}
+              <span class="text-blue-400  mx-4 rounded border-2 border border-red-300 px-1  font-bold rounded">{{ app_roles }}</span>
+            {% endfor %}
+          {% endif %}
+        </div>
       </div>
     </div>
   </div>
@@ -119,7 +113,9 @@
       "columnDefs": [{ "orderable": true, "targets": [0, 1, 2,3,4] }],
       "responsive": true,
       "searching": true,
-
+      language: {
+        search: "Filter results:"
+    }
     });
   });
   </script>

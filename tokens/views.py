@@ -350,39 +350,38 @@ def view_all_tokens(request):
 @login_required
 def awaiting_my_action(request):
     """
-    for each token.process in the tokens,  let curent_step = the last token.process.approval if any else 0 and let next_step =curent_step+1
-    then check if  next_step=step.step for token.process.workflow.step_set filtered by approcer = user.roles.all.
+    Process tokens based on user roles and cost centers.
     """
     user = request.user
     application_names = ["temper", "reimbursement", "clear credit"]
     cost_centers = user.cost_centers_for(application_names)
-    print(cost_centers)
+    if not cost_centers:
+        return render(
+            request,
+            "tokens/tokens.html",
+            {
+                "tokens": [],
+                "all": False,
+                "roles": get_my_roles_for_apps(user, application_names),
+                "error": "No cost centers found for the given applications."
+            },
+        )
+
+    user_roles = set(user.roles.all())
     tokens_to_process = []
-    user_roles = request.user.roles.all()
-    try:
-        mytokens = Token.objects.filter(cost_center__in=cost_centers)
-    except:
-        mytokens = Token.objects.none()
-       
-    count = mytokens.count()
 
-    mytokens = mytokens.order_by("-created_at")#[:10]
-    for token in mytokens:
-        process = token.process
+    tokens = Token.objects.filter(cost_center__in=cost_centers).prefetch_related(
+        'process__approval_set', 'process__workflow__step_set'
+    )
+    print("time it takes to get cost centers",timezone.now())
 
-        if process.approval_set.exists():
-            last_approval = process.approval_set.last() 
-            current_step = last_approval.step.step
-        else:
-            current_step = 0
-
-        next_step = current_step + 1
-
-        workflow = process.workflow
-        step = workflow.step_set.filter(step=next_step, approver__in=user_roles).first()
-
-        if step:
+    for token in tokens:
+        approvals = token.process.approval_set.all()
+        next_step = (approvals.last().step.step if approvals.exists() else 0) + 1
+        
+        if token.process.workflow.step_set.filter(step=next_step, approver__in=user_roles).exists():
             tokens_to_process.append(token)
+    print("to",timezone.now())
 
     return render(
         request,
@@ -390,12 +389,12 @@ def awaiting_my_action(request):
         {
             "tokens": tokens_to_process,
             "all": False,
-            "count": count,
-            "roles": get_my_roles_for_apps(
-                request.user, ["temper", "tokens", "reimbursement", "clear credit"]
-            ),
+            'types': application_names,
+            "roles": get_my_roles_for_apps(user, application_names),
         },
     )
+
+
 def addsection(request):
     for token in Token.objects.all():
         try:

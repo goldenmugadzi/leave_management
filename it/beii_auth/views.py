@@ -46,7 +46,7 @@ APPLICATIONS = [
         "name": "Token",
         "title": "Tokens",
         "iconUrl": "assets/images/token.png",
-        "url": "/tokens/"
+        "url": "/tokens_awaiting_my_action/"
     },
     {
         "name": "petty_cash",
