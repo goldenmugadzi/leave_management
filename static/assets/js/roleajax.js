@@ -102,9 +102,10 @@ function setRoles(e) {
       resetData();
     },
     error: function (xhr, status, error) {
-      document.getElementById("rolesModalform").innerHTML = xhr.responseText;
-      console.error("Error:", error);
-      console.log(xhr.responseText);
+    alert("error:"+error+"\n Please ensure that you gave the appropriate Cost Center to the user, and submit your changes before assigning responsibilities to the user.");  
+    // document.getElementById("rolesModalform").innerHTML = xhr.responseText;
+    //   console.error("Error:", error);
+    //   console.log(xhr.responseText);
     },
   });
 }
@@ -128,9 +129,8 @@ document.getElementById("save_role").addEventListener("click", function (e) {
         document.getElementById("app_"+rdata.appid).innerHTML = rdata.role;
     },
     error: function (xhr, status, error) {
-      document.getElementById("rolesModalform").innerHTML = xhr.responseText;
-      console.error("Error:", error);
-      console.log(xhr.responseText);
+     alert("Error:"+ error);
+      // console.log(xhr.responseText);
     },
   });
 });
