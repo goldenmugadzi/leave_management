@@ -235,8 +235,10 @@ class ViramentForm(forms.ModelForm):
     # 2: 'nd', 3
 
 class AceReportForm(forms.ModelForm):
-    end_date = forms.DateField(required=True, widget=forms.DateInput(attrs={'type': 'date'}))
     start_date = forms.DateField(required=True, widget=forms.DateInput(attrs={'type': 'date'}))
+    end_date = forms.DateField(required=True, widget=forms.DateInput(attrs={'type': 'date'}))
+
+    # period = forms.DateField(required=True, widget=forms.DateInput(attrs={'type': 'date'}))
     class Meta:
         model = Ace2
         # add end date to fields
@@ -245,7 +247,7 @@ class AceReportForm(forms.ModelForm):
         exclude = ['process','requested_by','Ace_id', 'asset_number' , 'designation', 'Ace_id2',
                    'details_of_expenditure', 'quantity', 'total_connection_fee','capital_estimated', 'capital_sanctioned',
                    'present_tariff','present_fmc','capital_contribution','materials','connection_fee','labour','transport'
-                    ,'classification','currency','amount','allocation_code_of_expenditure'
+                    ,'classification','currency','amount','allocation_code_of_expenditure','section'
                    # include the project items
                    ]
 
@@ -263,7 +265,7 @@ class AceReportForm(forms.ModelForm):
 
                 print("region", region)
                 self.fields['budget_id'].queryset = AssetBudget.objects.filter(period=2024, region=region)
-                self.fields['section'].queryset = Sections.objects.filter(region_id=region_id.id)
+                # self.fields['section'].queryset = Sections.objects.filter(region_id=region_id.id)
                 #
 
         for field_name, field in self.fields.items():

@@ -8,8 +8,11 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core import serializers
 from django.http import HttpResponse, JsonResponse, HttpResponseNotFound, FileResponse
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
+from django.template import loader
+from openpyxl import Workbook
+from weasyprint import HTML
 
 from ACE2.forms import *
 from approve.forms import ApprovalForm
@@ -1199,13 +1202,81 @@ def ace_reports(request):
             end_date = ace_report_form.cleaned_data['end_date']
             region = ace_report_form.cleaned_data['region']
             budget = ace_report_form.cleaned_data['budget_id']
+            print("budget_id", budget)
             report = ace_report_form.save(commit=False)
             report.start_date=start_date
             report.end_date=end_date
-            report.region
-            aces = Ace2.objects.filter(date_created__range=[start_date, end_date], region=region, budget_id=budget)
-            print(aces)
-            return render(request, 'finance/ace2/ace_reports.html', {'aces': aces})
+            report.region=region
+            # aces = Ace2.objects.filter(date_created__range=[start_date, end_date], region=region, budget_id=budget)
+            # get all aces with the items in the form above
+            aces = Ace2.objects.filter(region=region, budget_id=budget, date_created__range=[start_date, end_date])
+
+            # get latest budget_id
+            # budget_instance=AssetBudget.objects.get(budget_name=budget)
+            budget_instance=AssetBudget.objects.filter(budget_name=budget).last()
+            print(budget_instance.budget_id,'budget_id')
+            report = AceReport.objects.create(
+                start_date=start_date,
+                end_date=end_date,
+                region=region,
+                budget_id=budget_instance.budget_id
+            )
+            report.save()
+
+            print('report created')
+            print('report', report)
+            # print count of aces
+            print("count",aces.count())
+            return render(request, 'finance/ace2/ace_reports.html', {'aces': aces,'report': report})
     return render(request, 'finance/ace2/ace_create_reports.html', {'ace_report_form': ace_report_form})
 
+@login_required
+def ace_report_detail_pdf(request, report_id2):
+    report = AceReport.objects.filter(report_id2=report_id2).first()
+    budget = AssetBudget.objects.filter(budget_id=report.budget_id).first()
+    aces = Ace2.objects.filter(date_created__range=[report.start_date, report.end_date], region=report.region, budget_id=report.budget_id)
+    # return render_to_pdf('finance/ace2/ace_report_pdf.html', {'aces': aces,'report': report})
+    template = loader.get_template('finance/ace2/ace_reports.html')
+    context = {
+        'aces': aces,
+       'report': report,
+        'request': request
+    }
+    html = template.render(context, request)
+    pdf = HTML(string=html).write_pdf()
+    return HttpResponse(pdf, content_type='application/pdf')
 
+@login_required
+def ace_report_detail_excel(request,report_id2):
+    report = get_object_or_404(AceReport, report_id2=report_id2)
+    budget = get_object_or_404(AssetBudget, budget_id=report.budget_id)
+    print("report date",report.start_date)
+    print("report date",report.end_date)
+    print("report region",report.region)
+    print("report budget",budget.budget_id)
+
+    aces = Ace2.objects.filter(date_created__range=[report.start_date, report.end_date], region=report.region, budget_id=budget.budget_id)
+    print('count',aces.count())
+
+    response = HttpResponse(content_type='application/ms-excel')
+    response['Content-Disposition'] = 'attachment; filename="ace_report.xlsx"'
+
+    wb = Workbook()
+    ws = wb.active
+
+    ws.append(['Ace_id','details_of_expenditure','requested_by','section','Date', 'Budget', 'Amount','approval_status'])
+
+    for ace in aces:
+        transaction = Transactions.objects.filter(Ace_id2=ace).first()
+        ws.append([
+            ace.Ace_id2,
+            ace.details_of_expenditure,
+            ace.requested_by.get_full_name() if ace.requested_by else '',
+            ace.section.section if ace.section else '',
+            ace.date_created.strftime('%Y-%m-%d') if ace.date_created else '',
+            ace.budget_id.budget_name if ace.budget_id else '',
+            ace.amount,
+            transaction.approval_status if transaction else ''
+        ])
+    wb.save(response)
+    return response
