@@ -228,7 +228,8 @@ def token_details(request, token_id):
     completed = False
     user_roles = request.user.roles.all()
     allowed = allowed_to_approve(request.user,token)
-    if not token.process.approval_set.filter(approved="Rejected").exists() and allowed:
+
+    if not token.process.approval_set.filter(approved="Rejected").exists(): # and allowed:
         try:
             last_approved = token.process.approval_set.last().step.step
         except AttributeError:
@@ -268,6 +269,20 @@ def view_all_tokens(request):
         tkns = {}
         tockens = Token.objects.none()
         search_term = request.POST.get("search_term", "")
+        """for all the words that are in the search term, make all possible combinations of the words and search for them in the database and order them by the number of times they appear in the search term giving && query the highest priority when ranking the results"""
+        words = search_term.split() 
+        field_names = ["meter__number", "customer__name", "customer__stand_number", "reason", "created_by__username", "cost_center__name", "cost_center__code", "id", "created_at"]
+        for word in words:
+            for field_name in field_names:
+                word_tkns = Token.objects.filter(Q(**{field_name + "__icontains": word}))
+                for tkn in word_tkns:
+                    if tkn.id in tkns:
+                        tkns[tkn.id]['count'] += 1
+                    else:
+                        tkns[tkn.id] = {
+                            "token": tkn,
+                            'count': 1
+                        }
         
         for word in search_term.split():
             print(word)
@@ -290,25 +305,42 @@ def view_all_tokens(request):
                         "token": tkn,
                         'count': 1
                     }  
+        user_cost_center = request.user.section.id
+        print(user_cost_center)
+        print(Token.objects.filter(cost_center=user_cost_center))
+
         sorted_tokens = sorted(tkns.values(), key=lambda x: x['count'], reverse=True)
         sorted_token_ids = [token['token'].id for token in sorted_tokens]
-        sorted_tokens_queryset = Token.objects.filter(id__in=sorted_token_ids)
-        return render(
-            request,
-            "tokens/tokens.html",
-            {
-                "tokens": sorted_tokens_queryset.order_by("-created_at")[:100],
-                "roles": get_my_roles_for_apps(
-                    request.user, ["temper", "reimbursement", "clear credit"]
-                ),
-                "all": True,
-            },
-        )
+        if user_cost_center:
+            tockens = Token.objects.filter(Q(id__in=sorted_token_ids) & Q(cost_center=user_cost_center))
+            return render(
+                request,
+                "tokens/tokens.html",
+                {
+                    "tokens": tockens.order_by("-created_at")[:100],
+                    "roles": get_my_roles_for_apps(
+                        request.user, ["temper", "reimbursement", "clear credit"]
+                    ),
+                    "all": True,
+                },
+            )
+        else:
+            messages.error(request, "You do not have a cost center assigned to you. \n Please contact the administrator.")
+            return redirect("tokens:tokens")
+
+    user = request.user
+    application_names = ["temper", "reimbursement", "clear credit"]
+    cost_centers = user.cost_centers_for(application_names)
+    try:
+        mytokens = Token.objects.filter(cost_center__in=cost_centers)
+    except:
+        mytokens = Token.objects.none()
+
     return render(
         request,
         "tokens/tokens.html",
         {
-            "tokens": Token.objects.all().order_by("-created_at")[:10],
+            "tokens": mytokens,
             "all": True,
             "roles": get_my_roles_for_apps(
                 request.user, ["temper", "reimbursement", "clear credit"]
@@ -318,34 +350,38 @@ def view_all_tokens(request):
 @login_required
 def awaiting_my_action(request):
     """
-    for each token.process in the tokens,  let curent_step = the last token.process.approval if any else 0 and let next_step =curent_step+1
-    then check if  next_step=step.step for token.process.workflow.step_set filtered by approcer = user.roles.all.
+    Process tokens based on user roles and cost centers.
     """
+    user = request.user
+    application_names = ["temper", "reimbursement", "clear credit"]
+    cost_centers = user.cost_centers_for(application_names)
+    if not cost_centers:
+        return render(
+            request,
+            "tokens/tokens.html",
+            {
+                "tokens": [],
+                "all": False,
+                "roles": get_my_roles_for_apps(user, application_names),
+                "error": "No cost centers found for the given applications."
+            },
+        )
+
+    user_roles = set(user.roles.all())
     tokens_to_process = []
-    user_roles = request.user.roles.all()
-    mytokens = Token.objects.filter(
-        Q(region=request.user.region)
-        | Q(created_by__district=request.user.district)
+
+    tokens = Token.objects.filter(cost_center__in=cost_centers).prefetch_related(
+        'process__approval_set', 'process__workflow__step_set'
     )
-    count = mytokens.count()
+    print("time it takes to get cost centers",timezone.now())
 
-    mytokens = mytokens.order_by("-created_at")[:10]
-    for token in mytokens:
-        process = token.process
-
-        if process.approval_set.exists():
-            last_approval = process.approval_set.last()
-            current_step = last_approval.step.step
-        else:
-            current_step = 0
-
-        next_step = current_step + 1
-
-        workflow = process.workflow
-        step = workflow.step_set.filter(step=next_step, approver__in=user_roles).first()
-
-        if step:
+    for token in tokens:
+        approvals = token.process.approval_set.all()
+        next_step = (approvals.last().step.step if approvals.exists() else 0) + 1
+        
+        if token.process.workflow.step_set.filter(step=next_step, approver__in=user_roles).exists():
             tokens_to_process.append(token)
+    print("to",timezone.now())
 
     return render(
         request,
@@ -353,12 +389,12 @@ def awaiting_my_action(request):
         {
             "tokens": tokens_to_process,
             "all": False,
-            "count": count,
-            "roles": get_my_roles_for_apps(
-                request.user, ["temper", "tokens", "reimbursement", "clear credit"]
-            ),
+            'types': application_names,
+            "roles": get_my_roles_for_apps(user, application_names),
         },
     )
+
+
 def addsection(request):
     for token in Token.objects.all():
         try:

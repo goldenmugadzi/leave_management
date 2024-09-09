@@ -47,7 +47,7 @@ APPLICATIONS = [
         "name": "Token",
         "title": "Tokens",
         "iconUrl": "assets/images/token.png",
-        "url": "/tokens/"
+        "url": "/tokens_awaiting_my_action/"
     },
     {
         "name": "petty_cash",
@@ -313,7 +313,7 @@ def business_applications(request):
 
     users_role = user_profile.get_user_roles_for_application("users")
 
-    print("users_role: ", users_role)
+    # print("users_role: ", users_role)
     applications = APPLICATIONS
     if users_role == "standard" or users_role == "" or users_role == None:
         print("creating standard list ..")
