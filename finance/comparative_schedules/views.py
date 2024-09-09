@@ -1425,7 +1425,6 @@ def get_filtered_schedules(user_id, search_value, column_name, user_region, stat
                         ).exclude(
                         Q(csapproval__approval="Rejected") | Q(csapproval__approver_role="general_manager")
                     )
-                    print("cs: ", cs)
                 if status == "Complete":
                     cs = cs.filter(Q(csapproval__approval="Approved"), 
                             Q(csapproval__approver_role="general_manager")).exclude(
@@ -1441,21 +1440,19 @@ def get_filtered_schedules(user_id, search_value, column_name, user_region, stat
             if station and pickStation:
                 if station == "Sections":
                     section = Sections.objects.filter(id=pickStation).first()
-                    print("section: ", section, section.id)
-                    for c in cs:
-                        if c.section:
-                            print("c: ", c.section)
-                            
-                    cs = cs.filter(section=section)
+                    if section:
+                        cs = cs.filter(section=section)
                     print("cs: ", cs)   
                 if station == "Cost Centre":
-                    print("cost center: ", pickStation)
                     cost_center = CostCenter.objects.filter(id=pickStation).first()
-                    cs = cs.filter(cost_center=cost_center)
+                    if cost_center:
+                        cs = cs.filter(cost_center=cost_center)
                     print("cs: ", cs)
                 if station == "Region":
-                    region = Regions.objects.filter(id=pickStation).first()
-                    cs = cs.filter(region=region)
+                    region_ = Regions.objects.filter(id=pickStation).first()
+                    print("region: ", region_)
+                    if region_:
+                        cs = cs.filter(region=region_)
             
             # Filter based on search value
             if search_value:
