@@ -1407,60 +1407,70 @@ def get_filtered_schedules(user_id, search_value, column_name, user_region, stat
             region=user_region,
         ).all()
         
-        if status:
-            if status == "Pending Committee":
-                cs = cs.filter(
-                    Q(committee__committee_approval=None) | Q(committee__committee_approval="")).exclude(
-                        Q(committee__committee_approval="Rejected"))
-            if status == "Pending Finance":
-                cs = cs.filter(Q(csapproval__approval="") | Q(csapproval__approval=None)).exclude(
-                    Q(committee__committee_approval=None) | Q(committee__committee_approval="") | Q(committee__committee_approval="Rejected")
-                )
-                print("cs: ", cs)
-            if status == "Pending General Manager":
-                cs = cs.filter(Q(csapproval__approval="Approved"), 
-                        Q(csapproval__approver_role="finance_manager")
-                    ).exclude(
-                    Q(csapproval__approval="Rejected") | Q(csapproval__approver_role="general_manager")
-                )
-                print("cs: ", cs)
-            if status == "Complete":
-                cs = cs.filter(Q(csapproval__approval="Approved"), 
-                        Q(csapproval__approver_role="general_manager")).exclude(
-                    Q(csapproval__approval="Rejected") | Q(csapproval__approval="") | Q(csapproval__approval=None)
-                )
-            if status == "Rejected":
-                cs = cs.filter(
-                    Q(csapproval__approval="Rejected") | Q(committee__committee_approval="Rejected")
-                )
-            if status == "Cancelled":
-                cs = cs.filter(cancelled=True)
+        try:
+        
+            if status:
+                if status == "Pending Committee":
+                    cs = cs.filter(
+                        Q(committee__committee_approval=None) | Q(committee__committee_approval="")).exclude(
+                            Q(committee__committee_approval="Rejected"))
+                if status == "Pending Finance":
+                    cs = cs.filter(Q(csapproval__approval="") | Q(csapproval__approval=None)).exclude(
+                        Q(committee__committee_approval=None) | Q(committee__committee_approval="") | Q(committee__committee_approval="Rejected")
+                    )
+                    print("cs: ", cs)
+                if status == "Pending General Manager":
+                    cs = cs.filter(Q(csapproval__approval="Approved"), 
+                            Q(csapproval__approver_role="finance_manager")
+                        ).exclude(
+                        Q(csapproval__approval="Rejected") | Q(csapproval__approver_role="general_manager")
+                    )
+                    print("cs: ", cs)
+                if status == "Complete":
+                    cs = cs.filter(Q(csapproval__approval="Approved"), 
+                            Q(csapproval__approver_role="general_manager")).exclude(
+                        Q(csapproval__approval="Rejected") | Q(csapproval__approval="") | Q(csapproval__approval=None)
+                    )
+                if status == "Rejected":
+                    cs = cs.filter(
+                        Q(csapproval__approval="Rejected") | Q(committee__committee_approval="Rejected")
+                    )
+                if status == "Cancelled":
+                    cs = cs.filter(cancelled=True)
 
-        if station and pickStation:
-            if station == "Sections":
-                section = Sections.objects.filter(id=pickStation).first()
-                cs = cs.filter(section=section)
-            if station == "Cost Centre":
-                print("cost center: ", pickStation)
-                cost_center = CostCenter.objects.filter(id=pickStation).first()
-                cs = cs.filter(cost_center=cost_center)
-                print("cs: ", cs)
-            if station == "Region":
-                region = Regions.objects.filter(id=pickStation).first()
-                cs = cs.filter(region=region)
-        
-        # Filter based on search value
-        if search_value:
-            cs = cs.filter(
-            Q(cs_id__icontains=search_value) |
-            Q(scope_of_work__icontains=search_value) 
-            )
+            if station and pickStation:
+                if station == "Sections":
+                    section = Sections.objects.filter(id=pickStation).first()
+                    print("section: ", section, section.id)
+                    for c in cs:
+                        if c.section:
+                            print("c: ", c.section)
+                            
+                    cs = cs.filter(section=section)
+                    print("cs: ", cs)   
+                if station == "Cost Centre":
+                    print("cost center: ", pickStation)
+                    cost_center = CostCenter.objects.filter(id=pickStation).first()
+                    cs = cs.filter(cost_center=cost_center)
+                    print("cs: ", cs)
+                if station == "Region":
+                    region = Regions.objects.filter(id=pickStation).first()
+                    cs = cs.filter(region=region)
             
-        if start_date and end_date:
-            cs = cs.filter(created_at__range=[start_date, end_date])
-        
-        if column_name:
-            cs = cs.order_by(column_name)
+            # Filter based on search value
+            if search_value:
+                cs = cs.filter(
+                Q(cs_id__icontains=search_value) |
+                Q(scope_of_work__icontains=search_value) 
+                )
+                
+            if start_date and end_date:
+                cs = cs.filter(created_at__range=[start_date, end_date])
+            
+            if column_name:
+                cs = cs.order_by(column_name)
+        except Exception as ex:
+            print("Error: ", ex)
         
         return cs
 
