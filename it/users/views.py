@@ -1115,6 +1115,7 @@ def roles_modal(request):
             res= responsibilityForm.save()
             res.user = user
             res.save()
+            user.add_role(role)  # Add the role to the user
             print("Role added successfully",{ "appid":Application.objects.get(id=res.role.app_id.id) })
             return JsonResponse({"status": "success", "appid":res.role.app_id.id , "role":res.role.role }, safe=False)
         else:
