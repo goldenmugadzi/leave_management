@@ -150,12 +150,7 @@
         >
           Search
         </button>
-        <button
-            id="export_csv"
-          class="active:scale-95 rounded-lg bg-green-600 px-8 py-2 font-medium text-white outline-none focus:ring hover:opacity-90"
-        >
-          Export CSV
-        </button>
+        <span id="exportCSVContainer"></span>
       </div>
     </div>
   </div>
@@ -248,6 +243,18 @@
         url: url,
         type: "GET",
       },
+      dom: 'Blfrtip', // Define the layout of the table controls
+      lengthMenu: [10, 25, 50, 100],
+      buttons: [
+        {
+          extend: 'csvHtml5',
+          text: 'Export CSV',
+          className: "active:scale-95 rounded-lg bg-green-600 px-8 py-2 font-medium text-white outline-none focus:ring hover:opacity-90",
+          attr: {
+            id: 'exportCsvButton' // Add an ID to the button for easy reference
+          }
+        }
+      ],
       scrollX: true,
       columns: [
         {
@@ -480,6 +487,10 @@
         var newUrl = "/comperative_schedule/datatables/all_schedules";
         table.ajax.url(newUrl).load();
     })
+
+    // Move the button to a custom position
+    $('#exportCsvButton').appendTo('#exportCSVContainer');
+
   });
 </script>
 {% endblock scripts %} {% comment %} dom: 'Bfrtip', buttons: [ { extend: 'csv',
