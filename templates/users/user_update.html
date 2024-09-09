@@ -185,7 +185,7 @@
           <form method="dialog" class="modal-backdrop"  id="Modalform">
             {% csrf_token %}
             <input type="hidden" name="user_id" value="{{ user.id }}" />
-            <input type="hidden" name="app_id" value="{{ app.id }}" />
+            <input type="hidden" name="selectedapp_id"id="selectedapp_id" value="{{ app.id }}" />
             <h3 class="text-center text-lg font-semibold leading-6 text-gray-900">
               User:  <span class="text-blue-400">{{ user_profile.get_full_name }}</span> on <span class="text-green-400" id="applbl"></span>
             </h3>

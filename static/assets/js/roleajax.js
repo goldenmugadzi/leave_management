@@ -11,7 +11,13 @@ function setRoles(e) {
       document.getElementById("rolesModalform").innerHTML = rdata.form;
       let modal = document.getElementById("my_modal_2");
       let cc_chart = document.getElementById("cc_chart");
-      document.getElementById("applbl").innerHTML =  rdata.app;
+        const selectedAppIdElement = document.getElementById("selectedapp_id");
+        if (selectedAppIdElement) {
+          selectedAppIdElement.value = rdata.app.id;
+        } else {
+          console.error("Element with ID 'selectedapp_id' not found.");
+        }
+   document.getElementById("applbl").innerHTML =  rdata.app.fullname;
       const idCostCenters = document.getElementById("id_cost_centers");
       let selectedItems = [];
       
@@ -103,9 +109,9 @@ function setRoles(e) {
     },
     error: function (xhr, status, error) {
     alert("error:"+error+"\n Please ensure that you gave the appropriate Cost Center to the user, and submit your changes before assigning responsibilities to the user.");  
-    // document.getElementById("rolesModalform").innerHTML = xhr.responseText;
-    //   console.error("Error:", error);
-    //   console.log(xhr.responseText);
+    document.getElementById("rolesModalform").innerHTML = xhr.responseText;
+      console.error("Error:", xhr.responseText);
+      // console.log(xhr.responseTex t);
     },
   });
 }
@@ -130,7 +136,8 @@ document.getElementById("save_role").addEventListener("click", function (e) {
     },
     error: function (xhr, status, error) {
      alert("Error:"+ error);
-      // console.log(xhr.responseText);
+     console.error("Error:", xhr.responseText);
+    //  console.log(xhr);
     },
   });
 });
