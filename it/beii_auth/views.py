@@ -41,7 +41,6 @@ APPLICATIONS = [
         "title": "Virement",
         "iconUrl": "assets/images/money.png",
         "url": "/ace/viraments_awaiting_my_action"
-
     },
     {
         "name": "Token",
@@ -105,6 +104,7 @@ def login_user(request):
                 return redirect('/auth/change-password')
             login(request, user)
             last_page = request.session.get('logout_page')
+            print("last_page: ", last_page)
             if last_page:
                 return redirect(last_page)
             return redirect('/dashboards/overview')
@@ -313,7 +313,7 @@ def business_applications(request):
 
     users_role = user_profile.get_user_roles_for_application("users")
 
-    # print("users_role: ", users_role)
+    print("users_role: ", users_role)
     applications = APPLICATIONS
     if users_role == "standard" or users_role == "" or users_role == None:
         print("creating standard list ..")
