@@ -36,7 +36,7 @@ APPLICATIONS = [
         "iconUrl": "assets/images/capital.png",
         "url": "/ace/aces_awaiting_my_action"
     },
-{
+    {
         "name": "ace reports",
         "title": "ACE Reports",
         "iconUrl": "assets/images/reports.png",
@@ -60,6 +60,12 @@ APPLICATIONS = [
         "title": "Petty Cash",
         "iconUrl": "assets/images/pettycash.png",
         "url": "/pettycash/pettycashs_awaiting_my_action"
+    },
+    {
+        "name": "petty_cash_reports",
+        "title": "Petty Cash Reports",
+        "iconUrl": "assets/images/pettyreports.png",
+        "url": "/pettycash/create_pettycash_report"
     },
     {
         "name": "purchase_request",
