@@ -173,13 +173,14 @@ class UserProfile(AbstractUser):
             return f"{self.last_name} {self.first_name}"
         else:
             return f"{self.username}"
-    def add_role(self, role):
-        existing_role = self.roles.filter(app_id=role.app_id).first()
+    def add_role(self, role, app_id):
+        existing_role = self.roles.filter(app_id__fullname=app_id).first()
         if existing_role:
             self.roles.remove(existing_role)
-        self.roles.add(role)
+        try:self.roles.add(role)
+        except:pass
         self.save()
-
+   
     def get_user_roles_for_application(self, application_name):
         # Filter the user's roles for the specific application
         application = Application.objects.filter(name=application_name).first()
@@ -251,5 +252,5 @@ class Responsibilities(models.Model):
     cost_centers = models.ManyToManyField(CostCenter, blank=True)
 
     def __str__(self):
-        return self.role.role
+        return str(self.role.name)
    
