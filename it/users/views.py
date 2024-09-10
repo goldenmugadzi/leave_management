@@ -1147,6 +1147,7 @@ def roles_modal(request):
                 user.roles.remove(role)
             if res.role:
                 user.roles.add(Roles.objects.get(id=res.role.id))
+                print("Role added")
             if res.role and res.role.name:
                 return JsonResponse({"status": "success", "appid":res.role.app_id.id, "role":res.role.name}, safe=False)
             else:
