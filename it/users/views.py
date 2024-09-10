@@ -956,6 +956,7 @@ def import_users(request):
                     # initials = row['initials'].replace(" ", "")
                     # status = row['status'].replace(" ", "")
                     section = row['section'].replace(" ", "")
+                    section1=section
                     email = row['email'].replace(" ", "")
                     # phone = row['phone'].replace(" ", "")
                     # extension = row['extension'].replace(" ", "")
@@ -963,7 +964,7 @@ def import_users(request):
                     # createdon = row['createdon'].replace(" ", "")
                     region = row['region']
 
-                    section = Sections.objects.filter(code=section).first()
+
                     # search designation by description if not found create a new one
                     designation = Designations.objects.filter(description=Designation).first()
                     if not designation:
@@ -984,6 +985,23 @@ def import_users(request):
                             )
                             Region.save()
                             print("Created new region")
+
+                    if section!="":
+
+                        section,created = Sections.objects.get_or_create(
+                            section=section,
+                            region_id=3,
+                            defaults={
+                                'code':section1,
+
+                            }
+
+                        )
+
+                        if created:
+                            print("section created successfully!")
+                        else:
+                            print("section already exists!")
                     # check if user exists if not create a new one
                     check_user = UserProfile.objects.filter(username=username).first()
                     if check_user:
@@ -994,7 +1012,7 @@ def import_users(request):
                             first_name=firstname,
                             last_name=surname,
                             designation=designation,
-                            section=section if section!="" else None,
+                            section=section,
                             region=Region if region!="" else None,
                             email=email,
                             password=make_password("password"),

@@ -48,3 +48,13 @@ class Quotation(models.Model):
 
     def __str__(self):
         return str(self.pk)
+
+class PettycashReport(models.Model):
+    report_id = models.AutoField(primary_key=True)
+    start_date = models.DateField(blank=True, null=True)
+    end_date = models.DateField(blank=True, null=True)
+    region = models.ForeignKey(Regions, on_delete=models.DO_NOTHING, blank=True, null=True)
+    section = models.ForeignKey(Sections, on_delete=models.DO_NOTHING, blank=True, null=True)
+
+    def __str__(self):
+        return str(self.report_id)
