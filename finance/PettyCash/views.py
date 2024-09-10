@@ -706,4 +706,8 @@ def pettycash_report(request):
 
             pettycashs = Pettycash.objects.filter(date_created__range=[start_date, end_date], region=region, section=section)
             report = PettycashReport.objects.create(start_date=start_date, end_date=end_date, region=region, section=section)
-            return render(request, 'finance/pettycash/pettycash_report.html', {'pettycashs': pettycashs})
+            report.save()
+            print('report created')
+            print('count', pettycashs.count())
+            return render(request, 'finance/pettycash/pettycash_report.html', {'pettycashs': pettycashs, 'report': report})
+    return render(request, 'finance/pettycash/pettycash_create_report.html', {'pettyreportform': pettyreportform})
