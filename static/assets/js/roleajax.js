@@ -11,15 +11,22 @@ function setRoles(e) {
       document.getElementById("rolesModalform").innerHTML = rdata.form;
       let modal = document.getElementById("my_modal_2");
       let cc_chart = document.getElementById("cc_chart");
-      document.getElementById("applbl").innerHTML =  rdata.app;
+      const selectedAppIdElement = document.getElementById("selectedapp_id");
+      if (selectedAppIdElement) {
+        selectedAppIdElement.value = rdata.app.id;
+      } else {
+        console.error("Element with ID 'selectedapp_id' not found.");
+      }
+      document.getElementById("applbl").innerHTML = rdata.app.fullname;
       const idCostCenters = document.getElementById("id_cost_centers");
       let selectedItems = [];
-      
+
       for (let i = 0; i < idCostCenters.options.length; i++) {
-          if (idCostCenters.options[i].selected) {
-              selectedItems.push(idCostCenters.options[i].value);
-          }
-      } modal.showModal();
+        if (idCostCenters.options[i].selected) {
+          selectedItems.push(idCostCenters.options[i].value);
+        }
+      }
+      modal.showModal();
       const chartc = new google.visualization.OrgChart(cc_chart);
       const data = new google.visualization.DataTable();
       data.addColumn("string", "Name");
@@ -57,7 +64,6 @@ function setRoles(e) {
         }
         return descendants;
       }
-
       google.visualization.events.addListener(chartc, "select", function () {
         const selection = chartc.getSelection();
         // const idCostCenters = document.getElementById("id_cost_centers");
@@ -78,9 +84,7 @@ function setRoles(e) {
               const descendants = getDescendants(selectedRow);
               descendants.forEach(function (descendant) {
                 if (selectedItems.includes(descendant)) {
-                  selectedItems = selectedItems.filter(
-                    (i) => i !== descendant
-                  );
+                  selectedItems = selectedItems.filter((i) => i !== descendant);
                 }
               });
               descendants.forEach(function (descendant) {
@@ -98,14 +102,17 @@ function setRoles(e) {
         }
         resetData();
       });
-
       resetData();
     },
     error: function (xhr, status, error) {
-    alert("error:"+error+"\n Please ensure that you gave the appropriate Cost Center to the user, and submit your changes before assigning responsibilities to the user.");  
-    // document.getElementById("rolesModalform").innerHTML = xhr.responseText;
-    //   console.error("Error:", error);
-    //   console.log(xhr.responseText);
+      alert(
+        "error:" +
+          error +
+          "\n Please ensure that you gave the appropriate Cost Center to the user, and submit your changes before assigning responsibilities to the user."
+      );
+      document.getElementById("rolesModalform").innerHTML = xhr.responseText;
+      console.error("Error:", xhr.responseText);
+      // console.log(xhr.responseTex t);
     },
   });
 }
@@ -124,13 +131,15 @@ document.getElementById("save_role").addEventListener("click", function (e) {
     processData: false,
     contentType: false,
     success: function (rdata) {
-        document.getElementById("my_modal_2").close();
-        document.getElementById("rolesModalform").innerHTML = "";
-        document.getElementById("app_"+rdata.appid).innerHTML = rdata.role;
+      document.getElementById("my_modal_2").close();
+      document.getElementById("rolesModalform").innerHTML = "";
+      console.log(rdata.role);
+      document.getElementById("app_" + rdata.appid).innerHTML = rdata.role;
     },
     error: function (xhr, status, error) {
-     alert("Error:"+ error);
-      // console.log(xhr.responseText);
+      alert("Error:" + error);
+      console.error("Error:", xhr.responseText);
+      //  console.log(xhr);
     },
   });
 });
