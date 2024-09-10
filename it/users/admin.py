@@ -39,4 +39,8 @@ class CostCenterAdmin(admin.ModelAdmin):
 
 @admin.register(Responsibilities)
 class ResponsibilitiesAdmin(admin.ModelAdmin):
-    list_display = ('id','role', )
+    list_display = ('id', 'role', 'get_app_name','user')
+
+    def get_app_name(self, obj):
+        return obj.role.app_id.name if obj.role and obj.role.app_id else 'No App'
+    get_app_name.short_description = 'App Name'

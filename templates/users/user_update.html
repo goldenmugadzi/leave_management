@@ -162,21 +162,21 @@
             {% comment %} <p class="mt-1 text-sm leading-6 text-gray-600">Select user roles for the following application modules.</p> {% endcomment %}
             <div id="responsibilities-container" class="mt-10 grid grid-cols-3 gap-4">
               {% for app in user_applications %}
-              <div>
+              {% if   app.fullname %}<div>
                 <form method="post" id="role_form">
                   {% csrf_token %}
                   <input type="hidden" name="user_id" value="{{ user.id }}" />
                   <input type="hidden" name="app_id" value="{{ app.id }}" />
                   <input type="hidden" name="name" value="{{ app.name }}" />
-                  <button  class="block rolebtn text-sm font-medium border-gulf-blue-700 rounded px-2 border-1 border leading-6 text-gray-900"
+                 <button  class="block rolebtn text-sm font-medium border-gulf-blue-700 rounded px-2 border-1 border leading-6 text-gray-900"
                           type="button">
                     {{ app.fullname }} |
                     {% with responsibility=user_profile|get_responsibility:app %}
-                      <span id="app_{{ app.id }}" value="{{ responsibilities.id }}">{{ responsibility }}</span>
+                      <span id="app_{{ app.id }}" value="{{ responsibilities.id }}">{{ responsibility|default_if_none:'' }}</span>
                     {% endwith %}
-                  </button>
+                  </button> 
                 </form>
-              </div>
+              </div>{% endif %}
             {% endfor %}
               </div>
           </div>

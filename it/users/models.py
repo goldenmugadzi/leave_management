@@ -250,5 +250,5 @@ class Responsibilities(models.Model):
     cost_centers = models.ManyToManyField(CostCenter, blank=True)
 
     def __str__(self):
-        return self.role.role
+        return str(self.role.name)
    

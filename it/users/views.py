@@ -6,7 +6,7 @@ from django.contrib.auth import login
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.contrib.sites import requests
-from django.shortcuts import redirect, render
+from django.shortcuts import redirect, render,get_object_or_404
 from django.urls import reverse
 from django.contrib.auth.hashers import make_password
 from django.views.decorators.csrf import csrf_exempt
@@ -30,7 +30,7 @@ from django.core.paginator import Paginator
 from decouple import config
 from django.forms import inlineformset_factory
 from .forms import ResponsibilitiesForm
-from django.core import serializers
+
 BASE_URL = "http://"+config('HOST')+":"+config('PORT')
 APP_NAME = "users"
 
@@ -1112,31 +1112,29 @@ def roles_modal(request):
             role = Roles.objects.get(id=request.POST['role'])
         except:pass
         app_id = request.POST['selectedapp_id']
-        print("Role: ", role)
-        print("App ID: ", app_id)
-        print("App ID: ", type(app_id))
         user.add_role(role, app_id)
-        if role:  
-            responsibility = user.responsibilities.filter(role__app_id=role.app_id.id).first()
-            responsibilityForm = ResponsibilitiesForm(request.POST, instance=responsibility)
-            if responsibilityForm.is_valid():
-                res= responsibilityForm.save()
-                res.user = user
-                res.save()
-                return JsonResponse({"status": "success", "appid":res.role.app_id.id , "role":res.role.role }, safe=False)
+        responsibility = user.responsibilities.filter( user__id=user.id, role__app_id=app_id).first()
+        responsibilityForm = ResponsibilitiesForm(request.POST, instance=responsibility)
+        if responsibilityForm.is_valid():
+            print("Saving responsibility")
+            res= responsibilityForm.save()
+            res.user = user
+            res.save()
+            for role in user.roles.filter(app_id=app_id):
+                user.roles.remove(role)
+            if res.role:
+                user.roles.add(Roles.objects.get(id=res.role.id))
+            if res.role and res.role.name:
+                return JsonResponse({"status": "success", "appid":res.role.app_id.id, "role":res.role.name}, safe=False)
             else:
-                user = UserProfile.objects.get(id=userid)
-                regioncc=user.cost_center.get_region().get_decendance()
-                regioncc_list = list(regioncc.values('id', 'code', 'name', 'parent'))
-                return JsonResponse({"form":responsibilityForm.as_p(),"regioncc":regioncc_list, "app":Application.objects.get(id=appid ).fullname }, safe=False)
+                return JsonResponse({"status": "success", "appid":app_id, "role":None}, safe=False)   
         else:
-            """remove all responsibilities for the user on the app"""
-            print("Removing all responsibilities")
-            print("App ID: ", app_id)
-            user.responsibilities.filter(role__app_id__name=app_id).delete()
-
-        return JsonResponse({"status": "success", "appid":None, "role":None}, safe=False)
-    
+            print("Error: ", responsibilityForm.errors)
+            user = UserProfile.objects.get(id=userid)
+            regioncc=user.cost_center.get_region().get_decendance()
+            regioncc_list = list(regioncc.values('id', 'code', 'name', 'parent'))
+            return JsonResponse({"form":responsibilityForm.as_p(),"regioncc":regioncc_list, "app":Application.objects.get(id=appid ).fullname }, safe=False)
+      
     remove_duplicates()
     userid = request.GET['user_id']
     appid = request.GET['app_id']
@@ -1147,5 +1145,4 @@ def roles_modal(request):
     responsibility = user.responsibilities.filter(role__app_id=appid).first()
     form = ResponsibilitiesForm(roles_queryset=roles,cost_centers_queryset=regioncc, instance=responsibility)
     regioncc_list = list(regioncc.values('id', 'code', 'name', 'parent'))
-    print("form",form.as_p(),"regioncc",regioncc_list,"app",Application.objects.get(id=appid ))
     return JsonResponse({"form":form.as_p(),"regioncc":regioncc_list,"app":{'fullname':Application.objects.get(id=appid ).fullname,'id':Application.objects.get(id=appid ).id} }, safe=False)
