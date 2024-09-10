@@ -273,8 +273,7 @@
                   class="block rolebtn text-sm font-medium border-gulf-blue-700 rounded px-2 border-1 border leading-6 text-gray-900"
                   type="button"
                 >
-                  {{ app.fullname }} | {% with
-                  responsibility=user_profile|get_responsibility:app %}
+                  {{ app.fullname }} | {% with responsibility=user_profile|get_responsibility:app %}
                   <span id="app_{{ app.id }}" value="{{ responsibilities.id }}"
                     >{{ responsibility|default_if_none:'' }}</span
                   >
