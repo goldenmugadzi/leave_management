@@ -665,6 +665,27 @@
     <script></script>
     {% load sweetify %} {% sweetify %}
     <script>
+        // Time in milliseconds (10 minutes)
+        const INACTIVITY_TIMEOUT = 10 * 60 * 1000;
+        
+        let inactivityTimer;
+        
+        // Function to reset the inactivity timer
+        function resetInactivityTimer() {
+            clearTimeout(inactivityTimer);
+            inactivityTimer = setTimeout(() => {
+            window.location.href = '/login'; // Redirect to login page
+            }, INACTIVITY_TIMEOUT);
+        }
+        
+        // Event listeners to track user activity
+        window.onload = resetInactivityTimer;
+        document.onmousemove = resetInactivityTimer;
+        document.onkeypress = resetInactivityTimer;
+        document.onclick = resetInactivityTimer;
+        document.onscroll = resetInactivityTimer;
+    </script>
+    <script>
       $(document).ready(function () {
         // Initialize Select2 and add Tailwind CSS classes
         $(".select2")
