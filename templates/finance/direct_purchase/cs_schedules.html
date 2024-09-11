@@ -11,62 +11,157 @@
 </style>
 {% endblock styles %} {% block content %}
 <div class="content-wrapper">
+    <div class="mb-5">
+        <div
+          class="bg-gulf-blue-100 shadow-gulf-blue-300 text-gulf-blue-900 p-6 shadow-md rounded"
+        >
+          <div class="flex justify-between items-center mb-5">
+            <div>
+              <p class="text-lg font-semibold">Apply filters</p>
+              <p class="mt-1 text-sm">Use filters to further refine search</p>
+            </div>
+            <div class="flex justify-end items-center">
+              {% if procurement_role %}
+              <a
+                href="/direct_purchase/create_comperative_schedule/"
+                class="border-gulf-blue-600 hover:bg-gulf-blue-400 hover:text-gulf-blue-50 font-bold py-2 px-4 rounded m-2"
+              >
+                Create Schedule
+              </a>
+              {% endif %} {% if procurement_role %}
+              <a
+                id="your_schedules"
+                class="bg-gulf-blue-600 hover:bg-gulf-blue-800 text-white font-bold py-2 px-4 rounded m-2"
+              >
+                Your Schedules
+              </a>
+              {% endif %} {% if fm_role == False and gm_role == False %}
+              <a
+                id="pending_committee"
+                class="bg-gulf-blue-600 hover:bg-gulf-blue-800 text-white font-bold py-2 px-4 rounded m-2"
+              >
+                Pending Committee
+              </a>
+              {% endif %} {% if fm_role == True %}
+              <a
+                id="pending_fm"
+                class="bg-gulf-blue-600 hover:bg-gulf-blue-800 text-white font-bold py-2 px-4 rounded m-2"
+              >
+                Pending Finance
+              </a>
+              {% endif %} {% if gm_role == True %}
+              <a
+                id="pending_gm"
+                class="bg-gulf-blue-600 hover:bg-gulf-blue-800 text-white font-bold py-2 px-4 rounded m-2"
+              >
+                Pending GM
+              </a>
+              {% endif %}
+              <a
+                id="all_schedules"
+                class="bg-gulf-blue-600 hover:bg-gulf-blue-800 text-white font-bold py-2 px-4 rounded m-2"
+              >
+                All Schedules
+              </a>
+            </div>
+          </div>
+          <div
+            class="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3"
+          >
+            <div class="flex flex-col">
+              <label for="status" class="text-stone-600 text-sm font-medium"
+                >Status</label
+              >
+    
+              <select
+                id="status"
+                class="mt-2 block w-full rounded-md border border-gray-200 px-2 py-2 shadow-sm outline-none focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+              >
+                <option>Select Status</option>
+                <option value="Pending Committee">Pending Committee</option>
+                <option value="Pending Finance">Pending Finance</option>
+                <option value="Pending General Manager">Pending General Manager</option>
+                <option value="Complete">Complete</option>
+                <option value="Rejected">Rejected</option>
+                <option value="Cancelled">Cancelled</option>
+              </select>
+            </div>
+    
+            <div class="flex flex-col">
+              <label for="station" class="text-stone-600 text-sm font-medium"
+                >Station</label
+              >
+              <select
+                id="station"
+                class="mt-2 block w-full rounded-md border border-gray-200 px-2 py-2 shadow-sm outline-none focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+              >
+                <option>Select Station</option>
+                <option value="Sections">Sections</option>
+                <option value="Cost Centre">Cost Centre</option>
+                <option value="Region">Region</option>
+              </select>
+            </div>
+    
+            <div class="flex flex-col">
+              <label for="pickStation" class="text-stone-600 text-sm font-medium"
+                >Pick Station</label
+              >
+              <select
+                id="pickStation"
+                class="mt-2 block w-full rounded-md border border-gray-200 px-2 py-2 shadow-sm outline-none focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+              >
+                
+              </select>
+            </div>
+    
+            <div class="flex flex-col">
+              <label for="start_date" class="text-stone-600 text-sm font-medium"
+                >Start Date</label
+              >
+              <input
+                type="date"
+                id="start_date"
+                class="mt-2 block w-full rounded-md border border-gray-200 px-2 py-2 shadow-sm outline-none focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+              />
+            </div>
+    
+            <div class="flex flex-col">
+              <label for="end_date" class="text-stone-600 text-sm font-medium"
+                >End Date</label
+              >
+              <input
+                type="date"
+                id="end_date"
+                class="mt-2 block w-full rounded-md border border-gray-200 px-2 py-2 shadow-sm outline-none focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+              />
+            </div>
+          </div>
+    
+          <div class="mt-6 grid w-full grid-cols-2 justify-end space-x-4 md:flex">
+            <button
+              id="reset_filter"
+              class="active:scale-95 rounded-lg bg-red-200 px-8 py-2 font-medium text-gray-600 outline-none focus:ring hover:opacity-90"
+            >
+              Reset Filter
+            </button>
+            <button
+              id="search_filter"
+              class="active:scale-95 rounded-lg bg-blue-600 px-8 py-2 font-medium text-white outline-none focus:ring hover:opacity-90"
+            >
+              Search
+            </button>
+            <button
+              id="export_filter"
+              class="active:scale-95 rounded-lg bg-green-600 px-8 py-2 font-medium text-white outline-none focus:ring hover:opacity-90"
+            >
+                Export CSV
+            </button>
+          </div>
+        </div>
+      </div>
   <div
     class="bg-gulf-blue-100 shadow shadow-gulf-blue-300 text-gulf-blue-900 rounded px-2 py-2"
   >
-    <div class="flex justify-between items-center mb-5">
-      <span class="text-lg font-semibold">Direct Purchases</span>
-      <div class="flex justify-end items-center">
-        {% if procurement_role %}
-      <a
-      href="/direct_purchase/create_comperative_schedule/"
-      class="border-gulf-blue-600 hover:bg-gulf-blue-400 hover:text-gulf-blue-50 font-bold py-2 px-4 rounded m-2"
-      >
-      Create Schedule
-    </a>
-    {% endif %}
-      <a
-      id="all_schedules"
-      class="bg-gulf-blue-600 hover:bg-gulf-blue-800 text-white font-bold py-2 px-4 rounded m-2"
-      >
-      All Schedules
-    </a>
-    </div>
-    </div>
-    <div class="flex justify-end items-center mb-5">
-      {% if procurement_role %}
-      <a
-      id="your_schedules"
-      class="bg-gulf-blue-600 hover:bg-gulf-blue-800 text-white font-bold py-2 px-4 rounded m-2"
-      >
-      Your Schedules
-    </a>
-    {% endif %}
-      {% if fm_role == False and gm_role == False %}
-      <a
-        id="pending_committee"
-        class="bg-gulf-blue-600 hover:bg-gulf-blue-800 text-white font-bold py-2 px-4 rounded m-2"
-        >
-        Pending Committee
-      </a>
-      {% endif %}
-      {% if fm_role == True %} 
-      <a
-      id="pendind_fm"
-      class="bg-gulf-blue-600 hover:bg-gulf-blue-800 text-white font-bold py-2 px-4 rounded m-2"
-      >
-      Pending Finance
-    </a>    
-    {% endif %} 
-    {% if gm_role == True %}
-    <a
-    id="pending_gm"
-    class="bg-gulf-blue-600 hover:bg-gulf-blue-800 text-white font-bold py-2 px-4 rounded m-2"
-    >
-      Pending GM
-    </a>
-    {% endif %}
-    </div>
     <table id="direct_purchase" class="display" style="width: 100%">
       <thead>
         <tr>
@@ -253,6 +348,89 @@
       var newUrl = '/direct_purchase/datatables/pending_gm';
       table.ajax.url(newUrl).load();
     });
+    $("#station").on("change", function () {
+        const station_ = document.getElementById("station").value;
+        if(station_ === "Sections"){
+            let stations = fetch("/users/sections", {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+            })
+                .then((response) => response.json())
+                .then((data) => {
+                    console.log("data: ", data);
+                    let pickStation = document.getElementById("pickStation");
+                    pickStation.innerHTML = `<option>Select Section</option>`;
+                    data.forEach((_station) => {
+                        pickStation.innerHTML += `<option value="${_station.id}">${_station.section}</option>`;
+                    });
+                });
+        } else if(station_ == "Cost Centre"){
+                let stations = fetch("/users/cost_centers", {
+                    method: "GET",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                })
+                .then((response) => response.json())
+                .then((data) => {
+                    console.log("data: ", data);
+                    let pickStation = document.getElementById("pickStation");
+                    pickStation.innerHTML = `<option>Select Cost Centre</option>`;
+                    data.forEach((_station) => {
+                        pickStation.innerHTML += `<option value="${_station.id}">${_station.name}</option>`;
+                    });
+                });
+        } else if(station_ == "Region"){
+            let stations = fetch("/users/regions", {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+            })
+                .then((response) => response.json())
+                .then((data) => {
+                    console.log("data: ", data);
+                    let pickStation = document.getElementById("pickStation");
+                    pickStation.innerHTML = `<option>Select Region</option>`;
+                    data.forEach((_station) => {
+                        pickStation.innerHTML += `<option value="${_station.id}">${_station.region}</option>`;
+                    });
+                });
+        }
+    })
+    $("#search_filter").on("click", function () {
+        const startDate = document.getElementById("start_date").value;
+        const endDate = document.getElementById("end_date").value;
+        const status = document.getElementById("status").value;
+        const station = document.getElementById("station").value;
+        const pickStation = document.getElementById("pickStation").value;
+    
+        var newUrl = `/direct_purchase/datatables/filter?start_date=${startDate}&end_date=${endDate}&status=${status}&station=${station}&pick_station=${pickStation}`;
+        console.log("url: ", newUrl)
+        table.ajax.url(newUrl).load();
+    })
+    $("#export_filter").on("click", function () {
+        const startDate = document.getElementById("start_date").value;
+        const endDate = document.getElementById("end_date").value;
+        const status = document.getElementById("status").value;
+        const station = document.getElementById("station").value;
+        const pickStation = document.getElementById("pickStation").value;
+    
+        var newUrl = `/direct_purchase/datatables/export?start_date=${startDate}&end_date=${endDate}&status=${status}&station=${station}&pick_station=${pickStation}`;
+        console.log("url: ", newUrl)
+        window.location.href = newUrl;
+    })
+    $("#reset_filter").on("click", function () {
+        document.getElementById("start_date").value = "";
+        document.getElementById("end_date").value = "";
+        document.getElementById("status").value = "Select Status";
+        document.getElementById("station").value = "Select Station";
+        document.getElementById("pickStation").value = "Pick Station";
+        var newUrl = "/direct_purchase/datatables/all_schedules";
+        table.ajax.url(newUrl).load();
+    })
   });
 </script>
 {% endblock scripts %}

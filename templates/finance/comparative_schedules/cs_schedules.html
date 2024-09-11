@@ -150,7 +150,12 @@
         >
           Search
         </button>
-        <span id="exportCSVContainer"></span>
+        <button
+          id="export_filter"
+          class="active:scale-95 rounded-lg bg-green-600 px-8 py-2 font-medium text-white outline-none focus:ring hover:opacity-90"
+        >
+            Export CSV
+        </button>
       </div>
     </div>
   </div>
@@ -243,18 +248,8 @@
         url: url,
         type: "GET",
       },
-      dom: 'Blfrtip', // Define the layout of the table controls
+      dom: 'lfrtip', // Define the layout of the table controls
       lengthMenu: [10, 25, 50, 100],
-      buttons: [
-        {
-          extend: 'csvHtml5',
-          text: 'Export CSV',
-          className: "active:scale-95 rounded-lg bg-green-600 px-8 py-2 font-medium text-white outline-none focus:ring hover:opacity-90",
-          attr: {
-            id: 'exportCsvButton' // Add an ID to the button for easy reference
-          }
-        }
-      ],
       scrollX: true,
       columns: [
         {
@@ -478,6 +473,17 @@
         console.log("url: ", newUrl)
         table.ajax.url(newUrl).load();
     })
+    $("#export_filter").on("click", function () {
+        const startDate = document.getElementById("start_date").value;
+        const endDate = document.getElementById("end_date").value;
+        const status = document.getElementById("status").value;
+        const station = document.getElementById("station").value;
+        const pickStation = document.getElementById("pickStation").value;
+    
+        var newUrl = `/comperative_schedule/datatables/export?start_date=${startDate}&end_date=${endDate}&status=${status}&station=${station}&pick_station=${pickStation}`;
+        console.log("url: ", newUrl)
+        window.location.href = newUrl;
+    })
     $("#reset_filter").on("click", function () {
         document.getElementById("start_date").value = "";
         document.getElementById("end_date").value = "";
@@ -487,9 +493,6 @@
         var newUrl = "/comperative_schedule/datatables/all_schedules";
         table.ajax.url(newUrl).load();
     })
-
-    // Move the button to a custom position
-    $('#exportCsvButton').appendTo('#exportCSVContainer');
 
   });
 </script>

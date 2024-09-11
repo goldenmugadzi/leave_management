@@ -44,5 +44,6 @@ urlpatterns = [
     path('pending_gm_approval', get_pending_gm_approval, name='get_pending_gm_approval'),
     path('pending_fm_approval', get_pending_fm_approval, name='get_pending_fm_approval'),
     path('all_schedules', get_all_schedules, name='get_all_schedules'),
+    path('datatables/export', get_csv_export, name='get_csv_export'),
     path('datatables/<str:view>', datatable_data, name='datatable_data'),
 ]

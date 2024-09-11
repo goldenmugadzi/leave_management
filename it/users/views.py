@@ -1115,6 +1115,7 @@ def get_center_filter(request, id):
         
         json_centers.append(json_center)
     return JsonResponse(json_centers, safe=False)
+
 def remove_duplicates():
     duplicates = (
         Roles.objects.values('role', 'app_id')
@@ -1169,4 +1170,4 @@ def roles_modal(request):
     responsibility = user.responsibilities.filter(role__app_id=appid).first()
     form = ResponsibilitiesForm(roles_queryset=roles,cost_centers_queryset=regioncc, instance=responsibility)
     regioncc_list = list(regioncc.values('id', 'code', 'name', 'parent'))
-    return JsonResponse({"form":form.as_p(),"regioncc":regioncc_list,"app":{'fullname':Application.objects.get(id=appid ).fullname,'id':Application.objects.get(id=appid ).id} }, safe=False)
+    return JsonResponse({"form":form.as_p(),"regioncc":regioncc_list,"app":{'fullname':Application.objects.get(id=appid).fullname,'id':Application.objects.get(id=appid ).id} }, safe=False)

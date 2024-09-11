@@ -1,4 +1,5 @@
 import base64
+import csv
 import os
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
@@ -1470,6 +1471,43 @@ def get_filtered_schedules(user_id, search_value, column_name, user_region, stat
             print("Error: ", ex)
         
         return cs
+
+def get_csv_export(request):
+    
+    print("export csv")
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="rfq.csv"'
+    try:    
+        user_id = request.user.id
+        try:
+            user_region = Regions.objects.filter(region=request.user.region).first()
+        except Exception as ex:
+            user_region = None
+            print("error: ",  ex)
+        status = request.GET.get('status')
+        station = request.GET.get('station')
+        pickStation = request.GET.get('pick_station')
+        start_date = request.GET.get('start_date')
+        end_date = request.GET.get('end_date')
+        data = get_filtered_schedules(user_id=user_id, search_value="", column_name="", user_region=user_region, status=status, station=station, pickStation=pickStation, start_date=start_date, end_date=end_date)
+        custom_data = add_details(data)
+        # build csv file and return as response
+        try:
+            writer = csv.writer(response)
+            writer.writerow(['CS ID', 'PR ID', 'PR Number', 'PR Date', 'Scope of Work', 'Closing Date', 'Closing Time', 'Advert', 'PR Number', 'PR Date', 'CS Opened', 'TAC Date', 'Created By', 'Committee Approval', 'GM Approval', 'FM Approval', 'Section', 'Region', 'Created At'])
+            for item in custom_data:
+                try:
+                    writer.writerow([item['cs_id'], item['pr_id'], item['pr_number'], item['pr_date'], item['scope_of_work'], item['closing_date'], item['closing_time'], item['advert'], item['pr_number'], item['pr_date'], item['cs_opened'], item['tac_date'], item['created_by'], item['committee_approval'], item['gm_approval'], item['fm_approval'], item['section'], item['region'], item['created_at']])
+                    
+                except Exception as ex:
+                    print("For Writting to CSV: ", ex)
+        except Exception as ex:
+            print("Error Writting to CSV: ", ex)
+    except Exception as ex:
+        print("Error: ", ex)
+    
+    
+    return response
 
 def add_details(cs):
     cs_list = []
