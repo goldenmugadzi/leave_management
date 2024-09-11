@@ -117,7 +117,7 @@ class PettycashReportForm(forms.ModelForm):
         fields = '__all__'
         exclude = ['process','requested_by','designation',
                    'details_of_expenditure','currency','amount','amount_disbursed','receipt_file','amount_used',
-                   'amount','pettycash_id','old_version'
+                   'amount','pettycash_id','old_version','petty_id'
                    # include the project items
                    ]
 

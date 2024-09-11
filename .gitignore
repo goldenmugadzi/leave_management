@@ -151,3 +151,4 @@ node_modules/
 /bet/Scripts/transformers-cli.exe
 /bet/Scripts/weasyprint.exe
 /bet/Scripts/python.exe
+.idea/
