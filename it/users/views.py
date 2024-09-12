@@ -466,7 +466,6 @@ def update_user(request):
             section = request.POST.get('section')
             designation = request.POST.get('designation')
             cost_center = request.POST.get('cost_center')
-            print("cost_center 111: ", cost_center)
             
             region_, district_, depot_, section_, designation_, cost_center_ = None, None, None, None, None, None
             try:
@@ -485,7 +484,6 @@ def update_user(request):
                 'username': request.POST['username'],
                 'email': request.POST['email'],
                 'region': region_,
-                'cost_center': cost_center_,
                 'district': district_,
                 'depot': depot_,
                 'section': section_,
@@ -498,9 +496,9 @@ def update_user(request):
 
             user_profile.save()
 
-            roles = [role for role in [request.POST.get(app.name) for app in Application.objects.all() if request.POST.get(app.name) != 'Select Role'] if role and role != ""]
-            user_profile.roles.clear()
-            user_profile.roles.add(*Roles.objects.filter(id__in=roles))
+            # roles = [role for role in [request.POST.get(app.name) for app in Application.objects.all() if request.POST.get(app.name) != 'Select Role'] if role and role != ""]
+            # user_profile.roles.clear()
+            # user_profile.roles.add(*Roles.objects.filter(id__in=roles))
             messages.success(request, "User updated successfully")
         except Exception as ex:
             print("save user error", ex)
@@ -1103,7 +1101,12 @@ def import_old_users(request):
     return JsonResponse({"status": "success", "message": "Users imported successfully"})
 
 def get_center_filter(request, id):
-    cost_centers = CostCenter.objects.get(id=id).get_view()
+    cost_center = CostCenter.objects.filter(id=id).first()
+    user = UserProfile.objects.get(id=request.GET['u'])
+    cost_centers = cost_center.get_view()
+    """set the cost center to the user"""
+    user.cost_center = cost_center
+    user.save()
     json_centers = []
     for cost_center in cost_centers:
         json_center= {
