@@ -12,4 +12,5 @@ urlpatterns = [
     path('receipt', receipt, name='receipt'),
     path('attachment/<str:filename>/', download_file, name='attachment'),
     path('attachments/<str:attachment_id>', download_attachment, name='attachments'),
+    path('create_pettycash_report', pettycash_report, name='pettycash_report'),
 ]

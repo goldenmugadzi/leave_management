@@ -22,6 +22,10 @@ urlpatterns = [
     path('datatables', views.datatable_data, name='datatable_data'),
     path('import_old_users', views.import_old_users, name='import_old_users'),
     path('centfilter/<str:id>', views.get_center_filter, name='get_center_filter'),
+    
+    path('sections', views.get_sections, name='get_sections'),
+    path('cost_centers', views.get_cost_centers, name='get_cost_centers'),
+    path('regions', views.get_regions, name='get_regions'),
 
     path('setroles', views.roles_modal, name='setroles'),
 ]

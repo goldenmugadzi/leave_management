@@ -1,4 +1,5 @@
 import base64
+import csv
 import os
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
@@ -1197,7 +1198,8 @@ def your_comperative_schedules(request):
     return render(request, user_page, { 
             "fm_role": fm_role,
             "gm_role": gm_role,
-            "procurement_role": procurement_role,})
+            "procurement_role": procurement_role,
+            "page_title": "RFQ Comparative Schedules",})
 
 @login_required
 def get_all_schedules(request):
@@ -1209,9 +1211,8 @@ def get_all_schedules(request):
     fm_role, gm_role = False, False
     fm_role, gm_role, procurement_role = getUserFMGMRoles(user_profile)
     
-    print("roles: ", fm_role, gm_role)
     user_page = 'finance/comparative_schedules/cs_schedules.html'
-    return render(request, user_page, { "fm_role": fm_role, "gm_role": gm_role, "procurement_role": procurement_role,})
+    return render(request, user_page, { "fm_role": fm_role, "gm_role": gm_role, "procurement_role": procurement_role, "page_title": "RFQ Comparative Schedules"})
 
 @login_required
 def get_pending_committee(request):
@@ -1222,13 +1223,13 @@ def get_pending_committee(request):
     fm_role, gm_role = False, False
     fm_role, gm_role, procurement_role = getUserFMGMRoles(user_profile)   
         
-    print("roles: ", fm_role, gm_role)
     user_page = 'finance/comparative_schedules/cs_schedules.html'
     print("roles: ", fm_role, gm_role)
     return render(request, user_page, {
             "fm_role": fm_role,
             "gm_role": gm_role,
-            "procurement_role": procurement_role})
+            "procurement_role": procurement_role,
+            "page_title": "RFQ Comparative Schedules"})
 
 @login_required
 def get_pending_gm_approval(request):
@@ -1243,7 +1244,8 @@ def get_pending_gm_approval(request):
     return render(request, user_page, {
             "fm_role": fm_role,
             "gm_role": gm_role,
-            "procurement_role": procurement_role})
+            "procurement_role": procurement_role,
+            "page_title": "RFQ Comparative Schedules"})
 
 @login_required
 def get_pending_fm_approval(request):
@@ -1258,7 +1260,8 @@ def get_pending_fm_approval(request):
     return render(request, user_page, { 
             "fm_role": fm_role,
             "gm_role": gm_role,
-            "procurement_role": procurement_role})
+            "procurement_role": procurement_role,
+            "page_title": "RFQ Comparative Schedules"})
 
 def get_your_schedules(user_id, search_value=None, column_name=None, region=None):
     
@@ -1399,6 +1402,113 @@ def get_all_schedules_table(user_id, search_value=None, column_name=None, region
 
     return cs
 
+def get_filtered_schedules(user_id, search_value, column_name, user_region, status, station, pickStation, start_date, end_date):
+        print("user id: ", user_id, "search_value: ", search_value, "column_name: ", column_name, "user_region: ", user_region, "status: ", status, "station: ", station, "pickStation: ", pickStation, "start_date: ", start_date, "end_date: ", end_date)
+        cs = ComparativeSchedules.objects.filter(
+            region=user_region,
+        ).all()
+        
+        try:
+        
+            if status:
+                if status == "Pending Committee":
+                    cs = cs.filter(
+                        Q(committee__committee_approval=None) | Q(committee__committee_approval="")).exclude(
+                            Q(committee__committee_approval="Rejected"))
+                if status == "Pending Finance":
+                    cs = cs.filter(Q(csapproval__approval="") | Q(csapproval__approval=None)).exclude(
+                        Q(committee__committee_approval=None) | Q(committee__committee_approval="") | Q(committee__committee_approval="Rejected")
+                    )
+                    print("cs: ", cs)
+                if status == "Pending General Manager":
+                    cs = cs.filter(Q(csapproval__approval="Approved"), 
+                            Q(csapproval__approver_role="finance_manager")
+                        ).exclude(
+                        Q(csapproval__approval="Rejected") | Q(csapproval__approver_role="general_manager")
+                    )
+                if status == "Complete":
+                    cs = cs.filter(Q(csapproval__approval="Approved"), 
+                            Q(csapproval__approver_role="general_manager")).exclude(
+                        Q(csapproval__approval="Rejected") | Q(csapproval__approval="") | Q(csapproval__approval=None)
+                    )
+                if status == "Rejected":
+                    cs = cs.filter(
+                        Q(csapproval__approval="Rejected") | Q(committee__committee_approval="Rejected")
+                    )
+                if status == "Cancelled":
+                    cs = cs.filter(cancelled=True)
+
+            if station and pickStation:
+                if station == "Sections":
+                    section = Sections.objects.filter(id=pickStation).first()
+                    if section:
+                        cs = cs.filter(section=section)
+                    print("cs: ", cs)   
+                if station == "Cost Centre":
+                    cost_center = CostCenter.objects.filter(id=pickStation).first()
+                    if cost_center:
+                        cs = cs.filter(cost_center=cost_center)
+                    print("cs: ", cs)
+                if station == "Region":
+                    region_ = Regions.objects.filter(id=pickStation).first()
+                    print("region: ", region_)
+                    if region_:
+                        cs = cs.filter(region=region_)
+            
+            # Filter based on search value
+            if search_value:
+                cs = cs.filter(
+                Q(cs_id__icontains=search_value) |
+                Q(scope_of_work__icontains=search_value) 
+                )
+                
+            if start_date and end_date:
+                cs = cs.filter(created_at__range=[start_date, end_date])
+            
+            if column_name:
+                cs = cs.order_by(column_name)
+        except Exception as ex:
+            print("Error: ", ex)
+        
+        return cs
+
+def get_csv_export(request):
+    
+    print("export csv")
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="rfq.csv"'
+    try:    
+        user_id = request.user.id
+        try:
+            user_region = Regions.objects.filter(region=request.user.region).first()
+        except Exception as ex:
+            user_region = None
+            print("error: ",  ex)
+        status = request.GET.get('status')
+        station = request.GET.get('station')
+        pickStation = request.GET.get('pick_station')
+        start_date = request.GET.get('start_date')
+        end_date = request.GET.get('end_date')
+        data = get_filtered_schedules(user_id=user_id, search_value="", column_name="", user_region=user_region, status=status, station=station, pickStation=pickStation, start_date=start_date, end_date=end_date)
+        custom_data = add_details(data)
+        # build csv file and return as response
+        try:
+            writer = csv.writer(response)
+            writer.writerow(['CS ID', 'PR ID', 'PR Number', 'PR Date', 'Scope of Work', 'Closing Date', 'Closing Time', 'Advert', 'PR Number', 'PR Date', 'CS Opened', 'TAC Date', 'Created By', 'Committee Approval', 'GM Approval', 'FM Approval', 'Section', 'Region', 'Created At'])
+            for item in custom_data:
+                try:
+                    writer.writerow([item['cs_id'], item['pr_id'], item['pr_number'], item['pr_date'], item['scope_of_work'], item['closing_date'], item['closing_time'], item['advert'], item['pr_number'], item['pr_date'], item['cs_opened'], item['tac_date'], item['created_by'], item['committee_approval'], item['gm_approval'], item['fm_approval'], item['section'], item['region'], item['created_at']])
+                    
+                except Exception as ex:
+                    print("For Writting to CSV: ", ex)
+        except Exception as ex:
+            print("Error Writting to CSV: ", ex)
+    except Exception as ex:
+        print("Error: ", ex)
+    
+    
+    return response
+
 def add_details(cs):
     cs_list = []
     committee_reject_reason = ""
@@ -1520,6 +1630,13 @@ def datatable_data(request, view):
     elif view == "all_schedules":
         print("region inside: ", user_region)
         data = get_all_schedules_table(user_id, search_value, column_name, user_region)
+    elif view == "filter":
+        status = request.GET.get('status')
+        station = request.GET.get('station')
+        pickStation = request.GET.get('pick_station')
+        start_date = request.GET.get('start_date')
+        end_date = request.GET.get('end_date')
+        data = get_filtered_schedules(user_id, search_value, column_name, user_region, status, station, pickStation, start_date, end_date)
     
     # Total number of records before filtering
     total = len(data)
@@ -1538,6 +1655,7 @@ def datatable_data(request, view):
         'recordsFiltered': total,
         'data': data
     })
+
 
 @login_required
 def get_comperative_schedule(request, cs_id):
@@ -2845,6 +2963,7 @@ def save_cs_decision(request):
         "success": True,
     })   
 
+@login_required
 def save_additional_notes(request):
     cs_id = request.POST.get("cs_id", "")
     additional_notes = request.POST.get("additional_notes", "")
@@ -2862,6 +2981,7 @@ def save_additional_notes(request):
             "success": False,
         })
 
+@login_required
 def save_buyers_notes(request):
     cs_id = request.POST.get("cs_id", "")
     buyers_notes = request.POST.get("buyers_notes", "")
@@ -2880,7 +3000,6 @@ def save_buyers_notes(request):
             "message": "Comparative Schedule not found",
             "success": False,
         })
-
 
 @login_required
 def cancel_schedule(request, cs_id):

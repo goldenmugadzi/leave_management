@@ -15,8 +15,8 @@ from approve.models import Step
 from approve.views import intiate
 from it.users.models import UserProfile, Roles, Sections, Regions
 from approve.models import Process, Workflow, Step, Approval
-from .forms import PettycashForm, QuotationFormSet
-from .models import Pettycash, Quotation
+from .forms import PettycashForm, QuotationFormSet, PettycashReportForm
+from .models import Pettycash, Quotation, PettycashReport
 from django.db.models import Prefetch
 
 
@@ -689,3 +689,25 @@ def download_file(request, filename):
         messages.error(request, 'File not found')
 
         return HttpResponseNotFound('The requested file does not exist.')
+
+def pettycash_report(request):
+    user_id = request.user.id
+    user_profile = UserProfile.objects.filter(id=user_id).first()
+
+    pettyreportform=PettycashReportForm(user=user_profile)
+
+    if request.method == 'POST':
+        pettyreportform = PettycashReportForm(request.POST, user=user_profile)
+        if pettyreportform.is_valid():
+            start_date = pettyreportform.cleaned_data['start_date']
+            end_date = pettyreportform.cleaned_data['end_date']
+            region = pettyreportform.cleaned_data['region']
+            section = pettyreportform.cleaned_data['section']
+
+            pettycashs = Pettycash.objects.filter(date_created__range=[start_date, end_date], region=region, section=section)
+            report = PettycashReport.objects.create(start_date=start_date, end_date=end_date, region=region, section=section)
+            report.save()
+            print('report created')
+            print('count', pettycashs.count())
+            return render(request, 'finance/pettycash/pettycash_report.html', {'pettycashs': pettycashs, 'report': report})
+    return render(request, 'finance/pettycash/pettycash_create_report.html', {'pettyreportform': pettyreportform})

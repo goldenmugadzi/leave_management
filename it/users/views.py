@@ -1,5 +1,6 @@
 # users/views.py
 
+from datetime import timedelta
 import json
 import csv
 from django.contrib.auth import login
@@ -98,7 +99,7 @@ def ms_exhange_test(request):
     return JsonResponse({"status": "success", "message": "Email sent successfully"})
 
 @login_required
-@allowed_roles(['administrator'], ['users'])
+@allowed_roles(['Administrator'], ['users'])
 def add_centers(request):
     
     for region in REGIONS:
@@ -171,7 +172,7 @@ def add_centers(request):
 
 
 @login_required
-@allowed_roles(['administrator'], ['users'])
+@allowed_roles(['Administrator'], ['users'])
 def add_user(request):
     if request.method == "GET":
 
@@ -288,7 +289,7 @@ def add_user(request):
 
 
 @login_required
-@allowed_roles(['administrator'], ['users'])
+@allowed_roles(['Administrator'], ['users'])
 def get_user_records(request):
 
     user_page = 'users/user_index.html'
@@ -368,8 +369,8 @@ def datatable_data(request):
             'data': data
         })
 
-# @login_required
-# @allowed_roles(['administrator'], ['users'])
+@login_required
+@allowed_roles(['Administrator'], ['users'])
 def update_user(request):
     if request.method == "GET":
         user_profile = UserProfile.objects.get(id=request.GET['i'])
@@ -548,7 +549,7 @@ def view_user(request):
         )
         
 @login_required
-@allowed_roles(['administrator'], ['users'])
+@allowed_roles(['Administrator'], ['users'])
 def update_userx(request):
     if request.method == "GET":
 
@@ -682,7 +683,7 @@ def update_userx(request):
 
 
 @login_required
-@allowed_roles(['administrator'], ['users'])
+@allowed_roles(['Administrator'], ['users'])
 def reset_user_password(request):
     if request.method == "POST":
 
@@ -695,6 +696,8 @@ def reset_user_password(request):
             try:
                 validate_password(password1, user=user_profile)
                 user_profile.change_password = True
+                user_profile.password_expiry_date = date.today() + timedelta(days=user_profile.password_expiry_days)
+                user_profile.save()
                 user_profile.set_password(password1)
                 user_profile.save()
                 messages.success(request, "Password reset successfull")
@@ -769,15 +772,17 @@ def change_user_password(request):
 
     return redirect('/dashboards/overview')
 
-# @login_required
-# @allowed_roles(['Administrator'], ['users'])
-# def delete_user(request):
-#     if request.method == "GET":
-#         id = request.GET['i']
-#         user_profile = UserProfile.objects.filter(id=id).first()
-#         user_profile.delete()
+def get_sections(request):
+    sections = Sections.objects.all()
+    return JsonResponse(list(sections.values('id', 'section')), safe=False)
 
-#     return redirect('/users/users-index')
+def get_cost_centers(request):
+    cost_centers = CostCenter.objects.all()
+    return JsonResponse(list(cost_centers.values('id', 'name')), safe=False)
+
+def get_regions(request):
+    regions = Regions.objects.all()
+    return JsonResponse(list(regions.values('id', 'region')), safe=False)
 
 @login_required
 def get_filtered_centers(request, region_id):
@@ -930,7 +935,7 @@ def get_user_all_groups(request):
         )
 
 @login_required
-@allowed_roles(['administrator'], ['users'])
+@allowed_roles(['Administrator'], ['users'])
 def import_users(request):
     if request.method == "POST":
         file = request.FILES['file']
@@ -951,6 +956,7 @@ def import_users(request):
                     # initials = row['initials'].replace(" ", "")
                     # status = row['status'].replace(" ", "")
                     section = row['section'].replace(" ", "")
+                    section1=section
                     email = row['email'].replace(" ", "")
                     # phone = row['phone'].replace(" ", "")
                     # extension = row['extension'].replace(" ", "")
@@ -958,7 +964,7 @@ def import_users(request):
                     # createdon = row['createdon'].replace(" ", "")
                     region = row['region']
 
-                    section = Sections.objects.filter(code=section).first()
+
                     # search designation by description if not found create a new one
                     designation = Designations.objects.filter(description=Designation).first()
                     if not designation:
@@ -979,6 +985,23 @@ def import_users(request):
                             )
                             Region.save()
                             print("Created new region")
+
+                    if section!="":
+
+                        section,created = Sections.objects.get_or_create(
+                            section=section,
+                            region_id=3,
+                            defaults={
+                                'code':section1,
+
+                            }
+
+                        )
+
+                        if created:
+                            print("section created successfully!")
+                        else:
+                            print("section already exists!")
                     # check if user exists if not create a new one
                     check_user = UserProfile.objects.filter(username=username).first()
                     if check_user:
@@ -989,7 +1012,7 @@ def import_users(request):
                             first_name=firstname,
                             last_name=surname,
                             designation=designation,
-                            section=section if section!="" else None,
+                            section=section,
                             region=Region if region!="" else None,
                             email=email,
                             password=make_password("password"),
@@ -1092,6 +1115,7 @@ def get_center_filter(request, id):
         
         json_centers.append(json_center)
     return JsonResponse(json_centers, safe=False)
+
 def remove_duplicates():
     duplicates = (
         Roles.objects.values('role', 'app_id')
@@ -1124,6 +1148,7 @@ def roles_modal(request):
                 user.roles.remove(role)
             if res.role:
                 user.roles.add(Roles.objects.get(id=res.role.id))
+                print("Role added")
             if res.role and res.role.name:
                 return JsonResponse({"status": "success", "appid":res.role.app_id.id, "role":res.role.name}, safe=False)
             else:
@@ -1145,4 +1170,4 @@ def roles_modal(request):
     responsibility = user.responsibilities.filter(role__app_id=appid).first()
     form = ResponsibilitiesForm(roles_queryset=roles,cost_centers_queryset=regioncc, instance=responsibility)
     regioncc_list = list(regioncc.values('id', 'code', 'name', 'parent'))
-    return JsonResponse({"form":form.as_p(),"regioncc":regioncc_list,"app":{'fullname':Application.objects.get(id=appid ).fullname,'id':Application.objects.get(id=appid ).id} }, safe=False)
+    return JsonResponse({"form":form.as_p(),"regioncc":regioncc_list,"app":{'fullname':Application.objects.get(id=appid).fullname,'id':Application.objects.get(id=appid ).id} }, safe=False)

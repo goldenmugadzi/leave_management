@@ -1,3 +1,4 @@
+from datetime import datetime
 import json
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login
@@ -33,14 +34,19 @@ APPLICATIONS = [
         "name": "ace",
         "title": "ACE",
         "iconUrl": "assets/images/capital.png",
-        "url": "/ace/aces"
+        "url": "/ace/aces_awaiting_my_action"
+    },
+    {
+        "name": "ace reports",
+        "title": "ACE Reports",
+        "iconUrl": "assets/images/reports.png",
+        "url": "/ace/create_ace_report"
     },
     {
         "name": "virament",
         "title": "Virement",
         "iconUrl": "assets/images/money.png",
         "url": "/ace/viraments_awaiting_my_action"
-
     },
     {
         "name": "Token",
@@ -53,6 +59,12 @@ APPLICATIONS = [
         "title": "Petty Cash",
         "iconUrl": "assets/images/pettycash.png",
         "url": "/pettycash/pettycashs_awaiting_my_action"
+    },
+    {
+        "name": "petty_cash_reports",
+        "title": "Petty Cash Reports",
+        "iconUrl": "assets/images/pettyreports.png",
+        "url": "/pettycash/create_pettycash_report"
     },
     {
         "name": "purchase_request",
@@ -96,10 +108,17 @@ def login_user(request):
         
         user = authenticate(request, username=username, password=password)
         if user is not None:
+            if user.password_expiry_date and user.password_expiry_date <= datetime.now().date():
+                login(request, user)
+                return redirect('/auth/change-password')
             if user.change_password:
                 login(request, user)
                 return redirect('/auth/change-password')
             login(request, user)
+            last_page = request.session.get('logout_page')
+            print("last_page: ", last_page)
+            if last_page:
+                return redirect(last_page)
             return redirect('/dashboards/overview')
         else:
             return render(request, 'registration/login.html', {
@@ -306,7 +325,7 @@ def business_applications(request):
 
     users_role = user_profile.get_user_roles_for_application("users")
 
-    # print("users_role: ", users_role)
+    print("users_role: ", users_role)
     applications = APPLICATIONS
     if users_role == "standard" or users_role == "" or users_role == None:
         print("creating standard list ..")
@@ -317,7 +336,7 @@ def business_applications(request):
         applications = applications
     else:
         if user.region:
-            if user.region.region == "HARARE REGION" or user.region.region == "EASTERN REGION":
+            if user.region.region == "HARARE REGION" or user.region.region == "EASTERN REGION" or user.region.region == "NORTHERN REGION":
                 applications = applications
             else:
                 applications = [app for app in applications if app['name'] == 'users' or app['name'] == 'non_conformity']
@@ -441,7 +460,6 @@ def change_password(request):
             "username": username
         })
             
-
 # @login_required(login_url='/accounts/login')
 def security_questions(request):
    if request.method == "POST":
