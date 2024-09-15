@@ -8,7 +8,7 @@ from django.contrib import messages
 
 from it.users.models import CostCenter, Regions, Sections
 from utils.save_file import save_file
-from .models import Categories, First_Category, Secondary_Category, Filetype
+from .models import Categories, First_Category, KnowledgeCentreFolder, Secondary_Category, Filetype
 from django.shortcuts import render
 from django.db.models import Q
 from django.contrib.auth.decorators import login_required
@@ -19,6 +19,17 @@ from .models import KnowledgeCenter
 from django.core.files.storage import FileSystemStorage
 
 # Create your views here.
+def view_root_folders(request):
+    
+    root_folders = KnowledgeCentreFolder.objects.filter(parent__isnull=True)
+    url_path = request.path.split("/")
+    
+    return render(request, 'knowledge-center/root_folders.html', {
+        "url_path": url_path,
+        "folders": root_folders,
+        "page_title": "KNOWLEDGE CENTRE", 
+        "results": []})
+
 @login_required
 def create(request):
     url_path = request.path.split("/")
@@ -186,10 +197,12 @@ def view_archived_files(request):
 @login_required
 def view_firstview(request):
     
+    root_folders = KnowledgeCentreFolder.objects.filter(parent__isnull=True)
     url_path = request.path.split("/")
     
     return render(request, 'knowledge-center/view_firstview.html', {
         "url_path": url_path,
+        "folders": root_folders,
         "page_title": "KNOWLEDGE CENTRE", 
         "results": []})
     

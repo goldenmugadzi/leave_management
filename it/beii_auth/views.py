@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 import json
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login
@@ -108,6 +108,7 @@ def login_user(request):
         
         user = authenticate(request, username=username, password=password)
         if user is not None:
+            print("user expiry: ", (user.password_expiry_date <= datetime.now().date()), user.password_expiry_date, datetime.now().date())
             if user.password_expiry_date and user.password_expiry_date <= datetime.now().date():
                 login(request, user)
                 return redirect('/auth/change-password')
@@ -115,6 +116,9 @@ def login_user(request):
                 login(request, user)
                 return redirect('/auth/change-password')
             login(request, user)
+            next_url = request.GET.get('next')
+            if next_url:
+                return redirect(next_url)
             last_page = request.session.get('logout_page')
             print("last_page: ", last_page)
             if last_page:
@@ -431,6 +435,7 @@ def change_password(request):
                 validate_password(password, user=user_profile)
                 user_profile.set_password(password)
                 user_profile.change_password = False
+                user_profile.password_expiry_date = datetime.now().date() + timedelta(days=30)
                 user_profile.save()
                 messages.success(request, "Password changed successfully")
                 return redirect('/accounts/login')
@@ -534,6 +539,7 @@ def reset_password(request):
                 validate_password(password, user=user_profile)
                 user_profile.set_password(password)
                 user_profile.change_password = False
+                user_profile.password_expiry_date = datetime.now().date() + timedelta(days=-1)
                 user_profile.save()
                 messages.success(request, "Password changed successfully")
                 return redirect('/accounts/login')

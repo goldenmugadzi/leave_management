@@ -38,9 +38,14 @@
     />
     <script src="{% static 'assets/classification.js' %}"></script>
     <script>
-      function goBack() {
-        window.history.back();
-      }
+        function goBack() {
+          const loginUrl = '/accounts/login';
+          if (document.referrer && !document.referrer.includes(loginUrl)) {
+            window.history.back();
+          } else {
+            window.location.href = "{% url 'dashboard_index' %}";
+          }
+        }
     </script>
     {% comment %}
     <script src="http://code.jquery.com/jquery-1.10.2.js"></script>
@@ -161,7 +166,7 @@
               <a
                 id="menu-item"
                 class="flex items-center w-full h-12 px-3 mt-2 rounded hover:bg-gulf-blue-500 hover:shadow-lg"
-                href="/knowledge_center/categories"
+                href="/knowledge_center/root_folders"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -674,7 +679,9 @@
         function resetInactivityTimer() {
             clearTimeout(inactivityTimer);
             inactivityTimer = setTimeout(() => {
-            window.location.href = '/login'; // Redirect to login page
+            const currentUrl = window.location.href;
+            console.log("current url: ", currentUrl)
+            window.location.href = `/accounts/login?next=${encodeURIComponent(currentUrl)}`; // Redirect to login page
             }, INACTIVITY_TIMEOUT);
         }
         

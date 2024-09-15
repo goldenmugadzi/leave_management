@@ -99,6 +99,20 @@ def ms_exhange_test(request):
     return JsonResponse({"status": "success", "message": "Email sent successfully"})
 
 @login_required
+def ms_exhange_send(subject, body, to_recipients, cc_recipients):
+    account = get_exchange_account()
+    message = Message(
+        account=account,
+        folder=account.sent,
+        subject=subject,
+        body=body,
+        to_recipients=[Mailbox(email_address=recipient) for recipient in to_recipients],
+        cc_recipients=[Mailbox(email_address=recipient) for recipient in cc_recipients]
+    )
+    message.send()
+    return JsonResponse({"status": "success", "message": "Email sent successfully"})
+
+@login_required
 @allowed_roles(['Administrator'], ['users'])
 def add_centers(request):
     

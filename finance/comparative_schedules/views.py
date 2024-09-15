@@ -6,6 +6,8 @@ from django.shortcuts import redirect, render
 import json
 from datetime import datetime
 from django.db.models import Sum
+
+from it.users.views import ms_exhange_send
 from .models import *
 from it.users.models import *
 from finance.purchase_request.models import ProcurementPlanReference, PurchaseRequest, PrItem, Attachment, UnitOfMeasurement
@@ -1137,24 +1139,8 @@ def notify_user(user_, msg, notification_type, url, id):
             created_at=datetime.now(),
         )
         
+        ms_exhange_send(subject=notification_type, body=msg, to_recipients=[user_.email])
         return True
- 
-def ms_exchange():
-    # Set up the EWS connection
-    ews = pyexchange.ExchangeService('https://example.com/EWS/Exchange.asmx')
-
-    # Authenticate with the Exchange server
-    ews.authenticate('username', 'password')
-
-    # Get the inbox folder
-    inbox = ews.get_folder('inbox')
-
-    # Get the emails in the inbox
-    emails = inbox.get_items()
-
-    # Loop through the emails and print the subject
-    for email in emails:
-        print(email.subject)
  
 def notification_update(user, id):
     notification = Notification.objects.filter(user=user, notification_id=id).first()

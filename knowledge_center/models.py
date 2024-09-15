@@ -3,6 +3,35 @@ from django.db import models
 from it.users.models import CostCenter, Regions, Sections, UserProfile
 
 # Create your models here.
+class KnowledgeCentreFolder(models.Model):
+    name = models.CharField(max_length=255)
+    cover = models.ImageField(upload_to='uploads/knowledge_center/', null=True, blank=True)
+    parent = models.ForeignKey('self', on_delete=models.CASCADE, related_name='subfolders', null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name
+
+class KnowldgeCentreFile(models.Model):
+    filename = models.CharField(max_length=100)
+    archived = models.BooleanField(default=False) 
+    section = models.ForeignKey(Sections, on_delete=models.CASCADE, null=True, blank=True, default=None)
+    cost_center = models.ForeignKey(CostCenter, on_delete=models.CASCADE, null=True, blank=True, default=None)
+    region = models.ForeignKey(Regions, on_delete=models.CASCADE, null=True, blank=True, default=None)
+    created_at = models.DateField(null=True, blank=True, default=None)
+    created_on = models.DateTimeField(auto_now=True, null=True, blank=True)
+    updated_on = models.DateTimeField(auto_now=True, null=True, blank=True)
+    updated_at = models.DateField(null=True, blank=True, default=None)
+    created_by = models.ForeignKey(UserProfile, on_delete=models.CASCADE, null=True, blank=True, default=None)
+    folder = models.ForeignKey(KnowledgeCentreFolder, on_delete=models.CASCADE, related_name='files')
+    file = models.FileField(upload_to='uploads/knowledge_center/')
+    name = models.CharField(max_length=255)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name
 
 class Filetype(models.Model):
     name = models.CharField(max_length=100)

@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+  {% load static %}
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Business Excellence </title>
+    <link
+      rel="shortcut icon"
+      href="{% static 'assets/images/website-logo.png' %}"
+    />
+    <link href="{% static 'assets/css/tailwind.css' %}" rel="stylesheet" />
+  </head>
+  <body>
+    <main>
+      <div
+        style="height: 100vh"
+        class="flex justify-center items-center w-full bg-gray-100"
+      >
+        <div
+          style="width: 40%"
+          class="shadow bg-gray-200 h-auto shadow-gray-400 rounded-lg"
+        >
+          <div
+            style="display: flex; flex-direction: column"
+            class="flex px-4 py-4"
+          >
+            <div class="sm:mx-auto sm:w-full sm:max-w-sm">
+              <img
+                class="mx-auto h-28 w-auto"
+                src="{% static 'assets/images/website-logo.png' %}"
+                alt="Your Company"
+              />
+              <h2
+                class="mt-2 last:text-center text-2xl font-bold leading-9 tracking-tight text-blue-950"
+              >
+                BUSINESS EXCELLENCE v2.0
+              </h2>
+            </div>
+
+            <div class="sm:mx-auto sm:w-full sm:max-w-sm">
+                {% if request.session.logout_page %}
+                    <p>You were logged out from {{ request.session.logout_page }}.</p>
+                {% endif %}
+          {% if messages %}
+          <ul class="space-y-4 m-5">
+            {% for message in messages %}
+            <li
+              id="message-{{ forloop.counter }}"
+              class="border {% if message.tags == 'success' %}bg-green-100 border-green-400 text-green-700{% elif message.tags == 'info' %}bg-blue-100 border-blue-400 text-blue-700{% elif message.tags == 'warning' %}bg-yellow-100 border-yellow-400 text-yellow-700{% elif message.tags == 'danger' %}bg-red-100 border-red-400 text-red-700{% endif %} px-4 py-3 rounded relative"
+              role="alert"
+            >
+              <span class="block sm:inline">{{ message }}</span>
+              <span class="absolute top-0 bottom-0 right-0 px-4 py-3">
+                <svg
+                  class="fill-current h-6 w-6 text-red-500"
+                  role="button"
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 20 20"
+                  onclick="document.getElementById('message-{{ forloop.counter }}').style.display='none';"
+                >
+                  <title>Close</title>
+                  <path
+                    d="M14.348 14.849a1.2 1.2 0 0 1-1.697 0L10 11.819l-2.651 3.029a1.2 1.2 0 1 1-1.697-1.697l2.758-3.15-2.759-3.152a1.2 1.2 0 1 1 1.697-1.697L10 8.183l2.651-3.031a1.2 1.2 0 1 1 1.697 1.697l-2.758 3.152 2.758 3.15a1.2 1.2 0 0 1 0 1.698z"
+                  />
+                </svg>
+              </span>
+            </li>
+            {% endfor %}
+          </ul>
+          {% endif %}
+              {% if error_msg %}
+              <p class="text-center">{{error_msg}}</p>
+              {% endif %} {% if next %} {% if user.is_authenticated %}
+              <p>
+                Your account doesn't have access to this page. To proceed,
+                please login with an account that has access.
+              </p>
+              {% else %}
+              <p>Please login to see this page.</p>
+              {% endif %} {% endif %}
+              <form class="space-y-6" name="loginForm" method="post">
+                {% csrf_token %}
+                <div>
+                  <label
+                    for="username"
+                    class="block text-sm font-medium leading-6 text-gray-900 mt-2"
+                    >USERNAME</label
+                  >
+                  <div class="mt-2">
+                    <input
+                      id="username"
+                      name="username"
+                      type="text"
+                      autocomplete="username"
+                      required
+                      class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-gray-500 sm:text-sm sm:leading-6"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label
+                    for="password"
+                    class="block text-sm font-medium leading-6 text-gray-900"
+                    >PASSWORD</label
+                  >
+                  <div class="mt-2">
+                    <input
+                      id="password"
+                      name="password"
+                      type="password"
+                      autocomplete="current-password"
+                      required
+                      class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-gray-500 sm:text-sm sm:leading-6"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <button
+                    type="submit"
+                    name="login"
+                    class="flex w-full justify-center rounded-md bg-blue-925 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                  >
+                    LOGIN
+                  </button>
+                </div>
+              </form>
+
+              <p class="mt-10 text-center text-sm text-gray-500">
+                Forgot your password?
+                <a
+                  class="font-semibold leading-6 text-indigo-600 hover:text-indigo-500"
+                  href="/auth/answer-security-questions"
+                > Answer Security Questions
+                </a>
+                 {% comment %} <span> or reset via </span>
+                <a
+                  class="font-semibold leading-6 text-indigo-600 hover:text-indigo-500"
+                  href="/auth/change-password/email"
+                > Email
+                </a> {% endcomment %}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </body>
+</html>
