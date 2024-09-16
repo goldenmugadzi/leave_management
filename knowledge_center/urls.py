@@ -3,8 +3,16 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    path('root_folders', views.view_root_folders, name='user_manual_root_folders'),
-    path('categories', views.view_firstview, name='user_manual_view_advanced'),
+    path('import', views.import_old_data, name='import_data'),
+    path('root_folders', views.view_root_folders, name='root_folders'),
+    path('folder/<str:folder_name>/<int:folder_id>', views.view_sub_folders, name='sub_folders'),
+    path('create_root_folder', views.create_root_folder, name='create_root_folder'),
+    path('manage_folders', views.manage_folders, name='manage_folders'),
+    path('edit_folder/<int:folder_id>', views.edit_folder, name='edit_folder'),
+    path('delete_folder/<int:folder_id>', views.delete_folder, name='delete_folder'),
+    path('subfolders/<int:folder_id>/', views.get_subfolders, name='get_subfolders'),
+    path('create_subfolder/<int:folder_id>', views.create_subfolder, name='create_subfolder'),
+    path('categories', views.view_firstview, name='view_advanced'),
         
     path('create', views.create, name='user_manual_create'),
     path('knowledge_center_files', views.view_files, name='user_manual_index'),

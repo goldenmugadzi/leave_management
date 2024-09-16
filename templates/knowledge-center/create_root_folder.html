@@ -1,0 +1,175 @@
+<!--users/templates/users/add_user.html-->
+
+{% extends 'admin_layout.html' %} {% block content %}
+
+<div class="content-wrapper">
+  <div
+    class="bg-gulf-blue-100 shadow shadow-gulf-blue-200 text-gray-900 rounded px-2 py-2"
+  >
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      <div class="space-y-12 px-5 py-5">
+        <div class="mt-10 border-b border-gray-900/10 pb-12">
+          <h2 class="text-base font-semibold leading-7 text-gray-900">
+            Create Root Folder
+          </h2>
+          <p class="mt-1 text-sm leading-6 text-gray-600">
+            Fill all required fields.
+          </p>
+
+          <div class="mt-10 grid grid-cols-2 gap-4">
+            <div>
+              <label
+                for="folder_application"
+                class="block text-sm font-medium leading-6 text-gray-900"
+                >Application</label
+              >
+              <div class="mt-2">
+                <select
+                  required
+                  name="folder_application"
+                  id="folder_application"
+                  class="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                >
+                  <option value="">Select Application</option>
+                  {% for app in applications %}
+                  <option value="{{ app.id }}">{{ app.name }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+            <div>
+              <label
+                for="folder_name"
+                class="block text-sm font-medium leading-6 text-gray-900"
+                >Folder Name</label
+              >
+              <div class="mt-2">
+                <input
+                  required
+                  type="text"
+                  name="folder_name"
+                  id="folder_name"
+                  class="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label
+                for="cover_img"
+                class="block text-sm font-medium leading-6 text-gray-900"
+                >Cover Image</label
+              >
+              <div class="mt-2">
+                <input
+                  required
+                  accept=".jpg, .jpeg, .png"
+                  type="file"
+                  name="cover_img"
+                  id="cover_img"
+                  class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm px-2 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex mt-10 px-3 py-3">
+        <div style="width: 50%" class="flex justify-center">
+          <a
+            href="/knowledge_center/categories"
+            style="width: 100%"
+            class="text-sm text-center font-semibold leading-6 text-gray-900"
+          >
+            CANCEL
+          </a>
+        </div>
+        <div style="width: 50%">
+          <button
+            style="width: 100%"
+            type="submit"
+            class="rounded-md bg-gulf-blue-900 hover:bg-gulf-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+          >
+            SUBMIT FOLDER
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %} {% block scripts %}
+<script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+<script>
+    $("#category_id").change(function() {
+      var selectedValue = $(this).val();
+      $.ajax({
+        url: '/knowledge_center/get-files/' + selectedValue,
+        type: 'GET',
+        success: function(data) {
+            var selectElement = document.getElementById("subtype1");
+            // Clear existing options
+            selectElement.options.length = 0;
+
+            // Add new options based on data
+            console.log(data.subtypes);
+            let selectOpt = new Option("Select Subtype", "");
+            selectElement.add(selectOpt);
+            for (var option of data.options) {
+                var opt = new Option(option.name, option.id);
+                selectElement.add(opt);
+            }
+            if(data.options.length > 0){
+              document.getElementById("subtype1_container").style.display = "block";
+              document.getElementById("subtype1").required = true;
+            }
+        }
+      });
+    });
+  {% comment %} function updateSelectOptions(category_id, Categories, file_type, searchTerm) {
+    $.ajax({
+        url: '/user_manual/get-files/' + Categories + '/' + file_type + '/',
+        type: 'GET',
+        success: function(data) {
+            var selectElement = document.getElementById(selectElementId);
+            // Clear existing options
+            selectElement.options.length = 0;
+
+            // Add new options based on data
+            for (var option of data.options) {
+                var opt = new Option(option, option);
+                selectElement.add(opt);
+            }
+        }
+    });
+  } {% endcomment %}
+</script>
+<script>
+  $("#subtype1").change(function () {
+    var selectedValue = $(this).val();
+    var fileType = document.getElementById("category_id").value;
+    $.ajax({
+      url: "/knowledge_center/get-cat2/" + fileType + "/" + selectedValue,
+      type: "GET",
+      success: function (data) {
+        var secondCategory = document.getElementById("subtype2");
+        // Clear existing options
+        secondCategory.options.length = 0;
+
+        // Add new options based on data
+        console.log(data.subtypes);
+        let selectOpt = new Option("Select Subtype", "");
+        secondCategory.add(selectOpt);
+        for (var option of data.options_list) {
+          var opt = new Option(option.name, option.id);
+          secondCategory.add(opt);
+        }
+        if (data.options_list.length > 0) {
+          document.getElementById("subtype2_container").style.display = "block";
+        }
+      },
+    });
+  });
+</script>
+{% endblock scripts %}

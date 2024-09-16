@@ -8,7 +8,7 @@ from django.contrib import messages
 
 from it.users.models import CostCenter, Regions, Sections
 from utils.save_file import save_file
-from .models import Categories, First_Category, KnowledgeCentreFolder, Secondary_Category, Filetype
+from .models import Categories, First_Category, FolderApplication, KnowldgeCentreFile, KnowledgeCentreFolder, Secondary_Category, Filetype
 from django.shortcuts import render
 from django.db.models import Q
 from django.contrib.auth.decorators import login_required
@@ -19,16 +19,218 @@ from .models import KnowledgeCenter
 from django.core.files.storage import FileSystemStorage
 
 # Create your views here.
+def import_old_data(request):
+    
+    
+    application = FolderApplication.objects.filter(id=1).first()
+    # kc_file_types = Filetype.objects.all()
+    # for kc_file_type in kc_file_types:
+    #     folder_exists = KnowledgeCentreFolder.objects.filter(name=kc_file_type.name).first()
+    #     if not folder_exists:
+    #         new_root_folder = KnowledgeCentreFolder(name=kc_file_type.name, folder_application=application, cover=None)
+    #         new_root_folder.save()
+    #         print("success: ", kc_file_type.name)
+    
+    # kc_first_categories = First_Category.objects.all()
+    # for kc_first_category in kc_first_categories:
+    #     folder_exists = KnowledgeCentreFolder.objects.filter(name=kc_first_category.file_type.name).first()
+    #     parent = KnowledgeCentreFolder.objects.filter(name=kc_first_category.file_type.name).first()
+    #     new_root_folder = KnowledgeCentreFolder(name=kc_first_category.name, folder_application=application, cover=None, parent=parent)
+    #     new_root_folder.save()
+    #     print("success: ", kc_first_category.name)
+    
+    # kc_second_categories = Secondary_Category.objects.all()
+    # for kc_second_category in kc_second_categories:
+    #     root_parent = KnowledgeCentreFolder.objects.filter(name=kc_second_category.file.name).first()
+    #     first_parent = KnowledgeCentreFolder.objects.filter(name=kc_second_category.category.name, parent=root_parent).first()
+    #     parent = KnowledgeCentreFolder.objects.filter(name=kc_second_category.category.name, parent=first_parent).first()
+    #     new_root_folder = KnowledgeCentreFolder(name=kc_second_category.name, folder_application=application, cover=None, parent=parent)
+    #     new_root_folder.save()
+    #     print("success: ", kc_second_category.name)
+    
+    kcs = KnowledgeCenter.objects.all()
+    for kc in kcs:
+        print("starting kc: ", kc.filename)
+        root_parent = KnowledgeCentreFolder.objects.filter(name=kc.file_type_id.name).first() if kc.file_type_id else None
+        first_parent = KnowledgeCentreFolder.objects.filter(name=kc.subtype.name, parent=root_parent).first() if kc.subtype else None
+        parent = KnowledgeCentreFolder.objects.filter(name=kc.subsubtype.name, parent=first_parent).first() if kc.subsubtype else None
+        filename = os.path.basename(kc.filepath)
+        kc_file = KnowldgeCentreFile(
+            filename=kc.filename,
+            archived=kc.archived,
+            section=kc.section_id,
+            cost_center=kc.cost_center,
+            region=kc.region_id,
+            created_on=kc.created_on,
+            updated_on=kc.updated_on,
+            created_by=kc.done_by,
+            folder=parent,
+            name=kc.filename,
+            file="uploads/knowledge_center/" + filename,
+        )
+        kc_file.save()
+        print("success: ", kc.filename)
+
+    return JsonResponse({"message": "Data imported successfully"})
+
 def view_root_folders(request):
     
     root_folders = KnowledgeCentreFolder.objects.filter(parent__isnull=True)
     url_path = request.path.split("/")
+    root_folders_list = []
+    for folder in root_folders:
+        url_join = "/".join(url_path[:-1])
+        new_folder = {
+            "id": folder.id,
+            "url":  url_join + "/folder/" + str(folder.name) + "/" + str(folder.id),
+            "name": folder.name.upper(),
+            "cover": folder.cover.url if folder.cover else "",
+            "application": folder.folder_application.name,
+            "parent": folder.parent.name if folder.parent else ""
+            
+        }
+        root_folders_list.append(new_folder)
     
     return render(request, 'knowledge-center/root_folders.html', {
         "url_path": url_path,
-        "folders": root_folders,
+        "folders": root_folders_list,
         "page_title": "KNOWLEDGE CENTRE", 
         "results": []})
+    
+def view_sub_folders(request, folder_name, folder_id):
+    
+    current_folder = KnowledgeCentreFolder.objects.filter(id=folder_id).first()
+    print("current_folder: ", current_folder)
+    subfolders = KnowledgeCentreFolder.objects.filter(parent=current_folder)
+    print("subfolders: ", subfolders)
+    url = request.path
+    url_path = url.split("/")
+    subfolders_list = []
+    for subfolder in subfolders:
+        url_join = "/".join(url_path[:-2])
+        new_folder = {
+            "id": subfolder.id,
+            "url":  url_join + "/" + str(subfolder.name) + "/" + str(subfolder.id),
+            "name": subfolder.name.upper(),
+            "cover": subfolder.cover.url if subfolder.cover else "",
+            "application": subfolder.folder_application.name,
+            "parent": subfolder.parent.name if subfolder.parent else "",
+            "created_at": subfolder.created_at.astimezone().strftime("%Y-%m-%d %H:%M:%S") if subfolder.created_at else "",
+            
+        }
+        subfolders_list.append(new_folder)
+    return render(request, 'knowledge-center/sub_folders.html', {"url_path": url_path, "url": url, "subfolders": subfolders_list})
+    
+def create_root_folder(request):
+    url_path = request.path.split("/")
+    if request.method == 'POST':
+        print("post data: ", request.POST)
+        folder_name = request.POST['folder_name']
+        cover = request.FILES['cover_img']
+        application = request.POST['folder_application']
+        folder_application = FolderApplication.objects.filter(id=application).first()
+        folder = KnowledgeCentreFolder(name=folder_name, cover=cover, folder_application=folder_application)
+        folder.save()
+        messages.success(request, "Folder created successfully")
+        return redirect('/knowledge_center/root_folders')
+    
+    applications = FolderApplication.objects.all()
+    return render(request, 'knowledge-center/create_root_folder.html', {"url_path": url_path, "applications": applications})
+
+def create_subfolder(request, folder_id):
+    url_path = request.path.split("/")
+    if request.method == 'POST':
+        folder_name = request.POST['folder_name']
+        current_folder = request.POST['current_folder']
+        folder_application = request.POST['folder_application']
+        folder_application_ = FolderApplication.objects.filter(id=folder_application).first()
+        parent = KnowledgeCentreFolder.objects.filter(id=current_folder).first()
+        folder = KnowledgeCentreFolder(name=folder_name, parent=parent, folder_application=folder_application_)
+        folder.save()
+        
+        messages.success(request, "Folder created successfully")
+        return redirect('/knowledge_center/root_folders')
+    
+    current_folder = KnowledgeCentreFolder.objects.filter(id=folder_id).first()
+    return render(request, 'knowledge-center/create_sub_folder.html', {"url_path": url_path, "current_folder": current_folder})
+
+def get_subfolders(request, folder_id):
+    subfolders = KnowledgeCentreFolder.objects.filter(parent_id=folder_id)
+    subfolders_data = [{'id': folder.id, 'name': folder.name} for folder in subfolders]
+    return JsonResponse(subfolders_data, safe=False)
+
+def manage_folders(request):
+    folders = KnowledgeCentreFolder.objects.all()
+    folders_list = []
+    for folder in folders:
+        new_folder = {
+            "id": folder.id,
+            "name": folder.name,
+            "cover": folder.cover.url if folder.cover else "",
+            "application": folder.folder_application.name,
+            "parent": folder.parent.name if folder.parent else "",
+            "created_at": folder.created_at.astimezone().strftime("%Y-%m-%d %H:%M:%S") if folder.created_at else "",
+        }
+        folders_list.append(new_folder)
+    folders_json = json.dumps(folders_list) # serializers.serialize('json', folders)
+    url_path = request.path.split("/")
+    return render(request, 'knowledge-center/view_folder_list.html', {"url_path": url_path, "folders": folders_json, "page_title": "Manage Folders"})
+
+def edit_folder(request, folder_id):
+    url_path = request.path.split("/")
+    if request.method == 'GET':
+        print("folder_id: ", folder_id)
+        folder = KnowledgeCentreFolder.objects.filter(id=folder_id).first()
+        applications = FolderApplication.objects.all()
+        return render(request, 'knowledge-center/edit_folder.html', {"folder": folder, "url_path": url_path, "applications": applications}) 
+    if request.method == 'POST':
+        print("post data: ", request.POST)
+        folder_name = request.POST['folder_name']
+        cover = request.FILES.get('cover_img', None)
+        application = request.POST['folder_application']
+        folder_application = FolderApplication.objects.filter(id=application).first()
+        folder = KnowledgeCentreFolder.objects.filter(id=folder_id).first()
+        folder.name = folder_name if folder_name else folder.name
+        folder.cover = cover if cover else folder.cover
+        folder.folder_application = folder_application if folder_application else folder.folder_application
+        folder.save()
+        messages.success(request, "Folder updated successfully")
+        return redirect('/knowledge_center/manage_folders')
+    
+def delete_folder(request, folder_id):
+    folder = KnowledgeCentreFolder.objects.filter(id=folder_id).first()
+    folder.delete()
+    messages.success(request, "Folder deleted successfully")
+    return redirect('/knowledge_center/manage_folders')
+
+def edit_subfolder(request, folder_id):
+    url_path = request.path.split("/")
+    if request.method == 'GET':
+        print("folder_id: ", folder_id)
+        folder = KnowledgeCentreFolder.objects.filter(id=folder_id).first()
+        applications = FolderApplication.objects.all()
+        return render(request, 'knowledge-center/edit_subfolder.html', {"folder": folder, "url_path": url_path, "applications": applications}) 
+    if request.method == 'POST':
+        print("post data: ", request.POST)
+        folder_name = request.POST['folder_name']
+        cover = request.FILES.get('cover_img', None)
+        application = request.POST['folder_application']
+        folder_application = FolderApplication.objects.filter(id=application).first()
+        folder = KnowledgeCentreFolder.objects.filter(id=folder_id).first()
+        folder.name = folder_name if folder_name else folder.name
+        folder.cover = cover if cover else folder.cover
+        folder.folder_application = folder_application if folder_application else folder.folder_application
+        folder.save()
+        messages.success(request, "Folder updated successfully")
+        return redirect('/knowledge_center/manage_folders')
+
+def view_folders(request, folder_id):
+    folder = KnowledgeCentreFolder.objects.filter(id=folder_id).first()
+    subfolders = folder.subfolders.all()
+    files = folder.files.all()
+    url_path = request.path.split("/")
+    return render(request, 'knowledge-center/view_folders.html', {"url_path": url_path, "folder": folder, "subfolders": subfolders, "files": files})
+
 
 @login_required
 def create(request):
