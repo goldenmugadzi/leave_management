@@ -32,7 +32,66 @@
         </div>
     {% endfor %}
   </div>
-    
+  <div class="grid grid-cols-4 gap-4">
+    {% for f in files %} {% with forloop.counter as loop_index %} {% if loop_index|divisibleby:2%}
+    <div
+      class="w-auto bg-gulf-blue-300 text-center shadow shadow-nepal-300 text-gray-700 rounded px-10 py-4"
+    >
+      <a tabindex="-1" href="/knowledge_center/download_file?file_id={{f.id}}">
+        <div class="sm:flex lg:items-center lg:justify-between">
+          <div class="min-w-0 flex-1">
+            <div class="">
+              <div class="mx-auto">
+                <div class="group relative">
+                  <div class="flex justify-between items-center">
+                    <img
+                      src="{% static 'assets/images/pdf.png' %}"
+                      alt=""
+                      class="h-1/5 w-1/5 object-cover object-center"
+                    />
+                    <span
+                      title="{{f.filename}}"
+                      class="pr-1 font-semibold flex-1 text-left text-gray-800 px-2 overflow-hidden whitespace-nowrap overflow-ellipsis"
+                      >{{f.filename}}</span
+                    >
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </a>
+    </div>
+    {% else %}
+    <div
+      class="w-auto bg-citron-200 text-center shadow shadow-nepal-300 text-gray-700 rounded px-10 py-4"
+    >
+    <a tabindex="-1" href="/knowledge_center/download_file?file_id={{f.id}}">
+      <div class="sm:flex lg:items-center lg:justify-between">
+        <div class="min-w-0 flex-1">
+          <div class="">
+            <div class="mx-auto">
+              <div class="group relative">
+                <div class="flex justify-between items-center overflow-hidden">
+                  <img
+                    src="{% static 'assets/images/pdf.png' %}"
+                    alt=""
+                    class="h-1/5 w-1/5 object-cover object-center"
+                  />
+                  <span
+                    class="text-ellipsis pr-1 font-semibold flex-1 text-left text-gray-800 px-2"
+                    >{{f.filename}}</span
+                  >
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </a>
+  </div>
+    {% endif %} {% endwith %} {% endfor %}
+  </div>
 </div>
 <div style="display: flex;justify-content: center;">
     <a href="javascript:history.back()">

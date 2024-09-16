@@ -2175,7 +2175,7 @@ def save_comparative_schedule(request):
         advert_path = ""
         try:
             if advert_files:
-                advert_file = advert_files[0]
+                advert_file = advert_files
                 root_dir = os.path.join(settings.BASE_DIR, 'uploads', 'comparative', 'adverts')
                 fs = FileSystemStorage(location=root_dir)
                 filename_ = fs.save(advert_file.name, advert_file)
@@ -2253,7 +2253,7 @@ def update_comparative_schedule(request):
         advert_path = ""
         try:
             if advert_files:
-                advert_file = advert_files[0]
+                advert_file = advert_files
                 root_dir = os.path.join(settings.BASE_DIR, 'uploads', 'comparative', 'adverts')
                 fs = FileSystemStorage(location=root_dir)
                 filename_ = fs.save(advert_file.name, advert_file)

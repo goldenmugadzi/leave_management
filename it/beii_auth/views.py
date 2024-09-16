@@ -115,8 +115,10 @@ def login_user(request):
             if user.change_password:
                 login(request, user)
                 return redirect('/auth/change-password')
+            print("user ...")
             login(request, user)
             next_url = request.GET.get('next')
+            print("next url: ", next_url)
             if next_url:
                 return redirect(next_url)
             last_page = request.session.get('logout_page')

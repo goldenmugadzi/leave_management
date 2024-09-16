@@ -54,6 +54,14 @@ def import_old_data(request):
         root_parent = KnowledgeCentreFolder.objects.filter(name=kc.file_type_id.name).first() if kc.file_type_id else None
         first_parent = KnowledgeCentreFolder.objects.filter(name=kc.subtype.name, parent=root_parent).first() if kc.subtype else None
         parent = KnowledgeCentreFolder.objects.filter(name=kc.subsubtype.name, parent=first_parent).first() if kc.subsubtype else None
+        if parent:
+            folder = parent
+        elif first_parent:
+            folder = first_parent
+        elif root_parent:
+            folder = root_parent
+        else:
+            folder = None
         filename = os.path.basename(kc.filepath)
         kc_file = KnowldgeCentreFile(
             filename=kc.filename,
@@ -64,7 +72,7 @@ def import_old_data(request):
             created_on=kc.created_on,
             updated_on=kc.updated_on,
             created_by=kc.done_by,
-            folder=parent,
+            folder=folder,
             name=kc.filename,
             file="uploads/knowledge_center/" + filename,
         )
@@ -72,6 +80,27 @@ def import_old_data(request):
         print("success: ", kc.filename)
 
     return JsonResponse({"message": "Data imported successfully"})
+
+@login_required
+def download_file(request):
+
+    file_id = request.GET['file_id']
+    file_record = KnowldgeCentreFile.objects.filter(id=file_id).first()
+    file_path = file_record.file.url
+
+    # search for file in system
+    try:
+        # base_directory_path = request.build_absolute_uri(settings.MEDIA_URL + file_path)
+        base_directory_path = os.path.join(settings.BASE_DIR, file_path)
+        print("base_directory_path: ", base_directory_path)
+        return FileResponse(open(base_directory_path, 'rb'), content_type='application/pdf')
+    except FileNotFoundError:
+        messages.error(request, "File not found, please contact the administrator")
+    except Exception as ex:
+        messages.error(request, "Error downloading file")
+        print(ex)
+
+    return redirect('/knowledge_center/knowledge_center_files')
 
 def view_root_folders(request):
     
@@ -119,7 +148,25 @@ def view_sub_folders(request, folder_name, folder_id):
             
         }
         subfolders_list.append(new_folder)
-    return render(request, 'knowledge-center/sub_folders.html', {"url_path": url_path, "url": url, "subfolders": subfolders_list})
+    
+    files = []
+    if len(subfolders_list) < 1:
+        current_folder = KnowledgeCentreFolder.objects.filter(id=folder_id).first()
+        files = KnowldgeCentreFile.objects.filter(folder=current_folder).all()
+
+    url_path = request.path.split("/")
+    title = current_folder.name.upper()
+    
+    return render(request, 'knowledge-center/sub_folders.html', {"url_path": url_path, "url": url, "subfolders": subfolders_list, 'title': title, "files": files})
+
+def view_files_in_folder(request, folder_name, folder_id):
+    current_folder = KnowledgeCentreFolder.objects.filter(id=folder_id).first()
+    current_folder = KnowledgeCentreFolder.objects.filter(folder=current_folder).first()
+    files = current_folder.files.all()
+    url_path = request.path.split("/")
+    title = current_folder.name.upper()
+    
+    return render(request, 'knowledge-center/view_file_tiles.html', {"files": files, "url_path": url_path, "title": title})
     
 def create_root_folder(request):
     url_path = request.path.split("/")
@@ -437,26 +484,6 @@ def view_myfiles(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/view_myfiles.html', {"url_path": url_path})
 
-@login_required
-def download_file(request):
-
-    file_id = request.GET['file_id']
-    file_record = KnowledgeCenter.objects.filter(id=file_id).first()
-    file_path = file_record.filepath
-
-    # search for file in system
-    try:
-        # base_directory_path = request.build_absolute_uri(settings.MEDIA_URL + file_path)
-        base_directory_path = os.path.join(settings.BASE_DIR, file_path)
-        print("base_directory_path: ", base_directory_path)
-        return FileResponse(open(base_directory_path, 'rb'), content_type='application/pdf')
-    except FileNotFoundError:
-        messages.error(request, "File not found, please contact the administrator")
-    except Exception as ex:
-        messages.error(request, "Error downloading file")
-        print(ex)
-
-    return redirect('/knowledge_center/knowledge_center_files')
 
 @login_required
 def edit_file(request, file_id):
