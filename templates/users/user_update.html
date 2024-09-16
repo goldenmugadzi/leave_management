@@ -356,7 +356,7 @@
 
         var data = new google.visualization.DataTable();
         $.ajax({
-          url: '/users/centfilter/' + id + '?u=' + userid,
+          url: '/users/centfilter/' + id + '?u={{ user.id }}' ,
             datatype: 'json',
             type: 'GET',
             success: function(response) {
