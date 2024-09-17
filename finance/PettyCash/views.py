@@ -7,8 +7,9 @@ import sweetify
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseNotFound, FileResponse, HttpResponse
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
+from openpyxl.workbook import Workbook
 
 from approve.forms import ApprovalForm
 from approve.models import Step
@@ -321,7 +322,8 @@ def view_all_pettycashs(request):
                                                                                                     'petty_id')[:800]
     else:
         pettycashs = Pettycash.objects.filter(region=region).only('petty_id', 'date_created').order_by('-date_created',
-                                                                                                       'petty_id')[:1200]
+                                                                                                       'petty_id')[
+                     :1200]
     return render(request, 'finance/pettycash/view_all_pettycashs.html', {'pettycashs': pettycashs,
                                                                           'requester': requester})
 
@@ -690,11 +692,12 @@ def download_file(request, filename):
 
         return HttpResponseNotFound('The requested file does not exist.')
 
+
 def pettycash_report(request):
     user_id = request.user.id
     user_profile = UserProfile.objects.filter(id=user_id).first()
 
-    pettyreportform=PettycashReportForm(user=user_profile)
+    pettyreportform = PettycashReportForm(user=user_profile)
 
     if request.method == 'POST':
         pettyreportform = PettycashReportForm(request.POST, user=user_profile)
@@ -703,11 +706,52 @@ def pettycash_report(request):
             end_date = pettyreportform.cleaned_data['end_date']
             region = pettyreportform.cleaned_data['region']
             section = pettyreportform.cleaned_data['section']
+            payment_mode = pettyreportform.cleaned_data['payment_mode']
 
-            pettycashs = Pettycash.objects.filter(date_created__range=[start_date, end_date], region=region, section=section)
-            report = PettycashReport.objects.create(start_date=start_date, end_date=end_date, region=region, section=section)
+            pettycashs = Pettycash.objects.filter(region=region, section=section, payment_mode=payment_mode)
+            report = PettycashReport.objects.create(start_date=start_date, end_date=end_date, region=region,
+                                                    section=section, payment_mode=payment_mode)
             report.save()
             print('report created')
             print('count', pettycashs.count())
-            return render(request, 'finance/pettycash/pettycash_report.html', {'pettycashs': pettycashs, 'report': report})
+            return render(request, 'finance/pettycash/pettycash_reports.html',
+                          {'pettycashs': pettycashs, 'report': report})
     return render(request, 'finance/pettycash/pettycash_create_report.html', {'pettyreportform': pettyreportform})
+
+
+def print_report_excel(request, report_id):
+    report = get_object_or_404(PettycashReport, report_id=report_id)
+    print("report date", report.start_date)
+    print("report date", report.end_date)
+    print("report region", report.region)
+
+    pettycashs = Pettycash.objects.filter(region=report.region, section=report.section,payment_mode=report.payment_mode)
+    print('count', pettycashs.count())
+
+    response = HttpResponse(content_type='application/ms-excel')
+    response['Content-Disposition'] = 'attachment; filename="pettycash_report.xlsx"'
+
+    wb = Workbook()
+    ws = wb.active
+
+    ws.append(
+        ['petty_id', 'details_of_expenditure', 'requested_by', 'section', 'date_created', 'amount',
+         'approval_status'])
+
+    for pettycash in pettycashs:
+        requested_by = pettycash.requested_by.get_full_name() if pettycash.requested_by else ''
+        section = pettycash.section.section if pettycash.section else ''
+        date_created = pettycash.date_created.strftime('%Y-%m-%d') if pettycash.date_created else ''
+        approval_status = pettycash.process.approval_set.last().approved if pettycash.process.approval_set.last() else ''
+
+        ws.append([
+            pettycash.petty_id,
+            pettycash.details_of_expenditure,
+            requested_by,
+            section,
+            date_created,
+            pettycash.amount,
+            approval_status
+        ])
+    wb.save(response)
+    return response

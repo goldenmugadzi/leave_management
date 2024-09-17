@@ -14,6 +14,7 @@ class Pettycash(models.Model):
         ('USD Swipe', 'USD Swipe'),
         ('ZIG Cash', 'ZIG Cash'),
         ('ZIG Transfer', 'ZIG Transfer'),
+        ('ZIG_SWIPE', 'ZIG Swipe'),
     ]
 
     CURRENCY_CHOICES = [
@@ -55,6 +56,7 @@ class PettycashReport(models.Model):
     end_date = models.DateField(blank=True, null=True)
     region = models.ForeignKey(Regions, on_delete=models.DO_NOTHING, blank=True, null=True)
     section = models.ForeignKey(Sections, on_delete=models.DO_NOTHING, blank=True, null=True)
+    payment_mode = models.CharField(max_length=100, blank=True, null=True)
 
     def __str__(self):
         return str(self.report_id)

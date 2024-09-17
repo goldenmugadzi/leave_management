@@ -115,12 +115,11 @@ class PettycashReportForm(forms.ModelForm):
         # add end date to fields
 
         fields = '__all__'
-        exclude = ['process','requested_by','designation',
-                   'details_of_expenditure','currency','amount','amount_disbursed','receipt_file','amount_used',
-                   'amount','pettycash_id','old_version','petty_id'
+        exclude = ['process', 'requested_by', 'designation',
+                   'details_of_expenditure', 'currency', 'amount', 'amount_disbursed', 'receipt_file', 'amount_used',
+                   'amount', 'pettycash_id', 'old_version', 'petty_id'
                    # include the project items
                    ]
-
 
     def __init__(self, *args, **kwargs):
         user = kwargs.pop('user', None)

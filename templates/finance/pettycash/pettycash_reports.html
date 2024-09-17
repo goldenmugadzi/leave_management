@@ -19,7 +19,7 @@
       <div class=" grid grid-cols-4 container text-center ">
 {#        {% comment %} <a href="{% url 'nonconformity:checklist' %}" class="bg-blue-500 hover:bg-blue-700 inline-block rounded-full mx-3 text-white py-2 px-4 rounded">Create from checklist</a> {% endcomment %}#}
           <a href="/pettycash/print_report_csv/{{ report }}" class="bg-green-500 hover:bg-green-900 inline-block rounded-full mx-3 text-white py-2 px-4 rounded">CSV report</a>
-          <a href="/pettycash/print_report_pdf/{{ report }}" class="bg-yellow-500 hover:bg-red-900 inline-block rounded-full mx-3 text-white py-2 px-4 rounded">PDF report</a>
+{#          <a href="/pettycash/print_report_pdf/{{ report }}" class="bg-yellow-500 hover:bg-red-900 inline-block rounded-full mx-3 text-white py-2 px-4 rounded">PDF report</a>#}
       </div>
       <br> <table id="nonconformity" class="table table-striped stripe table-bordered">
         <thead>
@@ -39,7 +39,7 @@
         <tbody>
             {% for pettycash in pettycashs %}
             <tr class="h-1">
-                <td><a class="text-blue-500" href="/pettycash/pettycash_detail/{{pettycash.pettycash_id2}}">{{ pettycash.pettycash_id2|default_if_none:'' }}</a></td>
+                <td><a class="text-blue-500" href="/pettycash/pettycash_detail/{{pettycash.petty_id}}">{{ pettycash.petty_id|default_if_none:'' }}</a></td>
                 <td>{{ pettycash.details_of_expenditure }}</td>
               <td>{{ pettycash.amount }}</td>
 

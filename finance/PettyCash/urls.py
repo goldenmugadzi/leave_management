@@ -13,4 +13,6 @@ urlpatterns = [
     path('attachment/<str:filename>/', download_file, name='attachment'),
     path('attachments/<str:attachment_id>', download_attachment, name='attachments'),
     path('create_pettycash_report', pettycash_report, name='pettycash_report'),
+    path('print_report_csv/<str:report_id>', print_report_excel, name='print_report_csv'),
+    # path('print_report_pdf', print_report_pdf, name='print_report_pdf'),
 ]
