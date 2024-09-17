@@ -96,15 +96,21 @@ def import_old_data(request):
 
 @login_required
 def download_file(request):
+    file_id = request.GET.get('file_id')
+    if not file_id:
+        messages.error(request, "File ID is missing")
+        return redirect('/knowledge_center/knowledge_center_files')
 
-    file_id = request.GET['file_id']
     file_record = KnowldgeCentreFile.objects.filter(id=file_id).first()
-    file_path = file_record.file.url
+    if not file_record:
+        messages.error(request, "File not found in the database")
+        return redirect('/knowledge_center/knowledge_center_files')
+
+    file_path = file_record.file.path  # Use .path to get the full file system path
 
     # search for file in system
     try:
-        # base_directory_path = request.build_absolute_uri(settings.MEDIA_URL + file_path)
-        base_directory_path = os.path.join(settings.BASE_DIR, file_path)
+        base_directory_path = os.path.join(settings.MEDIA_ROOT, file_path)
         print("base_directory_path: ", base_directory_path)
         return FileResponse(open(base_directory_path, 'rb'), content_type='application/pdf')
     except FileNotFoundError:
@@ -295,18 +301,25 @@ def create_file(request):
     url_path = request.path.split("/")
     if request.method == 'POST':
         print("post data: ", request.POST)
-        file_name = request.POST['file_name']
-        file = request.FILES['file']
-        folder = request.POST['folder']
+        level = request.POST['level']
+        file_name = request.POST['filename']
+        folder = request.POST['subfolder_'+level]
+        section = request.POST['section']
+        region = request.POST['region']
+        file = request.FILES['uploaded_file']
+        
+        section_ = Sections.objects.filter(id=section).first()
+        region_ = Regions.objects.filter(id=region).first()
         folder_ = KnowledgeCentreFolder.objects.filter(id=folder).first()
-        file_record = KnowldgeCentreFile(name=file_name, file=file, folder=folder_)
+        file_record = KnowldgeCentreFile(filename=file_name, file=file, folder=folder_, region=region_, section=section_)
         file_record.save()
         messages.success(request, "File uploaded successfully")
-        return redirect('/knowledge_center/view_folders/' + str(folder)) 
+        return redirect('/knowledge_center/folder/' + str(folder_.name) + '/' + str(folder_.id)) 
     
     folder_applications = FolderApplication.objects.all()
-    
-    return render(request, 'knowledge-center/create_file.html', {"url_path": url_path, "folder_applications": folder_applications})
+    sections = Sections.objects.all()
+    regions = Regions.objects.all()
+    return render(request, 'knowledge-center/create_file.html', {"url_path": url_path, "folder_applications": folder_applications, "sections": sections, "regions": regions})
 
 def get_root_folders(request, folder_application_id):
     
@@ -327,6 +340,71 @@ def get_subfolders(request, folder_id):
     subfolders = KnowledgeCentreFolder.objects.filter(parent=folder)
     subfolders_data = [{'id': folder.id, 'name': folder.name} for folder in subfolders]
     return JsonResponse(subfolders_data, safe=False)
+
+def view_knowledge_center_files(request):
+        
+    files = KnowldgeCentreFile.objects.all()
+    files_list = []
+    for file in files:
+        new_file = {
+            "id": file.id,
+            "filename": file.filename,
+            "folder": file.folder.name,
+            "created_at": file.created_on.astimezone().strftime("%Y-%m-%d %H:%M:%S") if file.created_on else "",
+            "updated_at": file.updated_on.astimezone().strftime("%Y-%m-%d %H:%M:%S") if file.updated_on else "",
+        }
+        files_list.append(new_file)
+    
+    files_json = json.dumps(files_list)
+    url_path = request.path.split("/")
+    return render(request, 'knowledge-center/view_kc_files.html', {"url_path": url_path, "files": files_json, "page": "kc_all"})
+
+def view_knowledge_center_archives(request):
+        
+    files = KnowldgeCentreFile.objects.filter(archived=True).all()
+    files_list = []
+    for file in files:
+        new_file = {
+            "id": file.id,
+            "filename": file.filename,
+            "folder": file.folder.name,
+            "archived": file.archived,
+            "created_at": file.created_on.astimezone().strftime("%Y-%m-%d %H:%M:%S") if file.created_on else "",
+            "updated_at": file.updated_on.astimezone().strftime("%Y-%m-%d %H:%M:%S") if file.updated_on else "",
+        }
+        files_list.append(new_file)
+    
+    files_json = json.dumps(files_list)
+    url_path = request.path.split("/")
+    return render(request, 'knowledge-center/view_kc_files.html', {"url_path": url_path, "files": files_json})
+
+@login_required
+def archive_file(request, file_id):
+
+    try:
+        um = KnowldgeCentreFile.objects.filter(id=file_id).first()
+        um.archived=True
+        um.save()
+        messages.success(request, "File archived successfully")
+    except Exception as ex:
+        messages.error(request, "Error archiving file")
+        print("Error:",ex)
+    
+    return redirect('/knowledge_center/knowledge_center_files')
+
+@login_required
+def unarchive_file(request, file_id):
+
+    try:
+        um = KnowldgeCentreFile.objects.filter(id=file_id).first()
+        um.archived=False
+        um.save()
+        messages.success(request, "File unarchived successfully")
+    except Exception as ex:
+        messages.error(request, "Error unarchiving file")
+        print("Error:",ex)
+    
+    return redirect('/knowledge_center/knowledge_center_files')
 
 @login_required
 def create(request):
@@ -407,34 +485,6 @@ def create(request):
     cost_centers = CostCenter.objects.all()
     filetypes = Filetype.objects.all()
     return render(request, 'knowledge-center/create.html', {"url_path": url_path, "regions": regions, "sections": sections, "cost_centers": cost_centers, "filetypes": filetypes})
-
-@login_required
-def archive_file(request, file_id):
-
-    try:
-        um = KnowledgeCenter.objects.filter(id=file_id).first()
-        um.archived=True
-        um.save()
-        messages.success(request, "File archived successfully")
-    except Exception as ex:
-        messages.error(request, "Error archiving file")
-        print("Error:",ex)
-    
-    return redirect('/knowledge_center/knowledge_center_files')
-
-@login_required
-def unarchive_file(request, file_id):
-
-    try:
-        um = KnowledgeCenter.objects.filter(id=file_id).first()
-        um.archived=False
-        um.save()
-        messages.success(request, "File unarchived successfully")
-    except Exception as ex:
-        messages.error(request, "Error unarchiving file")
-        print("Error:",ex)
-    
-    return redirect('/knowledge_center/knowledge_center_files')
 
 @login_required
 def view_files(request):

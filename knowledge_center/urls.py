@@ -18,16 +18,17 @@ urlpatterns = [
     path('get_root_folders/<int:folder_application_id>', views.get_root_folders, name='get_root_folders'),
     path('get_subfolders/<int:folder_id>', views.get_subfolders, name='get_subfolders'),
     
+    path('knowledge_center_files', views.view_knowledge_center_files, name='view_knowledge_center_files'),
+    path('view_archive', views.view_knowledge_center_archives, name='view_archived_files'),
+    path('archive_file/<int:file_id>', views.archive_file, name='archive_file'),
+    path('unarchive_file/<int:file_id>', views.unarchive_file, name='unarchive_file'),
+    
     path('categories', views.view_firstview, name='view_advanced'),
         
     path('create', views.create, name='user_manual_create'),
-    path('knowledge_center_files', views.view_files, name='user_manual_index'),
     path('download_file', views.download_file, name='download_file'),
-    path('archive_file/<int:file_id>', views.archive_file, name='archive_file'),
-    path('unarchive_file/<int:file_id>', views.unarchive_file, name='unarchive_file'),
     path('edit_file/<str:file_id>', views.edit_file, name='user_manual_edit_file'),
     path('view_myfiles', views.view_by_category, name='user_manual_view_files'),
-    path('view_archive', views.view_archived_files, name='view_archived_files'),
     path('get-files/<int:file_type_id>/', views.get_files, name='get_files'),
     path('get-cat2/<int:file_type>/<int:selected_cat>', views.get_cat2, name='get_cat2'),
     
