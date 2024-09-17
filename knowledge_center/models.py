@@ -31,7 +31,7 @@ class KnowldgeCentreFile(models.Model):
     updated_on = models.DateTimeField(auto_now=True, null=True, blank=True)
     created_by = models.ForeignKey(UserProfile, on_delete=models.DO_NOTHING, null=True, blank=True, default=None)
     folder = models.ForeignKey(KnowledgeCentreFolder, on_delete=models.DO_NOTHING, related_name='files')
-    file = models.FileField(upload_to='uploads/knowledge_center/')
+    file = models.FileField(upload_to='uploads/knowledge_center/', max_length=500)
     name = models.CharField(max_length=255)
 
     def __str__(self):
