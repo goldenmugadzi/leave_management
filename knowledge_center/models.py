@@ -22,7 +22,7 @@ class KnowledgeCentreFolder(models.Model):
         return self.name
 
 class KnowldgeCentreFile(models.Model):
-    filename = models.CharField(max_length=100)
+    filename = models.CharField(max_length=400)
     archived = models.BooleanField(default=False) 
     section = models.ForeignKey(Sections, on_delete=models.DO_NOTHING, null=True, blank=True, default=None)
     cost_center = models.ForeignKey(CostCenter, on_delete=models.DO_NOTHING, null=True, blank=True, default=None)
