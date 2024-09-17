@@ -61,36 +61,36 @@ def import_old_data(request):
         new_root_folder.save()
         print("success: ", kc_second_category.name)
     
-    kcs = KnowledgeCenter.objects.all()
-    for kc in kcs:
-        print("starting kc: ", kc.filename)
-        root_parent = KnowledgeCentreFolder.objects.filter(name=kc.file_type_id.name).first() if kc.file_type_id else None
-        first_parent = KnowledgeCentreFolder.objects.filter(name=kc.subtype.name, parent=root_parent).first() if kc.subtype else None
-        parent = KnowledgeCentreFolder.objects.filter(name=kc.subsubtype.name, parent=first_parent).first() if kc.subsubtype else None
-        if parent:
-            folder = parent
-        elif first_parent:
-            folder = first_parent
-        elif root_parent:
-            folder = root_parent
-        else:
-            folder = None
-        filename = os.path.basename(kc.filepath)
-        kc_file = KnowldgeCentreFile(
-            filename=kc.filename,
-            archived=kc.archived,
-            section=kc.section_id,
-            cost_center=kc.cost_center,
-            region=kc.region_id,
-            created_on=kc.created_on,
-            updated_on=kc.updated_on,
-            created_by=kc.done_by,
-            folder=folder,
-            name=kc.filename,
-            file="uploads/knowledge_center/" + filename,
-        )
-        kc_file.save()
-        print("success: ", kc.filename)
+    # kcs = KnowledgeCenter.objects.all()
+    # for kc in kcs:
+    #     print("starting kc: ", kc.filename)
+    #     root_parent = KnowledgeCentreFolder.objects.filter(name=kc.file_type_id.name).first() if kc.file_type_id else None
+    #     first_parent = KnowledgeCentreFolder.objects.filter(name=kc.subtype.name, parent=root_parent).first() if kc.subtype else None
+    #     parent = KnowledgeCentreFolder.objects.filter(name=kc.subsubtype.name, parent=first_parent).first() if kc.subsubtype else None
+    #     if parent:
+    #         folder = parent
+    #     elif first_parent:
+    #         folder = first_parent
+    #     elif root_parent:
+    #         folder = root_parent
+    #     else:
+    #         folder = None
+    #     filename = os.path.basename(kc.filepath)
+    #     kc_file = KnowldgeCentreFile(
+    #         filename=kc.filename,
+    #         archived=kc.archived,
+    #         section=kc.section_id,
+    #         cost_center=kc.cost_center,
+    #         region=kc.region_id,
+    #         created_on=kc.created_on,
+    #         updated_on=kc.updated_on,
+    #         created_by=kc.done_by,
+    #         folder=folder,
+    #         name=kc.filename,
+    #         file="uploads/knowledge_center/" + filename,
+    #     )
+    #     kc_file.save()
+    #     print("success: ", kc.filename)
 
     return JsonResponse({"message": "Data imported successfully"})
 

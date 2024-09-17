@@ -13,7 +13,6 @@ from django.contrib.auth.decorators import login_required
 from it.beii_auth.models import Question, SecurityQuestions
 # from utils.helper_functions import get_dashboard_reports
 
-
 from it.beii_auth.models import Question, SecurityQuestions
 from it.users.models import UserProfile, Depots, Districts, Regions, Designations, Sections, Roles
 
@@ -108,7 +107,7 @@ def login_user(request):
         
         user = authenticate(request, username=username, password=password)
         if user is not None:
-            print("user expiry: ", (user.password_expiry_date <= datetime.now().date()), user.password_expiry_date, datetime.now().date())
+            # print("user expiry: ", (user.password_expiry_date <= datetime.now().date()), user.password_expiry_date, datetime.now().date())
             if user.password_expiry_date and user.password_expiry_date <= datetime.now().date():
                 login(request, user)
                 return redirect('/auth/change-password')
