@@ -3,17 +3,32 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    path('root_folders', views.view_root_folders, name='user_manual_root_folders'),
-    path('categories', views.view_firstview, name='user_manual_view_advanced'),
-        
-    path('create', views.create, name='user_manual_create'),
-    path('knowledge_center_files', views.view_files, name='user_manual_index'),
-    path('download_file', views.download_file, name='download_file'),
+    path('import', views.import_old_data, name='import_data'),
+    path('root_folders', views.view_root_folders, name='root_folders'),
+    path('folder/<str:folder_name>/<int:folder_id>', views.view_sub_folders, name='sub_folders'),
+    path('file/<str:file_name>/<int:file_id>', views.view_files_in_folder, name='view_files_in_folder'),
+    path('create_root_folder', views.create_root_folder, name='create_root_folder'),
+    path('manage_folders', views.manage_folders, name='manage_folders'),
+    path('edit_folder/<int:folder_id>', views.edit_folder, name='edit_folder'),
+    path('delete_folder/<int:folder_id>', views.delete_folder, name='delete_folder'),
+    path('subfolders/<int:folder_id>/', views.get_subfolders, name='get_subfolders'),
+    path('create_subfolder/<int:folder_id>', views.create_subfolder, name='create_subfolder'),
+    
+    path('create_file', views.create_file, name='create_file'),
+    path('get_root_folders/<int:folder_application_id>', views.get_root_folders, name='get_root_folders'),
+    path('get_subfolders/<int:folder_id>', views.get_subfolders, name='get_subfolders'),
+    
+    path('knowledge_center_files', views.view_knowledge_center_files, name='view_knowledge_center_files'),
+    path('view_archive', views.view_knowledge_center_archives, name='view_archived_files'),
     path('archive_file/<int:file_id>', views.archive_file, name='archive_file'),
     path('unarchive_file/<int:file_id>', views.unarchive_file, name='unarchive_file'),
+    
+    path('categories', views.view_firstview, name='view_advanced'),
+        
+    path('create', views.create, name='user_manual_create'),
+    path('download_file', views.download_file, name='download_file'),
     path('edit_file/<str:file_id>', views.edit_file, name='user_manual_edit_file'),
     path('view_myfiles', views.view_by_category, name='user_manual_view_files'),
-    path('view_archive', views.view_archived_files, name='view_archived_files'),
     path('get-files/<int:file_type_id>/', views.get_files, name='get_files'),
     path('get-cat2/<int:file_type>/<int:selected_cat>', views.get_cat2, name='get_cat2'),
     

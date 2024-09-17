@@ -133,7 +133,6 @@ document.getElementById("save_role").addEventListener("click", function (e) {
     success: function (rdata) {
       document.getElementById("my_modal_2").close();
       document.getElementById("rolesModalform").innerHTML = "";
-      console.log(rdata.role);
       document.getElementById("app_" + rdata.appid).innerHTML = rdata.role;
     },
     error: function (xhr, status, error) {

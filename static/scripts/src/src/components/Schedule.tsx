@@ -1607,7 +1607,8 @@ export default function Schedule({
       !refDate ||
       !closingTime ||
       !dateTenderOpened ||
-      !tenderAdjudicationCommitteeDate
+      !tenderAdjudicationCommitteeDate ||
+      !advert
     ) {
       onOpenResponse(
         "Submit Schedule Error",
@@ -1642,7 +1643,7 @@ export default function Schedule({
       "tender_adjudication_committee_date",
       tenderAdjudicationCommitteeDate
     );
-    form_data.append("advert", JSON.stringify(advert));
+    form_data.append("advert", advert);
     form_data.append("csrfmiddlewaretoken", getCookie("csrftoken") ?? "");
 
     fetch(`${base_url}/save`, {
@@ -1675,6 +1676,7 @@ export default function Schedule({
   };
 
   const onUpdateSchedule = () => {
+    console.log("adverts: ", advert);
     if (csId === "" || csId === undefined) {
       onOpenResponse(
         "Update Schedule Error",
@@ -1695,7 +1697,8 @@ export default function Schedule({
       !refDate ||
       !closingTime ||
       !dateTenderOpened ||
-      !tenderAdjudicationCommitteeDate
+      !tenderAdjudicationCommitteeDate ||
+      !advert
     ) {
       onOpenResponse(
         "Update Schedule Error",
@@ -1724,7 +1727,7 @@ export default function Schedule({
       "tender_adjudication_committee_date",
       tenderAdjudicationCommitteeDate
     );
-    form_data.append("advert", JSON.stringify(advert));
+    form_data.append("advert", advert);
     form_data.append("csrfmiddlewaretoken", getCookie("csrftoken") ?? "");
 
     fetch(`${base_url}/update`, {
@@ -1909,9 +1912,10 @@ export default function Schedule({
     name_: string,
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
-    console.log(event);
+    console.log("event: ", event, "name: ", name_);
     const file = event?.target?.files ? event?.target?.files[0] : undefined;
     const fileUrl = onGetFileObjectUrl(file);
+    console.log("file: ", file, "fileUrl: ", fileUrl);
     if (name_ === "advert") {
       setAdvert(file);
       setAdvertUrl(fileUrl);
@@ -4260,9 +4264,9 @@ export default function Schedule({
           })}
       </div>
 
-      {(username === csOwner || !csid) && !approvalsComplete ? (
+      {(username === csOwner || !csId) && !approvalsComplete ? (
         <div className="flex justify-center mt-10 px-3 py-3">
-          {csid ? (
+          {csId ? (
             <div className="w-30 m-2">
               <button
                 style={{ width: "100%" }}

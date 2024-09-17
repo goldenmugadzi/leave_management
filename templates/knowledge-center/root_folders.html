@@ -24,7 +24,7 @@
   </div>
   <div style="display: flex; justify-content: center">
     <a
-      href="create"
+      href="create_file"
       class="hover:bg-blue-200 outline-none focus:outline-none px-3 py-1 rounded flex items-center"
     >
       <svg
@@ -41,19 +41,19 @@
           d="M12 4.5v15m7.5-7.5h-15"
         />
       </svg>
-      <span class="px-2 font-semibold flex-1 text-gulf-blue-700">CREATE</span>
+      <span class="px-2 font-semibold flex-1 text-gulf-blue-700">CREATE FILE</span>
     </a>
   </div>
   <div style="display: flex; justify-content: center">
     <a
-      href="view_archive"
+      href="manage_folders"
       class="hover:bg-gray-200 outline-none focus:outline-none px-3 py-1 rounded flex items-center"
     >
-    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6 text-gulf-blue-700">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M12 10.5v6m3-3H9m4.06-7.19-2.12-2.12a1.5 1.5 0 0 0-1.061-.44H4.5A2.25 2.25 0 0 0 2.25 6v12a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9a2.25 2.25 0 0 0-2.25-2.25h-5.379a1.5 1.5 0 0 1-1.06-.44Z" />
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 text-gulf-blue-700">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 0 1 4.5 9.75h15A2.25 2.25 0 0 1 21.75 12v.75m-8.69-6.44-2.12-2.12a1.5 1.5 0 0 0-1.061-.44H4.5A2.25 2.25 0 0 0 2.25 6v12a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9a2.25 2.25 0 0 0-2.25-2.25h-5.379a1.5 1.5 0 0 1-1.06-.44Z" />
       </svg>
       
-      <span class="px-2 font-semibold flex-1 text-gulf-blue-700">New Folder</span>
+      <span class="px-2 font-semibold block text-gulf-blue-700">MANAGE FOLDERS</span>
     </a>
   </div>
   <div style="display: flex; justify-content: center">
@@ -95,11 +95,11 @@
                     style="background-color: #a16207"
                     class="aspect-h-1 aspect-w-1 w-full overflow-hidden rounded-md bg-gray-200 lg:aspect-none group-hover:opacity-75 lg:h-40"
                     >
-                    <a href="view_legislation">
+                    <a href="{{folder.url}}">
                         <img
-                        src={{file_instance.file.url}}
+                        src={{folder.cover}}
                         alt=""
-                        class="h-full w-full object-cover object-center lg:h-full lg:w-full"
+                        class=""
                         />
                     </a>
                     </div>
@@ -108,12 +108,12 @@
                         <div
                         class="dropdown-group inline-block w-full text-blue-50"
                         >
-                        <a href="view_legislation">
+                        <a href="{{folder.url}}">
                             <button
                             class="w-full bg-gulf-blue-600 hover:bg-blue-800 outline-none focus:outline-none border px-3 py-1 rounded flex items-center"
                             >
                             <span class="pr-1 font-semibold flex-1 text-blue-50"
-                                >{{folder.name.capitalize}}</span
+                                >{{folder.name}}</span
                             >
                             <span class="text-blue-50"> </span>
                             </button>

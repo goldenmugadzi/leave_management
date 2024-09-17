@@ -2233,6 +2233,7 @@ def update_comparative_schedule(request):
     try:
         
         advert_files = request.FILES.getlist("advert", None)
+        print("advert_files: ", advert_files)
         cs_id = request.POST.get("cs_id", "")
         plan_ref = request.POST.get("proc_ref", "")
         # proc_plan = data['proc_plan']
@@ -2254,6 +2255,7 @@ def update_comparative_schedule(request):
         try:
             if advert_files:
                 advert_file = advert_files[0]
+                print("advert_file: ", advert_file.name)
                 root_dir = os.path.join(settings.BASE_DIR, 'uploads', 'comparative', 'adverts')
                 fs = FileSystemStorage(location=root_dir)
                 filename_ = fs.save(advert_file.name, advert_file)
