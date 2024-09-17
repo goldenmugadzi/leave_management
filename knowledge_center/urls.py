@@ -14,6 +14,10 @@ urlpatterns = [
     path('subfolders/<int:folder_id>/', views.get_subfolders, name='get_subfolders'),
     path('create_subfolder/<int:folder_id>', views.create_subfolder, name='create_subfolder'),
     
+    path('create_file', views.create_file, name='create_file'),
+    path('get_root_folders/<int:folder_application_id>', views.get_root_folders, name='get_root_folders'),
+    path('get_subfolders/<int:folder_id>', views.get_subfolders, name='get_subfolders'),
+    
     path('categories', views.view_firstview, name='view_advanced'),
         
     path('create', views.create, name='user_manual_create'),
