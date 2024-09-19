@@ -201,7 +201,7 @@
                 }
 
                 // Fetch subfolders from the server (replace with your actual API endpoint)
-                fetch(`/knowledge_center/get_root_folders/${selectedTypeId}`)
+                fetch(`/ims/get_root_folders/${selectedTypeId}`)
                     .then(response => {
                         if (!response.ok) {
                             throw new Error('Network response was not ok');
@@ -221,7 +221,7 @@
                 if (!folderId) return;
 
                 // Fetch subfolders from the server (replace with your actual API endpoint)
-                fetch(`/knowledge_center/get_subfolders/${folderId}`)
+                fetch(`/ims/get_subfolders/${folderId}`)
                     .then(response => {
                         if (!response.ok) {
                             throw new Error('Network response was not ok');

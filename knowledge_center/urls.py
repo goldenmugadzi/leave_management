@@ -4,7 +4,8 @@ from . import views
 
 urlpatterns = [
     path('import', views.import_old_data, name='import_data'),
-    path('root_folders', views.view_root_folders, name='root_folders'),
+    path('import_processes', views.import_processes, name='import_processes'),
+    path('root_folders/<str:app_name>', views.view_root_folders, name='root_folders'),
     path('folder/<str:folder_name>/<int:folder_id>', views.view_sub_folders, name='sub_folders'),
     path('file/<str:file_name>/<int:file_id>', views.view_files_in_folder, name='view_files_in_folder'),
     path('create_root_folder', views.create_root_folder, name='create_root_folder'),
@@ -18,7 +19,7 @@ urlpatterns = [
     path('get_root_folders/<int:folder_application_id>', views.get_root_folders, name='get_root_folders'),
     path('get_subfolders/<int:folder_id>', views.get_subfolders, name='get_subfolders'),
     
-    path('knowledge_center_files', views.view_knowledge_center_files, name='view_knowledge_center_files'),
+    path('ims_files', views.ims_files, name='ims_files'),
     path('view_archive', views.view_knowledge_center_archives, name='view_archived_files'),
     path('archive_file/<int:file_id>', views.archive_file, name='archive_file'),
     path('unarchive_file/<int:file_id>', views.unarchive_file, name='unarchive_file'),

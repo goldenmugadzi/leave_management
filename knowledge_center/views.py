@@ -7,6 +7,7 @@ from django.conf import settings
 from django.contrib import messages
 
 from it.users.models import CostCenter, Regions, Sections
+from processes.models import File_Type, FileSubType, Processes, SubSubType
 from utils.save_file import save_file
 from .models import Categories, First_Category, FolderApplication, KnowldgeCentreFile, KnowledgeCentreFolder, Secondary_Category, Filetype
 from django.shortcuts import render
@@ -98,17 +99,93 @@ def import_old_data(request):
 
     return JsonResponse({"message": "Data imported successfully"})
 
+def import_processes(request):
+    
+    application = FolderApplication.objects.filter(id=2).first()
+    # pc_file_types = File_Type.objects.all()
+    # for pc in pc_file_types:
+    #     folder_exists = KnowledgeCentreFolder.objects.filter(name=pc.name).first()
+    #     if not folder_exists:
+    #         new_root_folder = KnowledgeCentreFolder(name=pc.name, folder_application=application, cover=None)
+    #         new_root_folder.save()
+    #         print("success: ", pc.name)
+    
+    # pc_subtypes = FileSubType.objects.all()
+    # for pc_subtype in pc_subtypes:
+    #     print("success: ", pc_subtype.name)
+    #     root_parent = KnowledgeCentreFolder.objects.filter(folder_application=application, name=pc_subtype.filetype_id.name).first()
+    #     print("root_parent: ", root_parent)
+    #     new_root_folder = KnowledgeCentreFolder(name=pc_subtype.name, folder_application=application, cover=None, parent=root_parent)
+    #     new_root_folder.save()
+    #     print("success: ", pc_subtype.name)
+
+    # pc_subsubtypes = SubSubType.objects.all()
+    # for pc_subsubtype in pc_subsubtypes:
+    #     print("success: ", pc_subsubtype.name)
+    #     root_parent = KnowledgeCentreFolder.objects.filter(name=pc_subsubtype.file_type_id.name, folder_application=application).first()
+    #     print("root_parent: ", root_parent)
+    #     first_parent = KnowledgeCentreFolder.objects.filter(name=pc_subsubtype.file_subtype_id.name, parent=root_parent, folder_application=application).first()
+    #     print("first_parent: ", first_parent)
+    #     parent = KnowledgeCentreFolder.objects.filter(name=pc_subsubtype.name, parent=first_parent, folder_application=application).first()
+    #     print("parent: ", parent)
+    #     if parent:
+    #         folder = parent
+    #     elif first_parent:
+    #         folder = first_parent
+    #     elif root_parent:
+    #         folder = root_parent
+    #     else:
+    #         folder = None
+    #     new_root_folder = KnowledgeCentreFolder(name=pc_subsubtype.name, folder_application=application, cover=None, parent=folder)
+    #     new_root_folder.save()
+    #     print("success: ", pc_subsubtype.name)
+
+    # pcs = Processes.objects.all()
+    # for pc in pcs:
+    #     try:
+    #         root_parent = KnowledgeCentreFolder.objects.filter(name=pc.filetype_id.name).first() if pc.filetype_id else None
+    #         first_parent = KnowledgeCentreFolder.objects.filter(name=pc.filesubtype_id.name, parent=root_parent).first() if pc.filesubtype_id else None
+    #         parent = KnowledgeCentreFolder.objects.filter(name=pc.subsubtype_id.name, parent=first_parent).first() if pc.subsubtype_id else None
+    #         if parent:
+    #             folder = parent
+    #         elif first_parent:
+    #             folder = first_parent
+    #         elif root_parent:
+    #             folder = root_parent
+    #         else:
+    #             folder = None
+                
+    #         filename = os.path.basename(pc.filepath)
+    #         pc_file = KnowldgeCentreFile(
+    #             filename=pc.filename,
+    #             archived=pc.archived,
+    #             section=pc.section_id,
+    #             cost_center=pc.cost_center,
+    #             region=pc.region_id,
+    #             created_on=pc.created_at,
+    #             updated_on=pc.updated_at,
+    #             created_by=pc.done_by,
+    #             folder=folder,
+    #             file="uploads/processes/" + filename,
+    #         )
+    #         pc_file.save()
+    #         print("success: ", pc.filename)
+    #     except Exception as ex:
+    #         print("Error: ", ex, pc.filename)
+            
+    return JsonResponse({"message": "Data imported successfully"})
+    
 @login_required
 def download_file(request):
     file_id = request.GET.get('file_id')
     if not file_id:
         messages.error(request, "File ID is missing")
-        return redirect('/knowledge_center/knowledge_center_files')
+        return redirect('/ims/knowledge_center_files')
 
     file_record = KnowldgeCentreFile.objects.filter(id=file_id).first()
     if not file_record:
         messages.error(request, "File not found in the database")
-        return redirect('/knowledge_center/knowledge_center_files')
+        return redirect('/ims/knowledge_center_files')
 
     file_path = file_record.file.path  # Use .path to get the full file system path
 
@@ -123,15 +200,21 @@ def download_file(request):
         messages.error(request, "Error downloading file")
         print(ex)
 
-    return redirect('/knowledge_center/knowledge_center_files')
+    return redirect('/ims/knowledge_center_files')
 
-def view_root_folders(request):
-    
-    root_folders = KnowledgeCentreFolder.objects.filter(parent__isnull=True)
+def view_root_folders(request, app_name):
+    if app_name == "knowledge_centre":
+        id = 1
+    elif app_name == "processes_and_procedures":
+        id = 2
+    else:
+        id = 1
+    application_ = FolderApplication.objects.filter(id=id).first()
+    root_folders = KnowledgeCentreFolder.objects.filter(folder_application=application_, parent__isnull=True)
     url_path = request.path.split("/")
     root_folders_list = []
     for folder in root_folders:
-        url_join = "/".join(url_path[:-1])
+        url_join = "/".join(url_path[:-2])
         new_folder = {
             "id": folder.id,
             "url":  url_join + "/folder/" + str(folder.name) + "/" + str(folder.id),
@@ -202,7 +285,7 @@ def create_root_folder(request):
         folder = KnowledgeCentreFolder(name=folder_name, cover=cover, folder_application=folder_application)
         folder.save()
         messages.success(request, "Folder created successfully")
-        return redirect('/knowledge_center/root_folders')
+        return redirect('/ims/root_folders/knowledge_centre')
     
     applications = FolderApplication.objects.all()
     return render(request, 'knowledge-center/create_root_folder.html', {"url_path": url_path, "applications": applications})
@@ -219,7 +302,7 @@ def create_subfolder(request, folder_id):
         folder.save()
         
         messages.success(request, "Folder created successfully")
-        return redirect('/knowledge_center/root_folders')
+        return redirect('/ims/root_folders')
     
     current_folder = KnowledgeCentreFolder.objects.filter(id=folder_id).first()
     return render(request, 'knowledge-center/create_sub_folder.html', {"url_path": url_path, "current_folder": current_folder})
@@ -265,13 +348,13 @@ def edit_folder(request, folder_id):
         folder.folder_application = folder_application if folder_application else folder.folder_application
         folder.save()
         messages.success(request, "Folder updated successfully")
-        return redirect('/knowledge_center/manage_folders')
+        return redirect('/ims/manage_folders')
     
 def delete_folder(request, folder_id):
     folder = KnowledgeCentreFolder.objects.filter(id=folder_id).first()
     folder.delete()
     messages.success(request, "Folder deleted successfully")
-    return redirect('/knowledge_center/manage_folders')
+    return redirect('/ims/manage_folders')
 
 def edit_subfolder(request, folder_id):
     url_path = request.path.split("/")
@@ -292,7 +375,7 @@ def edit_subfolder(request, folder_id):
         folder.folder_application = folder_application if folder_application else folder.folder_application
         folder.save()
         messages.success(request, "Folder updated successfully")
-        return redirect('/knowledge_center/manage_folders')
+        return redirect('/ims/manage_folders')
 
 def view_folders(request, folder_id):
     folder = KnowledgeCentreFolder.objects.filter(id=folder_id).first()
@@ -307,6 +390,7 @@ def create_file(request):
         print("post data: ", request.POST)
         level = request.POST['level']
         file_name = request.POST['filename']
+        root_folder = request.POST['root_folder']
         folder = request.POST['subfolder_'+level]
         section = request.POST['section']
         region = request.POST['region']
@@ -314,11 +398,14 @@ def create_file(request):
         
         section_ = Sections.objects.filter(id=section).first()
         region_ = Regions.objects.filter(id=region).first()
-        folder_ = KnowledgeCentreFolder.objects.filter(id=folder).first()
+        if folder:
+            folder_ = KnowledgeCentreFolder.objects.filter(id=folder).first()
+        else:
+            folder_ = KnowledgeCentreFolder.objects.filter(id=root_folder).first()
         file_record = KnowldgeCentreFile(filename=file_name, file=file, folder=folder_, region=region_, section=section_)
         file_record.save()
         messages.success(request, "File uploaded successfully")
-        return redirect('/knowledge_center/folder/' + str(folder_.name) + '/' + str(folder_.id)) 
+        return redirect('/ims/folder/' + str(folder_.name) + '/' + str(folder_.id)) 
     
     folder_applications = FolderApplication.objects.all()
     sections = Sections.objects.all()
@@ -327,7 +414,9 @@ def create_file(request):
 
 def get_root_folders(request, folder_application_id):
     
+    print("folder_application_id: ", folder_application_id)
     application_ = FolderApplication.objects.filter(id=folder_application_id).first()
+    print("application_: ", application_)
     root_folders = KnowledgeCentreFolder.objects.filter(folder_application=application_, parent__isnull=True)
     root_folders_list = []
     for folder in root_folders:
@@ -336,7 +425,7 @@ def get_root_folders(request, folder_application_id):
             "name": folder.name
         }
         root_folders_list.append(new_folder)
-    
+    print("root_folders_list: ", root_folders_list)
     return JsonResponse(root_folders_list, safe=False)
 
 def get_subfolders(request, folder_id):
@@ -345,7 +434,7 @@ def get_subfolders(request, folder_id):
     subfolders_data = [{'id': folder.id, 'name': folder.name} for folder in subfolders]
     return JsonResponse(subfolders_data, safe=False)
 
-def view_knowledge_center_files(request):
+def ims_files(request):
         
     files = KnowldgeCentreFile.objects.all()
     files_list = []
@@ -394,7 +483,7 @@ def archive_file(request, file_id):
         messages.error(request, "Error archiving file")
         print("Error:",ex)
     
-    return redirect('/knowledge_center/knowledge_center_files')
+    return redirect('/ims/knowledge_center_files')
 
 @login_required
 def unarchive_file(request, file_id):
@@ -408,7 +497,7 @@ def unarchive_file(request, file_id):
         messages.error(request, "Error unarchiving file")
         print("Error:",ex)
     
-    return redirect('/knowledge_center/knowledge_center_files')
+    return redirect('/ims/knowledge_center_files')
 
 @login_required
 def create(request):
