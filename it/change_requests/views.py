@@ -2,8 +2,10 @@ from datetime import datetime
 from django.forms import model_to_dict
 from django.http import JsonResponse
 from django.shortcuts import redirect, render
+from django.utils import timezone
 
 from it.change_requests.models import CRApproval, ChangeRequest, NewProfile, ProfileChange, ProfileDeactivation
+from it.users.forms import ResponsibilitiesForm
 from it.users.models import Application, CostCenter, Depots, Designations, Districts, Regions, Roles, Sections, UserProfile
 from django.db.models import Q
 from django.contrib import messages
@@ -66,8 +68,9 @@ def create_new_profile(request):
         cost_center = request.POST.get('cost_center')
         district_ = request.POST.get('district')
         region_ = request.POST.get('region')
+        application = request.POST.get('for_application')
 
-        region = Regions.objects.filter(id=region_).first()
+        region = Regions.objects.filter(id=region_).first() if region_ else None
         cost_center_ = CostCenter.objects.filter(id=cost_center).first() if cost_center else None
         district = Districts.objects.filter(code=district_).first() if district_ else None
         section = Sections.objects.filter(code=section_).first() if section_ else None
@@ -88,16 +91,9 @@ def create_new_profile(request):
 
         user.save()
 
-        # Get actual Role objects:
-        user_applications = Application.objects.all()
-        roles = [role for role in [request.POST.get(app.name) for app in user_applications if request.POST.get(app.name) != ""] if role and role != ""]  
-        print("roles: ", roles)    
-        role_objects = Roles.objects.filter(id__in=roles)  # Example of retrieving roles
-        user.roles.add(*role_objects)
-        user.save()
-
         cr_id = "CR-" + datetime.now().strftime("%Y%m%d%I%M%S")
         change_request = ChangeRequest(
+            application=application,
             cr_id=cr_id,
             change_type="New Profile",
             new_profile=user,
@@ -124,6 +120,7 @@ def profile_modification_request(request):
         change_reason = request.POST.get("change_reason")
         change_description = request.POST.get("change_description")
         profile_username = request.POST.get("user_profile")
+        application = request.POST.get("for_application")
         auth_user = request.user
         print("username: ", profile_username)
         user = UserProfile.objects.filter(username=profile_username).first()
@@ -136,8 +133,6 @@ def profile_modification_request(request):
                 print("error: ", ex)
                 messages.error(request, "You does not have a region or cost center")
                 return redirect("/change_requests/change_request_index")
-
-            roles = [role for role in [request.POST.get(app.name) for app in Application.objects.all() if request.POST.get(app.name) != 'Select Role'] if role and role != ""]
             
             profile_mod = ProfileChange(
                 user=user,
@@ -145,12 +140,12 @@ def profile_modification_request(request):
                 changed_by=user
             )
             profile_mod.save()
-            profile_mod.role_to_assign.set(Roles.objects.filter(id__in=roles))
             
             cr_id = "CR-" + datetime.now().strftime("%Y%m%d%I%M%S")
             
             change_request = ChangeRequest(
                 cr_id=cr_id,
+                application=application,
                 change_type="Profile Modification",
                 profile_change=profile_mod,
                 change_description=change_description,
@@ -169,6 +164,74 @@ def profile_modification_request(request):
 
     
         return redirect("/change_requests/change_request_index")
+
+def remove_duplicates():
+    duplicates = (
+        Roles.objects.values('role', 'app_id')
+        .annotate(count_id=Roles.Count('id'))
+        .filter(count_id__gt=1)
+    )
+
+    for duplicate in duplicates:
+        roles = Roles.objects.filter(role=duplicate['role'], app_id=duplicate['app_id'])
+        roles.exclude(id=roles.first().id).delete()
+
+
+@login_required
+def roles_modal(request):
+    if request.method == "POST":
+        user = UserProfile.objects.get(id=request.POST['user_id'])
+        change_description = request.POST.get('change_description')
+        change_reason = request.POST.get('change_reason')
+        role =Roles.objects.none()
+        try:
+            role = Roles.objects.get(id=request.POST['role'])
+        except:pass
+        app_id = request.POST['selectedapp_id']
+        
+        
+        profile_mod = ProfileChange(
+            user=user,
+            change_date=datetime.now(),
+            changed_by=user
+        )
+        profile_mod.save()
+        user.add_role(role, app_id)
+        responsibility = user.responsibilities.filter( user__id=user.id, role__app_id=app_id).first()
+        responsibilityForm = ResponsibilitiesForm(request.POST, instance=responsibility)
+        if responsibilityForm.is_valid():
+            print("Saving responsibility")
+            res= responsibilityForm.save()
+            res.user = user
+            res.save()
+            for role in user.roles.filter(app_id=app_id):
+                user.roles.remove(role)
+            if res.role:
+                user.roles.add(Roles.objects.get(id=res.role.id))
+                print("Role added")
+            if res.role and res.role.name:
+                return JsonResponse({"status": "success", "appid":res.role.app_id.id, "role":res.role.name}, safe=False)
+            else:
+                return JsonResponse({"status": "success", "appid":app_id, "role":None}, safe=False)   
+        else:
+            print("Error: ", responsibilityForm.errors)
+            user = UserProfile.objects.get(id=userid)
+            regioncc=user.cost_center.get_region().get_decendance()
+            regioncc_list = list(regioncc.values('id', 'code', 'name', 'parent'))
+            return JsonResponse({"form":responsibilityForm.as_p(),"regioncc":regioncc_list, "app":Application.objects.get(id=appid ).fullname }, safe=False)
+      
+    remove_duplicates()
+    userid = request.GET['user_id']
+    appid = request.GET['app_id']
+    user = UserProfile.objects.get(id=userid)
+    roles = Roles.objects.filter(app_id=appid)
+    """use a model form to assign roles to the user"""
+    regioncc=user.cost_center.get_region().get_decendance()
+    responsibility = user.responsibilities.filter(role__app_id=appid).first()
+    form = ResponsibilitiesForm(roles_queryset=roles,cost_centers_queryset=regioncc, instance=responsibility)
+    regioncc_list = list(regioncc.values('id', 'code', 'name', 'parent'))
+    return JsonResponse({"form":form.as_p(),"regioncc":regioncc_list,"app":{'fullname':Application.objects.get(id=appid).fullname,'id':Application.objects.get(id=appid ).id} }, safe=False)
+
 
 @login_required
 def profile_deactivation_request(request):
@@ -221,7 +284,6 @@ def new_profile_request(request):
     if request.method == "GET":
         change_request = ChangeRequest.objects.get(cr_id=request.GET['i'])
         if change_request.new_profile:
-                active_roles = {role.app_id.name: role for role in change_request.new_profile.roles.all() if role.app_id}
 
                 new_user = {
                     "id": change_request.new_profile.pk,
@@ -233,11 +295,9 @@ def new_profile_request(request):
                     "district": Districts.objects.filter(id=change_request.new_profile.district.id).first() if change_request.new_profile.district else None,
                     "region": Regions.objects.filter(id=change_request.new_profile.region.id).first() if change_request.new_profile.region else None,
                     "cost_center": CostCenter.objects.filter(id=change_request.new_profile.cost_center.id).first() if change_request.new_profile.cost_center else None,
-                    "roles": active_roles,
                     "designation": Designations.objects.filter(id=change_request.new_profile.designation.id).first() if change_request.new_profile.designation else None,
                 }
 
-                all_roles = {app.name: Roles.objects.filter(app_id=app.id).all() for app in Application.objects.all()}
                 cr = {
                     "user": new_user,
                     "cr_id": change_request.cr_id,
@@ -251,7 +311,6 @@ def new_profile_request(request):
                     request,
                     "change_requests/new_profile_request.html",
                     {
-                        "user_roles": all_roles,
                         "user_applications": Application.objects.all(),
                         "user_designations": Designations.objects.all(),
                         "sections": Sections.objects.all(),
@@ -268,7 +327,6 @@ def update_change_request(request):
     if request.method == "GET":
         change_request = ChangeRequest.objects.get(cr_id=request.GET['i'])
         if change_request.new_profile:
-                active_roles = {role.app_id.name: role for role in change_request.new_profile.roles.all() if role.app_id}
 
                 new_user = {
                     "id": change_request.new_profile.pk,
@@ -280,11 +338,9 @@ def update_change_request(request):
                     "district": Districts.objects.filter(id=change_request.new_profile.district.id).first() if change_request.new_profile.district else None,
                     "region": Regions.objects.filter(id=change_request.new_profile.region.id).first() if change_request.new_profile.region else None,
                     "cost_center": CostCenter.objects.filter(id=change_request.new_profile.cost_center.id).first() if change_request.new_profile.cost_center else None,
-                    "roles": active_roles,
                     "designation": Designations.objects.filter(id=change_request.new_profile.designation.id).first() if change_request.new_profile.designation else None,
                 }
 
-                all_roles = {app.name: Roles.objects.filter(app_id=app.id).all() for app in Application.objects.all()}
                 cr = {
                     "user": new_user,
                     "cr_id": change_request.cr_id,
@@ -298,7 +354,6 @@ def update_change_request(request):
                     request,
                     "change_requests/new_profile_request.html",
                     {
-                        "user_roles": all_roles,
                         "user_applications": Application.objects.all(),
                         "user_designations": Designations.objects.all(),
                         "sections": Sections.objects.all(),
@@ -313,9 +368,11 @@ def update_change_request(request):
         elif change_request.profile_change:
             profile_change = change_request.profile_change
             user = profile_change.user
-            roles = [role for role in profile_change.role_to_assign.all()]
-            active_roles = {role.app_id.name: role for role in roles if role.app_id}
-
+            try:
+                cost_center = user.cost_center
+            except Exception as ex:
+                print("error: ", ex)
+                cost_center = None
             new_user = {
                 "id": user.pk,
                 "username": user.username,
@@ -325,12 +382,10 @@ def update_change_request(request):
                 "section": user.section,
                 "district": user.district,
                 "region": user.region,
-                "cost_center": user.cost_center,
-                "roles": active_roles,
-                "designation": user.designation,
+                "cost_center": cost_center,
+                "designation": user.designation if user.designation else None,
             }
 
-            all_roles = {app.name: Roles.objects.filter(app_id=app.id).all() for app in Application.objects.all()}
             cr = {
                 "user": new_user,
                 "cr_id": change_request.cr_id,
@@ -344,7 +399,6 @@ def update_change_request(request):
                 request,
                 "change_requests/update_profile_modification.html",
                 {
-                    "user_roles": all_roles,
                     "user_applications": Application.objects.all(),
                     "user_designations": Designations.objects.all(),
                     "sections": Sections.objects.all(),
@@ -390,8 +444,13 @@ def update_change_request(request):
             change_reason = request.POST.get('change_reason')
             change_description = request.POST.get('change_description')
             change_request = ChangeRequest.objects.filter(cr_id=cr_id).first()
+            
+            section_head_approval = CRApproval.objects.filter(cr_id=change_request, approver_role__role="section_head").first()
             if not change_request:
                 messages.error(request, "Change request not found")
+                return redirect("/change_requests/change_request_index")
+            elif section_head_approval:
+                messages.warning(request, "Change request has already been approved by the section head. You cannot update it")
                 return redirect("/change_requests/change_request_index")
             else:
                 
@@ -401,11 +460,11 @@ def update_change_request(request):
 
                 if change_request.profile_change:
                     profile_mod = ProfileChange.objects.filter(id=change_request.profile_change.id).first()
-                    if profile_mod.application == "BUSINESS EXCELLENCE":
-                        roles = [role for role in [request.POST.get(app.name) for app in Application.objects.all() if request.POST.get(app.name) != 'Select Role'] if role and role != ""]
-                        profile_mod.role_to_assign.clear()
-                        profile_mod.role_to_assign.add(*Roles.objects.filter(id__in=roles))
-                        profile_mod.save()
+                    # if profile_mod.application == "BUSINESS EXCELLENCE":
+                    #     roles = [role for role in [request.POST.get(app.name) for app in Application.objects.all() if request.POST.get(app.name) != 'Select Role'] if role and role != ""]
+                    #     profile_mod.role_to_assign.clear()
+                    #     profile_mod.role_to_assign.add(*Roles.objects.filter(id__in=roles))
+                    #     profile_mod.save()
                     
                 elif change_request.profile_deactivation:
                     profile_deactivation = ProfileDeactivation.objects.filter(id=change_request.profile_deactivation.id).first()
@@ -426,8 +485,6 @@ def view_profile_request(request):
     if request.method == "GET":
         change_request = ChangeRequest.objects.get(cr_id=request.GET['i'])
         if change_request.new_profile:
-                print("change_request.new_profile.roles.all(): ", change_request.new_profile.roles.all(), change_request.new_profile.roles)
-                active_roles = {role.app_id.name: role for role in change_request.new_profile.roles.all() if role.app_id}
 
                 new_user = {
                     "id": change_request.new_profile.pk,
@@ -439,11 +496,9 @@ def view_profile_request(request):
                     "district": Districts.objects.filter(id=change_request.new_profile.district.id).first() if change_request.new_profile.district else None,
                     "region": Regions.objects.filter(id=change_request.new_profile.region.id).first() if change_request.new_profile.region else None,
                     "cost_center": CostCenter.objects.filter(id=change_request.new_profile.cost_center.id).first() if change_request.new_profile.cost_center else None,
-                    "roles": active_roles,
                     "designation": Designations.objects.filter(id=change_request.new_profile.designation.id).first() if change_request.new_profile.designation else None,
                 }
 
-                all_roles = {app.name: Roles.objects.filter(app_id=app.id).all() for app in Application.objects.all()}
                 cr = {
                     "user": new_user,
                     "cr_id": change_request.cr_id,
@@ -466,8 +521,6 @@ def view_profile_request(request):
                     if approval.approver_role.role == "it_section_head":
                         it_section_head_awaiting_action = False
                 
-                print("section_head_awaiting_action: ", section_head_awaiting_action)
-                print("it_section_head_awaiting_action: ", it_section_head_awaiting_action)
                 requestor = UserProfile.objects.filter(username=request.user.username).first()
                 requestor_role = requestor.get_user_roles_for_application("change_requests")
 
@@ -475,7 +528,6 @@ def view_profile_request(request):
                     request,
                     "change_requests/view_profile_request.html",
                     {
-                        "user_roles": all_roles,
                         "requestor_role": requestor_role,
                         "section_head_awaiting_action": section_head_awaiting_action,
                         "it_section_head_awaiting_action": it_section_head_awaiting_action,
@@ -494,8 +546,11 @@ def view_profile_request(request):
         elif change_request.profile_change:
             profile_change = change_request.profile_change
             user = profile_change.user
-            roles = [role for role in profile_change.role_to_assign.all()]
-            active_roles = {role.app_id.name: role for role in roles if role.app_id}
+            try:
+                cost_center = user.cost_center
+            except Exception as ex:
+                print("error: ", ex)
+                cost_center = None
 
             new_user = {
                 "id": user.pk,
@@ -506,8 +561,7 @@ def view_profile_request(request):
                 "section": user.section,
                 "district": user.district,
                 "region": user.region,
-                "cost_center": user.cost_center,
-                "roles": active_roles,
+                "cost_center": cost_center,
                 "designation": user.designation,
             }
 
@@ -526,7 +580,6 @@ def view_profile_request(request):
             print("it_section_head_awaiting_action: ", it_section_head_awaiting_action)
             requestor = UserProfile.objects.filter(username=request.user.username).first()
             requestor_role = requestor.get_user_roles_for_application("change_requests")
-            all_roles = {app.name: Roles.objects.filter(app_id=app.id).all() for app in Application.objects.all()}
             cr = {
                 "user": new_user,
                 "cr_id": change_request.cr_id,
@@ -540,7 +593,6 @@ def view_profile_request(request):
                 request,
                 "change_requests/view_profile_modification.html",
                 {
-                    "user_roles": all_roles,
                     "requestor_role": requestor_role,
                     "section_head_awaiting_action": section_head_awaiting_action,
                     "it_section_head_awaiting_action": it_section_head_awaiting_action,
@@ -580,8 +632,6 @@ def view_profile_request(request):
                 if approval.approver_role.role == "it_section_head":
                     it_section_head_awaiting_action = False
             
-            print("section_head_awaiting_action: ", section_head_awaiting_action)
-            print("it_section_head_awaiting_action: ", it_section_head_awaiting_action)
             requestor = UserProfile.objects.filter(username=request.user.username).first()
             requestor_role = requestor.get_user_roles_for_application("change_requests")
             return render(
@@ -632,8 +682,13 @@ def update_new_profile_request(request):
             change_reason = request.POST.get('change_reason')
             change_description = request.POST.get('change_description')
             change_request = ChangeRequest.objects.filter(cr_id=cr_id).first()
+            
+            section_head_approval = CRApproval.objects.filter(cr_id=change_request, approver_role__role="section_head").first()
             if not change_request:
                 messages.error(request, "Change request not found")
+                return redirect("/change_requests/change_request_index")
+            elif section_head_approval:
+                messages.warning(request, "Change request has already been approved by the section head. You cannot update it")
                 return redirect("/change_requests/change_request_index")
             else:
                 
@@ -698,7 +753,7 @@ def approve_profile_request(request):
                             approver=request.user,
                             approver_role=requestor.get_user_role_for_application("change_requests"),
                             approval_status=True,
-                            approval_date=datetime.now()
+                            approval_date=timezone.now()
                         )
                         cr_approval.save()
                         messages.success(request, "Change Request approved successfully")
@@ -715,7 +770,7 @@ def approve_profile_request(request):
                     approver_role=requestor.get_user_role_for_application("change_requests"),
                     approval_status=False,
                     comment=request.POST.get('rejectReason'),
-                    approval_date=datetime.now()
+                    approval_date=timezone.now()
                 )
                 cr_approval.save()
                 messages.success(request, "Change Request rejected successfully")
@@ -729,56 +784,10 @@ def approve_profile_request(request):
                         approver=request.user,
                         approver_role=requestor.get_user_role_for_application("change_requests"),
                         approval_status=True,
-                        approval_date=datetime.now()
+                        approval_date=timezone.now()
                     )
                     cr_approval.save()
                     messages.success(request, "Change Request approved successfully")
-                    cr_type = change_request.change_type
-                    
-                    if cr_type == "New Profile":
-                        new_profile = change_request.new_profile
-                        user = UserProfile(
-                            username=new_profile.username,
-                            first_name=new_profile.first_name,
-                            last_name=new_profile.last_name,
-                            email=new_profile.email,
-                            designation=new_profile.designation,
-                            cost_center=new_profile.cost_center,
-                            section=new_profile.section,
-                            district=new_profile.district,
-                            region=new_profile.region
-                        )
-                        user.save()
-                        user.roles.add(*new_profile.roles.all())
-                        try:
-                            password = "Password@2024"
-                            validate_password(password, user=user)
-                            user.set_password(password)
-                            user.save()
-                            messages.success(request, "Change Request applied successfully")
-                            return redirect("/change_requests/change_request_index")
-                            # Password is valid
-                        except ValidationError as e:
-                            # Password is not valid
-                            print(e.messages)
-                            messages.error(request, e.messages)
-                            return redirect("/change_requests/change_request_index")
-                    
-                    if cr_type == "Profile Modification":
-                        profile_change = change_request.profile_change
-                        user = UserProfile.objects.filter(id=profile_change.user.id).first()
-                        user.roles.clear()
-                        user.roles.add(*profile_change.role_to_assign.all())
-                        user.save()
-                        messages.success(request, "Change Request applied successfully")
-                        return redirect("/change_requests/change_request_index")
-                    
-                    if cr_type == "Profile Deactivation":
-                        profile_deactivation = change_request.profile_deactivation
-                        user = UserProfile.objects.filter(id=profile_deactivation.user.id).first()
-                        user.is_active = False
-                        user.save()
-                        messages.success(request, "Change Request applied successfully")
                     return redirect("/change_requests/change_request_index")
 
         except Exception as ex:
@@ -810,7 +819,7 @@ def datatable_data(request):
 
     if user.region:
         # Fetch your data from the model
-        records = ChangeRequest.objects.filter(region=user.region).all()
+        records = ChangeRequest.objects.filter(region=user.region)
         # Filter based on search value
         if search_value:
             records = records.filter(

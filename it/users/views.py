@@ -396,6 +396,7 @@ def update_user(request):
         region = None
         cost_center = None
         user_designation = None
+        cost_centers_ = CostCenter.objects.all()
         
         try:
             section = user_profile.section
@@ -403,6 +404,7 @@ def update_user(request):
             district = user_profile.district
             region = user_profile.region
             cost_center = user_profile.cost_center
+            cost_centers_ = CostCenter.objects.all()
          
             user_designation = user_profile.designation
         except Exception as ex:
@@ -458,6 +460,7 @@ def update_user(request):
             request,
             "users/user_update.html",
             {"cost_centers": cost_centers,
+             "cost_centers_": cost_centers_,
                 "form": CustomUserCreationForm,
                 "user_roles": all_roles,
                 "user_applications": Application.objects.all(),
@@ -501,6 +504,7 @@ def update_user(request):
                 'district': district_,
                 'depot': depot_,
                 'section': section_,
+                'cost_center': cost_center_,
                 'designation': designation_
             }
 
@@ -861,8 +865,9 @@ def fetch_center_parents(cost_center):
 # @allowed_roles(['administrator'], ['users'])
 def get_filtered_districts(request, region_id):
     
+    print("Region ID: ", region_id)
     districts = Districts.objects.filter(region_id=region_id).all()
-
+    print("Districts: ", districts)
     return JsonResponse(list(districts.values('id', 'district')), safe=False)
 
 @login_required

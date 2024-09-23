@@ -187,6 +187,9 @@
                   </option>
                   {% endif %}
                   <option value="">Select Cost Centre</option>
+                  {% for cost_centre in cost_centers_ %}
+                    <option value="{{ cost_centre.id }}">{{ cost_centre.name }}</option>
+                {% endfor %}
                 </select>
               </div>
             </div>
