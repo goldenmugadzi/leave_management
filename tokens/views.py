@@ -373,7 +373,7 @@ def awaiting_my_action(request):
     tokens = Token.objects.filter(cost_center__in=cost_centers).prefetch_related(
         'process__approval_set', 'process__workflow__step_set'
     )
-    print("time it takes to get cost centers",timezone.now())
+    # print("time it takes to get cost centers",timezone.now())
 
     for token in tokens:
         approvals = token.process.approval_set.all()
@@ -381,7 +381,7 @@ def awaiting_my_action(request):
         
         if token.process.workflow.step_set.filter(step=next_step, approver__in=user_roles).exists():
             tokens_to_process.append(token)
-    print("to",timezone.now())
+    # print("to",timezone.now())
 
     return render(
         request,
