@@ -11,18 +11,121 @@
 </style>
 {% endblock styles %} {% block content %}
 <div class="content-wrapper">
-  <div
-    class="bg-gulf-blue-100 shadow shadow-gulf-blue-300 text-gulf-blue-900 rounded px-2 py-2"
-  >
-    <div class="flex justify-between items-center mb-5">
-      <span class="text-lg font-semibold">CHANGE REQUESTS</span>
-      <a
-        href="/change_requests/create_change_request"
-        class="bg-gulf-blue-600 hover:bg-gulf-blue-800 text-white font-bold py-2 px-4 rounded"
+    <div class="mb-5">
+      <div
+        class="bg-gulf-blue-100 shadow-gulf-blue-300 text-gulf-blue-900 p-6 shadow-md rounded"
+      >
+        <div class="flex justify-between items-center mb-5">
+          <div>
+            <p class="text-lg font-semibold">Apply filters</p>
+            <p class="mt-1 text-sm">Use filters to further refine search</p>
+          </div>
+          <div class="flex justify-between items-center mb-5">
+            <a
+              href="/change_requests/create_change_request"
+              class="bg-gulf-blue-600 hover:bg-gulf-blue-800 text-white font-bold py-2 px-4 rounded"
+              >
+              CREATE CHANGE REQUEST
+            </a>
+          </div>
+        </div>
+        <div
+          class="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3"
         >
-        CREATE CHANGE REQUEST
-      </a>
+          <div class="flex flex-col">
+            <label for="status" class="text-stone-600 text-sm font-medium"
+              >Status</label
+            >
+  
+            <select
+              id="status"
+              class="mt-2 block w-full rounded-md border border-gray-200 px-2 py-2 shadow-sm outline-none focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+            >
+              <option>Select Status</option>
+              <option value="Pending Committee">Pending Committee</option>
+              <option value="Pending Finance">Pending Finance</option>
+              <option value="Pending General Manager">Pending General Manager</option>
+              <option value="Complete">Complete</option>
+              <option value="Rejected">Rejected</option>
+              <option value="Cancelled">Cancelled</option>
+            </select>
+          </div>
+  
+          <div class="flex flex-col">
+            <label for="station" class="text-stone-600 text-sm font-medium"
+              >Station</label
+            >
+            <select
+              id="station"
+              class="mt-2 block w-full rounded-md border border-gray-200 px-2 py-2 shadow-sm outline-none focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+            >
+              <option>Select Station</option>
+              <option value="Sections">Sections</option>
+              <option value="Cost Centre">Cost Centre</option>
+              <option value="Region">Region</option>
+            </select>
+          </div>
+  
+          <div class="flex flex-col">
+            <label for="pickStation" class="text-stone-600 text-sm font-medium"
+              >Pick Station</label
+            >
+            <select
+              id="pickStation"
+              class="mt-2 block w-full rounded-md border border-gray-200 px-2 py-2 shadow-sm outline-none focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+            >
+              
+            </select>
+          </div>
+  
+          <div class="flex flex-col">
+            <label for="start_date" class="text-stone-600 text-sm font-medium"
+              >Start Date</label
+            >
+            <input
+              type="date"
+              id="start_date"
+              class="mt-2 block w-full rounded-md border border-gray-200 px-2 py-2 shadow-sm outline-none focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+            />
+          </div>
+  
+          <div class="flex flex-col">
+            <label for="end_date" class="text-stone-600 text-sm font-medium"
+              >End Date</label
+            >
+            <input
+              type="date"
+              id="end_date"
+              class="mt-2 block w-full rounded-md border border-gray-200 px-2 py-2 shadow-sm outline-none focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+            />
+          </div>
+        </div>
+  
+        <div class="mt-6 grid w-full grid-cols-2 justify-end space-x-4 md:flex">
+          <button
+            id="reset_filter"
+            class="active:scale-95 rounded-lg bg-red-200 px-8 py-2 font-medium text-gray-600 outline-none focus:ring hover:opacity-90"
+          >
+            Reset Filter
+          </button>
+          <button
+            id="search_filter"
+            class="active:scale-95 rounded-lg bg-blue-600 px-8 py-2 font-medium text-white outline-none focus:ring hover:opacity-90"
+          >
+            Search
+          </button>
+          <button
+            id="export_filter"
+            class="active:scale-95 rounded-lg bg-green-600 px-8 py-2 font-medium text-white outline-none focus:ring hover:opacity-90"
+          >
+              Export CSV
+          </button>
+        </div>
+      </div>
     </div>
+    <div
+      class="bg-gulf-blue-100 shadow-md shadow-gulf-blue-300 text-gulf-blue-900 rounded px-2 py-2"
+    >
     <table id="change_request_index" class="display" style="width: 100%">
       <thead>
         <tr>
