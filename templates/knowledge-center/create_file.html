@@ -18,7 +18,7 @@
 
           <div class="mt-10 grid grid-cols-3 gap-4" x-data="folderSelector()">
             
-      <input type="hidden" name="level" :value="level" />
+            <input type="hidden" name="level" :value="level" />
             <div>
               <label
                 for="filename"
@@ -237,7 +237,7 @@
                         this.subfolderGroups = this.subfolderGroups.slice(0, level + 1);
                         this.selectedSubfolders = this.selectedSubfolders.slice(0, level + 1);
                         this.selectedSubfolders[level] = subfolder;
-                        this.level = level;
+                        this.level = level + 1;
                     })
                     .catch(error => {
                         console.error('There was a problem with the fetch operation:', error);
