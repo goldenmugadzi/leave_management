@@ -1,6 +1,7 @@
+import csv
 from datetime import datetime
 from django.forms import model_to_dict
-from django.http import JsonResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.utils import timezone
 
@@ -840,46 +841,43 @@ def datatable_data(request, view):
             start_date = request.GET.get('start_date')
             end_date = request.GET.get('end_date')
             print("region: ", region, " cr_type: ", cr_type, " cr_app: ", cr_app, " status: ", status, " cost_center: ")
-            try:
-                if region:
-                    region_ = Regions.objects.filter(id=region).first()
-                    records = records.filter(region=region_)
-                if cr_type:
-                    records = records.filter(change_type=cr_type)
-                if cr_app:
-                    records = records.filter(application=cr_app)
-                if status:
-                    if status == "Pending SH":
-                        records = records.filter(~Q(crapproval__approver_role__role="section_head"))
-                    if status == "Pending IT":
-                        records = records.filter(
-                                Q(crapproval__approver_role__role="section_head") & 
-                                Q(crapproval__approval_status=True)
-                            ).exclude(
-                                Q(crapproval__approver_role__role="it_section_head") & 
-                                Q(crapproval__approval_status=True)
-                            )
-                    if status == "Complete":
-                        records = records.filter(
+            if region:
+                region_ = Regions.objects.filter(id=region).first()
+                records = records.filter(region=region_)
+            if cr_type:
+                records = records.filter(change_type=cr_type)
+            if cr_app:
+                records = records.filter(application=cr_app)
+            if status:
+                if status == "Pending SH":
+                    records = records.filter(~Q(crapproval__approver_role__role="section_head"))
+                if status == "Pending IT":
+                    records = records.filter(
+                            Q(crapproval__approver_role__role="section_head") & 
+                            Q(crapproval__approval_status=True)
+                        ).exclude(
                             Q(crapproval__approver_role__role="it_section_head") & 
                             Q(crapproval__approval_status=True)
                         )
-                    if status == "Rejected":
-                        records = records.filter(
-                                (Q(crapproval__approver_role__role="section_head") & 
-                                Q(crapproval__approval_status=False)) |
-                                Q(crapproval__approver_role__role="it_section_head") & 
-                                Q(crapproval__approval_status=False)
-                            )
-                if cost_center:
-                    cost_center_ = CostCenter.objects.filter(id=cost_center).first()
-                    records = records.filter(cost_center=cost_center_)  
-                if start_date and end_date:
-                    start_date = datetime.strptime(start_date, "%Y-%m-%d")
-                    end_date = datetime.strptime(end_date, "%Y-%m-%d")
-                    records = records.filter(created_at__range=[start_date, end_date])
-            except Exception as ex:
-                print("ex: ", ex)
+                if status == "Complete":
+                    records = records.filter(
+                        Q(crapproval__approver_role__role="it_section_head") & 
+                        Q(crapproval__approval_status=True)
+                    )
+                if status == "Rejected":
+                    records = records.filter(
+                            (Q(crapproval__approver_role__role="section_head") & 
+                            Q(crapproval__approval_status=False)) |
+                            Q(crapproval__approver_role__role="it_section_head") & 
+                            Q(crapproval__approval_status=False)
+                        )
+            if cost_center:
+                cost_center_ = CostCenter.objects.filter(id=cost_center).first()
+                records = records.filter(cost_center=cost_center_)  
+            if start_date and end_date:
+                start_date = datetime.strptime(start_date, "%Y-%m-%d")
+                end_date = datetime.strptime(end_date, "%Y-%m-%d")
+                records = records.filter(created_at__range=[start_date, end_date])
                     
         # Total number of records before filtering
         total = records.count()
@@ -935,3 +933,118 @@ def datatable_data(request, view):
             'recordsFiltered': total,
             'data': data
         })
+
+def get_filtered_change_requests(records, user_id, search_value, column_name, user_region, region, cr_type, cr_app, status, cost_center, start_date, end_date):
+    
+    try:
+        print("region: ", region, " cr_type: ", cr_type, " cr_app: ", cr_app, " status: ", status, " cost_center: ")
+        if region:
+            region_ = Regions.objects.filter(id=region).first()
+            records = records.filter(region=region_)
+        if cr_type:
+            records = records.filter(change_type=cr_type)
+        if cr_app:
+            records = records.filter(application=cr_app)
+        if status:
+            if status == "Pending SH":
+                records = records.filter(~Q(crapproval__approver_role__role="section_head"))
+            if status == "Pending IT":
+                records = records.filter(
+                        Q(crapproval__approver_role__role="section_head") & 
+                        Q(crapproval__approval_status=True)
+                    ).exclude(
+                        Q(crapproval__approver_role__role="it_section_head") & 
+                        Q(crapproval__approval_status=True)
+                    )
+            if status == "Complete":
+                records = records.filter(
+                    Q(crapproval__approver_role__role="it_section_head") & 
+                    Q(crapproval__approval_status=True)
+                )
+            if status == "Rejected":
+                records = records.filter(
+                        (Q(crapproval__approver_role__role="section_head") & 
+                        Q(crapproval__approval_status=False)) |
+                        Q(crapproval__approver_role__role="it_section_head") & 
+                        Q(crapproval__approval_status=False)
+                    )
+        if cost_center:
+            cost_center_ = CostCenter.objects.filter(id=cost_center).first()
+            records = records.filter(cost_center=cost_center_)  
+        if start_date and end_date:
+            start_date = datetime.strptime(start_date, "%Y-%m-%d")
+            end_date = datetime.strptime(end_date, "%Y-%m-%d")
+            records = records.filter(created_at__range=[start_date, end_date])
+            
+        data = []
+        for obj in records:
+            section_head_approval = CRApproval.objects.filter(cr_id=obj, approver_role__role="section_head").first()
+            it_section_head_approval = CRApproval.objects.filter(cr_id=obj, approver_role__role="it_section_head").first()
+            
+            sh_status = "Pending"
+            if section_head_approval:
+                sh_status = "Approved" if section_head_approval.approval_status else "Rejected"
+            itsh = "Pending"
+            if it_section_head_approval:
+                itsh = "Approved" if it_section_head_approval.approval_status else "Rejected"
+            change_requests = {
+                "cr_id": obj.cr_id,
+                "change_type": obj.change_type,
+                "change_description": obj.change_description,
+                "change_reason": obj.change_reason,
+                "section_head_approval": sh_status,
+                "it_section_head_approval": itsh,
+                "creator_designation": obj.creator_designation.description,
+                "created_by": obj.created_by.first_name + " " + obj.created_by.last_name,
+                "region": obj.region.region,
+                "cost_center": obj.cost_center.name,
+                "created_at": obj.created_at.strftime("%Y-%m-%d %H:%M"),
+            }
+
+            data.append(change_requests)
+        return data
+    except Exception as ex:
+        print("ex: ", ex)
+    
+    return data
+
+def get_csv_export(request):
+    
+    print("export csv")
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="rfq.csv"'
+    try:  
+        region = request.GET.get('region')
+        cr_type = request.GET.get('cr_type')
+        cr_app = request.GET.get('cr_app')
+        status = request.GET.get('status')
+        cost_center = request.GET.get('cost_center')
+        start_date = request.GET.get('start_date')
+        end_date = request.GET.get('end_date')  
+        user_id = request.user.id
+        try:
+            user_region = Regions.objects.filter(region=request.user.region).first()
+            records = ChangeRequest.objects.filter(region=user_region)
+        except Exception as ex:
+            user_region = None
+            records = None
+            print("error: ",  ex)
+        print("region: ", region, " cr_type: ", cr_type, " cr_app: ", cr_app, " status: ", status, " cost_center: ")
+        records_ = get_filtered_change_requests(records, user_id=user_id, search_value="", column_name="", user_region=user_region, region=region, cr_type=cr_type, cr_app=cr_app, status=status, cost_center=cost_center, start_date=start_date, end_date=end_date)
+        # build csv file and return as response
+        try:
+            writer = csv.writer(response)
+            writer.writerow(['CR ID', 'Change Type', 'Change Description', 'Change Reason', 'Section Head Approval', 'IT Section Head Approval', 'Creator Designation', 'Created By', 'Region', 'Cost Center', 'Created At'])
+            for item in records_:
+                try:
+                    writer.writerow([item['cr_id'], item['change_type'], item['change_description'], item['change_reason'], item['section_head_approval'], item['it_section_head_approval'], item['creator_designation'], item['created_by'], item['region'], item['cost_center'], item['created_at']])
+                    
+                except Exception as ex:
+                    print("For Writting to CSV: ", ex)
+        except Exception as ex:
+            print("Error Writting to CSV: ", ex)
+    except Exception as ex:
+        print("Error: ", ex)
+    
+    
+    return response
