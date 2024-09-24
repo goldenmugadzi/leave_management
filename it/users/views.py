@@ -98,7 +98,6 @@ def ms_exhange_test(request):
     message.send()
     return JsonResponse({"status": "success", "message": "Email sent successfully"})
 
-@login_required
 def ms_exhange_send(subject, body, to_recipients, cc_recipients):
     account = get_exchange_account()
     message = Message(

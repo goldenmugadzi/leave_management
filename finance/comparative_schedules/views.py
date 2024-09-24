@@ -1139,7 +1139,7 @@ def notify_user(user_, msg, notification_type, url, id):
             created_at=datetime.now(),
         )
         
-        ms_exhange_send(subject=notification_type, body=msg, to_recipients=[user_.email])
+        # ms_exhange_send(subject=notification_type, body=msg, to_recipients=[user_.email], cc_recipients=[])
         return True
  
 def notification_update(user, id):
@@ -1948,6 +1948,9 @@ def get_create_data(request, pr_id):
         pr_id = "PR" + pr_id
     purchase_request = PurchaseRequest.objects.filter(id=pr_id).first()
     if purchase_request:
+        request_user = request.user
+        request_user_profile = UserProfile.objects.filter(id=request_user.id).first()
+        user_comparative_schedule_role = request_user_profile.get_user_role_for_application(APP_NAME) 
         proc_plans = ProcPlan.objects.all()
         currencies = Currency.objects.all()
         suppliers = Supplier.objects.all()
@@ -1983,6 +1986,7 @@ def get_create_data(request, pr_id):
         
         return JsonResponse({
                 "success": True,
+                "requester_role": user_comparative_schedule_role.role if user_comparative_schedule_role else "",
                 "message": "PR details retrieved successfully",
                 "pr_id": pr_id,
                 "scope_of_work": purchase_request.scope_of_work if purchase_request.scope_of_work else "",
@@ -2705,38 +2709,46 @@ def save_cs_committee(request):
     cs_id = request.POST.get("cs_id", "")
     json_data = json.loads(request.POST.get("committee", "{}"))
     committee = json_data.get("committee", [])
-    cs_query = ComparativeSchedules.objects.filter(cs_id=cs_id).first()
-    if not cs_query:
+    try:
+        cs_query = ComparativeSchedules.objects.filter(cs_id=cs_id).first()
+        if not cs_query:
+            return JsonResponse({
+                "message": "Comparative Schedule not found",
+                "success": False,
+                }, safe=False)
+        
+        # check if committee exists
+        for member in committee:
+            # check if member exists
+            # get member user profile
+            member_profile = UserProfile.objects.filter(username=member['memberUserName']).first()
+            if member_profile:
+                committee_query = Committee.objects.filter(cs_id=cs_query, user=member_profile).first()
+                if not committee_query:
+                    clear_approvals(cs_id)
+                    committee_query = Committee(
+                        cs_id = cs_query,
+                        user = member_profile,
+                        committee_name = member['memberUserName'],
+                        committee_position = member['memberPosition']
+                    )
+                    msg = "You have been added to the committee for RFQ " + cs_query.cs_id
+                    url = "/comperative_schedule/comperative_schedule/" + cs_query.cs_id
+                    notify_user(member_profile, msg, "RFQ", url, cs_query.cs_id)
+                    committee_query.save()
+                
+            
         return JsonResponse({
-            "message": "Comparative Schedule not found",
+            "message": "Committee saved successfully",
+            "success": True,
+        })
+    except Exception as ex:
+        print("Error: ", ex)
+        return JsonResponse({
+            "message": "Error saving Committee",
+            "error": str(ex),
             "success": False,
             }, safe=False)
-    
-    # check if committee exists
-    for member in committee:
-        # check if member exists
-        # get member user profile
-        member_profile = UserProfile.objects.filter(username=member['memberUserName']).first()
-        if member_profile:
-            committee_query = Committee.objects.filter(cs_id=cs_query, user=member_profile).first()
-            if not committee_query:
-                clear_approvals(cs_id)
-                committee_query = Committee(
-                    cs_id = cs_query,
-                    user = member_profile,
-                    committee_name = member['memberUserName'],
-                    committee_position = member['memberPosition']
-                )
-                msg = "You have been added to the committee for RFQ " + cs_query.cs_id
-                url = "/comperative_schedule/comperative_schedule/" + cs_query.cs_id
-                notify_user(member_profile, msg, "RFQ", url, cs_query.cs_id)
-                committee_query.save()
-            
-        
-    return JsonResponse({
-        "message": "Committee saved successfully",
-        "success": True,
-    })
 
 @login_required
 def delete_cs_committee_member(request):
@@ -2977,8 +2989,9 @@ def save_buyers_notes(request):
     cs_query = ComparativeSchedules.objects.filter(cs_id=cs_id).first()
     if cs_query:
         ranking = Ranking.objects.filter(cs_id=cs_query, rank=1).first()
-        ranking.remarks = buyers_notes if buyers_notes else "Supplier has been awarded being the lowest bidder having complied with all the requirements is recommended to provide the goods/service"
+        ranking.remarks = buyers_notes if buyers_notes else ""
         ranking.save()
+        print("ranking: ", ranking)
         return JsonResponse({
             "message": "Buyers notes saved successfully",
             "success": True,
