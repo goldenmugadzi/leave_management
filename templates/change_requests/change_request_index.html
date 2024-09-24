@@ -32,49 +32,80 @@
         <div
           class="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3"
         >
+            <div class="flex flex-col">
+            <label for="region" class="text-stone-600 text-sm font-medium"
+                >Region</label
+            >
+            <select
+                id="region"
+                class="mt-2 block w-full rounded-md border border-gray-200 px-2 py-2 shadow-sm outline-none focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+            >
+                <option value="">Select Region</option>
+                {% for region in regions %}
+                <option value="{{ region.id }}">{{ region }}</option>
+                {% endfor %}
+            </select>
+            </div>
+  
+            <div class="flex flex-col">
+              <label for="cost_center" class="text-stone-600 text-sm font-medium"
+                >Cost Centre</label
+              >
+              <select
+                id="cost_center"
+                class="mt-2 block w-full rounded-md border border-gray-200 px-2 py-2 shadow-sm outline-none focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+              >
+                <option value="">Select Centre</option>
+              </select>
+            </div>
+
+            <div class="flex flex-col">
+            <label for="cr_type" class="text-stone-600 text-sm font-medium"
+                >Change Request Type</label
+            >
+
+            <select
+                id="cr_type"
+                class="mt-2 block w-full rounded-md border border-gray-200 px-2 py-2 shadow-sm outline-none focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+            >
+                <option value="">Select Type</option>
+                <option value="New Profile">New Profile Request</option>
+                <option value="Profile Modification">Profile Modification</option>
+                <option value="Profile Deactivation">Profile Deactivation</option>
+            </select>
+            </div>
+
+            <div class="flex flex-col">
+            <label for="cr_app" class="text-stone-600 text-sm font-medium"
+                >Change Request Application</label
+            >
+
+            <select
+                id="cr_app"
+                class="mt-2 block w-full rounded-md border border-gray-200 px-2 py-2 shadow-sm outline-none focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+            >
+                <option value="">Select Application</option>
+                <option value="BUSINESS EXCELLENCE">
+                    BUSINESS EXCELLENCE
+                  </option>
+                  <option value="SAP">SAP</option>
+                  <option value="NDM">NDM</option>
+            </select>
+            </div>
+
           <div class="flex flex-col">
             <label for="status" class="text-stone-600 text-sm font-medium"
               >Status</label
             >
-  
             <select
               id="status"
               class="mt-2 block w-full rounded-md border border-gray-200 px-2 py-2 shadow-sm outline-none focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
             >
-              <option>Select Status</option>
-              <option value="Pending Committee">Pending Committee</option>
-              <option value="Pending Finance">Pending Finance</option>
-              <option value="Pending General Manager">Pending General Manager</option>
+              <option value="">Select Status</option>
+              <option value="Pending SH">Pending Section Head Approval</option>
+              <option value="Pending IT">Pending IT Approval</option>
               <option value="Complete">Complete</option>
               <option value="Rejected">Rejected</option>
-              <option value="Cancelled">Cancelled</option>
-            </select>
-          </div>
-  
-          <div class="flex flex-col">
-            <label for="station" class="text-stone-600 text-sm font-medium"
-              >Station</label
-            >
-            <select
-              id="station"
-              class="mt-2 block w-full rounded-md border border-gray-200 px-2 py-2 shadow-sm outline-none focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
-            >
-              <option>Select Station</option>
-              <option value="Sections">Sections</option>
-              <option value="Cost Centre">Cost Centre</option>
-              <option value="Region">Region</option>
-            </select>
-          </div>
-  
-          <div class="flex flex-col">
-            <label for="pickStation" class="text-stone-600 text-sm font-medium"
-              >Pick Station</label
-            >
-            <select
-              id="pickStation"
-              class="mt-2 block w-full rounded-md border border-gray-200 px-2 py-2 shadow-sm outline-none focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
-            >
-              
             </select>
           </div>
   
@@ -161,11 +192,11 @@
 <script>
 
   $(document).ready(function () {
-    $("#change_request_index").DataTable({
+    var table = $("#change_request_index").DataTable({
       "processing": true,
       "serverSide": true,
       "ajax": {
-        "url": "/change_requests/datatables",
+        "url": "/change_requests/datatables/all",
         "type": "GET"
       },
       columns: [
@@ -251,6 +282,61 @@
       ],
       order: [[5, 'desc']]
     });
+
+    $("#search_filter").on("click", function () {
+        const region = document.getElementById("region").value;
+        const cr_type = document.getElementById("cr_type").value;
+        const cr_app = document.getElementById("cr_app").value;
+        const cost_center = document.getElementById("cost_center").value;
+        const startDate = document.getElementById("start_date").value;
+        const endDate = document.getElementById("end_date").value;
+        const status = document.getElementById("status").value;
+    
+        var newUrl = `/change_requests/datatables/filter?start_date=${startDate}&end_date=${endDate}&status=${status}&cost_center=${cost_center}&region=${region}&cr_type=${cr_type}&cr_app=${cr_app}`;
+        table.ajax.url(newUrl).load();
+    })
+
+    $("#export_filter").on("click", function () {
+        const region = document.getElementById("region").value;
+        const cr_type = document.getElementById("cr_type").value;
+        const cr_app = document.getElementById("cr_app").value;
+        const cost_center = document.getElementById("cost_center").value;
+        const startDate = document.getElementById("start_date").value;
+        const endDate = document.getElementById("end_date").value;
+        const status = document.getElementById("status").value;
+    
+        var newUrl = `/change_requests/datatables/export?start_date=${startDate}&end_date=${endDate}&status=${status}&cost_center=${cost_center}&region=${region}&cr_type=${cr_type}&cr_app=${cr_app}`;
+        window.location.href = newUrl;
+    })
+
+    $("#reset_filter").on("click", function () {
+        document.getElementById("region").value = "";
+        document.getElementById("cr_type").value = "";
+        document.getElementById("cr_app").value = "";
+        document.getElementById("cost_center").value = "";
+        document.getElementById("start_date").value = "";
+        document.getElementById("end_date").value = "";
+        document.getElementById("status").value = "";
+
+        var newUrl = "/change_requests/datatables/all_schedules";
+        table.ajax.url(newUrl).load();
+    })
+  });
+
+  const region = document.getElementById('region');
+  const cost_center = document.getElementById('cost_center');
+
+  region.addEventListener('change', (e) => {
+    const regionId = e.target.value;
+    fetch(`{{BASE_URL}}/users/filtered_centers/${regionId}`)
+      .then((res) => res.json())
+      .then((data) => {
+        console.log("var: ", data);
+        cost_center.innerHTML = '<option>Select Cost Centre</option>';
+        data.forEach((_cost_center) => {
+          cost_center.innerHTML += `<option value="${_cost_center.id}">${_cost_center.name}</option>`;
+        });
+      });
   });
 </script>
 {% endblock scripts %}

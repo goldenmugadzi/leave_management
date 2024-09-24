@@ -800,17 +800,18 @@ def change_request_index(request):
 
     user_page = 'change_requests/change_request_index.html'
     user_title = request.user.get_full_name()
-
+    regions = Regions.objects.all()
     return render(
         request,
         user_page,
         {
             "title": "Change Requests",
             "user_title": user_title,
+            "regions": regions
         })
     
 @login_required
-def datatable_data(request):
+def datatable_data(request, view):
     draw = int(request.GET.get('draw', default=1))
     start = int(request.GET.get('start', default=0))
     length = int(request.GET.get('length', default=10))
@@ -829,7 +830,57 @@ def datatable_data(request):
             Q(new_profile__email__icontains=search_value) |
             Q(new_profile__username__icontains=search_value)
             )
-
+        
+        if view == "filter":
+            region = request.GET.get('region')
+            cr_type = request.GET.get('cr_type')
+            cr_app = request.GET.get('cr_app')
+            status = request.GET.get('status')
+            cost_center = request.GET.get('cost_center')
+            start_date = request.GET.get('start_date')
+            end_date = request.GET.get('end_date')
+            print("region: ", region, " cr_type: ", cr_type, " cr_app: ", cr_app, " status: ", status, " cost_center: ")
+            try:
+                if region:
+                    region_ = Regions.objects.filter(id=region).first()
+                    records = records.filter(region=region_)
+                if cr_type:
+                    records = records.filter(change_type=cr_type)
+                if cr_app:
+                    records = records.filter(application=cr_app)
+                if status:
+                    if status == "Pending SH":
+                        records = records.filter(~Q(crapproval__approver_role__role="section_head"))
+                    if status == "Pending IT":
+                        records = records.filter(
+                                Q(crapproval__approver_role__role="section_head") & 
+                                Q(crapproval__approval_status=True)
+                            ).exclude(
+                                Q(crapproval__approver_role__role="it_section_head") & 
+                                Q(crapproval__approval_status=True)
+                            )
+                    if status == "Complete":
+                        records = records.filter(
+                            Q(crapproval__approver_role__role="it_section_head") & 
+                            Q(crapproval__approval_status=True)
+                        )
+                    if status == "Rejected":
+                        records = records.filter(
+                                (Q(crapproval__approver_role__role="section_head") & 
+                                Q(crapproval__approval_status=False)) |
+                                Q(crapproval__approver_role__role="it_section_head") & 
+                                Q(crapproval__approval_status=False)
+                            )
+                if cost_center:
+                    cost_center_ = CostCenter.objects.filter(id=cost_center).first()
+                    records = records.filter(cost_center=cost_center_)  
+                if start_date and end_date:
+                    start_date = datetime.strptime(start_date, "%Y-%m-%d")
+                    end_date = datetime.strptime(end_date, "%Y-%m-%d")
+                    records = records.filter(created_at__range=[start_date, end_date])
+            except Exception as ex:
+                print("ex: ", ex)
+                    
         # Total number of records before filtering
         total = records.count()
 
