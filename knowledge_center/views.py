@@ -102,76 +102,76 @@ def import_old_data(request):
 def import_processes(request):
     
     application = FolderApplication.objects.filter(id=2).first()
-    # pc_file_types = File_Type.objects.all()
-    # for pc in pc_file_types:
-    #     folder_exists = KnowledgeCentreFolder.objects.filter(name=pc.name).first()
-    #     if not folder_exists:
-    #         new_root_folder = KnowledgeCentreFolder(name=pc.name, folder_application=application, cover=None)
-    #         new_root_folder.save()
-    #         print("success: ", pc.name)
+    pc_file_types = File_Type.objects.all()
+    for pc in pc_file_types:
+        folder_exists = KnowledgeCentreFolder.objects.filter(name=pc.name).first()
+        if not folder_exists:
+            new_root_folder = KnowledgeCentreFolder(name=pc.name, folder_application=application, cover=None)
+            new_root_folder.save()
+            print("success: ", pc.name)
     
-    # pc_subtypes = FileSubType.objects.all()
-    # for pc_subtype in pc_subtypes:
-    #     print("success: ", pc_subtype.name)
-    #     root_parent = KnowledgeCentreFolder.objects.filter(folder_application=application, name=pc_subtype.filetype_id.name).first()
-    #     print("root_parent: ", root_parent)
-    #     new_root_folder = KnowledgeCentreFolder(name=pc_subtype.name, folder_application=application, cover=None, parent=root_parent)
-    #     new_root_folder.save()
-    #     print("success: ", pc_subtype.name)
+    pc_subtypes = FileSubType.objects.all()
+    for pc_subtype in pc_subtypes:
+        print("success: ", pc_subtype.name)
+        root_parent = KnowledgeCentreFolder.objects.filter(folder_application=application, name=pc_subtype.filetype_id.name).first()
+        print("root_parent: ", root_parent)
+        new_root_folder = KnowledgeCentreFolder(name=pc_subtype.name, folder_application=application, cover=None, parent=root_parent)
+        new_root_folder.save()
+        print("success: ", pc_subtype.name)
 
-    # pc_subsubtypes = SubSubType.objects.all()
-    # for pc_subsubtype in pc_subsubtypes:
-    #     print("success: ", pc_subsubtype.name)
-    #     root_parent = KnowledgeCentreFolder.objects.filter(name=pc_subsubtype.file_type_id.name, folder_application=application).first()
-    #     print("root_parent: ", root_parent)
-    #     first_parent = KnowledgeCentreFolder.objects.filter(name=pc_subsubtype.file_subtype_id.name, parent=root_parent, folder_application=application).first()
-    #     print("first_parent: ", first_parent)
-    #     parent = KnowledgeCentreFolder.objects.filter(name=pc_subsubtype.name, parent=first_parent, folder_application=application).first()
-    #     print("parent: ", parent)
-    #     if parent:
-    #         folder = parent
-    #     elif first_parent:
-    #         folder = first_parent
-    #     elif root_parent:
-    #         folder = root_parent
-    #     else:
-    #         folder = None
-    #     new_root_folder = KnowledgeCentreFolder(name=pc_subsubtype.name, folder_application=application, cover=None, parent=folder)
-    #     new_root_folder.save()
-    #     print("success: ", pc_subsubtype.name)
+    pc_subsubtypes = SubSubType.objects.all()
+    for pc_subsubtype in pc_subsubtypes:
+        print("success: ", pc_subsubtype.name)
+        root_parent = KnowledgeCentreFolder.objects.filter(name=pc_subsubtype.file_type_id.name, folder_application=application).first()
+        print("root_parent: ", root_parent)
+        first_parent = KnowledgeCentreFolder.objects.filter(name=pc_subsubtype.file_subtype_id.name, parent=root_parent, folder_application=application).first()
+        print("first_parent: ", first_parent)
+        parent = KnowledgeCentreFolder.objects.filter(name=pc_subsubtype.name, parent=first_parent, folder_application=application).first()
+        print("parent: ", parent)
+        if parent:
+            folder = parent
+        elif first_parent:
+            folder = first_parent
+        elif root_parent:
+            folder = root_parent
+        else:
+            folder = None
+        new_root_folder = KnowledgeCentreFolder(name=pc_subsubtype.name, folder_application=application, cover=None, parent=folder)
+        new_root_folder.save()
+        print("success: ", pc_subsubtype.name)
 
-    # pcs = Processes.objects.all()
-    # for pc in pcs:
-    #     try:
-    #         root_parent = KnowledgeCentreFolder.objects.filter(name=pc.filetype_id.name).first() if pc.filetype_id else None
-    #         first_parent = KnowledgeCentreFolder.objects.filter(name=pc.filesubtype_id.name, parent=root_parent).first() if pc.filesubtype_id else None
-    #         parent = KnowledgeCentreFolder.objects.filter(name=pc.subsubtype_id.name, parent=first_parent).first() if pc.subsubtype_id else None
-    #         if parent:
-    #             folder = parent
-    #         elif first_parent:
-    #             folder = first_parent
-    #         elif root_parent:
-    #             folder = root_parent
-    #         else:
-    #             folder = None
+    pcs = Processes.objects.all()
+    for pc in pcs:
+        try:
+            root_parent = KnowledgeCentreFolder.objects.filter(name=pc.filetype_id.name).first() if pc.filetype_id else None
+            first_parent = KnowledgeCentreFolder.objects.filter(name=pc.filesubtype_id.name, parent=root_parent).first() if pc.filesubtype_id else None
+            parent = KnowledgeCentreFolder.objects.filter(name=pc.subsubtype_id.name, parent=first_parent).first() if pc.subsubtype_id else None
+            if parent:
+                folder = parent
+            elif first_parent:
+                folder = first_parent
+            elif root_parent:
+                folder = root_parent
+            else:
+                folder = None
                 
-    #         filename = os.path.basename(pc.filepath)
-    #         pc_file = KnowldgeCentreFile(
-    #             filename=pc.filename,
-    #             archived=pc.archived,
-    #             section=pc.section_id,
-    #             cost_center=pc.cost_center,
-    #             region=pc.region_id,
-    #             created_on=pc.created_at,
-    #             updated_on=pc.updated_at,
-    #             created_by=pc.done_by,
-    #             folder=folder,
-    #             file="uploads/processes/" + filename,
-    #         )
-    #         pc_file.save()
-    #         print("success: ", pc.filename)
-    #     except Exception as ex:
-    #         print("Error: ", ex, pc.filename)
+            filename = os.path.basename(pc.filepath)
+            pc_file = KnowldgeCentreFile(
+                filename=pc.filename,
+                archived=pc.archived,
+                section=pc.section_id,
+                cost_center=pc.cost_center,
+                region=pc.region_id,
+                created_on=pc.created_at,
+                updated_on=pc.updated_at,
+                created_by=pc.done_by,
+                folder=folder,
+                file="uploads/processes/" + filename,
+            )
+            pc_file.save()
+            print("success: ", pc.filename)
+        except Exception as ex:
+            print("Error: ", ex, pc.filename)
             
     return JsonResponse({"message": "Data imported successfully"})
     
