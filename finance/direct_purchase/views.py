@@ -916,32 +916,37 @@ def get_comperative_schedule_data(request, cs_id):
     grouped_by_bid = {}
     grouped_data = {}
     for bid in bids:
-        bid_no = bid.bid_no
-        if bid_no not in grouped_data:
-            encoded_file_data = ""
-            if bid.bid_document:
-                try:
-                    with open(bid.bid_document, 'rb') as f:
-                        file_data = f.read()
-                    encoded_file_data = base64.b64encode(file_data).decode('utf-8')
-                except Exception as ex:
-                    print("Error: ", ex)
-            grouped_data[bid_no] = {
-                'bid_count': bid.bid_no,
-                'supplier_name': bid.sup_id.name,
-                'bid_date': bid.quote_date,
-                'bid_document': encoded_file_data,
-                'items': []
-            }
-        grouped_data[bid_no]['items'].append({
-            'item_id': bid.item_id.item_id,
-            'item_required': bid.item_id.item_name,  # assume this is constant
-            'quantity': bid.item_id.quantity,
-            'unit_of_measurement': bid.item_id.unit_of_measurement,
-            'unit_price': bid.unit_price,
-            'vat': bid.vat,
-            'total_price': bid.total,
-        })
+        print("bid: ", bid.sup_id.name, bid.bid_no)
+        try:
+            bid_no = bid.bid_no
+            if bid_no not in grouped_data:
+                encoded_file_data = ""
+                if bid.bid_document:
+                    try:
+                        with open(bid.bid_document, 'rb') as f:
+                            file_data = f.read()
+                        encoded_file_data = base64.b64encode(file_data).decode('utf-8')
+                    except Exception as ex:
+                        print("Error: ", ex)
+                grouped_data[bid_no] = {
+                    'bid_count': bid.bid_no,
+                    'supplier_name': bid.sup_id.name,
+                    'bid_date': bid.quote_date,
+                    'encoded_bid_document': encoded_file_data,
+                    'bid_document': None,
+                    'items': []
+                }
+            grouped_data[bid_no]['items'].append({
+                'item_id': bid.item_id.item_id,
+                'item_required': bid.item_id.item_name,  # assume this is constant
+                'quantity': bid.item_id.quantity,
+                'unit_of_measurement': bid.item_id.unit_of_measurement,
+                'unit_price': bid.unit_price,
+                'vat': bid.vat,
+                'total_price': bid.total,
+            })
+        except Exception as ex:
+            print("Error: ", ex)
 
     result = list(grouped_data.values())
         
