@@ -2,7 +2,13 @@ from django.shortcuts import render, redirect, HttpResponse, get_object_or_404
 from .forms import *
 from .models import *
 from django.contrib import messages
-from approve.views import intiate, approve_step, get_my_roles_for_apps,send_notification,allowed_to_approve
+from approve.views import (
+    intiate,
+    approve_step,
+    get_my_roles_for_apps,
+    send_notification,
+    allowed_to_approve,
+)
 from approve.models import Step
 from approve.forms import ApprovalForm
 from django.contrib.auth.decorators import login_required
@@ -178,7 +184,7 @@ def create_token(request):
         cost_center = CostCenter.objects.get(code=request.user.section.code)
     except Exception as e:
         print(e)
-        
+
     forms = {
         "meter_form": MeterForm(),
         "customer_form": CustomerForm(),
@@ -199,27 +205,16 @@ def create_token(request):
 def token_details(request, token_id):
     token = Token.objects.get(id=token_id)
     if request.method == "POST":
-        generatetokenform = GenerateTokenForm(
-            request.POST, request.FILES, instance=token
-        )
+        generatetokenform = GenerateTokenForm(request.POST, request.FILES, instance=token)
         last_approval = token.process.approval_set.last()
         last_step = last_approval.step if last_approval else None
-        if (
-            token.process.workflow.step_set.last() is not None
-            and last_step is not None
-            and token.process.workflow.step_set.last().step == (last_step.step + 1)
-        ):
-            if (
-                generatetokenform.is_valid()
-                and request.FILES.get("token_photo") is not None
-            ):
+        if (token.process.workflow.step_set.last() is not None and last_step is not None and token.process.workflow.step_set.last().step == (last_step.step + 1) ):
+            if (generatetokenform.is_valid() and request.FILES.get("token_photo") is not None ):
                 approve_step(request, token.process.pk)
                 generatetokenform.save()
+                return redirect("tokens:token", token_id)
             else:
-                messages.error(
-                    request,
-                    "Generate token form is invalid. Have you provided a token photo?",
-                )
+                messages.error(request,"Generate token form is invalid. Have you provided a token photo?",)
         else:
             approve_step(request, token.process.pk)
     approvalForm = None
@@ -227,9 +222,9 @@ def token_details(request, token_id):
     to = None
     completed = False
     user_roles = request.user.roles.all()
-    allowed = allowed_to_approve(request.user,token)
-
-    if not token.process.approval_set.filter(approved="Rejected").exists(): # and allowed:
+    # allowed = allowed_to_approve(request.user,token)
+    print("allowed")
+    if not token.process.approval_set.filter(approved="Rejected").exists():  # and allowed:
         try:
             last_approved = token.process.approval_set.last().step.step
         except AttributeError:
@@ -248,8 +243,10 @@ def token_details(request, token_id):
             pass
 
         completed = token.process.workflow.step_set.last().step == last_approved
-    approved_steps = token.process.approval_set.all().values_list("step__step", flat=True)
-   
+    approved_steps = token.process.approval_set.all().values_list(
+        "step__step", flat=True
+    )
+
     token = get_object_or_404(Token, id=token_id)
     return render(
         request,
@@ -263,6 +260,8 @@ def token_details(request, token_id):
             "to": to,
         },
     )
+
+
 @login_required
 def view_all_tokens(request):
     if request.method == "POST":
@@ -270,49 +269,57 @@ def view_all_tokens(request):
         tockens = Token.objects.none()
         search_term = request.POST.get("search_term", "")
         """for all the words that are in the search term, make all possible combinations of the words and search for them in the database and order them by the number of times they appear in the search term giving && query the highest priority when ranking the results"""
-        words = search_term.split() 
-        field_names = ["meter__number", "customer__name", "customer__stand_number", "reason", "created_by__username", "cost_center__name", "cost_center__code", "id", "created_at"]
+        words = search_term.split()
+        field_names = [
+            "meter__number",
+            "customer__name",
+            "customer__stand_number",
+            "reason",
+            "created_by__username",
+            "cost_center__name",
+            "cost_center__code",
+            "id",
+            "created_at",
+        ]
         for word in words:
             for field_name in field_names:
-                word_tkns = Token.objects.filter(Q(**{field_name + "__icontains": word}))
+                word_tkns = Token.objects.filter(
+                    Q(**{field_name + "__icontains": word})
+                )
                 for tkn in word_tkns:
                     if tkn.id in tkns:
-                        tkns[tkn.id]['count'] += 1
+                        tkns[tkn.id]["count"] += 1
                     else:
-                        tkns[tkn.id] = {
-                            "token": tkn,
-                            'count': 1
-                        }
-        
+                        tkns[tkn.id] = {"token": tkn, "count": 1}
+
         for word in search_term.split():
             print(word)
             word_tkns = Token.objects.filter(
-                Q(meter__number__icontains=word) |
-                Q(customer__name__icontains=word) |
-                Q(customer__stand_number__icontains=word) |
-                Q(reason__icontains=word) |
-                Q(created_by__username__icontains=word) |
-                Q(cost_center__name__icontains=word) |
-                Q(cost_center__code__iexact=word) |
-                Q(id__iexact=word) |
-                Q(created_at__icontains=word)
+                Q(meter__number__icontains=word)
+                | Q(customer__name__icontains=word)
+                | Q(customer__stand_number__icontains=word)
+                | Q(reason__icontains=word)
+                | Q(created_by__username__icontains=word)
+                | Q(cost_center__name__icontains=word)
+                | Q(cost_center__code__iexact=word)
+                | Q(id__iexact=word)
+                | Q(created_at__icontains=word)
             )
             for tkn in word_tkns:
                 if tkn.id in tkns:
-                    tkns[tkn.id]['count'] += 1
+                    tkns[tkn.id]["count"] += 1
                 else:
-                    tkns[tkn.id] = {
-                        "token": tkn,
-                        'count': 1
-                    }  
+                    tkns[tkn.id] = {"token": tkn, "count": 1}
         user_cost_center = request.user.section.id
         print(user_cost_center)
         print(Token.objects.filter(cost_center=user_cost_center))
 
-        sorted_tokens = sorted(tkns.values(), key=lambda x: x['count'], reverse=True)
-        sorted_token_ids = [token['token'].id for token in sorted_tokens]
+        sorted_tokens = sorted(tkns.values(), key=lambda x: x["count"], reverse=True)
+        sorted_token_ids = [token["token"].id for token in sorted_tokens]
         if user_cost_center:
-            tockens = Token.objects.filter(Q(id__in=sorted_token_ids) & Q(cost_center=user_cost_center))
+            tockens = Token.objects.filter(
+                Q(id__in=sorted_token_ids) & Q(cost_center=user_cost_center)
+            )
             return render(
                 request,
                 "tokens/tokens.html",
@@ -325,7 +332,10 @@ def view_all_tokens(request):
                 },
             )
         else:
-            messages.error(request, "You do not have a cost center assigned to you. \n Please contact the administrator.")
+            messages.error(
+                request,
+                "You do not have a cost center assigned to you. \n Please contact the administrator.",
+            )
             return redirect("tokens:tokens")
 
     user = request.user
@@ -347,6 +357,8 @@ def view_all_tokens(request):
             ),
         },
     )
+
+
 @login_required
 def awaiting_my_action(request):
     """
@@ -363,7 +375,7 @@ def awaiting_my_action(request):
                 "tokens": [],
                 "all": False,
                 "roles": get_my_roles_for_apps(user, application_names),
-                "error": "No cost centers found for the given applications."
+                "error": "No cost centers found for the given applications.",
             },
         )
 
@@ -371,15 +383,17 @@ def awaiting_my_action(request):
     tokens_to_process = []
 
     tokens = Token.objects.filter(cost_center__in=cost_centers).prefetch_related(
-        'process__approval_set', 'process__workflow__step_set'
+        "process__approval_set", "process__workflow__step_set"
     )
     # print("time it takes to get cost centers",timezone.now())
 
     for token in tokens:
         approvals = token.process.approval_set.all()
         next_step = (approvals.last().step.step if approvals.exists() else 0) + 1
-        
-        if token.process.workflow.step_set.filter(step=next_step, approver__in=user_roles).exists():
+
+        if token.process.workflow.step_set.filter(
+            step=next_step, approver__in=user_roles
+        ).exists():
             tokens_to_process.append(token)
     # print("to",timezone.now())
 
@@ -389,7 +403,7 @@ def awaiting_my_action(request):
         {
             "tokens": tokens_to_process,
             "all": False,
-            'types': application_names,
+            "types": application_names,
             "roles": get_my_roles_for_apps(user, application_names),
         },
     )
@@ -416,6 +430,8 @@ def addsection(request):
         except:
             pass
     return redirect("tokens:tokens")
+
+
 def process_file(file_path):
     if not os.path.isfile(file_path):
         raise FileNotFoundError("File not found!")
@@ -512,10 +528,14 @@ def process_file(file_path):
             }
             print(state)
     return "json_data"
+
+
 def cost_centers(request):
     return render(
         request, "tokens/cost_centers.html", {"cost_centers": CostCenter.objects.all()}
     )
+
+
 def upload_centers(request):
     CostCenter.objects.all().delete()
     file_path = "tokens/cc.txt"
@@ -524,7 +544,11 @@ def upload_centers(request):
     except FileNotFoundError as e:
         print(e)
     return redirect("tokens:cost_centers")
+
+
 """get ancestors of the cost center and all its children and merge them into cost_centers"""
+
+
 def cost_center(request, cost_center_id):
     cost_center = CostCenter.objects.get(id=cost_center_id)
     return render(
@@ -535,6 +559,8 @@ def cost_center(request, cost_center_id):
             "cost_centers": cost_center.get_all_ancestors_and_their_children(),
         },
     )
+
+
 def migrate_tokens(request):
     import mysql.connector
 

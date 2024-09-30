@@ -185,7 +185,7 @@ def nonconformity_details(request, nonconformity_id):
         if request.user == nonconformity.recipient and nonconformity.accepted == None:
             rejectionForm = RejectionForm()
             acceptanceForm = AcceptanceForm(instance=nonconformity)
-        elif request.user == nonconformity.recipient and nonconformity.accepted == True and nonconformity.resolved != None:
+        elif request.user == nonconformity.recipient and nonconformity.accepted == True and nonconformity.resolved == None:
             form = ResolveNcForm(instance=nonconformity)
             # print(nonconformity.accepted == False,'qqqqqqqqqq',nonconformity.accepted != True, "accepted",  not nonconformity.closed, "closed", nonconformity.created_by, "created_by")
         elif request.user == nonconformity.created_by and nonconformity.created_by is not None and nonconformity.resolved != None and nonconformity.accepted == True and nonconformity.closed != True:
