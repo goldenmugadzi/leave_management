@@ -1,6 +1,7 @@
 import re
 from django.shortcuts import render, redirect
 from django.http import FileResponse, JsonResponse
+from urllib.parse import unquote
 from datetime import datetime
 import json, os
 from django.conf import settings
@@ -180,27 +181,30 @@ def download_file(request):
     file_id = request.GET.get('file_id')
     if not file_id:
         messages.error(request, "File ID is missing")
-        return redirect('/ims/knowledge_center_files')
+        return redirect('/ims/ims_files')
 
     file_record = KnowldgeCentreFile.objects.filter(id=file_id).first()
     if not file_record:
         messages.error(request, "File not found in the database")
-        return redirect('/ims/knowledge_center_files')
+        return redirect('/ims/ims_files')
 
     file_path = file_record.file.path  # Use .path to get the full file system path
-
+    directory = os.path.dirname(file_path)
+    file_name = os.path.basename(file_path)
+    encoded_file_name = unquote(file_name)
     # search for file in system
     try:
-        base_directory_path = os.path.join(settings.MEDIA_ROOT, file_path)
+        base_directory_path = os.path.join(settings.MEDIA_ROOT, directory, encoded_file_name)
         print("base_directory_path: ", base_directory_path)
         return FileResponse(open(base_directory_path, 'rb'), content_type='application/pdf')
-    except FileNotFoundError:
+    except FileNotFoundError as ex:
         messages.error(request, "File not found, please contact the administrator")
+        print("Error:",ex)
     except Exception as ex:
         messages.error(request, "Error downloading file")
-        print(ex)
-
-    return redirect('/ims/knowledge_center_files')
+        print("Error:",ex)
+    
+    return redirect('/ims/ims_files')
 
 def view_root_folders(request, app_name):
     if app_name == "knowledge_centre":
@@ -255,10 +259,8 @@ def view_sub_folders(request, folder_name, folder_id):
         }
         subfolders_list.append(new_folder)
     
-    files = []
-    if len(subfolders_list) < 1:
-        current_folder = KnowledgeCentreFolder.objects.filter(id=folder_id).first()
-        files = KnowldgeCentreFile.objects.filter(folder=current_folder).all()
+    current_folder = KnowledgeCentreFolder.objects.filter(id=folder_id).first()
+    files = KnowldgeCentreFile.objects.filter(folder=current_folder).all()
 
     url_path = request.path.split("/")
     title = current_folder.name.upper()
@@ -302,7 +304,7 @@ def create_subfolder(request, folder_id):
         folder.save()
         
         messages.success(request, "Folder created successfully")
-        return redirect('/ims/root_folders')
+        return redirect('/ims/manage_folders')
     
     current_folder = KnowledgeCentreFolder.objects.filter(id=folder_id).first()
     return render(request, 'knowledge-center/create_sub_folder.html', {"url_path": url_path, "current_folder": current_folder})

@@ -1,6 +1,9 @@
 {% extends 'admin_layout.html' %} {% load static %} {% block content %}
 
 <div style="margin-bottom: 25px" class="content-wrapper p-2 m-px text-gray-800">
+    {% if subfolders %}
+    <div class="mb-5 pb-5 border-b-2 border-b-blue-700">
+        <h1 class="text-2xl font-semibold mb-3">Folders</h1>
   <div class="grid grid-cols-3 gap-4">
     {% for folder in subfolders %}
         <div
@@ -32,6 +35,11 @@
         </div>
     {% endfor %}
   </div>
+</div>
+{% endif %}
+{% if files %}
+<div class="mt-5 pb-5 border-b-2 border-b-blue-700">
+    <h1 class="text-2xl font-semibold  mb-3">Documents</h1>
   <div class="grid grid-cols-4 gap-4">
     {% for f in files %} {% with forloop.counter as loop_index %} {% if loop_index|divisibleby:2%}
     <div
@@ -92,6 +100,8 @@
   </div>
     {% endif %} {% endwith %} {% endfor %}
   </div>
+  </div>
+{% endif %}
 </div>
 <div style="display: flex;justify-content: center;">
     <a href="javascript:history.back()">
