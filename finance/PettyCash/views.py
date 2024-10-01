@@ -216,6 +216,7 @@ def pettycash_awaiting_my_action(request):
         if role.application == "pettycash":
             custom_user_roles["pettycash"] = role
     pettycash_role = str(custom_user_roles["pettycash"])
+    print(pettycash_role)
     requester = 'create'
     current_year = datetime.now(timezone.utc).year
     region = Regions.objects.filter(id=user_profile.region.id).first()
@@ -309,6 +310,7 @@ def view_all_pettycashs(request):
         if role.application == "pettycash":
             custom_user_roles["pettycash"] = role
     pettycash_role = str(custom_user_roles["pettycash"])
+    print(pettycash_role)
     requester = "create"
     current_year = datetime.now(timezone.utc).year
 
@@ -725,7 +727,7 @@ def print_report_excel(request, report_id):
     print("report date", report.end_date)
     print("report region", report.region)
 
-    pettycashs = Pettycash.objects.filter(region=report.region, section=report.section,payment_mode=report.payment_mode)
+    pettycashs = Pettycash.objects.filter(region=report.region)
     print('count', pettycashs.count())
 
     response = HttpResponse(content_type='application/ms-excel')
@@ -751,6 +753,10 @@ def print_report_excel(request, report_id):
             section,
             date_created,
             pettycash.amount,
+            pettycash.amount_disbursed,
+            pettycash.amount_used,
+            pettycash.payment_mode,
+            pettycash.currency,
             approval_status
         ])
     wb.save(response)
