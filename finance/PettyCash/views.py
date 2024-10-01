@@ -214,7 +214,7 @@ def pettycash_awaiting_my_action(request):
         role = Roles.objects.filter(id=_role.id).first()
 
         if role.application == "pettycash":
-            custom_user_roles["pettycash"] = role
+            custom_user_roles["pettycash"] = role.role
     pettycash_role = str(custom_user_roles["pettycash"])
     print(pettycash_role)
     requester = 'create'
@@ -308,9 +308,10 @@ def view_all_pettycashs(request):
         role = Roles.objects.filter(id=_role.id).first()
 
         if role.application == "pettycash":
-            custom_user_roles["pettycash"] = role
+            custom_user_roles["pettycash"] = role.role
+            print("tr ", role.role)
     pettycash_role = str(custom_user_roles["pettycash"])
-    print(pettycash_role)
+    print("gh ", pettycash_role)
     requester = "create"
     current_year = datetime.now(timezone.utc).year
 

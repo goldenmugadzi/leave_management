@@ -304,7 +304,7 @@ def ace_awaiting_my_action(request):
         role = Roles.objects.filter(id=_role.id).first()
 
         if role.application == "ace":
-            custom_user_roles["ace"] = role
+            custom_user_roles["ace"] = role.role
     ace_role = str(custom_user_roles["ace"])
     requester = "create"
     cashier = "process"
@@ -382,7 +382,7 @@ def view_all_aces(request):
         role = Roles.objects.filter(id=_role.id).first()
 
         if role.application == "ace":
-            custom_user_roles["ace"] = role
+            custom_user_roles["ace"] = role.role
     ace_role = str(custom_user_roles["ace"])
     requester = "create"
 
