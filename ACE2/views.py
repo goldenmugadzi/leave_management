@@ -175,7 +175,7 @@ def create_Ace(request):
             role = Roles.objects.filter(id=_role.id).first()
 
             if role.application == "ace":
-                custom_user_roles["ace"] = role
+                custom_user_roles["ace"] = role.role
                 ace_role = str(custom_user_roles["ace"])
                 print(ace_role)
 

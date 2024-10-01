@@ -38,7 +38,7 @@ def pettyCash_detail(request, petty_id):
         role = Roles.objects.filter(id=_role.id).first()
 
         if role.application == "pettycash":
-            custom_user_roles["pettycash"] = role
+            custom_user_roles["pettycash"] = role.role
     pettycash_role = str(custom_user_roles["pettycash"])
     # print(pettycash_role)
 
@@ -150,7 +150,7 @@ def create_pettycash(request):
             role = Roles.objects.filter(id=_role.id).first()
 
             if role.application == "pettycash":
-                custom_user_roles["pettycash"] = role
+                custom_user_roles["pettycash"] = role.role
         pettycash_role = str(custom_user_roles["pettycash"])
         print(pettycash_role)
         if pettycash_role == "create":
