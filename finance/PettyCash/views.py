@@ -711,7 +711,8 @@ def pettycash_report(request):
             section = pettyreportform.cleaned_data['section']
             payment_mode = pettyreportform.cleaned_data['payment_mode']
 
-            pettycashs = Pettycash.objects.filter(region=region, section=section, payment_mode=payment_mode)
+            pettycashs = Pettycash.objects.filter(region=region, section=section,
+                                                  date_created__range=[start_date, end_date]).all()
             report = PettycashReport.objects.create(start_date=start_date, end_date=end_date, region=region,
                                                     section=section, payment_mode=payment_mode)
             report.save()
@@ -728,7 +729,7 @@ def print_report_excel(request, report_id):
     print("report date", report.end_date)
     print("report region", report.region)
 
-    pettycashs = Pettycash.objects.filter(region=report.region)
+    pettycashs = Pettycash.objects.filter(region=report.region, section=report.section,date_created__range=[report.start_date, report.end_date]).all()
     print('count', pettycashs.count())
 
     response = HttpResponse(content_type='application/ms-excel')
@@ -738,14 +739,15 @@ def print_report_excel(request, report_id):
     ws = wb.active
 
     ws.append(
-        ['petty_id', 'details_of_expenditure', 'requested_by', 'section', 'date_created', 'amount',
+        ['petty_id', 'details_of_expenditure', 'requested_by', 'section', 'date_created', 'amount', 'amount_disbursed',
+         'amount_used', 'payment_mode', 'currency',
          'approval_status'])
 
     for pettycash in pettycashs:
         requested_by = pettycash.requested_by.get_full_name() if pettycash.requested_by else ''
         section = pettycash.section.section if pettycash.section else ''
         date_created = pettycash.date_created.strftime('%Y-%m-%d') if pettycash.date_created else ''
-        approval_status = pettycash.process.approval_set.last().approved if pettycash.process.approval_set.last() else ''
+        approval_status = str(pettycash.process.approval_set.last()) if pettycash.process.approval_set.last() else ''
 
         ws.append([
             pettycash.petty_id,
