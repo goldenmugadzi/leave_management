@@ -6,5 +6,5 @@ urlpatterns = [
     path('search/', search_view, name='search'),
     # path('fscrawler/', start_fscrawler, name='fscrawler'),
      path('pdf/', view_pdf, name='view_pdf'),
-    # path('upload/', upload_file, name='upload_file'),
+    path('index_files/', index_files, name='index_files'),
 ]
