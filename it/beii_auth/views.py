@@ -341,7 +341,7 @@ def business_applications(request):
         applications = applications
     else:
         if user.region:
-            if user.region.region == "HARARE REGION" or user.region.region == "EASTERN REGION" or user.region.region == "NORTHERN REGION":
+            if user.region.region == "HARARE REGION" or user.region.region == "EASTERN REGION" or user.region.region == "NORTHERN REGION" or user.region.region == "SOUTHERN REGION":
                 applications = applications
             else:
                 applications = [app for app in applications if app['name'] == 'users' or app['name'] == 'non_conformity']
