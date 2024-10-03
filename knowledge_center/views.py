@@ -23,7 +23,6 @@ from django.core.files.storage import FileSystemStorage
 # Create your views here.
 def import_old_data(request):
     
-    
     application = FolderApplication.objects.filter(id=1).first()
     kc_file_types = Filetype.objects.all()
     for kc_file_type in kc_file_types:

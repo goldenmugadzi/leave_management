@@ -156,7 +156,8 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'it.beii_auth.inactive_user_middleware.InactiveUserMiddleware',
-    'it.beii_auth.session_middleware.LimitConcurrentSessionsMiddleware'
+    'it.beii_auth.session_middleware.LimitConcurrentSessionsMiddleware',
+    'it.beii_auth.session_middleware.SessionErrorSessionMiddleware'
 ]
 
 ROOT_URLCONF = 'beii_v1.urls'
