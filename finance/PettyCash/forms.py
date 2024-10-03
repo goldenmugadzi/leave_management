@@ -59,7 +59,7 @@ class PettycashForm(forms.ModelForm):
                                                     'sm:leading-6'
                                            })
                 # set maximum to 2600
-                field.widget.attrs.update({'max': '3000'})
+                field.widget.attrs.update({'max': '5000'})
             if field_name == 'section':
                 field.widget.attrs.update({
                     'class': "select2 block w-full rounded-md border-0 py-1.5 text-gray-900 "
