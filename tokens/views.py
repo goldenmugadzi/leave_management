@@ -324,7 +324,7 @@ def view_all_tokens(request):
                 request,
                 "tokens/tokens.html",
                 {
-                    "tokens": tockens.order_by("-created_at"),
+                    "tokens": tockens.order_by("-created_at")[:100],
                     "roles": get_my_roles_for_apps(
                         request.user, ["temper", "reimbursement", "clear credit"]
                     ),
