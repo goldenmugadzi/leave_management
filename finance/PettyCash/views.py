@@ -266,22 +266,46 @@ def pettycash_awaiting_my_action(request):
                 pettycashs_to_process.append(pettycash)
 
     else:
-        for pettycash in Pettycash.objects.filter(region=region).order_by('-date_created', 'petty_id')[:1600]:
-            process = pettycash.process
+        print(user_profile.region.id, 'region')
+        print(user_profile.designation.id, 'designation')
+        if user_profile.region.id == 4 and user_profile.designation.id == 65:
+            sections_to_filter = [416, 415, 414, 413, 412, 411, 410, 407]
+            for pettycash in Pettycash.objects.filter(section__id__in=sections_to_filter).order_by(
+                    '-date_created', 'petty_id')[:1600]:
+                process = pettycash.process
 
-            if process.approval_set.exists():
-                last_approval = process.approval_set.last()
-                current_step = last_approval.step.step
-            else:
-                current_step = 0
+                if process.approval_set.exists():
+                    last_approval = process.approval_set.last()
+                    current_step = last_approval.step.step
+                else:
+                    current_step = 0
 
-            next_step = current_step + 1
+                next_step = current_step + 1
 
-            workflow = process.workflow
-            step = workflow.step_set.filter(step=next_step, approver__in=user_roles).first()
+                workflow = process.workflow
+                step = workflow.step_set.filter(step=next_step, approver__in=user_roles).first()
 
-            if step:
-                pettycashs_to_process.append(pettycash)
+                if step:
+                    pettycashs_to_process.append(pettycash)
+                print('phakathi')
+        else:
+            for pettycash in Pettycash.objects.filter(region=region).order_by('-date_created', 'petty_id')[:1600]:
+                process = pettycash.process
+
+                if process.approval_set.exists():
+                    last_approval = process.approval_set.last()
+                    current_step = last_approval.step.step
+                else:
+                    current_step = 0
+
+                next_step = current_step + 1
+
+                workflow = process.workflow
+                step = workflow.step_set.filter(step=next_step, approver__in=user_roles).first()
+
+                if step:
+                    pettycashs_to_process.append(pettycash)
+                print('outside')
 
     return render(request, 'finance/pettycash/view_all_pettycashs.html', {'pettycashs': pettycashs_to_process,
                                                                           'pettycash_role': pettycash_role,
@@ -729,7 +753,8 @@ def print_report_excel(request, report_id):
     print("report date", report.end_date)
     print("report region", report.region)
 
-    pettycashs = Pettycash.objects.filter(region=report.region, section=report.section,date_created__range=[report.start_date, report.end_date]).all()
+    pettycashs = Pettycash.objects.filter(region=report.region, section=report.section,
+                                          date_created__range=[report.start_date, report.end_date]).all()
     print('count', pettycashs.count())
 
     response = HttpResponse(content_type='application/ms-excel')
