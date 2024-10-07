@@ -82,24 +82,51 @@ def search_view(request):
 def index_files(request):
     from tika import parser
     print("index_files")
-    parsed = parser.from_file("C:\\Users\\User\\Documents\\beii_v1-main\\static\\network_development\\reticulations\\20230207033551PMTD2301196 ZEBRA.pdf")
-
-    metadata = parsed.get("metadata", {})
-    content = parsed.get("content", "")
-    print(parsed)
+    documents_path = os.path.join(Path(__file__).resolve().parent.parent, "static")
+    subdirectories = ['process_maps','job_descriptions','plans_and_reports','network_development','petty_cash','comparative','ace',]    
+    content = None
+    pdf_path = "C:\\Users\\User\\Documents\\beii_v1-main\\static\\network_development\\reticulations\\20230207033551PMTD2301196 ZEBRA.pdf"
+    
+    ZEBRA_text = parser.from_file(pdf_path)
+    print(ZEBRA_text)
+    content = ZEBRA_text.get("content", "")
     if not content:
-        content = ocr_pdf("C:\\Users\\User\\Documents\\beii_v1-main\\static\\network_development\\reticulations\\20230207033551PMTD2301196 ZEBRA.pdf")
-    print(content)
-
-    context = {"metadata": metadata, "content": content}
+        content = ocr_pdf(pdf_path)
+        print('ocr_pdf', content)
+   
+    # for subdirectory in subdirectories:
+    #     subdirectory_path = os.path.join(documents_path, subdirectory)
+    #     for root, dirs, files in os.walk(subdirectory_path):
+    #         for file in files:
+    #             file_path = os.path.join(root, file)
+    #             print(file_path)
+    #             parsed = parser.from_file(file_path)
+    #             metadata = parsed.get("metadata", {})
+    #             content = parsed.get("content", "")
+    #             if not content:
+    #                 content = ocr_pdf(file_path)
+    #                 print(content)
+   
+    context = { "content": content}
     return render(request, "Docs/index_files.html", context)
 
 import pytesseract
 from pdf2image import convert_from_path
+from tika import parser
+
 
 def ocr_pdf(pdf_path):
     print("ocr_pdf")
-    text = "\n".join(pytesseract.image_to_string(image) for image in convert_from_path(pdf_path))
+    text = "\n"
+    pages = convert_from_path(pdf_path)
+    print("pages", pages)
+    # for count, page in enumerate(pages):
+    #    print("count", count)
+    #    text.join(parser.from_file(page))
+    # page.save(f'out{count}.jpg', 'JPEG')
+
+    # text = "\n".join(pytesseract.image_to_string(image) for image in convert_from_path(pdf_path, 500))
+    print("text", text)
     return text
 
 

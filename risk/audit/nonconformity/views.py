@@ -212,8 +212,11 @@ def view_notifications(request):
 @login_required
 def view_nonconformities(request):
     nonconformities = Nonconformity.objects.all()
+    """Get all nonconformities and oder them by  date created in descending order"""
+    nonconformities = Nonconformity.objects.all().order_by("-created_at")
+
     count = nonconformities.count()
-    return render(request,"risk/nonconformity/nonconformities.html", {"nonconformities": nonconformities.order_by('-id')[:10], "count": count})
+    return render(request,"risk/nonconformity/nonconformities.html", {"nonconformities": nonconformities.order_by("-created_at"), "count": count})
 
 @login_required
 def Icreated_nonconformities(request):
@@ -224,7 +227,7 @@ def Icreated_nonconformities(request):
     return render(
         request,
         "risk/nonconformity/mynonconformities.html",
-        {"nonconformities": nonconformities.order_by('-id')[:10], "count": count},
+        {"nonconformities": nonconformities.order_by("-created_at"), "count": count},
     )
 @login_required
 def assigned_to_me(request):
@@ -235,7 +238,7 @@ def assigned_to_me(request):
     return render(
         request,
         "risk/nonconformity/mynonconformities.html",
-        {"nonconformities": nonconformities.order_by('-id')[:10], "count": count},
+        {"nonconformities": nonconformities.order_by("-created_at"), "count": count},
     )
 
 # create clause and its questions using generic view it must redirect to the checklist view

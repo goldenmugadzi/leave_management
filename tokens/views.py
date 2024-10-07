@@ -223,7 +223,7 @@ def token_details(request, token_id):
     completed = False
     user_roles = request.user.roles.all()
     # allowed = allowed_to_approve(request.user,token)
-    print("allowed")
+    # print("allowed")
     if not token.process.approval_set.filter(approved="Rejected").exists():  # and allowed:
         try:
             last_approved = token.process.approval_set.last().step.step
