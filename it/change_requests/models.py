@@ -4,7 +4,7 @@ from it.users.models import CostCenter, Depots, Designations, Districts, Regions
 
 # Create your models here.
 class NewProfile(models.Model):
-    username = models.CharField(max_length=15, unique=True, verbose_name='EC Number',db_index=True)
+    username = models.CharField(max_length=15, blank=True, null=True)
     first_name = models.CharField(max_length=100, blank=True, null=True)
     last_name = models.CharField(max_length=100, blank=True, null=True)
     email = models.EmailField(max_length=100, blank=True, null=True)
@@ -13,7 +13,6 @@ class NewProfile(models.Model):
     cost_center = models.ForeignKey(CostCenter, on_delete=models.DO_NOTHING, blank=True, null=True)
     district = models.ForeignKey(Districts, on_delete=models.DO_NOTHING, blank=True, null=True)
     roles = models.ManyToManyField(Roles, blank=True, null=True)
-    responsibilty = models.ManyToManyField(Responsibilities, blank=True, null=True)
     region = models.ForeignKey(Regions, on_delete=models.DO_NOTHING, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
