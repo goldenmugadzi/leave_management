@@ -1,6 +1,9 @@
 {% extends 'admin_layout.html' %} {% load static %} {% block content %}
 
 <div style="margin-bottom: 25px" class="content-wrapper p-2 m-px text-gray-800">
+    {% if subfolders %}
+    <div class="mb-5 pb-5 border-b-2 border-b-blue-700">
+        <h1 class="text-2xl font-semibold mb-3">Folders</h1>
   <div class="grid grid-cols-3 gap-4">
     {% for folder in subfolders %}
         <div
@@ -32,12 +35,17 @@
         </div>
     {% endfor %}
   </div>
+</div>
+{% endif %}
+{% if files %}
+<div class="mt-5 pb-5 border-b-2 border-b-blue-700">
+    <h1 class="text-2xl font-semibold  mb-3">Documents</h1>
   <div class="grid grid-cols-4 gap-4">
     {% for f in files %} {% with forloop.counter as loop_index %} {% if loop_index|divisibleby:2%}
     <div
       class="w-auto bg-gulf-blue-300 text-center shadow shadow-nepal-300 text-gray-700 rounded px-10 py-4"
     >
-      <a tabindex="-1" href="/knowledge_center/download_file?file_id={{f.id}}">
+      <a tabindex="-1" href="/ims/download_file?file_id={{f.id}}">
         <div class="sm:flex lg:items-center lg:justify-between">
           <div class="min-w-0 flex-1">
             <div class="">
@@ -66,7 +74,7 @@
     <div
       class="w-auto bg-citron-200 text-center shadow shadow-nepal-300 text-gray-700 rounded px-10 py-4"
     >
-    <a tabindex="-1" href="/knowledge_center/download_file?file_id={{f.id}}">
+    <a tabindex="-1" href="/ims/download_file?file_id={{f.id}}">
       <div class="sm:flex lg:items-center lg:justify-between">
         <div class="min-w-0 flex-1">
           <div class="">
@@ -92,6 +100,8 @@
   </div>
     {% endif %} {% endwith %} {% endfor %}
   </div>
+  </div>
+{% endif %}
 </div>
 <div style="display: flex;justify-content: center;">
     <a href="javascript:history.back()">

@@ -3,6 +3,9 @@ from django.conf import settings
 from django.contrib.sessions.models import Session
 from django.utils import timezone
 from django.utils.deprecation import MiddlewareMixin
+from django.contrib.sessions.middleware import SessionMiddleware
+from django.http import HttpResponseRedirect
+from django.urls import reverse
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
@@ -22,3 +25,11 @@ class LimitConcurrentSessionsMiddleware(MiddlewareMixin):
                 user_sessions.sort(key=lambda session: session.expire_date)
                 for session in user_sessions[:-session_limit]:
                     session.delete()
+                
+class SessionErrorSessionMiddleware(SessionMiddleware):
+    def process_response(self, request, response):
+        try:
+            return super().process_response(request, response)
+        except Exception as e:
+            print(e)
+            return HttpResponseRedirect(reverse('login'))

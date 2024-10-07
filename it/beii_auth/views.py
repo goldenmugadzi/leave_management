@@ -105,30 +105,37 @@ def login_user(request):
         username = request.POST.get('username')
         password = request.POST.get('password')
         
-        user = authenticate(request, username=username, password=password)
-        if user is not None:
-            # print("user expiry: ", (user.password_expiry_date <= datetime.now().date()), user.password_expiry_date, datetime.now().date())
-            if user.password_expiry_date and user.password_expiry_date <= datetime.now().date():
+        try:
+            user = authenticate(request, username=username, password=password)
+            if user is not None:
+                # print("user expiry: ", (user.password_expiry_date <= datetime.now().date()), user.password_expiry_date, datetime.now().date())
+                if user.password_expiry_date and user.password_expiry_date <= datetime.now().date():
+                    login(request, user)
+                    return redirect('/auth/change-password')
+                if user.change_password:
+                    login(request, user)
+                    return redirect('/auth/change-password')
+                print("user ...")
                 login(request, user)
-                return redirect('/auth/change-password')
-            if user.change_password:
-                login(request, user)
-                return redirect('/auth/change-password')
-            print("user ...")
-            login(request, user)
-            next_url = request.GET.get('next')
-            print("next url: ", next_url)
-            if next_url:
-                return redirect(next_url)
-            last_page = request.session.get('logout_page')
-            print("last_page: ", last_page)
-            if last_page:
-                return redirect(last_page)
-            return redirect('/dashboards/overview')
-        else:
+                next_url = request.GET.get('next')
+                print("next url: ", next_url)
+                if next_url:
+                    return redirect(next_url)
+                last_page = request.session.get('logout_page')
+                print("last_page: ", last_page)
+                if last_page:
+                    return redirect(last_page)
+                return redirect('/dashboards/overview')
+            else:
+                return render(request, 'registration/login.html', {
+                    "error_msg": "Invalid username or password"
+                })
+        except Exception as e:
+            print("Error: ", e)
             return render(request, 'registration/login.html', {
                 "error_msg": "Invalid username or password"
             })
+        
     return render(request, 'registration/login.html', {})
 
 @login_required(login_url='/accounts/login')
@@ -341,7 +348,7 @@ def business_applications(request):
         applications = applications
     else:
         if user.region:
-            if user.region.region == "HARARE REGION" or user.region.region == "EASTERN REGION" or user.region.region == "NORTHERN REGION":
+            if user.region.region == "HARARE REGION" or user.region.region == "EASTERN REGION" or user.region.region == "NORTHERN REGION" or user.region.region == "SOUTHERN REGION":
                 applications = applications
             else:
                 applications = [app for app in applications if app['name'] == 'users' or app['name'] == 'non_conformity']

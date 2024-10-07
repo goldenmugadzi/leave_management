@@ -37,7 +37,7 @@ urlpatterns = [
     path('users/', include('it.users.urls')),
     path('change_requests/', include('it.change_requests.urls')),
     path('dashboards/', include('executive.exec_dashboards.urls')),
-    path('knowledge_center/', include('knowledge_center.urls')),
+    path('ims/', include('knowledge_center.urls')),
     path('processes/', include('processes.urls'), name='processes'),
     path('process_risks/', include('process_risks.urls'), name='process_risks'),
     # path('process_maps/',include('process_maps.urls'), name='process_maps'),

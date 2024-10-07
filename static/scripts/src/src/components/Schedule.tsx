@@ -682,6 +682,12 @@ export default function Schedule({
       .then((data) => {
         console.log("data: ", data);
         if (data && data.success) {
+            const requester_role: string | undefined = (
+                data as { requester_role?: string }
+            ).requester_role
+                ? (data as { requester_role?: string }).requester_role
+                : "";
+            setRequesterRole(requester_role ?? "");
           const pr_items = (data as { pr_items?: IPrItems[] }).pr_items
             ? (data as { pr_items?: IPrItems[] }).pr_items
             : undefined;
@@ -2345,6 +2351,14 @@ export default function Schedule({
       .then((data) => {
         console.log("data: ", data);
         if (data.success) {
+            const newRankings: IRank[] = (rankings ?? []).map((ranking) => {
+              if (ranking.rank === 1) {
+                ranking.remarks = buyersNotes;
+              }
+              return ranking;
+            }
+              );
+              setRankings(newRankings??rankings);
           onOpenResponse(
             "Buyer's Notes Saved",
             "Buyer's notes saved successfully",
@@ -4402,6 +4416,7 @@ export default function Schedule({
                 <div className="mt-2">
                   {username === csOwner ? (
                     <select
+                      title="Select Member Position"
                       onChange={(text) =>
                         onCommitteeChange("memberPosition", text)
                       }
@@ -4631,7 +4646,7 @@ export default function Schedule({
                           {rank.decision}
                         </td>
                         <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                          {rank.rank == 1? additionalNotes: rank.remarks}
+                          {rank.rank == 1? rank.remarks: ""}
                         </td>
                         <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
                           {rank.total}
@@ -4961,7 +4976,7 @@ export default function Schedule({
 
         {requesterRole === "verify" ? additionalInfo: ""}
 
-        {requesterRole === "procurement" ? buyersInfo: ""}
+        {requesterRole === "procurement" && username === csOwner ? buyersInfo: ""}
 
         {rankings?.length ?? 0 > 0 ? committeeTableComp : ""}
 

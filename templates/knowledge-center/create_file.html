@@ -18,7 +18,8 @@
 
           <div class="mt-10 grid grid-cols-3 gap-4" x-data="folderSelector()">
             
-      <input type="hidden" name="level" :value="level" />
+            <input type="hidden" name="level" id="level_id" />
+
             <div>
               <label
                 for="filename"
@@ -71,7 +72,7 @@
                   class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm px-2 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
                   x-model="selectedType" @change="fetchRootFolders(selectedType)"
                 >
-                    <option>Select File Type</option>
+                    <option value="">Select File Type</option>
                   {% for filetype in folder_applications %}
                       <option value="{{ filetype.id }}">{{ filetype.name }}</option>
                   {% endfor %}
@@ -121,12 +122,13 @@
             >
             <div class="mt-2">
                 <select
+                required
                 id="section"
                 name="section"
                 autocomplete="section"
                 class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm px-2 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
                 >
-                <option>Select Section</option>
+                <option value="">Select Section</option>
                 {% for section in sections %}
                 <option value="{{section.id}}">{{section.section}}</option>
                 {% endfor %}
@@ -148,7 +150,7 @@
                 autocomplete="region"
                 class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm px-2 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
                 >
-                <option>Select Region</option>
+                <option value="">Select Region</option>
                 {% for region in regions %}
                 <option value="{{region.id}}">{{region.region}}</option>
                 {% endfor %}
@@ -201,7 +203,7 @@
                 }
 
                 // Fetch subfolders from the server (replace with your actual API endpoint)
-                fetch(`/knowledge_center/get_root_folders/${selectedTypeId}`)
+                fetch(`/ims/get_root_folders/${selectedTypeId}`)
                     .then(response => {
                         if (!response.ok) {
                             throw new Error('Network response was not ok');
@@ -217,11 +219,17 @@
                     });
             },
             fetchSubfolders(subfolder, level) {
+                console.log("fetchSubfolders: ", subfolder, level);
+                this.level = level + 1;
+                let levelElement = document.getElementById('level_id');
+                if(levelElement) {
+                    levelElement.value = level - 1;
+                }
                 let folderId = subfolder ? subfolder : this.selectedFolder;
                 if (!folderId) return;
 
                 // Fetch subfolders from the server (replace with your actual API endpoint)
-                fetch(`/knowledge_center/get_subfolders/${folderId}`)
+                fetch(`/ims/get_subfolders/${folderId}`)
                     .then(response => {
                         if (!response.ok) {
                             throw new Error('Network response was not ok');
@@ -230,14 +238,12 @@
                     })
                     .then(data => {
                         console.log(`subfolders at level ${level}: `, data);
-                        // Ensure the subfolderGroups array has enough levels
                         // Update the subfolder group at the current level
                         this.subfolderGroups[level] = data;
                         // Clear subfolder groups at deeper levels
                         this.subfolderGroups = this.subfolderGroups.slice(0, level + 1);
                         this.selectedSubfolders = this.selectedSubfolders.slice(0, level + 1);
                         this.selectedSubfolders[level] = subfolder;
-                        this.level = level;
                     })
                     .catch(error => {
                         console.error('There was a problem with the fetch operation:', error);

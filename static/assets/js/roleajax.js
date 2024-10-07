@@ -142,6 +142,28 @@ document.getElementById("save_role").addEventListener("click", function (e) {
     },
   });
 });
+document.getElementById("cr_save_role").addEventListener("click", function (e) {
+  e.preventDefault();
+  const form = document.getElementById("Modalform");
+  const formData = new FormData(form);
+  $.ajax({
+    type: "POST",
+    url: "/change_requests/setroles",
+    data: formData,
+    processData: false,
+    contentType: false,
+    success: function (rdata) {
+      document.getElementById("my_modal_2").close();
+      document.getElementById("rolesModalform").innerHTML = "";
+      document.getElementById("app_" + rdata.appid).innerHTML = rdata.role;
+    },
+    error: function (xhr, status, error) {
+      alert("Error:" + error);
+      console.error("Error:", xhr.responseText);
+      //  console.log(xhr);
+    },
+  });
+});
 document.getElementById("save_update").addEventListener("click", function (e) {
   e.preventDefault();
   let form = document.getElementById("user_form");

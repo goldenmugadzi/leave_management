@@ -1,10 +1,10 @@
 from django.db import models
 
-from it.users.models import CostCenter, Depots, Designations, Districts, Regions, Roles, Sections, UserProfile
+from it.users.models import CostCenter, Depots, Designations, Districts, Regions, Responsibilities, Roles, Sections, UserProfile
 
 # Create your models here.
 class NewProfile(models.Model):
-    username = models.CharField(max_length=15, unique=True, verbose_name='EC Number',db_index=True)
+    username = models.CharField(max_length=15, blank=True, null=True)
     first_name = models.CharField(max_length=100, blank=True, null=True)
     last_name = models.CharField(max_length=100, blank=True, null=True)
     email = models.EmailField(max_length=100, blank=True, null=True)
@@ -50,6 +50,7 @@ class ProfileDeactivation(models.Model):
 
 class ChangeRequest(models.Model):
     cr_id = models.CharField(max_length=100, primary_key=True)
+    application = models.CharField(max_length=100, null=True, blank=True, default=None)
     change_type = models.CharField(max_length=100)
     new_profile = models.ForeignKey(NewProfile, on_delete=models.CASCADE, null=True, blank=True)
     profile_change = models.ForeignKey(ProfileChange, on_delete=models.CASCADE, null=True, blank=True)
