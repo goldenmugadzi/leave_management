@@ -268,7 +268,7 @@ def pettycash_awaiting_my_action(request):
     else:
         print(user_profile.region.id, 'region')
         print(user_profile.designation.id, 'designation')
-        if user_profile.region.id == 4 and user_profile.designation.id == 65:
+        if user_profile.region.id == 4 and user_profile.designation.id == 300:
             sections_to_filter = [416, 415, 414, 413, 412, 411, 410, 407]
             for pettycash in Pettycash.objects.filter(section__id__in=sections_to_filter).order_by(
                     '-date_created', 'petty_id')[:1600]:
