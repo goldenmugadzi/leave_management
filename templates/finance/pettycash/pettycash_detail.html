@@ -200,9 +200,13 @@
 
                         <div class="m-4 text-center">
                             <label for="amount_disbursed">Amount Disbursed</label>
-                            <input type="text" name="amount_disbursed" required>
+                            <input type="number" name="amount_disbursed" required min="1" max="{{ pettycash.amount }}">
                         </div>
-
+                        <div>
+                            <label for="payee">Payee</label>
+                            <input type="text" name="payee" required>
+                        
+                        </div>
 
                         <div class="m-4 text-center">
 {#                            <button type="submit" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded" name="approved" value="Rejected">Reject</button>#}

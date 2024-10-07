@@ -54,10 +54,12 @@ def pettyCash_detail(request, petty_id):
     if pettycash_role == "disburse" and request.method == 'POST':
         payment_mode = request.POST.get('payment_mode')
         amount_disbursed = request.POST.get('amount_disbursed')
+        payee = request.POST.get('payee')
         print(payment_mode)
         if payment_mode and payment_mode != '':
             pettycash_item.payment_mode = payment_mode
             pettycash_item.amount_disbursed = amount_disbursed
+            pettycash_item.payee = payee
             pettycash_item.save()
 
     approvalForm = None
