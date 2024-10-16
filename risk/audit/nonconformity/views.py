@@ -94,6 +94,9 @@ def nonconformity_details(request, nonconformity_id):
     acceptanceForm = None
     rejectionForm = None
     form = None
+    resolve_form = None
+    closeform = None
+    editform = None
 
     # If the request method is POST, process form data
     if request.method == "POST":
@@ -153,7 +156,7 @@ def nonconformity_details(request, nonconformity_id):
         elif request.user == nonconformity.created_by:
             # Different conditions for closing or updating the nonconformity
             act = request.POST.get("rejected")
-            if  act == "close" and ( nonconformity.accepted == True and nonconformity.resolved != None or nonconformity.closed == None and nonconformity.accepted == False or nonconformity.resolved == None and nonconformity.accepted == False):
+            if  ((act == "close") or request.POST.get("closed") != None) and ( nonconformity.accepted == True and nonconformity.resolved != None or nonconformity.closed == None and nonconformity.accepted == False or nonconformity.resolved == None and nonconformity.accepted == False):
                 print(act, "act")
                 form = CloseNcForm(request.POST, instance=nonconformity)
                 if form.is_valid():
@@ -178,15 +181,14 @@ def nonconformity_details(request, nonconformity_id):
 
     # If the request method is GET, prepare forms for display
     else:
-        closeform = None
-        editform = None
         print(nonconformity.accepted != True, "accepted",  not nonconformity.closed, "closed", nonconformity.created_by, "created_by")
         # Determine which forms to display based on the user and nonconformity status
         if request.user == nonconformity.recipient and nonconformity.accepted == None:
             rejectionForm = RejectionForm()
             acceptanceForm = AcceptanceForm(instance=nonconformity)
         elif request.user == nonconformity.recipient and nonconformity.accepted == True and nonconformity.resolved == None:
-            form = ResolveNcForm(instance=nonconformity)
+            # form = ResolveNcForm(instance=nonconformity)
+            resolve_form = ResolveNcForm(instance=nonconformity)
             # print(nonconformity.accepted == False,'qqqqqqqqqq',nonconformity.accepted != True, "accepted",  not nonconformity.closed, "closed", nonconformity.created_by, "created_by")
         elif request.user == nonconformity.created_by and nonconformity.created_by is not None and nonconformity.resolved != None and nonconformity.accepted == True and nonconformity.closed != True:
             closeform = CloseNcForm(instance=nonconformity)
@@ -197,9 +199,8 @@ def nonconformity_details(request, nonconformity_id):
         # Mark notifications as read
         old_notifications = Notification.objects.filter(user=request.user, url=nonconformity.get_absolute_url())
         old_notifications.update(is_read=True)
-
         # Render the nonconformity details page with the appropriate forms
-        return render(request, "risk/nonconformity/nonconformity_details.html", {"nonconformity": nonconformity, 'editform':editform, "acceptanceForm": acceptanceForm, "rejectionForm": rejectionForm, "closeform": closeform, "form": form})
+        return render(request, "risk/nonconformity/nonconformity_details.html", {"nonconformity": nonconformity, 'editform':editform, "acceptanceForm": acceptanceForm, "rejectionForm": rejectionForm,"resolve_form":resolve_form ,"closeform": closeform, "form": form})
 @login_required
 def view_notifications(request):
     user = request.user  # Assuming you have authentication enabled

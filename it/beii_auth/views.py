@@ -313,7 +313,7 @@ def home(request):
         "roles": custom_user_roles,
     }
         
-    print("custom_user: ", custom_user)
+    # print("custom_user: ", custom_user)
 
     return render(
         request, 
@@ -337,10 +337,10 @@ def business_applications(request):
 
     users_role = user_profile.get_user_roles_for_application("users")
 
-    print("users_role: ", users_role)
+    # print("users_role: ", users_role)
     applications = APPLICATIONS
     if users_role == "standard" or users_role == "" or users_role == None:
-        print("creating standard list ..")
+        # print("creating standard list ..")
         applications = [app for app in applications if app['name'] != 'users']
     
     user = request.user
@@ -399,7 +399,6 @@ def change_password(request):
             answer1 = request.POST.get('security_answer1')
             answer2 = request.POST.get('security_answer2')
             answer3 = request.POST.get('security_answer3')
-            print('question1: ', question1)
             
             question1_ = Question.objects.filter(id=question1).first()
             question2_ = Question.objects.filter(id=question2).first()

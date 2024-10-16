@@ -1,0 +1,27 @@
+{% extends "admin_layout.html" %}
+{% load static %}
+{% load humanize %}
+{% load custom_tags %}
+{% block styles %}
+  <link rel="stylesheet"
+        href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" />
+  <style>.dataTables_wrapper .dataTables_length select { width: 4rem; }</style>
+{% endblock %}
+{% block content %}
+  <title>Docs</title>
+  <form method="GET" action="{% url 'search_files' %}">
+    <label for="query">Search:</label>
+    <input type="text" id="query" name="query" value="{{ request.GET.query }}">
+    <button type="submit">Search</button>
+</form>
+
+<!-- Display search results -->
+{% if results %}
+    <h2>Search Results:</h2>
+    <ul>
+        {% for result in results %}
+            <li>{{ result.file_path }}: {{ result.content|truncatewords:50 }}</li>
+        {% endfor %}
+    </ul>
+{% endif %}
+{% endblock %}
