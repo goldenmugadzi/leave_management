@@ -54,10 +54,12 @@ def pettyCash_detail(request, petty_id):
     if pettycash_role == "disburse" and request.method == 'POST':
         payment_mode = request.POST.get('payment_mode')
         amount_disbursed = request.POST.get('amount_disbursed')
+        payee = request.POST.get('payee')
         print(payment_mode)
         if payment_mode and payment_mode != '':
             pettycash_item.payment_mode = payment_mode
             pettycash_item.amount_disbursed = amount_disbursed
+            pettycash_item.payee = payee
             pettycash_item.save()
 
     approvalForm = None
@@ -268,7 +270,7 @@ def pettycash_awaiting_my_action(request):
     else:
         print(user_profile.region.id, 'region')
         print(user_profile.designation.id, 'designation')
-        if user_profile.region.id == 4 and user_profile.designation.id == 65:
+        if user_profile.region.id == 4 and user_profile.designation.id == 300:
             sections_to_filter = [416, 415, 414, 413, 412, 411, 410, 407]
             for pettycash in Pettycash.objects.filter(section__id__in=sections_to_filter).order_by(
                     '-date_created', 'petty_id')[:1600]:
