@@ -348,7 +348,7 @@ def business_applications(request):
         applications = applications
     else:
         if user.region:
-            if user.region.region == "HARARE REGION" or user.region.region == "EASTERN REGION" or user.region.region == "NORTHERN REGION" or user.region.region == "SOUTHERN REGION":
+            if user.region.region == "HARARE REGION" or user.region.region == "EASTERN REGION" or user.region.region == "NORTHERN REGION" or user.region.region == "SOUTHERN REGION" or user.region.region == "HEAD OFFICE":
                 applications = applications
             else:
                 applications = [app for app in applications if app['name'] == 'users' or app['name'] == 'non_conformity']
@@ -492,7 +492,6 @@ def security_questions(request):
                 print("user_security_question: ", user_security_question)
                 if check_password(answer, user_security_question.security_answer):
                     print("Answer matched")
-                    user_profile.change_password = True
                     user_profile.save()
                     messages.success(request, "Security questions answered successfully")
                     return render(request, "registration/reset_password.html", {
