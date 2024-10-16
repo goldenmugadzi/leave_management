@@ -4,7 +4,11 @@ import requests
 import os
 from pathlib import Path
 from datetime import datetime
-
+import fitz
+from PIL import Image
+from tika import parser
+from elasticsearch import Elasticsearch
+import pytesseract
 documents_path = os.path.join(
     Path(__file__).resolve().parent.parent, "static", "documents"
 )
@@ -15,18 +19,18 @@ def search_view(request):
     query = request.GET.get("q", "")
 
     try:
-        url = "http://172.16.8.99:9200/_search"
-        params = {"q": query}
+        # url = "http://172.16.8.99:9200/_search"
+        # params = {"q": query}
 
-        response = requests.get(
-            url, params=params, auth=("elastic", "Password1234567890")
-        )
-        print("response: ", response)
+        # response = requests.get(
+        #     url, params=params, auth=("elastic", "Password1234567890")
+        # )
+        # print("response: ", response)
 
-        # url = 'http://localhost:9200/_all/_search'
-        # params = {'q': 'content:' + query}
+        url = 'http://localhost:9200/_all/_search'
+        params = {'q': 'content:' + query}
 
-        # response = requests.get(url, params=params)
+        response = requests.get(url, params=params)
         results = []
         if response.status_code == 200:
             data = response.json()
@@ -80,30 +84,71 @@ def search_view(request):
 
 
 def index_files(request):
-    from tika import parser
+    es = Elasticsearch([{'host': 'localhost', 'port': 9200, 'scheme': 'http'}])  # Adjust host and port if necessary
     print("index_files")
-    parsed = parser.from_file("C:\\Users\\User\\Documents\\beii_v1-main\\static\\network_development\\reticulations\\20230207033551PMTD2301196 ZEBRA.pdf")
+    documents_path = os.path.join(Path(__file__).resolve().parent.parent, "static")
+    subdirectories = ['process_maps', 'job_descriptions', 'plans_and_reports', 'network_development', 'petty_cash', 'comparative', 'ace']
+    content = None
 
-    metadata = parsed.get("metadata", {})
-    content = parsed.get("content", "")
-    print(parsed)
-    if not content:
-        content = ocr_pdf("C:\\Users\\User\\Documents\\beii_v1-main\\static\\network_development\\reticulations\\20230207033551PMTD2301196 ZEBRA.pdf")
-    print(content)
-
-    context = {"metadata": metadata, "content": content}
+    for subdirectory in subdirectories:
+        subdirectory_path = os.path.join(documents_path, subdirectory)
+        for root, dirs, files in os.walk(subdirectory_path):
+            for file in files:
+                file_path = os.path.join(root, file)
+                print(file_path)
+                parsed = parser.from_file(file_path)
+                metadata = parsed.get("metadata", {})
+                content = parsed.get("content", "")
+                print(content)
+                if not content:
+                    content = ocr_pdf(file_path)
+                    print(content)
+                
+                # Index the content to Elasticsearch
+                doc = {
+                    'file_path': file_path,
+                    'metadata': metadata,
+                    'content': content
+                }
+                try:
+                    es.index(index='documents', body=doc)
+                except Exception as e:
+                    print(f"Failed to connect to Elasticsearch: {e}")
+                    return render(request, "Docs/index_files.html", {"content": content, "error_message": "Failed to connect to Elasticsearch. Please ensure the server is running."})
+   
+    context = {"content": content}
     return render(request, "Docs/index_files.html", context)
-
-import pytesseract
-from pdf2image import convert_from_path
-
 def ocr_pdf(pdf_path):
-    print("ocr_pdf")
-    text = "\n".join(pytesseract.image_to_string(image) for image in convert_from_path(pdf_path))
+    doc = fitz.open(pdf_path)
+    text = ""
+    for page_num in range(len(doc)):
+        page = doc.load_page(page_num)
+        pix = page.get_pixmap()
+        img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
+        text += pytesseract.image_to_string(img)
     return text
 
+def search_files(request):
+    es = Elasticsearch([{'host': 'localhost', 'port': 9200, 'scheme': 'http'}])  # Adjust host, port, and scheme if necessary
+    query = request.GET.get('query', '')
+    
+    results = []
 
+    if query:
+        search_body = {
+            "query": {
+                "multi_match": {
+                    "query": query,
+                    "fields": ["content", "metadata"]
+                }
+            }
+        }
+        response = es.search(index='documents', body=search_body)
+        results = response['hits']['hits']
 
+        print(results[0])
+
+    return render(request, "Docs/index_files.html", {"results": results, "query": query})
 def view_pdf(request):
     if request.method == "POST":
         pdf_url = request.POST.get("pdf_url")
@@ -118,3 +163,4 @@ def view_pdf(request):
     else:
         messages.error(request, "Invalid request!")
         return redirect("/")
+
