@@ -222,8 +222,10 @@
                 console.log("fetchSubfolders: ", subfolder, level);
                 this.level = level + 1;
                 let levelElement = document.getElementById('level_id');
-                if(levelElement) {
+                if(levelElement && level > 0) {
                     levelElement.value = level - 1;
+                } else {
+                    levelElement.value = level;
                 }
                 let folderId = subfolder ? subfolder : this.selectedFolder;
                 if (!folderId) return;

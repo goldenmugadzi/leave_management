@@ -222,8 +222,6 @@ def token_details(request, token_id):
     to = None
     completed = False
     user_roles = request.user.roles.all()
-    # allowed = allowed_to_approve(request.user,token)
-    print("allowed")
     if not token.process.approval_set.filter(approved="Rejected").exists():  # and allowed:
         try:
             last_approved = token.process.approval_set.last().step.step
@@ -238,10 +236,8 @@ def token_details(request, token_id):
             to = newStep.to
             if newStep == token.process.workflow.step_set.last():
                 generateTokenForm = GenerateTokenForm()
-
         except Step.DoesNotExist:
             pass
-
         completed = token.process.workflow.step_set.last().step == last_approved
     approved_steps = token.process.approval_set.all().values_list(
         "step__step", flat=True
@@ -344,70 +340,27 @@ def view_all_tokens(request):
     try:
         mytokens = Token.objects.filter(cost_center__in=cost_centers)
     except:
-        mytokens = Token.objects.none()
-
-    return render(
-        request,
-        "tokens/tokens.html",
-        {
-            "tokens": mytokens,
-            "all": True,
-            "roles": get_my_roles_for_apps(
-                request.user, ["temper", "reimbursement", "clear credit"]
-            ),
-        },
-    )
-
+        mytokens = Token.objects.filter(cost_center__in=user.cost_center_and_decendace()) 
+    
+    return render(request,"tokens/tokens.html",{"tokens": mytokens,"all": True,"roles": get_my_roles_for_apps(request.user, ["temper", "reimbursement", "clear credit"]),},)
 
 @login_required
 def awaiting_my_action(request):
-    """
-    Process tokens based on user roles and cost centers.
-    """
+    """Process tokens based on user roles and cost centers."""
     user = request.user
     application_names = ["temper", "reimbursement", "clear credit"]
     cost_centers = user.cost_centers_for(application_names)
     if not cost_centers:
-        return render(
-            request,
-            "tokens/tokens.html",
-            {
-                "tokens": [],
-                "all": False,
-                "roles": get_my_roles_for_apps(user, application_names),
-                "error": "No cost centers found for the given applications.",
-            },
-        )
-
+        return render(request,"tokens/tokens.html",{"tokens": [],"all": False,"roles": get_my_roles_for_apps(user, application_names),"error": "No cost centers found for the given applications.",},)
     user_roles = set(user.roles.all())
     tokens_to_process = []
-
-    tokens = Token.objects.filter(cost_center__in=cost_centers).prefetch_related(
-        "process__approval_set", "process__workflow__step_set"
-    )
-    # print("time it takes to get cost centers",timezone.now())
-
+    tokens = Token.objects.filter(cost_center__in=cost_centers).prefetch_related("process__approval_set", "process__workflow__step_set")
     for token in tokens:
         approvals = token.process.approval_set.all()
         next_step = (approvals.last().step.step if approvals.exists() else 0) + 1
-
-        if token.process.workflow.step_set.filter(
-            step=next_step, approver__in=user_roles
-        ).exists():
+        if token.process.workflow.step_set.filter(step=next_step, approver__in=user_roles).exists():
             tokens_to_process.append(token)
-    # print("to",timezone.now())
-
-    return render(
-        request,
-        "tokens/tokens.html",
-        {
-            "tokens": tokens_to_process,
-            "all": False,
-            "types": application_names,
-            "roles": get_my_roles_for_apps(user, application_names),
-        },
-    )
-
+    return render(request,"tokens/tokens.html",{"tokens": tokens_to_process,"all": False,"types": application_names,"roles": get_my_roles_for_apps(user, application_names),},)
 
 def addsection(request):
     for token in Token.objects.all():
@@ -535,7 +488,6 @@ def cost_centers(request):
         request, "tokens/cost_centers.html", {"cost_centers": CostCenter.objects.all()}
     )
 
-
 def upload_centers(request):
     CostCenter.objects.all().delete()
     file_path = "tokens/cc.txt"
@@ -544,8 +496,6 @@ def upload_centers(request):
     except FileNotFoundError as e:
         print(e)
     return redirect("tokens:cost_centers")
-
-
 """get ancestors of the cost center and all its children and merge them into cost_centers"""
 
 

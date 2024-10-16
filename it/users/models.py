@@ -145,10 +145,7 @@ class CostCenter(models.Model):
      
     
     def __str__(self):
-        # ancestor_names = [ancestor.name for ancestor in self.get_all_ancestors()[1::]]
-        # center = f"{', '.join(ancestor_names + [f'{self.name}({self.code})'])}"
-        # center = ', '.join(dict.fromkeys(center.split(', ')))
-        # return center
+       
         return f"{self.name} ({self.code})"
 
 class UserProfile(AbstractUser):
@@ -215,6 +212,11 @@ class UserProfile(AbstractUser):
                 cost_centers.update(responsibility.cost_centers.all())
             return cost_centers
         return None
+            
+    def cost_center_and_decendace(self):
+        CostCenters = CostCenter.objects.filter(pk=self.cost_center.pk)
+        CostCenters |= self.cost_center.get_decendance()
+        return CostCenters
     
 class Notification(models.Model):
     user = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
