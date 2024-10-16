@@ -38,8 +38,8 @@ class Pettycash(models.Model):
     amount_disbursed = models.FloatField(blank=True, null=True)
     receipt_file = models.FileField(upload_to='uploads/pettycash', blank=True, null=True)
     amount_used = models.FloatField(blank=True, null=True)
-    payee = models.CharField(max_length=100, blank=True, null=True)
-    reason_for_supplier = models.CharField(max_length=100, blank=True, null=True)
+    # payee = models.CharField(max_length=100, blank=True, null=True)
+    # reason_for_supplier = models.CharField(max_length=100, blank=True, null=True)
 
     def __str__(self):
         return self.petty_id
