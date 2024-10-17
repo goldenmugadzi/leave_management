@@ -444,7 +444,7 @@ def get_subfolders(request, folder_id):
 
 def ims_files(request):
         
-    files = KnowldgeCentreFile.objects.all()
+    files = KnowldgeCentreFile.objects.filter(archived=False).all()
     files_list = []
     for file in files:
         new_file = {
