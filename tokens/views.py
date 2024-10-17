@@ -350,6 +350,9 @@ def awaiting_my_action(request):
     user = request.user
     application_names = ["temper", "reimbursement", "clear credit"]
     cost_centers = user.cost_centers_for(application_names)
+    end_date = timezone.now()
+    start_date = end_date - end_date.replace(day=1)
+    cost_center = get_parent(cost_centers)
     if not cost_centers:
         return render(request,"tokens/tokens.html",{"tokens": [],"all": False,"roles": get_my_roles_for_apps(user, application_names),"error": "No cost centers found for the given applications.",},)
     user_roles = set(user.roles.all())
@@ -360,7 +363,16 @@ def awaiting_my_action(request):
         next_step = (approvals.last().step.step if approvals.exists() else 0) + 1
         if token.process.workflow.step_set.filter(step=next_step, approver__in=user_roles).exists():
             tokens_to_process.append(token)
+
     return render(request,"tokens/tokens.html",{"tokens": tokens_to_process,"all": False,"types": application_names,"roles": get_my_roles_for_apps(user, application_names),},)
+
+def get_parent(cost_centers):
+    parent = None
+    for cost_center in cost_centers:
+        if cost_center.parent in cost_centers:
+            
+            parent = cost_center.parent
+    return parent
 
 def addsection(request):
     for token in Token.objects.all():

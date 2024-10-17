@@ -104,6 +104,7 @@
         </div>
         <div class=" container text-center mt-3">
           <form method="post" >
+           {% csrf_token %}
             <label for="start_date">Start Date:</label>
             <input type="date" id="start_date"class="rounded border-blue-500 border-1"  name="start_date" value="{{ start_date }}">
             
