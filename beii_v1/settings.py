@@ -155,9 +155,9 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'it.beii_auth.inactive_user_middleware.InactiveUserMiddleware',
-    'it.beii_auth.session_middleware.LimitConcurrentSessionsMiddleware',
-    'it.beii_auth.session_middleware.SessionErrorSessionMiddleware'
+    # 'it.beii_auth.inactive_user_middleware.InactiveUserMiddleware',
+    # 'it.beii_auth.session_middleware.LimitConcurrentSessionsMiddleware',
+    # 'it.beii_auth.session_middleware.SessionErrorSessionMiddleware'
 ]
 
 ROOT_URLCONF = 'beii_v1.urls'
@@ -186,9 +186,9 @@ CSRF_COOKIE_SECURE = config('CSRF_COOKIE_SECURE', default=False, cast=bool)
 SESSION_COOKIE_SECURE = config('SESSION_COOKIE_SECURE', default=False, cast=bool)
 
 # Set session timeout to 10 minutes (600 seconds)
-SESSION_COOKIE_AGE = 600
-SESSION_SAVE_EVERY_REQUEST = True
-SESSION_LIMIT = 2
+# SESSION_COOKIE_AGE = 600
+# SESSION_SAVE_EVERY_REQUEST = True
+# SESSION_LIMIT = 2
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
 
