@@ -491,7 +491,7 @@ def archive_file(request, file_id):
         messages.error(request, "Error archiving file")
         print("Error:",ex)
     
-    return redirect('/ims/knowledge_center_files')
+    return redirect('/ims/ims_files')
 
 @login_required
 def unarchive_file(request, file_id):
@@ -505,7 +505,7 @@ def unarchive_file(request, file_id):
         messages.error(request, "Error unarchiving file")
         print("Error:",ex)
     
-    return redirect('/ims/knowledge_center_files')
+    return redirect('/ims/ims_files')
 
 @login_required
 def create(request):
