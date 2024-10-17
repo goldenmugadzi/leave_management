@@ -95,14 +95,14 @@ def index_files(request):
         for root, dirs, files in os.walk(subdirectory_path):
             for file in files:
                 file_path = os.path.join(root, file)
-                print(file_path)
+                # print(file_path)
                 parsed = parser.from_file(file_path)
                 metadata = parsed.get("metadata", {})
                 content = parsed.get("content", "")
-                print(content)
+                print(parsed)
                 if not content:
                     content = ocr_pdf(file_path)
-                    print(content)
+                    # print(content)
                 
                 # Index the content to Elasticsearch
                 doc = {
@@ -115,7 +115,7 @@ def index_files(request):
                 except Exception as e:
                     print(f"Failed to connect to Elasticsearch: {e}")
                     return render(request, "Docs/index_files.html", {"content": content, "error_message": "Failed to connect to Elasticsearch. Please ensure the server is running."})
-   
+    
     context = {"content": content}
     return render(request, "Docs/index_files.html", context)
 def ocr_pdf(pdf_path):
@@ -146,9 +146,17 @@ def search_files(request):
         response = es.search(index='documents', body=search_body)
         results = response['hits']['hits']
 
-        print(results[0])
+    search_results = []
+    for result in results:
+        search_result = {
+            'file_path': result['_source']['file_path'],
+            'metadata': result['_source']['metadata'],
+            'content': result['_source']['content']
+        }
+        search_results.append(search_result)
+    print(search_results[0]['metadata'])
 
-    return render(request, "Docs/index_files.html", {"results": results, "query": query})
+    return render(request, "Docs/index_files.html", {"results": search_results, "query": query})
 def view_pdf(request):
     if request.method == "POST":
         pdf_url = request.POST.get("pdf_url")
