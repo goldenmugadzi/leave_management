@@ -156,7 +156,7 @@ def nonconformity_details(request, nonconformity_id):
         elif request.user == nonconformity.created_by:
             # Different conditions for closing or updating the nonconformity
             act = request.POST.get("rejected")
-            if  ((act == "close") or request.POST.get("closed") != None) and ( nonconformity.accepted == True and nonconformity.resolved != None or nonconformity.closed == None and nonconformity.accepted == False or nonconformity.resolved == None and nonconformity.accepted == False):
+            if  ((act == "close") or request.POST.get("closed") != None) and ( nonconformity.accepted != None and nonconformity.resolved != None or nonconformity.closed == None and nonconformity.accepted == False or nonconformity.resolved == None and nonconformity.accepted == False):
                 print(act, "act")
                 form = CloseNcForm(request.POST, instance=nonconformity)
                 if form.is_valid():
