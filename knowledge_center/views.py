@@ -265,7 +265,7 @@ def view_sub_folders(request, folder_name, folder_id):
         subfolders_list.append(new_folder)
     
     current_folder = KnowledgeCentreFolder.objects.filter(id=folder_id).first()
-    files = KnowldgeCentreFile.objects.filter(folder=current_folder).all()
+    files = KnowldgeCentreFile.objects.filter(folder=current_folder, archived=False).all()
 
     url_path = request.path.split("/")
     title = current_folder.name.upper()
