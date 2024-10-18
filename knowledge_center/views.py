@@ -265,7 +265,7 @@ def view_sub_folders(request, folder_name, folder_id):
         subfolders_list.append(new_folder)
     
     current_folder = KnowledgeCentreFolder.objects.filter(id=folder_id).first()
-    files = KnowldgeCentreFile.objects.filter(folder=current_folder).all()
+    files = KnowldgeCentreFile.objects.filter(folder=current_folder, archived=False).all()
 
     url_path = request.path.split("/")
     title = current_folder.name.upper()
@@ -444,7 +444,7 @@ def get_subfolders(request, folder_id):
 
 def ims_files(request):
         
-    files = KnowldgeCentreFile.objects.all()
+    files = KnowldgeCentreFile.objects.filter(archived=False).all()
     files_list = []
     for file in files:
         new_file = {
@@ -491,7 +491,7 @@ def archive_file(request, file_id):
         messages.error(request, "Error archiving file")
         print("Error:",ex)
     
-    return redirect('/ims/knowledge_center_files')
+    return redirect('/ims/ims_files')
 
 @login_required
 def unarchive_file(request, file_id):
@@ -505,7 +505,7 @@ def unarchive_file(request, file_id):
         messages.error(request, "Error unarchiving file")
         print("Error:",ex)
     
-    return redirect('/ims/knowledge_center_files')
+    return redirect('/ims/ims_files')
 
 @login_required
 def create(request):

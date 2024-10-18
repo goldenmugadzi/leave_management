@@ -2,26 +2,51 @@
 {% load static %}
 {% load humanize %}
 {% load custom_tags %}
-{% block styles %}
-  <link rel="stylesheet"
-        href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" />
-  <style>.dataTables_wrapper .dataTables_length select { width: 4rem; }</style>
-{% endblock %}
-{% block content %}
-  <title>Docs</title>
-  <form method="GET" action="{% url 'search_files' %}">
-    <label for="query">Search:</label>
-    <input type="text" id="query" name="query" value="{{ request.GET.query }}">
-    <button type="submit">Search</button>
-</form>
 
-<!-- Display search results -->
-{% if results %}
-    <h2>Search Results:</h2>
-    <ul>
-        {% for result in results %}
-            <li>{{ result.file_path }}: {{ result.content|truncatewords:50 }}</li>
-        {% endfor %}
-    </ul>
-{% endif %}
+{% block styles %}
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+  <header class="text-center my-8">
+    <h1 class="text-3xl font-bold">Search Results</h1>
+  </header>
+
+  <form class="flex justify-center mb-8" method="GET" action="{% url 'search_files' %}">
+    <input type="text" id="query" name="query" placeholder="Search..." value="{{ request.GET.query }}"
+           class="border border-gray-300 rounded-l-md p-2 w-1/2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+    <button type="submit" class="bg-blue-500 text-white rounded-r-md p-2 hover:bg-blue-600">
+      Search
+    </button>
+  </form>
+
+  <div class="max-w-2xl mx-auto">
+    {% if results %}
+      {% for result in results %}
+        <div class="bg-white shadow-md rounded-lg p-4 mb-4">
+          <h3 class="text-xl font-semibold">
+            <a href="{{ result.get_absolute_url }}" class="text-blue-600 hover:underline">{{ result.title }}</a>
+          </h3>
+          <p class="text-gray-700 mt-2">{{ result.content|truncatewords:30 }}</p>
+          <p class="text-gray-500 text-sm mt-2">
+            Published on: {{ result.published_date|date:"F j, Y" }} | Author: {{ result.author }}
+          </p>
+        </div>
+      {% empty %}
+        <p class="text-center text-gray-600">No results found for your query.</p>
+      {% endfor %}
+    {% else %}
+      <p class="text-center text-gray-600">No results found.</p>
+    {% endif %}
+  </div>
+{% endblock %}
+
+{% block scripts %}
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+  <script>
+    $(document).ready(function() {
+      $('#resultsTable').DataTable();
+    });
+  </script>
 {% endblock %}
