@@ -13,6 +13,7 @@ from approve.models import Step
 from approve.forms import ApprovalForm
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
+from datetime import datetime
 from approve.decorators import allowed_roles
 from django.db.models import Q
 import os, json, re
@@ -21,7 +22,7 @@ import mysql.connector
 
 # check update
 @login_required
-@allowed_roles(["Requester"], ["temper", "reimbursement", "clear credit"])
+@allowed_roles(["Requester","Commercial Supervisor"], ["temper", "reimbursement", "clear credit"])
 def create_token(request):
     if request.method == "POST":
         # meter details from the database if the meter number already exists and use its instance to update the meter details
@@ -350,6 +351,11 @@ def awaiting_my_action(request):
     user = request.user
     application_names = ["temper", "reimbursement", "clear credit"]
     cost_centers = user.cost_centers_for(application_names)
+    end_date = datetime.now()
+    start_date = end_date.replace(day=1)
+    print(end_date)
+    print(start_date)
+    cost_center = get_parent(cost_centers)
     if not cost_centers:
         return render(request,"tokens/tokens.html",{"tokens": [],"all": False,"roles": get_my_roles_for_apps(user, application_names),"error": "No cost centers found for the given applications.",},)
     user_roles = set(user.roles.all())
@@ -360,7 +366,16 @@ def awaiting_my_action(request):
         next_step = (approvals.last().step.step if approvals.exists() else 0) + 1
         if token.process.workflow.step_set.filter(step=next_step, approver__in=user_roles).exists():
             tokens_to_process.append(token)
-    return render(request,"tokens/tokens.html",{"tokens": tokens_to_process,"all": False,"types": application_names,"roles": get_my_roles_for_apps(user, application_names),},)
+
+    return render(request,"tokens/tokens.html",{"tokens": tokens_to_process,"all": False,"start_date":start_date,"end_date":end_date,"cost_center":cost_center, "types": application_names,"roles": get_my_roles_for_apps(user, application_names),},)
+
+def get_parent(cost_centers):
+    parent = None
+    for cost_center in cost_centers:
+        if cost_center.parent in cost_centers:
+            
+            parent = cost_center.parent
+    return parent
 
 def addsection(request):
     for token in Token.objects.all():

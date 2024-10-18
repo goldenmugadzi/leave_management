@@ -104,11 +104,12 @@
         </div>
         <div class=" container text-center mt-3">
           <form method="post" >
+           {% csrf_token %}
             <label for="start_date">Start Date:</label>
-            <input type="date" id="start_date"class="rounded border-blue-500 border-1"  name="start_date" value="{{ start_date }}">
+            <input type="date" id="start_date"class="rounded border-blue-500 border-1"  name="start_date" value="{{ start_date |date:'Y-m-d'}}">
             
             <label for="end_date">End Date:</label>
-            <input type="date" id="end_date"class="rounded border-blue-500 border-1"  name="end_date" value="{{ end_date }}">
+            <input type="date" id="end_date"class="rounded border-blue-500 border-1"  name="end_date" value="{{ end_date |date:'Y-m-d'}}">
             <label for="cost_center">Cost Center:</label>
             <input type="text" id="cost_center"class="rounded border-blue-500 border-1"  name="cost_center" value="{{ cost_center}}">
             
