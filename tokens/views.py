@@ -338,9 +338,12 @@ def view_all_tokens(request):
     user = request.user
     application_names = ["temper", "reimbursement", "clear credit"]
     cost_centers = user.cost_centers_for(application_names)
-    try:
+    mytokens=Token.objects.none()
+    
+    if cost_centers:
         mytokens = Token.objects.filter(cost_center__in=cost_centers)
-    except:
+    else:
+        print(user.cost_center_and_decendace())
         mytokens = Token.objects.filter(cost_center__in=user.cost_center_and_decendace()) 
     
     return render(request,"tokens/tokens.html",{"tokens": mytokens,"all": True,"roles": get_my_roles_for_apps(request.user, ["temper", "reimbursement", "clear credit"]),},)
