@@ -369,7 +369,7 @@ def awaiting_my_action(request):
     for token in tokens:
         approvals = token.process.approval_set.all()
         next_step = (approvals.last().step.step if approvals.exists() else 0) + 1
-        if token.process.workflow.step_set.filter(step=next_step, approver__in=user_roles).exists():
+        if token.process.workflow.step_set.filter(step=next_step, approver__in=user_roles).exists() and not token.process.approval_set.filter(approved = False).exists():
             tokens_to_process.append(token)
 
     return render(request,"tokens/tokens.html",{"tokens": tokens_to_process,"all": False,"start_date":start_date,"end_date":end_date,"cost_center":cost_center, "types": application_names,"roles": get_my_roles_for_apps(user, application_names),},)
