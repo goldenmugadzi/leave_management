@@ -791,3 +791,15 @@ def print_report_excel(request, report_id):
         ])
     wb.save(response)
     return response
+def receipt_manual(request):
+    if request.method == 'POST':
+        receipt_file = request.FILES['file-input']
+        print(receipt_file)
+        pettycash = request.POST['pettycash']
+        pettycash = Pettycash.objects.filter(petty_id=pettycash).first()
+        pettycash.receipt_file = receipt_file
+        pettycash.save()
+        messages.success(request, 'Receipt uploaded successfully')
+        return redirect('pettycash:pettycash_detail', petty_id=pettycash.petty_id)
+    else:
+        return render(request, 'finance/pettycash/receipt.html')
