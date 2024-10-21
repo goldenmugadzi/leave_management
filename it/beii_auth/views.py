@@ -110,6 +110,12 @@ REPORTS = [
         "iconUrl": "assets/images/bid.png",
         "url": "/direct_purchase/reports"
     },
+    {
+        "name": "change_requests",
+        "title": "Change Requests",
+        "iconUrl": "assets/images/change.png",
+        "url": "/change_requests/change_request_reports"
+    }
 ]
 
 # Create your views here.
