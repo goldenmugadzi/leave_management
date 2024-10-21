@@ -79,17 +79,13 @@
           <tbody>
             {% for token in tokens %}
               <tr class="h-1">
-                <td>
-                  <a class="text-blue-500" href="{% url 'tokens:token' token.id %}">{{ token.id|default_if_none:'' }}</a>
-                </td>
+                <td><a class="text-blue-500" href="{% url 'tokens:token' token.id %}">{{ token.id|default_if_none:'' }}</a></td>
                 <td>{{ token.reason|default_if_none:'' }}</td>
                 <td>{{ token.type|default_if_none:'' }}</td>
                 <td>{{ token.created_at|date }}</td>
                 <td>{{ token.cost_center }}</td>
                 <td>{{ token.customer.name|default_if_none:'' }}</td>
-                <td>
-                  <span title="{{ token.meter.meter_type }}">{{ token.meter.number }}</span>
-                </td>
+                <td><span title="{{ token.meter.meter_type }}">{{ token.meter.number }}</span></td>
                 <td>{{ token.process.approval_set.last|default_if_none:"No Approval" }}</td>
               </tr>
             {% endfor %}
@@ -103,7 +99,7 @@
           {% endif %}
         </div>
         <div class=" container text-center mt-3">
-          <form method="post" >
+          {% comment %} <form method="post" >
            {% csrf_token %}
             <label for="start_date">Start Date:</label>
             <input type="date" id="start_date"class="rounded border-blue-500 border-1"  name="start_date" value="{{ start_date |date:'Y-m-d'}}">
@@ -114,7 +110,7 @@
             <input type="text" id="cost_center"class="rounded border-blue-500 border-1"  name="cost_center" value="{{ cost_center}}">
             
             <button type="submit" class="bg-green-500 hover:bg-green-700 inline-block rounded-full m-auto text-white py-2 px-4 rounded">Filter</button>
-        </form>
+        </form> {% endcomment %}
         </div>
       </div>
     </div>

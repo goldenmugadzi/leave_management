@@ -170,12 +170,12 @@ def create_token(request):
                 clear_credit = clear_credit_form.save(commit=False)
                 clear_credit.token = token
                 clear_credit.save()
-                messages.info(request, "Token request saved successfully")
+                messages.success(request, "Token request saved successfully")
             else:
                 return render(request, "tokens/create_token.html", forms)
 
-            send_notification("token", token)
-            return redirect("tokens:tokens")
+            # send_notification("token", token)
+            return redirect("tokens:token", token.id)
 
         else:
             return render(request, "tokens/create_token.html", forms)
@@ -351,11 +351,13 @@ def awaiting_my_action(request):
     user = request.user
     application_names = ["temper", "reimbursement", "clear credit"]
     cost_centers = user.cost_centers_for(application_names)
+    cost_center=user.cost_center
     end_date = datetime.now()
     start_date = end_date.replace(day=1)
     print(end_date)
     print(start_date)
-    cost_center = get_parent(cost_centers)
+    if cost_centers:
+        cost_center = get_parent(cost_centers)
     if not cost_centers:
         return render(request,"tokens/tokens.html",{"tokens": [],"all": False,"roles": get_my_roles_for_apps(user, application_names),"error": "No cost centers found for the given applications.",},)
     user_roles = set(user.roles.all())
