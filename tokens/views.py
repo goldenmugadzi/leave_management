@@ -13,6 +13,7 @@ from approve.models import Step
 from approve.forms import ApprovalForm
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
+from datetime import datetime
 from approve.decorators import allowed_roles
 from django.db.models import Q
 import os, json, re
@@ -21,7 +22,7 @@ import mysql.connector
 
 # check update
 @login_required
-@allowed_roles(["Requester"], ["temper", "reimbursement", "clear credit"])
+@allowed_roles(["Requester","Commercial Supervisor"], ["temper", "reimbursement", "clear credit"])
 def create_token(request):
     if request.method == "POST":
         # meter details from the database if the meter number already exists and use its instance to update the meter details
@@ -169,12 +170,12 @@ def create_token(request):
                 clear_credit = clear_credit_form.save(commit=False)
                 clear_credit.token = token
                 clear_credit.save()
-                messages.info(request, "Token request saved successfully")
+                messages.success(request, "Token request saved successfully")
             else:
                 return render(request, "tokens/create_token.html", forms)
 
-            send_notification("token", token)
-            return redirect("tokens:tokens")
+            # send_notification("token", token)
+            return redirect("tokens:token", token.id)
 
         else:
             return render(request, "tokens/create_token.html", forms)
@@ -337,9 +338,12 @@ def view_all_tokens(request):
     user = request.user
     application_names = ["temper", "reimbursement", "clear credit"]
     cost_centers = user.cost_centers_for(application_names)
-    try:
+    mytokens=Token.objects.none()
+    
+    if cost_centers:
         mytokens = Token.objects.filter(cost_center__in=cost_centers)
-    except:
+    else:
+        print(user.cost_center_and_decendace())
         mytokens = Token.objects.filter(cost_center__in=user.cost_center_and_decendace()) 
     
     return render(request,"tokens/tokens.html",{"tokens": mytokens,"all": True,"roles": get_my_roles_for_apps(request.user, ["temper", "reimbursement", "clear credit"]),},)
@@ -350,6 +354,13 @@ def awaiting_my_action(request):
     user = request.user
     application_names = ["temper", "reimbursement", "clear credit"]
     cost_centers = user.cost_centers_for(application_names)
+    cost_center=user.cost_center
+    end_date = datetime.now()
+    start_date = end_date.replace(day=1)
+    print(end_date)
+    print(start_date)
+    if cost_centers:
+        cost_center = get_parent(cost_centers)
     if not cost_centers:
         return render(request,"tokens/tokens.html",{"tokens": [],"all": False,"roles": get_my_roles_for_apps(user, application_names),"error": "No cost centers found for the given applications.",},)
     user_roles = set(user.roles.all())
@@ -358,9 +369,18 @@ def awaiting_my_action(request):
     for token in tokens:
         approvals = token.process.approval_set.all()
         next_step = (approvals.last().step.step if approvals.exists() else 0) + 1
-        if token.process.workflow.step_set.filter(step=next_step, approver__in=user_roles).exists():
+        if token.process.workflow.step_set.filter(step=next_step, approver__in=user_roles).exists() and not token.process.approval_set.filter(approved = False).exists():
             tokens_to_process.append(token)
-    return render(request,"tokens/tokens.html",{"tokens": tokens_to_process,"all": False,"types": application_names,"roles": get_my_roles_for_apps(user, application_names),},)
+
+    return render(request,"tokens/tokens.html",{"tokens": tokens_to_process,"all": False,"start_date":start_date,"end_date":end_date,"cost_center":cost_center, "types": application_names,"roles": get_my_roles_for_apps(user, application_names),},)
+
+def get_parent(cost_centers):
+    parent = None
+    for cost_center in cost_centers:
+        if cost_center.parent in cost_centers:
+            
+            parent = cost_center.parent
+    return parent
 
 def addsection(request):
     for token in Token.objects.all():

@@ -32,6 +32,7 @@ urlpatterns = [
     path('approval_approve', approve_cs, name='approve_cs'),
     
     path('comperative_schedules', get_comperative_schedules, name='get_comperative_schedules'),
+    path('reports', reports_all_schedules, name='reports_all_schedules'),
     path('comperative_schedule/<str:cs_id>', get_comperative_schedule, name='get_comperative_schedule'),
     path('cs_data/<str:cs_id>', get_comperative_schedule_data, name='get_comperative_schedule_data'),
     

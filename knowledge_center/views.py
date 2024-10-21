@@ -420,6 +420,36 @@ def create_file(request):
     regions = Regions.objects.all()
     return render(request, 'knowledge-center/create_file.html', {"url_path": url_path, "folder_applications": folder_applications, "sections": sections, "regions": regions})
 
+def create_bulk_files(request):
+    url_path = request.path.split("/")
+    if request.method == 'POST':
+        print("post data: ", request.POST)
+        level = request.POST['level']
+        root_folder = request.POST['root_folder']
+        folder = request.POST['subfolder_'+level]
+        section = request.POST['section']
+        region = request.POST['region']
+        files = request.FILES.getlist('uploaded_files')
+        
+        section_ = Sections.objects.filter(id=section).first()
+        region_ = Regions.objects.filter(id=region).first()
+        if folder:
+            folder_ = KnowledgeCentreFolder.objects.filter(id=folder).first()
+        else:
+            folder_ = KnowledgeCentreFolder.objects.filter(id=root_folder).first()
+        
+        for file in files:
+            
+            file_record = KnowldgeCentreFile(filename=file.name, file=file, folder=folder_, region=region_, section=section_)
+            file_record.save()
+        messages.success(request, "Files uploaded successfully")
+        return redirect('/ims/folder/' + str(folder_.name) + '/' + str(folder_.id)) 
+    
+    folder_applications = FolderApplication.objects.all()
+    sections = Sections.objects.all()
+    regions = Regions.objects.all()
+    return render(request, 'knowledge-center/create_bulk_files.html', {"url_path": url_path, "folder_applications": folder_applications, "sections": sections, "regions": regions})
+
 def get_root_folders(request, folder_application_id):
     
     print("folder_application_id: ", folder_application_id)
