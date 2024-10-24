@@ -444,7 +444,7 @@ def upload_budgets(request):
         for row in reader:
             print("row: ", row)
             section_code = row['section_code']
-            section = row['section']
+            section = row['section'][:49]
             budget_name = row['budget']
             allocated = row['allocated']
             withdrawn = row['withdrawn']
@@ -464,11 +464,18 @@ def upload_budgets(request):
             region = Regions.objects.filter(region=region).first()
             print(region)
             created_date = date.today()
+            budget_name = section + "  " + budget_name
+            # remove whitespace on section code and section
+            section_code = section_code.strip()
+            section = section.strip()
+            print("section code: ", section_code)
+            print("section: ", section)
 
             # withdrawal_date = datetime.strptime(row['withdrawal_date'], "%Y/%m/%d").strftime("%Y-%m-%d")
             # areas = row['area'].split(',')
             check_budget = AssetBudget.objects.filter(budget_name=budget_name, period=period).first()
             budget_note = csvfile
+
 
             if check_budget:
                 print("duplicate record ....")
