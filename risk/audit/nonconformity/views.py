@@ -36,7 +36,7 @@ def create_nonconformity(request):
                     url=reverse("nonconformity:nonconformity", args=[nonconformity.id]),
                 )
                 messages.success(request, "Nonconformity created successfully!")
-                return redirect("/")
+                return redirect("nonconformity:nonconformity", nonconformity.id)
             else:
                 messages.error(
                     request, "You cannot create a nonconformity for yourself."
@@ -74,7 +74,7 @@ def create_nonconformity_from_checklist(request, clause):
                 )
                 # Display a success message
                 messages.success(request, "Nonconformity created successfully!")
-                return redirect("nonconformity:nonconformities")
+                return redirect("nonconformity:nonconformity", nonconformity.id)
             else:
                 return HttpResponse("You cannot create a nonconformity for yourself.")
     else:
@@ -181,12 +181,11 @@ def nonconformity_details(request, nonconformity_id):
 
     # If the request method is GET, prepare forms for display
     else:
-        print(nonconformity.accepted != True, "accepted",  not nonconformity.closed, "closed", nonconformity.created_by, "created_by")
         # Determine which forms to display based on the user and nonconformity status
         if request.user == nonconformity.recipient and nonconformity.accepted == None:
             rejectionForm = RejectionForm()
             acceptanceForm = AcceptanceForm(instance=nonconformity)
-        elif request.user == nonconformity.recipient and nonconformity.accepted == True and nonconformity.resolved == None:
+        elif request.user == nonconformity.recipient and nonconformity.accepted == True and nonconformity.resolved != True:
             # form = ResolveNcForm(instance=nonconformity)
             resolve_form = ResolveNcForm(instance=nonconformity)
             # print(nonconformity.accepted == False,'qqqqqqqqqq',nonconformity.accepted != True, "accepted",  not nonconformity.closed, "closed", nonconformity.created_by, "created_by")
