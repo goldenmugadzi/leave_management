@@ -9,6 +9,7 @@ from PIL import Image
 from tika import parser
 from elasticsearch import Elasticsearch
 import pytesseract
+from django.utils import timezone
 documents_path = os.path.join(
     Path(__file__).resolve().parent.parent, "static", "documents"
 )
@@ -18,70 +19,99 @@ def search_view(request):
     # Get the search query from the request
     query = request.GET.get("q", "")
 
-    try:
-        # url = "http://172.16.8.99:9200/_search"
-        # params = {"q": query}
+    # try:
+    #     # url = "http://172.16.8.99:9200/_search"
+    #     # params = {"q": query}
 
-        # response = requests.get(
-        #     url, params=params, auth=("elastic", "Password1234567890")
-        # )
-        # print("response: ", response)
+    #     # response = requests.get(
+    #     #     url, params=params, auth=("elastic", "Password1234567890")
+    #     # )
+    #     # print("response: ", response)
 
-        url = 'http://localhost:9200/_all/_search'
-        params = {'q': 'content:' + query}
+    #     url = 'http://localhost:9200/_all/_search'
+    #     params = {'q': 'content:' + query}
 
-        response = requests.get(url, params=params)
-        results = []
-        if response.status_code == 200:
-            data = response.json()
-            hits = data.get("hits", {}).get("hits", [])
-            print("hits: ", hits)
-            cleaned_hits = []
-            for hit in hits:
-                file_path = hit["_source"]["file"]["url"]
-                static_index = file_path.find("static")
-                if static_index != -1:
-                    url = "/" + file_path[static_index:]
-                else:
-                    url = ""
+    #     response = requests.get(url, params=params)
+    #     results = []
+    #     if response.status_code == 200:
+    #         data = response.json()
+    #         hits = data.get("hits", {}).get("hits", [])
+    #         print("hits: ", hits)
+    #         cleaned_hits = []
+    #         for hit in hits:
+    #             file_path = hit["_source"]["file"]["url"]
+    #             static_index = file_path.find("static")
+    #             if static_index != -1:
+    #                 url = "/" + file_path[static_index:]
+    #             else:
+    #                 url = ""
 
-                cleaned_hit = {
-                    "file": hit["_source"]["file"]["filename"][:-4],
-                    "author": (
-                        hit["_source"]["meta"]["author"]
-                        if "meta" in hit["_source"]
-                        else ""
-                    ),
-                    "date_created": (
-                        datetime.strptime(
-                            hit["_source"]["meta"]["created"], "%Y-%m-%dT%H:%M:%S.%f%z"
-                        ).strftime("%B %d, %Y %H:%M")
-                        if "meta" in hit["_source"]
-                        else ""
-                    ),
-                    # 'url':url ,
-                    "url": hit["_source"]["path"]["real"],
+    #             cleaned_hit = {
+    #                 "file": hit["_source"]["file"]["filename"][:-4],
+    #                 "author": (
+    #                     hit["_source"]["meta"]["author"]
+    #                     if "meta" in hit["_source"]
+    #                     else ""
+    #                 ),
+    #                 "date_created": (
+    #                     datetime.strptime(
+    #                         hit["_source"]["meta"]["created"], "%Y-%m-%dT%H:%M:%S.%f%z"
+    #                     ).strftime("%B %d, %Y %H:%M")
+    #                     if "meta" in hit["_source"]
+    #                     else ""
+    #                 ),
+    #                 # 'url':url ,
+    #                 "url": hit["_source"]["path"]["real"],
+    #             }
+    #             cleaned_hits.append(cleaned_hit)
+
+    #         return render(
+    #             request,
+    #             "Docs/search.html",
+    #             {"results": results, "cleaned_hits": cleaned_hits},
+    #         )
+
+    #     else:
+    #         print(f"Request failed with status code {response.status_code}")
+
+    #     # Render the search results template
+    #     return render(request, "Docs/search.html", {"results": results})
+
+    # except Exception as e:
+    #     print(f"An error occurred: {str(e)}")
+
+    #     # Handle the error appropriately, such as displaying an error page or message
+    #     return render(request, "Docs/search.html", {"results": "results"})
+    es = Elasticsearch([{'host': 'localhost', 'port': 9200, 'scheme': 'http'}])  # Adjust host, port, and scheme if necessary
+    # query = request.GET.get('query', '')
+    
+    results = []
+
+    if query:
+        search_body = {
+            "query": {
+                "multi_match": {
+                    "query": query,
+                    "fields": ["content", "metadata"]
                 }
-                cleaned_hits.append(cleaned_hit)
+            }
+        }
+        response = es.search(index='documents', body=search_body)
+        results = response['hits']['hits']
 
-            return render(
-                request,
-                "Docs/search.html",
-                {"results": results, "cleaned_hits": cleaned_hits},
-            )
-
-        else:
-            print(f"Request failed with status code {response.status_code}")
-
-        # Render the search results template
-        return render(request, "Docs/search.html", {"results": results})
-
-    except Exception as e:
-        print(f"An error occurred: {str(e)}")
-
-        # Handle the error appropriately, such as displaying an error page or message
-        return render(request, "Docs/search.html", {"results": "results"})
-
+    search_results = []
+    for result in results:
+        search_result = {
+            'file_path': result['_source']['file_path'],
+            'metadata': result['_source']['metadata'],
+            'content': result['_source']['content'],
+            'filename':result['filename']
+        }
+        search_results.append(search_result)
+    if search_results:
+        print(search_results[0]['metadata'])
+    return render(request, "Docs/search.html", {"results": search_results, "query": query})
+    # return render(request, "Docs/search.html", {"results": search_results})
 
 def index_files(request):
     es = Elasticsearch([{'host': 'localhost', 'port': 9200, 'scheme': 'http'}])  # Adjust host and port if necessary
@@ -107,8 +137,10 @@ def index_files(request):
                 # Index the content to Elasticsearch
                 doc = {
                     'file_path': file_path,
-                    'metadata': metadata,
-                    'content': content
+                    'filename':metadata['resourceName'][2:-1],
+                    'content': content,
+                    'uploaded_at': timezone.now(),
+                    'uploaded_by': request.user.get_full_name(),
                 }
                 try:
                     es.index(index='documents', body=doc)
@@ -154,7 +186,8 @@ def search_files(request):
             'content': result['_source']['content']
         }
         search_results.append(search_result)
-    print(search_results[0]['metadata'])
+    if search_results:
+        print(search_results[0]['metadata'])
 
     return render(request, "Docs/index_files.html", {"results": search_results, "query": query})
 def view_pdf(request):
