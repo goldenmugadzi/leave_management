@@ -937,7 +937,9 @@ def upload_aces_csv(request):
 
 
 def create_virament(request):
-    form = ViramentForm()
+    user_id = request.user.id
+    user_profile = UserProfile.objects.filter(id=user_id).first()
+    form = ViramentForm(user=user_profile)
     formset = QuotationFormSet()
     if request.method == 'POST':
         form = ViramentForm(request.POST, request.FILES)
@@ -970,7 +972,7 @@ def create_virament(request):
             url = reverse('Ace:virament_detail', args=[virament.virament_id])
             return redirect(url)
     else:
-        form = ViramentForm()
+        form = ViramentForm(user=user_profile)
     return render(request, 'finance/ace2/create_virament.html', {'form': form, 'formset': formset})
 
 
