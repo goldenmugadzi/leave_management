@@ -475,6 +475,7 @@ def update_user(request):
         )
     elif request.method == "POST":
         try:
+            
             user_profile = UserProfile.objects.filter(id=request.POST['user_id']).first()
             region = request.POST.get('region')
             district = request.POST.get('district')
