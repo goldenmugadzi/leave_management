@@ -146,12 +146,13 @@
                                 type="button">Edit or Redirect</button>
                     {% endif %}
                     {% if closeform and nonconformity.accepted != null %}
-                    <button class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded"
-                    type="submit"
-                    name="closed" id="id_closed"value="true" >Mark as Closed</button>
-   {% endif %}
+                        <button class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded"
+                                type="submit"
+                                name="closed"
+                                id="id_closed"
+                                value="true">Mark as Closed</button>
+                    {% endif %}
                     <input name="rejected" id="rejected" type="hidden" value="">
-                   
                     {% if editform %}
                         <div id="editformcontainer" class="hidden">
                             {% for field in editform %}
@@ -176,13 +177,13 @@
                                    value="Submit">
                         </div>
                     {% endif %}
-                  
                     {% if resolve_form %}
-                    <button class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded"
-                    type="submit"
-                    name="resolved" id="id_resolved" value="true" >Mark as Resolved</button>
-              
-                        {% endif %}
+                        <button class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded"
+                                type="submit"
+                                name="resolved"
+                                id="id_resolved"
+                                value="true">Mark as Resolved</button>
+                    {% endif %}
                     {% if form %}
                         {% for field in form %}
                             <div class="rounded row text-center py-2 my-3">
@@ -200,9 +201,7 @@
                                 {% endif %}
                             </div>
                         {% endfor %}
-                        
                     {% endif %}
-                
                     {% if form %}
                         <input class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded"
                                type="submit"
