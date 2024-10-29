@@ -48,6 +48,11 @@ def Ace_detail(request, Ace_id2):
 
     ace_item = Ace2.objects.get(Ace_id2=Ace_id2)
 
+    budget = ace_item.budget_id.budget_id
+    budget = AssetBudget.objects.get(budget_id=budget)
+    balance_before = budget.balance
+    balance_after = balance_before - ace_item.amount
+
     quotations = Quotation.objects.filter(ace2=ace_item).all()
     print(quotations.count())
 
@@ -117,6 +122,9 @@ def Ace_detail(request, Ace_id2):
         # budget calculations
         budget = ace_item.budget_id.budget_id
         budget = AssetBudget.objects.get(budget_id=budget)
+        balance_before = budget.balance
+        balance_after = balance_before - ace_item.amount
+
         print("ace: ", ace_item.Ace_id)
         transaction = Transactions.objects.filter(Ace_id2=str(ace_item.Ace_id)).first()
         # print('transaction: ', transaction)
@@ -142,7 +150,8 @@ def Ace_detail(request, Ace_id2):
                   {'ace': ace_item, 'approved_steps': approved_steps, 'approvalForm': approvalForm,
                    'to': to, 'ace_role': ace_role, 'user_groups': user_groups, 'qoutations': quotations,
                    'ace_quantity': ace_quantity,
-                   'clear': clear, 'clear_minus': clear_minus, 'accounting_officer_role': accounting_officer_role})
+                   'clear': clear, 'clear_minus': clear_minus, 'accounting_officer_role': accounting_officer_role,
+                   'balance_before': balance_before, 'balance_after': balance_after})
 
 
 @login_required
@@ -475,7 +484,6 @@ def upload_budgets(request):
             # areas = row['area'].split(',')
             check_budget = AssetBudget.objects.filter(budget_name=budget_name, period=period).first()
             budget_note = csvfile
-
 
             if check_budget:
                 print("duplicate record ....")
