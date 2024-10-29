@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, HttpResponse
 from django.contrib import messages
 import requests
 import os
@@ -125,19 +125,28 @@ def index_files(request):
         for root, dirs, files in os.walk(subdirectory_path):
             for file in files:
                 file_path = os.path.join(root, file)
-                # print(file_path)
-                parsed = parser.from_file(file_path)
+                file_path = os.path.normpath(file_path).replace("\\", "/")  # Normalize the path
+
+                if not os.path.isfile(file_path):
+                    return HttpResponse("File not found", status=404)
+
+                try:
+                    parsed = parser.from_file(file_path)
+                    # Process parsed data as needed
+                except Exception as e:
+                    print(f"Error processing file: {e}")
+                    print(file_path)
+                    return HttpResponse(f"Error processing file: {e}", status=500)
+                
                 metadata = parsed.get("metadata", {})
                 content = parsed.get("content", "")
-                print(parsed)
                 if not content:
                     content = ocr_pdf(file_path)
-                    # print(content)
                 
                 # Index the content to Elasticsearch
                 doc = {
                     'file_path': file_path,
-                    'filename':metadata['resourceName'][2:-1],
+                    'filename': metadata.get('resourceName', 'unknown'),
                     'content': content,
                     'uploaded_at': timezone.now(),
                     'uploaded_by': request.user.get_full_name(),
@@ -145,11 +154,11 @@ def index_files(request):
                 try:
                     es.index(index='documents', body=doc)
                 except Exception as e:
-                    print(f"Failed to connect to Elasticsearch: {e}")
-                    return render(request, "Docs/index_files.html", {"content": content, "error_message": "Failed to connect to Elasticsearch. Please ensure the server is running."})
-    
-    context = {"content": content}
-    return render(request, "Docs/index_files.html", context)
+                    print(f"Failed to index document: {e}")
+                    return HttpResponse(f"Failed to index document: {e}", status=500)
+   
+    return HttpResponse("Indexing completed successfully.")
+
 def ocr_pdf(pdf_path):
     doc = fitz.open(pdf_path)
     text = ""
