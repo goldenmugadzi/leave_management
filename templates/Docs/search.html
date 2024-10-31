@@ -16,8 +16,8 @@
                         <div class="card-footer flex justify-between items-end"
                              style="max-height: 1rem;
                                     overflow-y: auto">
-                            <span class="text-sm text-right text-green-400">Author: {{ result.author }}</span>
-                            <span class="text-sm text-right text-yellow-400">Published on: {{ result.published_date|date:"F j, Y" }}</span>
+                            <span class="text-sm text-right text-green-400">Published by: {{ result.uploaded_by }}</span>
+                            <span class="text-sm text-right text-yellow-400">Published on: {{ result.uploaded_at }}</span>
                         </div>
                     </div>
                   {% endfor %}

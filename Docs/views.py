@@ -1,10 +1,8 @@
 from django.shortcuts import render, redirect, HttpResponse
 from django.contrib import messages
-import requests
-import os
+import subprocess, requests, os,fitz,time
 from pathlib import Path
 from datetime import datetime
-import fitz
 from PIL import Image
 from tika import parser
 from elasticsearch import Elasticsearch
@@ -101,17 +99,44 @@ def search_view(request):
 
     search_results = []
     for result in results:
-        search_result = {
-            'file_path': result['_source']['file_path'],
-            'metadata': result['_source']['metadata'],
-            'content': result['_source']['content'],
-            'filename':result['filename']
-        }
+        search_result=result["_source"]
+        search_result["uploaded_at"]=datetime.strptime(search_result["uploaded_at"], "%Y-%m-%dT%H:%M:%S.%f%z").strftime("%B %d, %Y %H:%M")
+        search_result["filename"] = search_result["filename"][2:-1]
         search_results.append(search_result)
-    if search_results:
-        print(search_results[0]['metadata'])
+
+    # if search_results:
+    #     print(search_results[0]['metadata'])
     return render(request, "Docs/search.html", {"results": search_results, "query": query})
-    # return render(request, "Docs/search.html", {"results": search_results})
+def  start_tika_server(request):
+    # Path to the Tika server JAR file
+    tika_jar_path = os.path.join(Path(__file__).resolve().parent.parent, "static","tika","tika-server-standard-2.9.2.jar")
+    # Check if the Tika server is already running
+    try:
+        response = requests.get('http://localhost:9998/tika')
+        if response.status_code == 200:
+            print("Tika server is already running.")
+            return
+    except requests.ConnectionError:
+        print("Tika server is not running. Starting the server...")
+
+    # Start the Tika server
+    try:
+        # Start the Tika server as a subprocess
+        subprocess.Popen(['java', '-jar', tika_jar_path], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        print("Tika server started. Waiting for it to initialize...")
+        
+        # Wait for a few seconds to allow the server to start
+        time.sleep(5)
+        
+        # Check if the server is up
+        response = requests.get('http://localhost:9998/tika')
+        if response.status_code == 200:
+            print("Tika server is now running.")
+        else:
+            print("Failed to start Tika server.")
+    except Exception as e:
+        print(f"An error occurred while starting the Tika server: {e}")
+    return index_files(request)    
 
 def index_files(request):
     es = Elasticsearch([{'host': 'localhost', 'port': 9200, 'scheme': 'http'}])  # Adjust host and port if necessary
@@ -146,7 +171,7 @@ def index_files(request):
                 # Index the content to Elasticsearch
                 doc = {
                     'file_path': file_path,
-                    'filename': metadata.get('resourceName', 'unknown'),
+                    'filename': metadata.get('resourceName', 'unknown')[2:-1],
                     'content': content,
                     'uploaded_at': timezone.now(),
                     'uploaded_by': request.user.get_full_name(),
@@ -155,6 +180,7 @@ def index_files(request):
                     es.index(index='documents', body=doc)
                 except Exception as e:
                     print(f"Failed to index document: {e}")
+                    start_tika_server(request)
                     return HttpResponse(f"Failed to index document: {e}", status=500)
    
     return HttpResponse("Indexing completed successfully.")
