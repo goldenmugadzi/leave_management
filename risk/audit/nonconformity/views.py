@@ -132,7 +132,7 @@ def nonconformity_details(request, nonconformity_id):
                     messages.success(request, "You have successfully accepted the nonconformity.")
                     return redirect("nonconformity:nonconformities")
                 else:
-                    messages.error(request, "Sorry, something went wrong. Please fill in the required details and try again.")
+                    messages.error(request, "Sorry, something went wrong. Please fill in the required details and try again. Be sure to pick a date!")
                     return render(request, "risk/nonconformity/nonconformity_details.html", {"nonconformity": nonconformity, "acceptanceForm": acceptanceForm, "rejectionForm": rejectionForm, "form": form})
             elif accepeted == "False":
                 if rejectionForm.is_valid():
