@@ -683,10 +683,12 @@ def receipt(request):
         receipt_file = request.FILES['file-input']
         print(receipt_file)
         used = request.POST['disbursed']
+        payee = request.POST['payee']
         pettycash = request.POST['petty_id']
         pettycash = Pettycash.objects.filter(petty_id=pettycash).first()
         pettycash.receipt_file = receipt_file
         pettycash.amount_used = used
+        pettycash.payee = payee
         pettycash.save()
         messages.success(request, 'Receipt uploaded successfully')
         return redirect('pettycash:pettycash_detail', petty_id=pettycash.petty_id)

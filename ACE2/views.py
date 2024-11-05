@@ -122,8 +122,8 @@ def Ace_detail(request, Ace_id2):
         # budget calculations
         budget = ace_item.budget_id.budget_id
         budget = AssetBudget.objects.get(budget_id=budget)
-        balance_before = budget.balance
-        balance_after = balance_before - ace_item.amount
+        balance_before = 0
+        balance_after = 0
 
         print("ace: ", ace_item.Ace_id)
         transaction = Transactions.objects.filter(Ace_id2=str(ace_item.Ace_id)).first()
@@ -131,7 +131,7 @@ def Ace_detail(request, Ace_id2):
         # print("transaction: ", transaction)
         print("transaction: ", str(transaction.approval_status))
 
-        if transaction.approval_status != "approved by General Manager":
+        if transaction.approval_status != "approved by General Manager" and budget.balance>=0 and budget.balance>=ace_item.amount:
             budget.balance = budget.balance - ace_item.amount
             budget.to_be_withdrawn = budget.to_be_withdrawn - ace_item.amount
             budget.withdrawal_date = date.today()
