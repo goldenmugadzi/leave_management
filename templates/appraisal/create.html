@@ -1,0 +1,31 @@
+{% extends "admin_layout.html" %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<form method="post">
+    {%csrf_token%}
+    <div class="flex flex-col gap-8">
+        <div class="border-red-600 border-2 container">
+            <h3>Cost Center</h3>
+            <div>{{ cost_center_form.name|as_crispy_field }}</div>
+            <div>{{ cost_center_form.code|as_crispy_field }}</div>
+        </div>
+        
+        <div class="border-red-600 border-2 container">
+            <h3>User Profile</h3>
+            {{ user_profile_form|crispy }}
+        </div>
+
+        <div class="border-red-600 border-2 container">
+            <h3>Designation form</h3>
+            {{ designation_form|crispy }}
+        </div>
+        
+        <div class="border-red-600 border-2 container">
+            <h3>Qualifications</h3>
+            {{ qualification_form|crispy }}
+        </div>
+        <button type="submit">Create</button>
+    </div>
+</form>
+{% endblock%}

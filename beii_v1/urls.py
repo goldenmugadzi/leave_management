@@ -45,6 +45,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     # path('accounts/', include('django.contrib.auth.urls')),
     path('ace/', include('ACE2.urls')),
+    path('appraisal/', include('appraisal.urls')),
 
     # path('ace/', include('finance.Ace.urls')),
     path('direct_purchases/', include('finance.Direct_purchases.urls')),

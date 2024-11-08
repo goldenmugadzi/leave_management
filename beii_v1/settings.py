@@ -118,13 +118,16 @@ INSTALLED_APPS = [
     'finance.Direct_purchases',
     'ACE2',
     'esearch',
+    'appraisal.apps.AppraisalConfig',
 
     'reports',
     'sweetify',
     'mathfilters',
     'tokens',
     'commecial.tempertockens',
-    'competence_building.apps.CompetenceBuildingConfig'
+    'competence_building.apps.CompetenceBuildingConfig',
+    'crispy_forms',
+    'crispy_tailwind'
 ]
 
 AUTH_USER_MODEL = 'users.UserProfile'
@@ -274,3 +277,6 @@ STATICFILES_DIRS = [BASE_DIR / "static", BASE_DIR / "uploads", BASE_DIR / "media
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LOGIN_REDIRECT_URL = '/dashboards/overview'
+
+CRISPY_ALLOWED_TEMPLATE_PACKS = "tailwind"
+CRISPY_TEMPLATE_PACK = "tailwind"

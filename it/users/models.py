@@ -6,6 +6,7 @@ from django.contrib.auth.models import AbstractUser
 from django.contrib.auth.models import BaseUserManager
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
+from helpers.models import TimeStamp
 
 class UserManager(BaseUserManager):
     def create_user(self, username, password=None, **extra_fields):
@@ -258,3 +259,17 @@ class Responsibilities(models.Model):
     def __str__(self):
         return str(self.role.name)
    
+
+class UserQualification(TimeStamp):
+    """_summary_
+
+    Args:
+        TimeStamp (_type_): _description_
+    """
+    user = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
+    name = models.CharField(max_length=255, null=False, blank=False)
+    file = models.FileField(upload_to='uploads/user_qualification')
+    
+    def __str__(self) -> str:
+        return f"{self.name}"
+    
