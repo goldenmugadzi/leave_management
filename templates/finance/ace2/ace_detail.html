@@ -229,16 +229,10 @@
 {#                                        <span class="inline-block font-bold text-start rounded-full text-sm">Customer </span>#}
 {#                                    <span class="inline-block text-end rounded-full text-sm">{{ ace.region}} </span>#}
 {#                        </div>#}
-                    {% if ace.balance_before==0 %}
-                        
-                        <p class="font-bold   mb-2"> Approved</p>
-                        
-                        {% else %}
                             <p class="font-bold   mb-2"> From Budget           : {{ ace.budget_id }}</p>
                             <p class="font-bold mb-2"> Balance before ACE : {{ balance_before }}</p>
                             <p class="font-bold   mb-2"> Amount                : {{ ace.amount }}</p>
                             <p class="font-bold mb-2"> Balance after ACE  : {{ balance_after }}</p>
-                    {% endif %} 
                             
                             {% if ace.classification == 'Project' %}
                                 <p class="font-bold   mb-2"> Present Tariff :{{ ace.project_name }}</p>
