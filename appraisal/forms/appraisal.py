@@ -8,9 +8,13 @@ class UserQualificationForm(forms.ModelForm):
         exclude = ["created", "updated", "user"]
         
 class CostCenterForm(forms.ModelForm):
+    name = forms.ModelChoiceField(queryset=CostCenter.objects.all())
     class Meta:
         model = CostCenter
         exclude = ["id", "parent"]
+        labels = {
+            'name': 'Section',
+        }
 
 class UserProfileForm(forms.ModelForm):
     class Meta:
@@ -26,4 +30,4 @@ class AppraisalForm(forms.ModelForm):
     
     class Meta:
         model = Appraisal
-        fields = ["user"]
+        fields = []
