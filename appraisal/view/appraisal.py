@@ -30,8 +30,6 @@ class AppraisalCreateView(CreateView):
         context =  super().get_context_data(**kwargs)
         user_object = self.request.user
         context.update(self.get_initial_forms(user_object=user_object))
-        cost_centers = CostCenter.objects.all().values('id', 'name', 'code')
-        context['cost_centers'] = list(cost_centers)
         return context
     
     def form_valid(self, form: BaseModelForm) -> HttpResponse:
