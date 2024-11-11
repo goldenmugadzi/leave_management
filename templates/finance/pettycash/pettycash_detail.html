@@ -161,7 +161,7 @@
 
 
                                 {% else %}
-                                    <p class="font-bold   mb-2"> Receipt:  <a href="/pettycash/attachment/{{pettycash.receipt_file.name|basename}}/"><button class="bg-red-500 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded">
+                                    <p class="font-bold   mb-2"> Receipt: <a href="/media/{{pettycash.receipt_file}}"><button class="bg-red-500 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded">
                                         {{ pettycash.receipt_file.name|basename }}
                                     </button>
                                     </a></p>

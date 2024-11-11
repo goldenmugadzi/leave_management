@@ -183,6 +183,23 @@ def import_processes(request):
             
     return JsonResponse({"message": "Data imported successfully"})
     
+def import_files(request):
+    level = request.POST['level']
+    root_folder = request.POST['root_folder']
+    folder = request.POST['subfolder_'+level]
+    section = request.POST['section']
+    region = request.POST['region']
+    
+    files_directory = os.path.join(settings.MEDIA_ROOT, 'uploads', application)
+    files = os.listdir(files_directory)
+    for file in files:
+        file_path = os.path.join(files_directory, file)
+        if os.path.isfile(file_path):
+            file_name = os.path.basename(file)
+            file_record = KnowldgeCentreFile(filename=file_name, file=file_path)
+            file_record.save()
+            print("success: ", file_name)
+    
 @login_required
 def download_file(request):
     file_id = request.GET.get('file_id')

@@ -3,6 +3,7 @@ from .views import *
 
 urlpatterns = [
     path('overview/', dashboard_index, name='dashboard_index'),
+    path('dsm/', dsm_dashboard, name='dsm_dashboard'),
     path('filter/<str:item>', dashboard_filter, name='dashboard_filter'),
     path('pbnc/upload', pbnc_upload, name='pbnc_upload'),
     path('td/upload', td_upload, name='td_upload'),

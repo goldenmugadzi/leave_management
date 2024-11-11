@@ -112,7 +112,7 @@ def ms_exhange_send(subject, body, to_recipients, cc_recipients):
     return JsonResponse({"status": "success", "message": "Email sent successfully"})
 
 @login_required
-@allowed_roles(['Administrator'], ['users'])
+# @allowed_roles(['Administrator'], ['users'])
 def add_centers(request):
     
     for region in REGIONS:
@@ -185,7 +185,7 @@ def add_centers(request):
 
 
 @login_required
-@allowed_roles(['Administrator'], ['users'])
+# @allowed_roles(['Administrator'], ['users'])
 def add_user(request):
     if request.method == "GET":
 
@@ -302,7 +302,7 @@ def add_user(request):
 
 
 @login_required
-@allowed_roles(['Administrator'], ['users'])
+# @allowed_roles(['Administrator'], ['users'])
 def get_user_records(request):
 
     user_page = 'users/user_index.html'
@@ -383,7 +383,7 @@ def datatable_data(request):
         })
 
 @login_required
-@allowed_roles(['Administrator'], ['users'])
+# @allowed_roles(['Administrator'], ['users'])
 def update_user(request):
     if request.method == "GET":
         user_profile = UserProfile.objects.get(id=request.GET['i'])
@@ -525,6 +525,28 @@ def update_user(request):
         return redirect("/users/users-index")
     
 @login_required
+def set_requesters(request):
+    if request.method == "GET":
+        region = Regions.objects.filter(id=7).first()
+        nc_app = Application.objects.filter(id=1).first()
+        petty_app = Application.objects.filter(id=3).first()
+        ace_app = Application.objects.filter(id=7).first()
+        nc_requester = Roles.objects.filter(app_id=nc_app, role="recipient").first()
+        petty_requester = Roles.objects.filter(app_id=petty_app, role="create").first()
+        ace_requester = Roles.objects.filter(app_id=ace_app, role="create").first()
+        ho_users = UserProfile.objects.filter(region=region).all()
+        for user in ho_users:
+            user.roles.clear()
+            user.roles.add(ace_requester)
+            user.roles.add(petty_requester)
+            user.roles.add(nc_requester)
+            user.save()
+        
+        return JsonResponse({"status": "success", "message": "Requesters set successfully"})
+    else:
+        return JsonResponse({"status": "error", "message": "Invalid request method"})
+    
+@login_required
 def view_user(request):
     if request.method == "GET":
         user_profile = UserProfile.objects.get(id=request.user.id)
@@ -565,7 +587,7 @@ def view_user(request):
         )
         
 @login_required
-@allowed_roles(['Administrator'], ['users'])
+# @allowed_roles(['Administrator'], ['users'])
 def update_userx(request):
     if request.method == "GET":
 
@@ -699,7 +721,7 @@ def update_userx(request):
 
 
 @login_required
-@allowed_roles(['Administrator'], ['users'])
+# @allowed_roles(['Administrator'], ['users'])
 def reset_user_password(request):
     if request.method == "POST":
 
@@ -952,7 +974,7 @@ def get_user_all_groups(request):
         )
 
 @login_required
-@allowed_roles(['Administrator'], ['users'])
+# @allowed_roles(['Administrator'], ['users'])
 def import_users(request):
     if request.method == "POST":
         file = request.FILES['file']

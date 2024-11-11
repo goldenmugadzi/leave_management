@@ -1264,6 +1264,60 @@ def get_pending_fm_approval(request):
 
 def get_your_schedules(user_id, search_value=None, column_name=None, region=None):
     
+    try:
+        # Example usage
+        cs_all = ComparativeSchedules.objects.filter(
+        region=region,
+                cancelled=False,  # Only get items from non-cancelled CS
+                csapproval__approval='Approved').all()
+        
+        for css in cs_all:
+            css_ = css.select_related(
+                'item_id',
+                'sup_id',
+                'cs_id'
+            ).values(
+                'cs_id__cs_id',  # CS reference number
+                'item_id__item_name',
+                'item_id__quantity',
+                'item_id__unit_of_measurement',
+                'sup_id__supplier_name',
+                'unit_price',
+                'quoted_qty',
+                'total',
+                'quote_date',
+                'cs_id__currency__currency'
+            )
+
+            for item in css_:
+                print(f"""
+                CS Ref: {item['cs_id__cs_id']}
+                Item: {item['item_id__item_name']}
+                Quantity: {item['quoted_qty']} {item['item_id__unit_of_measurement']}
+                Unit Price: {item['unit_price']} {item['cs_id__currency__currency']}
+                Total: {item['total']} {item['cs_id__currency__currency']}
+                Supplier: {item['sup_id__supplier_name']}
+                Quote Date: {item['quote_date']}
+                """)
+                
+            try:
+                writer = csv.writer(response)
+                writer.writerow(['CS ID', 'PR ID', 'PR Number', 'PR Date', 'Scope of Work', 'Closing Date', 'Closing Time', 'Advert', 'PR Number', 'PR Date', 'CS Opened', 'TAC Date', 'Created By', 'Committee Approval', 'GM Approval', 'FM Approval', 'Section', 'Region', 'Created At'])
+                for item in css_:
+                    try:
+                        writer.writerow([item['cs_id__cs_id'], item['item_id__item_name'], item['quoted_qty'], item['item_id__unit_of_measurement'], item['unit_price'], item['total'], item['cs_id__currency__currency'], item['sup_id__supplier_name'], item['quote_date']])
+                        
+                    except Exception as ex:
+                        print("For Writting to CSV: ", ex)
+            except Exception as ex:
+                print("Error Writting to CSV: ", ex)
+        
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="rfq.csv"'
+        return response
+    except Exception as ex:
+        print("Error: ", ex)    
+    
     cs = ComparativeSchedules.objects.filter(
         region=region,
         created_by_id=user_id,
@@ -1676,273 +1730,281 @@ def create_comperative_schedule(request):
 @login_required
 def get_comperative_schedule_data(request, cs_id):
     
-    request_user = request.user
-    request_user_profile = UserProfile.objects.filter(id=request_user.id).first()
-    user_comparative_schedule_role = request_user_profile.get_user_role_for_application(APP_NAME)           
-
-    cs = ComparativeSchedules.objects.filter(cs_id=cs_id).first()
-    pr = None
-    proc_plan = ""
-    if cs:
-        try:
-            pr = PurchaseRequest.objects.filter(id=cs.pr_id_id).first()
-            proc_plan = cs.proc_plan if cs.proc_plan else ""
-        except Exception as ex:
-            print("Error: ", ex)
-            
-    proc_plans = ProcPlan.objects.all()
-    currencies = Currency.objects.all()
-    user = UserProfile.objects.filter(id=cs.created_by_id).first()
-    region = Regions.objects.filter(id=cs.region_id).first()
-    section = Sections.objects.filter(id=cs.section_id).first()
-    items = CSItems.objects.filter(cs_id=cs).all()
-    cs_items = CSRequiredItems.objects.filter(cs_id=cs).all()
-    bids = Bids.objects.filter(cs_id=cs).all()
-
-    compliance = CSCompliance.objects.filter(cs_id=cs).all()
-    complianceRemarks = CSComplianceRemarks.objects.filter(cs_id=cs).all()
-    
-    rankings = Ranking.objects.filter(cs_id=cs).all()
-    committee = Committee.objects.filter(cs_id=cs).all()
-    gm_approval = CSApproval.objects.filter(cs_id=cs, approver_role="general_manager").first()
-    fm_approval = CSApproval.objects.filter(cs_id=cs, approver_role="finance_manager").first()
-    
-    suppliers = Supplier.objects.all()
-    pr_items = PrItem.objects.filter(purchase_request=cs.pr_id_id, ordered=False).all()
-    users = UserProfile.objects.filter(region=cs.region).all()
-    
-    items_list = []
-    for item in items:
-        items_list.append({
-            "item_id": item.item_id,
-            "item_required": item.item_name,
-            "quantity": item.quantity,
-            "unit_of_measurement": item.unit_of_measurement,
-            "created_at": item.created_at,
-        })
-        
-    grouped_by_bid = {}
-    grouped_data = {}
-    for bid in bids:
-        print("bid: ", bid.sup_id.name, bid.bid_no)
-        try:
-            bid_no = bid.bid_no
-            if bid_no not in grouped_data:
-                encoded_file_data = ""
-                if bid.bid_document:
-                    try:
-                        with open(bid.bid_document, 'rb') as f:
-                            file_data = f.read()
-                        encoded_file_data = base64.b64encode(file_data).decode('utf-8')
-                    except Exception as ex:
-                        print("Error: ", ex)
-                grouped_data[bid_no] = {
-                    'bid_count': bid.bid_no,
-                    'supplier_name': bid.sup_id.name,
-                    'bid_date': bid.quote_date,
-                    'encoded_bid_document': encoded_file_data,
-                    'bid_document': None,
-                    'items': []
-                }
-            grouped_data[bid_no]['items'].append({
-                'item_id': bid.item_id.item_id,
-                'item_required': bid.item_id.item_name,  # assume this is constant
-                'quantity': bid.item_id.quantity,
-                'unit_of_measurement': bid.item_id.unit_of_measurement,
-                'unit_price': bid.unit_price,
-                'vat': bid.vat,
-                'total_price': bid.total,
-            })
-        except Exception as ex:
-            print("Error: ", ex)
-    result = list(grouped_data.values())
-        
-    compliance_list = []
-    for comp in compliance:
-        sup_name = ""
-        try:
-            sup_name = comp.supplier_id.name
-        except Exception as ex:
-            print("Error: ", ex)
-        
-        if sup_name:
-            compliance_list.append({
-                "supplier_name": sup_name,
-                "payment_terms": comp.payment_terms,
-                "bid_validity": comp.bid_validity,
-                "delivery_period": comp.delivery_period,
-                "technical_specifications": comp.technical_specifications,
-                "valid_tax_clearance": comp.valid_tax_clearance,
-                "registered_with_praz": comp.registered_with_praz,
-                "site_visit": comp.site_visit_done,
-                "samples_required": comp.samples_delivered,
-                "decision": comp.decision,
-                "remarks": comp.remarks,
-                "created_at": comp.created_at,
-            })
-    
-    compliance_remarks = []
-    for remark in complianceRemarks:
-        try:
-            compliance_remarks.append({
-            "supplier": remark.supplier_id.id,
-            "supplier_name": remark.supplier_id.name,
-            "remarks": remark.remarks,
-            })
-        except Exception as ex:
-            print("Error: ", ex)
-        
-    rankings_list = []
-    for rank in rankings:
-        try:
-            supplier = Supplier.objects.filter(id=rank.supplier_id.id).first()
-            rankings_list.append({
-                "supplier_name": supplier.name if supplier else "",
-                "rank": rank.rank,
-                "remarks": rank.remarks,
-                "decision": rank.decision,
-                "total": rank.total,
-                "created_at": rank.created_at,
-            })
-        except Exception as ex:
-            print("Error: ", ex)
-        
-    committee_list = []
-    for member in committee:
-        try:
-            if member.user:
-                committee_list.append({
-                    "memberUserName": member.user.username if member.user else "",
-                    "memberName": member.user.first_name + " " + member.user.last_name if member.user else "",
-                    "memberPosition": member.committee_position,
-                    "committeeStatus": member.committee_status,
-                    "memberApproval": member.committee_approval if member.committee_approval else "",
-                    "committeeJustification": member.justification,
-                    "committeeDate": member.committee_date,
-                }) 
-        except Exception as ex:
-            print("commitee_list Error: ", ex) 
-    
-    encoded_advert_file = ""
     try:
-        if cs.advert:
-            with open(cs.advert, 'rb') as f:
-                file_data = f.read()
-            encoded_advert_file = base64.b64encode(file_data).decode('utf-8')
-    except Exception as ex:
-        print("Error: ", ex)
-        
-    cs_owner = UserProfile.objects.filter(id=cs.created_by_id).first()  
-    pr_attachments = Attachment.objects.filter(purchase_request=pr).all()
-    
-    pr_at_list = []
-    for at in pr_attachments:
-        encoded_file_data = ""
-        if at.file:
+        request_user = request.user
+        request_user_profile = UserProfile.objects.filter(id=request_user.id).first()
+        user_comparative_schedule_role = request_user_profile.get_user_role_for_application(APP_NAME)           
+
+        cs = ComparativeSchedules.objects.filter(cs_id=cs_id).first()
+        pr = None
+        proc_plan = ""
+        if cs:
             try:
-                file_data = at.file.read()
-                encoded_file_data = base64.b64encode(file_data).decode('utf-8')
-                pr_at_list.append({
-                    "id": at.id,
-                    "file": encoded_file_data,
-                    "name": os.path.basename(at.file.name),
+                pr = PurchaseRequest.objects.filter(id=cs.pr_id_id).first()
+                proc_plan = cs.proc_plan if cs.proc_plan else ""
+            except Exception as ex:
+                print("Error: ", ex)
+                
+        proc_plans = ProcPlan.objects.all()
+        currencies = Currency.objects.all()
+        user = UserProfile.objects.filter(id=cs.created_by_id).first()
+        region = Regions.objects.filter(id=cs.region_id).first()
+        section = Sections.objects.filter(id=cs.section_id).first()
+        items = CSItems.objects.filter(cs_id=cs).all()
+        cs_items = CSRequiredItems.objects.filter(cs_id=cs).all()
+        bids = Bids.objects.filter(cs_id=cs).all()
+
+        compliance = CSCompliance.objects.filter(cs_id=cs).all()
+        complianceRemarks = CSComplianceRemarks.objects.filter(cs_id=cs).all()
+        
+        rankings = Ranking.objects.filter(cs_id=cs).all()
+        committee = Committee.objects.filter(cs_id=cs).all()
+        gm_approval = CSApproval.objects.filter(cs_id=cs, approver_role="general_manager").first()
+        fm_approval = CSApproval.objects.filter(cs_id=cs, approver_role="finance_manager").first()
+        
+        suppliers = Supplier.objects.all()
+        pr_items = PrItem.objects.filter(purchase_request=cs.pr_id_id, ordered=False).all()
+        users = UserProfile.objects.filter(region=cs.region).all()
+        
+        items_list = []
+        for item in items:
+            items_list.append({
+                "item_id": item.item_id,
+                "item_required": item.item_name,
+                "quantity": item.quantity,
+                "unit_of_measurement": item.unit_of_measurement,
+                "created_at": item.created_at,
+            })
+            
+        grouped_by_bid = {}
+        grouped_data = {}
+        for bid in bids:
+            print("bid: ", bid.sup_id.name, bid.bid_no)
+            try:
+                bid_no = bid.bid_no
+                if bid_no not in grouped_data:
+                    encoded_file_data = ""
+                    if bid.bid_document:
+                        try:
+                            with open(bid.bid_document, 'rb') as f:
+                                file_data = f.read()
+                            encoded_file_data = base64.b64encode(file_data).decode('utf-8')
+                        except Exception as ex:
+                            print("Error: ", ex)
+                    grouped_data[bid_no] = {
+                        'bid_count': bid.bid_no,
+                        'supplier_name': bid.sup_id.name,
+                        'bid_date': bid.quote_date,
+                        'encoded_bid_document': encoded_file_data,
+                        'bid_document': None,
+                        'items': []
+                    }
+                grouped_data[bid_no]['items'].append({
+                    'item_id': bid.item_id.item_id,
+                    'item_required': bid.item_id.item_name,  # assume this is constant
+                    'quantity': bid.item_id.quantity,
+                    'unit_of_measurement': bid.item_id.unit_of_measurement,
+                    'unit_price': bid.unit_price,
+                    'vat': bid.vat,
+                    'total_price': bid.total,
                 })
             except Exception as ex:
                 print("Error: ", ex)
-      
-    cs_item_list = []
-    for cs_item in cs_items:
-        cs_item_list.append({
-            "id": cs_item.id,
-            "item_required": cs_item.item_name,
-            "quantity": cs_item.quantity,
-            "unit_of_measurement": cs_item.unit_of_measurement,
-            "ordered": True,
-        })
+        result = list(grouped_data.values())
+            
+        compliance_list = []
+        for comp in compliance:
+            sup_name = ""
+            try:
+                sup_name = comp.supplier_id.name
+            except Exception as ex:
+                print("Error: ", ex)
+            
+            if sup_name:
+                compliance_list.append({
+                    "supplier_name": sup_name,
+                    "payment_terms": comp.payment_terms,
+                    "bid_validity": comp.bid_validity,
+                    "delivery_period": comp.delivery_period,
+                    "technical_specifications": comp.technical_specifications,
+                    "valid_tax_clearance": comp.valid_tax_clearance,
+                    "registered_with_praz": comp.registered_with_praz,
+                    "site_visit": comp.site_visit_done,
+                    "samples_required": comp.samples_delivered,
+                    "decision": comp.decision,
+                    "remarks": comp.remarks,
+                    "created_at": comp.created_at,
+                })
         
-    # copy cs_item_list to pr_item_list
-    pr_item_list = copy.deepcopy(cs_item_list) if cs_item_list else []
-    for pr_item in pr_items:
-        pr_item_list.append({
-            "id": pr_item.id,
-            "item_required": pr_item.item_required,
-            "quantity": pr_item.quantity,
-            "unit_of_measurement": pr_item.unit_of_measurement.name if pr_item.unit_of_measurement else "",
-            "ordered": pr_item.ordered,
-        })
+        compliance_remarks = []
+        for remark in complianceRemarks:
+            try:
+                compliance_remarks.append({
+                "supplier": remark.supplier_id.id,
+                "supplier_name": remark.supplier_id.name,
+                "remarks": remark.remarks,
+                })
+            except Exception as ex:
+                print("Error: ", ex)
+            
+        rankings_list = []
+        for rank in rankings:
+            try:
+                supplier = Supplier.objects.filter(id=rank.supplier_id.id).first()
+                rankings_list.append({
+                    "supplier_name": supplier.name if supplier else "",
+                    "rank": rank.rank,
+                    "remarks": rank.remarks,
+                    "decision": rank.decision,
+                    "total": rank.total,
+                    "created_at": rank.created_at,
+                })
+            except Exception as ex:
+                print("Error: ", ex)
+            
+        committee_list = []
+        for member in committee:
+            try:
+                if member.user:
+                    committee_list.append({
+                        "memberUserName": member.user.username if member.user else "",
+                        "memberName": member.user.first_name + " " + member.user.last_name if member.user else "",
+                        "memberPosition": member.committee_position,
+                        "committeeStatus": member.committee_status,
+                        "memberApproval": member.committee_approval if member.committee_approval else "",
+                        "committeeJustification": member.justification,
+                        "committeeDate": member.committee_date,
+                    }) 
+            except Exception as ex:
+                print("commitee_list Error: ", ex) 
+        
+        encoded_advert_file = ""
+        try:
+            if cs.advert:
+                with open(cs.advert, 'rb') as f:
+                    file_data = f.read()
+                encoded_advert_file = base64.b64encode(file_data).decode('utf-8')
+        except Exception as ex:
+            print("Error: ", ex)
+            
+        cs_owner = UserProfile.objects.filter(id=cs.created_by_id).first()  
+        pr_attachments = Attachment.objects.filter(purchase_request=pr).all()
+        
+        pr_at_list = []
+        for at in pr_attachments:
+            encoded_file_data = ""
+            if at.file:
+                try:
+                    file_data = at.file.read()
+                    encoded_file_data = base64.b64encode(file_data).decode('utf-8')
+                    pr_at_list.append({
+                        "id": at.id,
+                        "file": encoded_file_data,
+                        "name": os.path.basename(at.file.name),
+                    })
+                except Exception as ex:
+                    print("Error: ", ex)
+        
+        cs_item_list = []
+        for cs_item in cs_items:
+            cs_item_list.append({
+                "id": cs_item.id,
+                "item_required": cs_item.item_name,
+                "quantity": cs_item.quantity,
+                "unit_of_measurement": cs_item.unit_of_measurement,
+                "ordered": True,
+            })
+            
+        # copy cs_item_list to pr_item_list
+        pr_item_list = copy.deepcopy(cs_item_list) if cs_item_list else []
+        for pr_item in pr_items:
+            pr_item_list.append({
+                "id": pr_item.id,
+                "item_required": pr_item.item_required,
+                "quantity": pr_item.quantity,
+                "unit_of_measurement": pr_item.unit_of_measurement.name if pr_item.unit_of_measurement else "",
+                "ordered": pr_item.ordered,
+            })
 
-    context = {
-        "requester_role": user_comparative_schedule_role.role if user_comparative_schedule_role else "",
-        "cs_id": cs.cs_id,
-        "cs_owner": cs_owner.username if cs_owner else "",
-        "creator": cs_owner.first_name + " " + cs_owner.last_name if cs_owner else "",
-        "pr_id": pr.id,
-        "pr_number": cs.pr_number,
-        "pr_date": cs.pr_date,
-        "additional_notes": cs.additional_notes,        
-        "scope_of_work": cs.scope_of_work,
-        "closing_date": cs.closing_date,
-        "closing_time": cs.closing_time,
-        "advert": encoded_advert_file,
-        "pr_number": cs.pr_number,
-        "pr_date": cs.pr_date,
-        "ref_date": cs.ref_date,
-        "cs_opened": cs.cs_opened,
-        "tac_date": cs.tac_date,
-        "show_site_visit": cs.show_site_visit,
-        "show_samples_required": cs.show_sample_required,
-        "created_by": user.username,
-        "section": section.section if section else "",
-        "region": region.region if region else "",
-        "created_at": cs.created_at,
-        "proc_plan": {
-            "id": proc_plan.id,
-            "proc_ref": proc_plan.proc_ref,
-            "description": proc_plan.description,
-            } if proc_plan else {},
-        "proc_plans": list(proc_plans.values('id', 'proc_ref', 'description')),
-        "currencies": list(currencies.values('id', 'currency')),
-        "currency": {
-            "id": cs.currency.id,
-            "currency": cs.currency.currency,
-            } if cs.currency else {},
-        "gm_approval": {
-            "id": gm_approval.id,
-            "approver": gm_approval.user.username if gm_approval.user else "",
-            "approver_name": gm_approval.user.first_name + " " + gm_approval.user.last_name if gm_approval.user else "",
-            "approver_role": gm_approval.approver_role,
-            "approval": gm_approval.approval,
-            "justification": gm_approval.justification,
-            "approval_date": gm_approval.approval_date,
-            } if gm_approval else {},
-        "fm_approval": {
-            "id": fm_approval.id,
-            "approver": fm_approval.user.username if fm_approval.user else "",
-            "approver_name": fm_approval.user.first_name + " " + fm_approval.user.last_name if fm_approval.user else "",
-            "approver_role": fm_approval.approver_role,
-            "approval": fm_approval.approval,
-            "justification": fm_approval.justification,
-            "approval_date": fm_approval.approval_date,
-            } if fm_approval else {},
+        context = {
+            "requester_role": user_comparative_schedule_role.role if user_comparative_schedule_role else "",
+            "cs_id": cs.cs_id,
+            "cs_owner": cs_owner.username if cs_owner else "",
+            "creator": cs_owner.first_name + " " + cs_owner.last_name if cs_owner else "",
+            "pr_id": pr.id,
+            "pr_number": cs.pr_number,
+            "pr_date": cs.pr_date,
+            "additional_notes": cs.additional_notes,        
+            "scope_of_work": cs.scope_of_work,
+            "closing_date": cs.closing_date,
+            "closing_time": cs.closing_time,
+            "advert": encoded_advert_file,
+            "pr_number": cs.pr_number,
+            "pr_date": cs.pr_date,
+            "ref_date": cs.ref_date,
+            "cs_opened": cs.cs_opened,
+            "tac_date": cs.tac_date,
+            "show_site_visit": cs.show_site_visit,
+            "show_samples_required": cs.show_sample_required,
+            "created_by": user.username,
+            "section": section.section if section else "",
+            "region": region.region if region else "",
+            "created_at": cs.created_at,
+            "proc_plan": {
+                "id": proc_plan.id,
+                "proc_ref": proc_plan.proc_ref,
+                "description": proc_plan.description,
+                } if proc_plan else {},
+            "proc_plans": list(proc_plans.values('id', 'proc_ref', 'description')),
+            "currencies": list(currencies.values('id', 'currency')),
+            "currency": {
+                "id": cs.currency.id,
+                "currency": cs.currency.currency,
+                } if cs.currency else {},
+            "gm_approval": {
+                "id": gm_approval.id,
+                "approver": gm_approval.user.username if gm_approval.user else "",
+                "approver_name": gm_approval.user.first_name + " " + gm_approval.user.last_name if gm_approval.user else "",
+                "approver_role": gm_approval.approver_role,
+                "approval": gm_approval.approval,
+                "justification": gm_approval.justification,
+                "approval_date": gm_approval.approval_date,
+                } if gm_approval else {},
+            "fm_approval": {
+                "id": fm_approval.id,
+                "approver": fm_approval.user.username if fm_approval.user else "",
+                "approver_name": fm_approval.user.first_name + " " + fm_approval.user.last_name if fm_approval.user else "",
+                "approver_role": fm_approval.approver_role,
+                "approval": fm_approval.approval,
+                "justification": fm_approval.justification,
+                "approval_date": fm_approval.approval_date,
+                } if fm_approval else {},
+            
+            "pr_items": pr_item_list,
+            "pr_attachments": pr_at_list,
+            "cs_items": cs_item_list,
+            "proc_plans": list(proc_plans.values('id', 'proc_ref', 'description')),
+            "suppliers": list(suppliers.values('id', 'name')),
+            "users": list(users.values('id', 'username', 'first_name', 'last_name')),
+            "items": items_list,
+            "bids": result,
+            "compliance": compliance_list,
+            "complianceRemarks": compliance_remarks,
+            "rankings": rankings_list,
+            "committee": committee_list,
+            "proc_ref": cs.proc_plan.proc_ref if cs.proc_plan else "",
+        }
         
-        "pr_items": pr_item_list,
-        "pr_attachments": pr_at_list,
-        "cs_items": cs_item_list,
-        "proc_plans": list(proc_plans.values('id', 'proc_ref', 'description')),
-        "suppliers": list(suppliers.values('id', 'name')),
-        "users": list(users.values('id', 'username', 'first_name', 'last_name')),
-        "items": items_list,
-        "bids": result,
-        "compliance": compliance_list,
-        "complianceRemarks": compliance_remarks,
-        "rankings": rankings_list,
-        "committee": committee_list,
-        "proc_ref": cs.proc_plan.proc_ref if cs.proc_plan else "",
-    }
-    
-    context = json.dumps(context, default=str)
-    
-    return JsonResponse(context, safe=False)
+        context = json.dumps(context, default=str)
+        
+        return JsonResponse(context, safe=False)
+    except Exception as ex:
+        print("Wholesome Error: ", ex)
+        return JsonResponse({
+            "message": "Error retrieving Comparative Schedule data",
+            "error": str(ex),
+            "success": False,
+        }, safe=False)
 
 def save_file(f, file_path):
     if f:
