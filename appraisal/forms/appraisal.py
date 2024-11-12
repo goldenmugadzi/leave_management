@@ -1,6 +1,8 @@
 from django import forms
+from django.forms import modelformset_factory
 from it.users.models import UserQualification, CostCenter, UserProfile, Designations
-from ..models import Appraisal
+from ..models import Appraisal, AppraisalExperience, Experience
+
 
 class UserQualificationForm(forms.ModelForm):
     class Meta:
@@ -26,8 +28,19 @@ class DesignationForm(forms.ModelForm):
         model = Designations
         fields = ["identifier", "chk"]
         
+class AppraisalExperienceForm(forms.ModelForm):
+    class Meta:
+        model = AppraisalExperience
+        fields = ['experience', 'years_of_experience', 'months_of_experience']
+        
+        
 class AppraisalForm(forms.ModelForm):
     
     class Meta:
         model = Appraisal
         fields = []
+        
+class ExperienceForm(forms.ModelForm):
+    class Meta:
+        model = Experience
+        fields = ["name"]
