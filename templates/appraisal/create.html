@@ -9,6 +9,39 @@
             <h3>Cost Center</h3>
             <div>{{ cost_center_form.name|as_crispy_field }}</div>
         </div>
+        <div class="border-red-600 border-2 container">
+            <fieldset class="module aligned">
+                <h3>Experiences</h3>
+                {{ appraisal_experience_forms.management_form }}
+                {% for appraisal_experience_form in appraisal_experience_forms %}
+                <div class="form-row field-experience"">
+                    <!-- Experience field -->
+                    {{ appraisal_experience_form.experience|as_crispy_field }}
+                    <a 
+                    href="{% url 'create_experience' %}"
+                    onclick="window.open(this.href, 'experience_popup', 'width=600,height=400'); return false;"
+                    data-pop="yes"
+                    title="Add another experience"
+                    >
+                        <img src="/static/admin/img/icon-addlink.svg" alt="Add" width="20" height="20">
+                    </a>
+                </div>
+
+                <!-- years of experience field -->
+                <div class="form-row field-years_of_experience">
+                    <label for="{{ appraisal_experience_form.years_of_experience.id_for_label }}">Years of Experience:</label>
+                    {{ appraisal_experience_form.years_of_experience|as_crispy_field }}
+                </div>
+
+                <!-- months of experience field -->
+                <div class="form-row field-months_of_experience">
+                    <label for="{{ appraisal_experience_form.months_of_experience.id_for_label }}">Months of Experience:</label>
+                    {{ appraisal_experience_form.months_of_experience|as_crispy_field }}
+                </div>
+                {% endfor %}
+
+            </fieldset>
+        </div>
         
         <div class="border-red-600 border-2 container">
             <h3>User Profile</h3>
@@ -28,3 +61,32 @@
     </div>
 </form>
 {% endblock%}
+{% block scripts %} 
+<script>
+    function refreshExperienceDropdown() {
+        // hit experience_list_api
+        fetch("{% url 'experience_list_api' %}")
+            .then(response => response.json())
+            .then(data => {
+                const experienceDropdown = document.getElementById("id_appraisal-0-experience");
+                experienceDropdown.innerHTML = ""; // Clear current options
+                
+                // Add a default element which is the first array element
+                firstElement = data[0]
+                const defaultOption = document.createElement("option");
+                defaultOption.value = firstElement.id;
+                defaultOption.textContent = firstElement.name;
+                experienceDropdown.appendChild(defaultOption);
+
+                // Populate with new options
+                data.forEach(experience => {
+                    const option = document.createElement("option");
+                    option.value = experience.id;
+                    option.textContent = experience.name;
+                    experienceDropdown.appendChild(option);
+                });
+            })
+            .catch(error => console.error('Error refreshing experience dropdown:', error));
+    }
+</script>
+{% endblock scripts %}
