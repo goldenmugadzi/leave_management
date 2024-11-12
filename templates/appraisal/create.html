@@ -13,33 +13,18 @@
             <fieldset class="module aligned">
                 <h3>Experiences</h3>
                 {{ appraisal_experience_forms.management_form }}
-                {% for appraisal_experience_form in appraisal_experience_forms %}
-                <div class="form-row field-experience"">
-                    <!-- Experience field -->
-                    {{ appraisal_experience_form.experience|as_crispy_field }}
-                    <a 
-                    href="{% url 'create_experience' %}"
-                    onclick="window.open(this.href, 'experience_popup', 'width=600,height=400'); return false;"
-                    data-pop="yes"
-                    title="Add another experience"
-                    >
-                        <img src="/static/admin/img/icon-addlink.svg" alt="Add" width="20" height="20">
-                    </a>
+                <div class="experience-forms">
+                    {% for appraisal_experience_form in appraisal_experience_forms %}
+                        {% include "appraisal/experience_base.html" with experience_form=appraisal_experience_form %}
+                    {% endfor %}
                 </div>
 
-                <!-- years of experience field -->
-                <div class="form-row field-years_of_experience">
-                    <label for="{{ appraisal_experience_form.years_of_experience.id_for_label }}">Years of Experience:</label>
-                    {{ appraisal_experience_form.years_of_experience|as_crispy_field }}
+                <!-- Hidden template for cloning -->
+                <div id="empty-form-template" style="display: none;">
+                    {% include "appraisal/experience_base.html" with experience_form=appraisal_experience_forms.empty_form total_form_count=appraisal_experience_forms.total_form_count %}
                 </div>
 
-                <!-- months of experience field -->
-                <div class="form-row field-months_of_experience">
-                    <label for="{{ appraisal_experience_form.months_of_experience.id_for_label }}">Months of Experience:</label>
-                    {{ appraisal_experience_form.months_of_experience|as_crispy_field }}
-                </div>
-                {% endfor %}
-
+                <button type="button" id="add-experience-btn" onclick="addExperienceForm('{{ appraisal_experience_forms.total_form_count }}')">Add Experience</button>
             </fieldset>
         </div>
         
@@ -63,30 +48,67 @@
 {% endblock%}
 {% block scripts %} 
 <script>
+
+    // Refreshes all experience dropdowns in formsets with updated experience options from the server.
     function refreshExperienceDropdown() {
-        // hit experience_list_api
-        fetch("{% url 'experience_list_api' %}")
-            .then(response => response.json())
-            .then(data => {
-                const experienceDropdown = document.getElementById("id_appraisal-0-experience");
+        // get all experience dropdowns in formsets
+        const experienceDropdowns = document.querySelectorAll("select[id^='id_appraisal-'][id$='-experience']");
+
+    // Fetch updated list of experiences
+    fetch("{% url 'experience_list_api' %}")
+        .then(response => response.json())
+        .then(data => {
+            // Iterate through each dropdown and update its options
+            experienceDropdowns.forEach(experienceDropdown => {
                 experienceDropdown.innerHTML = ""; // Clear current options
                 
-                // Add a default element which is the first array element
-                firstElement = data[0]
-                const defaultOption = document.createElement("option");
-                defaultOption.value = firstElement.id;
-                defaultOption.textContent = firstElement.name;
-                experienceDropdown.appendChild(defaultOption);
-
                 // Populate with new options
-                data.forEach(experience => {
+                data.forEach((experience, index) => {
                     const option = document.createElement("option");
                     option.value = experience.id;
                     option.textContent = experience.name;
+
+                    // Set the first item as the default
+                    if (index === 0) {
+                        option.selected = true;
+                    }
+
                     experienceDropdown.appendChild(option);
                 });
-            })
-            .catch(error => console.error('Error refreshing experience dropdown:', error));
+            });
+        })
+        .catch(error => console.error('Error refreshing experience dropdown:', error));
+    }
+
+    // Adds a new experience form to the formset container
+    function addExperienceForm(totalFormCount) {
+        const formContainer = document.querySelector(".experience-forms");
+        const totalFormsInput = document.getElementById("id_appraisal-TOTAL_FORMS");
+
+        // Get the current total form count and increment it
+        let formCount = parseInt(totalFormsInput.value);
+
+        // Clone the template and replace the prefix with the new form count
+        const newFormHtml = document.getElementById("empty-form-template").innerHTML.replace(/__prefix__/g, formCount);
+        const newForm = document.createElement("div");
+        newForm.classList.add("experience-form");
+        newForm.innerHTML = newFormHtml;
+
+        // Add the new form to the container
+        formContainer.appendChild(newForm);
+
+        // Update the total form count
+        formCount++;
+        totalFormsInput.value = formCount;
+    }
+
+    // Removes an experience form from the formset container and updates total form count
+    function removeExperienceForm(button, totalFormCount) {
+        button.closest('.experience-form').remove();
+
+        // Update the form count
+        totalFormCount--;
+        document.getElementById('id_appraisal-TOTAL_FORMS').value = totalFormCount;
     }
 </script>
 {% endblock scripts %}

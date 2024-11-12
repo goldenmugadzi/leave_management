@@ -1,0 +1,27 @@
+{% load crispy_forms_tags %}
+
+
+<div class="experience-form">
+    <div class="form-row field-experience">
+        {{ experience_form.experience|as_crispy_field }}
+        <a 
+            href="{% url 'create_experience' %}"
+            onclick="window.open(this.href, 'experience_popup', 'width=600,height=400'); return false;"
+            data-pop="yes"
+            title="Add another experience"
+        >
+            <img src="/static/admin/img/icon-addlink.svg" alt="Add" width="20" height="20">
+        </a>
+    </div>
+
+    <div class="form-row field-years_of_experience">
+        {{ experience_form.years_of_experience|as_crispy_field }}
+    </div>
+
+    <div class="form-row field-months_of_experience">
+        {{ experience_form.months_of_experience|as_crispy_field }}
+    </div>
+
+    <button type="button" class="remove-experience-btn" onclick="removeExperienceForm(this, '{{total_form_count}}')">Remove</button>
+</div>
+
