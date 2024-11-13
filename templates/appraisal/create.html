@@ -40,7 +40,12 @@
         
         <div class="border-red-600 border-2 container">
             <h3>Qualifications</h3>
-            {{ qualification_form|crispy }}
+            {{ qualification_forms.management_form }}
+            <div class="qualification_form">
+                {% for qualification_form in qualification_forms %}
+                    <div>{{ qualification_form|crispy }}</div>
+                {% endfor %}
+            </div>
         </div>
         <button type="submit">Create</button>
     </div>

@@ -3,9 +3,9 @@ from django.forms import BaseModelForm
 from django.http import HttpResponse
 from django.shortcuts import render
 from django.views.generic.edit import CreateView
+from ..models import Appraisal, AppraisalExperience
 from it.users.models import UserQualification
-from ..models import Appraisal, AppraisalExperience, Experience
-from ..forms import AppraisalForm, UserQualificationForm, CostCenterForm, UserProfileForm, DesignationForm, AppraisalExperienceFormset
+from ..forms import AppraisalForm, UserQualificationForm, CostCenterForm, UserProfileForm, DesignationForm, AppraisalExperienceFormset, UserQualificationFormset
 from django.forms.models import model_to_dict
 
 class AppraisalCreateView(CreateView):
@@ -15,13 +15,16 @@ class AppraisalCreateView(CreateView):
     
     def get_initial_forms(self, user_object)->Dict[str,Any]:
         """Helper method to initialize related forms with initial data."""
-        qualification_initial_object = UserQualification.objects.get(user=user_object)
+        qualification_initial_object = UserQualificationFormset(
+            user=user_object, 
+            data=self.request.POST or None
+        )
         designation_initial_object = user_object.designation
         cost_center_initial_object = {"name": user_object.cost_center.id}
         appraisal_experience_initial_object = AppraisalExperienceFormset(self.request.POST or None, queryset=AppraisalExperience.objects.none())
 
         return {
-            'qualification_form': UserQualificationForm(self.request.POST or None, initial=model_to_dict(qualification_initial_object)),
+            'qualification_forms': qualification_initial_object,
             'designation_form': DesignationForm(self.request.POST or None, initial=model_to_dict(designation_initial_object)),
             'cost_center_form': CostCenterForm(self.request.POST or None, initial=cost_center_initial_object),
             'user_profile_form': UserProfileForm(self.request.POST or None, initial=model_to_dict(user_object)),

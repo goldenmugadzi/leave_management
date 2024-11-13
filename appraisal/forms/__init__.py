@@ -1,2 +1,2 @@
 from .appraisal import UserProfileForm, CostCenterForm, UserQualificationForm, AppraisalForm, DesignationForm, AppraisalExperienceForm, ExperienceForm
-from .formsets import AppraisalExperienceFormset
+from .formsets import AppraisalExperienceFormset, UserQualificationFormset
