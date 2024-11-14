@@ -15,7 +15,7 @@
                 {{ appraisal_experience_forms.management_form }}
                 <div class="experience-forms">
                     {% for appraisal_experience_form in appraisal_experience_forms %}
-                        {% include "appraisal/experience_base.html" with experience_form=appraisal_experience_form %}
+                        {% include "appraisal/experience_base.html" with experience_form=appraisal_experience_form total_form_count=appraisal_experience_forms.total_form_count %}
                     {% endfor %}
                 </div>
 
@@ -32,7 +32,7 @@
             <h3>User Profile</h3>
             {{ user_profile_form|crispy }}
         </div>
-
+        
         <div class="border-red-600 border-2 container">
             <h3>Designation form</h3>
             {{ designation_form|crispy }}
@@ -41,11 +41,17 @@
         <div class="border-red-600 border-2 container">
             <h3>Qualifications</h3>
             {{ qualification_forms.management_form }}
-            <div class="qualification_form">
+            <div class="qualification-forms">
                 {% for qualification_form in qualification_forms %}
-                    <div>{{ qualification_form|crispy }}</div>
+                    {% include "appraisal/qualification_base.html" with qualification_form=qualification_form total_form_count=qualification_forms.total_form_count %}
                 {% endfor %}
             </div>
+            
+            <!-- Hidden qualification form template -->
+            <div id="empty-qualification-template" style="display: none;">
+                {% include "appraisal/qualification_base.html" with qualification_form=qualification_forms.empty_form total_form_count=qualification_forms.total_form_count %}
+            </div>
+            <button type="button" id="add-qualification-btn" onclick="addQualificationForm('{{ qualification_forms.total_form_count }}')">Add Qualification</button>
         </div>
         <button type="submit">Create</button>
     </div>
@@ -115,5 +121,32 @@
         totalFormCount--;
         document.getElementById('id_appraisal-TOTAL_FORMS').value = totalFormCount;
     }
+
+    // addQualificationForm() adds new form to the formset container and updates form count
+    function addQualificationForm(total_form_count){
+        const formContainer = document.querySelector(".qualification-forms");
+        const totalFormCount = document.getElementById("id_qualification-TOTAL_FORMS");
+        let formCount = parseInt(totalFormCount.value);
+        
+        const newFormHtml = document.getElementById("empty-qualification-template").innerHTML.replace(/__prefix__/g, formCount)
+        const newForm = document.createElement("div")
+        newForm.classList.add("qualification-form")
+        newForm.innerHTML = newFormHtml
+
+        formContainer.appendChild(newForm)
+
+        formCount++;
+        totalFormCount.value = formCount
+    }
+
+    // Removes an qualification form from the formset container and updates the total form count
+    function removeQualificationForm(button, total_form_count){
+        button.closest(".qualification-form").remove()
+
+        total_form_count--;
+        document.getElementById('id_qualification-TOTAL_FORMS').value = total_form_count
+    }
+
+
 </script>
 {% endblock scripts %}

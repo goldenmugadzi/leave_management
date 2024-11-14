@@ -15,10 +15,9 @@ class AppraisalCreateView(CreateView):
     
     def get_initial_forms(self, user_object)->Dict[str,Any]:
         """Helper method to initialize related forms with initial data."""
-        qualification_initial_object = UserQualificationFormset(
-            user=user_object, 
-            data=self.request.POST or None
-        )
+        qualification_initial_object = UserQualificationFormset(self.request.POST or None, 
+            queryset=UserQualification.objects.none(),
+            prefix="qualification")
         designation_initial_object = user_object.designation
         cost_center_initial_object = {"name": user_object.cost_center.id}
         appraisal_experience_initial_object = AppraisalExperienceFormset(self.request.POST or None, queryset=AppraisalExperience.objects.none())
@@ -40,6 +39,9 @@ class AppraisalCreateView(CreateView):
     
     def form_valid(self, form: BaseModelForm) -> HttpResponse:
         form.instance.user = self.request.user
-        print("====================>>>>>> valid", self.request.POST)
+        payload = self.request.POST
+        print("====================>>>>>> valid", payload)
+        print("====================>>>>>> name", payload.get("name"))
+
         input()
         return super().form_valid(form)

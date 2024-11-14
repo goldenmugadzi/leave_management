@@ -1,0 +1,8 @@
+{% load crispy_forms_tags %}
+
+<div class="qualification-form">
+    <div class="form-row field-name">{{ qualification_form.name|as_crispy_field }}</div>
+    <div class="form-row field-file">{{ qualification_form.file|as_crispy_field }}</div>
+    
+    <button type="button" class="remove-experience-btn" onclick="removeQualificationForm(this, '{{total_form_count}}')">Remove</button>
+</div>

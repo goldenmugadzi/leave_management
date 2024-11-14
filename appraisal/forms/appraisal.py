@@ -8,19 +8,10 @@ from ..models import Appraisal, AppraisalExperience, Experience
 
 
 class UserQualificationForm(forms.ModelForm):
+    
     class Meta:
         model = UserQualification
         exclude = ["created", "updated", "user"]
-        
-class AppraisalQualificationForm(forms.Form):
-    qualification = forms.ModelChoiceField(queryset=UserQualification.objects.none())
-        
-    def __init__(self, *args, **kwargs):
-        user_object = kwargs.pop("user", None)
-        super().__init__(*args, **kwargs)
-        
-        if user_object is not None:
-            self.fields["qualification"].queryset = UserQualification.objects.filter(user=user_object)
         
 class CostCenterForm(forms.ModelForm):
     name = forms.ModelChoiceField(queryset=CostCenter.objects.all())
@@ -32,6 +23,7 @@ class CostCenterForm(forms.ModelForm):
         }
 
 class UserProfileForm(forms.ModelForm):
+    
     class Meta:
         model = UserProfile
         fields = ["username", "designation", "cost_center"]
