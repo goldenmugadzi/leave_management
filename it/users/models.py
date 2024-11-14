@@ -149,6 +149,14 @@ class CostCenter(models.Model):
        
         return f"{self.name} ({self.code})"
 
+
+GRADE_CHOICES = [
+    ('',''),
+    ('A and B', 'A and B'),
+    ('C and Above', 'C and Above'), 
+]
+
+
 class UserProfile(AbstractUser):
     username = models.CharField(max_length=15, unique=True, verbose_name='EC Number',db_index=True)
     designation = models.ForeignKey(Designations, on_delete=models.DO_NOTHING, blank=True, null=True)
@@ -163,6 +171,8 @@ class UserProfile(AbstractUser):
     password_expiry_date = models.DateField(null=True, blank=True)
     password_expiry_days = models.IntegerField(default=90)
     change_password = models.BooleanField(default=False, null=True, blank=True)
+    grade = models.CharField(choices=GRADE_CHOICES, max_length=20, default=GRADE_CHOICES[0][0])
+    national_id = models.CharField(max_length=18, null=True, default=None)
     class Meta:
         ordering = ['last_name','first_name','username']
 
