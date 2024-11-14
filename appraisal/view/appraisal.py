@@ -44,7 +44,9 @@ class AppraisalCreateView(CreateView):
             "user_profile": {
                 "username": payload.get("username"),
                 "designation": payload.get("designation"),
-                "cost_center": payload.get("cost_center")
+                "cost_center": payload.get("cost_center"),
+                "grade": payload.get("grade"),
+                "national_id": payload.get("national_id"),
             },
             "designation": {
                 "identifier": payload.get("identifier"),

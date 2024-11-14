@@ -26,7 +26,7 @@ class UserProfileForm(forms.ModelForm):
     
     class Meta:
         model = UserProfile
-        fields = ["username", "designation", "cost_center"]
+        fields = ["username", "designation", "cost_center", "grade", "national_id"]
         
 class DesignationForm(forms.ModelForm):
     class Meta:
