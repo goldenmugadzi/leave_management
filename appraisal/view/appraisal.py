@@ -37,11 +37,43 @@ class AppraisalCreateView(CreateView):
         
         return context
     
+    def build_payload(self) -> Dict[str, Any]:
+        """Builds a structured payload dictionary grouping data by form name."""
+        payload = self.request.POST
+        data = {
+            "user_profile": {
+                "username": payload.get("username"),
+                "designation": payload.get("designation"),
+                "cost_center": payload.get("cost_center")
+            },
+            "designation": {
+                "identifier": payload.get("identifier"),
+                "chk": payload.get("chk")
+            },
+            "cost_center": {
+                "name": payload.get("cost_center")
+            },
+            "qualification_forms": [
+                {
+                    "name": payload.get(f"qualification-{i}-name"),
+                    "file": payload.get(f"qualification-{i}-file")
+                }
+                for i in range(int(payload.get("qualification-TOTAL_FORMS", 0)))
+            ],
+            "appraisal_experience_forms": [
+                {
+                    "experience": payload.get(f"appraisal-{i}-experience"),
+                    "years_of_experience": payload.get(f"appraisal-{i}-years_of_experience"),
+                    "months_of_experience": payload.get(f"appraisal-{i}-months_of_experience")
+                }
+                for i in range(int(payload.get("appraisal-TOTAL_FORMS", 0)))
+            ],
+        }
+        return data
+    
     def form_valid(self, form: BaseModelForm) -> HttpResponse:
         form.instance.user = self.request.user
-        payload = self.request.POST
-        print("====================>>>>>> valid", payload)
-        print("====================>>>>>> name", payload.get("name"))
-
+        structured_payload = self.build_payload()
+        print("=========>>> Structured Payload:", structured_payload)
         input()
         return super().form_valid(form)
