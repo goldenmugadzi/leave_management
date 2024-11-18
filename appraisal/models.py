@@ -30,8 +30,8 @@ class AppraisalExperience(TimeStamp):
     experience = models.ForeignKey(Experience, on_delete=models.CASCADE, related_name="experience")
     
     # additional experiences
-    years_of_experience = models.PositiveIntegerField(max_length=2)
-    months_of_experience = models.PositiveIntegerField(max_length=2)
+    years_of_experience = models.PositiveIntegerField(default=0)
+    months_of_experience = models.PositiveIntegerField(default=0)
     
     def __str__(self) -> str:
         return f"{self.appraisal.user} - {self.experience}"
