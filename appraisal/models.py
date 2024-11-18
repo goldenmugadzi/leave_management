@@ -10,6 +10,7 @@ class Appraisal(TimeStamp):
     """
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     experience = models.ManyToManyField("Experience", through="AppraisalExperience")
+    process = models.ForeignKey("approve.Process", on_delete=models.CASCADE, null=True, related_name="appraisal_process")
     
     def __str__(self) -> str:
         return f"{self.user}"
