@@ -1,3 +1,4 @@
+import re
 from django.shortcuts import render, redirect, HttpResponse
 from django.contrib import messages
 import subprocess, requests, os,fitz,time
@@ -25,7 +26,7 @@ def search_view(request):
             "query": {
                 "multi_match": {
                     "query": query,
-                    "fields": ["content", "metadata"]
+                    "fields": ["content", "file_path", "filename", "uploaded_at", "uploaded_by"]
                 }
             }
         }
@@ -35,9 +36,23 @@ def search_view(request):
     search_results = []
     for result in results:
         search_result=result["_source"]
-        search_result["uploaded_at"]=datetime.strptime(search_result["uploaded_at"], "%Y-%m-%dT%H:%M:%S.%f%z").strftime("%B %d, %Y %H:%M")
-        search_results.append(search_result)
+        content = search_result.get("content", "")
+        if query.lower() in content.lower():
+            start_index = content.lower().index(query.lower())
+            sentence_start = content.rfind('.', 0, start_index)   # Find the last period before the match
+            if sentence_start == 0:  # No period found; start from the beginning
+                sentence_start = 0
+            start = max(sentence_start - 200, 0)
+            end = min(start_index + len(query) + 200, len(content))  # 200 characters after
+            snippet = content[start_index-200 :end].strip()
+            if len(snippet) > 400:
+                snippet = snippet[:400]  # Trim snippet to 400 characters if too long
+            search_result["content"] = snippet
+        else:
+            search_result["content"] = content[:400]  # Fallback to the first 400 characters if no match
+        search_results.append(search_result) 
     return render(request, "Docs/search.html", {"results": search_results, "query": query})
+
 def  start_tika_server():
     tika_jar_path = os.path.join(Path(__file__).resolve().parent.parent, "static","tika","tika-server-standard-2.9.2.jar")
     try:
@@ -60,52 +75,51 @@ def  start_tika_server():
         print(f"An error occurred while starting the Tika server: {e}")
     return     
 @login_required
-def index_files(request):
-    start_tika_server(request)
-    es = Elasticsearch([{'host': 'localhost', 'port': 9200, 'scheme': 'http'}])  # Adjust host and port if necessary
-    print("index_files")
+def index_files(request): 
+    start_tika_server()
+    es = Elasticsearch([{'host': 'localhost', 'port': 9200, 'scheme': 'http'}])
     documents_path = os.path.join(Path(__file__).resolve().parent.parent, "static")
     subdirectories = ['process_maps', 'job_descriptions', 'plans_and_reports', 'network_development', 'petty_cash', 'comparative', 'ace']
-    content = None
+    processed_files = set()
 
     for subdirectory in subdirectories:
         subdirectory_path = os.path.join(documents_path, subdirectory)
         for root, dirs, files in os.walk(subdirectory_path):
             for file in files:
                 file_path = os.path.join(root, file)
-                file_path = os.path.normpath(file_path).replace("\\", "/")  # Normalize the path
+                file_path = os.path.normpath(file_path).replace("\\", "/")
+                if file_path in processed_files:
+                    continue  # Skip if the file has already been processed
 
                 if not os.path.isfile(file_path):
-                    return HttpResponse("File not found", status=404)
-
+                    return HttpResponse("File not found", status=404) 
                 try:
                     parsed = parser.from_file(file_path)
-                    # Process parsed data as needed
                 except Exception as e:
-                    print(f"tika server not running: {e}")
-                    return HttpResponse(f"Error processing file: {e} \n tika server not running", status=500)
+                    print(f"Error processing file: {e}")
+                    return HttpResponse(f"Error processing file: {e} \n Tika server may not be running", status=500)
                 
                 metadata = parsed.get("metadata", {})
                 content = parsed.get("content", "")
                 if not content:
                     content = ocr_pdf(file_path)
                 
-                # Index the content to Elasticsearch
+                filename = metadata.get('resourceName', '')[2:-1]  
                 doc = {
-                    'file_path': file_path,
-                    'filename': metadata.get('resourceName', 'unknown')[2:-1],
+                    'file_path': file_path[file_path.index("/static"):],
+                    'filename': filename,
                     'content': content,
-                    'uploaded_at': datetime.strptime(timezone.now(), "%d-%B-%Y,%H:%M"),
+                    'uploaded_at': timezone.now().strftime("%B %d, %Y %H:%M"),
                     'uploaded_by': request.user.get_full_name(),
                 }
                 try:
                     es.index(index='documents', body=doc)
+                    processed_files.add(file_path)  # Mark file as processed
+                    print("Indexed file:", filename)
                 except Exception as e:
                     print(f"Failed to index document: {e}")
-                    return HttpResponse(f"Failed to index document: {e}", status=500)
-   
-    return HttpResponse("Indexing completed successfully.")
 
+    return HttpResponse("Indexing completed successfully.")
 def ocr_pdf(pdf_path):
     doc = fitz.open(pdf_path)
     text = ""
@@ -116,36 +130,6 @@ def ocr_pdf(pdf_path):
         text += pytesseract.image_to_string(img)
     return text
 
-def search_files(request):
-    es = Elasticsearch([{'host': 'localhost', 'port': 9200, 'scheme': 'http'}])  # Adjust host, port, and scheme if necessary
-    query = request.GET.get('query', '')
-    
-    results = []
-
-    if query:
-        search_body = {
-            "query": {
-                "multi_match": {
-                    "query": query,
-                    "fields": ["content", "metadata"]
-                }
-            }
-        }
-        response = es.search(index='documents', body=search_body)
-        results = response['hits']['hits']
-
-    search_results = []
-    for result in results:
-        search_result = {
-            'file_path': result['_source']['file_path'],
-            'metadata': result['_source']['metadata'],
-            'content': result['_source']['content']
-        }
-        search_results.append(search_result)
-    if search_results:
-        print(search_results[0]['metadata'])
-
-    return render(request, "Docs/index_files.html", {"results": search_results, "query": query})
 def view_pdf(request):
     if request.method == "POST":
         pdf_url = request.POST.get("pdf_url")

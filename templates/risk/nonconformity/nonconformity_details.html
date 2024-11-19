@@ -61,7 +61,41 @@
                 {% endfor %}
             </p>
         </div>
-        {% if request.user.username == nonconformity.recipient.username or request.user.username == nonconformity.created_by.username %}
+        {% with nonconformity.resolution_set.last as response %}
+        {% if response %}
+       <div class="card-body m-auto mb-5 bg-gradient-to-r from-green-100 to-white ed p-3 border rounded container rounded shadow-lg">
+        <div class="font-bold text-xl text-center">Resolution Details</div>
+        <br />
+        <div class="card-body  rounded-lg rounded-md rounded-sm">
+                <div class="card mb-3 row rounded py-4 border-3 border bg-gray-200 border-green-400 p-3 m-auto container">
+                 <div class="card-body font-bold">
+                        {% if response.corrective_action_taken %}
+                            <p class="card-text">Corrective Action Taken: {{ response.corrective_action_taken }}</p>
+                        {% endif %}
+                        {% if response.resolved_on %}
+                            <p class="card-text">Resolved On: {{ response.resolved_on }}</p>
+                        {% endif %}
+                    </div>
+                    <p class="flex flex-row text-sm">
+                            <a class="rounded shadow-md p-1 m-1 bg-white text-center text-blue-600"
+                               href="{{ response.attachment.url }}"
+                               name="">{{ response.attachment.name|basename }}</a>
+                    </p>
+                    <p class="flex flex-row text-sm flex justify-between ">
+                        <span class="text-sm text-left">
+                            {% if response.user.get_full_name %}
+                                {{ response.user.get_full_name }}
+                            {% else %}
+                                {{ response.user.username }}
+                            {% endif %}
+                        </span> <span class="text-smtext-right">As at  {{ response.dated }}</span>
+                    </p>
+                </div>
+        </div>
+    </div>
+       {% endif %}
+       {% endwith %}
+       {% if  request.user.username == nonconformity.recipient.username or request.user.username == nonconformity.created_by.username %}
             <form class="row rounded py-4 border bg-gulf-blue-100 col-6 m-auto p-3 container"
                   enctype="multipart/form-data"
                   id="form"
@@ -178,6 +212,22 @@
                         </div>
                     {% endif %}
                     {% if resolve_form %}
+                        {% for field in resolve_form %}
+                            <div class="rounded row text-center py-2 my-3">
+                                {% if field.is_hidden %}
+                                    {{ field }}
+                                {% else %}
+                                    <div class=" m-auto grid grid-cols-2 pr-5">
+                                        <div>
+                                            {{ field.label }}
+                                            <div class="text-blue-500">{{ field.help_text }}</div>
+                                            <div class="text-red-500 text-red-500 ">{{ field.errors }}</div>
+                                        </div>
+                                        {{ field }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
                         <button class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded"
                                 type="submit"
                                 name="resolved"
