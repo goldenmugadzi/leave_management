@@ -1072,6 +1072,12 @@ def virament_detail(request, virament_id):
 
     print(approve_now)
     if approve_now:
+
+        balance_before_from = "Actioned"
+        balance_before_to = "Actioned"
+        balance_after_from = "Actioned"
+        balance_after_to = "Actioned"
+
         # budget calculations
         fbudget = virament_item.from_budget
         tbudget = virament_item.to_budget
@@ -1088,6 +1094,7 @@ def virament_detail(request, virament_id):
             # budget.to_be_withdrawn = budget.to_be_withdrawn - virament_item.amount
             fbudget.withdrawal_date = date.today()
             fbudget.withdrawn = fbudget.withdrawn + virament_item.amount
+            # fbudget.balance = fbudget.balance - virament_item.amount
             fbudget.save()
 
             # budget viremented to
