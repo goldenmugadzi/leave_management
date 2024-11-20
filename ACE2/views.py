@@ -196,7 +196,8 @@ def create_Ace(request):
                 # print(budget)
                 print(budget, 'budget')
                 print(ace.amount, 'amount', budget.balance, 'balance', budget.to_be_withdrawn, 'to be withdrawn')
-                if ace.amount <= budget.balance and budget.to_be_withdrawn <= budget.balance:
+                balance_after_ace = budget.balance - ace.amount
+                if ace.amount <= budget.balance and budget.to_be_withdrawn <= budget.balance and balance_after_ace < 0:
                     ace.process = intiate(request, 'ace')
                     ace.requested_by = request.user
 
@@ -276,6 +277,11 @@ def create_Ace(request):
                 else:
                     messages.error(request, "the ace requires more than the current budget")
                     sweetify.error(request, "the ace requires more than the current budget")
+                    if balance_after_ace < 0:
+                        messages.error(request, "the ace requires more than the current budget resulting in a "
+                                                "negative balance")
+                        sweetify.error(request, "the ace requires more than the current budget resulting in a "
+                                                "negative balance")
                     return render(request, 'finance/ace2/create_ace.html',
                                   {'form': form, 'formset': formset, 'error_message': "Insufficient Balance"})
             else:
