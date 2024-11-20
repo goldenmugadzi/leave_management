@@ -35,7 +35,7 @@ def search_view(request):
     search_results = []
     for result in results:
         search_result=result["_source"]
-        search_result["uploaded_at"]=datetime.strptime(search_result["uploaded_at"], "%Y-%m-%dT%H:%M:%S.%f%z").strftime("%B %d, %Y %H:%M")
+        search_result["uploaded_at"] = datetime.strptime(search_result["uploaded_at"], "%Y-%m-%d %H:%M:%S").strftime("%B %d, %Y %H:%M")
         search_results.append(search_result)
     return render(request, "Docs/search.html", {"results": search_results, "query": query})
 def  start_tika_server():
@@ -61,7 +61,7 @@ def  start_tika_server():
     return     
 @login_required
 def index_files(request):
-    start_tika_server(request)
+    # start_tika_server()
     es = Elasticsearch([{'host': 'localhost', 'port': 9200, 'scheme': 'http'}])  # Adjust host and port if necessary
     print("index_files")
     documents_path = os.path.join(Path(__file__).resolve().parent.parent, "static")
@@ -90,12 +90,13 @@ def index_files(request):
                 if not content:
                     content = ocr_pdf(file_path)
                 
+                uploaded_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 # Index the content to Elasticsearch
                 doc = {
                     'file_path': file_path,
                     'filename': metadata.get('resourceName', 'unknown')[2:-1],
                     'content': content,
-                    'uploaded_at': datetime.strptime(timezone.now(), "%d-%B-%Y,%H:%M"),
+                    'uploaded_at': uploaded_at,
                     'uploaded_by': request.user.get_full_name(),
                 }
                 try:
