@@ -62,6 +62,15 @@ class Acceptance(models.Model):
     user = models.ForeignKey(UserProfile, on_delete=models.CASCADE, blank=True, null=True)
     def __str__(self):
         return self.corrective_action
+class Resolution(models.Model):
+    nonconformity = models.ForeignKey(Nonconformity , on_delete=models.CASCADE)
+    corrective_action_taken = models.CharField(max_length=300, blank=True, null=True)
+    dated = models.DateTimeField(default=timezone.now)
+    resolved_on = models.DateField(blank=True, null=True)
+    user = models.ForeignKey(UserProfile, on_delete=models.CASCADE, blank=True, null=True)
+    attachment = models.FileField(upload_to='nonconformity/resolution_attachments/', blank=True, null=True, verbose_name='Attachment')
+    def __str__(self):
+        return self.corrective_action_taken
     
 class Rejection(models.Model):
     nonconformity = models.ForeignKey(Nonconformity , on_delete=models.CASCADE)

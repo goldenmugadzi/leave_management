@@ -8,7 +8,6 @@ import time
 
 class Meter(models.Model):
     number = models.CharField(max_length=11)
-    kilowatt_hours = models.DecimalField(max_digits=11, decimal_places=2, default=0)
     phase = models.CharField(max_length=100, blank=True, null=True, choices= [('Single phase', 'Single phase'), ('Three phase', 'Three phase')], default='Single phase')
 
     def __stsr__(self):
@@ -84,8 +83,7 @@ class RecoveredMeter(models.Model):
         return str(self.token.meter.number)
 class FaultMaintanance(models.Model): 
     token = models.ForeignKey(Token, on_delete=models.CASCADE)
-    code = models.IntegerField(help_text="fault number displayed", blank=True, null=True )
-    photo= models.FileField(upload_to='uploads/Tokens/FaultMaintanance',help_text="Evidence ", blank=True, null=True)
+    photo= models.FileField(upload_to='uploads/Tokens/FaultMaintanance',help_text="Evidence of fault ", blank=True, null=True)
     def __str__(self):
         return str(self.token.meter.number)
 
