@@ -7,6 +7,11 @@ from ..models import Appraisal
 from approve.views import intiate
 from ..helpers.types import AppraisalPayloadType
 
+
+class AppraisalCreationError(Exception):
+    """Raised when creating an appraisal fails."""
+    pass
+
 @dataclass
 class AppraisalService:
     qualification_repository: UserQualificationRepository
@@ -16,20 +21,29 @@ class AppraisalService:
     
     def create_use_case(self, user_object: UserProfile, data: AppraisalPayloadType)->Appraisal:
         
-        with transaction.atomic():
-            process_object = intiate(user_object, "Appraisal")
-            appraisal_object  = self.appraisal_repository.create(user_object=user_object, process_object=process_object)
-            
-            for experience_item in data.experiences:
-                experience_object = self.experience_repository.get_or_create(name=experience_item["name"])
+        try:
+            # Atom transaction to create all entries related to appraisal
+            with transaction.atomic():
+                process_object = intiate(user_object, "Appraisal")
+                appraisal_object  = self.appraisal_repository.create(user_object=user_object, process_object=process_object)
                 
-                for appraisal_experience in data.appraisal_experiences:
-                    appraisal_object.experience.aadd(
-                        appraisal_object,
+                # ========== Persist Appraisal Experience ============
+                for experience_item in data.experiences:
+                    experience_object = self.experience_repository.get_or_create(name=experience_item.name)
+
+                    appraisal_object.experience.add(
                         experience_object,
                         through_defaults={
-                            "years_of_experience": appraisal_experience["years_of_experience"],
-                            "months_of_experience": appraisal_experience["months_of_experience"]
+                            "years_of_experience": experience_item.years_of_experience,
+                            "months_of_experience": experience_item.months_of_experience
                         }
                         
                     )
+                
+                # ========== Persist User Qualification ============
+                for qualification_item in data.qualifications:
+                    self.qualification_repository.create(name=qualification_item.name, file=qualification_item.file)
+                
+                return appraisal_object
+        except Exception as e:
+            raise AppraisalCreationError(f"Failed to create appraisal with error: {e}") 

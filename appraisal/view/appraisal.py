@@ -77,5 +77,6 @@ class AppraisalCreateView(CreateView):
         form.instance.user = self.request.user
         structured_payload = self.build_payload()
         print("=========>>> Structured Payload:", structured_payload)
+        print("=========>>> File:", structured_payload["qualification_forms"][0]["file"])
         input()
         return super().form_valid(form)
