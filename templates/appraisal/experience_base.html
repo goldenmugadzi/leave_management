@@ -1,7 +1,7 @@
 {% load crispy_forms_tags %}
 
 
-<div class="experience-form">
+<div class="experience-form p-2">
     <div class="form-row field-experience">
         {{ experience_form.experience|as_crispy_field }}
         <a 
@@ -14,12 +14,14 @@
         </a>
     </div>
 
-    <div class="form-row field-years_of_experience">
-        {{ experience_form.years_of_experience|as_crispy_field }}
-    </div>
-
-    <div class="form-row field-months_of_experience">
-        {{ experience_form.months_of_experience|as_crispy_field }}
+    <div class="grid grid-flow-col justify-stretch gap-2">
+        <div class="form-row field-years_of_experience">
+            {{ experience_form.years_of_experience|as_crispy_field }}
+        </div>
+    
+        <div class="form-row field-months_of_experience">
+            {{ experience_form.months_of_experience|as_crispy_field }}
+        </div>
     </div>
 
     <button type="button" class="remove-experience-btn" onclick="removeExperienceForm(this, '{{total_form_count}}')">Remove</button>

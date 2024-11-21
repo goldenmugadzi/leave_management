@@ -82,7 +82,13 @@ APPLICATIONS = [
         "title": "Change Requests",
         "iconUrl": "assets/images/change.png",
         "url": "/change_requests/change_request_index"
-    }
+    },
+    {
+        "name": "appraisal",
+        "title": "Appraisal",
+        "iconUrl": "assets/images/change.png",
+        "url": "/appraisal"
+    },
 ]
 
 REPORTS = [

@@ -47,3 +47,6 @@ class AppraisalService:
                 return appraisal_object
         except Exception as e:
             raise AppraisalCreationError(f"Failed to create appraisal with error: {e}") 
+
+    def get_all_use_case(self, user_object: UserProfile):
+        return Appraisal.objects.filter(user=user_object)

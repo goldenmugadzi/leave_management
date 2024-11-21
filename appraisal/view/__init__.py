@@ -1,2 +1,2 @@
-from .appraisal import AppraisalCreateView
+from .appraisal import AppraisalCreateView, AppraisalTemplateView
 from .experience import ExperienceCreateView, experience_list_api
