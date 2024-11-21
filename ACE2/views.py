@@ -351,6 +351,29 @@ def ace_awaiting_my_action(request):
                 if process.approval_set.filter(approved="Rejected").exists():
                     aces_to_process.remove(ace)
 
+    if ace_role == "pass" and user_profile.designation.id == 65 and user_profile.region.id == 3:
+        # I want objects from 2024 upwards
+
+        for ace in Ace2.objects.filter(date_created__year__gte=2024, region=region):
+            process = ace.process
+
+            if process.approval_set.exists():
+                last_approval = process.approval_set.last()
+                current_step = last_approval.step.step
+            else:
+                current_step = 0
+
+            next_step = current_step + 1
+
+            workflow = process.workflow
+            step = workflow.step_set.filter(step=next_step, approver__in=user_roles).first()
+
+            if step:
+                aces_to_process.append(ace)
+                # remove aces that have been rejected
+                if process.approval_set.filter(approved="Rejected").exists():
+                    aces_to_process.remove(ace)
+
     else:
         for ace in Ace2.objects.filter(date_created__year__gte=2024, region=region):
             process = ace.process
