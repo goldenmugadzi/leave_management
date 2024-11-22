@@ -349,7 +349,7 @@ def datatable_data(request):
 
     if user.region:
         # Fetch your data from the model
-        records = UserProfile.objects.all()
+        records = UserProfile.objects.order_by('-id').all()
         # Filter based on search value
         if search_value:
             records = records.filter(
@@ -496,6 +496,7 @@ def update_user(request):
         )
     elif request.method == "POST":
         try:
+            
             user_profile = UserProfile.objects.filter(id=request.POST['user_id']).first()
             region = request.POST.get('region')
             district = request.POST.get('district')
@@ -509,7 +510,7 @@ def update_user(request):
                 region_ = Regions.objects.filter(id=region).first() if region else None
                 district_ = Districts.objects.filter(id=district).first() if district else None
                 depot_ = Depots.objects.filter(id=depot).first() if depot else None
-                section_ = Sections.objects.filter(code=section).first() if section else None
+                section_ = Sections.objects.filter(id=section).first() if section else None
                 designation_ = Designations.objects.filter(id=designation).first() if designation else None
                 cost_center_ = CostCenter.objects.filter(id=cost_center).first() if cost_center else None
             except Exception as ex:

@@ -11,21 +11,152 @@
 </style>
 {% endblock styles %} {% block content %}
 <div class="content-wrapper">
-    <div
-      class="bg-gulf-blue-100 shadow-md shadow-gulf-blue-300 text-gulf-blue-900 rounded px-2 py-2"
-    >        <div class="flex justify-between items-center mb-5">
-        <div>
-          <p class="text-lg font-semibold">Change Requests</p>
-        </div>
+    <div class="mb-5">
+      <div
+        class="bg-gulf-blue-100 shadow-gulf-blue-300 text-gulf-blue-900 p-6 shadow-md rounded"
+      >
         <div class="flex justify-between items-center mb-5">
-          <a
-            href="/change_requests/create_change_request"
-            class="bg-gulf-blue-600 hover:bg-gulf-blue-800 text-white font-bold py-2 px-4 rounded"
+          <div>
+            <p class="text-lg font-semibold">Apply filters</p>
+            <p class="mt-1 text-sm">Use filters to further refine search</p>
+          </div>
+          <div class="flex justify-between items-center mb-5">
+            <a
+              href="/change_requests/create_change_request"
+              class="bg-gulf-blue-600 hover:bg-gulf-blue-800 text-white font-bold py-2 px-4 rounded"
+              >
+              CREATE CHANGE REQUEST
+            </a>
+          </div>
+        </div>
+        <div
+          class="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3"
+        >
+            <div class="flex flex-col">
+            <label for="region" class="text-stone-600 text-sm font-medium"
+                >Region</label
             >
-            CREATE CHANGE REQUEST
-          </a>
+            <select
+                id="region"
+                class="mt-2 block w-full rounded-md border border-gray-200 px-2 py-2 shadow-sm outline-none focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+            >
+                <option value="">Select Region</option>
+                {% for region in regions %}
+                <option value="{{ region.id }}">{{ region }}</option>
+                {% endfor %}
+            </select>
+            </div>
+  
+            <div class="flex flex-col">
+              <label for="cost_center" class="text-stone-600 text-sm font-medium"
+                >Cost Centre</label
+              >
+              <select
+                id="cost_center"
+                class="mt-2 block w-full rounded-md border border-gray-200 px-2 py-2 shadow-sm outline-none focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+              >
+                <option value="">Select Centre</option>
+              </select>
+            </div>
+
+            <div class="flex flex-col">
+            <label for="cr_type" class="text-stone-600 text-sm font-medium"
+                >Change Request Type</label
+            >
+
+            <select
+                id="cr_type"
+                class="mt-2 block w-full rounded-md border border-gray-200 px-2 py-2 shadow-sm outline-none focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+            >
+                <option value="">Select Type</option>
+                <option value="New Profile">New Profile Request</option>
+                <option value="Profile Modification">Profile Modification</option>
+                <option value="Profile Deactivation">Profile Deactivation</option>
+            </select>
+            </div>
+
+            <div class="flex flex-col">
+            <label for="cr_app" class="text-stone-600 text-sm font-medium"
+                >Change Request Application</label
+            >
+
+            <select
+                id="cr_app"
+                class="mt-2 block w-full rounded-md border border-gray-200 px-2 py-2 shadow-sm outline-none focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+            >
+                <option value="">Select Application</option>
+                <option value="BUSINESS EXCELLENCE">
+                    BUSINESS EXCELLENCE
+                  </option>
+                  <option value="SAP">SAP</option>
+                  <option value="NDM">NDM</option>
+            </select>
+            </div>
+
+          <div class="flex flex-col">
+            <label for="status" class="text-stone-600 text-sm font-medium"
+              >Status</label
+            >
+            <select
+              id="status"
+              class="mt-2 block w-full rounded-md border border-gray-200 px-2 py-2 shadow-sm outline-none focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+            >
+              <option value="">Select Status</option>
+              <option value="Pending SH">Pending Section Head Approval</option>
+              <option value="Pending IT">Pending IT Approval</option>
+              <option value="Complete">Complete</option>
+              <option value="Rejected">Rejected</option>
+            </select>
+          </div>
+  
+          <div class="flex flex-col">
+            <label for="start_date" class="text-stone-600 text-sm font-medium"
+              >Start Date</label
+            >
+            <input
+              type="date"
+              id="start_date"
+              class="mt-2 block w-full rounded-md border border-gray-200 px-2 py-2 shadow-sm outline-none focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+            />
+          </div>
+  
+          <div class="flex flex-col">
+            <label for="end_date" class="text-stone-600 text-sm font-medium"
+              >End Date</label
+            >
+            <input
+              type="date"
+              id="end_date"
+              class="mt-2 block w-full rounded-md border border-gray-200 px-2 py-2 shadow-sm outline-none focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+            />
+          </div>
+        </div>
+  
+        <div class="mt-6 grid w-full grid-cols-2 justify-end space-x-4 md:flex">
+          <button
+            id="reset_filter"
+            class="active:scale-95 rounded-lg bg-red-200 px-8 py-2 font-medium text-gray-600 outline-none focus:ring hover:opacity-90"
+          >
+            Reset Filter
+          </button>
+          <button
+            id="search_filter"
+            class="active:scale-95 rounded-lg bg-blue-600 px-8 py-2 font-medium text-white outline-none focus:ring hover:opacity-90"
+          >
+            Search
+          </button>
+          <button
+            id="export_filter"
+            class="active:scale-95 rounded-lg bg-green-600 px-8 py-2 font-medium text-white outline-none focus:ring hover:opacity-90"
+          >
+              Export CSV
+          </button>
         </div>
       </div>
+    </div>
+    <div
+      class="bg-gulf-blue-100 shadow-md shadow-gulf-blue-300 text-gulf-blue-900 rounded px-2 py-2"
+    >
     <table id="change_request_index" class="display" style="width: 100%">
       <thead>
         <tr>

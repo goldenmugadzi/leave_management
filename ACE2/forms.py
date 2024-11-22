@@ -38,6 +38,7 @@ class AceForm(forms.ModelForm):
             if user_profile:
                 region = user_profile.region
                 region_id = Regions.objects.filter(region=region).first()
+                print(user_profile)
 
                 print("region", region)
                 self.fields['budget_id'].queryset = AssetBudget.objects.filter(period=2024, region=region)
@@ -51,7 +52,7 @@ class AceForm(forms.ModelForm):
             })
             # self.fields['budget_id'].queryset = AssetBudget.objects.filter(period=2024)
 
-            if (field_name == 'budget_id') or (field_name == 'section'):
+            if (field_name == 'id_from_budget') or (field_name == 'section') or (field_name == 'id_to_budget'):
                 field.widget.attrs.update({
                     'class': "select2 block w-full rounded-md border-0 py-1.5 text-gray-900 "
                              "shadow-sm ring-1 ring-inset ring-gray-300 "
@@ -202,7 +203,21 @@ class ViramentForm(forms.ModelForm):
                    ]
 
     def __init__(self, *args, **kwargs):
+
+        user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
+        print("user", user)
+
+        if user:
+            user_profile = UserProfile.objects.filter(username=user.username).first()
+            if user_profile:
+                region = user_profile.region
+                region_id = Regions.objects.filter(region=region).first()
+
+                print("region", region)
+                self.fields['to_budget'].queryset = AssetBudget.objects.filter(period=2024, region=region)
+                self.fields['from_budget'].queryset = AssetBudget.objects.filter(period=2024, region=region)
+                self.fields['section'].queryset = Sections.objects.filter(region_id=region_id.id)
 
         for field_name, field in self.fields.items():
             # for the field budget, I want it to display its balance attribute when it selected
@@ -234,6 +249,7 @@ class ViramentForm(forms.ModelForm):
     # def get_quotation_label(self, quotation_number): suffix = 'ACE' if 11 <= quotation_number <= 13 else {1: 'st',
     # 2: 'nd', 3
 
+
 class AceReportForm(forms.ModelForm):
     start_date = forms.DateField(required=True, widget=forms.DateInput(attrs={'type': 'date'}))
     end_date = forms.DateField(required=True, widget=forms.DateInput(attrs={'type': 'date'}))
@@ -244,13 +260,14 @@ class AceReportForm(forms.ModelForm):
         # add end date to fields
 
         fields = '__all__'
-        exclude = ['process','requested_by','Ace_id', 'asset_number' , 'designation', 'Ace_id2',
-                   'details_of_expenditure', 'quantity', 'total_connection_fee','capital_estimated', 'capital_sanctioned',
-                   'present_tariff','present_fmc','capital_contribution','materials','connection_fee','labour','transport'
-                    ,'classification','currency','amount','allocation_code_of_expenditure','section'
+        exclude = ['process', 'requested_by', 'Ace_id', 'asset_number', 'designation', 'Ace_id2',
+                   'details_of_expenditure', 'quantity', 'total_connection_fee', 'capital_estimated',
+                   'capital_sanctioned',
+                   'present_tariff', 'present_fmc', 'capital_contribution', 'materials', 'connection_fee', 'labour',
+                   'transport'
+            , 'classification', 'currency', 'amount', 'allocation_code_of_expenditure', 'section'
                    # include the project items
                    ]
-
 
     def __init__(self, *args, **kwargs):
         user = kwargs.pop('user', None)
@@ -311,5 +328,3 @@ class AceReportForm(forms.ModelForm):
         words = field_name.split('_')
         capitalized_words = [word.capitalize() for word in words]
         return ' '.join(capitalized_words)
-
-

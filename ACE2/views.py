@@ -48,6 +48,11 @@ def Ace_detail(request, Ace_id2):
 
     ace_item = Ace2.objects.get(Ace_id2=Ace_id2)
 
+    budget = ace_item.budget_id.budget_id
+    budget = AssetBudget.objects.get(budget_id=budget)
+    balance_before = budget.balance
+    balance_after = balance_before - ace_item.amount
+
     quotations = Quotation.objects.filter(ace2=ace_item).all()
     print(quotations.count())
 
@@ -117,6 +122,9 @@ def Ace_detail(request, Ace_id2):
         # budget calculations
         budget = ace_item.budget_id.budget_id
         budget = AssetBudget.objects.get(budget_id=budget)
+        balance_before = "deducted"
+        balance_after = "deducted"
+
         print("ace: ", ace_item.Ace_id)
         transaction = Transactions.objects.filter(Ace_id2=str(ace_item.Ace_id)).first()
         # print('transaction: ', transaction)
@@ -142,7 +150,8 @@ def Ace_detail(request, Ace_id2):
                   {'ace': ace_item, 'approved_steps': approved_steps, 'approvalForm': approvalForm,
                    'to': to, 'ace_role': ace_role, 'user_groups': user_groups, 'qoutations': quotations,
                    'ace_quantity': ace_quantity,
-                   'clear': clear, 'clear_minus': clear_minus, 'accounting_officer_role': accounting_officer_role})
+                   'clear': clear, 'clear_minus': clear_minus, 'accounting_officer_role': accounting_officer_role,
+                   'balance_before': balance_before, 'balance_after': balance_after})
 
 
 @login_required
@@ -183,9 +192,14 @@ def create_Ace(request):
             if form.is_valid():
                 ace = form.save(commit=False)
                 # print(ace.budget_id)
-                budget = AssetBudget.objects.filter(budget_name=ace.budget_id).first()
+                budget = AssetBudget.objects.filter(budget_name=ace.budget_id, period=2024).first()
                 # print(budget)
-                if ace.amount <= budget.balance and budget.to_be_withdrawn <= budget.balance:
+                print(budget, 'budget')
+                print(ace.amount, 'amount', budget.balance, 'balance', budget.to_be_withdrawn, 'to be withdrawn')
+                balance_after_ace = budget.balance - ace.amount
+                #money in tray check
+                m_in_tray = budget.to_be_withdrawn + ace.amount
+                if ace.amount <= budget.balance and budget.to_be_withdrawn <= budget.balance and balance_after_ace < 0 and m_in_tray <= budget.balance:
                     ace.process = intiate(request, 'ace')
                     ace.requested_by = request.user
 
@@ -265,6 +279,11 @@ def create_Ace(request):
                 else:
                     messages.error(request, "the ace requires more than the current budget")
                     sweetify.error(request, "the ace requires more than the current budget")
+                    if balance_after_ace < 0:
+                        messages.error(request, "the ace requires more than the current budget resulting in a "
+                                                "negative balance")
+                        sweetify.error(request, "the ace requires more than the current budget resulting in a "
+                                                "negative balance")
                     return render(request, 'finance/ace2/create_ace.html',
                                   {'form': form, 'formset': formset, 'error_message': "Insufficient Balance"})
             else:
@@ -315,6 +334,29 @@ def ace_awaiting_my_action(request):
         # I want objects from 2024 upwards
 
         for ace in Ace2.objects.filter(section=request.user.section, date_created__year__gte=2024, region=region):
+            process = ace.process
+
+            if process.approval_set.exists():
+                last_approval = process.approval_set.last()
+                current_step = last_approval.step.step
+            else:
+                current_step = 0
+
+            next_step = current_step + 1
+
+            workflow = process.workflow
+            step = workflow.step_set.filter(step=next_step, approver__in=user_roles).first()
+
+            if step:
+                aces_to_process.append(ace)
+                # remove aces that have been rejected
+                if process.approval_set.filter(approved="Rejected").exists():
+                    aces_to_process.remove(ace)
+
+    if ace_role == "pass" and user_profile.designation.id == 65 and user_profile.region.id == 3:
+        # I want objects from 2024 upwards
+
+        for ace in Ace2.objects.filter(date_created__year__gte=2024, region=region):
             process = ace.process
 
             if process.approval_set.exists():
@@ -442,7 +484,7 @@ def upload_budgets(request):
         for row in reader:
             print("row: ", row)
             section_code = row['section_code']
-            section = row['section']
+            section = row['section'][:49]
             budget_name = row['budget']
             allocated = row['allocated']
             withdrawn = row['withdrawn']
@@ -462,6 +504,12 @@ def upload_budgets(request):
             region = Regions.objects.filter(region=region).first()
             print(region)
             created_date = date.today()
+            budget_name = section + "  " + budget_name
+            # remove whitespace on section code and section
+            section_code = section_code.strip()
+            section = section.strip()
+            print("section code: ", section_code)
+            print("section: ", section)
 
             # withdrawal_date = datetime.strptime(row['withdrawal_date'], "%Y/%m/%d").strftime("%Y-%m-%d")
             # areas = row['area'].split(',')
@@ -928,7 +976,9 @@ def upload_aces_csv(request):
 
 
 def create_virament(request):
-    form = ViramentForm()
+    user_id = request.user.id
+    user_profile = UserProfile.objects.filter(id=user_id).first()
+    form = ViramentForm(user=user_profile)
     formset = QuotationFormSet()
     if request.method == 'POST':
         form = ViramentForm(request.POST, request.FILES)
@@ -961,7 +1011,7 @@ def create_virament(request):
             url = reverse('Ace:virament_detail', args=[virament.virament_id])
             return redirect(url)
     else:
-        form = ViramentForm()
+        form = ViramentForm(user=user_profile)
     return render(request, 'finance/ace2/create_virament.html', {'form': form, 'formset': formset})
 
 
@@ -1047,6 +1097,12 @@ def virament_detail(request, virament_id):
 
     print(approve_now)
     if approve_now:
+
+        balance_before_from = "Actioned"
+        balance_before_to = "Actioned"
+        balance_after_from = "Actioned"
+        balance_after_to = "Actioned"
+
         # budget calculations
         fbudget = virament_item.from_budget
         tbudget = virament_item.to_budget
@@ -1063,6 +1119,7 @@ def virament_detail(request, virament_id):
             # budget.to_be_withdrawn = budget.to_be_withdrawn - virament_item.amount
             fbudget.withdrawal_date = date.today()
             fbudget.withdrawn = fbudget.withdrawn + virament_item.amount
+            # fbudget.balance = fbudget.balance - virament_item.amount
             fbudget.save()
 
             # budget viremented to

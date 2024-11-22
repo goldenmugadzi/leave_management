@@ -143,9 +143,11 @@ def import_processes(request):
     pcs = Processes.objects.all()
     for pc in pcs:
         try:
+            print("name: ", pc.filetype_id.name)
             root_parent = KnowledgeCentreFolder.objects.filter(name=pc.filetype_id.name).first() if pc.filetype_id else None
             first_parent = KnowledgeCentreFolder.objects.filter(name=pc.filesubtype_id.name, parent=root_parent).first() if pc.filesubtype_id else None
             parent = KnowledgeCentreFolder.objects.filter(name=pc.subsubtype_id.name, parent=first_parent).first() if pc.subsubtype_id else None
+            print("folders: ", root_parent, first_parent, parent)
             if parent:
                 folder = parent
             elif first_parent:
@@ -154,22 +156,28 @@ def import_processes(request):
                 folder = root_parent
             else:
                 folder = None
-                
+            
+            print("folder: ", folder)
             filename = os.path.basename(pc.filepath)
-            pc_file = KnowldgeCentreFile(
-                filename=pc.filename,
-                archived=pc.archived,
-                section=pc.section_id,
-                cost_center=pc.cost_center,
-                region=pc.region_id,
-                created_on=pc.created_at,
-                updated_on=pc.updated_at,
-                created_by=pc.done_by,
-                folder=folder,
-                file="uploads/processes/" + filename,
-            )
-            pc_file.save()
-            print("success: ", pc.filename)
+            file_exists = KnowldgeCentreFile.objects.filter(filename=pc.filename, folder=folder).first()
+            if not file_exists:
+                pc_file = KnowldgeCentreFile(
+                    filename=pc.filename,
+                    archived=pc.archived,
+                    section=pc.section_id,
+                    cost_center=pc.cost_center,
+                    region=pc.region_id,
+                    created_on=pc.created_at,
+                    updated_on=pc.updated_at,
+                    created_by=pc.done_by,
+                    folder=folder,
+                    file="uploads/processes/" + filename,
+                )
+                pc_file.save()
+                print("success: ", pc.filename)
+            else:
+                print("file exists: ", pc.filename, folder)
+                
         except Exception as ex:
             print("Error: ", ex, pc.filename)
             
@@ -238,9 +246,7 @@ def view_root_folders(request, app_name):
 def view_sub_folders(request, folder_name, folder_id):
     
     current_folder = KnowledgeCentreFolder.objects.filter(id=folder_id).first()
-    print("current_folder: ", current_folder)
     subfolders = KnowledgeCentreFolder.objects.filter(parent=current_folder)
-    print("subfolders: ", subfolders)
     url = request.path
     url_path = url.split("/")
     subfolders_list = []
@@ -259,7 +265,7 @@ def view_sub_folders(request, folder_name, folder_id):
         subfolders_list.append(new_folder)
     
     current_folder = KnowledgeCentreFolder.objects.filter(id=folder_id).first()
-    files = KnowldgeCentreFile.objects.filter(folder=current_folder).all()
+    files = KnowldgeCentreFile.objects.filter(folder=current_folder, archived=False).all()
 
     url_path = request.path.split("/")
     title = current_folder.name.upper()
@@ -403,6 +409,7 @@ def create_file(request):
             folder_ = KnowledgeCentreFolder.objects.filter(id=folder).first()
         else:
             folder_ = KnowledgeCentreFolder.objects.filter(id=root_folder).first()
+            
         file_record = KnowldgeCentreFile(filename=file_name, file=file, folder=folder_, region=region_, section=section_)
         file_record.save()
         messages.success(request, "File uploaded successfully")
@@ -412,6 +419,36 @@ def create_file(request):
     sections = Sections.objects.all()
     regions = Regions.objects.all()
     return render(request, 'knowledge-center/create_file.html', {"url_path": url_path, "folder_applications": folder_applications, "sections": sections, "regions": regions})
+
+def create_bulk_files(request):
+    url_path = request.path.split("/")
+    if request.method == 'POST':
+        print("post data: ", request.POST)
+        level = request.POST['level']
+        root_folder = request.POST['root_folder']
+        folder = request.POST['subfolder_'+level]
+        section = request.POST['section']
+        region = request.POST['region']
+        files = request.FILES.getlist('uploaded_files')
+        
+        section_ = Sections.objects.filter(id=section).first()
+        region_ = Regions.objects.filter(id=region).first()
+        if folder:
+            folder_ = KnowledgeCentreFolder.objects.filter(id=folder).first()
+        else:
+            folder_ = KnowledgeCentreFolder.objects.filter(id=root_folder).first()
+        
+        for file in files:
+            
+            file_record = KnowldgeCentreFile(filename=file.name, file=file, folder=folder_, region=region_, section=section_)
+            file_record.save()
+        messages.success(request, "Files uploaded successfully")
+        return redirect('/ims/folder/' + str(folder_.name) + '/' + str(folder_.id)) 
+    
+    folder_applications = FolderApplication.objects.all()
+    sections = Sections.objects.all()
+    regions = Regions.objects.all()
+    return render(request, 'knowledge-center/create_bulk_files.html', {"url_path": url_path, "folder_applications": folder_applications, "sections": sections, "regions": regions})
 
 def get_root_folders(request, folder_application_id):
     
@@ -437,7 +474,7 @@ def get_subfolders(request, folder_id):
 
 def ims_files(request):
         
-    files = KnowldgeCentreFile.objects.all()
+    files = KnowldgeCentreFile.objects.filter(archived=False).all()
     files_list = []
     for file in files:
         new_file = {
@@ -484,7 +521,7 @@ def archive_file(request, file_id):
         messages.error(request, "Error archiving file")
         print("Error:",ex)
     
-    return redirect('/ims/knowledge_center_files')
+    return redirect('/ims/ims_files')
 
 @login_required
 def unarchive_file(request, file_id):
@@ -498,7 +535,7 @@ def unarchive_file(request, file_id):
         messages.error(request, "Error unarchiving file")
         print("Error:",ex)
     
-    return redirect('/ims/knowledge_center_files')
+    return redirect('/ims/ims_files')
 
 @login_required
 def create(request):

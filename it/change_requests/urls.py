@@ -4,6 +4,7 @@ from . import views
 
 urlpatterns = [
     path('change_request_index', views.change_request_index, name='change_request_index'),
+    path('change_request_reports', views.change_request_reports, name='change_request_reports'),
     path('create_change_request', views.create_change_request, name='create_change_request'),
     path('create_new_profile', views.create_new_profile, name='create_new_profile'),
     path('datatables/export', views.get_csv_export, name='get_csv_export'),

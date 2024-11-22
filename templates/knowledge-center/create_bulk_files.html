@@ -13,7 +13,7 @@
             Create File
           </h2>
           <p class="mt-1 text-sm leading-6 text-gray-600">
-            Fill all required fields.
+            Please note you can only upload up to 20 files at a time.
           </p>
 
           <div class="mt-10 grid grid-cols-3 gap-4" x-data="folderSelector()">
@@ -46,11 +46,13 @@
                 <div class="mt-2">
                   <input
                     required
+                    multiple
                     accept="application/pdf"
                     type="file"
-                    name="uploaded_file"
+                    name="uploaded_files"
                     id="uploaded_file"
                     autocomplete="family-name"
+                    onchange="checkFileLimit(this)"
                     class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm px-2 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                   />
                 </div>
@@ -254,6 +256,14 @@
         };
     }
 </script>
+<script>
+    function checkFileLimit(input) {
+      if (input.files.length > 20) {
+        alert("You can only upload a maximum of 20 files at a time.");
+        input.value = ""; // Clear the input
+      }
+    }
+  </script>
 {% endblock scripts %}
 
 

@@ -419,6 +419,23 @@ def get_all_schedules(request):
     return render(request, user_page, {"fm_role": fm_role, "gm_role": gm_role, "procurement_role": procurement_role,
             "page_title": "Direct Purchases"})
 
+
+@login_required
+def reports_all_schedules(request):
+    
+    user_id = request.user.id
+    print("user name: ", request.user.username, request.user.id)
+    user_profile = UserProfile.objects.filter(id=user_id).first()
+    print("user: ", user_profile.username, user_profile.id)
+    fm_role, gm_role = False, False
+    fm_role, gm_role, procurement_role = getUserFMGMRoles(user_profile)
+    
+    print("roles: ", fm_role, gm_role)
+    user_page = 'finance/direct_purchase/cs_reports.html'
+    return render(request, user_page, {"fm_role": fm_role, "gm_role": gm_role, "procurement_role": procurement_role,
+            "page_title": "Direct Purchases"})
+
+
 @login_required
 def get_pending_committee(request):
     

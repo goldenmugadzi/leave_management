@@ -812,6 +812,21 @@ def change_request_index(request):
         })
     
 @login_required
+def change_request_reports(request):
+
+    user_page = 'change_requests/change_request_reports.html'
+    user_title = request.user.get_full_name()
+    regions = Regions.objects.all()
+    return render(
+        request,
+        user_page,
+        {
+            "title": "Change Requests Reports",
+            "user_title": user_title,
+            "regions": regions
+        })
+    
+@login_required
 def datatable_data(request, view):
     draw = int(request.GET.get('draw', default=1))
     start = int(request.GET.get('start', default=0))

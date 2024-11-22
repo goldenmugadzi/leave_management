@@ -36,12 +36,6 @@ APPLICATIONS = [
         "url": "/ace/aces_awaiting_my_action"
     },
     {
-        "name": "ace reports",
-        "title": "ACE Reports",
-        "iconUrl": "assets/images/reports.png",
-        "url": "/ace/create_ace_report"
-    },
-    {
         "name": "virament",
         "title": "Virement",
         "iconUrl": "assets/images/money.png",
@@ -58,12 +52,6 @@ APPLICATIONS = [
         "title": "Petty Cash",
         "iconUrl": "assets/images/pettycash.png",
         "url": "/pettycash/pettycashs_awaiting_my_action"
-    },
-    {
-        "name": "petty_cash_reports",
-        "title": "Petty Cash Reports",
-        "iconUrl": "assets/images/pettyreports.png",
-        "url": "/pettycash/create_pettycash_report"
     },
     {
         "name": "purchase_request",
@@ -94,6 +82,39 @@ APPLICATIONS = [
         "title": "Change Requests",
         "iconUrl": "assets/images/change.png",
         "url": "/change_requests/change_request_index"
+    }
+]
+
+REPORTS = [
+    {
+        "name": "ace reports",
+        "title": "ACE Reports",
+        "iconUrl": "assets/images/reports.png",
+        "url": "/ace/create_ace_report"
+    },
+    {
+        "name": "petty_cash_reports",
+        "title": "Petty Cash Reports",
+        "iconUrl": "assets/images/pettyreports.png",
+        "url": "/pettycash/create_pettycash_report"
+    },
+    {
+        "name": "comperative_schedule",
+        "title": "RFQ",
+        "iconUrl": "assets/images/ristricted_bid.png",
+        "url": "/comperative_schedule/reports"
+    },
+    {
+        "name": "direct_purchases",
+        "title": "Direct Purchases",
+        "iconUrl": "assets/images/bid.png",
+        "url": "/direct_purchase/reports"
+    },
+    {
+        "name": "change_requests",
+        "title": "Change Requests",
+        "iconUrl": "assets/images/change.png",
+        "url": "/change_requests/change_request_reports"
     }
 ]
 
@@ -348,10 +369,10 @@ def business_applications(request):
         applications = applications
     else:
         if user.region:
-            if user.region.region == "HARARE REGION" or user.region.region == "EASTERN REGION" or user.region.region == "NORTHERN REGION" or user.region.region == "SOUTHERN REGION":
-                applications = applications
-            else:
+            applications = applications
+            if user.region.region == "WESTERN REGION" or user.region.region == "TRANSMISSION & DISTRIBUTION":
                 applications = [app for app in applications if app['name'] == 'users' or app['name'] == 'non_conformity']
+                
         else:
             messages.error(request, "Your region is missing on your account profile, Please contact the administrator")
             applications = []
@@ -364,6 +385,50 @@ def business_applications(request):
             "user_title": user_title,
             "url_path": url_path,
             "page_title": "Business Applications", 
+            "user_groups": user_groups,
+            "apps": applications
+        })
+
+@login_required(login_url='/accounts/login')   
+def application_reports(request):
+
+    user_page = 'applications_reports.html'
+    user_title = request.user.get_full_name()
+    l = request.user.groups.values_list('name',flat = True) # QuerySet Object
+    user_groups = list(l)  
+
+    user_profile = UserProfile.objects.filter(id=request.user.id).first()
+    roles_ = user_profile.roles.all()
+
+    users_role = user_profile.get_user_roles_for_application("users")
+
+    # print("users_role: ", users_role)
+    applications = REPORTS
+    if users_role == "standard" or users_role == "" or users_role == None:
+        # print("creating standard list ..")
+        applications = [app for app in applications if app['name'] != 'users']
+    
+    user = request.user
+    if config('HOST') == "172.16.8.20":
+        applications = applications
+    else:
+        if user.region:
+            applications = applications
+            if user.region.region == "WESTERN REGION" or user.region.region == "TRANSMISSION & DISTRIBUTION":
+                applications = [app for app in applications if app['name'] == 'users' or app['name'] == 'non_conformity']
+                
+        else:
+            messages.error(request, "Your region is missing on your account profile, Please contact the administrator")
+            applications = []
+        
+    url_path = request.path.split("/")
+    return render(
+        request, 
+        user_page, 
+        {
+            "user_title": user_title,
+            "url_path": url_path,
+            "page_title": "Application Reports", 
             "user_groups": user_groups,
             "apps": applications
         })
@@ -491,7 +556,6 @@ def security_questions(request):
                 print("user_security_question: ", user_security_question)
                 if check_password(answer, user_security_question.security_answer):
                     print("Answer matched")
-                    user_profile.change_password = True
                     user_profile.save()
                     messages.success(request, "Security questions answered successfully")
                     return render(request, "registration/reset_password.html", {
