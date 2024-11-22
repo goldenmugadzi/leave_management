@@ -6,7 +6,7 @@ from approve.views import (
     intiate,
     approve_step,
     get_my_roles_for_apps,
-    test_send_notification,
+    send_notification,
     allowed_to_approve,
     approvers
 )
@@ -178,9 +178,7 @@ def create_token(request):
                 return render(request, "tokens/create_token.html", forms)
 
             # send_notification("token", token)
-            print("test_send_notification")
-            test_send_notification(request,"tokens:token", app, token)
-            print("test_send_notification1")
+            send_notification(request,"tokens:token", app, token)
 
             return redirect("tokens:token", token.id)
 

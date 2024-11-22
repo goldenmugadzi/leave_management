@@ -9,27 +9,8 @@
     <title></title>
     
     <link href="https://fonts.googleapis.com/css?family=Roboto:400,600" rel="stylesheet" type="text/css">
-    <!-- Web Font / @font-face : BEGIN -->
-    <!--[if mso]>
-        <style>
-            * {
-                font-family: 'Roboto', sans-serif !important;
-            }
-        </style>
-    <![endif]-->
-
-    <!--[if !mso]>
-        <link href="https://fonts.googleapis.com/css?family=Roboto:400,600" rel="stylesheet" type="text/css">
-    <![endif]-->
-
-    <!-- Web Font / @font-face : END -->
-
-    <!-- CSS Reset : BEGIN -->
-    
-    
+  
     <style>
-        /* What it does: Remove spaces around the email design added by some email clients. */
-        /* Beware: It can remove the padding / margin and add a background color to the compose a reply window. */
         html,
         body {
             margin: 0 auto !important;
@@ -69,6 +50,12 @@
         img {
             -ms-interpolation-mode:bicubic;
         }
+        .rounded-img {
+            border-radius: 50%;
+            width: 100px; /* Adjust as needed */
+            height: 100px; /* Adjust as needed */
+        }
+        
     </style>
 
 </head>
@@ -82,8 +69,8 @@
                         <tbody>
                             <tr>
                                 <td style="text-align: center; padding-bottom:25px">
-                                    <a href="#" class="logo-link">                                        
-                                        <img class="logo-dark logo-img logo-img-lg" src="https://cdn.theorg.com/053d7af2-88e4-4309-ab3e-c055ba9ffa1a_thumb.jpg" alt="logo-dark">
+                                    <a href="#" class="logo-link">
+                                        <img src="https://www.zetdc.co.zw/wp-content/uploads/2022/09/website-logo2-3.png" alt="logo" class="rounded-img" />
                                     </a>
                                 </td>
                             </tr>
@@ -93,39 +80,27 @@
                         <tbody>
                             <tr>
                                 <td style="text-align:center;padding: 30px 30px 15px 30px;">
-                                    <h2 style="font-size: 18px; color: #6576ff; font-weight: 600; margin: 0;">Hello {{ full_name }}!</h2>
+                                    <h2 style="font-size: 18px; color: #6576ff; font-weight: 600; margin: 0;">Hello {{ user_fullname }}!</h2>
                                 </td>
                             </tr>
                             <tr>
                                 <td style="text-align:center;padding: 0 30px 20px">
                                     <p style="margin-bottom: 25px;">
-                                        The Purchase Requsition for <strong>{{commodities}}</strong> 
-                                        {% if is_reminder == True %}
-                                            has been created successfully and is waiting for your approval.
-                                        {% else %}
-                                            has been {{approve_status}}. 
-                                        {% endif %}
-                                        To view more details about this approval and the status of the purchase requisition, please log in to the EPR (Enterprise Purchase Requisition) system.</p>
-                                    <a href="{{epr_url}}" style="background-color:#6576ff;border-radius:4px;color:#ffffff;display:inline-block;font-size:13px;font-weight:600;line-height:44px;text-align:center;text-decoration:none;text-transform: uppercase; padding: 0 25px">Sign in</a>
+                                    {{ message }}
+                                    <br/>
+                                    <br/>
+                                    <a href="{{ redirect_url }}" style="background-color:#6576ff;border-radius:4px;color:#ffffff;display:inline-block;font-size:13px;font-weight:600;line-height:44px;text-align:center;text-decoration:none;text-transform: uppercase; padding: 0 25px">Proceed to B.E </a>
                                 </td>
                             </tr>
                             <tr>
                                 <td style="text-align:center;padding: 20px 30px 40px">
         
-                                    <p style="margin: 0; font-size: 13px; line-height: 22px; color:#9ea8bb;">This is an automatically generated email please do not reply to this email. If you face any issues, please contact us at  apps@oacey.com</p>
+                                    <p style="margin: 0; font-size: 13px; line-height: 22px; color:#9ea8bb;">This is an automatically generated email please do not reply to this email. If you face any issues, please contact IT Administration</p>
                                 </td>
                             </tr>
                         </tbody>
                     </table>
-                    <table style="width:100%;max-width:620px;margin:0 auto;">
-                        <tbody>
-                            <tr>
-                                <td style="text-align: center; padding:25px 20px 0;">
-                                    <p style="font-size: 13px;">Copyright ©2024 Atlantis Foundries. All rights reserved. </p>
-                               </td>
-                            </tr>
-                        </tbody>
-                    </table>
+                   
                </td>
             </tr>
         </table>

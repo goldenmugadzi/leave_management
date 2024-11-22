@@ -114,7 +114,7 @@ def ms_exhange_send(subject, body, to_recipients, cc_recipients):
     message.send()
     return JsonResponse({"status": "success", "message": "Email sent successfully"})
 
-def _ms_exhange_send(subject, to_recipients, cc_recipients, template, kwargs):
+def ms_exhange_send_html(subject, to_recipients, cc_recipients, template, kwargs):
     account = get_exchange_account()
     message_body = get_template(f"{template}").render(kwargs["kwargs"])
     message = Message(
