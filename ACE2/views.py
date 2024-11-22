@@ -197,7 +197,9 @@ def create_Ace(request):
                 print(budget, 'budget')
                 print(ace.amount, 'amount', budget.balance, 'balance', budget.to_be_withdrawn, 'to be withdrawn')
                 balance_after_ace = budget.balance - ace.amount
-                if ace.amount <= budget.balance and budget.to_be_withdrawn <= budget.balance and balance_after_ace < 0:
+                #money in tray check
+                m_in_tray = budget.to_be_withdrawn + ace.amount
+                if ace.amount <= budget.balance and budget.to_be_withdrawn <= budget.balance and balance_after_ace < 0 and m_in_tray <= budget.balance:
                     ace.process = intiate(request, 'ace')
                     ace.requested_by = request.user
 
