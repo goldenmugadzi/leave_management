@@ -17,7 +17,7 @@ from rest_framework.parsers import JSONParser
 from django.contrib.auth.decorators import login_required
 from approve.decorators import allowed_roles
 from django.db.models import Q, Exists, OuterRef, Count, F
-from exchangelib import Credentials, Account, Configuration, Message, Mailbox
+from exchangelib import Credentials, Account, Configuration, Message, Mailbox, HTMLBody
 from django.conf import settings
 import pandas as pd
 from it.users.models import *
@@ -31,6 +31,8 @@ from django.core.paginator import Paginator
 from decouple import config
 from django.forms import inlineformset_factory
 from .forms import ResponsibilitiesForm
+from django.template.loader import get_template
+
 
 BASE_URL = "http://"+config('HOST')+":"+config('PORT')
 APP_NAME = "users"
@@ -86,13 +88,14 @@ def get_exchange_account():
     return account
 
 @login_required
-def ms_exhange_test(request):
+def ms_exhange_test(request, template, kwargs):
     account = get_exchange_account()
+    message = get_template(f"{template}").render(kwargs["kwargs"])
     message = Message(
         account=account,
         folder=account.sent,
         subject="Test Email",
-        body="This is a test email",
+        body=message,
         to_recipients=[Mailbox(email_address='kcbosha@zetdc.co.zw'), Mailbox(email_address='mchivinge@zetdc.co.zw'), Mailbox(email_address='amugwambi@zetdc.co.zw'), Mailbox(email_address='akwaramba@zetdc.co.zw')]
     )
     message.send()
@@ -110,6 +113,24 @@ def ms_exhange_send(subject, body, to_recipients, cc_recipients):
     )
     message.send()
     return JsonResponse({"status": "success", "message": "Email sent successfully"})
+
+def _ms_exhange_send(subject, to_recipients, cc_recipients, template, kwargs):
+    account = get_exchange_account()
+    message_body = get_template(f"{template}").render(kwargs["kwargs"])
+    message = Message(
+        account=account,
+        folder=account.sent,
+        subject=subject,
+        body=HTMLBody(message_body),
+        to_recipients=[Mailbox(email_address=recipient) for recipient in to_recipients],
+        cc_recipients=[Mailbox(email_address=recipient) for recipient in cc_recipients]
+    )
+
+    message.send()
+    return JsonResponse({"status": "success", "message": "Email sent successfully"})
+
+
+
 
 @login_required
 @allowed_roles(['Administrator'], ['users'])

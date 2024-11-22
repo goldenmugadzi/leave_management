@@ -7,8 +7,9 @@ from django.views.generic.detail import DetailView
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 from email.mime.text import MIMEText
-from it.users.views import ms_exhange_send
+from it.users.views import _ms_exhange_send
 from django.db.models import Q
+
 
 
 class WorkflowCreateView(CreateView):
@@ -234,29 +235,43 @@ def send_notification(app, object):
     return responsibilities
 
 
+
 def test_send_notification(request, url, app, obj):
     print("ndasvika")
     responsibilities = approvers(obj)
     domain_name = "http://127.0.0.1:8000"  # Consider using settings for the domain
 
     for responsibility in responsibilities:
-        print("ndawana user : ", responsibility.user)
+        print("ndawana user:", responsibility.user)
         subject = f"Hello: {responsibility.user.get_full_name()}"
         link = f"{domain_name}{reverse(url, args=[obj.id])}"
-        body = ( f"Approval request for {obj.process.workflow.name}. <a href='{link}'>Click here to proceed to B.E</a>")
-       
+        
+        # HTML body for the email
+        body = (
+            f"<p>Approval request for <strong>{obj.process.workflow.name}</strong>.</p>"
+            f"<p>To proceed to B.E, "
+            f"<a href='{link}'>click here</a>.</p>"
+        )
+      
+        # Plain text message (if needed, can be removed if only HTML is used)
         message = f"Approval request for {obj.process.workflow.name}. Click here to proceed to B.E"
 
         # Create the notification
         Notification.objects.create(
             user=responsibility.user,
             message=message,
-            url=f"{reverse(url, args=[obj.id])}",
+            url=reverse(url, args=[obj.id]),
             notification_type=app,
             notification_id=obj.id,
         )
-       # # Send the email
-        response = ms_exhange_send(subject, body, [responsibility.user.email], [])
+
+        # Send the email
+        response = _ms_exhange_send(subject=subject,
+                                    to_recipients=[responsibility.user.email],
+                                    cc_recipients=[],
+                                    template='email/email_template.html',
+                                    kwargs={"kwargs":{}}
+                                      )
 
         if response.status_code == 200:
             messages.success(request, "Email sent successfully!")
@@ -264,3 +279,4 @@ def test_send_notification(request, url, app, obj):
             messages.error(request, "Error sending email. Please try again.")
 
     return responsibilities
+
