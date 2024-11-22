@@ -122,8 +122,8 @@ def Ace_detail(request, Ace_id2):
         # budget calculations
         budget = ace_item.budget_id.budget_id
         budget = AssetBudget.objects.get(budget_id=budget)
-        balance_before = budget.balance
-        balance_after = balance_before - ace_item.amount
+        balance_before = "deducted"
+        balance_after = "deducted"
 
         print("ace: ", ace_item.Ace_id)
         transaction = Transactions.objects.filter(Ace_id2=str(ace_item.Ace_id)).first()
