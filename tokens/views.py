@@ -8,6 +8,7 @@ from approve.views import (
     get_my_roles_for_apps,
     send_notification,
     allowed_to_approve,
+    approvers
 )
 from approve.models import Step
 from approve.forms import ApprovalForm
@@ -82,12 +83,12 @@ def create_token(request):
             token.created_by = request.user
             token.region = request.user.region
             token.save()
-
+            app =None
             if token_type == "TEMPER" and tamper_token_form.is_valid():
                 tamper_token = tamper_token_form.save(commit=False)
                 tamper_token.token = token
                 tamper_token.save()
-
+                app = "temper"
                 if (
                     tamper_token.is_for == "Fauty Maintanance"
                     and fault_maintanance_form.is_valid()
@@ -127,6 +128,7 @@ def create_token(request):
                     return render(request, "tokens/create_token.html", forms)
 
             elif token_type == "REIMBURSEMENT" and reimbursement_form.is_valid():
+                app = "reimbursement"
                 reimbursement = reimbursement_form.save(commit=False)
                 reimbursement.token = token
                 reimbursement.save()
@@ -167,6 +169,7 @@ def create_token(request):
                     return render(request, "tokens/create_token.html", forms)
 
             elif token_type == "CLEAR CREDIT" and clear_credit_form.is_valid():
+                app="Clear Credit"
                 clear_credit = clear_credit_form.save(commit=False)
                 clear_credit.token = token
                 clear_credit.save()
@@ -175,6 +178,8 @@ def create_token(request):
                 return render(request, "tokens/create_token.html", forms)
 
             # send_notification("token", token)
+            send_notification(request,"tokens:token", app, token)
+
             return redirect("tokens:token", token.id)
 
         else:
@@ -245,6 +250,9 @@ def token_details(request, token_id):
     )
 
     token = get_object_or_404(Token, id=token_id)
+    # _approvers=approvers(token)
+    # print("approvers",_approvers)
+    # print("approvers",_approvers[0].user.get_full_name())
     return render(
         request,
         "tokens/token_detail.html",

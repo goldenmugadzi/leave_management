@@ -1,5 +1,5 @@
 from django.db import models
-from it.users.models import Roles, UserProfile,Application,CostCenter,Notification
+from it.users.models import Roles, UserProfile,Application,CostCenter,Notification,Responsibilities
 
 
 class Workflow(models.Model):
