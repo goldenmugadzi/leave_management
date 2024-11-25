@@ -25,8 +25,8 @@ class AppraisalService:
             # Atom transaction to create all entries related to appraisal
             with transaction.atomic():
                 process_object = intiate(user_object, "Appraisal")
-                appraisal_object  = self.appraisal_repository.create(user_object=user_object, process_object=process_object)
-                
+                appraisal_object = self.appraisal_repository.create(user_object=user_object, process_object=process_object)
+
                 # ========== Persist Appraisal Experience ============
                 for experience_item in data.experiences:
                     experience_object = self.experience_repository.get_or_create(name=experience_item.name)
