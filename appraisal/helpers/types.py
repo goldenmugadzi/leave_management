@@ -12,10 +12,12 @@ class QualificationsType(BaseModel):
         file (Optional[UploadedFile]): The associated file for the qualification. Optional.
     """
     name: str = Field(..., description="The name of the qualification.")
-    file: Optional[UploadedFile] = Field(None, description="The uploaded file object associated with the qualification.")
+    file: Optional[UploadedFile] = Field(None,
+                                         description="The uploaded file object associated with the qualification.")
 
     class Config:
         arbitrary_types_allowed = True
+
 
 class ExperienceType(BaseModel):
     """
@@ -29,6 +31,7 @@ class ExperienceType(BaseModel):
     name: str = Field(..., description="The name of the skill or experience.")
     years_of_experience: int = Field(..., ge=0, description="Years of experience (non-negative).")
     months_of_experience: int = Field(..., ge=0, lt=12, description="Months of experience (0-11).")
+
 
 class AppraisalPayloadType(BaseModel):
     """

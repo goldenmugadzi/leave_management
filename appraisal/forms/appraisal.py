@@ -8,13 +8,14 @@ from ..models import Appraisal, AppraisalExperience, Experience
 
 
 class UserQualificationForm(forms.ModelForm):
-    
     class Meta:
         model = UserQualification
         exclude = ["created", "updated", "user"]
-        
+
+
 class CostCenterForm(forms.ModelForm):
     name = forms.ModelChoiceField(queryset=CostCenter.objects.all())
+
     class Meta:
         model = CostCenter
         exclude = ["id", "parent"]
@@ -22,29 +23,31 @@ class CostCenterForm(forms.ModelForm):
             'name': 'Section',
         }
 
+
 class UserProfileForm(forms.ModelForm):
-    
     class Meta:
         model = UserProfile
         fields = ["username", "designation", "cost_center", "grade", "national_id"]
-        
+
+
 class DesignationForm(forms.ModelForm):
     class Meta:
         model = Designations
         fields = ["identifier", "chk"]
-        
+
+
 class AppraisalExperienceForm(forms.ModelForm):
     class Meta:
         model = AppraisalExperience
         fields = ['experience', 'years_of_experience', 'months_of_experience']
-        
-        
+
+
 class AppraisalForm(forms.ModelForm):
-    
     class Meta:
         model = Appraisal
         fields = []
-        
+
+
 class ExperienceForm(forms.ModelForm):
     class Meta:
         model = Experience
