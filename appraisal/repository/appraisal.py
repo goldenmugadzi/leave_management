@@ -5,7 +5,7 @@ from approve.models import Process
 
 
 class AppraisalRepository:
-    def create(self, user_object: UserProfile, process_object: Process)->Appraisal:
+    def create(self, user_object: UserProfile, process_object: Process) -> Appraisal:
         try:
             return Appraisal.objects.create(user=user_object, process=process_object)
         except Exception as e:
