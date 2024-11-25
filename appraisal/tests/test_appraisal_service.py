@@ -1,5 +1,5 @@
 from unittest import TestCase
-from unittest.mock import Mock, MagicMock, patch
+from unittest.mock import Mock, call, patch
 from ..repository import (
     UserQualificationRepository,
     AppraisalExperienceRepository,
@@ -12,6 +12,7 @@ from ..helpers.types import AppraisalPayloadType
 from approve.models import Process
 from ..models import Appraisal, Experience
 from it.users.models import UserProfile
+from ..helpers.types import ExperienceType
 
 
 class TestAppraisalService(TestCase):
@@ -42,12 +43,21 @@ class TestAppraisalService(TestCase):
     def mock_intiate(self, user_object, process_type):
         return self.mock_process()
     
-    def mock_appraisal_payload_input(self):
+    def mock_appraisal_payload_input(self, experiences=[], qualifications=[]):
         mock_data = Mock(spec=AppraisalPayloadType)
-        mock_data.experiences = []
-        mock_data.qualifications = []
+        mock_data.experiences = experiences
+        mock_data.qualifications = qualifications
         return mock_data
-        
+    
+    def mock_appraisal_object(self, process_object):
+        appraisal_object = Mock(spec=Appraisal)
+        appraisal_object.process = process_object
+        return appraisal_object
+    
+    def mock_experience_object(self, name):
+        mock = Mock(spec=Experience)
+        mock.name = name
+        return mock
         
     @patch("appraisal.services.appraisal.intiate")  
     def test_process_object_initialized(self, mock_intiate):
@@ -86,8 +96,7 @@ class TestAppraisalService(TestCase):
         mock_data = self.mock_appraisal_payload_input()
         
         # mock Appraisal object
-        mock_appraisal_object = Mock(spec=Appraisal)
-        mock_appraisal_object.process = mock_process_object
+        mock_appraisal_object = self.mock_appraisal_object(process_object=mock_process_object)
         self.appraisal_repository_mock.create.return_value = mock_appraisal_object
         
         # ========================= ACT ================================
@@ -115,3 +124,44 @@ class TestAppraisalService(TestCase):
                 # ===================== ASSERT ============================
 
                 self.assertEqual(str(e), f"Failed to create appraisal with error: {db_err_str}")
+
+    
+    def test_experience_object_creation_success(self):
+        # =================== ARRANGE =====================
+        experience_type = ExperienceType(name="Python", years_of_experience=1, months_of_experience=1)
+        experiences = [experience_type]
+        
+        mock_approval_payload = self.mock_appraisal_payload_input(experiences=experiences)
+        
+        mock_experience_object = self.mock_experience_object(name=experience_type.name)
+        self.experience_repository_mock.get_or_create.return_value = mock_experience_object
+        
+        # ==================== ACT =====================
+        result = self.appraisal_service.create_use_case(self.mock_user_object, mock_approval_payload)
+
+        # ==================== ASSERT ===================
+        self.experience_repository_mock.get_or_create.assert_called_once_with(name=experience_type.name)
+        
+    def test_multiple_experience_object_creation_success(self):
+        # =================== ARRANGE =====================
+        experience_type_1 = ExperienceType(name="Golang", years_of_experience=1, months_of_experience=1)
+        experience_type_2 = ExperienceType(name="Python", years_of_experience=1, months_of_experience=1)
+        experiences = [experience_type_1, experience_type_2]
+        
+        mock_approval_payload = self.mock_appraisal_payload_input(experiences=experiences)
+
+        for experience in experiences:
+            mock_experience_object = self.mock_experience_object(name=experience.name)
+            self.experience_repository_mock.get_or_create.return_value = mock_experience_object
+        
+        # ==================== ACT =====================
+        result = self.appraisal_service.create_use_case(self.mock_user_object, mock_approval_payload)
+
+        # ==================== ASSERT ===================
+        self.assertEqual(self.experience_repository_mock.get_or_create.call_count, 2)
+        
+        expected_calls = [
+            call(name=experience_type_1.name),
+            call(name=experience_type_2.name)
+        ]
+        self.experience_repository_mock.get_or_create.assert_has_calls(expected_calls, any_order=False)
