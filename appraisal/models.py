@@ -36,3 +36,5 @@ class AppraisalExperience(TimeStamp):
 
     def __str__(self) -> str:
         return f"{self.appraisal.user} - {self.experience}"
+
+
