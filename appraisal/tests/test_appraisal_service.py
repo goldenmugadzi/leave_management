@@ -12,10 +12,10 @@ from ..helpers.types import AppraisalPayloadType
 from approve.models import Process
 from ..models import Appraisal, Experience
 from it.users.models import UserProfile
-from ..helpers.types import ExperienceType
+from ..helpers.types import ExperienceType, QualificationsType
 
 
-class TestAppraisalService(TestCase):
+class TestAppraisalServiceCreateUseCase(TestCase):
     
     def setUp(self) -> None:
         # Mock repositories
@@ -143,6 +143,7 @@ class TestAppraisalService(TestCase):
         self.experience_repository_mock.get_or_create.assert_called_once_with(name=experience_type.name)
         
     def test_multiple_experience_object_creation_success(self):
+        
         # =================== ARRANGE =====================
         experience_type_1 = ExperienceType(name="Golang", years_of_experience=1, months_of_experience=1)
         experience_type_2 = ExperienceType(name="Python", years_of_experience=1, months_of_experience=1)
@@ -155,7 +156,7 @@ class TestAppraisalService(TestCase):
             self.experience_repository_mock.get_or_create.return_value = mock_experience_object
         
         # ==================== ACT =====================
-        result = self.appraisal_service.create_use_case(self.mock_user_object, mock_approval_payload)
+        self.appraisal_service.create_use_case(self.mock_user_object, mock_approval_payload)
 
         # ==================== ASSERT ===================
         self.assertEqual(self.experience_repository_mock.get_or_create.call_count, 2)
@@ -165,3 +166,80 @@ class TestAppraisalService(TestCase):
             call(name=experience_type_2.name)
         ]
         self.experience_repository_mock.get_or_create.assert_has_calls(expected_calls, any_order=False)
+
+    @patch("appraisal.services.appraisal.intiate")   
+    def test_adding_experience_appraisal(self, mock_intiate):
+        # =============================== ARRANGE =====================
+        
+        # Create a single mock process object to be used consistently
+        mock_process_object = self.mock_process()
+    
+        # Mock intiate to always return the same mock_process_object
+        mock_intiate.side_effect = lambda user_object, process_type: mock_process_object
+
+        # mock appraisal object
+        mock_appraisal_object = self.mock_appraisal_object(process_object=mock_process_object)
+        self.appraisal_repository_mock.create.return_value = mock_appraisal_object
+        
+        # mock payload data
+        experience_type_1 = ExperienceType(name="Golang", years_of_experience=1, months_of_experience=1)
+        experience_type_2 = ExperienceType(name="Python", years_of_experience=1, months_of_experience=1)
+        experiences = [experience_type_1, experience_type_2]
+        
+        mock_approval_payload = self.mock_appraisal_payload_input(experiences=experiences)
+        
+        # mock experience object
+        for experience in experiences:
+            mock_experience_object = self.mock_experience_object(name=experience.name)
+            self.experience_repository_mock.get_or_create.return_value = mock_experience_object
+       
+            # mock add_experiences
+            self.appraisal_repository_mock.add_experience.return_value = None
+        
+        # ========================== ACT =========================
+        self.appraisal_service.create_use_case(user_object=self.mock_user_object, data=mock_approval_payload)
+        
+        # ========================== ASSERT ======================
+        expected_calls = [
+            call(appraisal_object=mock_appraisal_object, experience_object=mock_experience_object, data=experience_type_1),
+            call(appraisal_object=mock_appraisal_object, experience_object=mock_experience_object, data=experience_type_2),
+        ]
+        self.appraisal_repository_mock.add_experience.assert_has_calls(expected_calls, any_order=False)
+        
+        self.assertEqual(self.appraisal_repository_mock.add_experience.call_count, 2)
+        
+    
+    @patch("appraisal.services.appraisal.intiate")   
+    def test_user_qualification_create(self, mock_intiate):
+        # ========================= ARRANGE ========================
+        
+        # mock process object
+        mock_process_object = self.mock_process()
+        mock_intiate.side_effect = lambda user_object, process_type: mock_process_object
+
+        # mock appraisal object
+        mock_appraisal_object = self.mock_appraisal_object(process_object=mock_process_object)
+        self.appraisal_repository_mock.create.return_value = mock_appraisal_object
+       
+        # mock qualifications payload
+        qualification_1 = QualificationsType(name="AWS")
+        qualification_2 = QualificationsType(name="AWS")
+        
+        qualifications = [qualification_1, qualification_2]
+        mock_payload = self.mock_appraisal_payload_input(qualifications=qualifications)
+        
+        # mock qualification create repo
+        for _ in qualifications:
+            self.qualification_repository_mock.create.return_value = None
+            
+        # ========================= ACT ============================
+        self.appraisal_service.create_use_case(user_object=self.mock_user_object, data=mock_payload)
+
+        # ========================= ASSERT =========================
+        expected_calls = [
+            call(user_object=self.mock_user_object, name=qualification_1.name, file=None),
+            call(user_object=self.mock_user_object, name=qualification_2.name, file=None)
+        ]
+        
+        self.qualification_repository_mock.create.assert_has_calls(expected_calls, any_order=False)
+        self.assertEqual(self.qualification_repository_mock.create.call_count, 2)

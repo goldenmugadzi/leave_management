@@ -30,19 +30,11 @@ class AppraisalService:
                 # ========== Persist Appraisal Experience ============
                 for experience_item in data.experiences:
                     experience_object = self.experience_repository.get_or_create(name=experience_item.name)
-
-                    appraisal_object.experience.add(
-                        experience_object,
-                        through_defaults={
-                            "years_of_experience": experience_item.years_of_experience,
-                            "months_of_experience": experience_item.months_of_experience
-                        }
-                        
-                    )
+                    self.appraisal_repository.add_experience(appraisal_object=appraisal_object, experience_object=experience_object, data=experience_item)
                 
                 # ========== Persist User Qualification ============
                 for qualification_item in data.qualifications:
-                    self.qualification_repository.create(name=qualification_item.name, file=qualification_item.file)
+                    self.qualification_repository.create(user_object=user_object, name=qualification_item.name, file=qualification_item.file)
                 
                 return appraisal_object
         except Exception as e:

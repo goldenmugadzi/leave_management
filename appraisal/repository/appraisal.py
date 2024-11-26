@@ -1,7 +1,8 @@
 from typing import Dict, Any
-from ..models import Appraisal
+from ..models import Appraisal, Experience
 from it.users.models import UserProfile
 from approve.models import Process
+from ..helpers.types import ExperienceType
 
 
 class AppraisalRepository:
@@ -10,3 +11,17 @@ class AppraisalRepository:
             return Appraisal.objects.create(user=user_object, process=process_object)
         except Exception as e:
             raise Exception(f"Appraisal Create Repo failed with error: {e}")
+
+    def add_experience(self, appraisal_object :Appraisal, experience_object: Experience, data: ExperienceType):
+        try:
+            appraisal_object.experience.add(
+                experience_object,
+                through_defaults={
+                    "years_of_experience": data.years_of_experience,
+                    "months_of_experience": data.months_of_experience
+                }
+                
+            )
+        except Exception as e:
+            raise Exception(f"Appraisal Experience Repo failed with error: {e}")
+ 
