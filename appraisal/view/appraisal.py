@@ -77,7 +77,9 @@ class AppraisalCreateView(CreateView):
             appraisal_repository=AppraisalRepository()
         )
         structured_payload = self.build_payload()
-        appraisal_service_handler.create_use_case(user_object=user_object, data=structured_payload)
+        appraisal_object = appraisal_service_handler.create_use_case(user_object=user_object, data=structured_payload)
+        form.instance = appraisal_object
+        
         form.instance.user = user_object
         # if len(structured_payload.experiences) == 0:
         #     # return an error 
