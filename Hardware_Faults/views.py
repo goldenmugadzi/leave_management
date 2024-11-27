@@ -56,14 +56,30 @@ def show_fault_datatable(request):
         # Total number of records before filtering
         total = employees.count()
 
-        # # Sorting
-        # order_column = request.GET.get('order[0][column]')
-        # order = request.GET.get('order[0][dir]')
-        # if order_column:
-        #     column_name = request.GET.get(f'columns[{order_column}][data]')
-        #     if order == 'desc':
-        #         column_name = f'-{column_name}'
-        #     employees = employees.order_by(column_name)
+         # Sorting
+        order_column = request.GET.get('order[0][column]')
+        order_dir = request.GET.get('order[0][dir]')
+
+        if order_column is not None and order_dir is not None:
+            column_map = {
+                "0": "jobcardnumber",
+                "1": "eserialnumber",
+                "2": "eloggedindate",
+                "3": "eUsername",
+                "4": "ephoneextension",
+                "5": "efault",
+                "6": "erepairstatus",
+                "7": "elocation",
+                "8": "eupdatedby",
+                "9": "elastupdate",
+            }
+
+            column_name = column_map.get(order_column)
+            if column_name:
+                if order_dir == 'desc':
+                    column_name = f'-{column_name}'  # Add descending order prefix
+                employees = employees.order_by(column_name)
+
 
         # Pagination
         paginator = Paginator(employees, length)
