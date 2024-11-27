@@ -9,13 +9,14 @@ class QuarterChoices(models.IntegerChoices):
     Q4 = 4, "4th"
     
 class PerformanceProgressStrength(TimeStamp):
-    name = models.TextField(null=False, blank=False)
+    name = models.CharField(max_length=500, null=False, blank=False, unique=True, db_index=False)
+    
     
     def __str__(self) -> str:
         return f"Strength-{self.id}"
 
 class PerformanceProgressWeakness(TimeStamp):
-    name = models.TextField(null=False, blank=False)
+    name = models.CharField(max_length=500, null=False, blank=False, unique=True, db_index=False)
     
     def __str__(self) -> str:
         return f"Weakness-{self.id}"
