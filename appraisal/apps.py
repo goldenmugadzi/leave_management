@@ -31,5 +31,5 @@ class AppraisalConfig(AppConfig):
     name = 'appraisal'
 
     def ready(self) -> None:
-        
         post_migrate.connect(load_strength_weakness_handler, sender=self)
+        from appraisal.signals.appraisal import create_performance_review_post_save_handler
