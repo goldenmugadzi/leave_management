@@ -3,7 +3,7 @@ from ..models import Appraisal, PerformanceProgressReview, PerformanceProgressSt
 from ..helpers.types import PerformanceReviewType
 
 class PerformanceReviewRepository:
-    def create_use_case(self, appraisal_object: Appraisal, data: PerformanceReviewType)->PerformanceProgressReview:
+    def create(self, appraisal_object: Appraisal, data: PerformanceReviewType)->PerformanceProgressReview:
         try:
             return PerformanceProgressReview.objects.create(appraisal=appraisal_object, quarter=data.quarter)
         except Exception as e:
