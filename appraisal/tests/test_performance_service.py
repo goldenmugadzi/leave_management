@@ -2,6 +2,7 @@ from unittest import TestCase
 from unittest.mock import Mock, call, patch
 from ..repository.performance import PerformanceReviewRepository
 from ..services import PerformanceReviewService
+from ..services.performance import PerformanceReviewCreateError
 from ..helpers.types import PerformanceReviewType
 from ..models import Appraisal, PerformanceProgressReview
 
@@ -49,3 +50,26 @@ class TestPerformanceReviewCreateUseCase(TestCase):
         
         self.performance_repo_mock.create.assert_called_once_with(appraisal_object=mock_appraisal_object, data=mock_payload)
         self.assertEqual(got_performance_review_object, mocked_performance_review_object)
+        
+    def test_performance_created_failure(self):
+        # ================== ARRANGE =========================
+        
+        # mock payload
+        mock_payload = self.mock_performance_payload_input()
+        mock_payload.quarter = 1
+        
+        # mock appraisal object
+        mock_appraisal_object = self.mock_appraisal_object()
+        
+        # mock db error
+        db_error_string = "Database Error"
+        
+        with patch.object(self.performance_repo_mock, 'create', side_effect=Exception(db_error_string)): 
+            try:
+                # ================== ACT    ==========================
+                self.performance_service.create_use_case(appraisal_object=mock_appraisal_object, data=mock_payload)
+                self.fail("Expected PerformanceReviewCreationError not raised")
+            except PerformanceReviewCreateError as e:
+                # ================== ASSERT ==========================
+                self.performance_repo_mock.create.assert_called_once_with(appraisal_object=mock_appraisal_object, data=mock_payload)
+                self.assertEqual(str(e), f"Failed to create performance review with error: {db_error_string}")
