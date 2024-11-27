@@ -36,7 +36,8 @@ def create_fault(request):
         employee.save()
         print("Data saved successfully!")
         messages.success(request, "Fault created successfully!")
-        return render(request, 'hardware_faults/create_fault.html',{'form':form})
+        
+        return redirect('show_fault')
     return render(request, 'hardware_faults/create_fault.html',{})
 
 def show_fault(request):
