@@ -286,6 +286,7 @@ def create_Ace(request):
                         msg = "Your subordinate" + str(use) + "created " + ace.Ace_id2 + "using budget " + str(
                             ace.budget_id)
                         url = "/ace/ace_detail/" + ace.Ace_id2
+                        section_heads = UserProfile.objects.filter(username=section_heads).first()
                         notify_user(section_heads, msg, "ACE", url, ace.Ace_id2)
 
                     # for quotation_form in formset:
