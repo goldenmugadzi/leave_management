@@ -45,6 +45,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     # path('accounts/', include('django.contrib.auth.urls')),
     path('ace/', include('ACE2.urls')),
+   
 
     # path('ace/', include('finance.Ace.urls')),
     path('direct_purchases/', include('finance.Direct_purchases.urls')),
@@ -57,6 +58,10 @@ urlpatterns = [
     path('api/auth/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('api/auth/token/verify/', TokenVerifyView.as_view(), name='token_verify'),
+
+     # path('', include('hardware_faults.urls')),
+      path('', include('Hardware_Faults.urls')),
+
 
 ] 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

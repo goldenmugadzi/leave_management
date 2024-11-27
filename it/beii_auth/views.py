@@ -82,7 +82,13 @@ APPLICATIONS = [
         "title": "Change Requests",
         "iconUrl": "assets/images/change.png",
         "url": "/change_requests/change_request_index"
-    }
+    },
+      {
+        "name": "hardware_faults",
+        "title": "Hardware Faults",
+        "iconUrl": "assets/images/fault3.png",
+        "url": "/show_fault/"
+    },
 ]
 
 REPORTS = [

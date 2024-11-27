@@ -1,0 +1,113 @@
+{% extends 'admin_layout.html' %} {% block styles %}
+<link
+  rel="stylesheet"
+  href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css"
+/>
+<style>
+  .dataTables_wrapper .dataTables_length select {
+    width: 4rem;
+  }
+</style>
+{% endblock styles %} {% block content %}
+<div class="content-wrapper">
+  <div
+    class="bg-gulf-blue-100 shadow shadow-gulf-blue-300 text-gulf-blue-900 rounded px-2 py-2"
+  >
+    <div class="flex justify-between items-center mb-5">
+      <span class="text-lg  font-bold text-black">Faults Details</span>
+      <a
+        href="/create_fault"
+        class="bg-gulf-blue-600 hover:bg-gulf-blue-800 text-white font-bold py-2 px-4 rounded"
+        >
+        Create fault
+      </a>
+    </div>
+    <table id="users_index" class="display" style="width: 100%">
+      <thead>
+          <tr>
+              <th>Jobcardnumber</th>
+              <th>Serial number</th>
+              <th>Logged in Date</th>
+              <th>Username</th>
+              <th>Phone Extension</th>
+              <th>Fault</th>
+              <th>Repair status</th>
+              <th>Location</th>
+              <th>Updatedby</th>
+              <th>Last Update</th>
+              <th>Action</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+      <tfoot>
+        <tr>
+            <th>Jobcardnumber</th>
+            <th>Serial number</th>
+            <th>Logged in Date</th>
+            <th>Username</th>
+            <th>Phone Extension</th>
+            <th>Fault</th>
+            <th>Repair status</th>
+            <th>Location</th>
+            <th>Updatedby</th>
+            <th>Last Update</th>
+            <th>Action</th>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+</div>
+{% endblock %} {% block scripts %}
+<script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<!-- Buttons JS -->
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/buttons/2.2.2/js/dataTables.buttons.min.js"></script>
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/buttons/2.2.2/js/buttons.html5.min.js"></script>
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/buttons/2.2.2/js/buttons.print.min.js"></script>
+<!-- PDFMake (for PDF export) -->
+<script type="text/javascript" charset="utf8" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.36/pdfmake.min.js"></script>
+<script type="text/javascript" charset="utf8" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.36/vfs_fonts.js"></script>
+<!-- JSZip (for Excel export) -->
+<script type="text/javascript" charset="utf8" src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
+<script>
+
+$(document).ready(function () {
+    $("#users_index").DataTable({
+      "processing": true,
+      "serverSide": true,
+      "ajax": {
+        "url": "/faults_datatable",
+
+      },
+      columns: [
+      { data: 'jobcardnumber' },
+      { data: 'serialnumber' },
+      { data: 'loggedindate' },
+      { data: 'username' },
+      { data: 'phoneextension' },
+      { data: 'fault' },
+      { data: 'repairstatus' },
+      { data: 'location' },
+      { data: 'updatedby' },
+      { data: 'lastupdate' },
+
+        {
+          data: "id",
+          orderable: false,
+          searchable: false,
+          render: function (data, type, row, meta) {
+              return `
+                  <a type="button" class="btn btn-info" href='/update_fault/${row.serialnumber}' >
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                      </svg>
+                  </a>`;
+          }
+
+                  }
+      ],
+      order: [[5, 'desc']]
+    });
+  });
+</script>
+{% endblock scripts %}

@@ -1,0 +1,77 @@
+{% extends 'admin_layout.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block content %}
+<div class="flex justify-center items-center min-h-screen">
+    <div class="container max-w-8xl bg-white shadow-md rounded-lg p-8">
+        <h1 class="text-2xl font-bold text-black">Update Fault</h1>
+        <p class="text-base font-bold text-black mt-2">All fields are required to be filled.</p>
+
+        <form action="/update_fault/{{ employee.eserialnumber }}/" method="POST">
+            {% csrf_token %}
+            <div class="mt-10 grid grid-cols-3 gap-3">
+            <div class="mt-4">
+                <label for="eserialnumber" class="block text-sm font-medium text-gray-700">Serial Number</label>
+                <input type="text" name="eserialnumber" value="{{ employee.eserialnumber }}" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+            </div>
+
+            <div class="mt-4">
+                <label for="eUsername" class="block text-sm font-medium text-gray-700">Username</label>
+                <input type="text" name="eUsername" value="{{ employee.eUsername }}" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+            </div>
+
+            <div class="mt-4">
+              <label for="ephoneextension" class="block text-sm font-medium text-gray-700">Phone extension</label>
+              <input type="text" name="ephoneextension" value="{{employee.ephoneextension}}" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+          </div>
+            </div>
+            <div class="mt-10 grid grid-cols-3 gap-3">
+          <div class="mt-4">
+            <label for="efault" class="block text-sm font-medium text-gray-700">fault</label>
+            <input type="text" name="efault" value="{{employee.efault}}" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+        </div>
+        <div>
+          <label
+            for="erepairstatus"
+            class="block text-sm font-medium leading-6 text-gray-900"
+            >Repair Status</label
+          >
+          <div class="mt-2">
+            <select
+              id="erepairstatus"
+              name="erepairstatus"
+              value="{{employee.erepairstatus}}"
+              class="block w-full bg-gulf-blue-50 rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 px-2 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+            >
+              <option>Select status</option>
+              <option value="logged in">logged in</option>
+              <option value="repair in progress">repair in progress</option>
+              <option value="fixed">fixed</option>
+              <option value="irrepairable">irrepairable</option>
+            </select>
+          </div>
+        </div>
+        <div class="mt-4">
+          <label for="elocation" class="block text-sm font-medium text-gray-700">location</label>
+          <input type="text" name="elocation" value="{{employee.elocation}}" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+      </div>
+            </div>
+      <div class="mt-10 grid grid-cols-3 gap-3">    
+      <div class="mt-4">
+        <label for="eupdatedby" class="block text-sm font-medium text-gray-700">Updatedby</label>
+        <input type="text" name="eupdatedby" value="{{employee.eupdatedby}}" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+    </div>
+      </div>
+      <div class="flex justify-end mt-4 gap-4">
+                <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                    Update Record
+                </button>
+                <a href="{% url 'show_fault' %}" class="bg-gray-300 hover:bg-gray-400 text-gray-700 font-bold py-2 px-4 rounded">
+                    Show Details
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock content %}
