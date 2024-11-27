@@ -20,6 +20,7 @@ from approve.models import Step
 from approve.views import intiate
 from it.users.models import UserProfile, Roles, Designations, Districts, Depots
 from finance.PettyCash.views import approve_step
+from finance.comparative_schedules.views import notification_update, notify_user
 
 
 # Create your views here.
@@ -143,6 +144,12 @@ def Ace_detail(request, Ace_id2):
             transaction.approval_status = "approved by General Manager"
             transaction.save()
             print("transaction: ", str(transaction.approval_status))
+            user = ace_item.requested_by
+            userp = UserProfile.objects.filter(id=user).first()
+
+            msg = "Your ACE " + ace_item.Ace_id2 + "has been approved by the General Manager"
+            url = "/ace/ace_detail/" + ace_item.Ace_id2
+            notify_user(userp, msg, "ACE", url, ace_item.Ace_id2)
 
     ace_quantity = range(ace_item.quantity)
     approved_steps = ace_item.process.approval_set.all().values_list('step__step', flat=True)
@@ -264,10 +271,36 @@ def create_Ace(request):
                     budget.withdrawal_date = ace.date_created
                     budget.save()
 
+                    requester = ace.requested_by
+                    use = UserProfile.objects.filter(id=requester.id).first()
+                    section_created = use.section
+
+                    # notify sh
+
+                    section_heads = find_ace_section_head(section_created)
+                    for head in section_heads:
+                        print(head.username, head.email)
+                        # budget name
+                        bdg = AssetBudget.objects.filter(budget_id=ace.budget_id).first()
+                        budget_name = bdg.budget_name
+                        msg = "Your subordinate" + use + "created " + ace.Ace_id2 + "using budget " + budget_name
+                        url = "/ace/ace_detail/" + ace.Ace_id2
+                        notify_user(head, msg, "ACE", url, ace.Ace_id2)
+
                     # for quotation_form in formset:
                     #     quotation = quotation_form.save(commit=False)
                     #     quotation.ace2 = ace
                     #     quotation.save()
+
+                    ace_section = ace.section
+                    ace_sh = find_ace_section_head(request, ace_section)
+                    for ah in ace_sh:
+                        print(ah.username, ah.email)
+                        bdg = AssetBudget.objects.filter(budget_id=ace.budget_id).first()
+                        budget_name = bdg.budget_name
+                        msg = "user" + use + "created " + ace.Ace_id2 + "using budget " + budget_name
+                        url = "/ace/ace_detail/" + ace.Ace_id2
+                        notify_user(ah, msg, "ACE", url, ace.Ace_id2)
 
                     if str(ace.classification) == "Project":
                         # the idea is that if its ace of type project there need to be added other project details
@@ -1343,3 +1376,37 @@ def ace_report_detail_excel(request, report_id2):
         ])
     wb.save(response)
     return response
+
+
+def find_ace_section_head(request,section):
+    all_users = UserProfile.objects.filter(section=section).all()
+    # section_heads = UserProfile.objects.filter(section=section, role='section_head')
+    if all_users:
+
+        for user_profile in all_users:
+            user_groups = user_profile.groups.values_list('name', flat=True)
+
+            custom_user_roles = {
+                "ace": {},
+            }
+
+            roles_ = user_profile.roles.all()
+            for _role in roles_:
+                role = Roles.objects.filter(id=_role.id).first()
+
+                if role.application == "ace":
+                    custom_user_roles["ace"] = role.role
+            ace_role = str(custom_user_roles["ace"])
+            if ace_role == "pass":
+                userp = 'sh'
+                sh = user_profile.username
+        if sh:
+            return sh
+
+        else:
+            messages.error(request,"the ace requires more than the current budget resulting in a "
+                           "negative balance")
+
+    # else:
+    #     messages.error(request, "the ace requires more than the current budget resulting in a "
+    #                             "negative balance")
