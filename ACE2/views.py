@@ -277,15 +277,16 @@ def create_Ace(request):
 
                     # notify sh
 
-                    section_heads = find_ace_section_head(section_created)
-                    for head in section_heads:
-                        print(head.username, head.email)
+                    section_heads = find_ace_section_head(request, section_created)
+                    if section_heads:
+                        print(section_heads, " section_heads")
                         # budget name
-                        bdg = AssetBudget.objects.filter(budget_id=ace.budget_id).first()
-                        budget_name = bdg.budget_name
-                        msg = "Your subordinate" + use + "created " + ace.Ace_id2 + "using budget " + budget_name
+                        # bdg = AssetBudget.objects.filter(budget_id=ace.budget_id).first()
+                        # budget_name = bdg.budget_name
+                        msg = "Your subordinate" + str(use) + "created " + ace.Ace_id2 + "using budget " + str(
+                            ace.budget_id)
                         url = "/ace/ace_detail/" + ace.Ace_id2
-                        notify_user(head, msg, "ACE", url, ace.Ace_id2)
+                        notify_user(section_heads, msg, "ACE", url, ace.Ace_id2)
 
                     # for quotation_form in formset:
                     #     quotation = quotation_form.save(commit=False)
@@ -294,13 +295,16 @@ def create_Ace(request):
 
                     ace_section = ace.section
                     ace_sh = find_ace_section_head(request, ace_section)
-                    for ah in ace_sh:
-                        print(ah.username, ah.email)
-                        bdg = AssetBudget.objects.filter(budget_id=ace.budget_id).first()
-                        budget_name = bdg.budget_name
-                        msg = "user" + use + "created " + ace.Ace_id2 + "using budget " + budget_name
+
+                    if ace_sh:
+                        print(ace_sh, "ace_sh")
+                        # bdg = AssetBudget.objects.filter(budget_id=ace.budget_id).first()
+                        # budget_name = bdg.budget_name
+                        msg = "user  " + str(use) + "created " + ace.Ace_id2 + "using budget " + str(ace.budget_id)
                         url = "/ace/ace_detail/" + ace.Ace_id2
-                        notify_user(ah, msg, "ACE", url, ace.Ace_id2)
+
+                        ace_sh = UserProfile.objects.filter(username=ace_sh).first()
+                        notify_user(ace_sh, msg, "ACE", url, ace.Ace_id2)
 
                     if str(ace.classification) == "Project":
                         # the idea is that if its ace of type project there need to be added other project details
@@ -310,8 +314,8 @@ def create_Ace(request):
                         url = reverse('Ace:ace_detail', args=[ace.Ace_id2])
                         return redirect(url)
                 else:
-                    messages.error(request, "the ace requires more than the current budget")
-                    sweetify.error(request, "the ace requires more than the current budget")
+                    messages.error(request, "ace not created")
+                    sweetify.error(request, "not created")
                     if balance_after_ace < 0:
                         messages.error(request, "the ace requires more than the current budget resulting in a "
                                                 "negative balance")
@@ -1378,7 +1382,7 @@ def ace_report_detail_excel(request, report_id2):
     return response
 
 
-def find_ace_section_head(request,section):
+def find_ace_section_head(request, section):
     all_users = UserProfile.objects.filter(section=section).all()
     # section_heads = UserProfile.objects.filter(section=section, role='section_head')
     if all_users:
@@ -1400,12 +1404,13 @@ def find_ace_section_head(request,section):
             if ace_role == "pass":
                 userp = 'sh'
                 sh = user_profile.username
-        if sh:
-            return sh
+                if sh:
+                    return sh
+
 
         else:
-            messages.error(request,"the ace requires more than the current budget resulting in a "
-                           "negative balance")
+            messages.error(request, "the ace requires more than the current budget resulting in a "
+                                    "negative balance")
 
     # else:
     #     messages.error(request, "the ace requires more than the current budget resulting in a "
