@@ -5,7 +5,7 @@ from ..helpers.types import PerformanceReviewType
 class PerformanceReviewRepository:
     def create(self, appraisal_object: Appraisal, data: PerformanceReviewType)->PerformanceProgressReview:
         try:
-            return PerformanceProgressReview.objects.create(appraisal=appraisal_object, quarter=data.quarter)
+            return PerformanceProgressReview.objects.get_or_create(appraisal=appraisal_object, quarter=data.quarter)
         except Exception as e:
             raise Exception(f"PerformanceReview create repo failed with error: {e}")
         
