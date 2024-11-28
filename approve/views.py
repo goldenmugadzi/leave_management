@@ -9,6 +9,7 @@ from django.urls import reverse
 from email.mime.text import MIMEText
 from it.users.views import ms_exhange_send_html
 from django.db.models import Q
+from decouple import config
 
 
 
@@ -238,7 +239,7 @@ def send_notification(app, object):
 
 def send_notification(request, url, app, obj):
     responsibilities = approvers(obj)
-    domain_name = "http://127.0.0.1:8000"  # Consider using settings for the domain
+    domain_name = config('be_url') #"http://127.0.0.1:8000"  # Consider using settings for the domain
 
     for responsibility in responsibilities:
         subject = f"Hello: {responsibility.user.get_full_name()}"
