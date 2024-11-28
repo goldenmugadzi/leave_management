@@ -8,6 +8,7 @@ from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from helpers.models import TimeStamp
 
+
 class UserManager(BaseUserManager):
     def create_user(self, username, password=None, **extra_fields):
         extra_fields.setdefault('is_staff', False)
@@ -37,6 +38,7 @@ class Regions(models.Model):
     def __str__(self):
         return self.region
 
+
 class Districts(models.Model):
     district = models.CharField(max_length=100)
     code = models.CharField(max_length=100)
@@ -54,6 +56,7 @@ class Sections(models.Model):
 
     def __str__(self):
         return self.section
+
 
 class Depots(models.Model):
     depot = models.CharField(max_length=100)
@@ -83,6 +86,7 @@ class Roles(models.Model):
     def __str__(self):
         return f"{self.name}"
 
+
 class Designations(models.Model):
     identifier = models.CharField(max_length=100, blank=True)
     description = models.CharField(max_length=100, blank=True)
@@ -93,18 +97,20 @@ class Designations(models.Model):
     def __str__(self):
         return self.identifier
 
+
 class CostCenter(models.Model):
     id = models.CharField(primary_key=True, max_length=20, editable=False)
     code = models.CharField(max_length=30)
     name = models.CharField(max_length=100, blank=True, null=True)
     parent = models.ForeignKey('self', on_delete=models.CASCADE, blank=True, null=True, related_name='children')
-  
+
     class Meta:
         ordering = ['parent__id']
-   
+
     def get_all_children(self):
         children = list(self.children.all())
         return children
+
     def get_decendance(self):
         def _get_all_descendants(node):
             descendants = node.children.all()
@@ -114,6 +120,7 @@ class CostCenter(models.Model):
 
         descendants = _get_all_descendants(self)
         return descendants | self.__class__.objects.filter(pk=self.pk)
+
     def get_all_ancestors(self):
         ancestors = []
         current = self
@@ -121,32 +128,34 @@ class CostCenter(models.Model):
             ancestors.append(current.parent)
             current = current.parent
         return ancestors[::-1]
+
     def get_region(self):
-        cc=self
+        cc = self
         ancestors = cc.get_all_ancestors()
 
         return ancestors[2]
+
     def get_all_ancestors_and_their_children(self):
         ancestors = CostCenter.objects.none()
         if self.parent:
             ancestors.append(self.parent)
             ancestors += self.parent.get_all_ancestors_and_their_children()
         children = self.get_all_children()
-        return ancestors  + children
-    def  get_view(self):
+        return ancestors + children
+
+    def get_view(self):
         """ return a list of cost centers involving children, grand children, brothers ,parent , parent brothers, grand parent"""
-        cost_centers=[]
-        i=0
-        while self.parent and i<2:
+        cost_centers = []
+        i = 0
+        while self.parent and i < 2:
             cost_centers.append(self)
             cost_centers += self.get_all_children()
             self = self.parent
-            i+=1
+            i += 1
         return cost_centers
-     
-    
+
     def __str__(self):
-       
+
         return f"{self.name} ({self.code})"
 
 
@@ -158,7 +167,7 @@ GRADE_CHOICES = [
 
 
 class UserProfile(AbstractUser):
-    username = models.CharField(max_length=15, unique=True, verbose_name='EC Number',db_index=True)
+    username = models.CharField(max_length=15, unique=True, verbose_name='EC Number', db_index=True)
     designation = models.ForeignKey(Designations, on_delete=models.DO_NOTHING, blank=True, null=True)
     section = models.ForeignKey(Sections, on_delete=models.DO_NOTHING, blank=True, null=True)
     cost_center = models.ForeignKey(CostCenter, on_delete=models.DO_NOTHING, blank=True, null=True)
@@ -174,47 +183,50 @@ class UserProfile(AbstractUser):
     grade = models.CharField(choices=GRADE_CHOICES, max_length=20, default=GRADE_CHOICES[0][0])
     national_id = models.CharField(max_length=18, null=True, default=None)
     class Meta:
-        ordering = ['last_name','first_name','username']
+        ordering = ['last_name', 'first_name', 'username']
 
     def __str__(self):
         if self.first_name and self.last_name:
             return f"{self.last_name} {self.first_name}"
         else:
             return f"{self.username}"
+
     def add_role(self, role, app_id):
         existing_role = self.roles.filter(app_id__fullname=app_id).first()
         if existing_role:
             self.roles.remove(existing_role)
-        try:self.roles.add(role)
-        except:pass
+        try:
+            self.roles.add(role)
+        except:
+            pass
         self.save()
-   
+
     def get_user_roles_for_application(self, application_name):
         # Filter the user's roles for the specific application
         application = Application.objects.filter(name=application_name).first()
-        print("application: ",application)
+        print("application: ", application)
         if application:
             user_roles = self.roles.filter(app_id=application.id)
-            print("user_roles: ",user_roles)
+            print("user_roles: ", user_roles)
             # Return the roles if any exist
             if user_roles.exists():
                 return user_roles[0].role
         else:
             return None
-    
+
     def get_user_role_for_application(self, application_name):
         # Filter the user's roles for the specific application
         application = Application.objects.filter(name=application_name).first()
-        print("application: ",application)
+        print("application: ", application)
         if application:
             user_roles = self.roles.filter(app_id=application.id)
-            print("user_roles: ",user_roles)
+            print("user_roles: ", user_roles)
             # Return the roles if any exist
             if user_roles.exists():
                 return user_roles[0]
         else:
             return None
-        
+
     def cost_centers_for(self, app_names):
         responsibilities = self.responsibilities.filter(role__app_id__name__in=app_names)
         if responsibilities.exists():
@@ -223,12 +235,13 @@ class UserProfile(AbstractUser):
                 cost_centers.update(responsibility.cost_centers.all())
             return cost_centers
         return None
-            
+
     def cost_center_and_decendace(self):
         CostCenters = CostCenter.objects.filter(pk=self.cost_center.pk)
         CostCenters |= self.cost_center.get_decendance()
         return CostCenters
-    
+
+
 class Notification(models.Model):
     user = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
     message = models.TextField()
@@ -241,6 +254,7 @@ class Notification(models.Model):
     def __str__(self):
         return self.message
 
+
 class Supplier(models.Model):
     id = models.CharField(primary_key=True, max_length=20, editable=False)
     name = models.CharField(max_length=100, unique=True, blank=True, null=True)
@@ -249,7 +263,7 @@ class Supplier(models.Model):
     address = models.CharField(max_length=100, blank=True, null=True)
 
     class Meta:
-        ordering = ['name'] 
+        ordering = ['name']
 
     def __str__(self):
         return self.name
@@ -261,8 +275,10 @@ class Supplier(models.Model):
             self.id = "splr" + timestamp + random_number
         super().save(*args, **kwargs)
 
+
 class Responsibilities(models.Model):
-    user = models.ForeignKey(UserProfile, on_delete=models.CASCADE, blank=True, null=True , related_name='responsibilities')
+    user = models.ForeignKey(UserProfile, on_delete=models.CASCADE, blank=True, null=True,
+                             related_name='responsibilities')
     role = models.ForeignKey(Roles, on_delete=models.CASCADE, blank=True, null=True)
     cost_centers = models.ManyToManyField(CostCenter, blank=True)
 

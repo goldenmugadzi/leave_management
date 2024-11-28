@@ -4,37 +4,48 @@ from django.contrib import messages
 from .models import *
 from .forms import *
 from django.views.generic.detail import DetailView
-from django.shortcuts import render, redirect,  get_object_or_404
+from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
+from email.mime.text import MIMEText
+from it.users.views import ms_exhange_send_html
+from django.db.models import Q
+from decouple import config
+
 
 
 class WorkflowCreateView(CreateView):
     form_class = WorkflowCreateForm
-    template_name = 'approve/create_workflow.html'
+    template_name = "approve/create_workflow.html"
     extra_steps = None
 
     def form_valid(self, form):
-        self.extra_steps = form.cleaned_data['number_of_steps']
+        self.extra_steps = form.cleaned_data["number_of_steps"]
         return super().form_valid(form)
 
     def get_success_url(self):
         workflow_id = self.object.id
-        return f'/workflow/{workflow_id}/add-steps?extra={self.extra_steps}'
+        return f"/workflow/{workflow_id}/add-steps?extra={self.extra_steps}"
 
 
 def step_formset_view(request, workflow_id):
     workflow = Workflow.objects.get(id=workflow_id)
-    extra_steps = int(request.GET.get('extra', 5))  # Default value of 5 if no 'extra' parameter is provided
-    formset_class = inlineformset_factory(Workflow, Step, form=StepForm, extra=extra_steps, can_delete=False)
-    formset_class.form.base_fields['approver'].queryset = Roles.objects.filter(application=workflow.application.name)
+    extra_steps = int(
+        request.GET.get("extra", 5)
+    )  # Default value of 5 if no 'extra' parameter is provided
+    formset_class = inlineformset_factory(
+        Workflow, Step, form=StepForm, extra=extra_steps, can_delete=False
+    )
+    formset_class.form.base_fields["approver"].queryset = Roles.objects.filter(
+        application=workflow.application.name
+    )
     existing_steps = Step.objects.filter(workflow_id=workflow_id)
 
-    if request.method == 'POST':
+    if request.method == "POST":
         formset = formset_class(request.POST, instance=workflow)
         if existing_steps.exists():
             # Show a pop-up message if there are existing steps
-            messages.warning(request, 'There are existing steps for this workflow.')
-            url = reverse('approve:workflow_detail', args=[workflow_id])
+            messages.warning(request, "There are existing steps for this workflow.")
+            url = reverse("approve:workflow_detail", args=[workflow_id])
             return redirect(url)
         elif formset.is_valid():
             instances = formset.save(commit=False)
@@ -43,34 +54,46 @@ def step_formset_view(request, workflow_id):
                     instance.workflow = workflow
                     instance.step = index + 1
                     instance.save()
-            url = reverse('approve:workflow_detail', args=[workflow_id])
+            url = reverse("approve:workflow_detail", args=[workflow_id])
             return redirect(url)
         else:
-            return render(request, 'approve/update_workflow.html', {'formset': formset, 'workflow': workflow})
+            return render(
+                request,
+                "approve/update_workflow.html",
+                {"formset": formset, "workflow": workflow},
+            )
     else:
         formset = formset_class(instance=workflow)
 
-    return render(request, 'approve/update_workflow.html', {'formset': formset, 'workflow': workflow})
+    return render(
+        request,
+        "approve/update_workflow.html",
+        {"formset": formset, "workflow": workflow},
+    )
 
 
 class WorkflowDetailView(DetailView):
     model = Workflow
-    template_name = 'approve/workflow_detail.html'
-    context_object_name = 'workflow'
+    template_name = "approve/workflow_detail.html"
+    context_object_name = "workflow"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         workflow = self.get_object()
-        context['steps'] = workflow.step_set.all()
+        context["steps"] = workflow.step_set.all()
         return context
+
 
 def get_my_roles_for_apps(user, app_names):
     roles_dict = []
     for app_name in app_names:
-        roles = user.roles.filter(app_id__name=app_name).values_list('name', flat=True)
+        roles = user.roles.filter(app_id__name=app_name).values_list("name", flat=True)
         if roles:
-            for role in roles: roles_dict.append( role+" for "+app_name )
+            for role in roles:
+                roles_dict.append(role + " for " + app_name)
     return roles_dict
+
+
 def intiate(request, app):
     app = Workflow.objects.get(name__iexact=app)
     process = Process.objects.create(workflow=app)
@@ -79,12 +102,12 @@ def intiate(request, app):
 
 
 def approve_step(request, process_id):
-    """ 
+    """
     This view function is used to approve a step in a process.
     if method is GET, get the last approval with this process id ordered by step and add 1 to its step to get next step.
-    use  it to check if user.role == step(with the next step and process.workflow).approver  
+    use  it to check if user.role == step(with the next step and process.workflow).approver
     else, the step is approved and the user is redirected to the workflow detail page.
- 
+
     """
     process = Process.objects.get(id=process_id)
     try:
@@ -96,12 +119,16 @@ def approve_step(request, process_id):
     except Step.DoesNotExist:
         next_step = 1
     try:
-        step = Step.objects.get(workflow=process.workflow, step=next_step, approver__in=request.user.roles.all())
+        step = Step.objects.get(
+            workflow=process.workflow,
+            step=next_step,
+            approver__in=request.user.roles.all(),
+        )
     except Step.DoesNotExist:
-        messages.info(request, 'This process was completed')
-        return redirect('approve:workflow_detail', process.workflow.id)
-    if not process.approval_set.filter(approved='Rejected'):
-        if request.method == 'POST':
+        messages.info(request, "This process was completed")
+        return redirect("approve:workflow_detail", process.workflow.id)
+    if not process.approval_set.filter(approved="Rejected"):
+        if request.method == "POST":
             form = ApprovalForm(request.POST)
             if form.is_valid():
                 approval = ApprovalForm(request.POST).save(commit=False)
@@ -109,76 +136,135 @@ def approve_step(request, process_id):
                 approval.process = process
                 approval.step = step
                 approval.save()
-                
-                if process.workflow.name == 'purchase request':
-                    return redirect('purchase_request:purchase_request_detail', process.purchaserequest_set.last().id)
-            
-                if process.workflow.name == 'tokens':
-                    return True # redirect('tokens:token', process.token_set.last().id)
-                elif process.workflow.name == 'pettycash':
-                    return redirect('pettycash:pettycash_detail', process.pettycash_set.last().petty_id)
-                elif process.workflow.name == 'ace':
+
+                if process.workflow.name == "purchase request":
+                    return redirect(
+                        "purchase_request:purchase_request_detail",
+                        process.purchaserequest_set.last().id,
+                    )
+
+                if process.workflow.name == "tokens":
+                    return True  # redirect('tokens:token', process.token_set.last().id)
+                elif process.workflow.name == "pettycash":
+                    return redirect(
+                        "pettycash:pettycash_detail",
+                        process.pettycash_set.last().petty_id,
+                    )
+                elif process.workflow.name == "ace":
                     print(process.ace2_set.last().Ace_id2, "Please")
                     messages.success(request, "ace actioned successfully")
-                    return redirect('Ace:ace_detail', process.ace2_set.last().Ace_id2)
+                    return redirect("Ace:ace_detail", process.ace2_set.last().Ace_id2)
                 else:
-                    return redirect('approve:workflow_detail', process.workflow.id)
+                    return redirect("approve:workflow_detail", process.workflow.id)
             else:
 
-                messages.error(request, 'A comment must be provided for rejection.')
-                if process.workflow.name == 'purchase request':
-                    return  redirect('purchase_request:purchase_request_detail', process.purchaserequest_set.last().id)
-            
-                if process.workflow.name == 'tokens':
-                    return False #redirect('tokens:token', process.token_set.last().id)
-                elif process.workflow.name == 'pettycash':
-                    return redirect('pettycash:pettycash_detail', process.pettycash_set.last().petty_id)
+                messages.error(request, "A comment must be provided for rejection.")
+                if process.workflow.name == "purchase request":
+                    return redirect(
+                        "purchase_request:purchase_request_detail",
+                        process.purchaserequest_set.last().id,
+                    )
+
+                if process.workflow.name == "tokens":
+                    return (
+                        False  # redirect('tokens:token', process.token_set.last().id)
+                    )
+                elif process.workflow.name == "pettycash":
+                    return redirect(
+                        "pettycash:pettycash_detail",
+                        process.pettycash_set.last().petty_id,
+                    )
 
                 else:
-                    return redirect('approve:workflow_detail', process.workflow.id)
-                
-        messages.error(request, 'You are not allowed to approve')
-        if process.workflow.name == 'purchase request':
-            return redirect('purchase_request:purchase_request_detail', process.purchaserequest_set.last().id)
+                    return redirect("approve:workflow_detail", process.workflow.id)
 
-        if process.workflow.name == 'tokens':
-            return redirect('tokens:token', process.token_set.last().id)
-        elif process.workflow.name == 'pettycash':
-            return redirect('pettycash:pettycash_detail', process.pettycash_set.last().petty_id)
+        messages.error(request, "You are not allowed to approve")
+        if process.workflow.name == "purchase request":
+            return redirect(
+                "purchase_request:purchase_request_detail",
+                process.purchaserequest_set.last().id,
+            )
+
+        if process.workflow.name == "tokens":
+            return redirect("tokens:token", process.token_set.last().id)
+        elif process.workflow.name == "pettycash":
+            return redirect(
+                "pettycash:pettycash_detail", process.pettycash_set.last().petty_id
+            )
 
         else:
-            return redirect('approve:workflow_detail', process.workflow.id)
-       
-    messages.error(request, 'this process was already rejected')
-    if process.workflow.name == 'purchase request':
-        return redirect('purchase_request:purchase_request_detail', process.purchaserequest_set.last().id)
+            return redirect("approve:workflow_detail", process.workflow.id)
 
-    if process.workflow.name == 'tokens':
-        return redirect('tokens:token', process.token_set.last().id)
-    elif process.workflow.name == 'pettycash':
-        return redirect('pettycash:pettycash_detail', process.pettycash_set.last().petty_id)
+    messages.error(request, "this process was already rejected")
+    if process.workflow.name == "purchase request":
+        return redirect(
+            "purchase_request:purchase_request_detail",
+            process.purchaserequest_set.last().id,
+        )
+
+    if process.workflow.name == "tokens":
+        return redirect("tokens:token", process.token_set.last().id)
+    elif process.workflow.name == "pettycash":
+        return redirect(
+            "pettycash:pettycash_detail", process.pettycash_set.last().petty_id
+        )
 
     else:
-        return redirect('approve:workflow_detail', process.workflow.id)
+        return redirect("approve:workflow_detail", process.workflow.id)
 
 
-def approvers( object):
-    ancestors = []
-    current = object.cost_center
-    while current.parent:
-        ancestors.append(current.id)
-        current = current.parent
+def approvers(object):
     step = get_object_or_404(Step, workflow=object.process.workflow, step=object.process.approval_set.count() + 1)
-    return UserProfile.objects.filter(cost_center__id__in=ancestors,roles__role=step.approver.role)
+    return  Responsibilities.objects.filter(Q(role=step.approver)& Q(cost_centers=object.cost_center))
 
-def allowed_to_approve(user,object):
-    possible_approvers = approvers(object)
-    return  user in possible_approvers
+
+def allowed_to_approve(user, object):
+    responsibilities = approvers(object)
+    return user in responsibilities
+
 
 def send_notification(app, object):
-    possible_approvers = approvers(object)
-    for approver in possible_approvers:
-         Notification.objects.create(user=approver,message=f"Approval request for {object.process.workflow.name}.",url=reverse("tokens:token", args=[object.id]),notification_type= app ,notification_id=object.id)
-    return possible_approvers
+    responsibilities = approvers(object)
+    for responsibility in responsibilities:
+        Notification.objects.create(
+            user=responsibility,
+            message=f"Approval request for {object.process.workflow.name}.",
+            url=reverse("tokens:token", args=[object.id]),
+            notification_type=app,
+            notification_id=object.id,
+        )
+    return responsibilities
 
+
+
+def send_notification(request, url, app, obj):
+    responsibilities = approvers(obj)
+    domain_name = config('be_url') #"http://127.0.0.1:8000"  # Consider using settings for the domain
+
+    for responsibility in responsibilities:
+        subject = f"Hello: {responsibility.user.get_full_name()}"
+        link = f"{domain_name}{reverse(url, args=[obj.id])}"        
+        message = f"Approval request for {obj.process.workflow.name}. "
+
+        # Create the notification
+        Notification.objects.create(
+            user=responsibility.user,
+            message=message,
+            url=reverse(url, args=[obj.id]),
+            notification_type=app,
+            notification_id=obj.id,
+        )
+        # Send the email
+        response = ms_exhange_send_html(subject=subject,
+                                    to_recipients=[responsibility.user.email],
+                                    cc_recipients=[],
+                                    template='email/email_template.html',
+                                    kwargs={"kwargs":{"redirect_url":link,"user_fullname":responsibility.user.get_full_name(),"message":message}}
+                                      )
+
+        if response.status_code == 200:
+            messages.success(request, "Email sent successfully!")
+        else:
+            messages.error(request, "Error sending email. Please try again.")
+    return responsibilities
 

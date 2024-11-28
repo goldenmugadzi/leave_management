@@ -3,7 +3,6 @@ import sys, os
 from datetime import timedelta
 from django.contrib.messages import constants as messages
 from decouple import config
-from decouple import config
 
 # Example usage in settings.py
 BASE_URL = config('BASE_URL')
@@ -260,6 +259,19 @@ EXCHANGE_SETTINGS = {
 # EMAIL_HOST_USER = 'perseychinaka@gmail.com'
 # EMAIL_HOST_PASSWORD = 'apppassword'
 # DEFAULT_FROM_EMAIL = "Zetdc Business Excellence "
+
+
+# Emails
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+# EMAIL_BACKEND = config('EMAIL_BACKEND')
+# EMAIL_USE_TLS = True
+Email_USE_SSL = True
+EMAIL_HOST = config("MS_SERVER")
+# EMAIL_PORT = config("EMAIL_PORT")
+EMAIL_HOST_USER = config("MS_EMAIL")
+DEFAULT_FROM_EMAIL = config("MS_EMAIL")
+EMAIL_HOST_PASSWORD = config("MS_PASS")
+
 DATA_UPLOAD_MAX_MEMORY_SIZE = 1024 * 1024 * 30
 
 LANGUAGE_CODE = 'en-us'

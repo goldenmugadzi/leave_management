@@ -138,10 +138,13 @@ class CloseNcForm(forms.ModelForm):
         for field_name, field in self.fields.items():field.widget.attrs.update({'class': "inline  rounded-md border-1 border-green-900   mx-5 sm:text-lg ",})    
     
 class ResolveNcForm(forms.ModelForm):
+    resolved_on = forms.DateField(widget=forms.DateInput(attrs={'type': 'date', 'max': str(datetime.date.today())}),required=False)
 
     class Meta:
-        model = Nonconformity
-        fields = ['resolved']
+        model = Resolution
+        fields = "__all__"
+        exclude = ['nonconformity','user','dated' ]
+
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

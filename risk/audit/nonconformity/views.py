@@ -103,11 +103,16 @@ def nonconformity_details(request, nonconformity_id):
         # If the current user is the recipient and the nonconformity is accepted
         if request.user == nonconformity.recipient and nonconformity.accepted == True:
             # Process resolve form
-            resolve_form = ResolveNcForm(request.POST, instance=nonconformity)
+            resolve_form = ResolveNcForm(request.POST, request.FILES)
             if resolve_form.is_valid():
-                resolve_form.save()
+                resolveform =resolve_form.save(commit=False)
+                resolveform.user = request.user
+                resolveform.nonconformity = nonconformity
+                resolveform.save()
+                nonconformity.resolved = True
+                nonconformity.save()
                 messages.success(request, "You have successfully resolved this nonconformity.")
-                return redirect("nonconformity:nonconformities")
+                return redirect("nonconformity:nonconformity", nonconformity.id)
             else:
                 messages.error(request, "Sorry, something went wrong. Please try again.")
                 return redirect("nonconformity:nonconformities")
@@ -185,20 +190,20 @@ def nonconformity_details(request, nonconformity_id):
         if request.user == nonconformity.recipient and nonconformity.accepted == None:
             rejectionForm = RejectionForm()
             acceptanceForm = AcceptanceForm(instance=nonconformity)
+        
         elif request.user == nonconformity.recipient and nonconformity.accepted == True and nonconformity.resolved != True:
-            # form = ResolveNcForm(instance=nonconformity)
-            resolve_form = ResolveNcForm(instance=nonconformity)
-            # print(nonconformity.accepted == False,'qqqqqqqqqq',nonconformity.accepted != True, "accepted",  not nonconformity.closed, "closed", nonconformity.created_by, "created_by")
+            corective_action = nonconformity.acceptance_set.last().corrective_action
+            resolve_form = ResolveNcForm(instance=nonconformity, initial={'corrective_action_taken': corective_action})
+      
         elif request.user == nonconformity.created_by and nonconformity.created_by is not None and nonconformity.resolved != None and nonconformity.accepted == True and nonconformity.closed != True:
             closeform = CloseNcForm(instance=nonconformity)
+        
         elif request.user == nonconformity.created_by and nonconformity.created_by is not None and not nonconformity.closed and nonconformity.accepted != True:
             editform = NonconformityForm(instance=nonconformity)
             if  nonconformity.accepted == False : closeform = CloseNcForm(instance=nonconformity)
-            # print(editform, "editform")
-        # Mark notifications as read
+
         old_notifications = Notification.objects.filter(user=request.user, url=nonconformity.get_absolute_url())
         old_notifications.update(is_read=True)
-        # Render the nonconformity details page with the appropriate forms
         return render(request, "risk/nonconformity/nonconformity_details.html", {"nonconformity": nonconformity, 'editform':editform, "acceptanceForm": acceptanceForm, "rejectionForm": rejectionForm,"resolve_form":resolve_form ,"closeform": closeform, "form": form})
 @login_required
 def view_notifications(request):
