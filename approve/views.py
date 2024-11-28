@@ -263,7 +263,7 @@ def send_notification(request, url, app, obj):
                                       )
 
         if response.status_code == 200:
-            messages.success(request, "Email sent successfully!")
+            messages.success(request, "Email sent successfully! "+ response)
         else:
             messages.error(request, "Error sending email. Please try again.")
     return responsibilities

@@ -8,3 +8,5 @@ class ItemAdmin(admin.ModelAdmin):
     list_display = ('item_required', 'unit_of_measurement', 'quantity', 'purchase_request', 'ordered', )
 admin.site.register(PurchaseRequest, PurchaseRequestAdmin)
 admin.site.register(PrItem, ItemAdmin)
+
+admin.register(ProcurementPlanReference)
