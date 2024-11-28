@@ -3,7 +3,6 @@ import sys, os
 from datetime import timedelta
 from django.contrib.messages import constants as messages
 from decouple import config
-from decouple import config
 
 # Example usage in settings.py
 BASE_URL = config('BASE_URL')
