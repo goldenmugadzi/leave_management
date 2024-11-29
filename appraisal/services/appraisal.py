@@ -1,10 +1,9 @@
-from typing import Dict, Any
 from dataclasses import dataclass
 from django.db import transaction
 from ..repository import UserQualificationRepository, AppraisalExperienceRepository, AppraisalRepository, ExperienceRepository
 from it.users.models import UserProfile
 from ..models import Appraisal
-from approve.views import intiate
+from approve.models import Process
 from ..helpers.types import AppraisalPayloadType
 
 
@@ -18,13 +17,12 @@ class AppraisalService:
     appraisal_experience_repository: AppraisalExperienceRepository
     experience_repository: ExperienceRepository
     appraisal_repository: AppraisalRepository
-    
-    def create_use_case(self, user_object: UserProfile, data: AppraisalPayloadType)->Appraisal:
-        
+
+    def create_use_case(self, user_object: UserProfile, process_object: Process, data: AppraisalPayloadType)->Appraisal:
+
         try:
             # Atom transaction to create all entries related to appraisal
             with transaction.atomic():
-                process_object = intiate(user_object, "Appraisal")
                 appraisal_object = self.appraisal_repository.create(user_object=user_object, process_object=process_object)
 
                 # ========== Persist Appraisal Experience ============
@@ -35,10 +33,10 @@ class AppraisalService:
                 # ========== Persist User Qualification ============
                 for qualification_item in data.qualifications:
                     self.qualification_repository.create(user_object=user_object, name=qualification_item.name, file=qualification_item.file)
-                
+
                 return appraisal_object
         except Exception as e:
-            raise AppraisalCreationError(f"Failed to create appraisal with error: {e}") 
+            raise AppraisalCreationError(f"Failed to create appraisal with error: {e}")
 
     def get_all_use_case(self, user_object: UserProfile):
         return Appraisal.objects.filter(user=user_object)
