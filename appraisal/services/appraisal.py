@@ -5,6 +5,7 @@ from it.users.models import UserProfile
 from ..models import Appraisal
 from approve.models import Process
 from ..helpers.types import AppraisalPayloadType
+from beii_v1.Docs import apps
 
 
 class AppraisalCreationError(Exception):
@@ -39,4 +40,4 @@ class AppraisalService:
             raise AppraisalCreationError(f"Failed to create appraisal with error: {e}")
 
     def get_all_use_case(self, user_object: UserProfile):
-        return Appraisal.objects.filter(user=user_object)
+        return self.appraisal_repository.get_all_user_appraisal_objects(user_object=user_object)
