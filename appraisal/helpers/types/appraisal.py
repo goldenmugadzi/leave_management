@@ -1,5 +1,5 @@
 from typing import List, Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from django.core.files.uploadedfile import UploadedFile
 
 
@@ -15,8 +15,7 @@ class QualificationsType(BaseModel):
     file: Optional[UploadedFile] = Field(None,
                                          description="The uploaded file object associated with the qualification.")
 
-    class Config:
-        arbitrary_types_allowed = True
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
 class ExperienceType(BaseModel):
@@ -38,14 +37,14 @@ class AppraisalPayloadType(BaseModel):
     Represents the payload structure for an appraisal request.
 
     Attributes:
-        experiences (Optional[List[ExperienceType]]): 
-            A list of experience details, where each entry includes information 
-            about a specific experience such as the name, years of experience, 
+        experiences (Optional[List[ExperienceType]]):
+            A list of experience details, where each entry includes information
+            about a specific experience such as the name, years of experience,
             and months of experience. This field is optional.
-            
-        qualifications (Optional[List[QualificationsType]]): 
-            A list of qualifications, where each qualification includes 
-            details such as the name and an optional file associated with it. 
+
+        qualifications (Optional[List[QualificationsType]]):
+            A list of qualifications, where each qualification includes
+            details such as the name and an optional file associated with it.
             This field is optional.
     """
     experiences: Optional[List[ExperienceType]] = Field(None, description="A list of experience details.")
