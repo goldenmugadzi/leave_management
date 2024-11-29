@@ -5,7 +5,6 @@ from it.users.models import UserProfile
 from ..models import Appraisal
 from approve.models import Process
 from ..helpers.types import AppraisalPayloadType
-from beii_v1.Docs import apps
 
 
 class AppraisalCreationError(Exception):

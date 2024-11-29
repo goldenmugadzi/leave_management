@@ -1,5 +1,5 @@
 from unittest import TestCase
-from unittest.mock import Mock, call, patch
+from unittest.mock import patch, Mock
 from ..repository.performance import PerformanceReviewRepository
 from ..services import PerformanceReviewService
 from ..services.performance import PerformanceReviewServiceError
@@ -20,51 +20,51 @@ class TestPerformanceReviewCreateUseCase(TestCase):
         self.performance_service = PerformanceReviewService(
             performance_repo=self.performance_repo_mock
         )
-        
-        
+
+
     def mock_appraisal_object(self):
         mock = Mock(spec=Appraisal)
         return mock
-        
+
     def test_performance_created_success(self):
         # ================== ARRANGE =========================
-        
+
         # mock payload
         mock_payload = mock_performance_payload_input()
         mock_payload.quarter = 1
-        
+
         # mock appraisal object
         mock_appraisal_object = self.mock_appraisal_object()
-        
+
         # mock perform review object
         mocked_performance_review_object = mock_performance_review_object()
-        
+
         # mock performance_create repo
         self.performance_repo_mock.create.return_value = mocked_performance_review_object
-        
+
         # ================== ACT    ==========================
         got_performance_review_object = self.performance_service.create_use_case(appraisal_object=mock_appraisal_object, data=mock_payload)
-        
-        
+
+
         # ================== ASSERT ==========================
-        
+
         self.performance_repo_mock.create.assert_called_once_with(appraisal_object=mock_appraisal_object, data=mock_payload)
         self.assertEqual(got_performance_review_object, mocked_performance_review_object)
-        
+
     def test_performance_created_failure(self):
         # ================== ARRANGE =========================
-        
+
         # mock payload
         mock_payload = mock_performance_payload_input()
         mock_payload.quarter = 1
-        
+
         # mock appraisal object
         mock_appraisal_object = self.mock_appraisal_object()
-        
+
         # mock db error
         db_error_string = "Database Error"
-        
-        with patch.object(self.performance_repo_mock, 'create', side_effect=Exception(db_error_string)): 
+
+        with patch.object(self.performance_repo_mock, 'create', side_effect=Exception(db_error_string)):
             try:
                 # ================== ACT    ==========================
                 self.performance_service.create_use_case(appraisal_object=mock_appraisal_object, data=mock_payload)
@@ -73,7 +73,7 @@ class TestPerformanceReviewCreateUseCase(TestCase):
                 # ================== ASSERT ==========================
                 self.performance_repo_mock.create.assert_called_once_with(appraisal_object=mock_appraisal_object, data=mock_payload)
                 self.assertEqual(str(e), f"Failed to create performance review with error: {db_error_string}")
-                
+
 
 class TestAddStrengthUseCases(TestCase):
     def setUp(self) -> None:
@@ -81,82 +81,80 @@ class TestAddStrengthUseCases(TestCase):
         self.performance_service = PerformanceReviewService(
             performance_repo=self.performance_repo_mock
         )
-        
+
     def get_strength_payload_objects(self):
         # mock strengths payload
         strengths_1 = StrengthAndWeaknessTypes(name="Problem solver")
         strengths_2 = StrengthAndWeaknessTypes(name="Details Oriented")
         mock_strengths_payload = [strengths_1, strengths_2]
-        
+
         # mock strengths objects
         strengths_object_1 = PerformanceProgressStrength(name=strengths_1.name)
         strengths_object_2 = PerformanceProgressStrength(name=strengths_2.name)
         mock_strengths_objects = [strengths_object_1, strengths_object_2]
-        
+
         return mock_strengths_payload, mock_strengths_objects
-    
+
     @patch('appraisal.services.performance.map_performance_strengths')
     def test_converted_to_strengths_objects(self, mock_map_performance_strengths):
         # ================ ARRANGE =============
-        
+
         # mock performance_review_object
         mock_performance_object = mock_performance_review_object()
-        
+
         # mock strengths payloads and objects
         mock_strengths_payload, mock_strengths_objects = self.get_strength_payload_objects()
-                
+
         # mock map_performance_strengths
         mock_map_performance_strengths.return_value = mock_strengths_objects
-        
+
         # ================ ACT =============
         self.performance_service.add_strengths_use_case(performance_review_object=mock_performance_object, strengths=mock_strengths_payload)
-        
+
         # ================ ASSERT =============
         mock_map_performance_strengths.assert_called_once_with(strengths=mock_strengths_payload)
-        
+
         # Verify the returned strengths objects
         self.assertEqual(mock_map_performance_strengths.return_value, mock_strengths_objects)
-        
+
     @patch('appraisal.services.performance.map_performance_strengths')
     def test_add_strengths_success(self, mock_map_performance_strengths):
         # ================ ARRANGE =============
-        
+
         # mock performance_review_object
         mock_performance_object = mock_performance_review_object()
-        
+
         # mock strengths payloads and objects
         mock_strengths_payload, mock_strengths_objects = self.get_strength_payload_objects()
-                
+
         # mock map_performance_strengths
         mock_map_performance_strengths.return_value = mock_strengths_objects
-        
+
         # mock add_strengths repo
         self.performance_repo_mock.add_strengths.return_value = None
-        
+
         # ================ ACT =============
         self.performance_service.add_strengths_use_case(performance_review_object=mock_performance_object, strengths=mock_strengths_payload)
 
         # =============== ASSERT ================
         self.performance_repo_mock.add_strengths.assert_called_once_with(performance_review_object=mock_performance_object, strengths=mock_strengths_objects)
-        
+
     @patch('appraisal.services.performance.map_performance_strengths')
     def test_add_strengths_error_handling(self, mock_map_performance_strengths):
         # ================ ARRANGE =============
-        
+
         # Mock performance_review_object
         mock_performance_object = mock_performance_review_object()
-        
+
         # Mock strengths payloads
         mock_strengths_payload, _ = self.get_strength_payload_objects()
-        
+
         # Mock map_performance_strengths to raise an exception
         mock_map_performance_strengths.side_effect = Exception("Mocked mapping error")
-        
+
         # ================ ACT & ASSERT =============
         with self.assertRaises(PerformanceReviewServiceError) as context:
             self.performance_service.add_strengths_use_case(performance_review_object=mock_performance_object, strengths=mock_strengths_payload)
 
         # Verify the exception message
         self.assertIn("Failed to add performance strengths with error: Mocked mapping error", str(context.exception))
-    
-    
