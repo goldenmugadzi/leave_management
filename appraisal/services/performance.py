@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from ..repository.performance import PerformanceReviewRepository
 from ..models import Appraisal, PerformanceProgressReview
 from ..helpers.types import PerformanceReviewType, StrengthAndWeaknessTypes
-from ..helpers.setters import map_performance_strengths
+from ..helpers.setters import map_performance_strengths, map_performance_weaknesses
 
 class PerformanceReviewServiceError(Exception):
     pass
@@ -28,3 +28,10 @@ class PerformanceReviewService:
             self.performance_repo.add_strengths(performance_review_object=performance_review_object, strengths=strengths_objects)
         except Exception as e:
             raise PerformanceReviewServiceError(f"Failed to add performance strengths with error: {e}")
+
+    def add_weakness_use_case(self, performance_review_object: PerformanceProgressReview, weaknesses: List[StrengthAndWeaknessTypes]):
+        try:
+            weaknesses_objects = map_performance_weaknesses(weaknesses=weaknesses)
+            self.performance_repo.add_weaknesses(performance_review_object=performance_review_object, weaknesses=weaknesses_objects)
+        except Exception as e:
+            raise PerformanceReviewServiceError(f"Failed to add performance weaknesses with error: {e}")
