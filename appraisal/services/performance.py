@@ -1,4 +1,4 @@
-from typing import Dict, Any
+from typing import List
 from dataclasses import dataclass
 from ..repository.performance import PerformanceReviewRepository
 from ..models import Appraisal, PerformanceProgressReview
@@ -12,17 +12,17 @@ class PerformanceReviewServiceError(Exception):
 @dataclass
 class PerformanceReviewService:
     performance_repo: PerformanceReviewRepository
-    
+
     def create_use_case(self, appraisal_object: Appraisal, data: PerformanceReviewType)->PerformanceProgressReview:
         try:
             performance_object = self.performance_repo.create(appraisal_object=appraisal_object, data=data)
             return performance_object
         except Exception as e:
             raise PerformanceReviewServiceError(f"Failed to create performance review with error: {e}")
-        
-    
-    
-    def add_strengths_use_case(self, performance_review_object: PerformanceProgressReview, strengths: StrengthAndWeaknessTypes):
+
+
+
+    def add_strengths_use_case(self, performance_review_object: PerformanceProgressReview, strengths: List[StrengthAndWeaknessTypes]):
         try:
             strengths_objects = map_performance_strengths(strengths=strengths)
             self.performance_repo.add_strengths(performance_review_object=performance_review_object, strengths=strengths_objects)
