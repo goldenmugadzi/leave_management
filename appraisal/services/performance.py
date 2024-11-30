@@ -35,3 +35,9 @@ class PerformanceReviewService:
             self.performance_repo.add_weaknesses(performance_review_object=performance_review_object, weaknesses=weaknesses_objects)
         except Exception as e:
             raise PerformanceReviewServiceError(f"Failed to add performance weaknesses with error: {e}")
+
+    def get_all_performance_use_case(self)->List[PerformanceProgressReview]:
+        try:
+           return self.performance_repo.get_all_performance()
+        except Exception as e:
+            raise PerformanceReviewServiceError(f"Failed to retrieve all performance with error: {e}")

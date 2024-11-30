@@ -46,3 +46,9 @@ class PerformanceReviewRepository:
             return PerformanceProgressWeakness.objects.get(name=name)
         except Exception as e:
             raise ValueError(f"retrieve weakness object failed with error: {e}")
+        
+    def get_all_performance(self)->List[PerformanceProgressReview]:
+        try:
+            return PerformanceProgressReview.objects.all().order_by('-created_date', '-updated')
+        except Exception as e:
+            raise ValueError(f"retrieving all performance objects failed with error: {e}")
