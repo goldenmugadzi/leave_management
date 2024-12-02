@@ -243,7 +243,7 @@ def send_notification(request, url, app, obj):
 
     for responsibility in responsibilities:
         subject = f"Hello: {responsibility.user.get_full_name()}"
-        link = f"{domain_name}{reverse(url, args=[obj.id])}"        
+        link = f"{domain_name}{reverse(url, args=[obj.id])}"
         message = f"Approval request for {obj.process.workflow.name}. "
 
         # Create the notification
@@ -261,10 +261,10 @@ def send_notification(request, url, app, obj):
                                     template='email/email_template.html',
                                     kwargs={"kwargs":{"redirect_url":link,"user_fullname":responsibility.user.get_full_name(),"message":message}}
                                       )
-
         if response.status_code == 200:
-            messages.success(request, "Email sent successfully! "+ response)
+
+            messages.success(request, "Email notification successfully sent to "+responsibility.user.get_full_name())
         else:
-            messages.error(request, "Error sending email. Please try again.")
+            messages.error(request, "Error sending email to  "+responsibility.user.get_full_name())
     return responsibilities
 
