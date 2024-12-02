@@ -120,6 +120,7 @@ INSTALLED_APPS = [
     'ACE2',
     'esearch',
     'Hardware_Faults',
+    'Asset_Register',
     'reports',
     'sweetify',
     'mathfilters',

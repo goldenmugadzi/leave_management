@@ -60,7 +60,10 @@ urlpatterns = [
     path('api/auth/token/verify/', TokenVerifyView.as_view(), name='token_verify'),
 
      # path('', include('hardware_faults.urls')),
-      path('', include('Hardware_Faults.urls')),
+    path('', include('Hardware_Faults.urls')),
+    path('', include('Asset_Register.urls')),
+
+      
 
 
 ] 
