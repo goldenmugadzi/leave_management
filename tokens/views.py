@@ -178,23 +178,17 @@ def create_token(request):
                 return render(request, "tokens/create_token.html", forms)
 
             # send_notification("token", token)
-            # send_notification(request, "tokens:token", app, token)
+            send_notification(request, "tokens:token", app, token)
 
             return redirect("tokens:token", token.id)
 
         else:
             return render(request, "tokens/create_token.html", forms)
 
-    cost_center = None
-    try:
-        cost_center = CostCenter.objects.get(code=request.user.section.code)
-    except Exception as e:
-        print(e)
-
     forms = {
         "meter_form": MeterForm(),
         "customer_form": CustomerForm(),
-        "token_form": TokenForm(initial={"cost_center": cost_center}),
+        "token_form": TokenForm(initial={"cost_center": request.user.cost_center}),
         "reimbursement_form": ReimbursementForm(),
         "clear_credit_form": ClearCreditForm(),
         "tamper_token_form": TamperTokenForm(),
@@ -210,7 +204,7 @@ def create_token(request):
 @login_required
 def token_details(request, token_id):
     token = Token.objects.get(id=token_id)
-    if request.method == "POST":
+    if request.method == "POST": 
         generatetokenform = GenerateTokenForm(request.POST, request.FILES, instance=token)
         last_approval = token.process.approval_set.last()
         last_step = last_approval.step if last_approval else None
@@ -250,11 +244,10 @@ def token_details(request, token_id):
     approved_steps = token.process.approval_set.all().values_list(
         "step__step", flat=True
     )
-
+    # Mark all matching notifications as read in one query
+    request.user.notification_set.filter(notification_id=token_id).update(is_read=True)
+    
     token = get_object_or_404(Token, id=token_id)
-    # _approvers=approvers(token)
-    # print("approvers",_approvers)
-    # print("approvers",_approvers[0].user.get_full_name())
     return render(
         request,
         "tokens/token_detail.html",
