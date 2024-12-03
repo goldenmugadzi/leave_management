@@ -1,0 +1,168 @@
+{% extends "admin_layout.html" %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<div class="flex gap-2">
+    <div class="flex-1">
+        <h3>User Information</h3>
+        <div class="shadow-xl rounded-lg border-2 border-indigo-400 grid grid-rows-2 grid-flow-col gap-2 py-2">
+            
+                <span>Cost Center: {{user.cost_center}}</span>
+            
+                <span>EC Number: {{user.username}}</span>
+
+                <span>Grade: {{user.grade}}</span>
+
+                <span>Current Position: {{user.designation}}</span>
+
+                <span>Section: {{user.section}}</span>
+
+        </div>   
+    </div>
+
+    <div class="flex-1">
+        <h3>User Qualifications</h3>
+        <div 
+        class="shadow-xl rounded-lg border-2 border-indigo-400"
+        style="max-height: 75px; overflow-y: auto;"
+        >
+            {% for qualification in qualifications %}
+                <div class="p-2 flex gap-2">
+                    <span>Name: {{qualification.name}}</span>
+                    <a 
+                    href={{qualification.file.url}}
+                    target="_blank"
+                    >Preview Document</a>
+                </div>
+                <hr/>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<div class="container my-4">
+        <div class="flex flex-col gap-4">
+                <div>
+                    <h3>{{ current_quarter }} Quarter</h3>
+                    <form method="post">
+                        {%csrf_token%}
+                        {{ current_form.quarter }}
+                        <div class="flex gap-2">  
+                            <div 
+                                class="flex-1 px-2 shadow-xl rounded-lg border-2 border-indigo-400"
+                                style="max-height: 180px; overflow-y: auto;"
+                            >
+                                {{ current_form.strengths|as_crispy_field }}
+                            </div>
+                            <div 
+                                class="flex-1 px-2 shadow-xl rounded-lg border-2 border-indigo-400"
+                                style="max-height: 180px; overflow-y: auto;"
+                            >
+                                {{ current_form.areas_of_weaknesses|as_crispy_field }}
+                            </div>
+                        </div>
+                        <div class="flex justify-center my-4">
+                            <button type="submit" class="w-96 bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4 rounded">Create</button>
+                        </div>
+                    </form>
+                </div>
+                <hr/>
+        </div>
+        
+    
+</div>
+
+{% endblock%}
+{% block scripts %} 
+<script>
+
+    // Refreshes all experience dropdowns in formsets with updated experience options from the server.
+    function refreshExperienceDropdown() {
+        // get all experience dropdowns in formsets
+        const experienceDropdowns = document.querySelectorAll("select[id^='id_appraisal-'][id$='-experience']");
+
+    // Fetch updated list of experiences
+    fetch("{% url 'experience_list_api' %}")
+        .then(response => response.json())
+        .then(data => {
+            // Iterate through each dropdown and update its options
+            experienceDropdowns.forEach(experienceDropdown => {
+                experienceDropdown.innerHTML = ""; // Clear current options
+                
+                // Populate with new options
+                data.forEach((experience, index) => {
+                    const option = document.createElement("option");
+                    option.value = experience.id;
+                    option.textContent = experience.name;
+
+                    // Set the first item as the default
+                    if (index === 0) {
+                        option.selected = true;
+                    }
+
+                    experienceDropdown.appendChild(option);
+                });
+            });
+        })
+        .catch(error => console.error('Error refreshing experience dropdown:', error));
+    }
+
+    // Adds a new experience form to the formset container
+    function addExperienceForm(totalFormCount) {
+        const formContainer = document.querySelector(".experience-forms");
+        const totalFormsInput = document.getElementById("id_appraisal-TOTAL_FORMS");
+
+        // Get the current total form count and increment it
+        let formCount = parseInt(totalFormsInput.value);
+
+        // Clone the template and replace the prefix with the new form count
+        const newFormHtml = document.getElementById("empty-form-template").innerHTML.replace(/__prefix__/g, formCount);
+        const newForm = document.createElement("div");
+        newForm.classList.add("experience-form");
+        newForm.innerHTML = newFormHtml;
+
+        // Add the new form to the container
+        formContainer.appendChild(newForm);
+
+        // Update the total form count
+        formCount++;
+        totalFormsInput.value = formCount;
+    }
+
+    // Removes an experience form from the formset container and updates total form count
+    function removeExperienceForm(button, totalFormCount) {
+        button.closest('.experience-form').remove();
+
+        // Update the form count
+        totalFormCount--;
+        document.getElementById('id_appraisal-TOTAL_FORMS').value = totalFormCount;
+    }
+
+    // addQualificationForm() adds new form to the formset container and updates form count
+    function addQualificationForm(total_form_count){
+        const formContainer = document.querySelector(".qualification-forms");
+        const totalFormCount = document.getElementById("id_qualification-TOTAL_FORMS");
+        let formCount = parseInt(totalFormCount.value);
+        
+        const newFormHtml = document.getElementById("empty-qualification-template").innerHTML.replace(/__prefix__/g, formCount)
+        const newForm = document.createElement("div")
+        newForm.classList.add("qualification-form")
+        newForm.innerHTML = newFormHtml
+
+        formContainer.appendChild(newForm)
+
+        formCount++;
+        totalFormCount.value = formCount
+    }
+
+    // Removes an qualification form from the formset container and updates the total form count
+    function removeQualificationForm(button, total_form_count){
+        button.closest(".qualification-form").remove()
+
+        total_form_count--;
+        document.getElementById('id_qualification-TOTAL_FORMS').value = total_form_count
+    }
+
+
+</script>
+{% endblock scripts %}

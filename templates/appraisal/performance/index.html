@@ -15,7 +15,7 @@
             <h3 class="text-center font-bold">Performance Review</h3>
         </div>
         
-        <table id="appraisals" class="table table-striped stripe mt-3 table-bordered">
+        <table id="performance_reviews_objects" class="table table-striped stripe mt-3 table-bordered">
           <thead>
             <tr>
               <th>ID</th>
@@ -26,15 +26,15 @@
             </tr>
           </thead>
           <tbody>
-            {% for appraisal in appraisals %}
+            {% for performance_reviews_object in performance_reviews_objects %}
               <tr>
                 <td>
-                    <a class="text-blue-500" href="#">{{ appraisal.id }}</a>
+                    <a class="text-blue-500" href="{% url 'performance_review_detail' performance_reviews_object.appraisal.id 1 %}">{{ performance_reviews_object.id }}</a>
                 </td>
-                <td>{{ appraisal.appraisal.user }}</td>
-                <td>{{ appraisal.created_date|date }}</td>
-                <td>{{ appraisal.updated|date }}</td>
-                <td>{{ appraisal.appraisal.process.approval_set.last|default_if_none:"No Approval" }}</td>
+                <td>{{ performance_reviews_object.appraisal.user }}</td>
+                <td>{{ performance_reviews_object.created_date|date }}</td>
+                <td>{{ performance_reviews_object.updated|date }}</td>
+                <td>{{ performance_reviews_object.appraisal.process.approval_set.last|default_if_none:"No Approval" }}</td>
               </tr>
             {% endfor %}
           </tbody>
@@ -50,7 +50,7 @@
   <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
   <script>
   $(document).ready(function () {
-    $("#appraisals").DataTable({
+    $("#performance_reviews_objects").DataTable({
       "pageLength": 10,
       "columnDefs": [{ "orderable": true, "targets": [0, 1, 2,3] }],
       "responsive": true,
