@@ -73,6 +73,9 @@ def show_asset(request):
 def table_asset (request):
   return render(request,'asset_register/table_asset.html')
 
+def show_product (request):
+  return render(request,'asset_register/table_product.html')
+
 def show_asset_datatable(request):
 
     try:
@@ -213,3 +216,84 @@ def update_asset(request, asset_id):
       
     
     return render(request, 'home/edit.html', {"url_path": url_path})
+
+def create_product(request):
+    if request.method == 'POST':
+        print("request",request.POST )
+
+        producttype = ProductType(
+            id= request.POST['id'],
+            product_type= request.POST['product_type'],
+            code= request.POST['code'],
+        )
+            
+        print("prod data: ", producttype)
+        producttype.save()
+        print("Data saved successfully!")
+        #messages.success(request, "Fault created successfully!")
+        
+        return redirect('show_fault')
+    return render(request, 'asset_register/create_product.html',{})
+
+def show_product_datatable(request):
+
+    try:
+        draw = int(request.GET.get('draw', default=1))
+        start = int(request.GET.get('start', default=0))
+        length = int(request.GET.get('length', default=10))
+        search_value = request.GET.get('search[value]', default='')
+
+        product = ProductType.objects.all()
+        print("product", product)
+
+        # Total number of records before filtering
+        total = product.count()
+
+          # Sorting
+        order_column = request.GET.get('order[0][column]')
+        order_dir = request.GET.get('order[0][dir]')
+
+        if order_column is not None and order_dir is not None:
+            column_map = {
+                "0": "id",
+                "1": "product_type",
+                "2": "code",
+            }
+
+            column_name = column_map.get(order_column)
+            if column_name:
+                if order_dir == 'desc':
+                    column_name = f'-{column_name}'  # Add descending order prefix
+                product= product.order_by(column_name)
+
+
+        # Pagination
+        paginator = Paginator(product, length)
+        page_number = start // length + 1
+        page_obj = paginator.get_page(page_number)
+
+
+        product_list = []
+        for product in page_obj:
+            new_product = {
+                "id": product.id,
+                "product_type": product.product_type,
+                "code": product.code,
+            }
+            product_list.append(new_product)
+         
+        return JsonResponse({
+            'draw': draw,
+            'recordsTotal': total,
+            'recordsFiltered': total,
+            'data': product_list
+        })
+    except Exception as ex:
+        print(ex)
+        return JsonResponse({
+            'draw': 1,
+            'recordsTotal': 0,
+            'recordsFiltered': 0,
+            'data': []
+        })
+

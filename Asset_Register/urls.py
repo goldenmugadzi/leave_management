@@ -8,4 +8,8 @@ urlpatterns = [
     path('update_asset/<str:id>/', views.update_asset, name="update_asset"),
     path('table_asset/', views.show_asset, name="table_asset"),
     path('asset_datatable/', views.show_asset_datatable),
+     path('create_product', views.create_product, name='create_product'),
+    path('table_product/', views.show_product, name="table_product"),
+    path('product_datatable/', views.show_product_datatable),
+
 ]
