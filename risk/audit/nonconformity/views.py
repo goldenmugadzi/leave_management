@@ -47,7 +47,10 @@ def create_nonconformity(request):
                     {"form": form},
                 )
     else:
-        form = NonconformityForm()
+        cost_center= request.user.cost_center
+        if not cost_center:
+            cost_center = CostCenter.objects.filter(code= request.user.region.code)
+        form = NonconformityForm(initial={'cost_center':cost_center})
     return render(
         request, "risk/nonconformity/create_nonconformity.html", {"form": form}
     )
@@ -218,7 +221,13 @@ def view_notifications(request):
 def view_nonconformities(request):
     nonconformities = Nonconformity.objects.all()
     """Get all nonconformities and oder them by  date created in descending order"""
-    nonconformities = Nonconformity.objects.all().order_by("-created_at")
+    cost_center= request.user.cost_center
+    if not cost_center:
+            cost_center = CostCenter.objects.filter(code= request.user.region.code)
+    region = cost_center.get_region()
+    cost_centers = region.get_decendance()
+
+    nonconformities = Nonconformity.objects.filter(created_by__cost_center__in = cost_centers).order_by("-created_at")
 
     count = nonconformities.count()
     return render(request,"risk/nonconformity/nonconformities.html", {"nonconformities": nonconformities.order_by("-created_at"), "count": count})

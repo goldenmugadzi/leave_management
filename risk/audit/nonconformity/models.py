@@ -40,7 +40,7 @@ class Nonconformity(models.Model):
     accepted = models.BooleanField( blank=True, null=True)
     resolved = models.BooleanField(blank=True, null=True)
     closed = models.BooleanField(blank=True, null=True)
-    cost_center = models.ForeignKey(CostCenter, on_delete=models.CASCADE)
+    cost_center = models.ForeignKey(CostCenter, on_delete=models.CASCADE, blank=True, null=True)
     
     def __str__(self):
         return self.id
