@@ -13,19 +13,19 @@ class PerformanceProgressStrength(TimeStamp):
     
     
     def __str__(self) -> str:
-        return f"Strength-{self.id}"
+        return f"{self.id}.  {self.name}"
 
 class PerformanceProgressWeakness(TimeStamp):
     name = models.CharField(max_length=500, null=False, blank=False, unique=True, db_index=False)
     
     def __str__(self) -> str:
-        return f"Weakness-{self.id}"
+        return f"{self.id}.  {self.name}"
 
 class PerformanceProgressReview(TimeStamp):
     appraisal = models.ForeignKey(Appraisal, on_delete=models.CASCADE)
     quarter = models.PositiveIntegerField(choices=QuarterChoices.choices)
-    strength = models.ManyToManyField(PerformanceProgressStrength)
-    areas_of_weakness = models.ManyToManyField(PerformanceProgressWeakness)
+    strengths = models.ManyToManyField(PerformanceProgressStrength)
+    areas_of_weaknesses = models.ManyToManyField(PerformanceProgressWeakness)
     
     def __str__(self) -> str:
-        return f"{self.appraisal.user} - {self.quarter}"
+        return f"{self.appraisal.user} - Q{self.quarter}"

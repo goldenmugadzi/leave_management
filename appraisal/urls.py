@@ -3,7 +3,8 @@ from .view import (AppraisalCreateView,
                    ExperienceCreateView, 
                    AppraisalTemplateView, 
                    experience_list_api,
-                   PerformanceReviewsTemplateView
+                   PerformanceReviewsTemplateView,
+                   PerformanceReviewsApprovalView
                    )
 
 urlpatterns = [
@@ -15,6 +16,7 @@ urlpatterns = [
     
     # ================= Performance urls =================================
     path('performance/review/', PerformanceReviewsTemplateView.as_view(), name='performance_review_index'),
+    path('performance/review/<int:appraisal_id>/<int:quarter>', PerformanceReviewsApprovalView.as_view(), name='performance_review_detail'),
     
     # ----- api ------
     path('api/experience-list/', experience_list_api, name='experience_list_api'),
