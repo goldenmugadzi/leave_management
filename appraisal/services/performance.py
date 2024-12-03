@@ -1,7 +1,7 @@
 from typing import List
 from dataclasses import dataclass
 from ..repository.performance import PerformanceReviewRepository
-from ..models import Appraisal, PerformanceProgressReview
+from ..models import Appraisal, PerformanceProgressReview, PerformanceProgressStrength, PerformanceProgressWeakness
 from ..helpers.types import PerformanceReviewType, StrengthAndWeaknessTypes
 from ..helpers.setters import map_performance_strengths, map_performance_weaknesses
 
@@ -22,17 +22,15 @@ class PerformanceReviewService:
 
 
 
-    def add_strengths_use_case(self, performance_review_object: PerformanceProgressReview, strengths: List[StrengthAndWeaknessTypes]):
+    def add_strengths_use_case(self, performance_review_object: PerformanceProgressReview, strengths: List[PerformanceProgressStrength]):
         try:
-            strengths_objects = map_performance_strengths(strengths=strengths)
-            self.performance_repo.add_strengths(performance_review_object=performance_review_object, strengths=strengths_objects)
+            self.performance_repo.add_strengths(performance_review_object=performance_review_object, strengths=strengths)
         except Exception as e:
             raise PerformanceReviewServiceError(f"Failed to add performance strengths with error: {e}")
 
-    def add_weakness_use_case(self, performance_review_object: PerformanceProgressReview, weaknesses: List[StrengthAndWeaknessTypes]):
+    def add_weakness_use_case(self, performance_review_object: PerformanceProgressReview, weaknesses: List[PerformanceProgressWeakness]):
         try:
-            weaknesses_objects = map_performance_weaknesses(weaknesses=weaknesses)
-            self.performance_repo.add_weaknesses(performance_review_object=performance_review_object, weaknesses=weaknesses_objects)
+            self.performance_repo.add_weaknesses(performance_review_object=performance_review_object, weaknesses=weaknesses)
         except Exception as e:
             raise PerformanceReviewServiceError(f"Failed to add performance weaknesses with error: {e}")
 
@@ -41,3 +39,17 @@ class PerformanceReviewService:
            return self.performance_repo.get_all_performance()
         except Exception as e:
             raise PerformanceReviewServiceError(f"Failed to retrieve all performance with error: {e}")
+
+    def get_performances_by_appraisal_id_use_case(self, appraisal_id: int)->List[PerformanceProgressReview]:
+        try:
+           return self.performance_repo.get_performance_by_appraisal_id(appraisal_id=appraisal_id)
+        except Exception as e:
+            raise PerformanceReviewServiceError(f"Failed to retrieve performance by appraisal with error: {e}")
+    
+    def get_performance_by_id_use_case(self, pk: int)->PerformanceProgressReview:
+        try:
+           return self.performance_repo.get_performance_by_id(pk=pk)
+        except Exception as e:
+            raise PerformanceReviewServiceError(f"Failed to retrieve performance by id with error: {e}")
+
+    
