@@ -14,7 +14,7 @@ class PurchaseRequestForm(forms.ModelForm):
     class Meta:
         model = PurchaseRequest
         fields = '__all__'
-        exclude = ['process', 'ace', 'requested_by', 'cost_center']
+        exclude = ['process', 'ace', 'requested_by', 'region', 'section']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -26,7 +26,7 @@ class PurchaseRequestForm(forms.ModelForm):
                          "sm:text-sm sm:leading-6",
             })
 
-            if (field_name == 'procurement_plan_reference') or ( field_name == 'section'):
+            if (field_name == 'procurement_plan_reference') or ( field_name == 'cost_center'):
                 field.widget.attrs.update({'class': "select2 block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6",})
             if isinstance(field.widget, forms.Textarea):
                 field.widget.attrs.update({'rows': '3'})

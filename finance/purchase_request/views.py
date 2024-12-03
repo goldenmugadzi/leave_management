@@ -121,7 +121,7 @@ def create_purchase_request(request):
             messages.error(request, 'A Purchase request for this PR Number already exist.')
             return render(request, 'finance/purchase_request/create_purchase_request.html', {'formset': formset, 'form': form})
     else:
-        form = PurchaseRequestForm(initial={'section':request.user.section})
+        form = PurchaseRequestForm(initial={'cost_center':request.user.cost_center})
         return render(request, 'finance/purchase_request/create_purchase_request.html',
                       {'formset': itemFormset(), 'form': form})
 
@@ -261,7 +261,14 @@ def view_all_purchase_requests(request):
     if request.method == 'POST' and search_term :
         purchase_requests = PurchaseRequest.objects.filter(Q(cost_center__name__icontains=search_term) | Q(section__section__icontains=search_term) | Q(requested_by__last_name__icontains=search_term) | Q(scope_of_work__icontains=search_term) | Q(id=search_term) | Q(pr_no__icontains=search_term)| Q(created_at__icontains=search_term)  )
         return render(request, 'finance/purchase_request/view_all_purchase_requests.html', {'purchase_requests': purchase_requests.order_by('-id')[:10]})
-    purchase_requests = PurchaseRequest.objects.order_by('-id')[:10]
+    cost_center= request.user.cost_center
+    if not cost_center:
+            cost_center = CostCenter.objects.filter(code= request.user.region.code)
+    region = cost_center.get_region()
+    cost_centers = region.get_decendance()
+
+    # nonconformities = Nonconformity.objects.filter(created_by__cost_center__in = cost_centers).order_by("-created_at")
+    purchase_requests = PurchaseRequest.objects.filter(Q(requested_by__cost_center__in = cost_centers)|Q(cost_center__in = cost_centers))
     return render(request, 'finance/purchase_request/view_all_purchase_requests.html', {'purchase_requests': purchase_requests})
 
 @login_required
