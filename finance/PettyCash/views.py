@@ -735,12 +735,12 @@ def pettycash_report(request):
             end_date = pettyreportform.cleaned_data['end_date']
             region = pettyreportform.cleaned_data['region']
             section = pettyreportform.cleaned_data['section']
-            payment_mode = pettyreportform.cleaned_data['payment_mode']
+            # payment_mode = pettyreportform.cleaned_data['payment_mode']
 
             pettycashs = Pettycash.objects.filter(region=region, section=section,
                                                   date_created__range=[start_date, end_date]).all()
             report = PettycashReport.objects.create(start_date=start_date, end_date=end_date, region=region,
-                                                    section=section, payment_mode=payment_mode)
+                                                    section=section)
             report.save()
             print('report created')
             print('count', pettycashs.count())
