@@ -46,6 +46,12 @@ class PerformanceReviewService:
         except Exception as e:
             raise PerformanceReviewServiceError(f"Failed to retrieve performance by appraisal with error: {e}")
     
+    def get_performances_by_appraisal_id_quarter_use_case(self, appraisal_id: int, quarter: int)->List[PerformanceProgressReview]:
+        try:
+           return self.performance_repo.get_performance_by_appraisal_id_quarter(appraisal_id=appraisal_id, quarter=quarter)
+        except Exception as e:
+            raise PerformanceReviewServiceError(f"Failed to retrieve performance by appraisal with error: {e}")
+    
     def get_performance_by_id_use_case(self, pk: int)->PerformanceProgressReview:
         try:
            return self.performance_repo.get_performance_by_id(pk=pk)
