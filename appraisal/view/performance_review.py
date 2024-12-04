@@ -73,8 +73,14 @@ class PerformanceReviewsApprovalView(TemplateView):
                 data["current_quarter"] = quarter
                 data["performance_review_objects"] = performance_review_objects
                 return data
+            
+        form = PerformanceReviewApprovalForm(self.request.POST or None, initial={"quarter": quarter})
+        data["current_form"] = form
+        data["current_quarter"] = quarter
+        data["performance_review_objects"] = performance_review_objects
 
-        raise Http404(f"No performance review form found for the {quarter} quarter of the year.")
+        return data
+
 
         
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
@@ -91,6 +97,9 @@ class PerformanceReviewsApprovalView(TemplateView):
         appraisal_id = self.kwargs.get("appraisal_id")
         quarter = self.kwargs.get("quarter")
         
+        if quarter > 4:
+            return HttpResponse("1st, 2nd, 3rd and 4th quarter of the year are required")
+                
         form = PerformanceReviewApprovalForm(request.POST)
         
         if form.is_valid():
@@ -101,7 +110,8 @@ class PerformanceReviewsApprovalView(TemplateView):
             service_handler = PerformanceReviewService(performance_repo=repository)
             
             try:
-                performance_review_object = service_handler.get_performance_by_id_use_case(pk=appraisal_id)
+                performance_review_object = service_handler.get_performances_by_appraisal_id_quarter_use_case(appraisal_id=appraisal_id, quarter=quarter).first()
+
             except Exception as e:
                 logger.error(f"Add strengths failed with error: {e}")
                 return HttpResponse("oops something went wrong")
@@ -117,9 +127,6 @@ class PerformanceReviewsApprovalView(TemplateView):
             except Exception as e:
                 logger.error(f"Add strengths failed with error: {e}")
                 return HttpResponse("oops something went wrong")
-            
-            if quarter > 4:
-                return HttpResponse("1st, 2nd, 3rd and 4th quarter of the year are required")
             
             next_quarter = quarter+1
             return HttpResponseRedirect(reverse('performance_review_detail', args=(appraisal_id, next_quarter)))
