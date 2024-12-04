@@ -10,7 +10,7 @@ from email.mime.text import MIMEText
 from it.users.views import ms_exhange_send_html
 from django.db.models import Q
 from decouple import config
-
+from datetime import datetime
 
 
 class WorkflowCreateView(CreateView):
@@ -229,7 +229,7 @@ def send_notification(app, object):
         Notification.objects.create(
             user=responsibility,
             message=f"Approval request for {object.process.workflow.name}.",
-            url=reverse("tokens:token", args=[object.id]),
+            url=reverse("tokens:token", args=[id]),
             notification_type=app,
             notification_id=object.id,
         )
@@ -237,34 +237,36 @@ def send_notification(app, object):
 
 
 
-def send_notification(request, url, app, obj):
+def send_notification(request, url, app, obj,id):
     responsibilities = approvers(obj)
     domain_name = config('be_url') #"http://127.0.0.1:8000"  # Consider using settings for the domain
+    cc_recipients =[]
+    cc_recipients_names =[]
+    redirect_url = f"{domain_name}{reverse(url, args=[id])}"
+    message = f"We kindly request that you review and take necessary action regarding this "
+    hour = datetime.now().hour
+    greetings = [(5, "Good morning!"),(12, "Good afternoon!"),(17, "Good evening!"),(21, "Good night!")]
+    
+    subject = next((msg for cutoff, msg in greetings if hour < cutoff), "Good night!")
 
-    for responsibility in responsibilities:
-        subject = f"Hello: {responsibility.user.get_full_name()}"
-        link = f"{domain_name}{reverse(url, args=[obj.id])}"
-        message = f"Approval request for {obj.process.workflow.name}. "
+    user=responsibilities[0].user
+    url=reverse(url, args=[id])
+    notification_type=app
+    notification_id=id
+    for responsibility in responsibilities[1:]:
+        cc_recipients.append(responsibility.user.email)
+        cc_recipients_names.append(responsibility.user.get_full_name)
 
-        # Create the notification
-        Notification.objects.create(
-            user=responsibility.user,
-            message=message,
-            url=reverse(url, args=[obj.id]),
-            notification_type=app,
-            notification_id=obj.id,
-        )
+    notify(request,subject,user,message,redirect_url,url,notification_type,notification_id,cc_recipients,cc_recipients_names)
+    return 1
+
+def notify(request,subject,user,message,redirect_url,url,notification_type,notification_id,cc_recipients,cc_recipients_names):
+      # Create the notification
+        Notification.objects.create(user=user,message=message,url=url,notification_type=notification_type,notification_id=notification_id)
         # Send the email
-        response = ms_exhange_send_html(subject=subject,
-                                    to_recipients=[responsibility.user.email],
-                                    cc_recipients=[],
-                                    template='email/email_template.html',
-                                    kwargs={"kwargs":{"redirect_url":link,"user_fullname":responsibility.user.get_full_name(),"message":message}}
-                                      )
+        response = ms_exhange_send_html(subject=subject,to_recipients=[user.email],cc_recipients=cc_recipients,template='email/email_template.html',
+                                    kwargs={"kwargs":{"redirect_url":redirect_url,"type":notification_type,"user_fullname":user.get_full_name(),"message":message}})
         if response.status_code == 200:
-
-            messages.success(request, "Email notification successfully sent to "+responsibility.user.get_full_name())
-        else:
-            messages.error(request, "Error sending email to  "+responsibility.user.get_full_name())
-    return responsibilities
-
+            if cc_recipients_names: return messages.success(request, "Email notification successfully sent to "+user.get_full_name()+". also copied " + cc_recipients_names)
+            else: return messages.success(request, "Email notification successfully sent to "+user.get_full_name())
+        else: return messages.error(request, "Error sending email to  "+user.get_full_name())

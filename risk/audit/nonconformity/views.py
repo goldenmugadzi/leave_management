@@ -9,11 +9,34 @@ from .forms import *
 # from it.users.models import Notification
 from it.users.models import Notification
 from django.contrib import messages
-
+from approve.views import notify
+from decouple import config
 # from django.core.mail import send_mail
 # from django.conf import settings
 from approve.decorators import checklist_roles
 
+
+def send_notification(request, url, app, obj):
+    domain_name = config('be_url') #"http://127.0.0.1:8000"  # Consider using settings for the domain
+    cc_recipients =[]
+    cc_recipients_names =[]
+    redirect_url = f"{domain_name}{reverse(url, args=[obj.id])}"
+    message = f"We kindly request that you review and take necessary action regarding this. "
+    hour = datetime.datetime.now().hour
+    greetings = [(5, "Good morning!"),(12, "Good afternoon!"),(17, "Good evening!"),(21, "Good night!")]
+    
+    subject = next((msg for cutoff, msg in greetings if hour < cutoff), "Good night!")
+
+    user=obj.recipient
+    # if isinstance(user, tuple):
+    #     user = user[0] 
+    url= reverse(url, args=[obj.id])
+    notification_type=app
+    notification_id=obj.id
+    print("user",user)
+   
+    notify(request,subject,user,message,redirect_url,url,notification_type,notification_id,cc_recipients,cc_recipients_names)
+    return 1
 
 @login_required
 def create_nonconformity(request):
@@ -36,6 +59,7 @@ def create_nonconformity(request):
                     url=reverse("nonconformity:nonconformity", args=[nonconformity.id]),
                 )
                 messages.success(request, "Nonconformity created successfully!")
+                send_notification(request,"nonconformity:nonconformity","Nonconformity", nonconformity)
                 return redirect("nonconformity:nonconformity", nonconformity.id)
             else:
                 messages.error(
@@ -399,17 +423,6 @@ def edit_iso_req(request, iso_req):
         request, "risk/nonconformity/create_edit_checklist.html", {"form": form}
     )
 
-
-def notify(request):
-    send_mail(
-        subject="Hello from Django qwertyuio",
-        message="This is a test email.",
-        from_email="perseychinaka@gmail.com",
-        recipient_list=["perseychinaka1@gmail.com", "pchinaka@zetdc.co.zw"],
-        fail_silently=False,
-    )
-    return HttpResponse("Email sent successfully!")
-    # ['ruvheneko@zetdc.co.zw'],  # recipient list
 
 
 def migrate_nonconformities(request):

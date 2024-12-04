@@ -48,6 +48,7 @@ class Token(models.Model):
 
 class REIMBURSEMENT(models.Model):
     purpose = models.CharField(max_length=15,help_text="Why?", blank=True, null=True,choices=[ ('Faulty Meter', 'Faulty Meter'), ('Recovered Meter', 'Recovered Meter'), ('Old Token', 'Old Token') ])
+    units = models.DecimalField(max_digits=10, decimal_places=2, help_text="kilowatt hours to be reimbursed", default=0)
     token = models.ForeignKey(Token, on_delete=models.CASCADE)
     def __str__(self):
         return str(self.token.meter.number)
