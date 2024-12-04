@@ -4,8 +4,10 @@ from django.urls import reverse
 from django.http.response import HttpResponse as HttpResponse
 
 from django.views.generic import TemplateView, UpdateView
+from ..services.appraisal import AppraisalService
 from ..services.performance import PerformanceReviewService
-from ..repository.performance import PerformanceReviewRepository
+from ..repository import AppraisalRepository, UserQualificationRepository, AppraisalExperienceRepository, ExperienceRepository, PerformanceReviewRepository
+
 from ..models import PerformanceProgressReview
 from ..forms import PerformanceReviewApprovalForm
 from loguru import logger
@@ -16,9 +18,14 @@ class PerformanceReviewsTemplateView(TemplateView):
     
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
-        repository = PerformanceReviewRepository()
-        service_handler = PerformanceReviewService(performance_repo=repository)
-        context["performance_reviews_objects"] = service_handler.get_all_performance_use_case()
+        appraisal_service_handler = AppraisalService(
+            appraisal_experience_repository=AppraisalExperienceRepository(),
+            qualification_repository=UserQualificationRepository(),
+            experience_repository=ExperienceRepository(),
+            appraisal_repository=AppraisalRepository()
+        )
+        context["appraisals"] = appraisal_service_handler.get_all_use_case()
+
         return context
     
 

@@ -107,6 +107,6 @@ class AppraisalTemplateView(TemplateView):
             experience_repository=ExperienceRepository(),
             appraisal_repository=AppraisalRepository()
         )
-        context["appraisals"] = appraisal_service_handler.get_all_use_case(user_object=self.request.user)
+        context["appraisals"] = appraisal_service_handler.get_appraisal_by_user_use_case(user_object=self.request.user)
 
         return context
