@@ -11,6 +11,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 from openpyxl.workbook import Workbook
 
+from ACE2.views import find_ace_section_head
 from approve.forms import ApprovalForm
 from approve.models import Step
 from approve.views import intiate
@@ -19,6 +20,8 @@ from approve.models import Process, Workflow, Step, Approval
 from .forms import PettycashForm, QuotationFormSet, PettycashReportForm
 from .models import Pettycash, Quotation, PettycashReport
 from django.db.models import Prefetch
+
+from ..comparative_schedules.views import notify_user
 
 
 @login_required
@@ -44,9 +47,8 @@ def pettyCash_detail(request, petty_id):
 
     pettycash_item = Pettycash.objects.get(petty_id=petty_id)
 
-    # return validation to clear
-    # validation = pettycash_item.process.approval_set.filter(approved='Approved', step__approver__in=user_profile.roles.all()).exists())
-    # print(validation)
+    # return validation to clear validation = pettycash_item.process.approval_set.filter(approved='Approved',
+    # step__approver__in=user_profile.roles.all()).exists()) print(validation)
 
     quotations = Quotation.objects.filter(pettycash=pettycash_item).all()
     # print(quotations.count())
@@ -174,6 +176,42 @@ def create_pettycash(request):
                     quotation = quotation_form.save(commit=False)
                     quotation.pettycash = pettycash
                     quotation.save()
+
+                requester = pettycash.requested_by
+                use = UserProfile.objects.filter(id=requester.id).first()
+                section_created = use.section
+
+                # notify sh
+
+                section_heads = find_ace_section_head(request, section_created)
+                if section_heads:
+                    print(section_heads, " section_heads")
+                    # budget name
+                    # bdg = AssetBudget.objects.filter(budget_id=ace.budget_id).first()
+                    # budget_name = bdg.budget_name
+                    msg = "Your subordinate" + str(use) + "created " + pettycash.petty_id + "using budget " + str(
+                        pettycash.budget_id)
+                    url = "/pettycash/pettycash_detail/" + pettycash.petty_id
+                    section_heads = UserProfile.objects.filter(username=section_heads).first()
+                    notify_user(section_heads, msg, "ACE", url, pettycash.petty_id)
+
+                # for quotation_form in formset:
+                #     quotation = quotation_form.save(commit=False)
+                #     quotation.pettycash2 = pettycash
+                #     quotation.save()
+
+                pettycash_section = pettycash.section
+                pettycash_sh = find_ace_section_head(request, pettycash_section)
+
+                if pettycash_sh:
+                    print(pettycash_sh, "pettycash_sh")
+                    # bdg = AssetBudget.objects.filter(budget_id=ace.budget_id).first()
+                    # budget_name = bdg.budget_name
+                    msg = "user  " + str(use) + "created " + pettycash.petty_id + "for section " + str(pettycash.section)
+                    url = "/pettycash/pettycash_detail/" + pettycash.petty_id
+
+                    pettycash_sh = UserProfile.objects.filter(username=pettycash_sh).first()
+                    notify_user(pettycash_sh, msg, "ACE", url, pettycash.petty_id)
 
                 url = reverse('pettycash:pettycash_detail', args=[pettycash.petty_id])
                 return redirect(url)
