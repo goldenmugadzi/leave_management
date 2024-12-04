@@ -26,15 +26,15 @@
             </tr>
           </thead>
           <tbody>
-            {% for performance_reviews_object in performance_reviews_objects %}
+            {% for appraisal in appraisals %}
               <tr>
                 <td>
-                    <a class="text-blue-500" href="{% url 'performance_review_detail' performance_reviews_object.appraisal.id 1 %}">{{ performance_reviews_object.id }}</a>
+                    <a class="text-blue-500" href="{% url 'performance_review_detail' appraisal.id 1 %}">{{ appraisal.id }}</a>
                 </td>
-                <td>{{ performance_reviews_object.appraisal.user }}</td>
-                <td>{{ performance_reviews_object.created_date|date }}</td>
-                <td>{{ performance_reviews_object.updated|date }}</td>
-                <td>{{ performance_reviews_object.appraisal.process.approval_set.last|default_if_none:"No Approval" }}</td>
+                <td>{{ appraisal.user }}</td>
+                <td>{{ appraisal.created_date|date }}</td>
+                <td>{{ appraisal.updated|date }}</td>
+                <td>{{ appraisal.process.approval_set.last|default_if_none:"No Approval" }}</td>
               </tr>
             {% endfor %}
           </tbody>
