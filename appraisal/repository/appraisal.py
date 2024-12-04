@@ -25,5 +25,8 @@ class AppraisalRepository:
         except Exception as e:
             raise Exception(f"Appraisal Experience Repo failed with error: {e}")
 
-    def get_all_user_appraisal_objects(self, user_object: UserProfile)->list:
+    def get_user_appraisal_objects(self, user_object: UserProfile)->list:
         return Appraisal.objects.filter(user=user_object)
+    
+    def get_all_appraisal_objects(self)->list:
+        return Appraisal.objects.all()

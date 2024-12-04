@@ -38,5 +38,8 @@ class AppraisalService:
         except Exception as e:
             raise AppraisalCreationError(f"Failed to create appraisal with error: {e}")
 
-    def get_all_use_case(self, user_object: UserProfile):
-        return self.appraisal_repository.get_all_user_appraisal_objects(user_object=user_object)
+    def get_appraisal_by_user_use_case(self, user_object: UserProfile):
+        return self.appraisal_repository.get_user_appraisal_objects(user_object=user_object)
+    
+    def get_all_use_case(self):
+        return self.appraisal_repository.get_all_appraisal_objects()
