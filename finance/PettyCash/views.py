@@ -63,6 +63,12 @@ def pettyCash_detail(request, petty_id):
             pettycash_item.amount_disbursed = amount_disbursed
             pettycash_item.payee = payee
             pettycash_item.save()
+            user = pettycash_item.requested_by
+            userp = UserProfile.objects.filter(id=user).first()
+
+            msg = "Your Pettycash " + pettycash_item.petty_id + "has a payment method added by Cashier"
+            url = "/pettycash/pettycash_detail/" + pettycash_item.petty_id
+            notify_user(userp, msg, "Pettycash", url, pettycash_item.petty_id)
 
     approvalForm = None
     to = None
@@ -78,7 +84,6 @@ def pettyCash_detail(request, petty_id):
     cashier_approved = False
     if pettycash_item.process.approval_set.filter(step__step=3).exists():
         cashier_approved = True
-
 
     approval_status = pettycash_item.process.approval_set.last().approved if pettycash_item.process.approval_set.last() else ""
     print("last approved", approval_status)
@@ -190,11 +195,11 @@ def create_pettycash(request):
                     # budget name
                     # bdg = AssetBudget.objects.filter(budget_id=ace.budget_id).first()
                     # budget_name = bdg.budget_name
-                    msg = "Your subordinate" + str(use) + "created " + pettycash.petty_id + "using budget " + str(
-                        pettycash.budget_id)
+                    msg = "Your subordinate" + str(use) + "created " + pettycash.petty_id + "for section " + str(
+                        pettycash.section)
                     url = "/pettycash/pettycash_detail/" + pettycash.petty_id
                     section_heads = UserProfile.objects.filter(username=section_heads).first()
-                    notify_user(section_heads, msg, "ACE", url, pettycash.petty_id)
+                    notify_user(section_heads, msg, "Pettycash", url, pettycash.petty_id)
 
                 # for quotation_form in formset:
                 #     quotation = quotation_form.save(commit=False)
@@ -208,7 +213,8 @@ def create_pettycash(request):
                     print(pettycash_sh, "pettycash_sh")
                     # bdg = AssetBudget.objects.filter(budget_id=ace.budget_id).first()
                     # budget_name = bdg.budget_name
-                    msg = "user  " + str(use) + "created " + pettycash.petty_id + "for section " + str(pettycash.section)
+                    msg = "user  " + str(use) + "created " + pettycash.petty_id + "for section " + str(
+                        pettycash.section)
                     url = "/pettycash/pettycash_detail/" + pettycash.petty_id
 
                     pettycash_sh = UserProfile.objects.filter(username=pettycash_sh).first()
@@ -830,6 +836,8 @@ def print_report_excel(request, report_id):
         ])
     wb.save(response)
     return response
+
+
 def receipt_manual(request):
     if request.method == 'POST':
         receipt_file = request.FILES['file-input']
