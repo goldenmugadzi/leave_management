@@ -12,18 +12,15 @@
     <div class="flex gap-2">
         <div class="flex-1">
             <h3>User Information</h3>
-            <div class="shadow-xl rounded-lg border-2 border-indigo-400 grid grid-rows-2 grid-flow-col gap-2 py-2">
-                
-                    <span>Cost Center: {{user.cost_center}}</span>
-                
-                    <span>EC Number: {{user.username}}</span>
-
-                    <span>Grade: {{user.grade}}</span>
-
-                    <span>Current Position: {{user.designation}}</span>
-
-                    <span>Section: {{user.section}}</span>
-
+            <div class="shadow-xl rounded-lg border-2 border-indigo-400 py-2 max-h-[140]">
+                  <ul class="px-2">
+                    <li>Cost Center: {{user_object.cost_center}}</li>
+                    <li>EC Number: {{user_object.username}}</li>
+                    <li>Grade: {{user_object.grade}}</li>
+                    <li>Current Position: {{user_object.designation}}</li>
+                    <li>Section: {{user_object.section}}</li>
+                  </ul>
+                    
             </div>   
         </div>
 
@@ -31,9 +28,9 @@
             <h3>User Qualifications</h3>
             <div 
             class="shadow-xl rounded-lg border-2 border-indigo-400"
-            style="max-height: 75px; overflow-y: auto;"
+            style="max-height: 140px; overflow-y: auto;"
             >
-                {% for qualification in qualifications %}
+                {% for qualification in user_qualification_objects %}
                     <div class="p-2 flex gap-2">
                         <span>Name: {{qualification.name}}</span>
                         <a 
@@ -43,24 +40,51 @@
                     </div>
                     <hr/>
                 {% endfor %}
+                
             </div>
         </div>
         <div class="flex-1">
             <h3>User Experiences</h3>
             <div 
             class="shadow-xl rounded-lg border-2 border-indigo-400"
-            style="max-height: 75px; overflow-y: auto;"
+            style="max-height: 140px; overflow-y: auto;"
             >
-                {% for qualification in qualifications %}
-                    <div class="p-2 flex gap-2">
-                        <span>Name: {{qualification.name}}</span>
-                        <a 
-                        href={{qualification.file.url}}
-                        target="_blank"
-                        >Preview Document</a>
-                    </div>
-                    <hr/>
-                {% endfor %}
+            <table class="min-w-full border-collapse">
+                <thead>
+                    <tr class="bg-gray-200 text-gray-600 text-left text-sm uppercase tracking-wider">
+                        <th class="px-6 py-3 border-b">Experience Name</th>
+                        <th class="px-6 py-3 border-b">Years of Experience</th>
+                        <th class="px-6 py-3 border-b">Months of Experience</th>
+                    </tr>
+                </thead>
+                <tbody class="text-gray-700">
+                    {% for experience in user_experience_objects %}
+                    <tr class="border-b hover:bg-gray-100">
+                        <td class="px-6 py-4">{{ experience.experience.name }}</td>
+                        <td class="px-6 py-4">{{ experience.years_of_experience }}</td>
+                        <td class="px-6 py-4">{{ experience.months_of_experience }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+                <!-- <table id="performance_reviews_objects" class="table table-striped stripe mt-3 table-bordered">
+                  <thead>
+                    <tr>
+                      <th>Name</th>
+                      <th>Years of Experience</th>
+                      <th>Months of Experience</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for user_experience_object in user_experience_objects %}
+                      <tr>
+                        <td>{{ user_experience_object.name }}</td>
+                        <td>{{ user_experience_object.years_of_experience }}</td>
+                        <td>{{ user_experience_object.months_of_experience }}</td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table> -->
             </div>
         </div>
     </div>

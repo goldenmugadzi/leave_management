@@ -41,5 +41,8 @@ class AppraisalService:
     def get_appraisal_by_user_use_case(self, user_object: UserProfile):
         return self.appraisal_repository.get_user_appraisal_objects(user_object=user_object)
     
+    def get_appraisal_by_pk_use_case(self, appraisal_id: int)->Appraisal:
+        return self.appraisal_repository.get_appraisal_by_pk(appraisal_id=appraisal_id)
+    
     def get_all_use_case(self):
         return self.appraisal_repository.get_all_appraisal_objects()

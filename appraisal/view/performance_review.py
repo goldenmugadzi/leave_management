@@ -1,14 +1,14 @@
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Union
 from django.http import Http404, HttpResponseRedirect
 from django.urls import reverse
 from django.http.response import HttpResponse as HttpResponse
 
-from django.views.generic import TemplateView, UpdateView
-from ..services.appraisal import AppraisalService
-from ..services.performance import PerformanceReviewService
+from django.views.generic import TemplateView
+from ..services import AppraisalService, PerformanceReviewService, UserQualificationService
 from ..repository import AppraisalRepository, UserQualificationRepository, AppraisalExperienceRepository, ExperienceRepository, PerformanceReviewRepository
 
-from ..models import PerformanceProgressReview
+from ..models import PerformanceProgressReview, AppraisalExperience
+from it.users.models import UserQualification, UserProfile
 from ..forms import PerformanceReviewApprovalForm
 from loguru import logger
 
@@ -31,6 +31,26 @@ class PerformanceReviewsAppraisalTemplateView(TemplateView):
 class PerformanceReviewsTemplateView(TemplateView):
     template_name = "appraisal/performance/detail.html"
     
+    def get_user_info(self, appraisal_id) -> Dict[str, Union[UserProfile, UserQualification, AppraisalExperience]]:
+        appraisal_service_handler = AppraisalService(
+            appraisal_experience_repository=AppraisalExperienceRepository(),
+            qualification_repository=UserQualificationRepository(),
+            experience_repository=ExperienceRepository(),
+            appraisal_repository=AppraisalRepository()
+        )
+        user_qualification_service = UserQualificationService(user_qualification_repo=UserQualificationRepository())
+        
+        appraisal_object = appraisal_service_handler.get_appraisal_by_pk_use_case(appraisal_id=appraisal_id).first()
+        user_qualification_objects = user_qualification_service.get_by_user_object_use_case(user_object=appraisal_object.user)
+        
+        data = {}
+        data["user_object"] = appraisal_object.user
+        data["user_qualification_objects"] = user_qualification_objects
+        data["user_experience_objects"] = appraisal_object.experience.all()
+        print("=======>>>>>>>", data["user_experience_objects"].all())
+        print("=======>>>>>>>", data["user_experience_objects"])
+        return data
+        
     
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
@@ -40,7 +60,8 @@ class PerformanceReviewsTemplateView(TemplateView):
         performance_review_objects = service_handler.get_performances_by_appraisal_id_use_case(appraisal_id=appraisal_id)
 
         context["performance_review_objects"] = performance_review_objects
-
+        user_info = self.get_user_info(appraisal_id=appraisal_id)
+        context.update(user_info)
         return context
     
     

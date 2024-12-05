@@ -28,5 +28,9 @@ class AppraisalRepository:
     def get_user_appraisal_objects(self, user_object: UserProfile)->list:
         return Appraisal.objects.filter(user=user_object)
     
+    def get_appraisal_by_pk(self, appraisal_id: int)->Appraisal:
+        return Appraisal.objects.filter(id=appraisal_id)
+    
     def get_all_appraisal_objects(self)->list:
+        
         return Appraisal.objects.all()

@@ -1,2 +1,3 @@
 from .appraisal import AppraisalService
 from .performance import PerformanceReviewService
+from .qualification import UserQualificationService
