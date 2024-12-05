@@ -76,12 +76,18 @@
                                             <span class="inline-block text-start font-bold rounded-full text-sm">Meter Number</span>
                                             <span class="inline-block text-end rounded-full text-sm">{{ token.meter.number|default_if_none:'' }}</span>
                                         </div>
-                                        
+                                        {% if token.type == "REIMBURSEMENT" %}
                                         <div class=" text-center">
                                             <span class="inline-block text-start font-bold rounded-full text-sm">Units</span>
-                                            <span class="inline-block text-end rounded-full text-sm">{{ token.meter.kilowatt_hours|default_if_none:'' }}</span>
+                                            <span class="inline-block text-end rounded-full text-sm">
+                                                {% if token.reimbursement_set.first.units %}{{ token.reimbursement_set.first.units }}{% endif %}
+                                                {% if token.reimbursement_set.first.units %}{{ token.reimbursement_set.first.units }}{% endif %}
+                                                {% if token.reimbursement_set.first.units %}{{ token.reimbursement_set.first.units }}{% endif %}
+                                                {% if token.reimbursement_set.first.units %}{{ token.reimbursement_set.first.units }}{% endif %}
+                                            </span>
                                         </div>
-                                        <div class=" text-center">
+                                        {% endif %}
+                                         <div class=" text-center">
                                             <span class="inline-block text-start font-bold rounded-full text-sm">Address</span>
                                             <span class="inline-block text-end rounded-full text-sm">{{ token.customer.address|default_if_none:'' }}</span>
                                         </div>

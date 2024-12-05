@@ -23,9 +23,8 @@ def send_notification(request, url, app, obj):
     redirect_url = f"{domain_name}{reverse(url, args=[obj.id])}"
     message = f"We kindly request that you review and take necessary action regarding this. "
     hour = datetime.datetime.now().hour
-    greetings = [(5, "Good morning!"),(12, "Good afternoon!"),(17, "Good evening!"),(21, "Good night!")]
-    
-    subject = next((msg for cutoff, msg in greetings if hour < cutoff), "Good night!")
+    greetings = {(0, 4): "Good night!",(5, 11): "Good morning!",(12, 16): "Good afternoon!",(17, 20): "Good evening!",(21, 23): "Good night!"}
+    subject = next((msg for (start, end), msg in greetings.items() if start <= hour <= end), "Hello!")
 
     user=obj.recipient
     # if isinstance(user, tuple):
