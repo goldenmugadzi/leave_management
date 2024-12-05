@@ -12,7 +12,7 @@ from ..models import PerformanceProgressReview
 from ..forms import PerformanceReviewApprovalForm
 from loguru import logger
 
-class PerformanceReviewsTemplateView(TemplateView):
+class PerformanceReviewsAppraisalTemplateView(TemplateView):
     template_name = "appraisal/performance/index.html"
     
     
@@ -28,16 +28,26 @@ class PerformanceReviewsTemplateView(TemplateView):
 
         return context
     
-
-class PerformanceReviewsApprovalView(TemplateView):
+class PerformanceReviewsTemplateView(TemplateView):
     template_name = "appraisal/performance/detail.html"
     
-    def get_user_appraisal_info(self, appraisal_id: int)->dict:
-        # appraisal user info
-        # appraisal user qualifications
-        # appraisal user experience
-        return {}
+    
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        context = super().get_context_data(**kwargs)
+        appraisal_id = self.kwargs.get("appraisal_id")
+        repository = PerformanceReviewRepository()
+        service_handler = PerformanceReviewService(performance_repo=repository)
+        performance_review_objects = service_handler.get_performances_by_appraisal_id_use_case(appraisal_id=appraisal_id)
 
+        context["performance_review_objects"] = performance_review_objects
+
+        return context
+    
+    
+
+class PerformanceReviewsApprovalView(TemplateView):
+    template_name = "appraisal/performance/create.html"
+    
 
     def get_performance_review_forms_objects(
         self, 
@@ -63,22 +73,17 @@ class PerformanceReviewsApprovalView(TemplateView):
         """
         repository = PerformanceReviewRepository()
         service_handler = PerformanceReviewService(performance_repo=repository)
-        performance_review_objects = service_handler.get_performances_by_appraisal_id_use_case(appraisal_id=appraisal_id)
+        performance_review_object = service_handler.get_performances_by_appraisal_id_quarter_use_case(appraisal_id=appraisal_id, quarter=quarter)
 
-        data = {}
-        for performance_review_object in performance_review_objects:
-            if performance_review_object.quarter == quarter:
-                form = PerformanceReviewApprovalForm(self.request.POST or None, initial={"quarter": quarter})
-                data["current_form"] = form
-                data["current_quarter"] = quarter
-                data["performance_review_objects"] = performance_review_objects
-                return data
+        if performance_review_object is None:
+            raise Http404("Performance Progress Review for this quarter not found")
+        
+        form = PerformanceReviewApprovalForm(self.request.POST or None, initial={"quarter": quarter, "strengths": performance_review_object.strengths.all(), "areas_of_weaknesses": performance_review_object.areas_of_weaknesses.all()})
+        data = {
+            "current_form": form,
+            "current_quarter": quarter
+        }
             
-        form = PerformanceReviewApprovalForm(self.request.POST or None, initial={"quarter": quarter})
-        data["current_form"] = form
-        data["current_quarter"] = quarter
-        data["performance_review_objects"] = performance_review_objects
-
         return data
 
 
@@ -87,19 +92,14 @@ class PerformanceReviewsApprovalView(TemplateView):
         context = super().get_context_data(**kwargs)
         appraisal_id = self.kwargs.get("appraisal_id")
         current_quarter = self.kwargs.get("quarter")
-        appraisal_info = self.get_user_appraisal_info(appraisal_id=appraisal_id)
         performance_review_objects = self.get_performance_review_forms_objects(appraisal_id=appraisal_id, quarter=current_quarter)
-        context.update(appraisal_info)
         context.update(performance_review_objects)
         return context
     
     def post(self, request, *args, **kwargs):
         appraisal_id = self.kwargs.get("appraisal_id")
         quarter = self.kwargs.get("quarter")
-        
-        if quarter > 4:
-            return HttpResponse("1st, 2nd, 3rd and 4th quarter of the year are required")
-                
+    
         form = PerformanceReviewApprovalForm(request.POST)
         
         if form.is_valid():
@@ -110,10 +110,10 @@ class PerformanceReviewsApprovalView(TemplateView):
             service_handler = PerformanceReviewService(performance_repo=repository)
             
             try:
-                performance_review_object = service_handler.get_performances_by_appraisal_id_quarter_use_case(appraisal_id=appraisal_id, quarter=quarter).first()
+                performance_review_object = service_handler.get_performances_by_appraisal_id_quarter_use_case(appraisal_id=appraisal_id, quarter=quarter)
 
             except Exception as e:
-                logger.error(f"Add strengths failed with error: {e}")
+                logger.error(f"retrieve performance object, failed with error: {e}")
                 return HttpResponse("oops something went wrong")
             
             try:
@@ -125,11 +125,10 @@ class PerformanceReviewsApprovalView(TemplateView):
             try:
                 service_handler.add_weakness_use_case(performance_review_object=performance_review_object, weaknesses=weaknesses)
             except Exception as e:
-                logger.error(f"Add strengths failed with error: {e}")
+                logger.error(f"Add weakness failed with error: {e}")
                 return HttpResponse("oops something went wrong")
             
-            next_quarter = quarter+1
-            return HttpResponseRedirect(reverse('performance_review_detail', args=(appraisal_id, next_quarter)))
+            return HttpResponseRedirect(reverse('performance_review_detail', args=(appraisal_id,)))
 
         context = self.get_context_data(**kwargs)
         context["form"] = form
