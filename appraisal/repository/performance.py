@@ -48,9 +48,12 @@ class PerformanceReviewRepository:
             raise ValueError(f"retrieving performance objects by appraisal failed with error: {e}")
     
     
-    def get_performance_by_appraisal_id_quarter(self, appraisal_id: int, quarter: int)->List[PerformanceProgressReview]:
+    def get_performance_by_appraisal_id_quarter(self, appraisal_id: int, quarter: int)->PerformanceProgressReview:
         try:
-            return PerformanceProgressReview.objects.filter(appraisal__id=appraisal_id, quarter=quarter)
+            object = PerformanceProgressReview.objects.filter(appraisal__id=appraisal_id, quarter=quarter)
+            if len(object) == 0:
+                return None
+            return object.first()
         except Exception as e:
             raise ValueError(f"retrieving performance objects by appraisal failed with error: {e}")
     
