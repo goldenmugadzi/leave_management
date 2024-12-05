@@ -79,6 +79,7 @@ def pettyCash_detail(request, petty_id):
     if pettycash_item.process.approval_set.filter(step__step=3).exists():
         cashier_approved = True
 
+
     approval_status = pettycash_item.process.approval_set.last().approved if pettycash_item.process.approval_set.last() else ""
     print("last approved", approval_status)
     if approval_status != "Rejected":
