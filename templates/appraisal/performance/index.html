@@ -29,7 +29,7 @@
             {% for appraisal in appraisals %}
               <tr>
                 <td>
-                    <a class="text-blue-500" href="{% url 'performance_review_detail' appraisal.id 1 %}">{{ appraisal.id }}</a>
+                    <a class="text-blue-500" href="{% url 'performance_review_detail' appraisal.id %}">{{ appraisal.id }}</a>
                 </td>
                 <td>{{ appraisal.user }}</td>
                 <td>{{ appraisal.created_date|date }}</td>
