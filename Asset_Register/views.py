@@ -163,59 +163,70 @@ def show_asset_datatable(request):
             'data': []
         })
     
-def update_asset(request, asset_id):
-    url_path = request.path.split("/")
-    if request.method == 'GET':
-        print("asset_id: ", asset_id)
-        asset_record = ZetdcAssets.objects.filter(id=asset_id).first()
-        # fetch section code
+def update_asset(request, id):
+  
+  zetdcAssets = ZetdcAssets.objects.filter(id=id).first()
+  
+  print({
+    'zetdcAssets': zetdcAssets,
+    'id': zetdcAssets.id,
+    'product_id': zetdcAssets.product_type,
+})
+ 
 
-        url_path = request.path.split("/")
-        return render(request, 'home/edit.html', {"record": asset_record, "url_path": url_path})    
-    
-    if request.method == 'POST':
-        # something
-        print("post data: ", request.POST)
-        id = request.POST['id']
-        asset_state = request.POST['asset_state']
-        product_id = request.POST['product_id']
-        serial_number = request.POST['serial_number']
-        asset_number = request.POST['asset_number']
-        department = request.POST['department']
-        user = request.POST['user']
-        regions = request.POST['regions']
-        purchase_cost = request.POST['purchase_cost']
-        designations = request.POST['designations']
-        date_purchased = request.POST['date_purchased']
-        warrant = request.POST['warrant']
-        model = request.POST['model']
-
-        # asset_state= ZetdcAssets.objects.filter(id=id).first() if id else None
+  if request.method == 'POST':
+        user_id = request.POST['user']
+        user = User.objects.filter(id=user_id).first()
+        region_id= request.POST['regions']
+        regions = Regions.objects.filter(id=region_id).first()
+        designation_id = request.POST['designations']
+        designations = Designations.objects.filter(id=designation_id).first()
+        section_id = request.POST['department']
+        sections = Sections.objects.filter(id=section_id).first()
+        print("request",request.POST)
+        #form.save()
         
-        um = ZetdcAssets.objects.filter(id=id).first()
-        um.asset_state= asset_state
-        um.product_type= product_id if product_id else ""
-        um.serial_number = serial_number
-        um.asset_number= asset_number
-        um.department = department if department else ""
-        um.user=user
-        um.regions=regions if regions else ""
-        um.purchase_cost=purchase_cost
-        um.designations=designations if designations else ""
-        um.date_purchased=date_purchased
-        um.warrant=warrant
-        um.model=model
-        um.updated_at = datetime.now().date()
-        um.created_by = "Goldy"
+        
+        zetdcAssets.id = request.POST['id']
+        zetdcAssets.product_id = request.POST['product_type']
+        zetdcAssets.asset_state = request.POST['asset_state']
+        zetdcAssets.serial_number = request.POST['serial_number']
+        zetdcAssets.department = request.POST['department']
+        zetdcAssets.user = user
+        zetdcAssets.regions = regions
+        zetdcAssets.purchase_cost = request.POST['purchase_cost']
+        zetdcAssets.designations = designations
+        zetdcAssets.sections = sections
+        zetdcAssets.date_purchased = request.POST['date_purchased']
+        zetdcAssets.warrant = request.POST['warrant']
+        zetdcAssets.model = request.POST['model']
+        #zetdcAssets.created_by = request.POST['created_by']
+        zetdcAssets.save()
+        return redirect('/table_asset')
+        
+  return render(request, 'asset_register/update_asset.html', {
+        'zetdcAssets': zetdcAssets,
+        'id': zetdcAssets.id,
+        'product_id': zetdcAssets.product_type,
+        'asset_state': zetdcAssets.asset_state,
+        'serial_number': zetdcAssets.serial_number,
+        'asset_number': zetdcAssets.id,  # If this refers to the asset number
+        'department': zetdcAssets.department,
+        'user': zetdcAssets.user,
+        'regions': zetdcAssets.regions,
+        'purchase_cost': zetdcAssets.purchase_cost,
+        'designations': zetdcAssets.designations,
+        'date_purchased': zetdcAssets.date_purchased,
+        'warrant': zetdcAssets.warrant,
+        'model': zetdcAssets.model,
+        # Pass lists for dropdowns
+        'product_types': ProductType.objects.all(),
+        'sections': Sections.objects.all(),
+        'users': User.objects.all(),
+        'regions': Regions.objects.all(),
+        'designations': Designations.objects.all(),
+})
 
-        um.save()
-        # fetch section code
-
-        url_path = request.path.split("/")
-        return render(request, 'home/edit.html', {"record": um, "url_path": url_path})    
-      
-    
-    return render(request, 'home/edit.html', {"url_path": url_path})
 
 def create_product(request):
     if request.method == 'POST':
@@ -236,7 +247,7 @@ def create_product(request):
     return render(request, 'asset_register/create_product.html',{})
 
 def show_product_datatable(request):
-
+    
     try:
         draw = int(request.GET.get('draw', default=1))
         start = int(request.GET.get('start', default=0))
@@ -281,7 +292,7 @@ def show_product_datatable(request):
                 "code": product.code,
             }
             product_list.append(new_product)
-         
+        print("product_list: ", product_list)
         return JsonResponse({
             'draw': draw,
             'recordsTotal': total,
@@ -297,3 +308,17 @@ def show_product_datatable(request):
             'data': []
         })
 
+def update_product(request, id):
+    producttype= ProductType.objects.filter(id=id).first()
+    if request.method == 'POST':
+        print("request",request.POST)
+        #form.save()
+        
+        producttype.id = request.POST['id']
+        producttype.product_type = request.POST['product_type']
+        producttype.code = request.POST['code']
+
+        producttype.save()
+        return redirect('/table_product')
+        
+    return render(request,'asset_register/updateproduct.html',{'producttype':producttype}) 

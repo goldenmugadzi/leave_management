@@ -6,6 +6,7 @@ urlpatterns = [
     path('create_asset', views.create_asset, name='create_asset'),
     path('show_asset/', views.show_asset, name="show_asset"),
     path('update_asset/<str:id>/', views.update_asset, name="update_asset"),
+    path('update_product/<str:id>/', views.update_product, name="update_product"),
     path('table_asset/', views.show_asset, name="table_asset"),
     path('asset_datatable/', views.show_asset_datatable),
      path('create_product', views.create_product, name='create_product'),

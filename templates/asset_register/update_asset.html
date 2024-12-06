@@ -1,8 +1,7 @@
-{% extends "layouts/base.html" %} {% block title %} User Profile {% endblock %}
-
-<!-- Specific Page CSS goes HERE  -->
- {% block content %}
-
+{% extends 'admin_layout.html' %} 
+{% load static %}
+{% load custom_filters %}
+{% block content %}
  <div class="content-wrapper">
   
   <div class="bg-gulf-blue-100 shadow shadow-gulf-blue-300 text-gulf-blue-900 rounded px-2 py-2">
@@ -19,6 +18,14 @@
           </p>
 
           <div class="mt-10 grid grid-cols-3 gap-4">
+                <input
+                  type="hidden"
+                  name="id"
+                  id="id"
+                  value="{{zetdcAssets.id}}"
+                  autocomplete="given-name"
+                  class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 px-2 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                />
 
             <div>
               <label
@@ -28,14 +35,15 @@
               >
               <div class="mt-2">
                 <select
-                id="product_id"
-                name="product_id"
+                id="product_type"
+                name="product_type"
+                value="{{zetdcAssets.product_id}}"
                   autocomplete="designation"
                   class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 px-2 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
                 >
                   <option>Select product</option>
                   {% for product_type in product_types %}
-                  <option value="{{ product_type.id }}">{{ product_type.product_type }}</option>
+                  <option value="{{product_id}}">{{ product_type.product_type }}</option>
                   {% endfor %}
                 </select>
               </div>
@@ -51,6 +59,7 @@
                   type="text"
                   name="asset_state"
                   id="asset_state"
+                  value="{{zetdcAssets.asset_state}}"
                   autocomplete="given-name"
                   class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 px-2 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                 />
@@ -66,7 +75,7 @@
                 <input
                   type="text"
                   name="serial_number"
-                  value="{{record.serial_number}}"
+                  value="{{zetdcAssets.serial_number}}"
                   id="serial_number"
                   autocomplete="given-name"
                   class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 px-2 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
@@ -83,7 +92,7 @@
                 <input
                   type="text"
                   name="asset_number"
-                  value="{{record.asset_number}}"
+                  value="{{zetdcAssets.asset_number}}"
                   id="asset_number"
                   autocomplete="given-name"
                   class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 px-2 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
@@ -100,7 +109,7 @@
                 <select
                   id="department"
                   name="department"
-                  value="{{record.department}}"
+                  value="{{zetdcAssets.department}}"
                   autocomplete="department"
                   class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 px-2 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
                 >
@@ -121,7 +130,7 @@
                 <select
                   id="user"
                   name="user"
-                  value="{{record.user}}"
+                  value="{{zetdcAssets.user}}"
                   autocomplete="user"
                   class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 px-2 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
                 >
@@ -142,7 +151,7 @@
                 <select
                   id="regions"
                   name="regions"
-                  value="{{record.regions}}"
+                  value="{{zetdcAssets.regions}}"
                   autocomplete="regions"
                   class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 px-2 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
                 >
@@ -163,7 +172,7 @@
                 <input
                   type="text"
                   name="purchase_cost"
-                  value="{{record.purchase_cost}}"
+                  value="{{zetdcAssets.purchase_cost}}"
                   id="purchase_cost"
                   autocomplete="given-name"
                   class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 px-2 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
@@ -180,7 +189,7 @@
                 <select
                   id="designations"
                   name="designations"
-                  value="{{record.designations}}"
+                  value="{{zetdcAssets.designations}}"
                   autocomplete="designations"
                   class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 px-2 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
                 >
@@ -201,7 +210,7 @@
                 <input
                   type="text"
                   name="date_purchased"
-                  value="{{record.date_purchased}}"
+                  value="{{zetdcAssets.date_purchased}}"
                   id="date_purchased"
                   autocomplete="given-name"
                   class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 px-2 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
@@ -218,7 +227,7 @@
                 <input
                   type="text"
                   name="warrant"
-                  value="{{record.warrant}}"
+                  value="{{zetdcAssets.warrant}}"
                   id="warrant"
                   autocomplete="given-name"
                   class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 px-2 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
@@ -235,7 +244,7 @@
                 <input
                   type="text"
                   name="model"
-                  value="{{record.model}}"
+                  value="{{zetdcAssets.model}}"
                   id="model"
                   autocomplete="given-name"
                   class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 px-2 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
