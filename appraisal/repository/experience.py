@@ -22,4 +22,10 @@ class AppraisalExperienceRepository:
         try:
             AppraisalExperience.objects.abulk_create(instances)
         except Exception as e:
-            raise Exception(f"ulk creation of AppraisalExperience failed: {e}")
+            raise Exception(f"bulk creation of AppraisalExperience failed: {e}")
+        
+    def get_experiences_by_appraisal_id(self, appraisal_id: int)->List[AppraisalExperience]:
+        try:
+            return AppraisalExperience.objects.filter(appraisal__id=appraisal_id).select_related('experience', 'appraisal')
+        except Exception as e:
+            raise Exception(f"retriving AppraisalExperience failed: {e}")
