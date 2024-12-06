@@ -10,7 +10,7 @@ class InterventionStrategy(BaseModel):
     category: str = Field(..., description="The category of intervention strategy.")
     
     
-class TrainingAndDevelopment(BaseModel):
+class TrainingAndDevelopmentCreateUpdateType(BaseModel):
     required_competencies: Optional[List[CompetencyType]] = Field(..., description="The list of required competencies")
     competency_gaps: Optional[List[CompetencyType]] = Field(..., description="The list of competency gaps")
     intervention_strategies: Optional[List[InterventionStrategy]] = Field(..., description="The list of intervention strategies")
