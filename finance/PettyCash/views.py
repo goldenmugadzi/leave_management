@@ -11,15 +11,13 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 from openpyxl.workbook import Workbook
 
-from ACE2.views import find_ace_section_head
+from ACE2.utils import find_ace_section_head, find_pettycash_section_head
 from approve.forms import ApprovalForm
-from approve.models import Step
 from approve.views import intiate
 from it.users.models import UserProfile, Roles, Sections, Regions
-from approve.models import Process, Workflow, Step, Approval
+from approve.models import Process, Step, Approval
 from .forms import PettycashForm, QuotationFormSet, PettycashReportForm
 from .models import Pettycash, Quotation, PettycashReport
-from django.db.models import Prefetch
 
 from ..comparative_schedules.views import notify_user
 
@@ -189,7 +187,7 @@ def create_pettycash(request):
 
                 # notify sh
 
-                section_heads = find_ace_section_head(request, section_created)
+                section_heads = find_pettycash_section_head(section_created)
                 if section_heads:
                     print(section_heads, " section_heads")
                     # budget name
@@ -200,6 +198,7 @@ def create_pettycash(request):
                     url = "/pettycash/pettycash_detail/" + pettycash.petty_id
                     section_heads = UserProfile.objects.filter(username=section_heads).first()
                     notify_user(section_heads, msg, "Pettycash", url, pettycash.petty_id)
+                    print("notified", section_heads)
 
                 # for quotation_form in formset:
                 #     quotation = quotation_form.save(commit=False)
@@ -207,7 +206,7 @@ def create_pettycash(request):
                 #     quotation.save()
 
                 pettycash_section = pettycash.section
-                pettycash_sh = find_ace_section_head(request, pettycash_section)
+                pettycash_sh = find_pettycash_section_head( pettycash_section)
 
                 if pettycash_sh:
                     print(pettycash_sh, "pettycash_sh")
@@ -219,6 +218,7 @@ def create_pettycash(request):
 
                     pettycash_sh = UserProfile.objects.filter(username=pettycash_sh).first()
                     notify_user(pettycash_sh, msg, "ACE", url, pettycash.petty_id)
+                    print("notified", pettycash_sh)
 
                 url = reverse('pettycash:pettycash_detail', args=[pettycash.petty_id])
                 return redirect(url)
