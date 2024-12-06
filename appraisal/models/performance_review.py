@@ -1,12 +1,7 @@
 from helpers.models import TimeStamp
 from django.db import models
 from .appraisal import Appraisal
-
-class QuarterChoices(models.IntegerChoices):
-    Q1 = 1, "1st"
-    Q2 = 2, "2nd"
-    Q3 = 3, "3rd"
-    Q4 = 4, "4th"
+from .helpers import QuarterChoices
     
 class PerformanceProgressStrength(TimeStamp):
     name = models.CharField(max_length=500, null=False, blank=False, unique=True, db_index=False)
