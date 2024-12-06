@@ -89,6 +89,12 @@ APPLICATIONS = [
         "iconUrl": "assets/images/hardware.png",
         "url": "/show_fault/"
     },
+     {
+        "name": "asset_register",
+        "title": "Asset Register",
+        "iconUrl": "assets/images/register.png",
+        "url": "/table_asset/"
+    },
 ]
 
 REPORTS = [
