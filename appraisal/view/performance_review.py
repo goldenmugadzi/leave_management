@@ -4,7 +4,7 @@ from django.urls import reverse
 from django.http.response import HttpResponse as HttpResponse
 
 from django.views.generic import TemplateView
-from ..services import AppraisalService, PerformanceReviewService, UserQualificationService
+from ..services import AppraisalService, PerformanceReviewService, UserQualificationService, AppraisalExperienceService
 from ..repository import AppraisalRepository, UserQualificationRepository, AppraisalExperienceRepository, ExperienceRepository, PerformanceReviewRepository
 
 from ..models import PerformanceProgressReview, AppraisalExperience
@@ -39,16 +39,16 @@ class PerformanceReviewsTemplateView(TemplateView):
             appraisal_repository=AppraisalRepository()
         )
         user_qualification_service = UserQualificationService(user_qualification_repo=UserQualificationRepository())
+        appraisal_experience_service = AppraisalExperienceService(appraisal_repo=AppraisalExperienceRepository())
         
         appraisal_object = appraisal_service_handler.get_appraisal_by_pk_use_case(appraisal_id=appraisal_id).first()
         user_qualification_objects = user_qualification_service.get_by_user_object_use_case(user_object=appraisal_object.user)
+        appraisal_experience_objects = appraisal_experience_service.get_by_appraisal_id_use_case(appraisal_id=appraisal_id)
         
         data = {}
         data["user_object"] = appraisal_object.user
         data["user_qualification_objects"] = user_qualification_objects
-        data["user_experience_objects"] = appraisal_object.experience.all()
-        print("=======>>>>>>>", data["user_experience_objects"].all())
-        print("=======>>>>>>>", data["user_experience_objects"])
+        data["user_experience_objects"] = appraisal_experience_objects
         return data
         
     
