@@ -273,8 +273,10 @@ def notify(request,subject,user,message,redirect_url,url,notification_type,notif
       # Create the notification
         Notification.objects.create(user=user,message=message,url=url,notification_type=notification_type,notification_id=notification_id)
         # Send the email
-        response = ms_exhange_send_html(subject=subject,to_recipients=[user.email],cc_recipients=cc_recipients[],template='email/email_template.html',
+        response = ms_exhange_send_html(subject=subject,to_recipients=[user.email],cc_recipients=cc_recipients,template='email/email_template.html',
                                     kwargs={"kwargs":{"redirect_url":redirect_url,"type":notification_type,"user_fullname":user.get_full_name(),"message":message}})
         if response.status_code == 200:
             cc_names_str = ', '.join(cc_recipients_names)  # Convert list to a  ent to  " + cc_names_str)
+            return messages.success(request, "Email notification successfully sent to "+ cc_names_str)
+        
         else: return messages.error(request, "Error sending email to  "+user.get_full_name())
