@@ -67,7 +67,7 @@ class PerformanceReviewsTemplateView(TemplateView):
     
 
 class PerformanceReviewsApprovalView(TemplateView):
-    template_name = "appraisal/performance/create.html"
+    template_name = "appraisal/performance/progress_review/create.html"
     
 
     def get_performance_review_forms_objects(

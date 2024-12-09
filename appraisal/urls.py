@@ -16,8 +16,8 @@ urlpatterns = [
     path('experience/create/', ExperienceCreateView.as_view(), name='create_experience'),
     
     # ================= Performance urls =================================
-    path('performance/review/', PerformanceReviewsAppraisalTemplateView.as_view(), name='performance_review_index'),
-    path('performance/review/<int:appraisal_id>', PerformanceReviewsTemplateView.as_view(), name='performance_review_detail'),
+    path('performance', PerformanceReviewsAppraisalTemplateView.as_view(), name='performance_review_index'),
+    path('performance/<int:appraisal_id>', PerformanceReviewsTemplateView.as_view(), name='performance_review_detail'),
     path('performance/review/<int:appraisal_id>/<int:quarter>', PerformanceReviewsApprovalView.as_view(), name='performance_review_create'),
     
     # ----- api ------

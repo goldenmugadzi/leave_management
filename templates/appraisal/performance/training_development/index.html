@@ -1,0 +1,43 @@
+{% load static %}
+
+    <div class="content-wrapper my-4">
+      <div class="grid grid-cols-1">
+        <div class="bg-gulf-blue-96 shadow-lg rounded-lg p-3">
+          <div class="flex justify-between">           
+              <h3 class="text-center font-bold">Training And Development Needs</h3>
+          </div>
+          
+            <div class="overflow-x-auto">
+                <table class="min-w-full border-collapse border border-gray-200 shadow-md rounded-lg">
+                    <thead>
+                    <tr class="bg-blue-500 text-white">
+                        <th class="px-6 py-2 text-left text-sm font-semibold">Quarter</th>
+                        <th class="px-6 py-2 text-left text-sm font-semibold">Created at</th>
+                        <th class="px-6 py-2 text-left text-sm font-semibold">Updated at</th>
+                        <th class="px-6 py-2 text-left text-sm font-semibold">Status</th>
+                    </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                    {% for performance_review_object in performance_review_objects %}
+                        <tr class="hover:bg-gray-100">
+                        <td class="px-6 py-4 whitespace-nowrap text-blue-600 hover:text-blue-800">
+                            <a href="{% url 'performance_review_create' performance_review_object.appraisal.id performance_review_object.quarter %}">
+                            {{ performance_review_object.quarter }}
+                            </a>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">{{ performance_review_object.created_date|date }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">{{ performance_review_object.updated|date }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            {{ performance_review_object.appraisal.process.approval_set.last|default_if_none:"No Approval" }}
+                        </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+          
+          </div>
+        </div>
+      </div>
+

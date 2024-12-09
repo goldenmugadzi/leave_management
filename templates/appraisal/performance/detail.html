@@ -12,8 +12,12 @@
     <div class="flex gap-2">
         <div class="flex-1">
             <h3>User Information</h3>
-            <div class="shadow-xl rounded-lg border-2 border-indigo-400 py-2 max-h-[140]">
+            <div 
+            class="shadow-xl rounded-lg border-2 border-indigo-400 py-2"
+            style="max-height: 140px; overflow-y: auto;"
+            >
                   <ul class="px-2">
+                    <li>Full Name: {{user_object}}</li>
                     <li>Cost Center: {{user_object.cost_center}}</li>
                     <li>EC Number: {{user_object.username}}</li>
                     <li>Grade: {{user_object.grade}}</li>
@@ -67,77 +71,21 @@
                     {% endfor %}
                 </tbody>
             </table>
-                <!-- <table id="performance_reviews_objects" class="table table-striped stripe mt-3 table-bordered">
-                  <thead>
-                    <tr>
-                      <th>Name</th>
-                      <th>Years of Experience</th>
-                      <th>Months of Experience</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {% for user_experience_object in user_experience_objects %}
-                      <tr>
-                        <td>{{ user_experience_object.name }}</td>
-                        <td>{{ user_experience_object.years_of_experience }}</td>
-                        <td>{{ user_experience_object.months_of_experience }}</td>
-                      </tr>
-                    {% endfor %}
-                  </tbody>
-                </table> -->
+                
             </div>
         </div>
     </div>
-
-  <div class="content-wrapper my-4">
-    <div class="grid grid-cols-1">
-      <div class="bg-gulf-blue-100 shadow-lg rounded-lg p-6">
-        <div class="flex justify-between">           
-            <h3 class="text-center font-bold">Performance Progress Review</h3>
-        </div>
-        
-        <table id="performance_reviews_objects" class="table table-striped stripe mt-3 table-bordered">
-          <thead>
-            <tr>
-              <th>Quarter</th>
-              <th>Appraisal for</th>
-              <th>Created at</th>
-              <th>Updated at</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for performance_review_object in performance_review_objects %}
-              <tr>
-                <td>
-                    <a class="text-blue-500" href="{% url 'performance_review_create' performance_review_object.appraisal.id performance_review_object.quarter %}">{{ performance_review_object.quarter }}</a>
-                </td>
-                <td>{{ performance_review_object.appraisal.user }}</td>
-                <td>{{ performance_review_object.created_date|date }}</td>
-                <td>{{ performance_review_object.updated|date }}</td>
-                <td>{{ performance_review_object.appraisal.process.approval_set.last|default_if_none:"No Approval" }}</td>
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-        
-        </div>
-      </div>
+  
+  
+  <div class="flex gap-4">
+    <div class="flex-1">
+      {% include "./progress_review/index.html" with performance_review_objects=performance_review_objects %}
     </div>
+    
+    <div class="flex-1">
+      {% include "./training_development/index.html" with performance_review_objects=performance_review_objects %}
+    </div>
+
   </div>
-{% endblock %}
-{% block scripts %}
-  <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
-  <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-  <script>
-  $(document).ready(function () {
-    $("#performance_reviews_objects").DataTable({
-      "pageLength": 10,
-      "columnDefs": [{ "orderable": true, "targets": [0, 1, 2,3] }],
-      "responsive": true,
-      "searching": false,
-      
-    });
-  });
-  </script>
+  </div>
 {% endblock %}
