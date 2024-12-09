@@ -178,7 +178,7 @@ def create_token(request):
                 return render(request, "tokens/create_token.html", forms)
 
             # send_notification("token", token)
-            send_notification(request, "tokens:token", app, token)
+            send_notification(request, "tokens:token", app, token,token.id)
 
             return redirect("tokens:token", token.id)
 
