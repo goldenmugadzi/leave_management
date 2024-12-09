@@ -91,7 +91,7 @@ APPLICATIONS = [
     },
      {
         "name": "asset_register",
-        "title": "Asset Register",
+        "title": "IT Asset Register",
         "iconUrl": "assets/images/register.png",
         "url": "/table_asset/"
     },

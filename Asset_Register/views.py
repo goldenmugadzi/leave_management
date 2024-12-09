@@ -100,6 +100,7 @@ def show_asset_datatable(request):
             Q(purchase_cost__icontains=search_value) |
             Q(designations__description__icontains=search_value) |
             Q(model__icontains=search_value) |
+            Q(warrant__icontains=search_value) |
             Q(created_by__icontains=search_value)
         )
         
