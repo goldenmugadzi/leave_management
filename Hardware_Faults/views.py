@@ -13,6 +13,8 @@ from datetime import date, datetime
 from django.core.paginator import Paginator
 from django.http import JsonResponse
 from django.core.serializers.json import DjangoJSONEncoder
+from django.db.models import Q
+
 
 
 def create_fault(request):
@@ -53,6 +55,21 @@ def show_fault_datatable(request):
         search_value = request.GET.get('search[value]', default='')
 
         employees = Employee.objects.all()
+
+        if search_value:
+         employees = employees.filter(
+            Q(jobcardnumber__icontains=search_value) |
+            Q(eserialnumber__icontains=search_value) |
+            Q(eloggedindate__icontains=search_value) |
+            Q(eUsername__icontains=search_value) |
+            Q(ephoneextension__icontains=search_value) |
+            Q(efault__icontains=search_value) |
+            Q(erepairstatus__icontains=search_value) |
+            Q(elocation__icontains=search_value) |
+            Q(eupdatedby__icontains=search_value) |
+            Q(elastupdate__icontains=search_value) 
+           
+        )
 
         # Total number of records before filtering
         total = employees.count()
@@ -143,41 +160,9 @@ def delete(request, id):
     form.delete()
     print ('golden')
     return redirect('/show')
-
-def home (request):
-    loggedin_count = Employee.objects.filter(erepairstatus="logged in").count()
-    fixed_count = Employee.objects.filter(erepairstatus="fixed").count()
-    irrepairable_count = Employee.objects.filter(erepairstatus="irrepairable").count()
-    repairinprogress_count = Employee.objects.filter(erepairstatus="repair in progress").count()
-    # [12, 19]
-
-    l = request.user.groups.values_list('name',flat = True)
-    user_groups = list(l)
-    print(user_groups)
-
-    return render(request,'home.html', {
-        'Employees_count': [loggedin_count,repairinprogress_count, fixed_count,irrepairable_count],
-        "user_groups": user_groups})
-
     
 def Tables (request):
   return render(request,'hardware_faults/table_fault.html')
   
-def Reports (request):
-     response = HttpResponse(content_type='text/csv')
-
-     writer = csv.writer(response)
-     writer.writerow(['jobcardnumber','eserialnumber','eloggedindate','eusername','ephoneextension','efault','erepairstatus','elocation','eupdatedby','elastupdate'])
-     
-     for employees in Employee.objects.all().values_list('jobcardnumber','eserialnumber','eloggedindate','eUsername','ephoneextension','efault','erepairstatus','elocation','eupdatedby','elastupdate'):
-        writer.writerow(employees)
-
-     response['content-Disposition'] = 'attachment;filename="employees.csv"'
-
-     return response
-  #return render(request,'Reports.html')
-
-def Notifications (request):
-  return render(request,'Notifications.html')
   
 

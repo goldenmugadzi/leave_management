@@ -5,6 +5,7 @@ from django.http import JsonResponse
 import json, os
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.db.models import Q
 
 from Asset_Register.models import Designations, ProductType, Regions, Sections, ZetdcAssets
 
@@ -86,6 +87,22 @@ def show_asset_datatable(request):
 
         assets = ZetdcAssets.objects.all()
         print("assets ", assets)
+    
+        if search_value:
+         assets = assets.filter(
+            Q(asset_state__icontains=search_value) |
+            Q(product_type__product_type__icontains=search_value) |
+            Q(serial_number__icontains=search_value) |
+            Q(sections__section__icontains=search_value) |
+            Q(user__first_name__icontains=search_value) |
+            Q(user__last_name__icontains=search_value) |
+            Q(regions__region__icontains=search_value) |
+            Q(purchase_cost__icontains=search_value) |
+            Q(designations__description__icontains=search_value) |
+            Q(model__icontains=search_value) |
+            Q(created_by__icontains=search_value)
+        )
+        
 
         # Total number of records before filtering
         total = assets.count()
@@ -256,6 +273,13 @@ def show_product_datatable(request):
 
         product = ProductType.objects.all()
         print("product", product)
+
+        if search_value:
+            product = product.filter(
+                product_type__icontains=search_value
+            ) | product.filter(
+                code__icontains=search_value
+            )
 
         # Total number of records before filtering
         total = product.count()
