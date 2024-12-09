@@ -283,7 +283,7 @@ def create_Ace(request):
                         # budget name
                         # bdg = AssetBudget.objects.filter(budget_id=ace.budget_id).first()
                         # budget_name = bdg.budget_name
-                        msg = "Your subordinate" + str(use) + "created " + ace.Ace_id2 + "using budget " + str(
+                        msg = "Your subordinate " + str(use) + "created " + ace.Ace_id2 + " using budget " + str(
                             ace.budget_id)
                         url = "/ace/ace_detail/" + ace.Ace_id2
                         section_heads = UserProfile.objects.filter(username=section_heads).first()

@@ -1,5 +1,5 @@
 import re
-from django.shortcuts import render, redirect
+from django.shortcuts import redirect
 from django.http import FileResponse, JsonResponse
 from urllib.parse import unquote
 from datetime import datetime
@@ -9,13 +9,11 @@ from django.contrib import messages
 
 from it.users.models import CostCenter, Regions, Sections
 from processes.models import File_Type, FileSubType, Processes, SubSubType
-from utils.save_file import save_file
-from .models import Categories, First_Category, FolderApplication, KnowldgeCentreFile, KnowledgeCentreFolder, Secondary_Category, Filetype
+from .models import First_Category, FolderApplication, KnowldgeCentreFile, KnowledgeCentreFolder, Secondary_Category, Filetype
 from django.shortcuts import render
-from django.db.models import Q
 from django.contrib.auth.decorators import login_required
 
-from utils.helper_functions import get_kc_dict
+from ACE2.utils import get_kc_dict
 
 from .models import KnowledgeCenter
 from django.core.files.storage import FileSystemStorage

@@ -1,26 +1,22 @@
 import shutil
-from django.shortcuts import render, redirect
-from django.http import FileResponse, JsonResponse
+from django.http import JsonResponse
 from datetime import datetime
 from django.conf import settings
 from django.contrib import messages
 from django.core.files.storage import FileSystemStorage
-import json, os
-from it import users
+import json
 from it.users.models import Regions
-from .models import FileSubType, Process_maps, Processes, SubSubType
+from .models import FileSubType, Processes, SubSubType
 from django.apps import apps
-from utils.helper_functions import get_kc_dict
+
 Sections = apps.get_model(app_label='users', model_name='Sections')
 UserProfile = apps.get_model(app_label="users", model_name="UserProfile")
-        
-from argparse import FileType
+
 from django.shortcuts import redirect, render
 from django.http import FileResponse
 import  os, re
 from beii_v1 import settings
-from process_risks.views import Sections
-from processes.models import File_Type, First_Category, Second_Category
+from processes.models import File_Type
 from django.contrib.auth.decorators import login_required
 
 @login_required
