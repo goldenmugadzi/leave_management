@@ -1,8 +1,8 @@
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from ..models import Appraisal
-from ..services import PerformanceReviewService
-from ..repository.performance import PerformanceReviewRepository
+from ..services import PerformanceReviewService, TrainingAndDevelopmentService
+from ..repository import PerformanceReviewRepository, TrainingAndDevelopmentRepository
 from ..helpers.types import PerformanceReviewType
 from django.db import transaction
 from loguru import logger
@@ -27,9 +27,9 @@ def create_performance_review_post_save_handler(sender, instance, created, **kwa
         - A list of `PerformanceReviewType` objects is prepared, representing each quarter (1 through 4).
 
         3. **Service Layer Usage**:
-        - For each quarter's payload, the `PerformanceReviewService` is instantiated with a 
+        - For each quarter's payload, the `PerformanceReviewService` is instantiated with a
             `PerformanceReviewRepository` dependency.
-        - The service's `create_use_case` method is called to create the performance review 
+        - The service's `create_use_case` method is called to create the performance review
             for the specified `Appraisal` instance.
 
         4. **Logging**:
@@ -62,20 +62,41 @@ def create_performance_review_post_save_handler(sender, instance, created, **kwa
                     PerformanceReviewType(quarter=2),
                     PerformanceReviewType(quarter=3),
                     PerformanceReviewType(quarter=4),
-                ]  
-                
+                ]
+
                 for performance_review_payload in performance_review_payloads:
                     performance_review_service = PerformanceReviewService(
                         performance_repo=PerformanceReviewRepository()
-                    )  
+                    )
                     logger.info(f"[ PerformanceReview ]: create instance {performance_review_payload.quarter} quart signal for {instance.user} appraisal ....")
-                    
+
                     performance_review_service.create_use_case(
                         appraisal_object=instance,
                         data=performance_review_payload
                     )
-                    
+
                     logger.success(f"[ PerformanceReview ]: instance {performance_review_payload.quarter} quart for {instance.user} appraisal created :) ")
 
         except Exception as e:
             logger.error(f"[PerformanceReview]: creating performance review instances failed for {instance.user} appraisal, with error: {e} ")
+
+
+@receiver(post_save, sender=Appraisal, dispatch_uid="training-dev-uid")
+def create_training_development_post_save_handler(sender, instance, created, **kwargs):
+    if created:
+        try:
+
+            with transaction.atomic():
+                training_development_repo_handler = TrainingAndDevelopmentRepository()
+                training_development_service_handler = TrainingAndDevelopmentService(training_dev_repo=training_development_repo_handler)
+
+                for quarter in range(1,5):
+                    logger.info(f"[ TrainingAndDevelopment ]: create instance {quarter} quart signal for {instance.user} appraisal ....")
+                    training_development_service_handler.create_use_case(
+                        appraisal_object=instance,
+                        quarter=quarter
+                    )
+                    logger.success(f"[ TrainingAndDevelopment ]: instance {quarter} quarter for {instance.user} appraisal created :) ")
+
+        except Exception as e:
+            logger.error(f"[TrainingAndDevelopment]: creating training and development instances failed for {instance.user} appraisal, with error: {e} ")
