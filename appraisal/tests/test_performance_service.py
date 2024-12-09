@@ -95,8 +95,7 @@ class TestAddStrengthUseCases(TestCase):
 
         return mock_strengths_payload, mock_strengths_objects
 
-    @patch('appraisal.services.performance.map_performance_strengths')
-    def test_add_strengths_success(self, mock_map_performance_strengths):
+    def test_add_strengths_success(self):
         # ================ ARRANGE =============
 
         # mock performance_review_object
