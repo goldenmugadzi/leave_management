@@ -82,7 +82,7 @@
                                                     <span class="inline-block text-start font-bold rounded-full text-sm">Units to be reimbursed</span>
                                                     <span class="inline-block text-end rounded-full text-sm">{{ token.reimbursement_set.first.units }}</span>
                                                 {% elif token.faultmeter_set.first.units %}
-                                                    <span class="inline-block text-start font-bold rounded-full text-sm">Units from faulty meter</span>
+                                                    <span class="inline-block text-start font-bold rounded-full text-sm">Units to be reimbursed</span>
                                                     <span class="inline-block text-end rounded-full text-sm">{{ token.faultmeter_set.first.units }}</span>
                                                 {% endif %}
                                             </div>
@@ -167,7 +167,7 @@
                                         <div class="font-bold text-center ">
                                             <p class="font-bold mb-2">Pernalty paid : ${{ token.clearcredit_set.last.amount|default_if_none:'' }}</p>
                                         </div>
-                                    {% endif %}
+                                        {% endif %}
                                 {% endif %}
                             </div>
                             <div class="card-body m-2   px-2 rounded">
