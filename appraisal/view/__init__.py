@@ -1,3 +1,4 @@
 from .appraisal import AppraisalCreateView, AppraisalTemplateView
 from .experience import ExperienceCreateView, experience_list_api
-from .performance_review import PerformanceReviewsAppraisalTemplateView, PerformanceReviewsApprovalView, PerformanceReviewsTemplateView
+from .performance_review import PerformancePlanAndAssessmentAppraisalTemplateView, PerformanceReviewsApprovalView, PerformancePlanAndAssessmentTemplateView
+from .training import TrainingAndDevelopmentUpdateView

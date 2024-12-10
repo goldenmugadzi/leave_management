@@ -4,15 +4,19 @@ from django.urls import reverse
 from django.http.response import HttpResponse as HttpResponse
 
 from django.views.generic import TemplateView
-from ..services import AppraisalService, PerformanceReviewService, UserQualificationService, AppraisalExperienceService
-from ..repository import AppraisalRepository, UserQualificationRepository, AppraisalExperienceRepository, ExperienceRepository, PerformanceReviewRepository
+from ..services import (AppraisalService, PerformanceReviewService, 
+                        UserQualificationService, AppraisalExperienceService, 
+                        TrainingAndDevelopmentService)
+from ..repository import (AppraisalRepository, UserQualificationRepository, AppraisalExperienceRepository, 
+                          ExperienceRepository, PerformanceReviewRepository,
+                          TrainingAndDevelopmentRepository)
 
-from ..models import PerformanceProgressReview, AppraisalExperience
+from ..models import PerformanceProgressReview, AppraisalExperience, TrainingAndDevelopment
 from it.users.models import UserQualification, UserProfile
 from ..forms import PerformanceReviewApprovalForm
 from loguru import logger
 
-class PerformanceReviewsAppraisalTemplateView(TemplateView):
+class PerformancePlanAndAssessmentAppraisalTemplateView(TemplateView):
     template_name = "appraisal/performance/index.html"
     
     
@@ -28,22 +32,28 @@ class PerformanceReviewsAppraisalTemplateView(TemplateView):
 
         return context
     
-class PerformanceReviewsTemplateView(TemplateView):
+class PerformancePlanAndAssessmentTemplateView(TemplateView):
     template_name = "appraisal/performance/detail.html"
     
-    def get_user_info(self, appraisal_id) -> Dict[str, Union[UserProfile, UserQualification, AppraisalExperience]]:
+    def get_appraisal_object(self, appraisal_id):
         appraisal_service_handler = AppraisalService(
             appraisal_experience_repository=AppraisalExperienceRepository(),
             qualification_repository=UserQualificationRepository(),
             experience_repository=ExperienceRepository(),
             appraisal_repository=AppraisalRepository()
         )
+        appraisal_object = appraisal_service_handler.get_appraisal_by_pk_use_case(appraisal_id=appraisal_id).first()
+        return appraisal_object
+        
+    
+    def get_user_info(self, appraisal_id) -> Dict[str, Union[UserProfile, UserQualification, AppraisalExperience]]:
         user_qualification_service = UserQualificationService(user_qualification_repo=UserQualificationRepository())
         appraisal_experience_service = AppraisalExperienceService(appraisal_repo=AppraisalExperienceRepository())
         
-        appraisal_object = appraisal_service_handler.get_appraisal_by_pk_use_case(appraisal_id=appraisal_id).first()
+        appraisal_object = self.get_appraisal_object(appraisal_id=appraisal_id)
         user_qualification_objects = user_qualification_service.get_by_user_object_use_case(user_object=appraisal_object.user)
         appraisal_experience_objects = appraisal_experience_service.get_by_appraisal_id_use_case(appraisal_id=appraisal_id)
+        
         
         data = {}
         data["user_object"] = appraisal_object.user
@@ -51,17 +61,29 @@ class PerformanceReviewsTemplateView(TemplateView):
         data["user_experience_objects"] = appraisal_experience_objects
         return data
         
+    def get_performance_plan_info(self, appraisal_id)->Dict[str, Union[List[PerformanceProgressReview], List[TrainingAndDevelopment]]]:
+        data = {}
+        
+        performance_review_repository = PerformanceReviewRepository()
+        performance_review_service_handler = PerformanceReviewService(performance_repo=performance_review_repository)
+        performance_review_objects = performance_review_service_handler.get_performances_by_appraisal_id_use_case(appraisal_id=appraisal_id)
+        data["performance_review_objects"] = performance_review_objects
+        
+        training_repo = TrainingAndDevelopmentRepository()
+        training_service_handler = TrainingAndDevelopmentService(training_dev_repo=training_repo)
+        data["training_objects"] = training_service_handler.get_by_appraisal_id_use_case(appraisal_id=appraisal_id)
+        return data
     
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
         appraisal_id = self.kwargs.get("appraisal_id")
-        repository = PerformanceReviewRepository()
-        service_handler = PerformanceReviewService(performance_repo=repository)
-        performance_review_objects = service_handler.get_performances_by_appraisal_id_use_case(appraisal_id=appraisal_id)
-
-        context["performance_review_objects"] = performance_review_objects
+        
+        performance_plan_info = self.get_performance_plan_info(appraisal_id=appraisal_id)
         user_info = self.get_user_info(appraisal_id=appraisal_id)
+        
         context.update(user_info)
+        context.update(performance_plan_info)
+        
         return context
     
     
