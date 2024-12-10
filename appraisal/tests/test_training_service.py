@@ -75,29 +75,26 @@ class TestTrainingService(TestCase):
     def test_update_training_dev_repo_called_once(self):
         # ============ ARRANGE ===============
         mock_training_development_object = self.mock_training_development_object()
-        quarter = 1
 
         mock_payload = self.mock_training_dev_payload()
         # ============ ACT ===============
-        self.mock_training_dev_service.update_use_case(training_development_object=mock_training_development_object, quarter=quarter, payload=mock_payload)
+        self.mock_training_dev_service.update_use_case(training_development_object=mock_training_development_object, payload=mock_payload)
 
         # ============ ASSERT ===============
         self.mock_training_dev_repo.update.assert_called_once_with(
             training_development_object=mock_training_development_object,
-            quarter=quarter,
             data=mock_payload
         )
 
     def test_update_training_dev_create_success(self):
         # ============ ARRANGE ===============
         mock_training_development_object = self.mock_training_development_object()
-        quarter = 1
 
         mock_payload = self.mock_training_dev_payload()
         self.mock_training_dev_repo.update.return_value = mock_training_development_object
 
         # ============ ACT ===============
-        result = self.mock_training_dev_service.update_use_case(training_development_object=mock_training_development_object, quarter=quarter, payload=mock_payload)
+        result = self.mock_training_dev_service.update_use_case(training_development_object=mock_training_development_object, payload=mock_payload)
 
         # ============ ASSERT ===============
         self.assertEqual(result, mock_training_development_object)
@@ -105,7 +102,6 @@ class TestTrainingService(TestCase):
     def test_update_training_dev_create_failure(self):
         # ============ ARRANGE ===============
         mock_training_development_object = self.mock_training_development_object()
-        quarter = 1
 
         mock_payload = self.mock_training_dev_payload()
         mock_db_err = "Some database error"
@@ -113,7 +109,7 @@ class TestTrainingService(TestCase):
         with patch.object(self.mock_training_dev_repo, 'update', side_effect=Exception(mock_db_err)):
             try:
                 # ============ ACT ===============
-                self.mock_training_dev_service.update_use_case(training_development_object=mock_training_development_object, quarter=quarter, payload=mock_payload)
+                self.mock_training_dev_service.update_use_case(training_development_object=mock_training_development_object, payload=mock_payload)
                 self.fail("Expected an error but got none")
             except TrainingAndDevelopmentServiceErr as e:
                 # ============ ASSERT ===============

@@ -1,6 +1,6 @@
 from typing import List
 from django.db import transaction
-from ..models import TrainingAndDevelopment, Appraisal
+from ..models import TrainingAndDevelopment, Appraisal, Competency, InterventionStrategy
 from ..helpers.types.training import TrainingAndDevelopmentCreateUpdateType
 
 class TrainingAndDevelopmentRepository:
@@ -28,22 +28,21 @@ class TrainingAndDevelopmentRepository:
         try:
             # Update Many-to-Many fields
             if data.required_competencies is not None:
-                for required_competency in data.required_competencies: 
-                    training_development_object.required_competencies.add(required_competency)
+                training_development_object.required_competencies.set([
+                    Competency.objects.get_or_create(name=rc.name)[0] for rc in data.required_competencies
+                ])
             
             if data.competency_gaps is not None:
-                for competency_gap in data.competency_gaps: 
-                    training_development_object.competency_gaps.add(competency_gap)
-
+                training_development_object.competency_gaps.set([
+                    Competency.objects.get_or_create(name=cg.name)[0] for cg in data.competency_gaps
+                ])
+            
             if data.intervention_strategies is not None:
-                for intervention_strategy in data.intervention_strategies: 
-                    training_development_object.intervention_strategies.add(intervention_strategy)
-
-            # Update regular fields
-            if data.action_recommended is not None:
-                training_development_object.action_recommended = data.action_recommended
-            if data.action_taken is not None:
-                training_development_object.action_taken = data.action_taken
+                training_development_object.intervention_strategies.set([
+                    InterventionStrategy.objects.get_or_create(
+                        description=is_.description, category=is_.category
+                    )[0] for is_ in data.intervention_strategies
+                ])
 
             # Save changes
             training_development_object.save()

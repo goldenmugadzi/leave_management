@@ -20,9 +20,9 @@ class TrainingAndDevelopmentService:
         except Exception as e:
             raise TrainingAndDevelopmentServiceErr(f"Failed to create training and development with error: {e}")
 
-    def update_use_case(self, training_development_object: TrainingAndDevelopment, quarter: int, payload: TrainingAndDevelopmentCreateUpdateType)->TrainingAndDevelopment:
+    def update_use_case(self, training_development_object: TrainingAndDevelopment, payload: TrainingAndDevelopmentCreateUpdateType)->TrainingAndDevelopment:
         try:
-            return self.training_dev_repo.update(training_development_object=training_development_object, quarter=quarter, data=payload)
+            return self.training_dev_repo.update(training_development_object=training_development_object, data=payload)
         except Exception as e:
             raise TrainingAndDevelopmentServiceErr(f"Failed to update training and development with error: {e}")
 
