@@ -195,17 +195,19 @@ def update_asset(request, id):
   if request.method == 'POST':
         user_id = request.POST['user']
         user = User.objects.filter(id=user_id).first()
+
         region_id= request.POST['regions']
         regions = Regions.objects.filter(id=region_id).first()
+
         designation_id = request.POST['designations']
         designations = Designations.objects.filter(id=designation_id).first()
+        
         section_id = request.POST['department']
         sections = Sections.objects.filter(id=section_id).first()
         print("request",request.POST)
         #form.save()
         
         
-        zetdcAssets.id = request.POST['id']
         zetdcAssets.product_id = request.POST['product_type']
         zetdcAssets.asset_state = request.POST['asset_state']
         zetdcAssets.serial_number = request.POST['serial_number']
