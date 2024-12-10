@@ -1,3 +1,4 @@
+from typing import List
 from dataclasses import dataclass
 from appraisal.models import TrainingAndDevelopment
 
@@ -24,3 +25,18 @@ class TrainingAndDevelopmentService:
             return self.training_dev_repo.update(training_development_object=training_development_object, quarter=quarter, data=payload)
         except Exception as e:
             raise TrainingAndDevelopmentServiceErr(f"Failed to update training and development with error: {e}")
+
+    def get_by_appraisal_id_use_case(self, appraisal_id: int)->List[TrainingAndDevelopment]:
+        try:
+           return self.training_dev_repo.get_by_appraisal_id(appraisal_id=appraisal_id)
+        except Exception as e:
+            raise TrainingAndDevelopmentServiceErr(f"Failed to retrieve all training and development by appraisal id with error: {e}")
+
+        
+    def get_by_appraisal_id_quarter_use_case(self, appraisal_id: int, quarter: int)->TrainingAndDevelopment:
+        try:
+           return self.training_dev_repo.get_by_appraisal_id_quarter(appraisal_id=appraisal_id, quarter=quarter)
+        except Exception as e:
+            raise TrainingAndDevelopmentServiceErr(f"Failed to retrieve training and development by appraisal id and quarter with error: {e}")
+
+        

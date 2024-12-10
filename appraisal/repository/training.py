@@ -1,3 +1,4 @@
+from typing import List
 from django.db import transaction
 from ..models import TrainingAndDevelopment, Appraisal
 from ..helpers.types.training import TrainingAndDevelopmentCreateUpdateType
@@ -10,11 +11,17 @@ class TrainingAndDevelopmentRepository:
         except Exception as e:
             raise Exception(f"create TrainingAndDevelopment Repo failed with error: {e}")
 
-    def get_by_appraisal_id_quarter(self, appraisal_id: int, quarter: int)->Appraisal:
+    def get_by_appraisal_id_quarter(self, appraisal_id: int, quarter: int)->TrainingAndDevelopment:
         try:
             return TrainingAndDevelopment.objects.get(appraisal__id=appraisal_id, quarter=quarter)
         except Exception as e:
             raise Exception(f"Get TrainingAndDevelopment by appraisal id and quarter Repo failed with error: {e}")
+    
+    def get_by_appraisal_id(self, appraisal_id: int)->List[TrainingAndDevelopment]:
+        try:
+            return TrainingAndDevelopment.objects.filter(appraisal__id=appraisal_id)
+        except Exception as e:
+            raise Exception(f"Get TrainingAndDevelopment by appraisal id Repo failed with error: {e}")
 
     @transaction.atomic
     def update(self, training_development_object: TrainingAndDevelopment, data: TrainingAndDevelopmentCreateUpdateType) -> TrainingAndDevelopment:
