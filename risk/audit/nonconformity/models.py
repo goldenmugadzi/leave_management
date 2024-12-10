@@ -4,7 +4,7 @@ from django.utils import timezone
 
 import time
 from django.urls import reverse
-from it.users.models import UserProfile
+from it.users.models import UserProfile, CostCenter
 
 class Clause(models.Model):
     id = models.CharField(max_length=4, blank=False, null=False,primary_key=True, verbose_name='Clause number')
@@ -40,6 +40,7 @@ class Nonconformity(models.Model):
     accepted = models.BooleanField( blank=True, null=True)
     resolved = models.BooleanField(blank=True, null=True)
     closed = models.BooleanField(blank=True, null=True)
+    cost_center = models.ForeignKey(CostCenter, on_delete=models.CASCADE, blank=True, null=True)
     
     def __str__(self):
         return self.id
@@ -62,6 +63,15 @@ class Acceptance(models.Model):
     user = models.ForeignKey(UserProfile, on_delete=models.CASCADE, blank=True, null=True)
     def __str__(self):
         return self.corrective_action
+class Resolution(models.Model):
+    nonconformity = models.ForeignKey(Nonconformity , on_delete=models.CASCADE)
+    corrective_action_taken = models.CharField(max_length=300, blank=True, null=True)
+    dated = models.DateTimeField(default=timezone.now)
+    resolved_on = models.DateField(blank=True, null=True)
+    user = models.ForeignKey(UserProfile, on_delete=models.CASCADE, blank=True, null=True)
+    attachment = models.FileField(upload_to='nonconformity/resolution_attachments/', blank=True, null=True, verbose_name='Attachment')
+    def __str__(self):
+        return self.corrective_action_taken
     
 class Rejection(models.Model):
     nonconformity = models.ForeignKey(Nonconformity , on_delete=models.CASCADE)

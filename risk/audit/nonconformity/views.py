@@ -9,11 +9,35 @@ from .forms import *
 # from it.users.models import Notification
 from it.users.models import Notification
 from django.contrib import messages
-
+from approve.views import notify
+from decouple import config
 # from django.core.mail import send_mail
 # from django.conf import settings
 from approve.decorators import checklist_roles
 
+
+def send_notification(request,user, url, app, obj):
+    domain_name = config('be_url') #"http://127.0.0.1:8000"  # Consider using settings for the domain
+    cc_recipients =[]
+    print(user,"nonconformity:nonconformity","Nonconformity", obj)
+    cc_recipients_names =[]
+    redirect_url = f"{domain_name}{reverse(url, args=[obj.id])}"
+    message = f"We kindly request that you review and take necessary action regarding this. "
+    hour = datetime.datetime.now().hour
+    greetings = {(0, 4): "Good night!",(5, 11): "Good morning!",(12, 16): "Good afternoon!",(17, 20): "Good evening!",(21, 23): "Good night!"}
+    subject = next((msg for (start, end), msg in greetings.items() if start <= hour <= end), "Hello!")
+
+    # user=obj.recipient
+    # if isinstance(user, tuple):
+    #     user = user[0] 
+    url= reverse(url, args=[obj.id])
+    notification_type=app
+    notification_id=obj.id
+    cc_recipients_names.append(user.get_full_name())  # Call the method
+    # print("user",user)
+   
+    notify(request,subject,user,message,redirect_url,url,notification_type,notification_id,cc_recipients,cc_recipients_names)
+    return 1
 
 @login_required
 def create_nonconformity(request):
@@ -36,6 +60,7 @@ def create_nonconformity(request):
                     url=reverse("nonconformity:nonconformity", args=[nonconformity.id]),
                 )
                 messages.success(request, "Nonconformity created successfully!")
+                send_notification(request,Nonconformity.recipient,"nonconformity:nonconformity","Nonconformity", nonconformity)
                 return redirect("nonconformity:nonconformity", nonconformity.id)
             else:
                 messages.error(
@@ -47,7 +72,10 @@ def create_nonconformity(request):
                     {"form": form},
                 )
     else:
-        form = NonconformityForm()
+        cost_center= request.user.cost_center
+        if not cost_center:
+            cost_center = CostCenter.objects.filter(code= request.user.region.code)
+        form = NonconformityForm(initial={'cost_center':cost_center})
     return render(
         request, "risk/nonconformity/create_nonconformity.html", {"form": form}
     )
@@ -67,13 +95,14 @@ def create_nonconformity_from_checklist(request, clause):
                 nonconformity.save()
                 # Create a notification for the auditee
                 auditee = nonconformity.recipient
-                notification = Notification.objects.create(
-                    user=auditee,
-                    message=f"nc: {nonconformity.description}",
-                    url=reverse("nonconformity:nonconformity", args=[nonconformity.id]),
-                )
+                # notification = Notification.objects.create(
+                #     user=auditee,
+                #     message=f"nc: {nonconformity.description}",
+                #     url=reverse("nonconformity:nonconformity", args=[nonconformity.id]),
+                # )
                 # Display a success message
                 messages.success(request, "Nonconformity created successfully!")
+                send_notification(request,auditee,"nonconformity:nonconformity","Nonconformity", nonconformity)
                 return redirect("nonconformity:nonconformity", nonconformity.id)
             else:
                 return HttpResponse("You cannot create a nonconformity for yourself.")
@@ -97,23 +126,32 @@ def nonconformity_details(request, nonconformity_id):
     resolve_form = None
     closeform = None
     editform = None
-
+    r_user=None
+    if request.user in {nonconformity.recipient, nonconformity.created_by}:
+        updated_count = request.user.notification_set.filter(notification_id=nonconformity.id).update(is_read=True)
+        print(f"Updated {updated_count} notifications as read." if updated_count else "No notifications found to update.")
     # If the request method is POST, process form data
     if request.method == "POST":
         # If the current user is the recipient and the nonconformity is accepted
-        if request.user == nonconformity.recipient and nonconformity.accepted == True:
+        if request.user == nonconformity.recipient and nonconformity.accepted == True and request.user != nonconformity.created_by:
             # Process resolve form
-            resolve_form = ResolveNcForm(request.POST, instance=nonconformity)
+            resolve_form = ResolveNcForm(request.POST, request.FILES)
             if resolve_form.is_valid():
-                resolve_form.save()
+                resolveform =resolve_form.save(commit=False)
+                resolveform.user = request.user
+                resolveform.nonconformity = nonconformity
+                resolveform.save()
+                nonconformity.resolved = True
+                nonconformity.save()
                 messages.success(request, "You have successfully resolved this nonconformity.")
-                return redirect("nonconformity:nonconformities")
+                send_notification(request,nonconformity.created_by,"nonconformity:nonconformity","Nonconformity", nonconformity)
+                return redirect("nonconformity:nonconformity", nonconformity.id)
             else:
                 messages.error(request, "Sorry, something went wrong. Please try again.")
                 return redirect("nonconformity:nonconformities")
 
         # If the current user is the recipient and the nonconformity is not accepted
-        elif request.user == nonconformity.recipient and nonconformity.accepted != True:
+        elif request.user == nonconformity.recipient and nonconformity.accepted != True and request.user != nonconformity.created_by:
             accepeted = request.POST.get("accepted")
             rejectionForm = RejectionForm(request.POST)
             acceptanceForm = AcceptanceForm(request.POST)
@@ -132,7 +170,7 @@ def nonconformity_details(request, nonconformity_id):
                     messages.success(request, "You have successfully accepted the nonconformity.")
                     return redirect("nonconformity:nonconformities")
                 else:
-                    messages.error(request, "Sorry, something went wrong. Please fill in the required details and try again.")
+                    messages.error(request, "Sorry, something went wrong. Please fill in the required details and try again. Be sure to pick a date!")
                     return render(request, "risk/nonconformity/nonconformity_details.html", {"nonconformity": nonconformity, "acceptanceForm": acceptanceForm, "rejectionForm": rejectionForm, "form": form})
             elif accepeted == "False":
                 if rejectionForm.is_valid():
@@ -147,6 +185,7 @@ def nonconformity_details(request, nonconformity_id):
                     for attachment in attachments:
                         RejectionAttachment.objects.create(rejection=rejection, attachment=attachment)
                     messages.success(request, "You have successfully rejected the nonconformity.")
+                    send_notification(request,nonconformity.created_by,"nonconformity:nonconformity","Nonconformity", nonconformity)
                     return redirect("nonconformity:nonconformities")
                 else:
                     messages.error(request, "Sorry, something went wrong. Please fill in the required details and try again.")
@@ -156,12 +195,14 @@ def nonconformity_details(request, nonconformity_id):
         elif request.user == nonconformity.created_by:
             # Different conditions for closing or updating the nonconformity
             act = request.POST.get("rejected")
+            print(act, "act",request.POST.get("closed") )
             if  ((act == "close") or request.POST.get("closed") != None) and ( nonconformity.accepted != None and nonconformity.resolved != None or nonconformity.closed == None and nonconformity.accepted == False or nonconformity.resolved == None and nonconformity.accepted == False):
                 print(act, "act")
                 form = CloseNcForm(request.POST, instance=nonconformity)
                 if form.is_valid():
                     form.save()
                     messages.success(request, "Nonconformity closed successfully!")
+                    send_notification(request,nonconformity.recipient,"nonconformity:nonconformity","Nonconformity", nonconformity)
                     return redirect(reverse("nonconformity:nonconformity", args=[nonconformity.id]))
             elif act == "edit" and nonconformity.accepted != True:
                 form = NonconformityForm(request.POST, instance=nonconformity)
@@ -174,7 +215,8 @@ def nonconformity_details(request, nonconformity_id):
                     for attachment in attachments:
                         Attachment.objects.create(acceptance=nc, attachment=attachment)
                     messages.success(request, "Nonconformity updated successfully!")
-                    return redirect(reverse("nonconformity:nonconformity", args=[nonconformity.id]))
+                    send_notification(request,nc.recipient,"nonconformity:nonconformity","Nonconformity", nc)
+                    return redirect(reverse("nonconformity:nonconformity", args=[nc.id]))
 
             messages.error(request, "Sorry, something went wrong. Please try again.")
             return redirect(reverse("nonconformity:nonconformity", args=[nonconformity.id]))
@@ -185,20 +227,20 @@ def nonconformity_details(request, nonconformity_id):
         if request.user == nonconformity.recipient and nonconformity.accepted == None:
             rejectionForm = RejectionForm()
             acceptanceForm = AcceptanceForm(instance=nonconformity)
+        
         elif request.user == nonconformity.recipient and nonconformity.accepted == True and nonconformity.resolved != True:
-            # form = ResolveNcForm(instance=nonconformity)
-            resolve_form = ResolveNcForm(instance=nonconformity)
-            # print(nonconformity.accepted == False,'qqqqqqqqqq',nonconformity.accepted != True, "accepted",  not nonconformity.closed, "closed", nonconformity.created_by, "created_by")
+            corective_action = nonconformity.acceptance_set.last().corrective_action
+            resolve_form = ResolveNcForm(instance=nonconformity, initial={'corrective_action_taken': corective_action})
+      
         elif request.user == nonconformity.created_by and nonconformity.created_by is not None and nonconformity.resolved != None and nonconformity.accepted == True and nonconformity.closed != True:
             closeform = CloseNcForm(instance=nonconformity)
+        
         elif request.user == nonconformity.created_by and nonconformity.created_by is not None and not nonconformity.closed and nonconformity.accepted != True:
             editform = NonconformityForm(instance=nonconformity)
             if  nonconformity.accepted == False : closeform = CloseNcForm(instance=nonconformity)
-            # print(editform, "editform")
-        # Mark notifications as read
+
         old_notifications = Notification.objects.filter(user=request.user, url=nonconformity.get_absolute_url())
         old_notifications.update(is_read=True)
-        # Render the nonconformity details page with the appropriate forms
         return render(request, "risk/nonconformity/nonconformity_details.html", {"nonconformity": nonconformity, 'editform':editform, "acceptanceForm": acceptanceForm, "rejectionForm": rejectionForm,"resolve_form":resolve_form ,"closeform": closeform, "form": form})
 @login_required
 def view_notifications(request):
@@ -213,7 +255,13 @@ def view_notifications(request):
 def view_nonconformities(request):
     nonconformities = Nonconformity.objects.all()
     """Get all nonconformities and oder them by  date created in descending order"""
-    nonconformities = Nonconformity.objects.all().order_by("-created_at")
+    cost_center= request.user.cost_center
+    if not cost_center:
+            cost_center = CostCenter.objects.filter(code= request.user.region.code)
+    region = cost_center.get_region()
+    cost_centers = region.get_decendance()
+
+    nonconformities = Nonconformity.objects.filter(created_by__cost_center__in = cost_centers).order_by("-created_at")
 
     count = nonconformities.count()
     return render(request,"risk/nonconformity/nonconformities.html", {"nonconformities": nonconformities.order_by("-created_at"), "count": count})
@@ -385,17 +433,6 @@ def edit_iso_req(request, iso_req):
         request, "risk/nonconformity/create_edit_checklist.html", {"form": form}
     )
 
-
-def notify(request):
-    send_mail(
-        subject="Hello from Django qwertyuio",
-        message="This is a test email.",
-        from_email="perseychinaka@gmail.com",
-        recipient_list=["perseychinaka1@gmail.com", "pchinaka@zetdc.co.zw"],
-        fail_silently=False,
-    )
-    return HttpResponse("Email sent successfully!")
-    # ['ruvheneko@zetdc.co.zw'],  # recipient list
 
 
 def migrate_nonconformities(request):

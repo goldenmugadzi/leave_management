@@ -31,3 +31,6 @@ class AttachmentAdmin(admin.ModelAdmin):
 @admin.register(AcceptanceAttachment)
 class AttachmentAdmin(admin.ModelAdmin):
     list_display = ('id', )
+@admin.register(Resolution)
+class ResolutionAdmin(admin.ModelAdmin):
+    list_display = ('id', )

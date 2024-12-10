@@ -11,14 +11,15 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 from openpyxl.workbook import Workbook
 
+from ACE2.utils import find_ace_section_head, find_pettycash_section_head
 from approve.forms import ApprovalForm
-from approve.models import Step
 from approve.views import intiate
 from it.users.models import UserProfile, Roles, Sections, Regions
-from approve.models import Process, Workflow, Step, Approval
+from approve.models import Process, Step, Approval
 from .forms import PettycashForm, QuotationFormSet, PettycashReportForm
 from .models import Pettycash, Quotation, PettycashReport
-from django.db.models import Prefetch
+
+from ..comparative_schedules.views import notify_user
 
 
 @login_required
@@ -44,9 +45,8 @@ def pettyCash_detail(request, petty_id):
 
     pettycash_item = Pettycash.objects.get(petty_id=petty_id)
 
-    # return validation to clear
-    # validation = pettycash_item.process.approval_set.filter(approved='Approved', step__approver__in=user_profile.roles.all()).exists())
-    # print(validation)
+    # return validation to clear validation = pettycash_item.process.approval_set.filter(approved='Approved',
+    # step__approver__in=user_profile.roles.all()).exists()) print(validation)
 
     quotations = Quotation.objects.filter(pettycash=pettycash_item).all()
     # print(quotations.count())
@@ -61,6 +61,12 @@ def pettyCash_detail(request, petty_id):
             pettycash_item.amount_disbursed = amount_disbursed
             pettycash_item.payee = payee
             pettycash_item.save()
+            user = pettycash_item.requested_by
+            userp = UserProfile.objects.filter(id=user).first()
+
+            msg = "Your Pettycash " + pettycash_item.petty_id + "has a payment method added by Cashier"
+            url = "/pettycash/pettycash_detail/" + pettycash_item.petty_id
+            notify_user(userp, msg, "Pettycash", url, pettycash_item.petty_id)
 
     approvalForm = None
     to = None
@@ -174,6 +180,45 @@ def create_pettycash(request):
                     quotation = quotation_form.save(commit=False)
                     quotation.pettycash = pettycash
                     quotation.save()
+
+                requester = pettycash.requested_by
+                use = UserProfile.objects.filter(id=requester.id).first()
+                section_created = use.section
+
+                # notify sh
+
+                section_heads = find_pettycash_section_head(section_created)
+                if section_heads:
+                    print(section_heads, " section_heads")
+                    # budget name
+                    # bdg = AssetBudget.objects.filter(budget_id=ace.budget_id).first()
+                    # budget_name = bdg.budget_name
+                    msg = "Your subordinate" + str(use) + "created " + pettycash.petty_id + "for section " + str(
+                        pettycash.section)
+                    url = "/pettycash/pettycash_detail/" + pettycash.petty_id
+                    section_heads = UserProfile.objects.filter(username=section_heads).first()
+                    notify_user(section_heads, msg, "Pettycash", url, pettycash.petty_id)
+                    print("notified", section_heads)
+
+                # for quotation_form in formset:
+                #     quotation = quotation_form.save(commit=False)
+                #     quotation.pettycash2 = pettycash
+                #     quotation.save()
+
+                pettycash_section = pettycash.section
+                pettycash_sh = find_pettycash_section_head( pettycash_section)
+
+                if pettycash_sh:
+                    print(pettycash_sh, "pettycash_sh")
+                    # bdg = AssetBudget.objects.filter(budget_id=ace.budget_id).first()
+                    # budget_name = bdg.budget_name
+                    msg = "user  " + str(use) + "created " + pettycash.petty_id + "for section " + str(
+                        pettycash.section)
+                    url = "/pettycash/pettycash_detail/" + pettycash.petty_id
+
+                    pettycash_sh = UserProfile.objects.filter(username=pettycash_sh).first()
+                    notify_user(pettycash_sh, msg, "ACE", url, pettycash.petty_id)
+                    print("notified", pettycash_sh)
 
                 url = reverse('pettycash:pettycash_detail', args=[pettycash.petty_id])
                 return redirect(url)
@@ -735,12 +780,12 @@ def pettycash_report(request):
             end_date = pettyreportform.cleaned_data['end_date']
             region = pettyreportform.cleaned_data['region']
             section = pettyreportform.cleaned_data['section']
-            payment_mode = pettyreportform.cleaned_data['payment_mode']
+            # payment_mode = pettyreportform.cleaned_data['payment_mode']
 
             pettycashs = Pettycash.objects.filter(region=region, section=section,
                                                   date_created__range=[start_date, end_date]).all()
             report = PettycashReport.objects.create(start_date=start_date, end_date=end_date, region=region,
-                                                    section=section, payment_mode=payment_mode)
+                                                    section=section)
             report.save()
             print('report created')
             print('count', pettycashs.count())
@@ -791,6 +836,8 @@ def print_report_excel(request, report_id):
         ])
     wb.save(response)
     return response
+
+
 def receipt_manual(request):
     if request.method == 'POST':
         receipt_file = request.FILES['file-input']
