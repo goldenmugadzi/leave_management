@@ -44,6 +44,10 @@ class TrainingAndDevelopmentRepository:
                     )[0] for is_ in data.intervention_strategies
                 ])
 
+            # Update regular fields
+            training_development_object.action_recommended = data.action_recommended or training_development_object.action_recommended
+            training_development_object.action_taken = data.action_taken or training_development_object.action_taken
+
             # Save changes
             training_development_object.save()
 

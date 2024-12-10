@@ -59,6 +59,7 @@ class PerformancePlanAndAssessmentTemplateView(TemplateView):
         data["user_object"] = appraisal_object.user
         data["user_qualification_objects"] = user_qualification_objects
         data["user_experience_objects"] = appraisal_experience_objects
+        
         return data
         
     def get_performance_plan_info(self, appraisal_id)->Dict[str, Union[List[PerformanceProgressReview], List[TrainingAndDevelopment]]]:
