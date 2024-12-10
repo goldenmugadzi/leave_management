@@ -1,0 +1,9 @@
+{% load crispy_forms_tags %}
+
+<div class="competency-form p-2">
+    <div class="grid grid-flow-col justify-stretch gap-4">
+        <div class="form-row field-name">{{ competency_form.required_competency|as_crispy_field }}</div>
+        <div class="form-row field-file">{{ competency_form.competency_gap|as_crispy_field }}</div>
+    </div>
+    <button type="button" class="remove-competency-btn ring-2 ring-red-600" onclick="removeCompetencyForm(this, '{{total_form_count}}')">Remove</button>
+</div>
