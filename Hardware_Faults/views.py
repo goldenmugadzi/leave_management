@@ -14,6 +14,11 @@ from django.core.paginator import Paginator
 from django.http import JsonResponse
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db.models import Q
+from exchangelib import Credentials, Account, Configuration, Message, Mailbox
+from django.urls import reverse
+from django.template.loader import render_to_string
+from exchangelib import HTMLBody
+
 
 
 
@@ -151,9 +156,51 @@ def update_fault(request, eserialnumber):
         employee.eupdatedby = request.POST['eupdatedby']
         employee.elastupdate = datetime.now()
         employee.save()
+       
+        notify_fault_update(request, employee)
+
         return redirect('/table_fault')
         
-    return render(request,'hardware_faults/update_fault.html',{'employee':employee})    
+    return render(request,'hardware_faults/update_fault.html',{'employee':employee})   
+
+def notify_fault_update(request, employee):
+   
+
+    subject = f"Hardware Fault Update: {employee.eUsername}"
+
+
+    # Email recipients (can be dynamic based on your logic)
+    recipients = [
+        {"email": "goldenmugadzi@gmail.com", "name": "G Mugadzi"},
+       
+    ]
+    # Construct email context for the template
+    context = {
+    "user_fullname": employee.eUsername,
+    "message": f"The fault update for {employee.efault} is {employee.erepairstatus}.",
+    "fault_details": {
+        "Username": employee.eUsername,
+        "Fault": employee.efault,
+        "Repair Status": employee.erepairstatus,
+    },
+}
+
+    # Render the email body from the template
+    email_body = render_to_string('email/email_template.html', context)
+
+    # Send the email to each recipient
+    for recipient in recipients:
+        try:
+            response = ms_exhange_send(
+                subject=subject,
+                body=email_body, 
+                to_recipients=[recipient["email"]],
+                cc_recipients=[],
+            )
+            if response.status_code != 200:
+                messages.error(request, f"Failed to notify {recipient['name']} ({recipient['email']}).")
+        except Exception as e:
+            messages.error(request, f"Error sending email to {recipient['email']}: {e}") 
 
 def delete(request, id):
     form = Employee.objects.filter(eserialnumber=id)
@@ -164,5 +211,53 @@ def delete(request, id):
 def Tables (request):
   return render(request,'hardware_faults/table_fault.html')
   
-  
+ 
+def get_exchange_account():
+
+    from decouple import config as cnf
+    print(cnf)
+    credentials = Credentials(
+        username='bexcel@zedc.co.zw',
+        password='Zesazesa_2024'
+    )
+    print("Credentials: ", credentials)
+    config = Configuration(
+        server='mail.zesaholdings.co.zw',
+        credentials=credentials,
+    )
+    print("Config: ", config)
+    account = Account(
+        primary_smtp_address='bexcel@zedc.co.zw',
+        config=config,
+        autodiscover=False,
+        access_type='delegate'
+    )
+    print("Successfully connected to Exchange server.")
+    return account
+
+@login_required
+def ms_exhange_test(request):
+    account = get_exchange_account()
+    message = Message(
+        account=account,
+        folder=account.sent,
+        subject="Test Email",
+        body="This is a test email",
+        to_recipients=[Mailbox(email_address='kcbosha@zetdc.co.zw'), Mailbox(email_address='mchivinge@zetdc.co.zw'), Mailbox(email_address='amugwambi@zetdc.co.zw'), Mailbox(email_address='akwaramba@zetdc.co.zw')]
+    )
+    message.send()
+    return JsonResponse({"status": "success", "message": "Email sent successfully"})
+
+def ms_exhange_send(subject, body, to_recipients, cc_recipients):
+    account = get_exchange_account()
+    message = Message(
+        account=account,
+        folder=account.sent,
+        subject=subject,
+        body=HTMLBody(body), 
+        to_recipients=[Mailbox(email_address=recipient) for recipient in to_recipients],
+        cc_recipients=[Mailbox(email_address=recipient) for recipient in cc_recipients]
+    )
+    message.send()
+    return JsonResponse({"status": "success", "message": "Email sent successfully"})
 
