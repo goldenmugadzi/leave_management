@@ -64,7 +64,7 @@ class AppraisalCreateView(CreateView):
                 "months_of_experience": payload.get(f"appraisal-{i}-months_of_experience")
             }
             for i in range(int(payload.get("appraisal-TOTAL_FORMS", 0)))
-            if payload.get(f"appraisal-{i}-experience")
+            if payload.get(f"appraisal-{i}-experience") and payload.get(f"appraisal-{i}-experience") != "0"
         ]
         data = AppraisalPayloadType(experiences=experiences, qualifications=qualifications)
         return data

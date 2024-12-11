@@ -40,7 +40,17 @@ class AppraisalExperienceForm(forms.ModelForm):
     class Meta:
         model = AppraisalExperience
         fields = ['experience', 'years_of_experience', 'months_of_experience']
-
+        
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Get all Experience objects and create choices
+        experience_choices = [(obj.name, obj.name) for obj in Experience.objects.all()]
+        
+        # Add placeholder option at the top
+        experience_choices.insert(0, (0, "--------------------"))
+        
+        # Assign choices to the widget
+        self.fields['experience'].widget = forms.Select(choices=experience_choices)
 
 class AppraisalForm(forms.ModelForm):
     class Meta:
