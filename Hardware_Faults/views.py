@@ -177,7 +177,7 @@ def notify_fault_update(request, employee):
     # Construct email context for the template
     context = {
     "user_fullname": employee.eUsername,
-    "message": f"The fault update for {employee.efault} is {employee.erepairstatus}.",
+    "message": f"The fault update for {employee.efault} is {employee.erepairstatus} for more information contact the Hardware Technician {employee.eupdatedby} at the workshop with the following reference {employee.jobcardnumber}",
     "fault_details": {
         "Username": employee.eUsername,
         "Fault": employee.efault,
