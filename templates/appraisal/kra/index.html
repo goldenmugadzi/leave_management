@@ -1,0 +1,39 @@
+{% extends "admin_layout.html" %}
+{% load static %}
+{% load crispy_forms_tags %}
+{% load humanize %}
+{% load custom_tags %}
+{% block styles %}
+  <link rel="stylesheet"
+        href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" />
+  <style>.dataTables_wrapper .dataTables_length select { width: 4rem; }</style>
+{% endblock %}
+
+{% block content %}
+  <div class="content-wrapper">
+    <div class="grid grid-cols-1">
+      <div class="bg-gulf-blue-100 shadow-lg rounded-lg p-6">
+        <div class="flex justify-between">
+                        
+            <h3 class="text-center font-bold">Key Result Area</h3>
+            <div>
+                <form>
+                    {%csrf_token%}
+                    <div class="flex mr-6">
+                        <div class="flex">
+                            <div>{{ year_quarter_form.year|as_crispy_field }}</div>
+                            <div>{{ year_quarter_form.quarter|as_crispy_field }}</div>
+                        </div>
+                        
+                        <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white px-4 mt-7 h-10 rounded">Filter</button>
+                    </div>
+                </form>
+            </div>
+            
+        </div>
+                
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
