@@ -1,12 +1,17 @@
 from django.db import models
 from helpers.models.timestamp import TimeStamp
-
+from datetime import datetime
 
 class QuarterChoices(models.IntegerChoices):
     Q1 = 1, "1st"
     Q2 = 2, "2nd"
     Q3 = 3, "3rd"
     Q4 = 4, "4th"
+
+def get_year_choices():
+    current_year = datetime.now().year
+    
+    return [(year, str(year)) for year in range(2000, current_year+30)]
 
 class YearQuarter(TimeStamp):
     """
@@ -22,7 +27,7 @@ class YearQuarter(TimeStamp):
         quarter (int): The quarter of the year (1, 2, 3, or 4).
 
     """
-    year = models.PositiveIntegerField()  # Explicitly store the year
+    year = models.PositiveIntegerField(choices=get_year_choices()) 
     quarter = models.PositiveIntegerField(choices=QuarterChoices.choices)
 
     def __str__(self):
