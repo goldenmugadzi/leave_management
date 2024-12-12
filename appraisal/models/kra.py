@@ -8,8 +8,10 @@ User = get_user_model()
 class KeyResultArea(TimeStamp):
     quarter = models.ForeignKey(YearQuarter, on_delete=models.RESTRICT)
     created_by = models.ForeignKey(User, on_delete=models.RESTRICT)
+    name = models.CharField(max_length=255)
+    description = models.TextField()
     weight = models.DecimalField(max_digits=5, decimal_places=2, default=100)
-    
+
     def __str__(self):
         return f"{self.created_by} - {self.quarter}"
     
@@ -19,7 +21,7 @@ class Activity(TimeStamp):
     name = models.CharField(max_length=255, blank=False, null=False)
     description = models.TextField()
     weight = models.DecimalField(max_digits=5, decimal_places=2)
-    
+
     def __str__(self):
         return f"{self.assigned_user}"
     
@@ -38,7 +40,9 @@ class Target(TimeStamp):
     metric_type = models.CharField(max_length=30, choices=METRIC_TYPES)
     name = models.CharField(max_length=255, blank=False, null=False)
     weight = models.DecimalField(max_digits=5, decimal_places=2)
-    allowance_variance = models.CharField(max_length=255, blank=False, null=False)
+    allowance_variance = models.DecimalField(max_digits=10, decimal_places=2)
+    target_value = models.DecimalField(max_digits=10, decimal_places=2)  
+    unit = models.CharField(max_length=30, blank=True, null=True)  
 
     def __str__(self):
         return f"{self.activity}"
@@ -46,9 +50,10 @@ class Target(TimeStamp):
 
 class TargetScore(TimeStamp):
     target = models.ForeignKey(Target, on_delete=models.CASCADE)
-    actual_performance = models.CharField(max_length=255, blank=False, null=False)
+    actual_performance = models.DecimalField(max_digits=10, decimal_places=2)
     score = models.DecimalField(max_digits=5, decimal_places=2)
-    actual_variance = models.CharField(max_length=255, blank=False, null=True)
+    actual_variance = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    comments = models.TextField()
 
     def __str__(self):
         return f"{self.target}"
