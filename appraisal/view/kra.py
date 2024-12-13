@@ -17,12 +17,11 @@ class KRATemplateView(TemplateView):
     def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
         context =  super().get_context_data(**kwargs)
         context.update(self.get_year_quarter_form())
-        print("===========>>>>>>", kwargs)
+        
+        query_param_year = self.request.GET.get('year')
+        query_param_quarter = self.request.GET.get('quarter')
+        
+        if query_param_year is not None or query_param_quarter is not None:
+            print(query_param_year, query_param_quarter)
         return context
     
-    def post(self, request, *args, **kwargs):
-        form = YearQuarterForm(self.request.POST)
-        if form.is_valid():
-            year = form.cleaned_data.get('year')
-            quarter = form.cleaned_data.get('quarter')
-            input()
