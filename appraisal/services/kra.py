@@ -1,3 +1,4 @@
+from typing import List
 from dataclasses import dataclass
 from ..repository.kra import KRARepository
 from it.users.models import UserProfile
@@ -17,3 +18,9 @@ class KRAService:
             return obj
         except Exception as e:
             raise KRAServiceErr(f"Failed to create kra with error: {e}")
+
+    def get_all_by_quarter_year_use_case(self, quarter_number: int, year_number: int)->List[KeyResultArea]:
+        try:
+            return self.kra_repo.retrieve(quarter_number=quarter_number, year_number=year_number)
+        except Exception as e:
+            raise KRAServiceErr(f"Retrieve all kra failed with error: {e}")
