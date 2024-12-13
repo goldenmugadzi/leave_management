@@ -4,6 +4,7 @@ from ..models import KeyResultArea
 from ..forms import YearQuarterForm
 from ..repository.kra import KRARepository
 from ..services.kra import KRAService
+from datetime import datetime
 
 class KRATemplateView(TemplateView):
     template_name = 'appraisal/kra/index.html'
@@ -19,16 +20,32 @@ class KRATemplateView(TemplateView):
         kra_queryset = service_handler.get_all_by_quarter_year_use_case(year_number=year, quarter_number=quarter)
         data = {"kra_objects": kra_queryset}
         return data
+    
+    def get_year_quarter(self):
+        data = {}
+        query_param_year = self.request.GET.get('year')
+        query_param_quarter = self.request.GET.get('quarter')
+        
+        if query_param_year is not None or query_param_quarter is not None:
+            data["year"] = query_param_year
+            data["quarter"] = query_param_quarter
+        else:
+            current_year = datetime.now().year
+            data["year"] = current_year
+            data["quarter"] = 1 
+        
+        return data
 
     def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
         context =  super().get_context_data(**kwargs)
         context.update(self.get_year_quarter_form())
         
-        query_param_year = self.request.GET.get('year')
-        query_param_quarter = self.request.GET.get('quarter')
+        year_qrt = self.get_year_quarter()
         
-        if query_param_year is not None or query_param_quarter is not None:
-            context.update(self.get_all_kra(year=query_param_year, quarter=query_param_quarter))
+        context.update(self.get_all_kra(year=year_qrt["year"], quarter=year_qrt["quarter"]))
+        context.update(year_qrt)
+
+            
         return context
     
     
