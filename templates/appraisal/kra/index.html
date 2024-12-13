@@ -35,5 +35,13 @@
         </div>
       </div>
     </div>
+
+    <div class="bg-gulf-blue-100 shadow-lg rounded-lg p-6 my-6">
+      <ul>
+        {% for kra_obj in kra_objects %}
+            <li>{{kra_obj.name}}</li>
+        {% endfor %}
+      </ul>
+    </div>
   </div>
 {% endblock %}
