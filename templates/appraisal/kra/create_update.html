@@ -10,28 +10,28 @@
                     <div 
                         class="flex-1 px-2 w-80 shadow-xl rounded-lg border-2"
                         >
-                            {{ form.quarter|as_crispy_field }}
+                            {{ kra_form.quarter|as_crispy_field }}
                     </div>
                     <div 
                         class="flex-1 px-2 w-80 shadow-xl rounded-lg border-2"
                         >
-                            {{ form.weight|as_crispy_field }}
+                            {{ kra_form.weight|as_crispy_field }}
                     </div>
 
                 </div>
                 <div 
                     class="flex-1 px-2 shadow-xl rounded-lg border-2"
                     >
-                        {{ form.name|as_crispy_field }}
+                        {{ kra_form.name|as_crispy_field }}
                 </div>
                 <div 
                     class="flex-1 px-2 shadow-xl rounded-lg border-2 border"
                     >
-                        {{ form.description|as_crispy_field }}
+                        {{ kra_form.description|as_crispy_field }}
                 </div>
             </div>
             <div class="flex justify-center my-2">
-                <button type="submit" class="w-96 bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4 rounded">Create</button>
+                <button type="submit" class="w-96 bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4 rounded">Save</button>
             </div>
         </form>
          

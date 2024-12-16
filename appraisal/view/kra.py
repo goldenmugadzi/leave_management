@@ -1,7 +1,7 @@
 from typing import Any, Dict, List
 from django.urls import reverse
 from django.views.generic import TemplateView
-from django.views.generic.edit import CreateView
+from django.views.generic.edit import CreateView, UpdateView
 from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib import messages
 from ..models import KeyResultArea
@@ -58,8 +58,14 @@ class KRATemplateView(TemplateView):
 class KRACreateView(SuccessMessageMixin,CreateView):
     model = KeyResultArea
     form_class = KraCreateForm
-    template_name = 'appraisal/kra/create.html'
+    template_name = 'appraisal/kra/create_update.html'
     success_message = 'Key Result Area created successfully'
+    context_object_name = "kra_form"
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context[self.context_object_name] = context.get("form")
+        return context
     
     def build_payload(self, form) -> KRAType:
         try:
@@ -100,3 +106,67 @@ class KRACreateView(SuccessMessageMixin,CreateView):
     
     def get_success_url(self) -> str:
         return reverse('kra_index')
+    
+    
+class KRAUpdateView(SuccessMessageMixin, UpdateView):
+    model = KeyResultArea
+    form_class = KraCreateForm
+    template_name = 'appraisal/kra/create_update.html'
+    success_message = 'Key Result Area updated successfully'
+    context_object_name = "kra_form"
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context[self.context_object_name] = context.get("form")
+        return context
+    
+    def build_payload(self, form) -> KRAType:
+        """
+        Constructs and validates a KRAType payload from the form data.
+        """
+        try:
+            data = {
+                "name": form.cleaned_data.get("name"),
+                "description": form.cleaned_data.get("description"),
+                "weight": form.cleaned_data.get("weight"),
+            }
+            return KRAType(**data)
+        except ValidationError as e:
+            error_message = e.errors()[0]["msg"]
+            messages.error(self.request, error_message)
+            raise
+
+    def form_valid(self, form):
+        """
+        Processes the form when valid, builds a payload, and performs additional actions.
+        """
+        try:
+            payload = self.build_payload(form)
+            
+            repo = KRARepository()
+            service_handler = KRAService(kra_repo=repo)
+            
+            kra_object = service_handler.update_use_case(kra_object=self.get_object(), quarter_obj=form.cleaned_data.get('quarter'), data=payload)
+            form.instance = kra_object
+        except ValidationError:
+            return self.form_invalid(form)
+        except Exception as e:
+            messages.error(self.request, f"An unexpected error occurred: {e}")
+            return self.form_invalid(form)
+
+        return super().form_valid(form)
+
+    def form_invalid(self, form):
+        """
+        Handles invalid form submission and adds appropriate messages.
+        """
+        messages.error(self.request, "There was an error updating the Key Result Area. Please correct the errors below.")
+        return super().form_invalid(form)
+
+    def get_success_url(self) -> str:
+        """
+        Redirects to the index page after successful update.
+        """
+        kra_obj_id = self.kwargs.get("pk")
+        return reverse('kra_update', kwargs={"pk": kra_obj_id})
+    
