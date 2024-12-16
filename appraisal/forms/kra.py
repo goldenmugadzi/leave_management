@@ -9,4 +9,4 @@ class YearQuarterForm(forms.ModelForm):
 class KraCreateForm(forms.ModelForm):
     class Meta:
         model = KeyResultArea
-        exclude = ["id", "created_date", "updated"]
+        exclude = ["id", "created_date", "updated", "created_by"]
