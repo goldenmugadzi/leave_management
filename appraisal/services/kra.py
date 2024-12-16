@@ -24,3 +24,9 @@ class KRAService:
             return self.kra_repo.retrieve(quarter_number=quarter_number, year_number=year_number)
         except Exception as e:
             raise KRAServiceErr(f"Retrieve all kra failed with error: {e}")
+
+    def update_use_case(self, kra_object: KeyResultArea, quarter_obj: YearQuarter, data: KRAType)->KeyResultArea:
+        try:
+            return self.kra_repo.update(kra_object=kra_object, quarter_obj=quarter_obj, data=data)
+        except Exception as e:
+            raise KRAServiceErr(f"Failed to update kra with error: {e}")

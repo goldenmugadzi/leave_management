@@ -79,3 +79,56 @@ class TestKRAService(TestCase):
             except KRAServiceErr as e:
                 # ============ ASSERT ===============
                 self.assertEqual(str(e), f"Failed to create kra with error: {mock_db_err}")
+
+    def mock_kra_object(self):
+        mock = Mock(spec=KeyResultArea)
+        return mock
+
+    def test_update_repo_called_once(self):
+        # =========== ARRANGE ==============
+        mock_quarter = self.mock_quarter_obj()
+        mock_payload = self.mock_payload()
+        mock_kra = self.mock_kra_object()
+
+        # =========== ACT ==============
+        self.kra_servise.update_use_case(kra_object=mock_kra, quarter_obj=mock_quarter, data=mock_payload)
+
+        # =========== ASSERT =============
+        self.mock_kra_repo.update.assert_called_once_with(
+            quarter_obj=mock_quarter,
+            kra_object=mock_kra,
+            data=mock_payload
+        )
+
+
+
+    def test_update_kra_success(self):
+        # =========== ARRANGE ==============
+        mock_quarter = self.mock_quarter_obj()
+        mock_payload = self.mock_payload()
+        mock_kra = self.mock_kra_object()
+        mock_kra_obj = self.mock_kra_object()
+
+        self.mock_kra_repo.update.return_value = mock_kra_obj
+
+        # =========== ACT ==============
+        result = self.kra_servise.update_use_case(kra_object=mock_kra, quarter_obj=mock_quarter, data=mock_payload)
+
+        # =========== ASSERT =============
+        self.assertEqual(result, mock_kra_obj)
+
+    def test_update_kra_failure(self):
+        # =========== ARRANGE ==============
+        mock_quarter = self.mock_quarter_obj()
+        mock_payload = self.mock_payload()
+        mock_kra = self.mock_kra_object()
+        mock_db_err = "Some database error"
+
+        with patch.object(self.mock_kra_repo, 'update', side_effect=Exception(mock_db_err)):
+            try:
+                # ============ ACT ===============
+                self.kra_servise.update_use_case(kra_object=mock_kra, quarter_obj=mock_quarter, data=mock_payload)
+                self.fail("Expected an error but got none")
+            except KRAServiceErr as e:
+                # ============ ASSERT ===============
+                self.assertEqual(str(e), f"Failed to update kra with error: {mock_db_err}")
