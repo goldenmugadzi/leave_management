@@ -1,5 +1,5 @@
 from django import forms
-from ..models import YearQuarter, KeyResultArea
+from ..models import YearQuarter, KeyResultArea, Activity
 
 class YearQuarterForm(forms.ModelForm):
     class Meta:
@@ -10,3 +10,8 @@ class KraCreateForm(forms.ModelForm):
     class Meta:
         model = KeyResultArea
         exclude = ["id", "created_date", "updated", "created_by"]
+        
+class ActivityCreateForm(forms.ModelForm):
+    class Meta:
+        model = Activity
+        exclude = ["id", "created_date", "updated", "kra"]
