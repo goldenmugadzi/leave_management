@@ -24,5 +24,6 @@ urlpatterns = [
     path('viraments', view_all_viraments, name='view_all_viraments'),
     path('viraments_awaiting_my_action', viraments_awaiting_my_action, name='viraments_awaiting_my_action'),
     path('transactions', view_all_transactions, name='view_all_transactions'),
-    path('transactions_for_budget/<str:budget_id>', transactions_for_budget, name='transactions_for_budgets')
+    path('transactions_for_budget/<str:budget_id>', transactions_for_budget, name='transactions_for_budgets'),
+    path('vir_and_ace/<str:budget_id>', transactions_view, name='vir_and_ace'),
 ]

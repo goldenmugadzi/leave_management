@@ -193,7 +193,7 @@ def create_pettycash(request):
                     # budget name
                     # bdg = AssetBudget.objects.filter(budget_id=ace.budget_id).first()
                     # budget_name = bdg.budget_name
-                    msg = "Your subordinate" + str(use) + "created " + pettycash.petty_id + "for section " + str(
+                    msg = "Your subordinate " + str(use) + " created " + pettycash.petty_id + " for section " + str(
                         pettycash.section)
                     url = "/pettycash/pettycash_detail/" + pettycash.petty_id
                     section_heads = UserProfile.objects.filter(username=section_heads).first()
