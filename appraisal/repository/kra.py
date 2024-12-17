@@ -120,3 +120,10 @@ class KraActivityRepository:
             return Activity.objects.create(kra=kra_obj, assigned_user=assigned_user, name=data.name, description=data.description, weight=data.weight)
         except Exception as e:
             raise Exception(f"KRA Activity Create Repo failed with error: {e}")
+
+    def fetch_by_kra_id(self, kra_id: int)->List[Activity]:
+        try:
+            queryset = Activity.objects.filter(kra__id=kra_id)
+            return queryset
+        except Exception as e:
+            raise Exception(f"KRA Activity Fetch Repo failed with error: {e}")
