@@ -1,0 +1,325 @@
+id,section,code,district_id,region_id
+1317,Transmission & Distribution,CC570000,,8
+1318,Transmission & Distribution Director,CC570100,,8
+1319,Trans & Dis Director's Office,570121,,8
+1320,Senior Manager Special Assignments,570122,,8
+1321,Electricity Trading & Operations,CC570150,,8
+1322,Electricity Trading & Operations Manager,570151,,8
+1323,Electricity Trading,570152,,8
+1324,National Grid,570153,,8
+1325,Subtransmission,570154,,8
+1326,NCC Administration,570155,,8
+1327,Technical Services,CC570200,,8
+1328,Technical Services Manager,570201,,8
+1329,Power Network Control,CC570210,,8
+1330,BRCC-Power Network Control,570210,,8
+1331,NCC - Power Network Control,570220,,8
+1332,Telecoms,CC570300,,8
+1333,Telecomms Engineer's Office,570301,,8
+1334,Harare Area-Telecomms,570302,,8
+1335,Harare Environs-Telecomms,570304,,8
+1336,Kariba-Telecomms,570305,,8
+1337,Orange Grove-Telecomms,570306,,8
+1338,Hwange-Telecomms,570307,,8
+1339,Marvel-Telecomms,570308,,8
+1340,Sherwood-Telecomms,570309,,8
+1341,Tokwe-Telecomms,570310,,8
+1342,Protection,CC570400,,8
+1343,Protection Services Engineer,570401,,8
+1344,Harare City-Protection,570402,,8
+1345,Harare Environs-Protection,570403,,8
+1346,Kariba-Protection,570404,,8
+1347,Orange Grove-Protection,570405,,8
+1348,Bulawayo-Protection,570406,,8
+1349,Hwange-Protection,570407,,8
+1350,Sherwood-Protection,570408,,8
+1351,Tokwe-Protection,570409,,8
+1352,Distribution Services,CC570500,,8
+1353,Distribution Services Manager,570505,,8
+1354,Transport,570506,,8
+1355,Section Engineer (SRRC),570507,,8
+1356,Metering,CC570510,,8
+1357,Section Engineer Metering,570511,,8
+1358,Metering East,570512,,8
+1359,Metering West,570513,,8
+1360,System Development,CC570600,,8
+1361,System Development Manager,570601,,8
+1362,Network Development,570602,,8
+1363,Power Development,570603,,8
+1364,Finance,CC570800,,8
+1365,Finance Manager,570801,,8
+1366,Financial Accounting,570802,,8
+1367,Management Accounting,570803,,8
+1368,Procurement,570804,,8
+1369,Business Planning,CC570900,,8
+1370,Business Planning Manager,570901,,8
+1371,Human Resources and Administration,CC571000,,8
+1372,HR_Apprentices,571005,,8
+1373,HR-Postgraduate Trainees,571004,,8
+1374,HR-Contract Workers,571003,,8
+1375,HR & Admin Manager,571001,,8
+1376,Human Resources & Administration,571002,,8
+1377,Regional Transmission East,CC572610,,8
+1378,Eastern Regional Office,572610,,8
+1379,Eastern Region Risk Control,572611,,8
+1380,Dema,CC572620,,8
+1381,Substations,CC572630,,8
+1382,Dema 330kV S/S,572631,,8
+1383,Seke 132kV S/s,572633,,8
+1384,Bromley 132kV S/s,572634,,8
+1385,Lines,CC572640,,8
+1386,Mutorashanga,CC572660,,8
+1387,Substations,CC572665,,8
+1388,Mtorashanga 300kV S/s,572665,,8
+1389,Mtorashanga 132kV S/s,572666,,8
+1390,Horseshoe 132kV S/s,572667,,8
+1391,Mazoe 88kV S/s,572668,,8
+1392,Lines,CC572670,,8
+1393,Kariba,CC572680,,8
+1394,Substations,CC572685,,8
+1395,Kariba 330kV S/s,572685,,8
+1396,Lines,CC572690,,8
+1397,B1:Kariba-Alaska1 330kV Line,572690,,8
+1398,B2:Kariba-Alaska2 330kV Line,572691,,8
+1399,B3:Kariba-Alaska3 330kV Line,572692,,8
+1400,KN1:Kariba-Norton1 330kV Line,572693,,8
+1401,KN2:Kariba-Norton2 330kV Line,572694,,8
+1402,Alaska,CC572700,,8
+1403,Substations,CC572705,,8
+1404,Alaska 330kV S/s,572705,,8
+1405,Alaska 132kV S/s,572706,,8
+1406,Chinhoyi 132kV S/s,572707,,8
+1407,Mhangura 88kV S/s,572708,,8
+1408,Lines,CC572710,,8
+1409,C1:Alaska-Sherwood (1-272) 330kV Line,572710,,8
+1410,N1: Alaska-Warren1 330kV Line,572711,,8
+1411,N2: Alaska-Warren2 330kV Line,572712,,8
+1412,A1:Alaska-Mutorashanga 330kV Line,572713,,8
+1413,Alaska-Chinhoyi 132kV Line,572714,,8
+1414,Alaska-Mhangura 88kV Line,572715,,8
+1415,Alaska-Mutorashanga 132kV Line,572716,,8
+1416,Mutorashanga-Bindura 132kV Line,572717,,8
+1417,Mutorashanga-Horseshoe 132kV Line,572718,,8
+1418,Norton,CC572730,,8
+1419,Substations,CC572735,,8
+1420,Norton 330kV S/s,575735,,8
+1421,Norton 88kV S/s,575736,,8
+1422,Chegutu 88kV S/s,575737,,8
+1423,Fylde 88kV S/s,575738,,8
+1424,Lydiate 88kV S/s,575739,,8
+1425,Lines,CC572745,,8
+1426,E1:Norton-Sherwood (1-225) 330kV Line,572745,,8
+1427,NRZ North (Norton-Rimuka) 88kV Line,572746,,8
+1428,Norton-SMC 132kV Line,572747,,8
+1429,Norton-Bindura1 88kV Line,572748,,8
+1430,Norton-Bindura2 88kV Line,572749,,8
+1431,Norton-Mazoe 88kV Line,572750,,8
+1432,Eiffel Flats T-Off-Eiffel Flats 88kV Line,572751,,8
+1433,Norton-Chegutu 88kV Line,572752,,8
+1434,SMC-Selous 132kV Line,572753,,8
+1435,Selous-Ngezi 132kV Line,572754,,8
+1436,Fylde-Kadoma 88kV Feeder,572755,,8
+1437,Chegutu-Fylde 88kV Feeder,572756,,8
+1438,Harare,CC572775,,8
+1439,Substations,CC572780,,8
+1440,Harare 330kV S/s,572778,,8
+1441,Atlanta 132kV S/s,572779,,8
+1442,Marondera 132kV S/s,572780,,8
+1443,Lines,CC572785,,8
+1444,Bindura,CC572790,,8
+1445,Substations,CC572792,,8
+1446,Bindura 330kV S/s,572792,,8
+1447,Madziwa 88kV S/s,572793,,8
+1448,Trojan 88kV S/s,572794,,8
+1449,Lines,CC572800,,8
+1450,Orange Grove,CC572805,,8
+1451,Substations,CC572808,,8
+1452,Orange Grove 330kV S/s,572808,,8
+1453,Triangle 132kV S/s,572809,,8
+1454,Mutare City 132kV S/s,572810,,8
+1455,Nyanga 132kV S/s,572811,,8
+1456,Mkwasine 132kV S/s,572812,,8
+1457,Rusape 132kV S/s,572813,,8
+1458,Middle Sabi 132kV S/s,572814,,8
+1459,Lines,CC572820,,8
+1460,Orange Grove Park Rd 132kV Line,572820,,8
+1461,P2:Dema-Orange Grove 338kV Line,572821,,8
+1462,Marondera-Rusape 132kV Line,572822,,8
+1463,Orange Grove-Nyanga 132kV Line,572823,,8
+1464,Orange Grove-Rusape 132kV Line,572824,,8
+1465,Orange Grove-M/Sabi 132kV Line,572825,,8
+1466,M/Sabi-Mkwasine 132kV Line,572826,,8
+1467,Triangle-Mkwasine 132kV Line,572827,,8
+1468,Bromley-Marondera 132kV Line,572828,,8
+1469,Dema-Bromley 132kV Line,572829,,8
+1470,Park Road-Middle Sabi T-Off 132kV Line,572830,,8
+1471,Warren,CC572835,,8
+1472,Substations,CC572838,,8
+1473,Warren 330kV S/s,572838,,8
+1474,Warren 132kV S/s,572839,,8
+1475,Kadoma 88kV S/s,572840,,8
+1476,Lines,CC572845,,8
+1477,D2: Warren-Norton 330kV Line,572845,,8
+1478,Warren-Seke 132kV Line,572846,,8
+1479,Warren-Atlanta 132kV Line,572847,,8
+1480,P1:Dema-Warren 330kV Line,572848,,8
+1481,Dema-Seke 132kV Line,572849,,8
+1482,L1: Warren-Harare1 330kV Line,572850,,8
+1483,L2: Warren-Harare2 330kV Line,572851,,8
+1484,CB1: Songo-Bindura 420kV Line,572852,,8
+1485,BD1: Bindura-Dema 330kV Line,572853,,8
+1486,Trojan-Madziwa 88kV Line,572854,,8
+1487,Dema-Coleford 132kV Line,572855,,8
+1488,Bindura-Trojan 132kV Line,572856,,8
+1489,Selous,CC572870,,8
+1490,Substations,CC572871,,8
+1491,Selous 330kV S/s,572871,,8
+1492,Rimuka 88kV S/s,572872,,8
+1493,Bedford 88kV S/s,572873,,8
+1494,Eiffel Flats 88kV S/s,572874,,8
+1495,Monawood 132kV S/s,572875,,8
+1496,SMC 88kV S/s,572876,,8
+1497,Lines,CC572880,,8
+1498,Regional Transmission West,CC573000,,8
+1499,Western Regional Office,573005,,8
+1500,Western Region Risk Control,573006,,8
+1501,Hwange,CC573010,,8
+1502,Substations,CC573015,,8
+1503,Hwange 330kV S/s,573015,,8
+1504,Victoria Falls 88kV S/s,573017,,8
+1505,Zambezi River Pumps 88kV S/s,573018,,8
+1506,Lines,CC573025,,8
+1507,R1:1-629 Line,573025,,8
+1508,S1:1-800 Line,573026,,8
+1509,S2:1-800 Line,573027,,8
+1510,Hwange Local Line,573028,,8
+1511,Zambezi River Pumps Line,573029,,8
+1512,Hwange-Victoria Falls Line,573030,,8
+1513,Insukamini,CC573040,,8
+1514,Substations,CC573045,,8
+1515,Insukamini 420kV S/s,573045,,8
+1516,Insukamini 330kV S/s,573046,,8
+1517,Esigodini 88kV S/s,573047,,8
+1518,Gwanda 132kV S/s,573048,,8
+1519,Gwanda 88kV S/s,573049,,8
+1520,Springs 88kV S/s,573050,,8
+1521,Lines,CC573055,,8
+1522,MK1 Line,573056,,8
+1523,R3: 1-74 Line,573057,,8
+1524,R4: 1-74 Line,573058,,8
+1525,Marvel,CC573070,,8
+1526,Substations,CC573075,,8
+1527,Marvel 330kV S/s,573075,,8
+1528,Marvel 88kV S/s,573076,,8
+1529,Turk mine 88kV S/s,573077,,8
+1530,Filabusi 88kV S/s,573078,,8
+1531,Ncema 88kV S/s,573079,,8
+1532,Mzinyathini 88kV S/s,573080,,8
+1533,Fernhill 88kV S/s,573081,,8
+1534,Lines,CC573085,,8
+1535,R2: 629-701 Line,573086,,8
+1536,Marvel - Turkmine Line,573087,,8
+1537,Byo-Ftwn 1-378 Line,573088,,8
+1538,Marvel-Esigodini Line,573089,,8
+1539,Esigodini-Ncema Line,573090,,8
+1540,Mzinyathini-Ncema Line,573091,,8
+1541,Marvel-Gwanda Line,573092,,8
+1542,Ncema-Filabusi Line,573093,,8
+1543,Tokwe,CC573100,,8
+1544,Substations,CC573105,,8
+1545,Tokwe 330kV S/s,573105,,8
+1546,Tokwe 132kV S/s,573106,,8
+1547,Mashava 132kV S/s,573107,,8
+1548,Mwenezi 132kV S/s,573108,,8
+1549,Triangle 132kV S/s,573109,,8
+1550,Zvishavane 132kV S/s,573110,,8
+1551,Beitbridge 132kV S/s,573111,,8
+1552,Mberengwa 132kV S/s,573112,,8
+1553,Mimosa 132kV S/s,573113,,8
+1554,Lines,CC573120,,8
+1555,X1:1-267 Line,573120,,8
+1556,T1:1-321 Line,573121,,8
+1557,Mberengwa-Gwanda Line,573122,,8
+1558,Mberengwa-Mimosa Line,573123,,8
+1559,Zvishavane-Mberengwa Line,573124,,8
+1560,Mwenezi-Beitbridge Line,573125,,8
+1561,Tokwe-Zvishavane1 Line,573126,,8
+1562,Tokwe-Zvishavane2 Line,573127,,8
+1563,Tokwe-Mashava 1 Line,573128,,8
+1564,Tokwe-Mashava 2 Line,573129,,8
+1565,Mwenezi-Triangle Line,573130,,8
+1566,Zvishavane-Shurugwi Line,573131,,8
+1567,Beitbridge-Limpopo Line,573132,,8
+1568,Haven,CC573140,,8
+1569,Substations,CC573145,,8
+1570,Haven 330kV S/s,573145,,8
+1571,Haven 132kV S/s,573146,,8
+1572,Ripple Creek 132kV S/s,573147,,8
+1573,Hunters Road 88kV S/s,573148,,8
+1574,Zisco 132kV S/s,573149,,8
+1575,Redcliff 88kV S/s,573150,,8
+1576,Zisco 88kV S/s,573151,,8
+1577,Steelmakers 88kV S/s,573152,,8
+1578,Lines,CC573155,,8
+1579,Chertsey,CC573160,,8
+1580,Substations,CC573165,,8
+1581,Chertsey 330kV S/s,573165,,8
+1582,Chertsey 132kV S/s,573166,,8
+1583,Shurugwi 132kV S/s,573167,,8
+1584,Unki 132kV S/s,573168,,8
+1585,Gweru Local 132kV S/s,573169,,8
+1586,Mvuma 88kV S/s,573170,,8
+1587,Shangani 132kV S/s,573171,,8
+1588,Lalapansi 88kV S/s,573172,,8
+1589,Ascot 88kV S/s,573173,,8
+1590,Gweru City 132kV S/s,573174,,8
+1591,Sino 88kV S/s,573175,,8
+1592,Lines,CC573175,,8
+1593,Chertsey-Shangani Line,573176,,8
+1594,Chertsey-Gweru 1,573177,,8
+1595,Chertsey-Gweru 3,573178,,8
+1596,Gweru-Ascot Line,573179,,8
+1597,Gweru-Shurugwi (GS1) Line,573180,,8
+1598,Shurugwi-Unki Line,573181,,8
+1599,Lalapansi-Sino Line,573182,,8
+1600,Lalapansi-Mvuma Line,573183,,8
+1601,M1: 1-280 Line,573184,,8
+1602,M2: 1-278 Line,573185,,8
+1603,Sherwood,CC573200,,8
+1604,Substations,CC573205,,8
+1605,Sherwood 330kV S/s,573205,,8
+1606,Sherwood 88kV S/s,573206,,8
+1607,Battlefields 88kV S/s,573207,,8
+1608,Zimasco East 88kV S/s,573208,,8
+1609,Zimasco West 88kV S/s,573209,,8
+1610,Munyati 88kV S/s,573211,,8
+1611,Sables 88kV S/s,573212,,8
+1612,Kwekwe 88kV S/s,573213,,8
+1613,Gado 88kV S/s,573214,,8
+1614,Shamwari 88kV S/s,573215,,8
+1615,Lines,CC573220,,8
+1616,Sherwood-Kwekwe Line,574220,,8
+1617,Battlefields-Kadoma Line,574221,,8
+1618,F1:1-182 Line,574222,,8
+1619,F2:1-47 Line,574223,,8
+1620,F3:47-182 Line,574224,,8
+1621,C1:272-357 Line,574225,,8
+1622,E1:226-318 Line,574226,,8
+1623,UM1:1-54 Line,574227,,8
+1624,UM2:1-36 Line,574228,,8
+1625,Shwd-Zimasco(RH1) Line,574229,,8
+1626,Shwd-Zimasco 3 (RH3) Line,574230,,8
+1627,Zimasco(RH4)Line,574231,,8
+1628,Kwekwe-Hunters Rd GW Line,574232,,8
+1629,Sherwood-Lalapansi Line,574233,,8
+1630,Zisco-Ripple Creek Line,574234,,8
+1631,Sherwood-Sables1(SA1) Line,574235,,8
+1632,Sherwood-Sables2 (SA2) Line,574236,,8
+1633,Sherwood-Zisco(RS1) Line,574237,,8
+1634,Sherwood-Zisco2(RS2) Line,574238,,8
+1635,NRZ(North) Line,574239,,8
+1636,NRZ(South) Line,574240,,8
+1637,Munyati-Kadoma Line,574241,,8
+1638,Munyati-Battlefields Line,574242,,8
+1639,Haven-Zimasco (RH5 ) Line,574243,,8
+1640,Haven-Zisco Line,574244,,8

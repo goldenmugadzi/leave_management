@@ -110,7 +110,7 @@ class OldTokenForm(forms.ModelForm):
     class Meta:
         model = OldToken
         fields = "__all__"
-        exclude=['token']
+        exclude=['token','units']
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for field_name, field in self.fields.items():
@@ -126,7 +126,7 @@ class FaultMeterForm(forms.ModelForm):
     class Meta:
         model = FaultMeter
         fields = "__all__"
-        exclude=['token']
+        exclude=['token','units']
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for field_name, field in self.fields.items():

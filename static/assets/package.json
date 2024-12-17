@@ -4,7 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build-css": "node-sass --output-style expanded --source-map true --source-map-contents true --precision 6 scss/style.scss css/styles.css"
+    "build-css": "node-sass --output-style expanded --source-map true --source-map-contents true --precision 6 scss/style.scss css/styles.css",
+    "build": "npx tailwindcss -i ./static/src/styles.css -o ./static/dist/styles.css --minify",
+    "watch": "npx tailwindcss -i ./static/src/styles.css -o ./static/dist/styles.css --watch"
   },
   "author": "",
   "license": "ISC",

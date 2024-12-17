@@ -458,6 +458,17 @@ def dashboard_index(request):
                       "tds": tds, 
                       "upos": upos
                   })
+    
+@login_required
+def dsm_dashboard(request):
+    
+    user_title = request.user.get_full_name()
+    
+    return render(request, 'dashboards/commercial/index.html', {
+                      "user_title": user_title,
+                      "page_title": "DSM Dashboards"
+                      })
+
 @login_required
 def dashboard_filter(request, item):
     

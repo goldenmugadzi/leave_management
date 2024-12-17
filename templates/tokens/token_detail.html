@@ -76,11 +76,17 @@
                                             <span class="inline-block text-start font-bold rounded-full text-sm">Meter Number</span>
                                             <span class="inline-block text-end rounded-full text-sm">{{ token.meter.number|default_if_none:'' }}</span>
                                         </div>
-                                        
-                                        <div class=" text-center">
-                                            <span class="inline-block text-start font-bold rounded-full text-sm">Units</span>
-                                            <span class="inline-block text-end rounded-full text-sm">{{ token.meter.kilowatt_hours|default_if_none:'' }}</span>
-                                        </div>
+                                        {% if token.type == "REIMBURSEMENT" %}
+                                            <div class=" text-center">
+                                                {% if token.reimbursement_set.first.units %}
+                                                    <span class="inline-block text-start font-bold rounded-full text-sm">Units to be reimbursed</span>
+                                                    <span class="inline-block text-end rounded-full text-sm">{{ token.reimbursement_set.first.units }}</span>
+                                                {% elif token.faultmeter_set.first.units %}
+                                                    <span class="inline-block text-start font-bold rounded-full text-sm">Units to be reimbursed</span>
+                                                    <span class="inline-block text-end rounded-full text-sm">{{ token.faultmeter_set.first.units }}</span>
+                                                {% endif %}
+                                            </div>
+                                        {% endif %}
                                         <div class=" text-center">
                                             <span class="inline-block text-start font-bold rounded-full text-sm">Address</span>
                                             <span class="inline-block text-end rounded-full text-sm">{{ token.customer.address|default_if_none:'' }}</span>
@@ -115,10 +121,13 @@
                                         </a>
                                     {% elif token.tampertoken_set.last.is_for == 'Fauty Maintanance' %}
                                         <div class="font-bold text-center ">
-                                         {% if  token.faultmaintanance_set.last.photo %}  <a class="text-blue-900 m-auto shadow-lg mb-2 p-2 border-yellow-500 border border-1 font-bold inline-block text-start rounded-full text-sm"
-                                         href="/media/{{token.faultmaintanance_set.last.photo }}">
-                                          {{ token.tampertoken_set.last.is_for|default_if_none:'' }} Picture
-                                      </a> {% endif %}   <p class="font-bold mb-2">Fauty Maintanance</p>
+                                            {% if  token.faultmaintanance_set.last.photo %}
+                                                <a class="text-blue-900 m-auto shadow-lg mb-2 p-2 border-yellow-500 border border-1 font-bold inline-block text-start rounded-full text-sm"
+                                                   href="/media/{{ token.faultmaintanance_set.last.photo }}">
+                                                    {{ token.tampertoken_set.last.is_for|default_if_none:'' }} Picture
+                                                </a>
+                                            {% endif %}
+                                            <p class="font-bold mb-2">Fauty Maintanance</p>
                                             <p class="mb-2 font-normal">Fault Code {{ token.faultmaintanance_set.last.code|default_if_none:'' }}</p>
                                         </div>
                                     {% elif token.tampertoken_set.last.is_for == 'Reconnection' %}
@@ -149,17 +158,16 @@
                                         </a>
                                     {% endif %}
                                 {% elif token.type == 'CLEAR CREDIT' %}
-                                    {% if  token.clearcredit_set.last.amount > 0 and token.clearcredit_set.last.receipt  %}
+                                    {% if  token.clearcredit_set.last.amount > 0 and token.clearcredit_set.last.receipt %}
                                         <a class="text-blue-900 m-auto shadow-lg mb-2 p-2 border-yellow-500 border border-1 font-bold inline-block text-start rounded-full text-sm"
                                            href="/media/{{ token.clearcredit_set.last.receipt }}">
                                             Pernalty paid : ${{ token.clearcredit_set.last.amount|default_if_none:'' }}
                                         </a>
-                                        {% elif token.clearcredit_set.last.amount > 0  %}
+                                    {% elif token.clearcredit_set.last.amount > 0 %}
                                         <div class="font-bold text-center ">
                                             <p class="font-bold mb-2">Pernalty paid : ${{ token.clearcredit_set.last.amount|default_if_none:'' }}</p>
                                         </div>
-                                        
-                                    {% endif %}
+                                        {% endif %}
                                 {% endif %}
                             </div>
                             <div class="card-body m-2   px-2 rounded">
