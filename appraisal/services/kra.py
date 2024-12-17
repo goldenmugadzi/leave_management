@@ -30,3 +30,9 @@ class KRAService:
             return self.kra_repo.update(kra_object=kra_object, quarter_obj=quarter_obj, data=data)
         except Exception as e:
             raise KRAServiceErr(f"Failed to update kra with error: {e}")
+
+    def get_kra_by_pk_use_case(self, kra_id: int)->KeyResultArea:
+        try:
+            return self.kra_repo.retrieve_by_pk(kra_id=kra_id)
+        except Exception as e:
+            raise KRAServiceErr(f"Retriev kra by id failed with error: {e}")
