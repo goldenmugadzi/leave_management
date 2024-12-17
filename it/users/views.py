@@ -106,17 +106,21 @@ def ms_exhange_test(request, template, kwargs):
 
 
 def ms_exhange_send(subject, body, to_recipients, cc_recipients):
-    account = get_exchange_account()
-    message = Message(
-        account=account,
-        folder=account.sent,
-        subject=subject,
-        body=body,
-        to_recipients=[Mailbox(email_address=recipient) for recipient in to_recipients],
-        cc_recipients=[Mailbox(email_address=recipient) for recipient in cc_recipients]
-    )
-    message.send()
-    return JsonResponse({"status": "success", "message": "Email sent successfully"})
+    try:
+        account = get_exchange_account()
+        message = Message(
+            account=account,
+            folder=account.sent,
+            subject=subject,
+            body=body,
+            to_recipients=[Mailbox(email_address=recipient) for recipient in to_recipients],
+            cc_recipients=[Mailbox(email_address=recipient) for recipient in cc_recipients]
+        )
+        message.send()
+        return JsonResponse({"status": "success", "message": "Email sent successfully"})
+    except Exception as ex:
+        print("Error: ", ex)
+        return JsonResponse({"status": "error", "message": "An error occurred while sending the email: " + str(ex)})
 
 
 def ms_exhange_send_html(subject, to_recipients, cc_recipients, template, kwargs):
