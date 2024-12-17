@@ -4,23 +4,84 @@ from django.views.generic import TemplateView
 from django.views.generic.edit import CreateView, UpdateView
 from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib import messages
-from ..models import KeyResultArea
-from ..forms import YearQuarterForm, KraCreateForm
-from ..repository.kra import KRARepository
-from ..services.kra import KRAService
+from ..models import Activity, KeyResultArea
+from ..forms import ActivityCreateForm
+from ..repository.kra import KRARepository, KraActivityRepository
+from ..services.kra import KRAService, ActivityService
 from..helpers.types.kra import KRAType
 from pydantic import ValidationError
 
+def get_kra_object(kra_id: int)->KeyResultArea:
+    repo = KRARepository()
+    service_handler = KRAService(kra_repo=repo)
+    return service_handler.get_kra_by_pk_use_case(kra_id=kra_id)
+    
 class KraActivityIndexTemplateView(TemplateView):
     template_name = 'appraisal/kra/activity/index.html'
     
-    def get_kra_object(self):
-        repo = KRARepository()
-        service_handler = KRAService(kra_repo=repo)
-        kra_obj_id = self.kwargs.get('kra_id')
-        return service_handler.get_kra_by_pk_use_case(kra_id=kra_obj_id)
+    def get_activity(self):
+        repo = KraActivityRepository()
+        service_handler = ActivityService(activity_repo=repo)
+        queryset = service_handler.fetch_by_kra_id_use_case(kra_id=self.kwargs.get('kra_id'))
+        data = {"activity_objects": queryset}
+        return data
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["kra_obj"] = self.get_kra_object()
+        kra_obj_id = self.kwargs.get('kra_id')
+        context.update(self.get_activity())
+        context["kra_obj"] = get_kra_object(kra_id=kra_obj_id)
         return context
+    
+class KraActivityCreateView(CreateView):
+    model = Activity
+    form_class = ActivityCreateForm
+    template_name = 'appraisal/kra/activity/create_update.html'
+    success_message = 'Activity created successfully'
+    context_object_name = "activity_form"
+    
+    @property
+    def get_kra_object(self):
+        kra_obj_id = self.kwargs.get('kra_id')
+        return get_kra_object(kra_id=kra_obj_id)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context[self.context_object_name] = context.get("form")
+        context["kra_object"] = self.get_kra_object
+        return context
+    
+    def build_payload(self, form) -> KRAType:
+        try:
+            data = {
+                "name": form.cleaned_data.get("name"),
+                "description": form.cleaned_data.get("description"),
+                "weight": form.cleaned_data.get("weight"),
+            }
+            return KRAType(**data)
+        except ValidationError as e:
+            error_message = e.errors()[0]["msg"]
+            messages.error(self.request, error_message)
+            raise
+        
+    
+    def form_valid(self, form):
+        try:
+            payload = self.build_payload(form=form)
+            kra_object = self.get_kra_object
+            assigned_user_object = form.cleaned_data.get('assigned_user')
+            
+            repo = KraActivityRepository()
+            service_handler = ActivityService(activity_repo=repo)
+            activity_object = service_handler.create_use_case(kra_object=kra_object,
+                                                              assigned_user=assigned_user_object,
+                                                              data=payload)
+            form.instance = activity_object
+        except Exception:
+            messages.error(self.request, f"An unexpected error occurred, please try again")
+            return self.form_invalid(form)
+        
+        return super().form_valid(form)
+    
+    def get_success_url(self) -> str:
+        return reverse('kra_activity_index', kwargs={"kra_id": self.kwargs.get('kra_id')})

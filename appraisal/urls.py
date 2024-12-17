@@ -10,7 +10,8 @@ from .view import (AppraisalCreateView,
                    KRATemplateView, 
                    KRACreateView,
                    KRAUpdateView,
-                   KraActivityIndexTemplateView
+                   KraActivityIndexTemplateView,
+                   KraActivityCreateView
                    )
 
 urlpatterns = [
@@ -31,6 +32,7 @@ urlpatterns = [
     path('kra/new', KRACreateView.as_view(), name='kra_create'),
     path('kra/<int:pk>', KRAUpdateView.as_view(), name='kra_update'),
     path('kra/<int:kra_id>/activity', KraActivityIndexTemplateView.as_view(), name='kra_activity_index'),
+    path('kra/<int:kra_id>/activity/new', KraActivityCreateView.as_view(), name='kra_activity_create'),
     
     # ----- api ------
     path('api/experience-list/', experience_list_api, name='experience_list_api'),
