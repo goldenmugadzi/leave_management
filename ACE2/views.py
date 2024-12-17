@@ -301,7 +301,7 @@ def create_Ace(request):
                         print(ace_sh, "ace_sh")
                         # bdg = AssetBudget.objects.filter(budget_id=ace.budget_id).first()
                         # budget_name = bdg.budget_name
-                        msg = "user  " + str(use) + "created " + ace.Ace_id2 + "using budget " + str(ace.budget_id)
+                        msg = "user  " + str(use) + "created " + ace.Ace_id2 + " using budget " + str(ace.budget_id)
                         url = "/ace/ace_detail/" + ace.Ace_id2
 
                         ace_sh = UserProfile.objects.filter(username=ace_sh).first()
