@@ -136,7 +136,42 @@ def ms_exhange_send_html(subject, to_recipients, cc_recipients, template, kwargs
 
 
 @login_required
-# @allowed_roles(['Administrator'], ['users'])
+@allowed_roles(['Administrator'], ['users'])
+def deactivate_user(request):
+    if request.method == "GET":
+        try:
+            user = UserProfile.objects.get(id=request.GET['i'])
+            user.is_active = False
+            user.save()
+            messages.success(request, "User deactivated successfully")
+            return redirect('/users/users-index')
+        except Exception as ex:
+            print("Error: ", ex)
+            messages.error(request, "An error occurred while deactivating the user: " + str(ex))
+            return redirect('/users/users-index')
+    else:
+        return redirect('/users/users-index')
+    
+@login_required
+@allowed_roles(['Administrator'], ['users'])
+def activate_user(request):
+    if request.method == "GET":
+        try:    
+            user = UserProfile.objects.get(id=request.GET['i'])
+            user.is_active = True
+            user.save()
+            messages.success(request, "User activated successfully")
+            return redirect('/users/users-index')
+        except Exception as ex:
+            print("Error: ", ex)
+            messages.error(request, "An error occurred while activating the user: " + str(ex))
+            return redirect('/users/users-index')
+    else:
+        return redirect('/users/users-index')
+
+
+@login_required
+@allowed_roles(['Administrator'], ['users'])
 def add_centers(request):
     for region in REGIONS:
         _region = Regions(
@@ -208,7 +243,7 @@ def add_centers(request):
 
 
 @login_required
-# @allowed_roles(['Administrator'], ['users'])
+@allowed_roles(['Administrator'], ['users'])
 def add_user(request):
     if request.method == "GET":
 
@@ -227,7 +262,6 @@ def add_user(request):
         user_designations = Designations.objects.all()
         sections = Sections.objects.all()
         cost_centers = CostCenter.objects.all()
-        districts = Districts.objects.all()
         regions = Regions.objects.all()
 
         return render(
@@ -240,7 +274,6 @@ def add_user(request):
                 "user_designations": user_designations,
                 "cost_centers": cost_centers,
                 "sections": sections,
-                "districts": districts,
                 "regions": regions,
                 "user_title": user_title,
                 "user_groups": user_groups,
@@ -254,8 +287,6 @@ def add_user(request):
             designation_ = request.POST['designation']
             email = request.POST['email']
             section_ = request.POST['section']
-            depots_ = request.POST['depot']
-            district_ = request.POST['district']
             cost_center = request.POST['cost_center']
             region_ = request.POST['region']
             password1 = request.POST['password1']
@@ -263,15 +294,11 @@ def add_user(request):
 
             region = None
             cost_center_ = None
-            district = None
-            depot = None
             section = None
             designation = None
             try:
                 region = Regions.objects.filter(id=region_).first() if region_ else None
                 cost_center_ = CostCenter.objects.filter(id=cost_center).first() if cost_center else None
-                district = Districts.objects.filter(code=district_).first() if district_ else None
-                depot = Depots.objects.filter(code=depots_).first() if depots_ else None
                 section = Sections.objects.filter(code=section_).first() if section_ else None
                 designation = Designations.objects.filter(id=designation_).first() if designation_ else None
             except Exception as ex:
@@ -287,8 +314,6 @@ def add_user(request):
                     designation=designation,
                     cost_center=cost_center_,
                     section=section,
-                    depot=depot,
-                    district=district,
                     region=region,
                     status="active"
                 )
@@ -327,20 +352,21 @@ def add_user(request):
 
 
 @login_required
-# @allowed_roles(['Administrator'], ['users'])
+@allowed_roles(['Administrator'], ['users'])
 def get_user_records(request):
     user_page = 'users/user_index.html'
     user_title = request.user.get_full_name()
     l = request.user.groups.values_list('name', flat=True)  # QuerySet Object
     user_groups = list(l)
-
+    regions = Regions.objects.all()
     return render(
         request,
         user_page,
         {
             "title": "All Records",
             "user_title": user_title,
-            "user_groups": user_groups
+            "user_groups": user_groups,
+            "regions": regions
         })
 
 
@@ -349,67 +375,76 @@ def datatable_data(request):
     start = int(request.GET.get('start', default=0))
     length = int(request.GET.get('length', default=10))
     search_value = request.GET.get('search[value]', default='')
+    active = request.GET.get('active', default=True)
+    region = request.GET.get('region', default='')
+    print("active: ", active)
     user = request.user
 
-    if user.region:
-        # Fetch your data from the model
-        records = UserProfile.objects.order_by('-id').all()
-        # Filter based on search value
-        if search_value:
-            records = records.filter(
-                Q(username__icontains=search_value) |
-                Q(first_name__icontains=search_value) |
-                Q(last_name__icontains=search_value) |
-                Q(email__icontains=search_value)
-            )
+    try:
+        if user.region:
+            if region:
+                records = UserProfile.objects.filter(is_active=active, region=region).order_by('-id').all()
+            else:
+                records = UserProfile.objects.filter(is_active=active).order_by('-id').all()
+            # Filter based on search value
+            if search_value:
+                records = records.filter(
+                    Q(username__icontains=search_value) |
+                    Q(first_name__icontains=search_value) |
+                    Q(last_name__icontains=search_value) |
+                    Q(email__icontains=search_value)
+                )
 
-        # Total number of records before filtering
-        total = records.count()
+            # Total number of records before filtering
+            total = records.count()
 
-        # Sorting
-        order_column = request.GET.get('order[0][column]')
-        order = request.GET.get('order[0][dir]')
-        if order_column:
-            column_name = request.GET.get(f'columns[{order_column}][data]')
-            if order == 'desc':
-                column_name = f'-{column_name}'
-            records = records.order_by(column_name)
+            # Sorting
+            order_column = request.GET.get('order[0][column]')
+            order = request.GET.get('order[0][dir]')
+            if order_column:
+                column_name = request.GET.get(f'columns[{order_column}][data]')
+                if order == 'desc':
+                    column_name = f'-{column_name}'
+                records = records.order_by(column_name)
 
-        # Pagination
-        paginator = Paginator(records, length)
-        page_number = start // length + 1
-        page_obj = paginator.get_page(page_number)
+            # Pagination
+            paginator = Paginator(records, length)
+            page_number = start // length + 1
+            page_obj = paginator.get_page(page_number)
 
-        # Prepare response
-        data = []
-        for obj in page_obj:
-            try:
-                cost_center_name = obj.cost_center.name
-            except Exception as ex:
-                print("Cost Center Error: ", ex)
-                cost_center_name = None
+            # Prepare response
+            data = []
+            for obj in page_obj:
+                try:
+                    cost_center_name = obj.cost_center.name
+                except Exception as ex:
+                    print("Cost Center Error: ", ex)
+                    cost_center_name = None
 
-            data.append({
-                "id": obj.pk,
-                "username": obj.username,
-                "first_name": obj.first_name,
-                "last_name": obj.last_name,
-                "email": obj.email,
-                "cost_center": cost_center_name,
-                "region": obj.region.region if obj.region else None,
-                "date_joined": obj.date_joined.date()
-            })
+                data.append({
+                    "id": obj.pk,
+                    "username": obj.username,
+                    "first_name": obj.first_name,
+                    "last_name": obj.last_name,
+                    "email": obj.email,
+                    "cost_center": cost_center_name,
+                    "region": obj.region.region if obj.region else None,
+                    "active": obj.is_active,
+                    "date_joined": obj.date_joined.date()
+                })
 
-        return JsonResponse({
-            'draw': draw,
-            'recordsTotal': total,
-            'recordsFiltered': total,
-            'data': data
-        })
-
+            return JsonResponse({
+                'draw': draw,
+                'recordsTotal': total,
+                'recordsFiltered': total,
+                'data': data
+                })
+    except Exception as ex:
+        print("Error: ", ex)
+        return JsonResponse({"status": "error", "message": "An error occurred while fetching the users"})
 
 @login_required
-# @allowed_roles(['Administrator'], ['users'])
+@allowed_roles(['Administrator'], ['users'])
 def update_user(request):
     if request.method == "GET":
         user_profile = UserProfile.objects.get(id=request.GET['i'])
@@ -421,22 +456,22 @@ def update_user(request):
         region = None
         cost_center = None
         user_designation = None
-        cost_centers_ = CostCenter.objects.all()
-
+        # cost_centers_ = CostCenter.objects.filter(Q(code=user_profile.region.code) | Q(code="CC" + user_profile.region.code)).all()
+        cost_centers_ = []
         try:
             section = user_profile.section
             depot = user_profile.depot
             district = user_profile.district
             region = user_profile.region
             cost_center = user_profile.cost_center
-            cost_centers_ = CostCenter.objects.all()
+            cost_centers_ = CostCenter.objects.filter(Q(parent=region.code) | Q(parent="CC" + region.code)).all()
 
             user_designation = user_profile.designation
         except Exception as ex:
             print("Error: ", ex)
         if not cost_center:
             try:
-                cost_center = CostCenter.objects.filter(code=region.code).first()
+                cost_center = CostCenter.objects.filter(Q(code=region.code) | Q(code="CC" + region.code)).first()
             except:
                 pass
         if not cost_center:
@@ -493,6 +528,7 @@ def update_user(request):
             cost_centers = []
         """for every application, initialize the responsibility formset for the user to be assigned roles and cost centers"""
 
+        print("cost_centers: ", cost_centers)
         return render(
             request,
             "users/user_update.html",
@@ -516,17 +552,15 @@ def update_user(request):
 
             user_profile = UserProfile.objects.filter(id=request.POST['user_id']).first()
             region = request.POST.get('region')
-            district = request.POST.get('district')
-            depot = request.POST.get('depot')
+            # district = request.POST.get('district')
+            # depot = request.POST.get('depot')
             section = request.POST.get('section')
             designation = request.POST.get('designation')
             cost_center = request.POST.get('cost_center')
 
-            region_, district_, depot_, section_, designation_, cost_center_ = None, None, None, None, None, None
+            region_, section_, designation_, cost_center_ = None, None, None, None
             try:
                 region_ = Regions.objects.filter(id=region).first() if region else None
-                district_ = Districts.objects.filter(id=district).first() if district else None
-                depot_ = Depots.objects.filter(id=depot).first() if depot else None
                 section_ = Sections.objects.filter(id=section).first() if section else None
                 designation_ = Designations.objects.filter(id=designation).first() if designation else None
                 cost_center_ = CostCenter.objects.filter(id=cost_center).first() if cost_center else None
@@ -539,8 +573,6 @@ def update_user(request):
                 'username': request.POST['username'],
                 'email': request.POST['email'],
                 'region': region_,
-                'district': district_,
-                'depot': depot_,
                 'section': section_,
                 'cost_center': cost_center_,
                 'designation': designation_
@@ -564,6 +596,7 @@ def update_user(request):
 
 
 @login_required
+@allowed_roles(['Administrator'], ['users'])
 def set_requesters(request):
     if request.method == "GET":
         region = Regions.objects.filter(id=7).first()
@@ -630,7 +663,7 @@ def view_user(request):
 
 
 @login_required
-# @allowed_roles(['Administrator'], ['users'])
+@allowed_roles(['Administrator'], ['users'])
 def update_userx(request):
     if request.method == "GET":
 
@@ -765,7 +798,7 @@ def update_userx(request):
 
 
 @login_required
-# @allowed_roles(['Administrator'], ['users'])
+@allowed_roles(['Administrator'], ['users'])
 def reset_user_password(request):
     if request.method == "POST":
 
@@ -1038,6 +1071,7 @@ def import_users(request):
                 decoded_file = file.read().decode('cp1252').splitlines()
                 reader = csv.DictReader(decoded_file)
                 for row in reader:
+                    # print("Row: ", row)
                     # (username, Designation, centre, descr, surname, firstname, initials, status, section, email, phone,
                     #  extension, section_code, createdon, region) = row
                     username = row['username'].replace(" ", "")
@@ -1086,7 +1120,6 @@ def import_users(request):
                             region_id=5,
                             defaults={
                                 'code': section1,
-
                             }
 
                         )
@@ -1097,6 +1130,8 @@ def import_users(request):
                             print("section already exists!")
                     # check if user exists if not create a new one
                     username = "ze" + username
+                    
+                    # return JsonResponse({"status": "success", "message": "Users imported successfully"})
                     check_user = UserProfile.objects.filter(username=username).first()
                     if check_user:
                         print("User already exists")

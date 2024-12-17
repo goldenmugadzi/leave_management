@@ -123,6 +123,7 @@ def index_files(request):
                     print(f"Failed to index document: {e}")
 
     return HttpResponse("Indexing completed successfully.")
+
 def ocr_pdf(pdf_path):
     doc = fitz.open(pdf_path)
     text = ""

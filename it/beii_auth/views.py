@@ -370,7 +370,7 @@ def business_applications(request):
     else:
         if user.region:
             applications = applications
-            if user.region.region == "WESTERN REGION" or user.region.region == "TRANSMISSION & DISTRIBUTION":
+            if user.region.region == "TRANSMISSION & DISTRIBUTION":
                 applications = [app for app in applications if app['name'] == 'users' or app['name'] == 'non_conformity']
                 
         else:
