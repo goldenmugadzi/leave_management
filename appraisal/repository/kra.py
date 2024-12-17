@@ -46,6 +46,29 @@ class KRARepository:
         except Exception as e:
             raise Exception(f"KRA retrieve by quarter and year failed with error: {e}")
     
+    def retrieve_by_pk(self, kra_id: int)->KeyResultArea:
+        """
+            Retrieves a list of KRA by primary key.
+
+            Args:
+                kra_id (int): The primary key of KRA.
+
+            Returns:
+                KeyResultArea: KeyResultArea object matching the specified primary key.
+
+            Raises:
+                Exception: If the retrieval operation fails.
+        """
+        try:
+            kra_object = KeyResultArea.objects.select_related('quarter').filter(id=kra_id).first()
+            
+            if kra_object is None:
+                raise Exception("KRA object not found")
+            
+            return kra_object
+        except Exception as e:
+            raise Exception(f"KRA retrieval by PK failed with error: {e}")
+        
     def update(self, kra_object: KeyResultArea, quarter_obj: YearQuarter, data: KRAType) -> KeyResultArea:
         """
             Updates the fields of a KeyResultArea object and saves the changes to the database.
