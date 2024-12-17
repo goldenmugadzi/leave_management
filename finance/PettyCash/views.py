@@ -64,7 +64,7 @@ def pettyCash_detail(request, petty_id):
             user = pettycash_item.requested_by
             userp = UserProfile.objects.filter(id=user).first()
 
-            msg = "Your Pettycash " + pettycash_item.petty_id + "has a payment method added by Cashier"
+            msg = "Your Pettycash " + pettycash_item.petty_id + " has a payment method added by Cashier"
             url = "/pettycash/pettycash_detail/" + pettycash_item.petty_id
             notify_user(userp, msg, "Pettycash", url, pettycash_item.petty_id)
 
@@ -193,7 +193,7 @@ def create_pettycash(request):
                     # budget name
                     # bdg = AssetBudget.objects.filter(budget_id=ace.budget_id).first()
                     # budget_name = bdg.budget_name
-                    msg = "Your subordinate" + str(use) + "created " + pettycash.petty_id + "for section " + str(
+                    msg = "Your subordinate " + str(use) + " created " + pettycash.petty_id + " for section " + str(
                         pettycash.section)
                     url = "/pettycash/pettycash_detail/" + pettycash.petty_id
                     section_heads = UserProfile.objects.filter(username=section_heads).first()
@@ -206,13 +206,13 @@ def create_pettycash(request):
                 #     quotation.save()
 
                 pettycash_section = pettycash.section
-                pettycash_sh = find_pettycash_section_head( pettycash_section)
+                pettycash_sh = find_pettycash_section_head(pettycash_section)
 
                 if pettycash_sh:
                     print(pettycash_sh, "pettycash_sh")
                     # bdg = AssetBudget.objects.filter(budget_id=ace.budget_id).first()
                     # budget_name = bdg.budget_name
-                    msg = "user  " + str(use) + "created " + pettycash.petty_id + "for section " + str(
+                    msg = "user  " + str(use) + " created " + pettycash.petty_id + " for section " + str(
                         pettycash.section)
                     url = "/pettycash/pettycash_detail/" + pettycash.petty_id
 

@@ -1438,3 +1438,10 @@ def find_ace_section_head(request, section):
     # else:
     #     messages.error(request, "the ace requires more than the current budget resulting in a "
     #                             "negative balance")
+
+
+# transanctions on a budget
+def transactions_view(request, budget):
+    transactions = Transactions.objects.filter(budget_id=budget)
+    #return an view with an html table of transactions
+    return render(request, 'finance/ace2/view_all_transactions.html', {'transactions': transactions})
