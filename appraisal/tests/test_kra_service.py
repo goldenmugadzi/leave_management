@@ -5,7 +5,7 @@ from unittest.mock import Mock, patch
 from ..helpers.types.kra import KRAType
 from ..models import YearQuarter, KeyResultArea
 from it.users.models import UserProfile
-from ..services.kra import KRAService, KRAServiceErr
+from ..services.kra import KRAService, KRAErr
 from ..repository.kra import KRARepository
 
 class TestKRAService(TestCase):
@@ -76,7 +76,7 @@ class TestKRAService(TestCase):
                 # ============ ACT ===============
                 self.kra_servise.create_use_case(quarter_obj=mock_quarter, creator_obj=mock_creator, data=mock_payload)
                 self.fail("Expected an error but got none")
-            except KRAServiceErr as e:
+            except KRAErr as e:
                 # ============ ASSERT ===============
                 self.assertEqual(str(e), f"Failed to create kra with error: {mock_db_err}")
 
@@ -129,6 +129,6 @@ class TestKRAService(TestCase):
                 # ============ ACT ===============
                 self.kra_servise.update_use_case(kra_object=mock_kra, quarter_obj=mock_quarter, data=mock_payload)
                 self.fail("Expected an error but got none")
-            except KRAServiceErr as e:
+            except KRAErr as e:
                 # ============ ASSERT ===============
                 self.assertEqual(str(e), f"Failed to update kra with error: {mock_db_err}")

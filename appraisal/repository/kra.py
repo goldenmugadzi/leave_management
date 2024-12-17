@@ -1,7 +1,7 @@
 from typing import List
-from ..models import KeyResultArea, YearQuarter
+from ..models import KeyResultArea, YearQuarter, Activity
 from ..helpers.types.kra import KRAType
-
+from it.users.models import UserProfile
 
 class KRARepository:
     def create(self, quarter_obj: YearQuarter, creator_obj, data: KRAType)->KeyResultArea:
@@ -19,12 +19,12 @@ class KRARepository:
             Raises:
                 Exception: If the creation operation fails.
         """
-        
+
         try:
             return KeyResultArea.objects.create(quarter=quarter_obj, created_by=creator_obj, name=data.name, description=data.description, weight=data.weight)
         except Exception as e:
             raise Exception(f"KRA Create Repo failed with error: {e}")
-        
+
     def retrieve(self, quarter_number: int, year_number: int)->List[KeyResultArea]:
         """
             Retrieves a list of KRAs for a specified quarter and year.
@@ -39,13 +39,13 @@ class KRARepository:
             Raises:
                 Exception: If the retrieval operation fails.
         """
-        
+
         try:
             queryset = KeyResultArea.objects.filter(quarter__year=year_number, quarter__quarter=quarter_number)
             return queryset
         except Exception as e:
             raise Exception(f"KRA retrieve by quarter and year failed with error: {e}")
-    
+
     def retrieve_by_pk(self, kra_id: int)->KeyResultArea:
         """
             Retrieves a list of KRA by primary key.
@@ -61,14 +61,14 @@ class KRARepository:
         """
         try:
             kra_object = KeyResultArea.objects.select_related('quarter').filter(id=kra_id).first()
-            
+
             if kra_object is None:
                 raise Exception("KRA object not found")
-            
+
             return kra_object
         except Exception as e:
             raise Exception(f"KRA retrieval by PK failed with error: {e}")
-        
+
     def update(self, kra_object: KeyResultArea, quarter_obj: YearQuarter, data: KRAType) -> KeyResultArea:
         """
             Updates the fields of a KeyResultArea object and saves the changes to the database.
@@ -114,5 +114,9 @@ class KRARepository:
             raise KRAUpdateError(f"KRA update Repo failed with error: {e}")
 
 
-
-
+class KraActivityRepository:
+    def create(self, kra_obj: KeyResultArea, assigned_user: UserProfile, data: KRAType)->Activity:
+        try:
+            return Activity.objects.create(kra=kra_obj, assigned_user=assigned_user, name=data.name, description=data.description, weight=data.weight)
+        except Exception as e:
+            raise Exception(f"KRA Activity Create Repo failed with error: {e}")
