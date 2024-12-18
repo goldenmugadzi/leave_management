@@ -111,7 +111,7 @@ class KRARepository:
             return kra_object
 
         except Exception as e:
-            raise KRAUpdateError(f"KRA update Repo failed with error: {e}")
+            raise Exception(f"KRA update Repo failed with error: {e}")
 
 
 class KraActivityRepository:
@@ -127,3 +127,29 @@ class KraActivityRepository:
             return queryset
         except Exception as e:
             raise Exception(f"KRA Activity Fetch Repo failed with error: {e}")
+
+    def update(self, activity_obj: Activity, assigned_user: UserProfile, data: KRAType)->Activity:
+        try:
+            updated = False
+            if assigned_user != activity_obj.assigned_user:
+                activity_obj.assigned_user = assigned_user
+                updated = True
+            
+            if data.name != activity_obj.name:
+                activity_obj.name = data.name
+                updated = True
+            
+            if data.description != activity_obj.description:
+                activity_obj.description = data.description
+                updated = True
+                
+            if data.weight != activity_obj.weight:
+                activity_obj.weight = data.weight
+                updated = True
+            
+            if updated:
+                activity_obj.save()
+                
+        except Exception as e:
+            raise Exception(f"KRA update Repo failed with error: {e}")
+
