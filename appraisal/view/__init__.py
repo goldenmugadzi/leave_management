@@ -2,5 +2,5 @@ from .appraisal import AppraisalCreateView, AppraisalTemplateView
 from .experience import ExperienceCreateView, experience_list_api
 from .performance_review import PerformancePlanAndAssessmentAppraisalTemplateView, PerformanceReviewsApprovalView, PerformancePlanAndAssessmentTemplateView
 from .training import TrainingAndDevelopmentUpdateView
-from .kra import KRATemplateView, KRACreateView, KRAUpdateView
-from .kra_activity import KraActivityIndexTemplateView, KraActivityCreateView
+from .kra.kra import KRATemplateView, KRACreateView, KRAUpdateView
+from .kra.activity import KraActivityIndexTemplateView, KraActivityCreateView

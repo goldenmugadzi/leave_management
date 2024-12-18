@@ -4,11 +4,12 @@ from django.views.generic import TemplateView
 from django.views.generic.edit import CreateView, UpdateView
 from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib import messages
-from ..models import KeyResultArea
-from ..forms import YearQuarterForm, KraCreateForm
-from ..repository.kra import KRARepository
-from ..services.kra import KRAService
-from..helpers.types.kra import KRAType
+from ...models import KeyResultArea
+from ...forms import YearQuarterForm, KraCreateForm
+from ...repository.kra import KRARepository
+from ...services.kra import KRAService
+from ...helpers.types.kra import KRAType
+from .helper import build_payload
 from pydantic import ValidationError
 from datetime import datetime
 
@@ -67,23 +68,10 @@ class KRACreateView(SuccessMessageMixin,CreateView):
         context[self.context_object_name] = context.get("form")
         return context
     
-    def build_payload(self, form) -> KRAType:
-        try:
-            data = {
-                "name": form.cleaned_data.get("name"),
-                "description": form.cleaned_data.get("description"),
-                "weight": form.cleaned_data.get("weight"),
-            }
-            return KRAType(**data)
-        except ValidationError as e:
-            error_message = e.errors()[0]["msg"]
-            messages.error(self.request, error_message)
-            raise
-    
     def form_valid(self, form):
         try:
             # Build payload
-            payload = self.build_payload(form)
+            payload = build_payload(form)
             
             # Call the service to create KRA
             repo = KRARepository()
@@ -119,29 +107,14 @@ class KRAUpdateView(SuccessMessageMixin, UpdateView):
         context = super().get_context_data(**kwargs)
         context[self.context_object_name] = context.get("form")
         return context
-    
-    def build_payload(self, form) -> KRAType:
-        """
-        Constructs and validates a KRAType payload from the form data.
-        """
-        try:
-            data = {
-                "name": form.cleaned_data.get("name"),
-                "description": form.cleaned_data.get("description"),
-                "weight": form.cleaned_data.get("weight"),
-            }
-            return KRAType(**data)
-        except ValidationError as e:
-            error_message = e.errors()[0]["msg"]
-            messages.error(self.request, error_message)
-            raise
+
 
     def form_valid(self, form):
         """
         Processes the form when valid, builds a payload, and performs additional actions.
         """
         try:
-            payload = self.build_payload(form)
+            payload = build_payload(form)
             
             repo = KRARepository()
             service_handler = KRAService(kra_repo=repo)

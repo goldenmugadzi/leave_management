@@ -4,11 +4,12 @@ from django.views.generic import TemplateView
 from django.views.generic.edit import CreateView, UpdateView
 from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib import messages
-from ..models import Activity, KeyResultArea
-from ..forms import ActivityCreateForm
-from ..repository.kra import KRARepository, KraActivityRepository
-from ..services.kra import KRAService, ActivityService
-from..helpers.types.kra import KRAType
+from ...models import Activity, KeyResultArea
+from ...forms import ActivityCreateForm
+from ...repository.kra import KRARepository, KraActivityRepository
+from ...services.kra import KRAService, ActivityService
+from ...helpers.types.kra import KRAType
+from .helper import build_payload
 from pydantic import ValidationError
 
 def get_kra_object(kra_id: int)->KeyResultArea:
@@ -50,24 +51,11 @@ class KraActivityCreateView(SuccessMessageMixin, CreateView):
         context[self.context_object_name] = context.get("form")
         context["kra_object"] = self.get_kra_object
         return context
-    
-    def build_payload(self, form) -> KRAType:
-        try:
-            data = {
-                "name": form.cleaned_data.get("name"),
-                "description": form.cleaned_data.get("description"),
-                "weight": form.cleaned_data.get("weight"),
-            }
-            return KRAType(**data)
-        except ValidationError as e:
-            error_message = e.errors()[0]["msg"]
-            messages.error(self.request, error_message)
-            raise
-        
+       
     
     def form_valid(self, form):
         try:
-            payload = self.build_payload(form=form)
+            payload = build_payload(form=form)
             kra_object = self.get_kra_object
             assigned_user_object = form.cleaned_data.get('assigned_user')
             
@@ -85,3 +73,18 @@ class KraActivityCreateView(SuccessMessageMixin, CreateView):
     
     def get_success_url(self) -> str:
         return reverse('kra_activity_index', kwargs={"kra_id": self.kwargs.get('kra_id')})
+
+class KraActivityUpdateView(SuccessMessageMixin, UpdateView):
+    model = Activity
+    form_class = ActivityCreateForm
+    template_name = 'appraisal/kra/activity/create_update.html'
+    success_message = 'Activity updated successfully'
+    context_object_name = "activity_form"
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context[self.context_object_name] = context.get("form")
+        return context
+    
+    
+    
