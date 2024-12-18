@@ -56,7 +56,7 @@ class KraActivityCreateView(SuccessMessageMixin, CreateView):
     
     def form_valid(self, form):
         try:
-            payload = build_payload(form=form)
+            payload = build_payload(request=self.request, form=form)
             kra_object = self.get_kra_object
             assigned_user_object = form.cleaned_data.get('assigned_user')
             
@@ -101,6 +101,7 @@ class KraActivityUpdateView(SuccessMessageMixin, UpdateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context[self.context_object_name] = context.get("form")
+        context["kra_object"] = self.get_activity_object.kra
         return context
     
     def form_valid(self, form):
