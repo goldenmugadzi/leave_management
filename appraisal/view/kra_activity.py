@@ -33,7 +33,7 @@ class KraActivityIndexTemplateView(TemplateView):
         context["kra_obj"] = get_kra_object(kra_id=kra_obj_id)
         return context
     
-class KraActivityCreateView(CreateView):
+class KraActivityCreateView(SuccessMessageMixin, CreateView):
     model = Activity
     form_class = ActivityCreateForm
     template_name = 'appraisal/kra/activity/create_update.html'
