@@ -8,9 +8,7 @@ from ...models import KeyResultArea
 from ...forms import YearQuarterForm, KraCreateForm
 from ...repository.kra import KRARepository
 from ...services.kra import KRAService
-from ...helpers.types.kra import KRAType
 from .helper import build_payload
-from pydantic import ValidationError
 from datetime import datetime
 
 class KRATemplateView(TemplateView):
@@ -71,7 +69,7 @@ class KRACreateView(SuccessMessageMixin,CreateView):
     def form_valid(self, form):
         try:
             # Build payload
-            payload = build_payload(form)
+            payload = build_payload(request=self.request, form=form)
             
             # Call the service to create KRA
             repo = KRARepository()
@@ -114,7 +112,7 @@ class KRAUpdateView(SuccessMessageMixin, UpdateView):
         Processes the form when valid, builds a payload, and performs additional actions.
         """
         try:
-            payload = build_payload(form)
+            payload = build_payload(request=self.request, form=form)
             
             repo = KRARepository()
             service_handler = KRAService(kra_repo=repo)

@@ -10,7 +10,7 @@ from ...repository.kra import KRARepository, KraActivityRepository
 from ...services.kra import KRAService, ActivityService
 from ...helpers.types.kra import KRAType
 from .helper import build_payload
-from pydantic import ValidationError
+
 
 def get_kra_object(kra_id: int)->KeyResultArea:
     repo = KRARepository()
@@ -86,5 +86,16 @@ class KraActivityUpdateView(SuccessMessageMixin, UpdateView):
         context[self.context_object_name] = context.get("form")
         return context
     
+    def form_valid(self, form):
+        try:
+            payload = build_payload(request=self.request, form=form)
+            kra_object = self.get_kra_object
+            assigned_user_object = form.cleaned_data.get('assigned_user')
+            
+            repo = KraActivityRepository()
+            service_handler = ActivityService(activity_repo=repo)
+            activity_object = service_handler.update_use_case(activity_object=)
+            
+        return super().form_valid(form)
     
     
