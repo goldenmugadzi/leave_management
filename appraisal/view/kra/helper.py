@@ -1,8 +1,9 @@
 from django.forms import BaseModelForm
+from django.contrib import messages
 from ...helpers.types.kra import KRAType
+from pydantic import ValidationError
 
-
-def build_payload(self, form: BaseModelForm) -> KRAType:
+def build_payload(request, form: BaseModelForm) -> KRAType:
     """
         Constructs and returns a KRAType payload from the cleaned data of the given form.
 
@@ -25,5 +26,5 @@ def build_payload(self, form: BaseModelForm) -> KRAType:
         return KRAType(**data)
     except ValidationError as e:
         error_message = e.errors()[0]["msg"]
-        messages.error(self.request, error_message)
+        messages.error(request, error_message)
         raise
