@@ -10,6 +10,7 @@ from ...repository.kra import KRARepository
 from ...services.kra import KRAService
 from .helper import build_payload
 from datetime import datetime
+from pydantic import ValidationError
 
 class KRATemplateView(TemplateView):
     template_name = 'appraisal/kra/index.html'
@@ -109,7 +110,7 @@ class KRAUpdateView(SuccessMessageMixin, UpdateView):
 
     def form_valid(self, form):
         """
-        Processes the form when valid, builds a payload, and performs additional actions.
+            Processes the form when valid, builds a payload, and performs additional actions.
         """
         try:
             payload = build_payload(request=self.request, form=form)

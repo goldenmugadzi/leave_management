@@ -10,6 +10,7 @@ from ...repository.kra import KRARepository, KraActivityRepository
 from ...services.kra import KRAService, ActivityService
 from ...helpers.types.kra import KRAType
 from .helper import build_payload
+from pydantic import ValidationError
 
 
 def get_kra_object(kra_id: int)->KeyResultArea:
@@ -81,6 +82,22 @@ class KraActivityUpdateView(SuccessMessageMixin, UpdateView):
     success_message = 'Activity updated successfully'
     context_object_name = "activity_form"
     
+    @property
+    def get_activity_object(self):
+        repo = KraActivityRepository()
+        service_handler = ActivityService(activity_repo=repo)
+        activity_obj_id = self.kwargs.get('activity_id')
+        activity_obj = service_handler.get_by_id_use_case(activity_id=activity_obj_id)
+        return activity_obj
+    
+    def get_object(self, queryset=None):
+        """
+        Override the default get_object method to retrieve the activity object using a custom service.
+        """
+        obj = self.get_activity_object
+        return obj
+
+    
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context[self.context_object_name] = context.get("form")
@@ -89,13 +106,25 @@ class KraActivityUpdateView(SuccessMessageMixin, UpdateView):
     def form_valid(self, form):
         try:
             payload = build_payload(request=self.request, form=form)
-            kra_object = self.get_kra_object
+            activity_object = self.get_activity_object
             assigned_user_object = form.cleaned_data.get('assigned_user')
             
             repo = KraActivityRepository()
             service_handler = ActivityService(activity_repo=repo)
-            activity_object = service_handler.update_use_case(activity_object=)
-            
+            activity_object = service_handler.update_use_case(activity_object=activity_object, assigned_user=assigned_user_object, data=payload)
+            form.instance = activity_object
+        except ValidationError:
+            return self.form_invalid(form)
+        except Exception as e:
+            messages.error(self.request, f"An unexpected error occurred: {e}")
+            return self.form_invalid(form)
         return super().form_valid(form)
     
+    def get_success_url(self) -> str:
+        """
+        Redirects to the index page after successful update.
+        """
+        kra_obj_id = self.kwargs.get("kra_id")
+        activity_obj_id = self.kwargs.get("activity_id")
+        return reverse('kra_activity_update', kwargs={"kra_id": kra_obj_id, "activity_id": activity_obj_id})
     

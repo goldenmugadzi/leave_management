@@ -149,7 +149,7 @@ class KraActivityRepository:
             
             if updated:
                 activity_obj.save()
-                
+            return activity_obj  
         except Exception as e:
             raise Exception(f"KRA update Repo failed with error: {e}")
         
