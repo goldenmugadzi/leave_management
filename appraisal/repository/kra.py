@@ -152,4 +152,16 @@ class KraActivityRepository:
                 
         except Exception as e:
             raise Exception(f"KRA update Repo failed with error: {e}")
+        
+    def get_activity_by_id(self, activity_id: int)->Activity:
+        try:
+            activity_object = Activity.objects.select_related('kra').filter(id=activity_id).first()
+
+            if activity_object is None:
+                raise Exception("Activity object not found")
+
+            return activity_object
+        except Exception as e:
+            raise Exception(f"Activity object retrieval by PK failed with error: {e}")
+
 
