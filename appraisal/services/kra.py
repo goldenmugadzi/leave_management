@@ -54,3 +54,10 @@ class ActivityService:
             return self.activity_repo.fetch_by_kra_id(kra_id=kra_id)
         except Exception as e:
             raise KRAErr(f"Failed to retrieve kra activities with error: {e}")
+
+    def update_use_case(self, activity_object: Activity, assigned_user: UserProfile, data: KRAType)->Activity:
+        try:
+            return self.activity_repo.update(activity_obj=activity_object, assigned_user=assigned_user, data=data)
+        except Exception as e:
+            raise KRAErr(f"Failed to update kra activities with error: {e}")
+        
