@@ -4,3 +4,4 @@ from .performance_review import PerformancePlanAndAssessmentAppraisalTemplateVie
 from .training import TrainingAndDevelopmentUpdateView
 from .kra.kra import KRATemplateView, KRACreateView, KRAUpdateView
 from .kra.activity import KraActivityIndexTemplateView, KraActivityCreateView, KraActivityUpdateView
+from .kra.targets import TargetsIndexView
