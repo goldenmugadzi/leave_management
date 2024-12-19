@@ -10,9 +10,9 @@
       <div class="bg-gulf-blue-100 shadow-lg rounded-lg p-6">
         <div class="flex justify-between">
             <div>
-                <h1 class="font-bold">Key Result Area Activities</h1>
+                <h1 class="font-bold">Activity Targets</h1>
                 <p class="text-sm text-muted">
-                    Key Result Area: <strong>{{ kra_obj.name }}</strong> for {{ kra_obj.quarter.quarter|quarter_name }} of {{ kra_obj.quarter.year }} Activities
+                    Activity: <strong>{{ activity_object.name }}</strong> Targets
                 </p>
             </div>
                
@@ -24,7 +24,7 @@
 
     <div class="bg-gulf-blue-100 shadow-lg rounded-lg p-6 my-6">
       <div class="flex justify-end">
-        <a href="{% url 'kra_activity_create' kra_obj.id %}"
+        <a href="#"
           class="my-2 bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4 rounded"
           >
           Create New
@@ -36,24 +36,26 @@
         class="w-full border border-blue-800 rounded-lg shadow-lg">
          <thead class="bg-blue-800 text-white">
            <tr>
-             <th class="px-6 py-3 text-left text-md font-semibold">Name</th>
-             <th class="px-6 py-3 text-left text-md font-semibold">Assigned User</th>
+             <th class="px-6 py-3 text-left text-md font-semibold">Metric Type</th>
+             <th class="px-6 py-3 text-left text-md font-semibold">Allowance Variance</th>
+             <th class="px-6 py-3 text-left text-md font-semibold">Target</th>
              <th class="px-6 py-3 text-left text-md font-semibold">Weight (%)</th>
              <th></th>
            </tr>
          </thead>
          <tbody class="divide-y divide-blue-300 bg-blue-50">
-           {% for activity_obj in activity_objects %}
+           {% for target_obj in target_objects %}
            <tr class="hover:bg-blue-100">
-             <td class="px-6 py-4 text-md text-blue-900 truncate max-w-xs">{{activity_obj.name}}</td>
-             <td class="px-6 py-4 text-md text-blue-900">{{activity_obj.assigned_user}}</td>
-             <td class="px-6 py-4 text-md text-blue-900">{{activity_obj.weight}}</td>
+             <td class="px-6 py-4 text-md text-blue-900">{{target_obj.metric_type}}</td>
+             <td class="px-6 py-4 text-md text-blue-900">{{target_obj.allowance_variance}}</td>
+             <td class="px-6 py-4 text-md text-blue-900">{{target_obj.target_value}}</td>
+             <td class="px-6 py-4 text-md text-blue-900">{{target_obj.weight}}</td>
              <td>
                <div class="relative inline-block text-left">
                  <!-- Actions Button -->
                  <button 
                    id="dropdownButton" 
-                   onclick="toggleDropdown('{{activity_obj.id}}')" 
+                   onclick="toggleDropdown('{{target_obj.id}}')" 
                    type="button" 
                    class="inline-flex w-full justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                    aria-expanded="false" 
@@ -73,7 +75,7 @@
    
                  <!-- Dropdown Menu -->
                  <div 
-                   id="dropdownMenu-{{activity_obj.id}}" 
+                   id="dropdownMenu-{{target_obj.id}}" 
                    class="hidden absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5"
                    role="menu"
                    aria-orientation="vertical"
@@ -81,14 +83,14 @@
                  >
                    <div class="py-1" role="none">
                      <a 
-                       href="{% url 'target_index' activity_obj.id %}" 
+                       href="#" 
                        class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900" 
                        role="menuitem"
                      >
                        View Activity's Targets
                      </a>
                      <a 
-                       href="{% url 'kra_activity_update' activity_obj.kra.id activity_obj.id %}" 
+                       href="#" 
                        class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900" 
                        role="menuitem"
                      >
@@ -113,8 +115,8 @@
 {% block scripts %}
 <script>
   // Function to toggle the dropdown visibility
-  function toggleDropdown(activityId) {
-    const dropdownMenu = document.getElementById(`dropdownMenu-${activityId}`);
+  function toggleDropdown(targetId) {
+    const dropdownMenu = document.getElementById(`dropdownMenu-${targetId}`);
      if (dropdownMenu) {  
     dropdownMenu.classList.toggle('hidden');
   }
