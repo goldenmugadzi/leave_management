@@ -18,34 +18,38 @@ from exchangelib import Credentials, Account, Configuration, Message, Mailbox
 from django.urls import reverse
 from django.template.loader import render_to_string
 from exchangelib import HTMLBody
-
-
-
+from django.contrib.auth import get_user_model
+from.models import*
+User = get_user_model()
 
 def create_fault(request):
+    users = User.objects.all() 
     if request.method == 'POST':
         form = EmployeeForm(request.POST or None)
         print("frm data: ", form.is_valid())
         print("request",request.POST )
         job_card_no = "JC"+ str(int(datetime.now().timestamp()))
+        user = User.objects.filter(id=request.POST['eUsername']).first()
 
         employee = Employee(
             jobcardnumber= job_card_no,
             eserialnumber= request.POST['eserialnumber'],
-            eUsername= request.POST['eUsername'],
+            eUsername= user.id,
             ephoneextension= request.POST['ephoneextension'],
             efault= request.POST['efault'],
             erepairstatus= request.POST['erepairstatus'],
             elocation= request.POST['elocation'],
-            eupdatedby= request.POST['eupdatedby'])
+            eupdatedby= request.user,
+            user=user
+            )
             
         print("empl data: ", employee)
         employee.save()
         print("Data saved successfully!")
         messages.success(request, "Fault created successfully!")
-        
+        print('user', users)
         return redirect('show_fault')
-    return render(request, 'hardware_faults/create_fault.html',{})
+    return render(request, 'hardware_faults/create_fault.html',{'users': users})
 
 def show_fault(request):
 
@@ -112,11 +116,12 @@ def show_fault_datatable(request):
         # Prepare response
         data = []
         for employee in page_obj:
+            print(employee)
             o = {
                 "jobcardnumber": employee.jobcardnumber,
                 "serialnumber": employee.eserialnumber,
                 "loggedindate": employee.eloggedindate,
-                "username": employee.eUsername,
+                "username": employee.user,
                 "phoneextension": employee.ephoneextension,
                 "fault": employee.efault,
                 "repairstatus": employee.erepairstatus,
@@ -143,12 +148,15 @@ def show_fault_datatable(request):
 
 def update_fault(request, eserialnumber):
     employee = Employee.objects.filter(eserialnumber=eserialnumber).first()
+    users = User.objects.all()
     form = EmployeeForm(request.POST)
     if request.method == 'POST':
+        user_id = request.POST['eUsername']
+        user = User.objects.filter(id=user_id).first()
+        
         print("request",request.POST)
         #form.save()
-        
-        employee.eUsername = request.POST['eUsername']
+        employee.eUsername = user_id
         employee.efault = request.POST['efault']
         employee.elocation = request.POST['elocation']
         employee.ephoneextension = request.POST['ephoneextension']
@@ -157,21 +165,21 @@ def update_fault(request, eserialnumber):
         employee.elastupdate = datetime.now()
         employee.save()
        
-        notify_fault_update(request, employee)
+        notify_fault_update(request,employee)
 
         return redirect('/table_fault')
         
-    return render(request,'hardware_faults/update_fault.html',{'employee':employee})   
+    return render(request,'hardware_faults/update_fault.html',{'employee':employee, 'users':users})   
 
 def notify_fault_update(request, employee):
    
-
+    user = User.objects.get(id=employee.eUsername)
     subject = f"Hardware Fault Update: {employee.eUsername}"
 
 
     # Email recipients (can be dynamic based on your logic)
     recipients = [
-        {"email": "goldenmugadzi@gmail.com", "name": "G Mugadzi"},
+        {"email": user.email},
        
     ]
     # Construct email context for the template
@@ -243,7 +251,7 @@ def ms_exhange_test(request):
         folder=account.sent,
         subject="Test Email",
         body="This is a test email",
-        to_recipients=[Mailbox(email_address='kcbosha@zetdc.co.zw'), Mailbox(email_address='mchivinge@zetdc.co.zw'), Mailbox(email_address='amugwambi@zetdc.co.zw'), Mailbox(email_address='akwaramba@zetdc.co.zw')]
+        to_recipients=[Mailbox(email_address='goldenmugadzi@gmail.com')]
     )
     message.send()
     return JsonResponse({"status": "success", "message": "Email sent successfully"})

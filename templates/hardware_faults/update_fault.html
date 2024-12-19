@@ -15,11 +15,27 @@
                 <label for="eserialnumber" class="block text-sm font-medium text-gray-700">Serial Number</label>
                 <input type="text" name="eserialnumber" value="{{ employee.eserialnumber }}" class="mt-1 block w-full px-3 py-2 bg-gulf-blue border border-blue-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
             </div>
-
-            <div class="mt-4">
-                <label for="eUsername" class="block text-sm font-medium text-gray-700">Username</label>
-                <input type="text" name="eUsername" value="{{ employee.eUsername }}" class="mt-1 block w-full px-3 py-2 bg-white border border-blue-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-            </div>
+            <div>
+              <label for="user" class="block text-sm font-medium leading-6 text-gray-900">
+                  Username
+              </label>
+              <div class="mt-2">
+                  <select
+                      id="eUsername"
+                      name="eUsername"
+                      autocomplete="Username"
+                      class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 px-2 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+                  >
+                      <option value="">Select user</option>
+                      {% for user in users %}
+                      <option value="{{ user.id }}" {% if employee.eUsername == user.id %}selected{% endif %}>
+                          {{ user.get_full_name }}
+                      </option>
+                      {% endfor %}
+                  </select>
+              </div>
+          </div>
+          
 
             <div class="mt-4">
               <label for="ephoneextension" class="block text-sm font-medium text-gray-700">Phone extension</label>
@@ -59,8 +75,8 @@
             </div>
       <div class="mt-10 grid grid-cols-3 gap-3">    
       <div class="mt-4">
-        <label for="eupdatedby" class="block text-sm font-medium text-gray-700">Updatedby</label>
-        <input type="text" name="eupdatedby" value="{{employee.eupdatedby}}" class="mt-1 block w-full px-3 py-2 bg-white border border-blue-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+        <label for="eupdatedby" class="block text-sm font-medium text-gray-700"></label>
+        <input type="hidden" id="hidden" name="eupdatedby" value="{{employee.eupdatedby}}" class="mt-1 block w-full px-3 py-2 bg-white border border-blue-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
     </div>
       </div>
       <div class="flex justify-end mt-4 gap-4">

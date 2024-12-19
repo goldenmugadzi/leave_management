@@ -36,21 +36,25 @@
               </div>
             </div>
             <div>
-                <label
-                  for="Username"
-                  class="block text-sm font-medium leading-6 text-gray-900"
-                  >Username</label
+              <label
+                for="user"
+                class="block text-sm font-medium leading-6 text-gray-900"
+                >Username</label
+              >
+              <div class="mt-2">
+                <select
+                  id="Username"
+                  name="eUsername"
+                  autocomplete="Username"
+                  class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 px-2 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
                 >
-                <div class="mt-2">
-                  <input
-                    required
-                    type="text"
-                    name="eUsername"
-                    id="eUsername"
-                    class="block w-full bg-gulf-blue-50 rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 px-2 ring-inset ring-blue-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                  />
-                </div>
+                  <option>Select user</option>
+                  {% for user in users %}
+                  <option value="{{ user.id }}" {% if user.id == form.instance.eUsername %}selected{% endif %}>{{ user.get_full_name }}</option>
+                  {% endfor %}
+                </select>
               </div>
+            </div>
                <div>
               <label
                 for="fault"

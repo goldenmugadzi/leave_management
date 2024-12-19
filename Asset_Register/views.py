@@ -349,3 +349,77 @@ def update_product(request, id):
         return redirect('/table_product')
         
     return render(request,'asset_register/updateproduct.html',{'producttype':producttype}) 
+
+def show_asset_report(request):
+    
+    return render(request, 'asset_register/asset_report.html')
+
+def show_report_datatable(request):
+    
+    try:
+        draw = int(request.GET.get('draw', default=1))
+        start = int(request.GET.get('start', default=0))
+        length = int(request.GET.get('length', default=10))
+        search_value = request.GET.get('search[value]', default='')
+
+        product = ProductType.objects.all()
+        print("product", product)
+
+        if search_value:
+            product = product.filter(
+                product_type__icontains=search_value
+            ) | product.filter(
+                code__icontains=search_value
+            )
+
+        # Total number of records before filtering
+        total = product.count()
+
+          # Sorting
+        order_column = request.GET.get('order[0][column]')
+        order_dir = request.GET.get('order[0][dir]')
+
+        if order_column is not None and order_dir is not None:
+            column_map = {
+                "0": "id",
+                "1": "product_type",
+                "2": "code",
+            }
+
+            column_name = column_map.get(order_column)
+            if column_name:
+                if order_dir == 'desc':
+                    column_name = f'-{column_name}'  # Add descending order prefix
+                product= product.order_by(column_name)
+
+
+        # Pagination
+        paginator = Paginator(product, length)
+        page_number = start // length + 1
+        page_obj = paginator.get_page(page_number)
+
+
+        product_list = []
+        for product in page_obj:
+            new_product = {
+                "id": product.id,
+                "product_type": product.product_type,
+                "code": product.code,
+            }
+            product_list.append(new_product)
+        print("product_list: ", product_list)
+        return JsonResponse({
+            'draw': draw,
+            'recordsTotal': total,
+            'recordsFiltered': total,
+            'data': product_list
+        })
+    except Exception as ex:
+        print(ex)
+        return JsonResponse({
+            'draw': 1,
+            'recordsTotal': 0,
+            'recordsFiltered': 0,
+            'data': []
+        })
+
