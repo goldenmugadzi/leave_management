@@ -1,9 +1,9 @@
 from typing import List
 from dataclasses import dataclass
 
-from ..repository.kra import KRARepository, KraActivityRepository
+from ..repository.kra import KRARepository, KraActivityRepository, ActivityTargetRepository
 from it.users.models import UserProfile
-from ..models import YearQuarter, KeyResultArea, Activity
+from ..models import YearQuarter, KeyResultArea, Activity,Target
 from ..helpers.types.kra import KRAType
 
 class KRAErr(Exception):
@@ -67,3 +67,13 @@ class ActivityService:
         except Exception as e:
             raise KRAErr(f"Failed to retrieve kra activities with error: {e}")
     
+    
+@dataclass
+class TargetService:
+    target_repository: ActivityTargetRepository
+    
+    def fetch_by_activity_use_case(self, activity_id: int)->List[Target]:
+        try:
+            return self.target_repository.fetch_by_activity_id(activity_id=activity_id)
+        except Exception as e:
+            raise KRAErr(f"Retrieve all targets by activity id failed with error: {e}")

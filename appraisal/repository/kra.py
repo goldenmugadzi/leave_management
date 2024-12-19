@@ -1,5 +1,5 @@
 from typing import List
-from ..models import KeyResultArea, YearQuarter, Activity
+from ..models import KeyResultArea, YearQuarter, Activity, Target
 from ..helpers.types.kra import KRAType
 from it.users.models import UserProfile
 
@@ -165,3 +165,11 @@ class KraActivityRepository:
             raise Exception(f"Activity object retrieval by PK failed with error: {e}")
 
 
+class ActivityTargetRepository:
+    
+    def fetch_by_activity_id(self, activity_id: int)->List[Target]:
+        try:
+            queryset = Target.objects.filter(activity__id=activity_id).select_related("activity")
+            return queryset
+        except Exception as e:
+                raise Exception(f"Targets retrieval by PK failed with error: {e}")
