@@ -1,11 +1,14 @@
 from pydantic import BaseModel, Field, field_validator
-from typing import Literal
+from decimal import Decimal
+from typing import Literal, Annotated, Optional
 from ...models.kra import METRIC_TYPES
 
 class KRAType(BaseModel):
     name: str = Field(..., description="The name of the KRA.")
     description: str = Field(..., description="The description of KRA.")
-    weight: float = Field(...,description="The weight of KRA.")
+    weight: Annotated[Decimal, Field(max_digits=5, decimal_places=2)] = Field(
+        ..., description="The weight of the KRA."
+    )
 
     @field_validator('weight')
     @classmethod
@@ -17,8 +20,21 @@ class KRAType(BaseModel):
 MetricTypeValues = Literal[tuple(metric[1] for metric in METRIC_TYPES)]
 
 class TargetType(BaseModel):
-    name: str = Field(..., description="The name of the the Target.")
     metric_type: MetricTypeValues = Field(..., description="The metric type of the Target.")
-    weight: float = Field(...,description="The weight of the Target.")
-    allowance_variance: float = Field(...,description="The allowance variance of the Target.")
-    target_value: float = Field(...,description="The target value of the Target.")
+    name: Annotated[str, Field(max_length=255)] = Field(
+        ..., description="The name of the Target."
+    )
+    weight: Annotated[Decimal, Field(max_digits=5, decimal_places=2)] = Field(
+        ..., description="The weight of the Target."
+    )
+    allowance_variance: Annotated[Decimal, Field(max_digits=10, decimal_places=2)] = Field(
+        ..., description="The allowance variance of the Target."
+    )
+    target_value: Annotated[Decimal, Field(max_digits=10, decimal_places=2)] = Field(
+        ..., description="The target value of the Target."
+    )
+    unit: Optional[Annotated[str, Field(max_length=30)]] = Field(
+        None, description="The unit of the Target."
+    )
+    
+    
