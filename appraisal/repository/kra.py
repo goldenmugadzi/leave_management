@@ -1,6 +1,6 @@
 from typing import List
 from ..models import KeyResultArea, YearQuarter, Activity, Target
-from ..helpers.types.kra import KRAType
+from ..helpers.types.kra import KRAType, TargetType
 from it.users.models import UserProfile
 
 class KRARepository:
@@ -173,3 +173,18 @@ class ActivityTargetRepository:
             return queryset
         except Exception as e:
                 raise Exception(f"Targets retrieval by PK failed with error: {e}")
+            
+    def create(self, activity_obj: Activity, data: TargetType)->Target:
+        try:
+            obj = Target.objects.create(activity=activity_obj,
+                                        metric_type=data.metric_type,
+                                        name=data.name,
+                                        weight=data.weight,
+                                        allowance_variance=data.allowance_variance,
+                                        target_value=data.target_value,
+                                        unit=data.unit
+                                        )
+            return obj
+        except Exception as e:
+                raise Exception(f"Targets retrieval by PK failed with error: {e}")
+            
