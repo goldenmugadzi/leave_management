@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from ..repository.kra import KRARepository, KraActivityRepository, ActivityTargetRepository
 from it.users.models import UserProfile
 from ..models import YearQuarter, KeyResultArea, Activity,Target
-from ..helpers.types.kra import KRAType
+from ..helpers.types.kra import KRAType, TargetType
 
 class KRAErr(Exception):
     ...
@@ -60,20 +60,26 @@ class ActivityService:
             return self.activity_repo.update(activity_obj=activity_object, assigned_user=assigned_user, data=data)
         except Exception as e:
             raise KRAErr(f"Failed to update kra activities with error: {e}")
-    
+
     def get_by_id_use_case(self, activity_id: int)->Activity:
         try:
             return self.activity_repo.get_activity_by_id(activity_id=activity_id)
         except Exception as e:
             raise KRAErr(f"Failed to retrieve kra activities with error: {e}")
-    
-    
+
+
 @dataclass
 class TargetService:
     target_repository: ActivityTargetRepository
-    
+
     def fetch_by_activity_use_case(self, activity_id: int)->List[Target]:
         try:
             return self.target_repository.fetch_by_activity_id(activity_id=activity_id)
         except Exception as e:
             raise KRAErr(f"Retrieve all targets by activity id failed with error: {e}")
+
+    def create_use_case(self, activity_obj: Activity, payload: TargetType)->Target:
+        try:
+            return self.target_repository.create(activity_obj=activity_obj, data=payload)
+        except Exception as e:
+            raise KRAErr(f"Create failed with error: {e}")
