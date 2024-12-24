@@ -83,3 +83,9 @@ class TargetService:
             return self.target_repository.create(activity_obj=activity_obj, data=payload)
         except Exception as e:
             raise KRAErr(f"Create failed with error: {e}")
+        
+    def get_by_id_use_case(self, target_id: int)->Target:
+        try:
+            return self.target_repository.get_target_by_id(target_id=target_id)
+        except Exception as e:
+            raise KRAErr(f"Get by pk failed with error: {e}")

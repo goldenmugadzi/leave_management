@@ -187,4 +187,14 @@ class ActivityTargetRepository:
             return obj
         except Exception as e:
                 raise Exception(f"Targets retrieval by PK failed with error: {e}")
-            
+    
+    def get_target_by_id(self, target_id: int)->Target:
+        try:
+            target_object = Target.objects.select_related('activity').filter(id=target_id).first()
+
+            if target_object is None:
+                raise Exception("Target object not found")
+
+            return target_object
+        except Exception as e:
+            raise Exception(f"Target object retrieval by PK failed with error: {e}")
