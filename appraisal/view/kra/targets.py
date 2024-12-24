@@ -77,3 +77,55 @@ class TargetCreateView(SuccessMessageMixin, CreateView):
     
     def get_success_url(self) -> str:
         return reverse('target_index', kwargs={"activity_id": self.kwargs.get('activity_id')})
+
+class TargetUpdateView(SuccessMessageMixin, UpdateView):
+    model = Target
+    form_class = TargetCreateForm
+    template_name = 'appraisal/kra/targets/create_update.html'
+    success_message = 'Target updated successfully'
+    context_object_name = "target_form"
+    
+    @property
+    def get_target_object(self):
+        repo = ActivityTargetRepository()
+        service_handler = TargetService(target_repository=repo)
+        target_obj = service_handler.get_by_id_use_case(target_id=self.kwargs.get('target_id'))
+        return target_obj
+    
+    def get_object(self, queryset=None):
+        """
+        Override the default get_object method to retrieve the activity object using a custom service.
+        """
+        obj = self.get_target_object
+        return obj
+
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context[self.context_object_name] = context.get("form")
+        context["activity_object"] = self.get_target_object.activity
+        return context
+    
+    def form_valid(self, form):
+        try:
+            payload = build_payload_target(request=self.request, form=form)
+            target_object = self.get_target_object
+                 
+            repo = ActivityTargetRepository()
+            service_handler = TargetService(target_repository=repo)
+            target_object = service_handler.update_use_case(target_obj=target_object,
+                                                              payload=payload)
+            form.instance = target_object
+        except ValidationError:
+            return self.form_invalid(form)
+        except Exception as e:
+            messages.error(self.request, f"An unexpected error occurred: {e}")
+            return self.form_invalid(form)
+        return super().form_valid(form)
+    
+    def get_success_url(self) -> str:
+        """
+        Redirects to the index page after successful update.
+        """
+        return reverse('target_update', kwargs={"activity_id": self.kwargs.get('activity_id'), "target_id": self.kwargs.get('target_id')})
+    

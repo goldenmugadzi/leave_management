@@ -83,14 +83,7 @@
                  >
                    <div class="py-1" role="none">
                      <a 
-                       href="#" 
-                       class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900" 
-                       role="menuitem"
-                     >
-                       View Activity's Targets
-                     </a>
-                     <a 
-                       href="#" 
+                       href="{% url 'target_update' activity_object.id target_obj.id %}" 
                        class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900" 
                        role="menuitem"
                      >
