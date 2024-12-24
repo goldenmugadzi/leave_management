@@ -186,7 +186,7 @@ class ActivityTargetRepository:
                                         )
             return obj
         except Exception as e:
-                raise Exception(f"Targets retrieval by PK failed with error: {e}")
+                raise Exception(f"Targets create repo failed with error: {e}")
     
     def get_target_by_id(self, target_id: int)->Target:
         try:
