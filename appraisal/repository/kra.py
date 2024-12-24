@@ -134,25 +134,25 @@ class KraActivityRepository:
             if assigned_user != activity_obj.assigned_user:
                 activity_obj.assigned_user = assigned_user
                 updated = True
-            
+
             if data.name != activity_obj.name:
                 activity_obj.name = data.name
                 updated = True
-            
+
             if data.description != activity_obj.description:
                 activity_obj.description = data.description
                 updated = True
-                
+
             if data.weight != activity_obj.weight:
                 activity_obj.weight = data.weight
                 updated = True
-            
+
             if updated:
                 activity_obj.save()
-            return activity_obj  
+            return activity_obj
         except Exception as e:
             raise Exception(f"KRA update Repo failed with error: {e}")
-        
+
     def get_activity_by_id(self, activity_id: int)->Activity:
         try:
             activity_object = Activity.objects.select_related('kra').filter(id=activity_id).first()
@@ -166,14 +166,14 @@ class KraActivityRepository:
 
 
 class ActivityTargetRepository:
-    
+
     def fetch_by_activity_id(self, activity_id: int)->List[Target]:
         try:
             queryset = Target.objects.filter(activity__id=activity_id).select_related("activity")
             return queryset
         except Exception as e:
                 raise Exception(f"Targets retrieval by PK failed with error: {e}")
-            
+
     def create(self, activity_obj: Activity, data: TargetType)->Target:
         try:
             obj = Target.objects.create(activity=activity_obj,
@@ -187,7 +187,7 @@ class ActivityTargetRepository:
             return obj
         except Exception as e:
                 raise Exception(f"Targets create repo failed with error: {e}")
-    
+
     def get_target_by_id(self, target_id: int)->Target:
         try:
             target_object = Target.objects.select_related('activity').filter(id=target_id).first()
@@ -198,3 +198,36 @@ class ActivityTargetRepository:
             return target_object
         except Exception as e:
             raise Exception(f"Target object retrieval by PK failed with error: {e}")
+
+    def update(self, target_obj: Target, payload: TargetType)->Target:
+        try:
+            updated = False
+            if payload.metric_type != target_obj.metric_type:
+                target_obj.metric_type = payload.metric_type
+                updated = True
+
+            if payload.name != target_obj.name:
+                target_obj.name = payload.name
+                updated = True
+
+            if payload.weight != target_obj.weight:
+                target_obj.weight = payload.weight
+                updated = True
+
+            if payload.allowance_variance != target_obj.allowance_variance:
+                target_obj.allowance_variance = payload.allowance_variance
+                updated = True
+
+            if payload.target_value != target_obj.target_value:
+                target_obj.target_value = payload.target_value
+                updated = True
+
+            if payload.unit != target_obj.unit:
+                target_obj.unit = payload.unit
+                updated = True
+
+            if updated:
+                target_obj.save()
+            return target_obj
+        except Exception as e:
+            raise Exception(f"Target update Repo failed with error: {e}")

@@ -64,3 +64,41 @@ class TestTargeServiceCreate(TestCase):
             except KRAErr as e:
                 # ================= ASSERT ========================
                 self.assertEqual(str(e), f"Create failed with error: {db_err}")
+
+    def test_update_repo_called_once(self):
+        # ========================= ARRANGE =========================
+        mock_target_obj = self.mock_target_obj()
+        mock_payload = self.mock_payload()
+
+        # ================= ACT =====================
+        self.service_handler.update_use_case(target_obj=mock_target_obj, payload=mock_payload)
+
+        # ================ ASSERT ===================
+        self.mock_repo.update.assert_called_once_with(target_obj=mock_target_obj, payload=mock_payload)
+
+    def test_update_usecase_success(self):
+        # ========================= ARRANGE =========================
+        mock_target_obj = self.mock_target_obj()
+        mock_payload = self.mock_payload()
+        self.mock_repo.update.return_value = mock_payload
+
+        # ================= ACT =====================
+        result = self.service_handler.update_use_case(target_obj=mock_target_obj, payload=mock_payload)
+
+        # ================ ASSERT ===================
+        self.assertEqual(result, mock_payload)
+
+    def test_update_usecase_failure(self):
+        # =========== ARRANGE ==============
+        mock_target_obj = self.mock_target_obj()
+        mock_payload = self.mock_payload()
+        mock_db_err = "Some database error"
+
+        with patch.object(self.mock_repo, 'update', side_effect=Exception(mock_db_err)):
+            try:
+                # ============ ACT ===============
+                self.service_handler.update_use_case(target_obj=mock_target_obj, payload=mock_payload)
+                self.fail("Expected an error but got none")
+            except KRAErr as e:
+                # ============ ASSERT ===============
+                self.assertEqual(str(e), f"Failed to update target with error: {mock_db_err}")
