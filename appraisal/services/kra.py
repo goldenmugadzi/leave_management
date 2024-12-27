@@ -1,10 +1,10 @@
 from typing import List
 from dataclasses import dataclass
 
-from ..repository.kra import KRARepository, KraActivityRepository, ActivityTargetRepository
+from ..repository.kra import KRARepository, KraActivityRepository, ActivityTargetRepository, TargetScoreRepository
 from it.users.models import UserProfile
-from ..models import YearQuarter, KeyResultArea, Activity,Target
-from ..helpers.types.kra import KRAType, TargetType
+from ..models import YearQuarter, KeyResultArea, Activity,Target, TargetScore
+from ..helpers.types.kra import KRAType, TargetType, TargetScoreType
 
 class KRAErr(Exception):
     ...
@@ -95,3 +95,13 @@ class TargetService:
             return self.target_repository.update(target_obj=target_obj, payload=payload)
         except Exception as e:
             raise KRAErr(f"Failed to update target with error: {e}")
+
+@dataclass
+class TargetScoreService:
+    target_score_repository: TargetScoreRepository
+
+    def create_use_case(self, target_obj: Target, data: TargetScoreType)->TargetScore:
+        try:
+            return self.target_score_repository.create(target_obj=target_obj, data=data)
+        except Exception as e:
+            raise KRAErr(f"Failed to create target-score with error: {e}")

@@ -1,11 +1,11 @@
 from unittest import TestCase
 from unittest.mock import Mock, patch
 
-from ..models.kra import Activity, Target
+from ..models.kra import Activity, Target, TargetScore
 
-from ..repository.kra import ActivityTargetRepository
-from ..services.kra import KRAErr, TargetService
-from ..helpers.types.kra import TargetType
+from ..repository.kra import ActivityTargetRepository, TargetScoreRepository
+from ..services.kra import KRAErr, TargetService, TargetScoreService
+from ..helpers.types.kra import TargetType, TargetScoreType
 
 class TestTargeServiceCreate(TestCase):
     def setUp(self) -> None:
@@ -102,3 +102,61 @@ class TestTargeServiceCreate(TestCase):
             except KRAErr as e:
                 # ============ ASSERT ===============
                 self.assertEqual(str(e), f"Failed to update target with error: {mock_db_err}")
+
+
+class TestTargetScoreService(TestCase):
+    def setUp(self) -> None:
+        self.mock_repo = Mock(spec=TargetScoreRepository)
+        self.service = TargetScoreService(target_score_repository=self.mock_repo)
+
+    def mock_target_obj(self):
+        mock = Mock(spec=Target)
+        return mock
+
+    def mock_payload(self):
+        mock = Mock(spec=TargetScoreType)
+        return mock
+
+    def mock_target_score_obj(self):
+        mock = Mock(spec=TargetScore)
+        return mock
+
+    def test_create_repo_called_once(self):
+        # ============= ARRANGE =================
+        mock_target_object = self.mock_target_obj()
+        mock_payload = self.mock_payload()
+
+        # ============ ACT ====================
+        self.service.create_use_case(target_obj=mock_target_object, data=mock_payload)
+
+        # ============ ASSERT ===================
+        self.mock_repo.create.assert_called_once_with(target_obj=mock_target_object, data=mock_payload)
+
+    def test_create_use_case_success(self):
+        # ============= ARRANGE =================
+        mock_target_object = self.mock_target_obj()
+        mock_payload = self.mock_payload()
+        mock_score_obj = self.mock_target_score_obj()
+
+        self.mock_repo.create.return_value = mock_score_obj
+
+        # ============ ACT ====================
+        result = self.service.create_use_case(target_obj=mock_target_object, data=mock_payload)
+
+        # ============ ASSERT ===================
+        self.assertEqual(result, mock_score_obj)
+
+    def test_create_usecase_failure(self):
+        # =========== ARRANGE ==============
+        mock_target_object = self.mock_target_obj()
+        mock_payload = self.mock_payload()
+        mock_db_err = "Some database error"
+
+        with patch.object(self.mock_repo, 'create', side_effect=Exception(mock_db_err)):
+            try:
+                # ============ ACT ===============
+                self.service.create_use_case(target_obj=mock_target_object, data=mock_payload)
+                self.fail("Expected an error but got none")
+            except KRAErr as e:
+                # ============ ASSERT ===============
+                self.assertEqual(str(e), f"Failed to create target-score with error: {mock_db_err}")
