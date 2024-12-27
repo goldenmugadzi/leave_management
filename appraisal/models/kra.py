@@ -50,7 +50,6 @@ class Target(TimeStamp):
 
 class TargetScore(TimeStamp):
     target = models.ForeignKey(Target, on_delete=models.CASCADE)
-    actual_performance = models.DecimalField(max_digits=10, decimal_places=2)
     score = models.DecimalField(max_digits=5, decimal_places=2)
     actual_variance = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     comments = models.TextField()
