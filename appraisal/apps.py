@@ -34,3 +34,4 @@ class AppraisalConfig(AppConfig):
         post_migrate.connect(load_strength_weakness_handler, sender=self)
         from appraisal.signals.appraisal import create_performance_review_post_save_handler
         from appraisal.signals.appraisal import create_training_development_post_save_handler
+        from appraisal.signals.kra import create_target_score_post_save_handler
