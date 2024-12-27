@@ -36,5 +36,12 @@ class TargetType(BaseModel):
     unit: Optional[Annotated[str, Field(max_length=30)]] = Field(
         None, description="The unit of the Target."
     )
-    
-    
+
+class TargetScoreType(BaseModel):
+    score: Annotated[Decimal, Field(max_digits=10, decimal_places=2)] = Field(
+        ..., description="The score of the target."
+    )
+    actual_variance: Annotated[Decimal, Field(max_digits=10, decimal_places=2)] = Field(
+        ..., description="The actual variance of the target."
+    )
+    comment: Optional[str] = Field(None, description="The comment of the target.")
