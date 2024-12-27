@@ -1,6 +1,6 @@
 from typing import List
-from ..models import KeyResultArea, YearQuarter, Activity, Target
-from ..helpers.types.kra import KRAType, TargetType
+from ..models import KeyResultArea, YearQuarter, Activity, Target, TargetScore
+from ..helpers.types.kra import KRAType, TargetType, TargetScoreType
 from it.users.models import UserProfile
 
 class KRARepository:
@@ -231,3 +231,11 @@ class ActivityTargetRepository:
             return target_obj
         except Exception as e:
             raise Exception(f"Target update Repo failed with error: {e}")
+
+class TargetScoreRepository:
+    def create(self, target_obj: Target, data: TargetScoreType)->TargetScore:
+        try:
+            obj = TargetScore.objects.create(target=target_obj, score=data.score, actual_variance=data.actual_variance)
+            return obj
+        except Exception as e:
+            raise Exception(f"score create repo failed with error: {e}")
