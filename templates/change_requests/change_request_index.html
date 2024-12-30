@@ -19,10 +19,22 @@
         </div>
         <div class="flex justify-between items-center mb-5">
           <a
+          id="all_schedules"
+          class="bg-gulf-blue-600 hover:bg-gulf-blue-800 text-white font-bold py-2 px-4 rounded m-2"
+          >
+            ALL
+          </a>
+          <a
+          id="incoming_cr"
+          class="bg-gulf-blue-600 hover:bg-gulf-blue-800 text-white font-bold py-2 px-4 rounded m-2"
+          >
+            AWAITING ACTION
+          </a>
+          <a
             href="/change_requests/create_change_request"
             class="bg-gulf-blue-600 hover:bg-gulf-blue-800 text-white font-bold py-2 px-4 rounded"
             >
-            CREATE CHANGE REQUEST
+            ADD NEW
           </a>
         </div>
       </div>
@@ -59,6 +71,8 @@
 <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 <script>
+
+  const user_title = "{{user_title}}"
 
   $(document).ready(function () {
     var table = $("#change_request_index").DataTable({
@@ -139,57 +153,35 @@
           orderable: false,
           searchable: false,
           render: function (data, type, row, meta) {
-            return `
+            let edit_button = `
               <a type="button" class="btn btn-info" href='/change_requests/update_change_request?i=${row.cr_id}' >
                 <i class="fa-solid fa-pen-to-square"></i>              
-              </a>
+              </a>`;
+            let view_button = `
               <a type="button" class="btn btn-secondary" href='/change_requests/view_change_request?i=${row.cr_id}' >
                 <i class="fa-solid fa-circle-info"></i>
               </a>`;
+            if(user_title === row.created_by){
+              return edit_button + view_button;
+            } else {
+              return view_button;
+            }
           },
         }
       ],
       order: [[5, 'desc']]
     });
 
-    $("#search_filter").on("click", function () {
-        const region = document.getElementById("region").value;
-        const cr_type = document.getElementById("cr_type").value;
-        const cr_app = document.getElementById("cr_app").value;
-        const cost_center = document.getElementById("cost_center").value;
-        const startDate = document.getElementById("start_date").value;
-        const endDate = document.getElementById("end_date").value;
-        const status = document.getElementById("status").value;
-    
-        var newUrl = `/change_requests/datatables/filter?start_date=${startDate}&end_date=${endDate}&status=${status}&cost_center=${cost_center}&region=${region}&cr_type=${cr_type}&cr_app=${cr_app}`;
-        table.ajax.url(newUrl).load();
-    })
+    $("#all_schedules").on("click", function () {
+      var newUrl = "/change_requests/datatables/all";
+      table.ajax.url(newUrl).load();
+    });
 
-    $("#export_filter").on("click", function () {
-        const region = document.getElementById("region").value;
-        const cr_type = document.getElementById("cr_type").value;
-        const cr_app = document.getElementById("cr_app").value;
-        const cost_center = document.getElementById("cost_center").value;
-        const startDate = document.getElementById("start_date").value;
-        const endDate = document.getElementById("end_date").value;
-        const status = document.getElementById("status").value;
-    
-        var newUrl = `/change_requests/datatables/export?start_date=${startDate}&end_date=${endDate}&status=${status}&cost_center=${cost_center}&region=${region}&cr_type=${cr_type}&cr_app=${cr_app}`;
-        window.location.href = newUrl;
-    })
+    $("#incoming_cr").on("click", function () {
+      var newUrl = "/change_requests/datatables/incoming_cr";
+      table.ajax.url(newUrl).load();
+    });
 
-    $("#reset_filter").on("click", function () {
-        document.getElementById("region").value = "";
-        document.getElementById("cr_type").value = "";
-        document.getElementById("cr_app").value = "";
-        document.getElementById("cost_center").value = "";
-        document.getElementById("start_date").value = "";
-        document.getElementById("end_date").value = "";
-        document.getElementById("status").value = "";
-
-        var newUrl = "/change_requests/datatables/all_schedules";
-        table.ajax.url(newUrl).load();
-    })
   });
 
   const region = document.getElementById('region');
