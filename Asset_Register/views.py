@@ -350,69 +350,96 @@ def update_product(request, id):
         
     return render(request,'asset_register/updateproduct.html',{'producttype':producttype}) 
 
-def show_asset_report(request):
+def show_report(request):
     
     return render(request, 'asset_register/asset_report.html')
 
 def show_report_datatable(request):
-    
     try:
         draw = int(request.GET.get('draw', default=1))
         start = int(request.GET.get('start', default=0))
         length = int(request.GET.get('length', default=10))
         search_value = request.GET.get('search[value]', default='')
 
-        product = ProductType.objects.all()
-        print("product", product)
+        assets = ZetdcAssets.objects.all()
+        print("assets ", assets)
+
+        status_filter = request.GET.get('status')
+        station_filter = request.GET.get('station')
+        pick_station_filter = request.GET.get('pickStation')
+        start_date_filter = request.GET.get('start_date')
+        end_date_filter = request.GET.get('end_date')
+
+        if status_filter and status_filter != "Select Status":
+            assets = assets.filter(asset_state=status_filter)
+        if station_filter and station_filter != "Select Station":
+            # Adjust field name as needed
+            assets = assets.filter(department=station_filter)
+        if pick_station_filter:  # No "Select Pick Station" option in this example
+            assets = assets.filter(regions=pick_station_filter) # Adjust field name as needed
+        if start_date_filter:
+            assets = assets.filter(date_purchased__gte=start_date_filter)
+        if end_date_filter:
+            assets = assets.filter(date_purchased__lte=end_date_filter)
+
 
         if search_value:
-            product = product.filter(
-                product_type__icontains=search_value
-            ) | product.filter(
-                code__icontains=search_value
+            assets = assets.filter(
+                Q(asset_state__icontains=search_value) |
+                Q(product_type__product_type__icontains=search_value) |
+                Q(sections__section__icontains=search_value) |
+                Q(regions__region__icontains=search_value) |
+                Q(purchase_cost__icontains=search_value)
             )
 
         # Total number of records before filtering
-        total = product.count()
+        total = assets.count()
 
-          # Sorting
+        # Sorting
         order_column = request.GET.get('order[0][column]')
         order_dir = request.GET.get('order[0][dir]')
 
         if order_column is not None and order_dir is not None:
             column_map = {
                 "0": "id",
-                "1": "product_type",
-                "2": "code",
+                "1": "asset_state",
+                "2": "product_type__product_type",
+                "3": "sections__section",
+                "4": "regions__region",
+                "5": "purchase_cost",
+                "6": "date_purchased",
             }
 
             column_name = column_map.get(order_column)
             if column_name:
                 if order_dir == 'desc':
                     column_name = f'-{column_name}'  # Add descending order prefix
-                product= product.order_by(column_name)
-
+                assets = assets.order_by(column_name)
 
         # Pagination
-        paginator = Paginator(product, length)
+        paginator = Paginator(assets, length)
         page_number = start // length + 1
         page_obj = paginator.get_page(page_number)
 
-
-        product_list = []
-        for product in page_obj:
-            new_product = {
-                "id": product.id,
-                "product_type": product.product_type,
-                "code": product.code,
+        # Process assets
+        asset_list = []
+        for asset in page_obj:
+            asset_dict = {
+                "id": asset.id,
+                "asset_state": asset.asset_state,
+                "product_type": asset.product_type.product_type if asset.product_type else None,
+                "department": asset.sections.section if asset.sections else None,
+                "regions": asset.regions.region if asset.regions else None,
+                "purchase_cost": asset.purchase_cost,
+                "date_purchased": asset.date_purchased,
             }
-            product_list.append(new_product)
-        print("product_list: ", product_list)
+            asset_list.append(asset_dict)
+
         return JsonResponse({
             'draw': draw,
             'recordsTotal': total,
             'recordsFiltered': total,
-            'data': product_list
+            'data': asset_list
         })
     except Exception as ex:
         print(ex)
@@ -422,4 +449,5 @@ def show_report_datatable(request):
             'recordsFiltered': 0,
             'data': []
         })
+
 

@@ -174,8 +174,7 @@ def update_fault(request, eserialnumber):
 def notify_fault_update(request, employee):
    
     user = User.objects.get(id=employee.eUsername)
-    subject = f"Hardware Fault Update: {employee.eUsername}"
-
+    subject = f"Hardware Fault Update: {user.first_name} {user.last_name}"
 
     # Email recipients (can be dynamic based on your logic)
     recipients = [
@@ -184,7 +183,7 @@ def notify_fault_update(request, employee):
     ]
     # Construct email context for the template
     context = {
-    "user_fullname": employee.eUsername,
+    "user_fullname": f"{user.first_name} {user.last_name}",
     "message": f"The fault update for {employee.efault} is {employee.erepairstatus} for more information contact the Hardware Technician {employee.eupdatedby} at the workshop with the following reference {employee.jobcardnumber}",
     "fault_details": {
         "Username": employee.eUsername,
