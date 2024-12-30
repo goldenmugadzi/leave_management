@@ -1,0 +1,47 @@
+{% extends "admin_layout.html" %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<div class="grid grid-cols-1">
+        <div class="bg-gulf-blue-100 shadow-lg rounded-lg p-6">
+            <div class="flex justify-between">
+                <div>
+                    <h1 class="font-bold">Target Score</h1>
+                    <p class="text-sm text-muted">
+                        Target score for <strong>{{ target_score_object.target.name }}</strong>.
+                        Expects target of <strong>{{ target_score_object.target.target_value }}</strong> and allowed variance of <strong>{{ target_score_object.target.allowance_variance }}</strong>
+                    </p>
+                </div>
+                
+            </div>
+                
+        </div>
+</div>
+<div class="container my-4">
+        <form method="post">
+            {%csrf_token%}
+            <div class="flex gap-6">
+                <div 
+                    class="flex-1 px-2 shadow-xl rounded-lg border-2"
+                    >
+                        {{ score_form.score|as_crispy_field }}
+                </div>
+                <div 
+                    class="flex-1 px-2 w-80 shadow-xl rounded-lg border-2"
+                    >
+                        {{ score_form.actual_variance|as_crispy_field }}
+                </div>
+            </div>
+            <div class="my-2 shadow-xl rounded-lg border">
+                <div class="p-4">
+                    {{ score_form.comments|as_crispy_field }}
+                </div>
+            </div>
+            
+            <div class="flex justify-center my-2">
+                <button type="submit" class="w-96 bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4 rounded">Save</button>
+            </div>
+        </form>
+         
+</div>
+{% endblock %}

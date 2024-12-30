@@ -1,15 +1,14 @@
-from typing import Any, Dict, List
+
 from django.urls import reverse
 from django.views.generic import TemplateView
 from django.views.generic.edit import CreateView, UpdateView
 from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib import messages
-from ...models import Activity, KeyResultArea, Target
-from ...forms import ActivityCreateForm, TargetCreateForm
-from ...repository.kra import ActivityTargetRepository, KraActivityRepository
-from ...services.kra import TargetService, ActivityService
-from ...helpers.types.kra import KRAType
-from .helper import build_payload_target
+from ...models import Target, TargetScore
+from ...forms import TargetCreateForm, TargetScoreForm
+from ...repository.kra import ActivityTargetRepository, KraActivityRepository, TargetScoreRepository
+from ...services.kra import TargetService, ActivityService, TargetScoreService
+from .helper import build_payload_target, build_payload_score
 from pydantic import ValidationError
 
 
@@ -128,4 +127,53 @@ class TargetUpdateView(SuccessMessageMixin, UpdateView):
         Redirects to the index page after successful update.
         """
         return reverse('target_update', kwargs={"activity_id": self.kwargs.get('activity_id'), "target_id": self.kwargs.get('target_id')})
+    
+    
+class TargetScoreUpdateView(SuccessMessageMixin, UpdateView):
+    model = TargetScore
+    form_class = TargetScoreForm
+    template_name = 'appraisal/kra/targets/score_form.html'
+    success_message = 'Scoring was set successfully'
+    context_object_name = "score_form"
+    
+    @property
+    def get_target_score_object(self):
+        repo = TargetScoreRepository()
+        service_handler = TargetScoreService(target_score_repository=repo)
+        obj = service_handler.get_by_target_id_use_case(target_id=self.kwargs.get('target_id'))
+        return obj
+    
+    def get_object(self, queryset=None):
+        """
+        Override the default get_object method to retrieve the activity object using a custom service.
+        """
+        obj = self.get_target_score_object
+        return obj
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context[self.context_object_name] = context.get("form")
+        context["target_score_object"] = self.get_target_score_object
+        return context
+    
+    def form_valid(self, form):
+        try:
+            payload = build_payload_score(request=self.request, form=form)
+                
+            repo = TargetScoreRepository()
+            service_handler = TargetScoreService(target_score_repository=repo)
+            target_score_object = service_handler.update_use_case(target_score_obj=self.get_object(), data=payload)
+            form.instance = target_score_object
+        except ValidationError:
+            return self.form_invalid(form)
+        except Exception as e:
+            messages.error(self.request, f"An unexpected error occurred: {e}")
+            return self.form_invalid(form)
+        return super().form_valid(form)
+    
+    def get_success_url(self) -> str:
+        """
+        Redirects to the index page after successful update.
+        """
+        return reverse('score', kwargs={"activity_id": self.kwargs.get('activity_id'), "target_id": self.kwargs.get('target_id')})
     
