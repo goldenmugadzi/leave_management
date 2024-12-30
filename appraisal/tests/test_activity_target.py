@@ -160,3 +160,45 @@ class TestTargetScoreService(TestCase):
             except KRAErr as e:
                 # ============ ASSERT ===============
                 self.assertEqual(str(e), f"Failed to create target-score with error: {mock_db_err}")
+
+    def mock_target_score_object(self):
+        mock = Mock(spec=TargetScore)
+        return mock
+
+    def test_update_repo_called_once(self):
+        # ============= ARRANGE =================
+        mock_target_score_object = self.mock_target_score_object()
+        mock_payload = self.mock_payload()
+
+        # ============ ACT ====================
+        self.service.update_use_case(target_score_obj=mock_target_score_object, data=mock_payload)
+
+        # ============ ASSERT ===================
+        self.mock_repo.update.assert_called_once_with(target_score_obj=mock_target_score_object, data=mock_payload)
+
+    def test_update_use_case_success(self):
+        # ============= ARRANGE =================
+        mock_target_score_object = self.mock_target_score_object()
+        mock_payload = self.mock_payload()
+        self.mock_repo.update.return_value = mock_target_score_object
+
+        # ============ ACT ====================
+        result = self.service.update_use_case(target_score_obj=mock_target_score_object, data=mock_payload)
+
+        # ============ ASSERT ===================
+        self.assertEqual(result, mock_target_score_object)
+
+    def test_update_usecase_failure(self):
+        # =========== ARRANGE ==============
+        mock_target_score_object = self.mock_target_score_object()
+        mock_payload = self.mock_payload()
+        mock_db_err = "Some database error"
+
+        with patch.object(self.mock_repo, 'update', side_effect=Exception(mock_db_err)):
+            try:
+                # ============ ACT ===============
+                self.service.update_use_case(target_score_obj=mock_target_score_object, data=mock_payload)
+                self.fail("Expected an error but got none")
+            except KRAErr as e:
+                # ============ ASSERT ===============
+                self.assertEqual(str(e), f"Failed to update target-score with error: {mock_db_err}")

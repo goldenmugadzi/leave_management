@@ -105,3 +105,15 @@ class TargetScoreService:
             return self.target_score_repository.create(target_obj=target_obj, data=data)
         except Exception as e:
             raise KRAErr(f"Failed to create target-score with error: {e}")
+
+    def update_use_case(self, target_score_obj: TargetScore, data: TargetScoreType)->TargetScore:
+        try:
+            return self.target_score_repository.update(target_score_obj=target_score_obj, data=data)
+        except Exception as e:
+            raise KRAErr(f"Failed to update target-score with error: {e}")
+
+    def get_by_target_id_use_case(self, target_id: int)->TargetScore:
+        try:
+            return self.target_score_repository.get_by_target_id(target_id=target_id)
+        except Exception as e:
+            raise KRAErr(f"Failed to get target-score with error: {e}")

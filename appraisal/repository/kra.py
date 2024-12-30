@@ -239,3 +239,36 @@ class TargetScoreRepository:
             return obj
         except Exception as e:
             raise Exception(f"score create repo failed with error: {e}")
+
+    def get_by_target_id(self, target_id: int)->TargetScore:
+        try:
+            obj = TargetScore.objects.select_related('target', 'target__activity').filter(target__id=target_id).first()
+
+            if obj is None:
+                raise Exception("Target score object not found")
+
+            return obj
+        except Exception as e:
+            raise Exception(f"score get repo failed with error: {e}")
+
+    def update(self, target_score_obj: TargetScore, data: TargetScoreType)->TargetScore:
+        try:
+            is_updated = False
+
+            if target_score_obj.score != data.score:
+                target_score_obj.score = data.score
+                is_updated = True
+
+            if target_score_obj.actual_variance != data.actual_variance:
+                target_score_obj.actual_variance = data.actual_variance
+                is_updated = True
+
+            if target_score_obj.comments != data.comment:
+                target_score_obj.comments = data.comment
+                is_updated = True
+
+            if is_updated:
+                target_score_obj.save()
+            return target_score_obj
+        except Exception as e:
+            raise Exception(f"Target score update Repo failed with error: {e}")
