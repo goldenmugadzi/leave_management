@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+  {% load static %}
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Business Excellence </title>
+    <link
+      rel="shortcut icon"
+      href="{% static 'assets/images/website-logo.png' %}"
+    />
+    <link href="{% static 'assets/css/tailwind.css' %}" rel="stylesheet" />
+  </head>
+  <body>
+    <main>
+      <div
+        style="height: 100vh"
+        class="flex justify-center items-center w-full bg-gray-100"
+      >
+        <div
+          style="width: 40%"
+          class="shadow bg-gray-200 h-auto shadow-gray-400 rounded-lg"
+        >
+          <div
+            style="display: flex; flex-direction: column"
+            class="flex px-4 py-4"
+          >
+            <div class="sm:mx-auto sm:w-full sm:max-w-sm">
+              <img
+                class="mx-auto h-28 w-auto"
+                src="{% static 'assets/images/website-logo.png' %}"
+                alt="Your Company"
+              />
+              <h2
+                class="mt-2 last:text-center text-2xl font-bold leading-9 tracking-tight text-blue-950"
+              >
+                BUSINESS EXCELLENCE v2.0
+              </h2>
+            </div>
+
+            <div class="sm:mx-auto sm:w-full sm:max-w-sm">
+                <p class="text-center mt-10">We’ve emailed you instructions for setting your password, if an account exists with the email you entered. You should receive them shortly.</p>
+
+                <p class="text-center mt-2">If you don’t receive an email, please make sure you’ve entered the address you registered with, and check your spam folder.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </body>
+</html>

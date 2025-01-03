@@ -998,6 +998,7 @@ def datatable_data(request, view):
             'recordsFiltered': 0,
             'data': []
         })
+
 def get_filtered_change_requests(records, user_id, search_value, column_name, user_region, region, cr_type, cr_app, status, cost_center, start_date, end_date):
     
     try:

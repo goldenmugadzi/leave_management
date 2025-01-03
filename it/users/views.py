@@ -138,6 +138,21 @@ def ms_exhange_send_html(subject, to_recipients, cc_recipients, template, kwargs
     message.send()
     return JsonResponse({"status": "success", "message": "Email sent successfully"})
 
+def ms_exhange_reset_password_html(subject, to_recipients, cc_recipients, template, kwargs):
+    account = get_exchange_account()
+    # message_body = get_template(f"{template}").render(kwargs["kwargs"])
+    message = Message(
+        account=account,
+        folder=account.sent,
+        subject=subject,
+        body=HTMLBody(template),
+        to_recipients=[Mailbox(email_address=recipient) for recipient in to_recipients],
+        cc_recipients=[Mailbox(email_address=recipient) for recipient in cc_recipients]
+    )
+
+    message.send()
+    return JsonResponse({"status": "success", "message": "Email sent successfully"})
+
 
 @login_required
 @allowed_roles(['Administrator'], ['users'])
