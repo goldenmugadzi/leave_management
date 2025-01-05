@@ -36,9 +36,9 @@
         class="w-full border border-blue-800 rounded-lg shadow-lg">
          <thead class="bg-blue-800 text-white">
            <tr>
+             <th class="px-6 py-3 text-left text-md font-semibold">Name</th>
              <th class="px-6 py-3 text-left text-md font-semibold">Metric Type</th>
              <th class="px-6 py-3 text-left text-md font-semibold">Allowance Variance</th>
-             <th class="px-6 py-3 text-left text-md font-semibold">Target</th>
              <th class="px-6 py-3 text-left text-md font-semibold">Weight (%)</th>
              <th></th>
            </tr>
@@ -46,9 +46,9 @@
          <tbody class="divide-y divide-blue-300 bg-blue-50">
            {% for target_obj in target_objects %}
            <tr class="hover:bg-blue-100">
+             <td class="px-6 py-4 text-md text-blue-900 truncate max-w-xs">{{target_obj.name}}</td>
              <td class="px-6 py-4 text-md text-blue-900">{{target_obj.metric_type}}</td>
              <td class="px-6 py-4 text-md text-blue-900">{{target_obj.allowance_variance}}</td>
-             <td class="px-6 py-4 text-md text-blue-900">{{target_obj.target_value}}</td>
              <td class="px-6 py-4 text-md text-blue-900">{{target_obj.weight}}</td>
              <td>
                <div class="relative inline-block text-left">

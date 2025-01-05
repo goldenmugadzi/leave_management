@@ -218,10 +218,6 @@ class ActivityTargetRepository:
                 target_obj.allowance_variance = payload.allowance_variance
                 updated = True
 
-            if payload.target_value != target_obj.target_value:
-                target_obj.target_value = payload.target_value
-                updated = True
-
             if payload.unit != target_obj.unit:
                 target_obj.unit = payload.unit
                 updated = True

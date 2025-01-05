@@ -30,9 +30,6 @@ class TargetType(BaseModel):
     allowance_variance: Annotated[Decimal, Field(max_digits=10, decimal_places=2)] = Field(
         ..., description="The allowance variance of the Target."
     )
-    target_value: Annotated[Decimal, Field(max_digits=10, decimal_places=2)] = Field(
-        ..., description="The target value of the Target."
-    )
     unit: Optional[Annotated[str, Field(max_length=30)]] = Field(
         None, description="The unit of the Target."
     )
@@ -45,3 +42,4 @@ class TargetScoreType(BaseModel):
         ..., description="The actual variance of the target."
     )
     comment: Optional[str] = Field(None, description="The comment of the target.")
+
