@@ -1278,76 +1278,26 @@ def get_pending_fm_approval(request):
 
 def get_your_schedules(user_id, search_value=None, column_name=None, region=None):
     
-    try:
-        # Example usage
-        cs_all = ComparativeSchedules.objects.filter(
-        region=region,
-                cancelled=False,  # Only get items from non-cancelled CS
-                csapproval__approval='Approved').all()
-        
-        for css in cs_all:
-            css_ = css.select_related(
-                'item_id',
-                'sup_id',
-                'cs_id'
-            ).values(
-                'cs_id__cs_id',  # CS reference number
-                'item_id__item_name',
-                'item_id__quantity',
-                'item_id__unit_of_measurement',
-                'sup_id__supplier_name',
-                'unit_price',
-                'quoted_qty',
-                'total',
-                'quote_date',
-                'cs_id__currency__currency'
+    try:   
+        cs = ComparativeSchedules.objects.filter(
+            region=region,
+            created_by_id=user_id,
+            cancelled=False
+        ).all()
+
+        # Filter based on search value
+        if search_value:
+            cs = cs.filter(
+                Q(cs_id__icontains=search_value) |
+                Q(scope_of_work__icontains=search_value)
             )
+        if column_name:
+            cs = cs.order_by(column_name)
 
-            for item in css_:
-                print(f"""
-                CS Ref: {item['cs_id__cs_id']}
-                Item: {item['item_id__item_name']}
-                Quantity: {item['quoted_qty']} {item['item_id__unit_of_measurement']}
-                Unit Price: {item['unit_price']} {item['cs_id__currency__currency']}
-                Total: {item['total']} {item['cs_id__currency__currency']}
-                Supplier: {item['sup_id__supplier_name']}
-                Quote Date: {item['quote_date']}
-                """)
-                
-            try:
-                writer = csv.writer(response)
-                writer.writerow(['CS ID', 'PR ID', 'PR Number', 'PR Date', 'Scope of Work', 'Closing Date', 'Closing Time', 'Advert', 'PR Number', 'PR Date', 'CS Opened', 'TAC Date', 'Created By', 'Committee Approval', 'GM Approval', 'FM Approval', 'Section', 'Region', 'Created At'])
-                for item in css_:
-                    try:
-                        writer.writerow([item['cs_id__cs_id'], item['item_id__item_name'], item['quoted_qty'], item['item_id__unit_of_measurement'], item['unit_price'], item['total'], item['cs_id__currency__currency'], item['sup_id__supplier_name'], item['quote_date']])
-                        
-                    except Exception as ex:
-                        print("For Writting to CSV: ", ex)
-            except Exception as ex:
-                print("Error Writting to CSV: ", ex)
-        
-        response = HttpResponse(content_type='text/csv')
-        response['Content-Disposition'] = 'attachment; filename="rfq.csv"'
-        return response
+        return cs
     except Exception as ex:
-        print("Error: ", ex)    
-    
-    cs = ComparativeSchedules.objects.filter(
-        region=region,
-        created_by_id=user_id,
-        cancelled=False
-    ).all()
-
-    # Filter based on search value
-    if search_value:
-        cs = cs.filter(
-            Q(cs_id__icontains=search_value) |
-            Q(scope_of_work__icontains=search_value)
-        )
-    if column_name:
-        cs = cs.order_by(column_name)
-
-    return cs
+        print("Error: ", ex)
+        return []
 
 
 def get_pending_committee_table(user_id, search_value=None, column_name=None, region=None):
@@ -1593,7 +1543,6 @@ def get_csv_export(request):
 def add_details(cs):
     cs_list = []
     committee_reject_reason = ""
-
     for c in cs:
         committee_approval = ""
         gm_approval = None
@@ -1721,9 +1670,6 @@ def datatable_data(request, view):
                                       start_date, end_date)
 
     # Total number of records before filtering
-    print("data: ", data)
-    if not isinstance(data, list):
-        data = []
     total = len(data)
     # Pagination
     paginator = Paginator(data, length)
@@ -1731,7 +1677,7 @@ def datatable_data(request, view):
     page_obj = paginator.get_page(page_number)
 
     # Prepare response
-    print("adding details")
+    print("adding details: ", page_obj.object_list)
     data = add_details(page_obj.object_list)
     return JsonResponse({
         'draw': draw,
