@@ -369,7 +369,6 @@ def add_user(request):
 
         return redirect("/users/users-index")
 
-
 @login_required
 @allowed_roles(['Administrator'], ['users'])
 def get_user_records(request):

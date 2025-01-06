@@ -682,7 +682,11 @@ def password_reset_request(request):
                     template=email,
                     kwargs={"kwargs": c}
                 )
+                messages.success(request, "Password reset email sent")
                 return redirect('password_reset_done')
+            else:
+                messages.error(request, "User email address not found")
+                return redirect('/password-reset/')
     else:
         form = PasswordResetForm()
     return render(request, 'registration/password_reset_email.html', {'form': form})
@@ -711,10 +715,15 @@ def password_reset_confirm_view(request, uidb64, token):
                 return redirect('password_reset_confirm', uidb64=uidb64, token=token)
             
             try:
+                validate_password(password, user=user)
                 user.set_password(password)
                 user.save()
                 messages.success(request, "Password reset successful")
                 return redirect('/accounts/login')
+            except ValidationError as e:
+                print("ValidationError: ", e.messages)
+                messages.error(request, e.messages)
+                return redirect('password_reset_confirm', uidb64=uidb64, token=token)
             except Exception as e:
                 print("Error: ", e)
                 messages.error(request, "An error occurred. Please try again.")
