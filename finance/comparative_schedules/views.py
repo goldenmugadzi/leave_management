@@ -7,7 +7,7 @@ import json
 from datetime import datetime
 from django.db.models import Sum
 
-from it.users.views import ms_exhange_send
+from it.users.views import ms_exhange_send, ms_exhange_send_html
 from .models import *
 from it.users.models import *
 from finance.purchase_request.models import ProcurementPlanReference, PurchaseRequest, PrItem, Attachment, \
@@ -1150,7 +1150,9 @@ def notify_user(user_, msg, notification_type, url, id):
         created_at=datetime.now(),
     )
 
-    ms_exhange_send(subject=notification_type, body=msg, to_recipients=[user_.email], cc_recipients=[])
+    # ms_exhange_send(subject=notification_type, body=msg, to_recipients=[user_.email], cc_recipients=[])
+    ms_exhange_send_html(subject=notification_type,to_recipients=[user_.email],template='email/email_template.html',
+                                    kwargs={"kwargs":{"redirect_url":f"/comperative_schedule/comperative_schedule/{id}","type":notification_type,"user_fullname":user_.get_full_name(),"message":msg}})
     return True
 
 
