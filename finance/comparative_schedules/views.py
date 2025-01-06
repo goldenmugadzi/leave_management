@@ -1721,6 +1721,7 @@ def datatable_data(request, view):
                                       start_date, end_date)
 
     # Total number of records before filtering
+    print("data: ", data)
     total = len(data)
     print("total: ", total)
     # Pagination
