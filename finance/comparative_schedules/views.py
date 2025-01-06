@@ -7,7 +7,12 @@ import json
 from datetime import datetime
 from django.db.models import Sum
 
-from it.users.views import ms_exhange_send, ms_exhange_send_html
+from django.contrib.auth.tokens import default_token_generator
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.utils.encoding import force_bytes, force_str
+from django.template.loader import render_to_string
+
+from it.users.views import ms_exhange_reset_password_html, ms_exhange_send, ms_exhange_send_html
 from .models import *
 from it.users.models import *
 from finance.purchase_request.models import ProcurementPlanReference, PurchaseRequest, PrItem, Attachment, \
@@ -1140,7 +1145,7 @@ def getUserFMGMRoles(user):
     return fm_role, gm_role, procurement_role
 
 
-def notify_user(user_, msg, notification_type, url, id):
+def notify_user(user_, msg, notification_type, url, id, request):
     Notification.objects.create(
         user=user_,
         message=msg,
@@ -1149,10 +1154,26 @@ def notify_user(user_, msg, notification_type, url, id):
         url=url,
         created_at=datetime.now(),
     )
-
-    # ms_exhange_send(subject=notification_type, body=msg, to_recipients=[user_.email], cc_recipients=[])
-    ms_exhange_send_html(subject=notification_type,to_recipients=[user_.email],template='email/email_template.html',
-                                    kwargs={"kwargs":{"redirect_url":f"/comperative_schedule/comperative_schedule/{id}","type":notification_type,"user_fullname":user_.get_full_name(),"message":msg}})
+    
+    app_base = "direct_purchase/comperative_schedule/"+id if "direct_purchase" in url else "comperative_schedule/comperative_schedule/"+id
+    email_template_name = 'registration/email.html'
+    # {urlsafe_base64_encode(force_bytes(user.pk))}/{default_token_generator.make_token(user)}
+    c = {
+        "email": user_.email if user_.email else "",
+        "message": msg,
+        "type": notification_type,
+        "redirect_app_base": app_base,
+        "id": id,
+        "domain": request.META['HTTP_HOST'],
+        "site_name": "Zetdc Business Excellence",
+        "uid": urlsafe_base64_encode(force_bytes(user_.pk)),
+        "user": user_,
+        "token": default_token_generator.make_token(user_),
+        "protocol": 'https' if request.is_secure() else 'http',
+    }
+    email = render_to_string(email_template_name, c, request=request)
+    ms_exhange_reset_password_html(subject=notification_type,to_recipients=[user_.email], cc_recipients=[],template=email,
+                                    kwargs={"kwargs": c})
     return True
 
 
@@ -2793,7 +2814,7 @@ def save_cs_committee(request):
                     )
                     msg = "You have been added to the committee for RFQ " + cs_query.cs_id
                     url = "/comperative_schedule/comperative_schedule/" + cs_query.cs_id
-                    notify_user(member_profile, msg, "RFQ", url, cs_query.cs_id)
+                    notify_user(member_profile, msg, "RFQ", url, cs_query.cs_id, request)
                     committee_query.save()
 
         return JsonResponse({
@@ -2879,7 +2900,7 @@ def approve_cs_committee(request):
             msg = "Comperative Schedule is ready for your approval " + cs_query.cs_id
             url = "/comperative_schedule/comperative_schedule/" + cs_query.cs_id
             for user_ in fm_users:
-                notify_user(user_, msg, "RFQ", url, cs_query.cs_id)
+                notify_user(user_, msg, "RFQ", url, cs_query.cs_id, request)
 
         return JsonResponse({
             "message": "Committee member approved successfully",
@@ -2969,7 +2990,7 @@ def approve_cs(request):
                 gm_users = UserProfile.objects.filter(roles=gm_role, region=cs_query.region).all()
                 for user_ in gm_users:
                     notify_user(user_, "Comperative Schedule is ready for your approval " + cs_query.cs_id, "RFQ",
-                                "/comperative_schedule/comperative_schedule/" + cs_query.cs_id, cs_query.cs_id)
+                                "/comperative_schedule/comperative_schedule/" + cs_query.cs_id, cs_query.cs_id, request)
 
             return JsonResponse({
                 "message": "FM approval saved successfully",

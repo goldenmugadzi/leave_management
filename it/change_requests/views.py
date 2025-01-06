@@ -1,5 +1,6 @@
 import csv
 from datetime import datetime
+from django.template.loader import render_to_string
 from django.forms import model_to_dict
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
@@ -17,7 +18,7 @@ from django.core.exceptions import ValidationError
 
 from django.contrib.auth.decorators import login_required
 
-from it.users.views import ms_exhange_send_html
+from it.users.views import ms_exhange_reset_password_html, ms_exhange_send_html
 # Create your views here.
 
 @login_required
@@ -100,7 +101,7 @@ def create_new_profile(request):
         change_request.save()
         messages.success(request, "Change request submitted successfully")
         # Get section head approver for this cost center
-        application = Application.objects.filter(name="Change Requests").first()
+        application = Application.objects.filter(name="change_requests").first()
         section_head_role = Roles.objects.filter(role="section_head", app_id=application.id).first()
         approver_responsibilities = Responsibilities.objects.filter(
             role=section_head_role,
@@ -111,11 +112,28 @@ def create_new_profile(request):
             messages.error(request, "No section head approver found for this cost center")
             return redirect("/change_requests/create_change_request")
         print("Sending email to: ", approver.email)
-        ms_exhange_send_html("New Profile Request", [approver.email], [], "emails/email_template.html", {
-            "message": "New profile request submitted successfully",
-            "type": "New Profile Request",
-            "redirect_url": "https://172.16.29.32:9300/change_requests/new_profile_request?i=" + change_request.cr_id
-        })
+        # ms_exhange_send_html("New Profile Request", [approver.email], [], "emails/email_template.html", {
+        #     "message": "New profile request submitted successfully",
+        #     "type": "New Profile Request",
+        #     "redirect_url": "https://172.16.29.32:9300/change_requests/new_profile_request?i=" + change_request.cr_id
+        # })
+        email_template_name = 'registration/email.html'
+        msg = "New profile request submitted successfully"
+        type_ = "New Profile Request"
+        app_base = "change_requests/new_profile_request?i="+change_request.cr_id
+        c = {
+            "email": approver.email if approver.email else "",
+            "message": msg,
+            "type": type_,
+            "redirect_app_base": app_base,
+            "id": change_request.cr_id,
+            "domain": request.META['HTTP_HOST'],
+            "site_name": "Zetdc Business Excellence",
+            "protocol": 'https' if request.is_secure() else 'http',
+        }
+        email = render_to_string(email_template_name, c, request=request)
+        ms_exhange_reset_password_html(subject=type_,to_recipients=[approver.email], cc_recipients=[],template=email,
+                                        kwargs={"kwargs": c})
         
         messages.success(request, "Section head approver notified successfully")
     except Exception as ex:
@@ -181,11 +199,23 @@ def profile_modification_request(request):
                 messages.error(request, "No section head approver found for this cost center")
                 return redirect("/change_requests/create_change_request")
             print("Sending email to: ", approver.email)
-            ms_exhange_send_html("Profile Modification Request", [approver.email], [], "emails/email_template.html", {
-                "message": "Profile modification request submitted successfully",
-                "type": "Profile Modification Request",
-                "redirect_url": "https://172.16.29.32:9300/change_requests/profile_modification_request?i=" + change_request.cr_id
-            })
+            email_template_name = 'registration/email.html'
+            msg = "Profile modification request submitted successfully"
+            type_ = "Profile Modification Request"
+            app_base = "change_requests/profile_modification_request?i="+change_request.cr_id
+            c = {
+                "email": approver.email if approver.email else "",
+                "message": msg,
+                "type": type_,
+                "redirect_app_base": app_base,
+                "id": change_request.cr_id,
+                "domain": request.META['HTTP_HOST'],
+                "site_name": "Zetdc Business Excellence",
+                "protocol": 'https' if request.is_secure() else 'http',
+            }
+            email = render_to_string(email_template_name, c, request=request)
+            ms_exhange_reset_password_html(subject=type_,to_recipients=[approver.email], cc_recipients=[],template=email,
+                                            kwargs={"kwargs": c})
             
             messages.success(request, "Section head approver notified successfully")
         else:
@@ -312,11 +342,25 @@ def profile_deactivation_request(request):
                 messages.error(request, "No section head approver found for this cost center")
                 return redirect("/change_requests/create_change_request")
             print("Sending email to: ", approver.email)
-            ms_exhange_send_html("Profile Deactivation Request", [approver.email], [], "emails/email_template.html", {
-                "message": "Profile deactivation request submitted successfully",
-                "type": "Profile Deactivation Request",
-                "redirect_url": "https://172.16.29.32:9300/change_requests/profile_deactivation_request?i=" + change_request.cr_id
-            })
+            email_template_name = 'registration/email.html'
+            msg = "Profile deactivation request submitted successfully"
+            type_ = "Profile Deactivation Request"
+            app_base = "change_requests/profile_deactivation_request?i="+change_request.cr_id
+            c = {
+                "email": approver.email if approver.email else "",
+                "message": msg,
+                "type": type_,
+                "redirect_app_base": app_base,
+                "id": change_request.cr_id,
+                "domain": request.META['HTTP_HOST'],
+                "site_name": "Zetdc Business Excellence",
+                "protocol": 'https' if request.is_secure() else 'http',
+            }
+            email = render_to_string(email_template_name, c, request=request)
+            ms_exhange_reset_password_html(subject=type_,to_recipients=[approver.email], cc_recipients=[],template=email,
+                                            kwargs={"kwargs": c})
+        
+            messages.success(request, "Section head approver notified successfully")
         else:
             messages.error(request, "User not found")
     except Exception as ex:
