@@ -365,7 +365,7 @@ def profile_deactivation_request(request):
             messages.error(request, "User not found")
     except Exception as ex:
         print("error: ", ex)
-        messages.error(request, "An error occurred while submitting the change request: "+str(ex))
+        messages.error(request, "An error occurred while submitting the change request")
         
     return redirect("/change_requests/change_request_index")
 
