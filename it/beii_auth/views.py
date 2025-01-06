@@ -15,6 +15,18 @@ from it.beii_auth.models import Question, SecurityQuestions
 
 from it.beii_auth.models import Question, SecurityQuestions
 from it.users.models import UserProfile, Depots, Districts, Regions, Designations, Sections, Roles
+from django.contrib.auth import views as auth_views
+from django.contrib.auth.tokens import default_token_generator
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.utils.encoding import force_bytes, force_str
+from django.template.loader import render_to_string
+from django.core.mail import send_mail
+from django.http import HttpResponse
+from django.conf import settings
+from django.contrib.auth import get_user_model
+from django.contrib.auth.forms import PasswordResetForm, SetPasswordForm
+
+from it.users.views import ms_exhange_reset_password_html, ms_exhange_send_html
 
 APPLICATIONS = [
     {
@@ -370,7 +382,7 @@ def business_applications(request):
     else:
         if user.region:
             applications = applications
-            if user.region.region == "WESTERN REGION" or user.region.region == "TRANSMISSION & DISTRIBUTION":
+            if user.region.region == "TRANSMISSION & DISTRIBUTION":
                 applications = [app for app in applications if app['name'] == 'users' or app['name'] == 'non_conformity']
                 
         else:
@@ -632,3 +644,95 @@ def get_dashboard_reports(section_code):
     
     
     return report
+
+def password_reset_request(request):
+    if request.method == "POST":
+        print("request.POST: ", request.POST)
+        
+        form = PasswordResetForm(request.POST)
+        if form.is_valid():
+            data = form.cleaned_data['email']
+            print("data: ", data)
+            associated_users = get_user_model().objects.filter(email=data)
+            print("associated_users: ", associated_users)
+            if associated_users.exists():
+                user = associated_users.first()
+                print("user: ", user)
+                subject = "Password Reset Request"
+                email_template_name = 'registration/email_template.html'
+                # {urlsafe_base64_encode(force_bytes(user.pk))}/{default_token_generator.make_token(user)}
+                c = {
+                    "email": user.email if user.email else data,
+                    "message": "You are receiving this email because you requested a password reset for your user account at Zetdc Business Excellence.",
+                    "type": "Password Reset Request",
+                    "redirect_url": f"{request.META['HTTP_HOST']}/password-reset/",
+                    "domain": request.META['HTTP_HOST'],
+                    "site_name": "Zetdc Business Excellence",
+                    "uid": urlsafe_base64_encode(force_bytes(user.pk)),
+                    "user": user,
+                    "token": default_token_generator.make_token(user),
+                    "protocol": 'https' if request.is_secure() else 'http',
+                }
+                email = render_to_string(email_template_name, c, request=request)
+                # send_mail(subject, email, settings.DEFAULT_FROM_EMAIL, [user.email], fail_silently=False)
+                ms_exhange_reset_password_html(
+                    subject=subject,
+                    to_recipients=[user.email],
+                    cc_recipients=[],
+                    template=email,
+                    kwargs={"kwargs": c}
+                )
+                messages.success(request, "Password reset email sent")
+                return redirect('password_reset_done')
+            else:
+                messages.error(request, "User email address not found")
+                return redirect('/password-reset/')
+    else:
+        form = PasswordResetForm()
+    return render(request, 'registration/password_reset_email.html', {'form': form})
+
+def password_reset_done_view(request):
+    return render(request, 'registration/email_reset_done.html')
+
+def password_reset_confirm_view(request, uidb64, token):
+    try:
+        uid = force_str(urlsafe_base64_decode(uidb64))
+        user = get_user_model().objects.get(pk=uid)
+        print("user: ", user, " uid: ", uid)
+    except (TypeError, ValueError, OverflowError, get_user_model().DoesNotExist):
+        user = None
+
+    print("token: ", token, " token: ", default_token_generator.check_token(user, token))
+    if user is not None and default_token_generator.check_token(user, token):
+        if request.method == "POST":
+            print("request.POST: ", request.POST)
+            password = request.POST.get('password')
+            password_confirm = request.POST.get('password_confirm')
+            print("password: ", password, password_confirm)
+            if password != password_confirm:
+                print("Passwords do not match")
+                messages.error(request, "Passwords do not match")
+                return redirect('password_reset_confirm', uidb64=uidb64, token=token)
+            
+            try:
+                validate_password(password, user=user)
+                user.set_password(password)
+                user.save()
+                messages.success(request, "Password reset successful")
+                return redirect('/accounts/login')
+            except ValidationError as e:
+                print("ValidationError: ", e.messages)
+                messages.error(request, e.messages)
+                return redirect('password_reset_confirm', uidb64=uidb64, token=token)
+            except Exception as e:
+                print("Error: ", e)
+                messages.error(request, "An error occurred. Please try again.")
+                return redirect('password_reset_confirm', uidb64=uidb64, token=token)
+        else:
+            form = SetPasswordForm(user)
+        return render(request, 'registration/password_reset_confirm.html', {'form': form})
+    else:
+        return render(request, 'registration/password_reset_confirm.html', {'invalid': True})
+
+def password_reset_complete_view(request):
+    return render(request, 'registration/password_reset_complete.html')

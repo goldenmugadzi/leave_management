@@ -1150,7 +1150,7 @@ def notify_user(user_, msg, notification_type, url, id):
         created_at=datetime.now(),
     )
 
-    # ms_exhange_send(subject=notification_type, body=msg, to_recipients=[user_.email], cc_recipients=[])
+    ms_exhange_send(subject=notification_type, body=msg, to_recipients=[user_.email], cc_recipients=[])
     return True
 
 
@@ -1160,7 +1160,6 @@ def notification_update(user, id):
         notification.is_read = True
         notification.save()
     return True
-
 
 @login_required
 def get_comperative_schedules(request):
@@ -1722,8 +1721,10 @@ def datatable_data(request, view):
                                       start_date, end_date)
 
     # Total number of records before filtering
+    print("data: ", data)
+    if not isinstance(data, list):
+        data = []
     total = len(data)
-    print("total: ", total)
     # Pagination
     paginator = Paginator(data, length)
     page_number = start // length + 1

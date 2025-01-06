@@ -4383,7 +4383,7 @@ export default function Schedule({
         </div>
       </div>
 
-      {requesterRole === "procurement" && buyersNotes ? (
+      {requesterRole === "procurement" && username === csOwner && buyersNotes ? (
         <div className="flex justify-center mt-2 px-3 py-3">
           <div className="w-50 m-2">
             <button
@@ -4974,9 +4974,9 @@ export default function Schedule({
 
         {rankings?.length ?? 0 > 0 ? rankingTableComp : ""}
 
-        {requesterRole === "verify" ? additionalInfo: ""}
+        {rankings?.length ?? 0 > 0  ? additionalInfo: ""}
 
-        {requesterRole === "procurement" && username === csOwner ? buyersInfo: ""}
+        {rankings?.length ?? 0 > 0  ? buyersInfo: ""}
 
         {rankings?.length ?? 0 > 0 ? committeeTableComp : ""}
 
