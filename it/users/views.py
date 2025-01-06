@@ -36,7 +36,6 @@ from django.template.loader import get_template
 BASE_URL = "http://" + config('HOST') + ":" + config('PORT')
 APP_NAME = "users"
 
-
 def getUserFMGMRoles(user):
     print("user: ", user.username, user.id)
     fm_role, gm_role, procurement_role = False, False, False
@@ -54,7 +53,6 @@ def getUserFMGMRoles(user):
 
     return fm_role, gm_role, procurement_role
 
-
 def user_centers(request):
     users = UserProfile.objects.all()
     for user in users:
@@ -64,7 +62,6 @@ def user_centers(request):
             user.cost_center = cost_center
             user.save()
     return JsonResponse({"status": "success", "message": "Centers added successfully"})
-
 
 def get_exchange_account():
     from decouple import config as cnf
@@ -88,7 +85,6 @@ def get_exchange_account():
     print("Successfully connected to Exchange server.")
     return account
 
-
 @login_required
 def ms_exhange_test(request, template, kwargs):
     account = get_exchange_account()
@@ -103,7 +99,6 @@ def ms_exhange_test(request, template, kwargs):
     )
     message.send()
     return JsonResponse({"status": "success", "message": "Email sent successfully"})
-
 
 def ms_exhange_send(subject, body, to_recipients, cc_recipients):
     try:
@@ -121,7 +116,6 @@ def ms_exhange_send(subject, body, to_recipients, cc_recipients):
     except Exception as ex:
         print("Error: ", ex)
         return JsonResponse({"status": "error", "message": "An error occurred while sending the email: " + str(ex)})
-
 
 def ms_exhange_send_html(subject, to_recipients, cc_recipients, template, kwargs):
     account = get_exchange_account()
@@ -152,7 +146,6 @@ def ms_exhange_reset_password_html(subject, to_recipients, cc_recipients, templa
 
     message.send()
     return JsonResponse({"status": "success", "message": "Email sent successfully"})
-
 
 @login_required
 @allowed_roles(['Administrator'], ['users'])
@@ -387,7 +380,6 @@ def get_user_records(request):
             "regions": regions
         })
 
-
 def datatable_data(request):
     draw = int(request.GET.get('draw', default=1))
     start = int(request.GET.get('start', default=0))
@@ -612,7 +604,6 @@ def update_user(request):
 
         return redirect("/users/users-index")
 
-
 @login_required
 @allowed_roles(['Administrator'], ['users'])
 def set_requesters(request):
@@ -678,7 +669,6 @@ def view_user(request):
                 "user": new_user
             }
         )
-
 
 @login_required
 @allowed_roles(['Administrator'], ['users'])
@@ -814,7 +804,6 @@ def update_userx(request):
 
         return redirect("/users/users-index")
 
-
 @login_required
 @allowed_roles(['Administrator'], ['users'])
 def reset_user_password(request):
@@ -859,7 +848,6 @@ def reset_user_password(request):
             })
 
     return redirect('/users/users-index')
-
 
 @login_required
 def change_user_password(request):

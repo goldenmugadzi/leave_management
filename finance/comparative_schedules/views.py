@@ -1722,8 +1722,9 @@ def datatable_data(request, view):
 
     # Total number of records before filtering
     print("data: ", data)
+    if not isinstance(data, list):
+        data = []
     total = len(data)
-    print("total: ", total)
     # Pagination
     paginator = Paginator(data, length)
     page_number = start // length + 1
