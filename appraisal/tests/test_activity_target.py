@@ -7,7 +7,7 @@ from ..repository.kra import ActivityTargetRepository, TargetScoreRepository
 from ..services.kra import KRAErr, TargetService, TargetScoreService
 from ..helpers.types.kra import TargetType, TargetScoreType
 
-class TestTargeServiceCreate(TestCase):
+class TestTargeService(TestCase):
     def setUp(self) -> None:
         self.mock_repo = Mock(spec=ActivityTargetRepository)
         self.service_handler = TargetService(target_repository=self.mock_repo)
@@ -202,3 +202,40 @@ class TestTargetScoreService(TestCase):
             except KRAErr as e:
                 # ============ ASSERT ===============
                 self.assertEqual(str(e), f"Failed to update target-score with error: {mock_db_err}")
+
+    def test_target_score_repo_called_once(self):
+        # ARRANGE
+        activity_id = 4
+        activity_weight = 60
+
+        # ACT
+        self.service.calculate_score_use_case(activity_id=activity_id, activity_weight=activity_weight)
+        # ASSERT
+        self.mock_repo.calculate_aggregated_activity_value.assert_called_once_with(activity_id=activity_id)
+
+    def test_calculate_activity_score_success(self):
+        # ARRANGE
+        activity_id = 4
+        activity_weight = 50
+        self.mock_repo.calculate_aggregated_activity_value.return_value = 95
+        want = 47.5
+        # ACT
+        got = self.service.calculate_activity_score_use_case(activity_id=activity_id, activity_weight=activity_weight)
+
+        # ASSERT
+        self.assertEqual(got, want)
+
+    def test_calculate_activity_score_failure(self):
+        # ARRANGE
+        activity_id = 4
+        activity_weight = 50
+        db_err = "some db error"
+
+        with patch.object(self.mock_repo, 'calculate_aggregated_activity_value', side_effect=Exception(db_err)):
+            try:
+                # ============ ACT ===============
+                self.service.calculate_activity_score_use_case(activity_id=activity_id, activity_weight=activity_weight)
+                self.fail("Expected an error but got none")
+            except KRAErr as e:
+                # ============ ASSERT ===============
+                self.assertEqual(str(e), f"Failed to calculate activity score with error: {db_err}")
