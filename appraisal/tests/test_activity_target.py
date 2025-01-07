@@ -207,9 +207,10 @@ class TestTargetScoreService(TestCase):
         # ARRANGE
         activity_id = 4
         activity_weight = 60
+        self.mock_repo.calculate_aggregated_activity_value.return_value = 85
 
         # ACT
-        self.service.calculate_score_use_case(activity_id=activity_id, activity_weight=activity_weight)
+        self.service.calculate_activity_score_use_case(activity_id=activity_id, activity_weight=activity_weight)
         # ASSERT
         self.mock_repo.calculate_aggregated_activity_value.assert_called_once_with(activity_id=activity_id)
 

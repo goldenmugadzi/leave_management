@@ -141,9 +141,10 @@ class TargetScoreService:
         Raises:
             Exception: If there is an error in retrieving the aggregated target scores.
         """
+        total_target = 0
         try:
             total_target = self.target_score_repository.calculate_aggregated_activity_value(activity_id=activity_id)
-            score = (total_target/100)*activity_weight
-            return score
         except Exception as e:
             raise KRAErr(f"Activity Score calculation failed with error: {e}")
+        score = (total_target/100)*activity_weight
+        return score
