@@ -232,10 +232,9 @@ class TestTargetScoreService(TestCase):
         db_err = "some db error"
 
         with patch.object(self.mock_repo, 'calculate_aggregated_activity_value', side_effect=Exception(db_err)):
-            try:
-                # ============ ACT ===============
+            with self.assertRaises(KRAErr) as context:
+                # ACT
                 self.service.calculate_activity_score_use_case(activity_id=activity_id, activity_weight=activity_weight)
-                self.fail("Expected an error but got none")
-            except KRAErr as e:
-                # ============ ASSERT ===============
-                self.assertEqual(str(e), f"Failed to calculate activity score with error: {db_err}")
+
+            # ASSERT
+            self.assertEqual(str(context.exception), f"Activity Score calculation failed with error: {db_err}")

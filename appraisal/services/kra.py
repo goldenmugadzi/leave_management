@@ -146,4 +146,4 @@ class TargetScoreService:
             score = (total_target/100)*activity_weight
             return score
         except Exception as e:
-            raise Exception(f"Activity Score calculation failed with error: {e}")
+            raise KRAErr(f"Activity Score calculation failed with error: {e}")
