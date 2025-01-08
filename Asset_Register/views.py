@@ -6,6 +6,8 @@ import json, os
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db.models import Q
+import csv
+from django.http import HttpResponse
 
 from Asset_Register.models import Designations, ProductType, Regions, Sections, ZetdcAssets
 
@@ -371,12 +373,13 @@ def show_report_datatable(request):
         end_date_filter = request.GET.get('end_date')
 
         if status_filter and status_filter != "Select Status":
+            print("status: ", status_filter)
             assets = assets.filter(asset_state=status_filter)
+            print("assets: ", assets)
         if station_filter and station_filter != "Select Station":
-            # Adjust field name as needed
             assets = assets.filter(department=station_filter)
-        if pick_station_filter:  # No "Select Pick Station" option in this example
-            assets = assets.filter(regions=pick_station_filter) # Adjust field name as needed
+        if pick_station_filter:  
+            assets = assets.filter(regions=pick_station_filter)
         if start_date_filter:
             assets = assets.filter(date_purchased__gte=start_date_filter)
         if end_date_filter:
@@ -450,4 +453,79 @@ def show_report_datatable(request):
             'data': []
         })
 
+def export_csv(request):
 
+     # Get filter parameters from the request
+    asset_state = request.GET.get('status', None)
+    sections = request.GET.get('sections', None)
+    regions = request.GET.get('regions', None)
+    pick_station = request.GET.get('pickStation', None)
+    start_date = request.GET.get('start_date', None)
+    end_date = request.GET.get('end_date', None)
+
+    assets = ZetdcAssets.objects.all()  
+    if asset_state:
+        assets = assets.filter(asset_state=asset_state)
+    if sections:
+        assets = assets.filter(sections=sections)
+    if regions:
+        assets = assets.filter(regions=regions)
+    if pick_station:
+        assets = assets.filter(pick_station=pick_station)
+    if start_date:
+        assets = assets.filter(date_purchased__gte=start_date)
+    if end_date:
+        assets = assets.filter(date_purchased__lte=end_date)
+
+    # Create the CSV response
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="Assets.csv"'
+
+    writer = csv.writer(response)
+    writer.writerow(['ID', 'Product Type', 'Asset State', 'Department', 'Regions', 'Purchase Cost', 'Date Purchased'])
+
+    for asset in assets:
+        writer.writerow([asset.id, asset.product_type, asset.asset_state, asset.department, asset.regions, asset.purchase_cost, asset.date_purchased])
+
+    return response
+
+def upload_asset(request):
+    if request.method == 'POST':
+
+        csvfile = request.FILES['uploaded_csv'] # file as key
+    
+        decoded_file = csvfile.read().decode('cp1252').splitlines()
+        reader = csv.DictReader(decoded_file)
+
+        for row in reader:        
+            date = datetime.strptime(row['created_at'], "%Y-%m-%d")
+            formatted_date = date.strftime("%Y-%m-%d")
+
+            district = Sections.objects.filter(district=row['district']).first()
+            section = Sections.objects.filter(section=row['section']).first()
+            region = Regions.objects.filter(region=row['region']).first()
+            designations = Designations.objects.filter(designations=row['designations']).first()
+
+            new_zetdcassets = ZetdcAssets(
+
+                product_type= row['product_type'], 
+                asset_state= row['asset_state'],
+                serial_number= row['serial_number'],
+                asset_number= row['asset_number'],
+                user= row['user'],
+                date_purchased= row['date_purchased'],
+                warrant = row['warant'],
+                model = row['model'],
+                purchase_cost= row['purchase_cost'],
+                designations= designations,
+                section=section,
+                district=district,
+                region=region,
+                created_at=formatted_date,
+                updated_at=formatted_date
+            )
+            new_zetdcassets.save()
+        
+        redirect('/table_asset')
+            
+    return render(request, 'asset_register/upload_asset.html', {})

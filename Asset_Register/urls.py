@@ -13,6 +13,8 @@ urlpatterns = [
     path('table_product/', views.show_product, name="table_product"),
     path('product_datatable/', views.show_product_datatable),
     path('asset_report/', views.show_report, name="show[_report"),
-    path('report_datatable/', views.show_report_datatable)
+    path('report_datatable/', views.show_report_datatable),
+    path('export_csv/', views.export_csv, name='export_csv'),
+    path('upload_asset/', views.upload_asset, name='upload_asset')
 
 ]

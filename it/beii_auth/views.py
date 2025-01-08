@@ -127,6 +127,12 @@ REPORTS = [
         "title": "Change Requests",
         "iconUrl": "assets/images/change.png",
         "url": "/change_requests/change_request_reports"
+    },
+      {
+        "name": "asset reports",
+        "title": "Asset Reports",
+        "iconUrl": "assets/images/reports.png",
+        "url": "/asset_report/"
     }
 ]
 

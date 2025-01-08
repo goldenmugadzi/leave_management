@@ -24,7 +24,7 @@
                   id="id"
                   value="{{zetdcAssets.id}}"
                   autocomplete="given-name"
-                  class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 px-2 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                  class="mt-2 block w-full rounded-md border border-gray-200 px-2 py-2 shadow-sm outline-none focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
                 />
 
             <div>
@@ -39,7 +39,7 @@
                 name="product_type"
                 value="{{zetdcAssets.product_id}}"
                   autocomplete="designation"
-                  class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 px-2 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+                  class="mt-2 block w-full rounded-md border border-gray-200 px-2 py-2 shadow-sm outline-none focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
                 >
                   <option>Select product</option>
                   {% for product_type in product_types %}
@@ -48,23 +48,26 @@
                 </select>
               </div>
             </div>
-            <div>
-              <label
-                for="asset_state"
-                class="block text-sm font-medium leading-6 text-gray-900"
-                >Asset State</label
+            <div class="flex flex-col">
+              <label for="status" class="text-stone-600 text-sm font-medium">
+                Asset State
+              </label>
+            
+              <select
+                id="asset_state"
+                name="asset_state"
+                class="mt-2 block w-full rounded-md border border-gray-200 px-2 py-2 shadow-sm outline-none focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
               >
-              <div class="mt-2">
-                <input
-                  type="text"
-                  name="asset_state"
-                  id="asset_state"
-                  value="{{zetdcAssets.asset_state}}"
-                  autocomplete="given-name"
-                  class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 px-2 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                />
-              </div>
+                <option>Select Status</option>
+                <option value="Brand New" {% if zetdcAssets.asset_state == "Brand New" %}selected{% endif %}>Brand New</option>
+                <option value="Warrant" {% if zetdcAssets.asset_state == "Warrant" %}selected{% endif %}>Warrant</option>
+                <option value="Awaiting New User" {% if zetdcAssets.asset_state == "Awaiting New User" %}selected{% endif %}>Awaiting New User</option>
+                <option value="Awaiting New Spares" {% if zetdcAssets.asset_state == "Awaiting New Spares" %}selected{% endif %}>Awaiting New Sparest</option>
+                <option value="Functioning" {% if zetdcAssets.asset_state == "Functioning" %}selected{% endif %}>Functioning</option>
+                <option value="Non Functioning" {% if zetdcAssets.asset_state == "Non Functioning" %}selected{% endif %}>Non Functioning</option>
+              </select>
             </div>
+            
             <div>
               <label
                 for="asset_number"
@@ -78,7 +81,7 @@
                   value="{{zetdcAssets.serial_number}}"
                   id="serial_number"
                   autocomplete="given-name"
-                  class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 px-2 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                  class="mt-2 block w-full rounded-md border border-gray-200 px-2 py-2 shadow-sm outline-none focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
                 />
               </div>
             </div>
@@ -95,7 +98,7 @@
                   value="{{zetdcAssets.asset_number}}"
                   id="asset_number"
                   autocomplete="given-name"
-                  class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 px-2 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                  class="mt-2 block w-full rounded-md border border-gray-200 px-2 py-2 shadow-sm outline-none focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
                 />
               </div>
             </div>
@@ -111,7 +114,7 @@
                   name="department"
                   value="{{zetdcAssets.department}}"
                   autocomplete="department"
-                  class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 px-2 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+                  class="mt-2 block w-full rounded-md border border-gray-200 px-2 py-2 shadow-sm outline-none focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
                 >
                   <option>Select department</option>
                   {% for section in sections %}
@@ -132,7 +135,7 @@
                   name="user"
                   value="{{zetdcAssets.user}}"
                   autocomplete="user"
-                  class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 px-2 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+                  class="mt-2 block w-full rounded-md border border-gray-200 px-2 py-2 shadow-sm outline-none focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
                 >
                   <option>Select user</option>
                   {% for user in users %}
@@ -153,7 +156,7 @@
                   name="regions"
                   value="{{zetdcAssets.regions}}"
                   autocomplete="regions"
-                  class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 px-2 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+                  class="mt-2 block w-full rounded-md border border-gray-200 px-2 py-2 shadow-sm outline-none focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
                 >
                   <option>Select region</option>
                   {% for region in regions %}
@@ -175,7 +178,7 @@
                   value="{{zetdcAssets.purchase_cost}}"
                   id="purchase_cost"
                   autocomplete="given-name"
-                  class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 px-2 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                  class="mt-2 block w-full rounded-md border border-gray-200 px-2 py-2 shadow-sm outline-none focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
                 />
               </div>
             </div>
@@ -191,7 +194,7 @@
                   name="designations"
                   value="{{zetdcAssets.designations}}"
                   autocomplete="designations"
-                  class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 px-2 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+                  class="mt-2 block w-full rounded-md border border-gray-200 px-2 py-2 shadow-sm outline-none focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
                 >
                   <option>Select Designation</option>
                   {% for designation in designations %}
@@ -213,7 +216,7 @@
                   value="{{zetdcAssets.date_purchased}}"
                   id="date_purchased"
                   autocomplete="given-name"
-                  class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 px-2 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                  class="mt-2 block w-full rounded-md border border-gray-200 px-2 py-2 shadow-sm outline-none focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
                 />
               </div>
             </div>
@@ -230,7 +233,7 @@
                   value="{{zetdcAssets.warrant}}"
                   id="warrant"
                   autocomplete="given-name"
-                  class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 px-2 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                  class="mt-2 block w-full rounded-md border border-gray-200 px-2 py-2 shadow-sm outline-none focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
                 />
               </div>
             </div>
@@ -247,7 +250,7 @@
                   value="{{zetdcAssets.model}}"
                   id="model"
                   autocomplete="given-name"
-                  class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 px-2 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                  class="mt-2 block w-full rounded-md border border-gray-200 px-2 py-2 shadow-sm outline-none focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
                 />
               </div>
             </div>
