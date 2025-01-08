@@ -51,7 +51,6 @@ def build_payload_target(request, form: BaseModelForm) -> TargetType:
             "metric_type": form.cleaned_data.get("metric_type"),
             "weight": form.cleaned_data.get("weight"),
             "allowance_variance": form.cleaned_data.get("allowance_variance"),
-            "target_value": form.cleaned_data.get("target_value"),
             "unit": form.cleaned_data.get("unit"),
         }
         return TargetType(**data)

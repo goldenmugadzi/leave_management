@@ -2,7 +2,7 @@ from typing import List
 from ..models import KeyResultArea, YearQuarter, Activity, Target, TargetScore
 from ..helpers.types.kra import KRAType, TargetType, TargetScoreType
 from it.users.models import UserProfile
-
+from django.db.models import Sum
 class KRARepository:
     def create(self, quarter_obj: YearQuarter, creator_obj, data: KRAType)->KeyResultArea:
         """
@@ -218,10 +218,6 @@ class ActivityTargetRepository:
                 target_obj.allowance_variance = payload.allowance_variance
                 updated = True
 
-            if payload.target_value != target_obj.target_value:
-                target_obj.target_value = payload.target_value
-                updated = True
-
             if payload.unit != target_obj.unit:
                 target_obj.unit = payload.unit
                 updated = True
@@ -272,3 +268,12 @@ class TargetScoreRepository:
             return target_score_obj
         except Exception as e:
             raise Exception(f"Target score update Repo failed with error: {e}")
+
+    def calculate_aggregated_activity_value(self, activity_id: int) -> float:
+            try:
+                result = TargetScore.objects.filter(
+                    target__activity__id=activity_id
+                ).aggregate(total_target=Sum('score'))
+                return result["total_target"] or 0.0
+            except Exception as e:
+                raise Exception(f"TargetScore aggregation failed with error: {e}")

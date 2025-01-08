@@ -117,3 +117,34 @@ class TargetScoreService:
             return self.target_score_repository.get_by_target_id(target_id=target_id)
         except Exception as e:
             raise KRAErr(f"Failed to get target-score with error: {e}")
+
+    def calculate_activity_score_use_case(self, activity_id: int, activity_weight: float)->float:
+        """
+        Calculates the score for a specific activity based on its aggregated target scores and weight.
+
+        Args:
+            activity_id (int): The unique identifier of the activity for which the score is to be calculated.
+            activity_weight (float): The weight of the activity, typically defined as a percentage.
+
+        Returns:
+            float: The calculated activity score in percentage.
+
+        Calculation:
+            - Retrieves the total aggregated target scores for the specified activity.
+            - Applies the formula: (total_target / 100) * activity_weight.
+            - Returns the computed score.
+
+        Example:
+            If the total aggregated target score for an activity is 85 and the activity weight is 20:
+            score = (85 / 100) * 20 = 17.0
+
+        Raises:
+            Exception: If there is an error in retrieving the aggregated target scores.
+        """
+        total_target = 0
+        try:
+            total_target = self.target_score_repository.calculate_aggregated_activity_value(activity_id=activity_id)
+        except Exception as e:
+            raise KRAErr(f"Activity Score calculation failed with error: {e}")
+        score = (total_target/100)*activity_weight
+        return score
