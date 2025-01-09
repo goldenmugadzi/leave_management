@@ -70,7 +70,6 @@ class TargetCreateView(SuccessMessageMixin, CreateView):
                                                             payload=payload)
             form.instance = target_object
         except Exception as e:
-            print("============>>>>>>>>", e)
             messages.error(self.request, f"An unexpected error occurred, please try again")
             return self.form_invalid(form)
 
