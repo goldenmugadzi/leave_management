@@ -181,7 +181,6 @@ class ActivityTargetRepository:
                                         name=data.name,
                                         weight=data.weight,
                                         allowance_variance=data.allowance_variance,
-                                        target_value=data.target_value,
                                         unit=data.unit
                                         )
             return obj

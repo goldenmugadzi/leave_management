@@ -10,13 +10,6 @@ class KRAType(BaseModel):
         ..., description="The weight of the KRA."
     )
 
-    @field_validator('weight')
-    @classmethod
-    def check_weight_range(cls, value: float) -> float:
-        if not 0 <= value <= 100:
-            raise ValueError("Weight must be between 0 and 100.")
-        return value
-
 MetricTypeValues = Literal[tuple(metric[1] for metric in METRIC_TYPES)]
 
 class TargetType(BaseModel):
