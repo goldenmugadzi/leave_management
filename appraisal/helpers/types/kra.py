@@ -20,8 +20,11 @@ class TargetType(BaseModel):
     weight: Annotated[Decimal, Field(max_digits=5, decimal_places=2)] = Field(
         ..., description="The weight of the Target."
     )
-    allowance_variance: Annotated[Decimal, Field(max_digits=10, decimal_places=2)] = Field(
-        ..., description="The allowance variance of the Target."
+    allowable_variance: Annotated[Decimal, Field(max_digits=10, decimal_places=2)] = Field(
+        ..., description="The allowable variance of the Target."
+    )
+    agreed_target: Annotated[Decimal, Field(max_digits=10, decimal_places=2)] = Field(
+        ..., description="The agreed value of the Target."
     )
     unit: Optional[Annotated[str, Field(max_length=30)]] = Field(
         None, description="The unit of the Target."

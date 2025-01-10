@@ -180,7 +180,8 @@ class ActivityTargetRepository:
                                         metric_type=data.metric_type,
                                         name=data.name,
                                         weight=data.weight,
-                                        allowance_variance=data.allowance_variance,
+                                        allowable_variance=data.allowable_variance,
+                                        agreed_target=data.agreed_target,
                                         unit=data.unit
                                         )
             return obj
