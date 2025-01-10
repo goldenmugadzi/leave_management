@@ -180,7 +180,7 @@ class TargetScoreUpdateView(SuccessMessageMixin, UpdateView):
                                         "target_id": self.kwargs.get('target_id')})
 
     def get_ActualVariance(actual, target):
-        actual_variance = target-actual
+        actual_variance = actual - target
         return actual_variance
 
     def getRating(actual_variance, within_condition):
