@@ -214,8 +214,8 @@ class ActivityTargetRepository:
                 target_obj.weight = payload.weight
                 updated = True
 
-            if payload.allowance_variance != target_obj.allowance_variance:
-                target_obj.allowance_variance = payload.allowance_variance
+            if payload.allowable_variance != target_obj.allowable_variance:
+                target_obj.allowable_variance = payload.allowable_variance
                 updated = True
 
             if payload.unit != target_obj.unit:
