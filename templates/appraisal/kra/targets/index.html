@@ -2,7 +2,7 @@
 {% load quarter %}
 {% load static %}
 {% load crispy_forms_tags %}
-{% load humanize %}
+{% load rating %}
 
 {% block content %}
   <div class="content-wrapper">
@@ -51,7 +51,7 @@
              <td class="px-6 py-4 text-md text-blue-900">{{target_obj.metric_type}}</td>
              <td class="px-6 py-4 text-md text-blue-900">{{target_obj.allowance_variance}}</td>
              <td class="px-6 py-4 text-md text-blue-900">{{target_obj.weight}}</td>
-             <td class="px-6 py-4 text-md text-blue-900"></td>
+             <td class="px-6 py-4 text-md text-blue-900">{{target_obj.activity.id|get_target_rating}}</td>
              <td>
                <div class="relative inline-block text-left">
                  <!-- Actions Button -->
