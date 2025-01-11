@@ -51,7 +51,6 @@ class Target(TimeStamp):
 class TargetScore(TimeStamp):
     target = models.OneToOneField(Target, on_delete=models.CASCADE)
     score = models.DecimalField(max_digits=5, decimal_places=2, default=0.0)
-    actual_variance = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, default=0.0)
     comments = models.TextField()
 
     def __str__(self):

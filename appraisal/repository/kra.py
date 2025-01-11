@@ -231,7 +231,7 @@ class ActivityTargetRepository:
 class TargetScoreRepository:
     def create(self, target_obj: Target, data: TargetScoreType)->TargetScore:
         try:
-            obj = TargetScore.objects.create(target=target_obj, score=data.score, actual_variance=data.actual_variance)
+            obj = TargetScore.objects.create(target=target_obj, score=data.score)
             return obj
         except Exception as e:
             raise Exception(f"score create repo failed with error: {e}")
@@ -253,10 +253,6 @@ class TargetScoreRepository:
 
             if target_score_obj.score != data.score:
                 target_score_obj.score = data.score
-                is_updated = True
-
-            if target_score_obj.actual_variance != data.actual_variance:
-                target_score_obj.actual_variance = data.actual_variance
                 is_updated = True
 
             if target_score_obj.comments != data.comment:
