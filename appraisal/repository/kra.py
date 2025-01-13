@@ -2,7 +2,7 @@ from typing import List
 from ..models import KeyResultArea, YearQuarter, Activity, Target, TargetScore
 from ..helpers.types.kra import KRAType, TargetType, TargetScoreType
 from it.users.models import UserProfile
-from django.db.models import Sum
+
 class KRARepository:
     def create(self, quarter_obj: YearQuarter, creator_obj, data: KRAType)->KeyResultArea:
         """
@@ -180,7 +180,8 @@ class ActivityTargetRepository:
                                         metric_type=data.metric_type,
                                         name=data.name,
                                         weight=data.weight,
-                                        allowance_variance=data.allowance_variance,
+                                        allowable_variance=data.allowable_variance,
+                                        agreed_target=data.agreed_target,
                                         unit=data.unit
                                         )
             return obj
@@ -213,8 +214,8 @@ class ActivityTargetRepository:
                 target_obj.weight = payload.weight
                 updated = True
 
-            if payload.allowance_variance != target_obj.allowance_variance:
-                target_obj.allowance_variance = payload.allowance_variance
+            if payload.allowable_variance != target_obj.allowable_variance:
+                target_obj.allowable_variance = payload.allowable_variance
                 updated = True
 
             if payload.unit != target_obj.unit:
@@ -230,7 +231,7 @@ class ActivityTargetRepository:
 class TargetScoreRepository:
     def create(self, target_obj: Target, data: TargetScoreType)->TargetScore:
         try:
-            obj = TargetScore.objects.create(target=target_obj, score=data.score, actual_variance=data.actual_variance)
+            obj = TargetScore.objects.create(target=target_obj, score=data.score)
             return obj
         except Exception as e:
             raise Exception(f"score create repo failed with error: {e}")
@@ -254,10 +255,6 @@ class TargetScoreRepository:
                 target_score_obj.score = data.score
                 is_updated = True
 
-            if target_score_obj.actual_variance != data.actual_variance:
-                target_score_obj.actual_variance = data.actual_variance
-                is_updated = True
-
             if target_score_obj.comments != data.comment:
                 target_score_obj.comments = data.comment
                 is_updated = True
@@ -268,11 +265,13 @@ class TargetScoreRepository:
         except Exception as e:
             raise Exception(f"Target score update Repo failed with error: {e}")
 
-    def calculate_aggregated_activity_value(self, activity_id: int) -> float:
+    def fetch_by_activity_id(self, activity_id: int) -> TargetScore:
             try:
-                result = TargetScore.objects.filter(
+                qr = TargetScore.objects.select_related('target', 'target__activity').filter(
                     target__activity__id=activity_id
-                ).aggregate(total_target=Sum('score'))
-                return result["total_target"] or 0.0
+                )
+                if not qr.exists():
+                    raise Exception("Target score not found")
+                return qr.first()
             except Exception as e:
-                raise Exception(f"TargetScore aggregation failed with error: {e}")
+                raise Exception(f"TargetScore fetch failed with error: {e}")

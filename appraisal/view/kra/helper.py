@@ -46,11 +46,13 @@ def build_payload_target(request, form: BaseModelForm) -> TargetType:
                 The first error message is displayed to the user via Django messages framework.
     """
     try:
+        print("=====================>>>>>>>>>", form.cleaned_data.get("allowable_variance"))
         data = {
             "name": form.cleaned_data.get("name"),
             "metric_type": form.cleaned_data.get("metric_type"),
             "weight": form.cleaned_data.get("weight"),
-            "allowance_variance": form.cleaned_data.get("allowance_variance"),
+            "allowable_variance": form.cleaned_data.get("allowable_variance"),
+            "agreed_target": form.cleaned_data.get("agreed_target"),
             "unit": form.cleaned_data.get("unit"),
         }
         return TargetType(**data)

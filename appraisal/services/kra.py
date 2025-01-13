@@ -5,6 +5,7 @@ from ..repository.kra import KRARepository, KraActivityRepository, ActivityTarge
 from it.users.models import UserProfile
 from ..models import YearQuarter, KeyResultArea, Activity,Target, TargetScore
 from ..helpers.types.kra import KRAType, TargetType, TargetScoreType
+from ..helpers.getters import get_actual_variance, get_within_condition, get_rating
 
 class KRAErr(Exception):
     ...
@@ -102,6 +103,7 @@ class TargetScoreService:
 
     def create_use_case(self, target_obj: Target, data: TargetScoreType)->TargetScore:
         try:
+
             return self.target_score_repository.create(target_obj=target_obj, data=data)
         except Exception as e:
             raise KRAErr(f"Failed to create target-score with error: {e}")
@@ -118,33 +120,31 @@ class TargetScoreService:
         except Exception as e:
             raise KRAErr(f"Failed to get target-score with error: {e}")
 
-    def calculate_activity_score_use_case(self, activity_id: int, activity_weight: float)->float:
+    def calculate_activity_score_use_case(self, activity_id: int)->float:
         """
         Calculates the score for a specific activity based on its aggregated target scores and weight.
 
         Args:
             activity_id (int): The unique identifier of the activity for which the score is to be calculated.
-            activity_weight (float): The weight of the activity, typically defined as a percentage.
 
         Returns:
             float: The calculated activity score in percentage.
 
-        Calculation:
-            - Retrieves the total aggregated target scores for the specified activity.
-            - Applies the formula: (total_target / 100) * activity_weight.
-            - Returns the computed score.
-
-        Example:
-            If the total aggregated target score for an activity is 85 and the activity weight is 20:
-            score = (85 / 100) * 20 = 17.0
 
         Raises:
             Exception: If there is an error in retrieving the aggregated target scores.
         """
-        total_target = 0
         try:
-            total_target = self.target_score_repository.calculate_aggregated_activity_value(activity_id=activity_id)
+            target_score_obj = self.target_score_repository.fetch_by_activity_id(activity_id=activity_id)
         except Exception as e:
             raise KRAErr(f"Activity Score calculation failed with error: {e}")
-        score = (total_target/100)*activity_weight
-        return score
+
+        actual_score = target_score_obj.score
+        target_score = target_score_obj.target.agreed_target
+        actual_variance = get_actual_variance(actual_score=actual_score, target_score=target_score)
+
+        allowable_variance = target_score_obj.target.allowable_variance
+        within_condition_value = get_within_condition(actual_variance=actual_variance, allowable_variance=allowable_variance)
+
+        rating = get_rating(actual_variance=actual_variance, within_condition=within_condition_value)
+        return rating

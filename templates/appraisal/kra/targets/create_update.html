@@ -36,12 +36,17 @@
                         >
                             {{ target_form.weight|as_crispy_field }}
                     </div>
+                    <div 
+                        class="flex-1 px-2 w-80 shadow-xl rounded-lg border-2"
+                        >
+                            {{ target_form.agreed_target|as_crispy_field }}
+                    </div>
                 </div>
                 <div class="flex gap-2">
                     <div 
                         class="flex-1 px-2 w-80 shadow-xl rounded-lg border-2"
                         >
-                            {{ target_form.allowance_variance|as_crispy_field }}
+                            {{ target_form.allowable_variance|as_crispy_field }}
                     </div>
                     
                     <div 
