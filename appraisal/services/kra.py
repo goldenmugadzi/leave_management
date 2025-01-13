@@ -120,12 +120,12 @@ class TargetScoreService:
         except Exception as e:
             raise KRAErr(f"Failed to get target-score with error: {e}")
 
-    def calculate_activity_score_use_case(self, activity_id: int)->float:
+    def calculate_activity_score_use_case(self, target_id: int)->float:
         """
         Calculates the score for a specific activity based on its aggregated target scores and weight.
 
         Args:
-            activity_id (int): The unique identifier of the activity for which the score is to be calculated.
+            target_id (int): The unique identifier of the activity for which the score is to be calculated.
 
         Returns:
             float: The calculated activity score in percentage.
@@ -135,7 +135,7 @@ class TargetScoreService:
             Exception: If there is an error in retrieving the aggregated target scores.
         """
         try:
-            target_score_obj = self.target_score_repository.fetch_by_activity_id(activity_id=activity_id)
+            target_score_obj = self.target_score_repository.get_by_target_id(target_id=target_id)
         except Exception as e:
             raise KRAErr(f"Activity Score calculation failed with error: {e}")
 
@@ -147,4 +147,5 @@ class TargetScoreService:
         within_condition_value = get_within_condition(actual_variance=actual_variance, allowable_variance=allowable_variance)
 
         rating = get_rating(actual_variance=actual_variance, within_condition=within_condition_value)
+
         return rating
