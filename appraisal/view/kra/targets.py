@@ -11,7 +11,6 @@ from .helper import build_payload_target, build_payload_score
 from pydantic import ValidationError
 
 
-
 class TargetsIndexView(TemplateView):
     template_name = 'appraisal/kra/targets/index.html'
 
@@ -180,4 +179,28 @@ class TargetScoreUpdateView(SuccessMessageMixin, UpdateView):
         return reverse('score', kwargs={"activity_id": self.kwargs.get('activity_id'),
                                         "target_id": self.kwargs.get('target_id')})
 
-    
+    def get_ActualVariance(actual, target):
+        actual_variance = target-actual
+        return actual_variance
+
+    def getRating(actual_variance, within_condition):
+        rating = 0
+        if actual_variance >= 0 and within_condition <= 1:
+            rating = 5
+        elif actual_variance > 0 and within_condition > 1:
+            rating = 6
+        elif actual_variance < 0 and within_condition <= 1:
+            rating = 4
+        elif actual_variance < 0 and within_condition > 1 and within_condition <= 2:
+            rating = 3
+        elif actual_variance < 0 and 2 < within_condition <= 3:
+            rating = 2
+        elif actual_variance < 0 and within_condition > 3:
+            rating = 1
+        return rating
+
+# within condition is the ratio of actual_variance to target_score and the allowable variance
+
+   def get_within_condition(actual_variance, allowable_variance):
+        within_condition=actual_variance/allowable_variance
+        return within_condition
