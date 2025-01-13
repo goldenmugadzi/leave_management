@@ -202,6 +202,7 @@ class TestTargetScoreService(TestCase):
             except KRAErr as e:
                 # ============ ASSERT ===============
                 self.assertEqual(str(e), f"Failed to update target-score with error: {mock_db_err}")
+
 class TestTargetScoreRatingCalculation(TestCase):
     def setUp(self) -> None:
         self.mock_repo = Mock(spec=TargetScoreRepository)
@@ -218,16 +219,20 @@ class TestTargetScoreRatingCalculation(TestCase):
         target_score = 100
         allowable_variance = 15
 
+        # Mock the target score object
         mock_target_score = self.mock_target_score_object()
         mock_target_score.score = actual_score
         mock_target_score.target.agreed_target = target_score
         mock_target_score.target.allowable_variance = allowable_variance
-        self.mock_repo.fetch_by_id.return_value = mock_target_score
+
+        # Configure the repository mock to return this object
+        self.mock_repo.get_by_target_id.return_value = mock_target_score
 
         # ACT
         self.service.calculate_activity_score_use_case(target_id=target_id)
+
         # ASSERT
-        self.mock_repo.fetch_by_id.assert_called_once_with(target_id=target_id)
+        self.mock_repo.get_by_target_id.assert_called_once_with(target_id=target_id)
 
     # def test_target_score_get_actual_variance_called_once(self):
     #     # ARRANGE
@@ -239,7 +244,7 @@ class TestTargetScoreRatingCalculation(TestCase):
     #     mock_target_score.score = actual_score
     #     mock_target_score.target.agreed_target = target_score
 
-    #     self.mock_repo.fetch_by_id.return_value = mock_target_score
+    #     self.mock_repo.get_by_target_id.return_value = mock_target_score
 
     #     # ACT AND ASSERT
     #     with patch("appraisal.services.kra.get_actual_variance") as actual_variance_method:
@@ -257,7 +262,7 @@ class TestTargetScoreRatingCalculation(TestCase):
     #     mock_target_score = self.mock_target_score_object()
     #     mock_target_score.target.allowable_variance = allowable_variance
 
-    #     self.mock_repo.fetch_by_id.return_value = mock_target_score
+    #     self.mock_repo.get_by_target_id.return_value = mock_target_score
 
     #     # ACT AND ASSERT
     #     with patch("appraisal.services.kra.get_within_condition") as get_within_condition:
@@ -276,7 +281,7 @@ class TestTargetScoreRatingCalculation(TestCase):
     #     mock_get_within_condition.return_value = within_condition
     #     mock_target_score = self.mock_target_score_object()
 
-    #     self.mock_repo.fetch_by_id.return_value = mock_target_score
+    #     self.mock_repo.get_by_target_id.return_value = mock_target_score
 
     #     # ACT AND ASSERT
     #     with patch("appraisal.services.kra.get_rating") as get_rating:
@@ -294,7 +299,7 @@ class TestTargetScoreRatingCalculation(TestCase):
         mock_target_score.score = actual_score
         mock_target_score.target.agreed_target = target_score
         mock_target_score.target.allowable_variance = allowable_variance
-        self.mock_repo.fetch_by_id.return_value = mock_target_score
+        self.mock_repo.get_by_target_id.return_value = mock_target_score
 
         want = 5
 
@@ -315,7 +320,7 @@ class TestTargetScoreRatingCalculation(TestCase):
     #     mock_target_score.score = actual_score
     #     mock_target_score.target.agreed_target = target_score
     #     mock_target_score.target.allowable_variance = allowable_variance
-    #     self.mock_repo.fetch_by_id.return_value = mock_target_score
+    #     self.mock_repo.get_by_target_id.return_value = mock_target_score
 
     #     want = 0
 
@@ -336,7 +341,7 @@ class TestTargetScoreRatingCalculation(TestCase):
     #     mock_target_score.score = actual_score
     #     mock_target_score.target.agreed_target = target_score
     #     mock_target_score.target.allowable_variance = allowable_variance
-    #     self.mock_repo.fetch_by_id.return_value = mock_target_score
+    #     self.mock_repo.get_by_target_id.return_value = mock_target_score
 
     #     want = 5
 
@@ -351,7 +356,8 @@ class TestTargetScoreRatingCalculation(TestCase):
         target_id = 4
         db_err = "some db error"
 
-        with patch.object(self.mock_repo, 'fetch_by_id', side_effect=Exception(db_err)):
+
+        with patch.object(self.mock_repo, 'get_by_target_id', side_effect=Exception(db_err)):
             with self.assertRaises(KRAErr) as context:
                 # ACT
                 self.service.calculate_activity_score_use_case(target_id=target_id)
