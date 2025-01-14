@@ -213,6 +213,10 @@ class ActivityTargetRepository:
             if payload.weight != target_obj.weight:
                 target_obj.weight = payload.weight
                 updated = True
+                
+            if payload.agreed_target != target_obj.agreed_target:
+                target_obj.agreed_target = payload.agreed_target
+                updated = True
 
             if payload.allowable_variance != target_obj.allowable_variance:
                 target_obj.allowable_variance = payload.allowable_variance
@@ -258,6 +262,10 @@ class TargetScoreRepository:
             if target_score_obj.comments != data.comment:
                 target_score_obj.comments = data.comment
                 is_updated = True
+                
+            if target_score_obj.comments != data.comment:
+                target_score_obj.comments = data.comment
+                is_updated = True
 
             if is_updated:
                 target_score_obj.save()
@@ -265,10 +273,10 @@ class TargetScoreRepository:
         except Exception as e:
             raise Exception(f"Target score update Repo failed with error: {e}")
 
-    def fetch_by_activity_id(self, activity_id: int) -> TargetScore:
+    def fetch_by_id(self, target_score_id: int) -> TargetScore:
             try:
                 qr = TargetScore.objects.select_related('target', 'target__activity').filter(
-                    target__activity__id=activity_id
+                    id=target_score_id
                 )
                 if not qr.exists():
                     raise Exception("Target score not found")
