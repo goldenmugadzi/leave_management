@@ -6,7 +6,7 @@ class TestGetActualVariance(TestCase):
         # Arrange
         actual_score = 90
         target_score = 100
-        want = 10
+        want = -10
 
         # Act
         got = get_actual_variance(actual_score=actual_score, target_score=target_score)
@@ -63,110 +63,28 @@ class TestGetWithInCondition(TestCase):
         self.assertEqual(str(context.exception), expected_err)
 
 class TestGetRating(TestCase):
-    def test_actual_variance_positive_within_condition_within_1(self):
-        # Arrange
-        actual_variance = 1
-        within_condition = 0.8
-        want = 5
+    def test_rating_5(self):
+        self.assertEqual(get_rating(0, 0), 5)
+        self.assertEqual(get_rating(-1, 0.5), 5)
+        self.assertEqual(get_rating(-1, -0.5), 5)
 
-        # Act
-        got = get_rating(actual_variance, within_condition)
+    def test_rating_6(self):
+        self.assertEqual(get_rating(1, 2), 6)
+        self.assertEqual(get_rating(5, 3), 6)
 
-        # Assert
-        self.assertEqual(want, got)
+    def test_rating_4(self):
+        self.assertEqual(get_rating(-1, -0.5), 4)
 
-    def test_actual_variance_positive_within_condition_above_1(self):
-        # Arrange
-        actual_variance = 1
-        within_condition = 1.5
-        want = 6
+    def test_rating_3(self):
+        self.assertEqual(get_rating(-1, -1.5), 3)
 
-        # Act
-        got = get_rating(actual_variance, within_condition)
+    def test_rating_2(self):
+        self.assertEqual(get_rating(-1, -2.5), 2)
 
-        # Assert
-        self.assertEqual(want, got)
+    def test_rating_1(self):
+        self.assertEqual(get_rating(-1, -5), 1)
 
-    def test_actual_variance_negative_within_condition_within_1(self):
-        # Arrange
-        actual_variance = -1
-        within_condition = 0.5
-        want = 4
-
-        # Act
-        got = get_rating(actual_variance, within_condition)
-
-        # Assert
-        self.assertEqual(want, got)
-
-    def test_actual_variance_negative_within_condition_between_1_and_2(self):
-        # Arrange
-        actual_variance = -1
-        within_condition = 1.5
-        want = 3
-
-        # Act
-        got = get_rating(actual_variance, within_condition)
-
-        # Assert
-        self.assertEqual(want, got)
-
-    def test_actual_variance_negative_within_condition_between_2_and_3(self):
-        # Arrange
-        actual_variance = -1
-        within_condition = 2.5
-        want = 2
-
-        # Act
-        got = get_rating(actual_variance, within_condition)
-
-        # Assert
-        self.assertEqual(want, got)
-
-    def test_actual_variance_negative_within_condition_above_3(self):
-        # Arrange
-        actual_variance = -1
-        within_condition = 3.5
-        want = 1
-
-        # Act
-        got = get_rating(actual_variance, within_condition)
-
-        # Assert
-        self.assertEqual(want, got)
-
-    def test_actual_variance_zero_within_condition_within_1(self):
-        # Arrange
-        actual_variance = 0
-        within_condition = 1
-        want = 5
-
-        # Act
-        got = get_rating(actual_variance, within_condition)
-
-        # Assert
-        self.assertEqual(want, got)
-
-    def test_actual_variance_negative_within_condition_exactly_2(self):
-        # Arrange
-        actual_variance = -1
-        within_condition = 2
-        want = 3
-
-        # Act
-        got = get_rating(actual_variance, within_condition)
-
-        # Assert
-        self.assertEqual(want, got)
-
-    def test_actual_variance_negative_within_condition_exactly_3(self):
-        # Arrange
-        actual_variance = -1
-        within_condition = 3
-        want = 2
-
-        # Act
-        got = get_rating(actual_variance, within_condition)
-
-        # Assert
-        self.assertEqual(want, got)
+    def test_rating_0(self):
+        # Case where no condition is met
+        self.assertEqual(get_rating(1, 0), 0)
+        self.assertEqual(get_rating(0, 2), 0)
