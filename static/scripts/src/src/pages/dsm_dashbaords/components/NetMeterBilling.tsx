@@ -1,47 +1,17 @@
 import { useState } from "react";
 import MultiBarChart from "./MultiBarChart";
 
-export default function NetMeterBilling() {
+interface INetMeterBillingProp {
+  region: string;
+  commissionedPoints: number;
+  totalBilled: number;
+  percentageBilled: number;
+}
+  
+
+export default function NetMeterBilling({ netMeteringBilling }: { netMeteringBilling: INetMeterBillingProp[] }) {
 
     const [netMeterBillingOpen, setNetMeterBillingOpen] = useState<boolean>(false);
-    const [regionalNMStats] = useState([
-        {
-            region: "ZETDC",
-            commissionedPoints: 260,
-            totalBilled: 200,
-            percentageBilled: 76.92,
-        },
-        {
-            region: "Harare",
-            commissionedPoints: 222,
-            totalBilled: 143,
-            percentageBilled: 64.41,
-        },
-        {
-            region: "Southern",
-            commissionedPoints: 4,
-            totalBilled: 2,
-            percentageBilled: 50.00,
-        },
-        {
-            region: "Eastern",
-            commissionedPoints: 10,
-            totalBilled: 4,
-            percentageBilled: 40.00,
-        },
-        {
-            region: "Western",
-            commissionedPoints: 8,
-            totalBilled: 7,
-            percentageBilled: 87.50,
-        },
-        {
-            region: "Northern",
-            commissionedPoints: 16,
-            totalBilled: 13,
-            percentageBilled: 81.25,
-        },
-    ]);
     const title = "Regional Net Metering Statistics Comparison";
 
   const RegionalStats = () => {
@@ -57,21 +27,21 @@ export default function NetMeterBilling() {
     const datasets = [
       {
         label: "Commissioned Net Metering Points",
-        data: [260, 222, 4, 10, 8, 16],
+        data: netMeteringBilling?.map((item: INetMeterBillingProp) => item.commissionedPoints),
         backgroundColor: "rgba(16, 185, 129, 0.7)",
         borderColor: "rgb(16, 185, 129)",
         borderWidth: 1,
       },
       {
         label: "Total Billed",
-        data: [200, 143, 2, 4, 7, 13],
+        data: netMeteringBilling?.map((item: INetMeterBillingProp) => item.totalBilled),
         backgroundColor: "rgba(59, 130, 246, 0.7)",
         borderColor: "rgb(59, 130, 246)",
         borderWidth: 1,
       },
       {
         label: "% Billed",
-        data: [76.92, 64.41, 50, 40, 87.5, 81.25],
+        data: netMeteringBilling?.map((item: INetMeterBillingProp) => item.percentageBilled),
         backgroundColor: "rgba(245, 158, 11, 0.7)",
         borderColor: "rgb(245, 158, 11)",
         borderWidth: 1,
@@ -116,7 +86,7 @@ export default function NetMeterBilling() {
               </tr>
             </thead>
             <tbody>
-              {regionalNMStats.map((item, index) => (
+              {netMeteringBilling?.map((item, index) => (
                 <tr key={index}>
                   <td className="py-2 px-4 border-b border-b-gray-50">
                     <div className="flex items-center">

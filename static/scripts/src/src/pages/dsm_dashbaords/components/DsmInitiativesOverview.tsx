@@ -24,6 +24,13 @@ ChartJS.register(
   PointElement
 );
 
+interface IVirtualPowerStats {
+  dsm_initiative: string;
+  initiative_type: string;
+  initiative_value: number;
+  demand_curtailed: number;
+}
+
 interface DsmInitiative {
   initiative: string;
   installations: string;
@@ -58,7 +65,7 @@ const initiatives: DsmInitiative[] = [
   },
 ];
 
-const DsmInitiativesOverview: React.FC = () => {
+const DsmInitiativesOverview: React.FC<{ virtualPowerStats: IVirtualPowerStats[] }> = ({ virtualPowerStats }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   const chartData = {
@@ -66,7 +73,7 @@ const DsmInitiativesOverview: React.FC = () => {
     datasets: [
       {
         label: "Number of Installations/Audits/Policies",
-        data: initiatives.map((item) => item.installations),
+        data: virtualPowerStats.map((item) => item.initiative_value),
         backgroundColor: "rgba(16, 185, 129, 0.7)",
         borderColor: "rgb(16, 185, 129)",
         borderWidth: 1,
@@ -74,7 +81,7 @@ const DsmInitiativesOverview: React.FC = () => {
       },
       {
         label: "Demand Curtailed (KW)",
-        data: initiatives.map((item) => item.demandCurtailed),
+        data: virtualPowerStats.map((item) => item.demand_curtailed),
         type: "line" as const,
         borderColor: "rgb(59, 130, 246)",
         backgroundColor: "rgba(59, 130, 246, 0.7)",
@@ -164,16 +171,16 @@ const DsmInitiativesOverview: React.FC = () => {
             </tr>
           </thead>
           <tbody>
-            {initiatives.map((item, index) => (
+            {virtualPowerStats.map((item, index) => (
               <tr key={index}>
                 <td className="py-2 px-4 border-b border-b-gray-50">
-                  {item.initiative}
+                  {item.dsm_initiative}
                 </td>
                 <td className="py-2 px-4 border-b border-b-gray-50 text-right">
-                  {item.installations.toLocaleString()}
+                  {item.initiative_value.toLocaleString()}
                 </td>
                 <td className="py-2 px-4 border-b border-b-gray-50 text-right">
-                  {item.demandCurtailed.toLocaleString()}
+                  {item.demand_curtailed.toLocaleString()}
                 </td>
               </tr>
             ))}

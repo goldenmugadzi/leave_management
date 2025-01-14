@@ -7,6 +7,7 @@ from django.core import serializers
 from django.http import JsonResponse
 from django.shortcuts import render,redirect
 from django.views.decorators.csrf import csrf_exempt
+from django.contrib import messages
 
 from executive.exec_dashboards.utils import *
 from .models import PBNC, TD, UPO, Inspections, Maintenance
@@ -470,6 +471,342 @@ def dsm_dashboard(request):
                       })
 
 @login_required
+def upload_net_metering_register(request):
+    
+    if request.method == 'POST':
+        print("request.POST: ", request.POST)
+        csvfile = request.FILES['uploaded_file']
+        print("csvfile: ", csvfile)
+        
+        decoded_file = csvfile.read().decode('cp1252').splitlines()
+        reader = csv.DictReader(decoded_file)
+        for row in reader:
+            print("row: ", row)
+            district_name = get_district_name(row['district'])
+            print("district_name: ", district_name)
+            district = Districts.objects.filter(district=district_name).first() if district_name else None
+            print("district: ", district)
+            try:
+                date_applied = datetime.strptime(row['date_applied'], "%d-%b-%y")
+            except ValueError:
+                try:
+                    date_applied = datetime.strptime(row['date_applied'], "%Y-%m-%d")
+                except ValueError:
+                    print(f"Could not parse date_applied: {row['date_applied']}")
+                    continue
+
+            try:
+                date_commissioned = datetime.strptime(row['date_commissioned'], "%d-%b-%y") 
+            except ValueError:
+                try:
+                    date_commissioned = datetime.strptime(row['date_commissioned'], "%Y-%m-%d")
+                except ValueError:
+                    print(f"Could not parse date_commissioned: {row['date_commissioned']}")
+                    continue
+            # date_applied = datetime.strptime(row['date_applied'], "%Y-%m-%d")
+            # date_commissioned = datetime.strptime(row['date_commissioned'], "%Y-%m-%d")
+            
+            try:
+                NetMeteringRegister.objects.create(
+                    name_of_customer=row['name_of_customer'],
+                    district=district,
+                    date_applied=date_applied,
+                    address=row['address'],
+                    date_commissioned=date_commissioned,
+                    progress=row['progress'],
+                    installed_capacity=row['installed_capacity'],
+                    duration=row['duration'],
+                    inverter_type=row['inverter_type'],
+                    solar_panel_type=row['solar_panel_type'],
+                    customer_category=row['customer_category'],
+                    phases=row['phases'],
+                    email_address=row['email_address'],
+                    cell_number=row['cell_number'],
+                    meter_number=row['meter_number'],
+                    account_number=row['account_number'],
+                    ip_address=row['ip_address'],
+                    comment=row['comment'],
+                )
+                print("success")
+            except Exception as e:
+                print("error: ", e)
+    
+    return render(request, 'dashboards/commercial/upload_net_metering_register.html', {})
+
+@csrf_exempt
+def get_net_metering_register(request):
+    net_metering_register = NetMeteringRegister.objects.all()
+    
+    # Calculate total and commissioned applications quantum
+    total_quantum = sum(float(record.installed_capacity or 0) for record in net_metering_register)
+    commissioned_quantum = sum(
+        float(record.installed_capacity or 0) 
+        for record in net_metering_register 
+        if record.progress == 'CD'  # CD = Commissioned
+    )
+    
+    # Calculate total and commissioned applications count
+    total_applications = net_metering_register.count()
+    commissioned_applications = net_metering_register.filter(progress='CD').count()
+    
+    # Calculate exports and imports
+    imports = net_metering_register.filter(customer_category='D')
+    exports = net_metering_register.filter(customer_category='C')
+    total_exports = sum(float(record.installed_capacity or 0) for record in exports)
+    total_imports = sum(float(record.installed_capacity or 0) for record in imports)
+    
+    # Calculate percentages
+    quantum_percentage = (commissioned_quantum / total_quantum * 100) if total_quantum else 0
+    applications_percentage = (commissioned_applications / total_applications * 100) if total_applications else 0
+    export_import_ratio = (total_exports / total_imports * 100) if total_imports else 0
+    
+    stats = {
+        "net_metering_stats": [
+            {
+                "title": "Net Metering Applications Quantum (KW)",
+                "percentage": f"{quantum_percentage:.1f}% Commissioned",
+                "percentage_width": f"{quantum_percentage:.1f}%",
+                "datasets": [
+                    {
+                        "label": "Total Applications Quantum (KW)",
+                        "value": f"{total_quantum:.2f}"
+                    },
+                    {
+                        "label": "Commissioned Quantum (KW)",
+                        "value": f"{commissioned_quantum:.2f}"
+                    }
+                ]
+            },
+            {
+                "title": "Net Metering Points Commissioned Applications",
+                "percentage": f"{applications_percentage:.1f}% Commissioned",
+                "percentage_width": f"{applications_percentage:.1f}%",
+                "datasets": [
+                    {
+                        "label": "Total Applications",
+                        "value": str(total_applications)
+                    },
+                    {
+                        "label": "Commissioned Applications",
+                        "value": str(commissioned_applications)
+                    }
+                ]
+            },
+            {
+                "title": "Exports to Import ratio after Net Metering Commissioning",
+                "percentage": f"{export_import_ratio:.1f}% Export to Import Ratio",
+                "percentage_width": f"{export_import_ratio:.1f}%",
+                "datasets": [
+                    {
+                        "label": "Total Exports (KWH)",
+                        "value": f"{total_exports:.2f}"
+                    },
+                    {
+                        "label": "Total Imports (KWH)",
+                        "value": f"{total_imports:.2f}"
+                    }
+                ]
+            }
+        ]
+    }
+    
+    return JsonResponse(stats)
+
+@login_required
+def upload_dsm_audit(request):
+    if request.method == 'POST':
+        print("request.POST: ", request.POST)
+        csvfile = request.FILES['uploaded_file']
+        print("csvfile: ", csvfile)
+        
+        decoded_file = csvfile.read().decode('cp1252').splitlines()
+        reader = csv.DictReader(decoded_file)
+        for row in reader:
+            print("row: ", row)
+            region = Regions.objects.filter(region=row['region']).first()
+            if not region:
+                messages.error(request, f"Region '{row['region']}' not found")
+                continue
+            try:
+                DSMAudits.objects.create(
+                    client=row['client'],  # Handle BOM in CSV
+                    region=region
+                )
+            except Exception as e:
+                messages.error(request, f"Error creating audit for {row['ï»¿client']}: {str(e)}")
+                continue
+        messages.success(request, "DSM Audit uploaded successfully")
+        return redirect('/dashboards/dsm/upload_dsm_audits')
+        
+    return render(request, 'dashboards/commercial/upload_dsm_audits.html', {})
+
+@csrf_exempt
+def get_dsm_audits(request):
+    dsm_audits = DSMAudits.objects.all()
+    print("dsm_audits: ", dsm_audits)
+    audits_by_region = {}
+    for audit in dsm_audits:
+        region_name = audit.region.region
+        if region_name not in audits_by_region:
+            audits_by_region[region_name] = 0
+        audits_by_region[region_name] += 1
+
+    # Ensure all regions are represented, even with 0 audits
+    all_regions = ["Harare", "Southern", "Eastern", "Western", "Northern"] 
+    for region in all_regions:
+        if region not in audits_by_region:
+            audits_by_region[region] = 0
+
+    response = []
+    for region, count in audits_by_region.items():
+        response.append({
+            "region": region,
+            "audits": count
+        })
+    print("response: ", response)
+    return JsonResponse(response, safe=False)
+
+@login_required
+def upload_net_metering_billing(request):
+    if request.method == 'POST':
+        print("request.POST: ", request.POST)
+        csvfile = request.FILES['uploaded_file']
+        print("csvfile: ", csvfile)
+        
+        decoded_file = csvfile.read().decode('cp1252').splitlines()
+        reader = csv.DictReader(decoded_file)
+        for row in reader:
+            print("row: ", row)
+            region = Regions.objects.filter(region=row['region']).first()
+            # if not region:
+            #     messages.error(request, f"Region '{row['region']}' not found")
+            #     continue
+            NetMeteringBilling.objects.create(
+                commissioned_points=row['commissioned_points'],
+                billed_points=row['billed_points'],
+                region=region
+            )
+        messages.success(request, "Net Metering Billing uploaded successfully")
+        return redirect('/dashboards/dsm/upload_net_metering_billing')
+
+    return render(request, 'dashboards/commercial/upload_net_metering_billing.html', {})
+
+@csrf_exempt
+def get_net_metering_billing(request):
+    net_metering_billing = NetMeteringBilling.objects.all()
+    billing_by_region = {}
+    for billing in net_metering_billing:
+        region_name = billing.region.region
+        if region_name not in billing_by_region:
+            billing_by_region[region_name] = {
+                'commissioned_points': 0,
+                'billed_points': 0
+            }
+        billing_by_region[region_name]['commissioned_points'] += int(billing.commissioned_points)
+        billing_by_region[region_name]['billed_points'] += int(billing.billed_points)
+
+    response = []
+    for region, stats in billing_by_region.items():
+        percentage = 0
+        if stats['commissioned_points'] > 0:
+            percentage = round((stats['billed_points'] / stats['commissioned_points']) * 100, 2)
+            
+        response.append({
+            'region': region,
+            'commissionedPoints': stats['commissioned_points'],
+            'totalBilled': stats['billed_points'], 
+            'percentageBilled': percentage
+        })
+
+    # Add ZETDC total
+    total_commissioned = sum(item['commissioned_points'] for item in billing_by_region.values())
+    total_billed = sum(item['billed_points'] for item in billing_by_region.values())
+    total_percentage = 0
+    if total_commissioned > 0:
+        total_percentage = round((total_billed / total_commissioned) * 100, 2)
+
+    response.append({
+        'region': 'ZETDC',
+        'commissionedPoints': total_commissioned,
+        'totalBilled': total_billed,
+        'percentageBilled': total_percentage
+    })
+    return JsonResponse(response, safe=False)
+
+@login_required
+def upload_virtual_power_stats(request):
+    if request.method == 'POST':
+        print("request.POST: ", request.POST)
+        csvfile = request.FILES['uploaded_file']
+        print("csvfile: ", csvfile)
+        
+        decoded_file = csvfile.read().decode('cp1252').splitlines()
+        reader = csv.DictReader(decoded_file)
+        for row in reader:
+            print("row: ", row)
+            VirtualPowerStats.objects.create(
+                dsm_initiative=row['dsm_initiative'],
+                initiative_type=row['initiative_type'],
+                initiative_value=row['initiative_value'],
+                demand_curtailed=row['demand_curtailed']
+            )
+        messages.success(request, "Virtual Power Stats uploaded successfully")
+        return redirect('/dashboards/dsm/upload_virtual_power_stats')
+
+    return render(request, 'dashboards/commercial/upload_virtual_power_stats.html', {})
+
+@csrf_exempt
+def get_virtual_power_stats(request):
+    virtual_power_stats = list(VirtualPowerStats.objects.values('dsm_initiative', 'initiative_type', 'initiative_value', 'demand_curtailed'))
+    return JsonResponse(virtual_power_stats, safe=False)
+
+def get_district_name(district):
+    district_name = None
+    if district == "HE":
+        district_name = "HR EAST DISTRICT"
+    elif district == "HS":
+        district_name = "HR SOUTH DISTRICT"
+    elif district == "HW":
+        district_name = "HR WEST DISTRICT"
+    elif district == "HN":
+        district_name = "HR NORTH DISTRICT"
+    elif district == "Byo East":
+        district_name = "BYO EAST DISTRICT"
+    elif district == "Byo West":
+        district_name = "BYO WEST DISTRICT"
+    elif district == "Byo Central":
+        district_name = "BYO CENTRAL DISTRICT"
+    elif district == "Byo North":
+        district_name = "BYO NORTH DISTRICT"
+    elif district == "Byo South":
+        district_name = "BYO SOUTH DISTRICT"
+    elif district == "Beitbridge":
+        district_name = "BEITBRIDGE DISTRICT"
+    elif district == "Victoria Falls":
+        district_name = "VICTORIA FALLS DISTRICT"
+    elif district == "MARONDERA":
+        district_name = "MARONDERA DISTRICT"
+    elif district == "BINDURA":
+        district_name = "BINDURA DISTRICT"
+    elif district == "KADOMA":
+        district_name = "KADOMA DISTRICT"
+    elif district == "BINDURA":
+        district_name = "BINDURA DISTRICT"
+    elif district == "CHINHOYI":
+        district_name = "CHINHOYI DISTRICT"
+    elif district == "GWERU":
+        district_name = "GWERU DISTRICT"
+    elif district == "MASVINGO":
+        district_name = "MASVINGO DISTRICT"
+    elif district == "MANICALAND":
+        district_name = "MANICALAND DISTRICT"
+    elif district == "MUTARE":
+        district_name = "MUTARE DISTRICT"
+    elif district == "Triangle":
+        district_name = "TRIANGLE DISTRICT"
+    return district_name
+
+@login_required
 def dashboard_filter(request, item):
     
     page_title = ""
@@ -703,6 +1040,7 @@ def pbnc_upload(request):
         redirect('/dashboards/pbnc/upload')
             
     return render(request, 'dashboards/pbnc/upload.html', {})
+
 @login_required
 def td_upload(request):
     if request.method == 'POST':

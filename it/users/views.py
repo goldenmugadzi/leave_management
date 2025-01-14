@@ -64,26 +64,30 @@ def user_centers(request):
     return JsonResponse({"status": "success", "message": "Centers added successfully"})
 
 def get_exchange_account():
-    from decouple import config as cnf
-    print(cnf)
-    credentials = Credentials(
-        username=cnf('MS_EMAIL'),
-        password=cnf('MS_PASS')
-    )
-    print("Credentials: ", credentials)
-    config = Configuration(
-        server=cnf('MS_SERVER'),
-        credentials=credentials,
-    )
-    print("Config: ", config)
-    account = Account(
-        primary_smtp_address=cnf('MS_PRIMARY_SMTP_ADDRESS'),
-        config=config,
-        autodiscover=False,
-        access_type='delegate'
-    )
-    print("Successfully connected to Exchange server.")
-    return account
+    try:
+        from decouple import config as cnf
+        print(cnf)
+        credentials = Credentials(
+            username=cnf('MS_EMAIL'),
+            password=cnf('MS_PASS')
+        )
+        print("Credentials: ", credentials)
+        config = Configuration(
+            server=cnf('MS_SERVER'),
+            credentials=credentials,
+        )
+        print("Config: ", config)
+        account = Account(
+            primary_smtp_address=cnf('MS_PRIMARY_SMTP_ADDRESS'),
+            config=config,
+            autodiscover=False,
+            access_type='delegate'
+        )
+        print("Successfully connected to Exchange server.")
+        return account
+    except Exception as ex:
+        print("Error: ", ex)
+        return None
 
 @login_required
 def ms_exhange_test(request, template, kwargs):
@@ -118,34 +122,42 @@ def ms_exhange_send(subject, body, to_recipients, cc_recipients):
         return JsonResponse({"status": "error", "message": "An error occurred while sending the email: " + str(ex)})
 
 def ms_exhange_send_html(subject, to_recipients, cc_recipients, template, kwargs):
-    account = get_exchange_account()
-    message_body = get_template(f"{template}").render(kwargs["kwargs"])
-    message = Message(
-        account=account,
-        folder=account.sent,
-        subject=subject,
-        body=HTMLBody(message_body),
-        to_recipients=[Mailbox(email_address=recipient) for recipient in to_recipients],
-        cc_recipients=[Mailbox(email_address=recipient) for recipient in cc_recipients]
-    )
+    try:
+        account = get_exchange_account()
+        message_body = get_template(f"{template}").render(kwargs["kwargs"])
+        message = Message(
+            account=account,
+            folder=account.sent,
+            subject=subject,
+            body=HTMLBody(message_body),
+            to_recipients=[Mailbox(email_address=recipient) for recipient in to_recipients],
+            cc_recipients=[Mailbox(email_address=recipient) for recipient in cc_recipients]
+        )
 
-    message.send()
-    return JsonResponse({"status": "success", "message": "Email sent successfully"})
+        message.send()
+        return JsonResponse({"status": "success", "message": "Email sent successfully"})
+    except Exception as ex:
+        print("Error: ", ex)
+        return JsonResponse({"status": "error", "message": "An error occurred while sending the email: " + str(ex)})
 
 def ms_exhange_reset_password_html(subject, to_recipients, cc_recipients, template, kwargs):
-    account = get_exchange_account()
-    # message_body = get_template(f"{template}").render(kwargs["kwargs"])
-    message = Message(
-        account=account,
-        folder=account.sent,
-        subject=subject,
-        body=HTMLBody(template),
-        to_recipients=[Mailbox(email_address=recipient) for recipient in to_recipients],
-        cc_recipients=[Mailbox(email_address=recipient) for recipient in cc_recipients]
-    )
+    try:
+        account = get_exchange_account()
+        # message_body = get_template(f"{template}").render(kwargs["kwargs"])
+        message = Message(
+            account=account,
+            folder=account.sent,
+            subject=subject,
+            body=HTMLBody(template),
+            to_recipients=[Mailbox(email_address=recipient) for recipient in to_recipients],
+            cc_recipients=[Mailbox(email_address=recipient) for recipient in cc_recipients]
+        )
 
-    message.send()
-    return JsonResponse({"status": "success", "message": "Email sent successfully"})
+        message.send()
+        return JsonResponse({"status": "success", "message": "Email sent successfully"})
+    except Exception as ex:
+        print("Error: ", ex)
+        return JsonResponse({"status": "error", "message": "An error occurred while sending the email: " + str(ex)})
 
 @login_required
 @allowed_roles(['Administrator'], ['users'])

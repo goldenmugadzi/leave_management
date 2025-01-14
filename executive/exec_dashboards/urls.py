@@ -4,6 +4,14 @@ from .views import *
 urlpatterns = [
     path('overview/', dashboard_index, name='dashboard_index'),
     path('dsm/', dsm_dashboard, name='dsm_dashboard'),
+    path('dsm/upload_net_metering_register', upload_net_metering_register, name='upload_net_metering_register'),
+    path('dsm/get_net_metering_register', get_net_metering_register, name='get_net_metering_register'),
+    path('dsm/upload_dsm_audits', upload_dsm_audit, name='upload_dsm_audit'),
+    path('dsm/get_dsm_audits', get_dsm_audits, name='get_dsm_audits'),
+    path('dsm/upload_net_metering_billing', upload_net_metering_billing, name='upload_net_metering_billing'),
+    path('dsm/get_net_metering_billing', get_net_metering_billing, name='get_net_metering_billing'),
+    path('dsm/upload_virtual_power_stats', upload_virtual_power_stats, name='upload_virtual_power_stats'),
+    path('dsm/get_virtual_power_stats', get_virtual_power_stats, name='get_virtual_power_stats'),
     path('filter/<str:item>', dashboard_filter, name='dashboard_filter'),
     path('pbnc/upload', pbnc_upload, name='pbnc_upload'),
     path('td/upload', td_upload, name='td_upload'),
@@ -16,6 +24,5 @@ urlpatterns = [
     path('districts', get_districts, name='get_districts'),
     path('dashboard_data', dashboard_data, name='dashboard_data'),
     path('dashboard_filter', dashboard_filters, name='dashboard_filter'),
-    
     path('setup_data', setup_random_data, name='setup_data'),
-    ]
+]

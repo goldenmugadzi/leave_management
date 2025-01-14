@@ -569,8 +569,13 @@ def security_questions(request):
                 if check_password(answer, user_security_question.security_answer):
                     print("Answer matched")
                     user_profile.save()
+                    questions = Question.objects.all()
+                    print("questions: ", questions)
+                    questions_json = json.dumps([{"id": q.id, "question": q.question} for q in questions])
+                    print("questions_json: ", questions_json)
                     messages.success(request, "Security questions answered successfully")
-                    return render(request, "registration/reset_password.html", {
+                    return render(request, "registration/change_password.html", {
+                        "questions": questions_json,
                         "username": username,
                     })
                 else:

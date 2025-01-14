@@ -7,12 +7,7 @@ interface DsmAuditData {
   audits: number;
 }
 
-const clientData: DsmAuditData[] = [
-  { region: "Harare", audits: 8 },
-  { region: "Southern", audits: 1 },
-];
-
-const DsmAuditChart: React.FC = () => {
+const DsmAuditChart: React.FC<{ dsmAudits: DsmAuditData[] }> = ({ dsmAudits }) => {
   const chartRef = useRef<HTMLCanvasElement>(null);
   const [isOpen, setIsOpen] = useState(false);
 
@@ -28,10 +23,10 @@ const DsmAuditChart: React.FC = () => {
       new Chart(chartRef.current, {
         type: "pie",
         data: {
-          labels: ["Harare", "Southern", "Eastern", "Western", "Northern"],
+          labels: dsmAudits.map(audit => audit?.region),
           datasets: [
             {
-              data: [8, 1, 0, 0, 0],
+              data: dsmAudits?.map(audit => audit?.audits),
               backgroundColor: [
                 "rgba(16, 185, 129, 0.7)", // Emerald
                 "rgba(59, 130, 246, 0.7)", // Blue
@@ -159,7 +154,7 @@ const DsmAuditChart: React.FC = () => {
               </tr>
             </thead>
             <tbody>
-              {clientData.map((item, index) => (
+              {dsmAudits?.map((item, index) => (
                 <tr key={index}>
                   <td className="py-2 px-4 border-b border-b-gray-50">
                     {item.region}
