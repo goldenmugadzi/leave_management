@@ -149,7 +149,7 @@ def Ace_detail(request, Ace_id2):
 
             msg = "Your ACE " + ace_item.Ace_id2 + "has been approved by the General Manager"
             url = "/ace/ace_detail/" + ace_item.Ace_id2
-            notify_user(userp, msg, "ACE", url, ace_item.Ace_id2)
+            notify_user(userp, msg, "ACE", url, ace_item.Ace_id2, request)
 
     ace_quantity = range(ace_item.quantity)
     approved_steps = ace_item.process.approval_set.all().values_list('step__step', flat=True)
@@ -287,7 +287,7 @@ def create_Ace(request):
                             ace.budget_id)
                         url = "/ace/ace_detail/" + ace.Ace_id2
                         section_heads = UserProfile.objects.filter(username=section_heads).first()
-                        notify_user(section_heads, msg, "ACE", url, ace.Ace_id2)
+                        notify_user(section_heads, msg, "ACE", url, ace.Ace_id2, request)
 
                     # for quotation_form in formset:
                     #     quotation = quotation_form.save(commit=False)
@@ -305,7 +305,7 @@ def create_Ace(request):
                         url = "/ace/ace_detail/" + ace.Ace_id2
 
                         ace_sh = UserProfile.objects.filter(username=ace_sh).first()
-                        notify_user(ace_sh, msg, "ACE", url, ace.Ace_id2)
+                        notify_user(ace_sh, msg, "ACE", url, ace.Ace_id2, request)
 
                     if str(ace.classification) == "Project":
                         # the idea is that if its ace of type project there need to be added other project details
