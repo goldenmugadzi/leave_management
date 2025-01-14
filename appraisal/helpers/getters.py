@@ -20,7 +20,7 @@ def get_actual_variance(actual_score: float, target_score: float)->float:
     Returns:
         float: The variance between the target and actual scores.
     """
-    actual_variance = target_score-actual_score
+    actual_variance = actual_score-target_score
     return actual_variance
 
 def get_within_condition(actual_variance: float, allowable_variance: float)->float:
@@ -41,18 +41,18 @@ def get_within_condition(actual_variance: float, allowable_variance: float)->flo
         raise ValueError("Allowance variance cannot be zero")
     return float(actual_variance) / float(allowable_variance)
 
-def get_rating(actual_variance: float, within_condition: float)->int:
+def get_rating(actual_variance, within_condition):
     rating = 0
-    if actual_variance >= 0 and within_condition <= 1:
+    if (within_condition > -1 and within_condition < 1):
         rating = 5
     elif actual_variance > 0 and within_condition > 1:
         rating = 6
-    elif actual_variance < 0 and within_condition <= 1:
+    elif actual_variance < 0 and within_condition < 0 and within_condition >-1:
         rating = 4
-    elif actual_variance < 0 and within_condition > 1 and within_condition <= 2:
+    elif actual_variance < 0 and within_condition <-1 and within_condition >-2:
         rating = 3
-    elif actual_variance < 0 and 2 < within_condition <= 3:
+    elif actual_variance < 0 and within_condition <-2 and within_condition >-3:
         rating = 2
-    elif actual_variance < 0 and within_condition > 3:
+    elif actual_variance < 0 and within_condition <-4:
         rating = 1
     return rating
