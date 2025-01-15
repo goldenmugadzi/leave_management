@@ -149,3 +149,40 @@ class TargetScoreService:
         rating = get_rating(actual_variance=actual_variance, within_condition=within_condition_value)
 
         return rating
+
+    def calculate_activity_weight_score(self, activity_id: int)->float:
+        """
+            Calculate the weighted average score for an activity based on target scores and their respective weights.
+
+            This method fetches all target scores for a given activity, calculates the weighted sum of the scores, 
+            and divides it by the total weight to return the weighted average score.
+
+            Args:
+                activity_id (int): The ID of the activity for which the weighted score is calculated.
+
+            Returns:
+                float: The weighted average score of the activity.
+
+            Raises:
+                KRAErr: If there is an error during calculation, including when the total weight is zero 
+                        or issues with fetching target scores.
+                Exception: If the total weight of all target scores is zero.
+        """
+        try:
+            target_scores = self.target_score_repository.fetch_by_activity_id(activity_id=activity_id)
+
+            weighted_sum = 0
+            total_weight = 0
+
+            for target_score_obj in target_scores:
+                target_score = target_score_obj.score
+                target_weight = target_score_obj.target.weight
+                weighted_sum += target_score * target_weight
+                total_weight += target_weight
+
+            if total_weight == 0:
+                raise Exception("Total weight for activity cannot be zero.")
+
+            return weighted_sum/total_weight
+        except Exception as e:
+            raise KRAErr(f"Failed to calculate activity score with error: {e}")

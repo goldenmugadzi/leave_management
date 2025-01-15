@@ -3,10 +3,10 @@ from unittest.mock import Mock, patch
 
 
 from ..helpers.types.kra import KRAType
-from ..models import Activity, KeyResultArea
+from ..models import Activity, KeyResultArea, TargetScore
 from it.users.models import UserProfile
-from ..services.kra import ActivityService, KRAErr
-from ..repository.kra import KraActivityRepository
+from ..services.kra import ActivityService, KRAErr, TargetScoreService
+from ..repository.kra import KraActivityRepository, TargetScoreRepository
 
 class TestActivityService(TestCase):
     def setUp(self):
@@ -76,3 +76,76 @@ class TestActivityService(TestCase):
             except KRAErr as e:
                 # ============ ASSERT ===============
                 self.assertEqual(str(e), f"Failed to create kra activity with error: {db_err}")
+
+class TestActivityWeightedScore(TestCase):
+    def setUp(self):
+        self.mock_target_score_repo = Mock(spec=TargetScoreRepository)
+        self.target_score_service = TargetScoreService(target_score_repository=self.mock_target_score_repo)
+
+    def mock_target_score_obj(self):
+        mock = Mock(spec=TargetScore)
+        return mock
+
+    def test_repo_handler_error(self):
+        # ARRANGE
+        activity_id = 4
+        db_err = "some database error"
+
+        with patch.object(self.mock_target_score_repo, 'fetch_by_activity_id', side_effect=Exception(db_err)):
+            with self.assertRaises(KRAErr) as context:
+                # ACT
+                self.target_score_service.calculate_activity_weight_score(activity_id=activity_id)
+
+            # ASSERT
+            self.assertEqual(str(context.exception), f"Failed to calculate activity score with error: {db_err}")
+
+    def test_total_weight_zero_error(self):
+        # ARRANGE
+        activity_id = 4
+        tagets_objs_list = []
+        zero_err = "Total weight for activity cannot be zero."
+
+        # Mock the repository to return an empty list
+        self.mock_target_score_repo.fetch_by_activity_id.return_value = tagets_objs_list
+
+        # ACT and ASSERT
+        with self.assertRaises(KRAErr) as context:
+            self.target_score_service.calculate_activity_weight_score(activity_id=activity_id)
+
+        # Verify the exception message matches the expected error
+        self.assertEqual(
+            str(context.exception),
+            f"Failed to calculate activity score with error: {zero_err}"
+        )
+
+    def test_success_weighted_score(self):
+        # ARRANGE
+        activity_id = 4
+        target_score_score_1 = 90
+        target_score__weight_1 = 50
+        target_score_score_2 = 80
+        target_score__weight_2 = 30
+        target_score_score_3 = 70
+        target_score__weight_3 = 20
+
+        mock_target_score_obj_1 = self.mock_target_score_obj()
+        mock_target_score_obj_1.score = target_score_score_1
+        mock_target_score_obj_1.target.weight = target_score__weight_1
+
+        mock_target_score_obj_2 = self.mock_target_score_obj()
+        mock_target_score_obj_2.score = target_score_score_2
+        mock_target_score_obj_2.target.weight = target_score__weight_2
+
+        mock_target_score_obj_3 = self.mock_target_score_obj()
+        mock_target_score_obj_3.score = target_score_score_3
+        mock_target_score_obj_3.target.weight = target_score__weight_3
+
+        tagets_objs_list = [mock_target_score_obj_1, mock_target_score_obj_2, mock_target_score_obj_3]
+
+        self.mock_target_score_repo.fetch_by_activity_id.return_value = tagets_objs_list
+        want = 83
+        # ACT
+        got = self.target_score_service.calculate_activity_weight_score(activity_id=activity_id)
+
+        # ASSERT
+        self.assertEqual(got, want)
