@@ -149,7 +149,7 @@ def show_asset_datatable(request):
         # print('my assets', asset.regions.region, asset.designations.description, )
         asset_list = []
         for asset in page_obj:
-            print('my assets', asset.regions.region)
+            # print('my assets', asset.regions.region)
             new_asset = {
                 "id": asset.id,
                 "asset_state": asset.asset_state,
@@ -491,41 +491,57 @@ def export_csv(request):
 
 def upload_asset(request):
     if request.method == 'POST':
-
-        csvfile = request.FILES['uploaded_csv'] # file as key
-    
-        decoded_file = csvfile.read().decode('cp1252').splitlines()
-        reader = csv.DictReader(decoded_file)
-
-        for row in reader:        
-            date = datetime.strptime(row['created_at'], "%Y-%m-%d")
-            formatted_date = date.strftime("%Y-%m-%d")
-
-            district = Sections.objects.filter(district=row['district']).first()
-            section = Sections.objects.filter(section=row['section']).first()
-            region = Regions.objects.filter(region=row['region']).first()
-            designations = Designations.objects.filter(designations=row['designations']).first()
-
-            new_zetdcassets = ZetdcAssets(
-
-                product_type= row['product_type'], 
-                asset_state= row['asset_state'],
-                serial_number= row['serial_number'],
-                asset_number= row['asset_number'],
-                user= row['user'],
-                date_purchased= row['date_purchased'],
-                warrant = row['warant'],
-                model = row['model'],
-                purchase_cost= row['purchase_cost'],
-                designations= designations,
-                section=section,
-                district=district,
-                region=region,
-                created_at=formatted_date,
-                updated_at=formatted_date
-            )
-            new_zetdcassets.save()
+        print("POST Data:", request.POST)
+        csvfile = request.FILES.get('uploaded_csv')
         
-        redirect('/table_asset')
-            
+        if not csvfile:
+            return render(request, 'asset_register/upload_asset.html', {'error': 'No file uploaded'})
+        
+        try:
+            decoded_file = csvfile.read().decode('cp1252').splitlines()
+            reader = csv.DictReader(decoded_file)
+            reader.fieldnames = [header.strip() for header in reader.fieldnames]
+            print("CSV Headers:", reader.fieldnames)
+
+            for row in reader:
+                date_string = row.get('date purchased') 
+                parsed_date = datetime.strptime(date_string, "%A, %B %d, %Y").date()
+
+                print("Processing row:", row)
+                product_type = ProductType.objects.filter(product_type=row.get('product type')).first()
+                section = Sections.objects.filter(section=row.get('department')).first()
+                region = Regions.objects.filter(region="harare").first()
+                print("region",region)
+                #designations = Designations.objects.filter( identifier=row.get('designations')).first()
+                created_at = datetime.now().date()
+                updated_at = datetime.now().date()
+
+
+                user= row.get('user').strip()
+                print("region",region)
+                new_zetdcassets = ZetdcAssets(
+                    product_type=product_type,
+                    asset_state=('asset_state'),
+                    serial_number=row.get('serial number'),
+                    #asset_number=row.get('ID'),
+                    user_name=user,
+                    date_purchased= parsed_date,
+                    #warrant=row.get('warrant'),
+                    #model=row.get('model'),
+                    #purchase_cost=row.get('purchase cost'),
+                    #designations=designations,
+                    sections=section,
+                    regions=region,
+                    created_at = created_at,
+                    updated_at = updated_at,
+                )
+                new_zetdcassets.save()
+
+            return redirect('/table_asset/')
+        except Exception as e:
+            print("Error:", e)
+            return render(request, 'asset_register/upload_asset.html', {'error': str(e)})
+
     return render(request, 'asset_register/upload_asset.html', {})
+
+
