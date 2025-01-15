@@ -274,12 +274,22 @@ class TargetScoreRepository:
             raise Exception(f"Target score update Repo failed with error: {e}")
 
     def fetch_by_id(self, target_score_id: int) -> TargetScore:
-            try:
-                qr = TargetScore.objects.select_related('target', 'target__activity').filter(
-                    id=target_score_id
-                )
-                if not qr.exists():
-                    raise Exception("Target score not found")
-                return qr.first()
-            except Exception as e:
-                raise Exception(f"TargetScore fetch failed with error: {e}")
+        try:
+            qr = TargetScore.objects.select_related('target', 'target__activity').filter(
+                id=target_score_id
+            )
+            if not qr.exists():
+                raise Exception("Target score not found")
+            return qr.first()
+        except Exception as e:
+            raise Exception(f"TargetScore fetch failed with error: {e}")
+        
+    def fetch_by_activity_id(self, activity_id: int) -> List[TargetScore]:
+        try:
+            qr = TargetScore.objects.select_related('target', 'target__activity').filter(
+                target__activity__id=activity_id
+            )
+            
+            return qr
+        except Exception as e:
+            raise Exception(f"TargetScore fetch failed with error: {e}")
