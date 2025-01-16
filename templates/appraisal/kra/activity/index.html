@@ -2,7 +2,7 @@
 {% load quarter %}
 {% load static %}
 {% load crispy_forms_tags %}
-{% load humanize %}
+{% load kra_calculations %}
 
 {% block content %}
   <div class="content-wrapper">
@@ -38,7 +38,8 @@
            <tr>
              <th class="px-6 py-3 text-left text-md font-semibold">Name</th>
              <th class="px-6 py-3 text-left text-md font-semibold">Assigned User</th>
-             <th class="px-6 py-3 text-left text-md font-semibold">Weight (%)</th>
+             <th class="px-6 py-3 text-left text-md font-semibold">Weight</th>
+             <th class="px-6 py-3 text-left text-md font-semibold">Average Weighted Score</th>
              <th></th>
            </tr>
          </thead>
@@ -48,6 +49,7 @@
              <td class="px-6 py-4 text-md text-blue-900 truncate max-w-xs">{{activity_obj.name}}</td>
              <td class="px-6 py-4 text-md text-blue-900">{{activity_obj.assigned_user}}</td>
              <td class="px-6 py-4 text-md text-blue-900">{{activity_obj.weight}}</td>
+             <td class="px-6 py-4 text-md text-blue-900">{{activity_obj.id|get_activity_average_weighted_score}}</td>
              <td>
                <div class="relative inline-block text-left">
                  <!-- Actions Button -->
