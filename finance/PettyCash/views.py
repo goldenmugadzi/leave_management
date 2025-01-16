@@ -66,7 +66,7 @@ def pettyCash_detail(request, petty_id):
 
             msg = "Your Pettycash " + pettycash_item.petty_id + " has a payment method added by Cashier"
             url = "/pettycash/pettycash_detail/" + pettycash_item.petty_id
-            notify_user(userp, msg, "Pettycash", url, pettycash_item.petty_id, request)
+            notify_user(userp, msg, "Petty Cash", url, pettycash_item.petty_id, request)
 
     approvalForm = None
     to = None
@@ -197,7 +197,7 @@ def create_pettycash(request):
                         pettycash.section)
                     url = "/pettycash/pettycash_detail/" + pettycash.petty_id
                     section_heads = UserProfile.objects.filter(username=section_heads).first()
-                    notify_user(section_heads, msg, "Pettycash", url, pettycash.petty_id, request)
+                    notify_user(section_heads, msg, "Petty Cash", url, pettycash.petty_id, request)
                     print("notified", section_heads)
 
                 # for quotation_form in formset:
@@ -217,7 +217,7 @@ def create_pettycash(request):
                     url = "/pettycash/pettycash_detail/" + pettycash.petty_id
 
                     pettycash_sh = UserProfile.objects.filter(username=pettycash_sh).first()
-                    notify_user(pettycash_sh, msg, "ACE", url, pettycash.petty_id, request)
+                    notify_user(pettycash_sh, msg, "Petty Cash", url, pettycash.petty_id, request)
                     print("notified", pettycash_sh)
 
                 url = reverse('pettycash:pettycash_detail', args=[pettycash.petty_id])
