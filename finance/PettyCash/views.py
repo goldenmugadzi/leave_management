@@ -188,37 +188,39 @@ def create_pettycash(request):
                 # notify sh
 
                 section_heads = find_pettycash_section_head(section_created)
-                if section_heads:
-                    print(section_heads, " section_heads")
-                    # budget name
-                    # bdg = AssetBudget.objects.filter(budget_id=ace.budget_id).first()
-                    # budget_name = bdg.budget_name
-                    msg = "Your subordinate " + str(use) + " created " + pettycash.petty_id + " for section " + str(
-                        pettycash.section)
-                    url = "/pettycash/pettycash_detail/" + pettycash.petty_id
-                    section_heads = UserProfile.objects.filter(username=section_heads).first()
-                    notify_user(section_heads, msg, "Pettycash", url, pettycash.petty_id, request)
-                    print("notified", section_heads)
+                try:
+                    if section_heads:
+                        print(section_heads, " section_heads")
+                        # budget name
+                        # bdg = AssetBudget.objects.filter(budget_id=ace.budget_id).first()
+                        # budget_name = bdg.budget_name
+                        msg = "Your subordinate " + str(use) + " created " + pettycash.petty_id + " for section " + str(
+                            pettycash.section)
+                        url = "/pettycash/pettycash_detail/" + pettycash.petty_id
+                        section_heads = UserProfile.objects.filter(username=section_heads).first()
+                        notify_user(section_heads, msg, "Pettycash", url, pettycash.petty_id, request)
+                        print("notified", section_heads)
 
-                # for quotation_form in formset:
-                #     quotation = quotation_form.save(commit=False)
-                #     quotation.pettycash2 = pettycash
-                #     quotation.save()
+                    # for quotation_form in formset:
+                    #     quotation = quotation_form.save(commit=False)
+                    #     quotation.pettycash2 = pettycash
+                    #     quotation.save()
 
-                pettycash_section = pettycash.section
-                pettycash_sh = find_pettycash_section_head(pettycash_section)
+                    pettycash_section = pettycash.section
+                    pettycash_sh = find_pettycash_section_head(pettycash_section)
+                except:
 
-                if pettycash_sh:
-                    print(pettycash_sh, "pettycash_sh")
-                    # bdg = AssetBudget.objects.filter(budget_id=ace.budget_id).first()
-                    # budget_name = bdg.budget_name
-                    msg = "user  " + str(use) + " created " + pettycash.petty_id + " for section " + str(
-                        pettycash.section)
-                    url = "/pettycash/pettycash_detail/" + pettycash.petty_id
+                    if pettycash_sh:
+                        print(pettycash_sh, "pettycash_sh")
+                        # bdg = AssetBudget.objects.filter(budget_id=ace.budget_id).first()
+                        # budget_name = bdg.budget_name
+                        msg = "user  " + str(use) + " created " + pettycash.petty_id + " for section " + str(
+                            pettycash.section)
+                        url = "/pettycash/pettycash_detail/" + pettycash.petty_id
 
-                    pettycash_sh = UserProfile.objects.filter(username=pettycash_sh).first()
-                    notify_user(pettycash_sh, msg, "ACE", url, pettycash.petty_id, request)
-                    print("notified", pettycash_sh)
+                        pettycash_sh = UserProfile.objects.filter(username=pettycash_sh).first()
+                        notify_user(pettycash_sh, msg, "Pettycash", url, pettycash.petty_id, request)
+                        print("notified", pettycash_sh)
 
                 url = reverse('pettycash:pettycash_detail', args=[pettycash.petty_id])
                 return redirect(url)
