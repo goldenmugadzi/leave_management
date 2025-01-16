@@ -1,6 +1,6 @@
 from unittest import TestCase
 from unittest.mock import Mock, patch
-
+from decimal import Decimal
 
 from ..helpers.types.kra import KRAType
 from ..models import Activity, KeyResultArea, TargetScore
@@ -149,3 +149,99 @@ class TestActivityWeightedScore(TestCase):
 
         # ASSERT
         self.assertEqual(got, want)
+
+class TestKraAverageWeightedScore(TestCase):
+    def setUp(self):
+        self.mock_activity_repo = Mock(spec=KraActivityRepository)
+        self.activity_service = ActivityService(activity_repo=self.mock_activity_repo)
+
+    def mock_activity_obj(self):
+        mock = Mock(spec=Activity)
+        return mock
+
+    @patch('appraisal.services.kra.TargetScoreService')
+    def test_repo_error(self, mock_target_score_service_object):
+        # ARRANGE
+        kra_id = 5
+        db_err = "Some db error"
+        with patch.object(self.mock_activity_repo, "fetch_by_kra_id", side_effect=Exception(db_err)):
+            with self.assertRaises(KRAErr) as context:
+                # ACT
+                self.activity_service.calculate_weighted_score_per_kra(kra_id=kra_id, target_score_service_object=mock_target_score_service_object)
+
+            # ASSERT
+            self.assertEqual(str(context.exception), f"Failed to fetch activities by pk with error: {db_err}")
+
+    @patch('appraisal.services.kra.TargetScoreService')
+    def test_activity_weight_score_service_error(self, mock_target_score_service_object):
+        # ARRANGE
+        kra_id = 5
+        mock_activity_obj_1 = self.mock_activity_obj()
+        mock_activity_obj_1.id = 1
+        mock_activity_obj_1.weight = 10
+
+        mock_activity_obj_2 = self.mock_activity_obj()
+        mock_activity_obj_2.id = 1
+        mock_activity_obj_2.weight = 20
+        self.mock_activity_repo.fetch_by_kra_id.return_value = [mock_activity_obj_1, mock_activity_obj_2]
+
+        target_score_err = "Some error"
+        mock_target_score_service_object.calculate_average_weighted_score_per_activity.side_effect = Exception(target_score_err)
+
+        with self.assertRaises(KRAErr) as context:
+            # ACT
+            self.activity_service.calculate_weighted_score_per_kra(
+                kra_id=kra_id,
+                target_score_service_object=mock_target_score_service_object
+            )
+
+        # ASSERT
+        expected_message = f"Failed to calculate kra weighted score with error: {target_score_err}"
+        self.assertEqual(str(context.exception), expected_message)
+
+    @patch('appraisal.services.kra.TargetScoreService')
+    def test_total_weight_zero_error(self, mock_target_score_service_object):
+        # ARRANGE
+        kra_id = 5
+        zero_error = "Total weight cannot be zero."
+        self.mock_activity_repo.fetch_by_kra_id.return_value = []
+
+        with self.assertRaises(KRAErr) as context:
+            # ACT
+            self.activity_service.calculate_weighted_score_per_kra(kra_id=kra_id, target_score_service_object=mock_target_score_service_object)
+
+        # ASSERT
+        self.assertEqual(str(context.exception), f"Failed to calculate kra weighted score with error: {zero_error}")
+
+    @patch('appraisal.services.kra.TargetScoreService')
+    def test_success(self, mock_target_score_service_object):
+        # ARRANGE
+        kra_id = 5
+
+        mock_activity_obj_1 = self.mock_activity_obj()
+        mock_activity_obj_1.id = 1
+        mock_activity_obj_1.weight = 10
+
+        mock_activity_obj_2 = self.mock_activity_obj()
+        mock_activity_obj_2.id = 1
+        mock_activity_obj_2.weight = 20
+        self.mock_activity_repo.fetch_by_kra_id.return_value = [mock_activity_obj_1, mock_activity_obj_2]
+
+        # Mock the TargetScoreService behavior
+        mock_target_score_service_object.calculate_average_weighted_score_per_activity.side_effect = [
+            50,  # For mock_activity1
+            70   # For mock_activity2
+        ]
+
+        # Calculate expected weighted score
+        expected_weighted_score = (50 * 10 + 70 * 20) / (10 + 20)
+
+        # ACT
+        result = self.activity_service.calculate_weighted_score_per_kra(
+                kra_id=kra_id,
+                target_score_service_object=mock_target_score_service_object
+            )
+
+        # ASSERT
+        self.assertAlmostEqual(result, expected_weighted_score, places=2)
+        self.mock_activity_repo.fetch_by_kra_id.assert_called_once_with(kra_id=kra_id)

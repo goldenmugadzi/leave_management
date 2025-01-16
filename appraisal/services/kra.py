@@ -1,5 +1,6 @@
 from typing import List
 from dataclasses import dataclass
+from decimal import Decimal
 
 from ..repository.kra import KRARepository, KraActivityRepository, ActivityTargetRepository, TargetScoreRepository
 from it.users.models import UserProfile
@@ -38,64 +39,6 @@ class KRAService:
             return self.kra_repo.retrieve_by_pk(kra_id=kra_id)
         except Exception as e:
             raise KRAErr(f"Retriev kra by id failed with error: {e}")
-
-@dataclass
-class ActivityService:
-    activity_repo: KraActivityRepository
-
-    def create_use_case(self, kra_object: KeyResultArea, assigned_user: UserProfile, data: KRAType)->Activity:
-        try:
-            obj = self.activity_repo.create(kra_obj=kra_object, assigned_user=assigned_user, data=data)
-            return obj
-        except Exception as e:
-            raise KRAErr(f"Failed to create kra activity with error: {e}")
-
-    def fetch_by_kra_id_use_case(self, kra_id: int)->List[Activity]:
-        try:
-            return self.activity_repo.fetch_by_kra_id(kra_id=kra_id)
-        except Exception as e:
-            raise KRAErr(f"Failed to retrieve kra activities with error: {e}")
-
-    def update_use_case(self, activity_object: Activity, assigned_user: UserProfile, data: KRAType)->Activity:
-        try:
-            return self.activity_repo.update(activity_obj=activity_object, assigned_user=assigned_user, data=data)
-        except Exception as e:
-            raise KRAErr(f"Failed to update kra activities with error: {e}")
-
-    def get_by_id_use_case(self, activity_id: int)->Activity:
-        try:
-            return self.activity_repo.get_activity_by_id(activity_id=activity_id)
-        except Exception as e:
-            raise KRAErr(f"Failed to retrieve kra activities with error: {e}")
-
-
-@dataclass
-class TargetService:
-    target_repository: ActivityTargetRepository
-
-    def fetch_by_activity_use_case(self, activity_id: int)->List[Target]:
-        try:
-            return self.target_repository.fetch_by_activity_id(activity_id=activity_id)
-        except Exception as e:
-            raise KRAErr(f"Retrieve all targets by activity id failed with error: {e}")
-
-    def create_use_case(self, activity_obj: Activity, payload: TargetType)->Target:
-        try:
-            return self.target_repository.create(activity_obj=activity_obj, data=payload)
-        except Exception as e:
-            raise KRAErr(f"Create failed with error: {e}")
-
-    def get_by_id_use_case(self, target_id: int)->Target:
-        try:
-            return self.target_repository.get_target_by_id(target_id=target_id)
-        except Exception as e:
-            raise KRAErr(f"Get by pk failed with error: {e}")
-
-    def update_use_case(self, target_obj: Target, payload: TargetType)->Target:
-        try:
-            return self.target_repository.update(target_obj=target_obj, payload=payload)
-        except Exception as e:
-            raise KRAErr(f"Failed to update target with error: {e}")
 
 @dataclass
 class TargetScoreService:
@@ -150,11 +93,11 @@ class TargetScoreService:
 
         return rating
 
-    def calculate_activity_weight_score(self, activity_id: int)->float:
+    def calculate_average_weighted_score_per_activity(self, activity_id: int)->float:
         """
             Calculate the weighted average score for an activity based on target scores and their respective weights.
 
-            This method fetches all target scores for a given activity, calculates the weighted sum of the scores, 
+            This method fetches all target scores for a given activity, calculates the weighted sum of the scores,
             and divides it by the total weight to return the weighted average score.
 
             Args:
@@ -164,7 +107,7 @@ class TargetScoreService:
                 float: The weighted average score of the activity.
 
             Raises:
-                KRAErr: If there is an error during calculation, including when the total weight is zero 
+                KRAErr: If there is an error during calculation, including when the total weight is zero
                         or issues with fetching target scores.
                 Exception: If the total weight of all target scores is zero.
         """
@@ -186,3 +129,94 @@ class TargetScoreService:
             return weighted_sum/total_weight
         except Exception as e:
             raise KRAErr(f"Failed to calculate activity score with error: {e}")
+
+
+@dataclass
+class ActivityService:
+    activity_repo: KraActivityRepository
+
+    def create_use_case(self, kra_object: KeyResultArea, assigned_user: UserProfile, data: KRAType)->Activity:
+        try:
+            obj = self.activity_repo.create(kra_obj=kra_object, assigned_user=assigned_user, data=data)
+            return obj
+        except Exception as e:
+            raise KRAErr(f"Failed to create kra activity with error: {e}")
+
+    def fetch_by_kra_id_use_case(self, kra_id: int)->List[Activity]:
+        try:
+            return self.activity_repo.fetch_by_kra_id(kra_id=kra_id)
+        except Exception as e:
+            raise KRAErr(f"Failed to retrieve kra activities with error: {e}")
+
+    def update_use_case(self, activity_object: Activity, assigned_user: UserProfile, data: KRAType)->Activity:
+        try:
+            return self.activity_repo.update(activity_obj=activity_object, assigned_user=assigned_user, data=data)
+        except Exception as e:
+            raise KRAErr(f"Failed to update kra activities with error: {e}")
+
+    def get_by_id_use_case(self, activity_id: int)->Activity:
+        try:
+            return self.activity_repo.get_activity_by_id(activity_id=activity_id)
+        except Exception as e:
+            raise KRAErr(f"Failed to retrieve kra activities with error: {e}")
+
+    def calculate_weighted_score_per_kra(self, kra_id: int, target_score_service_object: TargetScoreService)->float:
+        try:
+            activities_objects = self.activity_repo.fetch_by_kra_id(kra_id=kra_id)
+        except Exception as e:
+            raise KRAErr(f"Failed to fetch activities by pk with error: {e}")
+
+        try:
+            # Use Decimal for precision
+            weighted_sum = Decimal(0)
+            total_weight = Decimal(0)
+
+            for activity_obj in activities_objects:
+                # Convert weight to Decimal for compatibility
+                activity_weight = Decimal(str(activity_obj.weight))
+
+                # Ensure activity_weighted_score is Decimal-compatible
+                activity_weighted_score = Decimal(
+                    target_score_service_object.calculate_average_weighted_score_per_activity(activity_id=activity_obj.id)
+                )
+
+                # Perform calculations
+                weighted_sum += activity_weighted_score * activity_weight
+                total_weight += activity_weight
+
+            if total_weight == 0:
+                raise Exception("Total weight cannot be zero.")
+
+            # Return the weighted score as a float
+            return float(weighted_sum / total_weight)
+        except Exception as e:
+            raise KRAErr(f"Failed to calculate kra weighted score with error: {e}")
+
+
+@dataclass
+class TargetService:
+    target_repository: ActivityTargetRepository
+
+    def fetch_by_activity_use_case(self, activity_id: int)->List[Target]:
+        try:
+            return self.target_repository.fetch_by_activity_id(activity_id=activity_id)
+        except Exception as e:
+            raise KRAErr(f"Retrieve all targets by activity id failed with error: {e}")
+
+    def create_use_case(self, activity_obj: Activity, payload: TargetType)->Target:
+        try:
+            return self.target_repository.create(activity_obj=activity_obj, data=payload)
+        except Exception as e:
+            raise KRAErr(f"Create failed with error: {e}")
+
+    def get_by_id_use_case(self, target_id: int)->Target:
+        try:
+            return self.target_repository.get_target_by_id(target_id=target_id)
+        except Exception as e:
+            raise KRAErr(f"Get by pk failed with error: {e}")
+
+    def update_use_case(self, target_obj: Target, payload: TargetType)->Target:
+        try:
+            return self.target_repository.update(target_obj=target_obj, payload=payload)
+        except Exception as e:
+            raise KRAErr(f"Failed to update target with error: {e}")
