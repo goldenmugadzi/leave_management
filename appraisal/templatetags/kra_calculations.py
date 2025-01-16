@@ -16,3 +16,4 @@ def get_target_rating(target_id)->int:
     except Exception as e:
         logger.error(e)
         return 0
+    
