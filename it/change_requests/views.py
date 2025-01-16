@@ -138,8 +138,8 @@ def create_new_profile(request):
             
             messages.success(request, "Section head approver notified successfully")
         except Exception as ex:
-            print("Error: ", ex)
-            messages.error(request, "An error occurred while sending the email: " + str(ex))
+            print("Error: ", str(ex))
+            # messages.error(request, "An error occurred while sending the email: " + str(ex))
     except Exception as ex:
         print("error: ", ex)
         messages.error(request, "An error occurred while submitting the change request"+str(ex))
@@ -225,8 +225,8 @@ def profile_modification_request(request):
                 
                 messages.success(request, "Section head approver notified successfully")
             except Exception as ex:
-                print("Error: ", ex)
-                messages.error(request, "An error occurred while sending the email: " + str(ex))
+                print("Error: ", str(ex))
+                # messages.error(request, "An error occurred while sending the email: " + str(ex))
         else:
             messages.error(request, "User not found")
 
@@ -338,38 +338,41 @@ def profile_deactivation_request(request):
             )
             change_request.save()
             
-            messages.success(request, "Change request submitted successfully")        
-            # Get section head approver for this cost center
-            application = Application.objects.filter(name="Change Requests").first()
-            section_head_role = Roles.objects.filter(role="section_head", app_id=application.id).first()
-            approver_responsibilities = Responsibilities.objects.filter(
-                role=section_head_role,
-            cost_centers__in=[auth_user.cost_center]
-            ).first()
-            approver = approver_responsibilities.user if approver_responsibilities else None
-            if not approver:
-                messages.error(request, "No section head approver found for this cost center")
-                return redirect("/change_requests/create_change_request")
-            print("Sending email to: ", approver.email)
-            email_template_name = 'registration/email.html'
-            msg = "Profile deactivation request submitted successfully"
-            type_ = "Profile Deactivation Request"
-            app_base = "change_requests/profile_deactivation_request?i="+change_request.cr_id
-            c = {
-                "email": approver.email if approver.email else "",
-                "message": msg,
-                "type": type_,
-                "redirect_app_base": app_base,
-                "id": change_request.cr_id,
-                "domain": request.META['HTTP_HOST'],
-                "site_name": "Zetdc Business Excellence",
-                "protocol": 'https' if request.is_secure() else 'http',
-            }
-            email = render_to_string(email_template_name, c, request=request)
-            ms_exhange_reset_password_html(subject=type_,to_recipients=[approver.email], cc_recipients=[],template=email,
-                                            kwargs={"kwargs": c})
-        
-            messages.success(request, "Section head approver notified successfully")
+            messages.success(request, "Change request submitted successfully")   
+            try:     
+                # Get section head approver for this cost center
+                application = Application.objects.filter(name="Change Requests").first()
+                section_head_role = Roles.objects.filter(role="section_head", app_id=application.id).first()
+                approver_responsibilities = Responsibilities.objects.filter(
+                    role=section_head_role,
+                cost_centers__in=[auth_user.cost_center]
+                ).first()
+                approver = approver_responsibilities.user if approver_responsibilities else None
+                if not approver:
+                    messages.error(request, "No section head approver found for this cost center")
+                    return redirect("/change_requests/create_change_request")
+                print("Sending email to: ", approver.email)
+                email_template_name = 'registration/email.html'
+                msg = "Profile deactivation request submitted successfully"
+                type_ = "Profile Deactivation Request"
+                app_base = "change_requests/profile_deactivation_request?i="+change_request.cr_id
+                c = {
+                    "email": approver.email if approver.email else "",
+                    "message": msg,
+                    "type": type_,
+                    "redirect_app_base": app_base,
+                    "id": change_request.cr_id,
+                    "domain": request.META['HTTP_HOST'],
+                    "site_name": "Zetdc Business Excellence",
+                    "protocol": 'https' if request.is_secure() else 'http',
+                }
+                email = render_to_string(email_template_name, c, request=request)
+                ms_exhange_reset_password_html(subject=type_,to_recipients=[approver.email], cc_recipients=[],template=email,
+                                                kwargs={"kwargs": c})
+            
+                messages.success(request, "Section head approver notified successfully")
+            except Exception as ex:
+                print("error: ", str(ex))
         else:
             messages.error(request, "User not found")
     except Exception as ex:
@@ -876,28 +879,31 @@ def approve_profile_request(request):
                         )
                         cr_approval.save()
                         messages.success(request, "Change Request approved successfully")
-                        region = change_request.region
-                        region_cost_center = CostCenter.objects.filter(Q(code=region.code), Q(code="CC"+region.code)).first()
-                        # Get section head approver for this cost center
-                        application = Application.objects.filter(name="Change Requests").first()
-                        section_head_role = Roles.objects.filter(role="section_head", app_id=application.id).first()
-                        approver_responsibilities = Responsibilities.objects.filter(
-                            role=section_head_role,
-                            cost_centers__in=[region_cost_center]
-                        ).first()
-                        approver = approver_responsibilities.user if approver_responsibilities else None
-                        if not approver:
-                            messages.error(request, "No IT section head approver found for this cost center")
-                            return redirect("/change_requests/change_request_index")
-                        print("Sending email to: ", approver.email)
-                        cr_type = "new_profile_request" if change_request.change_type == "new_profile" else "profile_modification_request" if change_request.change_type == "profile_modification" else "profile_deactivation_request" if change_request.change_type == "profile_deactivation" else ""
-                        ms_exhange_send_html("Change Request Implementation", [approver.email], [], "emails/email_template.html", {
-                            "message": "Change Request Implementation",
-                            "type": "Change Request Implementation",
-                            "redirect_url": "https://172.16.29.32:9300/change_requests/" + cr_type + "?i=" + change_request.cr_id
-                        })
-                        
-                        messages.success(request, "Section head approver notified successfully")
+                        try:
+                            region = change_request.region
+                            region_cost_center = CostCenter.objects.filter(Q(code=region.code), Q(code="CC"+region.code)).first()
+                            # Get section head approver for this cost center
+                            application = Application.objects.filter(name="Change Requests").first()
+                            section_head_role = Roles.objects.filter(role="section_head", app_id=application.id).first()
+                            approver_responsibilities = Responsibilities.objects.filter(
+                                role=section_head_role,
+                                cost_centers__in=[region_cost_center]
+                            ).first()
+                            approver = approver_responsibilities.user if approver_responsibilities else None
+                            if not approver:
+                                messages.error(request, "No IT section head approver found for this cost center")
+                                return redirect("/change_requests/change_request_index")
+                            print("Sending email to: ", approver.email)
+                            cr_type = "new_profile_request" if change_request.change_type == "new_profile" else "profile_modification_request" if change_request.change_type == "profile_modification" else "profile_deactivation_request" if change_request.change_type == "profile_deactivation" else ""
+                            ms_exhange_send_html("Change Request Implementation", [approver.email], [], "emails/email_template.html", {
+                                "message": "Change Request Implementation",
+                                "type": "Change Request Implementation",
+                                "redirect_url": "https://172.16.29.32:9300/change_requests/" + cr_type + "?i=" + change_request.cr_id
+                            })
+                            
+                            messages.success(request, "Section head approver notified successfully")
+                        except Exception as ex:
+                            print("error: ", ex)
                     else:
                         messages.error(request, "Error. Please check your Change Request role")
                     
@@ -933,7 +939,7 @@ def approve_profile_request(request):
 
         except Exception as ex:
             print("error: ", ex)
-            messages.error(request, "An error occurred while approving the change request " + ex)
+            # messages.error(request, "An error occurred while approving the change request " + str(ex))
     return redirect("/change_requests/change_request_index")
 
 @login_required
