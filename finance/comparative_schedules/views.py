@@ -1156,8 +1156,13 @@ def notify_user(user_, msg, notification_type, url, id, request):
     )
     print("notification ","email ", user_.email, "msg ", msg, "notification_type ", notification_type, "url ", url, "id ", id)
     
-    app_base = "direct_purchase/comperative_schedule/"+id if "direct_purchase" in url else ("comperative_schedule"
-                                                                                            "/comperative_schedule/")+id
+    if "direct_purchase" in url:
+        app_base = "direct_purchase/comperative_schedule/"+id
+    elif "comperative_schedule" in url:
+        app_base = "comperative_schedule/comperative_schedule/"+id
+    else:
+        app_base = url
+    
     email_template_name = 'registration/email.html'
     # {urlsafe_base64_encode(force_bytes(user.pk))}/{default_token_generator.make_token(user)}
     c = {
