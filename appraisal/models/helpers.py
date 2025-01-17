@@ -29,3 +29,6 @@ class YearQuarter(TimeStamp):
 
     def __str__(self):
         return f"Year {self.year} - Q{self.quarter}"
+
+    class Meta:
+        unique_together = ('year', 'quarter')
