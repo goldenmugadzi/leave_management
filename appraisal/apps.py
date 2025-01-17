@@ -35,3 +35,7 @@ class AppraisalConfig(AppConfig):
         from appraisal.signals.appraisal import create_performance_review_post_save_handler
         from appraisal.signals.appraisal import create_training_development_post_save_handler
         from appraisal.signals.kra import create_target_score_post_save_handler
+        from .tasks import run_back_ground_tasks
+        
+        # Run tasks
+        run_back_ground_tasks()
