@@ -265,13 +265,15 @@ def view_all_purchase_requests(request):
     try: cost_center= request.user.cost_center
     except:
         if not cost_center:
-                cost_center = CostCenter.objects.filter(code= request.user.region.code)
+            cost_center = CostCenter.objects.filter(code= request.user.region.code)
+            messages.warning(request, 'Please contact the system administrators to assign you a cost center !')
+    print(len(cost_center.get_all_ancestors()))
+    if len(cost_center.get_all_ancestors())>2:
         region = cost_center.get_region()
-        messages.warning(request, 'Please contact the system administrators to assign you a cost center !')
+    else:
+        region = cost_center
     cost_centers = region.get_decendance()
-
-    # nonconformities = Nonconformity.objects.filter(created_by__cost_center__in = cost_centers).order_by("-created_at")
-    purchase_requests = PurchaseRequest.objects.filter(Q(requested_by__cost_center__in = cost_centers)|Q(cost_center__in = cost_centers))
+    purchase_requests = PurchaseRequest.objects.filter(Q(requested_by__cost_center__in = cost_centers)|Q(cost_center__in = cost_centers)).order_by("-created_at")
     return render(request, 'finance/purchase_request/view_all_purchase_requests.html', {'purchase_requests': purchase_requests})
 
 @login_required
