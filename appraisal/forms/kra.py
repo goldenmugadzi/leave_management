@@ -1,5 +1,6 @@
 from django import forms
 from ..models import YearQuarter, KeyResultArea, Activity, Target, TargetScore
+from datetime import datetime
 
 class YearQuarterForm(forms.ModelForm):
     class Meta:
@@ -10,7 +11,11 @@ class KraCreateForm(forms.ModelForm):
     class Meta:
         model = KeyResultArea
         exclude = ["id", "created_date", "updated", "created_by"]
-        
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        current_year = datetime.now().year
+        self.fields['quarter'].queryset = YearQuarter.objects.filter(year=current_year)      
 class ActivityCreateForm(forms.ModelForm):
     class Meta:
         model = Activity
