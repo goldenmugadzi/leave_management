@@ -1,6 +1,5 @@
 from django.db import models
 from helpers.models.timestamp import TimeStamp
-from datetime import datetime
 
 class QuarterChoices(models.IntegerChoices):
     Q1 = 1, "1st"
@@ -9,9 +8,7 @@ class QuarterChoices(models.IntegerChoices):
     Q4 = 4, "4th"
 
 def get_year_choices():
-    current_year = datetime.now().year
-    
-    return [(year, str(year)) for year in range(2000, current_year+30)]
+    return [(year, str(year)) for year in range(2000, 2050)]
 
 class YearQuarter(TimeStamp):
     """
