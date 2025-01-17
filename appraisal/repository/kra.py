@@ -115,9 +115,9 @@ class KRARepository:
 
 
 class KraActivityRepository:
-    def create(self, kra_obj: KeyResultArea, assigned_user: UserProfile, data: KRAType)->Activity:
+    def create(self, kra_obj: KeyResultArea, assigned_user: UserProfile, appraiser: UserProfile, data: KRAType)->Activity:
         try:
-            return Activity.objects.create(kra=kra_obj, assigned_user=assigned_user, name=data.name, description=data.description, weight=data.weight)
+            return Activity.objects.create(kra=kra_obj, assigned_user=assigned_user, appraiser=appraiser, name=data.name, description=data.description, weight=data.weight)
         except Exception as e:
             raise Exception(f"KRA Activity Create Repo failed with error: {e}")
 
@@ -128,11 +128,15 @@ class KraActivityRepository:
         except Exception as e:
             raise Exception(f"KRA Activity Fetch Repo failed with error: {e}")
 
-    def update(self, activity_obj: Activity, assigned_user: UserProfile, data: KRAType)->Activity:
+    def update(self, activity_obj: Activity, assigned_user: UserProfile, appraiser: UserProfile, data: KRAType)->Activity:
         try:
             updated = False
             if assigned_user != activity_obj.assigned_user:
                 activity_obj.assigned_user = assigned_user
+                updated = True
+
+            if appraiser != activity_obj.appraiser:
+                activity_obj.appraiser = appraiser
                 updated = True
 
             if data.name != activity_obj.name:
@@ -213,7 +217,7 @@ class ActivityTargetRepository:
             if payload.weight != target_obj.weight:
                 target_obj.weight = payload.weight
                 updated = True
-                
+
             if payload.agreed_target != target_obj.agreed_target:
                 target_obj.agreed_target = payload.agreed_target
                 updated = True
@@ -262,7 +266,7 @@ class TargetScoreRepository:
             if target_score_obj.comments != data.comment:
                 target_score_obj.comments = data.comment
                 is_updated = True
-                
+
             if target_score_obj.comments != data.comment:
                 target_score_obj.comments = data.comment
                 is_updated = True
@@ -283,13 +287,13 @@ class TargetScoreRepository:
             return qr.first()
         except Exception as e:
             raise Exception(f"TargetScore fetch failed with error: {e}")
-        
+
     def fetch_by_activity_id(self, activity_id: int) -> List[TargetScore]:
         try:
             qr = TargetScore.objects.select_related('target', 'target__activity').filter(
                 target__activity__id=activity_id
             )
-            
+
             return qr
         except Exception as e:
             raise Exception(f"TargetScore fetch failed with error: {e}")

@@ -33,15 +33,17 @@ class TestActivityService(TestCase):
         # ================ ARRANGE ===================
         mock_kra_obj = self.mock_kra_object()
         mock_assigned_user = self.mock_user_object()
+        mock_appraiser = self.mock_user_object()
         mock_payload = self.mock_payload()
 
         # ================ Act ======================
-        self.activity_service.create_use_case(kra_object=mock_kra_obj, assigned_user=mock_assigned_user, data=mock_payload)
+        self.activity_service.create_use_case(kra_object=mock_kra_obj, assigned_user=mock_assigned_user, appraiser=mock_appraiser, data=mock_payload)
 
         # =============== ASSERT ==================
         self.mock_activity_repo.create.assert_called_once_with(
             kra_obj=mock_kra_obj,
             assigned_user=mock_assigned_user,
+            appraiser=mock_appraiser,
             data=mock_payload
         )
 
@@ -51,11 +53,13 @@ class TestActivityService(TestCase):
         mock_assigned_user = self.mock_user_object()
         mock_payload = self.mock_payload()
         mock_activity_obj = self.mock_activity_obj()
+        mock_appraiser = self.mock_user_object()
 
         self.mock_activity_repo.create.return_value = mock_activity_obj
 
         # ================ Act ======================
-        result = self.activity_service.create_use_case(kra_object=mock_kra_obj, assigned_user=mock_assigned_user, data=mock_payload)
+        result = self.activity_service.create_use_case(kra_object=mock_kra_obj, assigned_user=mock_assigned_user, appraiser=mock_appraiser, data=mock_payload)
+
 
         # ================ ASSERT ===================
         self.assertEqual(result, mock_activity_obj)
@@ -66,12 +70,13 @@ class TestActivityService(TestCase):
         mock_kra_obj = self.mock_kra_object()
         mock_assigned_user = self.mock_user_object()
         mock_payload = self.mock_payload()
+        mock_appraiser = self.mock_user_object()
         db_err = "Database error"
 
         with patch.object(self.mock_activity_repo, 'create', side_effect=Exception(db_err)):
             try:
                 # ===================== ACT ====================
-                self.activity_service.create_use_case(kra_object=mock_kra_obj, assigned_user=mock_assigned_user, data=mock_payload)
+                self.activity_service.create_use_case(kra_object=mock_kra_obj, assigned_user=mock_assigned_user, appraiser=mock_appraiser, data=mock_payload)
                 self.fail("Expected an error but got none")
             except KRAErr as e:
                 # ============ ASSERT ===============

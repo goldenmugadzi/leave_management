@@ -135,9 +135,9 @@ class TargetScoreService:
 class ActivityService:
     activity_repo: KraActivityRepository
 
-    def create_use_case(self, kra_object: KeyResultArea, assigned_user: UserProfile, data: KRAType)->Activity:
+    def create_use_case(self, kra_object: KeyResultArea, assigned_user: UserProfile, appraiser: UserProfile, data: KRAType)->Activity:
         try:
-            obj = self.activity_repo.create(kra_obj=kra_object, assigned_user=assigned_user, data=data)
+            obj = self.activity_repo.create(kra_obj=kra_object, assigned_user=assigned_user, appraiser=appraiser, data=data)
             return obj
         except Exception as e:
             raise KRAErr(f"Failed to create kra activity with error: {e}")
@@ -148,9 +148,9 @@ class ActivityService:
         except Exception as e:
             raise KRAErr(f"Failed to retrieve kra activities with error: {e}")
 
-    def update_use_case(self, activity_object: Activity, assigned_user: UserProfile, data: KRAType)->Activity:
+    def update_use_case(self, activity_object: Activity, assigned_user: UserProfile, appraiser: UserProfile, data: KRAType)->Activity:
         try:
-            return self.activity_repo.update(activity_obj=activity_object, assigned_user=assigned_user, data=data)
+            return self.activity_repo.update(activity_obj=activity_object, assigned_user=assigned_user, appraiser=appraiser, data=data)
         except Exception as e:
             raise KRAErr(f"Failed to update kra activities with error: {e}")
 
