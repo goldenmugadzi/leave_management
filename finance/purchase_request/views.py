@@ -261,10 +261,13 @@ def view_all_purchase_requests(request):
     if request.method == 'POST' and search_term :
         purchase_requests = PurchaseRequest.objects.filter(Q(cost_center__name__icontains=search_term) | Q(section__section__icontains=search_term) | Q(requested_by__last_name__icontains=search_term) | Q(scope_of_work__icontains=search_term) | Q(id=search_term) | Q(pr_no__icontains=search_term)| Q(created_at__icontains=search_term)  )
         return render(request, 'finance/purchase_request/view_all_purchase_requests.html', {'purchase_requests': purchase_requests.order_by('-id') })
-    cost_center= request.user.cost_center
-    if not cost_center:
-            cost_center = CostCenter.objects.filter(code= request.user.region.code)
-    region = cost_center.get_region()
+   
+    try: cost_center= request.user.cost_center
+    except:
+        if not cost_center:
+                cost_center = CostCenter.objects.filter(code= request.user.region.code)
+        region = cost_center.get_region()
+        messages.warning(request, 'Please contact the system administrators to assign you a cost center !')
     cost_centers = region.get_decendance()
 
     # nonconformities = Nonconformity.objects.filter(created_by__cost_center__in = cost_centers).order_by("-created_at")

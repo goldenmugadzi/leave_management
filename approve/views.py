@@ -263,11 +263,16 @@ def send_notification(request, url, app, obj,id):
             recipients.append(responsibility.user)
             cc_recipients.append(responsibility.user.email)
             cc_recipients_names.append(responsibility.user.get_full_name())  # Call the method
-    user=recipients[0]
+    try:
+        user=recipients[0]
 
-    print(f"Sending to: {user.email}, CC: {cc_recipients}")
-    notify(request,subject,user,message,redirect_url,url,notification_type,notification_id,cc_recipients,cc_recipients_names)
-    return 1
+        print(f"Sending to: {user.email}, CC: {cc_recipients}")
+        notify(request,subject,user,message,redirect_url,url,notification_type,notification_id,cc_recipients,cc_recipients_names)
+        return 1
+    except:
+
+        messages.info(request, f" Please inform your EXPECTED APPROVER to contact system administrator for approval authorisation of ({notification_type.upper()}) for ({ str(obj.cost_center).upper() })")
+        return 0
 
 def notify(request,subject,user,message,redirect_url,url,notification_type,notification_id,cc_recipients,cc_recipients_names):
       # Create the notification

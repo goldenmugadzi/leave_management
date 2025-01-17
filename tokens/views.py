@@ -96,7 +96,7 @@ def create_token(request):
                     fault_maintanance = fault_maintanance_form.save(commit=False)
                     fault_maintanance.token = token
                     fault_maintanance.save()
-                    messages.info(request, "Token request saved successfully")
+                    messages.success(request, "Token request saved successfully")
                 elif (
                         tamper_token.is_for == "Recovered Meter"
                         and request.FILES.get("picture")
