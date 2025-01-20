@@ -103,7 +103,9 @@ class KraActivityUpdateView(SuccessMessageMixin, UpdateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context[self.context_object_name] = context.get("form")
-        context["kra_object"] = self.get_activity_object.kra
+        context["activity_object"] = self.get_activity_object
+        context["user_object"] = self.request.user
+    
         return context
 
     def form_valid(self, form):
