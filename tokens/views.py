@@ -51,6 +51,7 @@ def create_token(request):
         recovered_meter_form = RecoveredMeterForm(request.POST, request.FILES)
         fault_maintanance_form = FaultMaintananceForm(request.POST, request.FILES)
         reconnection_form = ReconnectionForm(request.POST, request.FILES)
+        print("object.process.workflow  ")
 
         forms = {
             "meter_form": meter_form,
