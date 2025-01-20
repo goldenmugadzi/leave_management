@@ -2,7 +2,7 @@ from pydantic import BaseModel, Field, field_validator
 from decimal import Decimal
 from typing import Literal, Annotated, Optional
 from ...models.kra import METRIC_TYPES
-
+from enum import Enum
 class KRAType(BaseModel):
     name: str = Field(..., description="The name of the KRA.")
     description: str = Field(..., description="The description of KRA.")
@@ -36,3 +36,14 @@ class TargetScoreType(BaseModel):
     )
     comment: Optional[str] = Field(None, description="The comment of the target.")
 
+class KraRolesType(Enum):
+    appraisee = "Appraisee"
+    appraiser = "Appraiser"
+    hod = "Section Head"
+    hr = "HR"
+    
+class KraRolesActionsType(Enum):
+    create = "Create"
+    update = "Update"
+    delete = "Delete"
+    read = "Read"

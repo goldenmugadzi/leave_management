@@ -1,4 +1,6 @@
 from typing import List
+from typing import Protocol
+from it.users.models import Application
 from .types.performance import StrengthAndWeaknessTypes
 from ..models.performance_review import PerformanceProgressStrength, PerformanceProgressWeakness
 
@@ -67,3 +69,44 @@ def map_performance_weaknesses(weaknesses: List[StrengthAndWeaknessTypes])->List
         weakness_object = PerformanceProgressWeakness(name=weakness.name)
         weaknesses_objects.append(weakness_object)
     return weaknesses_objects
+
+
+# implement strategy pattern for setting KRA related models roles
+
+# ================= Strategy Interface ==========================
+class KraModulesRolesStrategyInterface(Protocol):
+    def set_roles(self, application_object: Application):
+        """Set roles per each kra module
+
+        Args:
+            application_object (Application): instance of Application model
+        """
+        pass
+
+# =================== Concrete implementations ===================
+class KraModuleStrategy:
+    def set_roles(self, application_object: Application):
+        ...
+class ActivityModuleStrategy:
+    def set_roles(self, application_object: Application):
+        ...
+class TargetModuleStrategy:
+    def set_roles(self, application_object: Application):
+        ...
+class ScoringModuleStrategy:
+    def set_roles(self, application_object: Application):
+        ...
+        
+# ================== Context ===================
+class KraModulesRolesStrategyContext:
+    def __init__(self, strategy: KraModulesRolesStrategyInterface):
+        self.strategy = strategy
+    
+    def set_kra_module_roles(self, application_object: Application):
+        """
+        Delegates the role-setting task to the selected strategy.
+
+        Args:
+            application_object (Application): An instance of the Application model.
+        """
+        return self.strategy.set_roles(application_object)
