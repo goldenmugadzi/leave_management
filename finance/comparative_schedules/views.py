@@ -1187,7 +1187,6 @@ def notify_user(user_, msg, notification_type, url, id, request):
         print("error: ", str(e))
         return False
 
-
 def notification_update(user, id):
     notification = Notification.objects.filter(user=user, notification_id=id).first()
     if notification:
