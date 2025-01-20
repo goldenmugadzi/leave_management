@@ -1146,42 +1146,46 @@ def getUserFMGMRoles(user):
 
 
 def notify_user(user_, msg, notification_type, url, id, request):
-    Notification.objects.create(
-        user=user_,
-        message=msg,
-        notification_type=notification_type,
-        notification_id=id,
-        url=url,
-        created_at=datetime.now(),
-    )
-    print("notification ","email ", user_.email, "msg ", msg, "notification_type ", notification_type, "url ", url, "id ", id)
-    
-    if "direct_purchase" in url:
-        app_base = "direct_purchase/comperative_schedule/"+id
-    elif "comperative_schedule" in url:
-        app_base = "comperative_schedule/comperative_schedule/"+id
-    else:
-        app_base = url
-    
-    email_template_name = 'registration/email.html'
-    # {urlsafe_base64_encode(force_bytes(user.pk))}/{default_token_generator.make_token(user)}
-    c = {
-        "email": user_.email if user_.email else "",
-        "message": msg,
-        "type": notification_type,
-        "redirect_app_base": app_base,
-        "id": id,
-        "domain": request.META['HTTP_HOST'],
-        "site_name": "Zetdc Business Excellence",
-        "uid": urlsafe_base64_encode(force_bytes(user_.pk)),
-        "user": user_,
-        "token": default_token_generator.make_token(user_),
-        "protocol": 'https' if request.is_secure() else 'http',
-    }
-    email = render_to_string(email_template_name, c, request=request)
-    ms_exhange_reset_password_html(subject=notification_type,to_recipients=[user_.email], cc_recipients=[],template=email,
-                                    kwargs={"kwargs": c})
-    return True
+    try:
+        Notification.objects.create(
+            user=user_,
+            message=msg,
+            notification_type=notification_type,
+            notification_id=id,
+            url=url,
+            created_at=datetime.now(),
+        )
+        print("notification ","email ", user_.email, "msg ", msg, "notification_type ", notification_type, "url ", url, "id ", id)
+        
+        if "direct_purchase" in url:
+            app_base = "direct_purchase/comperative_schedule/"+id
+        elif "comperative_schedule" in url:
+            app_base = "comperative_schedule/comperative_schedule/"+id
+        else:
+            app_base = url
+        
+        email_template_name = 'registration/email.html'
+        # {urlsafe_base64_encode(force_bytes(user.pk))}/{default_token_generator.make_token(user)}
+        c = {
+            "email": user_.email if user_.email else "",
+            "message": msg,
+            "type": notification_type,
+            "redirect_app_base": app_base,
+            "id": id,
+            "domain": request.META['HTTP_HOST'],
+            "site_name": "Zetdc Business Excellence",
+            "uid": urlsafe_base64_encode(force_bytes(user_.pk)),
+            "user": user_,
+            "token": default_token_generator.make_token(user_),
+            "protocol": 'https' if request.is_secure() else 'http',
+        }
+        email = render_to_string(email_template_name, c, request=request)
+        ms_exhange_reset_password_html(subject=notification_type,to_recipients=[user_.email], cc_recipients=[],template=email,
+                                        kwargs={"kwargs": c})
+        return True
+    except Exception as e:
+        print("error: ", str(e))
+        return False
 
 
 def notification_update(user, id):
