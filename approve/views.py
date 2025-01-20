@@ -136,6 +136,7 @@ def approve_step(request, process_id):
     except Step.DoesNotExist:
         messages.info(request, "This process was completed")
         return redirect("approve:workflow_detail", process.workflow.id)
+    
     if not process.approval_set.filter(approved="Rejected"):
         if request.method == "POST":
             form = ApprovalForm(request.POST)
@@ -145,7 +146,6 @@ def approve_step(request, process_id):
                 approval.process = process
                 approval.step = step
                 approval.save()
-                print('----------------form.is_valid-----------------------------------')
 
                 if process.workflow.name == "purchase request":
                     return redirect(
@@ -154,11 +154,11 @@ def approve_step(request, process_id):
                     )
 
                 if process.token_set.exists():
-                    print('got here-----------------------------------')
-                    print(request, 'tokens:token',str(process.token_set.last().type), process.token_set.last(), process.token_set.last().id)
-                    send_notification(request, 'tokens:token',str(process.token_set.last().type), process.token_set.last(), process.token_set.last().id)
-                    print('------------------------------got here-----------------------------------')
-                    return redirect('tokens:token', process.token_set.last().id)
+                    token = process.token_set.last()
+
+                    send_notification(request, 'tokens:token', token.type, token, token.id)
+                    print('------------------------------got here-----------------------------------', str(token.id))
+                    return redirect('tokens:token', token.id)
                 
                 elif process.workflow.name == "pettycash":
                     return redirect(
@@ -229,9 +229,14 @@ def approve_step(request, process_id):
 
 
 def approvers(object):
-    step = get_object_or_404(Step, workflow=object.process.workflow, step=object.process.approval_set.count() + 1)
-    return  Responsibilities.objects.filter(Q(role=step.approver)& Q(cost_centers=object.cost_center))
-
+    step = get_object_or_404(Step, workflow=object.process.workflow, step=object.process.approval_set.count())
+    """check if the step is not the last step in the workflow"""
+    if step.step < object.process.workflow.step_set.count():
+        next_step = get_object_or_404(Step, workflow=object.process.workflow, step=object.process.approval_set.count()+1)
+        """check if there are approvers for the next step"""
+        return Responsibilities.objects.filter(Q(role=next_step.approver)& Q(cost_centers=object.cost_center))
+    else:
+        return None
 
 def allowed_to_approve(user, object):
     responsibilities = approvers(object)
@@ -243,12 +248,20 @@ def allowed_to_approve(user, object):
 
 def send_notification(request, url, app, obj,id):
     responsibilities = approvers(obj)
+    if responsibilities == None:
+        return messages.info(request, "This process was completed successfully")
+    elif not responsibilities:
+        messages.error(request, "There are no approvers for the next step")
+        messages.info(request, f" Please inform your EXPECTED APPROVER to contact system administrator for approval authorisation of ({notification_type.upper()}) for ({ str(obj.cost_center).upper() })")
+        return 0
+    print('-aaaaaaaas-----------------------------got here send_notification-----------------------------------', str(id))
     domain_name = config('be_url') #"http://127.0.0.1:8000"  # Consider using settings for the domain
     cc_recipients =[]
     recipients =[]
     cc_recipients_names =[]
     redirect_url = f"{domain_name}{reverse(url, args=[id])}"
     message = f"We kindly request that you review and take necessary action regarding this "
+    print('------------------------------got here send_notification-----------------------------------', str(id))
 
     hour = datetime.now().hour
     greetings = {(0, 4): "Good night!",(5, 11): "Good morning!",(12, 16): "Good afternoon!",(17, 20): "Good evening!",(21, 23): "Good night!"}

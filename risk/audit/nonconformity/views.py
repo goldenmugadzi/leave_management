@@ -27,7 +27,7 @@ def send_notification(request,user, url, app, obj):
     greetings = {(0, 4): "Good night!",(5, 11): "Good morning!",(12, 16): "Good afternoon!",(17, 20): "Good evening!",(21, 23): "Good night!"}
     subject = next((msg for (start, end), msg in greetings.items() if start <= hour <= end), "Hello!")
 
-    # user=obj.recipient
+    user=obj.recipient
     # if isinstance(user, tuple):
     #     user = user[0] 
     url= reverse(url, args=[obj.id])
