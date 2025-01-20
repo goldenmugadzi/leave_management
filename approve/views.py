@@ -229,7 +229,11 @@ def approve_step(request, process_id):
 
 
 def approvers(object):
-    step = get_object_or_404(Step, workflow=object.process.workflow, step=object.process.approval_set.count())
+    print("object.process.workflow  ",object.process.workflow)
+    try:
+        step = get_object_or_404(Step, workflow=object.process.workflow, step=object.process.approval_set.count())
+    except:
+        step = get_object_or_404(Step, workflow=object.process.workflow, step=1)
     """check if the step is not the last step in the workflow"""
     if step.step < object.process.workflow.step_set.count():
         next_step = get_object_or_404(Step, workflow=object.process.workflow, step=object.process.approval_set.count()+1)
@@ -252,16 +256,14 @@ def send_notification(request, url, app, obj,id):
         return messages.info(request, "This process was completed successfully")
     elif not responsibilities:
         messages.error(request, "There are no approvers for the next step")
-        messages.info(request, f" Please inform your EXPECTED APPROVER to contact system administrator for approval authorisation of ({notification_type.upper()}) for ({ str(obj.cost_center).upper() })")
+        messages.info(request, f" Please inform your EXPECTED APPROVER to contact system administrator for approval authorisation of ({app.upper()}) for ({ str(obj.cost_center).upper() })")
         return 0
-    print('-aaaaaaaas-----------------------------got here send_notification-----------------------------------', str(id))
     domain_name = config('be_url') #"http://127.0.0.1:8000"  # Consider using settings for the domain
     cc_recipients =[]
     recipients =[]
     cc_recipients_names =[]
     redirect_url = f"{domain_name}{reverse(url, args=[id])}"
     message = f"We kindly request that you review and take necessary action regarding this "
-    print('------------------------------got here send_notification-----------------------------------', str(id))
 
     hour = datetime.now().hour
     greetings = {(0, 4): "Good night!",(5, 11): "Good morning!",(12, 16): "Good afternoon!",(17, 20): "Good evening!",(21, 23): "Good night!"}
