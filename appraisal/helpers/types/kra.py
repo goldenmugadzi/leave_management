@@ -47,3 +47,15 @@ class KraRolesActionsType(Enum):
     update = "Update"
     delete = "Delete"
     read = "Read"
+    
+class KraRolesCreateType(BaseModel):
+    role: str = Field(..., description="The role action of KRA.")
+    name: str = Field(..., description="The role name of KRA.")
+    description: str = Field(..., description="The role description of KRA.")
+    application: str = Field(..., description="The role application of KRA.")
+
+class KraModulesType(Enum):
+    kra = "Kra"
+    activity = "Activity"
+    target = "Target"
+    target_score = "TargetScore"
