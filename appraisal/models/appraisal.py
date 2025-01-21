@@ -10,6 +10,7 @@ class Appraisal(TimeStamp):
     The model use an abstract model(TimeStamp) with created_date and updated_date fields.
     """
     user = models.ForeignKey(User, on_delete=models.CASCADE)
+    appraiser = models.ForeignKey(User, on_delete=models.CASCADE, related_name="appraiser", null=True)
     experience = models.ManyToManyField("Experience", through="AppraisalExperience")
     process = models.ForeignKey("approve.Process", on_delete=models.CASCADE, null=True,
                                 related_name="appraisal_process")

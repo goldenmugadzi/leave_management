@@ -25,8 +25,10 @@ class AppraisalCreateView(CreateView):
             queryset=UserQualification.objects.none(),
             prefix="qualification")
         appraisal_experience_initial_object = AppraisalExperienceFormset(self.request.POST or None, queryset=AppraisalExperience.objects.none())
+        appraiser_form = self.form_class()
         return {
             'qualification_forms': qualification_initial_object,
+            'appraisal_form': appraiser_form,
             'appraisal_experience_forms': appraisal_experience_initial_object
         }
 
@@ -82,7 +84,8 @@ class AppraisalCreateView(CreateView):
         appraisal_object = appraisal_service_handler.create_use_case(
             user_object=user_object,
            process_object=process_object,
-            data=structured_payload)
+            data=structured_payload,
+            appraiser=form.instance.appraiser)
         form.instance = appraisal_object
 
         form.instance.user = user_object
