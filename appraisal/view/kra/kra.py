@@ -11,6 +11,7 @@ from ...services.kra import KRAService
 from .helper import build_payload
 from datetime import datetime
 from pydantic import ValidationError
+from ...helpers.types.kra import KraRolesType
 
 class KRATemplateView(TemplateView):
     template_name = 'appraisal/kra/index.html'
@@ -50,6 +51,7 @@ class KRATemplateView(TemplateView):
         
         context.update(self.get_all_kra(year=year_qrt["year"], quarter=year_qrt["quarter"]))
         context.update(year_qrt)
+        context["roles"] = KraRolesType
 
             
         return context

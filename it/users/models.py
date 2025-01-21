@@ -84,7 +84,7 @@ class Roles(models.Model):
     app_id = models.ForeignKey(Application, on_delete=models.DO_NOTHING, blank=True, null=True)
 
     def __str__(self):
-        return f"{self.name}"
+        return f"{self.name} - {self.application}"
 
 
 class Designations(models.Model):

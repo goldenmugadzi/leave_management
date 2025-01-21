@@ -303,3 +303,7 @@ class KraRolesRepository:
     def create(self, application_object: Application, data: KraRolesCreateType)->Roles:
         obj,_ = Roles.objects.get_or_create(role=data.role, name=data.name, application=data.application, defaults={"app_id": application_object, "description": data.description})
         return obj
+    
+    def role_exists(self, role_name: str)->bool:
+        qr = Roles.objects.filter(name__iexact=role_name)
+        return qr.exists()
