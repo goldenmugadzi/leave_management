@@ -1,7 +1,7 @@
 from typing import List
 from ..models import KeyResultArea, YearQuarter, Activity, Target, TargetScore
-from ..helpers.types.kra import KRAType, TargetType, TargetScoreType
-from it.users.models import UserProfile
+from ..helpers.types.kra import KRAType, TargetType, TargetScoreType, KraRolesCreateType
+from it.users.models import UserProfile, Application, Roles
 
 class KRARepository:
     def create(self, quarter_obj: YearQuarter, creator_obj, data: KRAType)->KeyResultArea:
@@ -297,3 +297,9 @@ class TargetScoreRepository:
             return qr
         except Exception as e:
             raise Exception(f"TargetScore fetch failed with error: {e}")
+
+
+class KraRolesRepository:
+    def create(self, application_object: Application, data: KraRolesCreateType)->Roles:
+        obj,_ = Roles.objects.get_or_create(role=data.role, name=data.name, application=data.application, defaults={"app_id": application_object, "description": data.description})
+        return obj
