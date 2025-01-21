@@ -32,6 +32,8 @@ class AppraisalConfig(AppConfig):
 
     def ready(self) -> None:
         post_migrate.connect(load_strength_weakness_handler, sender=self)
+        from .signals.kra import create_kra_roles_handler
+        post_migrate.connect(create_kra_roles_handler, sender=self)
         from appraisal.signals.appraisal import create_performance_review_post_save_handler
         from appraisal.signals.appraisal import create_training_development_post_save_handler
         from appraisal.signals.kra import create_target_score_post_save_handler

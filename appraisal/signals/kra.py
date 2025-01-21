@@ -7,6 +7,7 @@ from ..helpers.types.kra import TargetScoreType
 from loguru import logger
 from django.db import transaction
 from it.users.models import Application
+from ..helpers.kra_roles import KraModulesRolesStrategyContext, KraModuleStrategy, ActivityModuleStrategy, TargetModuleStrategy, ScoringModuleStrategy
 
 @receiver(post_save, sender=Target, dispatch_uid="kra-target-uid")
 def create_target_score_post_save_handler(sender, instance, created, **kwargs):
@@ -29,8 +30,22 @@ def create_target_score_post_save_handler(sender, instance, created, **kwargs):
 def create_kra_roles_handler(sender, **kwargs):
     try:
         with transaction.atomic():
-            appraisal_application_object = Application.objects.get_or_create(name="appraisal")
+            logger.info('Loading KRA Roles.....')
+            appraisal_application_object, _ = Application.objects.get_or_create(name="appraisal")
             
+            # Define strategies for each module
+            strategies = [
+                KraModulesRolesStrategyContext(KraModuleStrategy()),
+                KraModulesRolesStrategyContext(ActivityModuleStrategy()),
+                KraModulesRolesStrategyContext(TargetModuleStrategy()),
+                KraModulesRolesStrategyContext(ScoringModuleStrategy()),
+            ]
+
+            # Apply each strategy to set roles
+            for strategy_context in strategies:
+                strategy_context.set_kra_module_roles(appraisal_application_object)
+            
+            logger.success('KRA roles successfully created for all modules.')
     except Exception as e:
         logger.error(f"Creating Kra Roles handler failed with error: {e}")
         return
