@@ -1138,7 +1138,7 @@ def import_users(request):
         return render(request, 'users/import_users.html')
 
 
-@allowed_roles(['administrator'], ['users'])
+@allowed_roles(['Administrator'], ['users'])
 def import_old_users(request):
     try:
         users_csv = 'execsys.csv'
