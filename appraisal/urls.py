@@ -2,6 +2,8 @@ from django.urls import path
 from .view import (AppraisalCreateView, 
                    AppraisalUpdateView,
                    ExperienceCreateView, 
+                   AppraisalExperienceCreateView,
+                   AppraisalExperienceUpdateView,
                    ExperienceListView,
                    AppraisalTemplateView, 
                    experience_list_api,
@@ -30,6 +32,8 @@ urlpatterns = [
     # ================= Experience urls ============================
     path('experience/create/', ExperienceCreateView.as_view(), name='create_experience'),
     path('experience/<int:appraisal_id>/', ExperienceListView.as_view(), name='list_experience'),
+    path('appraisal-experience/<int:appraisal_id>/', AppraisalExperienceCreateView.as_view(), name='appraisal_experience_create'),
+    path('appraisal-experience/<int:appraisal_exp_id>/view', AppraisalExperienceUpdateView.as_view(), name='appraisal_experience_update'),
     
     # ================= Performance urls =================================
     path('performance', PerformancePlanAndAssessmentAppraisalTemplateView.as_view(), name='performance_review_index'),

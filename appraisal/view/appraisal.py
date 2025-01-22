@@ -114,6 +114,7 @@ class AppraisalUpdateView(UpdateView):
         
         context["experience_objects"] = experience_service_handler.get_by_appraisal_id_use_case(appraisal_id=self.get_object().id)
         context["qualification_objects"] = qualifications
+        context["appraisal_object"] = self.get_object()
         return context
     
 

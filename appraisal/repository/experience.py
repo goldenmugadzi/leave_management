@@ -1,4 +1,5 @@
 from typing import Dict, Any, List
+from django.core.exceptions import MultipleObjectsReturned
 from ..models import AppraisalExperience, Appraisal, Experience
 
 
@@ -9,14 +10,21 @@ class ExperienceRepository:
 
 
 class AppraisalExperienceRepository:
-    def create(self, appraisal_object: Appraisal, experience_object: Experience, years: int = 0,
-               months: int = 0) -> AppraisalExperience:
-        return AppraisalExperience.objects.create(
-            appraisal=appraisal_object,
-            experience=experience_object,
-            years_of_experience=years,
-            months_of_experience=months
-        )
+    def create(self, appraisal_object: Appraisal, experience_object: Experience, years: int = 0, months: int = 0) -> AppraisalExperience|None:
+        try:
+            obj, created = AppraisalExperience.objects.get_or_create(
+                appraisal=appraisal_object,
+                experience=experience_object,
+                defaults={
+                    "years_of_experience": years,
+                    "months_of_experience": months
+                }
+            )
+            return obj
+        except MultipleObjectsReturned:
+            return None
+        except Exception as e:
+            raise Exception(f"AppraisalExperienceRepository.create failed with error: {e}")
 
     def bulk_create(self, instances: List[AppraisalExperience]):
         try:
@@ -32,7 +40,8 @@ class AppraisalExperienceRepository:
     
     def get_experiences_by_id(self, experience_id: int)->AppraisalExperience:
         try:
-            return AppraisalExperience.objects.get(id=experience_id).select_related('experience', 'appraisal')
+            obj = AppraisalExperience.objects.filter(id=experience_id).select_related('experience', 'appraisal')
+            return obj.first()
         except Exception as e:
             raise Exception(f"retriving AppraisalExperience failed: {e}")
 
@@ -40,6 +49,7 @@ class AppraisalExperienceRepository:
         try:
             changed = False
             experience_object = self.get_experiences_by_id(experience_object_id)
+            print("===========>>>> ", experience_object)
             if experience_object.years_of_experience != years_of_experience:
                 experience_object.years_of_experience = years_of_experience
                 changed = True

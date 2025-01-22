@@ -1,0 +1,81 @@
+{% extends "admin_layout.html" %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<div class="container my-4">
+    <div class="p-2">
+        <form method="post">
+            {%csrf_token%}
+            <div class="flex flex-row justify-between gap-2">
+                <div class="flex-1">
+                    {{ appraisal_experience_form.experience|as_crispy_field }}
+                </div>
+                
+                <div class="flex-1 mt-7">
+                    <a 
+                        href="{% url 'create_experience' %}"
+                        onclick="window.open(this.href, 'experience_popup', 'width=600,height=400'); return false;"
+                        data-pop="yes"
+                        title="Add another experience"
+                        class="bg-blue-500 hover:bg-blue-700 inline-block rounded-xl text-white p-2"
+                    >
+                        Add Experience
+                    </a>
+                </div>
+            </div>
+        
+            <div class="grid grid-flow-col justify-stretch gap-2">
+                <div class="form-row">
+                    {{ appraisal_experience_form.years_of_experience|as_crispy_field }}
+                </div>
+            
+                <div class="form-row">
+                    {{ appraisal_experience_form.months_of_experience|as_crispy_field }}
+                </div>
+            </div>
+        
+            <div class="flex justify-center my-2">
+                <button type="submit" class="w-96 bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4">Save</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %} 
+<script>
+
+    // Refreshes all experience dropdowns in formsets with updated experience options from the server.
+    function refreshExperienceDropdown() {
+        // get all experience dropdowns in formsets
+        const experienceDropdowns = document.querySelectorAll("select[id^='id_experience']");
+    // Fetch updated list of experiences
+    fetch("{% url 'experience_list_api' %}")
+        .then(response => response.json())
+        .then(data => {
+            // Iterate through each dropdown and update its options
+            experienceDropdowns.forEach(experienceDropdown => {
+                experienceDropdown.innerHTML = ""; // Clear current options
+                
+                // Populate with new options
+                data.forEach((experience, index) => {
+                    const option = document.createElement("option");
+                    option.value = experience.id;
+                    option.textContent = experience.name;
+
+                    // Set the first item as the default
+                    if (index === 0) {
+                        option.selected = true;
+                    }
+
+                    experienceDropdown.appendChild(option);
+                });
+            });
+        })
+        .catch(error => console.error('Error refreshing experience dropdown:', error));
+    }
+
+    
+
+
+</script>
+{% endblock scripts %}
