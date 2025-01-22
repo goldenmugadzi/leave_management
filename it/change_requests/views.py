@@ -1,5 +1,6 @@
 import csv
 from datetime import datetime
+from django.template.loader import render_to_string
 from django.forms import model_to_dict
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
@@ -7,7 +8,7 @@ from django.utils import timezone
 
 from it.change_requests.models import CRApproval, ChangeRequest, NewProfile, ProfileChange, ProfileDeactivation
 from it.users.forms import ResponsibilitiesForm
-from it.users.models import Application, CostCenter, Depots, Designations, Districts, Regions, Roles, Sections, UserProfile
+from it.users.models import Application, CostCenter, Depots, Designations, Districts, Regions, Responsibilities, Roles, Sections, UserProfile
 from django.db.models import Q
 from django.contrib import messages
 import traceback
@@ -16,6 +17,8 @@ from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 
 from django.contrib.auth.decorators import login_required
+
+from it.users.views import ms_exhange_reset_password_html, ms_exhange_send_html
 # Create your views here.
 
 @login_required
@@ -35,10 +38,8 @@ def create_change_request(request):
     
     # get designations
     user_designations = Designations.objects.all()
-    sections = Sections.objects.all()
-    cost_centers = CostCenter.objects.all()
-    districts = Districts.objects.all()
-    regions = Regions.objects.all()
+    parent = CostCenter.objects.filter(Q(code=user.region.code) | Q(code="CC"+user.region.code)).first()
+    cost_centers = parent.get_decendance() #CostCenter.objects.filter(parent=parent.id).all() if parent else []
     users = UserProfile.objects.filter(region=user.region).all()
     
     return render(request, 'change_requests/create_change_request.html',
@@ -48,9 +49,6 @@ def create_change_request(request):
                 "user_applications": user_applications,
                 "user_designations": user_designations,
                 "cost_centers": cost_centers,
-                "sections": sections,
-                "districts": districts,
-                "regions": regions,
                 "user_title": user_title,
                 "user_groups": user_groups,
             })
@@ -65,16 +63,11 @@ def create_new_profile(request):
         last_name = request.POST.get('last_name')
         email = request.POST.get('email')
         designation_ = request.POST.get('designation')
-        section_ = request.POST.get('section')
         cost_center = request.POST.get('cost_center')
-        district_ = request.POST.get('district')
-        region_ = request.POST.get('region')
         application = request.POST.get('for_application')
 
-        region = Regions.objects.filter(id=region_).first() if region_ else None
+        region = Regions.objects.filter(id=request.user.region.id).first() if request.user else None
         cost_center_ = CostCenter.objects.filter(id=cost_center).first() if cost_center else None
-        district = Districts.objects.filter(code=district_).first() if district_ else None
-        section = Sections.objects.filter(code=section_).first() if section_ else None
         designation = Designations.objects.filter(id=designation_).first() if designation_ else None
 
         user = NewProfile(
@@ -84,8 +77,6 @@ def create_new_profile(request):
             email=email,
             designation=designation,
             cost_center= cost_center_,
-            section=section,
-            district=district,
             region=region,
             created_at=datetime.now()
         )
@@ -93,6 +84,7 @@ def create_new_profile(request):
         user.save()
 
         cr_id = "CR-" + datetime.now().strftime("%Y%m%d%I%M%S")
+        cr_cost_center = request.user.cost_center
         change_request = ChangeRequest(
             application=application,
             cr_id=cr_id,
@@ -103,12 +95,51 @@ def create_new_profile(request):
             creator_designation=designation,
             created_by=request.user,
             region=region,
-            cost_center=cost_center_,
+            cost_center=cr_cost_center,
             created_at=datetime.now()
         )
         change_request.save()
-        
         messages.success(request, "Change request submitted successfully")
+        try:
+            # Get section head approver for this cost center
+            application = Application.objects.filter(name="change_requests").first()
+            section_head_role = Roles.objects.filter(role="section_head", app_id=application.id).first()
+            approver_responsibilities = Responsibilities.objects.filter(
+                role=section_head_role,
+                cost_centers__in=[cr_cost_center]
+            ).first()
+            approver = approver_responsibilities.user if approver_responsibilities else None
+            if not approver:
+                messages.error(request, "No section head approver found for this cost center")
+                return redirect("/change_requests/create_change_request")
+            print("Sending email to: ", approver.email)
+            # ms_exhange_send_html("New Profile Request", [approver.email], [], "emails/email_template.html", {
+            #     "message": "New profile request submitted successfully",
+            #     "type": "New Profile Request",
+            #     "redirect_url": "https://172.16.29.32:9300/change_requests/new_profile_request?i=" + change_request.cr_id
+            # })
+            email_template_name = 'registration/email.html'
+            msg = "New profile request submitted successfully"
+            type_ = "New Profile Request"
+            app_base = "change_requests/new_profile_request?i="+change_request.cr_id
+            c = {
+                "email": approver.email if approver.email else "",
+                "message": msg,
+                "type": type_,
+                "redirect_app_base": app_base,
+                "id": change_request.cr_id,
+                "domain": request.META['HTTP_HOST'],
+                "site_name": "Zetdc Business Excellence",
+                "protocol": 'https' if request.is_secure() else 'http',
+            }
+            email = render_to_string(email_template_name, c, request=request)
+            ms_exhange_reset_password_html(subject=type_,to_recipients=[approver.email], cc_recipients=[],template=email,
+                                            kwargs={"kwargs": c})
+            
+            messages.success(request, "Section head approver notified successfully")
+        except Exception as ex:
+            print("Error: ", str(ex))
+            # messages.error(request, "An error occurred while sending the email: " + str(ex))
     except Exception as ex:
         print("error: ", ex)
         messages.error(request, "An error occurred while submitting the change request"+str(ex))
@@ -160,6 +191,42 @@ def profile_modification_request(request):
             change_request.save()
             
             messages.success(request, "Change request submitted successfully")
+            
+            try:
+                # Get section head approver for this cost center
+                application = Application.objects.filter(name="Change Requests").first()
+                section_head_role = Roles.objects.filter(role="section_head", app_id=application.id).first()
+                approver_responsibilities = Responsibilities.objects.filter(
+                    role=section_head_role,
+                cost_centers__in=[cost_center]
+                ).first()
+                approver = approver_responsibilities.user if approver_responsibilities else None
+                if not approver:
+                    messages.error(request, "No section head approver found for this cost center")
+                    return redirect("/change_requests/create_change_request")
+                print("Sending email to: ", approver.email)
+                email_template_name = 'registration/email.html'
+                msg = "Profile modification request submitted successfully"
+                type_ = "Profile Modification Request"
+                app_base = "change_requests/profile_modification_request?i="+change_request.cr_id
+                c = {
+                    "email": approver.email if approver.email else "",
+                    "message": msg,
+                    "type": type_,
+                    "redirect_app_base": app_base,
+                    "id": change_request.cr_id,
+                    "domain": request.META['HTTP_HOST'],
+                    "site_name": "Zetdc Business Excellence",
+                    "protocol": 'https' if request.is_secure() else 'http',
+                }
+                email = render_to_string(email_template_name, c, request=request)
+                ms_exhange_reset_password_html(subject=type_,to_recipients=[approver.email], cc_recipients=[],template=email,
+                                                kwargs={"kwargs": c})
+                
+                messages.success(request, "Section head approver notified successfully")
+            except Exception as ex:
+                print("Error: ", str(ex))
+                # messages.error(request, "An error occurred while sending the email: " + str(ex))
         else:
             messages.error(request, "User not found")
 
@@ -271,12 +338,46 @@ def profile_deactivation_request(request):
             )
             change_request.save()
             
-            messages.success(request, "Change request submitted successfully")
+            messages.success(request, "Change request submitted successfully")   
+            try:     
+                # Get section head approver for this cost center
+                application = Application.objects.filter(name="Change Requests").first()
+                section_head_role = Roles.objects.filter(role="section_head", app_id=application.id).first()
+                approver_responsibilities = Responsibilities.objects.filter(
+                    role=section_head_role,
+                cost_centers__in=[auth_user.cost_center]
+                ).first()
+                approver = approver_responsibilities.user if approver_responsibilities else None
+                if not approver:
+                    messages.error(request, "No section head approver found for this cost center")
+                    return redirect("/change_requests/create_change_request")
+                print("Sending email to: ", approver.email)
+                email_template_name = 'registration/email.html'
+                msg = "Profile deactivation request submitted successfully"
+                type_ = "Profile Deactivation Request"
+                app_base = "change_requests/profile_deactivation_request?i="+change_request.cr_id
+                c = {
+                    "email": approver.email if approver.email else "",
+                    "message": msg,
+                    "type": type_,
+                    "redirect_app_base": app_base,
+                    "id": change_request.cr_id,
+                    "domain": request.META['HTTP_HOST'],
+                    "site_name": "Zetdc Business Excellence",
+                    "protocol": 'https' if request.is_secure() else 'http',
+                }
+                email = render_to_string(email_template_name, c, request=request)
+                ms_exhange_reset_password_html(subject=type_,to_recipients=[approver.email], cc_recipients=[],template=email,
+                                                kwargs={"kwargs": c})
+            
+                messages.success(request, "Section head approver notified successfully")
+            except Exception as ex:
+                print("error: ", str(ex))
         else:
             messages.error(request, "User not found")
     except Exception as ex:
         print("error: ", ex)
-        messages.error(request, "An error occurred while submitting the change request: "+str(ex))
+        messages.error(request, "An error occurred while submitting the change request")
         
     return redirect("/change_requests/change_request_index")
 
@@ -485,6 +586,23 @@ def update_change_request(request):
 def view_profile_request(request):
     if request.method == "GET":
         change_request = ChangeRequest.objects.get(cr_id=request.GET['i'])
+        
+        role = request.user.get_user_role_for_application("change_requests")
+        user_role = role.role if role else None
+        print("user_role: ", user_role)
+        user_responsibilities = Responsibilities.objects.filter(user=request.user, role=role).first() if role else None
+        print("user_responsibilities: ", user_responsibilities)
+        cost_centers = user_responsibilities.cost_centers.all() if user_responsibilities else []
+        print("cost_centers: ", cost_centers)
+        section_head_allowed = False
+        it_section_head_allowed = False
+        if user_role == "section_head":
+            if change_request.cost_center in cost_centers:
+                section_head_allowed = True
+        elif user_role == "it_section_head":
+            if change_request.cost_center in cost_centers:
+                it_section_head_allowed = True
+        
         if change_request.new_profile:
 
                 new_user = {
@@ -505,6 +623,7 @@ def view_profile_request(request):
                     "cr_id": change_request.cr_id,
                     "change_reason": change_request.change_reason,
                     "change_description": change_request.change_description,
+                    "application": change_request.application,
                     "created_by": change_request.created_by.first_name + " " + change_request.created_by.last_name,
                     "creator_designation": change_request.creator_designation.description,
                     "created_at": change_request.created_at
@@ -529,6 +648,8 @@ def view_profile_request(request):
                     request,
                     "change_requests/view_profile_request.html",
                     {
+                        "section_head_allowed": section_head_allowed,
+                        "it_section_head_allowed": it_section_head_allowed,
                         "requestor_role": requestor_role,
                         "section_head_awaiting_action": section_head_awaiting_action,
                         "it_section_head_awaiting_action": it_section_head_awaiting_action,
@@ -758,6 +879,31 @@ def approve_profile_request(request):
                         )
                         cr_approval.save()
                         messages.success(request, "Change Request approved successfully")
+                        try:
+                            region = change_request.region
+                            region_cost_center = CostCenter.objects.filter(Q(code=region.code), Q(code="CC"+region.code)).first()
+                            # Get section head approver for this cost center
+                            application = Application.objects.filter(name="Change Requests").first()
+                            section_head_role = Roles.objects.filter(role="section_head", app_id=application.id).first()
+                            approver_responsibilities = Responsibilities.objects.filter(
+                                role=section_head_role,
+                                cost_centers__in=[region_cost_center]
+                            ).first()
+                            approver = approver_responsibilities.user if approver_responsibilities else None
+                            if not approver:
+                                messages.error(request, "No IT section head approver found for this cost center")
+                                return redirect("/change_requests/change_request_index")
+                            print("Sending email to: ", approver.email)
+                            cr_type = "new_profile_request" if change_request.change_type == "new_profile" else "profile_modification_request" if change_request.change_type == "profile_modification" else "profile_deactivation_request" if change_request.change_type == "profile_deactivation" else ""
+                            ms_exhange_send_html("Change Request Implementation", [approver.email], [], "emails/email_template.html", {
+                                "message": "Change Request Implementation",
+                                "type": "Change Request Implementation",
+                                "redirect_url": "https://172.16.29.32:9300/change_requests/" + cr_type + "?i=" + change_request.cr_id
+                            })
+                            
+                            messages.success(request, "Section head approver notified successfully")
+                        except Exception as ex:
+                            print("error: ", ex)
                     else:
                         messages.error(request, "Error. Please check your Change Request role")
                     
@@ -793,7 +939,7 @@ def approve_profile_request(request):
 
         except Exception as ex:
             print("error: ", ex)
-            messages.error(request, "An error occurred while approving the change request " + ex)
+            # messages.error(request, "An error occurred while approving the change request " + str(ex))
     return redirect("/change_requests/change_request_index")
 
 @login_required
@@ -832,121 +978,163 @@ def datatable_data(request, view):
     start = int(request.GET.get('start', default=0))
     length = int(request.GET.get('length', default=10))
     search_value = request.GET.get('search[value]', default='')
-    user = request.user
-
-    if user.region:
-        # Fetch your data from the model
-        records = ChangeRequest.objects.filter(region=user.region)
-        # Filter based on search value
-        if search_value:
-            records = records.filter(
-            Q(change_reason__icontains=search_value) |
-            Q(new_profile__first_name__icontains=search_value) |
-            Q(new_profile__last_name__icontains=search_value) |
-            Q(new_profile__email__icontains=search_value) |
-            Q(new_profile__username__icontains=search_value)
-            )
+    
+    try:
+        user = request.user
         
-        if view == "filter":
-            region = request.GET.get('region')
-            cr_type = request.GET.get('cr_type')
-            cr_app = request.GET.get('cr_app')
-            status = request.GET.get('status')
-            cost_center = request.GET.get('cost_center')
-            start_date = request.GET.get('start_date')
-            end_date = request.GET.get('end_date')
-            print("region: ", region, " cr_type: ", cr_type, " cr_app: ", cr_app, " status: ", status, " cost_center: ")
-            if region:
-                region_ = Regions.objects.filter(id=region).first()
-                records = records.filter(region=region_)
-            if cr_type:
-                records = records.filter(change_type=cr_type)
-            if cr_app:
-                records = records.filter(application=cr_app)
-            if status:
-                if status == "Pending SH":
-                    records = records.filter(~Q(crapproval__approver_role__role="section_head"))
-                if status == "Pending IT":
-                    records = records.filter(
-                            Q(crapproval__approver_role__role="section_head") & 
-                            Q(crapproval__approval_status=True)
-                        ).exclude(
+        print("view: ", view)
+
+        if user.region:
+            # Fetch your data from the model
+            records = ChangeRequest.objects.filter(region=user.region)
+            # Filter based on search value
+            if search_value and records:
+                records = records.filter(
+                Q(change_reason__icontains=search_value) |
+                Q(new_profile__first_name__icontains=search_value) |
+                Q(new_profile__last_name__icontains=search_value) |
+                Q(new_profile__email__icontains=search_value) |
+                Q(new_profile__username__icontains=search_value)
+                )
+            
+            # Sorting
+            order_column = request.GET.get('order[0][column]')
+            order = request.GET.get('order[0][dir]')
+            if order_column:
+                column_name = request.GET.get(f'columns[{order_column}][data]')
+                if order == 'desc':
+                    column_name = f'-{column_name}'
+                records = records.order_by(column_name)
+            
+            if view == "filter":
+                region = request.GET.get('region')
+                cr_type = request.GET.get('cr_type')
+                cr_app = request.GET.get('cr_app')
+                status = request.GET.get('status')
+                cost_center = request.GET.get('cost_center')
+                start_date = request.GET.get('start_date')
+                end_date = request.GET.get('end_date')
+                print("region: ", region, " cr_type: ", cr_type, " cr_app: ", cr_app, " status: ", status, " cost_center: ")
+                if region:
+                    region_ = Regions.objects.filter(id=region).first()
+                    records = records.filter(region=region_)
+                if cr_type:
+                    records = records.filter(change_type=cr_type)
+                if cr_app:
+                    records = records.filter(application=cr_app)
+                if status:
+                    if status == "Pending SH":
+                        records = records.filter(~Q(crapproval__approver_role__role="section_head"))
+                    if status == "Pending IT":
+                        records = records.filter(
+                                Q(crapproval__approver_role__role="section_head") & 
+                                Q(crapproval__approval_status=True)
+                            ).exclude(
+                                Q(crapproval__approver_role__role="it_section_head") & 
+                                Q(crapproval__approval_status=True)
+                            )
+                    if status == "Complete":
+                        records = records.filter(
                             Q(crapproval__approver_role__role="it_section_head") & 
                             Q(crapproval__approval_status=True)
                         )
-                if status == "Complete":
+                    if status == "Rejected":
+                        records = records.filter(
+                                (Q(crapproval__approver_role__role="section_head") & 
+                                Q(crapproval__approval_status=False)) |
+                                Q(crapproval__approver_role__role="it_section_head") & 
+                                Q(crapproval__approval_status=False)
+                            )
+                if cost_center:
+                    cost_center_ = CostCenter.objects.filter(id=cost_center).first()
+                    records = records.filter(cost_center=cost_center_)  
+                if start_date and end_date:
+                    start_date = datetime.strptime(start_date, "%Y-%m-%d")
+                    end_date = datetime.strptime(end_date, "%Y-%m-%d")
+                    records = records.filter(created_at__range=[start_date, end_date])
+            
+            elif view == "incoming_cr":
+                role = user.get_user_role_for_application("change_requests")
+                user_role = role.role if role else None
+                print("user_role: ", user_role)
+                user_responsibilities = Responsibilities.objects.filter(user=user, role=role).first() if role else None
+                print("user_responsibilities: ", user_responsibilities)
+                cost_centers = user_responsibilities.cost_centers.all() if user_responsibilities else []
+                print("cost_centers: ", cost_centers)
+                if user_role == "section_head":
                     records = records.filter(
-                        Q(crapproval__approver_role__role="it_section_head") & 
+                        ~Q(crapproval__approver_role__role="section_head"),
+                        cost_center__in=cost_centers
+                        ).order_by('-created_at')
+                    print("section_head records: ", records)
+                elif user_role == "it_section_head":
+                    # Filter for records approved by section head and not yet handled by IT section head
+                    # Exclude records rejected by section head
+                    records = records.filter(
+                        Q(crapproval__approver_role__role="section_head") & 
                         Q(crapproval__approval_status=True)
+                    ).exclude(
+                        Q(crapproval__approver_role__role="section_head") &
+                        Q(crapproval__approval_status=False)
+                    ).exclude(
+                        Q(crapproval__approver_role__role="it_section_head")
                     )
-                if status == "Rejected":
-                    records = records.filter(
-                            (Q(crapproval__approver_role__role="section_head") & 
-                            Q(crapproval__approval_status=False)) |
-                            Q(crapproval__approver_role__role="it_section_head") & 
-                            Q(crapproval__approval_status=False)
-                        )
-            if cost_center:
-                cost_center_ = CostCenter.objects.filter(id=cost_center).first()
-                records = records.filter(cost_center=cost_center_)  
-            if start_date and end_date:
-                start_date = datetime.strptime(start_date, "%Y-%m-%d")
-                end_date = datetime.strptime(end_date, "%Y-%m-%d")
-                records = records.filter(created_at__range=[start_date, end_date])
+                    # records = ChangeRequest.objects.filter(~Q(crapproval__approver_role__role="it_section_head")).all()
+                    print("it_section_head records: ", records)
+                print("records: ", records)
+            # Total number of records before filtering
+            total = records.count() if records else 0
+
+            # Pagination
+            paginator = Paginator(records, length)
+            page_number = start // length + 1
+            page_obj = paginator.get_page(page_number)
+
+            # Prepare response
+            data = []
+            for obj in page_obj:
+                try:
+                    section_head_approval = CRApproval.objects.filter(cr_id=obj, approver_role__role="section_head").first()
+                    it_section_head_approval = CRApproval.objects.filter(cr_id=obj, approver_role__role="it_section_head").first()
                     
-        # Total number of records before filtering
-        total = records.count()
+                    sh_status = "Pending"
+                    if section_head_approval:
+                        sh_status = "Approved" if section_head_approval.approval_status else "Rejected"
+                    itsh = "Pending"
+                    if it_section_head_approval:
+                        itsh = "Approved" if it_section_head_approval.approval_status else "Rejected"
+                    change_requests = {
+                        "cr_id": obj.cr_id,
+                        "change_type": obj.change_type,
+                        "change_description": obj.change_description,
+                        "change_reason": obj.change_reason,
+                        "section_head_approval": sh_status,
+                        "it_section_head_approval": itsh,
+                        "creator_designation": obj.creator_designation.description,
+                        "created_by": obj.created_by.first_name + " " + obj.created_by.last_name,
+                        "region": obj.region.region,
+                        "cost_center": obj.cost_center.name if obj.cost_center else "",
+                        "created_at": obj.created_at.strftime("%Y-%m-%d %H:%M"),
+                    }
 
-        # Sorting
-        order_column = request.GET.get('order[0][column]')
-        order = request.GET.get('order[0][dir]')
-        if order_column:
-            column_name = request.GET.get(f'columns[{order_column}][data]')
-            if order == 'desc':
-                column_name = f'-{column_name}'
-            records = records.order_by(column_name)
+                    data.append(change_requests)
+                except Exception as ex:
+                    print("Cost Center Error: ", ex)
 
-        # Pagination
-        paginator = Paginator(records, length)
-        page_number = start // length + 1
-        page_obj = paginator.get_page(page_number)
+            return JsonResponse({
+                'draw': draw,
+                'recordsTotal': total,
+                'recordsFiltered': total,
+                'data': data
+            })
 
-        # Prepare response
-        data = []
-        for obj in page_obj:
-            try:
-                section_head_approval = CRApproval.objects.filter(cr_id=obj, approver_role__role="section_head").first()
-                it_section_head_approval = CRApproval.objects.filter(cr_id=obj, approver_role__role="it_section_head").first()
-                
-                sh_status = "Pending"
-                if section_head_approval:
-                    sh_status = "Approved" if section_head_approval.approval_status else "Rejected"
-                itsh = "Pending"
-                if it_section_head_approval:
-                    itsh = "Approved" if it_section_head_approval.approval_status else "Rejected"
-                change_requests = {
-                    "cr_id": obj.cr_id,
-                    "change_type": obj.change_type,
-                    "change_description": obj.change_description,
-                    "change_reason": obj.change_reason,
-                    "section_head_approval": sh_status,
-                    "it_section_head_approval": itsh,
-                    "creator_designation": obj.creator_designation.description,
-                    "created_by": obj.created_by.first_name + " " + obj.created_by.last_name,
-                    "region": obj.region.region,
-                    "cost_center": obj.cost_center.name,
-                    "created_at": obj.created_at.strftime("%Y-%m-%d %H:%M"),
-                }
-
-                data.append(change_requests)
-            except Exception as ex:
-                print("Cost Center Error: ", ex)
-
+    except Exception as ex:
+        print("Error: ", ex)
         return JsonResponse({
             'draw': draw,
-            'recordsTotal': total,
-            'recordsFiltered': total,
-            'data': data
+            'recordsTotal': 0,
+            'recordsFiltered': 0,
+            'data': []
         })
 
 def get_filtered_change_requests(records, user_id, search_value, column_name, user_region, region, cr_type, cr_app, status, cost_center, start_date, end_date):

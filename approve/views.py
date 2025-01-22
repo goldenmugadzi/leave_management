@@ -9,9 +9,18 @@ from django.urls import reverse
 from email.mime.text import MIMEText
 from it.users.views import ms_exhange_send_html
 from django.db.models import Q
+from django.core.validators import validate_email
+from django.core.exceptions import ValidationError
 from decouple import config
+from datetime import datetime
 
 
+def is_valid_email(email):
+    try:
+        validate_email(email)
+        return True
+    except ValidationError:
+        return False
 
 class WorkflowCreateView(CreateView):
     form_class = WorkflowCreateForm
@@ -127,6 +136,7 @@ def approve_step(request, process_id):
     except Step.DoesNotExist:
         messages.info(request, "This process was completed")
         return redirect("approve:workflow_detail", process.workflow.id)
+    
     if not process.approval_set.filter(approved="Rejected"):
         if request.method == "POST":
             form = ApprovalForm(request.POST)
@@ -143,8 +153,13 @@ def approve_step(request, process_id):
                         process.purchaserequest_set.last().id,
                     )
 
-                if process.workflow.name == "tokens":
-                    return True  # redirect('tokens:token', process.token_set.last().id)
+                if process.token_set.exists():
+                    token = process.token_set.last()
+
+                    send_notification(request, 'tokens:token', token.type, token, token.id)
+                    print('------------------------------got here-----------------------------------', str(token.id))
+                    return redirect('tokens:token', token.id)
+                
                 elif process.workflow.name == "pettycash":
                     return redirect(
                         "pettycash:pettycash_detail",
@@ -214,57 +229,74 @@ def approve_step(request, process_id):
 
 
 def approvers(object):
-    step = get_object_or_404(Step, workflow=object.process.workflow, step=object.process.approval_set.count() + 1)
-    return  Responsibilities.objects.filter(Q(role=step.approver)& Q(cost_centers=object.cost_center))
-
+    print("object.process.workflow  ",object.process.workflow)
+    try:
+        step = get_object_or_404(Step, workflow=object.process.workflow, step=object.process.approval_set.count())
+    except:
+        step = get_object_or_404(Step, workflow=object.process.workflow, step=1)
+    """check if the step is not the last step in the workflow"""
+    if step.step < object.process.workflow.step_set.count():
+        next_step = get_object_or_404(Step, workflow=object.process.workflow, step=object.process.approval_set.count()+1)
+        """check if there are approvers for the next step"""
+        return Responsibilities.objects.filter(Q(role=next_step.approver)& Q(cost_centers=object.cost_center))
+    else:
+        return None
 
 def allowed_to_approve(user, object):
     responsibilities = approvers(object)
     return user in responsibilities
 
 
-def send_notification(app, object):
-    responsibilities = approvers(object)
-    for responsibility in responsibilities:
-        Notification.objects.create(
-            user=responsibility,
-            message=f"Approval request for {object.process.workflow.name}.",
-            url=reverse("tokens:token", args=[object.id]),
-            notification_type=app,
-            notification_id=object.id,
-        )
-    return responsibilities
 
 
 
-def send_notification(request, url, app, obj):
+def send_notification(request, url, app, obj,id):
     responsibilities = approvers(obj)
+    if responsibilities == None:
+        return messages.info(request, "This process was completed successfully")
+    elif not responsibilities:
+        messages.error(request, "There are no approvers for the next step")
+        messages.info(request, f" Please inform your EXPECTED APPROVER to contact system administrator for approval authorisation of ({app.upper()}) for ({ str(obj.cost_center).upper() })")
+        return 0
     domain_name = config('be_url') #"http://127.0.0.1:8000"  # Consider using settings for the domain
+    cc_recipients =[]
+    recipients =[]
+    cc_recipients_names =[]
+    redirect_url = f"{domain_name}{reverse(url, args=[id])}"
+    message = f"We kindly request that you review and take necessary action regarding this "
+
+    hour = datetime.now().hour
+    greetings = {(0, 4): "Good night!",(5, 11): "Good morning!",(12, 16): "Good afternoon!",(17, 20): "Good evening!",(21, 23): "Good night!"}
+    subject = next((msg for (start, end), msg in greetings.items() if start <= hour <= end), "Hello!")
+
+    url=reverse(url, args=[id])
+    notification_type=app
+    notification_id=id
 
     for responsibility in responsibilities:
-        subject = f"Hello: {responsibility.user.get_full_name()}"
-        link = f"{domain_name}{reverse(url, args=[obj.id])}"        
-        message = f"Approval request for {obj.process.workflow.name}. "
+        if responsibility.user.email and is_valid_email(responsibility.user.email):  # Validate email
+            recipients.append(responsibility.user)
+            cc_recipients.append(responsibility.user.email)
+            cc_recipients_names.append(responsibility.user.get_full_name())  # Call the method
+    try:
+        user=recipients[0]
 
-        # Create the notification
-        Notification.objects.create(
-            user=responsibility.user,
-            message=message,
-            url=reverse(url, args=[obj.id]),
-            notification_type=app,
-            notification_id=obj.id,
-        )
+        print(f"Sending to: {user.email}, CC: {cc_recipients}")
+        notify(request,subject,user,message,redirect_url,url,notification_type,notification_id,cc_recipients,cc_recipients_names)
+        return 1
+    except:
+
+        messages.info(request, f" Please inform your EXPECTED APPROVER to contact system administrator for approval authorisation of ({notification_type.upper()}) for ({ str(obj.cost_center).upper() })")
+        return 0
+
+def notify(request,subject,user,message,redirect_url,url,notification_type,notification_id,cc_recipients,cc_recipients_names):
+      # Create the notification
+        Notification.objects.create(user=user,message=message,url=url,notification_type=notification_type,notification_id=notification_id)
         # Send the email
-        response = ms_exhange_send_html(subject=subject,
-                                    to_recipients=[responsibility.user.email],
-                                    cc_recipients=[],
-                                    template='email/email_template.html',
-                                    kwargs={"kwargs":{"redirect_url":link,"user_fullname":responsibility.user.get_full_name(),"message":message}}
-                                      )
-
+        response = ms_exhange_send_html(subject=subject,to_recipients=[user.email],cc_recipients=cc_recipients,template='email/email_template.html',
+                                    kwargs={"kwargs":{"redirect_url":redirect_url,"type":notification_type,"user_fullname":user.get_full_name(),"message":message}})
         if response.status_code == 200:
-            messages.success(request, "Email sent successfully!")
-        else:
-            messages.error(request, "Error sending email. Please try again.")
-    return responsibilities
-
+            cc_names_str = ', '.join(cc_recipients_names)  # Convert list to a  ent to  " + cc_names_str)
+            return messages.success(request, "Email notification successfully sent to "+ cc_names_str)
+        
+        else: return messages.error(request, "Error sending email to  "+user.get_full_name())

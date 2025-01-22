@@ -28,4 +28,7 @@ urlpatterns = [
     path('regions', views.get_regions, name='get_regions'),
 
     path('setroles', views.roles_modal, name='setroles'),
+    path('set_requesters', views.set_requesters, name='set_requesters'),
+    path('deactivate_user', views.deactivate_user, name='deactivate_user'),
+    path('activate_user', views.activate_user, name='activate_user'),
 ]

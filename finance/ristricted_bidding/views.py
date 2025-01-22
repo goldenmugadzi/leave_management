@@ -1516,7 +1516,7 @@ def save_cs_committee(request):
                 )
                 msg = "You have been added to the committee for Restricted Bid " + cs_query.cs_id
                 url = "/restricted_bidding/comperative_schedule/" + cs_query.cs_id
-                notify_user(member_profile, msg, "Restricted Bid", url, cs_query.cs_id)
+                notify_user(member_profile, msg, "Restricted Bid", url, cs_query.cs_id, request)
             committee_query.save()
 
     return JsonResponse({
@@ -1593,7 +1593,7 @@ def approve_cs_committee(request):
                 print("fm user: ", fm_user.username, fm_user.id)
                 msg = "Restricted is ready for your approval " + cs_query.cs_id
                 url = "/restricted_bidding/comperative_schedule/" + cs_query.cs_id
-                notify_user(fm_user, msg, "Restricted Bid", url, cs_query.cs_id)
+                notify_user(fm_user, msg, "Restricted Bid", url, cs_query.cs_id, request)
 
             return JsonResponse({
                 "message": "Committee member approved successfully",
@@ -1678,7 +1678,7 @@ def approve_cs(request):
                 gm_user = UserProfile.objects.filter(roles=gm_role).first()
                 print("gm user: ", gm_user.username, gm_user.id)
                 notify_user(gm_user, "Restricted Bid is ready for your approval " + cs_query.cs_id, "Restricted Bid",
-                            "/restricted_bidding/comperative_schedule/" + cs_query.cs_id, cs_query.cs_id)
+                            "/restricted_bidding/comperative_schedule/" + cs_query.cs_id, cs_query.cs_id, request)
 
             return JsonResponse({
                 "message": "FM approval saved successfully",

@@ -391,10 +391,16 @@ def uploaded_jobs_view(request):
     files_list = []
     try:
         for file in documents:
+            subcategory = None
+            try:
+                subcategory = file.subcategory
+            except:
+                subcategory = "None"
+                
             new_file = {
             "id":file.id,
             "category": file.category,
-            "sub_category":file.subcategory,
+            "sub_category":subcategory,
             "region": file.region,
             "archive": file.archive,
             "name": file.name,
@@ -416,13 +422,18 @@ def archived_documents(request):
     files_list = []
     try:
         for file in documents:
+            subcategory = None
+            try:
+                subcategory = file.subcategory
+            except:
+                subcategory = "None"
+                
             new_file = {
             "id":file.id,
             "region": file.region,
             "category": file.category,
-            "sub_category":file.subcategory,
+            "sub_category":subcategory,
             "archive": file.archive,
-            # "section": file.section,
             "file": file.file,
             "name": file.name,
             "created by": file.created_by,

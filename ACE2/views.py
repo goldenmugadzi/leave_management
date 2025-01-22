@@ -149,7 +149,7 @@ def Ace_detail(request, Ace_id2):
 
             msg = "Your ACE " + ace_item.Ace_id2 + "has been approved by the General Manager"
             url = "/ace/ace_detail/" + ace_item.Ace_id2
-            notify_user(userp, msg, "ACE", url, ace_item.Ace_id2)
+            notify_user(userp, msg, "ACE", url, ace_item.Ace_id2, request)
 
     ace_quantity = range(ace_item.quantity)
     approved_steps = ace_item.process.approval_set.all().values_list('step__step', flat=True)
@@ -283,11 +283,11 @@ def create_Ace(request):
                         # budget name
                         # bdg = AssetBudget.objects.filter(budget_id=ace.budget_id).first()
                         # budget_name = bdg.budget_name
-                        msg = "Your subordinate" + str(use) + "created " + ace.Ace_id2 + "using budget " + str(
+                        msg = "Your subordinate " + str(use) + "created " + ace.Ace_id2 + " using budget " + str(
                             ace.budget_id)
                         url = "/ace/ace_detail/" + ace.Ace_id2
                         section_heads = UserProfile.objects.filter(username=section_heads).first()
-                        notify_user(section_heads, msg, "ACE", url, ace.Ace_id2)
+                        notify_user(section_heads, msg, "ACE", url, ace.Ace_id2, request)
 
                     # for quotation_form in formset:
                     #     quotation = quotation_form.save(commit=False)
@@ -301,11 +301,11 @@ def create_Ace(request):
                         print(ace_sh, "ace_sh")
                         # bdg = AssetBudget.objects.filter(budget_id=ace.budget_id).first()
                         # budget_name = bdg.budget_name
-                        msg = "user  " + str(use) + "created " + ace.Ace_id2 + "using budget " + str(ace.budget_id)
+                        msg = "user  " + str(use) + "created " + ace.Ace_id2 + " using budget " + str(ace.budget_id)
                         url = "/ace/ace_detail/" + ace.Ace_id2
 
                         ace_sh = UserProfile.objects.filter(username=ace_sh).first()
-                        notify_user(ace_sh, msg, "ACE", url, ace.Ace_id2)
+                        notify_user(ace_sh, msg, "ACE", url, ace.Ace_id2, request)
 
                     if str(ace.classification) == "Project":
                         # the idea is that if its ace of type project there need to be added other project details
@@ -1318,6 +1318,7 @@ def ace_reports(request):
                 budget_id=budget_instance.budget_id
             )
             report.save()
+            print(report)
 
             print('report created')
             print('report', report)
@@ -1349,38 +1350,59 @@ def ace_report_detail_pdf(request, report_id2):
 def ace_report_detail_excel(request, report_id2):
     report = get_object_or_404(AceReport, report_id2=report_id2)
     budget = get_object_or_404(AssetBudget, budget_id=report.budget_id)
-    print("report date", report.start_date)
-    print("report date", report.end_date)
+    region_obj = get_object_or_404(Regions, id=report.region.id)
+    print("report start date", report.start_date)
+    print("report end date", report.end_date)
     print("report region", report.region)
+    print('region obj', region_obj)
     print("report budget", budget.budget_id)
+    if budget and region_obj:
 
-    aces = Ace2.objects.filter(date_created__range=[report.start_date, report.end_date], region=report.region,
-                               budget_id=budget.budget_id)
-    print('count', aces.count())
+        aces = Ace2.objects.filter(region=region_obj)
+        # budget_id = budget.budget_id,
+        # date_created__range = [report.start_date, report.end_date],
+        print('count', aces.count())
 
-    response = HttpResponse(content_type='application/ms-excel')
-    response['Content-Disposition'] = 'attachment; filename="ace_report.xlsx"'
+        response = HttpResponse(content_type='application/ms-excel')
+        response['Content-Disposition'] = 'attachment; filename="ace_report.xlsx"'
 
-    wb = Workbook()
-    ws = wb.active
+        wb = Workbook()
+        ws = wb.active
 
-    ws.append(
-        ['Ace_id', 'details_of_expenditure', 'requested_by', 'section', 'Date', 'Budget', 'Amount', 'approval_status'])
+        ws.append(
+            ['Ace_id', 'details_of_expenditure', 'requested_by', 'section', 'Date', 'Budget', 'Amount',
+             'approval_status'])
 
-    for ace in aces:
-        transaction = Transactions.objects.filter(Ace_id2=ace).first()
-        ws.append([
-            ace.Ace_id2,
-            ace.details_of_expenditure,
-            ace.requested_by.get_full_name() if ace.requested_by else '',
-            ace.section.section if ace.section else '',
-            ace.date_created.strftime('%Y-%m-%d') if ace.date_created else '',
-            ace.budget_id.budget_name if ace.budget_id else '',
-            ace.amount,
-            transaction.approval_status if transaction else ''
-        ])
-    wb.save(response)
-    return response
+        for ace in aces:
+            transaction = Transactions.objects.filter(Ace_id2=ace).first()
+            print(ace.Ace_id2)
+            # if section:
+            #     print(section.section, 'section')
+
+            if ace.section:
+                try:
+                    section_name = ace.section.section
+                except AttributeError:
+                    section_name = ""
+            else:
+                section_name = ""
+
+            print(section_name, 'section name')
+
+            ws.append([
+                ace.Ace_id2,
+                ace.details_of_expenditure,
+                ace.requested_by.get_full_name() if ace.requested_by else '',
+                section_name,
+                ace.date_created.strftime('%Y-%m-%d') if ace.date_created else '',
+                ace.budget_id.budget_name if ace.budget_id else '',
+                ace.amount,
+                transaction.approval_status if transaction else ''
+            ])
+        wb.save(response)
+        return response
+    else:
+        messages.error(request, "error")
 
 
 def find_ace_section_head(request, section):
@@ -1416,3 +1438,10 @@ def find_ace_section_head(request, section):
     # else:
     #     messages.error(request, "the ace requires more than the current budget resulting in a "
     #                             "negative balance")
+
+
+# transanctions on a budget
+def transactions_view(request, budget):
+    transactions = Transactions.objects.filter(budget_id=budget)
+    #return an view with an html table of transactions
+    return render(request, 'finance/ace2/view_all_transactions.html', {'transactions': transactions})

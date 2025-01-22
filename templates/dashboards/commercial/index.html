@@ -1,0 +1,639 @@
+{% extends "admin_layout.html" %} {% load static %} {% block content %}
+
+<div class="">
+  {% if page_description %}
+  <span class="">
+    <span class="text-xl font-bold tracking-tight text-gulf-blue-950">
+      {{page_description}}
+    </span>
+  </span>
+  {% else %}
+  <span class="">
+    <span class="text-xl tracking-tight text-gulf-blue-950"> Welcome </span>
+    <span class="text-xl font-bold tracking-tight text-gulf-blue-950">
+      {{user_title}}
+    </span>
+    <span class="text-lg tracking-tight text-gulf-blue-950">
+      , to your dashboard.
+    </span>
+  </span>
+  {% endif %}
+  <div class="mx-auto py-6">
+    <div x-data="{ showNotification: false }">
+      <div
+        x-show="showNotification"
+        class="mb-3 bg-citron-100 border-t-4 border-citron-500 rounded-b text-citron-900 px-4 py-3 shadow shadow-citron-300"
+        role="alert"
+      >
+        <div class="flex">
+          <div class="py-1">
+            <svg
+              class="fill-current h-6 w-6 text-citron-900 mr-4"
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 20 20"
+            >
+              <path
+                d="M2.93 17.07A10 10 0 1 1 17.07 2.93 10 10 0 0 1 2.93 17.07zm12.73-1.41A8 8 0 1 0 4.34 4.34a8 8 0 0 0 11.32 11.32zM9 11V9h2v6H9v-4zm0-6h2v2H9V5z"
+              />
+            </svg>
+          </div>
+          <div>
+            <p class="font-bold">News Flash</p>
+            <p class="text-sm">
+              Make sure you know how these changes affect you.
+            </p>
+          </div>
+          <div class="ml-auto flex">
+            <svg
+              @click="showNotification = !showNotification"
+              class="fill-current mr-3 h-6 w-6 text-gulf-blue-500"
+              role="button"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="currentColor"
+              class="w-6 h-6"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="m4.5 19.5 15-15m0 0H8.25m11.25 0v11.25"
+              />
+            </svg>
+            <svg
+              @click="showNotification = !showNotification"
+              class="fill-current mr-3 h-6 w-6 text-royal-heath-500"
+              role="button"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="currentColor"
+              class="w-6 h-6"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M6 18 18 6M6 6l12 12"
+              />
+            </svg>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="grid grid-cols-3 gap-4">
+      <div>
+        <a href="{% url 'upload_net_metering_register' %}" class="bg-blue-700 text-white px-4 py-2 rounded-md">
+          Upload Net Metering Register
+        </a>
+      </div>
+      <div>
+        <a href="{% url 'upload_dsm_audit' %}" class="bg-blue-700 text-white px-4 py-2 rounded-md">
+          Upload DSM Audits
+        </a>
+      </div>
+      <div>
+        <a href="{% url 'upload_net_metering_billing' %}" class="bg-blue-700 text-white px-4 py-2 rounded-md">
+          Upload Net Metering Billing
+        </a>
+      </div>
+      <div>
+        <a href="{% url 'upload_virtual_power_stats' %}" class="bg-blue-700 text-white px-4 py-2 rounded-md">
+          Upload Virtual Power Stats
+        </a>
+      </div>
+    </div>
+    <div id="dsm_dashboards_id" class="mt-4"></div>
+  </div>
+</div>
+
+{% endblock content %} {% block scripts %} {% comment %}
+<script src="{% static 'assets/cdn/chart.umd.min.js' %}"></script>
+{% endcomment %}
+<script
+  src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"
+  integrity="sha512-CQBWl4fJHWbryGE+Pc7UAxWMUMNMWzWxF4SQo9CgkJIN1kx6djDQZjh3Y8SZ1d+6I+1zze6Z7kHXO7q3UyZAWw=="
+  crossorigin="anonymous"
+  referrerpolicy="no-referrer"
+></script>
+<script src="{% static 'assets/cdn/react.development.js' %}"></script>
+<script src="{% static 'assets/cdn/react-dom.development.js' %}"></script>
+<script src="{% static 'assets/cdn/babel.min.js' %}"></script>
+<script src="{% static 'scripts/dist/main.js' %}"></script>
+<script
+  type="text/javascript"
+  src="{% static 'assets/custom/dashboard_filter.js' %}"
+></script>
+<!-- Add this in your scripts section -->
+<script>
+  // Bar Chart
+  const exportsCtx = document.getElementById("energyBarChart");
+  new Chart(exportsCtx, {
+    type: "bar",
+    data: {
+      labels: ["Exports", "Imports"],
+      datasets: [
+        {
+          label: "Exports to date after Net Metering Commissioning",
+          data: [10661462.35, 48719652.09],
+          backgroundColor: [
+            "rgba(16, 185, 129, 0.7)", // Emerald for exports
+            "rgba(244, 63, 94, 0.7)", // Rose for imports
+          ],
+          borderColor: ["rgb(16, 185, 129)", "rgb(244, 63, 94)"],
+          borderWidth: 1,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          beginAtZero: true,
+        },
+      },
+    },
+  });
+
+  // Pie Chart
+  const applicationsCtx = document.getElementById("applicationsChart");
+  new Chart(applicationsCtx, {
+    type: "bar",
+    data: {
+      labels: ["Applications", "Commissioned"],
+      datasets: [
+        {
+          label: "Commissions",
+          data: [375, 260],
+          backgroundColor: [
+            "rgba(16, 185, 129, 0.7)", // Emerald for exports
+            "rgba(244, 63, 94, 0.7)", // Rose for imports
+          ],
+          borderColor: ["rgb(16, 185, 129)", "rgb(244, 63, 94)"],
+          borderWidth: 1,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          beginAtZero: true,
+        },
+      },
+    },
+  });
+
+  const quantumCtx = document.getElementById("quantumChart");
+  new Chart(quantumCtx, {
+    type: "bar",
+    data: {
+      labels: ["Applications Quantum", "Commissioned Quantum"],
+      datasets: [
+        {
+          label: "Applications Quantum",
+          data: [27073.08, 18079.98],
+          backgroundColor: [
+            "rgba(16, 185, 129, 0.7)", // Emerald for exports
+            "rgba(244, 63, 94, 0.7)", // Rose for imports
+          ],
+          borderColor: ["rgb(16, 185, 129)", "rgb(244, 63, 94)"],
+          borderWidth: 1,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          beginAtZero: true,
+        },
+      },
+    },
+  });
+</script>
+<!-- Add this to your scripts section -->
+<script>
+  // Applications Chart
+  const appCtx = document.getElementById("applicationChart");
+  new Chart(appCtx, {
+    type: "doughnut",
+    data: {
+      labels: ["Commissioned", "Pending"],
+      datasets: [
+        {
+          data: [375, 260], // Adjust based on your actual commissioned percentage
+          backgroundColor: [
+            "rgba(16, 185, 129, 0.7)", // Emerald for commissioned
+            "rgba(229, 231, 235, 0.7)", // Gray for pending
+          ],
+          borderColor: ["rgb(16, 185, 129)", "rgb(229, 231, 235)"],
+          borderWidth: 1,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: {
+          position: "bottom",
+        },
+        title: {
+          display: true,
+          text: "Commission Status",
+        },
+      },
+      cutout: "70%",
+    },
+  });
+</script>
+
+<!-- Add this to your scripts section -->
+<script>
+  // Applications Chart
+  const appCtx1 = document.getElementById("applicationChart1");
+  new Chart(appCtx1, {
+    type: "doughnut",
+    data: {
+      labels: ["Commissioned", "Pending"],
+      datasets: [
+        {
+          data: [18079.98, 8993.1], // 27073.08 - 18079.98 = 8993.1 (pending)
+          backgroundColor: [
+            "rgba(16, 185, 129, 0.7)", // Emerald for commissioned
+            "rgba(229, 231, 235, 0.7)", // Gray for pending
+          ],
+          borderColor: ["rgb(16, 185, 129)", "rgb(229, 231, 235)"],
+          borderWidth: 1,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: {
+          position: "bottom",
+        },
+        title: {
+          display: true,
+          text: "Commission Status (kW)",
+        },
+        tooltip: {
+          callbacks: {
+            label: function (context) {
+              let label = context.label || "";
+              if (label) {
+                label += ": ";
+              }
+              label += context.formattedValue + " kW";
+              return label;
+            },
+          },
+        },
+      },
+      cutout: "70%",
+    },
+  });
+</script>
+
+<!-- Add this to your scripts section -->
+<script>
+  const ctx = document.getElementById("regionalStats");
+  new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels: ["ZETDC", "Harare", "Southern", "Eastern", "Western", "Northern"],
+      datasets: [
+        {
+          label: "Commissioned Net Metering Points",
+          data: [260, 222, 4, 10, 8, 16],
+          backgroundColor: "rgba(16, 185, 129, 0.7)", // Emerald
+          borderColor: "rgb(16, 185, 129)",
+          borderWidth: 1,
+        },
+        {
+          label: "Total Billed",
+          data: [200, 143, 2, 4, 7, 13],
+          backgroundColor: "rgba(59, 130, 246, 0.7)", // Blue
+          borderColor: "rgb(59, 130, 246)",
+          borderWidth: 1,
+        },
+        {
+          label: "% Billed",
+          data: [76.92, 64.41, 50, 40, 87.5, 81.25],
+          backgroundColor: "rgba(245, 158, 11, 0.7)", // Amber
+          borderColor: "rgb(245, 158, 11)",
+          borderWidth: 1,
+          yAxisID: "percentage",
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      scales: {
+        x: {
+          grid: {
+            display: false,
+          },
+        },
+        y: {
+          beginAtZero: true,
+          title: {
+            display: true,
+            text: "Count",
+          },
+        },
+        percentage: {
+          position: "right",
+          beginAtZero: true,
+          max: 100,
+          title: {
+            display: true,
+            text: "Percentage",
+          },
+          grid: {
+            display: false,
+          },
+        },
+      },
+      plugins: {
+        legend: {
+          position: "bottom",
+        },
+        title: {
+          display: true,
+          text: "Regional Net Metering Statistics Comparison",
+        },
+        tooltip: {
+          callbacks: {
+            label: function (context) {
+              let label = context.dataset.label || "";
+              if (label) {
+                label += ": ";
+              }
+              if (context.dataset.yAxisID === "percentage") {
+                label += context.parsed.y + "%";
+              } else {
+                label += context.parsed.y;
+              }
+              return label;
+            },
+          },
+        },
+      },
+    },
+  });
+</script>
+
+<script>
+  // Pie Chart for DSM Audits
+  const dsmCtx = document.getElementById("dsmAuditsChart");
+  new Chart(dsmCtx, {
+    type: "pie",
+    data: {
+      labels: ["Harare", "Southern", "Eastern", "Western", "Northern"],
+      datasets: [
+        {
+          data: [8, 1, 0, 0, 0],
+          backgroundColor: [
+            "rgba(16, 185, 129, 0.7)", // Emerald
+            "rgba(59, 130, 246, 0.7)", // Blue
+            "rgba(245, 158, 11, 0.7)", // Amber
+            "rgba(99, 102, 241, 0.7)", // Indigo
+            "rgba(236, 72, 153, 0.7)", // Pink
+          ],
+          borderColor: [
+            "rgb(16, 185, 129)",
+            "rgb(59, 130, 246)",
+            "rgb(245, 158, 11)",
+            "rgb(99, 102, 241)",
+            "rgb(236, 72, 153)",
+          ],
+          borderWidth: 1,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: {
+          position: "bottom",
+        },
+        title: {
+          display: true,
+          text: "DSM Audits by Region",
+        },
+        tooltip: {
+          callbacks: {
+            label: function (context) {
+              const label = context.label || "";
+              const value = context.raw || 0;
+              const total = context.dataset.data.reduce((a, b) => a + b, 0);
+              const percentage = ((value / total) * 100).toFixed(1);
+              return `${label}: ${value} (${percentage}%)`;
+            },
+          },
+        },
+      },
+    },
+  });
+</script>
+
+{% comment %} <div
+  class="bg-white border border-gray-100 shadow-md shadow-black/5 p-6 rounded-md"
+>
+  <div class="flex justify-between mb-4 items-start">
+    <div class="font-medium">DSM Initiatives Overview</div>
+  </div>
+
+  <!-- Table Section -->
+  <div class="overflow-x-auto mb-6">
+    <table class="w-full min-w-[460px]">
+      <thead>
+        <tr>
+          <th
+            class="text-[12px] uppercase tracking-wide font-medium text-gray-400 py-2 px-4 bg-gray-50 text-left"
+          >
+            DSM Initiative
+          </th>
+          <th
+            class="text-[12px] uppercase tracking-wide font-medium text-gray-400 py-2 px-4 bg-gray-50 text-right"
+          >
+            No of installations/audits/polices
+          </th>
+          <th
+            class="text-[12px] uppercase tracking-wide font-medium text-gray-400 py-2 px-4 bg-gray-50 text-right"
+          >
+            Demand curtailed (KW)
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="py-2 px-4 border-b border-b-gray-50">Solar PV Systems</td>
+          <td class="py-2 px-4 border-b border-b-gray-50 text-right">1,604</td>
+          <td class="py-2 px-4 border-b border-b-gray-50 text-right">17,660</td>
+        </tr>
+        <tr>
+          <td class="py-2 px-4 border-b border-b-gray-50">
+            Solar Thermal /solar Geysers
+          </td>
+          <td class="py-2 px-4 border-b border-b-gray-50 text-right">566</td>
+          <td class="py-2 px-4 border-b border-b-gray-50 text-right">7,866</td>
+        </tr>
+        <tr>
+          <td class="py-2 px-4 border-b border-b-gray-50">
+            Prepaymenet meters
+          </td>
+          <td class="py-2 px-4 border-b border-b-gray-50 text-right">344</td>
+          <td class="py-2 px-4 border-b border-b-gray-50 text-right">200</td>
+        </tr>
+        <tr>
+          <td class="py-2 px-4 border-b border-b-gray-50">
+            Energy Management Audits
+          </td>
+          <td class="py-2 px-4 border-b border-b-gray-50 text-right">465</td>
+          <td class="py-2 px-4 border-b border-b-gray-50 text-right">34,666</td>
+        </tr>
+        <tr>
+          <td class="py-2 px-4 border-b border-b-gray-50">
+            Energy Management Policy
+          </td>
+          <td class="py-2 px-4 border-b border-b-gray-50 text-right">8,456</td>
+          <td class="py-2 px-4 border-b border-b-gray-50 text-right">7,898</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Chart Section -->
+  <div class="mt-4">
+    <canvas id="dsmInitiativesChart"></canvas>
+  </div>
+</div> {% endcomment %}
+<script>
+  document
+    .getElementById("confirmReject")
+    .addEventListener("click", function () {
+      // Get the reject reason from the modal
+      var rejectReason = document.getElementById("modalRejectReason").value;
+
+      // Set the reject reason in the main form's hidden input
+      document.getElementById("rejectReason").value = rejectReason;
+      document.getElementById("actionButton").value = "REJECT";
+
+      // Submit the main form
+      document.getElementById("profile_form").submit();
+    });
+  document
+    .getElementById("confirmApprove")
+    .addEventListener("click", function () {
+      document.getElementById("actionButton").value = "APPROVE";
+
+      // Submit the main form
+      document.getElementById("profile_form").submit();
+    });
+  document
+    .getElementById("confirmApply")
+    .addEventListener("click", function () {
+      document.getElementById("actionButton").value = "APPLY";
+
+      // Submit the main form
+      document.getElementById("profile_form").submit();
+    });
+</script>
+<script>
+  const ctx = document.getElementById("dsmInitiativesChart");
+  new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels: [
+        "Solar PV Systems",
+        "Solar Thermal/Geysers",
+        "Prepaymenet meters",
+        "Energy Management Audits",
+        "Energy Management Policy",
+      ],
+      datasets: [
+        {
+          label: "Number of Installations/Audits/Policies",
+          data: [1604, 566, 344, 465, 8456],
+          backgroundColor: "rgba(16, 185, 129, 0.7)",
+          borderColor: "rgb(16, 185, 129)",
+          borderWidth: 1,
+          order: 2,
+        },
+        {
+          label: "Demand Curtailed (KW)",
+          data: [17660, 7866, 200, 34666, 7898],
+          type: "line",
+          borderColor: "rgb(59, 130, 246)",
+          backgroundColor: "rgba(59, 130, 246, 0.7)",
+          borderWidth: 2,
+          fill: false,
+          tension: 0.4,
+          yAxisID: "y1",
+          order: 1,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      interaction: {
+        intersect: false,
+        mode: "index",
+      },
+      scales: {
+        y: {
+          type: "linear",
+          display: true,
+          position: "left",
+          title: {
+            display: true,
+            text: "Number of Installations",
+          },
+        },
+        y1: {
+          type: "linear",
+          display: true,
+          position: "right",
+          title: {
+            display: true,
+            text: "Demand Curtailed (KW)",
+          },
+          grid: {
+            drawOnChartArea: false,
+          },
+        },
+      },
+      plugins: {
+        legend: {
+          position: "bottom",
+        },
+        title: {
+          display: true,
+          text: "DSM Initiatives - Installations vs Demand Curtailed",
+        },
+        tooltip: {
+          callbacks: {
+            label: function (context) {
+              let label = context.dataset.label || "";
+              if (label) {
+                label += ": ";
+              }
+              if (context.parsed.y !== null) {
+                label += context.parsed.y.toLocaleString();
+              }
+              return label;
+            },
+          },
+        },
+      },
+    },
+  });
+</script>
+{% endblock %}
