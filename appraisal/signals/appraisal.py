@@ -1,12 +1,15 @@
 from django.db.models.signals import post_save
+from django.urls import reverse
 from django.dispatch import receiver
+from django.db import transaction
 from ..models import Appraisal
 from ..services import PerformanceReviewService, TrainingAndDevelopmentService
 from ..repository import PerformanceReviewRepository, TrainingAndDevelopmentRepository
 from ..helpers.types import PerformanceReviewType
-from django.db import transaction
 from loguru import logger
-
+from decouple import config
+from datetime import datetime
+from it.users.views import email_notification
 
 @receiver(post_save, sender=Appraisal, dispatch_uid="appraisal-uid")
 def create_performance_review_post_save_handler(sender, instance, created, **kwargs):
@@ -100,3 +103,29 @@ def create_training_development_post_save_handler(sender, instance, created, **k
 
         except Exception as e:
             logger.error(f"[TrainingAndDevelopment]: creating training and development instances failed for {instance.user} appraisal, with error: {e} ")
+
+@receiver(post_save, sender=Appraisal, dispatch_uid="send-appraiser-email")
+def send_appraiser_email_post_save_handler(sender, instance, created, **kwargs):
+    if created:
+        try:
+            logger.info("Appraisal emails handler init ....")
+            domain_name = config('be_url')
+            url = reverse("url", kwargs={"pk": kra_obj_id})
+            redirect_url = f"{domain_name}{url}"     
+            
+            hour = datetime.now().hour
+            greetings = {(0, 4): "Good night!",(5, 11): "Good morning!",(12, 16): "Good afternoon!",(17, 20): "Good evening!",(21, 23): "Good night!"}
+            subject = next((msg for (start, end), msg in greetings.items() if start <= hour <= end), "Hello!")
+            message = "We kindly request that you review and take necessary action regarding this "
+
+            notification_type="Appraisal"
+            notification_id=instance.id
+            
+            response = email_notification(subject=subject, user=instance.appraiser, message=message, redirect_url=redirect_url, url=url, notification_type=notification_type, notification_id=notification_id, cc_recipients=[])
+            response_status_code = response.status_code
+            if response_status_code == 200:
+                logger.success(f"Appraisal Email sent successfully. Appraiser: {instance.appraiser}, Appraisee: {instance.user}")
+            else:
+                logger.error(f"Appraisal Email failed with status code {response_status_code}. Appraiser: {instance.appraiser}, Appraisee: {instance.user}")
+        except Exception as e:
+            logger.error(f"Appraisal emails signal handler with error: {e}")
