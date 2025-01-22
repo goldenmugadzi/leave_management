@@ -36,7 +36,8 @@ def create_token(request):
         # customer details from the database if the customer already exists and use its instance to update the customer details
         try:
             customer = Customer.objects.get(
-                contact_number=request.POST["contact_number"]
+                contact_number=request.POST["contact_number"],
+                name=request.POST["name"]
             )
             customer_form = CustomerForm(request.POST, instance=customer)
         except Customer.DoesNotExist:
