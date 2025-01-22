@@ -2,8 +2,11 @@ from django.forms import BaseModelForm
 from django.http import HttpResponse
 from django.http import JsonResponse
 from django.views.generic.edit import CreateView
+from django.views.generic import TemplateView
 from ..models import Experience
 from ..forms import ExperienceForm
+from ..repository.experience import AppraisalExperienceRepository
+from ..services.experience import AppraisalExperienceService
 
 
 class ExperienceCreateView(CreateView):
@@ -21,7 +24,17 @@ class ExperienceCreateView(CreateView):
             return HttpResponse(js_injector)
         return super().form_valid(form)
 
-
+class ExperienceListView(TemplateView):
+    model = Experience
+    template_name = 'appraisal/experience/index.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        appraisal_id = self.kwargs.get("appraisal_id")
+        repo = AppraisalExperienceRepository()
+        service_handler = AppraisalExperienceService(appraisal_repo=repo)
+        context["experience_objects"] = service_handler.get_by_appraisal_id_use_case(appraisal_id=appraisal_id)
+        return context
 
 def experience_list_api(request):
     """

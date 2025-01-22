@@ -29,3 +29,25 @@ class AppraisalExperienceRepository:
             return AppraisalExperience.objects.filter(appraisal__id=appraisal_id).select_related('experience', 'appraisal')
         except Exception as e:
             raise Exception(f"retriving AppraisalExperience failed: {e}")
+    
+    def get_experiences_by_id(self, experience_id: int)->AppraisalExperience:
+        try:
+            return AppraisalExperience.objects.get(id=experience_id).select_related('experience', 'appraisal')
+        except Exception as e:
+            raise Exception(f"retriving AppraisalExperience failed: {e}")
+
+    def update(self, experience_object_id: int, years_of_experience: int, months_of_experience:int)->Experience:
+        try:
+            changed = False
+            experience_object = self.get_experiences_by_id(experience_object_id)
+            if experience_object.years_of_experience != years_of_experience:
+                experience_object.years_of_experience = years_of_experience
+                changed = True
+            if experience_object.months_of_experience != months_of_experience:
+                experience_object.months_of_experience = months_of_experience
+                changed = True
+            if changed:
+                experience_object.save()
+            return experience_object
+        except Exception as e:
+            raise Exception(f"Update AppraisalExperience failed: {e}")

@@ -61,7 +61,6 @@ class AppraisalForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
 
         for field_name, field in self.fields.items():
-            print("=============>>>>>>>> ", field_name)
             if field_name == 'appraiser':
                 field.widget.attrs.update({
                     'class': "select2 block w-full rounded-md border-0 py-1.5 text-gray-900 "

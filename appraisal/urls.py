@@ -1,6 +1,8 @@
 from django.urls import path
 from .view import (AppraisalCreateView, 
+                   AppraisalUpdateView,
                    ExperienceCreateView, 
+                   ExperienceListView,
                    AppraisalTemplateView, 
                    experience_list_api,
                    PerformancePlanAndAssessmentAppraisalTemplateView,
@@ -16,21 +18,29 @@ from .view import (AppraisalCreateView,
                    TargetsIndexView,
                    TargetCreateView,
                    TargetUpdateView,
-                   TargetScoreUpdateView
+                   TargetScoreUpdateView,
+                   UserQualificationTemplateView
                    )
 
 urlpatterns = [
     path('', AppraisalTemplateView.as_view(), name='appraisal_index'),
     path('create/', AppraisalCreateView.as_view(), name='create_appraisal'),
+    path('update/<int:pk>', AppraisalUpdateView.as_view(), name='update_appraisal'),
 
     # ================= Experience urls ============================
     path('experience/create/', ExperienceCreateView.as_view(), name='create_experience'),
+    path('experience/<int:appraisal_id>/', ExperienceListView.as_view(), name='list_experience'),
     
     # ================= Performance urls =================================
     path('performance', PerformancePlanAndAssessmentAppraisalTemplateView.as_view(), name='performance_review_index'),
     path('performance/<int:appraisal_id>', PerformancePlanAndAssessmentTemplateView.as_view(), name='performance_review_detail'),
     path('performance/review/<int:appraisal_id>/<int:quarter>', PerformanceReviewsApprovalView.as_view(), name='performance_review_create'),
     path('performance/training-development/<int:appraisal_id>/<int:quarter>', TrainingAndDevelopmentUpdateView.as_view(), name='training_development_update'),
+    path('performance/training-development/<int:appraisal_id>/<int:quarter>', TrainingAndDevelopmentUpdateView.as_view(), name='training_development_update'),
+    
+    # ========================Qualification View=========================
+    path('qualification/<int:user_id>/', UserQualificationTemplateView.as_view(), name='list_qualification'),
+    
     
     # ================== KRA urls =================================
     path('kra', KRATemplateView.as_view(), name='kra_index'),

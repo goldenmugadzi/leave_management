@@ -2,16 +2,17 @@ from typing import Any, Dict
 from django.forms import BaseModelForm
 from django.http import HttpResponse
 from django.shortcuts import render
-from django.views.generic.edit import CreateView
+from django.views.generic.edit import CreateView, UpdateView
 from django.views.generic import TemplateView
 from django.urls import reverse
+from django.urls import reverse_lazy
 
 from ..models import Appraisal, AppraisalExperience
 from it.users.models import UserQualification
 from ..forms import AppraisalForm, UserQualificationForm, CostCenterForm, UserProfileForm, DesignationForm, AppraisalExperienceFormset, UserQualificationFormset
 from ..helpers.types import AppraisalPayloadType
 from ..repository import UserQualificationRepository, AppraisalExperienceRepository, ExperienceRepository, AppraisalRepository
-from ..services import AppraisalService
+from ..services import AppraisalService, AppraisalExperienceService
 from approve.views import intiate
 
 class AppraisalCreateView(CreateView):
@@ -98,6 +99,23 @@ class AppraisalCreateView(CreateView):
     def get_success_url(self) -> str:
         return reverse('appraisal_index')
 
+
+class AppraisalUpdateView(UpdateView):
+    model = Appraisal
+    form_class = AppraisalForm
+    template_name = "appraisal/update.html"
+    success_url = reverse_lazy("appraisal_index")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        experience_repo = AppraisalExperienceRepository()
+        experience_service_handler = AppraisalExperienceService(appraisal_repo=experience_repo)
+        qualifications = UserQualification.objects.filter(user=self.get_object().user)
+        
+        context["experience_objects"] = experience_service_handler.get_by_appraisal_id_use_case(appraisal_id=self.get_object().id)
+        context["qualification_objects"] = qualifications
+        return context
+    
 
 class AppraisalTemplateView(TemplateView):
     template_name = 'appraisal/index.html'

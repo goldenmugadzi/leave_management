@@ -37,7 +37,7 @@
             {% for appraisal in appraisals %}
               <tr>
                 <td>
-                    <a class="text-blue-500" href="#">{{ appraisal.id }}</a>
+                    <a class="text-blue-500" href="{% url 'update_appraisal' appraisal.id %}">{{ appraisal.id }}</a>
                 </td>
                 <td>{{ appraisal.created_date|date }}</td>
                 <td>{{ appraisal.updated|date }}</td>

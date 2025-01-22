@@ -15,3 +15,25 @@ class UserQualificationRepository:
         except Exception as e:
             raise ValueError(f"retrieving user qualification objects by user failed with error: {e}")
     
+    def get_by_id(self, qualification_id: int)->UserQualification:
+        try:
+            object = UserQualification.objects.get(id=qualification_id)
+            return object
+        except Exception as e:
+            raise ValueError(f"retrieving user qualification objects by pk failed with error: {e}")
+    
+    def update(self, qualification_object_id: int, name: str, file: UploadedFile)->UserQualification:
+        try:
+            changed = False
+            qualification_object = self.get_by_id(qualification_object_id)
+            if qualification_object.name != name:
+                qualification_object.name = name
+                changed = True
+            if qualification_object.file != file:
+                qualification_object.file = file
+                changed = True
+            if changed:
+                qualification_object.save()
+            return qualification_object
+        except Exception as e:
+            raise Exception(f"Update user qualification failed with error: {e}")

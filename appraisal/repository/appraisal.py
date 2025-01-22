@@ -24,6 +24,14 @@ class AppraisalRepository:
             )
         except Exception as e:
             raise Exception(f"Appraisal Experience Repo failed with error: {e}")
+    
+    def remove_experience(self, appraisal_object :Appraisal, experience_object: Experience):
+        try:
+            appraisal_object.experience.remove(
+              experience_object  
+            )
+        except Exception as e:
+            raise Exception(f"Appraisal Experience Repo failed with error: {e}")
 
     def get_user_appraisal_objects(self, user_object: UserProfile)->list:
         return Appraisal.objects.filter(user=user_object)
@@ -34,3 +42,13 @@ class AppraisalRepository:
     def get_all_appraisal_objects(self)->list:
         
         return Appraisal.objects.all()
+
+    def update(self, appraisal_object_id: int, appraiser_object: UserProfile)->Appraisal:
+        try:
+            appraisal_object = self.get_appraisal_by_pk(appraisal_object_id)
+            if appraisal_object.appraiser != appraiser_object:
+                appraisal_object.appraiser = appraiser_object
+                appraisal_object.save()
+            return appraisal_object
+        except Exception as e:
+            raise Exception(f"Appraisal Create Repo failed with error: {e}")
