@@ -11,6 +11,7 @@
                     {{ appraisal_experience_form.experience|as_crispy_field }}
                 </div>
                 
+                {% if not is_update %}
                 <div class="flex-1 mt-7">
                     <a 
                         href="{% url 'create_experience' %}"
@@ -22,6 +23,7 @@
                         Add Experience
                     </a>
                 </div>
+                {% endif %}
             </div>
         
             <div class="grid grid-flow-col justify-stretch gap-2">

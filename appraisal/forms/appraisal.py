@@ -51,6 +51,14 @@ class AppraisalExperienceForm(forms.ModelForm):
         
         # Assign choices to the widget
         self.fields['experience'].widget = forms.Select(choices=experience_choices)
+class AppraisalExperienceUpdateForm(forms.ModelForm):
+    class Meta:
+        model = AppraisalExperience
+        fields = ['experience', 'years_of_experience', 'months_of_experience']
+        
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['experience'].disabled = True
 
 class AppraisalForm(forms.ModelForm):
     class Meta:

@@ -8,7 +8,7 @@ from django.contrib import messages
 from django.urls import reverse
 
 from ..models import Experience, AppraisalExperience
-from ..forms import ExperienceForm, AppraisalExperienceForm
+from ..forms import ExperienceForm, AppraisalExperienceForm, AppraisalExperienceUpdateForm
 from ..repository import AppraisalExperienceRepository, AppraisalRepository
 from ..services import AppraisalExperienceService, AppraisalService
 from loguru import logger
@@ -85,6 +85,7 @@ class AppraisalExperienceCreateView(SuccessMessageMixin, CreateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context[self.context_object_name] = self.get_form()
+        context["is_update"] = False
         return context
     
     def form_valid(self, form):
@@ -113,12 +114,11 @@ class AppraisalExperienceCreateView(SuccessMessageMixin, CreateView):
 
 class AppraisalExperienceUpdateView(SuccessMessageMixin, UpdateView):
     model = AppraisalExperience
-    form_class = AppraisalExperienceForm
+    form_class = AppraisalExperienceUpdateForm
     template_name = 'appraisal/experience/appraisal_experience/create.html'
     success_message = 'Experience updated successfully'
     context_object_name = "appraisal_experience_form"
     
-        
     def get_object(self, queryset=None):
         appraisal_exp_repo = AppraisalExperienceRepository()
         appraisal_exp_service = AppraisalExperienceService(appraisal_repo=appraisal_exp_repo)
@@ -127,34 +127,29 @@ class AppraisalExperienceUpdateView(SuccessMessageMixin, UpdateView):
             appraisal_exp_id=self.kwargs.get("appraisal_exp_id")
         )
         return appraisal_exp_obj
-    
-    def get_form(self, form_class=None):
-        if form_class is None:
-            form_class = self.get_form_class()
-        appraisal_exp_obj = self.get_object()
-        return form_class(instance=appraisal_exp_obj)
-    
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context[self.context_object_name] = self.get_form()
+        context[self.context_object_name] = context.get("form")
+        context["is_update"] = True
         return context
-    
+        
     def form_valid(self, form):
         try:
             years = form.cleaned_data.get("years_of_experience")
             months = form.cleaned_data.get("months_of_experience")
             appraisal_exp_repo = AppraisalExperienceRepository()
             appraisal_exp_service = AppraisalExperienceService(appraisal_repo=appraisal_exp_repo)
-            print("==================Hit")
             appraisal_exp_obj = appraisal_exp_service.update_use_case(experience_object_id=self.kwargs.get("appraisal_exp_id"), years_of_experience=years, months_of_experience=months)
             
             form.instance = appraisal_exp_obj
             
         except Exception as e:
-            messages.error(self.request, f"An unexpected error occurred, please try again")
+            messages.error(self.request, "An unexpected error occurred, please try again")
             logger.error(f"Updating AppraisalExperience failed with error: {e}")
             return self.form_invalid(form)
         return super().form_valid(form)
+    
     
     def get_success_url(self) -> str:
         return reverse('appraisal_experience_update', kwargs={"appraisal_exp_id": self.kwargs.get('appraisal_exp_id')})
