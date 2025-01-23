@@ -51,9 +51,6 @@ def allowed_roles(allowed_roles, app_names):
     def decorator(view_func):
         @user_passes_test(lambda user: user.roles.filter(Q(name__in=allowed_roles) and Q(app_id__name__in=app_names)).exists())
         def wrapper(request, *args, **kwargs):
-            # messages.error(request, 'You are not authorised to access this page. Please contact the administrator.')
-            # return redirect('tokens:tokens_awaiting_my_action')
             return view_func(request, *args, **kwargs)
-
         return wrapper
     return decorator
