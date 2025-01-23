@@ -13,6 +13,8 @@ from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 from decouple import config
 from datetime import datetime
+from appraisal.helpers.notifications import send_appraisal_notifications
+
 
 
 def is_valid_email(email):
@@ -153,17 +155,26 @@ def approve_step(request, process_id):
                         process.purchaserequest_set.last().id,
                     )
 
-                elif process.token_set.exists():
+               
+                elif process.workflow.name == "Appraisal":
+                    appraisal = process.appraisal_process.last()
+                    url = reverse("update_appraisal", kwargs={"pk": appraisal.id})
+                    notification_type="Appraisal"
+                    notification_id=appraisal.id
+                    send_appraisal_notifications(user_object=appraisal.user,
+                                                notification_type=notification_type,
+                                                notification_id=notification_id,
+                                                url=url
+                                                )
+                    messages.success(request, "approved successfully")
+                    
+                    return redirect("update_appraisal", appraisal.id)
+                elif process.token_set.exists() != None:
                     token = process.token_set.last()
 
                     send_notification(request, 'tokens:token', token.type, token, token.id)
                     return redirect('tokens:token', token.id)
-                
-                elif process.appraisal_set.exists():
-                    appraisal = process.appraisal_set.last()
-                    # send_notification(request, 'tokens:token', token.type, token, token.id)
-                    return redirect("update_appraisal", appraisal.id)
-                
+                 
                 elif process.workflow.name == "pettycash":
                     return redirect(
                         "pettycash:pettycash_detail",

@@ -6,6 +6,7 @@ from ..models import Appraisal
 from ..services import PerformanceReviewService, TrainingAndDevelopmentService
 from ..repository import PerformanceReviewRepository, TrainingAndDevelopmentRepository
 from ..helpers.types import PerformanceReviewType
+from ..helpers.notifications import send_appraisal_notifications
 from loguru import logger
 from decouple import config
 from datetime import datetime
@@ -109,20 +110,16 @@ def send_appraiser_email_post_save_handler(sender, instance, created, **kwargs):
     if created:
         try:
             logger.info("Appraisal emails handler init ....")
-            domain_name = config('be_url')
-            url = reverse("url", kwargs={"pk": kra_obj_id})
-            redirect_url = f"{domain_name}{url}"     
             
-            hour = datetime.now().hour
-            greetings = {(0, 4): "Good night!",(5, 11): "Good morning!",(12, 16): "Good afternoon!",(17, 20): "Good evening!",(21, 23): "Good night!"}
-            subject = next((msg for (start, end), msg in greetings.items() if start <= hour <= end), "Hello!")
-            message = "We kindly request that you review and take necessary action regarding this "
-
+            url = reverse("update_appraisal", kwargs={"pk": instance.id})
             notification_type="Appraisal"
             notification_id=instance.id
             
-            response = email_notification(subject=subject, user=instance.appraiser, message=message, redirect_url=redirect_url, url=url, notification_type=notification_type, notification_id=notification_id, cc_recipients=[])
-            response_status_code = response.status_code
+            response_status_code = send_appraisal_notifications(user_object=instance.appraiser,
+                                                                notification_type=notification_type,
+                                                                notification_id=notification_id,
+                                                                url=url
+                                                                )
             if response_status_code == 200:
                 logger.success(f"Appraisal Email sent successfully. Appraiser: {instance.appraiser}, Appraisee: {instance.user}")
             else:
