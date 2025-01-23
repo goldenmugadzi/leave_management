@@ -2,10 +2,12 @@ from django.db import models
 from helpers.models.timestamp import TimeStamp
 from django.contrib.auth import get_user_model
 from .helpers import YearQuarter
+from .appraisal import Appraisal
 
 User = get_user_model()
 
 class KeyResultArea(TimeStamp):
+    appraisal = models.ForeignKey(Appraisal, on_delete=models.RESTRICT, related_name="appraisal_kra", null=True, blank=True)
     quarter = models.ForeignKey(YearQuarter, on_delete=models.RESTRICT)
     created_by = models.ForeignKey(User, on_delete=models.RESTRICT)
     name = models.CharField(max_length=255)

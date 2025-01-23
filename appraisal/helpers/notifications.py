@@ -14,10 +14,7 @@ def send_appraisal_notifications(user_object: UserProfile, notification_type: st
         greetings = {(0, 4): "Good night!",(5, 11): "Good morning!",(12, 16): "Good afternoon!",(17, 20): "Good evening!",(21, 23): "Good night!"}
         subject = next((msg for (start, end), msg in greetings.items() if start <= hour <= end), "Hello!")
         message = "We kindly request that you review and take necessary action regarding this "
-        
-        print("=====================+>>>>>>> ", user_object)
-        print()
-        print()
+
         response = email_notification(subject=subject, user=user_object, message=message, redirect_url=redirect_url, url=url, notification_type=notification_type, notification_id=notification_id, cc_recipients=[])
         return response.status_code
     except Exception as e:

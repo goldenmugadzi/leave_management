@@ -37,10 +37,10 @@ class TargetScoreType(BaseModel):
     comment: Optional[str] = Field(None, description="The comment of the target.")
 
 class KraRolesType(Enum):
-    appraisee = "Appraisee"
-    appraiser = "Appraiser"
-    hod = "Section Head"
-    hr = "HR"
+    appraisee = "appraisee"
+    appraiser = "appraiser"
+    hod = "reviewer"
+    hr = "hr"
     
 class KraRolesActionsType(Enum):
     create = "Create"

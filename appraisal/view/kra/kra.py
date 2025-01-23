@@ -4,6 +4,7 @@ from django.views.generic import TemplateView
 from django.views.generic.edit import CreateView, UpdateView
 from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib import messages
+from django.shortcuts import get_object_or_404
 from ...models import KeyResultArea
 from ...forms import YearQuarterForm, KraCreateForm
 from ...repository.kra import KRARepository
@@ -144,3 +145,14 @@ class KRAUpdateView(SuccessMessageMixin, UpdateView):
         kra_obj_id = self.kwargs.get("pk")
         return reverse('kra_update', kwargs={"pk": kra_obj_id})
     
+class KRADetailView(TemplateView):
+    template_name = "appraisal/kra/detail.html"
+    
+    def get_object(self):
+        obj = get_object_or_404(KeyResultArea, appraisal__id=self.kwargs.get("appraisal_id"))
+        return obj
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["kra_object"] = self.get_object()
+        return context
