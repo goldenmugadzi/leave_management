@@ -153,12 +153,16 @@ def approve_step(request, process_id):
                         process.purchaserequest_set.last().id,
                     )
 
-                if process.token_set.exists():
+                elif process.token_set.exists():
                     token = process.token_set.last()
 
                     send_notification(request, 'tokens:token', token.type, token, token.id)
-                    print('------------------------------got here-----------------------------------', str(token.id))
                     return redirect('tokens:token', token.id)
+                
+                elif process.appraisal_set.exists():
+                    appraisal = process.appraisal_set.last()
+                    # send_notification(request, 'tokens:token', token.type, token, token.id)
+                    return redirect("update_appraisal", appraisal.id)
                 
                 elif process.workflow.name == "pettycash":
                     return redirect(

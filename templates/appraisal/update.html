@@ -33,7 +33,7 @@
 
             <div class="flex flex-col gap-2 px-2">
                 
-                <!-- Appraisal Form -->
+                <!-- appraisal_object Form -->
                  <div>
                      {{form|crispy}}                
                  </div>
@@ -55,4 +55,116 @@
     </div>
 
   </div>
+
+  <h1 class="text-center mb-4 font-bold text-xl  mb-2">Workflow Details ({{ appraisal_object.process.workflow }})</h1>
+{% if approvalForm %}
+    <form class="row rounded py-4 border  rounded-lg p-3 m-auto container"
+            method="POST"
+            action="{% url 'appraisal_approval' appraisal_object.id %}"
+            enctype="multipart/form-data"
+            >
+        {% csrf_token %}
+        <div class=" m-auto container  ">
+            <div class="col-span-4">
+                {{ field.name }}
+                {% for field in generateappraisal_objectForm %}
+                    <div class="rounded row text-center py-2 my-3">
+                        {% if field.is_hidden %}
+                            {{ field }}
+                        {% else %}
+                            <div class=" m-auto grid grid-cols-2 pr-5">
+                                <div>
+                                    {{ field.label }}
+                                    <div class="text-blue-500">{{ field.help_text }}</div>
+                                    <div class="text-red-500 text-red-500 ">{{ field.errors }}</div>
+                                </div>
+                                {{ field }}
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+                {% for field in approvalForm %}
+                    <div class="rounded row text-center py-2 my-3">
+                        {% if field.is_hidden %}
+                            {{ field }}
+                        {% else %}
+                            {% if field.name == "approved" %}
+                            {% else %}
+                                <div class=" m-auto grid grid-cols-2 pr-5">
+                                    <div>
+                                        {{ field.label }}
+                                        <div class="text-blue-500">{{ field.help_text }}</div>
+                                        <div class="text-red-500 text-red-500 ">{{ field.errors }}</div>
+                                    </div>
+                                    {{ field }}
+                                </div>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+            <div class="m-4 text-center">
+                <button type="submit"
+                        class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded"
+                        name="approved"
+                        value="Rejected">Reject</button>
+                <button type="submit"
+                        class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded"
+                        name="approved"
+                        value="Approved">{{ to }}</button>
+            </div>
+        </div>
+    </form>
+{% endif %}
+<div class="card flex flex-row  flex  justify-center ">
+    {% for step in appraisal_object.process.workflow.step_set.all %}
+        <div class=" m-1 mx-4 rounded ">
+            {% if step.step in approved_steps %}
+                {% for approval in appraisal_object.process.approval_set.all %}
+                    {% if step == approval.step %}
+                        <div class="card-body m-1 px-2 arrow bg-gradient-to-r from-gulf-blue-100  {% if approval.approved == 'Rejected' %} to-red-700 {% else %} to-green-700 {% endif %} ed border rounded container rounded">
+                            <div class=" rounded-lg" title="{{ approval.comment }}">
+                                <p class="font-bold">{{ step |default_if_none:'' }}</p>
+                                <br>
+                            </div>
+                            <div class=" grid grid-cols-2 text-center">
+                                <span class="inline-block rounded-full text-sm">{{ approval.approved }}</span>
+                                <span class="inline-block rounded-full text-sm">By:
+                                    {% if request.user == approval.user %}
+                                        You
+                                    {% elif approval.user.get_full_name %}
+                                        {{ approval.user.get_full_name }}
+                                    {% elif request.user == approval.user %}
+                                        {{ approval.user }}
+                                    {% endif %}
+                                    <i class="fas fa-check-circle text-green-500">  </i>
+                                </span>
+                            </div>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            {% else %}
+                <div class="card-body px-2 arrow bg-gradient-to-r from-gulf-blue-100 to-blue-700 ed border rounded container rounded">
+                    <div class=" rounded-lg" title="{{ approval.comment }}">
+                        <p class="font-bold">{{ step |default_if_none:'' }}</p>
+                        <br>
+                        {% if step.to %}
+                            <span class="inline-block rounded-full text-sm">To {{ step.to|default_if_none:'' }}  <i class="fas fa-circle-notch fa-spin text-blue-500"></i>  </span>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+        {% if step == appraisal_object.process.workflow.step_set.last and step == appraisal_object.process.approval_set.last.step %}
+            <div class="card-body   m-2  p-2 border  rounded">
+                <div class="flex justify-center items-center  rounded ">
+                    <div class="rounded-lg" title="{{ approval.comment }}">
+                        Completed
+                        <i class="fas fa-check-circle text-green-500"></i>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    {% endfor %}
+</div>
 {% endblock %}

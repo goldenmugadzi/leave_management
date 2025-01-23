@@ -5,8 +5,11 @@ from django.core.files.uploadedfile import UploadedFile
 
 class UserQualificationRepository:
     def create(self, user_object: UserProfile, name: str, file: UploadedFile) -> UserQualification:
-        return UserQualification.objects.acreate(user=user_object, name=name, file=file)
-
+        try:
+            return UserQualification.objects.create(user=user_object, name=name, file=file)
+        except Exception as e:
+            raise Exception(f"create user qualification repo failed with error: {e}")
+    
     def get_by_user(self, user_object: UserProfile)->UserQualification:
         try:
             object = UserQualification.objects.filter(user=user_object)
@@ -29,7 +32,7 @@ class UserQualificationRepository:
             if qualification_object.name != name:
                 qualification_object.name = name
                 changed = True
-            if qualification_object.file != file:
+            if file and (not qualification_object.file or qualification_object.file.name != file.name):
                 qualification_object.file = file
                 changed = True
             if changed:

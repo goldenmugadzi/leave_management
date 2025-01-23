@@ -4,6 +4,7 @@ from .view import (AppraisalCreateView,
                    ExperienceCreateView, 
                    AppraisalExperienceCreateView,
                    AppraisalExperienceUpdateView,
+                   approveAppraisal,
                    ExperienceListView,
                    AppraisalTemplateView, 
                    experience_list_api,
@@ -21,13 +22,16 @@ from .view import (AppraisalCreateView,
                    TargetCreateView,
                    TargetUpdateView,
                    TargetScoreUpdateView,
-                   UserQualificationTemplateView
+                   UserQualificationTemplateView,
+                   UserQualificationCreateView,
+                   UserQualificationUpdateView
                    )
 
 urlpatterns = [
     path('', AppraisalTemplateView.as_view(), name='appraisal_index'),
     path('create/', AppraisalCreateView.as_view(), name='create_appraisal'),
     path('update/<int:pk>', AppraisalUpdateView.as_view(), name='update_appraisal'),
+    path('approval/<int:appraisal_id>', approveAppraisal, name='appraisal_approval'),
 
     # ================= Experience urls ============================
     path('experience/create/', ExperienceCreateView.as_view(), name='create_experience'),
@@ -44,6 +48,8 @@ urlpatterns = [
     
     # ========================Qualification View=========================
     path('qualification/<int:user_id>/', UserQualificationTemplateView.as_view(), name='list_qualification'),
+    path('qualification/<int:appraisal_id>', UserQualificationCreateView.as_view(), name='create_qualification'),
+    path('qualification/<int:qualification_id>/view', UserQualificationUpdateView.as_view(), name='update_qualification'),
     
     
     # ================== KRA urls =================================
