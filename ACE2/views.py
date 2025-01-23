@@ -15,10 +15,11 @@ from openpyxl import Workbook
 from weasyprint import HTML
 
 from ACE2.forms import *
+from ACE2.utils import find_pettycash_section_head
 from approve.forms import ApprovalForm
 from approve.models import Step
 from approve.views import intiate
-from it.users.models import UserProfile, Roles, Designations, Districts, Depots
+from it.users.models import UserProfile, Roles, Designations, Districts, Depots, Notification
 from finance.PettyCash.views import approve_step
 from finance.comparative_schedules.views import notification_update, notify_user
 
@@ -153,6 +154,20 @@ def Ace_detail(request, Ace_id2):
 
     ace_quantity = range(ace_item.quantity)
     approved_steps = ace_item.process.approval_set.all().values_list('step__step', flat=True)
+
+    notification_obj = Notification.objects.filter(notification_id=ace_item.Ace_id2).first()
+    section_created = ace_item.section
+    section_heads = find_pettycash_section_head(section_created)
+    if section_heads:
+        print('doing')
+        print("user prof ", user_profile, ' sect head ', section_heads)
+
+        if user_profile.username == section_heads:
+            print('notification', notification_obj)
+            notification_obj.is_read = True
+            notification_obj.save()
+            print(notification_obj, ' now set to read')
+
     return render(request, 'finance/ace2/ace_detail.html',
                   {'ace': ace_item, 'approved_steps': approved_steps, 'approvalForm': approvalForm,
                    'to': to, 'ace_role': ace_role, 'user_groups': user_groups, 'qoutations': quotations,

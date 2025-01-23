@@ -14,7 +14,7 @@ from openpyxl.workbook import Workbook
 from ACE2.utils import find_ace_section_head, find_pettycash_section_head
 from approve.forms import ApprovalForm
 from approve.views import intiate
-from it.users.models import UserProfile, Roles, Sections, Regions
+from it.users.models import UserProfile, Roles, Sections, Regions, Notification
 from approve.models import Process, Step, Approval
 from .forms import PettycashForm, QuotationFormSet, PettycashReportForm
 from .models import Pettycash, Quotation, PettycashReport
@@ -130,6 +130,19 @@ def pettyCash_detail(request, petty_id):
         cashier = None
 
     print(pettycash_role, clear, requestor, clear_minus, cashier_approved)
+    notification_obj = Notification.objects.filter(notification_id=petty_id).first()
+    section_created = pettycash_item.section
+    section_heads = find_pettycash_section_head(section_created)
+    if section_heads:
+        print('doing')
+        print("user prof ", user_profile, ' sect head ', section_heads)
+
+        if user_profile.username == section_heads:
+            print('notification', notification_obj)
+            notification_obj.is_read = True
+            notification_obj.save()
+            print(notification_obj, ' now set to read')
+
     return render(request, 'finance/pettycash/pettycash_detail.html',
                   {'pettycash': pettycash_item, 'approved_steps': approved_steps, 'approvalForm': approvalForm,
                    'to': to, 'pettycash_role': pettycash_role, 'user_groups': user_groups, 'quotations': quotations
