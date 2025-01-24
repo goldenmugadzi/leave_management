@@ -21,12 +21,12 @@ class Sections(models.Model):
 
 class ProductType(models.Model):
     product_type = models.CharField(max_length=100)
-    code = models.CharField(max_length=100)
+    model = models.CharField(max_length=100)
 
 
 class ZetdcAssets(models.Model):
     product_type = models.ForeignKey(ProductType, on_delete=models.DO_NOTHING, blank=True, null=True)
-    asset_state = models.CharField(max_length=100,blank=True, null=True)
+    asset_state = models.CharField(max_length=100)
     serial_number = models.CharField(max_length=100)
     asset_number = models.CharField(max_length=100)
     department = models.CharField(max_length=400)
@@ -37,8 +37,8 @@ class ZetdcAssets(models.Model):
     designations = models.ForeignKey(Designations, on_delete=models.DO_NOTHING , blank=True, null=True)
     sections = models.ForeignKey(Sections, on_delete=models.DO_NOTHING, blank=True, null=True)
     date_purchased =models.DateField()
-    warrant = models.CharField(max_length=100,blank=True, null=True)
-    model = models.CharField(max_length=100,blank=True, null=True)
+    model = models.CharField(max_length=100)
+    warrant = models.CharField(max_length=100)
     created_at = models.DateField()
     updated_at = models.DateField()
     created_by = models.CharField(max_length=50)

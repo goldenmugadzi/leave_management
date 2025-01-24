@@ -8,12 +8,13 @@ from django.contrib.auth import get_user_model
 from django.db.models import Q
 import csv
 from django.http import HttpResponse
+from dateutil import parser
 
 from Asset_Register.models import Designations, ProductType, Regions, Sections, ZetdcAssets
 
 User = get_user_model()
-
 def create_asset(request):
+    print("Asset:")
     url_path = request.path.split("/")
     if request.method == 'POST':
         product_type = request.POST['product_id']
@@ -28,6 +29,8 @@ def create_asset(request):
         date_purchased = request.POST['date_purchased']
         warrant = request.POST['warrant']
         model = request.POST['model']
+
+        print("Asset model:", model)
 
         pd = ProductType.objects.filter(id=product_type).first()
         rg = Regions.objects.filter(id=regions).first()
@@ -67,7 +70,6 @@ def create_asset(request):
     print('user', users)
     product_type=ProductType.objects.all()
     return render(request, 'asset_register/create_asset.html', {"url_path": url_path, 'regions': regions, 'sections': sections, 'designations': designation, 'product_types':product_type, 'users': users})
-
 
 def show_asset(request):
     
@@ -150,19 +152,23 @@ def show_asset_datatable(request):
         asset_list = []
         for asset in page_obj:
             # print('my assets', asset.regions.region)
+            # print("asset.product_type.product_type",asset.product_type.product_type)
+            #print("Asset model:", asset.model)
+
             new_asset = {
+
                 "id": asset.id,
                 "asset_state": asset.asset_state,
                 "product_type": asset.product_type.product_type if asset.product_type else None,
                 "serial_number": asset.serial_number,
                 "department": asset.sections.section if asset.sections else None,
-                "user": asset.user.first_name + " " + asset.user.last_name if asset.user else "",
+                "user": asset.user_name,
                 "regions": asset.regions.region if asset.regions else None,
                 "purchase_cost": asset.purchase_cost,
                 "designations": asset.designations.description if asset.designations else None,
                 "date_purchased": asset.date_purchased,
                 "warrant": asset.warrant,
-                "model": asset.model,
+                "model": asset.model if asset.model else None,
                 "created_by": asset.created_by,
                 "created_at": asset.created_at,
             }
@@ -232,7 +238,7 @@ def update_asset(request, id):
         'product_id': zetdcAssets.product_type,
         'asset_state': zetdcAssets.asset_state,
         'serial_number': zetdcAssets.serial_number,
-        'asset_number': zetdcAssets.id,  # If this refers to the asset number
+        'asset_number': zetdcAssets.id,  
         'department': zetdcAssets.department,
         'user': zetdcAssets.user,
         'regions': zetdcAssets.regions,
@@ -248,7 +254,6 @@ def update_asset(request, id):
         'regions': Regions.objects.all(),
         'designations': Designations.objects.all(),
 })
-
 
 def create_product(request):
     if request.method == 'POST':
@@ -269,7 +274,6 @@ def create_product(request):
     return render(request, 'asset_register/create_product.html',{})
 
 def show_product_datatable(request):
-    
     try:
         draw = int(request.GET.get('draw', default=1))
         start = int(request.GET.get('start', default=0))
@@ -277,7 +281,6 @@ def show_product_datatable(request):
         search_value = request.GET.get('search[value]', default='')
 
         product = ProductType.objects.all()
-        print("product", product)
 
         if search_value:
             product = product.filter(
@@ -286,10 +289,9 @@ def show_product_datatable(request):
                 code__icontains=search_value
             )
 
-        # Total number of records before filtering
         total = product.count()
 
-          # Sorting
+        # Sorting
         order_column = request.GET.get('order[0][column]')
         order_dir = request.GET.get('order[0][dir]')
 
@@ -297,37 +299,39 @@ def show_product_datatable(request):
             column_map = {
                 "0": "id",
                 "1": "product_type",
-                "2": "code",
+                "2": "model",
             }
 
             column_name = column_map.get(order_column)
             if column_name:
                 if order_dir == 'desc':
-                    column_name = f'-{column_name}'  # Add descending order prefix
-                product= product.order_by(column_name)
-
+                    column_name = f'-{column_name}' 
+                product = product.order_by(column_name)
 
         # Pagination
         paginator = Paginator(product, length)
         page_number = start // length + 1
         page_obj = paginator.get_page(page_number)
 
-
         product_list = []
-        for product in page_obj:
+        for p in page_obj:
+            asset = ZetdcAssets.objects.filter(product_type=p).first()  
+            model = asset.model if asset else '' 
+
             new_product = {
-                "id": product.id,
-                "product_type": product.product_type,
-                "code": product.code,
+                "id": p.id,
+                "product_type": p.product_type,
+                "model": model,
             }
             product_list.append(new_product)
-        print("product_list: ", product_list)
+
         return JsonResponse({
             'draw': draw,
             'recordsTotal': total,
             'recordsFiltered': total,
             'data': product_list
         })
+
     except Exception as ex:
         print(ex)
         return JsonResponse({
@@ -409,8 +413,7 @@ def show_report_datatable(request):
                 "2": "product_type__product_type",
                 "3": "sections__section",
                 "4": "regions__region",
-                "5": "purchase_cost",
-                "6": "date_purchased",
+                "5": "date_purchased",
             }
 
             column_name = column_map.get(order_column)
@@ -433,7 +436,6 @@ def show_report_datatable(request):
                 "product_type": asset.product_type.product_type if asset.product_type else None,
                 "department": asset.sections.section if asset.sections else None,
                 "regions": asset.regions.region if asset.regions else None,
-                "purchase_cost": asset.purchase_cost,
                 "date_purchased": asset.date_purchased,
             }
             asset_list.append(asset_dict)
@@ -454,8 +456,7 @@ def show_report_datatable(request):
         })
 
 def export_csv(request):
-
-     # Get filter parameters from the request
+    # Get filter parameters from the request
     asset_state = request.GET.get('status', None)
     sections = request.GET.get('sections', None)
     regions = request.GET.get('regions', None)
@@ -464,30 +465,56 @@ def export_csv(request):
     end_date = request.GET.get('end_date', None)
 
     assets = ZetdcAssets.objects.all()  
-    if asset_state:
+
+
+    if asset_state and asset_state != 'Select Status':
         assets = assets.filter(asset_state=asset_state)
+    
     if sections:
         assets = assets.filter(sections=sections)
+       
     if regions:
         assets = assets.filter(regions=regions)
+        
     if pick_station:
         assets = assets.filter(pick_station=pick_station)
+      
     if start_date:
+        start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
         assets = assets.filter(date_purchased__gte=start_date)
+       
     if end_date:
+        end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
         assets = assets.filter(date_purchased__lte=end_date)
+       
 
     # Create the CSV response
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = 'attachment; filename="Assets.csv"'
 
     writer = csv.writer(response)
-    writer.writerow(['ID', 'Product Type', 'Asset State', 'Department', 'Regions', 'Purchase Cost', 'Date Purchased'])
+    writer.writerow(['ID', 'Product Type', 'Asset State', 'Department', 'Regions', 'Date Purchased'])
 
+    if not assets.exists():
+        writer.writerow(['No data found'])
     for asset in assets:
-        writer.writerow([asset.id, asset.product_type, asset.asset_state, asset.department, asset.regions, asset.purchase_cost, asset.date_purchased])
+            asset_state_name = asset.asset_state if asset.asset_state else 'N/A'
+            section_name = asset.sections if asset.sections else 'N/A'
+            region_name = asset.regions if asset.regions else 'N/A'
 
+            # Write the row to the CSV
+            writer.writerow([
+                asset.id,
+                asset.product_type,
+                asset_state_name,  
+                section_name,      
+                region_name,       
+                asset.date_purchased
+            ])
     return response
+
+from datetime import datetime
+from dateutil import parser
 
 def upload_asset(request):
     if request.method == 'POST':
@@ -505,35 +532,50 @@ def upload_asset(request):
 
             for row in reader:
                 date_string = row.get('date purchased') 
-                parsed_date = datetime.strptime(date_string, "%A, %B %d, %Y").date()
+                parsed_date = None
+                
+                if date_string:
+                    # Try parsing with the first format: '%A, %B %d, %Y'
+                    try:
+                        parsed_date = datetime.strptime(date_string, "%A, %B %d, %Y").date()
+                    except ValueError:
+                        print(f"Failed to parse with first format: {date_string}")
+                    
+                    if not parsed_date:
+                        try:
+                            parsed_date = datetime.strptime(date_string, "%d-%b-%y").date()
+                        except ValueError:
+                            print(f"Failed to parse with second format: {date_string}")
+                    if not parsed_date:
+                        print(f"Invalid date format for: {date_string}")
 
+                # Check and print the parsed date for debugging
+                print(f"Parsed Date: {parsed_date}")
+                
                 print("Processing row:", row)
-                product_type = ProductType.objects.filter(product_type=row.get('product type')).first()
-                section = Sections.objects.filter(section=row.get('department')).first()
-                region = Regions.objects.filter(region="harare").first()
+                product_type, _ = ProductType.objects.get_or_create(product_type=row.get('product type'))  
+                section, _ = Sections.objects.get_or_create(section=row.get('department'))
+                region, _ = Regions.objects.get_or_create(region=row.get("region"))
                 print("region",region)
-                #designations = Designations.objects.filter( identifier=row.get('designations')).first()
+
                 created_at = datetime.now().date()
                 updated_at = datetime.now().date()
 
+                user = row.get('user').strip()
+                print("region", region)
 
-                user= row.get('user').strip()
-                print("region",region)
                 new_zetdcassets = ZetdcAssets(
                     product_type=product_type,
-                    asset_state=('asset_state'),
+                    asset_state=row.get('asset state', '').strip(),
                     serial_number=row.get('serial number'),
-                    #asset_number=row.get('ID'),
                     user_name=user,
-                    date_purchased= parsed_date,
-                    #warrant=row.get('warrant'),
-                    #model=row.get('model'),
-                    #purchase_cost=row.get('purchase cost'),
-                    #designations=designations,
+                    date_purchased=parsed_date, 
                     sections=section,
                     regions=region,
-                    created_at = created_at,
-                    updated_at = updated_at,
+                    created_at=created_at,
+                    updated_at=updated_at,
+                    model=row.get('model'),
+                    created_by="IT",
                 )
                 new_zetdcassets.save()
 
@@ -543,5 +585,7 @@ def upload_asset(request):
             return render(request, 'asset_register/upload_asset.html', {'error': str(e)})
 
     return render(request, 'asset_register/upload_asset.html', {})
+
+
 
 
