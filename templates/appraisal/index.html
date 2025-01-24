@@ -14,34 +14,37 @@
         <div class="flex justify-between">
                         
             <h3 class="text-center font-bold">My Appraisals</h3>
-            <div class="flex gap-2">
-              <a href="{% url 'performance_review_index' %}"
-                  class="bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4 rounded">Performance Plan & Assessment</a>
-              <a href="{% url 'kra_index' %}"
-                  class="bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4 rounded">Key Result Area Analysis</a>
               <a href="{% url 'create_appraisal' %}"
                   class="bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4 rounded">Create New Appraisal</a>
-            </div>
         </div>
         
         <table id="appraisals" class="table table-striped stripe mt-3 table-bordered">
           <thead>
             <tr>
-              <th>ID</th>
+              <th>Appraiser</th>
+              <th>Appraisee</th>
               <th>Create at</th>
-              <th>Updated at</th>
               <th>Status</th>
+              <th></th>
             </tr>
           </thead>
           <tbody>
             {% for appraisal in appraisals %}
               <tr>
-                <td>
-                    <a class="text-blue-500" href="{% url 'update_appraisal' appraisal.id %}">{{ appraisal.id }}</a>
-                </td>
+                <td>{{ appraisal.appraiser }}</td>
+                <td>{{ appraisal.user }}</td>
                 <td>{{ appraisal.created_date|date }}</td>
-                <td>{{ appraisal.updated|date }}</td>
                 <td>{{ appraisal.process.approval_set.last|default_if_none:"No Approval" }}</td>
+                <td>
+                  <div class="flex justify-end gap-1">
+                      <a href="{% url 'performance_review_detail' appraisal.id %}"
+                          class="bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4 rounded">Performance Plan & Assessment</a>
+                      <a href="{% url 'kra_index' appraisal.id %}"
+                          class="bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4 rounded">Key Result Area Analysis</a>
+                      <a href="{% url 'update_appraisal' appraisal.id %}"
+                          class="bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4 rounded">View Appraisal</a>
+                  </div>
+                </td>
               </tr>
             {% endfor %}
           </tbody>

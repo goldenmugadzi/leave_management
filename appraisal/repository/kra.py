@@ -45,6 +45,27 @@ class KRARepository:
             return queryset
         except Exception as e:
             raise Exception(f"KRA retrieve by quarter and year failed with error: {e}")
+        
+    def retrieve_quarter_appraisal_id(self, quarter_number: int, year_number: int, appraisal_id: int)->List[KeyResultArea]:
+        """
+            Retrieves a list of KRAs for a specified quarter and year and appraisal pk.
+
+            Args:
+                quarter_number (int): The quarter number (e.g., 1 for Q1, 2 for Q2).
+                year_number (int): The year number (e.g., 2024).
+
+            Returns:
+                List[KeyResultArea]: A list of KeyResultArea objects matching the specified quarter and year.
+
+            Raises:
+                Exception: If the retrieval operation fails.
+        """
+
+        try:
+            queryset = KeyResultArea.objects.filter(quarter__year=year_number, quarter__quarter=quarter_number, appraisal__id=appraisal_id)
+            return queryset
+        except Exception as e:
+            raise Exception(f"KRA retrieve by quarter and year failed with error: {e}")
 
     def retrieve_by_pk(self, kra_id: int)->KeyResultArea:
         """

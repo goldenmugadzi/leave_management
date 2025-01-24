@@ -5,7 +5,7 @@ from django.views.generic.edit import CreateView, UpdateView
 from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib import messages
 from django.shortcuts import get_object_or_404
-from ...models import KeyResultArea
+from ...models import KeyResultArea, Activity, Target
 from ...forms import YearQuarterForm, KraCreateForm
 from ...repository.kra import KRARepository
 from ...services.kra import KRAService
@@ -25,7 +25,7 @@ class KRATemplateView(TemplateView):
     def get_all_kra(self, year, quarter)->Dict[str, List[KeyResultArea]]:
         repo = KRARepository()
         service_handler = KRAService(kra_repo=repo)
-        kra_queryset = service_handler.get_all_by_quarter_year_use_case(year_number=year, quarter_number=quarter)
+        kra_queryset = service_handler.fetch_by_quarter_year_appraisal_pk_use_case(year_number=year, quarter_number=quarter, appraisal_id=self.kwargs.get("appraisal_id"))
         data = {"kra_objects": kra_queryset}
         return data
     
@@ -152,7 +152,20 @@ class KRADetailView(TemplateView):
         obj = get_object_or_404(KeyResultArea, appraisal__id=self.kwargs.get("appraisal_id"))
         return obj
     
+    def get_activities_with_targets(self)->list:
+        activities = Activity.objects.filter(kra=self.get_object())
+        
+        activities_with_targets = []
+        for activity in activities:
+            targets = Target.objects.filter(activity=activity)
+            activities_with_targets.append({
+                'activity': activity,
+                'targets': targets
+            })
+        return activities_with_targets
+        
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["kra_object"] = self.get_object()
+        context["activities_with_targets"] = self.get_activities_with_targets()
         return context

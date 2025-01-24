@@ -27,6 +27,12 @@ class KRAService:
             return self.kra_repo.retrieve(quarter_number=quarter_number, year_number=year_number)
         except Exception as e:
             raise KRAErr(f"Retrieve all kra failed with error: {e}")
+    
+    def fetch_by_quarter_year_appraisal_pk_use_case(self, quarter_number: int, year_number: int, appraisal_id: int)->List[KeyResultArea]:
+        try:
+            return self.kra_repo.retrieve_quarter_appraisal_id(quarter_number=quarter_number, year_number=year_number, appraisal_id=appraisal_id)
+        except Exception as e:
+            raise KRAErr(f"Retrieve all kra failed with error: {e}")
 
     def update_use_case(self, kra_object: KeyResultArea, quarter_obj: YearQuarter, data: KRAType)->KeyResultArea:
         try:
