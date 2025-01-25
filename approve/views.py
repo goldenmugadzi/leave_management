@@ -152,7 +152,7 @@ def approve_step(request, process_id):
                 approver__in=request.user.roles.all(),
             )
     except Step.DoesNotExist:
-        messages.info(request, "This process was completedddd")
+        messages.info(request, "This process was completed")
         return redirect("approve:workflow_detail", process.workflow.id)
     
     if not process.approval_set.filter(approved="Rejected"):

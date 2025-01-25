@@ -19,12 +19,12 @@ class AppraisalService:
     experience_repository: ExperienceRepository
     appraisal_repository: AppraisalRepository
 
-    def create_use_case(self, user_object: UserProfile, process_object: Process, appraiser: UserProfile, data: AppraisalPayloadType)->Appraisal:
+    def create_use_case(self, user_object: UserProfile, process_object: Process, appraiser: UserProfile, reviewer: UserProfile, data: AppraisalPayloadType)->Appraisal:
 
         try:
             # Atom transaction to create all entries related to appraisal
             with transaction.atomic():
-                appraisal_object = self.appraisal_repository.create(user_object=user_object, process_object=process_object, appraiser_object=appraiser)
+                appraisal_object = self.appraisal_repository.create(user_object=user_object, process_object=process_object, appraiser_object=appraiser, reviewert_object=reviewer)
 
                 # ========== Persist Appraisal Experience ============
                 for experience_item in data.experiences:

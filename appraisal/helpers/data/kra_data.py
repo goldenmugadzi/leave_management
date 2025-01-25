@@ -13,7 +13,7 @@ KRA_ROLES = [
             },
             {
                 "role": KraRolesActionsType.create.value,
-                "name": KraRolesType.hod.value,
+                "name": KraRolesType.reviewer.value,
                 "description": "Section Head KRA roles",
             },
             {
@@ -36,7 +36,7 @@ KRA_ACTIVITY_ROLES = [
             },
             {
                 "role": KraRolesActionsType.create.value,
-                "name": KraRolesType.hod.value,
+                "name": KraRolesType.reviewer.value,
                 "description": "Section Head KRA Activity roles",
             },
             {
@@ -59,7 +59,7 @@ ACTIVITY_TARGETS_ROLES = [
             },
             {
                 "role": KraRolesActionsType.read.value,
-                "name": KraRolesType.hod.value,
+                "name": KraRolesType.reviewer.value,
                 "description": "Section Head KRA Activity Targets roles",
             },
             {
@@ -82,7 +82,7 @@ TARGETS_SCORE_ROLES = [
             },
             {
                 "role": KraRolesActionsType.read.value,
-                "name": KraRolesType.hod.value,
+                "name": KraRolesType.reviewer.value,
                 "description": "Section Head KRA Targets Score roles",
             },
             {

@@ -11,6 +11,7 @@ class Appraisal(TimeStamp):
     """
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     appraiser = models.ForeignKey(User, on_delete=models.CASCADE, related_name="appraiser", null=True)
+    reviewer = models.ForeignKey(User, on_delete=models.CASCADE, related_name="reviewer", null=True)
     experience = models.ManyToManyField("Experience", through="AppraisalExperience")
     process = models.ForeignKey("approve.Process", on_delete=models.CASCADE, null=True,
                                 related_name="appraisal_process")

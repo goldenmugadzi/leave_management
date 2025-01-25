@@ -1,4 +1,5 @@
 from typing import List
+from django.core.exceptions import ObjectDoesNotExist
 from ..models import KeyResultArea, YearQuarter, Activity, Target, TargetScore, Appraisal
 from ..helpers.types.kra import KRAType, TargetType, TargetScoreType, KraRolesCreateType
 from it.users.models import UserProfile, Application, Roles
@@ -309,6 +310,32 @@ class TargetScoreRepository:
             return qr.first()
         except Exception as e:
             raise Exception(f"TargetScore fetch failed with error: {e}")
+        
+    def get_by_id_up_to_process_obj(self, target_score_id: int) -> TargetScore:
+        """
+            Retrieve a TargetScore object along with related objects up to the Process level.
+
+        Args:
+            target_score_id (int): The ID of the TargetScore to fetch.
+
+        Returns:
+            TargetScore: The TargetScore object with related objects preloaded.
+
+        Raises:
+            ObjectDoesNotExist: If the TargetScore is not found.
+        """
+        try:
+            return TargetScore.objects.select_related(
+                'target',
+                'target__activity',
+                'target__activity__kra',
+                'target__activity__kra__appraisal',
+                'target__activity__kra__appraisal__process'
+            ).get(id=target_score_id)
+        except ObjectDoesNotExist:
+            raise ObjectDoesNotExist("TargetScore with the given ID does not exist.")
+        except Exception as e:
+            raise Exception(f"Unexpected error occurred while fetching TargetScore: {e}")
 
     def fetch_by_activity_id(self, activity_id: int) -> List[TargetScore]:
         try:

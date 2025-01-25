@@ -85,13 +85,13 @@ class AppraisalCreateView(CreateView):
         )
         structured_payload = self.build_payload()
         process_object = intiate(None, "Appraisal")
-        print("==================>>>>>>>Appr ", form.instance.appraiser)
-        input()
         appraisal_object = appraisal_service_handler.create_use_case(
             user_object=user_object,
            process_object=process_object,
             data=structured_payload,
-            appraiser=form.instance.appraiser)
+            appraiser=form.instance.appraiser,
+            reviewer=form.instance.reviewer
+            )
         form.instance = appraisal_object
 
         form.instance.user = user_object

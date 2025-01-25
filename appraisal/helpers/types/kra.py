@@ -39,7 +39,7 @@ class TargetScoreType(BaseModel):
 class KraRolesType(Enum):
     appraisee = "appraisee"
     appraiser = "appraiser"
-    hod = "reviewer"
+    reviewer = "reviewer"
     hr = "hr"
     
 class KraRolesActionsType(Enum):

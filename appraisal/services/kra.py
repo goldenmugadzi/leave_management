@@ -136,7 +136,7 @@ class TargetScoreService:
         except Exception as e:
             raise KRAErr(f"Failed to calculate activity score with error: {e}")
 
-
+    
 @dataclass
 class ActivityService:
     activity_repo: KraActivityRepository

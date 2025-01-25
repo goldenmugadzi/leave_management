@@ -52,8 +52,13 @@
         <div class="flex flex-col gap-8">
             
             <!-- Appraisal Form -->
-            <div>
-                {{ appraisal_form.appraiser|as_crispy_field }}
+            <div class="flex flex-row gap-2">
+                <div class="flex-1">
+                    {{ appraisal_form.appraiser|as_crispy_field }}
+                </div>
+                <div class="flex-1">
+                    {{ appraisal_form.reviewer|as_crispy_field }}
+                </div>
             </div>
             <hr/>
 
@@ -68,13 +73,11 @@
                                     {% include "appraisal/experience_base.html" with experience_form=appraisal_experience_form total_form_count=appraisal_experience_forms.total_form_count %}
                                 {% endfor %}
                             </div>
-            
+                            
                             <!-- Hidden template for cloning -->
                             <div id="empty-form-template" style="display: none;">
                                 {% include "appraisal/experience_base.html" with experience_form=appraisal_experience_forms.empty_form total_form_count=appraisal_experience_forms.total_form_count %}
                             </div>
-            
-                            <button type="button" id="add-experience-btn" onclick="addExperienceForm('{{ appraisal_experience_forms.total_form_count }}')">Add Experience</button>
                         </fieldset>
                     </div>
                 </div>
@@ -93,11 +96,13 @@
                         <div id="empty-qualification-template" style="display: none;">
                             {% include "appraisal/qualification_base.html" with qualification_form=qualification_forms.empty_form total_form_count=qualification_forms.total_form_count %}
                         </div>
-                        <button type="button" id="add-qualification-btn" onclick="addQualificationForm('{{ qualification_forms.total_form_count }}')">Add Qualification</button>
                     </div>
+                    
                 </div>
             </div>
-            <button type="submit">Create</button>
+            <div class="flex justify-center my-2">
+                <button type="submit" class="w-96 bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4">Create</button>
+            </div>
         </div>
     </form>
 </div>
@@ -108,12 +113,21 @@
 
     // Tom Select for appraiser
     document.addEventListener("DOMContentLoaded", function () {
-        new TomSelect("#id_appraiser", {
-            create: false, // Prevent custom options
-            sortField: { field: "text", direction: "asc" }, // Sort options alphabetically
-            maxOptions: 100, // Limit the number of options shown in the dropdown
-            placeholder: "Search and select an appraiser", // Add a placeholder
-        });
+        
+        function getConfObject(placeholder){
+            const confObject = {
+                create: false, // Prevent custom options
+                sortField: { field: "text", direction: "asc" }, // Sort options alphabetically
+                maxOptions: 100, // Limit the number of options shown in the dropdown
+                placeholder: "", // Add a placeholder
+    
+            }
+            confObject.placeholder = placeholder
+            return confObject
+        }
+
+        new TomSelect("#id_appraiser", getConfObject("Search and Select Appraiser"));
+        new TomSelect("#id_reviewer", getConfObject("Search and Select Reviewer"));
     });
 
     // Refreshes all experience dropdowns in formsets with updated experience options from the server.

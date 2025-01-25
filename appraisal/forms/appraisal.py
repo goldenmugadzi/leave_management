@@ -5,6 +5,7 @@ from django.forms.renderers import BaseRenderer
 from django.forms.utils import ErrorList
 from it.users.models import UserQualification, CostCenter, UserProfile, Designations
 from ..models import Appraisal, AppraisalExperience, Experience
+from ..helpers.types.kra import KraRolesType
 
 
 class UserQualificationForm(forms.ModelForm):
@@ -63,13 +64,21 @@ class AppraisalExperienceUpdateForm(forms.ModelForm):
 class AppraisalForm(forms.ModelForm):
     class Meta:
         model = Appraisal
-        fields = ["appraiser"]
+        fields = ["appraiser", "reviewer"]
 
     appraiser = forms.ModelChoiceField(
-        queryset=UserProfile.objects.all(),
+        queryset=UserProfile.objects.filter(roles__role=KraRolesType.appraiser.value),
         widget=forms.Select(attrs={
             'id': 'id_appraiser',  # Add an ID for targeting with JavaScript
-            'class': 'bg-white border border-gray-300 rounded-lg py-2 px-4 block w-full focus:ring-blue-500 focus:border-blue-500 text-gray-700'
+            'class': 'bg-white border border-gray-300 rounded-lg py-2 px-4 block w-full focus:ring-blue-500 focus:border-blue-500 text-black-400'
+        }),
+        required=True
+    )
+    reviewer = forms.ModelChoiceField(
+        queryset=UserProfile.objects.filter(roles__role=KraRolesType.reviewer.value),
+        widget=forms.Select(attrs={
+            'id': 'id_reviewer',  # Add an ID for targeting with JavaScript
+            'class': 'bg-white border border-gray-300 rounded-lg py-2 px-4 block w-full focus:ring-blue-500 focus:border-blue-500 text-black-400'
         }),
         required=True
     )
