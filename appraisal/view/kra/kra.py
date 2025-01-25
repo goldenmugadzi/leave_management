@@ -5,13 +5,15 @@ from django.views.generic.edit import CreateView, UpdateView
 from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib import messages
 from django.shortcuts import get_object_or_404
-from ...models import KeyResultArea, Activity, Target
+from ...models import KeyResultArea, Activity, Target, Appraisal
 from ...forms import YearQuarterForm, KraCreateForm
 from ...repository.kra import KRARepository
 from ...services.kra import KRAService
 from .helper import build_payload
 from datetime import datetime
 from pydantic import ValidationError
+from approve.forms import ApprovalForm
+from approve.models import Step, Approval
 from ...helpers.types.kra import KraRolesType
 
 class KRATemplateView(TemplateView):
@@ -53,6 +55,7 @@ class KRATemplateView(TemplateView):
         context.update(self.get_all_kra(year=year_qrt["year"], quarter=year_qrt["quarter"]))
         context.update(year_qrt)
         context["roles"] = KraRolesType
+        context["appraisal_id"] = self.kwargs.get("appraisal_id")
 
             
         return context
@@ -70,6 +73,10 @@ class KRACreateView(SuccessMessageMixin,CreateView):
         context[self.context_object_name] = context.get("form")
         return context
     
+    def get_appraisa_object(self):
+        obj = get_object_or_404(Appraisal, id=self.kwargs.get("appraisal_id"))
+        return obj
+    
     def form_valid(self, form):
         try:
             # Build payload
@@ -82,6 +89,7 @@ class KRACreateView(SuccessMessageMixin,CreateView):
             kra_object = service_handler.create_use_case(
                 quarter_obj=form.cleaned_data.get('quarter'),
                 creator_obj=self.request.user,
+                appraisal_obj=self.get_appraisa_object(),
                 data=payload
             )
             form.instance = kra_object
@@ -95,7 +103,7 @@ class KRACreateView(SuccessMessageMixin,CreateView):
         return super().form_valid(form)
     
     def get_success_url(self) -> str:
-        return reverse('kra_index')
+        return reverse('kra_index', kwargs={"appraisal_id": self.kwargs.get("appraisal_id")})
     
     
 class KRAUpdateView(SuccessMessageMixin, UpdateView):
@@ -152,6 +160,59 @@ class KRADetailView(TemplateView):
         obj = get_object_or_404(KeyResultArea, appraisal__id=self.kwargs.get("appraisal_id"))
         return obj
     
+    def approve_form_data(self):
+        approvalForm = None
+        to = None
+        completed = False
+        
+        if not self.get_object().appraisal.process.approval_set.filter(approved="Rejected").exists():  # and allowed:
+            try:
+                last_approved = self.get_object().appraisal.process.approval_set.last().step.step
+            except AttributeError:
+                last_approved = 0
+            next_step = last_approved + 1
+            try:
+                newStep = Step.objects.filter(step=next_step, workflow=self.get_object().appraisal.process.workflow)
+                
+                if newStep.first().approver.name == "appraisee" or newStep.first().approver.name == "appraiser":
+                    is_appraisee = newStep.filter(
+                        approver__name="appraisee"
+                    ).exists()
+                    
+                    is_appraiser = newStep.filter(
+                        approver__name="appraiser"
+                    ).exists()
+                    if (is_appraisee and self.get_object().appraisal.user == self.request.user) | (is_appraiser and self.get_object().appraisal.appraiser == self.request.user):
+                        approvalForm = ApprovalForm
+                        to = newStep.first().to
+                else:
+                    allowed_to_approve = newStep.filter(
+                        approver__in=self.request.user.roles.all()
+                    ).exists()
+                    if allowed_to_approve:
+                        approvalForm = ApprovalForm
+                        to = newStep.first().to
+                   
+                # if newStep == self.get_object().process.workflow.step_set.last():
+                #     generateTokenForm = GenerateTokenForm()
+            except Exception as e:
+                print("=====>>>>", e)
+
+            completed = self.get_object().appraisal.process.workflow.step_set.last().step == last_approved
+        approved_steps = self.get_object().appraisal.process.approval_set.all().values_list(
+            "step__step", flat=True
+        )
+        return {
+            "completed": completed,
+            "approved_steps": approved_steps,
+            "approvalForm": approvalForm,
+            # "generateTokenForm": generateTokenForm,
+            "to": to,
+        }
+    
+    
+    
+    
     def get_activities_with_targets(self)->list:
         activities = Activity.objects.filter(kra=self.get_object())
         
@@ -166,6 +227,7 @@ class KRADetailView(TemplateView):
         
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        context.update(self.approve_form_data())
         context["kra_object"] = self.get_object()
         context["activities_with_targets"] = self.get_activities_with_targets()
         return context

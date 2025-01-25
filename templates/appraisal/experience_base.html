@@ -23,7 +23,8 @@
             {{ experience_form.months_of_experience|as_crispy_field }}
         </div>
     </div>
-
+    {{total_form_count}}
     <button type="button" class="remove-experience-btn" onclick="removeExperienceForm(this, '{{total_form_count}}')">Remove</button>
+    
 </div>
 

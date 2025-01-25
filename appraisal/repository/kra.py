@@ -1,16 +1,17 @@
 from typing import List
-from ..models import KeyResultArea, YearQuarter, Activity, Target, TargetScore
+from ..models import KeyResultArea, YearQuarter, Activity, Target, TargetScore, Appraisal
 from ..helpers.types.kra import KRAType, TargetType, TargetScoreType, KraRolesCreateType
 from it.users.models import UserProfile, Application, Roles
 
 class KRARepository:
-    def create(self, quarter_obj: YearQuarter, creator_obj, data: KRAType)->KeyResultArea:
+    def create(self, quarter_obj: YearQuarter, creator_obj: UserProfile, appraisal_obj: Appraisal, data: KRAType)->KeyResultArea:
         """
             Creates a new KeyResultArea (KRA) record in the database.
 
             Args:
                 quarter_obj (YearQuarter): The quarter associated with the KRA.
                 creator_obj: The user or entity responsible for creating the KRA.
+                appraisal_obj: The appraisal associated with the KRA.
                 data (KRAType): The data object containing the name, description, and weight of the KRA.
 
             Returns:
@@ -21,7 +22,7 @@ class KRARepository:
         """
 
         try:
-            return KeyResultArea.objects.create(quarter=quarter_obj, created_by=creator_obj, name=data.name, description=data.description, weight=data.weight)
+            return KeyResultArea.objects.create(quarter=quarter_obj, created_by=creator_obj, name=data.name, description=data.description, weight=data.weight, appraisal=appraisal_obj)
         except Exception as e:
             raise Exception(f"KRA Create Repo failed with error: {e}")
 
@@ -136,9 +137,9 @@ class KRARepository:
 
 
 class KraActivityRepository:
-    def create(self, kra_obj: KeyResultArea, assigned_user: UserProfile, appraiser: UserProfile, data: KRAType)->Activity:
+    def create(self, kra_obj: KeyResultArea, data: KRAType)->Activity:
         try:
-            return Activity.objects.create(kra=kra_obj, assigned_user=assigned_user, appraiser=appraiser, name=data.name, description=data.description, weight=data.weight)
+            return Activity.objects.create(kra=kra_obj, name=data.name, description=data.description, weight=data.weight)
         except Exception as e:
             raise Exception(f"KRA Activity Create Repo failed with error: {e}")
 

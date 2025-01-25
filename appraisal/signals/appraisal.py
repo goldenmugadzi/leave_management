@@ -2,7 +2,7 @@ from django.db.models.signals import post_save
 from django.urls import reverse
 from django.dispatch import receiver
 from django.db import transaction
-from ..models import Appraisal
+from ..models import Appraisal, TargetScore
 from ..services import PerformanceReviewService, TrainingAndDevelopmentService
 from ..repository import PerformanceReviewRepository, TrainingAndDevelopmentRepository
 from ..helpers.types import PerformanceReviewType
@@ -126,3 +126,15 @@ def send_appraiser_email_post_save_handler(sender, instance, created, **kwargs):
                 logger.error(f"Appraisal Email failed with status code {response_status_code}. Appraiser: {instance.appraiser}, Appraisee: {instance.user}")
         except Exception as e:
             logger.error(f"Appraisal emails signal handler with error: {e}")
+            
+            
+@receiver(post_save, sender=TargetScore, dispatch_uid="target-score-approval")
+def target_score_approval_post_save_handler(sender, instance, created, **kwargs):
+    if created:
+        try:
+            logger.info("Initializing Target Scoring approval ....")
+            pass
+        except Exception as e:
+            logger.error(f"Appraisal emails signal handler with error: {e}")
+            
+            

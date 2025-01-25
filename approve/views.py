@@ -130,13 +130,29 @@ def approve_step(request, process_id):
     except Step.DoesNotExist:
         next_step = 1
     try:
-        step = Step.objects.get(
-            workflow=process.workflow,
-            step=next_step,
-            approver__in=request.user.roles.all(),
-        )
+        step = None
+        
+        check_step = Step.objects.filter(workflow=process.workflow,step=next_step)   
+          
+        if process.workflow.name == "Appraisal":
+            if check_step.first().approver.name == "appraisee" or check_step.first().approver.name == "appraiser":
+                is_appraisee = check_step.filter(
+                    approver__name="appraisee"
+                ).exists()
+                
+                is_appraiser = check_step.filter(
+                    approver__name="appraiser"
+                ).exists()
+                if (is_appraisee and process.appraisal_process.last().user == request.user) | (is_appraiser and process.appraisal_process.last().appraiser == request.user):
+                    step = check_step.first()
+        else:
+            step = Step.objects.get(
+                workflow=process.workflow,
+                step=next_step,
+                approver__in=request.user.roles.all(),
+            )
     except Step.DoesNotExist:
-        messages.info(request, "This process was completed")
+        messages.info(request, "This process was completedddd")
         return redirect("approve:workflow_detail", process.workflow.id)
     
     if not process.approval_set.filter(approved="Rejected"):
@@ -168,7 +184,7 @@ def approve_step(request, process_id):
                                                 )
                     messages.success(request, "approved successfully")
                     
-                    return redirect("update_appraisal", appraisal.id)
+                    return step
                 elif process.token_set.exists() != None:
                     token = process.token_set.last()
 

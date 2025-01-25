@@ -37,7 +37,6 @@
          <thead class="bg-blue-800 text-white">
            <tr>
              <th class="px-6 py-3 text-left text-md font-semibold">Name</th>
-             <th class="px-6 py-3 text-left text-md font-semibold">Assigned User</th>
              <th class="px-6 py-3 text-left text-md font-semibold">Weight</th>
              <th class="px-6 py-3 text-left text-md font-semibold">Average Weighted Score</th>
              <th></th>
@@ -47,58 +46,17 @@
            {% for activity_obj in activity_objects %}
            <tr class="hover:bg-blue-100">
              <td class="px-6 py-4 text-md text-blue-900 truncate max-w-xs">{{activity_obj.name}}</td>
-             <td class="px-6 py-4 text-md text-blue-900">{{activity_obj.assigned_user}}</td>
              <td class="px-6 py-4 text-md text-blue-900">{{activity_obj.weight}}</td>
              <td class="px-6 py-4 text-md text-blue-900">{{activity_obj.id|get_activity_average_weighted_score}}</td>
              <td>
-               <div class="relative inline-block text-left">
-                 <!-- Actions Button -->
-                 <button 
-                   id="dropdownButton" 
-                   onclick="toggleDropdown('{{activity_obj.id}}')" 
-                   type="button" 
-                   class="inline-flex w-full justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                   aria-expanded="false" 
-                   aria-haspopup="true"
-                 >
-                   Actions
-                   <svg 
-                     xmlns="http://www.w3.org/2000/svg" 
-                     class="ml-2 h-5 w-5 text-gray-500" 
-                     viewBox="0 0 20 20" 
-                     fill="currentColor" 
-                     aria-hidden="true"
-                   >
-                     <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4 4a.75.75 0 01-1.06 0l-4-4a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
-                   </svg>
-                 </button>
-   
-                 <!-- Dropdown Menu -->
-                 <div 
-                   id="dropdownMenu-{{activity_obj.id}}" 
-                   class="hidden absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5"
-                   role="menu"
-                   aria-orientation="vertical"
-                   aria-labelledby="dropdownButton"
-                 >
-                   <div class="py-1" role="none">
-                     <a 
-                       href="{% url 'target_index' activity_obj.id %}" 
-                       class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900" 
-                       role="menuitem"
-                     >
-                       View Activity's Targets
-                     </a>
-                     <a 
-                       href="{% url 'kra_activity_update' activity_obj.kra.id activity_obj.id %}" 
-                       class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900" 
-                       role="menuitem"
-                     >
-                       Update Activity
-                     </a>
-                   </div>
-                 </div>
-               </div>
+              <div class="flex justify-end gap-1">
+                  <a href="{% url 'target_index' activity_obj.id %}"
+                      class="bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4 rounded">Targets</a>
+                  <a href="{% url 'kra_activity_update' activity_obj.kra.id activity_obj.id %}"
+                      class="bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4 rounded">View</a>
+                  
+              </div>
+               
              </td>
              
    
@@ -112,25 +70,3 @@
   </div>
 {% endblock %}
 
-{% block scripts %}
-<script>
-  // Function to toggle the dropdown visibility
-  function toggleDropdown(activityId) {
-    const dropdownMenu = document.getElementById(`dropdownMenu-${activityId}`);
-     if (dropdownMenu) {  
-    dropdownMenu.classList.toggle('hidden');
-  }
-  }
-
-  // Close the dropdown when clicking outside
-  window.addEventListener('click', function(event) {
-    const dropdowns = document.querySelectorAll("[id^='dropdownMenu-']");
-    dropdowns.forEach(dropdown => {
-      if (!dropdown.contains(event.target) && !event.target.matches('button')) {
-        dropdown.classList.add('hidden');
-      }
-    });
-  });
-</script>
-
-{% endblock %}

@@ -1,4 +1,5 @@
 from typing import Dict, Any
+from django.db.models import Q
 from ..models import Appraisal, Experience
 from it.users.models import UserProfile
 from approve.models import Process
@@ -33,8 +34,10 @@ class AppraisalRepository:
         except Exception as e:
             raise Exception(f"Appraisal Experience Repo failed with error: {e}")
 
-    def get_user_appraisal_objects(self, user_object: UserProfile)->list:
-        return Appraisal.objects.filter(user=user_object)
+    def get_user_appraisal_objects(self, user_object: UserProfile) -> list:
+        return Appraisal.objects.filter(
+            Q(user=user_object) | Q(appraiser=user_object)
+        )
     
     def get_appraisal_by_pk(self, appraisal_id: int)->Appraisal:
         return Appraisal.objects.filter(id=appraisal_id)

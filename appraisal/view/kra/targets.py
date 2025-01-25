@@ -75,8 +75,12 @@ class TargetCreateView(SuccessMessageMixin, CreateView):
         return super().form_valid(form)
 
     def get_success_url(self) -> str:
+        if 'Save And Add Another' in self.request.POST:
+            return reverse('target_create', kwargs={"activity_id": self.kwargs.get('activity_id')})
+        elif 'Save and Add Confirm' in self.request.POST:
+            return reverse('kra_detail', kwargs={"appraisal_id": self.get_activity_object["activity_object"].kra.appraisal.id})
         return reverse('target_index', kwargs={"activity_id": self.kwargs.get('activity_id')})
-
+        
 
 class TargetUpdateView(SuccessMessageMixin, UpdateView):
     model = Target
@@ -176,5 +180,4 @@ class TargetScoreUpdateView(SuccessMessageMixin, UpdateView):
         """
         Redirects to the index page after successful update.
         """
-        return reverse('score', kwargs={"activity_id": self.kwargs.get('activity_id'),
-                                        "target_id": self.kwargs.get('target_id')})
+        return reverse('target_index', kwargs={"activity_id": self.kwargs.get('activity_id')})

@@ -29,12 +29,19 @@
                                 </a>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
+                                {% if qualification_object.file != None %}
                                 <a 
                                     href={{qualification_object.file.url}}
                                     target="_blank"
                                     class="bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white p-2"
                                     >Preview Document</a>
                                 </div>
+                                {% else %}
+                                    <span 
+                                    class="bg-gray-500 inline-block rounded-full text-black p-2"
+                                    >No Document</span>
+                                </div>
+                                {% endif %}
                             </td>
                         </tr>
                     {% endfor %}

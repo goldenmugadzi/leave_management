@@ -4,7 +4,7 @@ from decimal import Decimal
 
 from ..repository.kra import KRARepository, KraActivityRepository, ActivityTargetRepository, TargetScoreRepository
 from it.users.models import UserProfile
-from ..models import YearQuarter, KeyResultArea, Activity,Target, TargetScore
+from ..models import YearQuarter, KeyResultArea, Activity,Target, TargetScore, Appraisal
 from ..helpers.types.kra import KRAType, TargetType, TargetScoreType
 from ..helpers.getters import get_actual_variance, get_within_condition, get_rating
 
@@ -15,9 +15,9 @@ class KRAErr(Exception):
 class KRAService:
     kra_repo: KRARepository
 
-    def create_use_case(self, quarter_obj: YearQuarter, creator_obj: UserProfile, data: KRAType)->KeyResultArea:
+    def create_use_case(self, quarter_obj: YearQuarter, creator_obj: UserProfile, appraisal_obj: Appraisal, data: KRAType)->KeyResultArea:
         try:
-            obj = self.kra_repo.create(quarter_obj=quarter_obj, creator_obj=creator_obj, data=data)
+            obj = self.kra_repo.create(quarter_obj=quarter_obj, creator_obj=creator_obj, data=data, appraisal_obj=appraisal_obj)
             return obj
         except Exception as e:
             raise KRAErr(f"Failed to create kra with error: {e}")
@@ -141,9 +141,9 @@ class TargetScoreService:
 class ActivityService:
     activity_repo: KraActivityRepository
 
-    def create_use_case(self, kra_object: KeyResultArea, assigned_user: UserProfile, appraiser: UserProfile, data: KRAType)->Activity:
+    def create_use_case(self, kra_object: KeyResultArea, data: KRAType)->Activity:
         try:
-            obj = self.activity_repo.create(kra_obj=kra_object, assigned_user=assigned_user, appraiser=appraiser, data=data)
+            obj = self.activity_repo.create(kra_obj=kra_object, data=data)
             return obj
         except Exception as e:
             raise KRAErr(f"Failed to create kra activity with error: {e}")

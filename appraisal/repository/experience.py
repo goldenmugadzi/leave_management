@@ -49,7 +49,6 @@ class AppraisalExperienceRepository:
         try:
             changed = False
             experience_object = self.get_experiences_by_id(experience_object_id)
-            print("===========>>>> ", experience_object)
             if experience_object.years_of_experience != years_of_experience:
                 experience_object.years_of_experience = years_of_experience
                 changed = True

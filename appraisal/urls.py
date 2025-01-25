@@ -55,7 +55,7 @@ urlpatterns = [
     
     # ================== KRA urls =================================
     path('kra/<int:appraisal_id>/list', KRATemplateView.as_view(), name='kra_index'),
-    path('kra/new', KRACreateView.as_view(), name='kra_create'),
+    path('kra/<int:appraisal_id>/new', KRACreateView.as_view(), name='kra_create'),
     path('kra/detail/<int:appraisal_id>', KRADetailView.as_view(), name='kra_detail'),
     path('kra/<int:pk>', KRAUpdateView.as_view(), name='kra_update'),
     path('kra/<int:kra_id>/activity', KraActivityIndexTemplateView.as_view(), name='kra_activity_index'),

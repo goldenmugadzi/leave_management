@@ -65,16 +65,14 @@ class AppraisalForm(forms.ModelForm):
         model = Appraisal
         fields = ["appraiser"]
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        for field_name, field in self.fields.items():
-            if field_name == 'appraiser':
-                field.widget.attrs.update({
-                    'class': "select2 block w-full rounded-md border-0 py-1.5 text-gray-900 "
-                                "shadow-sm ring-1 ring-inset ring-gray-300 "
-                                "placeholder:text-blue-400 focus:ring-2 focus:ring-inset "
-                                "focus:ring-indigo-600 sm:text-sm sm:leading-6", })
+    appraiser = forms.ModelChoiceField(
+        queryset=UserProfile.objects.all(),
+        widget=forms.Select(attrs={
+            'id': 'id_appraiser',  # Add an ID for targeting with JavaScript
+            'class': 'bg-white border border-gray-300 rounded-lg py-2 px-4 block w-full focus:ring-blue-500 focus:border-blue-500 text-gray-700'
+        }),
+        required=True
+    )
 
 class ExperienceForm(forms.ModelForm):
     class Meta:

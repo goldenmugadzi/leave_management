@@ -41,7 +41,6 @@ class UserQualificationCreateView(SuccessMessageMixin,CreateView):
             form.instance.file = self.request.FILES.get("file")
             repo = UserQualificationRepository()
             service_handler = UserQualificationService(user_qualification_repo=repo)
-            
             user_qualification_obj = service_handler.create_use_case(
                 user_object=self.request.user,
                 name=form.cleaned_data.get("name"),

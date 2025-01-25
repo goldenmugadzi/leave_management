@@ -36,12 +36,12 @@
                                                     </tr>
                                                     </thead>
                                                     <tbody class="divide-y divide-blue-300 bg-blue-50">
-                                                    {% for target_obj in activities_with_targets.targets %}
+                                                    {% for target_obj in activity_data.targets %}
                                                     <tr class="hover:bg-blue-100">
-                                                        <td class="px-6 py-4 text-md text-blue-900 truncate max-w-xs">{{target_obj.target.name}}</td>
-                                                        <td class="px-6 py-4 text-md text-blue-900">{{target_obj.target.metric_type}}</td>
-                                                        <td class="px-6 py-4 text-md text-blue-900">{{target_obj.target.allowable_variance}}</td>
-                                                        <td class="px-6 py-4 text-md text-blue-900">{{target_obj.target.agreed_target}}</td>
+                                                        <td class="px-6 py-4 text-md text-blue-900 truncate max-w-xs">{{target_obj.name}}</td>
+                                                        <td class="px-6 py-4 text-md text-blue-900">{{target_obj.metric_type}}</td>
+                                                        <td class="px-6 py-4 text-md text-blue-900">{{target_obj.allowable_variance}}</td>
+                                                        <td class="px-6 py-4 text-md text-blue-900">{{target_obj.agreed_target}}</td>
                                                     </tr>
                                                     {% endfor %}
                                                     </tbody>

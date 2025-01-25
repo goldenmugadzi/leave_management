@@ -8,7 +8,7 @@ from django.shortcuts import redirect
 
 from django.urls import reverse_lazy
 
-from ..models import Appraisal, AppraisalExperience
+from ..models import Appraisal, AppraisalExperience, Experience
 from it.users.models import UserQualification
 from ..forms import AppraisalForm, UserQualificationForm, CostCenterForm, UserProfileForm, DesignationForm, AppraisalExperienceFormset, UserQualificationFormset
 from ..helpers.types import AppraisalPayloadType
@@ -65,7 +65,7 @@ class AppraisalCreateView(CreateView):
         ]
         experiences = [
             {
-                "name": payload.get(f"appraisal-{i}-experience"),
+                "name": Experience.objects.filter(id=payload.get(f"appraisal-{i}-experience")).values_list("name", flat=True).first(),
                 "years_of_experience": payload.get(f"appraisal-{i}-years_of_experience"),
                 "months_of_experience": payload.get(f"appraisal-{i}-months_of_experience")
             }
@@ -85,6 +85,8 @@ class AppraisalCreateView(CreateView):
         )
         structured_payload = self.build_payload()
         process_object = intiate(None, "Appraisal")
+        print("==================>>>>>>>Appr ", form.instance.appraiser)
+        input()
         appraisal_object = appraisal_service_handler.create_use_case(
             user_object=user_object,
            process_object=process_object,
@@ -121,15 +123,31 @@ class AppraisalUpdateView(UpdateView):
                 last_approved = 0
             next_step = last_approved + 1
             try:
-                newStep = Step.objects.get(
-                    step=next_step, workflow=self.get_object().process.workflow, approver__in=self.request.user.roles.all()
-                )
-                approvalForm = ApprovalForm
-                to = newStep.to
+                newStep = Step.objects.filter(step=next_step, workflow=self.get_object().process.workflow)
+                
+                if newStep.first().approver.name == "appraisee" or newStep.first().approver.name == "appraiser":
+                    is_appraisee = newStep.filter(
+                        approver__name="appraisee"
+                    ).exists()
+                    
+                    is_appraiser = newStep.filter(
+                        approver__name="appraiser"
+                    ).exists()
+                    if (is_appraisee and self.get_object().user == self.request.user) | (is_appraiser and self.get_object().appraiser == self.request.user):
+                        approvalForm = ApprovalForm
+                        to = newStep.first().to
+                else:
+                    allowed_to_approve = newStep.filter(
+                        approver__in=self.request.user.roles.all()
+                    ).exists()
+                    if allowed_to_approve:
+                        approvalForm = ApprovalForm
+                        to = newStep.first().to
+                   
                 # if newStep == self.get_object().process.workflow.step_set.last():
                 #     generateTokenForm = GenerateTokenForm()
-            except Step.DoesNotExist:
-                pass
+            except Exception as e:
+                print("=====>>>>", e)
             completed = self.get_object().process.workflow.step_set.last().step == last_approved
         approved_steps = self.get_object().process.approval_set.all().values_list(
             "step__step", flat=True
@@ -157,6 +175,8 @@ class AppraisalUpdateView(UpdateView):
 
 def approveAppraisal(request,appraisal_id):
     appraisal = Appraisal.objects.get(id=appraisal_id)
+    approved_step_object = None 
+    
     if request.method == "POST": 
         # generateappraisalform = GenerateappraisalForm(request.POST, request.FILES, instance=appraisal)
         last_approval = appraisal.process.approval_set.last()
@@ -164,14 +184,17 @@ def approveAppraisal(request,appraisal_id):
         if (appraisal.process.workflow.step_set.last() is not None and last_step is not None and 
             appraisal.process.workflow.step_set.last().step == ( last_step.step + 1)):
             # if (generateappraisalform.is_valid() and request.FILES.get("appraisal_photo") is not None):
-            approve_step(request, appraisal.process.pk)
+            approved_step_object = approve_step(request, appraisal.process.pk)
             #     print("approved")
             #     # generateappraisalform.save()
             # else:
             #     messages.error(request, "appraisal updloading form is invalid. Have you provided a appraisal photo?", )
         else:
-            approve_step(request, appraisal.process.pk)
-    return redirect("update_appraisal", appraisal_id)
+            approved_step_object = approve_step(request, appraisal.process.pk)
+    
+    # ======= implement return redirect to related view
+    return redirect("appraisal_index")
+
 class AppraisalTemplateView(TemplateView):
     template_name = 'appraisal/index.html'
 
@@ -183,6 +206,8 @@ class AppraisalTemplateView(TemplateView):
             experience_repository=ExperienceRepository(),
             appraisal_repository=AppraisalRepository()
         )
-        context["appraisals"] = appraisal_service_handler.get_appraisal_by_user_use_case(user_object=self.request.user)
-
+        if self.request.user.roles.filter(role="hr").exists():
+            context["appraisals"] = appraisal_service_handler.get_all_use_case()
+        else:
+            context["appraisals"] = appraisal_service_handler.get_appraisal_by_user_use_case(user_object=self.request.user)
         return context

@@ -1,6 +1,11 @@
 {% extends "admin_layout.html" %}
 {% load crispy_forms_tags %}
 
+{% block styles %}
+<link href="https://cdn.jsdelivr.net/npm/tom-select/dist/css/tom-select.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/tom-select/dist/js/tom-select.complete.min.js"></script>
+{% endblock styles %}
+
 {% block content %}
 <div class="flex gap-2">
     <div class="flex-1">
@@ -39,51 +44,58 @@
         </div>
     </div>
 </div>
+<hr/>
 
 <div class="container my-4">
-    <form method="post">
+    <form method="post" enctype="multipart/form-data">
         {%csrf_token%}
         <div class="flex flex-col gap-8">
             
             <!-- Appraisal Form -->
             <div>
-                <label>Select Appraiser</label>
-                {{appraisal_form.appraiser}}
+                {{ appraisal_form.appraiser|as_crispy_field }}
             </div>
-            <div class="border-2 rounded-lg shadow-md border-indigo-400 container" style="max-height: 400px; overflow-y: auto;">
-                <fieldset class="module aligned">
-                    <h3>Experiences</h3>
-                    {{ appraisal_experience_forms.management_form }}
-                    <div class="experience-forms">
-                        {% for appraisal_experience_form in appraisal_experience_forms %}
-                            {% include "appraisal/experience_base.html" with experience_form=appraisal_experience_form total_form_count=appraisal_experience_forms.total_form_count %}
-                        {% endfor %}
-                    </div>
-    
-                    <!-- Hidden template for cloning -->
-                    <div id="empty-form-template" style="display: none;">
-                        {% include "appraisal/experience_base.html" with experience_form=appraisal_experience_forms.empty_form total_form_count=appraisal_experience_forms.total_form_count %}
-                    </div>
-    
-                    <button type="button" id="add-experience-btn" onclick="addExperienceForm('{{ appraisal_experience_forms.total_form_count }}')">Add Experience</button>
-                </fieldset>
-            </div>
+            <hr/>
+
+            <div class="flex gap-2 justify-between">
+                <div class="flex-1">
+                    <h3 class="text-pretty font-bold">My Experiences</h3>
+                    <div class="border-2 rounded-lg shadow-md border-indigo-400 container" style="max-height: 400px; overflow-y: auto;">
+                        <fieldset class="module aligned">
+                            {{ appraisal_experience_forms.management_form }}
+                            <div class="experience-forms">
+                                {% for appraisal_experience_form in appraisal_experience_forms %}
+                                    {% include "appraisal/experience_base.html" with experience_form=appraisal_experience_form total_form_count=appraisal_experience_forms.total_form_count %}
+                                {% endfor %}
+                            </div>
             
-                    
-            <div class="border-2 rounded-lg shadow-md border-indigo-400 container"  style="max-height: 200px; overflow-y: auto;">
-                <h3>Qualifications</h3>
-                {{ qualification_forms.management_form }}
-                <div class="qualification-forms">
-                    {% for qualification_form in qualification_forms %}
-                        {% include "appraisal/qualification_base.html" with qualification_form=qualification_form total_form_count=qualification_forms.total_form_count %}
-                    {% endfor %}
+                            <!-- Hidden template for cloning -->
+                            <div id="empty-form-template" style="display: none;">
+                                {% include "appraisal/experience_base.html" with experience_form=appraisal_experience_forms.empty_form total_form_count=appraisal_experience_forms.total_form_count %}
+                            </div>
+            
+                            <button type="button" id="add-experience-btn" onclick="addExperienceForm('{{ appraisal_experience_forms.total_form_count }}')">Add Experience</button>
+                        </fieldset>
+                    </div>
                 </div>
                 
-                <!-- Hidden qualification form template -->
-                <div id="empty-qualification-template" style="display: none;">
-                    {% include "appraisal/qualification_base.html" with qualification_form=qualification_forms.empty_form total_form_count=qualification_forms.total_form_count %}
+                <div class="flex-1">
+                    <h3 class="text-pretty font-bold">My Qualifications</h3>
+                    <div class="border-2 rounded-lg shadow-md border-indigo-400 container"  style="max-height: 200px; overflow-y: auto;">
+                        {{ qualification_forms.management_form }}
+                        <div class="qualification-forms">
+                            {% for qualification_form in qualification_forms %}
+                                {% include "appraisal/qualification_base.html" with qualification_form=qualification_form total_form_count=qualification_forms.total_form_count %}
+                            {% endfor %}
+                        </div>
+                        
+                        <!-- Hidden qualification form template -->
+                        <div id="empty-qualification-template" style="display: none;">
+                            {% include "appraisal/qualification_base.html" with qualification_form=qualification_forms.empty_form total_form_count=qualification_forms.total_form_count %}
+                        </div>
+                        <button type="button" id="add-qualification-btn" onclick="addQualificationForm('{{ qualification_forms.total_form_count }}')">Add Qualification</button>
+                    </div>
                 </div>
-                <button type="button" id="add-qualification-btn" onclick="addQualificationForm('{{ qualification_forms.total_form_count }}')">Add Qualification</button>
             </div>
             <button type="submit">Create</button>
         </div>
@@ -93,6 +105,16 @@
 {% endblock%}
 {% block scripts %} 
 <script>
+
+    // Tom Select for appraiser
+    document.addEventListener("DOMContentLoaded", function () {
+        new TomSelect("#id_appraiser", {
+            create: false, // Prevent custom options
+            sortField: { field: "text", direction: "asc" }, // Sort options alphabetically
+            maxOptions: 100, // Limit the number of options shown in the dropdown
+            placeholder: "Search and select an appraiser", // Add a placeholder
+        });
+    });
 
     // Refreshes all experience dropdowns in formsets with updated experience options from the server.
     function refreshExperienceDropdown() {
@@ -134,7 +156,9 @@
         let formCount = parseInt(totalFormsInput.value);
 
         // Clone the template and replace the prefix with the new form count
-        const newFormHtml = document.getElementById("empty-form-template").innerHTML.replace(/__prefix__/g, formCount);
+        const newFormHtml = document
+            .getElementById("empty-form-template")
+            .innerHTML.replace(/__prefix__/g, formCount);
         const newForm = document.createElement("div");
         newForm.classList.add("experience-form");
         newForm.innerHTML = newFormHtml;
@@ -142,18 +166,34 @@
         // Add the new form to the container
         formContainer.appendChild(newForm);
 
-        // Update the total form count
+        // Update the total form count in the hidden input
         formCount++;
         totalFormsInput.value = formCount;
-    }
+
+        // Call toggleRemoveExperienceButtons to update the visibility of the "Remove" buttons
+        toggleRemoveExperienceButtons();  
+        }
 
     // Removes an experience form from the formset container and updates total form count
     function removeExperienceForm(button, totalFormCount) {
-        button.closest('.experience-form').remove();
+        const totalFormsInput = document.getElementById("id_appraisal-TOTAL_FORMS");
 
-        // Update the form count
-        totalFormCount--;
-        document.getElementById('id_appraisal-TOTAL_FORMS').value = totalFormCount;
+        // Remove the form from the DOM
+        button.closest(".experience-form").remove();
+
+        // Update the total form count
+        let formCount = parseInt(totalFormsInput.value);
+        formCount--;
+        totalFormsInput.value = formCount;
+
+        // Re-index the remaining forms to ensure consistency
+        const forms = document.querySelectorAll(".experience-form");
+        forms.forEach((form, index) => {
+            form.innerHTML = form.innerHTML.replace(/appraisal-\d+-/g, `appraisal-${index}-`);
+        });
+
+        // Call toggleRemoveExperienceButtons to update the visibility of the "Remove" buttons
+        toggleRemoveExperienceButtons();  
     }
 
     // addQualificationForm() adds new form to the formset container and updates form count
@@ -171,16 +211,77 @@
 
         formCount++;
         totalFormCount.value = formCount
+
+        // Call toggleRemoveQualificationButtons to update the visibility of the "Remove" buttons
+        toggleRemoveQualificationButtons();  
     }
 
     // Removes an qualification form from the formset container and updates the total form count
     function removeQualificationForm(button, total_form_count){
+        const totalFormsInput = document.getElementById('id_qualification-TOTAL_FORMS')
+        
         button.closest(".qualification-form").remove()
 
-        total_form_count--;
-        document.getElementById('id_qualification-TOTAL_FORMS').value = total_form_count
+        // Update the total form count
+        let formCount = parseInt(totalFormsInput.value);
+        formCount--;
+        totalFormsInput.value = formCount;
+
+        // Re-index the remaining forms to ensure consistency
+        const forms = document.querySelectorAll(".qualification-form");
+        forms.forEach((form, index) => {
+            form.innerHTML = form.innerHTML.replace(/qualification-\d+-/g, `qualification-${index}-`);
+        });
+
+        // Call toggleRemoveQualificationButtons to update the visibility of the "Remove" buttons
+        toggleRemoveQualificationButtons();  
     }
 
+    // Function to toggle the visibility of remove buttons
+    function toggleRemoveExperienceButtons() {
+        const totalFormsInput = document.getElementById("id_appraisal-TOTAL_FORMS");
+
+        // Update the total form count
+        let formCount = parseInt(totalFormsInput.value);
+        const removeButtons = document.querySelectorAll(".remove-experience-btn");
+
+        // Check if there is only one form
+        if (formCount === 1) {
+            removeButtons.forEach(button => {
+                button.classList.add("hidden");
+            });
+        } else {
+            removeButtons.forEach(button => {
+                button.classList.remove("hidden");
+            });
+
+        }
+    }
+
+    function toggleRemoveQualificationButtons() {
+        const totalFormsInput = document.getElementById("id_qualification-TOTAL_FORMS");
+
+        // Update the total form count
+        let formCount = parseInt(totalFormsInput.value);
+        const removeButtons = document.querySelectorAll(".remove-qualification-btn");
+
+        // Check if there is only one form
+        if (formCount === 1) {
+            removeButtons.forEach(button => {
+                button.classList.add("hidden");
+            });
+        } else {
+            removeButtons.forEach(button => {
+                button.classList.remove("hidden");
+            });
+        }
+    }
+
+    // Initial setup to hide or show remove buttons on page load
+    document.addEventListener("DOMContentLoaded", () => {
+        toggleRemoveExperienceButtons();
+        toggleRemoveQualificationButtons();
+    });
 
 </script>
 {% endblock scripts %}

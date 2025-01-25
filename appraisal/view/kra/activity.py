@@ -58,14 +58,10 @@ class KraActivityCreateView(SuccessMessageMixin, CreateView):
         try:
             payload = build_payload(request=self.request, form=form)
             kra_object = self.get_kra_object
-            assigned_user_object = form.cleaned_data.get('assigned_user')
-            appraiser_object = form.cleaned_data.get('appraiser')
 
             repo = KraActivityRepository()
             service_handler = ActivityService(activity_repo=repo)
             activity_object = service_handler.create_use_case(kra_object=kra_object,
-                                                              assigned_user=assigned_user_object,
-                                                              appraiser=appraiser_object,
                                                               data=payload)
             form.instance = activity_object
         except Exception:
