@@ -53,6 +53,7 @@ class TargetScore(TimeStamp):
     target = models.OneToOneField(Target, on_delete=models.CASCADE)
     score = models.DecimalField(max_digits=5, decimal_places=2, default=0.0)
     comments = models.TextField()
+    is_scored = models.BooleanField(default=False)
 
     def __str__(self):
         return f"{self.target}"

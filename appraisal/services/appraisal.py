@@ -127,7 +127,13 @@ class AppraisalService:
 
     
     def get_appraisal_by_user_use_case(self, user_object: UserProfile):
-        return self.appraisal_repository.get_user_appraisal_objects(user_object=user_object)
+        return self.appraisal_repository.fetch_by_user(user_object=user_object)
+    
+    def get_appraisal_by_appraiser_use_case(self, appraiser_object: UserProfile):
+        return self.appraisal_repository.fetch_by_appraiser(appraiser_object=appraiser_object)
+    
+    def get_appraisal_by_reviewer_use_case(self, reviewer_object: UserProfile):
+        return self.appraisal_repository.fetch_by_reviewer(reviewer_object=reviewer_object)
     
     def get_appraisal_by_pk_use_case(self, appraisal_id: int)->Appraisal:
         return self.appraisal_repository.get_appraisal_by_pk(appraisal_id=appraisal_id)

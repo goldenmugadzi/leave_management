@@ -59,3 +59,14 @@ class KraModulesType(Enum):
     activity = "Activity"
     target = "Target"
     target_score = "TargetScore"
+    
+    
+class RoleFilterChoices(Enum):
+    MY_APPRAISAL = "my_appraisal"
+    ASSIGNED_APPRAISALS = "assigned_appraisals"
+    APPRAISALS_FOR_REVIEW = "appraisals_for_review"
+    ALL_APPRAISALS = "all_appraisals"
+
+    @classmethod
+    def choices(cls):
+        return [(choice.value, choice.name.replace("_", " ").title()) for choice in cls]

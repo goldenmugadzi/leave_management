@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any, Dict, List
 from django.forms import BaseModelForm
 from django.http import HttpResponse
 from django.views.generic.edit import CreateView, UpdateView
@@ -10,10 +10,12 @@ from django.urls import reverse_lazy
 
 from ..models import Appraisal, AppraisalExperience, Experience
 from it.users.models import UserQualification
-from ..forms import AppraisalForm, UserQualificationForm, CostCenterForm, UserProfileForm, DesignationForm, AppraisalExperienceFormset, UserQualificationFormset
+from ..forms import AppraisalForm, AppraisalExperienceFormset, UserQualificationFormset, AppraisalRoleFilterForm
 from ..helpers.types import AppraisalPayloadType
+from ..helpers.types.kra import RoleFilterChoices
 from ..repository import UserQualificationRepository, AppraisalExperienceRepository, ExperienceRepository, AppraisalRepository
 from ..services import AppraisalService, AppraisalExperienceService
+
 from approve.views import intiate,approve_step
 from approve.forms import ApprovalForm
 from approve.models import Step, Approval
@@ -197,17 +199,43 @@ def approveAppraisal(request,appraisal_id):
 
 class AppraisalTemplateView(TemplateView):
     template_name = 'appraisal/index.html'
-
-    def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
-        context =  super().get_context_data(**kwargs)
+    
+    def get_role_filter(self)->str:
+        role_filter = self.request.GET.get('role_filter')
+        if role_filter is None:
+            return RoleFilterChoices.MY_APPRAISAL.value
+        return role_filter
+    
+    def get_heading_name(self)->str:
+        role_filter = self.get_role_filter()
+        return role_filter.capitalize().replace("_", " ")
+    
+    def get_role_filter_form(self)->Dict[str, AppraisalRoleFilterForm]:
+        form = AppraisalRoleFilterForm(initial={"role_filter": self.get_role_filter()})
+        return {"role_filter_form": form}
+    
+    def get_appraisals(self)->List[Appraisal]:
         appraisal_service_handler = AppraisalService(
             appraisal_experience_repository=AppraisalExperienceRepository(),
             qualification_repository=UserQualificationRepository(),
             experience_repository=ExperienceRepository(),
             appraisal_repository=AppraisalRepository()
         )
-        if self.request.user.roles.filter(role="hr").exists():
-            context["appraisals"] = appraisal_service_handler.get_all_use_case()
-        else:
-            context["appraisals"] = appraisal_service_handler.get_appraisal_by_user_use_case(user_object=self.request.user)
+        
+        match self.get_role_filter():
+            case RoleFilterChoices.MY_APPRAISAL.value:
+                return {"appraisals": appraisal_service_handler.get_appraisal_by_user_use_case(user_object=self.request.user)}
+            case RoleFilterChoices.ASSIGNED_APPRAISALS.value:
+                return {"appraisals": appraisal_service_handler.get_appraisal_by_appraiser_use_case(appraiser_object=self.request.user)}
+            case RoleFilterChoices.APPRAISALS_FOR_REVIEW.value:
+                return {"appraisals": appraisal_service_handler.get_appraisal_by_reviewer_use_case(reviewer_object=self.request.user)}
+            case RoleFilterChoices.ALL_APPRAISALS.value:
+                return {"appraisals": appraisal_service_handler.get_all_use_case()}
+        
+    def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
+        context =  super().get_context_data(**kwargs)
+        
+        context.update(self.get_role_filter_form())
+        context.update({"heading_name": self.get_heading_name()})
+        context.update(self.get_appraisals())
         return context

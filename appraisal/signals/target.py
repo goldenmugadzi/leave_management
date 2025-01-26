@@ -7,7 +7,7 @@ from django.db import transaction
 
 @receiver(post_save, sender=TargetScore, dispatch_uid="target-score-approval")
 def target_score_approval_post_save_handler(sender, instance, created, **kwargs):
-    if not created:
+    if not created and not instance.is_scored:
         try:
             logger.info("Initializing Target Scoring approval ....")
             with transaction.atomic():

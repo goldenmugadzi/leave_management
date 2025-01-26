@@ -1,6 +1,8 @@
 from django import forms
 from ..models import YearQuarter, KeyResultArea, Activity, Target, TargetScore
+from ..helpers.types.kra import RoleFilterChoices
 from datetime import datetime
+
 
 class YearQuarterForm(forms.ModelForm):
     class Meta:
@@ -29,5 +31,12 @@ class TargetCreateForm(forms.ModelForm):
 class TargetScoreForm(forms.ModelForm):
     class Meta:
         model = TargetScore
-        exclude = ["id", "created_date", "updated", "target"]
+        exclude = ["id", "created_date", "updated", "target", "is_scored"]
+
+class AppraisalRoleFilterForm(forms.Form):
     
+    role_filter = forms.ChoiceField(
+        choices=RoleFilterChoices.choices(),
+        label="Role Filter",
+        widget=forms.Select(attrs={'class': 'form-control'}),
+    )

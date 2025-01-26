@@ -2,6 +2,7 @@
 {% load static %}
 {% load humanize %}
 {% load custom_tags %}
+{% load crispy_forms_tags %}
 {% block styles %}
   <link rel="stylesheet"
         href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" />
@@ -12,17 +13,39 @@
     <div class="grid grid-cols-1">
       <div class="bg-gulf-blue-100 shadow-lg rounded-lg p-6">
         <div class="flex justify-between">
+          <h1 class="text-center font-bold mt-7">{{heading_name}}</h1>
                         
-            <h3 class="text-center font-bold">My Appraisals</h3>
-              <a href="{% url 'create_appraisal' %}"
-                  class="bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4 rounded">Create New Appraisal</a>
+          <div class="flex">
+              <div class="flex-1">
+                <form>
+                      {%csrf_token%}
+                      <div class="flex">
+                          <div class="flex-1">
+                              {{role_filter_form|crispy}}
+                          </div>
+                          <div class="flex-1">
+                            <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white px-4 mt-7 h-10 rounded">Role Filter</button>
+                          </div>
+                      </div>
+                  </form>
+              </div>
+              <div class="flex-2">
+                <a 
+                  href="{% url 'create_appraisal' %}"
+                  class="bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4 mt-7"
+                  >
+                  Create New Appraisal
+                </a>
+              </div>
+            </div>
         </div>
         
         <table id="appraisals" class="table table-striped stripe mt-3 table-bordered">
           <thead>
             <tr>
-              <th>Appraiser</th>
               <th>Appraisee</th>
+              <th>Appraiser</th>
+              <th>Reviewer</th>
               <th>Create at</th>
               <th>Status</th>
               <th></th>
@@ -31,8 +54,9 @@
           <tbody>
             {% for appraisal in appraisals %}
               <tr>
-                <td>{{ appraisal.appraiser }}</td>
                 <td>{{ appraisal.user }}</td>
+                <td>{{ appraisal.appraiser }}</td>
+                <td>{{ appraisal.reviewer }}</td>
                 <td>{{ appraisal.created_date|date }}</td>
                 <td>{{ appraisal.process.approval_set.last|default_if_none:"No Approval" }}</td>
                 <td>
