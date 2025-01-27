@@ -31,7 +31,7 @@ def create_kra_roles_handler(sender, **kwargs):
     try:
         with transaction.atomic():
             logger.info('Loading KRA Roles.....')
-            appraisal_application_object, _ = Application.objects.get_or_create(name="Appraisal", defaults={"full_name": "Appraisal"})
+            appraisal_application_object, _ = Application.objects.get_or_create(name="Appraisal", defaults={"fullname": "Appraisal"})
             
             # Define strategies for each module
             strategies = [

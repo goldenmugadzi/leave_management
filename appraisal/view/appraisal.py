@@ -5,6 +5,8 @@ from django.views.generic.edit import CreateView, UpdateView
 from django.views.generic import TemplateView
 from django.urls import reverse
 from django.shortcuts import redirect
+from django.contrib.messages.views import SuccessMessageMixin
+from django.contrib import messages
 
 from django.urls import reverse_lazy
 
@@ -21,9 +23,10 @@ from approve.views import intiate,approve_step
 from approve.forms import ApprovalForm
 from approve.models import Step, Approval
 
-class AppraisalCreateView(CreateView):
+class AppraisalCreateView(SuccessMessageMixin, CreateView):
     model = Appraisal
     form_class = AppraisalForm
+    success_message = "Appraisal created successfully! Your appraiser will review it shortly and either accept or reject it."
     template_name = 'appraisal/create.html'
 
     def get_initial_forms(self, user_object)->Dict[str,Any]:
@@ -109,11 +112,11 @@ class AppraisalCreateView(CreateView):
         return reverse('appraisal_index')
 
 
-class AppraisalUpdateView(UpdateView):
+class AppraisalUpdateView(SuccessMessageMixin, UpdateView):
     model = Appraisal
     form_class = AppraisalUpdateForm
+    success_message = "Appraisal reviewer was set successfully"
     template_name = "appraisal/update.html"
-    success_url = reverse_lazy("appraisal_index")
     
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -178,7 +181,6 @@ class AppraisalUpdateView(UpdateView):
     
     def form_valid(self, form):
         role = self.get_form_kwargs().pop("role", None)
-        print("Role ==================>>>>> ", role)
         return super().form_valid(form)
     
     def get_context_data(self, **kwargs):
@@ -191,6 +193,9 @@ class AppraisalUpdateView(UpdateView):
         context["qualification_objects"] = qualifications
         context["appraisal_object"] = self.get_object()
         return context
+    
+    def get_success_url(self):
+        return reverse("update_appraisal", kwargs={"pk": self.kwargs.get("pk")})
     
 
 def approveAppraisal(request,appraisal_id):
