@@ -10,11 +10,12 @@ from django.urls import reverse_lazy
 
 from ..models import Appraisal, AppraisalExperience, Experience
 from it.users.models import UserQualification
-from ..forms import AppraisalForm, AppraisalExperienceFormset, UserQualificationFormset, AppraisalRoleFilterForm
+from ..forms import AppraisalForm, AppraisalExperienceFormset, UserQualificationFormset, AppraisalRoleFilterForm, AppraisalUpdateForm
 from ..helpers.types import AppraisalPayloadType
 from ..helpers.types.kra import RoleFilterChoices
 from ..repository import UserQualificationRepository, AppraisalExperienceRepository, ExperienceRepository, AppraisalRepository
 from ..services import AppraisalService, AppraisalExperienceService
+from ..helpers.types.kra import KraRolesType
 
 from approve.views import intiate,approve_step
 from approve.forms import ApprovalForm
@@ -50,6 +51,7 @@ class AppraisalCreateView(CreateView):
         user_object = self.request.user
         context.update(self.get_initial_forms(user_object=user_object))
         context.update(self.get_initial_user_data(user_object=user_object))
+        context["is_update"] = False
         return context
 
     def build_payload(self) -> AppraisalPayloadType:
@@ -109,10 +111,22 @@ class AppraisalCreateView(CreateView):
 
 class AppraisalUpdateView(UpdateView):
     model = Appraisal
-    form_class = AppraisalForm
+    form_class = AppraisalUpdateForm
     template_name = "appraisal/update.html"
     success_url = reverse_lazy("appraisal_index")
     
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        appraisal_object = self.get_object()
+        loggedin_user_object = self.request.user
+        
+        match loggedin_user_object:
+            case appraisal_object.user:
+                kwargs["role"] = KraRolesType.appraisee.value
+            case appraisal_object.appraiser:
+                kwargs["role"] = KraRolesType.appraiser.value
+        return kwargs
+        
     def approve_form_data(self):
         approvalForm = None
         to = None
@@ -162,7 +176,6 @@ class AppraisalUpdateView(UpdateView):
             "to": to,
         }
     
-
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         experience_repo = AppraisalExperienceRepository()

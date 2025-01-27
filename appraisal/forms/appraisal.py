@@ -62,10 +62,62 @@ class AppraisalExperienceUpdateForm(forms.ModelForm):
         self.fields['experience'].disabled = True
 
 class AppraisalForm(forms.ModelForm):
+    appraiser = forms.ModelChoiceField(
+        queryset=UserProfile.objects.filter(roles__role=KraRolesType.appraiser.value),
+        widget=forms.Select(attrs={
+            'id': 'id_appraiser',  # Add an ID for targeting with JavaScript
+        }),
+        required=True
+    )
+    reviewer = forms.ModelChoiceField(
+        queryset=UserProfile.objects.filter(roles__role=KraRolesType.reviewer.value),
+        widget=forms.Select(attrs={
+            'id': 'id_reviewer',  # Add an ID for targeting with JavaScript
+        }),
+        required=False
+    )
+    
     class Meta:
         model = Appraisal
         fields = ["appraiser", "reviewer"]
-
+        
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['reviewer'].disabled = True
+        
+class AppraisalUpdateForm(forms.ModelForm):
+    appraiser = forms.ModelChoiceField(
+        queryset=UserProfile.objects.filter(roles__role=KraRolesType.appraiser.value),
+        widget=forms.Select(attrs={
+            'id': 'id_appraiser',  # Add an ID for targeting with JavaScript
+        }),
+        required=True
+    )
+    reviewer = forms.ModelChoiceField(
+        queryset=UserProfile.objects.filter(roles__role=KraRolesType.reviewer.value),
+        widget=forms.Select(attrs={
+            'id': 'id_reviewer',  # Add an ID for targeting with JavaScript
+        }),
+        required=False
+    )
+    
+    class Meta:
+        model = Appraisal
+        fields = ["appraiser", "reviewer"]
+        
+    def __init__(self, *args, **kwargs):
+        role = kwargs.pop("role", None)
+        super().__init__(*args, **kwargs)
+        match role:
+            case KraRolesType.appraisee.value:
+                self.fields['reviewer'].disabled = True
+            case KraRolesType.appraiser.value:
+                self.fields['appraiser'].disabled = True
+            case None:
+                self.fields['appraiser'].disabled = True
+                self.fields['reviewer'].disabled = True
+        
+class AppraisalAppraiseeUpdateForm(forms.ModelForm):
     appraiser = forms.ModelChoiceField(
         queryset=UserProfile.objects.filter(roles__role=KraRolesType.appraiser.value),
         widget=forms.Select(attrs={
@@ -80,8 +132,70 @@ class AppraisalForm(forms.ModelForm):
             'id': 'id_reviewer',  # Add an ID for targeting with JavaScript
             'class': 'bg-white border border-gray-300 rounded-lg py-2 px-4 block w-full focus:ring-blue-500 focus:border-blue-500 text-black-400'
         }),
+        required=False
+    )
+    
+    class Meta:
+        model = Appraisal
+        fields = ["appraiser", "reviewer"]
+        
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['reviewer'].disabled = True
+class AppraisalAppraiserUpdateForm(forms.ModelForm):
+    appraiser = forms.ModelChoiceField(
+        queryset=UserProfile.objects.filter(roles__role=KraRolesType.appraiser.value),
+        widget=forms.Select(attrs={
+            'id': 'id_appraiser',  # Add an ID for targeting with JavaScript
+            'class': 'bg-white border border-gray-300 rounded-lg py-2 px-4 block w-full focus:ring-blue-500 focus:border-blue-500 text-black-400'
+        }),
         required=True
     )
+    reviewer = forms.ModelChoiceField(
+        queryset=UserProfile.objects.filter(roles__role=KraRolesType.reviewer.value),
+        widget=forms.Select(attrs={
+            'id': 'id_reviewer',  # Add an ID for targeting with JavaScript
+            'class': 'bg-white border border-gray-300 rounded-lg py-2 px-4 block w-full focus:ring-blue-500 focus:border-blue-500 text-black-400'
+        }),
+        required=False
+    )
+    
+    class Meta:
+        model = Appraisal
+        fields = ["appraiser", "reviewer"]
+        
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['appraiser'].disabled = True
+
+    
+class AppraisalReviewerUpdateForm(forms.ModelForm):
+    appraiser = forms.ModelChoiceField(
+        queryset=UserProfile.objects.filter(roles__role=KraRolesType.appraiser.value),
+        widget=forms.Select(attrs={
+            'id': 'id_appraiser',  # Add an ID for targeting with JavaScript
+            'class': 'bg-white border border-gray-300 rounded-lg py-2 px-4 block w-full focus:ring-blue-500 focus:border-blue-500 text-black-400'
+        }),
+        required=True
+    )
+    reviewer = forms.ModelChoiceField(
+        queryset=UserProfile.objects.filter(roles__role=KraRolesType.reviewer.value),
+        widget=forms.Select(attrs={
+            'id': 'id_reviewer',  # Add an ID for targeting with JavaScript
+            'class': 'bg-white border border-gray-300 rounded-lg py-2 px-4 block w-full focus:ring-blue-500 focus:border-blue-500 text-black-400'
+        }),
+        required=False
+    )
+    
+    class Meta:
+        model = Appraisal
+        fields = ["appraiser", "reviewer"]
+        
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['appraiser'].disabled = True
+        self.fields['reviewer'].disabled = True
+
 
 class ExperienceForm(forms.ModelForm):
     class Meta:

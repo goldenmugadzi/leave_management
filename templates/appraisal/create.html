@@ -52,13 +52,8 @@
         <div class="flex flex-col gap-8">
             
             <!-- Appraisal Form -->
-            <div class="flex flex-row gap-2">
-                <div class="flex-1">
-                    {{ appraisal_form.appraiser|as_crispy_field }}
-                </div>
-                <div class="flex-1">
-                    {{ appraisal_form.reviewer|as_crispy_field }}
-                </div>
+            <div class="shadow-xl rounded-lg border-2 border-indigo-400 my-2">
+                {% include "./roles/set_appraisal_users.html" %}
             </div>
             <hr/>
 
@@ -110,25 +105,6 @@
 {% endblock%}
 {% block scripts %} 
 <script>
-
-    // Tom Select for appraiser
-    document.addEventListener("DOMContentLoaded", function () {
-        
-        function getConfObject(placeholder){
-            const confObject = {
-                create: false, // Prevent custom options
-                sortField: { field: "text", direction: "asc" }, // Sort options alphabetically
-                maxOptions: 100, // Limit the number of options shown in the dropdown
-                placeholder: "", // Add a placeholder
-    
-            }
-            confObject.placeholder = placeholder
-            return confObject
-        }
-
-        new TomSelect("#id_appraiser", getConfObject("Search and Select Appraiser"));
-        new TomSelect("#id_reviewer", getConfObject("Search and Select Reviewer"));
-    });
 
     // Refreshes all experience dropdowns in formsets with updated experience options from the server.
     function refreshExperienceDropdown() {
