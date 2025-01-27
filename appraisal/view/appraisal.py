@@ -176,6 +176,11 @@ class AppraisalUpdateView(UpdateView):
             "to": to,
         }
     
+    def form_valid(self, form):
+        role = self.get_form_kwargs().pop("role", None)
+        print("Role ==================>>>>> ", role)
+        return super().form_valid(form)
+    
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         experience_repo = AppraisalExperienceRepository()

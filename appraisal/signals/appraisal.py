@@ -6,11 +6,13 @@ from ..models import Appraisal, TargetScore
 from ..services import PerformanceReviewService, TrainingAndDevelopmentService
 from ..repository import PerformanceReviewRepository, TrainingAndDevelopmentRepository
 from ..helpers.types import PerformanceReviewType
+from ..helpers.types.kra import KraRolesType
 from ..helpers.notifications import send_appraisal_notifications
 from loguru import logger
 from decouple import config
 from datetime import datetime
-from it.users.views import email_notification
+from it.users.models import Roles
+
 
 @receiver(post_save, sender=Appraisal, dispatch_uid="appraisal-uid")
 def create_performance_review_post_save_handler(sender, instance, created, **kwargs):
@@ -127,14 +129,26 @@ def send_appraiser_email_post_save_handler(sender, instance, created, **kwargs):
         except Exception as e:
             logger.error(f"Appraisal emails signal handler with error: {e}")
             
-            
-@receiver(post_save, sender=TargetScore, dispatch_uid="target-score-approval")
-def target_score_approval_post_save_handler(sender, instance, created, **kwargs):
+@receiver(post_save, sender=Appraisal, dispatch_uid="assign_appraisee_role")
+def assign_appraisee_role_post_save_handler(sender, instance, created, **kwargs):
     if created:
         try:
-            logger.info("Initializing Target Scoring approval ....")
-            pass
+            
+            
+            logger.info(f"Assigning Appraisee role for {instance.user} handler init ....")
+            
+            if not instance.user.roles.filter(role=KraRolesType.appraisee.value).values("id").exists():
+                appraisee_role = Roles.objects.filter(role=KraRolesType.appraisee.value).first()
+                
+                if appraisee_role:
+                    instance.user.roles.add(appraisee_role)
+                    instance.user.save()
+                    logger.success(f"Appraisee role assigned to {instance.user}.")
+                else:
+                    logger.warning(f"'Appraisee' role not found in the Roles table.")
+                
         except Exception as e:
-            logger.error(f"Appraisal emails signal handler with error: {e}")
+            logger.error(f"Assigning Appraisee role to {instance.user} signal handler failed with error: {e}")
             
             
+

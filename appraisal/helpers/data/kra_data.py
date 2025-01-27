@@ -1,23 +1,23 @@
-from ..types.kra import KraRolesType, KraRolesActionsType
+from ..types.kra import KraRolesType
 
 KRA_ROLES = [
             {
-                "role": KraRolesActionsType.read.value,
+                "role": KraRolesType.appraisee.value,
                 "name": KraRolesType.appraisee.value,
                 "description": "Appraisee KRA roles",
             },
             {
-                "role": KraRolesActionsType.read.value,
+                "role": KraRolesType.appraiser.value,
                 "name": KraRolesType.appraiser.value,
                 "description": "Appraiser KRA roles",
             },
             {
-                "role": KraRolesActionsType.create.value,
+                "role": KraRolesType.reviewer.value,
                 "name": KraRolesType.reviewer.value,
-                "description": "Section Head KRA roles",
+                "description": "Reviewer KRA roles",
             },
             {
-                "role": KraRolesActionsType.read.value,
+                "role": KraRolesType.hr.value,
                 "name": KraRolesType.hr.value,
                 "description": "HR KRA roles",
             },
@@ -25,22 +25,22 @@ KRA_ROLES = [
 
 KRA_ACTIVITY_ROLES = [
             {
-                "role": KraRolesActionsType.read.value,
+                "role": KraRolesType.appraisee.value,
                 "name": KraRolesType.appraisee.value,
                 "description": "Appraisee KRA Activity roles",
             },
             {
-                "role": KraRolesActionsType.read.value,
+                "role": KraRolesType.appraiser.value,
                 "name": KraRolesType.appraiser.value,
                 "description": "Appraiser KRA Activity roles",
             },
             {
-                "role": KraRolesActionsType.create.value,
+                "role": KraRolesType.reviewer.value,
                 "name": KraRolesType.reviewer.value,
                 "description": "Section Head KRA Activity roles",
             },
             {
-                "role": KraRolesActionsType.read.value,
+                "role": KraRolesType.hr.value,
                 "name": KraRolesType.hr.value,
                 "description": "HR KRA Activity roles",
             },
@@ -48,22 +48,22 @@ KRA_ACTIVITY_ROLES = [
 
 ACTIVITY_TARGETS_ROLES = [
             {
-                "role": KraRolesActionsType.read.value,
+                "role": KraRolesType.appraisee.value,
                 "name": KraRolesType.appraisee.value,
                 "description": "Appraisee KRA Activity Targets roles",
             },
             {
-                "role": KraRolesActionsType.create.value,
+                "role": KraRolesType.appraiser.value,
                 "name": KraRolesType.appraiser.value,
                 "description": "Appraiser KRA Activity Targets roles",
             },
             {
-                "role": KraRolesActionsType.read.value,
+                "role": KraRolesType.reviewer.value,
                 "name": KraRolesType.reviewer.value,
                 "description": "Section Head KRA Activity Targets roles",
             },
             {
-                "role": KraRolesActionsType.read.value,
+                "role": KraRolesType.hr.value,
                 "name": KraRolesType.hr.value,
                 "description": "HR KRA Activity Targets roles",
             },
@@ -71,22 +71,22 @@ ACTIVITY_TARGETS_ROLES = [
 
 TARGETS_SCORE_ROLES = [
             {
-                "role": KraRolesActionsType.read.value,
+                "role": KraRolesType.appraisee.value,
                 "name": KraRolesType.appraisee.value,
                 "description": "Appraisee KRA Targets Score roles",
             },
             {
-                "role": KraRolesActionsType.create.value,
+                "role": KraRolesType.appraiser.value,
                 "name": KraRolesType.appraiser.value,
                 "description": "Appraiser KRA Targets Score roles",
             },
             {
-                "role": KraRolesActionsType.read.value,
+                "role": KraRolesType.reviewer.value,
                 "name": KraRolesType.reviewer.value,
                 "description": "Section Head KRA Targets Score roles",
             },
             {
-                "role": KraRolesActionsType.read.value,
+                "role": KraRolesType.hr.value,
                 "name": KraRolesType.hr.value,
                 "description": "HR KRA Targets Score roles",
             },
