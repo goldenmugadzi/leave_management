@@ -94,7 +94,19 @@ APPLICATIONS = [
         "title": "Change Requests",
         "iconUrl": "assets/images/change.png",
         "url": "/change_requests/change_request_index"
-    }
+    },
+    {
+        "name": "hardware_faults",
+        "title": "IT Hardware Management",
+        "iconUrl": "assets/images/hardware.png",
+        "url": "/show_fault/"
+    },
+     {
+        "name": "asset_register",
+        "title": "IT Asset Register",
+        "iconUrl": "assets/images/register.png",
+        "url": "/table_asset/"
+    },
 ]
 
 REPORTS = [
@@ -127,17 +139,23 @@ REPORTS = [
         "title": "Change Requests",
         "iconUrl": "assets/images/change.png",
         "url": "/change_requests/change_request_reports"
+    },
+      {
+        "name": "asset reports",
+        "title": "Asset Reports",
+        "iconUrl": "assets/images/reports.png",
+        "url": "/asset_report/"
     }
 ]
+
 
 # Create your views here.
 # @TODO: @login_required
 def login_user(request):
-    
     if request.method == "POST":
         username = request.POST.get('username')
         password = request.POST.get('password')
-        
+
         try:
             user = authenticate(request, username=username, password=password)
             if user is not None:
@@ -168,37 +186,36 @@ def login_user(request):
             return render(request, 'registration/login.html', {
                 "error_msg": "Invalid username or password"
             })
-        
+
     return render(request, 'registration/login.html', {})
+
 
 @login_required(login_url='/accounts/login')
 def index(request):
-    
     if request.user.is_authenticated:
-        
         user_title = request.user.get_full_name()
-        l = request.user.groups.values_list('name',flat = True) # QuerySet Object
+        l = request.user.groups.values_list('name', flat=True)  # QuerySet Object
         user_groups = list(l)
-        
+
         return redirect(
-            '/dashboards/overview', 
-            user_title, 
-            request, 
+            '/dashboards/overview',
+            user_title,
+            request,
             user_groups
-            )
-        
+        )
+
     return redirect('/accounts/login')
+
 
 @login_required(login_url='/accounts/login')
 def dashboard(request):
-
     user_page = 'dashboard.html'
     user_title = request.user.get_full_name()
     user = request.user
     user_profile = UserProfile.objects.filter(user_id=user.id).first()
-    l = request.user.groups.values_list('name',flat = True) # QuerySet Object
-    user_groups = list(l) 
-    
+    l = request.user.groups.values_list('name', flat=True)  # QuerySet Object
+    user_groups = list(l)
+
     custom_user_roles = {
         "non_conformity": {},
         "remittance_advice": {},
@@ -210,26 +227,26 @@ def dashboard(request):
         "users": {},
     }
 
-    user_group_ids = user_profile.roles 
+    user_group_ids = user_profile.roles
     user_group_ids = user_group_ids.split(",") if user_group_ids else []
     for id in user_group_ids:
         role = Roles.objects.filter(id=id).first()
 
         if role.application == "users":
             custom_user_roles["users"] = role
-        
+
         if role.application == "non_conformity":
             custom_user_roles["non_conformity"] = role
-            
+
         if role.application == "remittance_advice":
             custom_user_roles["remittance_advice"] = role
-        
+
         if role.application == "pettycash":
             custom_user_roles["pettycash"] = role
 
         if role.application == "adjudication":
             custom_user_roles["adjudication"] = role
-            
+
         if role.application == "tokens":
             custom_user_roles["tokens"] = role
 
@@ -238,7 +255,6 @@ def dashboard(request):
 
         if role.application == "ace":
             custom_user_roles["ace"] = role
-            
 
     region = Regions.objects.filter(id=user_profile.region).first()
     district = Districts.objects.filter(code=user_profile.district).first()
@@ -258,28 +274,28 @@ def dashboard(request):
         "region": region,
         "roles": custom_user_roles,
     }
-    
+
     dashboard_reports = get_dashboard_reports(user_profile.section)
 
     return render(
-        request, 
-        user_page, 
+        request,
+        user_page,
         {
-            "user_title": user_title, 
+            "user_title": user_title,
             "user_groups": user_groups,
             "user": custom_user
         })
 
+
 @login_required(login_url='/accounts/login')
 def home(request):
-
     user_page = 'home/dashboard.html'
     user_title = request.user.get_full_name()
     user = request.user
     user_profile = UserProfile.objects.filter(user_id=user.id).first()
-    l = request.user.groups.values_list('name',flat = True) # QuerySet Object
-    user_groups = list(l) 
-    
+    l = request.user.groups.values_list('name', flat=True)  # QuerySet Object
+    user_groups = list(l)
+
     custom_user_roles = {
         "non_conformity": {},
         "remittance_advice": {},
@@ -290,7 +306,7 @@ def home(request):
         "ace": {},
         "users": {},
     }
-    
+
     region = None
     district = None
     depot = None
@@ -304,19 +320,19 @@ def home(request):
 
             if role.application == "users":
                 custom_user_roles["users"] = role
-            
+
             if role.application == "non_conformity":
                 custom_user_roles["non_conformity"] = role
-                
+
             if role.application == "remittance_advice":
                 custom_user_roles["remittance_advice"] = role
-            
+
             if role.application == "pettycash":
                 custom_user_roles["pettycash"] = role
 
             if role.application == "adjudication":
                 custom_user_roles["adjudication"] = role
-                
+
             if role.application == "tokens":
                 custom_user_roles["tokens"] = role
 
@@ -325,12 +341,13 @@ def home(request):
 
             if role.application == "ace":
                 custom_user_roles["ace"] = role
-                
+
         region = Regions.objects.filter(id=user_profile.region).first()
         district = Districts.objects.filter(code=user_profile.district).first()
         depot = Depots.objects.filter(code=user_profile.depot).first()
         section = Sections.objects.filter(code=user_profile.section).first()
-        user_designation = Designations.objects.filter(id=user_profile.designation).first() if user_profile.designation else None
+        user_designation = Designations.objects.filter(
+            id=user_profile.designation).first() if user_profile.designation else None
 
     custom_user = {
         "id": user.pk,
@@ -345,25 +362,25 @@ def home(request):
         "region": region,
         "roles": custom_user_roles,
     }
-        
+
     # print("custom_user: ", custom_user)
 
     return render(
-        request, 
-        user_page, 
+        request,
+        user_page,
         {
-            "user_title": user_title, 
+            "user_title": user_title,
             "user_groups": user_groups,
             "user": custom_user
         })
- 
-@login_required(login_url='/accounts/login')   
-def business_applications(request):
 
+
+@login_required(login_url='/accounts/login')
+def business_applications(request):
     user_page = 'business_applications.html'
     user_title = request.user.get_full_name()
-    l = request.user.groups.values_list('name',flat = True) # QuerySet Object
-    user_groups = list(l)  
+    l = request.user.groups.values_list('name', flat=True)  # QuerySet Object
+    user_groups = list(l)
 
     user_profile = UserProfile.objects.filter(id=request.user.id).first()
     roles_ = user_profile.roles.all()
@@ -375,7 +392,7 @@ def business_applications(request):
     if users_role == "standard" or users_role == "" or users_role == None:
         # print("creating standard list ..")
         applications = [app for app in applications if app['name'] != 'users']
-    
+
     user = request.user
     if config('HOST') == "172.16.8.20":
         applications = applications
@@ -388,26 +405,26 @@ def business_applications(request):
         else:
             messages.error(request, "Your region is missing on your account profile, Please contact the administrator")
             applications = []
-        
+
     url_path = request.path.split("/")
     return render(
-        request, 
-        user_page, 
+        request,
+        user_page,
         {
             "user_title": user_title,
             "url_path": url_path,
-            "page_title": "Business Applications", 
+            "page_title": "Business Applications",
             "user_groups": user_groups,
             "apps": applications
         })
 
-@login_required(login_url='/accounts/login')   
-def application_reports(request):
 
+@login_required(login_url='/accounts/login')
+def application_reports(request):
     user_page = 'applications_reports.html'
     user_title = request.user.get_full_name()
-    l = request.user.groups.values_list('name',flat = True) # QuerySet Object
-    user_groups = list(l)  
+    l = request.user.groups.values_list('name', flat=True)  # QuerySet Object
+    user_groups = list(l)
 
     user_profile = UserProfile.objects.filter(id=request.user.id).first()
     roles_ = user_profile.roles.all()
@@ -419,7 +436,7 @@ def application_reports(request):
     if users_role == "standard" or users_role == "" or users_role == None:
         # print("creating standard list ..")
         applications = [app for app in applications if app['name'] != 'users']
-    
+
     user = request.user
     if config('HOST') == "172.16.8.20":
         applications = applications
@@ -432,29 +449,30 @@ def application_reports(request):
         else:
             messages.error(request, "Your region is missing on your account profile, Please contact the administrator")
             applications = []
-        
+
     url_path = request.path.split("/")
     return render(
-        request, 
-        user_page, 
+        request,
+        user_page,
         {
             "user_title": user_title,
             "url_path": url_path,
-            "page_title": "Application Reports", 
+            "page_title": "Application Reports",
             "user_groups": user_groups,
             "apps": applications
         })
 
-def app_logout(request):
 
+def app_logout(request):
     logout(request)
     return redirect('/accounts/login')
+
 
 @login_required(login_url='/accounts/login')
 def change_password(request):
     if request.method == "POST":
         print("request.POST: ", request.POST)
-        
+
         username = request.user.username
         user_profile = UserProfile.objects.filter(username=username).first()
         questions = Question.objects.all()
@@ -476,16 +494,16 @@ def change_password(request):
             answer1 = request.POST.get('security_answer1')
             answer2 = request.POST.get('security_answer2')
             answer3 = request.POST.get('security_answer3')
-            
+
             question1_ = Question.objects.filter(id=question1).first()
             question2_ = Question.objects.filter(id=question2).first()
             question3_ = Question.objects.filter(id=question3).first()
             print('question1_: ', question1_, question2_, question3_)
-            
+
             user_security_questions = SecurityQuestions.objects.filter(user=user_profile)
             if user_security_questions:
                 user_security_questions.delete()
-            
+
             try:
                 security_question1 = SecurityQuestions(
                     user=user_profile,
@@ -493,14 +511,14 @@ def change_password(request):
                     security_answer=make_password(answer1)
                 )
                 security_question1.save()
-                
+
                 security_question2 = SecurityQuestions(
                     user=user_profile,
                     security_question=question2_,
                     security_answer=make_password(answer2)
                 )
                 security_question2.save()
-                
+
                 security_question3 = SecurityQuestions(
                     user=user_profile,
                     security_question=question3_,
@@ -514,7 +532,7 @@ def change_password(request):
                     "questions": questions_json,
                     "username": username
                 })
-            
+
             try:
                 validate_password(password, user=user_profile)
                 user_profile.set_password(password)
@@ -548,21 +566,23 @@ def change_password(request):
             "questions": questions_json,
             "username": username
         })
-            
+
+
 # @login_required(login_url='/accounts/login')
 def security_questions(request):
-   if request.method == "POST":
+    if request.method == "POST":
 
-       username = request.POST.get('username')
-       user_profile = UserProfile.objects.filter(username=username).first()
-       if user_profile:
+        username = request.POST.get('username')
+        user_profile = UserProfile.objects.filter(username=username).first()
+        if user_profile:
             question = request.POST.get('security_question1')
             answer = request.POST.get('security_answer1')
             print('question1: ', question, answer)
-            
+
             question1_ = Question.objects.filter(id=question).first()
-            
-            user_security_question = SecurityQuestions.objects.filter(user=user_profile, security_question=question1_).first()
+
+            user_security_question = SecurityQuestions.objects.filter(user=user_profile,
+                                                                      security_question=question1_).first()
             if user_security_question:
                 # compare the answer
                 print("user_security_question: ", user_security_question)
@@ -581,37 +601,40 @@ def security_questions(request):
                 else:
                     print("Invalid answer")
                     messages.error(request, "Invalid answer")
-                    return redirect('/auth/answer-security-questions') 
+                    return redirect('/auth/answer-security-questions')
             else:
                 print("User has not set this security questions")
                 messages.error(request, "User has not set this security questions")
                 return redirect('/auth/answer-security-questions')
-       messages.error(request, "User not found")
-       return redirect('/auth/answer-security-questions')
-   else:
-       questions = Question.objects.all()
-       print("questions: ", questions)
-       questions_json = json.dumps([{"id": q.id, "question": q.question} for q in questions])
-       print("questions_json: ", questions_json)
-       return render(request, "registration/answer_questions.html", {
-           "questions": questions_json
-       }) 
+        messages.error(request, "User not found")
+        return redirect('/auth/answer-security-questions')
+    else:
+        questions = Question.objects.all()
+        print("questions: ", questions)
+        questions_json = json.dumps([{"id": q.id, "question": q.question} for q in questions])
+        print("questions_json: ", questions_json)
+        return render(request, "registration/answer_questions.html", {
+            "questions": questions_json
+        })
 
-# @login_required(login_url='/accounts/login')   
+    # @login_required(login_url='/accounts/login')
+
+
 def reset_email(request):
     if request.method == "POST":
-         
-         return redirect('/accounts/login')
-    else:
-         return render(request, "registration/change_password_email.html", {})
 
-# @login_required(login_url='/accounts/login')    
+        return redirect('/accounts/login')
+    else:
+        return render(request, "registration/change_password_email.html", {})
+
+
+# @login_required(login_url='/accounts/login')
 def reset_password(request):
     if request.method == "POST":
-         
+
         username = request.POST.get('username')
         user_profile = UserProfile.objects.filter(username=username).first()
-        
+
         if user_profile:
             password = request.POST.get('new_password')
             password_confirm = request.POST.get('password_confirm')
@@ -641,13 +664,12 @@ def reset_password(request):
             print("User not found")
             return redirect('/auth/reset-password')
     else:
-         return render(request, "registration/reset_password.html", {})
+        return render(request, "registration/reset_password.html", {})
+
 
 def get_dashboard_reports(section_code):
-    
     report = {}
-    
-    
+
     return report
 
 def password_reset_request(request):
