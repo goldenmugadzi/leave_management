@@ -117,6 +117,26 @@
                     </div>
                   </div>
 
+                  <div>
+                    <label
+                      for="roles_to_action"
+                      class="block text-sm font-medium leading-6 text-gray-900"
+                      >Roles to Action</label
+                    >
+                    <div class="mt-2">
+                      <textarea disabled type="text" name="roles_to_action" id="roles_to_action" autocomplete="roles_to_action" class="block w-full bg-gulf-blue-50 rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">{% if cr.user.roles_to_action %}{{cr.user.roles_to_action}}{% endif %}</textarea>
+                    </div>
+                  </div>
+                  <div class="bg-green-50 rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
+                    <label
+                      for="roles_actions"
+                      class="block text-sm font-medium leading-6 text-gray-900"
+                      >Roles Implemented</label>
+                    <div class="mt-2">
+                      <textarea {% if requestor_role == "it_section_head" and it_section_head_awaiting_action and section_head_awaiting_action == False and it_section_head_allowed == True %} required {% else %} disabled {% endif %} type="text" name="roles_actions" id="roles_actions" autocomplete="roles_actions" class="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">{% if cr.user.roles_actions %}{{cr.user.roles_actions}}{% endif %}</textarea>
+                    </div>
+                  </div>
+
                   <div class="mt-10 grid grid-cols-3 gap-4">
                     <div>
                       <label
@@ -421,8 +441,7 @@
                           disabled
                           type="text"
                           id="comment"
-                          class="block w-full bg-gulf-blue-50 rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 px-2 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
-                        >{{approvals.comment}}</textarea>
+                          class="block w-full bg-gulf-blue-50 rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 px-2 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6">{{approvals.comment}}</textarea>
                       </div>
                     </div>
                     <div></div>
