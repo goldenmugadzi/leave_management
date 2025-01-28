@@ -129,19 +129,22 @@ def pettyCash_detail(request, petty_id):
     else:
         cashier = None
 
-    print(pettycash_role, clear, requestor, clear_minus, cashier_approved)
-    notification_obj = Notification.objects.filter(notification_id=petty_id).first()
-    section_created = pettycash_item.section
-    section_heads = find_pettycash_section_head(section_created)
-    if section_heads:
-        print('doing')
-        print("user prof ", user_profile, ' sect head ', section_heads)
+    try:
+        print(pettycash_role, clear, requestor, clear_minus, cashier_approved)
+        notification_obj = Notification.objects.filter(notification_id=petty_id).first()
+        section_created = pettycash_item.section
+        section_heads = find_pettycash_section_head(section_created)
+        if section_heads:
+            print('doing')
+            print("user prof ", user_profile, ' sect head ', section_heads)
 
-        if user_profile.username == section_heads:
-            print('notification', notification_obj)
-            notification_obj.is_read = True
-            notification_obj.save()
-            print(notification_obj, ' now set to read')
+            if user_profile.username == section_heads:
+                print('notification', notification_obj)
+                notification_obj.is_read = True
+                notification_obj.save()
+                print(notification_obj, ' now set to read')
+    except Exception as e:
+        print(e)
 
     return render(request, 'finance/pettycash/pettycash_detail.html',
                   {'pettycash': pettycash_item, 'approved_steps': approved_steps, 'approvalForm': approvalForm,
