@@ -1,6 +1,6 @@
-from typing import Dict, Any
+from typing import Dict, Any, List
 from django.db.models import Model
-
+from approve.models import Step, Process
 
 def get_changed_fields(model_object: Model, data: Dict[str, Any]) -> Dict[str, Any]:
     changed_data = {}
@@ -56,3 +56,12 @@ def get_rating(actual_variance, within_condition):
     elif actual_variance < 0 and within_condition < -4:
         rating = 1
     return rating
+
+
+def get_approved_steps(process_object: Process)->Dict[str, List[Step]]:
+    approved_steps = process_object.approval_set.all().values_list(
+            "step__step", flat=True
+        )
+    return {
+        "approved_steps": approved_steps,
+    }

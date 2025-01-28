@@ -116,86 +116,17 @@ class AppraisalUpdateForm(forms.ModelForm):
             case None:
                 self.fields['appraiser'].disabled = True
                 self.fields['reviewer'].disabled = True
+                
+    def clean(self):
+        cleaned_data = super().clean()
+        role = self.initial.get("role")
         
-class AppraisalAppraiseeUpdateForm(forms.ModelForm):
-    appraiser = forms.ModelChoiceField(
-        queryset=UserProfile.objects.filter(roles__role=KraRolesType.appraiser.value),
-        widget=forms.Select(attrs={
-            'id': 'id_appraiser',  # Add an ID for targeting with JavaScript
-            'class': 'bg-white border border-gray-300 rounded-lg py-2 px-4 block w-full focus:ring-blue-500 focus:border-blue-500 text-black-400'
-        }),
-        required=True
-    )
-    reviewer = forms.ModelChoiceField(
-        queryset=UserProfile.objects.filter(roles__role=KraRolesType.reviewer.value),
-        widget=forms.Select(attrs={
-            'id': 'id_reviewer',  # Add an ID for targeting with JavaScript
-            'class': 'bg-white border border-gray-300 rounded-lg py-2 px-4 block w-full focus:ring-blue-500 focus:border-blue-500 text-black-400'
-        }),
-        required=False
-    )
-    
-    class Meta:
-        model = Appraisal
-        fields = ["appraiser", "reviewer"]
+        # Ensure reviewer is set before marking as accepted
+        if role == KraRolesType.appraiser.value and not cleaned_data.get("reviewer"):
+            raise forms.ValidationError("A reviewer must be assigned before accepting the appraisal.")
         
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['reviewer'].disabled = True
-class AppraisalAppraiserUpdateForm(forms.ModelForm):
-    appraiser = forms.ModelChoiceField(
-        queryset=UserProfile.objects.filter(roles__role=KraRolesType.appraiser.value),
-        widget=forms.Select(attrs={
-            'id': 'id_appraiser',  # Add an ID for targeting with JavaScript
-            'class': 'bg-white border border-gray-300 rounded-lg py-2 px-4 block w-full focus:ring-blue-500 focus:border-blue-500 text-black-400'
-        }),
-        required=True
-    )
-    reviewer = forms.ModelChoiceField(
-        queryset=UserProfile.objects.filter(roles__role=KraRolesType.reviewer.value),
-        widget=forms.Select(attrs={
-            'id': 'id_reviewer',  # Add an ID for targeting with JavaScript
-            'class': 'bg-white border border-gray-300 rounded-lg py-2 px-4 block w-full focus:ring-blue-500 focus:border-blue-500 text-black-400'
-        }),
-        required=False
-    )
-    
-    class Meta:
-        model = Appraisal
-        fields = ["appraiser", "reviewer"]
+        return cleaned_data
         
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['appraiser'].disabled = True
-
-    
-class AppraisalReviewerUpdateForm(forms.ModelForm):
-    appraiser = forms.ModelChoiceField(
-        queryset=UserProfile.objects.filter(roles__role=KraRolesType.appraiser.value),
-        widget=forms.Select(attrs={
-            'id': 'id_appraiser',  # Add an ID for targeting with JavaScript
-            'class': 'bg-white border border-gray-300 rounded-lg py-2 px-4 block w-full focus:ring-blue-500 focus:border-blue-500 text-black-400'
-        }),
-        required=True
-    )
-    reviewer = forms.ModelChoiceField(
-        queryset=UserProfile.objects.filter(roles__role=KraRolesType.reviewer.value),
-        widget=forms.Select(attrs={
-            'id': 'id_reviewer',  # Add an ID for targeting with JavaScript
-            'class': 'bg-white border border-gray-300 rounded-lg py-2 px-4 block w-full focus:ring-blue-500 focus:border-blue-500 text-black-400'
-        }),
-        required=False
-    )
-    
-    class Meta:
-        model = Appraisal
-        fields = ["appraiser", "reviewer"]
-        
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['appraiser'].disabled = True
-        self.fields['reviewer'].disabled = True
-
 
 class ExperienceForm(forms.ModelForm):
     class Meta:

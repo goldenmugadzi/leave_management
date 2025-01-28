@@ -6,7 +6,7 @@
             {% if step.step in approved_steps %}
                 {% for approval in appraisal_object.process.approval_set.all %}
                     {% if step == approval.step %}
-                        <div class="card-body m-1 px-2 arrow bg-gradient-to-r from-gulf-blue-100  {% if approval.approved == 'Rejected' %} to-red-700 {% else %} to-green-700 {% endif %} ed border rounded container rounded">
+                        <div class="card-body m-1 px-2 arrow bg-gradient-to-r from-gulf-blue-100  {% if approval.approved == 'Rejected' %} to-red-700 {% else %} to-green-700 {% endif %} ed border rounded container">
                             <div class=" rounded-lg" title="{{ approval.comment }}">
                                 <p class="font-bold">{{ step |default_if_none:'' }}</p>
                                 <br>
@@ -28,7 +28,7 @@
                     {% endif %}
                 {% endfor %}
             {% else %}
-                <div class="card-body px-2 arrow bg-gradient-to-r from-gulf-blue-100 to-blue-700 ed border rounded container rounded">
+                <div class="card-body px-2 arrow bg-gradient-to-r from-gulf-blue-100 to-blue-700 ed border rounded container">
                     <div class=" rounded-lg" title="{{ approval.comment }}">
                         <p class="font-bold">{{ step |default_if_none:'' }}</p>
                         <br>

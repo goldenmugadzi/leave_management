@@ -39,9 +39,18 @@
             <form method="POST">
                 {% csrf_token %}
                 {% include "./roles/set_appraisal_users.html" %}
-                <div class="flex justify-center">
-                    <button type="submit" class="w-96 bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4">Save</button>
-                </div>
+
+                {% if is_appraisee == True %}
+                    <div class="flex justify-center">
+                        <button type="submit" class="w-96 bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4">Save Appraiser</button>
+                    </div>
+                {% endif %}
+
+                {% if is_appraiser == True %}
+                    <div class="flex justify-center">
+                        <button type="submit" class="w-96 bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4">Save Reviewer</button>
+                    </div>
+                {% endif %}
             </form>
         </div>
     </div>
@@ -57,9 +66,6 @@
 
   </div>
 
-  {% if approvalForm %}
-    {% include "./approval/create.html" %}
-  {% endif %}
 
 {% endblock %}
 

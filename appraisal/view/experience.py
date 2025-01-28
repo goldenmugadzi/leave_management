@@ -1,3 +1,4 @@
+from typing import Dict
 from django.forms import BaseModelForm
 from django.http import HttpResponse
 from django.http import JsonResponse
@@ -127,11 +128,19 @@ class AppraisalExperienceUpdateView(SuccessMessageMixin, UpdateView):
             appraisal_exp_id=self.kwargs.get("appraisal_exp_id")
         )
         return appraisal_exp_obj
+    
+    def approval_user_roles(self)->Dict[str, bool]:
+        is_appraisee = self.request.user == self.get_object().appraisal.user
+        data = {
+            "is_appraisee": is_appraisee,
+        }
+        return data
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context[self.context_object_name] = context.get("form")
         context["is_update"] = True
+        context.update(self.approval_user_roles())
         return context
         
     def form_valid(self, form):

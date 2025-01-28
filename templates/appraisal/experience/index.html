@@ -5,9 +5,10 @@
         <div class="bg-gulf-blue-96 shadow-lg rounded-lg p-3">
           <div class="flex justify-between my-2">           
               <h3 class="text-center font-bold">User Experiences</h3>
-              <a href="{% url 'appraisal_experience_create' appraisal_object.id %}"
-                  class="bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4">Add Experience</a>
-
+              {% if is_appraisee == True %}
+                <a href="{% url 'appraisal_experience_create' appraisal_object.id %}"
+                    class="bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4">Add Experience</a>
+              {% endif %}
           </div>
           
             <div style="max-height: 300px; overflow-y: auto; border: 1px solid #ccc;">
