@@ -15,7 +15,7 @@ class Appraisal(TimeStamp):
     experience = models.ManyToManyField("Experience", through="AppraisalExperience")
     process = models.ForeignKey("approve.Process", on_delete=models.CASCADE, null=True,
                                 related_name="appraisal_process")
-
+    is_accepted = models.BooleanField(default=False)
 
     def __str__(self) -> str:
         return f"{self.user}"

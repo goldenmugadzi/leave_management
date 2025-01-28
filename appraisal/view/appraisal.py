@@ -18,6 +18,7 @@ from ..helpers.types.kra import RoleFilterChoices
 from ..repository import UserQualificationRepository, AppraisalExperienceRepository, ExperienceRepository, AppraisalRepository
 from ..services import AppraisalService, AppraisalExperienceService
 from ..helpers.types.kra import KraRolesType
+from ..helpers.getters import get_approved_steps
 
 from approve.views import intiate,approve_step
 from approve.forms import ApprovalForm
@@ -128,59 +129,23 @@ class AppraisalUpdateView(SuccessMessageMixin, UpdateView):
                 kwargs["role"] = KraRolesType.appraisee.value
             case appraisal_object.appraiser:
                 kwargs["role"] = KraRolesType.appraiser.value
+        
         return kwargs
         
-    def approve_form_data(self):
-        approvalForm = None
-        to = None
-        completed = False
-        
-        if not self.get_object().process.approval_set.filter(approved="Rejected").exists():  # and allowed:
-            try:
-                last_approved = self.get_object().process.approval_set.last().step.step
-            except AttributeError:
-                last_approved = 0
-            next_step = last_approved + 1
-            try:
-                newStep = Step.objects.filter(step=next_step, workflow=self.get_object().process.workflow)
-                
-                if newStep.first().approver.name == "appraisee" or newStep.first().approver.name == "appraiser":
-                    is_appraisee = newStep.filter(
-                        approver__name="appraisee"
-                    ).exists()
-                    
-                    is_appraiser = newStep.filter(
-                        approver__name="appraiser"
-                    ).exists()
-                    if (is_appraisee and self.get_object().user == self.request.user) | (is_appraiser and self.get_object().appraiser == self.request.user):
-                        approvalForm = ApprovalForm
-                        to = newStep.first().to
-                else:
-                    allowed_to_approve = newStep.filter(
-                        approver__in=self.request.user.roles.all()
-                    ).exists()
-                    if allowed_to_approve:
-                        approvalForm = ApprovalForm
-                        to = newStep.first().to
-                   
-                # if newStep == self.get_object().process.workflow.step_set.last():
-                #     generateTokenForm = GenerateTokenForm()
-            except Exception as e:
-                print("=====>>>>", e)
-            completed = self.get_object().process.workflow.step_set.last().step == last_approved
-        approved_steps = self.get_object().process.approval_set.all().values_list(
-            "step__step", flat=True
-        )
-        return {
-            "completed": completed,
-            "approved_steps": approved_steps,
-            "approvalForm": approvalForm,
-            # "generateTokenForm": generateTokenForm,
-            "to": to,
+    
+    def approval_user_roles(self)->Dict[str, bool]:
+        is_appraisee = self.request.user == self.get_object().user
+        is_appraiser = self.request.user == self.get_object().appraiser
+        data = {
+            "is_appraisee": is_appraisee,
+            "is_appraiser": is_appraiser
         }
+        return data
     
     def form_valid(self, form):
         role = self.get_form_kwargs().pop("role", None)
+        if role == KraRolesType.appraiser.value and not self.get_object().is_accepted:
+            form.instance.is_accepted = True
         return super().form_valid(form)
     
     def get_context_data(self, **kwargs):
@@ -188,10 +153,12 @@ class AppraisalUpdateView(SuccessMessageMixin, UpdateView):
         experience_repo = AppraisalExperienceRepository()
         experience_service_handler = AppraisalExperienceService(appraisal_repo=experience_repo)
         qualifications = UserQualification.objects.filter(user=self.get_object().user)
-        context.update(self.approve_form_data())
         context["experience_objects"] = experience_service_handler.get_by_appraisal_id_use_case(appraisal_id=self.get_object().id)
         context["qualification_objects"] = qualifications
         context["appraisal_object"] = self.get_object()
+        
+        context.update(get_approved_steps(process_object=self.get_object().process))
+        context.update(self.approval_user_roles())
         return context
     
     def get_success_url(self):

@@ -1,5 +1,7 @@
 from typing import List
 from .types.performance import StrengthAndWeaknessTypes
+from approve.models import Approval, Step
+from it.users.models import UserProfile
 from ..models.performance_review import PerformanceProgressStrength, PerformanceProgressWeakness
 
 def map_performance_strengths(strengths: List[StrengthAndWeaknessTypes])->List[PerformanceProgressStrength]:
@@ -69,3 +71,19 @@ def map_performance_weaknesses(weaknesses: List[StrengthAndWeaknessTypes])->List
     return weaknesses_objects
 
 
+def set_approval_process(process_object: Approval, user_object: UserProfile):
+    latest_approval = process_object.approval_set.last()
+    if latest_approval is not None:
+        next_step = latest_approval.step.step + 1
+    else:
+        next_step = 1
+    step_object = Step.object.filter(workflow=process_object.workflow,step=next_step)
+
+    Approval.objects.get_or_create(
+        step=step_object,
+        user=user_object,
+        process=process_object,
+        defaults={
+        "approved":'Approved'
+        }
+    )

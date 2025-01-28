@@ -1,13 +1,14 @@
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save, pre_save
 from django.urls import reverse
 from django.dispatch import receiver
 from django.db import transaction
-from ..models import Appraisal, TargetScore
+from ..models import Appraisal
 from ..services import PerformanceReviewService, TrainingAndDevelopmentService
 from ..repository import PerformanceReviewRepository, TrainingAndDevelopmentRepository
 from ..helpers.types import PerformanceReviewType
 from ..helpers.types.kra import KraRolesType
 from ..helpers.notifications import send_appraisal_notifications
+from ..helpers.setters import set_approval_process
 from loguru import logger
 from decouple import config
 from datetime import datetime
@@ -147,6 +148,19 @@ def assign_appraisee_role_post_save_handler(sender, instance, created, **kwargs)
                 else:
                     logger.warning(f"'Appraisee' role not found in the Roles table.")
                 
+        except Exception as e:
+            logger.error(f"Assigning Appraisee role to {instance.user} signal handler failed with error: {e}")
+
+
+@receiver(post_save, sender=Appraisal, dispatch_uid="set_appraiser_approval")
+def set_appraiser_approval_post_save_handler(sender, instance, created, **kwargs):
+    if not created and instance.is_accepted:
+        try:
+            logger.info(f"Starting Appraiser Confirmation Process for Appraisal: {instance} ....")
+            with transaction.atomic():
+                set_approval_process(process_object=instance, user_object=instance.appraiser)
+                
+                logger.success(f"Appraiser Confirmation Process for Appraisal: {instance} completed successfully.")
         except Exception as e:
             logger.error(f"Assigning Appraisee role to {instance.user} signal handler failed with error: {e}")
             
