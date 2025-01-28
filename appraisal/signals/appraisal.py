@@ -158,11 +158,11 @@ def set_appraiser_approval_post_save_handler(sender, instance, created, **kwargs
         try:
             logger.info(f"Starting Appraiser Confirmation Process for Appraisal: {instance} ....")
             with transaction.atomic():
-                set_approval_process(process_object=instance, user_object=instance.appraiser)
+                set_approval_process(process_object=instance.process, user_object=instance.appraiser)
                 
                 logger.success(f"Appraiser Confirmation Process for Appraisal: {instance} completed successfully.")
         except Exception as e:
-            logger.error(f"Assigning Appraisee role to {instance.user} signal handler failed with error: {e}")
+            logger.error(f"Assigning Appraiser Approval to {instance.user} signal handler failed with error: {e}")
             
             
 

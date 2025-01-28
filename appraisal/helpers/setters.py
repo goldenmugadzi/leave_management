@@ -77,10 +77,10 @@ def set_approval_process(process_object: Approval, user_object: UserProfile):
         next_step = latest_approval.step.step + 1
     else:
         next_step = 1
-    step_object = Step.object.filter(workflow=process_object.workflow,step=next_step)
+    step_object = Step.objects.filter(workflow=process_object.workflow,step=next_step)
 
     Approval.objects.get_or_create(
-        step=step_object,
+        step=step_object.first(),
         user=user_object,
         process=process_object,
         defaults={
