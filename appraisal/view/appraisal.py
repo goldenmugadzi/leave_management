@@ -85,6 +85,10 @@ class AppraisalCreateView(SuccessMessageMixin, CreateView):
 
     def form_valid(self, form: BaseModelForm) -> HttpResponse:
         user_object = self.request.user
+        if not user_object.grade:
+            messages.error(self.request, "Oops! Your profile has no grade set. Kindly contact admin.")
+            return self.form_invalid(form)
+
         appraisal_service_handler = AppraisalService(
             appraisal_experience_repository=AppraisalExperienceRepository(),
             qualification_repository=UserQualificationRepository(),
