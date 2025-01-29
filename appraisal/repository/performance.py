@@ -1,11 +1,11 @@
 from typing import List
 from ..models import Appraisal, PerformanceProgressReview, PerformanceProgressStrength, PerformanceProgressWeakness
-from ..helpers.types import PerformanceReviewType
+from ..models.helpers import YearQuarter
 
 class PerformanceReviewRepository:
-    def create(self, appraisal_object: Appraisal, data: PerformanceReviewType)->PerformanceProgressReview:
+    def create(self, appraisal_object: Appraisal, year_quarter_object: YearQuarter)->PerformanceProgressReview:
         try:
-            return PerformanceProgressReview.objects.get_or_create(appraisal=appraisal_object, quarter=data.quarter)
+            return PerformanceProgressReview.objects.get_or_create(appraisal=appraisal_object, quarter=year_quarter_object)
         except Exception as e:
             raise Exception(f"PerformanceReview create repo failed with error: {e}")
         

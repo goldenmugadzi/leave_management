@@ -2,12 +2,13 @@ from typing import List
 from django.db import transaction
 from ..models import TrainingAndDevelopment, Appraisal, Competency, InterventionStrategy
 from ..helpers.types.training import TrainingAndDevelopmentCreateUpdateType
+from ..models.helpers import YearQuarter
 
 class TrainingAndDevelopmentRepository:
     
-    def create(self, appraisal_object: Appraisal, quarter: int)->TrainingAndDevelopment:
+    def create(self, appraisal_object: Appraisal, quarter_obj: YearQuarter)->TrainingAndDevelopment:
         try:
-            return TrainingAndDevelopment.objects.create(appraisal=appraisal_object, quarter=quarter)
+            return TrainingAndDevelopment.objects.create(appraisal=appraisal_object, quarter=quarter_obj)
         except Exception as e:
             raise Exception(f"create TrainingAndDevelopment Repo failed with error: {e}")
 

@@ -5,7 +5,7 @@ from appraisal.models import TrainingAndDevelopment
 from appraisal.models.appraisal import Appraisal
 from ..repository.training import TrainingAndDevelopmentRepository
 from ..helpers.types.training import TrainingAndDevelopmentCreateUpdateType
-
+from ..models.helpers import YearQuarter
 class TrainingAndDevelopmentServiceErr(Exception):
     ...
 
@@ -13,10 +13,10 @@ class TrainingAndDevelopmentServiceErr(Exception):
 class TrainingAndDevelopmentService:
     training_dev_repo: TrainingAndDevelopmentRepository
 
-    def create_use_case(self, appraisal_object: Appraisal, quarter: int)->TrainingAndDevelopment:
+    def create_use_case(self, appraisal_object: Appraisal, quarter_obj: YearQuarter)->TrainingAndDevelopment:
         try:
 
-            return self.training_dev_repo.create(appraisal_object=appraisal_object, quarter=quarter)
+            return self.training_dev_repo.create(appraisal_object=appraisal_object, quarter=quarter_obj)
         except Exception as e:
             raise TrainingAndDevelopmentServiceErr(f"Failed to create training and development with error: {e}")
 

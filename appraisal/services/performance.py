@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from ..repository.performance import PerformanceReviewRepository
 from ..models import Appraisal, PerformanceProgressReview, PerformanceProgressStrength, PerformanceProgressWeakness
 from ..helpers.types import PerformanceReviewType
+from ..models.helpers import YearQuarter
 
 class PerformanceReviewServiceError(Exception):
     pass
@@ -12,9 +13,9 @@ class PerformanceReviewServiceError(Exception):
 class PerformanceReviewService:
     performance_repo: PerformanceReviewRepository
 
-    def create_use_case(self, appraisal_object: Appraisal, data: PerformanceReviewType)->PerformanceProgressReview:
+    def create_use_case(self, appraisal_object: Appraisal, year_quarter_object: YearQuarter)->PerformanceProgressReview:
         try:
-            performance_object = self.performance_repo.create(appraisal_object=appraisal_object, data=data)
+            performance_object = self.performance_repo.create(appraisal_object=appraisal_object, year_quarter_object=year_quarter_object)
             return performance_object
         except Exception as e:
             raise PerformanceReviewServiceError(f"Failed to create performance review with error: {e}")

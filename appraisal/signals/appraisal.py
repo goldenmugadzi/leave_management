@@ -9,6 +9,7 @@ from ..helpers.types import PerformanceReviewType
 from ..helpers.types.kra import KraRolesType
 from ..helpers.notifications import send_appraisal_notifications
 from ..helpers.setters import set_approval_process
+from ..models.helpers import YearQuarter
 from loguru import logger
 from decouple import config
 from datetime import datetime
@@ -64,25 +65,20 @@ def create_performance_review_post_save_handler(sender, instance, created, **kwa
     if created:
         try:
             with transaction.atomic():
-                performance_review_payloads = [
-                    PerformanceReviewType(quarter=1),
-                    PerformanceReviewType(quarter=2),
-                    PerformanceReviewType(quarter=3),
-                    PerformanceReviewType(quarter=4),
-                ]
+                year_quarter_qr = YearQuarter.objects.filter(year=datetime.now().year)
 
-                for performance_review_payload in performance_review_payloads:
+                for year_quarter_obj in year_quarter_qr:
                     performance_review_service = PerformanceReviewService(
                         performance_repo=PerformanceReviewRepository()
                     )
-                    logger.info(f"[ PerformanceReview ]: create instance {performance_review_payload.quarter} quart signal for {instance.user} appraisal ....")
+                    logger.info(f"[ PerformanceReview ]: create instance {year_quarter_obj} quart signal for {instance.user} appraisal ....")
 
                     performance_review_service.create_use_case(
                         appraisal_object=instance,
-                        data=performance_review_payload
+                        year_quarter_object=year_quarter_obj
                     )
 
-                    logger.success(f"[ PerformanceReview ]: instance {performance_review_payload.quarter} quart for {instance.user} appraisal created :) ")
+                    logger.success(f"[ PerformanceReview ]: instance {year_quarter_obj} quart for {instance.user} appraisal created :) ")
 
         except Exception as e:
             logger.error(f"[PerformanceReview]: creating performance review instances failed for {instance.user} appraisal, with error: {e} ")
@@ -97,13 +93,15 @@ def create_training_development_post_save_handler(sender, instance, created, **k
                 training_development_repo_handler = TrainingAndDevelopmentRepository()
                 training_development_service_handler = TrainingAndDevelopmentService(training_dev_repo=training_development_repo_handler)
 
-                for quarter in range(1,5):
-                    logger.info(f"[ TrainingAndDevelopment ]: create instance {quarter} quart signal for {instance.user} appraisal ....")
+                year_quarter_qr = YearQuarter.objects.filter(year=datetime.now().year)
+
+                for year_quarter_obj in year_quarter_qr:
+                    logger.info(f"[ TrainingAndDevelopment ]: create instance {year_quarter_obj} quart signal for {instance.user} appraisal ....")
                     training_development_service_handler.create_use_case(
                         appraisal_object=instance,
-                        quarter=quarter
+                        quarter_obj=year_quarter_obj
                     )
-                    logger.success(f"[ TrainingAndDevelopment ]: instance {quarter} quarter for {instance.user} appraisal created :) ")
+                    logger.success(f"[ TrainingAndDevelopment ]: instance {year_quarter_obj} quarter for {instance.user} appraisal created :) ")
 
         except Exception as e:
             logger.error(f"[TrainingAndDevelopment]: creating training and development instances failed for {instance.user} appraisal, with error: {e} ")
