@@ -9,6 +9,8 @@ from ...forms import ActivityCreateForm
 from ...repository.kra import KRARepository, KraActivityRepository
 from ...services.kra import KRAService, ActivityService
 from ...helpers.types.kra import KRAType
+from ...helpers.getters import get_approved_steps
+from django.http import Http404
 from .helper import build_payload
 from pydantic import ValidationError
 
@@ -21,6 +23,18 @@ def get_kra_object(kra_id: int)->KeyResultArea:
 class KraActivityIndexTemplateView(TemplateView):
     template_name = 'appraisal/kra/activity/index.html'
 
+    def get_appraisal_object(self):
+        kra_obj_id = self.kwargs.get('kra_id')
+        kra_obj = get_kra_object(kra_id=kra_obj_id)
+        if kra_obj is None:
+            raise Http404("No KRA object found.")
+        return kra_obj.appraisal
+    
+    def get_approved_steps(self):
+        appraisal_object = self.get_appraisal_object()
+        result = get_approved_steps(process_object=appraisal_object.process)
+        return result
+
     def get_activity(self):
         repo = KraActivityRepository()
         service_handler = ActivityService(activity_repo=repo)
@@ -32,7 +46,10 @@ class KraActivityIndexTemplateView(TemplateView):
         context = super().get_context_data(**kwargs)
         kra_obj_id = self.kwargs.get('kra_id')
         context.update(self.get_activity())
+        context.update(self.get_approved_steps())
         context["kra_obj"] = get_kra_object(kra_id=kra_obj_id)
+        context["appraisal_object"] = self.get_appraisal_object()
+        
         return context
 
 class KraActivityCreateView(SuccessMessageMixin, CreateView):

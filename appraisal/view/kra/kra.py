@@ -5,11 +5,13 @@ from django.views.generic.edit import CreateView, UpdateView
 from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib import messages
 from django.shortcuts import get_object_or_404
+from django.http import Http404
 from ...models import KeyResultArea, Activity, Target, Appraisal
 from ...forms import YearQuarterForm, KraCreateForm
 from ...repository.kra import KRARepository
 from ...services.kra import KRAService
 from .helper import build_payload
+from ...helpers.getters import get_approved_steps
 from datetime import datetime
 from pydantic import ValidationError
 from approve.forms import ApprovalForm
@@ -30,6 +32,19 @@ class KRATemplateView(TemplateView):
         kra_queryset = service_handler.fetch_by_quarter_year_appraisal_pk_use_case(year_number=year, quarter_number=quarter, appraisal_id=self.kwargs.get("appraisal_id"))
         data = {"kra_objects": kra_queryset}
         return data
+    
+    def get_appraisal_object(self):
+        year_qrt = self.get_year_quarter()
+        kra_queryset = self.get_all_kra(year=year_qrt["year"], quarter=year_qrt["quarter"])["kra_objects"]
+        if kra_queryset.exists():
+            return kra_queryset.first().appraisal
+        raise Http404("No appraisal object found for the given year and quarter.")
+    
+    def get_approved_steps(self):
+        appraisal_object = self.get_appraisal_object()
+        result = get_approved_steps(process_object=appraisal_object.process)
+        return result
+    
     
     def get_year_quarter(self):
         data = {}
@@ -54,9 +69,10 @@ class KRATemplateView(TemplateView):
         
         context.update(self.get_all_kra(year=year_qrt["year"], quarter=year_qrt["quarter"]))
         context.update(year_qrt)
+        context.update(self.get_approved_steps())
         context["roles"] = KraRolesType
         context["appraisal_id"] = self.kwargs.get("appraisal_id")
-
+        context["appraisal_object"] = self.get_appraisal_object()
             
         return context
     

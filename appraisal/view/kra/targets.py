@@ -3,16 +3,20 @@ from django.views.generic import TemplateView
 from django.views.generic.edit import CreateView, UpdateView
 from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib import messages
+from django.http import Http404
 from ...models import Target, TargetScore
 from ...forms import TargetCreateForm, TargetScoreForm
 from ...repository.kra import ActivityTargetRepository, KraActivityRepository, TargetScoreRepository
 from ...services.kra import TargetService, ActivityService, TargetScoreService
+from ...helpers.getters import get_approved_steps
+
 from .helper import build_payload_target, build_payload_score
 from pydantic import ValidationError
 
 
 class TargetsIndexView(TemplateView):
     template_name = 'appraisal/kra/targets/index.html'
+    
 
     @property
     def get_activity_object(self):
@@ -30,10 +34,25 @@ class TargetsIndexView(TemplateView):
         data = {"target_objects": queryset}
         return data
 
+    def get_appraisal_object(self):
+        activity_obj = self.get_activity_object["activity_object"]
+        if activity_obj is None:
+            raise Http404("No Activity target object found.")
+        
+        appraisal_obj = activity_obj.kra.appraisal
+        return appraisal_obj
+    
+    def get_approved_steps(self):
+        appraisal_object = self.get_appraisal_object()
+        result = get_approved_steps(process_object=appraisal_object.process)
+        return result
+    
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context.update(self.get_target_objects)
         context.update(self.get_activity_object)
+        context.update(self.get_approved_steps())
+        context["appraisal_object"] = self.get_appraisal_object()
         return context
 
 
