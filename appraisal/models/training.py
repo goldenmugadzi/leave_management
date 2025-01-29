@@ -2,7 +2,7 @@ from helpers.models import TimeStamp
 from django.db import models
 from it.users.models import Designations
 from .appraisal import Appraisal
-from .helpers import QuarterChoices
+from .helpers import YearQuarter
 
 INTERVENTION_CATEGORY_CHOICES = [
     ("TRAINING", "TRAINING"),
@@ -43,7 +43,7 @@ class InterventionStrategy(TimeStamp):
      
 class TrainingAndDevelopment(TimeStamp):
     appraisal = models.ForeignKey(Appraisal, on_delete=models.CASCADE)
-    quarter = models.PositiveIntegerField(choices=QuarterChoices.choices)
+    quarter = models.ForeignKey(YearQuarter, on_delete=models.RESTRICT, null=True, blank="")
     required_competencies = models.ManyToManyField(Competency, related_name="required_competencies")
     competency_gaps = models.ManyToManyField(Competency, related_name="competency_gaps")
     intervention_strategies = models.ManyToManyField(InterventionStrategy)
