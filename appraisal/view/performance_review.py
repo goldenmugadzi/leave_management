@@ -19,11 +19,11 @@ from ..forms import PerformanceReviewApprovalForm
 from approve.forms import ApprovalForm
 from approve.models import Step, Approval
 from loguru import logger
+from ..helpers.getters import get_approved_steps
 
 
 class PerformancePlanAndAssessmentAppraisalTemplateView(TemplateView):
     template_name = "appraisal/performance/index.html"
-    
     
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
@@ -33,6 +33,7 @@ class PerformancePlanAndAssessmentAppraisalTemplateView(TemplateView):
             experience_repository=ExperienceRepository(),
             appraisal_repository=AppraisalRepository()
         )
+        
         context["appraisals"] = appraisal_service_handler.get_all_use_case()
 
         return context
@@ -141,7 +142,7 @@ class PerformancePlanAndAssessmentTemplateView(TemplateView):
         context.update(user_info)
         context.update(performance_plan_info)
         context["appraisal_object"] = self.get_appraisal_object(appraisal_id=appraisal_id)
-        context.update(self.approve_form_data())
+        context.update(get_approved_steps(process_object=self.get_appraisal_object(appraisal_id=appraisal_id).process))
         
         return context
     

@@ -1,9 +1,10 @@
-from typing import Any, Dict, Union
-from django.forms import BaseModelForm
+from typing import Any, Dict
 from django.http import HttpResponse
 from django.shortcuts import render
 from django.views.generic.edit import CreateView
 from django.views.generic import TemplateView
+from django.contrib.messages.views import SuccessMessageMixin
+from django.contrib import messages
 from django.urls import reverse
 
 from ..helpers.types.training import TrainingAndDevelopmentCreateUpdateType
@@ -13,10 +14,11 @@ from ..models import TrainingAndDevelopment, InterventionStrategy
 from ..repository import TrainingAndDevelopmentRepository
 from ..services import TrainingAndDevelopmentService
 from loguru import logger
-class TrainingAndDevelopmentUpdateView(CreateView):
+class TrainingAndDevelopmentUpdateView(SuccessMessageMixin, CreateView):
     model = TrainingAndDevelopment
     form_class = ActionsForm
     template_name = "appraisal/performance/training_development/update.html"
+    success_message = "Training and Development set successfully"
     
     def get_competency_form(self, training_object):
         initial_data = []
