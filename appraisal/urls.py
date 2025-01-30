@@ -43,9 +43,8 @@ urlpatterns = [
     # ================= Performance urls =================================
     path('performance', PerformancePlanAndAssessmentAppraisalTemplateView.as_view(), name='performance_review_index'),
     path('performance/<int:appraisal_id>', PerformancePlanAndAssessmentTemplateView.as_view(), name='performance_review_detail'),
-    path('performance/review/<int:appraisal_id>/<int:quarter>', PerformanceReviewsApprovalView.as_view(), name='performance_review_create'),
-    path('performance/training-development/<int:appraisal_id>/<int:quarter>', TrainingAndDevelopmentUpdateView.as_view(), name='training_development_update'),
-    path('performance/training-development/<int:appraisal_id>/<int:quarter>', TrainingAndDevelopmentUpdateView.as_view(), name='training_development_update'),
+    path('performance/review/<int:appraisal_id>/<int:year>/<int:quarter>', PerformanceReviewsApprovalView.as_view(), name='performance_review_create'),
+    path('performance/training-development/<int:appraisal_id>/<int:year>/<int:quarter>', TrainingAndDevelopmentUpdateView.as_view(), name='training_development_update'),
     
     # ========================Qualification View=========================
     path('qualification/<int:user_id>/', UserQualificationTemplateView.as_view(), name='list_qualification'),

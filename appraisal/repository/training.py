@@ -12,9 +12,9 @@ class TrainingAndDevelopmentRepository:
         except Exception as e:
             raise Exception(f"create TrainingAndDevelopment Repo failed with error: {e}")
 
-    def get_by_appraisal_id_quarter(self, appraisal_id: int, quarter: int)->TrainingAndDevelopment:
+    def get_by_appraisal_id_quarter(self, appraisal_id: int, year: int, quarter: int)->TrainingAndDevelopment:
         try:
-            return TrainingAndDevelopment.objects.get(appraisal__id=appraisal_id, quarter=quarter)
+            return TrainingAndDevelopment.objects.get(appraisal__id=appraisal_id, quarter__year=year, quarter__quarter=quarter)
         except Exception as e:
             raise Exception(f"Get TrainingAndDevelopment by appraisal id and quarter Repo failed with error: {e}")
     

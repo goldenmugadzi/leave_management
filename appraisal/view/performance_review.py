@@ -149,11 +149,7 @@ class PerformanceReviewsApprovalView(TemplateView):
     template_name = "appraisal/performance/progress_review/create.html"
     
 
-    def get_performance_review_forms_objects(
-        self, 
-        appraisal_id: int, 
-        quarter: int
-    ) -> Dict[str, PerformanceReviewApprovalForm | List[PerformanceProgressReview | int]]:
+    def get_performance_review_forms_objects(self) -> Dict[str, PerformanceReviewApprovalForm | List[PerformanceProgressReview | int]]:
         """
         Fetches and prepares performance review forms and objects for a given appraisal ID and quarter.
 
@@ -171,17 +167,23 @@ class PerformanceReviewsApprovalView(TemplateView):
         Raises:
             Http404: If no matching form for the specified quarter is found.
         """
+        appraisal_id = self.kwargs.get("appraisal_id")
+        current_quarter = self.kwargs.get("quarter")
+        current_year = self.kwargs.get("year")
+        
         repository = PerformanceReviewRepository()
         service_handler = PerformanceReviewService(performance_repo=repository)
-        performance_review_object = service_handler.get_performances_by_appraisal_id_quarter_use_case(appraisal_id=appraisal_id, quarter=quarter)
+        performance_review_object = service_handler.get_performances_by_appraisal_id_quarter_use_case(appraisal_id=appraisal_id, year=current_year, quarter=current_quarter)
 
         if performance_review_object is None:
             raise Http404("Performance Progress Review for this quarter not found")
         
+        quarter = performance_review_object.quarter
         form = PerformanceReviewApprovalForm(self.request.POST or None, initial={"quarter": quarter, "strengths": performance_review_object.strengths.all(), "areas_of_weaknesses": performance_review_object.areas_of_weaknesses.all()})
         data = {
             "current_form": form,
-            "current_quarter": quarter
+            "current_quarter": quarter,
+            "performance_review_object": performance_review_object
         }
             
         return data
@@ -190,10 +192,7 @@ class PerformanceReviewsApprovalView(TemplateView):
         
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
-        appraisal_id = self.kwargs.get("appraisal_id")
-        current_quarter = self.kwargs.get("quarter")
-        performance_review_objects = self.get_performance_review_forms_objects(appraisal_id=appraisal_id, quarter=current_quarter)
-        context.update(performance_review_objects)
+        context.update(self.get_performance_review_forms_objects())
         return context
     
     def post(self, request, *args, **kwargs):

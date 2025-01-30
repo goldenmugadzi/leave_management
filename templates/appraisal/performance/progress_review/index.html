@@ -21,7 +21,7 @@
                     {% for performance_review_object in performance_review_objects %}
                         <tr class="hover:bg-gray-100">
                         <td class="px-6 py-4 whitespace-nowrap text-blue-600 hover:text-blue-800">
-                            <a href="{% url 'performance_review_create' performance_review_object.appraisal.id performance_review_object.quarter %}">
+                            <a href="{% url 'performance_review_create' performance_review_object.appraisal.id performance_review_object.quarter.year performance_review_object.quarter.quarter %}">
                             {{ performance_review_object.quarter }}
                             </a>
                         </td>

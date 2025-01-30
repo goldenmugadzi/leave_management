@@ -33,9 +33,9 @@ class TrainingAndDevelopmentService:
             raise TrainingAndDevelopmentServiceErr(f"Failed to retrieve all training and development by appraisal id with error: {e}")
 
         
-    def get_by_appraisal_id_quarter_use_case(self, appraisal_id: int, quarter: int)->TrainingAndDevelopment:
+    def get_by_appraisal_id_quarter_use_case(self, appraisal_id: int, year: int, quarter: int)->TrainingAndDevelopment:
         try:
-           return self.training_dev_repo.get_by_appraisal_id_quarter(appraisal_id=appraisal_id, quarter=quarter)
+            return self.training_dev_repo.get_by_appraisal_id_quarter(appraisal_id=appraisal_id, quarter=quarter, year=year)
         except Exception as e:
             raise TrainingAndDevelopmentServiceErr(f"Failed to retrieve training and development by appraisal id and quarter with error: {e}")
 
