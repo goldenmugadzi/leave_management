@@ -35,7 +35,6 @@
                 <div id="empty-intervention_strategy-template" style="display: none;">
                     {% include "./intervention_strategy.html" with intervention_strategy_form=intervention_strategy_forms.empty_form total_form_count=intervention_strategy_forms.total_form_count %}
                 </div>
-                <button type="button" id="add-intervention_strategy-btn" onclick="addInterventionStrategyForm('{{ intervention_strategy_forms.total_form_count }}')">Add Intervention Strategy</button>
             </div>
 
             <div class="border-2 rounded-lg shadow-md border-indigo-400 container">
@@ -106,14 +105,27 @@
 
         formCount++;
         totalFormCount.value = formCount
+        toggleRemoveInterventionStrategyButtons()
     }
 
     // Removes an InterventionStrategy form from the formset container and updates the total form count
     function removeInterventionStrategyForm(button, total_form_count){
+        
+        const totalFormsInput = document.getElementById('id_intervention_strategy-TOTAL_FORMS')
+        
         button.closest(".intervention_strategy-form").remove()
 
-        total_form_count--;
-        document.getElementById('id_intervention_strategy-TOTAL_FORMS').value = total_form_count
+        // Update the total form count
+        let formCount = parseInt(totalFormsInput.value);
+        formCount--;
+        totalFormsInput.value = formCount;
+
+        // Re-index the remaining forms to ensure consistency
+        const forms = document.querySelectorAll(".intervention_strategy-form");
+        forms.forEach((form, index) => {
+            form.innerHTML = form.innerHTML.replace(/intervention_strategy-\d+-/g, `intervention_strategy-${index}-`);
+        });
+        toggleRemoveInterventionStrategyButtons()
     }
 
     function toggleRemoveCompetencyButtons() {
@@ -135,9 +147,28 @@
         }
     }
 
+    function toggleRemoveInterventionStrategyButtons() {
+        const totalFormsInput = document.getElementById("id_intervention_strategy-TOTAL_FORMS");
+
+        // Update the total form count
+        let formCount = parseInt(totalFormsInput.value);
+        const removeButtons = document.querySelectorAll(".remove-intervention_strategy_form-btn");
+
+        // Check if there is only one form
+        if (formCount === 1) {
+            removeButtons.forEach(button => {
+                button.classList.add("hidden");
+            });
+        } else {
+            removeButtons.forEach(button => {
+                button.classList.remove("hidden");
+            });
+        }
+    }
+
     // Initial setup to hide or show remove buttons on page load
     document.addEventListener("DOMContentLoaded", () => {
-        // toggleRemoveExperienceButtons();
+        toggleRemoveInterventionStrategyButtons();
         toggleRemoveCompetencyButtons();
     });
 
