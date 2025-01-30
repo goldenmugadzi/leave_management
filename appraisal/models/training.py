@@ -43,7 +43,7 @@ class InterventionStrategy(TimeStamp):
      
 class TrainingAndDevelopment(TimeStamp):
     appraisal = models.ForeignKey(Appraisal, on_delete=models.CASCADE)
-    quarter = models.ForeignKey(YearQuarter, on_delete=models.RESTRICT, null=True, blank="")
+    quarter = models.ForeignKey(YearQuarter, on_delete=models.RESTRICT, null=True, blank=True)
     required_competencies = models.ManyToManyField(Competency, related_name="required_competencies")
     competency_gaps = models.ManyToManyField(Competency, related_name="competency_gaps")
     intervention_strategies = models.ManyToManyField(InterventionStrategy)

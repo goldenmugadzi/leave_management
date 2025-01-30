@@ -18,9 +18,9 @@ class PerformanceProgressWeakness(TimeStamp):
 
 class PerformanceProgressReview(TimeStamp):
     appraisal = models.ForeignKey(Appraisal, on_delete=models.CASCADE)
-    quarter = models.ForeignKey(YearQuarter, on_delete=models.RESTRICT, null=True, blank="")
+    quarter = models.ForeignKey(YearQuarter, on_delete=models.RESTRICT, null=True, blank=True)
     strengths = models.ManyToManyField(PerformanceProgressStrength)
     areas_of_weaknesses = models.ManyToManyField(PerformanceProgressWeakness)
     
     def __str__(self) -> str:
-        return f"{self.appraisal.user} - Q{self.quarter}"
+        return f"{self.appraisal.user} - {self.quarter}"
