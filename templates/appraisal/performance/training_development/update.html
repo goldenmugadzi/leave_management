@@ -44,10 +44,11 @@
                     <div class="form-row field-action_taken">{{ action_form.action_taken|as_crispy_field }}</div>
                 </div>
             </div>
-            <div class="flex justify-center">
-                <button type="submit" class="bg-blue-500 hover:bg-blue-700 w-80 rounded-full text-white py-2 px-4">Create</button>
-            </div>
-            
+            {% if is_appraiser == True %}
+                <div class="flex justify-center">
+                    <button type="submit" class="bg-blue-500 hover:bg-blue-700 w-80 rounded-full text-white py-2 px-4">Create</button>
+                </div>
+            {% endif %}
     </form>
 </div>
 {% endblock %}

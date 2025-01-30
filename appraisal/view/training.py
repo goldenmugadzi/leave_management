@@ -71,6 +71,14 @@ class TrainingAndDevelopmentUpdateView(CreateView):
 
         return training_object
     
+    def approval_user_roles(self)->Dict[str, bool]:
+        appraisal_object = self.get_training_object().appraisal
+        is_appraiser = self.request.user == appraisal_object.appraiser
+        data = {
+            "is_appraiser": is_appraiser
+        }
+        return data
+    
     def get_forms_initial_data(self)->Dict[str, Any]:
         
         try:
@@ -88,6 +96,7 @@ class TrainingAndDevelopmentUpdateView(CreateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context.update(self.get_forms_initial_data())
+        context.update(self.approval_user_roles())
         return context
     
     def build_payload(self)->TrainingAndDevelopmentCreateUpdateType:
