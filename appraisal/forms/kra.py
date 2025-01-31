@@ -27,7 +27,13 @@ class TargetCreateForm(forms.ModelForm):
     class Meta:
         model = Target
         exclude = ["id", "created_date", "updated", "activity"]
-        
+    
+    def __init__(self, *args, **kwargs):
+        is_grade_c = kwargs.pop("is_above_grade_c", None)
+        super().__init__(*args, **kwargs)
+
+        if not is_grade_c:
+            self.fields["metric_type"].disabled = True
 class TargetScoreForm(forms.ModelForm):
     class Meta:
         model = TargetScore

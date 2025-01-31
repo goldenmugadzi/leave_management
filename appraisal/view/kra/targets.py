@@ -12,6 +12,7 @@ from ...helpers.getters import get_approved_steps
 
 from .helper import build_payload_target, build_payload_score
 from pydantic import ValidationError
+from it.users.models import GRADE_CHOICES
 
 
 class TargetsIndexView(TemplateView):
@@ -62,6 +63,15 @@ class TargetCreateView(SuccessMessageMixin, CreateView):
     template_name = 'appraisal/kra/targets/create_update.html'
     success_message = 'Target created successfully'
     context_object_name = "target_form"
+    
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        appraisee_object = self.get_activity_object["activity_object"].kra.appraisal.user
+        if appraisee_object.grade == GRADE_CHOICES[2][1]:
+            kwargs["is_above_grade_c"] = True
+        else:
+            kwargs["is_above_grade_c"] = False
+        return kwargs
 
     @property
     def get_activity_object(self):

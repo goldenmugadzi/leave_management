@@ -38,7 +38,7 @@ METRIC_TYPES = [
 
 class Target(TimeStamp):
     activity = models.ForeignKey(Activity, on_delete=models.CASCADE)
-    metric_type = models.CharField(max_length=30, choices=METRIC_TYPES)
+    metric_type = models.CharField(max_length=30, choices=METRIC_TYPES, null=True, blank=True)
     name = models.CharField(max_length=255, blank=False, null=False)
     weight = models.DecimalField(max_digits=5, decimal_places=2)
     agreed_target = models.DecimalField(max_digits=5, decimal_places=2)
