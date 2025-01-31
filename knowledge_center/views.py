@@ -182,54 +182,61 @@ def import_processes(request):
     return JsonResponse({"message": "Data imported successfully"})
     
 def import_files(request):
-    region = Regions.objects.filter(id=1).first()
-    # Get the approved and commissioned directories
-    approved_dir = os.path.join(settings.MEDIA_ROOT, 'temp', 'approved')
-    commissioned_dir = os.path.join(settings.MEDIA_ROOT, 'temp', 'commissioned')
+    try:
+        region = Regions.objects.filter(id=1).first()
+        # Get the approved and commissioned directories
+        approved_dir = os.path.join(settings.MEDIA_ROOT, 'temp', 'approved')
+        commissioned_dir = os.path.join(settings.MEDIA_ROOT, 'temp', 'commissioned')
+        
+        print("approved_dir: ", os.path.exists(approved_dir), os.listdir(approved_dir))
+        print("commissioned_dir: ", os.path.exists(commissioned_dir), os.listdir(commissioned_dir))
+        # Process files from approved directory
+        if os.path.exists(approved_dir):
+            for file in os.listdir(approved_dir):
+                file_path = os.path.join(approved_dir, file)
+                if os.path.isfile(file_path):
+                    file_name = os.path.basename(file)
+                    relative_path = os.path.join('uploads', 'knowledge_center', file_name)
+                    folder = KnowledgeCentreFolder.objects.filter(name='Approved Drawings').first()
+                    file_exists = KnowldgeCentreFile.objects.filter(filename=file_name, folder=folder, region=region).first()
+                    if not file_exists:
+                        file_record = KnowldgeCentreFile(
+                            filename=file_name,
+                            file=relative_path,
+                            folder=folder,
+                            region=region
+                        )
+
+                        file_record.save()
+                        print("Added approved file:", file_name)
+
+        # Process files from commissioned directory 
+        if os.path.exists(commissioned_dir):
+            for file in os.listdir(commissioned_dir):
+                file_path = os.path.join(commissioned_dir, file)
+                if os.path.isfile(file_path):
+                    file_name = os.path.basename(file)
+                    relative_path = os.path.join('uploads', 'knowledge_center', file_name)
+                    folder = KnowledgeCentreFolder.objects.filter(name='Commissioned Drawings').first()
+                    file_exists = KnowldgeCentreFile.objects.filter(filename=file_name, folder=folder, region=region).first()
+                    if not file_exists:
+
+                        file_record = KnowldgeCentreFile(
+                            filename=file_name,
+                            file=relative_path,
+                            folder=folder,
+                            region=region
+                        )
+                        file_record.save()
+                        print("Added commissioned file:", file_name)
+                        
+        return JsonResponse({"message": "Data imported successfully"})
+    except Exception as ex:
+        print("Error: ", ex)
+        return JsonResponse({"message": "Error importing data"})
+
     
-    # Process files from approved directory
-    if os.path.exists(approved_dir):
-        for file in os.listdir(approved_dir):
-            file_path = os.path.join(approved_dir, file)
-            if os.path.isfile(file_path):
-                file_name = os.path.basename(file)
-                relative_path = os.path.join('uploads', 'knowledge_center', file_name)
-                folder = KnowledgeCentreFolder.objects.filter(name='Approved Drawings').first()
-                file_exists = KnowldgeCentreFile.objects.filter(filename=file_name, folder=folder, region=region).first()
-                if not file_exists:
-                    file_record = KnowldgeCentreFile(
-                        filename=file_name,
-                        file=relative_path,
-                        folder=folder,
-                        region=region
-                    )
 
-                    file_record.save()
-                    print("Added approved file:", file_name)
-
-    # Process files from commissioned directory 
-    if os.path.exists(commissioned_dir):
-        for file in os.listdir(commissioned_dir):
-            file_path = os.path.join(commissioned_dir, file)
-            if os.path.isfile(file_path):
-                file_name = os.path.basename(file)
-                relative_path = os.path.join('uploads', 'knowledge_center', file_name)
-                folder = KnowledgeCentreFolder.objects.filter(name='Commissioned Drawings').first()
-                file_exists = KnowldgeCentreFile.objects.filter(filename=file_name, folder=folder, region=region).first()
-                if not file_exists:
-
-                    file_record = KnowldgeCentreFile(
-                        filename=file_name,
-                        file=relative_path,
-                        folder=folder,
-                        region=region
-                    )
-                    file_record.save()
-                    print("Added commissioned file:", file_name)
-                    
-    return JsonResponse({"message": "Data imported successfully"})
-
-    
 @login_required
 def download_file(request):
     file_id = request.GET.get('file_id')
