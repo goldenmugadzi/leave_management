@@ -3,7 +3,7 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    path('import', views.import_old_data, name='import_data'),
+    path('import', views.import_files, name='import_data'),
     path('import_processes', views.import_processes, name='import_processes'),
     path('root_folders/<str:app_name>', views.view_root_folders, name='root_folders'),
     path('folder/<str:folder_name>/<int:folder_id>', views.view_sub_folders, name='sub_folders'),
