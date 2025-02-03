@@ -216,6 +216,13 @@ def create_pettycash(request):
                         section_heads = UserProfile.objects.filter(username=section_heads).first()
                         notify_user(section_heads, msg, "Pettycash", url, pettycash.petty_id, request)
                         print("notified", section_heads)
+                        sweetify.success(request, "Pettycash created successfully")
+                        messages.success(request, "Pettycash created successfully")
+
+                    else:
+                        print("no section head")
+                        sweetify.error(request, "No section head found")
+                        messages.error(request, "No section head found")
 
                     # for quotation_form in formset:
                     #     quotation = quotation_form.save(commit=False)
@@ -224,6 +231,8 @@ def create_pettycash(request):
 
                     pettycash_section = pettycash.section
                     pettycash_sh = find_pettycash_section_head(pettycash_section)
+
+
                 except:
 
                     if pettycash_sh:
@@ -237,6 +246,11 @@ def create_pettycash(request):
                         pettycash_sh = UserProfile.objects.filter(username=pettycash_sh).first()
                         notify_user(pettycash_sh, msg, "Pettycash", url, pettycash.petty_id, request)
                         print("notified", pettycash_sh)
+
+                    else:
+                        print("no section head")
+                        sweetify.error(request, "No section head found")
+                        messages.error(request, "No section head found")
 
                 url = reverse('pettycash:pettycash_detail', args=[pettycash.petty_id])
                 return redirect(url)
