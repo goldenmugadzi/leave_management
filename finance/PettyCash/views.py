@@ -157,6 +157,7 @@ def pettyCash_detail(request, petty_id):
 def create_pettycash(request):
     user_id = request.user.id
     user_profile = UserProfile.objects.filter(id=user_id).first()
+    print(request.FILES, 'files')
     if request.method == 'POST':
         print("post")
         form = PettycashForm(request.POST, request.FILES)
