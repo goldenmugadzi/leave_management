@@ -271,7 +271,7 @@ DEFAULT_FROM_EMAIL = config("MS_EMAIL")
 EMAIL_HOST_PASSWORD = config("MS_PASS")
 PASSWORD_RESET_TIMEOUT = 3600  # 1 hour
 
-DATA_UPLOAD_MAX_MEMORY_SIZE = 1024 * 1024 * 30
+DATA_UPLOAD_MAX_MEMORY_SIZE = 1024 * 1024 * 1024  # 1GB
 
 LANGUAGE_CODE = 'en-us'
 
@@ -280,7 +280,7 @@ USE_I18N = True
 LOGIN_REDIRECT_URL = '/'
 LOGIN_URL = '/accounts/login'
 
-os.environ['TIKA_SERVER_JAR'] = os.path.join(BASE_DIR,'static','tika','tika-server-standard-2.9.2.jar')
+os.environ['TIKA_SERVER_JAR'] = os.path.join(BASE_DIR, 'static', 'tika', 'tika-server-standard-2.9.2.jar')
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 STATIC_URL = '/static/'
