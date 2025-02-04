@@ -158,6 +158,7 @@ def create_pettycash(request):
     user_id = request.user.id
     user_profile = UserProfile.objects.filter(id=user_id).first()
     if request.method == 'POST':
+        print("post")
         form = PettycashForm(request.POST, request.FILES)
         formset = QuotationFormSet(request.POST, request.FILES)
         user_id = request.user.id
@@ -191,11 +192,13 @@ def create_pettycash(request):
                 petty_id = "PC" + date + rand2
                 pettycash.petty_id = petty_id
                 pettycash.save()
+                print(pettycash, 'pettycash created')
 
                 for quotation_form in formset:
                     quotation = quotation_form.save(commit=False)
                     quotation.pettycash = pettycash
                     quotation.save()
+                    print(quotation, 'quotation created')
 
                 requester = pettycash.requested_by
                 use = UserProfile.objects.filter(id=requester.id).first()
@@ -205,6 +208,7 @@ def create_pettycash(request):
 
                 section_heads = find_pettycash_section_head(section_created)
                 try:
+                    print(section_heads, "section_heads")
                     if section_heads:
                         print(section_heads, " section_heads")
                         # budget name
@@ -218,6 +222,7 @@ def create_pettycash(request):
                         print("notified", section_heads)
                         sweetify.success(request, "Pettycash created successfully")
                         messages.success(request, "Pettycash created successfully")
+                        print("notified", section_heads)
 
                     else:
                         print("no section head")
