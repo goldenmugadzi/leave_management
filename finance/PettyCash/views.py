@@ -270,6 +270,7 @@ def create_pettycash(request):
     else:
         form = PettycashForm(user=user_profile)
         formset = QuotationFormSet()
+        print("not post")
 
     return render(request, 'finance/pettycash/create_pettycash.html', {'form': form, 'formset': formset})
 
