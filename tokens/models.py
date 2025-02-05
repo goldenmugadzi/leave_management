@@ -32,7 +32,7 @@ class Token(models.Model):
     process=models.ForeignKey(Process, on_delete=models.CASCADE, blank=True, null=True)
     # section=models.ForeignKey(Sections, on_delete=models.CASCADE, blank=True, null=True)
     region=models.ForeignKey(Regions, on_delete=models.CASCADE, blank=True, null=True)
-    cost_center=models.ForeignKey(CostCenter, on_delete=models.CASCADE)
+    cost_center=models.ForeignKey(CostCenter, on_delete=models.CASCADE, blank=True, null=True)
      
     token_photo = models.FileField(upload_to='uploads/Tokens/generatedtoken',help_text="photo of generated token " , blank=True, null=True)
     type = models.CharField(max_length=100,help_text="Type of Token",  choices=[('REIMBURSEMENT', 'REIMBURSEMENT') , ('CLEAR CREDIT', 'CLEAR CREDIT'), ('TEMPER', 'TEMPER')])
@@ -48,6 +48,7 @@ class Token(models.Model):
 
 class REIMBURSEMENT(models.Model):
     purpose = models.CharField(max_length=15,help_text="Why?", blank=True, null=True,choices=[ ('Faulty Meter', 'Faulty Meter'), ('Recovered Meter', 'Recovered Meter'), ('Old Token', 'Old Token') ])
+    units = models.DecimalField(max_digits=10, decimal_places=2, help_text="kilowatt hours to be reimbursed", default=0)
     token = models.ForeignKey(Token, on_delete=models.CASCADE)
     def __str__(self):
         return str(self.token.meter.number)

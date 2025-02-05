@@ -1,5 +1,5 @@
 import re
-from django.shortcuts import render, redirect
+from django.shortcuts import redirect
 from django.http import FileResponse, JsonResponse
 from urllib.parse import unquote
 from datetime import datetime
@@ -9,13 +9,11 @@ from django.contrib import messages
 
 from it.users.models import CostCenter, Regions, Sections
 from processes.models import File_Type, FileSubType, Processes, SubSubType
-from utils.save_file import save_file
-from .models import Categories, First_Category, FolderApplication, KnowldgeCentreFile, KnowledgeCentreFolder, Secondary_Category, Filetype
+from .models import First_Category, FolderApplication, KnowldgeCentreFile, KnowledgeCentreFolder, Secondary_Category, Filetype
 from django.shortcuts import render
-from django.db.models import Q
 from django.contrib.auth.decorators import login_required
 
-from utils.helper_functions import get_kc_dict
+from ACE2.utils import get_kc_dict
 
 from .models import KnowledgeCenter
 from django.core.files.storage import FileSystemStorage
@@ -182,6 +180,23 @@ def import_processes(request):
             print("Error: ", ex, pc.filename)
             
     return JsonResponse({"message": "Data imported successfully"})
+    
+def import_files(request):
+    level = request.POST['level']
+    root_folder = request.POST['root_folder']
+    folder = request.POST['subfolder_'+level]
+    section = request.POST['section']
+    region = request.POST['region']
+    
+    files_directory = os.path.join(settings.MEDIA_ROOT, 'uploads', application)
+    files = os.listdir(files_directory)
+    for file in files:
+        file_path = os.path.join(files_directory, file)
+        if os.path.isfile(file_path):
+            file_name = os.path.basename(file)
+            file_record = KnowldgeCentreFile(filename=file_name, file=file_path)
+            file_record.save()
+            print("success: ", file_name)
     
 @login_required
 def download_file(request):

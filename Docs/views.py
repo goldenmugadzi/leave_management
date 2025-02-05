@@ -36,8 +36,21 @@ def search_view(request):
     search_results = []
     for result in results:
         search_result=result["_source"]
-        search_result["uploaded_at"] = datetime.strptime(search_result["uploaded_at"], "%Y-%m-%d %H:%M:%S").strftime("%B %d, %Y %H:%M")
-        search_results.append(search_result)
+        content = search_result.get("content", "")
+        if query.lower() in content.lower():
+            start_index = content.lower().index(query.lower())
+            sentence_start = content.rfind('.', 0, start_index)   # Find the last period before the match
+            if sentence_start == 0:  # No period found; start from the beginning
+                sentence_start = 0
+            start = max(sentence_start - 200, 0)
+            end = min(start_index + len(query) + 200, len(content))  # 200 characters after
+            snippet = content[start_index-200 :end].strip()
+            if len(snippet) > 400:
+                snippet = snippet[:400]  # Trim snippet to 400 characters if too long
+            search_result["content"] = snippet
+        else:
+            search_result["content"] = content[:400]  # Fallback to the first 400 characters if no match
+        search_results.append(search_result) 
     return render(request, "Docs/search.html", {"results": search_results, "query": query})
 
 def  start_tika_server():
@@ -62,10 +75,9 @@ def  start_tika_server():
         print(f"An error occurred while starting the Tika server: {e}")
     return     
 @login_required
-def index_files(request):
-    # start_tika_server()
-    es = Elasticsearch([{'host': 'localhost', 'port': 9200, 'scheme': 'http'}])  # Adjust host and port if necessary
-    print("index_files")
+def index_files(request): 
+    start_tika_server()
+    es = Elasticsearch([{'host': 'localhost', 'port': 9200, 'scheme': 'http'}])
     documents_path = os.path.join(Path(__file__).resolve().parent.parent, "static")
     subdirectories = ['process_maps', 'job_descriptions', 'plans_and_reports', 'network_development', 'petty_cash', 'comparative', 'ace']
     processed_files = set()
@@ -92,23 +104,26 @@ def index_files(request):
                 if not content:
                     content = ocr_pdf(file_path)
                 
+                file_path = file_path[file_path.index("/static"):]
+                file_name = file_path.split("/").pop()[:-2]
                 uploaded_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 # Index the content to Elasticsearch
                 doc = {
-                    'file_path': file_path[file_path.index("/static"):],
-                    'filename': filename,
+                    'file_path': file_path,
+                    'filename': file_name,
                     'content': content,
                     'uploaded_at': uploaded_at,
                     'uploaded_by': request.user.get_full_name(),
                 }
+
                 try:
                     es.index(index='documents', body=doc)
                     processed_files.add(file_path)  # Mark file as processed
-                    print("Indexed file:", filename)
                 except Exception as e:
                     print(f"Failed to index document: {e}")
 
     return HttpResponse("Indexing completed successfully.")
+
 def ocr_pdf(pdf_path):
     doc = fitz.open(pdf_path)
     text = ""

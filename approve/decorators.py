@@ -2,6 +2,7 @@ from django.contrib.auth.decorators import login_required,user_passes_test
 from approve.models import Step
 from approve.forms import ApprovalForm
 from functools import wraps
+from django.db.models import Q
 from django.contrib import messages
 from django.shortcuts import  redirect
 
@@ -48,7 +49,7 @@ def checklist_roles(view_func):
 
 def allowed_roles(allowed_roles, app_names):
     def decorator(view_func):
-        @user_passes_test(lambda user: user.roles.filter(name__in=allowed_roles, app_id__name__in=app_names).exists())
+        @user_passes_test(lambda user: user.roles.filter(Q(name__in=allowed_roles) and Q(app_id__name__in=app_names)).exists())
         def wrapper(request, *args, **kwargs):
             return view_func(request, *args, **kwargs)
         return wrapper

@@ -4,7 +4,6 @@ from datetime import timedelta
 from django.contrib.messages import constants as messages
 from decouple import config
 from decouple import config
-from decouple import config
 
 # Example usage in settings.py
 BASE_URL = config('BASE_URL')
@@ -271,6 +270,7 @@ EMAIL_HOST = config("MS_SERVER")
 EMAIL_HOST_USER = config("MS_EMAIL")
 DEFAULT_FROM_EMAIL = config("MS_EMAIL")
 EMAIL_HOST_PASSWORD = config("MS_PASS")
+PASSWORD_RESET_TIMEOUT = 3600  # 1 hour
 
 DATA_UPLOAD_MAX_MEMORY_SIZE = 1024 * 1024 * 30
 
