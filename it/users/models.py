@@ -152,6 +152,16 @@ class CostCenter(models.Model):
             self = self.parent
             i += 1
         return cost_centers
+    def get_view_1(self):
+        """ return a list of cost centers involving children, grand children, brothers ,parent , parent brothers, grand parent"""
+        cost_centers = []
+        i = 0
+        while self.parent and i < 4:
+            cost_centers.append(self)
+            cost_centers += self.get_all_children()
+            self = self.parent
+            i += 1
+        return cost_centers
 
     def __str__(self):
 

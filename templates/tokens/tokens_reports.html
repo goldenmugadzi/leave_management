@@ -1,0 +1,132 @@
+{% extends "admin_layout.html" %}
+{% load static %}
+{% block styles %}
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" />
+  <style>.dataTables_wrapper .dataTables_length select { width: 4rem; }</style>
+{% endblock %}
+{% block content %}
+  <title>Tokens Report</title>
+  <div class="content-wrapper">
+    <div class="grid grid-cols-1">
+      <div class="bg-gulf-blue-100 shadow-lg rounded-lg p-6">
+        <h3 class="text-center font-bold mb-4">Tokens Report</h3>
+        <form method="post">
+          {% csrf_token %}
+          <div class="grid grid-cols-2 gap-4 mx-2 py-1">
+            {{ tokenFilterForm.as_p }}
+            <button type="submit" class="bg-green-500 hover:bg-green-700 inline-block rounded-full m-auto text-white py-2 px-4 rounded">Filter</button>
+          </div>
+        </form>
+       {% if tokens %}
+       <table id="tokens" class="table table-striped stripe mt-3 table-bordered">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Description</th>
+            <th>Type</th>
+            <th>Date</th>
+            <th>Cost Center</th>
+            <th>Customer</th>
+            <th>Meter number</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for token in tokens %}
+            <tr class="h-1">
+              <td><a class="text-blue-500" href="{% url 'tokens:token' token.id %}">{{ token.id|default_if_none:'' }}</a></td>
+              <td>{{ token.reason|default_if_none:'' }}</td>
+              <td>{{ token.type|default_if_none:'' }}</td>
+              <td>{{ token.created_at|date }}</td>
+              <td>{{ token.cost_center }}</td>
+              <td>{{ token.customer.name|default_if_none:'' }}</td>
+              <td><span title="{{ token.meter.meter_type }}">{{ token.meter.number }}</span></td>
+              <td>{{ token.process.approval_set.last|default_if_none:"No Approval" }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% endif %}
+        <!-- Chart Container -->
+        <div class="mt-6">
+          <canvas id="tokenChart" width="400" height="100"></canvas>
+        </div>
+        <div class="mt-6 grid-cols-2 grid gap-4">
+          <canvas id="reimbursementTokenChart" width="400" height="100"></canvas>
+          <canvas id="temperTokenChart" width="400" height="100"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+{% block scripts %}
+  <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+  <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    $(document).ready(function () {
+      $("#tokens").DataTable({
+        "pageLength": 10,
+        "columnDefs": [{ "orderable": true, "targets": [0, 1, 2,3,4] }],
+        "responsive": true,
+        "searching": true,
+        language: {
+          search: "Filter results:"
+      }
+      });
+        const ctx = document.getElementById('tokenChart').getContext('2d');
+        const tokenChart = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: {{ dates|safe }},  // Dates for the x-axis
+            datasets: [
+              {
+                label: 'Tokens Created',
+                data: {{ created_tokens|safe }},
+                borderColor: 'rgb(16, 31, 15)',
+                fill: false,
+              },
+              {
+                label: 'Completed Approvals',
+                data: {{ approved_tokens|safe }},
+                borderColor: 'rgb(24, 185, 18)',
+                fill: false,
+              },
+              {
+                label: 'Tokens Pending Approval',
+                data: {{ pending_tokens|safe }},
+                borderColor: 'rgb(102, 99, 255)',
+                fill: false,
+              },{
+                label: 'Tokens Rejected',
+                data: {{ rejected_tokens|safe }},
+                borderColor: 'rgba(255, 99, 132, 1)',
+                fill: false,
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            scales: {
+              x: {
+                display: true,
+                title: {
+                  display: true,
+                  text: 'Date'
+                }
+              },
+              y: {
+                display: true,
+                title: {
+                  display: true,
+                  text: 'Number of Tokens'
+                }
+              }
+            }
+          }
+        });
+        
+        
+    });
+  </script>
+{% endblock %}

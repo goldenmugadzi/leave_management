@@ -154,3 +154,58 @@ class ResolveNcForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         for field_name, field in self.fields.items():field.widget.attrs.update({'class': "inline  rounded-md border-1 border-green-900   mx-5 sm:text-lg ",})    
    
+
+class NonconformityReportForm(forms.Form):
+    start_date = forms.DateField(
+        required=False,
+        initial=timezone.now().date,
+        widget=forms.DateInput(attrs={
+            'type': 'date',
+            'class': 'select2 block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6'
+        })
+    )
+    end_date = forms.DateField(
+        required=False,
+        initial=timezone.now().date,
+        widget=forms.DateInput(attrs={
+            'type': 'date',
+            'class': 'block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6'
+        })
+    )
+    cost_center = forms.ModelChoiceField(
+        queryset=CostCenter.objects.none(),
+        required=False,
+        widget=forms.Select(attrs={
+            'class': 'select2 block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6'
+        })
+    )
+
+    def __init__(self, *args, **kwargs):
+        cost_center = kwargs.pop('cost_center', None)
+        super().__init__(*args, **kwargs)
+        if cost_center:
+            self.fields['cost_center'].queryset = self.get_relevant_cost_centers(cost_center)
+            self.fields['cost_center'].initial = cost_center
+        for field_name, field in self.fields.items():
+            field.widget.attrs.update({
+                'class': " w-full rounded-md border-0 py-1.5 mx-5 text-gray-900 shadow-sm ring-1 ring-inset ring-green-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6",
+            })
+            if isinstance(field.widget, forms.Textarea):
+                field.widget.attrs.update({'rows': '3'})
+            if field_name == 'cost_center':
+                field.widget.attrs.update({'class': "select2  w-full rounded-md mx-5 border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-green-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6",
+                })
+    def get_relevant_cost_centers(self, cost_center):
+        cost_centers = cost_center.get_view_1()
+        return CostCenter.objects.filter(id__in=[cc.id for cc in cost_centers])
+
+    def clean(self):
+        cleaned_data = super().clean()
+        start_date = cleaned_data.get("start_date")
+        end_date = cleaned_data.get("end_date")
+        if start_date and end_date and start_date > end_date:
+            raise forms.ValidationError("Start date cannot be after end date.")
+        
+        return cleaned_data
+    
+    
