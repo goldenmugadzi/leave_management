@@ -60,6 +60,14 @@ class KRATemplateView(TemplateView):
             data["quarter"] = 1 
         
         return data
+    
+    
+    def approval_user_roles(self)->Dict[str, bool]:
+        is_appraiser = self.request.user == self.get_appraisal_object().appraiser
+        data = {
+            "is_appraiser": is_appraiser
+        }
+        return data
 
     def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
         context =  super().get_context_data(**kwargs)
@@ -70,6 +78,8 @@ class KRATemplateView(TemplateView):
         context.update(self.get_all_kra(year=year_qrt["year"], quarter=year_qrt["quarter"]))
         context.update(year_qrt)
         context.update(self.get_approved_steps())
+        context.update(self.approval_user_roles())
+        
         context["roles"] = KraRolesType
         context["appraisal_id"] = self.kwargs.get("appraisal_id")
         context["appraisal_object"] = self.get_appraisal_object()
