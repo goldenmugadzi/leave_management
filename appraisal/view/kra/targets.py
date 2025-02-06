@@ -14,7 +14,7 @@ from ...helpers.getters import get_approved_steps
 from .helper import build_payload_target, build_payload_score
 from pydantic import ValidationError
 from it.users.models import GRADE_CHOICES
-
+from loguru import logger
 
 class TargetsIndexView(TemplateView):
     template_name = 'appraisal/kra/targets/index.html'
@@ -49,11 +49,20 @@ class TargetsIndexView(TemplateView):
         result = get_approved_steps(process_object=appraisal_object.process)
         return result
     
+    def approval_user_roles(self)->Dict[str, bool]:
+        is_appraiser = self.request.user == self.get_appraisal_object().appraiser
+        data = {
+            "is_appraiser": is_appraiser
+        }
+        return data
+
+    
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context.update(self.get_target_objects)
         context.update(self.get_activity_object)
         context.update(self.get_approved_steps())
+        context.update(self.approval_user_roles())
         context["appraisal_object"] = self.get_appraisal_object()
         return context
 
@@ -107,6 +116,7 @@ class TargetCreateView(SuccessMessageMixin, CreateView):
                                                             payload=payload)
             form.instance = target_object
         except Exception as e:
+            logger.error(f"TargetCreateView failed: {e}")
             messages.error(self.request, f"An unexpected error occurred, please try again")
             return self.form_invalid(form)
 

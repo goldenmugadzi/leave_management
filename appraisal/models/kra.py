@@ -44,7 +44,7 @@ class Target(TimeStamp):
     agreed_target = models.DecimalField(max_digits=5, decimal_places=2)
     allowable_variance = models.DecimalField(max_digits=10, decimal_places=2)
     unit = models.CharField(max_length=30, blank=True, null=True)  
-
+    
     def __str__(self):
         return f"{self.activity}"
 
