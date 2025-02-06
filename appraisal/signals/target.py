@@ -31,6 +31,6 @@ def set_target_approval_post_save_handler(sender, instance, created, **kwargs):
                 
                 logger.success(f"KRA Approval for Target: {instance} completed successfully.")
         except Exception as e:
-            logger.error(f"KRA Approval for Target{instance} signal handler failed with error: {e}")
+            logger.error(f"KRA Approval for Target: {instance}, signal handler failed with error: {e}")
             
             

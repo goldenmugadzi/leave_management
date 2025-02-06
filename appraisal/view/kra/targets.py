@@ -152,14 +152,18 @@ class TargetUpdateView(SuccessMessageMixin, UpdateView):
         return obj
     
     def approval_user_roles(self)->Dict[str, bool]:
-        is_appraiser = self.request.user == self.get_object().activity.kra.appraisal.appraiser
+        appraisal_object = self.get_object().activity.kra.appraisal
+        is_appraiser = self.request.user == appraisal_object.appraiser
+        is_appraisee = self.request.user == appraisal_object.user
         data = {
-            "is_appraiser": is_appraiser
+            "is_appraiser": is_appraiser,
+            "is_appraisee": is_appraisee
         }
         return data
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        context.update(self.approval_user_roles())
         context[self.context_object_name] = context.get("form")
         context["activity_object"] = self.get_target_object.activity
         return context
