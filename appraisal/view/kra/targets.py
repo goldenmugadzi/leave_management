@@ -1,3 +1,4 @@
+from typing import Dict
 from django.urls import reverse
 from django.views.generic import TemplateView
 from django.views.generic.edit import CreateView, UpdateView
@@ -80,10 +81,18 @@ class TargetCreateView(SuccessMessageMixin, CreateView):
         obj = service_handler.get_by_id_use_case(activity_id=self.kwargs.get('activity_id'))
         data = {"activity_object": obj}
         return data
+    
+    def approval_user_roles(self)->Dict[str, bool]:
+        is_appraiser = self.request.user == self.get_activity_object["activity_object"].kra.appraisal.appraiser
+        data = {
+            "is_appraiser": is_appraiser
+        }
+        return data
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context[self.context_object_name] = context.get("form")
+        context.update(self.approval_user_roles())
         context.update(self.get_activity_object)
         return context
 
@@ -131,6 +140,13 @@ class TargetUpdateView(SuccessMessageMixin, UpdateView):
         """
         obj = self.get_target_object
         return obj
+    
+    def approval_user_roles(self)->Dict[str, bool]:
+        is_appraiser = self.request.user == self.get_object().activity.kra.appraisal.appraiser
+        data = {
+            "is_appraiser": is_appraiser
+        }
+        return data
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
