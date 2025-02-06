@@ -41,15 +41,22 @@ class KraActivityIndexTemplateView(TemplateView):
         queryset = service_handler.fetch_by_kra_id_use_case(kra_id=self.kwargs.get('kra_id'))
         data = {"activity_objects": queryset}
         return data
+    
+    def approval_user_roles(self)->Dict[str, bool]:
+        is_appraiser = self.request.user == self.get_appraisal_object().appraiser
+        data = {
+            "is_appraiser": is_appraiser
+        }
+        return data
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         kra_obj_id = self.kwargs.get('kra_id')
         context.update(self.get_activity())
         context.update(self.get_approved_steps())
+        context.update(self.approval_user_roles())
         context["kra_obj"] = get_kra_object(kra_id=kra_obj_id)
         context["appraisal_object"] = self.get_appraisal_object()
-        
         return context
 
 class KraActivityCreateView(SuccessMessageMixin, CreateView):
@@ -112,9 +119,16 @@ class KraActivityUpdateView(SuccessMessageMixin, UpdateView):
         obj = self.get_activity_object
         return obj
 
+    def approval_user_roles(self)->Dict[str, bool]:
+        is_appraiser = self.request.user == self.get_object().kra.appraisal.appraiser
+        data = {
+            "is_appraiser": is_appraiser
+        }
+        return data
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        context.update(self.approval_user_roles())
         context[self.context_object_name] = context.get("form")
         context["activity_object"] = self.get_activity_object
         context["user_object"] = self.request.user
