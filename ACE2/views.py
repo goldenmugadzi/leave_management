@@ -168,6 +168,15 @@ def Ace_detail(request, Ace_id2):
             notification_obj.save()
             print(notification_obj, ' now set to read')
 
+    # if clear minus notify GM
+    if clear_minus:
+        msg = " ACE " + ace_item.Ace_id2 + "has been added to your tray"
+        url = "/ace/ace_detail/" + ace_item.Ace_id2
+        general_manager = find_general_manager(request, ace_item.region)
+        if general_manager:
+            general_manager = UserProfile.objects.filter(username=general_manager).first()
+            notify_user(general_manager, msg, "ACE", url, ace_item.Ace_id2, request)
+
     return render(request, 'finance/ace2/ace_detail.html',
                   {'ace': ace_item, 'approved_steps': approved_steps, 'approvalForm': approvalForm,
                    'to': to, 'ace_role': ace_role, 'user_groups': user_groups, 'qoutations': quotations,
@@ -1453,6 +1462,36 @@ def find_ace_section_head(request, section):
     # else:
     #     messages.error(request, "the ace requires more than the current budget resulting in a "
     #                             "negative balance")
+
+
+def find_general_manager(request, region):
+    all_users = UserProfile.objects.filter(region=region).all()
+    # section_heads = UserProfile.objects.filter(section=section, role='section_head')
+    if all_users:
+
+        for user_profile in all_users:
+            user_groups = user_profile.groups.values_list('name', flat=True)
+
+            custom_user_roles = {
+                "ace": {},
+            }
+
+            roles_ = user_profile.roles.all()
+            for _role in roles_:
+                role = Roles.objects.filter(id=_role.id).first()
+
+                if role.application == "ace":
+                    custom_user_roles["ace"] = role.role
+            ace_role = str(custom_user_roles["ace"])
+            if ace_role == "approve":
+                userp = 'gm'
+                gm = user_profile.username
+                if gm:
+                    return gm
+
+
+        else:
+            print("no users found")
 
 
 # transanctions on a budget
