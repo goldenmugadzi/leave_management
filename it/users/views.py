@@ -985,10 +985,10 @@ def fetch_center_parents(cost_center):
                                                                                                        'parent')
                     filtered_centers += filtered_centers_4
     return filtered_centers
-
+ 
 
 @login_required
-# @allowed_roles(['administrator'], ['users'])
+# @allowed_roles(['Administrator'], ['users'])
 def get_filtered_districts(request, region_id):
     print("Region ID: ", region_id)
     districts = Districts.objects.filter(region_id=region_id).all()
@@ -997,7 +997,7 @@ def get_filtered_districts(request, region_id):
 
 
 @login_required
-# @allowed_roles(['administrator'], ['users'])
+# @allowed_roles(['Administrator'], ['users'])
 def get_filtered_depots(request, district_id):
     print("District ID: ", district_id)
     depots = Depots.objects.filter(district_id=district_id).all()
@@ -1007,7 +1007,7 @@ def get_filtered_depots(request, district_id):
 
 
 @login_required
-# @allowed_roles(['administrator'], ['users'])
+# @allowed_roles(['Administrator'], ['users'])
 def get_user_all_groups(request):
     if request.method == "GET":
         user_title = request.user.get_full_name()
