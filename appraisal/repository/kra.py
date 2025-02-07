@@ -226,7 +226,7 @@ class ActivityTargetRepository:
         except Exception as e:
             raise Exception(f"Target object retrieval by PK failed with error: {e}")
 
-    def update(self, target_obj: Target, payload: TargetType)->Target:
+    def update(self, target_obj: Target, payload: TargetType, is_approved: bool)->Target:
         try:
             updated = False
             if payload.metric_type != target_obj.metric_type:
@@ -251,6 +251,14 @@ class ActivityTargetRepository:
 
             if payload.unit != target_obj.unit:
                 target_obj.unit = payload.unit
+                updated = True
+                
+            if payload.unit != target_obj.unit:
+                target_obj.unit = payload.unit
+                updated = True
+            
+            if not target_obj.is_approved and is_approved:
+                target_obj.is_approved = is_approved
                 updated = True
 
             if updated:

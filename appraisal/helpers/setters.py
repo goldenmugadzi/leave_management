@@ -71,7 +71,7 @@ def map_performance_weaknesses(weaknesses: List[StrengthAndWeaknessTypes])->List
     return weaknesses_objects
 
 
-def set_approval_process(process_object: Approval, user_object: UserProfile):
+def set_approval_process(process_object: Approval, user_object: UserProfile, approved=True):
     latest_approval = process_object.approval_set.last()
     if latest_approval is not None:
         next_step = latest_approval.step.step + 1
@@ -79,11 +79,17 @@ def set_approval_process(process_object: Approval, user_object: UserProfile):
         next_step = 1
     step_object = Step.objects.filter(workflow=process_object.workflow,step=next_step)
 
+    approved_str = ""
+    if approved:
+        approved_str = "Approved"
+    else:
+        approved_str = "Rejected"
+    
     Approval.objects.get_or_create(
         step=step_object.first(),
         user=user_object,
         process=process_object,
         defaults={
-        "approved":'Approved'
+        "approved": approved_str
         }
     )

@@ -30,10 +30,20 @@ class TargetCreateForm(forms.ModelForm):
     
     def __init__(self, *args, **kwargs):
         is_grade_c = kwargs.pop("is_above_grade_c", None)
+        is_appraisee = kwargs.pop("is_appraisee", None)
         super().__init__(*args, **kwargs)
 
         if not is_grade_c:
             self.fields["metric_type"].disabled = True
+        
+        if is_appraisee == True:
+            self.fields["metric_type"].disabled = True
+            self.fields["name"].disabled = True
+            self.fields["weight"].disabled = True
+            self.fields["agreed_target"].disabled = True
+            self.fields["allowable_variance"].disabled = True
+            self.fields["unit"].disabled = True
+            
 class TargetScoreForm(forms.ModelForm):
     class Meta:
         model = TargetScore

@@ -10,11 +10,13 @@ from ...forms import TargetCreateForm, TargetScoreForm
 from ...repository.kra import ActivityTargetRepository, KraActivityRepository, TargetScoreRepository
 from ...services.kra import TargetService, ActivityService, TargetScoreService
 from ...helpers.getters import get_approved_steps
+from ...helpers.setters import set_approval_process
 
 from .helper import build_payload_target, build_payload_score
 from pydantic import ValidationError
 from it.users.models import GRADE_CHOICES
 from loguru import logger
+
 
 class TargetsIndexView(TemplateView):
     template_name = 'appraisal/kra/targets/index.html'
@@ -125,8 +127,6 @@ class TargetCreateView(SuccessMessageMixin, CreateView):
     def get_success_url(self) -> str:
         if 'Save And Add Another' in self.request.POST:
             return reverse('target_create', kwargs={"activity_id": self.kwargs.get('activity_id')})
-        elif 'Save and Add Confirm' in self.request.POST:
-            return reverse('kra_detail', kwargs={"appraisal_id": self.get_activity_object["activity_object"].kra.appraisal.id})
         return reverse('target_index', kwargs={"activity_id": self.kwargs.get('activity_id')})
         
 
@@ -160,13 +160,36 @@ class TargetUpdateView(SuccessMessageMixin, UpdateView):
             "is_appraisee": is_appraisee
         }
         return data
+    
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        appraisee_object = self.get_object().activity.kra.appraisal.user
+        if appraisee_object.grade == GRADE_CHOICES[2][1]:
+            kwargs["is_above_grade_c"] = True
+        else:
+            kwargs["is_above_grade_c"] = False
+        
+        if self.approval_user_roles()["is_appraisee"]:
+            kwargs["is_appraisee"] = True
+        else:
+            kwargs["is_appraisee"] = False
+        return kwargs
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context.update(self.approval_user_roles())
         context[self.context_object_name] = context.get("form")
         context["activity_object"] = self.get_target_object.activity
+        context["target_object"] = self.get_target_object
         return context
+    
+    def set_appraisee_approval_process(self):
+        """Set the Approval Process for Appraisee to Accept KRAs"""
+        process_object  = self.get_target_object.activity.kra.appraisal.process
+        if "Accept Target" in self.request.POST:
+            set_approval_process(process_object=process_object, user_object=self.request.user)
+        if "Reject Target" in self.request.POST:
+            set_approval_process(process_object=process_object, user_object=self.request.user)
 
     def form_valid(self, form):
         try:
@@ -175,8 +198,14 @@ class TargetUpdateView(SuccessMessageMixin, UpdateView):
 
             repo = ActivityTargetRepository()
             service_handler = TargetService(target_repository=repo)
-            target_object = service_handler.update_use_case(target_obj=target_object,
+            if "Accept Target" in self.request.POST or "Reject Target" in self.request.POST:
+                target_object = service_handler.update_use_case(target_obj=target_object,
+                                                            payload=payload, is_approved=True)
+                self.set_appraisee_approval_process()
+            elif "Save And Add Another" in self.request.POST or "Save and Add Confirm" in self.request.POST:
+                target_object = service_handler.update_use_case(target_obj=target_object,
                                                             payload=payload)
+
             form.instance = target_object
         except ValidationError:
             return self.form_invalid(form)
