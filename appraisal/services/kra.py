@@ -226,3 +226,4 @@ class TargetService:
             return self.target_repository.update(target_obj=target_obj, payload=payload, is_approved=is_approved)
         except Exception as e:
             raise KRAErr(f"Failed to update target with error: {e}")
+

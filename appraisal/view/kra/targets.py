@@ -201,7 +201,10 @@ class TargetUpdateView(SuccessMessageMixin, UpdateView):
             if "Accept Target" in self.request.POST or "Reject Target" in self.request.POST:
                 target_object = service_handler.update_use_case(target_obj=target_object,
                                                             payload=payload, is_approved=True)
-                self.set_appraisee_approval_process()
+                
+                if not repo.get_unapproved_targets_by_activity(activity_object=target_object.activity).exists():
+                    # Set approval step completed if all activity targets are approved
+                    self.set_appraisee_approval_process()
             elif "Save And Add Another" in self.request.POST or "Save and Add Confirm" in self.request.POST:
                 target_object = service_handler.update_use_case(target_obj=target_object,
                                                             payload=payload)

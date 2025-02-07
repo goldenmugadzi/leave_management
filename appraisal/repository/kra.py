@@ -225,7 +225,7 @@ class ActivityTargetRepository:
             return target_object
         except Exception as e:
             raise Exception(f"Target object retrieval by PK failed with error: {e}")
-
+    
     def update(self, target_obj: Target, payload: TargetType, is_approved: bool)->Target:
         try:
             updated = False
@@ -267,6 +267,12 @@ class ActivityTargetRepository:
         except Exception as e:
             raise Exception(f"Target update Repo failed with error: {e}")
 
+    def get_unapproved_targets_by_activity(self, activity_object: Activity)->List[Target]:
+        try:
+            return Target.objects.filter(activity=activity_object, is_approved=False)
+        except Exception as e:
+            raise Exception(f"Targets retrieval by activity failed with error: {e}")
+    
 class TargetScoreRepository:
     def create(self, target_obj: Target, data: TargetScoreType)->TargetScore:
         try:
