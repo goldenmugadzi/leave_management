@@ -255,11 +255,18 @@ def view_notifications(request):
 def view_nonconformities(request):
     nonconformities = Nonconformity.objects.all()
     """Get all nonconformities and oder them by  date created in descending order"""
-    cost_center= request.user.cost_center
-    if not cost_center:
-            cost_center = CostCenter.objects.filter(code= request.user.region.code)
-    region = cost_center.get_region()
-    cost_centers = region.get_decendance()
+    try:
+        cost_center= request.user.cost_center
+        if not cost_center:
+                cost_center = CostCenter.objects.filter(code= request.user.region.code)
+        region = cost_center.get_region()
+        cost_centers = region.get_decendance()
+    except:
+        cost_centers = None
+    
+    if not cost_centers:
+        messages.error(request, "You do not have access to any cost centers. Please contact the administrator for assistance.")
+        return redirect("/")
 
     nonconformities = Nonconformity.objects.filter(created_by__cost_center__in = cost_centers).order_by("-created_at")
 
