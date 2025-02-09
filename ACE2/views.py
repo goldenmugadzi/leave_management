@@ -553,13 +553,16 @@ def upload_budgets(request):
             withdrawn = row['withdrawn']
             balance = row['balance']
 
-            # withdrawal_date = row['withdrawal_date']
-            # withdrawal_date = withdrawal_date.strip().split(" ")[0]
-            # if withdrawal_date != "NULL":
-            #
-            #     withdrawal_date = datetime.strptime(withdrawal_date, "%Y-%m-%d")
-            # else:
-            #     withdrawal_date = None
+            if not allocated:
+                allocated = 0  # Provide a default value if allocated is empty
+            if not balance:
+                balance = 0  # Provide a default value if balance is empty
+
+            try:
+                allocated = float(allocated)
+                balance = float(balance)
+            except ValueError:
+                return HttpResponse("Error: Allocated and Balance fields must be numbers")
 
             awaiting_sanctioning = row['awaiting_sanctioning']
             period = int(row['period'])
