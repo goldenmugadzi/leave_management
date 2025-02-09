@@ -22,6 +22,7 @@ from approve.views import intiate
 from it.users.models import UserProfile, Roles, Designations, Districts, Depots, Notification
 from finance.PettyCash.views import approve_step
 from finance.comparative_schedules.views import notification_update, notify_user
+from .models import AceReport as Report
 
 
 # Create your views here.
@@ -1499,3 +1500,41 @@ def transactions_view(request, budget):
     transactions = Transactions.objects.filter(budget_id=budget)
     #return an view with an html table of transactions
     return render(request, 'finance/ace2/view_all_transactions.html', {'transactions': transactions})
+
+
+@login_required
+def reports_view(request):
+    reports = Report.objects.all()
+    return render(request, 'reports/reports_index.html', {'reports': reports})
+
+@login_required
+def generate_report(request):
+    if request.method == 'POST':
+        attribute = request.POST.get('attribute')
+        value = request.POST.get('value')
+        aces = Ace2.objects.filter(**{attribute: value})
+        return render(request, 'reports/generate_report.html', {'aces': aces, 'attribute': attribute, 'value': value})
+    return render(request, 'reports/generate_report.html')
+
+@login_required
+def download_csv(request):
+    attribute = request.GET.get('attribute')
+    value = request.GET.get('value')
+    aces = Ace2.objects.filter(**{attribute: value})
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="report.csv"'
+    writer = csv.writer(response)
+    writer.writerow(['Ace_id', 'details_of_expenditure', 'requested_by', 'section', 'Date', 'Budget', 'Amount', 'approval_status'])
+    for ace in aces:
+        transaction = Transactions.objects.filter(Ace_id2=ace).first()
+        writer.writerow([
+            ace.Ace_id2,
+            ace.details_of_expenditure,
+            ace.requested_by.get_full_name() if ace.requested_by else '',
+            ace.section.section if ace.section else '',
+            ace.date_created.strftime('%Y-%m-%d') if ace.date_created else '',
+            ace.budget_id.budget_name if ace.budget_id else '',
+            ace.amount,
+            transaction.approval_status if transaction else ''
+        ])
+    return response

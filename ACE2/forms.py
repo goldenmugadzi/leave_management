@@ -328,3 +328,8 @@ class AceReportForm(forms.ModelForm):
         words = field_name.split('_')
         capitalized_words = [word.capitalize() for word in words]
         return ' '.join(capitalized_words)
+
+
+class ReportForm(forms.Form):
+    attribute = forms.ChoiceField(choices=[(field.name, field.name) for field in Ace2._meta.fields])
+    value = forms.CharField(max_length=100)

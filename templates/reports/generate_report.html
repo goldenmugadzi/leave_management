@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1 class="mb-4">Generate Report</h1>
+    <form method="post" action="{% url 'Ace:generate_report' %}">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="attribute">Attribute:</label>
+            <select name="attribute" id="attribute" class="form-control">
+                {% for field in form.fields.attribute.choices %}
+                    <option value="{{ field.0 }}">{{ field.1 }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="value">Value:</label>
+            <input type="text" name="value" id="value" class="form-control" required>
+        </div>
+        <button type="submit" class="btn btn-primary mt-3">Generate Report</button>
+    </form>
+</div>
+
+{% if aces %}
+<div class="container mt-5">
+    <h2 class="mb-4">Report Results</h2>
+    <table class="table table-bordered table-striped">
+        <thead class="thead-dark">
+            <tr>
+                <th>Ace ID</th>
+                <th>Details of Expenditure</th>
+                <th>Requested By</th>
+                <th>Section</th>
+                <th>Date</th>
+                <th>Budget</th>
+                <th>Amount</th>
+                <th>Approval Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for ace in aces %}
+            <tr>
+                <td>{{ ace.Ace_id2 }}</td>
+                <td>{{ ace.details_of_expenditure }}</td>
+                <td>{{ ace.requested_by.get_full_name }}</td>
+                <td>{{ ace.section.section }}</td>
+                <td>{{ ace.date_created }}</td>
+                <td>{{ ace.budget_id.budget_name }}</td>
+                <td>{{ ace.amount }}</td>
+                <td>{{ ace.transactions.approval_status }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <a href="{% url 'Ace:download_csv' %}" class="btn btn-success mt-3">Download CSV</a>
+</div>
+{% endif %}
+{% endblock %}
