@@ -702,7 +702,7 @@ def list_budgets(request):
     # }
     user_title = request.user.get_full_name()
     print(section_used)
-    section_budget = AssetBudget.objects.filter(region=region).order_by('period')
+    section_budget = AssetBudget.objects.filter(region=region)
     # print(section_budget)
     user_title = request.user.get_full_name()
     l = request.user.groups.values_list('name', flat=True)
@@ -1510,6 +1510,7 @@ def reports_view(request):
     reports = Report.objects.all()
     return render(request, 'reports/reports_index.html', {'reports': reports})
 
+
 @login_required
 def generate_report(request):
     if request.method == 'POST':
@@ -1519,6 +1520,7 @@ def generate_report(request):
         return render(request, 'reports/generate_report.html', {'aces': aces, 'attribute': attribute, 'value': value})
     return render(request, 'reports/generate_report.html')
 
+
 @login_required
 def download_csv(request):
     attribute = request.GET.get('attribute')
@@ -1527,7 +1529,8 @@ def download_csv(request):
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = 'attachment; filename="report.csv"'
     writer = csv.writer(response)
-    writer.writerow(['Ace_id', 'details_of_expenditure', 'requested_by', 'section', 'Date', 'Budget', 'Amount', 'approval_status'])
+    writer.writerow(
+        ['Ace_id', 'details_of_expenditure', 'requested_by', 'section', 'Date', 'Budget', 'Amount', 'approval_status'])
     for ace in aces:
         transaction = Transactions.objects.filter(Ace_id2=ace).first()
         writer.writerow([
