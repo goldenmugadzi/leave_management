@@ -251,6 +251,20 @@ def create_Ace(request):
 
                     ace_id2 = "ACE" + date + rand2
                     ace.Ace_id2 = ace_id2
+
+                    # check if ace_id2 exists
+                    ace_id2_exists = Ace2.objects.filter(Ace_id2=ace_id2).exists()
+                    # i want ths to loop till ace_id2 is unique
+                    while ace_id2_exists:
+                        rand = randrange(1, 1000)
+                        rand2 = str(rand)
+                        date = datetime.now()
+                        date = date.strftime("%Y%m%d")
+                        ace_id2 = "ACE" + date + rand2
+                        ace.Ace_id2 = ace_id2
+                        print("now trying ", ace_id2)
+                        ace_id2_exists = Ace2.objects.filter(Ace_id2=ace_id2).exists()
+
                     if designation:
                         ace.designation = designation
                     else:
