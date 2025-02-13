@@ -224,7 +224,7 @@ def create_Ace(request):
             if form.is_valid():
                 ace = form.save(commit=False)
                 # print(ace.budget_id)
-                budget = AssetBudget.objects.filter(budget_name=ace.budget_id, period=2024).first()
+                budget = AssetBudget.objects.filter(budget_name=ace.budget_id, period=2025).first()
                 # print(budget)
                 print(budget, 'budget')
                 print(ace.amount, 'amount', budget.balance, 'balance', budget.to_be_withdrawn, 'to be withdrawn')
