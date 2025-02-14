@@ -1209,4 +1209,3 @@ def tokens_reports(request):
         return render(request, "tokens/tokens_reports.html", context)
 
     return render(request, "tokens/tokens_reports.html", {"tokenFilterForm": form})
-
