@@ -11,6 +11,6 @@ urlpatterns = [
     path('update_fault/<str:eserialnumber>/', views.update_fault, name="update_fault"),
     path('table_fault/', views.show_fault, name="table_fault"),
     path('faults_datatable/', views.show_fault_datatable),
-    
+    path('upload_fault/', views.upload_fault, name='upload_fault'),
    
 ]   
