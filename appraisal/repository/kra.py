@@ -1,7 +1,7 @@
 from typing import List
 from django.core.exceptions import ObjectDoesNotExist
-from ..models import KeyResultArea, YearQuarter, Activity, Target, TargetScore, Appraisal
-from ..helpers.types.kra import KRAType, TargetType, TargetScoreType, KraRolesCreateType
+from ..models import KeyResultArea, YearQuarter, Activity, TargetScore, Appraisal
+from ..helpers.types.kra import KRAType, TargetScoreType, KraRolesCreateType
 from it.users.models import UserProfile, Application, Roles
 
 class KRARepository:
@@ -192,94 +192,14 @@ class KraActivityRepository:
             raise Exception(f"Activity object retrieval by PK failed with error: {e}")
 
 
-class ActivityTargetRepository:
-
-    def fetch_by_activity_id(self, activity_id: int)->List[Target]:
-        try:
-            queryset = Target.objects.filter(activity__id=activity_id).select_related("activity")
-            return queryset
-        except Exception as e:
-                raise Exception(f"Targets retrieval by PK failed with error: {e}")
-
-    def create(self, activity_obj: Activity, data: TargetType)->Target:
-        try:
-            obj = Target.objects.create(activity=activity_obj,
-                                        metric_type=data.metric_type,
-                                        name=data.name,
-                                        weight=data.weight,
-                                        allowable_variance=data.allowable_variance,
-                                        agreed_target=data.agreed_target,
-                                        unit=data.unit
-                                        )
-            return obj
-        except Exception as e:
-                raise Exception(f"Targets create repo failed with error: {e}")
-
-    def get_target_by_id(self, target_id: int)->Target:
-        try:
-            target_object = Target.objects.select_related('activity').filter(id=target_id).first()
-
-            if target_object is None:
-                raise Exception("Target object not found")
-
-            return target_object
-        except Exception as e:
-            raise Exception(f"Target object retrieval by PK failed with error: {e}")
-    
-    def update(self, target_obj: Target, payload: TargetType, is_approved: bool)->Target:
-        try:
-            updated = False
-            if payload.metric_type != target_obj.metric_type:
-                target_obj.metric_type = payload.metric_type
-                updated = True
-
-            if payload.name != target_obj.name:
-                target_obj.name = payload.name
-                updated = True
-
-            if payload.weight != target_obj.weight:
-                target_obj.weight = payload.weight
-                updated = True
-
-            if payload.agreed_target != target_obj.agreed_target:
-                target_obj.agreed_target = payload.agreed_target
-                updated = True
-
-            if payload.allowable_variance != target_obj.allowable_variance:
-                target_obj.allowable_variance = payload.allowable_variance
-                updated = True
-
-            if payload.unit != target_obj.unit:
-                target_obj.unit = payload.unit
-                updated = True
-                
-            if payload.unit != target_obj.unit:
-                target_obj.unit = payload.unit
-                updated = True
-            
-            if not target_obj.is_approved and is_approved:
-                target_obj.is_approved = is_approved
-                updated = True
-
-            if updated:
-                target_obj.save()
-            return target_obj
-        except Exception as e:
-            raise Exception(f"Target update Repo failed with error: {e}")
-
-    def get_unapproved_targets_by_activity(self, activity_object: Activity)->List[Target]:
-        try:
-            return Target.objects.filter(activity=activity_object, is_approved=False)
-        except Exception as e:
-            raise Exception(f"Targets retrieval by activity failed with error: {e}")
     
 class TargetScoreRepository:
-    def create(self, target_obj: Target, data: TargetScoreType)->TargetScore:
-        try:
-            obj = TargetScore.objects.create(target=target_obj, score=data.score)
-            return obj
-        except Exception as e:
-            raise Exception(f"score create repo failed with error: {e}")
+    # def create(self, target_obj: Target, data: TargetScoreType)->TargetScore:
+    #     try:
+    #         obj = TargetScore.objects.create(target=target_obj, score=data.score)
+    #         return obj
+    #     except Exception as e:
+    #         raise Exception(f"score create repo failed with error: {e}")
 
     def get_by_target_id(self, target_id: int)->TargetScore:
         try:

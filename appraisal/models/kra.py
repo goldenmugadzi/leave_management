@@ -1,61 +1,68 @@
 from django.db import models
 from helpers.models.timestamp import TimeStamp
-from django.contrib.auth import get_user_model
 from .helpers import YearQuarter
 from .appraisal import Appraisal
 
-User = get_user_model()
-
 class KeyResultArea(TimeStamp):
-    appraisal = models.ForeignKey(Appraisal, on_delete=models.RESTRICT, related_name="appraisal_kra", null=True, blank=True)
-    quarter = models.ForeignKey(YearQuarter, on_delete=models.RESTRICT)
-    created_by = models.ForeignKey(User, on_delete=models.RESTRICT)
     name = models.CharField(max_length=255)
     description = models.TextField()
     weight = models.DecimalField(max_digits=5, decimal_places=2, default=100)
 
     def __str__(self):
-        return f"{self.created_by} - {self.quarter}"
-    
-class Activity(TimeStamp):
-    kra = models.ForeignKey(KeyResultArea, on_delete=models.CASCADE)
-    name = models.CharField(max_length=255, blank=False, null=False)
-    description = models.TextField()
-    weight = models.DecimalField(max_digits=5, decimal_places=2)
-
-    def __str__(self):
         return f"{self.name}"
+
+        
+class AppraisalKra(TimeStamp):
+    appraisal = models.ForeignKey(Appraisal, on_delete=models.RESTRICT, related_name="appraisal_kra", null=True, blank=True)
+    quarter = models.ForeignKey(YearQuarter, on_delete=models.RESTRICT)
+    kra_reference = models.ForeignKey(KeyResultArea, on_delete=models.RESTRICT, related_name="kra", null=True, blank=True)
+    activity_reference = models.ForeignKey("Activity", on_delete=models.RESTRICT, related_name="activity", null=True, blank=True)
+    
+    def __str__(self):
+        return f"{self.appraisal}"
     
     class Meta:
-        verbose_name_plural = "Activities"
+        constraints = [
+            models.CheckConstraint(
+                check=(
+                    models.Q(kra_reference__isnull=False, activity_reference__isnull=True) |
+                    models.Q(kra_reference__isnull=True, activity_reference__isnull=False)
+                ),
+                name="only_one_reference_allowed"
+            )
+        ]
     
-METRIC_TYPES = [
+    
+PERFORMANCE_INDICATOR = [
         ('Quantity', 'Quantity'),
         ('Quality', 'Quality'),
         ('Timeliness', 'Timeliness'),
         ('Cost', 'Cost'),
     ]
 
-class Target(TimeStamp):
-    activity = models.ForeignKey(Activity, on_delete=models.CASCADE)
-    metric_type = models.CharField(max_length=30, choices=METRIC_TYPES, null=True, blank=True)
+class Activity(TimeStamp):
+    appraisal_kra = models.ForeignKey(AppraisalKra, on_delete=models.CASCADE)
     name = models.CharField(max_length=255, blank=False, null=False)
+    description = models.TextField()
+    performance_indicator = models.CharField(max_length=30, choices=PERFORMANCE_INDICATOR, null=True, blank=True)
     weight = models.DecimalField(max_digits=5, decimal_places=2)
-    agreed_target = models.DecimalField(max_digits=5, decimal_places=2)
-    allowable_variance = models.DecimalField(max_digits=10, decimal_places=2)
+    agreed_target = models.DecimalField(max_digits=5, decimal_places=2, default=0.0)
+    allowable_variance = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
     unit = models.CharField(max_length=30, blank=True, null=True)  
-    is_approved = models.BooleanField(default=False)
     
     def __str__(self):
-        return f"{self.activity}"
-
+        return f"{self.name}"
+    
+    class Meta:
+        verbose_name_plural = "Activities"
+    
 
 class TargetScore(TimeStamp):
-    target = models.OneToOneField(Target, on_delete=models.CASCADE)
+    activity = models.OneToOneField(Activity, on_delete=models.CASCADE)
     score = models.DecimalField(max_digits=5, decimal_places=2, default=0.0)
     comments = models.TextField()
     is_scored = models.BooleanField(default=False)
 
     def __str__(self):
-        return f"{self.target}"
+        return f"{self.activity}"
     

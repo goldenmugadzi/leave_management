@@ -6,7 +6,7 @@ from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib import messages
 from django.shortcuts import get_object_or_404
 from django.http import Http404
-from ...models import KeyResultArea, Activity, Target, Appraisal
+from ...models import KeyResultArea, Activity, Appraisal
 from ...forms import YearQuarterForm, KraCreateForm
 from ...repository.kra import KRARepository
 from ...services.kra import KRAService

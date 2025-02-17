@@ -2,10 +2,10 @@ from typing import List
 from dataclasses import dataclass
 from decimal import Decimal
 
-from ..repository.kra import KRARepository, KraActivityRepository, ActivityTargetRepository, TargetScoreRepository
+from ..repository.kra import KRARepository, KraActivityRepository, TargetScoreRepository
 from it.users.models import UserProfile
-from ..models import YearQuarter, KeyResultArea, Activity,Target, TargetScore, Appraisal
-from ..helpers.types.kra import KRAType, TargetType, TargetScoreType
+from ..models import YearQuarter, KeyResultArea, Activity, TargetScore, Appraisal
+from ..helpers.types.kra import KRAType, TargetScoreType
 from ..helpers.getters import get_actual_variance, get_within_condition, get_rating
 
 class KRAErr(Exception):
@@ -50,7 +50,7 @@ class KRAService:
 class TargetScoreService:
     target_score_repository: TargetScoreRepository
 
-    def create_use_case(self, target_obj: Target, data: TargetScoreType)->TargetScore:
+    def create_use_case(self, target_obj, data: TargetScoreType)->TargetScore:
         try:
 
             return self.target_score_repository.create(target_obj=target_obj, data=data)
@@ -199,31 +199,4 @@ class ActivityService:
             raise KRAErr(f"Failed to calculate kra weighted score with error: {e}")
 
 
-@dataclass
-class TargetService:
-    target_repository: ActivityTargetRepository
-
-    def fetch_by_activity_use_case(self, activity_id: int)->List[Target]:
-        try:
-            return self.target_repository.fetch_by_activity_id(activity_id=activity_id)
-        except Exception as e:
-            raise KRAErr(f"Retrieve all targets by activity id failed with error: {e}")
-
-    def create_use_case(self, activity_obj: Activity, payload: TargetType)->Target:
-        try:
-            return self.target_repository.create(activity_obj=activity_obj, data=payload)
-        except Exception as e:
-            raise KRAErr(f"Create failed with error: {e}")
-
-    def get_by_id_use_case(self, target_id: int)->Target:
-        try:
-            return self.target_repository.get_target_by_id(target_id=target_id)
-        except Exception as e:
-            raise KRAErr(f"Get by pk failed with error: {e}")
-
-    def update_use_case(self, target_obj: Target, payload: TargetType, is_approved=False)->Target:
-        try:
-            return self.target_repository.update(target_obj=target_obj, payload=payload, is_approved=is_approved)
-        except Exception as e:
-            raise KRAErr(f"Failed to update target with error: {e}")
 

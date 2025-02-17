@@ -34,13 +34,12 @@ class AppraisalConfig(AppConfig):
         post_migrate.connect(load_strength_weakness_handler, sender=self)
         from .signals.kra import create_kra_roles_handler
         post_migrate.connect(create_kra_roles_handler, sender=self)
-        from .signals.target import target_score_approval_post_save_handler, set_target_approval_post_save_handler
+        from .signals.target import target_score_approval_post_save_handler
         from appraisal.signals.appraisal import (create_performance_review_post_save_handler, 
                                                  create_training_development_post_save_handler, 
                                                  send_appraiser_email_post_save_handler, 
                                                  assign_appraisee_role_post_save_handler,
                                                  set_appraiser_approval_post_save_handler)
-        from appraisal.signals.kra import create_target_score_post_save_handler
         from .tasks import run_back_ground_tasks
         
         # Run tasks
