@@ -103,26 +103,25 @@
               </div>
             </div>
             <div>
-              <label
-                for="department"
-                class="block text-sm font-medium leading-6 text-gray-900"
-                >Department</label
-              >
+              <label for="department" class="block text-sm font-medium leading-6 text-gray-900">Department</label>
               <div class="mt-2">
                 <select
                   id="department"
                   name="department"
-                  value="{{zetdcAssets.department}}"
+                  value="{{ zetdcAssets.department.id }}" 
                   autocomplete="department"
                   class="mt-2 block w-full rounded-md border border-gray-200 px-2 py-2 shadow-sm outline-none focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
                 >
-                  <option>Select department</option>
+                  <option value="">Select department</option>
                   {% for section in sections %}
-                  <option value="{{ section.id }}">{{ section.section }}</option>
+                    <option value="{{ section.id }}" {% if section.id == zetdcAssets.sections.id %}selected{% endif %}>
+                      {{ section.section }}
+                    </option>
                   {% endfor %}
                 </select>
               </div>
             </div>
+            
             <div>
               <label
                 for="user"
@@ -145,26 +144,25 @@
               </div>
             </div>
             <div>
-              <label
-                for="regions"
-                class="block text-sm font-medium leading-6 text-gray-900"
-                >Region</label
-              >
+              <label for="regions" class="block text-sm font-medium leading-6 text-gray-900">Region</label>
               <div class="mt-2">
                 <select
                   id="regions"
                   name="regions"
-                  value="{{zetdcAssets.regions}}"
+                  value="{{ zetdcAssets.regions.id }}"  
                   autocomplete="regions"
                   class="mt-2 block w-full rounded-md border border-gray-200 px-2 py-2 shadow-sm outline-none focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
                 >
-                  <option>Select region</option>
+                  <option value="">Select region</option>
                   {% for region in regions %}
-                  <option value="{{ region.id }}">{{ region.region }}</option>
+                    <option value="{{ region.id }}" {% if region.id == zetdcAssets.regions.id %}selected{% endif %}>
+                      {{ region.region }}
+                    </option>
                   {% endfor %}
                 </select>
               </div>
             </div>
+            
             <div>
               <label
                 for="purchase_cost"
@@ -183,26 +181,27 @@
               </div>
             </div>
             <div>
-              <label
-                for="designations"
-                class="block text-sm font-medium leading-6 text-gray-900"
-                >Designation</label
-              >
+              <label for="designations" class="block text-sm font-medium leading-6 text-gray-900">
+                Designation
+              </label>
               <div class="mt-2">
                 <select
                   id="designations"
                   name="designations"
-                  value="{{zetdcAssets.designations}}"
+                  value="{{ zetdcAssets.designations }}"
                   autocomplete="designations"
                   class="mt-2 block w-full rounded-md border border-gray-200 px-2 py-2 shadow-sm outline-none focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
                 >
-                  <option>Select Designation</option>
+                  <option value="">Select Designation</option>
                   {% for designation in designations %}
-                  <option value="{{ designation.id }}">{{ designation.description }}</option>
+                  <option value="{{ designation.id }}" {% if zetdcAssets.designations == designation.id %}selected{% endif %}>
+                    {{ designation.description }}
+                  </option>
                   {% endfor %}
                 </select>
               </div>
             </div>
+            
             <div>
               <label
                 for="date_purchased"
@@ -238,26 +237,22 @@
               </div>
             </div>
             <div>
-              <label
-                for="model"
-                class="block text-sm font-medium leading-6 text-gray-900"
-                >Model</label
-              >
+              <label for="model" class="block text-sm font-medium leading-6 text-gray-900">Model</label>
               
-                <select
-                  id="model"
-                  name="model"
-                  class="mt-2 block w-full rounded-md border border-gray-200 px-2 py-2 shadow-sm outline-none focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
-                >
-                  <option>Select Status</option>
-                  <option value="laptop" {% if zetdcAssets.model == "laptop" %}selected{% endif %}>laptop</option>
-                  <option value="printer" {% if zetdcAssets.model== "printer" %}selected{% endif %}>printer</option>
-                  <option value="desktop" {% if zetdcAssets.model == "desktop" %}selected{% endif %}>desktop</option>
-                  <option value="switch" {% if zetdcAssets.model == "switch" %}selected{% endif %}>switch</option>
-                  <option value="router" {% if zetdcAssets.model== "router" %}selected{% endif %}>router</option>
-                </select>
-              </div>
+              <select
+                id="model"
+                name="model"
+                class="mt-2 block w-full rounded-md border border-gray-200 px-2 py-2 shadow-sm outline-none focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+              >
+                <option value="">Select Model</option>
+                <option value="laptop" {% if zetdcAssets.model == "laptop" %}selected{% endif %}>laptop</option>
+                <option value="printer" {% if zetdcAssets.model == "printer" %}selected{% endif %}>printer</option>
+                <option value="desktop" {% if zetdcAssets.model == "desktop" %}selected{% endif %}>desktop</option>
+                <option value="switch" {% if zetdcAssets.model == "switch" %}selected{% endif %}>switch</option>
+                <option value="router" {% if zetdcAssets.model == "router" %}selected{% endif %}>router</option>
+              </select>
             </div>
+            
 
               {% comment %} <div class="col-md-4 pr-md-1">
                 <div class="form-group">

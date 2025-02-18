@@ -88,13 +88,14 @@
                 <select
                   id="regions"
                   name="regions"
-                  value="{{employee.regions}}"
                   autocomplete="regions"
                   class="mt-2 block w-full rounded-md border border-gray-200 px-2 py-2 shadow-sm outline-none focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
                 >
                   <option>Select region</option>
                   {% for region in regions %}
-                  <option value="{{ region.id }}">{{ region.region }}</option>
+                    <option value="{{ region.id }}" {% if region.id == employee.regions.id %}selected{% endif %}>
+                      {{ region.region }}
+                    </option>
                   {% endfor %}
                 </select>
               </div>
@@ -127,13 +128,14 @@
                 <select
                   id="department"
                   name="department"
-                  value="{{employee.department}}"
                   autocomplete="department"
                   class="mt-2 block w-full rounded-md border border-gray-200 px-2 py-2 shadow-sm outline-none focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
                 >
                   <option>Select department</option>
                   {% for section in sections %}
-                  <option value="{{ section.id }}">{{ section.section }}</option>
+                    <option value="{{ section.id }}" {% if section.id == employee.sections.id %}selected{% endif %}>
+                      {{ section.section }}
+                    </option>
                   {% endfor %}
                 </select>
               </div>

@@ -182,7 +182,7 @@ def update_fault(request, eserialnumber):
 
     if request.method == 'POST':
         region_id = request.POST.get('regions')
-        section_id = request.POST.get('sections')
+        section_id = request.POST.get('department')  # Change to 'department' instead of 'sections'
         user_id = request.POST.get('eUsername') 
 
         try:
@@ -193,9 +193,10 @@ def update_fault(request, eserialnumber):
             messages.error(request, "Invalid region, section, or user.")
             return redirect('update_fault', eserialnumber=eserialnumber)
 
+        # Now that section is being retrieved by id, update department properly
         employee.userprofile = user 
         employee.efault = request.POST['efault']
-        employee.department = section.section_name if section else None 
+        employee.department = section.id if section else employee.department  # Set department correctly
         employee.ephoneextension = request.POST['ephoneextension']
         employee.erepairstatus = request.POST['erepairstatus']
         employee.regions = region
@@ -203,22 +204,24 @@ def update_fault(request, eserialnumber):
         employee.eupdatedby = request.user
         employee.comment = request.POST['comment']
         employee.elastupdate = datetime.now()
+
+        # Save the employee, including department from form submission
         employee.save()
 
         messages.success(request, "Fault updated successfully!")
         return redirect('table_fault')
+
     initial_data = {
         'eserialnumber': employee.eserialnumber,
         'eUsername': employee.userprofile.id if employee.userprofile else None,
         'efault': employee.efault,
-        'department': employee.department, 
+        'department': employee.department,  # Ensure this is populated with current department
         'ephoneextension': employee.ephoneextension,
         'erepairstatus': employee.erepairstatus,
         'regions': employee.regions.id if employee.regions else None, 
         'sections': employee.sections.id if employee.sections else None,
         'comment': employee.comment,
     }
-
 
     form = EmployeeForm(instance=employee, initial=initial_data)
 
@@ -228,7 +231,9 @@ def update_fault(request, eserialnumber):
         'regions': regions,
         'sections': sections,
         'form': form, 
-    })  
+    })
+
+ 
 
 def notify_fault_update(request, employee):
    
