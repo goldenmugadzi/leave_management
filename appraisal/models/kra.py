@@ -6,7 +6,7 @@ from .appraisal import Appraisal
 class KeyResultArea(TimeStamp):
     name = models.CharField(max_length=255)
     description = models.TextField()
-    weight = models.DecimalField(max_digits=5, decimal_places=2, default=100)
+    weight = models.DecimalField(max_digits=5, decimal_places=2, default=0.0)
 
     def __str__(self):
         return f"{self.name}"
@@ -15,8 +15,8 @@ class KeyResultArea(TimeStamp):
 class AppraisalKra(TimeStamp):
     appraisal = models.ForeignKey(Appraisal, on_delete=models.RESTRICT, related_name="appraisal_kra", null=True, blank=True)
     quarter = models.ForeignKey(YearQuarter, on_delete=models.RESTRICT)
-    kra_reference = models.ForeignKey(KeyResultArea, on_delete=models.RESTRICT, related_name="kra", null=True, blank=True)
-    activity_reference = models.ForeignKey("Activity", on_delete=models.RESTRICT, related_name="activity", null=True, blank=True)
+    key_result_area = models.ForeignKey(KeyResultArea, on_delete=models.RESTRICT, related_name="key_result_area", null=True, blank=True)
+    supervisor_activity = models.ForeignKey("Activity", on_delete=models.RESTRICT, related_name="activity", null=True, blank=True)
     
     def __str__(self):
         return f"{self.appraisal}"
@@ -25,8 +25,8 @@ class AppraisalKra(TimeStamp):
         constraints = [
             models.CheckConstraint(
                 check=(
-                    models.Q(kra_reference__isnull=False, activity_reference__isnull=True) |
-                    models.Q(kra_reference__isnull=True, activity_reference__isnull=False)
+                    models.Q(key_result_area__isnull=False, supervisor_activity__isnull=True) |
+                    models.Q(key_result_area__isnull=True, supervisor_activity__isnull=False)
                 ),
                 name="only_one_reference_allowed"
             )
