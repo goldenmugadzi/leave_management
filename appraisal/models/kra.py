@@ -4,6 +4,7 @@ from .helpers import YearQuarter
 from .appraisal import Appraisal
 
 class KeyResultArea(TimeStamp):
+    appraisal = models.ForeignKey(Appraisal, on_delete=models.RESTRICT, related_name="user_kra_appraisal", null=True, blank=True)
     name = models.CharField(max_length=255)
     description = models.TextField()
     weight = models.DecimalField(max_digits=5, decimal_places=2, default=0.0)
@@ -13,7 +14,7 @@ class KeyResultArea(TimeStamp):
 
         
 class AppraisalKra(TimeStamp):
-    appraisal = models.ForeignKey(Appraisal, on_delete=models.RESTRICT, related_name="appraisal_kra", null=True, blank=True)
+    appraisal = models.ForeignKey(Appraisal, on_delete=models.RESTRICT, related_name="appraisal_kra_user_appraisal", null=True, blank=True)
     quarter = models.ForeignKey(YearQuarter, on_delete=models.RESTRICT)
     key_result_area = models.ForeignKey(KeyResultArea, on_delete=models.RESTRICT, related_name="key_result_area", null=True, blank=True)
     supervisor_activity = models.ForeignKey("Activity", on_delete=models.RESTRICT, related_name="activity", null=True, blank=True)

@@ -15,9 +15,9 @@ class KRAErr(Exception):
 class KRAService:
     kra_repo: KRARepository
 
-    def create_use_case(self, quarter_obj: YearQuarter, creator_obj: UserProfile, appraisal_obj: Appraisal, data: KRAType)->KeyResultArea:
+    def create_use_case(self, appraisal_object: Appraisal, data: KRAType)->KeyResultArea:
         try:
-            obj = self.kra_repo.create(quarter_obj=quarter_obj, creator_obj=creator_obj, data=data, appraisal_obj=appraisal_obj)
+            obj = self.kra_repo.create(appraisal_obj=appraisal_obj, data=data)
             return obj
         except Exception as e:
             raise KRAErr(f"Failed to create kra with error: {e}")
