@@ -1,5 +1,5 @@
 from django import forms
-from ..models import YearQuarter, KeyResultArea, Activity, TargetScore
+from ..models import YearQuarter, KeyResultArea, Activity, TargetScore, AppraisalKra
 from ..helpers.types.kra import RoleFilterChoices
 from datetime import datetime
 
@@ -36,3 +36,8 @@ class AppraisalRoleFilterForm(forms.Form):
         label="Role Filter",
         widget=forms.Select(attrs={'class': 'form-control'}),
     )
+    
+class AppraisalKraForm(forms.ModelForm):
+    class Meta:
+        model = AppraisalKra
+        fields = ["quarter", "activity_reference", "appraisal"]

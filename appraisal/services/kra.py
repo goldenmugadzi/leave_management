@@ -2,7 +2,7 @@ from typing import List
 from dataclasses import dataclass
 from decimal import Decimal
 
-from ..repository.kra import KRARepository, KraActivityRepository, TargetScoreRepository
+from ..repository.kra import KRARepository, KraActivityRepository, TargetScoreRepository, AppraisalKraRepository
 from it.users.models import UserProfile
 from ..models import YearQuarter, KeyResultArea, Activity, TargetScore, Appraisal
 from ..helpers.types.kra import KRAType, TargetScoreType
@@ -27,7 +27,7 @@ class KRAService:
             return self.kra_repo.retrieve(quarter_number=quarter_number, year_number=year_number)
         except Exception as e:
             raise KRAErr(f"Retrieve all kra failed with error: {e}")
-    
+
     def fetch_by_quarter_year_appraisal_pk_use_case(self, quarter_number: int, year_number: int, appraisal_id: int)->List[KeyResultArea]:
         try:
             return self.kra_repo.retrieve_quarter_appraisal_id(quarter_number=quarter_number, year_number=year_number, appraisal_id=appraisal_id)
@@ -136,7 +136,7 @@ class TargetScoreService:
         except Exception as e:
             raise KRAErr(f"Failed to calculate activity score with error: {e}")
 
-    
+
 @dataclass
 class ActivityService:
     activity_repo: KraActivityRepository
@@ -198,5 +198,18 @@ class ActivityService:
         except Exception as e:
             raise KRAErr(f"Failed to calculate kra weighted score with error: {e}")
 
+@dataclass
+class AppraisalKraService:
+    repo: AppraisalKraRepository
 
+    def create_use_case(self, appraisal_object: Appraisal, quarter_obj: YearQuarter, kra_obj: KeyResultArea=None, activity_object: Activity=None):
+        try:
+            return self.repo.create(appraisal_object=appraisal_object, quarter_obj=quarter_obj, kra_obj=kra_obj, activity_object=activity_object)
+        except Expeption as e:
+            raise KRAErr(f"Failed to create appraisal kra with error: {e}")
 
+    def fetch_by_quarter_year_appraisal_pk_use_case(self, quarter_number: int, year_number: int, appraisal_id: int):
+        try:
+            return self.repo.retrieve_quarter_appraisal_id(quarter_number=quarter_number, year_number=year_number, appraisal_id=appraisal_id)
+        except Exception as e:
+            raise KRAErr(f"Retrieve all appraisal kra failed with error: {e}")

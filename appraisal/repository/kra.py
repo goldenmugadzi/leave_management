@@ -1,6 +1,6 @@
 from typing import List
 from django.core.exceptions import ObjectDoesNotExist
-from ..models import KeyResultArea, YearQuarter, Activity, TargetScore, Appraisal
+from ..models import KeyResultArea, YearQuarter, Activity, TargetScore, Appraisal, AppraisalKra
 from ..helpers.types.kra import KRAType, TargetScoreType, KraRolesCreateType
 from it.users.models import UserProfile, Application, Roles
 
@@ -137,6 +137,34 @@ class KRARepository:
             raise Exception(f"KRA update Repo failed with error: {e}")
 
 
+class AppraisalKraRepository:
+    def create(self, appraisal_object: Appraisal, quarter_obj: YearQuarter, kra_obj: KeyResultArea=None, activity_object=None)->AppraisalKra:
+        try:
+            return AppraisalKra.objects.create(appraisal=appraisal_object, quarter=quarter_obj, kra_reference=kra_obj, activity_reference=activity_object)
+        except Exception as e:
+            raise Exception(f"AppraisalKra Create Repo failed with error: {e}")
+    
+    def retrieve_quarter_appraisal_id(self, quarter_number: int, year_number: int, appraisal_id: int)->List[AppraisalKra]:
+            """
+                Retrieves a list of KRAs for a specified quarter and year and appraisal pk.
+
+                Args:
+                    quarter_number (int): The quarter number (e.g., 1 for Q1, 2 for Q2).
+                    year_number (int): The year number (e.g., 2024).
+
+                Returns:
+                    List[KeyResultArea]: A list of KeyResultArea objects matching the specified quarter and year.
+
+                Raises:
+                    Exception: If the retrieval operation fails.
+            """
+            try:
+                queryset = AppraisalKra.objects.filter(quarter__year=year_number, quarter__quarter=quarter_number, appraisal__id=appraisal_id)
+                return queryset
+            except Exception as e:
+                raise Exception(f"KRA retrieve by quarter and year failed with error: {e}")
+
+    
 class KraActivityRepository:
     def create(self, kra_obj: KeyResultArea, data: KRAType)->Activity:
         try:

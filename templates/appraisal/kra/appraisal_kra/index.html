@@ -1,0 +1,121 @@
+{% extends "admin_layout.html" %}
+{% load quarter %}
+{% load static %}
+{% load crispy_forms_tags %}
+{% load kra_calculations %}
+{% load kra_permissions %}
+
+{% block content %}
+  {% include "../../approval/detail.html" %}
+  <div class="content-wrapper">
+    <div class="grid grid-cols-1">
+      <div class="bg-gulf-blue-100 shadow-lg rounded-lg p-6">
+        <div class="flex justify-between">
+            <div>
+              <h1 class="font-bold">Key Result Area</h1>
+              <p class="text-sm text-muted">Key Result Area for the {{ quarter|quarter_name }} of {{year}}</p>
+            </div>
+            <div>
+                <form>
+                    {%csrf_token%}
+                    <div class="flex mr-6">
+                        <div class="flex">
+                            <div>{{ year_quarter_form.year|as_crispy_field }}</div>
+                            <div>{{ year_quarter_form.quarter|as_crispy_field }}</div>
+                        </div>
+                        
+                        <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white px-4 mt-7 h-10 rounded">Filter</button>
+                    </div>
+                </form>
+            </div>
+            
+        </div>
+                
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-gulf-blue-100 shadow-lg rounded-lg p-6 my-6">
+        {% if is_appraiser == True %}
+            <div class="flex justify-end">
+              <a href="{% url 'appraisal_kra_create' appraisal_id %}"
+                        class="my-2 bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4">Create New</a>
+
+            </div>
+        {% endif %}
+      <div style="max-height: 280px; overflow-y: auto;">
+        <table 
+        class="w-full border border-blue-800 rounded-lg shadow-lg">
+         <thead class="bg-blue-800 text-white">
+           <tr>
+             <th class="px-6 py-3 text-left text-md font-semibold">Name</th>
+             <th class="px-6 py-3 text-left text-md font-semibold">Weight</th>
+             <th class="px-6 py-3 text-left text-md font-semibold">Average Weighted Score</th>
+             <th></th>
+           </tr>
+         </thead>
+         <tbody class="divide-y divide-blue-300 bg-blue-50">
+           {% for kra_obj in kra_objects %}
+           <tr class="hover:bg-blue-100">
+             <td class="px-6 py-4 text-md text-blue-900 truncate max-w-xs">{{kra_obj.name}}</td>
+             <td class="px-6 py-4 text-md text-blue-900">{{kra_obj.weight}}</td>
+             <td class="px-6 py-4 text-md text-blue-900">{{kra_obj.id|get_kra_average_weighted_score}}</td>
+             <td>
+               <div class="flex gap-2 justify-center">
+                <a 
+                  href="{% url 'kra_activity_index' kra_obj.id %}" 
+                  class="rounded-2xl bg-blue-500 block px-4 py-2 text-sm text-white hover:bg-blue-700" 
+                >
+                  Activities
+                </a>
+                <a 
+                  href="{% url 'kra_detail' kra_obj.appraisal.id %}" 
+                  class="rounded-2xl bg-blue-500 block px-4 py-2 text-sm text-white hover:bg-blue-700" 
+                >
+                  View
+                </a>
+                {% if is_appraiser == True %}
+                  <a 
+                    href="{% url 'kra_update' kra_obj.id %}" 
+                    class="rounded-2xl bg-blue-500 block px-4 py-2 text-sm text-white hover:bg-blue-700" 
+                  >
+                    Update
+                  </a>
+                {% endif %}
+
+               </div>
+             </td>
+             
+   
+           </tr>
+          {% endfor %}
+         </tbody>
+       </table>
+
+      </div>
+    </div>
+  </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Function to toggle the dropdown visibility
+  function toggleDropdown(kraId) {
+    const dropdownMenu = document.getElementById(`dropdownMenu-${kraId}`);
+     if (dropdownMenu) {  
+    dropdownMenu.classList.toggle('hidden');
+  }
+  }
+
+  // Close the dropdown when clicking outside
+  window.addEventListener('click', function(event) {
+    const dropdowns = document.querySelectorAll("[id^='dropdownMenu-']");
+    dropdowns.forEach(dropdown => {
+      if (!dropdown.contains(event.target) && !event.target.matches('button')) {
+        dropdown.classList.add('hidden');
+      }
+    });
+  });
+</script>
+
+{% endblock %}
