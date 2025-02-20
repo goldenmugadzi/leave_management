@@ -6,9 +6,11 @@ from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib import messages
 from django.shortcuts import get_object_or_404
 from django.http import Http404
+from django.http import JsonResponse, HttpResponse
 from ...models import KeyResultArea, Activity, Appraisal
 from ...forms import YearQuarterForm, KraCreateForm
 from ...repository.kra import KRARepository
+from ...repository.appraisal import AppraisalRepository
 from ...services.kra import KRAService
 from .helper import build_payload
 from ...helpers.getters import get_approved_steps
@@ -16,7 +18,53 @@ from datetime import datetime
 from pydantic import ValidationError
 from approve.forms import ApprovalForm
 from approve.models import Step, Approval
+
 from ...helpers.types.kra import KraRolesType
+from loguru import logger
+class KRACreateView(CreateView):
+    """View for creating new Kra"""
+    model = KeyResultArea
+    form_class = KraCreateForm
+    template_name = 'appraisal/kra/create_update.html'
+    success_message = 'Key Result Area created successfully'
+    context_object_name = "kra_form"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context[self.context_object_name] = context.get("form")
+        context["appraisal_id"] = self.kwargs.get("appraisal_id")
+        return context
+    
+    def get_appraisal_object(self):
+        repo = AppraisalRepository()
+        qr = repo.get_appraisal_by_pk(appraisal_id=self.kwargs.get("appraisal_id"))
+        
+        if qr.exists():
+            return qr.first()
+        raise Http404("Appraisal not found")
+    
+    def form_valid(self, form):
+        try:
+            # Build payload
+            payload = build_payload(request=self.request, form=form)
+            
+            # Call the service to create KRA
+            repo = KRARepository()
+            service_handler = KRAService(kra_repo=repo)
+            kra_object = service_handler.create_use_case(appraisal=self.get_appraisal_object(), data=payload)
+            form.instance = kra_object
+        except ValidationError:
+            # Errors are already handled in build_payload
+            return self.form_invalid(form)
+        except Exception as e:
+            logger.error(f"Failed to create kra with error: {e}")
+            messages.error(self.request, f"An unexpected error occurred, please try again")
+            return self.form_invalid(form)
+        
+        # JSON response that inject JavaScript to close the popup and refresh the parent
+        js_injector = "<script>opener.refreshKraDropdown(); window.close();</script>"
+        return HttpResponse(js_injector)
+
 
 class KRATemplateView(TemplateView):
     template_name = 'appraisal/kra/index.html'
@@ -87,51 +135,6 @@ class KRATemplateView(TemplateView):
         return context
     
 
-class KRACreateView(SuccessMessageMixin,CreateView):
-    model = KeyResultArea
-    form_class = KraCreateForm
-    template_name = 'appraisal/kra/create_update.html'
-    success_message = 'Key Result Area created successfully'
-    context_object_name = "kra_form"
-    
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context[self.context_object_name] = context.get("form")
-        return context
-    
-    def get_appraisa_object(self):
-        obj = get_object_or_404(Appraisal, id=self.kwargs.get("appraisal_id"))
-        return obj
-    
-    def form_valid(self, form):
-        try:
-            # Build payload
-            payload = build_payload(request=self.request, form=form)
-            
-            # Call the service to create KRA
-            repo = KRARepository()
-            service_handler = KRAService(kra_repo=repo)
-            
-            kra_object = service_handler.create_use_case(
-                quarter_obj=form.cleaned_data.get('quarter'),
-                creator_obj=self.request.user,
-                appraisal_obj=self.get_appraisa_object(),
-                data=payload
-            )
-            form.instance = kra_object
-        except ValidationError as e:
-            # Errors are already handled in build_payload
-            return self.form_invalid(form)
-        except Exception as e:
-            messages.error(self.request, f"An unexpected error occurred, please try again")
-            return self.form_invalid(form)
-        
-        return super().form_valid(form)
-    
-    def get_success_url(self) -> str:
-        return reverse('kra_index', kwargs={"appraisal_id": self.kwargs.get("appraisal_id")})
-    
-    
 class KRAUpdateView(SuccessMessageMixin, UpdateView):
     model = KeyResultArea
     form_class = KraCreateForm
@@ -257,3 +260,15 @@ class KRADetailView(TemplateView):
         context["kra_object"] = self.get_object()
         context["activities_with_targets"] = self.get_activities_with_targets()
         return context
+    
+    
+def kra_list_api(request, appraisal_id):
+    """
+    API endpoint to retrieve a list of all KRA by their pk.
+
+    Returns:
+        JsonResponse
+    
+    """
+    kra = KeyResultArea.objects.filter(appraisal_id__id=appraisal_id).values("id", "name", "created_date").order_by("-created_date")
+    return JsonResponse(list(kra), safe=False)

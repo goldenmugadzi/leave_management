@@ -5,20 +5,35 @@
 <div class="container my-4">
         <form method="post">
             {%csrf_token%}
-            <div class="flex flex-col gap-6">
-                <div class="flex gap-2">
+            {{ appraisal_kra_form.quarter|as_crispy_field }}
+            <div class="flex gap-6 mt-6">
                     <div 
-                        class="flex-1 px-2 w-80 shadow-xl rounded-lg border-2"
+                        class="flex-1 w-80"
                         >
-                            {{ appraisal_kra_form.quarter|as_crispy_field }}
+                            {{ appraisal_kra_form.supervisor_activity|as_crispy_field }}
                     </div>
-                    <div 
-                        class="flex-1 px-2 w-80 shadow-xl rounded-lg border-2"
-                        >
-                            {{ appraisal_kra_form.activity_reference|as_crispy_field }}
+                    <div class="flex-1">
+                        <div class="flex justify-between gap-2">
+                            <div 
+                                class="flex-1 px-2 w-80"
+                                >
+                                    {{ appraisal_kra_form.key_result_area|as_crispy_field }}
+                            </div>
+                            <div class="mt-7">
+                                <a 
+                                    href="{% url 'kra_create' appraisal_id %}"
+                                    onclick="window.open(this.href, 'kra_popup', 'width=600,height=400'); return false;"
+                                    data-pop="yes"
+                                    title="Add another kra"
+                                    class="bg-blue-500 hover:bg-blue-700 inline-block rounded-xl text-white p-2"
+                                >
+                                    Add KRA
+                                </a>
+                            </div>
+    
+                        </div>
                     </div>
 
-                </div>
                 
             </div>
             <div class="flex justify-center my-2">
@@ -28,3 +43,38 @@
          
 </div>
 {% endblock %}
+{% block scripts %}
+<script>
+    // Refreshes all kra dropdowns in formsets with updated kra options from the server.
+    function refreshKraDropdown() {
+        // get all kra dropdowns in formsets
+        const kraDropdowns = document.querySelectorAll("select[id^='id_key_result_area']");
+    // Fetch updated list of kra
+    fetch("{% url 'kra_list_api' appraisal_id  %}")
+        .then(response => response.json())
+        .then(data => {
+            // Iterate through each dropdown and update its options
+            kraDropdowns.forEach(kraDropdown => {
+                kraDropdown.innerHTML = ""; // Clear current options
+                
+                // Populate with new options
+                data.forEach((kra, index) => {
+                    const option = document.createElement("option");
+                    option.value = kra.id;
+                    option.textContent = kra.name;
+
+                    // Set the first item as the default and disable the dropdown
+                    if (index === 0) {
+                        option.selected = true;
+                        kraDropdown.disabled = true;
+                    }
+
+                    kraDropdown.appendChild(option);
+                });
+            });
+        })
+        .catch(error => console.error('Error refreshing experience dropdown:', error));
+    }
+
+</script>
+{% endblock scripts %}

@@ -9,6 +9,7 @@ from django.http import Http404
 from ...models import KeyResultArea, AppraisalKra, Appraisal
 from ...forms import YearQuarterForm, AppraisalKraForm
 from ...repository.kra import AppraisalKraRepository
+from ...repository.appraisal import AppraisalRepository
 from ...services.kra import AppraisalKraService
 from ...helpers.getters import get_approved_steps
 from ...repository import UserQualificationRepository, AppraisalExperienceRepository, ExperienceRepository, AppraisalRepository
@@ -88,3 +89,52 @@ class AppraisalKraCreateView(SuccessMessageMixin, CreateView):
     template_name = 'appraisal/kra/appraisal_kra/create_update.html'
     success_message = 'Key Result Area created successfully'
     context_object_name = "appraisal_kra_form"
+
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context[self.context_object_name] = context.get("form")
+        context["appraisal_id"] = self.kwargs.get("appraisal_id")
+        return context
+    
+    def get_appraisal_object(self):
+        qr = AppraisalRepository().get_appraisal_by_pk(appraisal_id=self.kwargs.get("appraisal_id"))
+        if qr.exists():
+            return qr.first()
+        return Http404("Appraisal not found")
+    
+    def post(self, request, *args, **kwargs):
+        """
+        Handle POST requests: instantiate a form instance with the passed
+        POST variables and then check if it's valid.
+        """
+        form = self.get_form()
+        if form.is_valid():
+            return self.form_valid(form)
+        else:
+            return self.form_invalid(form)
+        
+    def form_invalid(self, form):
+        self.object = None  
+        messages.error(self.request, "A Key Result Area (KRA) or a Supervisor Activity is required. Please provide at least one to proceed.")
+        return self.render_to_response(self.get_context_data(form=form))
+    
+    def form_valid(self, form):
+        kra_obj = form.cleaned_data.get("key_result_area")
+        supervisor_activity_obj = form.cleaned_data.get("supervisor_activity")
+        
+        if (kra_obj is None and supervisor_activity_obj is None) or (kra_obj is not None and supervisor_activity_obj is not None):
+            return self.form_invalid(form)
+        
+        quarter_year_obj = form.cleaned_data.get("quarter")
+        try:
+            appraisal_kra_object = AppraisalKraRepository().create(appraisal_object=self.get_appraisal_object(), quarter_obj=quarter_year_obj, kra_obj=kra_obj, activity_object=supervisor_activity_obj)
+            form.instance = appraisal_kra_object
+        except Exception as e:
+            logger.error(f"Failed to create appraisal kra: {e}")
+            messages.error(self.request, "Something went wrong, please try again")
+        
+        return super().form_valid(form)
+    
+    def get_success_url(self):
+        return reverse('kra_index', kwargs={"appraisal_id": self.kwargs.get("appraisal_id")})

@@ -5,11 +5,12 @@ from ..helpers.types.kra import KRAType, TargetScoreType, KraRolesCreateType
 from it.users.models import UserProfile, Application, Roles
 
 class KRARepository:
-    def create(self, data: KRAType)->KeyResultArea:
+    def create(self, appraisal: Appraisal, data: KRAType)->KeyResultArea:
         """
             Creates a new KeyResultArea (KRA) record in the database.
 
             Args:
+                appraisal: Appraisal Object
                 data (KRAType): The data object containing the name, description, and weight of the KRA.
 
             Returns:
@@ -20,7 +21,7 @@ class KRARepository:
         """
 
         try:
-            return KeyResultArea.objects.create(name=data.name, description=data.description, weight=data.weight)
+            return KeyResultArea.objects.create(appraisal=appraisal, name=data.name, description=data.description, weight=data.weight)
         except Exception as e:
             raise Exception(f"KRA Create Repo failed with error: {e}")
 
