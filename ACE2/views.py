@@ -410,7 +410,7 @@ def ace_awaiting_my_action(request):
     if ace_role == "pass":
         # I want objects from 2024 upwards
 
-        for ace in Ace2.objects.filter(section=request.user.section, date_created__year__gte=2024, region=region):
+        for ace in Ace2.objects.filter(section=request.user.section, date_created__year__gte=2025, region=region):
             process = ace.process
 
             if process.approval_set.exists():
@@ -433,7 +433,7 @@ def ace_awaiting_my_action(request):
     if ace_role == "pass" and user_profile.designation.id == 65 and user_profile.region.id == 3:
         # I want objects from 2024 upwards
 
-        for ace in Ace2.objects.filter(date_created__year__gte=2024, region=region):
+        for ace in Ace2.objects.filter(date_created__year__gte=2025, region=region):
             process = ace.process
 
             if process.approval_set.exists():
