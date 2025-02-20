@@ -59,12 +59,14 @@ def Ace_detail(request, Ace_id2):
     quotations = Quotation.objects.filter(ace2=ace_item).all()
     print(quotations.count())
 
-    if ace_role == "disburse":
-        payment_mode = request.POST.get('payment_mode')
-        # print(payment_mode)
-        if payment_mode and payment_mode != '':
-            ace_item.payment_mode = payment_mode
-            ace_item.save()
+    print(ace_item.section, " section")
+
+    # if ace_role == "disburse":
+    #     payment_mode = request.POST.get('payment_mode')
+    #     # print(payment_mode)
+    #     if payment_mode and payment_mode != '':
+    #         ace_item.payment_mode = payment_mode
+    #         ace_item.save()
 
     approvalForm = None
     to = None
@@ -93,6 +95,7 @@ def Ace_detail(request, Ace_id2):
                                        approver__in=user_roles)
 
             if ace_role == "pass":
+                print(ace_item.section, " section")
 
                 if newStep and request.user.section == ace_item.section and next_step == 1:
                     approvalForm = ApprovalForm
@@ -388,6 +391,8 @@ def ace_awaiting_my_action(request):
     user_id = request.user.id
     user_profile = UserProfile.objects.filter(id=user_id).first()
     region = Regions.objects.filter(id=user_profile.region.id).first()
+    section = Sections.objects.filter(section=user_profile.section).first()
+    print(section, " section")
 
     user_groups = user_profile.groups.values_list('name', flat=True)
 
@@ -410,7 +415,7 @@ def ace_awaiting_my_action(request):
     if ace_role == "pass":
         # I want objects from 2024 upwards
 
-        for ace in Ace2.objects.filter(section=request.user.section, date_created__year__gte=2025, region=region):
+        for ace in Ace2.objects.filter(section=section, date_created__year__gte=2025, region=region):
             process = ace.process
 
             if process.approval_set.exists():
@@ -489,6 +494,8 @@ def view_all_aces(request):
     user_id = request.user.id
     user_profile = UserProfile.objects.filter(id=user_id).first()
     region = Regions.objects.filter(id=user_profile.region.id).first()
+    section = Sections.objects.filter(section=user_profile.section).first()
+    print(section, " section")
 
     user_groups = user_profile.groups.values_list('name', flat=True)
 
@@ -508,7 +515,7 @@ def view_all_aces(request):
     if ace_role == "create":
         aces = Ace2.objects.filter(requested_by=request.user)
     elif ace_role == "pass":
-        aces = Ace2.objects.filter(section=request.user.section)
+        aces = Ace2.objects.filter(section=section, region=region)
     else:
         print('kings')
         aces = Ace2.objects.filter(region=region)
