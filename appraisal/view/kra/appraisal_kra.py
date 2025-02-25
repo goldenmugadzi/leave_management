@@ -137,4 +137,4 @@ class AppraisalKraCreateView(SuccessMessageMixin, CreateView):
         return super().form_valid(form)
     
     def get_success_url(self):
-        return reverse('kra_index', kwargs={"appraisal_id": self.kwargs.get("appraisal_id")})
+        return reverse('appraisal_kra_index', kwargs={"appraisal_id": self.kwargs.get("appraisal_id")})

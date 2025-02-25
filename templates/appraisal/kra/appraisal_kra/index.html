@@ -55,28 +55,28 @@
            </tr>
          </thead>
          <tbody class="divide-y divide-blue-300 bg-blue-50">
-           {% for kra_obj in kra_objects %}
+           {% for appraisal_kra_obj in appraisal_kra_objects %}
            <tr class="hover:bg-blue-100">
-             <td class="px-6 py-4 text-md text-blue-900 truncate max-w-xs">{{kra_obj.name}}</td>
-             <td class="px-6 py-4 text-md text-blue-900">{{kra_obj.weight}}</td>
-             <td class="px-6 py-4 text-md text-blue-900">{{kra_obj.id|get_kra_average_weighted_score}}</td>
+             <td class="px-6 py-4 text-md text-blue-900 truncate max-w-xs">{{appraisal_kra_obj.get_name}}</td>
+             <td class="px-6 py-4 text-md text-blue-900">{{appraisal_kra_obj.get_weight}}</td>
+             <td class="px-6 py-4 text-md text-blue-900">0.0</td>
              <td>
                <div class="flex gap-2 justify-center">
                 <a 
-                  href="{% url 'kra_activity_index' kra_obj.id %}" 
+                  href="{% url 'kra_activity_index' appraisal_kra_obj.id %}" 
                   class="rounded-2xl bg-blue-500 block px-4 py-2 text-sm text-white hover:bg-blue-700" 
                 >
                   Activities
                 </a>
                 <a 
-                  href="{% url 'kra_detail' kra_obj.appraisal.id %}" 
+                  href="{% url 'kra_detail' appraisal_kra_obj.appraisal.id %}" 
                   class="rounded-2xl bg-blue-500 block px-4 py-2 text-sm text-white hover:bg-blue-700" 
                 >
                   View
                 </a>
                 {% if is_appraiser == True %}
                   <a 
-                    href="{% url 'kra_update' kra_obj.id %}" 
+                    href="{% url 'kra_update' appraisal_kra_obj.id %}" 
                     class="rounded-2xl bg-blue-500 block px-4 py-2 text-sm text-white hover:bg-blue-700" 
                   >
                     Update
