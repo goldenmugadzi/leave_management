@@ -1,7 +1,10 @@
 from django.db import models
+from django.contrib.auth import get_user_model
 from helpers.models.timestamp import TimeStamp
 from .helpers import YearQuarter
 from .appraisal import Appraisal
+
+User = get_user_model()
 
 class KeyResultArea(TimeStamp):
     appraisal = models.ForeignKey(Appraisal, on_delete=models.RESTRICT, related_name="user_kra_appraisal", null=True, blank=True)
@@ -22,6 +25,28 @@ class AppraisalKra(TimeStamp):
     def __str__(self):
         return f"{self.appraisal}"
     
+    def is_supervisor_activity(self):
+        supervisor_activity = self.supervisor_activity != None
+        return supervisor_activity
+    
+    def is_key_result_area(self):
+        key_result_area = self.key_result_area != None
+        return key_result_area
+    
+    @property
+    def get_name(self):
+        if self.is_supervisor_activity():
+            return self.supervisor_activity.name
+        if self.is_key_result_area():
+            return self.key_result_area.name
+    
+    @property  
+    def get_weight(self):
+        if self.is_supervisor_activity():
+            return self.supervisor_activity.weight
+        if self.is_key_result_area():
+            return self.key_result_area.weight
+        
     class Meta:
         constraints = [
             models.CheckConstraint(
@@ -50,6 +75,7 @@ class Activity(TimeStamp):
     agreed_target = models.DecimalField(max_digits=5, decimal_places=2, default=0.0)
     allowable_variance = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
     unit = models.CharField(max_length=30, blank=True, null=True)  
+    assigned_user = models.ForeignKey(User, on_delete=models.RESTRICT, null=True)
     
     def __str__(self):
         return f"{self.name}"
