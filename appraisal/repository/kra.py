@@ -162,6 +162,29 @@ class AppraisalKraRepository:
             except Exception as e:
                 raise Exception(f"KRA retrieve by quarter and year failed with error: {e}")
 
+    def retrieve_by_pk(self, pk: int)->AppraisalKra:
+        """
+            Retrieves a list of Appraisal Kra by primary key.
+
+            Args:
+                pk (int): The primary key of KRA.
+
+            Returns:
+                AppraisalKra: AppraisalKra object matching the specified primary key.
+
+            Raises:
+                Exception: If the retrieval operation fails.
+        """
+        try:
+            qr = AppraisalKra.objects.filter(id=pk)
+
+            if not qr.exists():
+                raise Exception("Appraisal object not found")
+
+            return qr.first()
+        except Exception as e:
+            raise Exception(f"Appraisal Kra retrieval by PK failed with error: {e}")
+
     
 class KraActivityRepository:
     def create(self, kra_obj: KeyResultArea, data: KRAType)->Activity:
@@ -170,9 +193,9 @@ class KraActivityRepository:
         except Exception as e:
             raise Exception(f"KRA Activity Create Repo failed with error: {e}")
 
-    def fetch_by_kra_id(self, kra_id: int)->List[Activity]:
+    def fetch_by_appraisal_kra_id(self, appraisal_kra_id: int)->List[Activity]:
         try:
-            queryset = Activity.objects.filter(kra__id=kra_id)
+            queryset = Activity.objects.filter(appraisal_kra_id__id=appraisal_kra_id).select_related("appraisal_kra")
             return queryset
         except Exception as e:
             raise Exception(f"KRA Activity Fetch Repo failed with error: {e}")

@@ -6,7 +6,7 @@ from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib import messages
 from ...models import Activity, KeyResultArea
 from ...forms import ActivityCreateForm
-from ...repository.kra import KRARepository, KraActivityRepository
+from ...repository.kra import KRARepository, KraActivityRepository, AppraisalKraRepository
 from ...services.kra import KRAService, ActivityService
 from ...helpers.types.kra import KRAType
 from ...helpers.getters import get_approved_steps
@@ -15,30 +15,26 @@ from .helper import build_payload
 from pydantic import ValidationError
 
 
-def get_kra_object(kra_id: int)->KeyResultArea:
-    repo = KRARepository()
-    service_handler = KRAService(kra_repo=repo)
-    return service_handler.get_kra_by_pk_use_case(kra_id=kra_id)
+def get_appraisal_kra_object(appraisal_kra_id: int)->KeyResultArea:
+    repo = AppraisalKraRepository()
+    appraisal_kra_object = repo.retrieve_by_pk(pk=appraisal_kra_id)
+    return appraisal_kra_object
 
 class KraActivityIndexTemplateView(TemplateView):
     template_name = 'appraisal/kra/activity/index.html'
 
     def get_appraisal_object(self):
-        kra_obj_id = self.kwargs.get('kra_id')
-        kra_obj = get_kra_object(kra_id=kra_obj_id)
+        kra_obj_id = self.kwargs.get('appraisal_kra_id')
+        kra_obj = get_appraisal_kra_object(appraisal_kra_id=kra_obj_id)
         if kra_obj is None:
             raise Http404("No KRA object found.")
         return kra_obj.appraisal
     
-    def get_approved_steps(self):
-        appraisal_object = self.get_appraisal_object()
-        result = get_approved_steps(process_object=appraisal_object.process)
-        return result
-
+    
     def get_activity(self):
         repo = KraActivityRepository()
         service_handler = ActivityService(activity_repo=repo)
-        queryset = service_handler.fetch_by_kra_id_use_case(kra_id=self.kwargs.get('kra_id'))
+        queryset = service_handler.fetch_by_appraisal_kra_id_use_case(appraisal_kra_id=self.kwargs.get('appraisal_kra_id'))
         data = {"activity_objects": queryset}
         return data
     
@@ -51,11 +47,10 @@ class KraActivityIndexTemplateView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        kra_obj_id = self.kwargs.get('kra_id')
+        kra_obj_id = self.kwargs.get('appraisal_kra_id')
         context.update(self.get_activity())
-        context.update(self.get_approved_steps())
         context.update(self.approval_user_roles())
-        context["kra_obj"] = get_kra_object(kra_id=kra_obj_id)
+        context["kra_obj"] = get_appraisal_kra_object(appraisal_kra_id=kra_obj_id)
         context["appraisal_object"] = self.get_appraisal_object()
         return context
 
@@ -67,21 +62,21 @@ class KraActivityCreateView(SuccessMessageMixin, CreateView):
     context_object_name = "activity_form"
 
     @property
-    def get_kra_object(self):
+    def get_appraisal_kra_object(self):
         kra_obj_id = self.kwargs.get('kra_id')
-        return get_kra_object(kra_id=kra_obj_id)
+        return get_appraisal_kra_object(kra_id=kra_obj_id)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context[self.context_object_name] = context.get("form")
-        context["kra_object"] = self.get_kra_object
+        context["kra_object"] = self.get_appraisal_kra_object
         return context
 
 
     def form_valid(self, form):
         try:
             payload = build_payload(request=self.request, form=form)
-            kra_object = self.get_kra_object
+            kra_object = self.get_appraisal_kra_object
 
             repo = KraActivityRepository()
             service_handler = ActivityService(activity_repo=repo)

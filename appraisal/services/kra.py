@@ -148,9 +148,9 @@ class ActivityService:
         except Exception as e:
             raise KRAErr(f"Failed to create kra activity with error: {e}")
 
-    def fetch_by_kra_id_use_case(self, kra_id: int)->List[Activity]:
+    def fetch_by_appraisal_kra_id_use_case(self, appraisal_kra_id: int)->List[Activity]:
         try:
-            return self.activity_repo.fetch_by_kra_id(kra_id=kra_id)
+            return self.activity_repo.fetch_by_appraisal_kra_id(appraisal_kra_id=appraisal_kra_id)
         except Exception as e:
             raise KRAErr(f"Failed to retrieve kra activities with error: {e}")
 
