@@ -1,7 +1,7 @@
 from typing import List
 from django.core.exceptions import ObjectDoesNotExist
 from ..models import KeyResultArea, YearQuarter, Activity, TargetScore, Appraisal, AppraisalKra
-from ..helpers.types.kra import KRAType, TargetScoreType, KraRolesCreateType
+from ..helpers.types.kra import KRAType, TargetScoreType, KraRolesCreateType, ActivityType
 from it.users.models import UserProfile, Application, Roles
 
 class KRARepository:
@@ -187,9 +187,19 @@ class AppraisalKraRepository:
 
     
 class KraActivityRepository:
-    def create(self, kra_obj: KeyResultArea, data: KRAType)->Activity:
+    def create(self, appraisal_kra_object: AppraisalKra, assigned_user_object: UserProfile|None, data: ActivityType)->Activity:
         try:
-            return Activity.objects.create(kra=kra_obj, name=data.name, description=data.description, weight=data.weight)
+            return Activity.objects.create(
+                appraisal_kra=appraisal_kra_object, 
+                name=data.name, 
+                description=data.description, 
+                performance_indicator=data.performance_indicator,
+                weight=data.weight,
+                agreed_target=data.agreed_target,
+                allowable_variance=data.allowable_variance,
+                unit=data.unit,
+                assigned_user=assigned_user_object,
+                )
         except Exception as e:
             raise Exception(f"KRA Activity Create Repo failed with error: {e}")
 

@@ -17,7 +17,7 @@ class KraCreateForm(forms.ModelForm):
 class ActivityCreateForm(forms.ModelForm):
     class Meta:
         model = Activity
-        exclude = ["id", "created_date", "updated", "kra"]
+        exclude = ["id", "created_date", "updated", "appraisal_kra"]
         
             
 class TargetScoreForm(forms.ModelForm):

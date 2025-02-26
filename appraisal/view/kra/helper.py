@@ -1,6 +1,6 @@
 from django.forms import BaseModelForm
 from django.contrib import messages
-from ...helpers.types.kra import KRAType, TargetScoreType
+from ...helpers.types.kra import KRAType, TargetScoreType, ActivityType
 from pydantic import ValidationError
 
 # TODO: Use Strategy Pattern to encapsulate
@@ -26,6 +26,36 @@ def build_payload(request, form: BaseModelForm) -> KRAType:
             "weight": form.cleaned_data.get("weight"),
         }
         return KRAType(**data)
+    except ValidationError as e:
+        error_message = e.errors()[0]["msg"]
+        messages.error(request, error_message)
+        raise
+    
+def build_payload_activity(request, form: BaseModelForm) -> ActivityType:
+    """
+        Constructs and returns a ActivityType payload from the cleaned data of the given form.
+
+        Args:
+            form (BaseModelForm): A Django form instance with cleaned data.
+
+        Returns:
+            ActivityType: An instance of ActivityType populated with data from the form.
+
+        Raises:
+            ValidationError: If the data provided cannot be used to construct a valid ActivityType instance.
+                The first error message is displayed to the user via Django messages framework.
+    """
+    try:
+        data = {
+            "name": form.cleaned_data.get("name"),
+            "description": form.cleaned_data.get("description"),
+            "weight": form.cleaned_data.get("weight"),
+            "performance_indicator": form.cleaned_data.get("performance_indicator"),
+            "agreed_target": form.cleaned_data.get("agreed_target"),
+            "allowable_variance": form.cleaned_data.get("allowable_variance"),
+            "unit": form.cleaned_data.get("unit"),
+        }
+        return ActivityType(**data)
     except ValidationError as e:
         error_message = e.errors()[0]["msg"]
         messages.error(request, error_message)

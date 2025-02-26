@@ -57,7 +57,6 @@ urlpatterns = [
     path('kra/<int:appraisal_id>/list', KRATemplateView.as_view(), name='kra_index'),
     path('kra/detail/<int:appraisal_id>', KRADetailView.as_view(), name='kra_detail'),
     path('kra/<int:pk>', KRAUpdateView.as_view(), name='kra_update'),
-    path('kra/<int:kra_id>/activity/new', KraActivityCreateView.as_view(), name='kra_activity_create'),
     path('kra/<int:kra_id>/activity/<int:activity_id>', KraActivityUpdateView.as_view(), name='kra_activity_update'),
     path('kra/activity/<int:activity_id>/targets/<int:target_id>/score', TargetScoreUpdateView.as_view(), name='score'),
     
@@ -65,6 +64,7 @@ urlpatterns = [
     path('kra/<int:appraisal_id>/appraisal-kra', AppraisalKraTemplateView.as_view(), name='appraisal_kra_index'),
     
     path('kra/<int:appraisal_kra_id>/activity', KraActivityIndexTemplateView.as_view(), name='kra_activity_index'),
+    path('kra/<int:appraisal_kra_id>/activity/new', KraActivityCreateView.as_view(), name='kra_activity_create'),
     
     
     # ----- api ------

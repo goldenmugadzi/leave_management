@@ -11,7 +11,7 @@ from ...services.kra import KRAService, ActivityService
 from ...helpers.types.kra import KRAType
 from ...helpers.getters import get_approved_steps
 from django.http import Http404
-from .helper import build_payload
+from .helper import build_payload_activity
 from pydantic import ValidationError
 
 
@@ -29,7 +29,6 @@ class KraActivityIndexTemplateView(TemplateView):
         if kra_obj is None:
             raise Http404("No KRA object found.")
         return kra_obj.appraisal
-    
     
     def get_activity(self):
         repo = KraActivityRepository()
@@ -63,25 +62,37 @@ class KraActivityCreateView(SuccessMessageMixin, CreateView):
 
     @property
     def get_appraisal_kra_object(self):
-        kra_obj_id = self.kwargs.get('kra_id')
-        return get_appraisal_kra_object(kra_id=kra_obj_id)
+        appraisal_kra_id = self.kwargs.get('appraisal_kra_id')
+        return get_appraisal_kra_object(appraisal_kra_id=appraisal_kra_id)
+    
+    def approval_user_roles(self)->Dict[str, bool]:
+        is_appraiser = self.request.user == self.get_appraisal_kra_object.appraisal.appraiser
+        data = {
+            "is_appraiser": is_appraiser
+        }
+        return data
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        context.update(self.approval_user_roles())
         context[self.context_object_name] = context.get("form")
-        context["kra_object"] = self.get_appraisal_kra_object
+        context["appraisal_kra_object"] = self.get_appraisal_kra_object
         return context
 
 
     def form_valid(self, form):
         try:
-            payload = build_payload(request=self.request, form=form)
-            kra_object = self.get_appraisal_kra_object
-
+            payload = build_payload_activity(request=self.request, form=form)
+            appraisal_kra_object = self.get_appraisal_kra_object
+            assigned_user = form.cleaned_data.get("assigned_user")
+            
             repo = KraActivityRepository()
             service_handler = ActivityService(activity_repo=repo)
-            activity_object = service_handler.create_use_case(kra_object=kra_object,
-                                                              data=payload)
+            activity_object = service_handler.create_use_case(
+                appraisal_kra_object=appraisal_kra_object,
+                assigned_user_object=assigned_user,
+                data=payload
+                )
             form.instance = activity_object
         except Exception:
             messages.error(self.request, f"An unexpected error occurred, please try again")
@@ -90,7 +101,7 @@ class KraActivityCreateView(SuccessMessageMixin, CreateView):
         return super().form_valid(form)
 
     def get_success_url(self) -> str:
-        return reverse('kra_activity_index', kwargs={"kra_id": self.kwargs.get('kra_id')})
+        return reverse('kra_activity_index', kwargs={"appraisal_kra_id": self.kwargs.get('appraisal_kra_id')})
 
 class KraActivityUpdateView(SuccessMessageMixin, UpdateView):
     model = Activity

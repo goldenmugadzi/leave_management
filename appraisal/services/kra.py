@@ -4,8 +4,8 @@ from decimal import Decimal
 
 from ..repository.kra import KRARepository, KraActivityRepository, TargetScoreRepository, AppraisalKraRepository
 from it.users.models import UserProfile
-from ..models import YearQuarter, KeyResultArea, Activity, TargetScore, Appraisal
-from ..helpers.types.kra import KRAType, TargetScoreType
+from ..models import YearQuarter, KeyResultArea, Activity, TargetScore, Appraisal, AppraisalKra
+from ..helpers.types.kra import KRAType, TargetScoreType, ActivityType
 from ..helpers.getters import get_actual_variance, get_within_condition, get_rating
 
 class KRAErr(Exception):
@@ -141,9 +141,9 @@ class TargetScoreService:
 class ActivityService:
     activity_repo: KraActivityRepository
 
-    def create_use_case(self, kra_object: KeyResultArea, data: KRAType)->Activity:
+    def create_use_case(self, appraisal_kra_object: AppraisalKra, assigned_user_object: UserProfile|None, data: ActivityType)->Activity:
         try:
-            obj = self.activity_repo.create(kra_obj=kra_object, data=data)
+            obj = self.activity_repo.create(appraisal_kra_object=appraisal_kra_object, assigned_user_object=assigned_user_object, data=data)
             return obj
         except Exception as e:
             raise KRAErr(f"Failed to create kra activity with error: {e}")
@@ -154,7 +154,7 @@ class ActivityService:
         except Exception as e:
             raise KRAErr(f"Failed to retrieve kra activities with error: {e}")
 
-    def update_use_case(self, activity_object: Activity, assigned_user: UserProfile, appraiser: UserProfile, data: KRAType)->Activity:
+    def update_use_case(self, activity_object: Activity, assigned_user: UserProfile, appraiser: UserProfile, data: ActivityType)->Activity:
         try:
             return self.activity_repo.update(activity_obj=activity_object, assigned_user=assigned_user, appraiser=appraiser, data=data)
         except Exception as e:

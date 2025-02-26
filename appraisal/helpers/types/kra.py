@@ -2,15 +2,13 @@ from pydantic import BaseModel, Field, field_validator
 from decimal import Decimal
 from typing import Literal, Annotated, Optional
 from enum import Enum
-
+from ...models.kra import PERFORMANCE_INDICATOR
 class KRAType(BaseModel):
     name: str = Field(..., description="The name of the KRA.")
     description: str = Field(..., description="The description of KRA.")
     weight: Annotated[Decimal, Field(max_digits=5, decimal_places=2)] = Field(
         ..., description="The weight of the KRA."
     )
-
-# MetricTypeValues = Literal[tuple(metric[1] for metric in METRIC_TYPES)]
 
 
 class TargetScoreType(BaseModel):
@@ -53,3 +51,31 @@ class RoleFilterChoices(Enum):
     @classmethod
     def choices(cls):
         return [(choice.value, choice.name.replace("_", " ").title()) for choice in cls]
+
+
+
+VALID_PERFORMANCE_INDICATORS = {choice[1] for choice in PERFORMANCE_INDICATOR}
+
+class ActivityType(BaseModel):
+    name: str = Field(..., description="The name of the activity.")
+    description: str = Field(..., description="The description of the activity.")
+    weight: Annotated[Decimal, Field(max_digits=5, decimal_places=2)] = Field(
+        ..., description="The weight of the activity."
+    )
+    performance_indicator: str = Field(..., description="The performance indicator value of the activity.")
+    allowable_variance: Annotated[Decimal, Field(max_digits=10, decimal_places=2)] = Field(
+        ..., description="The allowable variance of the Target."
+    )
+    agreed_target: Annotated[Decimal, Field(max_digits=10, decimal_places=2)] = Field(
+        ..., description="The agreed value of the Target."
+    )
+    unit: Optional[Annotated[str, Field(max_length=30)]] = Field(
+        None, description="The unit of the Target."
+    )
+
+    @field_validator("performance_indicator")
+    @classmethod
+    def validate_performance_indicator(cls, value: str):
+        if value not in VALID_PERFORMANCE_INDICATORS:
+            raise ValueError(f"Invalid performance indicator: {value}")
+        return value
