@@ -46,10 +46,9 @@ class KraActivityIndexTemplateView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        kra_obj_id = self.kwargs.get('appraisal_kra_id')
         context.update(self.get_activity())
         context.update(self.approval_user_roles())
-        context["kra_obj"] = get_appraisal_kra_object(appraisal_kra_id=kra_obj_id)
+        context["kra_obj"] = get_appraisal_kra_object(appraisal_kra_id=self.kwargs.get('appraisal_kra_id'))
         context["appraisal_object"] = self.get_appraisal_object()
         return context
 
@@ -112,10 +111,9 @@ class KraActivityUpdateView(SuccessMessageMixin, UpdateView):
 
     @property
     def get_activity_object(self):
-        repo = KraActivityRepository()
-        service_handler = ActivityService(activity_repo=repo)
         activity_obj_id = self.kwargs.get('activity_id')
-        activity_obj = service_handler.get_by_id_use_case(activity_id=activity_obj_id)
+        repo = KraActivityRepository()
+        activity_obj = repo.get_activity_by_id(activity_id=activity_obj_id)
         return activity_obj
 
     def get_object(self, queryset=None):
@@ -126,7 +124,7 @@ class KraActivityUpdateView(SuccessMessageMixin, UpdateView):
         return obj
 
     def approval_user_roles(self)->Dict[str, bool]:
-        is_appraiser = self.request.user == self.get_object().kra.appraisal.appraiser
+        is_appraiser = self.request.user == self.get_object().appraisal_kra.appraisal.appraiser
         data = {
             "is_appraiser": is_appraiser
         }
@@ -143,14 +141,13 @@ class KraActivityUpdateView(SuccessMessageMixin, UpdateView):
 
     def form_valid(self, form):
         try:
-            payload = build_payload(request=self.request, form=form)
+            payload = build_payload_activity(request=self.request, form=form)
             activity_object = self.get_activity_object
             assigned_user_object = form.cleaned_data.get('assigned_user')
-            appraiser_object = form.cleaned_data.get('appraiser')
 
             repo = KraActivityRepository()
             service_handler = ActivityService(activity_repo=repo)
-            activity_object = service_handler.update_use_case(activity_object=activity_object, assigned_user=assigned_user_object, appraiser=appraiser_object, data=payload)
+            activity_object = service_handler.update_use_case(activity_object=activity_object, assigned_user=assigned_user_object, data=payload)
             form.instance = activity_object
         except ValidationError:
             return self.form_invalid(form)
@@ -163,6 +160,5 @@ class KraActivityUpdateView(SuccessMessageMixin, UpdateView):
         """
         Redirects to the index page after successful update.
         """
-        kra_obj_id = self.kwargs.get("kra_id")
         activity_obj_id = self.kwargs.get("activity_id")
-        return reverse('kra_activity_update', kwargs={"kra_id": kra_obj_id, "activity_id": activity_obj_id})
+        return reverse('kra_activity_update', kwargs={"activity_id": activity_obj_id})

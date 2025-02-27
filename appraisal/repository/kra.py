@@ -224,20 +224,16 @@ class KraActivityRepository:
 
     def fetch_by_appraisal_kra_id(self, appraisal_kra_id: int)->List[Activity]:
         try:
-            queryset = Activity.objects.filter(appraisal_kra_id__id=appraisal_kra_id).select_related("appraisal_kra")
+            queryset = Activity.objects.filter(appraisal_kra__id=appraisal_kra_id).select_related("appraisal_kra")
             return queryset
         except Exception as e:
             raise Exception(f"KRA Activity Fetch Repo failed with error: {e}")
 
-    def update(self, activity_obj: Activity, assigned_user: UserProfile, appraiser: UserProfile, data: KRAType)->Activity:
+    def update(self, activity_obj: Activity, assigned_user: UserProfile, data: ActivityType)->Activity:
         try:
             updated = False
             if assigned_user != activity_obj.assigned_user:
                 activity_obj.assigned_user = assigned_user
-                updated = True
-
-            if appraiser != activity_obj.appraiser:
-                activity_obj.appraiser = appraiser
                 updated = True
 
             if data.name != activity_obj.name:
@@ -252,11 +248,27 @@ class KraActivityRepository:
                 activity_obj.weight = data.weight
                 updated = True
 
+            if data.performance_indicator != activity_obj.performance_indicator:
+                activity_obj.performance_indicator = data.performance_indicator
+                updated = True
+                
+            if data.agreed_target != activity_obj.agreed_target:
+                activity_obj.agreed_target = data.agreed_target
+                updated = True
+                
+            if data.allowable_variance != activity_obj.allowable_variance:
+                activity_obj.allowable_variance = data.allowable_variance
+                updated = True
+                
+            if data.unit != activity_obj.unit:
+                activity_obj.unit = data.unit
+                updated = True
+                
             if updated:
                 activity_obj.save()
             return activity_obj
         except Exception as e:
-            raise Exception(f"KRA update Repo failed with error: {e}")
+            raise Exception(f"Activity update Repo failed with error: {e}")
 
     def get_activity_by_id(self, activity_id: int)->Activity:
         try:
