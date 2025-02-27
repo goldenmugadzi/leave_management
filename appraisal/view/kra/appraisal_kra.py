@@ -81,7 +81,7 @@ class AppraisalKraTemplateView(TemplateView):
         context["appraisal_id"] = self.kwargs.get("appraisal_id")
             
         return context
-
+        
 
 class AppraisalKraCreateView(SuccessMessageMixin, CreateView):
     model = AppraisalKra
@@ -138,3 +138,55 @@ class AppraisalKraCreateView(SuccessMessageMixin, CreateView):
     
     def get_success_url(self):
         return reverse('appraisal_kra_index', kwargs={"appraisal_id": self.kwargs.get("appraisal_id")})
+    
+
+class AppraisalKraUpdateView(SuccessMessageMixin, UpdateView):
+    model = AppraisalKra
+    form_class = AppraisalKraForm
+    template_name = 'appraisal/kra/appraisal_kra/create_update.html'
+    success_message = 'Key Result Area created successfully'
+    context_object_name = "appraisal_kra_form"
+    
+    def get_object(self, queryset = ...):
+        repo = AppraisalKraRepository()
+        obj = repo.retrieve_by_pk(pk=self.kwargs.get("appraisal_kra_id"))
+        return obj
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context[self.context_object_name] = context.get("form")
+        context["appraisal_id"] = self.get_object().appraisal.id
+        return context
+    
+    def form_invalid(self, form):
+        messages.error(self.request, "A Key Result Area (KRA) or a Supervisor Activity is required. Please provide at least one to proceed.")
+        return self.render_to_response(self.get_context_data(form=form))
+    
+
+    def form_valid(self, form):
+        """
+            Processes the form when valid, builds a payload, and performs additional actions.
+        """
+        kra_obj = form.cleaned_data.get("key_result_area")
+        supervisor_activity_obj = form.cleaned_data.get("supervisor_activity")
+        
+        if (kra_obj is None and supervisor_activity_obj is None) or (kra_obj is not None and supervisor_activity_obj is not None):
+            return self.form_invalid(form)
+        
+        quarter_year_obj = form.cleaned_data.get("quarter")
+        try:
+            appraisal_kra_object = AppraisalKraRepository().update(appraisal_kra_obj=self.get_object(), quarter_obj=quarter_year_obj, kra_obj=kra_obj, activity_object=supervisor_activity_obj)
+            form.instance = appraisal_kra_object
+        except Exception as e:
+            logger.error(f"Failed to create appraisal kra: {e}")
+            messages.error(self.request, "Something went wrong, please try again")
+        
+        return super().form_valid(form)
+
+
+    def get_success_url(self) -> str:
+        """
+        Redirects to the index page after successful update.
+        """
+        kra_obj_id = self.kwargs.get("appraisal_kra_id")
+        return reverse('appraisal_kra_update', kwargs={"appraisal_kra_id": kra_obj_id})

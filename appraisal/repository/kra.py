@@ -136,7 +136,7 @@ class KRARepository:
 
 
 class AppraisalKraRepository:
-    def create(self, appraisal_object: Appraisal, quarter_obj: YearQuarter, kra_obj: KeyResultArea=None, activity_object=None)->AppraisalKra:
+    def create(self, appraisal_object: Appraisal, quarter_obj: YearQuarter, kra_obj: KeyResultArea=None, activity_object: Activity=None)->AppraisalKra:
         try:
             return AppraisalKra.objects.create(appraisal=appraisal_object, quarter=quarter_obj, key_result_area=kra_obj, supervisor_activity=activity_object)
         except Exception as e:
@@ -184,6 +184,25 @@ class AppraisalKraRepository:
             return qr.first()
         except Exception as e:
             raise Exception(f"Appraisal Kra retrieval by PK failed with error: {e}")
+
+    def update(self, appraisal_kra_obj: AppraisalKra, quarter_obj: YearQuarter, kra_obj: KeyResultArea, activity_object: Activity)->AppraisalKra:
+        try:
+            updated = False
+            if quarter_obj != appraisal_kra_obj.quarter:
+                appraisal_kra_obj.quarter = quarter_obj
+                updated = True
+            if kra_obj != appraisal_kra_obj.key_result_area:
+                appraisal_kra_obj.key_result_area = kra_obj
+                updated = True
+            if activity_object != appraisal_kra_obj.supervisor_activity:
+                appraisal_kra_obj.supervisor_activity = activity_object
+                updated = True
+
+            if updated:
+                appraisal_kra_obj.save()
+            return appraisal_kra_obj
+        except Exception as e:
+            raise Exception(f"KRA update Repo failed with error: {e}")
 
     
 class KraActivityRepository:
@@ -241,12 +260,24 @@ class KraActivityRepository:
 
     def get_activity_by_id(self, activity_id: int)->Activity:
         try:
-            activity_object = Activity.objects.select_related('kra').filter(id=activity_id).first()
+            qr = Activity.objects.filter(id=activity_id)
 
-            if activity_object is None:
+            if not qr.exists():
                 raise Exception("Activity object not found")
 
-            return activity_object
+            return qr.first()
+        except Exception as e:
+            raise Exception(f"Activity object retrieval by PK failed with error: {e}")
+
+    
+    def get_activity_by_appraisal_kra_pk(self, appraisal_kra_pk: int)->Activity:
+        try:
+            qr = Activity.objects.filter(appraisal_kra__id=appraisal_kra_pk)
+
+            if not qr.exists():
+                raise Exception("Activity object not found")
+
+            return qr.first()
         except Exception as e:
             raise Exception(f"Activity object retrieval by PK failed with error: {e}")
 
