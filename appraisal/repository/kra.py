@@ -138,7 +138,7 @@ class KRARepository:
 class AppraisalKraRepository:
     def create(self, appraisal_object: Appraisal, quarter_obj: YearQuarter, kra_obj: KeyResultArea=None, activity_object: Activity=None)->AppraisalKra:
         try:
-            return AppraisalKra.objects.create(appraisal=appraisal_object, quarter=quarter_obj, key_result_area=kra_obj, supervisor_activity=activity_object)
+            return AppraisalKra.objects.create(appraisal=appraisal_object, quarter=quarter_obj, new_kra=kra_obj, assigned_kra=activity_object)
         except Exception as e:
             raise Exception(f"AppraisalKra Create Repo failed with error: {e}")
     
@@ -191,11 +191,11 @@ class AppraisalKraRepository:
             if quarter_obj != appraisal_kra_obj.quarter:
                 appraisal_kra_obj.quarter = quarter_obj
                 updated = True
-            if kra_obj != appraisal_kra_obj.key_result_area:
-                appraisal_kra_obj.key_result_area = kra_obj
+            if kra_obj != appraisal_kra_obj.new_kra:
+                appraisal_kra_obj.new_kra = kra_obj
                 updated = True
-            if activity_object != appraisal_kra_obj.supervisor_activity:
-                appraisal_kra_obj.supervisor_activity = activity_object
+            if activity_object != appraisal_kra_obj.assigned_kra:
+                appraisal_kra_obj.assigned_kra = activity_object
                 updated = True
 
             if updated:

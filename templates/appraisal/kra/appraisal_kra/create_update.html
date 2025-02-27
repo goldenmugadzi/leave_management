@@ -10,14 +10,14 @@
                     <div 
                         class="flex-1 w-80"
                         >
-                            {{ appraisal_kra_form.supervisor_activity|as_crispy_field }}
+                            {{ appraisal_kra_form.assigned_kra|as_crispy_field }}
                     </div>
                     <div class="flex-1">
                         <div class="flex justify-between gap-2">
                             <div 
                                 class="flex-1 px-2 w-80"
                                 >
-                                    {{ appraisal_kra_form.key_result_area|as_crispy_field }}
+                                    {{ appraisal_kra_form.new_kra|as_crispy_field }}
                             </div>
                             <div class="mt-7">
                                 <a 
@@ -48,7 +48,7 @@
     // Refreshes all kra dropdowns in formsets with updated kra options from the server.
     function refreshKraDropdown() {
         // get all kra dropdowns in formsets
-        const kraDropdowns = document.querySelectorAll("select[id^='id_key_result_area']");
+        const kraDropdowns = document.querySelectorAll("select[id^='id_new_kra']");
     // Fetch updated list of kra
     fetch("{% url 'kra_list_api' appraisal_id  %}")
         .then(response => response.json())

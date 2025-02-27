@@ -19,40 +19,40 @@ class KeyResultArea(TimeStamp):
 class AppraisalKra(TimeStamp):
     appraisal = models.ForeignKey(Appraisal, on_delete=models.RESTRICT, related_name="appraisal_kra_user_appraisal", null=True, blank=True)
     quarter = models.ForeignKey(YearQuarter, on_delete=models.RESTRICT)
-    key_result_area = models.ForeignKey(KeyResultArea, on_delete=models.RESTRICT, related_name="key_result_area", null=True, blank=True)
-    supervisor_activity = models.ForeignKey("Activity", on_delete=models.RESTRICT, related_name="activity", null=True, blank=True)
+    new_kra = models.ForeignKey(KeyResultArea, on_delete=models.RESTRICT, related_name="new_kra", null=True, blank=True)
+    assigned_kra = models.ForeignKey("Activity", on_delete=models.RESTRICT, related_name="activity", null=True, blank=True)
     
     def __str__(self):
         return f"{self.appraisal}"
     
-    def is_supervisor_activity(self):
-        supervisor_activity = self.supervisor_activity != None
-        return supervisor_activity
+    def is_assigned_kra(self):
+        assigned_kra = self.assigned_kra != None
+        return assigned_kra
     
-    def is_key_result_area(self):
-        key_result_area = self.key_result_area != None
-        return key_result_area
+    def is_new_kra(self):
+        new_kra = self.new_kra != None
+        return new_kra
     
     @property
     def get_name(self):
-        if self.is_supervisor_activity():
-            return self.supervisor_activity.name
-        if self.is_key_result_area():
-            return self.key_result_area.name
+        if self.is_assigned_kra():
+            return self.assigned_kra.name
+        if self.is_new_kra():
+            return self.new_kra.name
     
     @property  
     def get_weight(self):
-        if self.is_supervisor_activity():
-            return self.supervisor_activity.weight
-        if self.is_key_result_area():
-            return self.key_result_area.weight
+        if self.is_assigned_kra():
+            return self.assigned_kra.weight
+        if self.is_new_kra():
+            return self.new_kra.weight
         
     class Meta:
         constraints = [
             models.CheckConstraint(
                 check=(
-                    models.Q(key_result_area__isnull=False, supervisor_activity__isnull=True) |
-                    models.Q(key_result_area__isnull=True, supervisor_activity__isnull=False)
+                    models.Q(new_kra__isnull=False, assigned_kra__isnull=True) |
+                    models.Q(new_kra__isnull=True, assigned_kra__isnull=False)
                 ),
                 name="only_one_reference_allowed"
             )
