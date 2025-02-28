@@ -4,7 +4,7 @@ from django.views.generic import TemplateView
 from django.views.generic.edit import CreateView, UpdateView
 from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib import messages
-from django.http import Http404
+from django.http import Http404, HttpResponseServerError
 from ...models import TargetScore
 from ...forms import TargetScoreForm
 from ...repository.kra import KraActivityRepository, TargetScoreRepository
@@ -28,9 +28,13 @@ class TargetScoreUpdateView(SuccessMessageMixin, UpdateView):
     @property
     def get_target_score_object(self):
         repo = TargetScoreRepository()
-        service_handler = TargetScoreService(target_score_repository=repo)
-        obj = service_handler.get_by_target_id_use_case(target_id=self.kwargs.get('target_id'))
-        return obj
+        try:
+            return repo.get_by_activity_id(activity_id=self.kwargs.get("activity_id"))
+        except TargetScore.DoesNotExist:
+            raise Http404("Score object not found")
+        except Exception as e:
+            logger.error(f"Update view for TargetScore with activity pk-{self.kwargs.get('activity_id')}, failed with error: {e}")
+            return HttpResponseServerError("Something went wrong, please try again.")
 
     def get_object(self, queryset=None):
         """
@@ -52,16 +56,17 @@ class TargetScoreUpdateView(SuccessMessageMixin, UpdateView):
             repo = TargetScoreRepository()
             service_handler = TargetScoreService(target_score_repository=repo)
             target_score_object = service_handler.update_use_case(target_score_obj=self.get_object(), data=payload)
+ 
             form.instance = target_score_object
         except ValidationError:
-            return self.form_invalid(form)
+            return super().form_invalid(form)
         except Exception as e:
             messages.error(self.request, f"An unexpected error occurred: {e}")
-            return self.form_invalid(form)
+            return super().form_invalid(form)
         return super().form_valid(form)
 
     def get_success_url(self) -> str:
         """
         Redirects to the index page after successful update.
         """
-        return reverse('target_index', kwargs={"activity_id": self.kwargs.get('activity_id')})
+        return reverse('score_view', kwargs={"activity_id": self.kwargs.get('activity_id')})

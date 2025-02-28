@@ -1,6 +1,7 @@
 from django import forms
 from ..models import YearQuarter, KeyResultArea, Activity, TargetScore, AppraisalKra
 from ..helpers.types.kra import RoleFilterChoices
+from it.users.models import UserProfile
 from datetime import datetime
 
 
@@ -15,6 +16,10 @@ class KraCreateForm(forms.ModelForm):
         exclude = ["id", "created_date", "updated"]
           
 class ActivityCreateForm(forms.ModelForm):
+    assigned_user = forms.ModelChoiceField(
+        queryset=UserProfile.objects.all(), 
+        required=False
+    )
     class Meta:
         model = Activity
         exclude = ["id", "created_date", "updated", "appraisal_kra"]
@@ -23,7 +28,7 @@ class ActivityCreateForm(forms.ModelForm):
 class TargetScoreForm(forms.ModelForm):
     class Meta:
         model = TargetScore
-        exclude = ["id", "created_date", "updated", "target", "is_scored"]
+        exclude = ["id", "created_date", "updated", "activity", "is_scored"]
 
 class AppraisalRoleFilterForm(forms.Form):
     

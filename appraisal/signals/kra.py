@@ -6,23 +6,24 @@ from ..helpers.types.kra import TargetScoreType
 from loguru import logger
 from django.db import transaction
 from it.users.models import Application
+from ..models import Activity
 from ..helpers.kra_roles import KraModulesRolesStrategyContext, KraModuleStrategy, ActivityModuleStrategy, TargetModuleStrategy, ScoringModuleStrategy
 
-# @receiver(post_save, sender=Target, dispatch_uid="kra-target-uid")
-# def create_target_score_post_save_handler(sender, instance, created, **kwargs):
-#     if created:
-#         try:
-#             logger.info(f"[TargetScore]: creating target({instance.name}) score target instance")
+@receiver(post_save, sender=Activity, dispatch_uid="kra-target-uid")
+def create_target_score_post_save_handler(sender, instance, created, **kwargs):
+    if created:
+        try:
+            logger.info(f"[TargetScore]: creating target({instance.name}) score target instance")
             
-#             repo = TargetScoreRepository()
-#             service_handler = TargetScoreService(target_score_repository=repo)
-#             default_values = 0.0
-#             payload = TargetScoreType(score=default_values, actual_variance=default_values)
-#             service_handler.create_use_case(target_obj=instance, data=payload)
+            repo = TargetScoreRepository()
+            service_handler = TargetScoreService(target_score_repository=repo)
+            default_values = 0.0
+            payload = TargetScoreType(score=default_values)
+            service_handler.create_use_case(activity_obj=instance, data=payload)
             
-#             logger.success(f"[TargetScore]: created score target instance for target({instance.name})")
-#         except Exception as e:
-#             logger.error(f"[TargetScore]: creating target({instance.name}), failed with error: {e} ")
+            logger.success(f"[TargetScore]: created score target instance for target({instance.name})")
+        except Exception as e:
+            logger.error(f"[TargetScore]: creating target({instance.name}), failed with error: {e} ")
    
 
 

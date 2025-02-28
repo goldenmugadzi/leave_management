@@ -296,21 +296,32 @@ class KraActivityRepository:
 
     
 class TargetScoreRepository:
-    # def create(self, target_obj: Target, data: TargetScoreType)->TargetScore:
-    #     try:
-    #         obj = TargetScore.objects.create(target=target_obj, score=data.score)
-    #         return obj
-    #     except Exception as e:
-    #         raise Exception(f"score create repo failed with error: {e}")
-
-    def get_by_target_id(self, target_id: int)->TargetScore:
+    def create(self, activity_obj: Activity, data: TargetScoreType)->TargetScore:
         try:
-            obj = TargetScore.objects.select_related('target', 'target__activity').filter(target__id=target_id).first()
-
-            if obj is None:
-                raise Exception("Target score object not found")
-
+            obj = TargetScore.objects.create(activity=activity_obj, score=data.score)
             return obj
+        except Exception as e:
+            raise Exception(f"score create repo failed with error: {e}")
+
+    def get_by_id(self, score_id: int)->TargetScore:
+        try:
+            qr = TargetScore.objects.select_related('activity').filter(id=score_id)
+
+            if not qr.exists():
+                raise TargetScore.DoesNotExist
+
+            return qr.first()
+        except Exception as e:
+            raise Exception(f"score get repo failed with error: {e}")
+    
+    def get_by_activity_id(self, activity_id: int)->TargetScore:
+        try:
+            qr = TargetScore.objects.select_related('activity').filter(activity__id=activity_id)
+
+            if not qr.exists():
+                raise TargetScore.DoesNotExist
+
+            return qr.first()
         except Exception as e:
             raise Exception(f"score get repo failed with error: {e}")
 
@@ -340,17 +351,7 @@ class TargetScoreRepository:
         except Exception as e:
             raise Exception(f"Target score update Repo failed with error: {e}")
 
-    def fetch_by_id(self, target_score_id: int) -> TargetScore:
-        try:
-            qr = TargetScore.objects.select_related('target', 'target__activity').filter(
-                id=target_score_id
-            )
-            if not qr.exists():
-                raise Exception("Target score not found")
-            return qr.first()
-        except Exception as e:
-            raise Exception(f"TargetScore fetch failed with error: {e}")
-        
+
     def get_by_id_up_to_process_obj(self, target_score_id: int) -> TargetScore:
         """
             Retrieve a TargetScore object along with related objects up to the Process level.
@@ -377,15 +378,6 @@ class TargetScoreRepository:
         except Exception as e:
             raise Exception(f"Unexpected error occurred while fetching TargetScore: {e}")
 
-    def fetch_by_activity_id(self, activity_id: int) -> List[TargetScore]:
-        try:
-            qr = TargetScore.objects.select_related('target', 'target__activity').filter(
-                target__activity__id=activity_id
-            )
-
-            return qr
-        except Exception as e:
-            raise Exception(f"TargetScore fetch failed with error: {e}")
 
 
 class KraRolesRepository:

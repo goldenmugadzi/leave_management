@@ -50,10 +50,9 @@ class KRAService:
 class TargetScoreService:
     target_score_repository: TargetScoreRepository
 
-    def create_use_case(self, target_obj, data: TargetScoreType)->TargetScore:
+    def create_use_case(self, activity_obj: Activity, data: TargetScoreType)->TargetScore:
         try:
-
-            return self.target_score_repository.create(target_obj=target_obj, data=data)
+            return self.target_score_repository.create(activity_obj=activity_obj, data=data)
         except Exception as e:
             raise KRAErr(f"Failed to create target-score with error: {e}")
 
@@ -63,9 +62,9 @@ class TargetScoreService:
         except Exception as e:
             raise KRAErr(f"Failed to update target-score with error: {e}")
 
-    def get_by_target_id_use_case(self, target_id: int)->TargetScore:
+    def get_by_id_use_case(self, score_id: int)->TargetScore:
         try:
-            return self.target_score_repository.get_by_target_id(target_id=target_id)
+            return self.target_score_repository.get_by_id(score_id=score_id)
         except Exception as e:
             raise KRAErr(f"Failed to get target-score with error: {e}")
 
