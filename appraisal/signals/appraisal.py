@@ -88,10 +88,10 @@ def create_performance_review_post_save_handler(sender, instance, created, **kwa
 def create_training_development_post_save_handler(sender, instance, created, **kwargs):
     if created:
         try:
+            training_development_repo_handler = TrainingAndDevelopmentRepository()
+            training_development_service_handler = TrainingAndDevelopmentService(training_dev_repo=training_development_repo_handler)
 
             with transaction.atomic():
-                training_development_repo_handler = TrainingAndDevelopmentRepository()
-                training_development_service_handler = TrainingAndDevelopmentService(training_dev_repo=training_development_repo_handler)
 
                 year_quarter_qr = YearQuarter.objects.filter(year=datetime.now().year)
 

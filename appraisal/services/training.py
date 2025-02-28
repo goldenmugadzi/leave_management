@@ -16,7 +16,7 @@ class TrainingAndDevelopmentService:
     def create_use_case(self, appraisal_object: Appraisal, quarter_obj: YearQuarter)->TrainingAndDevelopment:
         try:
 
-            return self.training_dev_repo.create(appraisal_object=appraisal_object, quarter=quarter_obj)
+            return self.training_dev_repo.create(appraisal_object=appraisal_object, quarter_obj=quarter_obj)
         except Exception as e:
             raise TrainingAndDevelopmentServiceErr(f"Failed to create training and development with error: {e}")
 
