@@ -92,4 +92,22 @@ class TargetScore(TimeStamp):
 
     def __str__(self):
         return f"{self.activity}"
+
+
+class AppraisalWorkflow(TimeStamp):
+    appraisal = models.ForeignKey(Appraisal, on_delete=models.RESTRICT, related_name="approval_appraisal", null=True, blank=True)
+    stage_name = models.CharField(max_length=255)
+    stage_num = models.PositiveIntegerField()
+    is_completed = models.BooleanField(default=False)
+    updated_by = models.ForeignKey(User, on_delete=models.RESTRICT, related_name="approve_user")
     
+    def __str__(self):
+        return f"Approval {self.stage_name} - {self.stage_num} for {self.appraisal}"
+    
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['appraisal', 'stage_num'],
+                name='unique_stage_per_appraisal'
+            )
+        ]
