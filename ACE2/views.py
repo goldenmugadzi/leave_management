@@ -435,9 +435,14 @@ def ace_awaiting_my_action(request):
                 aces_to_process.append(ace)
                 # remove aces that have been rejected
                 if process.approval_set.filter(approved="Rejected").exists():
+                    aces_rejected = process.approval_set.filter(approved="Rejected")
                     aces_to_process.remove(ace)
+                    #remove aces from southern region shs
+                    if ace_role == "pass" and user_profile.region.id == 4:
+                        ace = Ace2.objects.filter(date_created__year__gte=2025, region=region)
+                        aces_to_process.remove(ace)
 
-        if ace_role == "pass" and user_profile.designation.id == 65 and user_profile.region.id == 3:
+        if ace_role == "pass" and user_profile.designation.id == 65 and user_profile.region.id == 4:
             # I want objects from 2024 upwards
             print("northern sh")
 
