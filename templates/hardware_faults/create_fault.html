@@ -2,60 +2,45 @@
 {% load static %}
 {% load custom_filters %}
 {% block content %}
-    <style>
-      input[type=text], select {
-        width: 100%;
-        padding: 10px;  
-      }
-      </style>
-<div class="flex justify-center items-center min-h-screen">
-  <div class="container max-w-8xl bg-gulf-blue-200  text-gulf-blue-900 shadow-md rounded-lg p-8">
-    <div class="card" style="width: 75rem;">
-      <div class="card-body" card bg-dark>
-        <h5 class="text-2xl font-bold text-black">Create Fault</h5>
-          <p class="card-description text-base font-bold text-black mt-2">
+
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
+<script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+</script>
+ <div class="content-wrapper">
+  
+  <div class="bg-gulf-blue-100 shadow shadow-gulf-blue-300 text-gulf-blue-900 rounded px-2 py-2">
+    <form method="post" >
+      {% csrf_token %}
+      <div class="space-y-12 px-5 py-5">
+
+        <div class="mt-10 border-b border-gulf-blue-900/10 pb-12">
+          <h1 class="text-base font-semibold leading-7 text-gulf-blue-900">
+            Create Your Fault
+          </h1>
+          <p class="mt-1 text-sm leading-6 text-gulf-blue-900">
             All fields are required to be filled.
           </p>
-        <form action="" method="POST">
-          {% csrf_token %}
-          <div class="mt-10 grid grid-cols-3 gap-3">
+
+          <div class="mt-10 grid grid-cols-3 gap-4">
             <div>
               <label
                 for="serialnumber"
                 class="block text-sm font-medium leading-6 text-gray-900"
-                >Serialnumber</label
+                >Serial Number</label
               >
               <div class="mt-2">
                 <input
-                  required
                   type="text"
                   name="eserialnumber"
                   id="eserialnumber"
-                  class="block w-full bg-gulf-blue-50 rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 px-2 ring-inset ring-blue-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                  autocomplete="given-name"
+                  class="mt-2 block w-full rounded-md border border-gray-200 px-2 py-2 shadow-sm outline-none focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
                 />
               </div>
             </div>
             <div>
-              <label
-                for="user"
-                class="block text-sm font-medium leading-6 text-gray-900"
-                >Username</label
-              >
-              <div class="mt-2">
-                <select
-                  id="Username"
-                  name="eUsername"
-                  autocomplete="Username"
-                  class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 px-2 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
-                >
-                  <option>Select user</option>
-                  {% for user in users %}
-                  <option value="{{ user.id }}" {% if user.id == form.instance.eUsername %}selected{% endif %}>{{ user.get_full_name }}</option>
-                  {% endfor %}
-                </select>
-              </div>
-            </div>
-               <div>
               <label
                 for="fault"
                 class="block text-sm font-medium leading-6 text-gray-900"
@@ -63,84 +48,108 @@
               >
               <div class="mt-2">
                 <input
-                  required
                   type="text"
                   name="efault"
                   id="efault"
-                  class="block w-full bg-gulf-blue-50 rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 px-2 ring-inset ring-blue-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                  autocomplete="given-name"
+                  class="mt-2 block w-full rounded-md border border-gray-200 px-2 py-2 shadow-sm outline-none focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+                />
+              </div>
+            </div>
+            <div>
+              <label
+                for="department"
+                class="block text-sm font-medium leading-6 text-gray-900"
+                >Department</label
+              >
+              <div class="mt-2">
+                <select
+                  id="department"
+                  name="department"
+                  autocomplete="department"
+                  class="mt-2 block w-full rounded-md border border-gray-200 px-2 py-2 shadow-sm outline-none focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+                >
+                  <option>Select department</option>
+                  {% for section in sections %}
+                  <option value="{{ section.id }}">{{ section.section }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+            <div>
+              <label
+                for="Username"
+                class="block text-sm font-medium leading-6 text-gray-900"
+                >Username</label
+              >
+              <div class="mt-2">
+                <select
+                  id="eUsername"
+                  name="eUsername"
+                  class="mt-2 block w-full rounded-md border border-gray-200 px-2 py-2 shadow-sm outline-none focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+                >
+                  <option value="">Select user</option>
+                  {% for user in users %}
+                  <option value="{{ user.id }}">{{ user.first_name }} {{ user.last_name }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+            <div>
+              <label
+                for="regions"
+                class="block text-sm font-medium leading-6 text-gray-900"
+                >Region</label
+              >
+              <div class="mt-2">
+                <select
+                  id="regions"
+                  name="regions"
+                  autocomplete="regions"
+                  class="mt-2 block w-full rounded-md border border-gray-200 px-2 py-2 shadow-sm outline-none focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+                >
+                  <option>Select region</option>
+                  {% for region in regions %}
+                  <option value="{{ region.id }}">{{ region.region }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+            <div>
+              <label
+                for="phoneextension"
+                class="block text-sm font-medium leading-6 text-gray-900"
+                >Phone Extension</label
+              >
+              <div class="mt-2">
+                <input
+                  type="text"
+                  name="ephoneextension"
+                  id="ephoneextension"
+                  autocomplete="given-name"
+                  class="mt-2 block w-full rounded-md border border-gray-200 px-2 py-2 shadow-sm outline-none focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
                 />
               </div>
             </div>
           </div>
-          <div class="mt-10 grid grid-cols-3 gap-3">
-            <div>
-                <label
-                  for="ephoneextension"
-                  class="block text-sm font-medium leading-6 text-gray-900"
-                  >Phone Extension</label
-                >
-                <div class="mt-2">
-                  <input
-                    required
-                    type="text"
-                    name="ephoneextension"
-                    id="ephoneextension"
-                    class="block w-full bg-gulf-blue-50 rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 px-2 ring-inset ring-blue-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                  />
-                </div>
+            <div class="flex mt-10 px-3 py-3">
+              <div style="width: 50%;">
+                <button style="width: 100%;" class="text-sm font-semibold leading-6 text-gray-900">
+                  CANCEL
+                </button>
               </div>
-              <div>
-                <label
-                  for="repairstatus"
-                  class="block text-sm font-medium leading-6 text-gray-900"
-                  >Repair Status</label
+              <div style="width: 50%;">
+                <button
+                style="width: 100%;"
+                  type="submit"
+                  class="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
                 >
-                <div class="mt-2">
-                  <select
-                    id="erepairstatus"
-                    name="erepairstatus"
-                    class="block w-full bg-gulf-blue-50 rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 px-2 ring-inset ring-blue-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
-                  >
-                    <option>Select status</option>
-                    <option value="logged in">logged in</option>
-                    <option value="repair in progress">repair in progress</option>
-                    <option value="fixed">fixed</option>
-                    <option value="irrepairable">irrepairable</option>
-                  </select>
-                </div>
+                  SAVE USER
+                </button>
               </div>
-              <div>
-                <label
-                  for="location"
-                  class="block text-sm font-medium leading-6 text-gray-900"
-                  >Location</label
-                >
-                <div class="mt-2">
-                  <input
-                    required
-                    type="text"
-                    name="elocation"
-                    id="elocation"
-                    class="block w-full bg-gulf-blue-50 rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 px-2 ring-inset ring-blue-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                  />
-                </div>
-              </div>
-          </div>
-             
-          <div class="flex justify-end mt-10">
-            <button
-              class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-              type="submit"
-            >
-              Create Fault
-            </button>
-          </div>
-        </form>
+            </div>
+          </form>
+        </div>
       </div>
-    </div>
-  </div>
- </div>
-</div>
-{% endblock content %}
- 
-  
+      {% endblock %}
+      

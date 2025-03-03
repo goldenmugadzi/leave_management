@@ -4,72 +4,117 @@ from django.core.paginator import Paginator
 from django.http import JsonResponse
 import json, os
 from django.conf import settings
-from django.contrib.auth import get_user_model
+#from django.contrib.auth import get_user_model
 from django.db.models import Q
 import csv
 from django.http import HttpResponse
 from dateutil import parser
+from it.users.models import Regions, Sections, Designations, UserProfile
+from Asset_Register.models import ProductType, ZetdcAssets
 
-from Asset_Register.models import Designations, ProductType, Regions, Sections, ZetdcAssets
-
-User = get_user_model()
+#User = get_user_model()
 def create_asset(request):
-    print("Asset:")
+    print("Assets:")
     url_path = request.path.split("/")
+
     if request.method == 'POST':
-        product_type = request.POST['product_id']
+        product_type = request.POST['product_id']  
         asset_state = request.POST['asset_state']
         serial_number = request.POST['serial_number']
         asset_number = request.POST['asset_number']
         department = request.POST['department']
-        user = request.POST['user']
-        regions = request.POST['regions']
+        user_id = request.POST['users']  
+        region_id = request.POST['regions']
         purchase_cost = request.POST['purchase_cost']
-        designations = request.POST['designations']
+        designation_id = request.POST['designations']
         date_purchased = request.POST['date_purchased']
         warrant = request.POST['warrant']
         model = request.POST['model']
 
         print("Asset model:", model)
 
-        pd = ProductType.objects.filter(id=product_type).first()
-        rg = Regions.objects.filter(id=regions).first()
-        ds = Designations.objects.filter(id=designations).first()
-        dp = Sections.objects.filter(id=department).first()
-        sr = User.objects.filter(id=user).first()
+    
+        try:
+            product_type = ProductType.objects.get(id=product_type)
+        except ProductType.DoesNotExist:
+            print(f"ProductType with ID {product_type} does not exist.")
+            return render(request, 'asset_register/create_asset.html', {
+                "url_path": url_path,
+                "error_message": "Invalid Product Type."
+            })
+
+        
+        try:
+            user = UserProfile.objects.get(id=request.POST['users'])  
+        except UserProfile.DoesNotExist:
+            print(f"UserProfile with ID {user_id} does not exist.")
+            return render(request, 'asset_register/create_asset.html', {
+                "url_path": url_path,
+                "error_message": "Invalid User."
+            })
+        try:
+            region = Regions.objects.get(id=region_id)  
+        except Regions.DoesNotExist:
+            print(f"Regions with ID {region_id} does not exist.")
+            return render(request, 'asset_register/create_asset.html', {
+                "url_path": url_path,
+                "error_message": "Invalid Region."
+            })
+        try:
+            designation = Designations.objects.get(id=designation_id)  
+        except Designations.DoesNotExist:
+            print(f"Designations with ID {designation_id} does not exist.")
+            return render(request, 'asset_register/create_asset.html', {
+                "url_path": url_path,
+                "error_message": "Invalid Designation."
+            })
+        try:
+            section = Sections.objects.get(id=request.POST['department']) 
+
+        except (Regions.DoesNotExist, Sections.DoesNotExist):
+            #print("request.POST",regions)
+            return redirect('create_fault')
 
         um = ZetdcAssets(
-            asset_state= asset_state,
-            product_type= pd if pd else None,
-            serial_number = serial_number,
-            asset_number= asset_number,
-            department = dp if dp else None,
-            user=sr,
-            regions= rg if rg else None,
+            asset_state=asset_state,
+            product_type=product_type,  
+            serial_number=serial_number,
+            asset_number=asset_number,
+            department=department,
+            user=user,  
+            regions=region,
+            sections=section,
             purchase_cost=purchase_cost,
-            designations=ds if ds else None,
+            designations=designation,
             date_purchased=date_purchased,
             warrant=warrant,
             model=model,
-            created_at = datetime.now().date(),
-            updated_at = datetime.now().date(),
-            created_by = "Goldy",
+            created_at=datetime.now().date(),
+            updated_at=datetime.now().date(),
+            created_by="Goldy",
         )
         um.save()
 
         return render(request, 'asset_register/create_asset.html', {
                       "url_path": url_path
                       })
-    
-    regions=Regions.objects.all()
-    
-    sections=Sections.objects.all()
-    designation=Designations.objects.all()
-    
-    users=User.objects.all()
-    print('user', users)
-    product_type=ProductType.objects.all()
-    return render(request, 'asset_register/create_asset.html', {"url_path": url_path, 'regions': regions, 'sections': sections, 'designations': designation, 'product_types':product_type, 'users': users})
+
+    regions = Regions.objects.all()
+    sections = Sections.objects.all()
+    designation = Designations.objects.all()
+    users = UserProfile.objects.all()
+
+    print('users', users)
+    product_type = ProductType.objects.all()
+    return render(request, 'asset_register/create_asset.html', {
+        "url_path": url_path,
+        'regions': regions,
+        'sections': sections,
+        'designations': designation,
+        'product_types': product_type,
+        'users': users  
+    })
+
 
 def show_asset(request):
     
@@ -162,7 +207,7 @@ def show_asset_datatable(request):
                 "product_type": asset.product_type.product_type if asset.product_type else None,
                 "serial_number": asset.serial_number,
                 "department": asset.sections.section if asset.sections else None,
-                "user": asset.user_name,
+                 "user": f"{asset.user.first_name} {asset.user.last_name}" if asset.user else None,
                 "regions": asset.regions.region if asset.regions else None,
                 "purchase_cost": asset.purchase_cost,
                 "designations": asset.designations.description if asset.designations else None,
@@ -188,23 +233,15 @@ def show_asset_datatable(request):
             'recordsFiltered': 0,
             'data': []
         })
-    
+
 def update_asset(request, id):
-  
-  zetdcAssets = ZetdcAssets.objects.filter(id=id).first()
-  
-  print({
-    'zetdcAssets': zetdcAssets,
-    'id': zetdcAssets.id,
-    'product_id': zetdcAssets.product_type,
-})
- 
-
-  if request.method == 'POST':
+    zetdcAssets = ZetdcAssets.objects.filter(id=id).first()
+    
+    if request.method == 'POST':
         user_id = request.POST['user']
-        user = User.objects.filter(id=user_id).first()
+        user = UserProfile.objects.filter(id=user_id).first()
 
-        region_id= request.POST['regions']
+        region_id = request.POST['regions']
         regions = Regions.objects.filter(id=region_id).first()
 
         designation_id = request.POST['designations']
@@ -212,10 +249,15 @@ def update_asset(request, id):
         
         section_id = request.POST['department']
         sections = Sections.objects.filter(id=section_id).first()
-        print("request",request.POST)
-        #form.save()
-        
-        
+
+        # Parse and reformat the date
+        try:
+            date_purchased = datetime.strptime(request.POST['date_purchased'], "%b. %d, %Y")  # Format like "Jan. 20, 2025"
+            date_purchased = date_purchased.strftime("%Y-%m-%d")  # Convert to "2025-01-20"
+        except ValueError:
+            
+            date_purchased = None
+
         zetdcAssets.product_id = request.POST['product_type']
         zetdcAssets.asset_state = request.POST['asset_state']
         zetdcAssets.serial_number = request.POST['serial_number']
@@ -225,14 +267,14 @@ def update_asset(request, id):
         zetdcAssets.purchase_cost = request.POST['purchase_cost']
         zetdcAssets.designations = designations
         zetdcAssets.sections = sections
-        zetdcAssets.date_purchased = request.POST['date_purchased']
+        zetdcAssets.date_purchased = date_purchased
         zetdcAssets.warrant = request.POST['warrant']
         zetdcAssets.model = request.POST['model']
-        #zetdcAssets.created_by = request.POST['created_by']
         zetdcAssets.save()
+
         return redirect('/table_asset')
-        
-  return render(request, 'asset_register/update_asset.html', {
+    
+    return render(request, 'asset_register/update_asset.html', {
         'zetdcAssets': zetdcAssets,
         'id': zetdcAssets.id,
         'product_id': zetdcAssets.product_type,
@@ -240,20 +282,21 @@ def update_asset(request, id):
         'serial_number': zetdcAssets.serial_number,
         'asset_number': zetdcAssets.id,  
         'department': zetdcAssets.department,
-        'user': zetdcAssets.user,
+        'user': zetdcAssets.user, 
         'regions': zetdcAssets.regions,
         'purchase_cost': zetdcAssets.purchase_cost,
         'designations': zetdcAssets.designations,
         'date_purchased': zetdcAssets.date_purchased,
         'warrant': zetdcAssets.warrant,
         'model': zetdcAssets.model,
-        # Pass lists for dropdowns
+
+
         'product_types': ProductType.objects.all(),
         'sections': Sections.objects.all(),
-        'users': User.objects.all(),
+        'users': UserProfile.objects.all(),
         'regions': Regions.objects.all(),
         'designations': Designations.objects.all(),
-})
+    })
 
 def create_product(request):
     if request.method == 'POST':

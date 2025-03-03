@@ -18,38 +18,57 @@ from exchangelib import Credentials, Account, Configuration, Message, Mailbox
 from django.urls import reverse
 from django.template.loader import render_to_string
 from exchangelib import HTMLBody
-from django.contrib.auth import get_user_model
+#from django.contrib.auth import get_user_model
 from.models import*
-User = get_user_model()
+from it.users.models import Regions, Sections, UserProfile
+#User = get_user_model()
 
 def create_fault(request):
-    users = User.objects.all() 
+    users = UserProfile.objects.all()
+    regions = Regions.objects.all()
+    sections = Sections.objects.all()
+     
     if request.method == 'POST':
-        form = EmployeeForm(request.POST or None)
-        print("frm data: ", form.is_valid())
-        print("request",request.POST )
-        job_card_no = "JC"+ str(int(datetime.now().timestamp()))
-        user = User.objects.filter(id=request.POST['eUsername']).first()
+        # form = EmployeeForm(request.POST or None)
+        # print("request.POST",)
+        # if form.is_valid():
+        region_id = request.POST.get('regions')
+        section_id = request.POST.get('sections')
+       # print("request.POST",sections)
+        try:
+            region = Regions.objects.get(id=region_id) if region_id else None
+            section = Sections.objects.get(id=request.POST['department']) 
+
+        except (Regions.DoesNotExist, Sections.DoesNotExist):
+            #print("request.POST",regions)
+            return redirect('create_fault')
+
+        job_card_no = "JC" + str(int(datetime.now().timestamp()))
+        user = UserProfile.objects.filter(id=request.POST['eUsername']).first()
 
         employee = Employee(
-            jobcardnumber= job_card_no,
-            eserialnumber= request.POST['eserialnumber'],
-            eUsername= user.id,
-            ephoneextension= request.POST['ephoneextension'],
-            efault= request.POST['efault'],
-            erepairstatus= request.POST['erepairstatus'],
-            elocation= request.POST['elocation'],
-            eupdatedby= request.user,
+            jobcardnumber=job_card_no,
+            eserialnumber=request.POST['eserialnumber'],
+            eUsername=user.username,
+            ephoneextension=request.POST['ephoneextension'],
+            efault=request.POST['efault'],
+            erepairstatus="logged in",
+            department=request.POST['department'],
+            regions=region,  
+            sections=section, 
+            eupdatedby=request.user,
             user=user
-            )
-            
-        print("empl data: ", employee)
+        )
+        print("sections:", section_id)
         employee.save()
-        print("Data saved successfully!")
         messages.success(request, "Fault created successfully!")
-        print('user', users)
         return redirect('show_fault')
-    return render(request, 'hardware_faults/create_fault.html',{'users': users})
+
+    return render(request, 'hardware_faults/create_fault.html', {
+        'users': users,
+        'regions': regions,
+        'sections': sections,
+    })
 
 def show_fault(request):
 
@@ -74,7 +93,7 @@ def show_fault_datatable(request):
             Q(ephoneextension__icontains=search_value) |
             Q(efault__icontains=search_value) |
             Q(erepairstatus__icontains=search_value) |
-            Q(elocation__icontains=search_value) |
+            Q(department__icontains=search_value) |
             Q(eupdatedby__icontains=search_value) |
             Q(elastupdate__icontains=search_value) 
            
@@ -96,9 +115,11 @@ def show_fault_datatable(request):
                 "4": "ephoneextension",
                 "5": "efault",
                 "6": "erepairstatus",
-                "7": "elocation",
+                "7": "department",
                 "8": "eupdatedby",
                 "9": "elastupdate",
+                "10": "regions",
+                "11": "comment",
             }
 
             column_name = column_map.get(order_column)
@@ -125,8 +146,10 @@ def show_fault_datatable(request):
                 "phoneextension": employee.ephoneextension,
                 "fault": employee.efault,
                 "repairstatus": employee.erepairstatus,
-                "location": employee.elocation,
+                "comment": employee.comment,
                 "updatedby": employee.eupdatedby,
+                 "department": employee.sections.section if employee.sections else None,
+                 "regions":employee.regions.region if employee.regions else None,
                 "lastupdate": employee.elastupdate,
             }
             data.append(o)
@@ -147,29 +170,70 @@ def show_fault_datatable(request):
         })
 
 def update_fault(request, eserialnumber):
-    employee = Employee.objects.filter(eserialnumber=eserialnumber).first()
-    users = User.objects.all()
-    form = EmployeeForm(request.POST)
+    try:
+        employee = Employee.objects.get(eserialnumber=eserialnumber) 
+    except Employee.DoesNotExist:
+        messages.error(request, "Employee not found.")
+        return redirect('table_fault') 
+
+    users = UserProfile.objects.all()
+    regions = Regions.objects.all()
+    sections = Sections.objects.all()
+
     if request.method == 'POST':
-        user_id = request.POST['eUsername']
-        user = User.objects.filter(id=user_id).first()
-        
-        print("request",request.POST)
-        #form.save()
-        employee.eUsername = user_id
+        region_id = request.POST.get('regions')
+        section_id = request.POST.get('department')  # Change to 'department' instead of 'sections'
+        user_id = request.POST.get('eUsername') 
+
+        try:
+            region = Regions.objects.get(id=region_id) if region_id else None
+            section = Sections.objects.get(id=section_id) if section_id else None
+            user = UserProfile.objects.get(id=user_id) if user_id else None 
+        except (Regions.DoesNotExist, Sections.DoesNotExist, UserProfile.DoesNotExist):
+            messages.error(request, "Invalid region, section, or user.")
+            return redirect('update_fault', eserialnumber=eserialnumber)
+
+        # Now that section is being retrieved by id, update department properly
+        employee.userprofile = user 
         employee.efault = request.POST['efault']
-        employee.elocation = request.POST['elocation']
+        employee.department = section.id if section else employee.department  # Set department correctly
         employee.ephoneextension = request.POST['ephoneextension']
         employee.erepairstatus = request.POST['erepairstatus']
-        employee.eupdatedby = request.POST['eupdatedby']
+        employee.regions = region
+        employee.sections = section
+        employee.eupdatedby = request.user
+        employee.comment = request.POST['comment']
         employee.elastupdate = datetime.now()
-        employee.save()
-       
-        notify_fault_update(request,employee)
 
-        return redirect('/table_fault')
-        
-    return render(request,'hardware_faults/update_fault.html',{'employee':employee, 'users':users})   
+        # Save the employee, including department from form submission
+        employee.save()
+
+        messages.success(request, "Fault updated successfully!")
+        return redirect('table_fault')
+
+    initial_data = {
+        'eserialnumber': employee.eserialnumber,
+        'eUsername': employee.userprofile.id if employee.userprofile else None,
+        'efault': employee.efault,
+        'department': employee.department,  # Ensure this is populated with current department
+        'ephoneextension': employee.ephoneextension,
+        'erepairstatus': employee.erepairstatus,
+        'regions': employee.regions.id if employee.regions else None, 
+        'sections': employee.sections.id if employee.sections else None,
+        'comment': employee.comment,
+    }
+
+    form = EmployeeForm(instance=employee, initial=initial_data)
+
+    return render(request, 'hardware_faults/update_fault.html', {
+        'employee': employee,
+        'users': users,
+        'regions': regions,
+        'sections': sections,
+        'form': form, 
+    })
+
+ 
 
 def notify_fault_update(request, employee):
    
@@ -268,3 +332,75 @@ def ms_exhange_send(subject, body, to_recipients, cc_recipients):
     message.send()
     return JsonResponse({"status": "success", "message": "Email sent successfully"})
 
+from datetime import datetime
+from dateutil import parser
+
+def upload_fault(request):
+    if request.method == 'POST':
+        print("POST Data:", request.POST)
+        csvfile = request.FILES.get('uploaded_csv')
+        
+        if not csvfile:
+            return render(request, 'asset_register/upload_asset.html', {'error': 'No file uploaded'})
+        
+        try:
+            decoded_file = csvfile.read().decode('cp1252').splitlines()
+            reader = csv.DictReader(decoded_file)
+            reader.fieldnames = [header.strip() for header in reader.fieldnames]
+            print("CSV Headers:", reader.fieldnames)
+
+            for row in reader:
+                date_string = row.get('date purchased') 
+                parsed_date = None
+                
+                if date_string:
+                    # Try parsing with the first format: '%A, %B %d, %Y'
+                    try:
+                        parsed_date = datetime.strptime(date_string, "%A, %B %d, %Y").date()
+                    except ValueError:
+                        print(f"Failed to parse with first format: {date_string}")
+                    
+                    if not parsed_date:
+                        try:
+                            parsed_date = datetime.strptime(date_string, "%d-%b-%y").date()
+                        except ValueError:
+                            print(f"Failed to parse with second format: {date_string}")
+                    if not parsed_date:
+                        print(f"Invalid date format for: {date_string}")
+
+                # Check and print the parsed date for debugging
+                print(f"Parsed Date: {parsed_date}")
+                
+                print("Processing row:", row)
+                #product_type, _ = ProductType.objects.get_or_create(product_type=row.get('product type'))  
+                section, _ = Sections.objects.get_or_create(section=row.get('department'))
+                region, _ = Regions.objects.get_or_create(region=row.get("region"))
+                print("region",region)
+
+                loggedin_date = datetime.now().date()
+                lastupdate = datetime.now().date()
+
+                user = row.get('user').strip()
+                print("region", region)
+
+                new_employee = Employee(
+                    serialnumber=serialnumber,
+                    phoneextension=phoneextension,
+                    fault=fault,
+                    user_name=user,
+                    repairstatus=repairstatus,
+                    comment=comment,
+                    sections=section,
+                    regions=region,
+                    loggedin_date=loggedin_date,
+                    lastupdate=lastupdate,
+                   
+                )
+                new_employee.save()
+
+            return redirect('/table_fault/')
+        except Exception as e:
+            print("Error:", e)
+            return render(request, 'hardware_faults/upload_fault.html', {'error': str(e)})
+
+    return render(request, 'hardware_faults/upload_fault.html', {})

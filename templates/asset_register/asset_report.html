@@ -21,44 +21,8 @@
           <p class="mt-1 text-sm">Use filters to further refine search</p>
         </div>
         <div class="flex justify-end items-center">
-          {% if procurement_role %}
           <a
-            href="/comperative_schedule/create_comperative_schedule/"
-            class="border-gulf-blue-600 hover:bg-gulf-blue-400 hover:text-gulf-blue-50 font-bold py-2 px-4 rounded m-2"
-          >
-            Create Schedule
-          </a>
-          {% endif %} {% if procurement_role %}
-          <a
-            id="your_schedules"
-            class="bg-gulf-blue-600 hover:bg-gulf-blue-800 text-white font-bold py-2 px-4 rounded m-2"
-          >
-            Your Schedules
-          </a>
-          {% endif %} {% if fm_role == False and gm_role == False %}
-          <a
-            id="pending_committee"
-            class="bg-gulf-blue-600 hover:bg-gulf-blue-800 text-white font-bold py-2 px-4 rounded m-2"
-          >
-            Pending Committee
-          </a>
-          {% endif %} {% if fm_role == True %}
-          <a
-            id="pending_fm"
-            class="bg-gulf-blue-600 hover:bg-gulf-blue-800 text-white font-bold py-2 px-4 rounded m-2"
-          >
-            Pending Finance
-          </a>
-          {% endif %} {% if gm_role == True %}
-          <a
-            id="pending_gm"
-            class="bg-gulf-blue-600 hover:bg-gulf-blue-800 text-white font-bold py-2 px-4 rounded m-2"
-          >
-            Pending GM
-          </a>
-          {% endif %}
-          <a
-            id="table_asset"
+            id="report_datatable"
             class="bg-gulf-blue-600 hover:bg-gulf-blue-800 text-white font-bold py-2 px-4 rounded m-2"
           >
             All Assets
@@ -262,6 +226,18 @@
       // Handle Search button click
       $("#search_filter").on("click", function () {
           table.ajax.reload(); // Reload the table data with new filter parameters
+      });
+       // Handle Reset button click
+       $("#report_datatable").on("click", function () {
+              // Reset all filters to show all assets
+          $("#status").val('');
+          $("#station").val('');
+          $("#pickStation").val('');
+          $("#start_date").val('');
+          $("#end_date").val('');
+
+          // Reload the table with no filters
+          table.ajax.reload();
       });
   
       // Handle Reset button click
