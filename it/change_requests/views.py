@@ -732,6 +732,8 @@ def view_profile_request(request):
                 request,
                 "change_requests/view_profile_modification.html",
                 {
+                    "section_head_allowed": section_head_allowed,
+                    "it_section_head_allowed": it_section_head_allowed,
                     "requestor_role": requestor_role,
                     "section_head_awaiting_action": section_head_awaiting_action,
                     "it_section_head_awaiting_action": it_section_head_awaiting_action,
@@ -777,6 +779,8 @@ def view_profile_request(request):
                 request,
                 "change_requests/view_profile_deactivation.html",
                 {
+                    "section_head_allowed": section_head_allowed,
+                    "it_section_head_allowed": it_section_head_allowed,
                     "user_applications": Application.objects.all(),
                     "user_designations": Designations.objects.all(),
                     "sections": Sections.objects.all(),
@@ -951,16 +955,16 @@ def approve_profile_request(request):
                 if user_role == "it_section_head":
                     roles_actions = request.POST.get('roles_actions')
                     print("roles_actions: ", roles_actions)
-                    if not roles_actions:
-                        messages.error(request, "Please enter the roles implemented")
-                        return redirect("/change_requests/change_request_index")
+                    # if not roles_actions:
+                    #     messages.error(request, "Please enter the roles implemented")
+                    #     return redirect("/change_requests/change_request_index")
                     if change_request.change_type != "new_profile":
                         new_profile = change_request.new_profile
-                        new_profile.roles_actions = roles_actions
+                        new_profile.roles_actions = roles_actions if roles_actions else new_profile.roles_actions
                         new_profile.save()
                     elif change_request.change_type == "profile_modification":
                         profile_modification = change_request.profile_modification
-                        profile_modification.roles_actions = roles_actions
+                        profile_modification.roles_actions = roles_actions if roles_actions else profile_modification.roles_actions
                         profile_modification.save()
                         
                     cr_approval = CRApproval(

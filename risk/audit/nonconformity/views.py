@@ -258,7 +258,7 @@ def view_nonconformities(request):
     try:
         cost_center= request.user.cost_center
         if not cost_center:
-                cost_center = CostCenter.objects.filter(code= request.user.region.code)
+            cost_center = CostCenter.objects.filter(code= request.user.region.code)
         region = cost_center.get_region()
         cost_centers = region.get_decendance()
     except:
