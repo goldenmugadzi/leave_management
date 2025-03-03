@@ -1190,22 +1190,10 @@ def tokens_reports(request):
             if approvals := token.process.approval_set.all():
                 for approval in approvals:
                     approver_name = approval.step.approver.name
-                    if approval.approved == "Rejected":
-                        specific_tokens[month][token.type][approver_name]["rejected"] += 1
-                    else:
-                        specific_tokens[month][token.type][approver_name]["approved"] += 1
-
-        print("Final specific_tokens structure:", specific_tokens)
-        context = {
-            "tokens": tokens,
-            "specific_tokens": json.dumps(specific_tokens),
-            "dates": json.dumps(list(specific_tokens.keys())),
-            "start_date": form.cleaned_data.get("start_date"),
-            "end_date": form.cleaned_data.get("end_date"),
-            "cost_center": form.cleaned_data.get("cost_center"),
-            "tokenFilterForm": form,
-        }
-        
+                    if approval.approved == "Rejected":specific_tokens[month][token.type][approver_name]["rejected"] += 1
+                    else:specific_tokens[month][token.type][approver_name]["approved"] += 1
+        context = {"tokens": tokens,"specific_tokens": json.dumps(specific_tokens),"dates": json.dumps(list(specific_tokens.keys())),"start_date": form.cleaned_data.get("start_date"),"end_date": form.cleaned_data.get("end_date"),"cost_center": form.cleaned_data.get("cost_center"),"tokenFilterForm": form,}
         return render(request, "tokens/tokens_reports.html", context)
 
     return render(request, "tokens/tokens_reports.html", {"tokenFilterForm": form})
+
