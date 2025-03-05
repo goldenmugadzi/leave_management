@@ -2,7 +2,7 @@ from django.db.models.signals import post_save, pre_save
 from django.urls import reverse
 from django.dispatch import receiver
 from django.db import transaction
-from ..models import Appraisal
+from ..models import Appraisal, AppraisalWorkflow
 from ..services import PerformanceReviewService, TrainingAndDevelopmentService
 from ..repository import PerformanceReviewRepository, TrainingAndDevelopmentRepository
 from ..helpers.types import PerformanceReviewType
@@ -10,6 +10,7 @@ from ..helpers.types.kra import KraRolesType
 from ..helpers.notifications import send_appraisal_notifications
 from ..helpers.setters import set_approval_process
 from ..models.helpers import YearQuarter
+from ..helpers.data.approval_stage import ApprovalStageData
 from loguru import logger
 from decouple import config
 from datetime import datetime
@@ -162,5 +163,27 @@ def set_appraiser_approval_post_save_handler(sender, instance, created, **kwargs
         except Exception as e:
             logger.error(f"Assigning Appraiser Approval to {instance.user} signal handler failed with error: {e}")
             
+
+@receiver(post_save, sender=Appraisal, dispatch_uid="appraisal_approval_workflow")
+def set_appraisal_approval_workflow(sender, instance, created, **kwargs):
+    if created:
+        try:
+            logger.info(f"[Creating Appraisal Approval] appraisal: {instance} handler initialized ...")
             
+            workflow_entries = [
+                AppraisalWorkflow(
+                    appraisal=instance,
+                    stage_name=stage.value,
+                    stage_num=index+1
+                )
+                for index, stage in enumerate(ApprovalStageData)
+            ]
+            
+            with transaction.atomic():
+                AppraisalWorkflow.objects.bulk_create(workflow_entries)
+            
+            logger.success("[Creating Appraisal Approval] completed")
+        except Exception as e:
+            logger.error(f"[Creating Appraisal Approval]-failed with error: {e}")
+            return
 

@@ -99,7 +99,7 @@ class AppraisalWorkflow(TimeStamp):
     stage_name = models.CharField(max_length=255)
     stage_num = models.PositiveIntegerField()
     is_completed = models.BooleanField(default=False)
-    updated_by = models.ForeignKey(User, on_delete=models.RESTRICT, related_name="approve_user")
+    updated_by = models.ForeignKey(User, on_delete=models.RESTRICT, related_name="approve_user", null=True, blank=True)
     
     def __str__(self):
         return f"Approval {self.stage_name} - {self.stage_num} for {self.appraisal}"
