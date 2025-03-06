@@ -7,9 +7,9 @@ from ..helpers.types import ExperienceType
 
 
 class AppraisalRepository:
-    def create(self, user_object: UserProfile, process_object: Process, appraiser_object: UserProfile, reviewert_object: UserProfile) -> Appraisal:
+    def create(self, user_object: UserProfile, appraiser_object: UserProfile, reviewert_object: UserProfile) -> Appraisal:
         try:
-            return Appraisal.objects.create(user=user_object, process=process_object, appraiser=appraiser_object, reviewer=reviewert_object)
+            return Appraisal.objects.create(user=user_object, appraiser=appraiser_object, reviewer=reviewert_object)
         except Exception as e:
             raise Exception(f"Appraisal Create Repo failed with error: {e}")
 
