@@ -41,57 +41,6 @@ class PerformancePlanAndAssessmentAppraisalTemplateView(TemplateView):
 class PerformancePlanAndAssessmentTemplateView(TemplateView):
     template_name = "appraisal/performance/detail.html"
     
-    def approve_form_data(self):
-        approvalForm = None
-        to = None
-        completed = False
-        appraisal_object = self.get_appraisal_object(appraisal_id=self.kwargs.get("appraisal_id"))
-        
-        if not appraisal_object.process.approval_set.filter(approved="Rejected").exists():  # and allowed:
-            try:
-                last_approved = appraisal_object.process.approval_set.last().step.step
-            except AttributeError:
-                last_approved = 0
-            next_step = last_approved + 1
-            try:
-                newStep = Step.objects.filter(step=next_step, workflow=appraisal_object.process.workflow)
-                
-                if newStep.first().approver.name == "appraisee" or newStep.first().approver.name == "appraiser":
-                    is_appraisee = newStep.filter(
-                        approver__name="appraisee"
-                    ).exists()
-                    
-                    is_appraiser = newStep.filter(
-                        approver__name="appraiser"
-                    ).exists()
-                    if (is_appraisee and appraisal_object.user == self.request.user) | (is_appraiser and appraisal_object.appraiser == self.request.user):
-                        approvalForm = ApprovalForm
-                        to = newStep.first().to
-                else:
-                    allowed_to_approve = newStep.filter(
-                        approver__in=self.request.user.roles.all()
-                    ).exists()
-                    if allowed_to_approve:
-                        approvalForm = ApprovalForm
-                        to = newStep.first().to
-                   
-                # if newStep == appraisal_object.process.workflow.step_set.last():
-                #     generateTokenForm = GenerateTokenForm()
-            except Exception as e:
-                print("=====>>>>", e)
-            completed = appraisal_object.process.workflow.step_set.last().step == last_approved
-        approved_steps = appraisal_object.process.approval_set.all().values_list(
-            "step__step", flat=True
-        )
-        return {
-            "completed": completed,
-            "approved_steps": approved_steps,
-            "approvalForm": approvalForm,
-            # "generateTokenForm": generateTokenForm,
-            "to": to,
-        }
-    
-    
     def get_appraisal_object(self, appraisal_id):
         appraisal_service_handler = AppraisalService(
             appraisal_experience_repository=AppraisalExperienceRepository(),
@@ -142,7 +91,6 @@ class PerformancePlanAndAssessmentTemplateView(TemplateView):
         context.update(user_info)
         context.update(performance_plan_info)
         context["appraisal_object"] = self.get_appraisal_object(appraisal_id=appraisal_id)
-        context.update(get_approved_steps(process_object=self.get_appraisal_object(appraisal_id=appraisal_id).process))
         
         return context
     

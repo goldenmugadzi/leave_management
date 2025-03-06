@@ -189,59 +189,7 @@ class KRADetailView(TemplateView):
         obj = get_object_or_404(KeyResultArea, appraisal__id=self.kwargs.get("appraisal_id"))
         return obj
     
-    def approve_form_data(self):
-        approvalForm = None
-        to = None
-        completed = False
-        
-        if not self.get_object().appraisal.process.approval_set.filter(approved="Rejected").exists():  # and allowed:
-            try:
-                last_approved = self.get_object().appraisal.process.approval_set.last().step.step
-            except AttributeError:
-                last_approved = 0
-            next_step = last_approved + 1
-            try:
-                newStep = Step.objects.filter(step=next_step, workflow=self.get_object().appraisal.process.workflow)
-                
-                if newStep.first().approver.name == "appraisee" or newStep.first().approver.name == "appraiser":
-                    is_appraisee = newStep.filter(
-                        approver__name="appraisee"
-                    ).exists()
-                    
-                    is_appraiser = newStep.filter(
-                        approver__name="appraiser"
-                    ).exists()
-                    if (is_appraisee and self.get_object().appraisal.user == self.request.user) | (is_appraiser and self.get_object().appraisal.appraiser == self.request.user):
-                        approvalForm = ApprovalForm
-                        to = newStep.first().to
-                else:
-                    allowed_to_approve = newStep.filter(
-                        approver__in=self.request.user.roles.all()
-                    ).exists()
-                    if allowed_to_approve:
-                        approvalForm = ApprovalForm
-                        to = newStep.first().to
-                   
-                # if newStep == self.get_object().process.workflow.step_set.last():
-                #     generateTokenForm = GenerateTokenForm()
-            except Exception as e:
-                print("=====>>>>", e)
-
-            completed = self.get_object().appraisal.process.workflow.step_set.last().step == last_approved
-        approved_steps = self.get_object().appraisal.process.approval_set.all().values_list(
-            "step__step", flat=True
-        )
-        return {
-            "completed": completed,
-            "approved_steps": approved_steps,
-            "approvalForm": approvalForm,
-            # "generateTokenForm": generateTokenForm,
-            "to": to,
-        }
-    
-    
-    
-    
+       
     def get_activities_with_targets(self)->list:
         activities = Activity.objects.filter(kra=self.get_object())
         
@@ -256,7 +204,6 @@ class KRADetailView(TemplateView):
         
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context.update(self.approve_form_data())
         context["kra_object"] = self.get_object()
         context["activities_with_targets"] = self.get_activities_with_targets()
         return context

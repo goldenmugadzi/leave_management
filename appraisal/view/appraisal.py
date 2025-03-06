@@ -96,10 +96,8 @@ class AppraisalCreateView(SuccessMessageMixin, CreateView):
             appraisal_repository=AppraisalRepository()
         )
         structured_payload = self.build_payload()
-        process_object = intiate(None, "Appraisal")
         appraisal_object = appraisal_service_handler.create_use_case(
             user_object=user_object,
-           process_object=process_object,
             data=structured_payload,
             appraiser=form.instance.appraiser,
             reviewer=form.instance.reviewer
@@ -161,35 +159,12 @@ class AppraisalUpdateView(SuccessMessageMixin, UpdateView):
         context["qualification_objects"] = qualifications
         context["appraisal_object"] = self.get_object()
         
-        context.update(get_approved_steps(process_object=self.get_object().process))
         context.update(self.approval_user_roles())
         return context
     
     def get_success_url(self):
         return reverse("update_appraisal", kwargs={"pk": self.kwargs.get("pk")})
     
-
-def approveAppraisal(request,appraisal_id):
-    appraisal = Appraisal.objects.get(id=appraisal_id)
-    approved_step_object = None 
-    
-    if request.method == "POST": 
-        # generateappraisalform = GenerateappraisalForm(request.POST, request.FILES, instance=appraisal)
-        last_approval = appraisal.process.approval_set.last()
-        last_step = last_approval.step if last_approval else None
-        if (appraisal.process.workflow.step_set.last() is not None and last_step is not None and 
-            appraisal.process.workflow.step_set.last().step == ( last_step.step + 1)):
-            # if (generateappraisalform.is_valid() and request.FILES.get("appraisal_photo") is not None):
-            approved_step_object = approve_step(request, appraisal.process.pk)
-            #     print("approved")
-            #     # generateappraisalform.save()
-            # else:
-            #     messages.error(request, "appraisal updloading form is invalid. Have you provided a appraisal photo?", )
-        else:
-            approved_step_object = approve_step(request, appraisal.process.pk)
-    
-    # ======= implement return redirect to related view
-    return redirect("appraisal_index")
 
 class AppraisalTemplateView(TemplateView):
     template_name = 'appraisal/index.html'
