@@ -4,7 +4,8 @@ from django.http import HttpResponse
 from django.views.generic.edit import CreateView, UpdateView
 from django.views.generic import TemplateView
 from django.urls import reverse
-from django.shortcuts import redirect
+
+from django.shortcuts import redirect, render
 from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib import messages
 
@@ -208,3 +209,7 @@ class AppraisalTemplateView(TemplateView):
         context.update({"heading_name": self.get_heading_name()})
         context.update(self.get_appraisals())
         return context
+
+
+def internal_server_error_view(request):
+    return render(request, "appraisal/errors.html", status=500)

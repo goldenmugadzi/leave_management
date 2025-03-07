@@ -8,6 +8,7 @@ from .view import (AppraisalCreateView,
                    AppraisalTemplateView,
                    experience_list_api,
                    kra_list_api,
+                   internal_server_error_view,
                    PerformancePlanAndAssessmentAppraisalTemplateView,
                    PerformancePlanAndAssessmentTemplateView,
                    PerformanceReviewsApprovalView,
@@ -32,6 +33,7 @@ urlpatterns = [
     path('', AppraisalTemplateView.as_view(), name='appraisal_index'),
     path('create/', AppraisalCreateView.as_view(), name='create_appraisal'),
     path('update/<int:pk>', AppraisalUpdateView.as_view(), name='update_appraisal'),
+    path('server-error/', internal_server_error_view, name='server_error_view'),
 
     # ================= Experience urls ============================
     path('experience/create/', ExperienceCreateView.as_view(), name='create_experience'),

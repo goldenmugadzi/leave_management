@@ -3,3 +3,4 @@ from .experience import AppraisalExperienceRepository, ExperienceRepository
 from .appraisal import AppraisalRepository
 from .performance import PerformanceReviewRepository
 from .training import TrainingAndDevelopmentRepository
+from .approval import AppraisalWorkflowRepository

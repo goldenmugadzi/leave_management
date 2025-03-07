@@ -8,7 +8,8 @@
   <style>.dataTables_wrapper .dataTables_length select { width: 4rem; }</style>
 {% endblock %}
 {% block content %}
-{% include "appraisal/approval/detail.html" %}
+{% include "appraisal/approval/detail.html" with stages=stages last_stage_num=last_stage_number %}
+
     <div class="flex gap-2">
         <div class="flex-1">
             <h3>User Information</h3>
