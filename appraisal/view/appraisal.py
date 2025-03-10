@@ -19,7 +19,6 @@ from ..helpers.types.kra import RoleFilterChoices
 from ..repository import UserQualificationRepository, AppraisalExperienceRepository, ExperienceRepository, AppraisalRepository
 from ..services import AppraisalService, AppraisalExperienceService
 from ..helpers.types.kra import KraRolesType
-from ..helpers.getters import get_approved_steps
 
 from approve.views import intiate,approve_step
 from approve.forms import ApprovalForm

@@ -9,10 +9,11 @@ from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib import messages
 from ..services import (AppraisalService, PerformanceReviewService, 
                         UserQualificationService, AppraisalExperienceService, 
-                        TrainingAndDevelopmentService, AppraisalWorkflowService)
+                        TrainingAndDevelopmentService)
 from ..repository import (AppraisalRepository, UserQualificationRepository, AppraisalExperienceRepository, 
                           ExperienceRepository, PerformanceReviewRepository,
-                          TrainingAndDevelopmentRepository, AppraisalWorkflowRepository)
+                          TrainingAndDevelopmentRepository)
+from ..helpers.getters import ApprovalStagesHandler
 
 from ..models import PerformanceProgressReview, AppraisalExperience, TrainingAndDevelopment
 from it.users.models import UserQualification, UserProfile
@@ -20,9 +21,6 @@ from ..forms import PerformanceReviewApprovalForm
 from approve.forms import ApprovalForm
 from approve.models import Step, Approval
 from loguru import logger
-from ..helpers.getters import get_approved_steps
-
-
 
 class PerformancePlanAndAssessmentAppraisalTemplateView(TemplateView):
     template_name = "appraisal/performance/index.html"
@@ -89,13 +87,8 @@ class PerformancePlanAndAssessmentTemplateView(TemplateView):
     
     def get_approval_stages(self):
         try:
-            approval_workflow_repo = AppraisalWorkflowRepository()
-            qr = approval_workflow_repo.retrieve_by_appraisal(appraisal_id=self.kwargs.get("appraisal_id"))
-            return {
-                "stages": qr,
-                "last_stage_number": qr.last().stage_num
-            }
-
+            handler = ApprovalStagesHandler(appraisal_id=self.kwargs.get("appraisal_id"))
+            return handler.get_stages_info()
         except Exception as e:
             logger.error(f"[PerformancePlanAndAssessmentTemplateView] for Appraisal - {self.get_appraisal_object()} failed with error: {e}")
             return None

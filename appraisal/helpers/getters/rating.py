@@ -1,15 +1,3 @@
-from typing import Dict, Any, List
-from django.db.models import Model
-from approve.models import Step, Process
-
-def get_changed_fields(model_object: Model, data: Dict[str, Any]) -> Dict[str, Any]:
-    changed_data = {}
-    for key, value in data.items():
-        current_user_value = getattr(model_object, key, None)
-        if value != current_user_value:
-            changed_data[key] = value
-    return changed_data
-
 def get_actual_variance(actual_score: float, target_score: float)->float:
     """Calculates the actual variance between the target score and the actual score.
 
@@ -56,12 +44,3 @@ def get_rating(actual_variance, within_condition):
     elif actual_variance < 0 and within_condition < -4:
         rating = 1
     return rating
-
-
-def get_approved_steps(process_object: Process)->Dict[str, List[Step]]:
-    approved_steps = process_object.approval_set.all().values_list(
-            "step__step", flat=True
-        )
-    return {
-        "approved_steps": approved_steps,
-    }

@@ -11,7 +11,6 @@ from ...forms import YearQuarterForm, AppraisalKraForm
 from ...repository.kra import AppraisalKraRepository
 from ...repository.appraisal import AppraisalRepository
 from ...services.kra import AppraisalKraService
-from ...helpers.getters import get_approved_steps
 from ...repository import UserQualificationRepository, AppraisalExperienceRepository, ExperienceRepository, AppraisalRepository
 from ...services import AppraisalService
 from datetime import datetime

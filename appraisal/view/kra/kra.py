@@ -13,7 +13,6 @@ from ...repository.kra import KRARepository
 from ...repository.appraisal import AppraisalRepository
 from ...services.kra import KRAService
 from .helper import build_payload
-from ...helpers.getters import get_approved_steps
 from datetime import datetime
 from pydantic import ValidationError
 from approve.forms import ApprovalForm
@@ -88,12 +87,7 @@ class KRATemplateView(TemplateView):
             return kra_queryset.first().appraisal
         raise Http404("No appraisal object found for the given year and quarter.")
     
-    def get_approved_steps(self):
-        appraisal_object = self.get_appraisal_object()
-        result = get_approved_steps(process_object=appraisal_object.process)
-        return result
-    
-    
+
     def get_year_quarter(self):
         data = {}
         query_param_year = self.request.GET.get('year')
@@ -125,7 +119,6 @@ class KRATemplateView(TemplateView):
         
         context.update(self.get_all_kra(year=year_qrt["year"], quarter=year_qrt["quarter"]))
         context.update(year_qrt)
-        context.update(self.get_approved_steps())
         context.update(self.approval_user_roles())
         
         context["roles"] = KraRolesType

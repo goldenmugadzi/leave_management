@@ -9,7 +9,6 @@ from ...models import TargetScore
 from ...forms import TargetScoreForm
 from ...repository.kra import KraActivityRepository, TargetScoreRepository
 from ...services.kra import ActivityService, TargetScoreService
-from ...helpers.getters import get_approved_steps
 from ...helpers.setters import set_approval_process
 
 from .helper import build_payload_score

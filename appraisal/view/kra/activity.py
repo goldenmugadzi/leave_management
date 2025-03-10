@@ -9,7 +9,6 @@ from ...forms import ActivityCreateForm
 from ...repository.kra import KRARepository, KraActivityRepository, AppraisalKraRepository
 from ...services.kra import KRAService, ActivityService
 from ...helpers.types.kra import KRAType
-from ...helpers.getters import get_approved_steps
 from django.http import Http404
 from .helper import build_payload_activity
 from pydantic import ValidationError
