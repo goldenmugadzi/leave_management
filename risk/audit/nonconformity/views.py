@@ -308,7 +308,7 @@ def nonconformity_reports(request):
                         "resolved":json.dumps([data["resolved"] for data in monthly_data.values()]),
                         "closed":json.dumps([data["closed"] for data in monthly_data.values()]),
                         "new":json.dumps([data["new"] for data in monthly_data.values()]),
-                        "dates": json.dumps(sorted(monthly_data.keys())),
+                        "dates": json.dumps(list(monthly_data.keys())),
                         "start_date": form.cleaned_data.get("start_date"),
                         "end_date": form.cleaned_data.get("end_date"),
                         "cost_center": form.cleaned_data.get("cost_center")})
