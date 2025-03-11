@@ -4,7 +4,7 @@ from django.views.generic import TemplateView
 from django.views.generic.edit import CreateView, UpdateView
 from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib import messages
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, redirect
 from django.http import Http404
 from django.http import JsonResponse, HttpResponse
 from ...models import KeyResultArea, Activity, Appraisal
@@ -13,6 +13,7 @@ from ...repository.kra import KRARepository
 from ...repository.appraisal import AppraisalRepository
 from ...services.kra import KRAService
 from .helper import build_payload
+from ...helpers.getters.approval import ApprovalStagesHandler
 from datetime import datetime
 from pydantic import ValidationError
 from approve.forms import ApprovalForm
@@ -111,6 +112,15 @@ class KRATemplateView(TemplateView):
         }
         return data
 
+    def get_approval_stages(self):
+        try:
+            handler = ApprovalStagesHandler(appraisal_id=self.get_appraisal_object().id)
+            return handler.get_stages_info()
+        except Exception as e:
+            logger.error(f"[PerformancePlanAndAssessmentTemplateView] for Appraisal - {self.get_appraisal_object()} failed with error: {e}")
+            return None
+        
+    
     def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
         context =  super().get_context_data(**kwargs)
         context.update(self.get_year_quarter_form())
@@ -120,6 +130,8 @@ class KRATemplateView(TemplateView):
         context.update(self.get_all_kra(year=year_qrt["year"], quarter=year_qrt["quarter"]))
         context.update(year_qrt)
         context.update(self.approval_user_roles())
+        print("========>>>>>>>>> ", self.get_approval_stages())
+        context.update(self.get_approval_stages())
         
         context["roles"] = KraRolesType
         context["appraisal_id"] = self.kwargs.get("appraisal_id")
@@ -127,6 +139,13 @@ class KRATemplateView(TemplateView):
             
         return context
     
+    
+    def get(self, request, *args, **kwargs):
+        approval_data = self.get_approval_stages()
+        if approval_data is None:
+            return redirect("server_error_view")
+        context = self.get_context_data(**kwargs)
+        return self.render_to_response(context)
 
 class KRAUpdateView(SuccessMessageMixin, UpdateView):
     model = KeyResultArea

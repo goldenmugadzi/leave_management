@@ -19,11 +19,12 @@ from ..helpers.types.kra import RoleFilterChoices
 from ..repository import UserQualificationRepository, AppraisalExperienceRepository, ExperienceRepository, AppraisalRepository
 from ..services import AppraisalService, AppraisalExperienceService
 from ..helpers.types.kra import KraRolesType
+from ..helpers.getters.approval import ApprovalStagesHandler
 
 from approve.views import intiate,approve_step
 from approve.forms import ApprovalForm
 from approve.models import Step, Approval
-
+from loguru import logger
 class AppraisalCreateView(SuccessMessageMixin, CreateView):
     model = Appraisal
     form_class = AppraisalForm
@@ -150,6 +151,14 @@ class AppraisalUpdateView(SuccessMessageMixin, UpdateView):
             form.instance.is_accepted = True
         return super().form_valid(form)
     
+    def get_approval_stages(self):
+        try:
+            handler = ApprovalStagesHandler(appraisal_id=self.get_object().id)
+            return handler.get_stages_info()
+        except Exception as e:
+            logger.error(f"[PerformancePlanAndAssessmentTemplateView] for Appraisal - {self.get_appraisal_object()} failed with error: {e}")
+            return None
+    
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         experience_repo = AppraisalExperienceRepository()
@@ -159,8 +168,17 @@ class AppraisalUpdateView(SuccessMessageMixin, UpdateView):
         context["qualification_objects"] = qualifications
         context["appraisal_object"] = self.get_object()
         
+        context.update(self.get_approval_stages())
         context.update(self.approval_user_roles())
         return context
+    
+    def get(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        approval_data = self.get_approval_stages()
+        if approval_data is None:
+            return redirect("server_error_view")
+        context = self.get_context_data(**kwargs)
+        return self.render_to_response(context)
     
     def get_success_url(self):
         return reverse("update_appraisal", kwargs={"pk": self.kwargs.get("pk")})

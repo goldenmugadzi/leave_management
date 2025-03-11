@@ -4,7 +4,7 @@ from django.views.generic import TemplateView
 from django.views.generic.edit import CreateView, UpdateView
 from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib import messages
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, redirect
 from django.http import Http404
 from ...models import KeyResultArea, AppraisalKra, Appraisal
 from ...forms import YearQuarterForm, AppraisalKraForm
@@ -15,6 +15,7 @@ from ...repository import UserQualificationRepository, AppraisalExperienceReposi
 from ...services import AppraisalService
 from datetime import datetime
 from ...helpers.types.kra import KraRolesType
+from ...helpers.getters.approval import ApprovalStagesHandler
 from loguru import logger
 
 
@@ -66,6 +67,13 @@ class AppraisalKraTemplateView(TemplateView):
         }
         return data
 
+    def get_approval_stages(self):
+        try:
+            handler = ApprovalStagesHandler(appraisal_id=self.get_appraisal_object().id)
+            return handler.get_stages_info()
+        except Exception as e:
+            logger.error(f"[PerformancePlanAndAssessmentTemplateView] for Appraisal - {self.get_appraisal_object()} failed with error: {e}")
+            return None
     
     def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
         context =  super().get_context_data(**kwargs)
@@ -76,10 +84,20 @@ class AppraisalKraTemplateView(TemplateView):
         context.update(self.get_all_kra(year=year_qrt["year"], quarter=year_qrt["quarter"]))
         context.update(year_qrt)
         context.update(self.appraiser_role())
+        context.update(self.get_approval_stages())
+        
         context["roles"] = KraRolesType
         context["appraisal_id"] = self.kwargs.get("appraisal_id")
             
         return context
+    
+    def get(self, request, *args, **kwargs):
+        approval_data = self.get_approval_stages()
+        if approval_data is None:
+            return redirect("server_error_view")
+        context = self.get_context_data(**kwargs)
+        return self.render_to_response(context)
+    
         
 
 class AppraisalKraCreateView(SuccessMessageMixin, CreateView):

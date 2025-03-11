@@ -8,7 +8,8 @@
 
 {% block content %}
 
-{% include "./approval/detail.html" %}
+{% include "appraisal/approval/detail.html" with stages=stages last_stage_num=last_stage_number %}
+
 
 <div class="flex gap-2">
     <div class="flex-1">
