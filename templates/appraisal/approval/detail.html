@@ -14,19 +14,30 @@
                 All stages completed
             </p>
         {% endif %}
+        
         <div class="flex items-center justify-between pt-4 space-x-2">
             <!-- Step 1 -->
             {% for stage in stages %}
                 <div class="relative flex-1 text-center min-w-0">
-                    <div class="w-12 h-12 flex items-center justify-center rounded-full text-white font-bold bg-blue-500 mx-auto">
-                        {{ stage.stage_num }}
-                    </div>
+                    {% if stage.is_completed == True %}
+                        <div class="w-12 h-12 flex items-center justify-center rounded-full text-white font-bold bg-blue-500 mx-auto">
+                            {{ stage.stage_num }}
+                        </div>
+                    {% else %}
+                        <div class="w-12 h-12 flex items-center justify-center rounded-full text-white font-bold bg-gray-400 mx-auto">
+                            {{ stage.stage_num }}
+                        </div>
+                    {% endif %}
                     
                 </div>
 
                 <!-- Line -->
                 {% if last_stage_num != stage.stage_num %}
-                    <div class="flex-1 h-1 bg-blue-500"></div>
+                    {% if stage.is_completed %}
+                        <div class="flex-1 h-1 bg-blue-500"></div>
+                    {% else %}
+                        <div class="flex-1 h-1 bg-gray-400"></div>
+                    {% endif %}
                 {% endif %}
             {% endfor %}
         </div>
