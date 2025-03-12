@@ -41,7 +41,9 @@
            <tr>
              <th class="px-6 py-3 text-left text-md font-semibold">Name</th>
              <th class="px-6 py-3 text-left text-md font-semibold">Weight</th>
-             <th class="px-6 py-3 text-left text-md font-semibold">Average Weighted Score</th>
+             <th class="px-6 py-3 text-left text-md font-semibold">Weighted Score</th>
+             <th class="px-6 py-3 text-left text-md font-semibold">Actual Variance</th>
+             <th class="px-6 py-3 text-left text-md font-semibold">Rating Score</th>
              <th></th>
            </tr>
          </thead>
@@ -50,9 +52,11 @@
            <tr class="hover:bg-blue-100">
              <td class="px-6 py-4 text-md text-blue-900 truncate max-w-xs">{{activity_obj.name}}</td>
              <td class="px-6 py-4 text-md text-blue-900">{{activity_obj.weight}}</td>
-             <td class="px-6 py-4 text-md text-blue-900">{{activity_obj.id|get_activity_average_weighted_score}}</td>
+             <td class="px-6 py-4 text-md text-blue-900">{{activity_obj.id|get_activity_weighted_score}}</td>
+             <td class="px-6 py-4 text-md text-blue-900">{{activity_obj.id|get_activity_actual_variance}}</td>
+             <td class="px-6 py-4 text-md text-blue-900">{{activity_obj.id|get_activity_rating}}</td>
              <td>
-              <div class="flex justify-end gap-1">
+              <div class="flex justify-even gap-1">
                   <a href="{% url 'score_view' activity_obj.id %}"
                     class="bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4"
                       >Score</a>

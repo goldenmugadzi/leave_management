@@ -67,73 +67,38 @@ class TargetScoreService:
             return self.target_score_repository.get_by_id(score_id=score_id)
         except Exception as e:
             raise KRAErr(f"Failed to get target-score with error: {e}")
+        
 
-    def calculate_activity_score_use_case(self, target_id: int)->float:
-        """
-        Calculates the score for a specific activity based on its aggregated target scores and weight.
-
-        Args:
-            target_id (int): The unique identifier of the activity for which the score is to be calculated.
-
-        Returns:
-            float: The calculated activity score in percentage.
-
-
-        Raises:
-            Exception: If there is an error in retrieving the aggregated target scores.
-        """
-        try:
-            target_score_obj = self.target_score_repository.get_by_target_id(target_id=target_id)
-        except Exception as e:
-            raise KRAErr(f"Activity Score calculation failed with error: {e}")
-
-        actual_score = target_score_obj.score
-        target_score = target_score_obj.target.agreed_target
+    def calculate_actual_variance_use_case(self, score_object: TargetScore)->float:
+        """Calculate the actual variance between the actual score and the target score."""
+        actual_score = score_object.score
+        target_score = score_object.activity.agreed_target
         actual_variance = get_actual_variance(actual_score=actual_score, target_score=target_score)
+        return actual_variance
+    
+    def calculate_activity_rating_score_use_case(self, activity_id: int)->float:
+        """Calculate the rating score for an activity based on actual variance and allowable variance."""
+        score_obj = self.target_score_repository.get_by_activity_id(activity_id=activity_id)
+        actual_variance = self.calculate_actual_variance_use_case(score_object=score_obj)
 
-        allowable_variance = target_score_obj.target.allowable_variance
+        allowable_variance = score_obj.activity.allowable_variance
         within_condition_value = get_within_condition(actual_variance=actual_variance, allowable_variance=allowable_variance)
 
         rating = get_rating(actual_variance=actual_variance, within_condition=within_condition_value)
 
         return rating
 
-    def calculate_average_weighted_score_per_activity(self, activity_id: int)->float:
-        """
-            Calculate the weighted average score for an activity based on target scores and their respective weights.
-
-            This method fetches all target scores for a given activity, calculates the weighted sum of the scores,
-            and divides it by the total weight to return the weighted average score.
-
-            Args:
-                activity_id (int): The ID of the activity for which the weighted score is calculated.
-
-            Returns:
-                float: The weighted average score of the activity.
-
-            Raises:
-                KRAErr: If there is an error during calculation, including when the total weight is zero
-                        or issues with fetching target scores.
-                Exception: If the total weight of all target scores is zero.
-        """
+    def calculate_activity_weighted_score(self, activity_id: int)->float:
+        """Calculate the weighted score for an activity by multiplying the activity score by its weight."""
         try:
-            target_scores = self.target_score_repository.fetch_by_activity_id(activity_id=activity_id)
+            score_obj = self.target_score_repository.get_by_activity_id(activity_id=activity_id)
+            activity_score = score_obj.score
+            activity_weight = score_obj.activity.weight
+            weighted_score = activity_score * activity_weight
 
-            weighted_sum = 0
-            total_weight = 0
-
-            for target_score_obj in target_scores:
-                target_score = target_score_obj.score
-                target_weight = target_score_obj.target.weight
-                weighted_sum += target_score * target_weight
-                total_weight += target_weight
-
-            if total_weight == 0:
-                raise Exception("Total weight for activity cannot be zero.")
-
-            return weighted_sum/total_weight
+            return weighted_score
         except Exception as e:
-            raise KRAErr(f"Failed to calculate activity score with error: {e}")
+            raise KRAErr(f"Failed to calculate activity weighted score with error: {e}")
 
 
 @dataclass

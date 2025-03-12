@@ -337,9 +337,6 @@ class TargetScoreRepository:
                 target_score_obj.comments = data.comment
                 is_updated = True
 
-            if target_score_obj.comments != data.comment:
-                target_score_obj.comments = data.comment
-                is_updated = True
                 
             if not target_score_obj.is_scored:
                 target_score_obj.is_scored = True
