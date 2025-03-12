@@ -150,7 +150,7 @@ def Ace_detail(request, Ace_id2):
             transaction.save()
             print("transaction: ", str(transaction.approval_status))
             user = ace_item.requested_by
-            userp = UserProfile.objects.filter(id=user).first()
+            userp = UserProfile.objects.filter(id=user.id).first()
 
             msg = "Your ACE " + ace_item.Ace_id2 + "has been approved by the General Manager"
             url = "/ace/ace_detail/" + ace_item.Ace_id2
