@@ -11,7 +11,7 @@
   <title>Tokens Report</title>
   <div class="content-wrapper">
     <div class="grid grid-cols-1">
-      <div class="bg-gulf-blue-100 shadow-lg rounded-lg p-6">
+      <div class="bg-gulf-blue-100 shadow-lg mt-5 rounded-lg p-6 bg-gulf-blue-200">
         <h3 class="text-center font-bold mb-4">Tokens Report</h3>
         {% if tokens %}
           <table id="tokens" class="table table-striped stripe mt-3 table-bordered">
@@ -46,7 +46,212 @@
               {% endfor %}
             </tbody>
           </table>
+        </div>
+        <div class="bg-gulf-blue-100 shadow-lg mt-5 rounded-lg p-6  bg-red-700">
+          <h3 class="text-center font-bold mb-4">Temper Tokens Report</h3>
+          <table id="TemperTokensreport"
+                 class="table table-striped stripe mt-3 table-bordered  ">
+            <thead>
+              <tr>
+                <th>Month-Ending</th>
+                <th>Total</th>
+                <th>
+                  <div class="text-center border-2 border border-yellow-400 rounded-lg ">
+                    <strong>Scso</strong>
+                    <div class="grid grid-cols-3 gap-4 mx-2 py-1">
+                      <span>New</span>
+                      <span>Approved</span>
+                      <span>Rejected</span>
+                    </div>
+                  </div>
+                </th>
+                <th>
+                  <div class="text-center border-2 border border-blue-500 rounded-lg ">
+                    <strong>Sales Executive</strong>
+                    <div class="grid grid-cols-3 gap-4 mx-2 py-1">
+                      <span>New</span>
+                      <span>Approved</span>
+                      <span>Rejected</span>
+                    </div>
+                  </div>
+                </th>
+                <th>
+                  <div class="text-center border-2 border border-red-500 rounded-lg ">
+                    <strong>Commercial Supervisor</strong>
+                    <div class="grid grid-cols-3 gap-4 mx-2 py-1">
+                      <span>New</span>
+                      <span>Approved</span>
+                      <span>Rejected</span>
+                    </div>
+                  </div>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for month, data in specific_tokens.items %}
+                <tr class="h-1">
+                  <td>
+                    <form method="post">
+                      {% csrf_token %}
+                      <input type="hidden" name="month" value="{{ month }}">
+                      <input type="hidden" name="token_type" value="TEMPER">
+                      <input type="hidden" name="cost_center" value="{{ cost_center.id }}">
+                      <button type="submit" class="text-blue-500 btn-link">{{ month }}</button>
+                    </form>
+                  </td>
+                  <td>{{ data.TEMPER.total }}</td>
+                  <td>
+                    <div class="text-center grid grid-cols-3 gap-4 mx-2 py-1">
+                      <span>{{ data.TEMPER.SCSO.new }}</span>
+                      <span>{{ data.TEMPER.SCSO.approved }}</span>
+                      <span>{{ data.TEMPER.SCSO.rejected }}</span>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="text-center grid grid-cols-3 gap-4 mx-2 py-1">
+                      <span>{{ data.TEMPER.Sales_Exec.new }}</span>
+                      <span>{{ data.TEMPER.Sales_Exec.approved }}</span>
+                      <span>{{ data.TEMPER.Sales_Exec.rejected }}</span>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="text-center grid grid-cols-3 gap-4 mx-2 py-1">
+                      <span>{{ data.TEMPER.Commercial_Supervisor.new }}</span>
+                      <span>{{ data.TEMPER.Commercial_Supervisor.approved }}</span>
+                      <span>{{ data.TEMPER.Commercial_Supervisor.rejected }}</span>
+                    </div>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        <div class="bg-gulf-blue-100 shadow-lg mt-5 rounded-lg p-6 bg-gulf-blue-900">
+          <h3 class="text-center font-bold mb-4">Clear Credit Tokens Report</h3>
+          <table id="CLEAR_CREDITTokensreport"
+                 class="table table-striped stripe mt-3 table-bordered  ">
+            <thead>
+              <tr>
+                <th>Month-Ending</th>
+                <th>Total</th>
+                <th>
+                  <div class="text-center border-2 border border-blue-500 rounded-lg ">
+                    <strong>Sales Executive</strong>
+                    <div class="grid grid-cols-3 gap-4 mx-2 py-1">
+                      <span>New</span>
+                      <span>Approved</span>
+                      <span>Rejected</span>
+                    </div>
+                  </div>
+                </th>
+                <th>
+                  <div class="text-center border-2 border border-red-500 rounded-lg ">
+                    <strong>Commercial Supervisor</strong>
+                    <div class="grid grid-cols-3 gap-4 mx-2 py-1">
+                      <span>New</span>
+                      <span>Approved</span>
+                      <span>Rejected</span>
+                    </div>
+                  </div>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for month, data in specific_tokens.items %}
+                <tr class="h-1">
+                  <td>
+                    <form method="post">
+                      {% csrf_token %}
+                      <input type="hidden" name="month" value="{{ month }}">
+                      <input type="hidden" name="token_type" value="CLEAR CREDIT">
+                      <input type="hidden" name="cost_center" value="{{ cost_center.id }}">
+                      <button type="submit" class="text-blue-500 btn-link">{{ month }}</button>
+                    </form>
+                  </td> 
+                  <td>{{ data.CLEAR_CREDIT.total }}</td>
+                  <td>
+                    <div class="text-center grid grid-cols-3 gap-4 mx-2 py-1">
+                      <span>{{ data.CLEAR_CREDIT.Sales_Exec.new }}</span>
+                      <span>{{ data.CLEAR_CREDIT.Sales_Exec.approved }}</span>
+                      <span>{{ data.CLEAR_CREDIT.Sales_Exec.rejected }}</span>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="text-center grid grid-cols-3 gap-4 mx-2 py-1">
+                      <span>{{ data.CLEAR_CREDIT.Commercial_Supervisor.new }}</span>
+                      <span>{{ data.CLEAR_CREDIT.Commercial_Supervisor.approved }}</span>
+                      <span>{{ data.CLEAR_CREDIT.Commercial_Supervisor.rejected }}</span>
+                    </div>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        <div class="bg-gulf-blue-100 shadow-lg mt-5 rounded-lg p-6 bg-yellow-400">
+          <h3 class="text-center font-bold mb-4">Reimbursement Tokens Report</h3>
+          <table id="ReimbursementTokensreport"
+                 class="table table-striped stripe mt-3 table-bordered  ">
+            <thead>
+              <tr>
+                <th>Month-Ending</th>
+                <th>Total</th>
+                <th>
+                  <div class="text-center border-2 border border-blue-500 rounded-lg ">
+                    <strong>Sales Executive</strong>
+                    <div class="grid grid-cols-3 gap-4 mx-2 py-1">
+                      <span>New</span>
+                      <span>Approved</span>
+                      <span>Rejected</span>
+                    </div>
+                  </div>
+                </th>
+                <th>
+                  <div class="text-center border-2 border border-red-500 rounded-lg ">
+                    <strong>Commercial Supervisor</strong>
+                    <div class="grid grid-cols-3 gap-4 mx-2 py-1">
+                      <span>New</span>
+                      <span>Approved</span>
+                      <span>Rejected</span>
+                    </div>
+                  </div>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for month, data in specific_tokens.items %}
+                <tr class="h-1">
+                  <td>
+                    <form method="post">
+                      {% csrf_token %}
+                      <input type="hidden" name="month" value="{{ month }}">
+                      <input type="hidden" name="token_type" value="REIMBURSEMENT">
+                      <input type="hidden" name="cost_center" value="{{ cost_center.id }}">
+                      <button type="submit" class="text-blue-500 btn-link">{{ month }}</button>
+                    </form>
+                  </td> 
+                  <td>{{ data.REIMBURSEMENT.total }}</td>
+                  <td>
+                    <div class="text-center grid grid-cols-3 gap-4 mx-2 py-1">
+                      <span>{{ data.REIMBURSEMENT.Sales_Exec.new }}</span>
+                      <span>{{ data.REIMBURSEMENT.Sales_Exec.approved }}</span>
+                      <span>{{ data.REIMBURSEMENT.Sales_Exec.rejected }}</span>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="text-center grid grid-cols-3 gap-4 mx-2 py-1">
+                      <span>{{ data.REIMBURSEMENT.Commercial_Supervisor.new }}</span>
+                      <span>{{ data.REIMBURSEMENT.Commercial_Supervisor.approved }}</span>
+                      <span>{{ data.REIMBURSEMENT.Commercial_Supervisor.rejected }}</span>
+                    </div>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
         {% endif %}
+      </div>
+      <div class="bg-gulf-blue-100 shadow-lg mt-5 rounded-lg p-6 bg-gulf-blue-400">
         <div class=" container text-center ">
           {% if roles %}
             {% for app_roles in roles %}
@@ -66,118 +271,42 @@
           </div>
         </form>
         <br />
-        <div class="mt-6 ">
-          <canvas id="TokensChart" width="400" height="100"></canvas>
-        </div>
-        <div>
-          <h2>TEMPER Token Statistics</h2>
-          <canvas id="temperChart"></canvas>
-        </div>
       </div>
     </div>
-  </div>
-{% endblock %}
-{% block scripts %}
-  <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
-  <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  
-   <script>
+  {% endblock %}
+  {% block scripts %}
+    <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
     $(document).ready(function () {
       // Initialize the DataTable with options and Tailwind CSS classes
       $("#tokens").DataTable({
-        // Set the number of rows to display per page
+        "pageLength": 10, "columnDefs": [
+          { "orderable": true, "targets": [0, 1, 2] }
+        ], "responsive": true,
+      });
+      $("#TemperTokensreport").DataTable({
+      "searching": false,
+        "pageLength": 10,"columnDefs": [
+          { "orderable": true, "targets": [0, 1, 2] }
+        ],"responsive": true,
+      });
+      $("#ReimbursementTokensreport").DataTable({
         "pageLength": 10,
-    
-        // Enable sorting on the specified columns
+      "searching": false,
         "columnDefs": [
           { "orderable": true, "targets": [0, 1, 2] }
-        ],
-    
-        // Enable searching within the table
-        "searching": true,
-    
-        // Display the DataTable in a responsive manner
+        ],    
         "responsive": true,
       });
-      const ctx = document.getElementById('temperChart').getContext('2d');
-      const nonconformityChart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-          labels: {{ dates|safe }},  // Dates for the x-axis
-          datasets: [
-           {
-              label:'Total Tokens',
-              data: {{ tempcreated|safe }},
-              borderColor: 'rgba(153, 102, 255, 1)',
-              backgroundColor: 'rgba(153, 102, 255, 0.2)',
-            }, {
-              label:'New Tokens',
-              data: {{ tempnew|safe }},
-              borderColor: 'rgba(86, 106, 255)',
-              backgroundColor: 'rgba(86, 106, 255, 0.8)',
-            },
-             {
-                label: 'SCSO Approved',
-                data: {{ SCSapproved|safe }},
-                borderColor: 'rgb(2, 147, 26)',
-                backgroundColor: 'rgb(2, 147, 26)',
-            },
-            {
-                label: 'SCSO Rejected',
-                data: {{ SCSrejected|safe }},
-                borderColor: 'rgba(255, 99, 132, 1)',
-                backgroundColor: 'rgba(240, 7, 232, 0.9)',
-            },
-            {
-                label: 'Sales Exec Approved',
-                data: {{ Salapproved|safe }},
-                borderColor: 'rgb(54, 235, 66)',
-                backgroundColor: 'rgba(19, 7, 240, 0.9)',
-            },
-            {
-                label: 'Sales Exec Rejected',
-                data: {{ Salrejected|safe }},
-                borderColor: 'rgba(235, 54, 54, 0.5)',
-                backgroundColor: 'rgba(153, 79, 128, 0.9)',
-            },
-            {
-                label: 'Commercial Supervisor Approved', 
-                data: {{ Comapproved|safe }},
-                backgroundColorggg: 'rgb(54, 235, 66)',
-                borderColor: 'rgba(0, 0, 0)',
-            },
-            {
-                label: 'Commercial Supervisor Rejected',
-                data: {{ Comrejected|safe }},
-                backgroundColor: 'rgba(255, 99, 132, 1)',
-                borderColor: 'rgb(0, 0, 0)',
-            }
-        ]
- 
-        },
-        options: {
-          responsive: true,
-          scales: {
-            x: {
-              display: true,
-              title: {
-                display: true,
-                text: 'Date'
-              }
-            },
-            y: {
-              display: true,
-              title: {
-                display: true,
-                text: 'Number of tokens'
-              }
-            }
-          }
-        }
+      $("#CLEAR_CREDITTokensreport").DataTable({
+      "searching": false,
+        "pageLength": 10, "columnDefs": [
+          { "orderable": true, "targets": [0, 1, 2] }
+        ], "responsive": true,
       });
     });
   
-  </script>
-  
-{% endblock %}
+    </script>
+  {% endblock %}

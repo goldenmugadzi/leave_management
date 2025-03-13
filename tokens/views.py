@@ -15,6 +15,7 @@ from approve.forms import ApprovalForm
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from datetime import datetime
+from calendar import monthrange
 from approve.decorators import allowed_roles
 from django.db.models import Count, Q
 from django.db.models.functions import TruncMonth
@@ -1164,122 +1165,77 @@ def migrate_clear_credit_tokens(request):
 
 @login_required
 def tokens_reports(request):
-    form = TokenFilterForm(request.POST or None, cost_center=request.user.cost_center)
-    tokens = Token.objects.all()
-
-    if request.method == "POST" and form.is_valid():
+    form = TokenFilterForm( None, cost_center=request.user.cost_center)
+    if request.method == "POST"  :
+        tokens = Token.objects.all()
         filters = Q()
-        for field in ["start_date", "end_date"]:
-            if value := form.cleaned_data.get(field):
-                filters &= Q(
-                    **{
-                        f"created_at__{'gte' if field == 'start_date' else 'lte'}": value
-                    }
-                )
-        if cost_center := form.cleaned_data.get("cost_center"):
+        month = request.POST.get('month', None)
+        if month is not None:
+            print(month)
+
+            month = datetime.strptime(month, "%d/%m/%Y")
+            start_date = datetime(month.year, month.month, 1)
+            end_date = datetime(month.year, month.month, monthrange(month.year, month.month)[1])  
+            cost_center = CostCenter.objects.get(id=request.POST.get('cost_center'))
+            filters &= Q(created_at__gte=start_date, created_at__lte=end_date)
             filters &= Q(cost_center__in=cost_center.get_decendance())
+            filters &= Q(type=request.POST.get('token_type'))
+            form = TokenFilterForm( None, cost_center=request.user.cost_center,initial={ 'start_date': start_date,'end_date': end_date})
+
+            print(filters)
+        else:
+            form = TokenFilterForm(request.POST or None, cost_center=request.user.cost_center)
+            print("form.is_valid(")
+            if form.is_valid():
+                start_date = form.cleaned_data.get("start_date")
+                end_date = form.cleaned_data.get("end_date")
+                cost_center = form.cleaned_data.get("cost_center")
+                for field in ["start_date", "end_date"]:
+                    if (value := form.cleaned_data.get(field)):filters &= Q(**{f"created_at__{'gte' if field == 'start_date' else 'lte'}": value})
+                if (cost_center := form.cleaned_data.get("cost_center")):filters &= Q(cost_center__in=cost_center.get_decendance())
 
         tokens = tokens.filter(filters)
-
-        # Initialize data structures
-        dates = sorted(set(token.created_at.strftime("%Y-%m") for token in tokens))
-        datasets = {
-            "SCSapproved": [0] * len(dates),
-            "SCSrejected": [0] * len(dates),
-            "Salapproved": [0] * len(dates),
-            "Salrejected": [0] * len(dates),
-            "Comapproved": [0] * len(dates),
-            "Comrejected": [0] * len(dates),
-            "created": [0] * len(dates),
-            "new": [0] * len(dates),
-        }
-
-        # Process tokens
+        print("tokens", tokens)
         tempers = tokens.filter(type="TEMPER")
-        for token in tempers:
-            month = token.created_at.strftime("%Y-%m")
-            index = dates.index(month)
+        reimbursements = tokens.filter(type="REIMBURSEMENT")
+        clear_credits = tokens.filter(type="CLEAR CREDIT")
+        token_types = {
+            "TEMPER": [step.approver.name.replace(" ","_") for step in tempers.first().process.workflow.step_set.all()] if tempers.first() else [],
+            "REIMBURSEMENT": [step.approver.name.replace(" ","_") for step in reimbursements.first().process.workflow.step_set.all()] if reimbursements.first() else [],
+            "CLEAR_CREDIT": [step.approver.name.replace(" ","_") for step in clear_credits.first().process.workflow.step_set.all()] if clear_credits.first() else []
+        } 
+        specific_tokens = {}
+        for token in tokens:
+            month_end = token.created_at.replace(day=monthrange(token.created_at.year, token.created_at.month)[1])
 
-            # Increment created count
-            datasets["created"][index] += 1
-
-            # Process approvals
-            approvals = token.process.approval_set.all()
-            if approvals.exists():
+            month = month_end.strftime("%d/%m/%Y")
+            specific_tokens.setdefault(month, {token_type: {step: {"new": 0,"approved": 0, "rejected": 0} for step in steps}| {"total": 0} for token_type, steps in token_types.items()})
+            specific_tokens[month][token.type.replace(" ","_")]["total"] += 1
+            "if token is not rejected, add it to new tokens for the next approver"
+            if token.process.approval_set.exists() and token.process.approval_set.last().approved != "Rejected":
+                if not token.process.approval_set.filter(approved="Rejected").exists():
+                    try:
+                        next_step = token.process.workflow.step_set.get(step=token.process.approval_set.last().step.step + 1)
+                        specific_tokens[month][token.type.replace(" ","_")][next_step.approver.name.replace(" ","_")]["new"] += 1
+                    except Step.DoesNotExist:
+                        pass
+            elif not token.process.approval_set.exists():
+                specific_tokens[month][token.type.replace(" ","_")][token.process.workflow.step_set.first().approver.name.replace(" ","_")]["new"] += 1
+                
+            if approvals := token.process.approval_set.all():
                 for approval in approvals:
-                    approver_name = approval.step.approver.name
-                    if approver_name == "SCSO":
-                        if approval.approved == "Approved":
-                            datasets["SCSapproved"][index] += 1
-                        elif approval.approved == "Rejected":
-                            datasets["SCSrejected"][index] += 1
-                    elif approver_name == "Sales Exec":
-                        if approval.approved == "Approved":
-                            datasets["Salapproved"][index] += 1
-                        elif approval.approved == "Rejected":
-                            datasets["Salrejected"][index] += 1
-                    elif approver_name == "Commercial Supervisor":
-                        if approval.approved == "Approved":
-                            datasets["Comapproved"][index] += 1
-                        elif approval.approved == "Rejected":
-                            datasets["Comrejected"][index] += 1
-            else:
-                # Increment new count
-                datasets["new"][index] += 1
-
-        # Prepare context
-        context = {
-            "tokens": tokens,
-            "dates": json.dumps(dates),
-            "SCSapproved": json.dumps(datasets["SCSapproved"]),
-            "SCSrejected": json.dumps(datasets["SCSrejected"]),
-            "Salapproved": json.dumps(datasets["Salapproved"]),
-            "Salrejected": json.dumps(datasets["Salrejected"]),
-            "Comapproved": json.dumps(datasets["Comapproved"]),
-            "Comrejected": json.dumps(datasets["Comrejected"]),
-            "tempcreated": json.dumps(datasets["created"]),
-            "tempnew": json.dumps(datasets["new"]),
-            "start_date": form.cleaned_data.get("start_date"),
-            "end_date": form.cleaned_data.get("end_date"),
-            "cost_center": form.cleaned_data.get("cost_center"),
-            "tokenFilterForm": form,
-        }
+                    approver_name = approval.step.approver.name.replace(" ","_")
+                    if approval.approved == "Rejected":specific_tokens[month][token.type.replace(" ","_")][approver_name]["rejected"] += 1
+                    else:specific_tokens[month][token.type.replace(" ","_")][approver_name]["approved"] += 1
+                    
+                    
+        context = {"tokens": tokens,
+                   "specific_tokens": specific_tokens,
+                   "start_date": start_date,
+                   "end_date": end_date,""
+                   "cost_center": cost_center,
+                   "tokenFilterForm": form}
         return render(request, "tokens/tokens_reports.html", context)
 
     return render(request, "tokens/tokens_reports.html", {"tokenFilterForm": form})
-# def tokens_reports(request):
-#     form = TokenFilterForm(request.POST or None, cost_center=request.user.cost_center)
-#     tokens = Token.objects.all()
 
-#     if request.method == "POST" and form.is_valid():
-#         filters = Q()
-#         for field in ["start_date", "end_date"]:
-#             if (value := form.cleaned_data.get(field)):filters &= Q(**{f"created_at__{'gte' if field == 'start_date' else 'lte'}": value})
-#         if (cost_center := form.cleaned_data.get("cost_center")):filters &= Q(cost_center__in=cost_center.get_decendance())
-
-#         tokens = tokens.filter(filters)
-#         tempers = tokens.filter(type="TEMPER")
-#         reimbursements = tokens.filter(type="REIMBURSEMENT")
-#         clear_credits = tokens.filter(type="CLEAR CREDIT")
-#         token_types = {
-#             "TEMPER": [step.approver.name for step in tempers.first().process.workflow.step_set.all()] if tempers.first() else [],
-#             "REIMBURSEMENT": [step.approver.name for step in reimbursements.first().process.workflow.step_set.all()] if reimbursements.first() else [],
-#             "CLEAR CREDIT": [step.approver.name for step in clear_credits.first().process.workflow.step_set.all()] if clear_credits.first() else []
-#         }
-#         specific_tokens = {}
-#         for token in tokens:
-#             month = token.created_at.strftime("%Y-%m")
-#             specific_tokens.setdefault(month, {token_type: {step: {"approved": 0, "rejected": 0} for step in steps}| {"created": 0,"new": 0} for token_type, steps in token_types.items()})
-#             specific_tokens[month][token.type]["created"] += 1
-#             if approvals := token.process.approval_set.all():
-#                 for approval in approvals:
-#                     approver_name = approval.step.approver.name
-#                     if approval.approved == "Rejected":specific_tokens[month][token.type][approver_name]["rejected"] += 1
-#                     else:specific_tokens[month][token.type][approver_name]["approved"] += 1
-#             else:
-#                 specific_tokens[month][token.type]["new"] += 1
-
-#         context = {"tokens": tokens,"specific_tokens": json.dumps(specific_tokens),"dates": json.dumps(list(specific_tokens.keys())),"start_date": form.cleaned_data.get("start_date"),"end_date": form.cleaned_data.get("end_date"),"cost_center": form.cleaned_data.get("cost_center"),"tokenFilterForm": form,}
-#         return render(request, "tokens/tokens_reports.html", context)
-
-#     return render(request, "tokens/tokens_reports.html", {"tokenFilterForm": form})
