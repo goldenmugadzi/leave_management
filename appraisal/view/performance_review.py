@@ -201,10 +201,8 @@ class PerformanceReviewsApprovalView(SuccessMessageMixin, TemplateView):
                 return redirect("server_error_view")            
             
             if not performance_review_object.is_completed:
-                print("============>>>>>>> hit")
                 performance_review_object.is_completed = True
                 performance_review_object.save()
-                print("============>>>>>>> after ", performance_review_object.is_completed)
                 
             messages.success(request, "Performance Review updated successfully")
             return HttpResponseRedirect(reverse('performance_review_detail', args=(appraisal_id,)))

@@ -49,6 +49,7 @@ class TrainingAndDevelopment(TimeStamp):
     intervention_strategies = models.ManyToManyField(InterventionStrategy)
     action_recommended = models.TextField(null=True, blank=True)
     action_taken = models.TextField(null=True, blank=True)
+    is_completed = models.BooleanField(default=False)
     
     def __str__(self):
         return f"{self.appraisal} - Q{self.quarter}"

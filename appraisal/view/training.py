@@ -144,6 +144,11 @@ class TrainingAndDevelopmentUpdateView(SuccessMessageMixin, CreateView):
 
         updated_training_object = training_service.update_use_case(training_development_object=training_dev_object, payload=payload)
         form.instance = updated_training_object
+        
+        if not updated_training_object.is_completed:
+            updated_training_object.is_completed = True
+            updated_training_object.save()
+            
         return super().form_valid(form)
     
     def get_success_url(self) -> str:
