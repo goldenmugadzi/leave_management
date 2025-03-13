@@ -176,36 +176,36 @@ class PerformanceReviewsApprovalView(SuccessMessageMixin, TemplateView):
     
     def post(self, request, *args, **kwargs):
         appraisal_id = self.kwargs.get("appraisal_id")
-        quarter = self.kwargs.get("quarter")
-        year = self.kwargs.get("year")
-        
+        current_quarter = self.kwargs.get("quarter")
+        current_year = self.kwargs.get("year")
         form = PerformanceReviewApprovalForm(request.POST)
         
         if form.is_valid():
             strengths = form.cleaned_data.get("strengths")
             weaknesses = form.cleaned_data.get("areas_of_weaknesses")
             
+            performance_review_object = self.get_performance_review_object()
             repository = PerformanceReviewRepository()
             service_handler = PerformanceReviewService(performance_repo=repository)
-            
-            try:
-                performance_review_object = service_handler.get_performances_by_appraisal_id_quarter_use_case(appraisal_id=appraisal_id, year=year, quarter=quarter)
-
-            except Exception as e:
-                logger.error(f"retrieve performance object, failed with error: {e}")
-                return messages.error(request, "Something went wrong, please try")
-            
+         
             try:
                 service_handler.add_strengths_use_case(performance_review_object=performance_review_object, strengths=strengths)
             except Exception as e:
-                logger.error(f"Add strengths failed with error: {e}")
-                return messages.error(request, "Something went wrong, please try")
+                logger.error(f"Add strengths for appraisal pk: {current_quarter} and quarter: {current_year}-{current_quarter}, failed with error: {e}")
+                return redirect("server_error_view")
             
             try:
                 service_handler.add_weakness_use_case(performance_review_object=performance_review_object, weaknesses=weaknesses)
             except Exception as e:
-                logger.error(f"Add weakness failed with error: {e}")
-                return messages.error(request, "Something went wrong, please try")
+                logger.error(f"Add weakness for appraisal pk: {current_quarter} and quarter: {current_year}-{current_quarter}, failed with error: {e}")
+                return redirect("server_error_view")            
+            
+            if not performance_review_object.is_completed:
+                print("============>>>>>>> hit")
+                performance_review_object.is_completed = True
+                performance_review_object.save()
+                print("============>>>>>>> after ", performance_review_object.is_completed)
+                
             messages.success(request, "Performance Review updated successfully")
             return HttpResponseRedirect(reverse('performance_review_detail', args=(appraisal_id,)))
 
