@@ -13,7 +13,6 @@
     <div class="grid grid-cols-1">
       <div class="bg-gulf-blue-100 shadow-lg rounded-lg p-6">
         <h3 class="text-center font-bold mb-4">Tokens Report</h3>
-       
         {% if tokens %}
           <table id="tokens" class="table table-striped stripe mt-3 table-bordered">
             <thead>
@@ -70,6 +69,10 @@
         <div class="mt-6 ">
           <canvas id="TokensChart" width="400" height="100"></canvas>
         </div>
+        <div>
+          <h2>TEMPER Token Statistics</h2>
+          <canvas id="temperChart"></canvas>
+        </div>
       </div>
     </div>
   </div>
@@ -77,89 +80,104 @@
 {% block scripts %}
   <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
   <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script>
-  $(document).ready(function () {
-   
-       $("#tokens").DataTable({
-      "pageLength": 10,
-      "columnDefs": [{ "orderable": true, "targets": [0, 1, 2,3,4] }],
-      "responsive": true,
-      "searching": true,
-      language: {
-        search: "Filter results:"
-    }
-    });
- 
-  });
-  document.addEventListener('DOMContentLoaded', function () {
-    const data = {{ specific_tokens|safe }};
-
-    // Extract labels (months) and datasets
-    const labels = Object.keys(data);
-    console.log(labels);
-    const datasets = [];
-
-    // Function to create dataset for a specific role, category, and type (approved/rejected)
-    const createDataset = (category, role, type, backgroundColor, borderColor) => {
-        return {
-            label: `${category} - ${role} ${type}`,
-            data: labels.map(month => {
-                // Check if the category, role, and type exist in the data
-                if (data[month] && data[month][category] && data[month][category][role]) {
-                    return data[month][category][role][type] || 0; // Default to 0 if the type is missing
-                }
-                return 0; // Default to 0 if the category or role is missing
-            }),
-            backgroundColor: backgroundColor,
-            borderColor: borderColor,
-            borderWidth: 1
-        };
-    };
+   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
+   <script>
+    $(document).ready(function () {
+      // Initialize the DataTable with options and Tailwind CSS classes
+      $("#tokens").DataTable({
+        // Set the number of rows to display per page
+        "pageLength": 10,
     
-    datasets.push(createDataset('TEMPER', 'SCSO', 'approved', 'rgba(75, 192, 192, 0.2)', 'rgba(75, 192, 192, 1)'));
-    datasets.push(createDataset('TEMPER', 'SCSO', 'rejected', 'rgba(255, 99, 132, 0.2)', 'rgba(255, 99, 132, 1)'));
-    datasets.push(createDataset('TEMPER', 'Sales Exec', 'approved', 'rgba(54, 162, 235, 0.2)', 'rgba(54, 162, 235, 1)'));
-    datasets.push(createDataset('TEMPER', 'Sales Exec', 'rejected', 'rgba(255, 206, 86, 0.2)', 'rgba(255, 206, 86, 1)'));
-    datasets.push(createDataset('TEMPER', 'Commercial Supervisor', 'approved', 'rgba(153, 102, 255, 0.2)', 'rgba(153, 102, 255, 1)'));
-    datasets.push(createDataset('TEMPER', 'Commercial Supervisor', 'rejected', 'rgba(255, 159, 64, 0.2)', 'rgba(255, 159, 64, 1)'));
-
-    datasets.push(createDataset('REIMBURSEMENT', 'Sales Exec', 'approved', 'rgba(75, 192, 192, 0.2)', 'rgba(75, 192, 192, 1)'));
-    datasets.push(createDataset('REIMBURSEMENT', 'Sales Exec', 'rejected', 'rgba(255, 99, 132, 0.2)', 'rgba(255, 99, 132, 1)'));
-    datasets.push(createDataset('REIMBURSEMENT', 'Commercial Supervisor', 'approved', 'rgba(54, 162, 235, 0.2)', 'rgba(54, 162, 235, 1)'));
-    datasets.push(createDataset('REIMBURSEMENT', 'Commercial Supervisor', 'rejected', 'rgba(255, 206, 86, 0.2)', 'rgba(255, 206, 86, 1)'));
-
-    datasets.push(createDataset('CLEAR CREDIT', 'Sales Exec', 'approved', 'rgba(153, 102, 255, 0.2)', 'rgba(153, 102, 255, 1)'));
-    datasets.push(createDataset('CLEAR CREDIT', 'Sales Exec', 'rejected', 'rgba(255, 159, 64, 0.2)', 'rgba(255, 159, 64, 1)'));
-    datasets.push(createDataset('CLEAR CREDIT', 'Commercial Supervisor', 'approved', 'rgba(75, 192, 192, 0.2)', 'rgba(75, 192, 192, 1)'));
-    datasets.push(createDataset('CLEAR CREDIT', 'Commercial Supervisor', 'rejected', 'rgba(255, 99, 132, 0.2)', 'rgba(255, 99, 132, 1)'));
-
-    // Create the chart
-    const ctx = document.getElementById('TokensChart').getContext('2d');
-    const tokenChart = new Chart(ctx, {
+        // Enable sorting on the specified columns
+        "columnDefs": [
+          { "orderable": true, "targets": [0, 1, 2] }
+        ],
+    
+        // Enable searching within the table
+        "searching": true,
+    
+        // Display the DataTable in a responsive manner
+        "responsive": true,
+      });
+      const ctx = document.getElementById('temperChart').getContext('2d');
+      const nonconformityChart = new Chart(ctx, {
         type: 'bar',
         data: {
-            labels: labels,
-            datasets: datasets
+          labels: {{ dates|safe }},  // Dates for the x-axis
+          datasets: [
+           {
+              label:'Total Tokens',
+              data: {{ tempcreated|safe }},
+              borderColor: 'rgba(153, 102, 255, 1)',
+              backgroundColor: 'rgba(153, 102, 255, 0.2)',
+            }, {
+              label:'New Tokens',
+              data: {{ tempnew|safe }},
+              borderColor: 'rgba(86, 106, 255)',
+              backgroundColor: 'rgba(86, 106, 255, 0.8)',
+            },
+             {
+                label: 'SCSO Approved',
+                data: {{ SCSapproved|safe }},
+                borderColor: 'rgb(2, 147, 26)',
+                backgroundColor: 'rgb(2, 147, 26)',
+            },
+            {
+                label: 'SCSO Rejected',
+                data: {{ SCSrejected|safe }},
+                borderColor: 'rgba(255, 99, 132, 1)',
+                backgroundColor: 'rgba(240, 7, 232, 0.9)',
+            },
+            {
+                label: 'Sales Exec Approved',
+                data: {{ Salapproved|safe }},
+                borderColor: 'rgb(54, 235, 66)',
+                backgroundColor: 'rgba(19, 7, 240, 0.9)',
+            },
+            {
+                label: 'Sales Exec Rejected',
+                data: {{ Salrejected|safe }},
+                borderColor: 'rgba(235, 54, 54, 0.5)',
+                backgroundColor: 'rgba(153, 79, 128, 0.9)',
+            },
+            {
+                label: 'Commercial Supervisor Approved', 
+                data: {{ Comapproved|safe }},
+                backgroundColorggg: 'rgb(54, 235, 66)',
+                borderColor: 'rgba(0, 0, 0)',
+            },
+            {
+                label: 'Commercial Supervisor Rejected',
+                data: {{ Comrejected|safe }},
+                backgroundColor: 'rgba(255, 99, 132, 1)',
+                borderColor: 'rgb(0, 0, 0)',
+            }
+        ]
+ 
         },
         options: {
-            scales: {
-                y: {
-                    beginAtZero: true
-                }
+          responsive: true,
+          scales: {
+            x: {
+              display: true,
+              title: {
+                display: true,
+                text: 'Date'
+              }
             },
-            responsive: true,
-            plugins: {
-                legend: {
-                    position: 'top',
-                },
-                title: {
-                    display: true,
-                    text: 'Token Data Visualization'
-                }
+            y: {
+              display: true,
+              title: {
+                display: true,
+                text: 'Number of tokens'
+              }
             }
+          }
         }
+      });
     });
-}); 
+  
   </script>
+  
 {% endblock %}
