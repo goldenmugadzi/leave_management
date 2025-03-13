@@ -4,7 +4,7 @@ from django.dispatch import receiver
 from django.db import transaction
 from ..models import Appraisal, AppraisalWorkflow
 from ..services import PerformanceReviewService, TrainingAndDevelopmentService
-from ..repository import PerformanceReviewRepository, TrainingAndDevelopmentRepository
+from ..repository import PerformanceReviewRepository, TrainingAndDevelopmentRepository, AppraisalWorkflowRepository
 from ..helpers.types import PerformanceReviewType
 from ..helpers.types.kra import KraRolesType
 from ..helpers.notifications import send_appraisal_notifications
@@ -185,5 +185,29 @@ def set_appraisal_approval_workflow(sender, instance, created, **kwargs):
             logger.success("[Creating Appraisal Approval] completed")
         except Exception as e:
             logger.error(f"[Creating Appraisal Approval]-failed with error: {e}")
+            return
+        
+@receiver(post_save, sender=Appraisal, dispatch_uid="appraisal_approval_workflow_acceptance_complete")
+def set_appraisal_acceptance_stage_completed(sender, instance, created, **kwargs):
+    if not created and instance.reviewer is not None:
+        try:
+            logger.info(f"[Approval Workflow stage] Accept Appraisal: {instance} handler initialized ...")
+            repo = AppraisalWorkflowRepository()
+            
+            workflow_qr = repo.retrieve_by_appraisal(appraisal_id=instance.id)
+            
+            if not workflow_qr.exists():
+                logger.error(f"[Approval Workflow stage] Appraisal: {instance}, All stages not found")
+                return            
+            
+            accept_appraisal_qr = workflow_qr.filter(stage_name=ApprovalStageData.accept_appraisal.value)
+            if not accept_appraisal_qr.exists():
+                logger.error(f"[Approval Workflow stage] Appraisal: {instance}, {ApprovalStageData.accept_appraisal.value} stage  not found")
+                return 
+              
+            repo.update(workflow_object=accept_appraisal_qr.first(), is_completed=True, updated_by=instance.appraiser)
+            
+            logger.success("[Approval Workflow stage] Accept Appraisal completed")
+        except Exception as e:
             return
 
