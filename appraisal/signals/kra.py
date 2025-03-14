@@ -3,11 +3,10 @@ from django.dispatch import receiver
 from ..repository.kra import TargetScoreRepository
 from ..services.kra import TargetScoreService
 from ..helpers.types.kra import TargetScoreType
+from ..models import Activity
 from loguru import logger
 from django.db import transaction
 from it.users.models import Application
-from ..helpers.data.approval_stage import ApprovalStageData
-from ..models import Activity, AppraisalWorkflow
 from ..helpers.kra_roles import KraModulesRolesStrategyContext, KraModuleStrategy, ActivityModuleStrategy, TargetModuleStrategy, ScoringModuleStrategy
 
 @receiver(post_save, sender=Activity, dispatch_uid="kra-target-uid")
@@ -48,18 +47,4 @@ def create_kra_roles_handler(sender, **kwargs):
         logger.error(f"Creating Kra Roles handler failed with error: {e}")
         return
     
-# def create_approval_stages(sender, **kwargs):
-#     try:
-#         logger.info(f"Creating Appraisal Approval] initialing ...")
-#         for index, stage in enumerate(ApprovalStageData):
-#             logger.info(f"[Creating Appraisal Approval] for approval stage: {stage.value}")
-            
-#             stage_num = index+1
-#             AppraisalWorkflow.objects.get_or_create(stage_name=stage.value, stage_num=stage_num, defaults={"stage_name": stage.value, "stage_num": stage_num})
-            
-#             logger.success(f"[Creating Appraisal Approval] - {stage.value}, created successfully")
-        
-#         logger.info("Creating Appraisal Approval] completed")
-#     except Exception as e:
-#         logger.error(f"[Creating Appraisal Approval]-failed with error: {e}")
-#         return
+

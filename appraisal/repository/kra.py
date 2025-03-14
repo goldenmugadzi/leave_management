@@ -1,5 +1,7 @@
 from typing import List
 from django.core.exceptions import ObjectDoesNotExist
+from django.db.models.query import QuerySet
+
 from ..models import KeyResultArea, YearQuarter, Activity, TargetScore, Appraisal, AppraisalKra
 from ..helpers.types.kra import KRAType, TargetScoreType, KraRolesCreateType, ActivityType
 from it.users.models import UserProfile, Application, Roles
@@ -347,6 +349,13 @@ class TargetScoreRepository:
             return target_score_obj
         except Exception as e:
             raise Exception(f"Target score update Repo failed with error: {e}")
+
+    def fetch_by_appraisal_id(self, appraisal_id: int)->QuerySet[TargetScore]:
+        try:
+            return TargetScore.objects.filter(activity__appraisal_kra__appraisal__id=appraisal_id).select_related('activity', 'activity__appraisal_kra__appraisal')
+        except Exception as e:
+            raise Exception(f"Target score fetch by appraisal pk, failed with error: {e}")
+
 
 
     def get_by_id_up_to_process_obj(self, target_score_id: int) -> TargetScore:
