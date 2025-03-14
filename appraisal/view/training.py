@@ -1,6 +1,6 @@
 from typing import Any, Dict
 from django.http import HttpResponse
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.views.generic.edit import CreateView
 from django.views.generic import TemplateView
 from django.contrib.messages.views import SuccessMessageMixin
@@ -8,6 +8,7 @@ from django.contrib import messages
 from django.urls import reverse
 
 from ..helpers.types.training import TrainingAndDevelopmentCreateUpdateType
+from ..helpers.getters import ActivityScoreHandler
 
 from ..forms import InterventionStrategyFormSet, ActionsForm, CompetencyFormSet
 from ..models import TrainingAndDevelopment, InterventionStrategy
@@ -97,9 +98,31 @@ class TrainingAndDevelopmentUpdateView(SuccessMessageMixin, CreateView):
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        
+        handler = ActivityScoreHandler()
+        data = handler.get_activity_scores_quarter_scored(appraisal_id=self.kwargs.get('appraisal_id'),
+                                                              quarter=self.kwargs.get('quarter'),
+                                                              year=self.kwargs.get('year'))
+        context.update(data)
         context.update(self.get_forms_initial_data())
         context.update(self.approval_user_roles())
+        
         return context
+    
+    def get(self, request, *args, **kwargs):
+        self.object = None
+        try:
+            handler = ActivityScoreHandler()
+            data = handler.get_activity_scores_quarter_scored(appraisal_id=self.kwargs.get('appraisal_id'),
+                                                              quarter=self.kwargs.get('quarter'),
+                                                              year=self.kwargs.get('year'))
+            if not data["activity_scores_quarter_scored"] and self.approval_user_roles()["is_appraiser"]:
+                messages.info(request=request, message="To complete this stage, you must score all activities for this quarter. Please ensure that each activity has a score before proceeding.")
+        except Exception as e:
+            logger.error(f"Scored activity for appraisal: {self.kwargs.get('appraisal_id')} quarter: {self.kwargs.get('quarter')}-{self.kwargs.get('year')}, failed with error: {e}")
+            return redirect("server_error_view")
+        context = self.get_context_data(**kwargs)
+        return self.render_to_response(context)
     
     def build_payload(self)->TrainingAndDevelopmentCreateUpdateType:
         payload = self.request.POST
@@ -150,6 +173,8 @@ class TrainingAndDevelopmentUpdateView(SuccessMessageMixin, CreateView):
             updated_training_object.save()
             
         return super().form_valid(form)
+    
+    
     
     def get_success_url(self) -> str:
         return reverse('performance_review_detail', args=(self.kwargs.get("appraisal_id"),))

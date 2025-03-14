@@ -45,9 +45,11 @@
                 </div>
             </div>
             {% if is_appraiser == True %}
-                <div class="flex justify-center">
-                    <button type="submit" class="bg-blue-500 hover:bg-blue-700 w-80 rounded-full text-white py-2 px-4">Create</button>
-                </div>
+                {% if activity_scores_quarter_scored == True %}
+                    <div class="flex justify-center">
+                        <button type="submit" class="bg-blue-500 hover:bg-blue-700 w-80 rounded-full text-white py-2 px-4">Create</button>
+                    </div>
+                {% endif %}
             {% endif %}
     </form>
 </div>
