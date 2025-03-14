@@ -955,10 +955,12 @@ def approve_profile_request(request):
                 if user_role == "it_section_head":
                     roles_actions = request.POST.get('roles_actions')
                     print("roles_actions: ", roles_actions)
-                    # if not roles_actions:
-                    #     messages.error(request, "Please enter the roles implemented")
-                    #     return redirect("/change_requests/change_request_index")
-                    if change_request.change_type != "new_profile":
+                    if not roles_actions:
+                        messages.error(request, "Please enter the roles implemented")
+                        return redirect("/change_requests/change_request_index")
+                    else:
+                        roles_actions = roles_actions.strip()
+                    if change_request.change_type == "new_profile":
                         new_profile = change_request.new_profile
                         new_profile.roles_actions = roles_actions if roles_actions else new_profile.roles_actions
                         new_profile.save()
