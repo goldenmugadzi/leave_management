@@ -149,20 +149,7 @@ def assign_appraisee_role_post_save_handler(sender, instance, created, **kwargs)
                 
         except Exception as e:
             logger.error(f"Assigning Appraisee role to {instance.user} signal handler failed with error: {e}")
-
-
-@receiver(post_save, sender=Appraisal, dispatch_uid="set_appraiser_approval")
-def set_appraiser_approval_post_save_handler(sender, instance, created, **kwargs):
-    if not created and instance.is_accepted:
-        try:
-            logger.info(f"Starting Appraiser Confirmation Process for Appraisal: {instance} ....")
-            with transaction.atomic():
-                set_approval_process(process_object=instance.process, user_object=instance.appraiser)
-                
-                logger.success(f"Appraiser Confirmation Process for Appraisal: {instance} completed successfully.")
-        except Exception as e:
-            logger.error(f"Assigning Appraiser Approval to {instance.user} signal handler failed with error: {e}")
-            
+ 
 
 @receiver(post_save, sender=Appraisal, dispatch_uid="appraisal_approval_workflow")
 def set_appraisal_approval_workflow(sender, instance, created, **kwargs):
@@ -198,16 +185,16 @@ def set_appraisal_acceptance_stage_completed(sender, instance, created, **kwargs
             
             if not workflow_qr.exists():
                 logger.error(f"[Approval Workflow stage] Appraisal: {instance}, All stages not found")
-                return            
+                return None            
             
             accept_appraisal_qr = workflow_qr.filter(stage_name=ApprovalStageData.accept_appraisal.value)
             if not accept_appraisal_qr.exists():
                 logger.error(f"[Approval Workflow stage] Appraisal: {instance}, {ApprovalStageData.accept_appraisal.value} stage  not found")
-                return 
+                return None
               
             repo.update(workflow_object=accept_appraisal_qr.first(), is_completed=True, updated_by=instance.appraiser)
             
             logger.success("[Approval Workflow stage] Accept Appraisal completed")
         except Exception as e:
-            return
+            return None
 

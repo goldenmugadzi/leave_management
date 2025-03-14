@@ -39,6 +39,7 @@ class AppraisalConfig(AppConfig):
         from appraisal.signals.appraisal import (create_performance_review_post_save_handler, 
                                                  create_training_development_post_save_handler, 
                                                  assign_appraisee_role_post_save_handler,
+                                                 set_appraisal_acceptance_stage_completed
                                                  )
         from .tasks import run_back_ground_tasks
         
