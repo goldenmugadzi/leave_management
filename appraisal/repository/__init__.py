@@ -4,3 +4,4 @@ from .appraisal import AppraisalRepository
 from .performance import PerformanceReviewRepository
 from .training import TrainingAndDevelopmentRepository
 from .approval import AppraisalWorkflowRepository
+from .kra import TargetScoreRepository, AppraisalKraRepository

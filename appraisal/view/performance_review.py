@@ -13,7 +13,7 @@ from ..services import (AppraisalService, PerformanceReviewService,
 from ..repository import (AppraisalRepository, UserQualificationRepository, AppraisalExperienceRepository, 
                           ExperienceRepository, PerformanceReviewRepository,
                           TrainingAndDevelopmentRepository)
-from ..helpers.getters import ApprovalStagesHandler
+from ..helpers.getters import ApprovalStagesHandler, ActivityScoreHandler
 
 from ..models import PerformanceProgressReview, AppraisalExperience, TrainingAndDevelopment
 from it.users.models import UserQualification, UserProfile
@@ -166,13 +166,32 @@ class PerformanceReviewsApprovalView(SuccessMessageMixin, TemplateView):
             "is_appraiser": is_appraiser
         }
         return data
-
-
+    
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
+        handler = ActivityScoreHandler()
+        data = handler.get_activity_scores_quarter_scored(appraisal_id=self.kwargs.get('appraisal_id'),
+                                                              quarter=self.kwargs.get('quarter'),
+                                                              year=self.kwargs.get('year'))
+   
+        context.update(data)
         context.update(self.get_performance_review_forms_objects())
         context.update(self.approval_user_roles())
         return context
+    
+    def get(self, request, *args, **kwargs):
+        try:
+            handler = ActivityScoreHandler()
+            data = handler.get_activity_scores_quarter_scored(appraisal_id=self.kwargs.get('appraisal_id'),
+                                                              quarter=self.kwargs.get('quarter'),
+                                                              year=self.kwargs.get('year'))
+            if not data["activity_scores_quarter_scored"] and self.approval_user_roles()["is_appraiser"]:
+                messages.info(request=request, message="To complete this stage, you must score all activities for this quarter. Please ensure that each activity has a score before proceeding.")
+        except Exception as e:
+            logger.error(f"Scored activity for appraisal: {self.kwargs.get('appraisal_id')} quarter: {self.kwargs.get('quarter')}-{self.kwargs.get('year')}, failed with error: {e}")
+            return redirect("server_error_view")
+        context = self.get_context_data(**kwargs)
+        return self.render_to_response(context)
     
     def post(self, request, *args, **kwargs):
         appraisal_id = self.kwargs.get("appraisal_id")
