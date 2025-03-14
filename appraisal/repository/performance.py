@@ -43,7 +43,7 @@ class PerformanceReviewRepository:
     
     def get_performance_by_appraisal_id(self, appraisal_id: int)->List[PerformanceProgressReview]:
         try:
-            return PerformanceProgressReview.objects.filter(appraisal__id=appraisal_id)
+            return PerformanceProgressReview.objects.filter(appraisal__id=appraisal_id).select_related('appraisal')
         except Exception as e:
             raise ValueError(f"retrieving performance objects by appraisal failed with error: {e}")
     

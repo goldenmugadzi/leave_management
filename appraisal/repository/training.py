@@ -20,7 +20,7 @@ class TrainingAndDevelopmentRepository:
     
     def get_by_appraisal_id(self, appraisal_id: int)->List[TrainingAndDevelopment]:
         try:
-            return TrainingAndDevelopment.objects.filter(appraisal__id=appraisal_id)
+            return TrainingAndDevelopment.objects.filter(appraisal__id=appraisal_id).select_related('appraisal')
         except Exception as e:
             raise Exception(f"Get TrainingAndDevelopment by appraisal id Repo failed with error: {e}")
 

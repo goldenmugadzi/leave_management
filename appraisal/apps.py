@@ -42,6 +42,7 @@ class AppraisalConfig(AppConfig):
                                                  set_appraisal_acceptance_stage_completed
                                                  )
         from .signals.target import set_appraisal_scoring_stage_completed
+        from .signals.performance_review import set_performance_progress_review_stage_completed, set_training_development_stage_completed
         from .tasks import run_back_ground_tasks
         
         # Run tasks
