@@ -1,5 +1,6 @@
 from typing import Any, Dict, List
 from django.urls import reverse
+from django.shortcuts import redirect
 from django.views.generic import TemplateView
 from django.views.generic.edit import CreateView, UpdateView
 from django.contrib.messages.views import SuccessMessageMixin
@@ -9,9 +10,12 @@ from ...forms import ActivityCreateForm
 from ...repository.kra import KRARepository, KraActivityRepository, AppraisalKraRepository
 from ...services.kra import KRAService, ActivityService
 from ...helpers.types.kra import KRAType
+from ...helpers.getters.approval import ApprovalStagesHandler
+
 from django.http import Http404
 from .helper import build_payload_activity
 from pydantic import ValidationError
+from loguru import logger
 
 
 def get_appraisal_kra_object(appraisal_kra_id: int)->KeyResultArea:
@@ -42,14 +46,31 @@ class KraActivityIndexTemplateView(TemplateView):
             "is_appraiser": is_appraiser
         }
         return data
+    
+    def get_approval_stages(self):
+        try:
+            handler = ApprovalStagesHandler(appraisal_id=self.get_appraisal_object().id)
+            return handler.get_stages_info()
+        except Exception as e:
+            logger.error(f"[PerformancePlanAndAssessmentTemplateView] for Appraisal - {self.get_appraisal_object()} failed with error: {e}")
+            return None
+        
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context.update(self.get_activity())
+        context.update(self.get_approval_stages())
         context.update(self.approval_user_roles())
         context["kra_obj"] = get_appraisal_kra_object(appraisal_kra_id=self.kwargs.get('appraisal_kra_id'))
         context["appraisal_object"] = self.get_appraisal_object()
         return context
+    
+    def get(self, request, *args, **kwargs):
+        approval_data = self.get_approval_stages()
+        if approval_data is None:
+            return redirect("server_error_view")
+        context = self.get_context_data(**kwargs)
+        return self.render_to_response(context)
 
 class KraActivityCreateView(SuccessMessageMixin, CreateView):
     model = Activity

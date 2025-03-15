@@ -130,7 +130,6 @@ class KRATemplateView(TemplateView):
         context.update(self.get_all_kra(year=year_qrt["year"], quarter=year_qrt["quarter"]))
         context.update(year_qrt)
         context.update(self.approval_user_roles())
-        print("========>>>>>>>>> ", self.get_approval_stages())
         context.update(self.get_approval_stages())
         
         context["roles"] = KraRolesType
