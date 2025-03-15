@@ -6,7 +6,7 @@ from ..repository.kra import KRARepository, KraActivityRepository, TargetScoreRe
 from it.users.models import UserProfile
 from ..models import YearQuarter, KeyResultArea, Activity, TargetScore, Appraisal, AppraisalKra
 from ..helpers.types.kra import KRAType, TargetScoreType, ActivityType
-from ..helpers.getters import get_actual_variance, get_within_condition, get_rating
+from ..helpers.getters import get_actual_variance, get_within_condition, get_rating, RatingCalculation
 
 class KRAErr(Exception):
     ...
@@ -79,12 +79,12 @@ class TargetScoreService:
     def calculate_activity_rating_score_use_case(self, activity_id: int)->float:
         """Calculate the rating score for an activity based on actual variance and allowable variance."""
         score_obj = self.target_score_repository.get_by_activity_id(activity_id=activity_id)
-        actual_variance = self.calculate_actual_variance_use_case(score_object=score_obj)
-
-        allowable_variance = score_obj.activity.allowable_variance
-        within_condition_value = get_within_condition(actual_variance=actual_variance, allowable_variance=allowable_variance)
-
-        rating = get_rating(actual_variance=actual_variance, within_condition=within_condition_value)
+        activity_obj = score_obj.activity
+        rating_calc_handler = RatingCalculation()
+        
+        is_target_met = rating_calc_handler.is_target_met(agreed_target=activity_obj.agreed_target, actual_target=score_obj.score)
+        variance_range_classifier = rating_calc_handler.classify_variance_range(agreed_target=activity_obj.agreed_target, allowable_variance=activity_obj.allowable_variance, actual_score=score_obj.score)
+        rating = rating_calc_handler.calculate_rating(is_target_met=is_target_met, variance_range_classify=variance_range_classifier)
 
         return rating
 
