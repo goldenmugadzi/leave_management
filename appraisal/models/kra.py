@@ -74,7 +74,6 @@ class Activity(TimeStamp):
     weight = models.DecimalField(max_digits=5, decimal_places=2)
     agreed_target = models.DecimalField(max_digits=5, decimal_places=2, default=0.0)
     allowable_variance = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
-    unit = models.CharField(max_length=30, blank=True, null=True)  
     assigned_user = models.ForeignKey(User, on_delete=models.RESTRICT, null=True)
     
     def __str__(self):

@@ -13,7 +13,7 @@
             <div>
                 <h1 class="font-bold">Key Result Area Activities</h1>
                 <p class="text-sm text-muted">
-                    Key Result Area: <strong>{{ kra_obj.name }}</strong> for {{ kra_obj.quarter.quarter|quarter_name }} of {{ kra_obj.quarter.year }} Activities
+                    Key Result Area Activity: <strong>{{ kra_obj.get_name }}</strong> for {{ kra_obj.quarter.quarter|quarter_name }} of {{ kra_obj.quarter.year }} Activities
                 </p>
             </div>
                
@@ -41,9 +41,12 @@
            <tr>
              <th class="px-6 py-3 text-left text-md font-semibold">Name</th>
              <th class="px-6 py-3 text-left text-md font-semibold">Weight</th>
-             <th class="px-6 py-3 text-left text-md font-semibold">Weighted Score</th>
+             <th class="px-6 py-3 text-left text-md font-semibold">Agreed Target</th>
+             <th class="px-6 py-3 text-left text-md font-semibold">Allowable Variance</th>
+             <th class="px-6 py-3 text-left text-md font-semibold">Actual Performance</th>
              <th class="px-6 py-3 text-left text-md font-semibold">Actual Variance</th>
-             <th class="px-6 py-3 text-left text-md font-semibold">Rating Score</th>
+             <th class="px-6 py-3 text-left text-md font-semibold">Rating</th>
+             <th class="px-6 py-3 text-left text-md font-semibold">Weighted Score</th>
              <th></th>
            </tr>
          </thead>
@@ -51,10 +54,13 @@
            {% for activity_obj in activity_objects %}
            <tr class="hover:bg-blue-100">
              <td class="px-6 py-4 text-md text-blue-900 truncate max-w-xs">{{activity_obj.name}}</td>
-             <td class="px-6 py-4 text-md text-blue-900">{{activity_obj.weight}}</td>
-             <td class="px-6 py-4 text-md text-blue-900">{{activity_obj.id|get_activity_weighted_score}}</td>
-             <td class="px-6 py-4 text-md text-blue-900">{{activity_obj.id|get_activity_actual_variance}}</td>
+             <td class="px-6 py-4 text-md text-blue-900">{{activity_obj.weight}} %</td>
+             <td class="px-6 py-4 text-md text-blue-900">{{activity_obj.agreed_target}} %</td>
+             <td class="px-6 py-4 text-md text-blue-900">(+-) {{activity_obj.allowable_variance}} %</td>
+             <td class="px-6 py-4 text-md text-blue-900">{{activity_obj.id|get_target_score_by_activity_id}} %</td>
+             <td class="px-6 py-4 text-md text-blue-900">(+-) {{activity_obj.id|get_activity_actual_variance}} %</td>
              <td class="px-6 py-4 text-md text-blue-900">{{activity_obj.id|get_activity_rating}}</td>
+             <td class="px-6 py-4 text-md text-blue-900">{{activity_obj.id|get_activity_weighted_score}}</td>
              <td>
               <div class="flex justify-even gap-1">
                   <a href="{% url 'score_view' activity_obj.id %}"

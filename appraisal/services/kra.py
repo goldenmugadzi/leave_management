@@ -6,7 +6,7 @@ from ..repository.kra import KRARepository, KraActivityRepository, TargetScoreRe
 from it.users.models import UserProfile
 from ..models import YearQuarter, KeyResultArea, Activity, TargetScore, Appraisal, AppraisalKra
 from ..helpers.types.kra import KRAType, TargetScoreType, ActivityType
-from ..helpers.getters import get_actual_variance, get_within_condition, get_rating, RatingCalculation
+from ..helpers.getters import RatingCalculation
 
 class KRAErr(Exception):
     ...
@@ -73,7 +73,9 @@ class TargetScoreService:
         """Calculate the actual variance between the actual score and the target score."""
         actual_score = score_object.score
         target_score = score_object.activity.agreed_target
-        actual_variance = get_actual_variance(actual_score=actual_score, target_score=target_score)
+        rating_calc_handler = RatingCalculation()
+        
+        actual_variance = rating_calc_handler.get_actual_variance(actual_score=actual_score, target_score=target_score)
         return actual_variance
     
     def calculate_activity_rating_score_use_case(self, activity_id: int)->float:
@@ -93,7 +95,7 @@ class TargetScoreService:
         try:
             score_obj = self.target_score_repository.get_by_activity_id(activity_id=activity_id)
             activity_score = score_obj.score
-            activity_weight = score_obj.activity.weight
+            activity_weight = score_obj.activity.weight/100
             weighted_score = activity_score * activity_weight
 
             return weighted_score
