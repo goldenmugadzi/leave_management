@@ -53,18 +53,18 @@ def get_activity_actual_variance(activity_id)->float:
 
     
 @register.filter
-def get_kra_average_weighted_score(kra_id)->float:
-    if not isinstance(kra_id, int):
-        logger.error(f"[KRA pk: {kra_id}] Invalid type for kra_id: Expected int, got {type(kra_id).__name__}")
+def get_kra_total_score(appraisal_kra_id)->float:
+    if not isinstance(appraisal_kra_id, int):
+        logger.error(f"[KRA pk: {appraisal_kra_id}] Invalid type for appraisal_kra_id: Expected int, got {type(appraisal_kra_id).__name__}")
         return 0.0
 
     repo = KraActivityRepository()
-    service_handler = ActivityService(activity_repo=repo)
+    activity_service_handler = ActivityService(activity_repo=repo)
     target_score_repo = TargetScoreRepository()
     target_score_service_handler = TargetScoreService(target_score_repository=target_score_repo)
-    
+    total_score = activity_service_handler.calculate_total_activities_weighted_scores_per_kra(appraisal_kra_id=appraisal_kra_id, target_score_service_object=target_score_service_handler)
     try:
-        return service_handler.calculate_weighted_score_per_kra(kra_id=kra_id, target_score_service_object=target_score_service_handler)
+        return f"{total_score:.2f}"
     except Exception as e:
         logger.error(e)
         return 0.0

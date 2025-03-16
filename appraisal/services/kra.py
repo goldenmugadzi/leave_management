@@ -132,35 +132,20 @@ class ActivityService:
         except Exception as e:
             raise KRAErr(f"Failed to retrieve kra activities with error: {e}")
 
-    def calculate_weighted_score_per_kra(self, kra_id: int, target_score_service_object: TargetScoreService)->float:
+    def calculate_total_activities_weighted_scores_per_kra(self, appraisal_kra_id: int, target_score_service_object: TargetScoreService)->float:
         try:
-            activities_objects = self.activity_repo.fetch_by_kra_id(kra_id=kra_id)
+            activities_objects = self.activity_repo.fetch_by_appraisal_kra_id(appraisal_kra_id=appraisal_kra_id)
         except Exception as e:
-            raise KRAErr(f"Failed to fetch activities by pk with error: {e}")
+            raise KRAErr(f"Failed to fetch activities by appraisal kra pk with error: {e}")
 
         try:
-            # Use Decimal for precision
-            weighted_sum = Decimal(0)
             total_weight = Decimal(0)
 
             for activity_obj in activities_objects:
-                # Convert weight to Decimal for compatibility
-                activity_weight = Decimal(str(activity_obj.weight))
+                activity_weighted_score = target_score_service_object.calculate_activity_weighted_score(activity_id=activity_obj.id)
+                total_weight += activity_weighted_score
 
-                # Ensure activity_weighted_score is Decimal-compatible
-                activity_weighted_score = Decimal(
-                    target_score_service_object.calculate_average_weighted_score_per_activity(activity_id=activity_obj.id)
-                )
-
-                # Perform calculations
-                weighted_sum += activity_weighted_score * activity_weight
-                total_weight += activity_weight
-
-            if total_weight == 0:
-                raise Exception("Total weight cannot be zero.")
-
-            # Return the weighted score as a float
-            return float(weighted_sum / total_weight)
+            return total_weight
         except Exception as e:
             raise KRAErr(f"Failed to calculate kra weighted score with error: {e}")
 

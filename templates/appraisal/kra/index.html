@@ -50,7 +50,7 @@
            <tr>
              <th class="px-6 py-3 text-left text-md font-semibold">Name</th>
              <th class="px-6 py-3 text-left text-md font-semibold">Weight</th>
-             <th class="px-6 py-3 text-left text-md font-semibold">Average Weighted Score</th>
+             <th class="px-6 py-3 text-left text-md font-semibold">Total Score</th>
              <th></th>
            </tr>
          </thead>
@@ -59,7 +59,7 @@
            <tr class="hover:bg-blue-100">
              <td class="px-6 py-4 text-md text-blue-900 truncate max-w-xs">{{kra_obj.name}}</td>
              <td class="px-6 py-4 text-md text-blue-900">{{kra_obj.weight}}</td>
-             <td class="px-6 py-4 text-md text-blue-900">{{kra_obj.id|get_kra_average_weighted_score}}</td>
+             <td class="px-6 py-4 text-md text-blue-900">{{kra_obj.id|get_kra_total_score}}</td>
              <td>
                <div class="flex gap-2 justify-center">
                 <a 
