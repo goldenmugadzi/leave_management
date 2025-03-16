@@ -52,8 +52,7 @@ def build_payload_activity(request, form: BaseModelForm) -> ActivityType:
             "weight": form.cleaned_data.get("weight"),
             "performance_indicator": form.cleaned_data.get("performance_indicator"),
             "agreed_target": form.cleaned_data.get("agreed_target"),
-            "allowable_variance": form.cleaned_data.get("allowable_variance"),
-            "unit": form.cleaned_data.get("unit"),
+            "allowable_variance": form.cleaned_data.get("allowable_variance")
         }
         return ActivityType(**data)
     except ValidationError as e:

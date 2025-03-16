@@ -218,7 +218,6 @@ class KraActivityRepository:
                 weight=data.weight,
                 agreed_target=data.agreed_target,
                 allowable_variance=data.allowable_variance,
-                unit=data.unit,
                 assigned_user=assigned_user_object,
                 )
         except Exception as e:

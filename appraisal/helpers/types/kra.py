@@ -69,9 +69,6 @@ class ActivityType(BaseModel):
     agreed_target: Annotated[Decimal, Field(max_digits=10, decimal_places=2)] = Field(
         ..., description="The agreed value of the Target."
     )
-    unit: Optional[Annotated[str, Field(max_length=30)]] = Field(
-        None, description="The unit of the Target."
-    )
 
     @field_validator("performance_indicator")
     @classmethod
