@@ -150,7 +150,7 @@ def Ace_detail(request, Ace_id2):
             transaction.save()
             print("transaction: ", str(transaction.approval_status))
             user = ace_item.requested_by
-            userp = UserProfile.objects.filter(id=user).first()
+            userp = UserProfile.objects.filter(id=user.id).first()
 
             msg = "Your ACE " + ace_item.Ace_id2 + "has been approved by the General Manager"
             url = "/ace/ace_detail/" + ace_item.Ace_id2
@@ -233,8 +233,16 @@ def create_Ace(request):
                 print(ace.amount, 'amount', budget.balance, 'balance', budget.to_be_withdrawn, 'to be withdrawn')
                 balance_after_ace = budget.balance - ace.amount
                 #money in tray check
-                m_in_tray = budget.to_be_withdrawn + ace.amount
-                if ace.amount <= budget.balance and budget.to_be_withdrawn <= budget.balance and balance_after_ace > 0 and m_in_tray <= budget.balance:
+                if budget.to_be_withdrawn:
+
+                    m_in_tray = budget.to_be_withdrawn + ace.amount
+                    budget_to_be_withdrawn = budget.to_be_withdrawn
+                else:
+                    m_in_tray = ace.amount
+                    budget_to_be_withdrawn = 0
+                print(budget_to_be_withdrawn, 'budget to be withdrawn')
+                print(m_in_tray, 'money in tray')
+                if ace.amount <= budget.balance and budget_to_be_withdrawn <= budget.balance and balance_after_ace > 0 and m_in_tray <= budget.balance:
                     ace.process = intiate(request, 'ace')
                     ace.requested_by = request.user
 
@@ -309,7 +317,7 @@ def create_Ace(request):
                     transaction.save()
 
                     budget = AssetBudget.objects.filter(budget_name=ace.budget_id).first()
-                    budget.to_be_withdrawn = budget.to_be_withdrawn + ace.amount
+                    budget.to_be_withdrawn = budget_to_be_withdrawn + ace.amount
                     budget.withdrawal_date = ace.date_created
                     budget.save()
 
@@ -435,9 +443,14 @@ def ace_awaiting_my_action(request):
                 aces_to_process.append(ace)
                 # remove aces that have been rejected
                 if process.approval_set.filter(approved="Rejected").exists():
+                    aces_rejected = process.approval_set.filter(approved="Rejected")
                     aces_to_process.remove(ace)
+                    #remove aces from southern region shs
+                    if ace_role == "pass" and user_profile.region.id == 4:
+                        ace = Ace2.objects.filter(date_created__year__gte=2025, region=region)
+                        aces_to_process.remove(ace)
 
-        if ace_role == "pass" and user_profile.designation.id == 65 and user_profile.region.id == 3:
+        if ace_role == "pass" and user_profile.designation.id == 65 and user_profile.region.id == 4:
             # I want objects from 2024 upwards
             print("northern sh")
 
@@ -1462,7 +1475,6 @@ def find_ace_section_head(request, section):
     all_users = UserProfile.objects.filter(section=section).all()
     # section_heads = UserProfile.objects.filter(section=section, role='section_head')
     if all_users:
-
         for user_profile in all_users:
             user_groups = user_profile.groups.values_list('name', flat=True)
 
@@ -1483,14 +1495,8 @@ def find_ace_section_head(request, section):
                 if sh:
                     return sh
 
-
-        else:
-            messages.error(request, "the ace requires more than the current budget resulting in a "
-                                    "negative balance")
-
-    # else:
-    #     messages.error(request, "the ace requires more than the current budget resulting in a "
-    #                             "negative balance")
+    # Return None if no section head is found
+    return None
 
 
 def find_general_manager(request, region):
