@@ -145,6 +145,16 @@ REPORTS = [
         "title": "Asset Reports",
         "iconUrl": "assets/images/reports.png",
         "url": "/asset_report/"
+    },  {
+        "name": "Token",
+        "title": "Tokens",
+        "iconUrl": "assets/images/token.png",
+        "url": "/tokens_reports/"
+    },{
+        "name": "non_conformity",
+        "title": "Non-Conformity",
+        "iconUrl": "assets/images/non-conforming.png",
+        "url": "/nonconformity_repots/"
     }
 ]
 

@@ -22,6 +22,7 @@ from approve.views import intiate
 from it.users.models import UserProfile, Roles, Designations, Districts, Depots, Notification
 from finance.PettyCash.views import approve_step
 from finance.comparative_schedules.views import notification_update, notify_user
+from .models import AceReport as Report
 
 
 # Create your views here.
@@ -58,12 +59,14 @@ def Ace_detail(request, Ace_id2):
     quotations = Quotation.objects.filter(ace2=ace_item).all()
     print(quotations.count())
 
-    if ace_role == "disburse":
-        payment_mode = request.POST.get('payment_mode')
-        # print(payment_mode)
-        if payment_mode and payment_mode != '':
-            ace_item.payment_mode = payment_mode
-            ace_item.save()
+    print(ace_item.section, " section")
+
+    # if ace_role == "disburse":
+    #     payment_mode = request.POST.get('payment_mode')
+    #     # print(payment_mode)
+    #     if payment_mode and payment_mode != '':
+    #         ace_item.payment_mode = payment_mode
+    #         ace_item.save()
 
     approvalForm = None
     to = None
@@ -92,6 +95,7 @@ def Ace_detail(request, Ace_id2):
                                        approver__in=user_roles)
 
             if ace_role == "pass":
+                print(ace_item.section, " section")
 
                 if newStep and request.user.section == ace_item.section and next_step == 1:
                     approvalForm = ApprovalForm
@@ -223,7 +227,7 @@ def create_Ace(request):
             if form.is_valid():
                 ace = form.save(commit=False)
                 # print(ace.budget_id)
-                budget = AssetBudget.objects.filter(budget_name=ace.budget_id, period=2024).first()
+                budget = AssetBudget.objects.filter(budget_name=ace.budget_id, period=2025).first()
                 # print(budget)
                 print(budget, 'budget')
                 print(ace.amount, 'amount', budget.balance, 'balance', budget.to_be_withdrawn, 'to be withdrawn')
@@ -250,6 +254,20 @@ def create_Ace(request):
 
                     ace_id2 = "ACE" + date + rand2
                     ace.Ace_id2 = ace_id2
+
+                    # check if ace_id2 exists
+                    ace_id2_exists = Ace2.objects.filter(Ace_id2=ace_id2).exists()
+                    # i want ths to loop till ace_id2 is unique
+                    while ace_id2_exists:
+                        rand = randrange(1, 1000)
+                        rand2 = str(rand)
+                        date = datetime.now()
+                        date = date.strftime("%Y%m%d")
+                        ace_id2 = "ACE" + date + rand2
+                        ace.Ace_id2 = ace_id2
+                        print("now trying ", ace_id2)
+                        ace_id2_exists = Ace2.objects.filter(Ace_id2=ace_id2).exists()
+
                     if designation:
                         ace.designation = designation
                     else:
@@ -373,6 +391,8 @@ def ace_awaiting_my_action(request):
     user_id = request.user.id
     user_profile = UserProfile.objects.filter(id=user_id).first()
     region = Regions.objects.filter(id=user_profile.region.id).first()
+    section = Sections.objects.filter(section=user_profile.section).first()
+    print(section, " section")
 
     user_groups = user_profile.groups.values_list('name', flat=True)
 
@@ -394,9 +414,11 @@ def ace_awaiting_my_action(request):
 
     if ace_role == "pass":
         # I want objects from 2024 upwards
+        print("pass sh")
 
-        for ace in Ace2.objects.filter(section=request.user.section, date_created__year__gte=2024, region=region):
+        for ace in Ace2.objects.filter(section=section, date_created__year__gte=2025, region=region):
             process = ace.process
+            print("normal sh")
 
             if process.approval_set.exists():
                 last_approval = process.approval_set.last()
@@ -415,32 +437,34 @@ def ace_awaiting_my_action(request):
                 if process.approval_set.filter(approved="Rejected").exists():
                     aces_to_process.remove(ace)
 
-    if ace_role == "pass" and user_profile.designation.id == 65 and user_profile.region.id == 3:
-        # I want objects from 2024 upwards
+        if ace_role == "pass" and user_profile.designation.id == 65 and user_profile.region.id == 3:
+            # I want objects from 2024 upwards
+            print("northern sh")
 
-        for ace in Ace2.objects.filter(date_created__year__gte=2024, region=region):
-            process = ace.process
+            for ace in Ace2.objects.filter(date_created__year__gte=2025, region=region):
+                process = ace.process
 
-            if process.approval_set.exists():
-                last_approval = process.approval_set.last()
-                current_step = last_approval.step.step
-            else:
-                current_step = 0
+                if process.approval_set.exists():
+                    last_approval = process.approval_set.last()
+                    current_step = last_approval.step.step
+                else:
+                    current_step = 0
 
-            next_step = current_step + 1
+                next_step = current_step + 1
 
-            workflow = process.workflow
-            step = workflow.step_set.filter(step=next_step, approver__in=user_roles).first()
+                workflow = process.workflow
+                step = workflow.step_set.filter(step=next_step, approver__in=user_roles).first()
 
-            if step:
-                aces_to_process.append(ace)
-                # remove aces that have been rejected
-                if process.approval_set.filter(approved="Rejected").exists():
-                    aces_to_process.remove(ace)
+                if step:
+                    aces_to_process.append(ace)
+                    # remove aces that have been rejected
+                    if process.approval_set.filter(approved="Rejected").exists():
+                        aces_to_process.remove(ace)
 
     else:
-        for ace in Ace2.objects.filter(date_created__year__gte=2024, region=region):
+        for ace in Ace2.objects.filter(date_created__year__gte=2025, region=region):
             process = ace.process
+            print("not sh")
 
             if process.approval_set.exists():
                 last_approval = process.approval_set.last()
@@ -459,7 +483,7 @@ def ace_awaiting_my_action(request):
                 if process.approval_set.filter(approved="Rejected").exists():
                     aces_to_process.remove(ace)
 
-    print(aces_to_process)
+    # print(aces_to_process)
 
     return render(request, 'finance/ace2/view_all_aces.html', {'aces': aces_to_process,
                                                                'ace_role': ace_role,
@@ -474,6 +498,8 @@ def view_all_aces(request):
     user_id = request.user.id
     user_profile = UserProfile.objects.filter(id=user_id).first()
     region = Regions.objects.filter(id=user_profile.region.id).first()
+    section = Sections.objects.filter(section=user_profile.section).first()
+    print(section, " section")
 
     user_groups = user_profile.groups.values_list('name', flat=True)
 
@@ -493,7 +519,7 @@ def view_all_aces(request):
     if ace_role == "create":
         aces = Ace2.objects.filter(requested_by=request.user)
     elif ace_role == "pass":
-        aces = Ace2.objects.filter(section=request.user.section)
+        aces = Ace2.objects.filter(section=section, region=region)
     else:
         print('kings')
         aces = Ace2.objects.filter(region=region)
@@ -552,13 +578,16 @@ def upload_budgets(request):
             withdrawn = row['withdrawn']
             balance = row['balance']
 
-            # withdrawal_date = row['withdrawal_date']
-            # withdrawal_date = withdrawal_date.strip().split(" ")[0]
-            # if withdrawal_date != "NULL":
-            #
-            #     withdrawal_date = datetime.strptime(withdrawal_date, "%Y-%m-%d")
-            # else:
-            #     withdrawal_date = None
+            if not allocated:
+                allocated = 0  # Provide a default value if allocated is empty
+            if not balance:
+                balance = 0  # Provide a default value if balance is empty
+
+            try:
+                allocated = float(allocated)
+                balance = float(balance)
+            except ValueError:
+                return HttpResponse("Error: Allocated and Balance fields must be numbers")
 
             awaiting_sanctioning = row['awaiting_sanctioning']
             period = int(row['period'])
@@ -698,7 +727,7 @@ def list_budgets(request):
     # }
     user_title = request.user.get_full_name()
     print(section_used)
-    section_budget = AssetBudget.objects.filter(region=region).order_by('period')
+    section_budget = AssetBudget.objects.filter(region=region)
     # print(section_budget)
     user_title = request.user.get_full_name()
     l = request.user.groups.values_list('name', flat=True)
@@ -1499,3 +1528,44 @@ def transactions_view(request, budget):
     transactions = Transactions.objects.filter(budget_id=budget)
     #return an view with an html table of transactions
     return render(request, 'finance/ace2/view_all_transactions.html', {'transactions': transactions})
+
+
+@login_required
+def reports_view(request):
+    reports = Report.objects.all()
+    return render(request, 'reports/reports_index.html', {'reports': reports})
+
+
+@login_required
+def generate_report(request):
+    if request.method == 'POST':
+        attribute = request.POST.get('attribute')
+        value = request.POST.get('value')
+        aces = Ace2.objects.filter(**{attribute: value})
+        return render(request, 'reports/generate_report.html', {'aces': aces, 'attribute': attribute, 'value': value})
+    return render(request, 'reports/generate_report.html')
+
+
+@login_required
+def download_csv(request):
+    attribute = request.GET.get('attribute')
+    value = request.GET.get('value')
+    aces = Ace2.objects.filter(**{attribute: value})
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="report.csv"'
+    writer = csv.writer(response)
+    writer.writerow(
+        ['Ace_id', 'details_of_expenditure', 'requested_by', 'section', 'Date', 'Budget', 'Amount', 'approval_status'])
+    for ace in aces:
+        transaction = Transactions.objects.filter(Ace_id2=ace).first()
+        writer.writerow([
+            ace.Ace_id2,
+            ace.details_of_expenditure,
+            ace.requested_by.get_full_name() if ace.requested_by else '',
+            ace.section.section if ace.section else '',
+            ace.date_created.strftime('%Y-%m-%d') if ace.date_created else '',
+            ace.budget_id.budget_name if ace.budget_id else '',
+            ace.amount,
+            transaction.approval_status if transaction else ''
+        ])
+    return response

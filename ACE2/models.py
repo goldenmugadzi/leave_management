@@ -103,6 +103,10 @@ class AssetBudget(models.Model):
     def __str__(self):
         return str(self.budget_name)
 
+    #order list by id and period starting with the largest
+    class Meta:
+        ordering = ['budget_id', '-period']
+
 
 class Ace2(models.Model):
     CLASSIFICATION_CHOICES = [

@@ -5,7 +5,7 @@ import datetime
 from django.utils import timezone
 from .models import *
 from .forms import *
-
+import json
 # from it.users.models import Notification
 from it.users.models import Notification
 from django.contrib import messages
@@ -255,23 +255,68 @@ def view_notifications(request):
 def view_nonconformities(request):
     nonconformities = Nonconformity.objects.all()
     """Get all nonconformities and oder them by  date created in descending order"""
-    try:
-        cost_center= request.user.cost_center
-        if not cost_center:
+    cost_center= request.user.cost_center
+    if not cost_center:
             cost_center = CostCenter.objects.filter(code= request.user.region.code)
+    try:
         region = cost_center.get_region()
-        cost_centers = region.get_decendance()
     except:
-        cost_centers = None
-    
-    if not cost_centers:
-        messages.error(request, "You do not have access to any cost centers. Please contact the administrator for assistance.")
-        return redirect("/")
-
-    nonconformities = Nonconformity.objects.filter(created_by__cost_center__in = cost_centers).order_by("-created_at")
-
+        region = cost_center
+        messages.error(request, "You do not have a Cost center assigned to you. Please contact the administrator.")
+    cost_centers = region.get_decendance()
+    print(cost_centers)
+    nonconformities = Nonconformity.objects.filter(Q(created_by__cost_center__in=cost_centers) | Q(recipient__cost_center__in=cost_centers)).order_by("-created_at")
     count = nonconformities.count()
     return render(request,"risk/nonconformity/nonconformities.html", {"nonconformities": nonconformities.order_by("-created_at"), "count": count})
+
+@login_required
+def nonconformity_reports(request):
+    form = NonconformityReportForm(request.POST or None, cost_center=request.user.cost_center)
+   
+    if request.method == "POST" and form.is_valid():
+        filters = Q()
+        for field in ["start_date", "end_date"]:
+            if (value := form.cleaned_data.get(field)):
+                filters &= Q(**{f"created_at__{'gte' if field == 'start_date' else 'lte'}": value})
+        if (cost_center := form.cleaned_data.get("cost_center")):
+            cost_center_instance = CostCenter.objects.get(pk=cost_center.id)  # Fetch the actual CostCenter instance
+            filters &= Q(created_by__cost_center__in=cost_center_instance.get_decendance())
+        nonconformities = Nonconformity.objects.filter(filters).order_by("-created_at")
+        print("filters",filters)
+        monthly_data,context={}, {"form": form,"nonconformities": nonconformities}
+        for nc in nonconformities:
+            month = nc.created_at.strftime("%m-%Y")
+            monthly_data.setdefault(month, {"created": 0, "new": 0,"accepted": 0, "rejected": 0, "resolved": 0, "closed": 0})
+            monthly_data[month]["created"] += 1
+            if nc.closed == True:
+                monthly_data[month]["closed"] += 1
+            elif nc.resolved == True:
+                monthly_data[month]["resolved"] += 1
+            elif nc.accepted == False:
+                monthly_data[month]["rejected"] += 1
+            elif nc.accepted == True:
+                monthly_data[month]["accepted"] += 1
+            else:
+                monthly_data[month]["new"] += 1
+
+                print(nc.accepted, "accepted", nc.resolved, "resolved", nc.closed, "closed")
+        monthly_data = dict(sorted(monthly_data.items(), key=lambda x: datetime.datetime.strptime(x[0], "%m-%Y")))
+
+        context.update({"created":json.dumps([data["created"] for data in monthly_data.values()]),
+                        "accepted":json.dumps([data["accepted"] for data in monthly_data.values()]),
+                        "rejected":json.dumps([data["rejected"] for data in monthly_data.values()]),
+                        "resolved":json.dumps([data["resolved"] for data in monthly_data.values()]),
+                        "closed":json.dumps([data["closed"] for data in monthly_data.values()]),
+                        "new":json.dumps([data["new"] for data in monthly_data.values()]),
+                        "dates": json.dumps(list(monthly_data.keys())),
+                        "start_date": form.cleaned_data.get("start_date"),
+                        "end_date": form.cleaned_data.get("end_date"),
+                        "cost_center": form.cleaned_data.get("cost_center")})
+        
+        print(json.dumps(list(monthly_data.keys())))  
+        return render(request,"risk/nonconformity/nonconformity_reports.html", context)
+  
+    return render(request, "risk/nonconformity/nonconformity_reports.html", {"form": form})
 
 @login_required
 def Icreated_nonconformities(request):

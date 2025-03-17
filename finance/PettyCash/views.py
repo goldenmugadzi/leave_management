@@ -191,6 +191,16 @@ def create_pettycash(request):
                 date = date.strftime("%Y%m%d")
 
                 petty_id = "PC" + date + rand2
+
+                # check if petty_id exists
+                petty_id_exists = Pettycash.objects.filter(petty_id=petty_id).exists()
+                while petty_id_exists:
+                    rand = randrange(1, 1000)
+                    rand2 = str(rand)
+                    petty_id = "PC" + date + rand2
+                    print("trying new petty_id", petty_id)
+                    petty_id_exists = Pettycash.objects.filter(petty_id=petty_id).exists()
+
                 pettycash.petty_id = petty_id
                 pettycash.save()
                 print(pettycash, 'pettycash created')
