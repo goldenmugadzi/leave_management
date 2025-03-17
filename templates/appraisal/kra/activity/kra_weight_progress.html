@@ -1,0 +1,47 @@
+<div class="bg-gray-100 p-8">
+  <div class="max-w-2xl mx-auto">
+    <h1 class="text-2xl font-bold mb-4">KRA Weight Progress</h1>
+    
+    <!-- Progress Bar Container -->
+    <div class="bg-gray-200 rounded-full h-6 overflow-hidden">
+      <!-- Covered Weight Progress -->
+      <div 
+        id="covered-progress" 
+        class="bg-blue-500 h-6 rounded-l-full" 
+        style="width: 0%;"
+      ></div>
+      <!-- Remaining Weight Progress -->
+      <div 
+        id="remaining-progress" 
+        class="bg-gray-400 h-6" 
+        style="width: 0%;"
+      ></div>
+    </div>
+
+    <!-- Labels -->
+    <div class="mt-4 flex justify-between text-sm text-gray-700">
+      <span>Covered: <span id="covered-label">0%</span></span>
+      <span>Remaining: <span id="remaining-label">0%</span></span>
+    </div>
+  </div>
+
+  <script>
+    // JavaScript function to update the progress bar
+    function updateProgressBar(appraisalKraWeight, coveredAppraisalKraWeight, remainAppraisalKraWeight) {
+      const coveredPercentage = (coveredAppraisalKraWeight / appraisalKraWeight) * 100;
+      const remainingPercentage = (remainAppraisalKraWeight / appraisalKraWeight) * 100;
+
+      document.getElementById('covered-progress').style.width = `${coveredPercentage}%`;
+      document.getElementById('remaining-progress').style.width = `${remainingPercentage}%`;
+      document.getElementById('covered-label').textContent = `${coveredPercentage.toFixed(2)}%`;
+      document.getElementById('remaining-label').textContent = `${remainingPercentage.toFixed(2)}%`;
+    }
+
+    // Call the function with values from Django
+    updateProgressBar(
+      {{ appraisal_kra_weight }}, 
+      {{ covered_appraisal_kra_weight }}, 
+      {{ remain_appraisal_kra_weight }}
+    );
+  </script>
+</div>

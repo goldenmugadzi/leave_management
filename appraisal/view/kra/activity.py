@@ -76,6 +76,15 @@ class KraActivityIndexTemplateView(TemplateView):
         approval_data = self.get_approval_stages()
         if approval_data is None:
             return redirect("server_error_view")
+        
+        try:
+            activity_qr = self.get_activity()["activity_objects"]
+            if activity_qr.exists():
+                appraisal_kra_object = activity_qr.first().appraisal_kra
+                get_activity_weight_against_kra_weight(appraisal_kra_object=appraisal_kra_object)
+        except Exception as e:
+            logger.error(f"Activity weight progress against it's activities weights failed with error: {e}")
+            return redirect("server_error_view")
         context = self.get_context_data(**kwargs)
         return self.render_to_response(context)
 
@@ -87,11 +96,6 @@ class KraActivityCreateView(SuccessMessageMixin, CreateView):
     success_message = 'Activity created successfully'
     context_object_name = "activity_form"
     
-    def __init__(self, **kwargs):
-        # Initializes the view with default values for `appraisal_kra_weight_covered` and `appraisal_kra_weight_remaining`, reducing redundant repository calls by updating these values in the `get()` method.
-        self.appraisal_kra_weight_covered = 0
-        self.appraisal_kra_weight_remaining = 0
-        super().__init__(**kwargs)
 
     @property
     def get_appraisal_kra_object(self):
@@ -116,9 +120,7 @@ class KraActivityCreateView(SuccessMessageMixin, CreateView):
     def get(self, request, *args, **kwargs):
         self.object = None
         try:
-            appraisal_kra_progress = get_activity_weight_against_kra_weight(appraisal_kra_object=self.get_appraisal_kra_object)
-            self.appraisal_kra_weight_covered = appraisal_kra_progress.covered_kra_weight
-            self.appraisal_kra_weight_remaining = appraisal_kra_progress.remaining_kra_weight
+            get_activity_weight_against_kra_weight(appraisal_kra_object=self.get_appraisal_kra_object)
         except Exception as e:
             logger.error(f"Activity weight progress against it's activities weights failed with error: {e}")
             return redirect("server_error_view")
@@ -131,7 +133,8 @@ class KraActivityCreateView(SuccessMessageMixin, CreateView):
             payload = build_payload_activity(request=self.request, form=form)
             appraisal_kra_object = self.get_appraisal_kra_object
             
-            if self.appraisal_kra_weight_remaining < payload.weight:
+            appraisal_kra_progress = get_activity_weight_against_kra_weight(appraisal_kra_object=self.get_appraisal_kra_object)
+            if appraisal_kra_progress.remaining_kra_weight < payload.weight:
                 messages.error(self.request, "The activity weight cannot be greater than its KRA weight. Please adjust the activity weight to ensure it does not exceed the KRA weight.")
                 return self.form_invalid(form)
             
@@ -160,11 +163,6 @@ class KraActivityUpdateView(SuccessMessageMixin, UpdateView):
     success_message = 'Activity updated successfully'
     context_object_name = "activity_form"
 
-    def __init__(self, **kwargs):
-        # Initializes the view with default values for `appraisal_kra_weight_covered` and `appraisal_kra_weight_remaining`, reducing redundant repository calls by updating these values in the `get()` method.
-        self.appraisal_kra_weight_covered = 0
-        self.appraisal_kra_weight_remaining = 0
-        super().__init__(**kwargs)
     
     @property
     def get_activity_object(self):
@@ -193,6 +191,7 @@ class KraActivityUpdateView(SuccessMessageMixin, UpdateView):
         context.update(self.approval_user_roles())
         context[self.context_object_name] = context.get("form")
         context["activity_object"] = self.get_activity_object
+        context["appraisal_kra_object"] = self.get_activity_object.appraisal_kra
         context["user_object"] = self.request.user
     
         return context
@@ -200,9 +199,7 @@ class KraActivityUpdateView(SuccessMessageMixin, UpdateView):
     def get(self, request, *args, **kwargs):
         self.object = self.get_object()
         try:
-            appraisal_kra_progress = get_activity_weight_against_kra_weight(appraisal_kra_object=self.get_activity_object.appraisal_kra)
-            self.appraisal_kra_weight_covered = appraisal_kra_progress.covered_kra_weight
-            self.appraisal_kra_weight_remaining = appraisal_kra_progress.remaining_kra_weight
+            get_activity_weight_against_kra_weight(appraisal_kra_object=self.get_activity_object.appraisal_kra)
         except Exception as e:
             logger.error(f"Activity weight progress against it's activities weights failed with error: {e}")
             return redirect("server_error_view")
@@ -214,10 +211,12 @@ class KraActivityUpdateView(SuccessMessageMixin, UpdateView):
             payload = build_payload_activity(request=self.request, form=form)
             activity_object = self.get_activity_object
             
-            if self.appraisal_kra_weight_remaining < payload.weight:
+            
+            appraisal_kra_progress = get_activity_weight_against_kra_weight(appraisal_kra_object=self.get_activity_object.appraisal_kra)
+            if appraisal_kra_progress.remaining_kra_weight < payload.weight:
                 messages.error(self.request, "The activity weight cannot be greater than its KRA weight. Please adjust the activity weight to ensure it does not exceed the KRA weight.")
                 return self.form_invalid(form)
-            
+           
             assigned_user_object = form.cleaned_data.get('assigned_user')
 
             repo = KraActivityRepository()
