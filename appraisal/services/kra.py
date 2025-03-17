@@ -154,7 +154,7 @@ class ActivityService:
     def get_activities_kra_weight_progress(self, appraisal_kra_object: AppraisalKra)->ActivityKraProgressType:
         try:
             activities_qr = self.activity_repo.fetch_by_appraisal_kra_id(appraisal_kra_id=appraisal_kra_object.id)
-            if activities_qr.exist():
+            if activities_qr.exists():
                 appraisal_kra_weight = appraisal_kra_object.get_weight
                 covered_appraisal_kra_weight = activities_qr.aggregate(Sum("weight"))["weight__sum"]
                 if appraisal_kra_weight < covered_appraisal_kra_weight:
