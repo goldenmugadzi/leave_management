@@ -2,10 +2,12 @@ from typing import List
 from dataclasses import dataclass
 from decimal import Decimal
 
+from django.db.models import Sum
+
 from ..repository.kra import KRARepository, KraActivityRepository, TargetScoreRepository, AppraisalKraRepository
 from it.users.models import UserProfile
 from ..models import YearQuarter, KeyResultArea, Activity, TargetScore, Appraisal, AppraisalKra
-from ..helpers.types.kra import KRAType, TargetScoreType, ActivityType
+from ..helpers.types.kra import KRAType, TargetScoreType, ActivityType, ActivityKraProgressType
 from ..helpers.getters import RatingCalculation
 
 class KRAErr(Exception):
@@ -148,6 +150,22 @@ class ActivityService:
             return total_weight
         except Exception as e:
             raise KRAErr(f"Failed to calculate kra weighted score with error: {e}")
+        
+    def get_activities_kra_weight_progress(self, appraisal_kra_object: AppraisalKra)->ActivityKraProgressType:
+        try:
+            activities_qr = self.activity_repo.fetch_by_appraisal_kra_id(appraisal_kra_id=appraisal_kra_object.id)
+            if activities_qr.exist():
+                appraisal_kra_weight = appraisal_kra_object.get_weight
+                covered_appraisal_kra_weight = activities_qr.aggregate(Sum("weight"))["weight__sum"]
+                if appraisal_kra_weight < covered_appraisal_kra_weight:
+                    raise Exception(f"Appraisal Kra pk[{appraisal_kra_object.id}]: Total Activities weight cannot be greater than Appraisal Kra weight")
+                
+                remain_appraisal_kra_weight = appraisal_kra_weight - covered_appraisal_kra_weight
+                return ActivityKraProgressType(covered_kra_weight=covered_appraisal_kra_weight, remaining_kra_weight=remain_appraisal_kra_weight)
+            
+            return ActivityKraProgressType(covered_kra_weight=0, remaining_kra_weight=appraisal_kra_object.get_weight)
+        except Exception as e:
+            raise KRAErr(f"Failed to get kra activities weight progress with error: {e}")
 
 @dataclass
 class AppraisalKraService:

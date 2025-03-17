@@ -76,3 +76,7 @@ class ActivityType(BaseModel):
         if value not in VALID_PERFORMANCE_INDICATORS:
             raise ValueError(f"Invalid performance indicator: {value}")
         return value
+    
+class ActivityKraProgressType(BaseModel):
+    covered_kra_weight: float
+    remaining_kra_weight: float
