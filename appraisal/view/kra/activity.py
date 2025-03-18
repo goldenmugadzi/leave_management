@@ -32,13 +32,16 @@ def get_activity_weight_against_kra_weight(appraisal_kra_object):
 
 class KraActivityIndexTemplateView(TemplateView):
     template_name = 'appraisal/kra/activity/index.html'
-
+    
+    def get_appraisal_kra_obj(self):
+        return get_appraisal_kra_object(appraisal_kra_id=self.kwargs.get('appraisal_kra_id'))
+    
     def get_appraisal_object(self):
-        kra_obj_id = self.kwargs.get('appraisal_kra_id')
-        kra_obj = get_appraisal_kra_object(appraisal_kra_id=kra_obj_id)
-        if kra_obj is None:
+        appraisal_kra_obj = self.get_appraisal_kra_obj()
+        if appraisal_kra_obj is None:
             raise Http404("No KRA object found.")
-        return kra_obj.appraisal
+        return appraisal_kra_obj.appraisal
+    
     
     def get_activity(self):
         repo = KraActivityRepository()
@@ -65,9 +68,19 @@ class KraActivityIndexTemplateView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        
+        appraisal_kra_progress_handler = get_activity_weight_against_kra_weight(appraisal_kra_object=self.get_appraisal_kra_obj())
+        appraisal_kra_progress_data = {
+            "appraisal_kra_weight": self.get_appraisal_kra_obj().get_weight,
+            "covered_appraisal_kra_weight": appraisal_kra_progress_handler.covered_kra_weight,
+            "remain_appraisal_kra_weight": appraisal_kra_progress_handler.remaining_kra_weight
+        }
+        
+        context.update(**appraisal_kra_progress_data)
         context.update(self.get_activity())
         context.update(self.get_approval_stages())
         context.update(self.approval_user_roles())
+        
         context["kra_obj"] = get_appraisal_kra_object(appraisal_kra_id=self.kwargs.get('appraisal_kra_id'))
         context["appraisal_object"] = self.get_appraisal_object()
         return context
@@ -78,10 +91,7 @@ class KraActivityIndexTemplateView(TemplateView):
             return redirect("server_error_view")
         
         try:
-            activity_qr = self.get_activity()["activity_objects"]
-            if activity_qr.exists():
-                appraisal_kra_object = activity_qr.first().appraisal_kra
-                get_activity_weight_against_kra_weight(appraisal_kra_object=appraisal_kra_object)
+            get_activity_weight_against_kra_weight(appraisal_kra_object=self.get_appraisal_kra_obj())
         except Exception as e:
             logger.error(f"Activity weight progress against it's activities weights failed with error: {e}")
             return redirect("server_error_view")
@@ -112,6 +122,16 @@ class KraActivityCreateView(SuccessMessageMixin, CreateView):
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        
+        appraisal_kra_progress_handler = get_activity_weight_against_kra_weight(appraisal_kra_object=self.get_appraisal_kra_object)
+        appraisal_kra_progress_data = {
+            "appraisal_kra_weight": self.get_appraisal_kra_object.get_weight,
+            "covered_appraisal_kra_weight": appraisal_kra_progress_handler.covered_kra_weight,
+            "remain_appraisal_kra_weight": appraisal_kra_progress_handler.remaining_kra_weight
+        }
+        context.update(**appraisal_kra_progress_data)
+  
+        
         context.update(self.approval_user_roles())
         context[self.context_object_name] = context.get("form")
         context["appraisal_kra_object"] = self.get_appraisal_kra_object
@@ -188,6 +208,15 @@ class KraActivityUpdateView(SuccessMessageMixin, UpdateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        
+        appraisal_kra_progress_handler = get_activity_weight_against_kra_weight(appraisal_kra_object=self.get_activity_object.appraisal_kra)
+        appraisal_kra_progress_data = {
+            "appraisal_kra_weight": self.get_activity_object.appraisal_kra.get_weight,
+            "covered_appraisal_kra_weight": appraisal_kra_progress_handler.covered_kra_weight,
+            "remain_appraisal_kra_weight": appraisal_kra_progress_handler.remaining_kra_weight
+        }
+        context.update(**appraisal_kra_progress_data)
+  
         context.update(self.approval_user_roles())
         context[self.context_object_name] = context.get("form")
         context["activity_object"] = self.get_activity_object
