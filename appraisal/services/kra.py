@@ -80,14 +80,13 @@ class TargetScoreService:
         actual_variance = rating_calc_handler.get_actual_variance(actual_score=actual_score, target_score=target_score)
         return actual_variance
     
-    def calculate_activity_rating_score_use_case(self, activity_id: int)->float:
+    def calculate_activity_rating_score_use_case(self, score_object: TargetScore)->float:
         """Calculate the rating score for an activity based on actual variance and allowable variance."""
-        score_obj = self.target_score_repository.get_by_activity_id(activity_id=activity_id)
-        activity_obj = score_obj.activity
+        activity_obj = score_object.activity
         rating_calc_handler = RatingCalculation()
         
-        is_target_met = rating_calc_handler.is_target_met(agreed_target=activity_obj.agreed_target, actual_target=score_obj.score)
-        variance_range_classifier = rating_calc_handler.classify_variance_range(agreed_target=activity_obj.agreed_target, allowable_variance=activity_obj.allowable_variance, actual_score=score_obj.score)
+        is_target_met = rating_calc_handler.is_target_met(agreed_target=activity_obj.agreed_target, actual_target=score_object.score)
+        variance_range_classifier = rating_calc_handler.classify_variance_range(agreed_target=activity_obj.agreed_target, allowable_variance=activity_obj.allowable_variance, actual_score=score_object.score)
         rating = rating_calc_handler.calculate_rating(is_target_met=is_target_met, variance_range_classify=variance_range_classifier)
 
         return rating
@@ -96,9 +95,9 @@ class TargetScoreService:
         """Calculate the weighted score for an activity by multiplying the activity score by its weight."""
         try:
             score_obj = self.target_score_repository.get_by_activity_id(activity_id=activity_id)
-            activity_score = score_obj.score
+            activity_rate = self.calculate_activity_rating_score_use_case(score_object=score_obj)
             activity_weight = score_obj.activity.weight/100
-            weighted_score = activity_score * activity_weight
+            weighted_score = activity_rate * activity_weight
 
             return weighted_score
         except Exception as e:
