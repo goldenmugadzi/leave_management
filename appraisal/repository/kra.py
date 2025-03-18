@@ -2,7 +2,7 @@ from typing import List
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models.query import QuerySet
 
-from ..models import KeyResultArea, YearQuarter, Activity, TargetScore, Appraisal, AppraisalKra
+from ..models import KeyResultArea, YearQuarter, Activity, TargetScore, Appraisal, AppraisalKra, AppraisalKraReviewerStatus
 from ..helpers.types.kra import KRAType, TargetScoreType, KraRolesCreateType, ActivityType
 from it.users.models import UserProfile, Application, Roles
 
@@ -47,7 +47,7 @@ class KRARepository:
             return queryset
         except Exception as e:
             raise Exception(f"KRA retrieve by quarter and year failed with error: {e}")
-        
+
     def retrieve_quarter_appraisal_id(self, quarter_number: int, year_number: int, appraisal_id: int)->List[KeyResultArea]:
         """
             Retrieves a list of KRAs for a specified quarter and year and appraisal pk.
@@ -143,7 +143,7 @@ class AppraisalKraRepository:
             return AppraisalKra.objects.create(appraisal=appraisal_object, quarter=quarter_obj, new_kra=kra_obj, assigned_kra=activity_object)
         except Exception as e:
             raise Exception(f"AppraisalKra Create Repo failed with error: {e}")
-    
+
     def retrieve_quarter_appraisal_id(self, quarter_number: int, year_number: int, appraisal_id: int)->List[AppraisalKra]:
             """
                 Retrieves a list of KRAs for a specified quarter and year and appraisal pk.
@@ -206,14 +206,14 @@ class AppraisalKraRepository:
         except Exception as e:
             raise Exception(f"KRA update Repo failed with error: {e}")
 
-    
+
 class KraActivityRepository:
     def create(self, appraisal_kra_object: AppraisalKra, assigned_user_object: UserProfile|None, data: ActivityType)->Activity:
         try:
             return Activity.objects.create(
-                appraisal_kra=appraisal_kra_object, 
-                name=data.name, 
-                description=data.description, 
+                appraisal_kra=appraisal_kra_object,
+                name=data.name,
+                description=data.description,
                 performance_indicator=data.performance_indicator,
                 weight=data.weight,
                 agreed_target=data.agreed_target,
@@ -252,19 +252,19 @@ class KraActivityRepository:
             if data.performance_indicator != activity_obj.performance_indicator:
                 activity_obj.performance_indicator = data.performance_indicator
                 updated = True
-                
+
             if data.agreed_target != activity_obj.agreed_target:
                 activity_obj.agreed_target = data.agreed_target
                 updated = True
-                
+
             if data.allowable_variance != activity_obj.allowable_variance:
                 activity_obj.allowable_variance = data.allowable_variance
                 updated = True
-                
+
             if data.unit != activity_obj.unit:
                 activity_obj.unit = data.unit
                 updated = True
-                
+
             if updated:
                 activity_obj.save()
             return activity_obj
@@ -282,7 +282,7 @@ class KraActivityRepository:
         except Exception as e:
             raise Exception(f"Activity object retrieval by PK failed with error: {e}")
 
-    
+
     def get_activity_by_appraisal_kra_pk(self, appraisal_kra_pk: int)->Activity:
         try:
             qr = Activity.objects.filter(appraisal_kra__id=appraisal_kra_pk)
@@ -295,7 +295,7 @@ class KraActivityRepository:
             raise Exception(f"Activity object retrieval by PK failed with error: {e}")
 
 
-    
+
 class TargetScoreRepository:
     def create(self, activity_obj: Activity, data: TargetScoreType)->TargetScore:
         try:
@@ -314,7 +314,7 @@ class TargetScoreRepository:
             return qr.first()
         except Exception as e:
             raise Exception(f"score get repo failed with error: {e}")
-    
+
     def get_by_activity_id(self, activity_id: int)->TargetScore:
         try:
             qr = TargetScore.objects.select_related('activity').filter(activity__id=activity_id)
@@ -338,7 +338,7 @@ class TargetScoreRepository:
                 target_score_obj.comments = data.comment
                 is_updated = True
 
-                
+
             if not target_score_obj.is_scored:
                 target_score_obj.is_scored = True
                 is_updated = True
@@ -389,7 +389,15 @@ class KraRolesRepository:
     def create(self, application_object: Application, data: KraRolesCreateType)->Roles:
         obj,_ = Roles.objects.get_or_create(role=data.role, name=data.name, application=application_object.name, defaults={"app_id": application_object, "description": data.description})
         return obj
-    
+
     def role_exists(self, role_name: str)->bool:
         qr = Roles.objects.filter(name__iexact=role_name)
         return qr.exists()
+
+class ApprasialKraReviewerStatusRepository:
+    def create(self, appraisal_kra_obj: AppraisalKra, status: str, comment: str = None)->AppraisalKraReviewerStatus:
+        try:
+            object = AppraisalKraReviewerStatus.objects.create(appraisal_kra=appraisal_kra_obj, status=status, comment=comment)
+            return object
+        except Exception as e:
+            raise Exception(f"ApprasialKraReviewerStatusRepository create repo failed with error: {e}")

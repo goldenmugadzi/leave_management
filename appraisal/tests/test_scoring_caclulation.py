@@ -1,7 +1,6 @@
 from unittest import TestCase
 from ..helpers.getters.rating import RatingCalculation, ActivityRatingEnum
 from pydantic import BaseModel
-from loguru import logger
 
 class RatingCalculationTestModel(BaseModel):
     name: str
