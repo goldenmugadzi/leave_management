@@ -15,38 +15,38 @@ class KeyResultArea(TimeStamp):
     def __str__(self):
         return f"{self.name}"
 
-        
+
 class AppraisalKra(TimeStamp):
     appraisal = models.ForeignKey(Appraisal, on_delete=models.RESTRICT, related_name="appraisal_kra_user_appraisal", null=True, blank=True)
     quarter = models.ForeignKey(YearQuarter, on_delete=models.RESTRICT)
     new_kra = models.ForeignKey(KeyResultArea, on_delete=models.RESTRICT, related_name="new_kra", null=True, blank=True)
     assigned_kra = models.ForeignKey("Activity", on_delete=models.RESTRICT, related_name="activity", null=True, blank=True)
-    
+
     def __str__(self):
         return f"{self.appraisal}"
-    
+
     def is_assigned_kra(self):
         assigned_kra = self.assigned_kra != None
         return assigned_kra
-    
+
     def is_new_kra(self):
         new_kra = self.new_kra != None
         return new_kra
-    
+
     @property
     def get_name(self):
         if self.is_assigned_kra():
             return self.assigned_kra.name
         if self.is_new_kra():
             return self.new_kra.name
-    
-    @property  
+
+    @property
     def get_weight(self):
         if self.is_assigned_kra():
             return self.assigned_kra.weight
         if self.is_new_kra():
             return self.new_kra.weight
-        
+
     class Meta:
         constraints = [
             models.CheckConstraint(
@@ -57,8 +57,8 @@ class AppraisalKra(TimeStamp):
                 name="only_one_reference_allowed"
             )
         ]
-    
-    
+
+
 PERFORMANCE_INDICATOR = [
         ('Quantity', 'Quantity'),
         ('Quality', 'Quality'),
@@ -75,13 +75,13 @@ class Activity(TimeStamp):
     agreed_target = models.DecimalField(max_digits=5, decimal_places=2, default=0.0)
     allowable_variance = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
     assigned_user = models.ForeignKey(User, on_delete=models.RESTRICT, null=True)
-    
+
     def __str__(self):
         return f"{self.name}"
-    
+
     class Meta:
         verbose_name_plural = "Activities"
-    
+
 
 class TargetScore(TimeStamp):
     activity = models.OneToOneField(Activity, on_delete=models.CASCADE)
@@ -99,10 +99,10 @@ class AppraisalWorkflow(TimeStamp):
     stage_num = models.PositiveIntegerField()
     is_completed = models.BooleanField(default=False)
     updated_by = models.ForeignKey(User, on_delete=models.RESTRICT, related_name="approve_user", null=True, blank=True)
-    
+
     def __str__(self):
         return f"Approval {self.stage_name} - {self.stage_num} for {self.appraisal}"
-    
+
     class Meta:
         constraints = [
             models.UniqueConstraint(
@@ -110,3 +110,18 @@ class AppraisalWorkflow(TimeStamp):
                 name='unique_stage_per_appraisal'
             )
         ]
+
+
+APPRAISAL_KRA_REVIEWER_STATUS_CHOICES = [
+    ("PENDING", "PENDING"),
+    ("ACCEPT", "ACCEPT"),
+    ("REJECT", "REJECT"),
+]
+
+class AppraisalKraReviewerStatus(TimeStamp):
+    appraisal_kra = models.ForeignKey(AppraisalKra, on_delete=models.CASCADE)
+    status = models.CharField(max_length=10, choices=APPRAISAL_KRA_REVIEWER_STATUS_CHOICES)
+    comment = models.TextField(null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.appraisal_kra}"
