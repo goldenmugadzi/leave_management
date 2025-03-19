@@ -402,7 +402,39 @@ class KraRolesRepository:
 class ApprasialKraReviewerStatusRepository:
     def create(self, appraisal_kra_obj: AppraisalKra, status: str, comment: str = None)->AppraisalKraReviewerStatus:
         try:
-            object = AppraisalKraReviewerStatus.objects.create(appraisal_kra=appraisal_kra_obj, status=status, comment=comment)
+            object, _ = AppraisalKraReviewerStatus.objects.get_or_create(appraisal_kra=appraisal_kra_obj, defaults={"status": status, "comment": comment})
             return object
         except Exception as e:
             raise Exception(f"ApprasialKraReviewerStatusRepository create repo failed with error: {e}")
+
+    def fetch_by_appraisal_kra_id(self, appraisal_kra_id: int)->List[AppraisalKraReviewerStatus]:
+        try:
+            qr = AppraisalKraReviewerStatus.objects.filter(appraisal_kra__id=appraisal_kra_id).select_related('appraisal_kra')
+            return qr
+        except Exception as e:
+            raise Exception(f"ApprasialKraReviewerStatusRepository fetch_by_appraisal_kra_id repo failed with error: {e}")
+    
+    def get_by_appraisal_kra_id(self, appraisal_kra_id: int)->AppraisalKraReviewerStatus:
+        try:
+            qr = self.fetch_by_appraisal_kra_id(appraisal_kra_id=appraisal_kra_id)
+            if not qr.exists():
+                return None
+            return qr.first()
+        except Exception as e:
+            raise Exception(f"ApprasialKraReviewerStatusRepository get_by_appraisal_kra_id repo failed with error: {e}")
+
+    def update(self, appraisal_kra_reviewer_status_obj: AppraisalKraReviewerStatus, status: str, comment: str)->AppraisalKraReviewerStatus:
+        try:
+            is_changed = False
+            
+            if appraisal_kra_reviewer_status_obj.status != status:
+                appraisal_kra_reviewer_status_obj.status = status
+                is_changed = True
+            if appraisal_kra_reviewer_status_obj.comment != comment:
+                appraisal_kra_reviewer_status_obj.comment = comment
+                is_changed = True
+            if is_changed:
+                appraisal_kra_reviewer_status_obj.save()
+            return appraisal_kra_reviewer_status_obj
+        except Exception as e:
+            raise Exception(f"ApprasialKraReviewerStatusRepository update repo failed with error: {e}")

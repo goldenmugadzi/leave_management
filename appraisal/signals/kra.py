@@ -1,9 +1,10 @@
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-from ..repository.kra import TargetScoreRepository
+from ..repository.kra import TargetScoreRepository, ApprasialKraReviewerStatusRepository
 from ..services.kra import TargetScoreService
 from ..helpers.types.kra import TargetScoreType
-from ..models import Activity
+from ..models import Activity, AppraisalKra
+from ..models.kra import APPRAISAL_KRA_REVIEWER_STATUS_CHOICES
 from loguru import logger
 from django.db import transaction
 from it.users.models import Application
@@ -48,3 +49,16 @@ def create_kra_roles_handler(sender, **kwargs):
         return
     
 
+@receiver(post_save, sender=AppraisalKra, dispatch_uid="appraisal-kra_reviewer_status-uid")
+def create_appraisal_kra_reviewer_status_handler(sender, instance, created, **kwargs):
+    if created:
+        try:
+            logger.info(f'Creating ApprasialKraReviewerStatus for AppraisalKra pk {instance.id} .....')
+            
+            repo = ApprasialKraReviewerStatusRepository()
+            repo.create(appraisal_kra_obj=instance, status=APPRAISAL_KRA_REVIEWER_STATUS_CHOICES[0][0])
+            
+            logger.success(f"ApprasialKraReviewerStatus for AppraisalKra pk {instance.id} created successfully.")
+        except Exception as e:
+            logger.error(f"Creating Appraisal Kra Reviewer signal handler failed with error: {e}")
+            return
