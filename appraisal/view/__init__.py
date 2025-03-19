@@ -7,3 +7,4 @@ from .kra.appraisal_kra import AppraisalKraCreateView, AppraisalKraTemplateView,
 from .kra.activity import KraActivityIndexTemplateView, KraActivityCreateView, KraActivityUpdateView
 from .kra.targets import TargetScoreUpdateView
 from .qualification import UserQualificationTemplateView, UserQualificationCreateView, UserQualificationUpdateView
+from .kra.reviewer_status import AppraisalKraReviewerStatusUpdateView

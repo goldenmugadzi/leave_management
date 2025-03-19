@@ -225,7 +225,7 @@ class AppraisalKraDetailView(TemplateView):
         return score_repo.fetch_by_appraisal_kra_id(appraisal_kra_id=self.kwargs.get("appraisal_kra_id"))
 
     def is_reviewer(self)->bool:
-        return self.request.user == self.get_object().activity.appraisal_kra.appraisal.reviewer
+        return self.request.user == self.get_object().appraisal.reviewer
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

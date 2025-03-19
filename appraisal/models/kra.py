@@ -119,8 +119,8 @@ APPRAISAL_KRA_REVIEWER_STATUS_CHOICES = [
 ]
 
 class AppraisalKraReviewerStatus(TimeStamp):
-    appraisal_kra = models.ForeignKey(AppraisalKra, on_delete=models.CASCADE)
-    status = models.CharField(max_length=10, choices=APPRAISAL_KRA_REVIEWER_STATUS_CHOICES)
+    appraisal_kra = models.OneToOneField(AppraisalKra, on_delete=models.RESTRICT)
+    status = models.CharField(max_length=10, choices=APPRAISAL_KRA_REVIEWER_STATUS_CHOICES, default=APPRAISAL_KRA_REVIEWER_STATUS_CHOICES[0][0])
     comment = models.TextField(null=True, blank=True)
 
     def __str__(self):

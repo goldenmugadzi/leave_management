@@ -27,7 +27,8 @@ from .view import (AppraisalCreateView,
                    AppraisalKraCreateView,
                    AppraisalKraTemplateView,
                    AppraisalKraUpdateView,
-                   AppraisalKraDetailView
+                   AppraisalKraDetailView,
+                   AppraisalKraReviewerStatusUpdateView
                    )
 
 urlpatterns = [
@@ -55,20 +56,23 @@ urlpatterns = [
     
     
     # ================== KRA urls =================================
-    # path('kra/<int:appraisal_id>/new', KRACreateView.as_view(), name='kra_create'),
-    # path('kra/<int:appraisal_id>/list', KRATemplateView.as_view(), name='kra_index'),
-    # path('kra/detail/<int:appraisal_kra_id>', KRADetailView.as_view(), name='kra_detail'),
+    path('kra/<int:appraisal_id>/new', KRACreateView.as_view(), name='kra_create'),
+    path('kra/<int:appraisal_id>/list', KRATemplateView.as_view(), name='kra_index'),
+    path('kra/detail/<int:appraisal_kra_id>', KRADetailView.as_view(), name='kra_detail'),
     
     path('kra/<int:appraisal_id>/appraisal-kra', AppraisalKraTemplateView.as_view(), name='appraisal_kra_index'),
     path('kra/<int:appraisal_id>/appraisal-kra/new', AppraisalKraCreateView.as_view(), name='appraisal_kra_create'),
     path('kra/appraisal-kra/<int:appraisal_kra_id>', AppraisalKraUpdateView.as_view(), name='appraisal_kra_update'),
-    path('kra/detail/<int:appraisal_kra_id>', AppraisalKraDetailView.as_view(), name='appraisal_kra_detail'),
+    path('kra/appraisal-kra/detail/<int:appraisal_kra_id>', AppraisalKraDetailView.as_view(), name='appraisal_kra_detail'),
     
     path('kra/activity/<int:activity_id>/score', TargetScoreUpdateView.as_view(), name='score_view'),
     
     path('kra/<int:appraisal_kra_id>/activity', KraActivityIndexTemplateView.as_view(), name='kra_activity_index'),
     path('kra/<int:appraisal_kra_id>/activity/new', KraActivityCreateView.as_view(), name='kra_activity_create'),
     path('kra/activity/<int:activity_id>', KraActivityUpdateView.as_view(), name='kra_activity_update'),
+    
+    # ========================= Reviewer status =======================
+    path('kra/reviewer-status/<int:appraisal_kra_id>', AppraisalKraReviewerStatusUpdateView.as_view(), name='appraisal_kra_reviewer_status_update'),
     
     
     # ----- api ------

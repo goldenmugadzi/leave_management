@@ -1,5 +1,5 @@
 from django import forms
-from ..models import YearQuarter, KeyResultArea, Activity, TargetScore, AppraisalKra
+from ..models import YearQuarter, KeyResultArea, Activity, TargetScore, AppraisalKra, AppraisalKraReviewerStatus
 from ..helpers.types.kra import RoleFilterChoices
 from it.users.models import UserProfile
 from datetime import datetime
@@ -55,3 +55,7 @@ class AppraisalKraForm(forms.ModelForm):
         else:
             self.fields["assigned_kra"].queryset =  Activity.objects.filter(assigned_user__id=appraisee_id)
 
+class AppraisalKraReviewerStatusForm(forms.ModelForm):
+    class Meta:
+        model = AppraisalKraReviewerStatus
+        exclude = ["id", "created_date", "updated", "appraisal_kra"]

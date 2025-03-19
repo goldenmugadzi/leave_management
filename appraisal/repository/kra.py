@@ -357,7 +357,7 @@ class TargetScoreRepository:
 
     def fetch_by_appraisal_kra_id(self, appraisal_kra_id: int)->QuerySet[TargetScore]:
         try:
-            return TargetScore.objects.filter(activity__appraisal_kra__id=appraisal_kra_id).select_related('activity', 'activity__appraisal_kra', 'activity__appraisal_kra__appraisal', 'activity__appraisal_kra__appraisal__appraisal')
+            return TargetScore.objects.filter(activity__appraisal_kra__id=appraisal_kra_id).select_related('activity', 'activity__appraisal_kra', 'activity__appraisal_kra__appraisal')
         except Exception as e:
             raise Exception(f"Target score fetch by appraisal_kra pk, failed with error: {e}")
 
