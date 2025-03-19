@@ -6,12 +6,12 @@ from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib import messages
 from django.shortcuts import get_object_or_404, redirect
 from django.http import Http404
-from ...models import KeyResultArea, AppraisalKra, Appraisal
+from ...models import KeyResultArea, AppraisalKra, Appraisal, TargetScore
 from ...forms import YearQuarterForm, AppraisalKraForm
 from ...repository.kra import AppraisalKraRepository
 from ...repository.appraisal import AppraisalRepository
 from ...services.kra import AppraisalKraService
-from ...repository import UserQualificationRepository, AppraisalExperienceRepository, ExperienceRepository, AppraisalRepository
+from ...repository import AppraisalRepository, TargetScoreRepository
 from ...services import AppraisalService
 from datetime import datetime
 from ...helpers.types.kra import KraRolesType
@@ -211,3 +211,36 @@ class AppraisalKraUpdateView(SuccessMessageMixin, UpdateView):
         """
         kra_obj_id = self.kwargs.get("appraisal_kra_id")
         return reverse('appraisal_kra_update', kwargs={"appraisal_kra_id": kra_obj_id})
+
+
+class AppraisalKraDetailView(TemplateView):
+    template_name = "appraisal/kra/appraisal_kra/detail.html"
+    
+    def get_object(self):
+        obj = get_object_or_404(AppraisalKra, pk=self.kwargs.get("appraisal_kra_id"))
+        return obj
+    
+    def get_score_objects(self)->List[TargetScore]:
+        score_repo = TargetScoreRepository()
+        return score_repo.fetch_by_appraisal_kra_id(appraisal_kra_id=self.kwargs.get("appraisal_kra_id"))
+
+    def is_reviewer(self)->bool:
+        return self.request.user == self.get_object().activity.appraisal_kra.appraisal.reviewer
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        context["score_objects"] = self.get_score_objects()
+        context["appraisal_kra_object"] = self.get_object()
+        context["is_reviewer"] = self.is_reviewer()        
+        return context
+    
+    def get(self, request, *args, **kwargs):
+        try:
+            self.get_score_objects()
+            self.is_reviewer()
+        except Exception as e:
+            logger.error(f"KRADetailView for appraisal_kra_id: {self.kwargs.get('appraisal_kra_id')}, failed with error: {e}")
+            return redirect("server_error_view")
+        context = self.get_context_data(**kwargs)
+        return self.render_to_response(context)

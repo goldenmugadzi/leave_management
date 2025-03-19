@@ -1,0 +1,74 @@
+{% extends "admin_layout.html" %}
+{% load quarter %}
+{% load static %}
+{% load crispy_forms_tags %}
+{% load kra_calculations %}
+{% load kra_permissions %}
+
+{% block content %}
+    {% include "appraisal/approval/detail.html" with stages=stages last_stage_num=last_stage_number %}
+
+    <div class="content-wrapper">
+        <div class="grid grid-cols-1">
+            <div class="bg-gulf-blue-100 shadow-lg rounded-lg p-6">
+                <div class="flex justify-between">
+                    <div>
+                        <h1 class="font-bold">Key Result Area Details</h1>
+                        <p class="text-sm text-muted">
+                            Key Result Area: <strong>{{ appraisal_kra_object.get_name }}</strong> for {{ appraisal_kra_object.quarter.quarter|quarter_name }} of {{ appraisal_kra_object.quarter.year }}
+                        </p>
+                    </div>  
+                </div>   
+            </div>  
+        </div>
+
+        <div class="bg-gulf-blue-100 shadow-lg rounded-lg p-6 my-6">
+
+            <div style="max-height: 280px; overflow-y: auto;">
+                <table 
+                    class="w-full border border-blue-800 rounded-lg shadow-lg">
+                    <thead class="bg-blue-800 text-white">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-md font-semibold">Name</th>
+                            <th class="px-6 py-3 text-left text-md font-semibold">Weight</th>
+                            <th class="px-6 py-3 text-left text-md font-semibold">Agreed Target</th>
+                            <th class="px-6 py-3 text-left text-md font-semibold">Allowable Variance</th>
+                            <th class="px-6 py-3 text-left text-md font-semibold">Actual Performance</th>
+                            <th class="px-6 py-3 text-left text-md font-semibold">Actual Variance</th>
+                            <th class="px-6 py-3 text-left text-md font-semibold">Rating</th>
+                            <th class="px-6 py-3 text-left text-md font-semibold">Weighted Score</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-blue-300 bg-blue-50">
+                        {% for score_obj in score_objects %}
+                            <tr class="hover:bg-blue-100">
+                                <td class="px-6 py-4 text-md text-blue-900 truncate max-w-xs">{{score_obj.activity.name}}</td>
+                                <td class="px-6 py-4 text-md text-blue-900">{{score_obj.activity.weight}} %</td>
+                                <td class="px-6 py-4 text-md text-blue-900">{{score_obj.activity.agreed_target}} %</td>
+                                <td class="px-6 py-4 text-md text-blue-900">(+-) {{score_obj.activity.allowable_variance}} %</td>
+                                <td class="px-6 py-4 text-md text-blue-900">{{score_obj.score}} %</td>
+                                <td class="px-6 py-4 text-md text-blue-900">(+-) {{score_obj.activity.allowable_variance}} %</td>
+                                <td class="px-6 py-4 text-md text-blue-900">{{score_obj.activity.id|get_activity_rating}}</td>
+                                <td class="px-6 py-4 text-md text-blue-900">{{score_obj.activity.id|get_activity_weighted_score}}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td class="font-bold">Total Score</td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td class="px-6 py-4 text-md text-blue-900">{{appraisal_kra_object.id|get_kra_total_score}}</td>
+                        </tr>
+                    </tfoot>
+                </table>
+
+            </div>
+        </div>
+    </div>
+
+{% endblock %}

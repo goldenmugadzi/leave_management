@@ -7,9 +7,9 @@ from django.contrib import messages
 from django.shortcuts import get_object_or_404, redirect
 from django.http import Http404
 from django.http import JsonResponse, HttpResponse
-from ...models import KeyResultArea, Activity, Appraisal
+from ...models import KeyResultArea, Activity, Appraisal, AppraisalKra
 from ...forms import YearQuarterForm, KraCreateForm
-from ...repository.kra import KRARepository
+from ...repository.kra import KRARepository, TargetScoreRepository
 from ...repository.appraisal import AppraisalRepository
 from ...services.kra import KRAService
 from .helper import build_payload
@@ -197,28 +197,27 @@ class KRADetailView(TemplateView):
     template_name = "appraisal/kra/detail.html"
     
     def get_object(self):
-        obj = get_object_or_404(KeyResultArea, appraisal__id=self.kwargs.get("appraisal_id"))
+        obj = get_object_or_404(AppraisalKra, pk=self.kwargs.get("appraisal_kra_id"))
         return obj
     
-       
-    def get_activities_with_targets(self)->list:
-        activities = Activity.objects.filter(kra=self.get_object())
-        
-        activities_with_targets = []
-        for activity in activities:
-            targets = Target.objects.filter(activity=activity)
-            activities_with_targets.append({
-                'activity': activity,
-                'targets': targets
-            })
-        return activities_with_targets
-        
+    def get_score_objects(self)->List[TargetScoreRepository]:
+        score_repo = TargetScoreRepository()
+        return score_repo.fetch_by_appraisal_kra_id(appraisal_kra_id=self.kwargs.get("appraisal_kra_id"))
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        context["score_objects"] = self.get_score_objects()
         context["kra_object"] = self.get_object()
-        context["activities_with_targets"] = self.get_activities_with_targets()
         return context
     
+    def get(self, request, *args, **kwargs):
+        try:
+            self.get_score_objects()
+        except Exception as e:
+            logger.error(f"KRADetailView for appraisal_kra_id: {self.kwargs.get('appraisal_kra_id')}, failed with error: {e}")
+            return redirect("server_error_view")
+        context = self.get_context_data(**kwargs)
+        return self.render_to_response(context)
     
 def kra_list_api(request, appraisal_id):
     """
