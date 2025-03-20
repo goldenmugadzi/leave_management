@@ -173,6 +173,8 @@ class AppraisalKraUpdateView(SuccessMessageMixin, UpdateView):
         obj = repo.retrieve_by_pk(pk=self.kwargs.get("appraisal_kra_id"))
         return obj
     
+    
+    
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context[self.context_object_name] = context.get("form")
@@ -220,6 +222,14 @@ class AppraisalKraDetailView(TemplateView):
         obj = get_object_or_404(AppraisalKra, pk=self.kwargs.get("appraisal_kra_id"))
         return obj
     
+    def get_approval_stages(self):
+        try:
+            handler = ApprovalStagesHandler(appraisal_id=self.get_object().appraisal.id)
+            return handler.get_stages_info()
+        except Exception as e:
+            logger.error(f"[AppraisalKraUpdateView] for Appraisal - {self.get_object().appraisal} failed with error: {e}")
+            return None
+    
     def get_score_objects(self)->List[TargetScore]:
         score_repo = TargetScoreRepository()
         return score_repo.fetch_by_appraisal_kra_id(appraisal_kra_id=self.kwargs.get("appraisal_kra_id"))
@@ -229,7 +239,7 @@ class AppraisalKraDetailView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        
+        context.update(self.get_approval_stages())
         context["score_objects"] = self.get_score_objects()
         context["appraisal_kra_object"] = self.get_object()
         context["is_reviewer"] = self.is_reviewer()        
