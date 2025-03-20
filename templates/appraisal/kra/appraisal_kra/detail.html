@@ -59,7 +59,7 @@
                                 <td class="px-6 py-4 text-md text-blue-900">{{score_obj.activity.agreed_target}} %</td>
                                 <td class="px-6 py-4 text-md text-blue-900">(+-) {{score_obj.activity.allowable_variance}} %</td>
                                 <td class="px-6 py-4 text-md text-blue-900">{{score_obj.score}} %</td>
-                                <td class="px-6 py-4 text-md text-blue-900">(+-) {{score_obj.activity.allowable_variance}} %</td>
+                                <td class="px-6 py-4 text-md text-blue-900">(+-) {{score_obj.activity.id|get_activity_actual_variance}} %</td>
                                 <td class="px-6 py-4 text-md text-blue-900">{{score_obj.activity.id|get_activity_rating}}</td>
                                 <td class="px-6 py-4 text-md text-blue-900">{{score_obj.activity.id|get_activity_weighted_score}}</td>
                             </tr>
