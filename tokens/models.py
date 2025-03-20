@@ -22,6 +22,12 @@ class Customer(models.Model):
     def __str__(self):
         return self.name
 
+
+class Attachments(models.Model):
+    file = models.FileField(upload_to='uploads/Tokens/attachments',help_text="Add attachments")
+    def __str__(self):
+        return str(self.token.meter.number)
+
 class Token(models.Model):
     id = models.CharField(primary_key=True, max_length=20, editable=False)
     meter = models.ForeignKey(Meter, on_delete=models.CASCADE, blank=True, null=True)
@@ -30,10 +36,9 @@ class Token(models.Model):
     created_by = models.ForeignKey(UserProfile, on_delete=models.CASCADE, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     process=models.ForeignKey(Process, on_delete=models.CASCADE, blank=True, null=True)
-    # section=models.ForeignKey(Sections, on_delete=models.CASCADE, blank=True, null=True)
     region=models.ForeignKey(Regions, on_delete=models.CASCADE, blank=True, null=True)
     cost_center=models.ForeignKey(CostCenter, on_delete=models.CASCADE, blank=True, null=True)
-     
+    attachments = models.ManyToManyField(Attachments)
     token_photo = models.FileField(upload_to='uploads/Tokens/generatedtoken',help_text="photo of generated token " , blank=True, null=True)
     type = models.CharField(max_length=100,help_text="Type of Token",  choices=[('REIMBURSEMENT', 'REIMBURSEMENT') , ('CLEAR CREDIT', 'CLEAR CREDIT'), ('TEMPER', 'TEMPER')])
     def __str__(self):

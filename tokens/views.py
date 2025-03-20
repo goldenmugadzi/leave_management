@@ -1182,7 +1182,7 @@ def tokens_reports(request):
             filters &= Q(type=request.POST.get('token_type'))
             form = TokenFilterForm( None, cost_center=request.user.cost_center,initial={ 'start_date': start_date,'end_date': end_date})
 
-            print(filters)
+            # print(filters,"type",request.POST.get('token_type'))
         else:
             form = TokenFilterForm(request.POST or None, cost_center=request.user.cost_center)
             print("form.is_valid(")
@@ -1195,8 +1195,9 @@ def tokens_reports(request):
                 if (cost_center := form.cleaned_data.get("cost_center")):filters &= Q(cost_center__in=cost_center.get_decendance())
 
         tokens = tokens.filter(filters)
-        print("tokens", tokens)
+        # print("tokens", tokens)
         tempers = tokens.filter(type="TEMPER")
+        
         reimbursements = tokens.filter(type="REIMBURSEMENT")
         clear_credits = tokens.filter(type="CLEAR CREDIT")
         token_types = {
