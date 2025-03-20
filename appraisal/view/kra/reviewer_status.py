@@ -30,21 +30,21 @@ class AppraisalKraReviewerStatusUpdateView(SuccessMessageMixin, UpdateView):
         return context
 
     def form_valid(self, form):
-        try:
-            status = form.cleaned_data.get("status")
-            comment = form.cleaned_data.get("comment")
-            
-            if (status == APPRAISAL_KRA_REVIEWER_STATUS_CHOICES[2][0]) and (comment == "" or comment == None):
-                messages.error(self.request, "Please provide the reason for your rejection in the comment field before proceeding.")
-                return self.form_invalid(form) 
-            
-            repo = ApprasialKraReviewerStatusRepository()
-            obj = repo.update(appraisal_kra_reviewer_status_obj=self.get_object(), status=status, comment=comment)
-            form.instance = obj
-        except Exception as e:
-            logger.error(f"AppraisalKraReviewerStatusUpdateView for {self.get_object()}, failed with error: {e}")
-            messages.error(self.request, "An unexpected error occurred. Please try again")
-            return self.form_invalid(form)   
+        # try:
+        status = form.cleaned_data.get("status")
+        comment = form.cleaned_data.get("comment")
+        
+        if (status == APPRAISAL_KRA_REVIEWER_STATUS_CHOICES[2][0]) and (comment == "" or comment == None):
+            messages.error(self.request, "Please provide the reason for your rejection in the comment field before proceeding.")
+            return self.form_invalid(form) 
+        
+        repo = ApprasialKraReviewerStatusRepository()
+        obj = repo.update(appraisal_kra_reviewer_status_obj=self.get_object(), status=status, comment=comment)
+        form.instance = obj
+        # except Exception as e:
+        #     logger.error(f"AppraisalKraReviewerStatusUpdateView for {self.get_object()}, failed with error: {e}")
+        #     messages.error(self.request, "An unexpected error occurred. Please try again")
+        #     return self.form_invalid(form)   
         
         # JSON response that inject JavaScript to close the popup and refresh the parent
         js_injector = "<script>window.close();</script>"

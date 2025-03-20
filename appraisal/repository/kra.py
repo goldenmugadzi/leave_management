@@ -27,16 +27,16 @@ class KRARepository:
         except Exception as e:
             raise Exception(f"KRA Create Repo failed with error: {e}")
 
-    def retrieve(self, quarter_number: int, year_number: int)->List[KeyResultArea]:
+    def retrieve(self, quarter_number: int, year_number: int)->QuerySet[KeyResultArea]:
         """
-            Retrieves a list of KRAs for a specified quarter and year.
+            Retrieves a QuerySet of KRAs for a specified quarter and year.
 
             Args:
                 quarter_number (int): The quarter number (e.g., 1 for Q1, 2 for Q2).
                 year_number (int): The year number (e.g., 2024).
 
             Returns:
-                List[KeyResultArea]: A list of KeyResultArea objects matching the specified quarter and year.
+                QuerySet[KeyResultArea]: A QuerySet of KeyResultArea objects matching the specified quarter and year.
 
             Raises:
                 Exception: If the retrieval operation fails.
@@ -48,16 +48,16 @@ class KRARepository:
         except Exception as e:
             raise Exception(f"KRA retrieve by quarter and year failed with error: {e}")
 
-    def retrieve_quarter_appraisal_id(self, quarter_number: int, year_number: int, appraisal_id: int)->List[KeyResultArea]:
+    def retrieve_quarter_appraisal_id(self, quarter_number: int, year_number: int, appraisal_id: int)->QuerySet[KeyResultArea]:
         """
-            Retrieves a list of KRAs for a specified quarter and year and appraisal pk.
+            Retrieves a QuerySet of KRAs for a specified quarter and year and appraisal pk.
 
             Args:
                 quarter_number (int): The quarter number (e.g., 1 for Q1, 2 for Q2).
                 year_number (int): The year number (e.g., 2024).
 
             Returns:
-                List[KeyResultArea]: A list of KeyResultArea objects matching the specified quarter and year.
+                QuerySet[KeyResultArea]: A QuerySet of KeyResultArea objects matching the specified quarter and year.
 
             Raises:
                 Exception: If the retrieval operation fails.
@@ -71,7 +71,7 @@ class KRARepository:
 
     def retrieve_by_pk(self, kra_id: int)->KeyResultArea:
         """
-            Retrieves a list of KRA by primary key.
+            Retrieves a QuerySet of KRA by primary key.
 
             Args:
                 kra_id (int): The primary key of KRA.
@@ -144,16 +144,16 @@ class AppraisalKraRepository:
         except Exception as e:
             raise Exception(f"AppraisalKra Create Repo failed with error: {e}")
 
-    def retrieve_quarter_appraisal_id(self, quarter_number: int, year_number: int, appraisal_id: int)->List[AppraisalKra]:
+    def retrieve_quarter_appraisal_id(self, quarter_number: int, year_number: int, appraisal_id: int)->QuerySet[AppraisalKra]:
             """
-                Retrieves a list of KRAs for a specified quarter and year and appraisal pk.
+                Retrieves a QuerySet of KRAs for a specified quarter and year and appraisal pk.
 
                 Args:
                     quarter_number (int): The quarter number (e.g., 1 for Q1, 2 for Q2).
                     year_number (int): The year number (e.g., 2024).
 
                 Returns:
-                    List[KeyResultArea]: A list of KeyResultArea objects matching the specified quarter and year.
+                    QuerySet[KeyResultArea]: A QuerySet of KeyResultArea objects matching the specified quarter and year.
 
                 Raises:
                     Exception: If the retrieval operation fails.
@@ -166,7 +166,7 @@ class AppraisalKraRepository:
 
     def retrieve_by_pk(self, pk: int)->AppraisalKra:
         """
-            Retrieves a list of Appraisal Kra by primary key.
+            Retrieves a QuerySet of Appraisal Kra by primary key.
 
             Args:
                 pk (int): The primary key of KRA.
@@ -223,7 +223,7 @@ class KraActivityRepository:
         except Exception as e:
             raise Exception(f"KRA Activity Create Repo failed with error: {e}")
 
-    def fetch_by_appraisal_kra_id(self, appraisal_kra_id: int)->List[Activity]:
+    def fetch_by_appraisal_kra_id(self, appraisal_kra_id: int)->QuerySet[Activity]:
         try:
             queryset = Activity.objects.filter(appraisal_kra__id=appraisal_kra_id).select_related("appraisal_kra")
             return queryset
@@ -407,7 +407,7 @@ class ApprasialKraReviewerStatusRepository:
         except Exception as e:
             raise Exception(f"ApprasialKraReviewerStatusRepository create repo failed with error: {e}")
 
-    def fetch_by_appraisal_kra_id(self, appraisal_kra_id: int)->List[AppraisalKraReviewerStatus]:
+    def fetch_by_appraisal_kra_id(self, appraisal_kra_id: int)->QuerySet[AppraisalKraReviewerStatus]:
         try:
             qr = AppraisalKraReviewerStatus.objects.filter(appraisal_kra__id=appraisal_kra_id).select_related('appraisal_kra')
             return qr
@@ -438,3 +438,10 @@ class ApprasialKraReviewerStatusRepository:
             return appraisal_kra_reviewer_status_obj
         except Exception as e:
             raise Exception(f"ApprasialKraReviewerStatusRepository update repo failed with error: {e}")
+
+    def fetch_by_quarter_year(self, year: int)->QuerySet[AppraisalKraReviewerStatus]:
+        try:
+            qr = AppraisalKraReviewerStatus.objects.filter(appraisal_kra__quarter__year=year).select_related('appraisal_kra__quarter')
+            return qr
+        except Exception as e:
+            raise Exception(f"ApprasialKraReviewerStatusRepository fetch_by_quarter_year repo failed with error: {e}")
