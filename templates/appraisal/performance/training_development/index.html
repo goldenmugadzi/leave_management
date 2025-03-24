@@ -28,7 +28,15 @@
                         <td class="px-6 py-4 whitespace-nowrap">{{ training_object.created_date|date }}</td>
                         <td class="px-6 py-4 whitespace-nowrap">{{ training_object.updated|date }}</td>
                         <td class="px-6 py-4 whitespace-nowrap">
-                            {{ training_object.appraisal.process.approval_set.last|default_if_none:"No Approval" }}
+                            {% if training_object.is_completed == True %}
+                                <span class="px-3 py-1 text-sm font-medium text-white bg-green-500 rounded-full">
+                                    Completion
+                                </span>
+                            {% else %}
+                                <span class="px-3 py-1 text-sm font-medium text-white bg-yellow-600 rounded-full">
+                                    Pending
+                                </span>
+                            {% endif %}
                         </td>
                         </tr>
                     {% endfor %}

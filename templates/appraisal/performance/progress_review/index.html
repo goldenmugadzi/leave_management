@@ -20,16 +20,25 @@
                     <tbody class="bg-white divide-y divide-gray-200">
                     {% for performance_review_object in performance_review_objects %}
                         <tr class="hover:bg-gray-100">
-                        <td class="px-6 py-4 whitespace-nowrap text-blue-600 hover:text-blue-800">
-                            <a href="{% url 'performance_review_create' performance_review_object.appraisal.id performance_review_object.quarter.year performance_review_object.quarter.quarter %}">
-                            {{ performance_review_object.quarter }}
-                            </a>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap">{{ performance_review_object.created_date|date }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">{{ performance_review_object.updated|date }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            {{ performance_review_object.appraisal.process.approval_set.last|default_if_none:"No Approval" }}
-                        </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-blue-600 hover:text-blue-800">
+                                <a href="{% url 'performance_review_create' performance_review_object.appraisal.id performance_review_object.quarter.year performance_review_object.quarter.quarter %}">
+                                {{ performance_review_object.quarter }}
+                                </a>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">{{ performance_review_object.created_date|date }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">{{ performance_review_object.updated|date }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                {% if performance_review_object.is_completed == True %}
+                                    <span class="px-3 py-1 text-sm font-medium text-white bg-green-500 rounded-full">
+                                        Completion
+                                    </span>
+                                {% else %}
+                                    <span class="px-3 py-1 text-sm font-medium text-white bg-yellow-600 rounded-full">
+                                        Pending
+                                    </span>
+                                {% endif %}
+                            </td>
+                        
                         </tr>
                     {% endfor %}
                     </tbody>
