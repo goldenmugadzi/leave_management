@@ -52,7 +52,8 @@ class AceForm(forms.ModelForm):
             })
             # self.fields['budget_id'].queryset = AssetBudget.objects.filter(period=2024)
 
-            if (field_name == 'id_from_budget') or (field_name == 'section') or (field_name == 'id_to_budget'):
+            if (field_name == 'id_from_budget') or (field_name == 'section') or (field_name == 'id_to_budget') or (
+                    field_name == 'budget_id') or (field_name == 'budget'):
                 field.widget.attrs.update({
                     'class': "select2 block w-full rounded-md border-0 py-1.5 text-gray-900 "
                              "shadow-sm ring-1 ring-inset ring-gray-300 "
