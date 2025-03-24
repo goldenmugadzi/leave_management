@@ -7,6 +7,8 @@ services:
       always
     ports:
       - "9998:9998" # Expose port 9998 for the Tika server
+    networks:
+      - elastic_network
     environment:
       - TIKA_CONFIG_PATH=/tika-config.xml # Optional: Path to custom Tika configuration
     volumes:
@@ -20,6 +22,8 @@ services:
       - discovery.type=single-node
       - ES_JAVA_OPTS=-Xms1g -Xmx1g
       - xpack.security.enabled=false
+    networks:
+      - elastic_network
     volumes:
       - es_data:/usr/share/elasticsearch/data
     ports:
@@ -31,6 +35,8 @@ services:
     ports:
       - target: 5601
         published: 5601
+    networks:
+      - elastic_network
     depends_on:
       - elasticsearch  
   
@@ -48,8 +54,18 @@ services:
         condition: service_healthy
     ports:
       - 8580:8080
+    networks:
+      - elastic_network
     command: fscrawler idx --restart --rest
 
 volumes:
   es_data:
     driver: local
+
+networks:
+  elastic_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.40.0.0/16
+          gateway: 172.40.0.1

@@ -3,7 +3,6 @@ from django.db import models
 from datetime import date, datetime
 from it.users.models import *
 
-
 # Create your models here.
 class Employee(models.Model):
     user = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
