@@ -361,7 +361,16 @@ class TargetScoreRepository:
         except Exception as e:
             raise Exception(f"Target score fetch by appraisal_kra pk, failed with error: {e}")
 
-
+    def appraisal_kra_activities_scored(self, appraisal_kra_id: int)->bool:
+        try:
+            qr = TargetScore.objects.filter(activity__appraisal_kra__id=appraisal_kra_id, is_scored=False)
+            if qr.exists():
+                return False
+        except Exception as e:
+            raise Exception(f"Target score fetch by appraisal_kra pk, failed with error: {e}")
+        return True
+    
+    
     def get_by_id_up_to_process_obj(self, target_score_id: int) -> TargetScore:
         """
             Retrieve a TargetScore object along with related objects up to the Process level.

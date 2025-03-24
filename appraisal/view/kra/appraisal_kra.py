@@ -236,19 +236,26 @@ class AppraisalKraDetailView(TemplateView):
 
     def is_reviewer(self)->bool:
         return self.request.user == self.get_object().appraisal.reviewer
+    
+    def appraisal_kra_activities_scored(self)->bool:
+        score_repo = TargetScoreRepository()
+        return score_repo.appraisal_kra_activities_scored(appraisal_kra_id=self.kwargs.get("appraisal_kra_id"))
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context.update(self.get_approval_stages())
         context["score_objects"] = self.get_score_objects()
         context["appraisal_kra_object"] = self.get_object()
-        context["is_reviewer"] = self.is_reviewer()        
+        context["is_reviewer"] = self.is_reviewer()   
+        context["appraisal_kra_activities_scored"] = self.appraisal_kra_activities_scored()
+        
         return context
     
     def get(self, request, *args, **kwargs):
         try:
             self.get_score_objects()
             self.is_reviewer()
+            self.appraisal_kra_activities_scored()
         except Exception as e:
             logger.error(f"KRADetailView for appraisal_kra_id: {self.kwargs.get('appraisal_kra_id')}, failed with error: {e}")
             return redirect("server_error_view")

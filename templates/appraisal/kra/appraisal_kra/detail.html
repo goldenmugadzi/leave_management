@@ -24,17 +24,19 @@
 
         <div class="bg-gulf-blue-100 shadow-lg rounded-lg p-6 my-6">
             {% if is_reviewer == True %}
-                <div class="flex justify-end my-2">
-                    <a 
-                        href="{% url 'appraisal_kra_reviewer_status_update' appraisal_kra_object.id %}"
-                        onclick="window.open(this.href, 'reviewer_status_popup', 'width=600,height=400'); return false;"
-                        data-pop="yes"
-                        title="Update status"
-                        class="bg-blue-500 hover:bg-blue-700 inline-block rounded-xl text-white p-2"
-                    >
-                        Reviewer Action
-                    </a>
-                </div>
+                {% if appraisal_kra_activities_scored == True %}
+                    <div class="flex justify-end my-2">
+                        <a 
+                            href="{% url 'appraisal_kra_reviewer_status_update' appraisal_kra_object.id %}"
+                            onclick="window.open(this.href, 'reviewer_status_popup', 'width=600,height=400'); return false;"
+                            data-pop="yes"
+                            title="Update status"
+                            class="bg-blue-500 hover:bg-blue-700 inline-block rounded-xl text-white p-2"
+                        >
+                            Reviewer Action
+                        </a>
+                    </div>
+                {% endif %}
             {% endif %}
             <div style="max-height: 280px; overflow-y: auto;">
                 <table 

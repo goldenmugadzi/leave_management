@@ -2,7 +2,7 @@ from django import template
 from ..services.kra import TargetScoreService, ActivityService
 from ..repository.kra import TargetScoreRepository, KraActivityRepository
 from loguru import logger
-from loguru import logger
+
 register = template.Library()
 
 @register.filter

@@ -2,6 +2,7 @@
 {% load static %}
 {% load humanize %}
 {% load custom_tags %}
+{% load approval_stages %}
 {% load crispy_forms_tags %}
 {% block styles %}
   <link rel="stylesheet"
@@ -47,7 +48,7 @@
               <th>Appraiser</th>
               <th>Reviewer</th>
               <th>Create at</th>
-              <th>Status</th>
+              <th>Approval Stage Status</th>
               <th></th>
             </tr>
           </thead>
@@ -58,8 +59,18 @@
                 <td>{{ appraisal.appraiser }}</td>
                 <td>{{ appraisal.reviewer }}</td>
                 <td>{{ appraisal.created_date|date }}</td>
-                <td>{{ appraisal.process.approval_set.last|default_if_none:"No Approval" }}</td>
                 <td>
+                  {% with data=appraisal.id|get_current_approval_stage %}
+                    {% if data.current_stage != None %}
+                      
+                        <p class="flex justify-center py-2">
+                          {{data.current_stage.stage_name}} stage
+                        </p>
+                      
+                    {% endif %}
+                  {% endwith %}
+                </td>
+                  <td>
                   <div class="flex justify-end gap-1">
                       <a href="{% url 'performance_review_detail' appraisal.id %}"
                           class="bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4">Performance Plan & Assessment</a>

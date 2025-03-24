@@ -218,7 +218,15 @@ class AppraisalTemplateView(TemplateView):
                 return {"appraisals": appraisal_service_handler.get_appraisal_by_reviewer_use_case(reviewer_object=self.request.user)}
             case RoleFilterChoices.ALL_APPRAISALS.value:
                 return {"appraisals": appraisal_service_handler.get_all_use_case()}
-        
+    
+    def get_approval_stages(self):
+        try:
+            handler = ApprovalStagesHandler(appraisal_id=self.get_object().appraisal.id)
+            return handler.get_stages_info()
+        except Exception as e:
+            logger.error(f"[AppraisalKraUpdateView] for Appraisal - {self.get_object().appraisal} failed with error: {e}")
+            return None
+    
     def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
         context =  super().get_context_data(**kwargs)
         
