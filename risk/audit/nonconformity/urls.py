@@ -8,6 +8,7 @@ urlpatterns = [
     path('create_nonconformity/<str:clause>', create_nonconformity_from_checklist, name='create_nonconformity_from_checklist'),
     path('inbox/', view_notifications, name='inbox'),
     path('nonconformities/', view_nonconformities, name='nonconformities'),
+    path('nonconformity_repots/', nonconformity_reports, name='nonconformity_reports'),
     path('i_created/', Icreated_nonconformities, name='i_created'),
     path('assigned_to_me/', assigned_to_me, name='assigned_to_me'),
     path('nonconformity/<str:nonconformity_id>/', nonconformity_details, name='nonconformity'),

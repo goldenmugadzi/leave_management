@@ -133,8 +133,10 @@ def create_new_profile(request):
             email = render_to_string(email_template_name, c, request=request)
             ms_exhange_reset_password_html(subject=type_,to_recipients=[approver.email], cc_recipients=[],template=email,
                                             kwargs={"kwargs": c})
-            
-            messages.success(request, "Section head approver notified successfully")
+            if approver.section:
+                messages.success(request, f"Section head approver {approver.first_name} {approver.last_name}, {approver.section.name} notified successfully")
+            else:
+                messages.success(request, f"Section head approver {approver.first_name} {approver.last_name} notified successfully")
         except Exception as ex:
             print("Error: ", str(ex))
             # messages.error(request, "An error occurred while sending the email: " + str(ex))
@@ -223,7 +225,11 @@ def profile_modification_request(request):
                 ms_exhange_reset_password_html(subject=type_,to_recipients=[approver.email], cc_recipients=[],template=email,
                                                 kwargs={"kwargs": c})
                 
-                messages.success(request, "Section head approver notified successfully")
+                if approver.section:
+                    messages.success(request, f'Section head approver {approver.first_name} {approver.last_name}, {approver.section.name} notified successfully')
+                else:
+                    messages.success(request, f'Section head approver {approver.first_name} {approver.last_name} notified successfully')
+                    
             except Exception as ex:
                 print("Error: ", str(ex))
                 # messages.error(request, "An error occurred while sending the email: " + str(ex))
@@ -330,6 +336,7 @@ def profile_deactivation_request(request):
                 profile_deactivation=profile_deactivation,
                 change_description=change_description,
                 change_reason=change_reason,
+                application=application,
                 creator_designation=user.designation,
                 created_by=request.user,
                 region=auth_user.region,
@@ -370,7 +377,10 @@ def profile_deactivation_request(request):
                 ms_exhange_reset_password_html(subject=type_,to_recipients=[approver.email], cc_recipients=[],template=email,
                                                 kwargs={"kwargs": c})
             
-                messages.success(request, "Section head approver notified successfully")
+                if approver.section:
+                    messages.success(request, f'Section head approver {approver.first_name} {approver.last_name}, {approver.section.name} notified successfully')
+                else:
+                    messages.success(request, f'Section head approver {approver.first_name} {approver.last_name} notified successfully')
             except Exception as ex:
                 print("error: ", str(ex))
         else:
@@ -732,6 +742,8 @@ def view_profile_request(request):
                 request,
                 "change_requests/view_profile_modification.html",
                 {
+                    "section_head_allowed": section_head_allowed,
+                    "it_section_head_allowed": it_section_head_allowed,
                     "requestor_role": requestor_role,
                     "section_head_awaiting_action": section_head_awaiting_action,
                     "it_section_head_awaiting_action": it_section_head_awaiting_action,
@@ -777,6 +789,8 @@ def view_profile_request(request):
                 request,
                 "change_requests/view_profile_deactivation.html",
                 {
+                    "section_head_allowed": section_head_allowed,
+                    "it_section_head_allowed": it_section_head_allowed,
                     "user_applications": Application.objects.all(),
                     "user_designations": Designations.objects.all(),
                     "sections": Sections.objects.all(),
@@ -951,17 +965,16 @@ def approve_profile_request(request):
                 if user_role == "it_section_head":
                     roles_actions = request.POST.get('roles_actions')
                     print("roles_actions: ", roles_actions)
-                    if not roles_actions:
-                        messages.error(request, "Please enter the roles implemented")
-                        return redirect("/change_requests/change_request_index")
-                    if change_request.change_type != "new_profile":
-                        new_profile = change_request.new_profile
-                        new_profile.roles_actions = roles_actions
-                        new_profile.save()
-                    elif change_request.change_type == "profile_modification":
-                        profile_modification = change_request.profile_modification
-                        profile_modification.roles_actions = roles_actions
-                        profile_modification.save()
+                    if roles_actions:
+                        roles_actions = roles_actions.strip()
+                        if change_request.change_type == "new_profile":
+                            new_profile = change_request.new_profile
+                            new_profile.roles_actions = roles_actions if roles_actions else new_profile.roles_actions
+                            new_profile.save()
+                        elif change_request.change_type == "profile_modification":
+                            profile_modification = change_request.profile_modification
+                            profile_modification.roles_actions = roles_actions if roles_actions else profile_modification.roles_actions
+                            profile_modification.save()
                         
                     cr_approval = CRApproval(
                         cr_id=change_request,
@@ -1028,6 +1041,8 @@ def datatable_data(request, view):
             if search_value and records:
                 records = records.filter(
                 Q(change_reason__icontains=search_value) |
+                Q(change_description__icontains=search_value) |
+                Q(application__icontains=search_value) |
                 Q(new_profile__first_name__icontains=search_value) |
                 Q(new_profile__last_name__icontains=search_value) |
                 Q(new_profile__email__icontains=search_value) |
@@ -1039,7 +1054,11 @@ def datatable_data(request, view):
             order = request.GET.get('order[0][dir]')
             if order_column:
                 column_name = request.GET.get(f'columns[{order_column}][data]')
-                if order == 'desc':
+                if column_name != "it_section_head_approval" and column_name != "section_head_approval":
+                    column_name = f'{column_name}'
+                else:
+                    column_name = "created_at"
+                if order == 'desc' and column_name != 'it_section_head_approval' and column_name != 'section_head_approval':
                     column_name = f'-{column_name}'
                 records = records.order_by(column_name)
             
@@ -1145,6 +1164,7 @@ def datatable_data(request, view):
                         "change_type": obj.change_type,
                         "change_description": obj.change_description,
                         "change_reason": obj.change_reason,
+                        "application": obj.application,
                         "section_head_approval": sh_status,
                         "it_section_head_approval": itsh,
                         "creator_designation": obj.creator_designation.description,
@@ -1167,6 +1187,7 @@ def datatable_data(request, view):
 
     except Exception as ex:
         print("Error: ", ex)
+        traceback.print_exc()
         return JsonResponse({
             'draw': draw,
             'recordsTotal': 0,

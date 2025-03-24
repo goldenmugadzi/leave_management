@@ -8,22 +8,26 @@ from approve.views import (
     get_my_roles_for_apps,
     send_notification,
     allowed_to_approve,
-    approvers
+    approvers,
 )
 from approve.models import Step
 from approve.forms import ApprovalForm
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from datetime import datetime
+from calendar import monthrange
 from approve.decorators import allowed_roles
-from django.db.models import Q
+from django.db.models import Count, Q
+from django.db.models.functions import TruncMonth
 import os, json, re
 import mysql.connector
 
 
 # check update
 @login_required
-@allowed_roles(["Requester", "Commercial Supervisor"], ["temper", "reimbursement", "clear credit"])
+@allowed_roles(
+    ["Requester", "Commercial Supervisor"], ["temper", "reimbursement", "clear credit"]
+)
 def create_token(request):
     if request.method == "POST":
         # meter details from the database if the meter number already exists and use its instance to update the meter details
@@ -36,8 +40,7 @@ def create_token(request):
         # customer details from the database if the customer already exists and use its instance to update the customer details
         try:
             customer = Customer.objects.get(
-                contact_number=request.POST["contact_number"],
-                name=request.POST["name"]
+                contact_number=request.POST["contact_number"], name=request.POST["name"]
             )
             customer_form = CustomerForm(request.POST, instance=customer)
         except Customer.DoesNotExist:
@@ -92,25 +95,25 @@ def create_token(request):
                 tamper_token.save()
                 app = "temper"
                 if (
-                        tamper_token.is_for == "Fauty Maintanance"
-                        and fault_maintanance_form.is_valid()
+                    tamper_token.is_for == "Fauty Maintanance"
+                    and fault_maintanance_form.is_valid()
                 ):
                     fault_maintanance = fault_maintanance_form.save(commit=False)
                     fault_maintanance.token = token
                     fault_maintanance.save()
                     messages.success(request, "Token request saved successfully")
                 elif (
-                        tamper_token.is_for == "Recovered Meter"
-                        and request.FILES.get("picture")
-                        and recovered_meter_form.is_valid()
+                    tamper_token.is_for == "Recovered Meter"
+                    and request.FILES.get("picture")
+                    and recovered_meter_form.is_valid()
                 ):
                     recovered_meter = recovered_meter_form.save(commit=False)
                     recovered_meter.token = token
                     recovered_meter.save()
                     messages.info(request, "Token request saved successfully")
                 elif (
-                        tamper_token.is_for == "Reconnection"
-                        and reconnection_form.is_valid()
+                    tamper_token.is_for == "Reconnection"
+                    and reconnection_form.is_valid()
                 ):
                     reconnection = reconnection_form.save(commit=False)
                     reconnection.token = token
@@ -135,25 +138,25 @@ def create_token(request):
                 reimbursement.token = token
                 reimbursement.save()
                 if (
-                        reimbursement.purpose == "Faulty Meter"
-                        and faulty_meter_form.is_valid()
+                    reimbursement.purpose == "Faulty Meter"
+                    and faulty_meter_form.is_valid()
                 ):
                     faulty_meter = faulty_meter_form.save(commit=False)
                     faulty_meter.token = token
                     faulty_meter.save()
                     messages.info(request, "Token request saved successfully")
                 elif (
-                        reimbursement.purpose == "Recovered Meter"
-                        and recovered_meter_form.is_valid()
+                    reimbursement.purpose == "Recovered Meter"
+                    and recovered_meter_form.is_valid()
                 ):
                     recovered_meter = recovered_meter_form.save(commit=False)
                     recovered_meter.token = token
                     recovered_meter.save()
                     messages.info(request, "Token request saved successfully")
                 elif (
-                        reimbursement.purpose == "Old Token"
-                        and old_token_form.is_valid()
-                        and request.FILES.get("old_token")
+                    reimbursement.purpose == "Old Token"
+                    and old_token_form.is_valid()
+                    and request.FILES.get("old_token")
                 ):
                     old_token = old_token_form.save(commit=False)
                     old_token.token = token
@@ -180,7 +183,7 @@ def create_token(request):
                 return render(request, "tokens/create_token.html", forms)
 
             # send_notification("token", token)
-            send_notification(request, "tokens:token", app, token,token.id)
+            send_notification(request, "tokens:token", app, token, token.id)
 
             return redirect("tokens:token", token.id)
 
@@ -206,18 +209,30 @@ def create_token(request):
 @login_required
 def token_details(request, token_id):
     token = Token.objects.get(id=token_id)
-    if request.method == "POST": 
-        generatetokenform = GenerateTokenForm(request.POST, request.FILES, instance=token)
+    if request.method == "POST":
+        generatetokenform = GenerateTokenForm(
+            request.POST, request.FILES, instance=token
+        )
         last_approval = token.process.approval_set.last()
         last_step = last_approval.step if last_approval else None
-        if (token.process.workflow.step_set.last() is not None and last_step is not None and token.process.workflow.step_set.last().step == ( last_step.step + 1)):
-            if (generatetokenform.is_valid() and request.FILES.get("token_photo") is not None):
+        if (
+            token.process.workflow.step_set.last() is not None
+            and last_step is not None
+            and token.process.workflow.step_set.last().step == (last_step.step + 1)
+        ):
+            if (
+                generatetokenform.is_valid()
+                and request.FILES.get("token_photo") is not None
+            ):
                 approve_step(request, token.process.pk)
                 print("approved")
                 generatetokenform.save()
                 return redirect("tokens:token", token_id)
             else:
-                messages.error(request, "Token updloading form is invalid. Have you provided a token photo?", )
+                messages.error(
+                    request,
+                    "Token updloading form is invalid. Have you provided a token photo?",
+                )
         else:
             approve_step(request, token.process.pk)
     approvalForm = None
@@ -226,7 +241,9 @@ def token_details(request, token_id):
     completed = False
     user_roles = request.user.roles.all()
 
-    if not token.process.approval_set.filter(approved="Rejected").exists():  # and allowed:
+    if not token.process.approval_set.filter(
+        approved="Rejected"
+    ).exists():  # and allowed:
         try:
             last_approved = token.process.approval_set.last().step.step
         except AttributeError:
@@ -248,7 +265,7 @@ def token_details(request, token_id):
     )
     # Mark all matching notifications as read in one query
     request.user.notification_set.filter(notification_id=token_id).update(is_read=True)
-    
+
     token = get_object_or_404(Token, id=token_id)
     return render(
         request,
@@ -349,12 +366,21 @@ def view_all_tokens(request):
         mytokens = Token.objects.filter(cost_center__in=cost_centers)
     else:
         print(user.cost_center_and_decendace())
-        mytokens = Token.objects.filter(cost_center__in=user.cost_center_and_decendace())
+        mytokens = Token.objects.filter(
+            cost_center__in=user.cost_center_and_decendace()
+        )
 
-    return render(request, "tokens/tokens.html", {"tokens": mytokens, "all": True,
-                                                  "roles": get_my_roles_for_apps(request.user,
-                                                                                 ["temper", "reimbursement",
-                                                                                  "clear credit"]), }, )
+    return render(
+        request,
+        "tokens/tokens.html",
+        {
+            "tokens": mytokens,
+            "all": True,
+            "roles": get_my_roles_for_apps(
+                request.user, ["temper", "reimbursement", "clear credit"]
+            ),
+        },
+    )
 
 
 @login_required
@@ -371,25 +397,45 @@ def awaiting_my_action(request):
     if cost_centers:
         cost_center = get_parent(cost_centers)
     if not cost_centers:
-        return render(request, "tokens/tokens.html",
-                      {"tokens": [], "all": False, "roles": get_my_roles_for_apps(user, application_names),
-                       "error": "No cost centers found for the given applications.", }, )
+        return render(
+            request,
+            "tokens/tokens.html",
+            {
+                "tokens": [],
+                "all": False,
+                "roles": get_my_roles_for_apps(user, application_names),
+                "error": "No cost centers found for the given applications.",
+            },
+        )
     user_roles = set(user.roles.all())
     tokens_to_process = []
-    tokens = Token.objects.filter(cost_center__in=cost_centers).prefetch_related("process__approval_set",
-                                                                                 "process__workflow__step_set")
+    tokens = Token.objects.filter(cost_center__in=cost_centers).prefetch_related(
+        "process__approval_set", "process__workflow__step_set"
+    )
     for token in tokens:
         approvals = token.process.approval_set.all()
         next_step = (approvals.last().step.step if approvals.exists() else 0) + 1
-        if token.process.workflow.step_set.filter(step=next_step,
-                                                  approver__in=user_roles).exists() and not token.process.approval_set.filter(
-                approved="Rejected").exists():
+        if (
+            token.process.workflow.step_set.filter(
+                step=next_step, approver__in=user_roles
+            ).exists()
+            and not token.process.approval_set.filter(approved="Rejected").exists()
+        ):
             tokens_to_process.append(token)
 
-    return render(request, "tokens/tokens.html",
-                  {"tokens": tokens_to_process, "all": False, "start_date": start_date, "end_date": end_date,
-                   "cost_center": cost_center, "types": application_names,
-                   "roles": get_my_roles_for_apps(user, application_names), }, )
+    return render(
+        request,
+        "tokens/tokens.html",
+        {
+            "tokens": tokens_to_process,
+            "all": False,
+            "start_date": start_date,
+            "end_date": end_date,
+            "cost_center": cost_center,
+            "types": application_names,
+            "roles": get_my_roles_for_apps(user, application_names),
+        },
+    )
 
 
 def get_parent(cost_centers):
@@ -912,8 +958,8 @@ def migrate_reimbursement_tokens(request):
                         except Exception as e:
                             user = UserProfile.objects.get(username=tkn["update_user1"])
                         if (
-                                tkn["reject_reason"] is not None
-                                and tkn["update_user2"] is None
+                            tkn["reject_reason"] is not None
+                            and tkn["update_user2"] is None
                         ):
                             Approval.objects.create(
                                 step=next_approval_step,
@@ -1088,8 +1134,8 @@ def migrate_clear_credit_tokens(request):
                         except Exception as e:
                             user = UserProfile.objects.get(username=tkn["update_user1"])
                         if (
-                                tkn["reject_reason"] is not None
-                                and tkn["update_user2"] is None
+                            tkn["reject_reason"] is not None
+                            and tkn["update_user2"] is None
                         ):
                             Approval.objects.create(
                                 step=next_approval_step,
@@ -1115,3 +1161,81 @@ def migrate_clear_credit_tokens(request):
         cursor.close()
         cnx.close()
     return redirect("tokens:tokens")
+
+
+@login_required
+def tokens_reports(request):
+    form = TokenFilterForm( None, cost_center=request.user.cost_center)
+    if request.method == "POST"  :
+        tokens = Token.objects.all()
+        filters = Q()
+        month = request.POST.get('month', None)
+        if month is not None:
+            print(month)
+
+            month = datetime.strptime(month, "%d/%m/%Y")
+            start_date = datetime(month.year, month.month, 1)
+            end_date = datetime(month.year, month.month, monthrange(month.year, month.month)[1])  
+            cost_center = CostCenter.objects.get(id=request.POST.get('cost_center'))
+            filters &= Q(created_at__gte=start_date, created_at__lte=end_date)
+            filters &= Q(cost_center__in=cost_center.get_decendance())
+            filters &= Q(type=request.POST.get('token_type'))
+            form = TokenFilterForm( None, cost_center=request.user.cost_center,initial={ 'start_date': start_date,'end_date': end_date})
+
+            print(filters)
+        else:
+            form = TokenFilterForm(request.POST or None, cost_center=request.user.cost_center)
+            print("form.is_valid(")
+            if form.is_valid():
+                start_date = form.cleaned_data.get("start_date")
+                end_date = form.cleaned_data.get("end_date")
+                cost_center = form.cleaned_data.get("cost_center")
+                for field in ["start_date", "end_date"]:
+                    if (value := form.cleaned_data.get(field)):filters &= Q(**{f"created_at__{'gte' if field == 'start_date' else 'lte'}": value})
+                if (cost_center := form.cleaned_data.get("cost_center")):filters &= Q(cost_center__in=cost_center.get_decendance())
+
+        tokens = tokens.filter(filters)
+        print("tokens", tokens)
+        tempers = tokens.filter(type="TEMPER")
+        reimbursements = tokens.filter(type="REIMBURSEMENT")
+        clear_credits = tokens.filter(type="CLEAR CREDIT")
+        token_types = {
+            "TEMPER": [step.approver.name.replace(" ","_") for step in tempers.first().process.workflow.step_set.all()] if tempers.first() else [],
+            "REIMBURSEMENT": [step.approver.name.replace(" ","_") for step in reimbursements.first().process.workflow.step_set.all()] if reimbursements.first() else [],
+            "CLEAR_CREDIT": [step.approver.name.replace(" ","_") for step in clear_credits.first().process.workflow.step_set.all()] if clear_credits.first() else []
+        } 
+        specific_tokens = {}
+        for token in tokens:
+            month_end = token.created_at.replace(day=monthrange(token.created_at.year, token.created_at.month)[1])
+
+            month = month_end.strftime("%d/%m/%Y")
+            specific_tokens.setdefault(month, {token_type: {step: {"new": 0,"approved": 0, "rejected": 0} for step in steps}| {"total": 0} for token_type, steps in token_types.items()})
+            specific_tokens[month][token.type.replace(" ","_")]["total"] += 1
+            "if token is not rejected, add it to new tokens for the next approver"
+            if token.process.approval_set.exists() and token.process.approval_set.last().approved != "Rejected":
+                if not token.process.approval_set.filter(approved="Rejected").exists():
+                    try:
+                        next_step = token.process.workflow.step_set.get(step=token.process.approval_set.last().step.step + 1)
+                        specific_tokens[month][token.type.replace(" ","_")][next_step.approver.name.replace(" ","_")]["new"] += 1
+                    except Step.DoesNotExist:
+                        pass
+            elif not token.process.approval_set.exists():
+                specific_tokens[month][token.type.replace(" ","_")][token.process.workflow.step_set.first().approver.name.replace(" ","_")]["new"] += 1
+                
+            if approvals := token.process.approval_set.all():
+                for approval in approvals:
+                    approver_name = approval.step.approver.name.replace(" ","_")
+                    if approval.approved == "Rejected":specific_tokens[month][token.type.replace(" ","_")][approver_name]["rejected"] += 1
+                    else:specific_tokens[month][token.type.replace(" ","_")][approver_name]["approved"] += 1
+                    
+                    
+        context = {"tokens": tokens,
+                   "specific_tokens": specific_tokens,
+                   "start_date": start_date,
+                   "end_date": end_date,""
+                   "cost_center": cost_center,
+                   "tokenFilterForm": form}
+        return render(request, "tokens/tokens_reports.html", context)
+
+    return render(request, "tokens/tokens_reports.html", {"tokenFilterForm": form})
+

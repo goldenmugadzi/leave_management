@@ -3,8 +3,16 @@
 {% load custom_filters %}
 {% block content %}
 
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
 <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
 <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+<!-- Add jQuery and Select2 JS -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+</script>
+
+
 <script>
   $(document).ready(function() {
     $("#datepurchased").datepicker({ minDate: 0 });
@@ -128,11 +136,10 @@
               <div class="mt-2">
                 <select
                   id="user"
-                  name="user"
-                  autocomplete="user"
+                  name="users"
                   class="mt-2 block w-full rounded-md border border-gray-200 px-2 py-2 shadow-sm outline-none focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
                 >
-                  <option>Select user</option>
+                  <option value="">Select user</option>
                   {% for user in users %}
                   <option value="{{ user.id }}">{{ user.first_name }} {{ user.last_name }}</option>
                   {% endfor %}
