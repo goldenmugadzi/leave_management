@@ -23,7 +23,7 @@ class Customer(models.Model):
         return self.name
 
 
-class Attachments(models.Model):
+class Attachment(models.Model):
     file = models.FileField(upload_to='uploads/Tokens/attachments',help_text="Add attachments")
     def __str__(self):
         return str(self.token.meter.number)
@@ -38,7 +38,7 @@ class Token(models.Model):
     process=models.ForeignKey(Process, on_delete=models.CASCADE, blank=True, null=True)
     region=models.ForeignKey(Regions, on_delete=models.CASCADE, blank=True, null=True)
     cost_center=models.ForeignKey(CostCenter, on_delete=models.CASCADE, blank=True, null=True)
-    attachments = models.ManyToManyField(Attachments)
+    attachments = models.ManyToManyField(Attachment, blank=True)
     token_photo = models.FileField(upload_to='uploads/Tokens/generatedtoken',help_text="photo of generated token " , blank=True, null=True)
     type = models.CharField(max_length=100,help_text="Type of Token",  choices=[('REIMBURSEMENT', 'REIMBURSEMENT') , ('CLEAR CREDIT', 'CLEAR CREDIT'), ('TEMPER', 'TEMPER')])
     def __str__(self):
@@ -60,7 +60,7 @@ class REIMBURSEMENT(models.Model):
 class CLEARCREDIT(models.Model):
     token = models.ForeignKey(Token, on_delete=models.CASCADE)
     amount = models.DecimalField(max_digits=10,help_text="amount paid to clear credit", decimal_places=2, null=True, blank=True)
-    receipt = models.FileField(upload_to='uploads/Tokens/Token/receipt',help_text="a photo of the receipt as proof of payment", blank=True, null=True)
+    receipts = models.ManyToManyField(Attachment,help_text="proof of payment", blank=True, null=True)
     def __str__(self):
         return str(self.token.meter.number)
 
@@ -72,19 +72,20 @@ class TAMPERTOKEN(models.Model):
 
 class OldToken(models.Model):
     token = models.ForeignKey(Token, on_delete=models.CASCADE)
-    old_token = models.FileField(upload_to='uploads/Tokens/oldToken',help_text="photo of old token" , blank=True, null=True)
+    old_token = models.ManyToManyField(Attachment,help_text="evidence of old token", blank=True, null=True)
     def __str__(self):
         return str(self.id)
 class FaultMeter(models.Model):
     token = models.ForeignKey(Token, on_delete=models.CASCADE)
     units = models.DecimalField(max_digits=10, decimal_places=2, help_text="kilowatt hours remaining", default=0)
-    photo= models.FileField(upload_to='uploads/Tokens/faultMeter',help_text="Meter photo showing showing units ", blank=True, null=True)
+    photo= models.ManyToManyField(Attachment,help_text="Meter photo showing showing units ", blank=True)
     def __str__(self):
         return str(self.token.meter.number)
     
 class RecoveredMeter(models.Model):
     token = models.ForeignKey(Token, on_delete=models.CASCADE)
     picture= models.FileField(upload_to='uploads/Tokens/RecoveredMeter',help_text="Meter photo showing nill credit", blank=True, null=True)
+    photo= models.ManyToManyField(Attachment,help_text="Meter photo showing showing units ", blank=True)
     def __str__(self):
         return str(self.token.meter.number)
 class FaultMaintanance(models.Model): 

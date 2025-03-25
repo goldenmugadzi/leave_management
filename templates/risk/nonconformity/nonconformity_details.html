@@ -63,6 +63,7 @@
         </div>
         {% with nonconformity.resolution_set.last as response %}
             {% if response %}
+            {{ response }}
                 <div class="card-body m-auto mb-5 bg-gradient-to-r from-green-100 to-white ed p-3 border rounded container rounded shadow-lg">
                     <div class="font-bold text-xl text-center">Resolution Details</div>
                     <br />
