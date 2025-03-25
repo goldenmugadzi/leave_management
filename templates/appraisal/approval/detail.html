@@ -31,7 +31,7 @@
                                 {{ stage.stage_num }}
                             </div>
                         {% endif %}
-                        
+
                     {% else %}
                         <!-- Other stages has modal -->
                         {% if stage.is_completed == True %}
@@ -57,7 +57,7 @@
                 {% endif %}
 
                 <!-- Modal template -->
-                {% include "appraisal/modal.html" with modal_heading=stage.stage_name modal_id=stage.stage_num %}
+                {% include "./modal.html" with modal_heading=stage.stage_name modal_id=stage.stage_num %}
                 
 
             {% endfor %}
