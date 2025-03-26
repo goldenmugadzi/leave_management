@@ -29,6 +29,12 @@ services:
     ports:
       - target: 9200
         published: 9200
+    healthcheck:
+      test: ["executable", "arg"]
+      interval: 1m30s
+      timeout: 30s
+      retries: 5
+      start_period: 30s
 
   kibana:
     image: kibana:8.2.2
@@ -41,19 +47,18 @@ services:
       - elasticsearch  
   
   fscrawler:
-    image: dadoonet/fscrawler:$FSCRAWLER_VERSION
+    image: dadoonet/fscrawler:${FSCRAWLER_VERSION}
     container_name: fscrawler
     restart: always
     volumes:
-      - ../../test-documents/src/main/resources/documents/:/tmp/es:ro
-      - ${PWD}/config:/root/.fscrawler
-      - ${PWD}/logs:/usr/share/fscrawler/logs
-      - ${PWD}/external:/usr/share/fscrawler/external
+      - ./media:/tmp/es:ro
+      - ./config:/root/.fscrawler
+      - ./logs:/usr/share/fscrawler/logs
     depends_on:
       elasticsearch:
         condition: service_healthy
     ports:
-      - 8580:8080
+      - "8580:8080"
     networks:
       - elastic_network
     command: fscrawler idx --restart --rest
