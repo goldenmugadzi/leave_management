@@ -1,6 +1,6 @@
 from django import forms
 from django.utils import timezone
-from .models import Meter, Customer,CostCenter, Token, REIMBURSEMENT, CLEARCREDIT, TAMPERTOKEN, OldToken, FaultMeter, RecoveredMeter, FaultMaintanance, Reconnection
+from .models import Meter, Customer,CostCenter, Token, REIMBURSEMENT, CLEARCREDIT, TAMPERTOKEN, OldToken, FaultMeter, RecoveredMeter, FaultMaintanance, Reconnection, Attachment
 
 class MeterForm(forms.ModelForm):
     class Meta:
@@ -47,9 +47,16 @@ class GenerateTokenForm(forms.ModelForm):
         if not token_photo:
             raise forms.ValidationError('A token photo is required.')
         return token_photo
+class AttachmentForm(forms.ModelForm):
+    class Meta:
+        model = Attachment
+        fields = ['file']
 class TokenForm(forms.ModelForm):
-    attachments = forms.FileField(widget=forms.ClearableFileInput(attrs={'multiple': True}),required=False)
-
+    # attachments = forms.FileField(widget=forms.ClearableFileInput(attrs={'multiple': True}),required=False)
+    additional_attachments = forms.FileField(
+        required=False,
+        widget=forms.ClearableFileInput(attrs={'multiple': True}),
+    )
     class Meta:
         model = Token
         fields = "__all__"

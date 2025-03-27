@@ -88,6 +88,12 @@ def create_token(request):
             token.created_by = request.user
             token.region = request.user.region
             token.save()
+             # Handle multiple file uploads
+            files = request.FILES.getlist('additional_attachments')
+            for file in files:
+                attachment = Attachment.objects.create(file=file)
+                token.additional_attachments.add(attachment)
+            
             app = None
             if token_type == "TEMPER" and tamper_token_form.is_valid():
                 tamper_token = tamper_token_form.save(commit=False)
@@ -110,7 +116,8 @@ def create_token(request):
                     recovered_meter = recovered_meter_form.save(commit=False)
                     recovered_meter.token = token
                     recovered_meter.save()
-                    messages.info(request, "Token request saved successfully")
+                    messages.success(request, "Token request saved successfully")
+
                 elif (
                     tamper_token.is_for == "Reconnection"
                     and reconnection_form.is_valid()
@@ -118,7 +125,8 @@ def create_token(request):
                     reconnection = reconnection_form.save(commit=False)
                     reconnection.token = token
                     reconnection.save()
-                    messages.info(request, "Token request saved successfully")
+                    messages.success(request, "Token request saved successfully")
+
                 else:
                     forms.update(
                         {
@@ -144,7 +152,8 @@ def create_token(request):
                     faulty_meter = faulty_meter_form.save(commit=False)
                     faulty_meter.token = token
                     faulty_meter.save()
-                    messages.info(request, "Token request saved successfully")
+                    messages.success(request, "Token request saved successfully")
+
                 elif (
                     reimbursement.purpose == "Recovered Meter"
                     and recovered_meter_form.is_valid()
@@ -152,7 +161,8 @@ def create_token(request):
                     recovered_meter = recovered_meter_form.save(commit=False)
                     recovered_meter.token = token
                     recovered_meter.save()
-                    messages.info(request, "Token request saved successfully")
+                    messages.success(request, "Token request saved successfully")
+
                 elif (
                     reimbursement.purpose == "Old Token"
                     and old_token_form.is_valid()
@@ -161,7 +171,8 @@ def create_token(request):
                     old_token = old_token_form.save(commit=False)
                     old_token.token = token
                     old_token.save()
-                    messages.info(request, "Token request saved successfully")
+                    messages.success(request, "Token request saved successfully")
+
                 else:
                     forms.update(
                         {
