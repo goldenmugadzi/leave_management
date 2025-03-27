@@ -53,11 +53,7 @@ class Nonconformity(models.Model):
             random_number = str(random.randint(10000, 99999))
             self.id = "NC" + timestamp + random_number
         super().save(*args, **kwargs)
-class Attachment(models.Model):
-    nonconformity = models.ForeignKey(Nonconformity, on_delete=models.CASCADE)
-    attachment = models.FileField(upload_to='nonconformity/attachments/', blank=True, null=True, verbose_name='Attachment')
-    def __str__(self):
-        return self.attachment.name
+
 class Acceptance(models.Model):
     nonconformity = models.ForeignKey(Nonconformity , on_delete=models.CASCADE)
     cause = models.TextField(max_length=400, blank=True, null=True)
@@ -73,7 +69,7 @@ class Resolution(models.Model):
     dated = models.DateTimeField(default=timezone.now)
     resolved_on = models.DateField(blank=True, null=True)
     user = models.ForeignKey(UserProfile, on_delete=models.CASCADE, blank=True, null=True)
-    attachment = models.ForeignKey(Attachment, on_delete=models.CASCADE, blank=True, null=True)
+    attachment = models.FileField(upload_to='nonconformity/resolution_attachments/', blank=True, null=True, verbose_name='Attachment')
     def __str__(self):
         return self.corrective_action_taken
     
@@ -81,19 +77,22 @@ class Rejection(models.Model):
     nonconformity = models.ForeignKey(Nonconformity , on_delete=models.CASCADE)
     user = models.ForeignKey(UserProfile, on_delete=models.CASCADE, blank=True, null=True)
     rejection_reason = models.TextField(max_length=400, blank=True, null=True)
-    attachment = models.ForeignKey(Attachment, on_delete=models.CASCADE, blank=True, null=True)
     dated = models.DateTimeField(default=timezone.now) 
     def __str__(self):
         return self.rejection_reason
     
-
+class Attachment(models.Model):
+    nonconformity = models.ForeignKey(Nonconformity, on_delete=models.CASCADE)
+    attachment = models.FileField(upload_to='nonconformity/attachments/', blank=True, null=True, verbose_name='Attachment')
+    def __str__(self):
+        return self.attachment.name
 class RejectionAttachment(models.Model):
     rejection = models.ForeignKey(Rejection, on_delete=models.CASCADE)
-    attachment = models.ForeignKey(Attachment, on_delete=models.CASCADE, blank=True, null=True)
+    attachment = models.FileField(upload_to='nonconformity/rejection_attachments/', blank=True, null=True, verbose_name='Attachment')
     def __str__(self):
         return self.attachment.name
 class AcceptanceAttachment(models.Model):
     acceptance = models.ForeignKey(Acceptance, on_delete=models.CASCADE)
-    attachment = models.ForeignKey(Attachment, on_delete=models.CASCADE, blank=True, null=True)
+    attachment = models.FileField(upload_to='nonconformity/acceptance_attachments/', blank=True, null=True, verbose_name='Attachment')
     def __str__(self):
         return self.attachment.name
