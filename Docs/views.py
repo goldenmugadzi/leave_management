@@ -30,8 +30,11 @@ def search_view(request):
                 }
             }
         }
-        response = es.search(index='documents', body=search_body)
-        results = response['hits']['hits']
+        try:
+            response = es.search(index='documents', body=search_body)
+            results = response['hits']['hits']
+        except Exception as e:
+            print(f"Error searching Elasticsearch: {e}")
 
     search_results = []
     for result in results:
