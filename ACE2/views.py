@@ -168,9 +168,10 @@ def Ace_detail(request, Ace_id2):
 
         if user_profile.username == section_heads:
             print('notification', notification_obj)
-            notification_obj.is_read = True
-            notification_obj.save()
-            print(notification_obj, ' now set to read')
+            if notification_obj:  # Add null check here
+                notification_obj.is_read = True
+                notification_obj.save()
+                print(notification_obj, ' now set to read')
 
     # if clear minus notify GM
     if clear_minus:
