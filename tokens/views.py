@@ -86,7 +86,7 @@ def create_token(request):
             token.customer = customer
             token.process = process
             token.created_by = request.user
-            token.region = request.user.region
+            # token.region = request.user.region
             token.save()
              # Handle multiple file uploads
             files = request.FILES.getlist('additional_attachments')
@@ -462,7 +462,7 @@ def addsection(request):
         try:
             if not token.section:
                 token.section = token.created_by.section
-                token.region = token.created_by.region
+                # token.region = token.created_by.region
                 token.save()
             old_process = token.process
             if old_process.workflow.name == "tokens":
@@ -694,10 +694,10 @@ def migrate_tokens(request):
                 if cost_center_query
                 else CostCenter.objects.get(code=tkn["allocation_code"])
             )
-            if created_by is not None:
-                token["region"] = created_by.region
-            else:
-                token["region"] = None
+            # if created_by is not None:
+                # token["region"] = created_by.region
+            # else:
+                # token["region"] = None
             token["type"] = "TEMPER"
             purpose = tkn["purpose"]
             process = intiate(request, "temper")
@@ -882,10 +882,10 @@ def migrate_reimbursement_tokens(request):
 
             token["cost_center"] = cost_center_query
             try:
-                if created_by is not None:
-                    token["region"] = created_by.region
-                else:
-                    token["region"] = None
+                # if created_by is not None:
+                #     token["region"] = created_by.region
+                # else:
+                #     token["region"] = None
                 print("token", token)
                 token["type"] = "REIMBURSEMENT"
                 purpose = tkn["recovered_fault"]
@@ -1073,10 +1073,10 @@ def migrate_clear_credit_tokens(request):
 
             token["cost_center"] = cost_center_query
             try:
-                if created_by is not None:
-                    token["region"] = created_by.region
-                else:
-                    token["region"] = None
+                # if created_by is not None:
+                #     token["region"] = created_by.region
+                # else:
+                #     token["region"] = None
                 print("token", token)
                 token["type"] = "CLEAR CREDIT"
                 process = intiate(request, "clear credit")
