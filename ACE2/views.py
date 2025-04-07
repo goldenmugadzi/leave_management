@@ -1588,6 +1588,16 @@ def my_actioned_items(request):
     user_profile = UserProfile.objects.filter(id=user_id).first()
     region = Regions.objects.filter(id=user_profile.region.id).first()
     
+    # Get user role
+    custom_user_roles = {"ace": {}}
+    roles_ = user_profile.roles.all()
+    for _role in roles_:
+        role = Roles.objects.filter(id=_role.id).first()
+        if role.application == "ace":
+            custom_user_roles["ace"] = role.role
+            ace_role = str(custom_user_roles["ace"])
+            break
+    
     # Get all ACEs where the current user has an approval in the process
     actioned_aces = []
     
@@ -1600,13 +1610,15 @@ def my_actioned_items(request):
         if process and process.approval_set.exists():
             approvals = process.approval_set.all()
             for approval in approvals:
-                # Fix: Use user attribute instead of by
-                if approval.user == request.user:  # Compare with the actual user object
+                if approval.user == request.user:
                     actioned_aces.append(ace)
-                    break  # Found an approval by this user for this ACE
+                    break
+
+    requester = "create"  # Used in template for role checks
     
     return render(request, 'finance/ace2/my_actioned_items.html', {
         'aces': actioned_aces,
         'title': 'My Actioned Items',
-        'ace_role': 'view'  # This will control what actions are available in the template
+        'ace_role': ace_role,
+        'requester': requester
     })

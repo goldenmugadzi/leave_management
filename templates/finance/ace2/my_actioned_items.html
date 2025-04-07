@@ -69,6 +69,9 @@
             <th>Created At</th>
             <th>Section</th>
             <th>Allocation Code</th>
+            {% if ace_role == 'accounting_officer' or ace_role == 'cashier' %}
+              <th>Asset Number</th>
+            {% endif %}
             <th>Status</th>
             <th>My Action</th>
           </tr>
@@ -83,6 +86,21 @@
                 <td>{{ ace.date_created }}</td>
                 <td>{{ ace.section }}</td>
                 <td>{{ ace.section.code }}</td>
+                {% if ace_role == 'accounting_officer' or ace_role == 'cashier' %}
+                  <td>
+                    {% if ace.asset_number %}
+                      <span class="px-2 py-1 rounded-full bg-green-100 text-green-800 text-xs font-medium">{{ ace.asset_number }}</span>
+                    {% elif ace.asset_numbers.all %}
+                      {% for asset in ace.asset_numbers.all %}
+                        <div class="mb-1">
+                          <span class="px-2 py-1 rounded-full bg-green-100 text-green-800 text-xs font-medium">{{ asset.number }}</span>
+                        </div>
+                      {% endfor %}
+                    {% else %}
+                      <span class="text-gray-400 text-xs">No asset number</span>
+                    {% endif %}
+                  </td>
+                {% endif %}
                 <td>{{ ace.process.approval_set.last|default_if_none:'' }}</td>
                 <td class="border-l border-gray-200">
                     {% for approval in ace.process.approval_set.all %}
@@ -93,7 +111,7 @@
                           </span>
                           {% if approval.step %}
                             <div class="mt-1 text-sm text-gray-600">
-                              as {{ approval.step.approver.name|default:approval.step|default:"Step"|stringformat:"s"|lower }}
+                              as {{ approval.step|default:"Step"|stringformat:"s"|lower }}
                               {% if approval.step.step %}
                                 <span class="bg-gray-200 text-gray-700 px-1 rounded-sm text-xs">#{{ approval.step.step }}</span>
                               {% endif %}
@@ -109,7 +127,7 @@
             </tr>
             {% empty %}
             <tr>
-                <td colspan="9" class="text-center">No items actioned yet.</td>
+                <td colspan="{% if ace_role == 'accounting_officer' or ace_role == 'cashier' %}10{% else %}9{% endif %}" class="text-center">No items actioned yet.</td>
             </tr>
             {% endfor %}
         </tbody>
