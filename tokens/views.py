@@ -86,8 +86,14 @@ def create_token(request):
             token.customer = customer
             token.process = process
             token.created_by = request.user
-            token.region = request.user.region
+            # token.region = request.user.region
             token.save()
+             # Handle multiple file uploads
+            files = request.FILES.getlist('additional_attachments')
+            for file in files:
+                attachment = Attachment.objects.create(file=file)
+                token.additional_attachments.add(attachment)
+            
             app = None
             if token_type == "TEMPER" and tamper_token_form.is_valid():
                 tamper_token = tamper_token_form.save(commit=False)
@@ -110,7 +116,8 @@ def create_token(request):
                     recovered_meter = recovered_meter_form.save(commit=False)
                     recovered_meter.token = token
                     recovered_meter.save()
-                    messages.info(request, "Token request saved successfully")
+                    messages.success(request, "Token request saved successfully")
+
                 elif (
                     tamper_token.is_for == "Reconnection"
                     and reconnection_form.is_valid()
@@ -118,7 +125,8 @@ def create_token(request):
                     reconnection = reconnection_form.save(commit=False)
                     reconnection.token = token
                     reconnection.save()
-                    messages.info(request, "Token request saved successfully")
+                    messages.success(request, "Token request saved successfully")
+
                 else:
                     forms.update(
                         {
@@ -144,7 +152,8 @@ def create_token(request):
                     faulty_meter = faulty_meter_form.save(commit=False)
                     faulty_meter.token = token
                     faulty_meter.save()
-                    messages.info(request, "Token request saved successfully")
+                    messages.success(request, "Token request saved successfully")
+
                 elif (
                     reimbursement.purpose == "Recovered Meter"
                     and recovered_meter_form.is_valid()
@@ -152,7 +161,8 @@ def create_token(request):
                     recovered_meter = recovered_meter_form.save(commit=False)
                     recovered_meter.token = token
                     recovered_meter.save()
-                    messages.info(request, "Token request saved successfully")
+                    messages.success(request, "Token request saved successfully")
+
                 elif (
                     reimbursement.purpose == "Old Token"
                     and old_token_form.is_valid()
@@ -161,7 +171,8 @@ def create_token(request):
                     old_token = old_token_form.save(commit=False)
                     old_token.token = token
                     old_token.save()
-                    messages.info(request, "Token request saved successfully")
+                    messages.success(request, "Token request saved successfully")
+
                 else:
                     forms.update(
                         {
@@ -451,7 +462,7 @@ def addsection(request):
         try:
             if not token.section:
                 token.section = token.created_by.section
-                token.region = token.created_by.region
+                # token.region = token.created_by.region
                 token.save()
             old_process = token.process
             if old_process.workflow.name == "tokens":
@@ -683,10 +694,10 @@ def migrate_tokens(request):
                 if cost_center_query
                 else CostCenter.objects.get(code=tkn["allocation_code"])
             )
-            if created_by is not None:
-                token["region"] = created_by.region
-            else:
-                token["region"] = None
+            # if created_by is not None:
+                # token["region"] = created_by.region
+            # else:
+                # token["region"] = None
             token["type"] = "TEMPER"
             purpose = tkn["purpose"]
             process = intiate(request, "temper")
@@ -871,10 +882,10 @@ def migrate_reimbursement_tokens(request):
 
             token["cost_center"] = cost_center_query
             try:
-                if created_by is not None:
-                    token["region"] = created_by.region
-                else:
-                    token["region"] = None
+                # if created_by is not None:
+                #     token["region"] = created_by.region
+                # else:
+                #     token["region"] = None
                 print("token", token)
                 token["type"] = "REIMBURSEMENT"
                 purpose = tkn["recovered_fault"]
@@ -1062,10 +1073,10 @@ def migrate_clear_credit_tokens(request):
 
             token["cost_center"] = cost_center_query
             try:
-                if created_by is not None:
-                    token["region"] = created_by.region
-                else:
-                    token["region"] = None
+                # if created_by is not None:
+                #     token["region"] = created_by.region
+                # else:
+                #     token["region"] = None
                 print("token", token)
                 token["type"] = "CLEAR CREDIT"
                 process = intiate(request, "clear credit")
@@ -1182,7 +1193,7 @@ def tokens_reports(request):
             filters &= Q(type=request.POST.get('token_type'))
             form = TokenFilterForm( None, cost_center=request.user.cost_center,initial={ 'start_date': start_date,'end_date': end_date})
 
-            print(filters)
+            # print(filters,"type",request.POST.get('token_type'))
         else:
             form = TokenFilterForm(request.POST or None, cost_center=request.user.cost_center)
             print("form.is_valid(")
@@ -1195,8 +1206,9 @@ def tokens_reports(request):
                 if (cost_center := form.cleaned_data.get("cost_center")):filters &= Q(cost_center__in=cost_center.get_decendance())
 
         tokens = tokens.filter(filters)
-        print("tokens", tokens)
+        # print("tokens", tokens)
         tempers = tokens.filter(type="TEMPER")
+        
         reimbursements = tokens.filter(type="REIMBURSEMENT")
         clear_credits = tokens.filter(type="CLEAR CREDIT")
         token_types = {
