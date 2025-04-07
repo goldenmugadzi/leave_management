@@ -23,6 +23,9 @@
 {#        {% comment %} <a href="{% url 'nonconformity:checklist' %}" class="bg-blue-500 hover:bg-blue-700 inline-block rounded-full mx-3 text-white py-2 px-4 rounded">Create from checklist</a> {% endcomment %}#}
         <a href="{% url 'pettycash:pettycashs_awaiting_my_action' %}" class="bg-blue-500 hover:bg-gray-700 inline-block rounded-full mx-3 text-white py-2 px-4 rounded">Awaiting my action </a>
           <a href="/pettycash/pettycashs" class="bg-gray-500 hover:bg-gray-700 inline-block rounded-full mx-3 text-white py-2 px-4 rounded">View Pettycash</a>
+          {% comment %} view my actioned items {% endcomment %}
+          <a href="{% url 'pettycash:my_actioned_items' %}" class="bg-yellow-500 hover:bg-yellow-700 inline-block rounded-full mx-3 text-white py-2 px-4 rounded">View My Actioned Items</a>
+          
       </div>
       <br> <table id="nonconformity" class="table table-striped stripe table-bordered">
         <thead>

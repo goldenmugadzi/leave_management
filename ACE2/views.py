@@ -1576,3 +1576,50 @@ def download_csv(request):
             transaction.approval_status if transaction else ''
         ])
     return response
+
+
+@login_required
+def my_actioned_items(request):
+    """
+    Show ACE items the current user has actioned (approved/rejected).
+    """
+    username = request.user.username
+    user_id = request.user.id
+    user_profile = UserProfile.objects.filter(id=user_id).first()
+    region = Regions.objects.filter(id=user_profile.region.id).first()
+    
+    # Get user role
+    custom_user_roles = {"ace": {}}
+    roles_ = user_profile.roles.all()
+    for _role in roles_:
+        role = Roles.objects.filter(id=_role.id).first()
+        if role.application == "ace":
+            custom_user_roles["ace"] = role.role
+            ace_role = str(custom_user_roles["ace"])
+            print("ace role",ace_role)
+            break
+    
+    # Get all ACEs where the current user has an approval in the process
+    actioned_aces = []
+    
+    # Find all ACEs
+    all_aces = Ace2.objects.filter(region=region)
+    
+    # Check each ACE for this user's approvals
+    for ace in all_aces:
+        process = ace.process
+        if process and process.approval_set.exists():
+            approvals = process.approval_set.all()
+            for approval in approvals:
+                if approval.user == request.user:
+                    actioned_aces.append(ace)
+                    break
+
+    requester = "create"  # Used in template for role checks
+    
+    return render(request, 'finance/ace2/my_actioned_items.html', {
+        'aces': actioned_aces,
+        'title': 'My Actioned Items',
+        'ace_role': ace_role,
+        'requester': requester
+    })

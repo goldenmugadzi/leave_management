@@ -27,4 +27,5 @@ urlpatterns = [
     path('transactions_for_budget/<str:budget_id>', transactions_for_budget, name='transactions_for_budgets'),
     path('vir_and_ace/<str:budget_id>', transactions_view, name='vir_and_ace'),
     path('reports', reports_view, name='reports_view'),
+    path('my_actioned/', my_actioned_items, name='my_actioned_items'),
 ]

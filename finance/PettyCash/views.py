@@ -899,3 +899,50 @@ def receipt_manual(request):
         return redirect('pettycash:pettycash_detail', petty_id=pettycash.petty_id)
     else:
         return render(request, 'finance/pettycash/receipt.html')
+
+
+@login_required
+def my_actioned_items(request):
+    """
+    Show PettyCash items the current user has actioned (approved/rejected).
+    """
+    user_id = request.user.id
+    user_profile = UserProfile.objects.filter(id=user_id).first()
+    region = Regions.objects.filter(id=user_profile.region.id).first()
+    
+    # Get all PettyCash items where the current user has an approval in the process
+    actioned_pettycashs = []
+    
+    # Get user roles for PettyCash app
+    user_roles = user_profile.roles.all()
+    custom_user_roles = {"pettycash": {}}
+    
+    for _role in user_roles:
+        role = Roles.objects.filter(id=_role.id).first()
+        if role.application == "pettycash":
+            custom_user_roles["pettycash"] = role.role
+    
+    pettycash_role = str(custom_user_roles["pettycash"])
+    
+    # Find all PettyCash where this user has an approval record
+    all_pettycashs = Pettycash.objects.filter(region=region)
+    
+    # Check each PettyCash for this user's approvals
+    for pettycash in all_pettycashs:
+        process = pettycash.process
+        if process and process.approval_set.exists():
+            approvals = process.approval_set.all()
+            for approval in approvals:
+                if approval.user == request.user:
+                    actioned_pettycashs.append(pettycash)
+                    break  # Found an approval by this user for this pettycash
+    
+    requester = "create"  # Used in template for role checks
+    
+    return render(request, 'finance/pettycash/my_actioned_items.html', {
+        'pettycashs': actioned_pettycashs,
+        'pettycash_role': pettycash_role,
+        'user_groups': user_profile.groups.values_list('name', flat=True),
+        'requester': requester,
+        'title': 'My Actioned Items'
+    })
