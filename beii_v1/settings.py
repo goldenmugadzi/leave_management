@@ -124,7 +124,8 @@ INSTALLED_APPS = [
     'mathfilters',
     'tokens',
     'commecial.tempertockens',
-    'competence_building.apps.CompetenceBuildingConfig'
+    'competence_building.apps.CompetenceBuildingConfig',
+    'comm_files',
 ]
 
 AUTH_USER_MODEL = 'users.UserProfile'

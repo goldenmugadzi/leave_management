@@ -63,8 +63,8 @@ urlpatterns = [
     path('', include('Hardware_Faults.urls')),
     path('', include('Asset_Register.urls')),
 
-      
-
+    # Add the comm_files app URLs
+    path('commercial/', include('comm_files.urls')),
 
 ] 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
