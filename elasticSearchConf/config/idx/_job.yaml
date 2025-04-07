@@ -1,0 +1,22 @@
+name: "idx"
+fs:
+  url: "/tmp/es"
+  update_rate: "15m"
+  includes:
+    - "*.pdf"
+    - "*.doc"
+    - "*.docx"
+    - "*.txt"
+  excludes:
+    - "*.tmp"
+    
+elasticsearch:
+  nodes:
+    - url: "http://elasticsearch:9200"
+  index: "idx"
+  bulk_size: 100
+  flush_interval: "5s"
+  byte_size: "10mb"
+
+rest:
+  url: "http://0.0.0.0:8080" 

@@ -1,0 +1,4 @@
+rest: true
+elasticsearch:
+  nodes:
+    - url: "http://elasticsearch:9200" 
