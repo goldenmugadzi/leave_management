@@ -69,7 +69,7 @@
             <th>Created At</th>
             <th>Section</th>
             <th>Allocation Code</th>
-            {% if ace_role == 'accounting_officer' or ace_role == 'cashier' %}
+            {% if ace_role == 'accounting_officer' or ace_role == 'cashier' or ace_role == 'process' %}
               <th>Asset Number</th>
             {% endif %}
             <th>Status</th>
@@ -86,7 +86,7 @@
                 <td>{{ ace.date_created }}</td>
                 <td>{{ ace.section }}</td>
                 <td>{{ ace.section.code }}</td>
-                {% if ace_role == 'accounting_officer' or ace_role == 'cashier' %}
+                {% if ace_role == 'accounting_officer' or ace_role == 'cashier' or ace_role == 'process' %}
                   <td>
                     {% if ace.asset_number %}
                       <span class="px-2 py-1 rounded-full bg-green-100 text-green-800 text-xs font-medium">{{ ace.asset_number }}</span>

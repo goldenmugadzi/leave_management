@@ -1596,6 +1596,7 @@ def my_actioned_items(request):
         if role.application == "ace":
             custom_user_roles["ace"] = role.role
             ace_role = str(custom_user_roles["ace"])
+            print("ace role",ace_role)
             break
     
     # Get all ACEs where the current user has an approval in the process
