@@ -118,6 +118,7 @@ INSTALLED_APPS = [
     'finance.Direct_purchases',
     'ACE2',
     'esearch',
+    'Transport',
     'Hardware_Faults',
     'Asset_Register',
     'reports',
@@ -126,6 +127,7 @@ INSTALLED_APPS = [
     'tokens',
     'commecial.tempertockens',
     'competence_building.apps.CompetenceBuildingConfig'
+    
 ]
 
 AUTH_USER_MODEL = 'users.UserProfile'

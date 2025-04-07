@@ -36,9 +36,9 @@
               <div class="mt-2">
                 <input
                   type="text"
-                  name="eserialnumber"
-                  value="{{employee.eserialnumber}}"
-                  id="eserialnumber"
+                  name="serialnumber"
+                  value="{{employee.serialnumber}}"
+                  id="serialnumber"
                   autocomplete="given-name"
                   class="mt-2 block w-full rounded-md border border-gray-200 px-2 py-2 shadow-sm outline-none focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
                 />
@@ -53,9 +53,9 @@
               <div class="mt-2">
                 <input
                   type="text"
-                  name="ephoneextension"
-                  value="{{employee.ephoneextension}}"
-                  id="ephoneextension"
+                  name="phoneextension"
+                  value="{{employee.phoneextension}}"
+                  id="phoneextension"
                   autocomplete="given-name"
                   class="mt-2 block w-full rounded-md border border-gray-200 px-2 py-2 shadow-sm outline-none focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
                 />
@@ -70,9 +70,9 @@
               <div class="mt-2">
                 <input
                   type="text"
-                  name="efault"
-                  value="{{employee.efault}}"
-                  id="efault"
+                  name="fault"
+                  value="{{employee.fault}}"
+                  id="fault"
                   autocomplete="given-name"
                   class="mt-2 block w-full rounded-md border border-gray-200 px-2 py-2 shadow-sm outline-none focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
                 />
@@ -119,33 +119,11 @@
               </div>
             </div>
             <div>
-              <label
-                for="department"
-                class="block text-sm font-medium leading-6 text-gray-900"
-                >Department</label
-              >
-              <div class="mt-2">
-                <select
-                  id="department"
-                  name="department"
-                  autocomplete="department"
-                  class="mt-2 block w-full rounded-md border border-gray-200 px-2 py-2 shadow-sm outline-none focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
-                >
-                  <option>Select department</option>
-                  {% for section in sections %}
-                    <option value="{{ section.id }}" {% if section.id == employee.sections.id %}selected{% endif %}>
-                      {{ section.section }}
-                    </option>
-                  {% endfor %}
-                </select>
-              </div>
-            </div>
-            <div>
               <label for="repairstatus" class="block text-sm font-medium leading-6 text-gray-900">Repair Status</label>
             
               <select
-                id="erepairstatus"
-                name="erepairstatus"
+                id="repairstatus"
+                name="repairstatus"
                 class="mt-2 block w-full rounded-md border border-gray-200 px-2 py-2 shadow-sm outline-none focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
               >
                 <option>Select Status</option>
@@ -178,14 +156,23 @@
                 </div>
               </div> {% endcomment %}
             </div>
-      <div class="flex justify-end mt-4 gap-4">
-                <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                    Update Record
-                </button>
-                <a href="{% url 'show_fault' %}" class="bg-blue-300 hover:bg-gray-400 text-gray-700 font-bold py-2 px-4 rounded">
-                    Show Details
-                </a>
-            </div>
+            <div class="flex mt-10 px-3 py-3">
+              <div style="width: 50%;">
+                  <a href="{% url 'show_fault' %}" style="width: 100%;" class="text-sm font-semibold leading-6 text-gray-900 text-center block py-2">
+                      SHOW DETAILS
+                  </a>
+              </div>
+              <div style="width: 50%;">
+                  <button
+                      style="width: 100%;"
+                      type="submit"
+                      class="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                  >
+                      UPDATE RECORD
+                  </button>
+              </div>
+          </div>
+          
         </form>
     </div>
 </div>

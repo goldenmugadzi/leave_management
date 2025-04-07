@@ -62,7 +62,8 @@ urlpatterns = [
      # path('', include('hardware_faults.urls')),
     path('', include('Hardware_Faults.urls')),
     path('', include('Asset_Register.urls')),
-
+    path('', include('Transport.urls')),
+ 
       
 
 

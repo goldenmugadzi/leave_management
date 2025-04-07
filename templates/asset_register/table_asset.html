@@ -1,47 +1,73 @@
-{% extends 'admin_layout.html' %} {% block styles %}
-<link
-  rel="stylesheet"
-  href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css"
-/>
-<style>
-  .dataTables_wrapper .dataTables_length select {
-    width: 4rem;
-  }
-</style>
-{% endblock styles %} {% block content %}
-<div class="content-wrapper">
-  <div
-    class="bg-gulf-blue-100 shadow shadow-gulf-blue-300 text-gulf-blue-900 rounded px-2 py-2"
-  >
-    <div class="flex justify-between items-center mb-5">
-      <span class="text-lg font-bold text-black">Asset Management</span>
-      <div class="flex">
-        <a
-          href="/create_asset"
-          class="bg-gulf-blue-600 hover:bg-gulf-blue-800 text-white font-bold py-2 px-4 rounded mr-2"
-        >
-          Create Asset
-        </a>
-        <a
-          href="/table_product"
-          class="bg-gulf-blue-600 hover:bg-gulf-blue-800 text-white font-bold py-2 px-4 rounded  mr-2"
-        >
-          Create Product
-        </a>
-        <a
-        href="/upload_asset"
-        class="bg-gulf-blue-600 hover:bg-gulf-blue-800 text-white font-bold py-2 px-4 rounded"
-      >
-        Upload File
-      </a>
+{% extends 'admin_layout.html' %}
+
+{% block styles %}
+  <link
+    rel="stylesheet"
+    href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css"
+  />
+  <style>
+    .dataTables_wrapper .dataTables_length select {
+      width: 4rem;
+    }
+    .tab-button {
+  padding: 0.5rem 1rem;
+  border: 2px solid transparent;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  transition: background-color 0.3s, color 0.3s;
+  text-align: center;
+}
+
+.tab-button.active {
+  background-color: #1d4ed8; /* Blue color */
+  color: white;
+  border-color: #1d4ed8;
+}
+
+.tab-button:hover {
+  background-color: #2563eb; /* Hover effect */
+  color: white;
+}
+
+  </style>
+{% endblock styles %}
+
+{% block content %}
+  <div class="content-wrapper">
+    <div class="bg-gulf-blue-100 shadow shadow-gulf-blue-300 text-gulf-blue-900 rounded px-2 py-2">
+      <div class="flex justify-between items-center mb-5">
+        <span class="text-lg font-bold text-black">Asset Management</span>
+        <div class="mb-4 flex space-x-4 p-2 bg-white rounded-lg shadow-md">
+          <!-- Tab Navigation -->
+          <a
+            href="/createAsset"
+            class="tab-button active"
+          >
+            Create Asset
+          </a>
+          <a
+            href="/table_product"
+            class="tab-button"
+          >
+            Create Product
+          </a>
+          <a
+            href="/upload_asset"
+            class="tab-button"
+          >
+            Upload File
+          </a>
+        </div>
+        
       </div>
-    </div>
-    <table id="assetTable" class="display" style="width: 100%">
+      <div class="overflow-x-auto">
+      <table id="assetTable" class="display" style="width: 100%">
       <thead>
           <tr>
             <th>ID</th>
             <th>Product Type</th>
             <th>Asset State</th>
+            <th>Asset Number</th>
             <th>Serial Number</th>
             <th>Department</th>
             <th>User</th>
@@ -50,7 +76,10 @@
             <th>Designation</th>
             <th>Date Purchased</th>
             <th>Warrant</th>
+            <th>Cost Center</th>
             <th>Model</th>
+            <th>Supplier</th>
+            <th>Updated At</th>
             <th>Created By</th>
             <th>Action</th>
         </tr>
@@ -61,6 +90,7 @@
           <th>ID</th>
           <th>Product Type</th>
           <th>Asset State</th>
+          <th>Asset Number</th>
           <th>Serial Number</th>
           <th>Department</th>
           <th>User</th>
@@ -69,12 +99,16 @@
           <th>Designation</th>
           <th>Date Purchased</th>
           <th>Warrant</th>
+          <th>Cost Center</th>
           <th>Model</th>
+          <th>Supplier</th>
+          <th>Updated At</th>
           <th>Created By</th>
           <th>Action</th>
         </tr>
       </tfoot>
     </table>
+    </div>
   </div>
 </div>
 {% endblock %} {% block scripts %}
@@ -109,6 +143,9 @@ $(document).ready(function () {
             data: "asset_state",
           },
           {
+            data: "asset_number",
+          },
+          {
             data: "serial_number",
           },
           {
@@ -132,8 +169,17 @@ $(document).ready(function () {
           {
             data: "warrant"
           },
+         {
+          data:"cost_center"
+         },
           {
             data: "model"
+          },
+          {
+            data: "supplier"
+          },
+          {
+            data: "updated_at"
           },
           {
             data: "created_by"

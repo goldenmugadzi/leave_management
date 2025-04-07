@@ -1,11 +1,11 @@
 from django import forms
 from .models import *
 
-class EmployeeForm(forms.ModelForm):
+class ZetdcAssetForm(forms.ModelForm):
     class Meta:
-        model = Employee
+        model = ZetdcAssets
         fields = '__all__'
-        exclude = ['jobcardnumber','updatedby']
+        # exclude = ['process', 'ace', 'requested_by', 'region', 'section']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -17,7 +17,7 @@ class EmployeeForm(forms.ModelForm):
                          "sm:text-sm sm:leading-6",
             })
 
-            if (field_name == 'user') or ( field_name == 'designation') or ( field_name == 'cost_center') or ( field_name == 'department') or ( field_name == 'updatedby') or ( field_name == 'regions') or ( field_name == 'repairstatus'):
+            if (field_name == 'product_type') or (field_name == 'user') or ( field_name == 'designation') or ( field_name == 'cost_center')or ( field_name == 'regions') or ( field_name == 'created_by') or ( field_name == 'department')or ( field_name == 'model')or ( field_name == 'asset_state'):
                 field.widget.attrs.update({'class': "select2 block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6",})
             if isinstance(field.widget, forms.Textarea):
                 field.widget.attrs.update({'rows': '3'})
