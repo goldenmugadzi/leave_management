@@ -107,6 +107,12 @@ APPLICATIONS = [
         "iconUrl": "assets/images/register.png",
         "url": "/table_asset/"
     },
+    {
+        "name": "comm_files",
+        "title": "Commercial Files",
+        "iconUrl": "assets/images/customer.png",
+        "url": "/commercial/customers"
+    },
 ]
 
 REPORTS = [
