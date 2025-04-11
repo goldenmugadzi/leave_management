@@ -136,7 +136,7 @@
                             {% if quotation.quotation_file == '' %}
                                 <p class="font-bold   mb-2"> Quotation: not available</p>
                             {% else %}
-                                <p class="font-bold   mb-2"> Quotation: {{ quotation }}<a href="/pettycash/qoutes/{{ quotation.quotation_file }}"></a></p>
+                                {% comment %} <p class="font-bold   mb-2"> Quotation: {{ quotation }}<a href="/pettycash/qoutes/{{ quotation.quotation_file }}"></a></p> {% endcomment %}
                             {% endif %}
                         {% endfor %}
                         {% endif %}
