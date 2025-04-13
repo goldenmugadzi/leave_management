@@ -42,9 +42,9 @@ share/python-wheels/
 *.egg
 MANIFEST
 
-# Ignore dr_site folder
-dr_site/
-dr_site/*
+# Ignore dr_setup folder
+dr_setup/
+dr_setup/*
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
