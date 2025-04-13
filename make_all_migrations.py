@@ -18,6 +18,11 @@ custom_apps = [
        not app.startswith('mathfilters')
 ]
 
+def get_app_label(app_path):
+    # Split the path and get the last part
+    parts = app_path.split('.')
+    return parts[-1]
+
 def make_migrations():
     print("Starting migrations for all apps...")
     
@@ -30,13 +35,14 @@ def make_migrations():
         print(f"× Error making general migrations: {str(e)}")
 
     # Then make migrations for each app individually
-    for app in custom_apps:
+    for app_path in custom_apps:
+        app_label = get_app_label(app_path)
         try:
-            print(f"\nMaking migrations for {app}...")
-            call_command('makemigrations', app)
-            print(f"✓ Successfully made migrations for {app}")
+            print(f"\nMaking migrations for {app_label}...")
+            call_command('makemigrations', app_label)
+            print(f"✓ Successfully made migrations for {app_label}")
         except Exception as e:
-            print(f"× Error making migrations for {app}: {str(e)}")
+            print(f"× Error making migrations for {app_label}: {str(e)}")
 
     print("\nMigration process completed!")
 
