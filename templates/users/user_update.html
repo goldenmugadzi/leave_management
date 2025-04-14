@@ -1,188 +1,47 @@
 <!--users/templates/users/add_user.html-->
-{% extends 'admin_layout.html' %}
-{% block styles %}
-<link
-  rel="stylesheet"
-  href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css"
-/>
+{% extends 'admin_layout.html' %} 
+{% load static %} 
+{% load custom_filters %}
 <style>
-  .dataTables_wrapper .dataTables_length select {
-    width: 4rem;
+  .google-visualization-orgchart-linebottom {
+    border-bottom: 1px solid #3388dd;
+    height: 2rem;
   }
-  /* Tab Button Styles */
-  .tab-button {
-    padding: 0.5rem 1rem;
-    border: 2px solid transparent;
-    border-radius: 0.375rem;
-    cursor: pointer;
-    transition: background-color 0.3s, color 0.3s;
-  }
-  .tab-button.active {
-    background-color: #1d4ed8; /* bg-blue-600 */
-    color: white;
-    border-color: #1d4ed8; /* same blue */
-  }
-  .tab-button:hover {
-    background-color: #2563eb; /* hover effect */
-    color: white;
+  .google-visualization-orgchart-lineleft {
+    border-left: 1px solid #3388dd;
+    height: 2rem;
   }
 </style>
-{% endblock styles %}
-
 {% block content %}
+
 <div class="content-wrapper">
   <div
-    class="bg-gulf-blue-100 shadow shadow-gulf-blue-300 text-gulf-blue-900 rounded px-2 py-2"
+    class="bg-gulf-blue-100 shadow shadow-gulf-blue-200 text-gray-900 rounded px-2 py-2"
   >
-    <!-- Tab Navigation -->
+    <!-- component -->
     <div x-data="{ openTab: 1 }" class="p-8">
-      <div class="mb-4 flex space-x-4 p-2 bg-white rounded-lg shadow-md">
-        <!-- Register Vehicle Tab Button -->
-        <button
-          x-on:click="openTab = 1"
-          :class="{ 'bg-blue-600 text-white': openTab === 1 }"
-          class="flex-1 py-2 px-4 rounded-md focus:outline-none focus:shadow-outline-blue transition-all duration-300"
+      <div class="">
+        <div class="mb-4 flex space-x-4 p-2 bg-white rounded-lg shadow-md">
+          <button
+            x-on:click="openTab = 1"
+            :class="{ 'bg-blue-600 text-white': openTab === 1 }"
+            class="flex-1 py-2 px-4 rounded-md focus:outline-none focus:shadow-outline-blue transition-all duration-300"
+          >
+            Update Profile Details
+          </button>
+          <button
+            x-on:click="openTab = 2"
+            :class="{ 'bg-blue-600 text-white': openTab === 2 }"
+            class="flex-1 py-2 px-4 rounded-md focus:outline-none focus:shadow-outline-blue transition-all duration-300"
+          >
+            Update Responsibilities
+          </button>
+        </div>
+
+        <div
+          x-show="openTab === 1"
+          class="transition-all duration-300 bg-white p-4 rounded-lg shadow-md border-l-4 border-blue-600"
         >
-          Register Vehicle
-        </button>
-        <!-- Upload File Tab Button -->
-        <button
-          x-on:click="openTab = 2"
-          :class="{ 'bg-blue-600 text-white': openTab === 2 }"
-          class="flex-1 py-2 px-4 rounded-md focus:outline-none focus:shadow-outline-blue transition-all duration-300"
-        >
-          Upload File
-        </button>
-      </div>
-
-      <!-- Tab Content for Register Vehicle -->
-      <div
-        x-show="openTab === 1"
-        class="transition-all duration-300 bg-white p-4 rounded-lg shadow-md border-l-4 border-blue-600"
-      >
-        <a
-          href="/register_vehicle"
-          class="bg-gulf-blue-600 hover:bg-gulf-blue-800 text-white font-bold py-2 px-4 rounded"
-        >
-          Register Vehicle
-        </a>
-      </div>
-
-      <!-- Tab Content for Upload File -->
-      <div
-        x-show="openTab === 2"
-        class="transition-all duration-300 bg-white p-4 rounded-lg shadow-md border-l-4 border-blue-600"
-      >
-        <a
-          href="/upload_vehicle"
-          class="bg-gulf-blue-600 hover:bg-gulf-blue-800 text-white font-bold py-2 px-4 rounded"
-        >
-          Upload File
-        </a>
-      </div>
-    </div>
-
-    <!-- Data Table -->
-    <table id="vehicleTable" class="display" style="width: 100%">
-      <thead>
-        <tr>
-          <th>Jobcardnumber</th>
-          <th>Fleet Number</th>
-          <th>Reg Number</th>
-          <th>Make</th>
-          <th>Model</th>
-          <th>Department</th>
-          <th>User</th>
-          <th>Region</th>
-          <th>Designation</th>
-          <th>Chass Number</th>
-          <th>Engine Number</th>
-          <th>Fuel Type</th>
-          <th>Year</th>
-          <th>Updated By</th>
-          <th>Created By</th>
-          <th>Action</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-      <tfoot>
-        <tr>
-          <th>Jobcardnumber</th>
-          <th>Fleet Number</th>
-          <th>Reg Number</th>
-          <th>Make</th>
-          <th>Model</th>
-          <th>Department</th>
-          <th>User</th>
-          <th>Region</th>
-          <th>Designation</th>
-          <th>Chass Number</th>
-          <th>Engine Number</th>
-          <th>Fuel Type</th>
-          <th>Year</th>
-          <th>Updated By</th>
-          <th>Created By</th>
-          <th>Action</th>
-        </tr>
-      </tfoot>
-    </table>
-  </div>
-</div>
-{% endblock %}
-
-{% block scripts %}
-<script src="https://code.jquery.com/jquery-3.7.0.js"></script>
-<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/buttons/2.2.2/js/dataTables.buttons.min.js"></script>
-<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/buttons/2.2.2/js/buttons.html5.min.js"></script>
-<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/buttons/2.2.2/js/buttons.print.min.js"></script>
-<script type="text/javascript" charset="utf8" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.36/pdfmake.min.js"></script>
-<script type="text/javascript" charset="utf8" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.36/vfs_fonts.js"></script>
-<script type="text/javascript" charset="utf8" src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
-<script>
-  $(document).ready(function () {
-    $("#vehicleTable").DataTable({
-      "processing": true,
-      "serverSide": true,
-      "ajax": {
-        "url": "/vehicle_datatable",
-      },
-      columns: [
-        { data: "jobcardnumber" },
-        { data: "fleet_number" },
-        { data: "reg_number" },
-        { data: "make" },
-        { data: "model" },
-        { data: "department" },
-        { data: "user" },
-        { data: "regions" },
-        { data: "designations" },
-        { data: "engine_number" },
-        { data: "chass_number" },
-        { data: "fuel_type" },
-        { data: "year" },
-        { data: "created_by" },
-        { data: "updated_by" },
-        {
-          data: "id",
-          orderable: false,
-          searchable: false,
-          render: function (data, type, row, meta) {
-            return `
-              <a type="button" class="btn btn-info" href='/update_vehicle/${row.id}' >
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
-                </svg>
-              </a>`;
-          }
-        }
-      ],
-      order: [[5, 'desc']]
-    });
-  });
-</script>
-{% endblock %}
-
         <form id="user_form" method="post">
           <input type="hidden" name="user_id" value="{{ user.id }}" />
           {% csrf_token %}

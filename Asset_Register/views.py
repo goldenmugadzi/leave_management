@@ -10,7 +10,7 @@ import csv
 from django.http import HttpResponse
 from .forms import *
 from dateutil import parser
-from it.users.models import Regions, Sections, Designations, UserProfile, CostCenter
+from it.users.models import Regions, Sections, Designations, UserProfile, CostCenter,Roles
 from Asset_Register.models import ProductType, ZetdcAssets
 from datetime import datetime
 from dateutil import parser
@@ -36,8 +36,16 @@ def createAsset(request):
     return render(request, "asset_register/createAsset.html", {"form": form})
 
 def show_asset(request):
-    
-    return render(request, 'asset_register/table_asset.html')
+    try:
+        user_roles = request.user.get_user_role_for_application("IT Asset Register")
+        is_technician = user_roles.name == 'technician'
+    except AttributeError as e:
+        print(f"Role error: {e}")
+        is_technician = False
+
+    return render(request, 'asset_register/table_asset.html', {
+        'is_technician': is_technician
+    })
 
 def table_asset (request):
   return render(request,'asset_register/table_asset.html')
@@ -45,126 +53,148 @@ def table_asset (request):
 def show_product (request):
   return render(request,'asset_register/table_product.html')
 
+#@login_required
 def show_asset_datatable(request):
     try:
         print("\n===== NEW REQUEST =====")
-        print(f"Request: {request.GET}")
+        print(f"User: {request.user.first_name} {request.user.last_name} ({request.user.username})")
+        
+        cost_centers = request.user.cost_centers_for(["IT Asset Register"])
+        if cost_centers:
+            assets=ZetdcAssets.objects.filter(cost_center__in=cost_centers)
+        else:
+            assets=ZetdcAssets.objects.filter(cost_center__in=request.user.cost_center_and_decendace())
 
-        # Get parameters with defaults
+        try:
+            user_roles = request.user.get_user_role_for_application("IT Asset Register")
+            print(f"User roles: {user_roles}")
+        except AttributeError as e:
+            print(f"Error getting user roles: {str(e)}")
+            user_roles=[]
+
+        print(" user_roles.name", user_roles.name)
+        is_technician = user_roles.name == 'technician'
+        print("is_technician",is_technician)
+        # return render(request, 'table_asset.html', {
+        # 'is_technician': is_technician
+        # })
+
+        
         try:
             draw = int(request.GET.get('draw', 1))
             start = int(request.GET.get('start', 0))
             length = int(request.GET.get('length', 10))
             search_value = request.GET.get('search[value]', '')
         except ValueError as e:
-            return JsonResponse({'error': f'Invalid parameter: {str(e)}'}, status=400)
+            print("error",e)
 
-        # Get all assets without region filtering
-        assets = ZetdcAssets.objects.all()
-        print(f"DEBUG: Showing all assets, count: {assets.count()}")
-
-        # Apply search filter
+        # 5. Apply search filter
+        # assets=None
         if search_value:
-            print(f"DEBUG: Applying search filter for: {search_value}")
-            assets = assets.filter(
-                Q(asset_state__icontains=search_value) |
-                Q(product_type__product_type__icontains=search_value) |
-                Q(serial_number__icontains=search_value) |
-                Q(department__section__icontains=search_value) |
-                Q(user__first_name__icontains=search_value) |
-                Q(user__last_name__icontains=search_value) |
-                Q(regions__region__icontains=search_value) |
-                Q(purchase_cost__icontains=search_value) |
-                Q(designation__description__icontains=search_value) |
-                Q(model__icontains=search_value) |
-                Q(warrant__icontains=search_value) |
-                Q(created_by__icontains=search_value)
-            )
-            print(f"DEBUG: Post-search asset count: {assets.count()}")
+            try:
+                assets = assets.filter(
+                    Q(asset_state__icontains=search_value) |
+                    Q(product_type__product_type__icontains=search_value) |
+                    Q(serial_number__icontains=search_value) |
+                    Q(department__section__icontains=search_value) |
+                    Q(user__first_name__icontains=search_value) |
+                    Q(user__last_name__icontains=search_value) |
+                    Q(regions__region__icontains=search_value) |
+                    Q(purchase_cost__icontains=search_value) |
+                    Q(designation__description__icontains=search_value) |
+                    Q(model__icontains=search_value) |
+                    Q(warrant__icontains=search_value) |
+                    Q(created_by__icontains=search_value)
+                )
+                print(f"After search: {assets.count()} assets")
+            except Exception as e:
+                print(f"Search error: {str(e)}")
+                # return JsonResponse({
+                #     'error': 'Error processing search.'
+                # }, status=400)
 
-        # Ordering
-        order_column = request.GET.get('order[0][column]')
-        order_dir = request.GET.get('order[0][dir]')
-        if order_column and order_dir:
-            column_map = {
-                "0": "id",
-                "1": "asset_state",
-                "2": "product_type__product_type",
-                "3": "serial_number",
-                "4": "department__section",
-                "5": "user__first_name",
-                "6": "regions__region",
-                "7": "purchase_cost",
-                "8": "designation__description",
-                "9": "date_purchased",
-                "10": "warrant",
-                "11": "model",
-                "12": "created_by",
-                "13": "created_at",
-                "14": "asset_number",
-            }
-            column_name = column_map.get(order_column)
-            if column_name:
-                order_prefix = '-' if order_dir == 'desc' else ''
-                assets = assets.order_by(f'{order_prefix}{column_name}')
-                print(f"DEBUG: Ordering by {order_prefix}{column_name}")
+        print("assets", assets)
+        if assets:
+            # 6. Ordering
+            try:
+                order_column = request.GET.get('order[0][column]')
+                order_dir = request.GET.get('order[0][dir]')
+                if order_column and order_dir:
+                    column_map = {
+                        "0": "id",
+                        "1": "asset_state",
+                        "2": "product_type__product_type",
+                        "3": "serial_number",
+                        "4": "department__section",
+                        "5": "user__first_name",
+                        "6": "regions__region",
+                        "7": "purchase_cost",
+                        "8": "designation__description",
+                        "9": "date_purchased",
+                        "10": "warrant",
+                        "11": "model",
+                        "12": "created_by",
+                        "13": "created_at",
+                        "14": "asset_number",
+                    }
+                    column_name = column_map.get(order_column)
+                    if column_name:
+                        order_prefix = '-' if order_dir == 'desc' else ''
+                        assets = assets.order_by(f'{order_prefix}{column_name}')
+            except Exception as e:
+                print(f"Ordering error: {str(e)}")
 
-        # Pagination
-        paginator = Paginator(assets, length)
-        page_number = start // length + 1
-        try:
-            page_obj = paginator.get_page(page_number)
-            print(f"DEBUG: Page {page_number} of {paginator.num_pages}")
-        except Exception as e:
-            print(f"DEBUG: Pagination error: {e}")
-            page_obj = []
+            # 7. Pagination
+            try:
+                paginator = Paginator(assets, length)
+                page_number = start // length + 1
+                page_obj = paginator.get_page(page_number)
+            except Exception as e:
+                print(f"Pagination error: {str(e)}")
+                # return JsonResponse({
+                #     'error': 'Error paginating results.'
+                # }, status=400)
 
-        # Prepare data - ensure all values are JSON serializable
-        asset_list = []
-        for asset in page_obj:
-            print(asset.created_by)
-            asset_data = {
-                "id": asset.id,
-                "asset_state": asset.asset_state,
-                "asset_number": asset.asset_number,
-                "product_type": asset.product_type.product_type if asset.product_type else None,
-                "serial_number": asset.serial_number,
-                "department": asset.department.section if asset.department else None,
-                "user": f"{asset.user.first_name} {asset.user.last_name}" if asset.user else None,
-                "regions": asset.regions.region if asset.regions else None,
-                "purchase_cost": float(asset.purchase_cost) if asset.purchase_cost else 00.00,
-                "designations": asset.designation.description if asset.designation else None,
-                "date_purchased": asset.date_purchased.isoformat() if asset.date_purchased else None,
-                "warrant": asset.warrant,
-                "cost_center": asset.cost_center.name if asset.cost_center else None,
-                "model": asset.model,
-                "updated_at": asset.updated_at.isoformat() if asset.updated_at else None,
-                "supplier": asset.supplier,
-                "created_by": f"{asset.created_by.first_name} {asset.created_by.last_name}" if asset.created_by else None,
-            }
-            asset_list.append(asset_data)
+            # 8. Prepare response data
+            asset_list = []
+            for asset in page_obj:
+                try:
+                    asset_data = {
+                        "id": asset.id,
+                        "asset_state": asset.asset_state,
+                        "asset_number": asset.asset_number,
+                        "product_type": asset.product_type.product_type if asset.product_type else None,
+                        "serial_number": asset.serial_number,
+                        "department": asset.department.section if asset.department else None,
+                        "user": f"{asset.user.first_name} {asset.user.last_name}" if asset.user else None,
+                        "regions": asset.regions.region if asset.regions else None,
+                        "purchase_cost": float(asset.purchase_cost) if asset.purchase_cost else 0.00,
+                        "designations": asset.designation.description if asset.designation else None,
+                        "date_purchased": asset.date_purchased.isoformat() if asset.date_purchased else None,
+                        "warrant": asset.warrant,
+                        "cost_center": asset.cost_center.name if asset.cost_center else None,
+                        "model": asset.model,
+                        "updated_at": asset.updated_at.isoformat() if asset.updated_at else None,
+                        "supplier": asset.supplier,
+                        "created_by": f"{asset.created_by.first_name} {asset.created_by.last_name}" if asset.created_by else None,
+                    }
+                    asset_list.append(asset_data)
+                except Exception as e:
+                    print(f"Error processing asset {asset.id}: {str(e)}")
+                    continue
 
-        print(f"DEBUG: Returning {len(asset_list)} items")
-        
-        response = JsonResponse({
+        # 9. Return successful response
+        return JsonResponse({
             'draw': draw,
-            'recordsTotal': assets.count(),
-            'recordsFiltered': assets.count(),
+            'recordsTotal': assets.count() if assets else 0,
+            'recordsFiltered': assets.count() if assets else 0,
             'data': asset_list
-        }, json_dumps_params={'ensure_ascii': False})
-        
-        
-        response["Access-Control-Allow-Origin"] = "*"
-        return response
+        })
 
     except Exception as ex:
-        print(f"ERROR: {str(ex)}", exc_info=True)
+        print(f"Unexpected error: {str(ex)}", exc_info=True)
         return JsonResponse({
-            'draw': 1,
-            'recordsTotal': 0,
-            'recordsFiltered': 0,
-            'data': [],
-            'error': str(ex)
+            'error': 'An unexpected error occurred.'
         }, status=500)
        
 def update_asset(request, asset_id):
