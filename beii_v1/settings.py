@@ -126,11 +126,13 @@ INSTALLED_APPS = [
     'commecial.tempertockens',
     'competence_building.apps.CompetenceBuildingConfig',
     'comm_files',
+    'django_prometheus',
 ]
 
 AUTH_USER_MODEL = 'users.UserProfile'
 
 MIDDLEWARE = [
+    'django_prometheus.middleware.PrometheusBeforeMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
@@ -141,7 +143,8 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'it.beii_auth.inactive_user_middleware.InactiveUserMiddleware',
     'it.beii_auth.session_middleware.LimitConcurrentSessionsMiddleware',
-    'it.beii_auth.session_middleware.SessionErrorSessionMiddleware'
+    'it.beii_auth.session_middleware.SessionErrorSessionMiddleware',
+    'django_prometheus.middleware.PrometheusAfterMiddleware',
 ]
 
 ROOT_URLCONF = 'beii_v1.urls'

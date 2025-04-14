@@ -21,6 +21,11 @@ django-mathfilters==1.0.0
 django-weasyprint==2.2.0
 djangorestframework==3.14.0
 djangorestframework-simplejwt==5.2.2
+django-annoying==0.10.6
+django-anymail==8.4
+django-widget-tweaks==1.4.12
+django-prometheus==2.3.1
+django-filter
 dnspython==2.6.1
 elastic-transport==8.12.0
 elasticsearch==8.12.0
