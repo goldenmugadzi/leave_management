@@ -55,7 +55,6 @@ class TokenForm(forms.ModelForm):
     # attachments = forms.FileField(widget=forms.ClearableFileInput(attrs={'multiple': True}),required=False)
     additional_attachments = forms.FileField(
         required=False,
-        widget=forms.FileInput(attrs={'multiple': True}),
     )
     class Meta:
         model = Token
