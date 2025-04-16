@@ -2,178 +2,58 @@
 {% load static %}
 {% load custom_filters %}
 {% block content %}
+
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
+<script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+<!-- Add jQuery and Select2 JS -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+</script>
+<script>
+  $(document).ready(function() {
+    $("#datepurchased").datepicker({ 
+      dateFormat: "yy-mm-dd",  
+      minDate: 0  
+    });
+  });
+</script>
+
+
  <div class="content-wrapper">
   
   <div class="bg-gulf-blue-100 shadow shadow-gulf-blue-300 text-gulf-blue-900 rounded px-2 py-2">
     <form method="post">
       {% csrf_token %}
-      <div class="space-y-12 px-5 py-5">
-
-        <div class="mt-10 border-b border-gulf-blue-900/10 pb-12">
-          <h2 class="text-base font-semibold leading-7 text-gulf-blue-900">
-            Update Fault
-          </h2>
-          <p class="mt-1 text-sm leading-6 text-gulf-blue-900">
-            All fields are required to be filled.
-          </p>
-
-          <div class="mt-10 grid grid-cols-3 gap-4">
-                <input
-                  type="hidden"
-                  name="id"
-                  id="id"
-                  value="{{employee.id}}"
-                  autocomplete="given-name"
-                  class="mt-2 block w-full rounded-md border border-gray-200 px-2 py-2 shadow-sm outline-none focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
-                />
-            
-            <div>
-              <label
-                for="serialnumber"
-                class="block text-sm font-medium leading-6 text-gray-900"
-                >Serial Number</label
-              >
-              <div class="mt-2">
-                <input
-                  type="text"
-                  name="serialnumber"
-                  value="{{employee.serialnumber}}"
-                  id="serialnumber"
-                  autocomplete="given-name"
-                  class="mt-2 block w-full rounded-md border border-gray-200 px-2 py-2 shadow-sm outline-none focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
-                />
-              </div>
-            </div>
-            <div>
-              <label
-                for="phoneextension"
-                class="block text-sm font-medium leading-6 text-gray-900"
-                >Phone Extension</label
-              >
-              <div class="mt-2">
-                <input
-                  type="text"
-                  name="phoneextension"
-                  value="{{employee.phoneextension}}"
-                  id="phoneextension"
-                  autocomplete="given-name"
-                  class="mt-2 block w-full rounded-md border border-gray-200 px-2 py-2 shadow-sm outline-none focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
-                />
-              </div>
-            </div>
-            <div>
-              <label
-                for="fault"
-                class="block text-sm font-medium leading-6 text-gray-900"
-                >Fault</label
-              >
-              <div class="mt-2">
-                <input
-                  type="text"
-                  name="fault"
-                  value="{{employee.fault}}"
-                  id="fault"
-                  autocomplete="given-name"
-                  class="mt-2 block w-full rounded-md border border-gray-200 px-2 py-2 shadow-sm outline-none focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
-                />
-              </div>
-            </div>
-            <div>
-              <label
-                for="regions"
-                class="block text-sm font-medium leading-6 text-gray-900"
-                >Region</label
-              >
-              <div class="mt-2">
-                <select
-                  id="regions"
-                  name="regions"
-                  autocomplete="regions"
-                  class="mt-2 block w-full rounded-md border border-gray-200 px-2 py-2 shadow-sm outline-none focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
-                >
-                  <option>Select region</option>
-                  {% for region in regions %}
-                    <option value="{{ region.id }}" {% if region.id == employee.regions.id %}selected{% endif %}>
-                      {{ region.region }}
-                    </option>
-                  {% endfor %}
-                </select>
-              </div>
-            </div>
-            <div>
-              <label
-                for="comment"
-                class="block text-sm font-medium leading-6 text-gray-900"
-                >Comment</label
-              >
-              <div class="mt-2">
-                <input
-                  type="text"
-                  name="comment"
-                  value="{{employee.comment}}"
-                  id="comment"
-                  rows="4"
-                  autocomplete="given-name"
-                  class="mt-2 block w-full rounded-md border border-gray-200 px-2 py-2 shadow-sm outline-none focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
-                />
-              </div>
-            </div>
-            <div>
-              <label for="repairstatus" class="block text-sm font-medium leading-6 text-gray-900">Repair Status</label>
-            
-              <select
-                id="repairstatus"
-                name="repairstatus"
-                class="mt-2 block w-full rounded-md border border-gray-200 px-2 py-2 shadow-sm outline-none focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
-              >
-                <option>Select Status</option>
-                <option value="loggedin" {% if employee.erepairstatus == "loggedin" %}selected{% endif %}>loggedin</option>
-                <option value="repair in progress" {% if employee.erepairstatus == "repair in progress" %}selected{% endif %}>repair in progress</option>
-                <option value="fixed" {% if employee.erepairstatus == "fixed" %}selected{% endif %}>fixed</option>
-                <option value="absolute state" {% if employee.erepairstatus == "absolute state" %}selected{% endif %}>absolute state</option>
-                <option value="need replacement" {% if employee.erepairstatus == "need replacement" %}selected{% endif %}>need replacement</option>
-              </select>
-            </div>
-            
-
-
-              {% comment %} <div class="col-md-4 pr-md-1">
-                <div class="form-group">
-                  <label
-                    for="region"
-                    class="block text-sm font-medium leading-6 text-gray-900"
-                    >Date Created</label
-                  >
-                  <div class="mt-2">
-                    <input
-                      type="text"
-                      name="region"
-                      id="region"
-                      autocomplete="given-name"
-                      class="form-control"
-                    />
-                  </div>
-                </div>
-              </div> {% endcomment %}
-            </div>
-            <div class="flex mt-10 px-3 py-3">
-              <div style="width: 50%;">
-                  <a href="{% url 'show_fault' %}" style="width: 100%;" class="text-sm font-semibold leading-6 text-gray-900 text-center block py-2">
-                      SHOW DETAILS
-                  </a>
-              </div>
-              <div style="width: 50%;">
-                  <button
-                      style="width: 100%;"
-                      type="submit"
-                      class="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                  >
-                      UPDATE RECORD
-                  </button>
-              </div>
-          </div>
-          
-        </form>
-    </div>
-</div>
-{% endblock content %}
+      <h1 class="text-base font-semibold leading-7 text-gulf-blue-900">
+        User Information
+      </h1>
+      <p class="mt-1 text-sm leading-6 text-gulf-blue-900">
+        Fill all required fields.
+      </p>
+      <div class="rounded row text-center py-2 grid grid-cols-2  my-3">
+        {% for field in form %} {% if field.is_hidden %} {{ field }} {% else %} <div class="mb-5 grid grid-cols-2 text-center pr-5"> <div> {{ field.label }} <div class="text-blue-500 text-center">{{ field.help_text }}</div> <div class="text-red-500 text-center text-red-500 ">{{ field.errors }}</div> </div> {{ field }} </div> {% endif %}  {% endfor %}
+        <!-- {{ form.as_p }}  -->
+      </div>
+      <div class="flex mt-10 px-3 py-3">
+        <div style="width: 50%;">
+          <button style="width: 100%;" class="text-sm font-semibold leading-6 text-gray-900">
+            CANCEL
+          </button>
+        </div>
+        <div style="width: 50%;">
+          <button
+          style="width: 100%;"
+            type="submit"
+            class="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+          >
+            SAVE USER
+          </button>
+        </div>
+      </div>
+    </form>
+        </div>
+      </div>
+      {% endblock %}
+      
