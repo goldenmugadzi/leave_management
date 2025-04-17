@@ -22,6 +22,8 @@ from.models import*
 from it.users.models import Regions, Sections, UserProfile
 from django.shortcuts import get_object_or_404, render, redirect  # Add get_object_or_404 here
 from django.db import transaction
+from datetime import datetime
+from dateutil import parser
 
 
 def createFault(request):
@@ -296,9 +298,6 @@ def ms_exhange_send(subject, body, to_recipients, cc_recipients):
     print("message",message),
     message.send()
     return JsonResponse({"status": "success", "message": "Email sent successfully"})
-
-from datetime import datetime
-from dateutil import parser
 
 def upload_fault(request):
     if request.method == 'POST':
