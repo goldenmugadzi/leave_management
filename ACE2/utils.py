@@ -50,3 +50,53 @@ def find_pettycash_section_head(section):
                 if sh:
                     return sh
     return None
+
+
+def send_daily_gm_notifications():
+    """
+    Function to be scheduled for daily notification of pending items to GMs.
+    Only notifies GMs about items in their specific region.
+    """
+    from django.http import HttpRequest
+    
+    # Create a mock request for the notification system
+    request = HttpRequest()
+    
+    # Get all regions
+    regions = Regions.objects.all()
+    
+    for region in regions:
+        # Find general managers for this specific region only
+        gm_users = UserProfile.objects.filter(
+            region=region,
+            roles__application="ace",
+            roles__role="approve"
+        ).all()
+        
+        if not gm_users:
+            continue
+        
+        # Find pending items for this region's GM (filtered by region)
+        pending_count = 0
+        pending_aces = []
+        
+        for ace in Ace2.objects.filter(region=region):
+            process = ace.process
+            if not process or process.approval_set.filter(approved="Rejected").exists():
+                continue
+                
+            if process.approval_set.exists():
+                latest_approval = process.approval_set.last()
+                current_step = latest_approval.step.step
+                total_steps = process.workflow.step_set.count()
+                
+                if current_step == total_steps - 1:
+                    pending_aces.append(ace)
+                    pending_count += 1
+        
+        # Send a daily summary if there are pending items in this region
+        if pending_count > 0:
+            for gm in gm_users:
+                msg = f"Daily reminder: You have {pending_count} ACE items awaiting your approval in {region.region}"
+                url = "/ace/awaiting_my_action/"
+                notify_user(gm, msg, "ACE", url, f"daily_gm_{region.id}", request)

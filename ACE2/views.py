@@ -1682,3 +1682,70 @@ def my_actioned_items(request):
         'ace_role': ace_role,
         'requester': requester
     })
+
+
+@login_required
+def notify_pending_gm_approvals(request):
+    """
+    Sends notifications to general managers about ACE items awaiting their approval
+    in their specific region only.
+    """
+    user_id = request.user.id
+    user_profile = UserProfile.objects.filter(id=user_id).first()
+    notification_count = 0
+    
+    # Get all regions
+    regions = Regions.objects.all()
+    
+    for region in regions:
+        # Find general managers for this specific region (users with "approve" role for ACE)
+        gm_users = UserProfile.objects.filter(
+            region=region,
+            roles__application="ace",
+            roles__role="approve"
+        ).all()
+        
+        if not gm_users:
+            continue
+            
+        # Find ACE items in THIS REGION ONLY that are at the final approval step
+        pending_aces = []
+        for ace in Ace2.objects.filter(region=region):
+            process = ace.process
+            
+            # Skip items without process or already rejected
+            if not process or process.approval_set.filter(approved="Rejected").exists():
+                continue
+                
+            if process.approval_set.exists():
+                latest_approval = process.approval_set.last()
+                current_step = latest_approval.step.step
+                total_steps = process.workflow.step_set.count()
+                
+                # If we're at the step before the last step, item is pending GM approval
+                if current_step == total_steps - 1:
+                    pending_aces.append(ace)
+        
+        # Notify each GM about pending items IN THEIR REGION ONLY
+        if pending_aces:
+            for gm in gm_users:
+                count = len(pending_aces)
+                notification_count += count
+                
+                # Send a summary notification
+                msg = f"You have {count} ACE items awaiting your approval in {region.region}"
+                url = "/ace/awaiting_my_action/"
+                notify_user(gm, msg, "ACE", url, f"gm_summary_{region.id}", request)
+                
+                # Optional: Send individual notifications for each item
+                for ace in pending_aces:
+                    item_msg = f"ACE {ace.Ace_id2} requires your final approval"
+                    item_url = f"/ace/ace_detail/{ace.Ace_id2}"
+                    notify_user(gm, item_msg, "ACE", item_url, ace.Ace_id2, request)
+    
+    if notification_count > 0:
+        sweetify.success(request, f"Sent notifications for {notification_count} pending ACE items to general managers")
+    else:
+        sweetify.info(request, "No pending ACE items requiring general manager approval found")
+    
+    return redirect('/ace/aces')
