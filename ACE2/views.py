@@ -56,6 +56,32 @@ def Ace_detail(request, Ace_id2):
     balance_before = budget.balance
     balance_after = balance_before - ace_item.amount
 
+    # Check for rejected ACEs and process budget reversal only once
+    if ace_item.process and ace_item.process.approval_set.exists():
+        last_approval = ace_item.process.approval_set.last()
+        if last_approval and last_approval.approved == "Rejected":
+            # Get the transaction to check if it's already been processed
+            transaction = Transactions.objects.filter(Ace_id2=str(ace_item.Ace_id2)).first()
+            if transaction and transaction.approval_status != "Rejected":
+                # Reverse the budget allocation by returning the amount
+                budget.to_be_withdrawn = budget.to_be_withdrawn - ace_item.amount
+                budget.save()
+                
+                # Mark transaction as rejected to prevent repeated reversal
+                transaction.approval_status = "Rejected"
+                transaction.save()
+                
+                # Notify the requester
+                user = ace_item.requested_by
+                if user:
+                    userp = UserProfile.objects.filter(id=user.id).first()
+                    msg = f"Your ACE {ace_item.Ace_id2} has been rejected. Allocated funds have been released."
+                    url = f"/ace/ace_detail/{ace_item.Ace_id2}"
+                    notify_user(userp, msg, "ACE", url, ace_item.Ace_id2, request)
+                    
+                # Show a message to the current user
+                sweetify.info(request, f"ACE {ace_item.Ace_id2} was rejected. Budget has been adjusted.")
+
     quotations = Quotation.objects.filter(ace2=ace_item).all()
     print(quotations.count())
 
@@ -68,6 +94,35 @@ def Ace_detail(request, Ace_id2):
     #         ace_item.payment_mode = payment_mode
     #         ace_item.save()
 
+    # Add approval notification handling
+    if request.method == 'POST' and 'approval_form' in request.POST:
+        form = ApprovalForm(request.POST)
+        if form.is_valid():
+            approved = form.cleaned_data['approved']
+            remarks = form.cleaned_data['remarks']
+            
+            if approved == 'Approved':
+                # Notify the requester about this approval step
+                user = ace_item.requested_by
+                if user:
+                    userp = UserProfile.objects.filter(id=user.id).first()
+                    
+                    # Get step information for the notification message
+                    try:
+                        latest_approval = ace_item.process.approval_set.last()
+                        if latest_approval:
+                            current_step = latest_approval.step.step
+                            total_steps = ace_item.process.workflow.step_set.count()
+                            approver_role = request.user.designation.description if hasattr(request.user, 'designation') else "Approver"
+                            
+                            msg = f"Your ACE {ace_item.Ace_id2} has been approved by {approver_role} (Step {current_step}/{total_steps})"
+                            url = f"/ace/ace_detail/{ace_item.Ace_id2}"
+                            notify_user(userp, msg, "ACE", url, ace_item.Ace_id2, request)
+                            
+                            sweetify.success(request, f"ACE {ace_item.Ace_id2} approved and requester notified")
+                    except Exception as e:
+                        print(f"Error sending notification: {e}")
+    
     approvalForm = None
     to = None
     user_roles = request.user.roles.all()  # Accessing the user's roles through the 'roles' attribute
@@ -428,6 +483,10 @@ def ace_awaiting_my_action(request):
         for ace in Ace2.objects.filter(section=section, date_created__year__gte=2025, region=region):
             process = ace.process
             print("normal sh")
+
+            # Skip rejected ACEs more efficiently
+            if process and process.approval_set.filter(approved="Rejected").exists():
+                continue
 
             if process.approval_set.exists():
                 last_approval = process.approval_set.last()
@@ -1623,3 +1682,70 @@ def my_actioned_items(request):
         'ace_role': ace_role,
         'requester': requester
     })
+
+
+@login_required
+def notify_pending_gm_approvals(request):
+    """
+    Sends notifications to general managers about ACE items awaiting their approval
+    in their specific region only.
+    """
+    user_id = request.user.id
+    user_profile = UserProfile.objects.filter(id=user_id).first()
+    notification_count = 0
+    
+    # Get all regions
+    regions = Regions.objects.all()
+    
+    for region in regions:
+        # Find general managers for this specific region (users with "approve" role for ACE)
+        gm_users = UserProfile.objects.filter(
+            region=region,
+            roles__application="ace",
+            roles__role="approve"
+        ).all()
+        
+        if not gm_users:
+            continue
+            
+        # Find ACE items in THIS REGION ONLY that are at the final approval step
+        pending_aces = []
+        for ace in Ace2.objects.filter(region=region):
+            process = ace.process
+            
+            # Skip items without process or already rejected
+            if not process or process.approval_set.filter(approved="Rejected").exists():
+                continue
+                
+            if process.approval_set.exists():
+                latest_approval = process.approval_set.last()
+                current_step = latest_approval.step.step
+                total_steps = process.workflow.step_set.count()
+                
+                # If we're at the step before the last step, item is pending GM approval
+                if current_step == total_steps - 1:
+                    pending_aces.append(ace)
+        
+        # Notify each GM about pending items IN THEIR REGION ONLY
+        if pending_aces:
+            for gm in gm_users:
+                count = len(pending_aces)
+                notification_count += count
+                
+                # Send a summary notification
+                msg = f"You have {count} ACE items awaiting your approval in {region.region}"
+                url = "/ace/awaiting_my_action/"
+                notify_user(gm, msg, "ACE", url, f"gm_summary_{region.id}", request)
+                
+                # Optional: Send individual notifications for each item
+                for ace in pending_aces:
+                    item_msg = f"ACE {ace.Ace_id2} requires your final approval"
+                    item_url = f"/ace/ace_detail/{ace.Ace_id2}"
+                    notify_user(gm, item_msg, "ACE", item_url, ace.Ace_id2, request)
+    
+    if notification_count > 0:
+        sweetify.success(request, f"Sent notifications for {notification_count} pending ACE items to general managers")
+    else:
+        sweetify.info(request, "No pending ACE items requiring general manager approval found")
+    
+    return redirect('/ace/aces')
