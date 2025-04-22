@@ -81,8 +81,8 @@ def  start_tika_server():
 def index_files(request): 
     start_tika_server()
     es = Elasticsearch([{'host': 'localhost', 'port': 9200, 'scheme': 'http'}])
-    documents_path = os.path.join(Path(__file__).resolve().parent.parent, "static")
-    subdirectories = ['process_maps', 'job_descriptions', 'plans_and_reports', 'network_development', 'petty_cash', 'comparative', 'ace']
+    documents_path = os.path.join(Path(__file__).resolve().parent.parent, "media")
+    subdirectories = ['uploads',]
     processed_files = set()
 
     for subdirectory in subdirectories:
