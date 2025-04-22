@@ -94,6 +94,35 @@ def Ace_detail(request, Ace_id2):
     #         ace_item.payment_mode = payment_mode
     #         ace_item.save()
 
+    # Add approval notification handling
+    if request.method == 'POST' and 'approval_form' in request.POST:
+        form = ApprovalForm(request.POST)
+        if form.is_valid():
+            approved = form.cleaned_data['approved']
+            remarks = form.cleaned_data['remarks']
+            
+            if approved == 'Approved':
+                # Notify the requester about this approval step
+                user = ace_item.requested_by
+                if user:
+                    userp = UserProfile.objects.filter(id=user.id).first()
+                    
+                    # Get step information for the notification message
+                    try:
+                        latest_approval = ace_item.process.approval_set.last()
+                        if latest_approval:
+                            current_step = latest_approval.step.step
+                            total_steps = ace_item.process.workflow.step_set.count()
+                            approver_role = request.user.designation.description if hasattr(request.user, 'designation') else "Approver"
+                            
+                            msg = f"Your ACE {ace_item.Ace_id2} has been approved by {approver_role} (Step {current_step}/{total_steps})"
+                            url = f"/ace/ace_detail/{ace_item.Ace_id2}"
+                            notify_user(userp, msg, "ACE", url, ace_item.Ace_id2, request)
+                            
+                            sweetify.success(request, f"ACE {ace_item.Ace_id2} approved and requester notified")
+                    except Exception as e:
+                        print(f"Error sending notification: {e}")
+    
     approvalForm = None
     to = None
     user_roles = request.user.roles.all()  # Accessing the user's roles through the 'roles' attribute
