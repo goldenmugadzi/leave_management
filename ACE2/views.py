@@ -56,6 +56,32 @@ def Ace_detail(request, Ace_id2):
     balance_before = budget.balance
     balance_after = balance_before - ace_item.amount
 
+    # Check for rejected ACEs and process budget reversal only once
+    if ace_item.process and ace_item.process.approval_set.exists():
+        last_approval = ace_item.process.approval_set.last()
+        if last_approval and last_approval.approved == "Rejected":
+            # Get the transaction to check if it's already been processed
+            transaction = Transactions.objects.filter(Ace_id2=str(ace_item.Ace_id2)).first()
+            if transaction and transaction.approval_status != "Rejected":
+                # Reverse the budget allocation by returning the amount
+                budget.to_be_withdrawn = budget.to_be_withdrawn - ace_item.amount
+                budget.save()
+                
+                # Mark transaction as rejected to prevent repeated reversal
+                transaction.approval_status = "Rejected"
+                transaction.save()
+                
+                # Notify the requester
+                user = ace_item.requested_by
+                if user:
+                    userp = UserProfile.objects.filter(id=user.id).first()
+                    msg = f"Your ACE {ace_item.Ace_id2} has been rejected. Allocated funds have been released."
+                    url = f"/ace/ace_detail/{ace_item.Ace_id2}"
+                    notify_user(userp, msg, "ACE", url, ace_item.Ace_id2, request)
+                    
+                # Show a message to the current user
+                sweetify.info(request, f"ACE {ace_item.Ace_id2} was rejected. Budget has been adjusted.")
+
     quotations = Quotation.objects.filter(ace2=ace_item).all()
     print(quotations.count())
 
@@ -428,6 +454,10 @@ def ace_awaiting_my_action(request):
         for ace in Ace2.objects.filter(section=section, date_created__year__gte=2025, region=region):
             process = ace.process
             print("normal sh")
+
+            # Skip rejected ACEs more efficiently
+            if process and process.approval_set.filter(approved="Rejected").exists():
+                continue
 
             if process.approval_set.exists():
                 last_approval = process.approval_set.last()
