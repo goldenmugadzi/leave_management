@@ -26,6 +26,7 @@ from rest_framework_simplejwt.views import (
 )
 
 urlpatterns = [
+    path('', include('django_prometheus.urls')),
     path('', include('it.beii_auth.urls')),
     path('', include('Docs.urls')),
     path('', include('tokens.urls')),

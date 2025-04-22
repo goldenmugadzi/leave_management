@@ -18,7 +18,7 @@ SECRET_KEY = 'django-insecure-7per#nouy422m0!hn0!ecb7ltnq#!^#g!2r5&%^5c%v(!ivv&a
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=False, cast=bool)
 
-ALLOWED_HOSTS = [config('HOST'), "127.0.0.1"]
+ALLOWED_HOSTS = [config('HOST'), "127.0.0.1", "172.16.8.99", "172.16.28.32"]
 
 CORS_ALLOWED_ORIGINS = [
     config('BASE_URL') + ":" + config('PORT'),
@@ -126,11 +126,13 @@ INSTALLED_APPS = [
     'commecial.tempertockens',
     'competence_building.apps.CompetenceBuildingConfig',
     'comm_files',
+    'django_prometheus',
 ]
 
 AUTH_USER_MODEL = 'users.UserProfile'
 
 MIDDLEWARE = [
+    'django_prometheus.middleware.PrometheusBeforeMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
@@ -141,7 +143,8 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'it.beii_auth.inactive_user_middleware.InactiveUserMiddleware',
     'it.beii_auth.session_middleware.LimitConcurrentSessionsMiddleware',
-    'it.beii_auth.session_middleware.SessionErrorSessionMiddleware'
+    'it.beii_auth.session_middleware.SessionErrorSessionMiddleware',
+    'django_prometheus.middleware.PrometheusAfterMiddleware',
 ]
 
 ROOT_URLCONF = 'beii_v1.urls'
