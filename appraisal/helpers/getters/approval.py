@@ -1,5 +1,11 @@
 from dataclasses import dataclass
+from typing import Protocol, List
+from django.db.models.query import QuerySet
 from ...repository.approval import AppraisalWorkflowRepository
+from ...repository.kra import TargetScoreRepository, AppraisalKraRepository
+from ...models.helpers import YearQuarter
+from ...models.kra import TargetScore
+from ..types.quarters import ApprovedQuartersType
 from loguru import logger
 
 @dataclass
@@ -58,3 +64,69 @@ class ApprovalStagesHandler:
             "last_stage_number": last_stage_number,
             **self.get_current_and_next_stage()
         }
+
+
+# Strategy Pattern use Protocol for composition rather inheritance
+class ApprovalWorkflowQuarterStagesStrategyInterface(Protocol):
+    def get_approved_quarters(self, appraisal_kra_id: int)->List[ApprovedQuartersType]:
+        """handler that retrieve all quarters[1,2,3,4] approval status.
+
+        Args:
+            appraisal_kra_id (int): AppraisalKra pk
+
+        Returns:
+            ApprovedQuartersType: pydantic type for with all quarters[1,2,3,4]
+        """
+        pass
+    
+@dataclass    
+class ScoringStageStrategy:
+    def __get_all_score_objects_by_appraisal_kra_id(self, appraisal_kra_id: int):
+        repo = TargetScoreRepository()
+        return repo.fetch_by_appraisal_kra_id(appraisal_kra_id=appraisal_kra_id)
+    
+    def __get_unscored_per_quarter(self, target_score_objects: QuerySet[TargetScore], quarter_obj_id: int):
+        return target_score_objects.filter(activity__appraisal_kra__quarter__id=quarter_obj_id, is_scored=False)
+    
+    def __get_scored_per_quarter(self, target_score_objects: QuerySet[TargetScore], quarter_obj_id: int):
+        return target_score_objects.filter(activity__appraisal_kra__quarter__id=quarter_obj_id, is_scored=True)
+    
+    def get_approved_quarters(self, appraisal_kra_id: int)->List[ApprovedQuartersType]:
+        appraisal_kra_repo = AppraisalKraRepository()
+        appraisal_kra_object = appraisal_kra_repo.retrieve_by_pk(pk=appraisal_kra_id)
+        year_quarter_qr = YearQuarter.objects.filter(year=appraisal_kra_object.quarter.year).order_by("quarter")
+        target_score_objects = self.__get_all_score_objects_by_appraisal_kra_id(appraisal_kra_id=appraisal_kra_id)
+        result = []
+        
+        
+        for year_quarter_obj in year_quarter_qr:
+            year_quarter_name = year_quarter_obj.__str__()
+            unscored_qr  = self.__get_unscored_per_quarter(target_score_objects=target_score_objects, quarter_obj_id=year_quarter_obj.id)
+            scored_qr = self.__get_scored_per_quarter(target_score_objects=target_score_objects, quarter_obj_id=year_quarter_obj.id)
+            
+            approved_quarter_type_obj = None
+            if unscored_qr.exists() or not scored_qr.exists():
+                approved_quarter_type_obj = ApprovedQuartersType(quarter_name=year_quarter_name, is_approved=False)
+            else:
+                approved_quarter_type_obj = ApprovedQuartersType(quarter_name=year_quarter_name, is_approved=True)
+            result.append(approved_quarter_type_obj)
+        return result
+    
+class PerformanceReviewStageStrategy:
+    def get_approved_quarters(self, appraisal_kra_id: int)->List[ApprovedQuartersType]:
+        pass
+
+class TrainingAndDevelopmentStageStrategy:
+    def get_approved_quarters(self, appraisal_kra_id: int)->List[ApprovedQuartersType]:
+        pass
+
+class ReviewStageStrategy:
+    def get_approved_quarters(self, appraisal_kra_id: int)->List[ApprovedQuartersType]:
+        pass
+
+class ApprovalWorkflowQuarterStagesStrategyContext:
+    def __init__(self, strategy: ApprovalWorkflowQuarterStagesStrategyInterface):
+        self.strategy = strategy
+        
+    def get_stage_quarters_approval(self, appraisal_kra_id: int)->List[ApprovedQuartersType]:
+        return self.strategy.get_approved_quarters(appraisal_kra_id=appraisal_kra_id)
