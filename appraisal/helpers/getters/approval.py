@@ -10,6 +10,26 @@ from ...models.performance_review import PerformanceProgressReview
 from ..types.quarters import ApprovedQuartersType
 from loguru import logger
 
+
+@dataclass
+class AppraisalKraAndYearQuarterHandler:
+    
+    def get_appraisal_kra_obj(self, appraisal_kra_id: int):
+        appraisal_kra_repo = AppraisalKraRepository()
+        return appraisal_kra_repo.retrieve_by_pk(pk=appraisal_kra_id)
+
+    def get_year_quarter_queryset(self, year: int)->QuerySet[YearQuarter]:
+        """Handler that returns queryset of YearQuarter for the given year
+
+        Args:
+            year_name (int): Year number
+
+        Returns:
+            QuerySet[YearQuarter]: queryset for the given year
+        """
+        return YearQuarter.objects.filter(year=year).order_by("quarter")
+
+        
 @dataclass
 class ApprovalStagesHandler:
     appraisal_id: int
@@ -93,12 +113,11 @@ class ScoringStageStrategy:
         return target_score_objects.filter(activity__appraisal_kra__quarter__id=quarter_obj_id, is_scored=True)
     
     def get_approved_quarters(self, appraisal_kra_id: int)->List[ApprovedQuartersType]:
-        appraisal_kra_repo = AppraisalKraRepository()
-        appraisal_kra_object = appraisal_kra_repo.retrieve_by_pk(pk=appraisal_kra_id)
-        year_quarter_qr = YearQuarter.objects.filter(year=appraisal_kra_object.quarter.year).order_by("quarter")
+        appraisal_kra_year_quarter_handler = AppraisalKraAndYearQuarterHandler()
+        appraisal_kra_obj = appraisal_kra_year_quarter_handler.get_appraisal_kra_obj(appraisal_kra_id=appraisal_kra_id)
+        year_quarter_qr = appraisal_kra_year_quarter_handler.get_year_quarter_queryset(year=appraisal_kra_obj.quarter.year)
         target_score_objects = self.__get_all_score_objects_by_appraisal_kra_id(appraisal_kra_id=appraisal_kra_id)
         result = []
-        
         
         for year_quarter_obj in year_quarter_qr:
             year_quarter_name = year_quarter_obj.__str__()
