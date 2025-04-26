@@ -2,9 +2,11 @@ from dataclasses import dataclass
 from typing import Protocol, List
 from django.db.models.query import QuerySet
 from ...repository.approval import AppraisalWorkflowRepository
+from ...repository.performance import PerformanceReviewRepository
 from ...repository.kra import TargetScoreRepository, AppraisalKraRepository
 from ...models.helpers import YearQuarter
 from ...models.kra import TargetScore
+from ...models.performance_review import PerformanceProgressReview
 from ..types.quarters import ApprovedQuartersType
 from loguru import logger
 
@@ -78,8 +80,7 @@ class ApprovalWorkflowQuarterStagesStrategyInterface(Protocol):
             ApprovedQuartersType: pydantic type for with all quarters[1,2,3,4]
         """
         pass
-    
-@dataclass    
+        
 class ScoringStageStrategy:
     def __get_all_score_objects_by_appraisal_kra_id(self, appraisal_kra_id: int):
         repo = TargetScoreRepository()
@@ -113,13 +114,49 @@ class ScoringStageStrategy:
         return result
     
 class PerformanceReviewStageStrategy:
-    def get_approved_quarters(self, appraisal_kra_id: int)->List[ApprovedQuartersType]:
-        pass
+    
+    def __is_incomplete_performance_review_exists(self, appraisal_id: int, quarter_obj_id: int)->bool:
+        """Handler that query db by appraisal and quarter pk, to Performance review object is incomplete
 
+        Args:
+            appraisal_id (int): Appraisal primary key
+            quarter_obj_id (int): Year Quarter pk 
+
+        Returns:
+            bool: 'true' if PerformanceProgressReview is incomplete else false
+        """
+        
+        perf_reviewer_repo = PerformanceReviewRepository()
+        perf_reviewer_qr = perf_reviewer_repo.get_performance_by_appraisal_id(appraisal_id=appraisal_id)
+
+        incomplete_perf_review_qr = perf_reviewer_qr.filter(quarter__id=quarter_obj_id, is_completed=False)
+        if incomplete_perf_review_qr.exists():
+            return True
+        return False
+    
+    def get_approved_quarters(self, appraisal_kra_id: int)->List[ApprovedQuartersType]:
+        appraisal_kra_repo = AppraisalKraRepository()
+        appraisal_kra_object = appraisal_kra_repo.retrieve_by_pk(pk=appraisal_kra_id)
+    
+        year_quarter_qr = YearQuarter.objects.filter(year=appraisal_kra_object.quarter.year).order_by("quarter")
+        result = []
+        for year_quarter_obj in year_quarter_qr:
+            year_quarter_name = year_quarter_obj.__str__()
+            is_not_approved = self.__is_incomplete_performance_review_exists(appraisal_id=appraisal_kra_object.appraisal.id, quarter_obj_id=year_quarter_obj.id)
+            
+            approved_quarter_type_obj = None
+            if is_not_approved:
+                approved_quarter_type_obj = ApprovedQuartersType(quarter_name=year_quarter_name, is_approved=False)
+            else:
+                approved_quarter_type_obj = ApprovedQuartersType(quarter_name=year_quarter_name, is_approved=True)
+            result.append(approved_quarter_type_obj)
+        return result
+            
 class TrainingAndDevelopmentStageStrategy:
     def get_approved_quarters(self, appraisal_kra_id: int)->List[ApprovedQuartersType]:
         pass
 
+    
 class ReviewStageStrategy:
     def get_approved_quarters(self, appraisal_kra_id: int)->List[ApprovedQuartersType]:
         pass
