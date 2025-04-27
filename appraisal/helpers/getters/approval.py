@@ -1,12 +1,12 @@
 from dataclasses import dataclass
 from typing import Protocol, List
 from django.db.models.query import QuerySet
-from ...repository.approval import AppraisalWorkflowRepository
+from ...repository.approval import AppraisalWorkflowRepository, AppraisalKraReviewerStatusRepository
 from ...repository.performance import PerformanceReviewRepository
 from ...repository.training import TrainingAndDevelopmentRepository
 from ...repository.kra import TargetScoreRepository, AppraisalKraRepository
 from ...models.helpers import YearQuarter
-from ...models.kra import TargetScore
+from ...models.kra import TargetScore, APPRAISAL_KRA_REVIEWER_STATUS_CHOICES
 from ..types.quarters import ApprovedQuartersType
 from loguru import logger
 
@@ -212,12 +212,45 @@ class TrainingAndDevelopmentStageStrategy:
 
     
 class ReviewStageStrategy:
+    
+    def __is_appraisal_kra_quarter_reviewed(self, year_quarter_id: int)->bool:
+        repo = AppraisalKraReviewerStatusRepository()
+        appraisal_kra_status_review_qr = repo.retrieve_by_appraisal_kra_year_quarter_id(year_quarter_obj_id=year_quarter_id)
+        
+        if not appraisal_kra_status_review_qr.exists():
+            return False
+        
+        accepted_appraisal_kra_status_review_qr = appraisal_kra_status_review_qr.filter(status=APPRAISAL_KRA_REVIEWER_STATUS_CHOICES[1][0])
+        if not accepted_appraisal_kra_status_review_qr.exists():
+            return False
+        
+        return True
+        
     def get_approved_quarters(self, appraisal_kra_id: int)->List[ApprovedQuartersType]:
-        pass
+        appraisal_kra_year_quarter_handler = AppraisalKraAndYearQuarterHandler()
+        appraisal_kra_obj = appraisal_kra_year_quarter_handler.get_appraisal_kra_obj(appraisal_kra_id=appraisal_kra_id)
+        year_quarter_qr = appraisal_kra_year_quarter_handler.get_year_quarter_queryset(year=appraisal_kra_obj.quarter.year)
+
+        result = []
+        for year_quarter_obj in year_quarter_qr:
+            year_quarter_name = year_quarter_obj.__str__()
+            is_approved = self.__is_appraisal_kra_quarter_reviewed(year_quarter_id=year_quarter_obj.id)
+
+            approved_quarter_type_obj = None
+            if is_approved:
+                approved_quarter_type_obj = ApprovedQuartersType(quarter_name=year_quarter_name, is_approved=True)
+            else:
+                approved_quarter_type_obj = ApprovedQuartersType(quarter_name=year_quarter_name, is_approved=False)
+            result.append(approved_quarter_type_obj)
+        return result
 
 class ApprovalWorkflowQuarterStagesStrategyContext:
     def __init__(self, strategy: ApprovalWorkflowQuarterStagesStrategyInterface):
         self.strategy = strategy
         
     def get_stage_quarters_approval(self, appraisal_kra_id: int)->List[ApprovedQuartersType]:
-        return self.strategy.get_approved_quarters(appraisal_kra_id=appraisal_kra_id)
+        try:
+            return self.strategy.get_approved_quarters(appraisal_kra_id=appraisal_kra_id)
+        except Exception as e:
+            logger.error(f"[ApprovalWorkflowQuarterStagesStrategyInterface] for {self.strategy}, failed with error: {e}")
+            return None

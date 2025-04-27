@@ -1,6 +1,6 @@
 from typing import List
 from django.db.models.query import QuerySet
-from ..models import AppraisalWorkflow, Appraisal
+from ..models import AppraisalWorkflow, AppraisalKraReviewerStatus
 from it.users.models import UserProfile
 from loguru import logger
 
@@ -28,3 +28,21 @@ class AppraisalWorkflowRepository:
             return workflow_object
         except Exception as e:
             raise Exception(f"AppraisalWorkflowRepository update handler failed with error: {e}")
+
+class AppraisalKraReviewerStatusRepository:
+    def retrieve_by_appraisal_kra_id(self, appraisal_kra_id: int)->AppraisalKraReviewerStatus:
+        try:
+            qr = AppraisalKraReviewerStatus.objects.filter(appraisal_kra__id=appraisal_kra_id)
+            if not qr.exists():
+                raise Exception("AppraisalKraReviewerStatus object not found")
+            return qr.first()
+        except Exception as e:
+            raise Exception(f"[AppraisalKraReviewerStatusRepository] retrieve_by_appraisal_kra_id failed with error: {e}")
+       
+    def retrieve_by_appraisal_kra_year_quarter_id(self, year_quarter_obj_id: int)->QuerySet[AppraisalKraReviewerStatus]:
+        try:
+            return AppraisalKraReviewerStatus.objects.filter(appraisal_kra__quarter__id=year_quarter_obj_id)
+
+        except Exception as e:
+            raise Exception(f"[AppraisalKraReviewerStatusRepository] retrieve_by_appraisal_kra_year_quarter_id failed with error: {e}")
+       
