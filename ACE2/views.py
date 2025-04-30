@@ -537,7 +537,7 @@ def ace_awaiting_my_action(request):
     else:
         for ace in Ace2.objects.filter(date_created__year__gte=2025, region=region):
             process = ace.process
-            print("not sh")
+            # print("not sh")
 
             if process.approval_set.exists():
                 last_approval = process.approval_set.last()
