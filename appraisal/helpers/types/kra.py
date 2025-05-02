@@ -76,6 +76,26 @@ class ActivityType(BaseModel):
         if value not in VALID_PERFORMANCE_INDICATORS:
             raise ValueError(f"Invalid performance indicator: {value}")
         return value
+
+class PerformanceDimensionType(BaseModel):
+    description: str = Field(..., description="The description of the activity.")
+    weight: Annotated[Decimal, Field(max_digits=5, decimal_places=2)] = Field(
+        ..., description="The weight of the activity."
+    )
+    performance_indicator: str = Field(..., description="The performance indicator value of the activity.")
+    allowable_variance: Annotated[Decimal, Field(max_digits=10, decimal_places=2)] = Field(
+        ..., description="The allowable variance of the Target."
+    )
+    agreed_target: Annotated[Decimal, Field(max_digits=10, decimal_places=2)] = Field(
+        ..., description="The agreed value of the Target."
+    )
+
+    @field_validator("performance_indicator")
+    @classmethod
+    def validate_performance_indicator(cls, value: str):
+        if value not in VALID_PERFORMANCE_INDICATORS:
+            raise ValueError(f"Invalid performance indicator: {value}")
+        return value   
     
 class ActivityKraProgressType(BaseModel):
     covered_kra_weight: float

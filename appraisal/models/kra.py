@@ -81,7 +81,17 @@ class Activity(TimeStamp):
 
     class Meta:
         verbose_name_plural = "Activities"
-
+        
+class PerformanceDimension(TimeStamp):
+    activity = models.ForeignKey(AppraisalKra, on_delete=models.CASCADE, related_name="performance_indicator")
+    performance_indicator = performance_indicator = models.CharField(max_length=30, choices=PERFORMANCE_INDICATOR, null=True, blank=True)
+    description = models.TextField()
+    weight = models.DecimalField(max_digits=5, decimal_places=2)
+    agreed_target = models.DecimalField(max_digits=5, decimal_places=2, default=0.0)
+    allowable_variance = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
+    
+    def __str__(self):
+        return f"{self.performance_indicator}"
 
 class TargetScore(TimeStamp):
     activity = models.OneToOneField(Activity, on_delete=models.CASCADE)
@@ -125,3 +135,4 @@ class AppraisalKraReviewerStatus(TimeStamp):
 
     def __str__(self):
         return f"{self.appraisal_kra}"
+

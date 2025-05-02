@@ -3,7 +3,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db.models.query import QuerySet
 
 from ..models import KeyResultArea, YearQuarter, Activity, TargetScore, Appraisal, AppraisalKra, AppraisalKraReviewerStatus
-from ..helpers.types.kra import KRAType, TargetScoreType, KraRolesCreateType, ActivityType
+from ..helpers.types.kra import KRAType, TargetScoreType, KraRolesCreateType, ActivityType, PerformanceDimensionType
 from it.users.models import UserProfile, Application, Roles
 
 class KRARepository:
@@ -454,3 +454,19 @@ class ApprasialKraReviewerStatusRepository:
             return qr
         except Exception as e:
             raise Exception(f"ApprasialKraReviewerStatusRepository fetch_by_quarter_year repo failed with error: {e}")
+
+
+class PerformanceDimensionRepository:
+    def create(self, activity_obj: Activity, data: PerformanceDimensionType):
+        try:
+            return Activity.objects.create(
+                activity=activity_obj,
+                name=data.name,
+                description=data.description,
+                performance_indicator=data.performance_indicator,
+                weight=data.weight,
+                agreed_target=data.agreed_target,
+                allowable_variance=data.allowable_variance,
+                )
+        except Exception as e:
+            raise Exception(f"KRA Activity Create Repo failed with error: {e}")
