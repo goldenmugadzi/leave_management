@@ -1,0 +1,84 @@
+{% extends "admin_layout.html" %}
+{% load quarter %}
+{% load static %}
+{% load crispy_forms_tags %}
+{% load kra_calculations %}
+
+{% block content %}
+  {% include "appraisal/approval/detail.html" with stages=stages last_stage_num=last_stage_num %}
+  <div class="content-wrapper">
+    <div class="grid grid-cols-1">
+        <div class="bg-gulf-blue-100 shadow-lg rounded-lg p-6">
+            <div class="flex justify-between">
+                <div>
+                    <h1 class="font-bold">Activity Performance Dimensions</h1>
+                    <p class="text-sm text-muted">
+                        Activity: <strong>{{ activity_object.name }}</strong>
+                    </p>
+                </div>
+            </div>
+                
+        </div>
+    </div>
+
+    <div class="bg-gulf-blue-100 shadow-lg rounded-lg p-6 my-6">
+      {% if is_appraiser == True %}
+        <div class="flex justify-end">
+          <a href="#"
+            class="my-2 bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4 rounded"
+            >
+            Create New
+          </a>
+
+        </div>
+      {% endif %}
+      <div style="max-height: 280px; overflow-y: auto;">
+        <table 
+        class="w-full border border-blue-800 rounded-lg shadow-lg">
+         <thead class="bg-blue-800 text-white">
+           <tr>
+             <th class="px-6 py-3 text-left text-md font-semibold">Performance Indicator</th>
+             <th class="px-6 py-3 text-left text-md font-semibold">Weight</th>
+             <th class="px-6 py-3 text-left text-md font-semibold">Agreed Target</th>
+             <th class="px-6 py-3 text-left text-md font-semibold">Allowable Variance</th>
+             <th class="px-6 py-3 text-left text-md font-semibold">Actual Performance</th>
+             <th class="px-6 py-3 text-left text-md font-semibold">Actual Variance</th>
+             <th class="px-6 py-3 text-left text-md font-semibold">Rating</th>
+             <th class="px-6 py-3 text-left text-md font-semibold">Weighted Score</th>
+             <th></th>
+           </tr>
+         </thead>
+         <tbody class="divide-y divide-blue-300 bg-blue-50">
+           {% for performance_dimensions_obj in performance_dimensions_qr %}
+           <tr class="hover:bg-blue-100">
+             <td class="px-6 py-4 text-md text-blue-900 truncate max-w-xs">{{performance_dimensions_obj.performance_indicator}}</td>
+             <td class="px-6 py-4 text-md text-blue-900">{{performance_dimensions_obj.weight}} %</td>
+             <td class="px-6 py-4 text-md text-blue-900">{{performance_dimensions_obj.agreed_target}} %</td>
+             <td class="px-6 py-4 text-md text-blue-900">(+-) {{performance_dimensions_obj.allowable_variance}} %</td>
+             <td class="px-6 py-4 text-md text-blue-900">{{performance_dimensions_obj.id|get_target_score_by_activity_id}} %</td>
+             <td class="px-6 py-4 text-md text-blue-900">(+-) {{performance_dimensions_obj.id|get_activity_actual_variance}} %</td>
+             <td class="px-6 py-4 text-md text-blue-900">{{performance_dimensions_obj.id|get_activity_rating}}</td>
+             <td class="px-6 py-4 text-md text-blue-900">{{performance_dimensions_obj.id|get_activity_weighted_score}}</td>
+             <td>
+              <div class="flex justify-even gap-1">
+                  <a href="{% url 'score_view' activity_object.id %}"
+                    class="bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4"
+                      >Score</a>
+                  <a href="{% url 'kra_activity_update' activity_object.id %}"
+                    class="bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4"
+                      >View</a>
+              </div>
+               
+             </td>
+             
+   
+           </tr>
+          {% endfor %}
+         </tbody>
+       </table>
+
+      </div>
+    </div>
+  </div>
+{% endblock %}
+

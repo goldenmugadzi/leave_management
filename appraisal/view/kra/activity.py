@@ -7,7 +7,7 @@ from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib import messages
 from ...models import Activity, KeyResultArea
 from ...forms import ActivityCreateForm
-from ...repository.kra import KRARepository, KraActivityRepository, AppraisalKraRepository
+from ...repository.kra import KraActivityRepository, AppraisalKraRepository, PerformanceDimensionRepository
 from ...services.kra import KRAService, ActivityService
 from ...helpers.types.kra import KRAType
 from ...helpers.getters.approval import ApprovalStagesHandler
@@ -265,3 +265,61 @@ class KraActivityUpdateView(SuccessMessageMixin, UpdateView):
         """
         activity_obj_id = self.kwargs.get("activity_id")
         return reverse('kra_activity_update', kwargs={"activity_id": activity_obj_id})
+
+
+class PerformanceDimensionTemplateView(TemplateView):
+    template_name = 'appraisal/kra/performance_dimension/index.html'
+        
+    def get_activity(self):
+        repo = KraActivityRepository()
+        obj = repo.get_activity_by_id(activity_id=self.kwargs.get("activity_id"))
+        return obj
+    
+    def approval_user_roles(self)->Dict[str, bool]:
+        activity_obj = self.get_activity()
+        is_appraiser = self.request.user == activity_obj.appraisal_kra.appraisal.appraiser
+        data = {
+            "is_appraiser": is_appraiser
+        }
+        return data
+    
+    def get_approval_stages(self):
+        try:
+            activity_obj = self.get_activity()
+            handler = ApprovalStagesHandler(appraisal_id=activity_obj.appraisal_kra.appraisal.id)
+            return handler.get_stages_info()
+        except Exception as e:
+            logger.error(f"[PerformanceDimensionTemplateView] for Activity - {self.get_activity()} failed with error: {e}")
+            return None
+        
+    def get_all_performance_dimension(self):
+        try:
+            repo = PerformanceDimensionRepository()
+            return repo.fetch_by_activity_id(activity_id=self.kwargs.get("activity_id"))
+            
+        except Exception as e:
+            logger.error(f"[PerformanceDimensionTemplateView] for Activity - {self.get_activity()} failed with error: {e}")
+            return None
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        context.update({"activity_object": self.get_activity()})
+        context.update({"performance_dimensions_qr": self.get_all_performance_dimension()})
+        context.update(self.get_approval_stages())
+        context.update(self.approval_user_roles())
+        
+        return context
+    
+    def get(self, request, *args, **kwargs):
+        approval_data = self.get_approval_stages()
+        if approval_data is None:
+            return redirect("server_error_view")
+        try:
+            activity_obj = self.get_activity()
+            get_activity_weight_against_kra_weight(appraisal_kra_object=activity_obj.appraisal_kra)
+        except Exception as e:
+            logger.error(f"Activity weight progress against it's activities weights failed with error: {e}")
+            return redirect("server_error_view")
+        context = self.get_context_data(**kwargs)
+        return self.render_to_response(context)
