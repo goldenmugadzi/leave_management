@@ -2,7 +2,7 @@ from typing import List
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models.query import QuerySet
 
-from ..models import KeyResultArea, YearQuarter, Activity, TargetScore, Appraisal, AppraisalKra, AppraisalKraReviewerStatus
+from ..models import KeyResultArea, YearQuarter, Activity, TargetScore, Appraisal, AppraisalKra, AppraisalKraReviewerStatus, PerformanceDimension
 from ..helpers.types.kra import KRAType, TargetScoreType, KraRolesCreateType, ActivityType, PerformanceDimensionType
 from it.users.models import UserProfile, Application, Roles
 
@@ -459,9 +459,8 @@ class ApprasialKraReviewerStatusRepository:
 class PerformanceDimensionRepository:
     def create(self, activity_obj: Activity, data: PerformanceDimensionType):
         try:
-            return Activity.objects.create(
+            return PerformanceDimension.objects.create(
                 activity=activity_obj,
-                name=data.name,
                 description=data.description,
                 performance_indicator=data.performance_indicator,
                 weight=data.weight,
@@ -469,4 +468,73 @@ class PerformanceDimensionRepository:
                 allowable_variance=data.allowable_variance,
                 )
         except Exception as e:
-            raise Exception(f"KRA Activity Create Repo failed with error: {e}")
+            raise Exception(f"PerformanceDimensionRepository Create Repo failed with error: {e}")
+
+    def get_by_pk(self, performance_dimension_id: int)->PerformanceDimension:
+        try:
+            perf_dimension_object = PerformanceDimension.objects.select_related('activity').filter(id=performance_dimension_id).first()
+
+            if perf_dimension_object is None:
+                raise Exception("PerformanceDimension object not found")
+
+            return perf_dimension_object
+        except Exception as e:
+            raise Exception(f"PerformanceDimensionRepository retrieval by PK failed with error: {e}")
+
+    def get_by_activity_id(self, activity_id: int)->PerformanceDimension:
+        try:
+            perf_dimension_object = PerformanceDimension.objects.select_related('activity').filter(activity__id=activity_id).first()
+
+            if perf_dimension_object is None:
+                raise Exception("PerformanceDimension object not found")
+
+            return perf_dimension_object
+        except Exception as e:
+            raise Exception(f"PerformanceDimensionRepository retrieval by activity id failed with error: {e}")
+    
+    def fetch_by_activity_id(self, activity_id: int)->QuerySet[PerformanceDimension]:
+        try:
+            return PerformanceDimension.objects.select_related('activity').filter(activity__id=activity_id)
+  
+        except Exception as e:
+            raise Exception(f"PerformanceDimensionRepository fetch by activity id failed with error: {e}")
+    
+    def fetch_by_id(self, performance_dimension_id: int)->QuerySet[PerformanceDimension]:
+        try:
+            return PerformanceDimension.objects.select_related('activity').filter(id=performance_dimension_id)
+  
+        except Exception as e:
+            raise Exception(f"PerformanceDimensionRepository fetch by id failed with error: {e}")
+    
+    def update(self, performance_dimension_obj: PerformanceDimension, data: PerformanceDimensionType)->PerformanceDimension:
+        try:
+            updated = False
+            if data.name != performance_dimension_obj.name:
+                performance_dimension_obj.name = data.name
+                updated = True
+
+            if data.description != performance_dimension_obj.description:
+                performance_dimension_obj.description = data.description
+                updated = True
+
+            if data.weight != performance_dimension_obj.weight:
+                performance_dimension_obj.weight = data.weight
+                updated = True
+
+            if data.performance_indicator != performance_dimension_obj.performance_indicator:
+                performance_dimension_obj.performance_indicator = data.performance_indicator
+                updated = True
+
+            if data.agreed_target != performance_dimension_obj.agreed_target:
+                performance_dimension_obj.agreed_target = data.agreed_target
+                updated = True
+
+            if data.allowable_variance != performance_dimension_obj.allowable_variance:
+                performance_dimension_obj.allowable_variance = data.allowable_variance
+                updated = True
+
+            if updated:
+             performance_dimension_obj.save()
+            return performance_dimension_obj
+        except Exception as e:
+            raise Exception(f"PerformanceDimensionRepository update Repo failed with error: {e}")
