@@ -623,6 +623,9 @@ def view_profile_request(request):
             if change_request.cost_center in cost_centers:
                 it_section_head_allowed = True
         
+        # Set modal_auto_show to False to prevent modals from showing automatically
+        modal_auto_show = False
+        
         if change_request.new_profile:
 
                 new_user = {
@@ -683,7 +686,8 @@ def view_profile_request(request):
                         "cr_approvals": cr_approvals,
                         "user_title": request.user.get_full_name(),
                         "user_groups": list(request.user.groups.values_list('name', flat=True)),
-                        "cr": cr
+                        "cr": cr,
+                        "modal_auto_show": modal_auto_show
                     }
                 )
         
