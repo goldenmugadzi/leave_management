@@ -5,8 +5,8 @@ from django.views.generic import TemplateView
 from django.views.generic.edit import CreateView, UpdateView
 from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib import messages
-from ...models import Activity, KeyResultArea
-from ...forms import ActivityCreateForm
+from ...models import Activity, KeyResultArea, PerformanceDimension
+from ...forms import ActivityCreateForm, PerformanceReviewApprovalForm
 from ...repository.kra import KraActivityRepository, AppraisalKraRepository, PerformanceDimensionRepository
 from ...services.kra import KRAService, ActivityService
 from ...helpers.types.kra import KRAType
@@ -323,3 +323,81 @@ class PerformanceDimensionTemplateView(TemplateView):
             return redirect("server_error_view")
         context = self.get_context_data(**kwargs)
         return self.render_to_response(context)
+
+
+class PerformanceDimensionTemplateCreateView(SuccessMessageMixin, CreateView):
+    model = PerformanceDimension
+    form_class = PerformanceReviewApprovalForm
+    template_name = 'appraisal/kra/performance_dimension/create_update.html'
+    success_message = 'Performance Dimension created successfully'
+    context_object_name = "performance_form"
+    
+
+    @property
+    def get_appraisal_kra_object(self):
+        appraisal_kra_id = self.kwargs.get('appraisal_kra_id')
+        return get_appraisal_kra_object(appraisal_kra_id=appraisal_kra_id)
+    
+    def approval_user_roles(self)->Dict[str, bool]:
+        is_appraiser = self.request.user == self.get_appraisal_kra_object.appraisal.appraiser
+        data = {
+            "is_appraiser": is_appraiser
+        }
+        return data
+
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        appraisal_kra_progress_handler = get_activity_weight_against_kra_weight(appraisal_kra_object=self.get_appraisal_kra_object)
+        appraisal_kra_progress_data = {
+            "appraisal_kra_weight": self.get_appraisal_kra_object.get_weight,
+            "covered_appraisal_kra_weight": appraisal_kra_progress_handler.covered_kra_weight,
+            "remain_appraisal_kra_weight": appraisal_kra_progress_handler.remaining_kra_weight
+        }
+        context.update(**appraisal_kra_progress_data)
+  
+        
+        context.update(self.approval_user_roles())
+        context[self.context_object_name] = context.get("form")
+        context["appraisal_kra_object"] = self.get_appraisal_kra_object
+        return context
+
+    def get(self, request, *args, **kwargs):
+        self.object = None
+        try:
+            get_activity_weight_against_kra_weight(appraisal_kra_object=self.get_appraisal_kra_object)
+        except Exception as e:
+            logger.error(f"Activity weight progress against it's activities weights failed with error: {e}")
+            return redirect("server_error_view")
+        context = self.get_context_data(**kwargs)
+        return self.render_to_response(context)
+
+
+    def form_valid(self, form):
+        try:
+            payload = build_payload_activity(request=self.request, form=form)
+            appraisal_kra_object = self.get_appraisal_kra_object
+            
+            appraisal_kra_progress = get_activity_weight_against_kra_weight(appraisal_kra_object=self.get_appraisal_kra_object)
+            if appraisal_kra_progress.remaining_kra_weight < payload.weight:
+                messages.error(self.request, "The activity weight cannot be greater than its KRA weight. Please adjust the activity weight to ensure it does not exceed the KRA weight.")
+                return self.form_invalid(form)
+            
+            assigned_user = form.cleaned_data.get("assigned_user")
+            repo = KraActivityRepository()
+            service_handler = ActivityService(activity_repo=repo)
+            activity_object = service_handler.create_use_case(
+                appraisal_kra_object=appraisal_kra_object,
+                assigned_user_object=assigned_user,
+                data=payload
+                )
+            form.instance = activity_object
+        except Exception:
+            messages.error(self.request, f"An unexpected error occurred, please try again")
+            return self.form_invalid(form)
+
+        return super().form_valid(form)
+
+    def get_success_url(self) -> str:
+        return reverse('kra_activity_index', kwargs={"appraisal_kra_id": self.kwargs.get('appraisal_kra_id')})
