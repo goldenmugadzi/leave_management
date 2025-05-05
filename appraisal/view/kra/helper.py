@@ -1,9 +1,56 @@
+from typing import Protocol
 from django.forms import BaseModelForm
 from django.contrib import messages
+from django.http import HttpRequest
 from ...helpers.types.kra import KRAType, TargetScoreType, ActivityType
-from pydantic import ValidationError
+from pydantic import ValidationError, BaseModel
+from loguru import logger
 
-# TODO: Use Strategy Pattern to encapsulate
+# Payload DeserializationStrategy Interface definition
+class PayloadDeserializationStrategyInterface(Protocol):
+    
+    def deserialize(self, form_object: BaseModelForm)->BaseModel|None:
+        pass
+    
+
+class KraDeserializationStrategy:
+    def deserialize(self, form_object: BaseModelForm)->BaseModel:
+        
+        data = {
+            "name": form_object.cleaned_data.get("name"),
+            "description": form_object.cleaned_data.get("description"),
+            "weight": form_object.cleaned_data.get("weight"),
+        }
+        return KRAType(**data)
+
+
+class PayloadDeserializationStrategyContext:
+    def __init__(self, strategy: PayloadDeserializationStrategyInterface):
+        self.strategy = strategy
+        
+    def deserialize_payload(self, request_object: HttpRequest, form_object: BaseModelForm)->BaseModel|None:
+        """            
+            Constructs and returns payload from the cleaned data of the given form_object.
+
+            Args:
+                request_object (HttpRequest): Django request object
+                form_object (BaseModelForm): A Django form_object instance with cleaned data.
+
+            Returns:
+                BaseModel: Pydantic defined base class 
+                None: indicates an error
+        """
+        try:
+            return self.strategy.deserialize(form_object=form_object)
+        except ValidationError as e:
+            error_message = e.errors()[0]["msg"]
+            messages.error(request_object, error_message)
+            return None
+        except Exception as e:
+            logger.error(f"[PayloadDeserializationStrategyContext] of {str(self.strategy)}, failed with error: {e}")
+            messages.error(request_object, "something went wrong, please try again.")
+            return None
+
 
 def build_payload(request, form: BaseModelForm) -> KRAType:
     """
@@ -87,6 +134,4 @@ def build_payload_score(request, form: BaseModelForm) -> TargetScoreType:
         error_message = e.errors()[0]["msg"]
         messages.error(request, error_message)
         raise
-    
-    
     
