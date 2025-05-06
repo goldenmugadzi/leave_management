@@ -97,6 +97,6 @@ class PerformanceDimensionType(BaseModel):
             raise ValueError(f"Invalid performance indicator: {value}")
         return value   
     
-class ActivityKraProgressType(BaseModel):
-    covered_kra_weight: float
-    remaining_kra_weight: float
+class WeightProgressType(BaseModel):
+    covered_weight: float
+    remaining_weight: float

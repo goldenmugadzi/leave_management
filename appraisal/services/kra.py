@@ -4,10 +4,10 @@ from decimal import Decimal
 
 from django.db.models import Sum
 
-from ..repository.kra import KRARepository, KraActivityRepository, TargetScoreRepository, AppraisalKraRepository
+from ..repository.kra import KRARepository, KraActivityRepository, TargetScoreRepository, AppraisalKraRepository, PerformanceDimensionRepository
 from it.users.models import UserProfile
 from ..models import YearQuarter, KeyResultArea, Activity, TargetScore, Appraisal, AppraisalKra
-from ..helpers.types.kra import KRAType, TargetScoreType, ActivityType, ActivityKraProgressType
+from ..helpers.types.kra import KRAType, TargetScoreType, ActivityType, WeightProgressType, PerformanceDimensionType
 from ..helpers.getters import RatingCalculation
 
 class KRAErr(Exception):
@@ -150,7 +150,7 @@ class ActivityService:
         except Exception as e:
             raise KRAErr(f"Failed to calculate kra weighted score with error: {e}")
         
-    def get_activities_kra_weight_progress(self, appraisal_kra_object: AppraisalKra)->ActivityKraProgressType:
+    def get_activities_kra_weight_progress(self, appraisal_kra_object: AppraisalKra)->WeightProgressType:
         try:
             activities_qr = self.activity_repo.fetch_by_appraisal_kra_id(appraisal_kra_id=appraisal_kra_object.id)
             if activities_qr.exists():
@@ -160,9 +160,9 @@ class ActivityService:
                     raise Exception(f"Appraisal Kra pk[{appraisal_kra_object.id}]: Total Activities weight cannot be greater than Appraisal Kra weight")
                 
                 remain_appraisal_kra_weight = appraisal_kra_weight - covered_appraisal_kra_weight
-                return ActivityKraProgressType(covered_kra_weight=covered_appraisal_kra_weight, remaining_kra_weight=remain_appraisal_kra_weight)
+                return WeightProgressType(covered_weight=covered_appraisal_kra_weight, remaining_weight=remain_appraisal_kra_weight)
             
-            return ActivityKraProgressType(covered_kra_weight=0, remaining_kra_weight=appraisal_kra_object.get_weight)
+            return WeightProgressType(covered_weight=0, remaining_weight=appraisal_kra_object.get_weight)
         except Exception as e:
             raise KRAErr(f"Failed to get kra activities weight progress with error: {e}")
 
@@ -181,3 +181,30 @@ class AppraisalKraService:
             return self.repo.retrieve_quarter_appraisal_id(quarter_number=quarter_number, year_number=year_number, appraisal_id=appraisal_id)
         except Exception as e:
             raise KRAErr(f"Retrieve all appraisal kra failed with error: {e}")
+
+@dataclass
+class PerformanceDimensionService:
+    repo: PerformanceDimensionRepository
+    
+    def create_use_case(self, activity_obj: Activity, data: PerformanceDimensionType):
+        return self.repo.create(activity_obj=activity_obj, data=data)
+    
+    def fetch_all_by_activity_id(self, activity_id):
+        return self.repo.fetch_by_activity_id(activity_id=activity_id)
+    
+    def get_activities_performance_dimension_weight_progress(self, activity_object: Activity)->WeightProgressType:
+        try:
+            perf_dimension_qr = self.fetch_all_by_activity_id(activity_id=activity_object.id)
+            activity_weight = activity_object.weight
+            
+            if perf_dimension_qr.exists():
+                covered_activity_weight = perf_dimension_qr.aggregate(Sum("weight"))["weight__sum"]
+                if activity_weight < covered_activity_weight:
+                    raise Exception(f"Activity pk[{activity_object.id}]: Total Performance Dimensions weight cannot be greater than Activity weight")
+                
+                remain_activity_weight = activity_weight - covered_activity_weight
+                return WeightProgressType(covered_weight=covered_activity_weight, remaining_weight=remain_activity_weight)
+            
+            return WeightProgressType(covered_weight=0, remaining_weight=activity_weight)
+        except Exception as e:
+            raise KRAErr(f"[PerformanceDimensionService] get_activities_performance_dimension_weight_progress with activity pk {activity_weight.id}, failed with error {e}")
