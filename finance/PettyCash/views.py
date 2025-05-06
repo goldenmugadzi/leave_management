@@ -62,7 +62,7 @@ def pettyCash_detail(request, petty_id):
             pettycash_item.payee = payee
             pettycash_item.save()
             user = pettycash_item.requested_by
-            userp = UserProfile.objects.filter(id=user).first()
+            userp = UserProfile.objects.filter(id=user.id).first()
 
             msg = "Your Pettycash " + pettycash_item.petty_id + " has a payment method added by Cashier"
             url = "/pettycash/pettycash_detail/" + pettycash_item.petty_id
