@@ -4,7 +4,7 @@ from .performance_review import PerformancePlanAndAssessmentAppraisalTemplateVie
 from .training import TrainingAndDevelopmentUpdateView
 from .kra.kra import KRATemplateView, KRACreateView, KRAUpdateView, KRADetailView, kra_list_api
 from .kra.appraisal_kra import AppraisalKraCreateView, AppraisalKraTemplateView, AppraisalKraUpdateView, AppraisalKraDetailView
-from .kra.activity import KraActivityIndexTemplateView, KraActivityCreateView, KraActivityUpdateView, PerformanceDimensionTemplateView
+from .kra.activity import KraActivityIndexTemplateView, KraActivityCreateView, KraActivityUpdateView, PerformanceDimensionTemplateView, PerformanceDimensionTemplateCreateView, PerformanceDimensionTemplateUpdateView
 from .kra.targets import TargetScoreUpdateView
 from .qualification import UserQualificationTemplateView, UserQualificationCreateView, UserQualificationUpdateView
 from .kra.reviewer_status import AppraisalKraReviewerStatusUpdateView

@@ -1,6 +1,6 @@
 <div class="max-w-3xl mx-auto">
 
-    <h1 class="font-bold mb-2">KRA Weight Progress</h1>
+    <h1 class="font-bold mb-2">Weight Progress</h1>
     
     <!-- Progress Bar Container -->
     <div class="bg-gray-200 rounded-full h-6 overflow-hidden border-4 border-white">
@@ -27,21 +27,21 @@
 
   <script>
     // JavaScript function to update the progress bar
-    function updateProgressBar(appraisalKraWeight, coveredAppraisalKraWeight, remainAppraisalKraWeight) {
-      const coveredPercentage = (coveredAppraisalKraWeight / appraisalKraWeight) * 100;
-      const remainingPercentage = (remainAppraisalKraWeight / appraisalKraWeight) * 100;
+    function updateProgressBar(weight, coveredWeight, remainWeight) {
+      const coveredPercentage = (coveredWeight / weight) * 100;
+      const remainingPercentage = (remainWeight / weight) * 100;
 
       document.getElementById('covered-progress').style.width = `${coveredPercentage}%`;
       document.getElementById('remaining-progress').style.width = `${remainingPercentage}%`;
-      document.getElementById('covered-label').textContent = `${coveredAppraisalKraWeight.toFixed(2)}%`;
-      document.getElementById('remaining-label').textContent = `${remainAppraisalKraWeight.toFixed(2)}%`;
+      document.getElementById('covered-label').textContent = `${coveredWeight.toFixed(2)}%`;
+      document.getElementById('remaining-label').textContent = `${remainWeight.toFixed(2)}%`;
     }
 
     // Call the function with values from Django
     updateProgressBar(
-      {{ appraisal_kra_weight }}, 
-      {{ covered_appraisal_kra_weight }}, 
-      {{ remain_appraisal_kra_weight }}
+      {{ weight }}, 
+      {{ covered_weight }}, 
+      {{ remain_weight }}
     );
   </script>
 </div>

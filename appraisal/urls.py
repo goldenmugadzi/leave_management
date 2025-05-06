@@ -29,7 +29,9 @@ from .view import (AppraisalCreateView,
                    AppraisalKraUpdateView,
                    AppraisalKraDetailView,
                    AppraisalKraReviewerStatusUpdateView,
-                   PerformanceDimensionTemplateView
+                   PerformanceDimensionTemplateView,
+                   PerformanceDimensionTemplateCreateView,
+                   PerformanceDimensionTemplateUpdateView
                    )
 
 urlpatterns = [
@@ -73,9 +75,9 @@ urlpatterns = [
     path('kra/activity/<int:activity_id>', KraActivityUpdateView.as_view(), name='kra_activity_update'),
     
     path('kra/activity/<int:activity_id>/performance-dimension', PerformanceDimensionTemplateView.as_view(), name='performance_dimension_index'),
+    path('kra/activity/<int:activity_id>/performance-dimension/new', PerformanceDimensionTemplateCreateView.as_view(), name='performance_dimension_create'),
+    path('kra/activity/<int:activity_id>/performance-dimension/<int:performance_dimension_id>', PerformanceDimensionTemplateUpdateView.as_view(), name='performance_dimension_update'),
 
-    
-    
     # ========================= Reviewer status =======================
     path('kra/reviewer-status/<int:appraisal_kra_id>', AppraisalKraReviewerStatusUpdateView.as_view(), name='appraisal_kra_reviewer_status_update'),
     

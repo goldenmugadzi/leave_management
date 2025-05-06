@@ -2,7 +2,7 @@ from typing import Protocol
 from django.forms import BaseModelForm
 from django.contrib import messages
 from django.http import HttpRequest
-from ...helpers.types.kra import KRAType, TargetScoreType, ActivityType
+from ...helpers.types.kra import KRAType, TargetScoreType, ActivityType, PerformanceDimensionType
 from pydantic import ValidationError, BaseModel
 from loguru import logger
 
@@ -23,6 +23,39 @@ class KraDeserializationStrategy:
         }
         return KRAType(**data)
 
+class KraActivityDeserializationStrategy:
+    def deserialize(self, form_object: BaseModelForm)->BaseModel:
+        
+        data = {
+                "name": form_object.cleaned_data.get("name"),
+                "description": form_object.cleaned_data.get("description"),
+                "weight": form_object.cleaned_data.get("weight"),
+                "performance_indicator": form_object.cleaned_data.get("performance_indicator"),
+                "agreed_target": form_object.cleaned_data.get("agreed_target"),
+                "allowable_variance": form_object.cleaned_data.get("allowable_variance")
+            }
+        return ActivityType(**data)
+    
+class ScoreDeserializationStrategy:
+    def deserialize(self, form_object: BaseModelForm)->BaseModel:
+        data = {
+            "score": form_object.cleaned_data.get("score"),
+            "actual_variance": form_object.cleaned_data.get("actual_variance"),
+            "comment": form_object.cleaned_data.get("comments"),
+
+        }
+        return TargetScoreType(**data)
+    
+class PerformanceDimensionDeserializationStrategy:
+    def deserialize(self, form_object: BaseModelForm)->BaseModel:
+        data = {
+                "description": form_object.cleaned_data.get("description"),
+                "weight": form_object.cleaned_data.get("weight"),
+                "performance_indicator": form_object.cleaned_data.get("performance_indicator"),
+                "agreed_target": form_object.cleaned_data.get("agreed_target"),
+                "allowable_variance": form_object.cleaned_data.get("allowable_variance")
+        }
+        return PerformanceDimensionType(**data)
 
 class PayloadDeserializationStrategyContext:
     def __init__(self, strategy: PayloadDeserializationStrategyInterface):
@@ -31,6 +64,7 @@ class PayloadDeserializationStrategyContext:
     def deserialize_payload(self, request_object: HttpRequest, form_object: BaseModelForm)->BaseModel|None:
         """            
             Constructs and returns payload from the cleaned data of the given form_object.
+            The function make use of django messages function to compose and return response. 
 
             Args:
                 request_object (HttpRequest): Django request object

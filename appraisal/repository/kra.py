@@ -472,7 +472,7 @@ class PerformanceDimensionRepository:
 
     def get_by_pk(self, performance_dimension_id: int)->PerformanceDimension:
         try:
-            perf_dimension_object = PerformanceDimension.objects.select_related('activity').filter(id=performance_dimension_id).first()
+            perf_dimension_object = PerformanceDimension.objects.select_related('activity', 'activity__appraisal_kra', 'activity__appraisal_kra__appraisal').filter(id=performance_dimension_id).first()
 
             if perf_dimension_object is None:
                 raise Exception("PerformanceDimension object not found")
@@ -492,6 +492,13 @@ class PerformanceDimensionRepository:
         except Exception as e:
             raise Exception(f"PerformanceDimensionRepository retrieval by activity id failed with error: {e}")
     
+    def fetch_by_activity_id_performance_indicator(self, activity_id: int, performance_indicator: str)->QuerySet[PerformanceDimension]:
+        try:
+            perf_dimension_qr = PerformanceDimension.objects.select_related('activity').filter(activity__id=activity_id, performance_indicator=performance_indicator)
+            return perf_dimension_qr
+        except Exception as e:
+            raise Exception(f"PerformanceDimensionRepository fetch by activity id and performance indicator failed with error: {e}")
+    
     def fetch_by_activity_id(self, activity_id: int)->QuerySet[PerformanceDimension]:
         try:
             return PerformanceDimension.objects.select_related('activity').filter(activity__id=activity_id)
@@ -509,10 +516,6 @@ class PerformanceDimensionRepository:
     def update(self, performance_dimension_obj: PerformanceDimension, data: PerformanceDimensionType)->PerformanceDimension:
         try:
             updated = False
-            if data.name != performance_dimension_obj.name:
-                performance_dimension_obj.name = data.name
-                updated = True
-
             if data.description != performance_dimension_obj.description:
                 performance_dimension_obj.description = data.description
                 updated = True

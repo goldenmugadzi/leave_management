@@ -6,7 +6,7 @@ from django.db.models import Sum
 
 from ..repository.kra import KRARepository, KraActivityRepository, TargetScoreRepository, AppraisalKraRepository, PerformanceDimensionRepository
 from it.users.models import UserProfile
-from ..models import YearQuarter, KeyResultArea, Activity, TargetScore, Appraisal, AppraisalKra
+from ..models import YearQuarter, KeyResultArea, Activity, TargetScore, Appraisal, AppraisalKra, PerformanceDimension
 from ..helpers.types.kra import KRAType, TargetScoreType, ActivityType, WeightProgressType, PerformanceDimensionType
 from ..helpers.getters import RatingCalculation
 
@@ -208,3 +208,17 @@ class PerformanceDimensionService:
             return WeightProgressType(covered_weight=0, remaining_weight=activity_weight)
         except Exception as e:
             raise KRAErr(f"[PerformanceDimensionService] get_activities_performance_dimension_weight_progress with activity pk {activity_weight.id}, failed with error {e}")
+
+    def performance_indicator_exists(self, activity_id, performance_indicator: str)->bool:
+        qr = self.repo.fetch_by_activity_id_performance_indicator(activity_id=activity_id, performance_indicator=performance_indicator)
+        
+        if qr.exists():
+            return True
+        return False
+        
+        
+    def get_by_pk_use_case(self, performance_dimension_id: int)->PerformanceDimension:
+        return self.repo.get_by_pk(performance_dimension_id=performance_dimension_id)
+    
+    def update_use_case(self, performance_dimension_object: PerformanceDimension, data: PerformanceDimensionType)->PerformanceDimension:
+        return self.repo.update(performance_dimension_obj=performance_dimension_object, data=data)

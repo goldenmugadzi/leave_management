@@ -6,14 +6,13 @@ from django.views.generic.edit import CreateView, UpdateView
 from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib import messages
 from ...models import Activity, KeyResultArea, PerformanceDimension
-from ...forms import ActivityCreateForm, PerformanceReviewApprovalForm
+from ...forms import ActivityCreateForm, PerformanceDimensionForm
 from ...repository.kra import KraActivityRepository, AppraisalKraRepository, PerformanceDimensionRepository
-from ...services.kra import KRAService, ActivityService
-from ...helpers.types.kra import KRAType
+from ...services.kra import ActivityService, PerformanceDimensionService
 from ...helpers.getters.approval import ApprovalStagesHandler
 
 from django.http import Http404
-from .helper import build_payload_activity
+from .helper import build_payload_activity, PerformanceDimensionDeserializationStrategy, PayloadDeserializationStrategyContext
 from pydantic import ValidationError
 from loguru import logger
 
@@ -29,6 +28,9 @@ def get_activity_weight_against_kra_weight(appraisal_kra_object):
 
     return service_handler.get_activities_kra_weight_progress(appraisal_kra_object=appraisal_kra_object)
 
+def get_activities_performance_dimension_weight_progress(activity_object):
+    service_handler = PerformanceDimensionService(repo=PerformanceDimensionRepository())
+    return service_handler.get_activities_performance_dimension_weight_progress(activity_object)
 
 class KraActivityIndexTemplateView(TemplateView):
     template_name = 'appraisal/kra/activity/index.html'
@@ -71,9 +73,9 @@ class KraActivityIndexTemplateView(TemplateView):
         
         appraisal_kra_progress_handler = get_activity_weight_against_kra_weight(appraisal_kra_object=self.get_appraisal_kra_obj())
         appraisal_kra_progress_data = {
-            "appraisal_kra_weight": self.get_appraisal_kra_obj().get_weight,
-            "covered_appraisal_kra_weight": appraisal_kra_progress_handler.covered_kra_weight,
-            "remain_appraisal_kra_weight": appraisal_kra_progress_handler.remaining_kra_weight
+            "weight": self.get_appraisal_kra_obj().get_weight,
+            "covered_weight": appraisal_kra_progress_handler.covered_weight,
+            "remain_weight": appraisal_kra_progress_handler.remaining_weight
         }
         
         context.update(**appraisal_kra_progress_data)
@@ -125,9 +127,9 @@ class KraActivityCreateView(SuccessMessageMixin, CreateView):
         
         appraisal_kra_progress_handler = get_activity_weight_against_kra_weight(appraisal_kra_object=self.get_appraisal_kra_object)
         appraisal_kra_progress_data = {
-            "appraisal_kra_weight": self.get_appraisal_kra_object.get_weight,
-            "covered_appraisal_kra_weight": appraisal_kra_progress_handler.covered_kra_weight,
-            "remain_appraisal_kra_weight": appraisal_kra_progress_handler.remaining_kra_weight
+            "weight": self.get_appraisal_kra_object.get_weight,
+            "covered_weight": appraisal_kra_progress_handler.covered_weight,
+            "remain_weight": appraisal_kra_progress_handler.remaining_weight
         }
         context.update(**appraisal_kra_progress_data)
   
@@ -211,9 +213,9 @@ class KraActivityUpdateView(SuccessMessageMixin, UpdateView):
         
         appraisal_kra_progress_handler = get_activity_weight_against_kra_weight(appraisal_kra_object=self.get_activity_object.appraisal_kra)
         appraisal_kra_progress_data = {
-            "appraisal_kra_weight": self.get_activity_object.appraisal_kra.get_weight,
-            "covered_appraisal_kra_weight": appraisal_kra_progress_handler.covered_kra_weight,
-            "remain_appraisal_kra_weight": appraisal_kra_progress_handler.remaining_kra_weight
+            "weight": self.get_activity_object.appraisal_kra.get_weight,
+            "covered_weight": appraisal_kra_progress_handler.covered_weight,
+            "remain_weight": appraisal_kra_progress_handler.remaining_weight
         }
         context.update(**appraisal_kra_progress_data)
   
@@ -295,7 +297,8 @@ class PerformanceDimensionTemplateView(TemplateView):
     def get_all_performance_dimension(self):
         try:
             repo = PerformanceDimensionRepository()
-            return repo.fetch_by_activity_id(activity_id=self.kwargs.get("activity_id"))
+            service_handler = PerformanceDimensionService(repo=repo)
+            return service_handler.fetch_all_by_activity_id(activity_id=self.kwargs.get("activity_id"))
             
         except Exception as e:
             logger.error(f"[PerformanceDimensionTemplateView] for Activity - {self.get_activity()} failed with error: {e}")
@@ -303,9 +306,16 @@ class PerformanceDimensionTemplateView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        activity_perf_progress_handler = get_activities_performance_dimension_weight_progress(activity_object=self.get_activity())
+        activity_perf_dimension_progress_data = {
+            "weight": self.get_activity().weight,
+            "covered_weight": activity_perf_progress_handler.covered_weight,
+            "remain_weight": activity_perf_progress_handler.remaining_weight
+        }
         
         context.update({"activity_object": self.get_activity()})
         context.update({"performance_dimensions_qr": self.get_all_performance_dimension()})
+        context.update(activity_perf_dimension_progress_data)
         context.update(self.get_approval_stages())
         context.update(self.approval_user_roles())
         
@@ -317,9 +327,9 @@ class PerformanceDimensionTemplateView(TemplateView):
             return redirect("server_error_view")
         try:
             activity_obj = self.get_activity()
-            get_activity_weight_against_kra_weight(appraisal_kra_object=activity_obj.appraisal_kra)
+            get_activities_performance_dimension_weight_progress(activity_object=activity_obj)
         except Exception as e:
-            logger.error(f"Activity weight progress against it's activities weights failed with error: {e}")
+            logger.error(f"Activity weight progress against it's performance dimension weights failed with error: {e}")
             return redirect("server_error_view")
         context = self.get_context_data(**kwargs)
         return self.render_to_response(context)
@@ -327,77 +337,166 @@ class PerformanceDimensionTemplateView(TemplateView):
 
 class PerformanceDimensionTemplateCreateView(SuccessMessageMixin, CreateView):
     model = PerformanceDimension
-    form_class = PerformanceReviewApprovalForm
+    form_class = PerformanceDimensionForm
     template_name = 'appraisal/kra/performance_dimension/create_update.html'
     success_message = 'Performance Dimension created successfully'
     context_object_name = "performance_form"
     
-
-    @property
-    def get_appraisal_kra_object(self):
-        appraisal_kra_id = self.kwargs.get('appraisal_kra_id')
-        return get_appraisal_kra_object(appraisal_kra_id=appraisal_kra_id)
+    def get_activity_object(self):
+        repo = KraActivityRepository()
+        obj = repo.get_activity_by_id(activity_id=self.kwargs.get("activity_id"))
+        return obj
     
     def approval_user_roles(self)->Dict[str, bool]:
-        is_appraiser = self.request.user == self.get_appraisal_kra_object.appraisal.appraiser
+        activity_obj = self.get_activity_object()
+        is_appraiser = self.request.user == activity_obj.appraisal_kra.appraisal.appraiser
         data = {
             "is_appraiser": is_appraiser
         }
         return data
-
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         
-        appraisal_kra_progress_handler = get_activity_weight_against_kra_weight(appraisal_kra_object=self.get_appraisal_kra_object)
-        appraisal_kra_progress_data = {
-            "appraisal_kra_weight": self.get_appraisal_kra_object.get_weight,
-            "covered_appraisal_kra_weight": appraisal_kra_progress_handler.covered_kra_weight,
-            "remain_appraisal_kra_weight": appraisal_kra_progress_handler.remaining_kra_weight
+        activity_perf_progress_handler = get_activities_performance_dimension_weight_progress(activity_object=self.get_activity_object())
+        activity_perf_dimension_progress_data = {
+            "weight": self.get_activity_object().weight,
+            "covered_weight": activity_perf_progress_handler.covered_weight,
+            "remain_weight": activity_perf_progress_handler.remaining_weight
         }
-        context.update(**appraisal_kra_progress_data)
-  
         
-        context.update(self.approval_user_roles())
         context[self.context_object_name] = context.get("form")
-        context["appraisal_kra_object"] = self.get_appraisal_kra_object
+        context.update({"activity_object": self.get_activity_object()})
+        context.update(self.approval_user_roles())
+        context.update(activity_perf_dimension_progress_data)
         return context
+        
+    def get_deserialized_payload(self, form):
+        payload_deserialization_context = PayloadDeserializationStrategyContext(strategy=PerformanceDimensionDeserializationStrategy())
+        return payload_deserialization_context.deserialize_payload(request_object=self.request, form_object=form)
+        
+    def form_valid(self, form):
+        try:
+            payload = self.get_deserialized_payload(form)
+            activity_object = self.get_activity_object()
+            
+            service_handler = PerformanceDimensionService(repo=PerformanceDimensionRepository())
+            perf_dimension_object_exists = service_handler.performance_indicator_exists(activity_id=activity_object.id, performance_indicator=payload.performance_indicator)
+            if perf_dimension_object_exists:
+                messages.error(self.request, "Performance Dimension with this performance indicator already exists.")
+                return self.form_invalid(form)
+            
+            weight_progress = get_activities_performance_dimension_weight_progress(activity_object=activity_object)
+            if weight_progress.remaining_weight < payload.weight:
+                messages.error(self.request, "The performance dimension weight cannot be greater than the activity weight. Please adjust it to ensure it does not exceed the activity weight.")
+                return self.form_invalid(form)
+            
+            perf_dimension_object = service_handler.create_use_case(activity_obj=activity_object, data=payload)
+            form.instance = perf_dimension_object
+        except Exception as e:
+            logger.error(f"[PerformanceDimensionTemplateCreateView] for activity pk: {self.kwargs.get('activity_id')}, failed with error: {e}")
+            messages.error(self.request, "An unexpected error occurred, please try again")
+            return self.form_invalid(form)
 
+        return super().form_valid(form)
+    
     def get(self, request, *args, **kwargs):
         self.object = None
         try:
-            get_activity_weight_against_kra_weight(appraisal_kra_object=self.get_appraisal_kra_object)
+            activity_obj = self.get_activity_object()
+            get_activities_performance_dimension_weight_progress(activity_object=activity_obj)
         except Exception as e:
-            logger.error(f"Activity weight progress against it's activities weights failed with error: {e}")
+            logger.error(f"Activity weight progress against it's performance dimension weights failed with error: {e}")
             return redirect("server_error_view")
         context = self.get_context_data(**kwargs)
         return self.render_to_response(context)
+    
+
+    def get_success_url(self) -> str:
+        return reverse('performance_dimension_index', kwargs={"activity_id": self.kwargs.get('activity_id')})
+
+
+class PerformanceDimensionTemplateUpdateView(SuccessMessageMixin, UpdateView):
+    model = PerformanceDimension
+    form_class = PerformanceDimensionForm
+    template_name = 'appraisal/kra/performance_dimension/create_update.html'
+    success_message = 'Performance Dimension updated successfully'
+    context_object_name = "performance_form"
+
+
+    def get_perf_dimension_object(self):
+        service_handler = PerformanceDimensionService(repo=PerformanceDimensionRepository())
+        return service_handler.get_by_pk_use_case(performance_dimension_id=self.kwargs.get('performance_dimension_id'))
+
+    def get_object(self, queryset=None):
+        """
+        Override the default get_object method to retrieve the activity object using a custom service.
+        """
+        obj = self.get_perf_dimension_object()
+        return obj
+
+    def approval_user_roles(self)->Dict[str, bool]:
+        is_appraiser = self.request.user == self.get_object().activity.appraisal_kra.appraisal.appraiser
+        data = {
+            "is_appraiser": is_appraiser
+        }
+        return data
+    
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        activity_object = self.get_perf_dimension_object().activity
+        activity_perf_progress_handler = get_activities_performance_dimension_weight_progress(activity_object=self.get_perf_dimension_object().activity)
+        activity_perf_dimension_progress_data = {
+            "weight": activity_object.weight,
+            "covered_weight": activity_perf_progress_handler.covered_weight,
+            "remain_weight": activity_perf_progress_handler.remaining_weight
+        }
+        context.update(activity_perf_dimension_progress_data)
+  
+        context.update(self.approval_user_roles())
+        context[self.context_object_name] = context.get("form")
+        context["activity_object"] = activity_object
+    
+        return context
+    
+    def get(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        try:
+            activity_obj = self.get_perf_dimension_object().activity
+            get_activities_performance_dimension_weight_progress(activity_object=activity_obj)
+        except Exception as e:
+            logger.error(f"Activity weight progress against it's performance dimension weights failed with error: {e}")
+            return redirect("server_error_view")
+        context = self.get_context_data(**kwargs)
+        return self.render_to_response(context)
+    
+    def get_deserialized_payload(self, form):
+        payload_deserialization_context = PayloadDeserializationStrategyContext(strategy=PerformanceDimensionDeserializationStrategy())
+        return payload_deserialization_context.deserialize_payload(request_object=self.request, form_object=form)
 
 
     def form_valid(self, form):
         try:
-            payload = build_payload_activity(request=self.request, form=form)
-            appraisal_kra_object = self.get_appraisal_kra_object
+            payload = self.get_deserialized_payload(form)
+            activity_object = self.get_perf_dimension_object().activity
             
-            appraisal_kra_progress = get_activity_weight_against_kra_weight(appraisal_kra_object=self.get_appraisal_kra_object)
-            if appraisal_kra_progress.remaining_kra_weight < payload.weight:
-                messages.error(self.request, "The activity weight cannot be greater than its KRA weight. Please adjust the activity weight to ensure it does not exceed the KRA weight.")
+            service_handler = PerformanceDimensionService(repo=PerformanceDimensionRepository())            
+            weight_progress = get_activities_performance_dimension_weight_progress(activity_object=activity_object)
+            if weight_progress.remaining_weight < payload.weight:
+                messages.error(self.request, "The performance dimension weight cannot be greater than the activity weight. Please adjust it to ensure it does not exceed the activity weight.")
                 return self.form_invalid(form)
             
-            assigned_user = form.cleaned_data.get("assigned_user")
-            repo = KraActivityRepository()
-            service_handler = ActivityService(activity_repo=repo)
-            activity_object = service_handler.create_use_case(
-                appraisal_kra_object=appraisal_kra_object,
-                assigned_user_object=assigned_user,
-                data=payload
-                )
-            form.instance = activity_object
-        except Exception:
-            messages.error(self.request, f"An unexpected error occurred, please try again")
+            perf_dimension_object = service_handler.update_use_case(performance_dimension_object=self.get_object(), data=payload)
+            form.instance = perf_dimension_object
+        except Exception as e:
+            logger.error(f"[PerformanceDimensionTemplateUpdateView] object with pk: {self.kwargs.get('performance_dimension_id')}, failed with error: {e}")
+            messages.error(self.request, "An unexpected error occurred, please try again")
             return self.form_invalid(form)
-
         return super().form_valid(form)
 
     def get_success_url(self) -> str:
-        return reverse('kra_activity_index', kwargs={"appraisal_kra_id": self.kwargs.get('appraisal_kra_id')})
+        """
+        Redirects to the index page after successful update.
+        """
+        return reverse('performance_dimension_update', kwargs={"activity_id": self.kwargs.get("activity_id"), "performance_dimension_id": self.kwargs.get("performance_dimension_id")})
