@@ -83,8 +83,8 @@ class Activity(TimeStamp):
         verbose_name_plural = "Activities"
         
 class PerformanceDimension(TimeStamp):
-    activity = models.ForeignKey(AppraisalKra, on_delete=models.CASCADE, related_name="performance_indicator")
-    performance_indicator = performance_indicator = models.CharField(max_length=30, choices=PERFORMANCE_INDICATOR, null=True, blank=True)
+    activity = models.ForeignKey(Activity, on_delete=models.CASCADE, related_name="performance_indicator_activity")
+    performance_indicator = models.CharField(max_length=30, choices=PERFORMANCE_INDICATOR, null=True, blank=True)
     description = models.TextField()
     weight = models.DecimalField(max_digits=5, decimal_places=2)
     agreed_target = models.DecimalField(max_digits=5, decimal_places=2, default=0.0)
