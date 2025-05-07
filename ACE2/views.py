@@ -7,12 +7,13 @@ import csv
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core import serializers
-from django.http import HttpResponse, JsonResponse, HttpResponseNotFound, FileResponse
+from django.http import HttpResponse, JsonResponse, HttpResponseNotFound, FileResponse, HttpResponseForbidden
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 from django.template import loader
 from openpyxl import Workbook
 from weasyprint import HTML
+from django.db import transaction
 
 from ACE2.forms import *
 from ACE2.utils import find_pettycash_section_head
@@ -537,7 +538,7 @@ def ace_awaiting_my_action(request):
     else:
         for ace in Ace2.objects.filter(date_created__year__gte=2025, region=region):
             process = ace.process
-            print("not sh")
+            # print("not sh")
 
             if process.approval_set.exists():
                 last_approval = process.approval_set.last()
@@ -1140,6 +1141,11 @@ def upload_aces_csv(request):
 
 
 def create_virament(request):
+    # Creates new virament
+    # 1. Initializes workflow process
+    # 2. Records transaction
+    # 3. Handles attachments
+    # 4. Links to source/target budgets
     user_id = request.user.id
     user_profile = UserProfile.objects.filter(id=user_id).first()
     form = ViramentForm(user=user_profile)
@@ -1179,8 +1185,19 @@ def create_virament(request):
     return render(request, 'finance/ace2/create_virament.html', {'form': form, 'formset': formset})
 
 
+@transaction.atomic
+@login_required
 def virament_detail(request, virament_id):
     virament_item = Asset_budget_Virament.objects.get(virament_id=virament_id)
+    user_profile = UserProfile.objects.filter(id=request.user.id).first()
+
+    # Enhanced role and region check
+    has_virement_role = user_profile.roles.filter(application="virement").exists()
+    is_same_region = virament_item.region == user_profile.region
+
+    if not has_virement_role or not is_same_region:
+        return HttpResponseForbidden("You are not authorized to view or approve this virament.")
+
     balance_before_from = virament_item.from_budget.balance
     balance_before_to = virament_item.to_budget.balance
     balance_after_from = virament_item.from_budget.balance - virament_item.amount
@@ -1312,9 +1329,10 @@ def virament_detail(request, virament_id):
 
 
 def view_all_viraments(request):
-    user_id = request.user.id
-    user_profile = UserProfile.objects.filter(id=user_id).first()
-    region = Regions.objects.filter(id=user_profile.region.id).first()
+    user_profile = UserProfile.objects.filter(id=request.user.id).first()
+    if not user_profile.roles.filter(application="virement").exists():
+        return HttpResponseForbidden("You are not authorized to view viraments.")
+    region = user_profile.region
     viraments = Asset_budget_Virament.objects.filter(region=region).order_by('-date_created')
     return render(request,
                   'finance/ace2/view_all_viraments.html',
@@ -1352,39 +1370,35 @@ def viraments_awaiting_my_action(request):
     print(virement_role)
 
     if virement_role == "pass":
-        for virement in Asset_budget_Virament.objects.filter(section=request.user.section):
-            process = virement.process
-
-            if process.approval_set.exists():
-                last_approval = process.approval_set.last()
-                current_step = last_approval.step.step
-            else:
-                current_step = 0
-
-            next_step = current_step + 1
-
-            workflow = process.workflow
-            step = workflow.step_set.filter(step=next_step, approver__in=user_roles).first()
-
-            if step:
-                viraments_to_process.append(virement)
-
+        # Only show viraments in the user's section and region
+        viraments_qs = Asset_budget_Virament.objects.filter(
+            section=request.user.section,
+            region=request.user.region
+        )
     else:
-        for virement in Asset_budget_Virament.objects.all():
-            process = virement.process
+        # Only show viraments in the user's region
+        viraments_qs = Asset_budget_Virament.objects.filter(
+            region=request.user.region
+        )
 
-            if process.approval_set.exists():
-                last_approval = process.approval_set.last()
-                current_step = last_approval.step.step
-            else:
-                current_step = 0
+    for virement in viraments_qs:
+        process = virement.process
 
-            next_step = current_step + 1
+        # Only show if the user is the correct approver for the next step
+        if process.approval_set.exists():
+            last_approval = process.approval_set.last()
+            current_step = last_approval.step.step
+        else:
+            current_step = 0
 
-            workflow = process.workflow
-            step = workflow.step_set.filter(step=next_step, approver__in=user_roles).first()
+        next_step = current_step + 1
+        workflow = process.workflow
+        step = workflow.step_set.filter(step=next_step, approver__in=user_roles).first()
 
-            if step:
+        # Only add if the user is the approver for this step
+        if step:
+            # Optionally, check if the user is in the approver list for this step
+            if step.approver.filter(id__in=request.user.roles.values_list('id', flat=True)).exists():
                 viraments_to_process.append(virement)
 
     return render(request, 'finance/ace2/view_all_viraments.html', {'aces': viraments_to_process,
