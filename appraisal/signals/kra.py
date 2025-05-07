@@ -3,14 +3,14 @@ from django.dispatch import receiver
 from ..repository.kra import TargetScoreRepository, ApprasialKraReviewerStatusRepository
 from ..services.kra import TargetScoreService
 from ..helpers.types.kra import TargetScoreType
-from ..models import Activity, AppraisalKra
+from ..models import AppraisalKra, PerformanceDimension
 from ..models.kra import APPRAISAL_KRA_REVIEWER_STATUS_CHOICES
 from loguru import logger
 from django.db import transaction
 from it.users.models import Application
 from ..helpers.kra_roles import KraModulesRolesStrategyContext, KraModuleStrategy, ActivityModuleStrategy, TargetModuleStrategy, ScoringModuleStrategy
 
-@receiver(post_save, sender=Activity, dispatch_uid="kra-target-uid")
+@receiver(post_save, sender=PerformanceDimension, dispatch_uid="kra-target-uid")
 def create_target_score_post_save_handler(sender, instance, created, **kwargs):
     if created:
         try:
@@ -20,11 +20,11 @@ def create_target_score_post_save_handler(sender, instance, created, **kwargs):
             service_handler = TargetScoreService(target_score_repository=repo)
             default_values = 0.0
             payload = TargetScoreType(score=default_values)
-            service_handler.create_use_case(activity_obj=instance, data=payload)
+            service_handler.create_use_case(performance_dimension_obj=instance, data=payload, attachments=[])
             
-            logger.success(f"[TargetScore]: created score target instance for target({instance.name})")
+            logger.success(f"[TargetScore]: created score target instance for performance dimension ({instance.performance_dimension})")
         except Exception as e:
-            logger.error(f"[TargetScore]: creating target({instance.name}), failed with error: {e} ")
+            logger.error(f"[TargetScore]: creating target for performance dimension ({instance.performance_dimension}), failed with error: {e} ")
    
 
 

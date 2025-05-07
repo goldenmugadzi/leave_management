@@ -297,16 +297,16 @@ class KraActivityRepository:
 
 
 class TargetScoreRepository:
-    def create(self, activity_obj: Activity, data: TargetScoreType)->TargetScore:
+    def create(self, performance_dimension: PerformanceDimension, data: TargetScoreType)->TargetScore:
         try:
-            obj = TargetScore.objects.create(activity=activity_obj, score=data.score)
+            obj = TargetScore.objects.create(performance_dimension=performance_dimension, score=data.score, comment=data.comment)
             return obj
         except Exception as e:
             raise Exception(f"score create repo failed with error: {e}")
 
     def get_by_id(self, score_id: int)->TargetScore:
         try:
-            qr = TargetScore.objects.select_related('activity').filter(id=score_id)
+            qr = TargetScore.objects.select_related('performance_dimension').filter(id=score_id)
 
             if not qr.exists():
                 raise TargetScore.DoesNotExist
@@ -315,9 +315,9 @@ class TargetScoreRepository:
         except Exception as e:
             raise Exception(f"score get repo failed with error: {e}")
 
-    def get_by_activity_id(self, activity_id: int)->TargetScore:
+    def get_by_performance_dimension_id(self, performance_dimension_id: int)->TargetScore:
         try:
-            qr = TargetScore.objects.select_related('activity').filter(activity__id=activity_id)
+            qr = TargetScore.objects.select_related('performance_dimension').filter(performance_dimension__id=performance_dimension_id)
 
             if not qr.exists():
                 raise TargetScore.DoesNotExist
@@ -351,19 +351,19 @@ class TargetScoreRepository:
 
     def fetch_by_appraisal_id(self, appraisal_id: int)->QuerySet[TargetScore]:
         try:
-            return TargetScore.objects.filter(activity__appraisal_kra__appraisal__id=appraisal_id).select_related('activity', 'activity__appraisal_kra', 'activity__appraisal_kra__appraisal')
+            return TargetScore.objects.filter(performance_dimension__activity__appraisal_kra__appraisal__id=appraisal_id).select_related('performance_dimension__activity__appraisal_kra__appraisal')
         except Exception as e:
             raise Exception(f"Target score fetch by appraisal pk, failed with error: {e}")
 
     def fetch_by_appraisal_kra_id(self, appraisal_kra_id: int)->QuerySet[TargetScore]:
         try:
-            return TargetScore.objects.filter(activity__appraisal_kra__id=appraisal_kra_id).select_related('activity', 'activity__appraisal_kra', 'activity__appraisal_kra__appraisal')
+            return TargetScore.objects.filter(performance_dimension__activity__appraisal_kra__id=appraisal_kra_id).select_related('performance_dimension__activity__appraisal_kra__appraisal')
         except Exception as e:
             raise Exception(f"Target score fetch by appraisal_kra pk, failed with error: {e}")
 
     def appraisal_kra_activities_scored(self, appraisal_kra_id: int)->bool:
         try:
-            qr = TargetScore.objects.filter(activity__appraisal_kra__id=appraisal_kra_id, is_scored=False)
+            qr = TargetScore.objects.filter(performance_dimension__activity__appraisal_kra__id=appraisal_kra_id, is_scored=False)
             if qr.exists():
                 return False
         except Exception as e:

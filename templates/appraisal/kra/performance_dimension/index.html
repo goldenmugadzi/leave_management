@@ -18,7 +18,7 @@
                 </div>
 
                 <div>
-                    {% include "appraisal/kra/weight_progress.html" %} 
+                    {% include "appraisal/kra/weight_progress.html" with weight_of="Activity" %} 
                 </div>
             </div>
                 
@@ -59,10 +59,10 @@
              <td class="px-6 py-4 text-md text-blue-900">{{performance_dimensions_obj.weight}} %</td>
              <td class="px-6 py-4 text-md text-blue-900">{{performance_dimensions_obj.agreed_target}} %</td>
              <td class="px-6 py-4 text-md text-blue-900">(+-) {{performance_dimensions_obj.allowable_variance}} %</td>
-             <td class="px-6 py-4 text-md text-blue-900">{{performance_dimensions_obj.id|get_target_score_by_activity_id}} %</td>
-             <td class="px-6 py-4 text-md text-blue-900">(+-) {{performance_dimensions_obj.id|get_activity_actual_variance}} %</td>
-             <td class="px-6 py-4 text-md text-blue-900">{{performance_dimensions_obj.id|get_activity_rating}}</td>
-             <td class="px-6 py-4 text-md text-blue-900">{{performance_dimensions_obj.id|get_activity_weighted_score}}</td>
+             <td class="px-6 py-4 text-md text-blue-900">{{performance_dimensions_obj.id|get_target_score_by_performance_dimension_id}} %</td>
+             <td class="px-6 py-4 text-md text-blue-900">(+-) {{performance_dimensions_obj.id|get_performance_dimension_actual_variance}} %</td>
+             <td class="px-6 py-4 text-md text-blue-900">{{performance_dimensions_obj.id|get_performance_dimension_rating}}</td>
+             <td class="px-6 py-4 text-md text-blue-900">{{performance_dimensions_obj.id|get_performance_dimension_weighted_score}}</td>
              <td>
               <div class="flex justify-even gap-1">
                   <a href="#"

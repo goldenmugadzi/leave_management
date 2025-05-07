@@ -52,9 +52,9 @@ class KRAService:
 class TargetScoreService:
     target_score_repository: TargetScoreRepository
 
-    def create_use_case(self, activity_obj: Activity, data: TargetScoreType)->TargetScore:
+    def create_use_case(self, performance_dimension_obj: PerformanceDimension, data: TargetScoreType, attachments: list)->TargetScore:
         try:
-            return self.target_score_repository.create(activity_obj=activity_obj, data=data)
+            return self.target_score_repository.create(performance_dimension=performance_dimension_obj, data=data)
         except Exception as e:
             raise KRAErr(f"Failed to create target-score with error: {e}")
 
@@ -74,34 +74,34 @@ class TargetScoreService:
     def calculate_actual_variance_use_case(self, score_object: TargetScore)->float:
         """Calculate the actual variance between the actual score and the target score."""
         actual_score = score_object.score
-        target_score = score_object.activity.agreed_target
+        target_score = score_object.performance_dimension.agreed_target
         rating_calc_handler = RatingCalculation()
         
         actual_variance = rating_calc_handler.get_actual_variance(actual_score=actual_score, target_score=target_score)
         return actual_variance
     
-    def calculate_activity_rating_score_use_case(self, score_object: TargetScore)->float:
-        """Calculate the rating score for an activity based on actual variance and allowable variance."""
-        activity_obj = score_object.activity
+    def calculate_performance_dimension_rating_score_use_case(self, score_object: TargetScore)->float:
+        """Calculate the rating score for an performance dimension based on actual variance and allowable variance."""
+        performance_dimension_obj = score_object.performance_dimension
         rating_calc_handler = RatingCalculation()
         
-        is_target_met = rating_calc_handler.is_target_met(agreed_target=activity_obj.agreed_target, actual_target=score_object.score)
-        variance_range_classifier = rating_calc_handler.classify_variance_range(agreed_target=activity_obj.agreed_target, allowable_variance=activity_obj.allowable_variance, actual_score=score_object.score)
+        is_target_met = rating_calc_handler.is_target_met(agreed_target=performance_dimension_obj.agreed_target, actual_target=score_object.score)
+        variance_range_classifier = rating_calc_handler.classify_variance_range(agreed_target=performance_dimension_obj.agreed_target, allowable_variance=performance_dimension_obj.allowable_variance, actual_score=score_object.score)
         rating = rating_calc_handler.calculate_rating(is_target_met=is_target_met, variance_range_classify=variance_range_classifier)
 
         return rating
 
-    def calculate_activity_weighted_score(self, activity_id: int)->float:
-        """Calculate the weighted score for an activity by multiplying the activity score by its weight."""
+    def calculate_performance_dimension_weighted_score(self, performance_dimension_id: int)->float:
+        """Calculate the weighted score for an performance dimension by multiplying the performance dimension score by its weight."""
         try:
-            score_obj = self.target_score_repository.get_by_activity_id(activity_id=activity_id)
-            activity_rate = self.calculate_activity_rating_score_use_case(score_object=score_obj)
-            activity_weight = score_obj.activity.weight/100
-            weighted_score = activity_rate * activity_weight
+            score_obj = self.target_score_repository.get_by_performance_dimension_id(performance_dimension_id=performance_dimension_id)
+            performance_dimension_rate = self.calculate_performance_dimension_rating_score_use_case(score_object=score_obj)
+            performance_dimension_weight = score_obj.performance_dimension.weight/100
+            weighted_score = performance_dimension_rate * performance_dimension_weight
 
             return weighted_score
         except Exception as e:
-            raise KRAErr(f"Failed to calculate activity weighted score with error: {e}")
+            raise KRAErr(f"Failed to calculate performance dimension weighted score with error: {e}")
 
 
 @dataclass
