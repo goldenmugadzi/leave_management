@@ -148,6 +148,12 @@ def pettyCash_detail(request, petty_id):
     except Exception as e:
         print(e)
 
+    Notification.objects.filter(
+        notification_id=petty_id,
+        user=request.user,
+        is_read=False
+    ).update(is_read=True)
+
     return render(request, 'finance/pettycash/pettycash_detail.html',
                   {'pettycash': pettycash_item, 'approved_steps': approved_steps, 'approvalForm': approvalForm,
                    'to': to, 'pettycash_role': pettycash_role, 'user_groups': user_groups, 'quotations': quotations
@@ -1018,5 +1024,38 @@ def notify_uncleared_pettycash_dischargers(request):
                     url = f"/pettycash/pettycash_detail/{pc.petty_id}"
                     notify_user(user_to_notify, msg, "Pettycash", url, pc.petty_id, request)
                     print(f"Notified user {user_to_notify} to clear petty cash {pc.petty_id}.")
+
+            # Escalation: If uncleared for more than 30 days, notify section head (or escalate further)
+            THIRTY_DAYS = 30
+            very_old_threshold = now - timedelta(days=THIRTY_DAYS)
+            if (
+                len(approvals) >= 2 and
+                hasattr(disburse_approval, 'approved_at') and
+                disburse_approval.approved_at and
+                disburse_approval.approved_at < very_old_threshold
+            ):
+                # Escalate to section head
+                section_head = None
+                if hasattr(pc, 'section') and pc.section:
+                    section_head = find_pettycash_section_head(pc.section)
+                if section_head:
+                    # section_head may be a username or UserProfile
+                    if isinstance(section_head, str):
+                        section_head_user = UserProfile.objects.filter(username=section_head).first()
+                    else:
+                        section_head_user = section_head
+                    if section_head_user:
+                        recent_escalation = Notification.objects.filter(
+                            user=section_head_user,
+                            notification_id=pc.petty_id,
+                            notification_type='Pettycash',
+                            message__icontains='escalated',
+                            created_at__gte=very_old_threshold
+                        ).exists()
+                        if not recent_escalation:
+                            msg = f"[Escalation] Petty cash {pc.petty_id} has not been cleared for over 30 days. Please follow up with the user/disburser."
+                            url = f"/pettycash/pettycash_detail/{pc.petty_id}"
+                            notify_user(section_head_user, msg, "Pettycash", url, pc.petty_id, request)
+                            print(f"Escalation: Notified section head {section_head_user} for petty cash {pc.petty_id} uncleared >30 days.")
         except Exception as e:
             print(f"[Exemption] Error processing petty cash {getattr(pc, 'petty_id', None)}: {e}")
