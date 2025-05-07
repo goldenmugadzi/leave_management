@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from datetime import datetime, timezone
 from mimetypes import guess_type
 from random import randrange
@@ -411,6 +413,8 @@ def pettycash_awaiting_my_action(request):
 
 @login_required
 def view_all_pettycashs(request):
+    # Notify disbursers of uncleared petty cash older than a week
+    notify_uncleared_pettycash_dischargers(request)
     user_roles = request.user.roles.all()
 
     user_id = request.user.id
@@ -777,10 +781,22 @@ def receipt(request):
         receipt_file = request.FILES['file-input']
         print(receipt_file)
         used = request.POST['disbursed']
-        pettycash = request.POST['petty_id']
-        pettycash = Pettycash.objects.filter(petty_id=pettycash).first()
+        pettycash_id = request.POST['petty_id']
+        pettycash = Pettycash.objects.filter(petty_id=pettycash_id).first()
+        # Validation: amount_used must be less than or equal to amount_disbursed
+        try:
+            used_float = float(used)
+            disbursed_float = float(pettycash.amount_disbursed) if pettycash.amount_disbursed is not None else 0
+        except (ValueError, TypeError):
+            messages.error(request, 'Invalid amount entered.')
+            return redirect('pettycash:pettycash_detail', petty_id=pettycash.petty_id)
+
+        if used_float > disbursed_float:
+            messages.error(request, 'Amount used cannot be greater than amount disbursed.')
+            return redirect('pettycash:pettycash_detail', petty_id=pettycash.petty_id)
+
         pettycash.receipt_file = receipt_file
-        pettycash.amount_used = used
+        pettycash.amount_used = used_float
         pettycash.save()
         messages.success(request, 'Receipt uploaded successfully')
         return redirect('pettycash:pettycash_detail', petty_id=pettycash.petty_id)
@@ -946,3 +962,61 @@ def my_actioned_items(request):
         'requester': requester,
         'title': 'My Actioned Items'
     })
+
+
+def notify_uncleared_pettycash_dischargers(request):
+    """
+    Notify disbursers if a petty cash item has not been cleared (no receipt/amount_used) for over a week after disbursement.
+    This runs on every access to a main petty cash view.
+    """
+    from django.utils import timezone
+    now = timezone.now()
+    one_week_ago = now - timedelta(days=7)
+    # Find all petty cash items disbursed more than a week ago, not yet cleared
+    uncleared_pettycash = Pettycash.objects.filter(
+        amount_disbursed__isnull=False,
+        amount_disbursed__gt=0,
+        # Not yet cleared
+        amount_used__isnull=True,
+        # Optionally, you may want to also check receipt_file__isnull=True
+    )
+    for pc in uncleared_pettycash:
+        try:
+            # Get all approvals for this petty cash process, ordered by approval date
+            approvals = list(pc.process.approval_set.order_by('approved_at'))
+            if len(approvals) >= 2:
+                disburse_approval = approvals[-2]  # Second from last approval
+                # Check that this approval's step/role is 'disburse'
+                if hasattr(disburse_approval.step, 'role') and getattr(disburse_approval.step.role, 'role', None) == 'disburse':
+                    if disburse_approval.approved_at and disburse_approval.approved_at < one_week_ago:
+                        disburser = disburse_approval.user
+                        # Notify the disburser
+                        recent_notification = Notification.objects.filter(
+                            user=disburser,
+                            notification_id=pc.petty_id,
+                            notification_type='Pettycash',
+                            message__icontains='not cleared',
+                            created_at__gte=one_week_ago
+                        ).exists()
+                        if not recent_notification:
+                            msg = f"Petty cash {pc.petty_id} you disbursed has not been cleared for over a week. Please follow up."
+                            url = f"/pettycash/pettycash_detail/{pc.petty_id}"
+                            notify_user(disburser, msg, "Pettycash", url, pc.petty_id, request)
+                            print(f"Notified disburser {disburser} for petty cash {pc.petty_id} not cleared.")
+            # Also notify the user who has not yet cleared (the requested_by user)
+            user_to_notify = pc.requested_by
+            if user_to_notify:
+                recent_user_notification = Notification.objects.filter(
+                    user=user_to_notify,
+                    notification_id=pc.petty_id,
+                    notification_type='Pettycash',
+                    message__icontains='You have not yet cleared',
+                    created_at__gte=one_week_ago
+                ).exists()
+                if not recent_user_notification:
+                    msg = f"You have not yet cleared petty cash {pc.petty_id}. Please upload your receipts and acquittal."
+                    url = f"/pettycash/pettycash_detail/{pc.petty_id}"
+                    notify_user(user_to_notify, msg, "Pettycash", url, pc.petty_id, request)
+                    print(f"Notified user {user_to_notify} to clear petty cash {pc.petty_id}.")
+        except Exception as e:
+            print(f"[Exemption] Error processing petty cash {getattr(pc, 'petty_id', None)}: {e}")
