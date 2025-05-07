@@ -94,13 +94,20 @@ class PerformanceDimension(TimeStamp):
         return f"{self.performance_indicator}"
 
 class TargetScore(TimeStamp):
-    activity = models.OneToOneField(Activity, on_delete=models.CASCADE)
+    performance_dimension = models.OneToOneField(PerformanceDimension, on_delete=models.CASCADE, null=True, blank=True)
     score = models.DecimalField(max_digits=5, decimal_places=2, default=0.0)
-    comments = models.TextField()
+    comments = models.TextField(blank=True)
     is_scored = models.BooleanField(default=False)
 
     def __str__(self):
-        return f"{self.activity}"
+        return f"{self.performance_dimension}"
+    
+class ScoreDocument(TimeStamp):
+    target_score = models.ForeignKey(TargetScore, on_delete=models.CASCADE, related_name='documents')
+    document = models.FileField(upload_to='uploads/appraisal/score_attachments')
+
+    def __str__(self):
+        return f"Document for {self.target_score}"
 
 
 class AppraisalWorkflow(TimeStamp):
