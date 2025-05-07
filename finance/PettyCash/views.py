@@ -70,6 +70,11 @@ def pettyCash_detail(request, petty_id):
             url = "/pettycash/pettycash_detail/" + pettycash_item.petty_id
             notify_user(userp, msg, "Pettycash", url, pettycash_item.petty_id, request)
 
+            # --- Notify user that funds have been disbursed ---
+            msg_disbursed = f"Funds for Pettycash {pettycash_item.petty_id} have been disbursed. Please collect and acquit as soon as possible."
+            notify_user(userp, msg_disbursed, "Pettycash", url, pettycash_item.petty_id, request)
+            # --------------------------------------------------
+
     approvalForm = None
     to = None
     user_roles = request.user.roles.all()  # Accessing the user's roles through the 'roles' attribute
@@ -805,6 +810,21 @@ def receipt(request):
         pettycash.amount_used = used_float
         pettycash.save()
         messages.success(request, 'Receipt uploaded successfully')
+
+        # --- Notify disburser that the petty cash has been cleared ---
+        # Find the disburser from the approvals (step with role 'disburse')
+        if pettycash.process and pettycash.process.approval_set.exists():
+            approvals = pettycash.process.approval_set.order_by('approved_at')
+            for approval in approvals:
+                # Check if this approval's step/role is 'disburse'
+                if hasattr(approval.step, 'role') and getattr(approval.step.role, 'role', None) == 'disburse':
+                    disburser = approval.user
+                    msg_cleared = f"Pettycash {pettycash.petty_id} you disbursed has now been cleared by the user."
+                    url = f"/pettycash/pettycash_detail/{pettycash.petty_id}"
+                    notify_user(disburser, msg_cleared, "Pettycash", url, pettycash.petty_id, request)
+                    break
+        # ------------------------------------------------------------
+
         return redirect('pettycash:pettycash_detail', petty_id=pettycash.petty_id)
     else:
         return redirect('/pettycash/pettycashs')
