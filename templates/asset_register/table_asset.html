@@ -81,6 +81,7 @@
             <th>Model</th>
             <th>Supplier</th>
             <th>Updated At</th>
+            <th>Created At</th>
             <th>Created By</th>
             <th>Action</th>
         </tr>
@@ -104,6 +105,7 @@
           <th>Model</th>
           <th>Supplier</th>
           <th>Updated At</th>
+          <th>Created At</th>
           <th>Created By</th>
           <th>Action</th>
         </tr>
@@ -129,50 +131,47 @@ const is_technician = "{{ is_technician|lower }}" === "true";
 console.log("Technician status:", is_technician);
 $(document).ready(function () {
     $("#assetTable").DataTable({
-      "processing": true,
-      "serverSide": true,
-      "ajax": {
-        "url": "/asset_datatable",
-      },
-          columns: [
-          { data: "id" },
-          { data: "product_type" },
-          { data: "asset_state" },
-          { data: "asset_number" },
-          { data: "serial_number" },
-          { data: "department" },
-          { data: "user" },
-          { data: "regions" },
-          { data: "purchase_cost" },
-          { data: "designations" },
-          { data: "date_purchased" },
-          { data: "warrant" },
-          { data: "cost_center" },
-          { data: "model" },
-          { data: "supplier" },
-          { data: "updated_at" },
-          { data: "created_by" },
-          {
-            data: "id",
-            orderable: false,
-            searchable: false,
-            render: function (data, type, row, meta) {
-              if(is_technician){
-                return `
-                <a type="button" class="btn btn-info" href='/update_asset/${row.id}'>
-               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
-                </svg>
-                </a>`;
+        processing: true,
+        serverSide: true,
+        ajax: {
+            url: "/asset_datatable",
+            error: function (xhr, error, thrown) {
+                console.error("DataTable error:", xhr.responseText);
             }
-            else{return ''}
-              }
-              
-          }
+        },
+        columns: [
+            { data: "id" },
+            { data: "product_type" },
+            { data: "asset_state" },
+            { data: "asset_number" },
+            { data: "serial_number" },
+            { data: "department" },
+            { data: "user" },
+            { data: "regions" },
+            { data: "purchase_cost" },
+            { data: "designations" },
+            { data: "date_purchased" },
+            { data: "warrant" },
+            { data: "cost_center" },
+            { data: "model" },
+            { data: "supplier" },
+            { data: "updated_at" },
+            { data: "created_at" },
+            { data: "created_by" },
+            {
+                data: "id",
+                render: function(data, type, row) {
+                    if (is_technician) {
+                        return `<a href="/update_asset/${data}" class="btn btn-info"> <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                      </svg></a>`;
+                    }
+                    return '';
+                }
+            }
         ],
-
-      order: [[5, 'desc']]
+        order: [[0, 'desc']]
     });
-  });
+});
 </script>
 {% endblock scripts %}

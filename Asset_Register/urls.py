@@ -18,4 +18,8 @@ urlpatterns = [
     path('export_csv/', views.export_csv, name='export_csv'),
     path('upload_asset/', views.upload_asset, name='upload_asset')
 
+
+
 ]
+
+  
