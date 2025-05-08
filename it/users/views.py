@@ -32,6 +32,7 @@ from decouple import config
 from django.forms import inlineformset_factory
 from .forms import ResponsibilitiesForm
 from django.template.loader import get_template
+import logging
 
 BASE_URL = "http://" + config('HOST') + ":" + config('PORT')
 APP_NAME = "users"
@@ -64,29 +65,55 @@ def user_centers(request):
     return JsonResponse({"status": "success", "message": "Centers added successfully"})
 
 def get_exchange_account():
+    logger = logging.getLogger('security')
     try:
         from decouple import config as cnf
-        print(cnf)
+        logger.info("Attempting to connect to Exchange server")
+        
+        # Log environment variable availability (just presence, not values for security)
+        has_email = bool(cnf('MS_EMAIL', default=''))
+        has_pass = bool(cnf('MS_PASS', default=''))
+        has_server = bool(cnf('MS_SERVER', default=''))
+        has_smtp = bool(cnf('MS_PRIMARY_SMTP_ADDRESS', default=''))
+        
+        logger.info(f"Exchange config variables present: Email: {has_email}, Password: {has_pass}, Server: {has_server}, SMTP: {has_smtp}")
+        
+        if not (has_email and has_pass and has_server and has_smtp):
+            logger.error("Missing Exchange server configuration variables")
+            return None
+            
         credentials = Credentials(
             username=cnf('MS_EMAIL'),
             password=cnf('MS_PASS')
         )
-        print("Credentials: ", credentials)
+        logger.info("Exchange credentials created")
+        
         config = Configuration(
             server=cnf('MS_SERVER'),
             credentials=credentials,
         )
-        print("Config: ", config)
+        logger.info("Exchange configuration created")
+        
         account = Account(
             primary_smtp_address=cnf('MS_PRIMARY_SMTP_ADDRESS'),
             config=config,
             autodiscover=False,
             access_type='delegate'
         )
-        print("Successfully connected to Exchange server.")
-        return account
+        
+        # Test the connection by accessing the inbox
+        try:
+            _ = account.inbox
+            logger.info("Successfully connected to Exchange server and verified inbox access")
+            return account
+        except Exception as e:
+            logger.error(f"Failed to verify inbox access: {str(e)}")
+            return None
+            
     except Exception as ex:
-        print("Error: ", ex)
+        error_message = str(ex)
+        logger.error(f"Error creating Exchange account: {error_message}", exc_info=True)
+        print("Error connecting to Exchange server: ", error_message)
         return None
 
 @login_required
@@ -142,8 +169,18 @@ def ms_exhange_send_html(subject, to_recipients, cc_recipients, template, kwargs
 
 def ms_exhange_reset_password_html(subject, to_recipients, cc_recipients, template, kwargs):
     try:
+        # Log connection attempt
+        logger = logging.getLogger('security')
+        logger.info(f"Attempting to send password reset email to: {to_recipients}")
+        
         account = get_exchange_account()
-        # message_body = get_template(f"{template}").render(kwargs["kwargs"])
+        if account is None:
+            logger.error("Failed to get Exchange account")
+            return JsonResponse({"status": "error", "message": "Failed to connect to email server"})
+        
+        # Log success of obtaining account
+        logger.info("Successfully got Exchange account")
+        
         message = Message(
             account=account,
             folder=account.sent,
@@ -152,12 +189,19 @@ def ms_exhange_reset_password_html(subject, to_recipients, cc_recipients, templa
             to_recipients=[Mailbox(email_address=recipient) for recipient in to_recipients],
             cc_recipients=[Mailbox(email_address=recipient) for recipient in cc_recipients]
         )
-
+        
+        # Log message creation success
+        logger.info("Message object created, attempting to send")
+        
         message.send()
+        logger.info(f"Email sent successfully to {to_recipients}")
         return JsonResponse({"status": "success", "message": "Email sent successfully"})
     except Exception as ex:
-        print("Error: ", ex)
-        return JsonResponse({"status": "error", "message": "An error occurred while sending the email: " + str(ex)})
+        error_message = str(ex)
+        if logger:
+            logger.error(f"Error sending email: {error_message}", exc_info=True)
+        print("Error: ", error_message)
+        return JsonResponse({"status": "error", "message": "An error occurred while sending the email: " + error_message})
 
 @login_required
 @allowed_roles(['Administrator'], ['users'])
