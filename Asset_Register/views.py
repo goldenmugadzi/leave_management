@@ -8,117 +8,45 @@ from django.conf import settings
 from django.db.models import Q
 import csv
 from django.http import HttpResponse
+from .forms import *
 from dateutil import parser
-from it.users.models import Regions, Sections, Designations, UserProfile
+from it.users.models import Regions, Sections, Designations, UserProfile, CostCenter,Roles
 from Asset_Register.models import ProductType, ZetdcAssets
+from datetime import datetime
+from dateutil import parser
+from django.contrib import messages
+from django.db import transaction,IntegrityError
+import traceback
+from django.core.exceptions import ValidationError
+from decimal import Decimal
+from django.shortcuts import get_object_or_404, render, redirect  # Add get_object_or_404 here
 
 #User = get_user_model()
-def create_asset(request):
-    print("Assets:")
-    url_path = request.path.split("/")
-
+def createAsset(request):
     if request.method == 'POST':
-        product_type = request.POST['product_id']  
-        asset_state = request.POST['asset_state']
-        serial_number = request.POST['serial_number']
-        asset_number = request.POST['asset_number']
-        department = request.POST['department']
-        user_id = request.POST['users']  
-        region_id = request.POST['regions']
-        purchase_cost = request.POST['purchase_cost']
-        designation_id = request.POST['designations']
-        date_purchased = request.POST['date_purchased']
-        warrant = request.POST['warrant']
-        model = request.POST['model']
-
-        print("Asset model:", model)
-
-    
-        try:
-            product_type = ProductType.objects.get(id=product_type)
-        except ProductType.DoesNotExist:
-            print(f"ProductType with ID {product_type} does not exist.")
-            return render(request, 'asset_register/create_asset.html', {
-                "url_path": url_path,
-                "error_message": "Invalid Product Type."
-            })
-
+        form = ZetdcAssetForm(request.POST, request.FILES)
+        if form.is_valid():
+            form.save()  
+            return redirect('table_asset') 
+        else:
         
-        try:
-            user = UserProfile.objects.get(id=request.POST['users'])  
-        except UserProfile.DoesNotExist:
-            print(f"UserProfile with ID {user_id} does not exist.")
-            return render(request, 'asset_register/create_asset.html', {
-                "url_path": url_path,
-                "error_message": "Invalid User."
-            })
-        try:
-            region = Regions.objects.get(id=region_id)  
-        except Regions.DoesNotExist:
-            print(f"Regions with ID {region_id} does not exist.")
-            return render(request, 'asset_register/create_asset.html', {
-                "url_path": url_path,
-                "error_message": "Invalid Region."
-            })
-        try:
-            designation = Designations.objects.get(id=designation_id)  
-        except Designations.DoesNotExist:
-            print(f"Designations with ID {designation_id} does not exist.")
-            return render(request, 'asset_register/create_asset.html', {
-                "url_path": url_path,
-                "error_message": "Invalid Designation."
-            })
-        try:
-            section = Sections.objects.get(id=request.POST['department']) 
+            print(form.errors)  
+    else:
+        form = ZetdcAssetForm()
 
-        except (Regions.DoesNotExist, Sections.DoesNotExist):
-            #print("request.POST",regions)
-            return redirect('create_fault')
-
-        um = ZetdcAssets(
-            asset_state=asset_state,
-            product_type=product_type,  
-            serial_number=serial_number,
-            asset_number=asset_number,
-            department=department,
-            user=user,  
-            regions=region,
-            sections=section,
-            purchase_cost=purchase_cost,
-            designations=designation,
-            date_purchased=date_purchased,
-            warrant=warrant,
-            model=model,
-            created_at=datetime.now().date(),
-            updated_at=datetime.now().date(),
-            created_by="Goldy",
-        )
-        um.save()
-
-        return render(request, 'asset_register/create_asset.html', {
-                      "url_path": url_path
-                      })
-
-    regions = Regions.objects.all()
-    sections = Sections.objects.all()
-    designation = Designations.objects.all()
-    users = UserProfile.objects.all()
-
-    print('users', users)
-    product_type = ProductType.objects.all()
-    return render(request, 'asset_register/create_asset.html', {
-        "url_path": url_path,
-        'regions': regions,
-        'sections': sections,
-        'designations': designation,
-        'product_types': product_type,
-        'users': users  
-    })
-
+    return render(request, "asset_register/createAsset.html", {"form": form})
 
 def show_asset(request):
-    
-    return render(request, 'asset_register/table_asset.html')
+    try:
+        user_roles = request.user.get_user_role_for_application("IT Asset Register")
+        is_technician = user_roles.name == 'technician'
+    except AttributeError as e:
+        print(f"Role error: {e}")
+        is_technician = False
+
+    return render(request, 'asset_register/table_asset.html', {
+        'is_technician': is_technician
+    })
 
 def table_asset (request):
   return render(request,'asset_register/table_asset.html')
@@ -126,177 +54,172 @@ def table_asset (request):
 def show_product (request):
   return render(request,'asset_register/table_product.html')
 
+#@login_required
 def show_asset_datatable(request):
-
     try:
-        draw = int(request.GET.get('draw', default=1))
-        start = int(request.GET.get('start', default=0))
-        length = int(request.GET.get('length', default=10))
-        search_value = request.GET.get('search[value]', default='')
+        print("\n===== NEW REQUEST =====")
+        print(f"User: {request.user.first_name} {request.user.last_name} ({request.user.username})")
 
-        assets = ZetdcAssets.objects.all()
-        print("assets ", assets)
-    
-        if search_value:
-         assets = assets.filter(
-            Q(asset_state__icontains=search_value) |
-            Q(product_type__product_type__icontains=search_value) |
-            Q(serial_number__icontains=search_value) |
-            Q(sections__section__icontains=search_value) |
-            Q(user__first_name__icontains=search_value) |
-            Q(user__last_name__icontains=search_value) |
-            Q(regions__region__icontains=search_value) |
-            Q(purchase_cost__icontains=search_value) |
-            Q(designations__description__icontains=search_value) |
-            Q(model__icontains=search_value) |
-            Q(warrant__icontains=search_value) |
-            Q(created_by__icontains=search_value)
-        )
         
+        assets = ZetdcAssets.objects.all()
+        print(f"assets count: {assets.count()}")
 
-        # Total number of records before filtering
+    
+        cost_centers = request.user.cost_centers_for(["IT Asset Register"])
+        if cost_centers:
+            print(f"Filtering by cost centers: {cost_centers}")
+            assets = assets.filter(cost_center__in=cost_centers)
+            print(f"After cost center filtering: {assets.count()}")
+        else:
+            descendents = request.user.cost_center_and_decendace()
+            print(f"Filtering by cost center descendents: {descendents}")
+            assets = assets.filter(cost_center__in=descendents)
+            print(f"After descendents filtering: {assets.count()}")
+
+        
+        draw = int(request.GET.get('draw', 1))
+        start = int(request.GET.get('start', 0))
+        length = int(request.GET.get('length', 10))
+        search_value = request.GET.get('search[value]', '')
+
+        
+        if search_value:
+            print(f"Applying search filter: {search_value}")
+            assets = assets.filter(
+                Q(asset_state__icontains=search_value) |
+                Q(product_type__product_type__icontains=search_value) |
+                Q(serial_number__icontains=search_value) |
+                Q(department__section__icontains=search_value) |
+                Q(user__first_name__icontains=search_value) |
+                Q(user__last_name__icontains=search_value) |
+                Q(regions__region__icontains=search_value) |
+                Q(purchase_cost__icontains=search_value) |
+                Q(designation__description__icontains=search_value) |
+                Q(model__icontains=search_value) |
+                Q(warrant__icontains=search_value) |
+                Q(cost_center__name__icontains=search_value) |
+                Q(supplier__icontains=search_value) |
+                Q(created_by__first_name__icontains=search_value) |
+                Q(created_by__last_name__icontains=search_value)
+            )
+            print(f"After search filtering: {assets.count()}")
+
+        
         total = assets.count()
+        print(f"Total records: {total}")
 
-          # Sorting
+        
         order_column = request.GET.get('order[0][column]')
         order_dir = request.GET.get('order[0][dir]')
-
-        if order_column is not None and order_dir is not None:
+        
+        if order_column and order_dir:
             column_map = {
                 "0": "id",
-                "1": "asset_state",
-                "2": "product_type",
-                "3": "serial_number",
-                "4": "department",
-                "5": "user",
-                "6": "regions",
-                "7": "purchase_cost",
-                "8": "designations",
-                "9": "date_purchased",
-                "10": "warrant",
-                "11": "model",
-                "12": "created_by",
-                "13": "created_at",
-
+                "1": "product_type__product_type",
+                "2": "asset_state",
+                "3": "asset_number",
+                "4": "serial_number",
+                "5": "department__section",
+                "6": "user__first_name",
+                "7": "regions__region",
+                "8": "purchase_cost",
+                "9": "designation__description",
+                "10": "date_purchased",
+                "11": "warrant",
+                "12": "cost_center__name",
+                "13": "model",
+                "14": "supplier",
+                "15": "updated_at",
+                "16": "created_at",
+                "17": "created_by__first_name",
             }
-
+            
             column_name = column_map.get(order_column)
             if column_name:
                 if order_dir == 'desc':
-                    column_name = f'-{column_name}'  # Add descending order prefix
-                assets= assets.order_by(column_name)
-
+                    column_name = f'-{column_name}'
+                print(f"Ordering by: {column_name}")
+                assets = assets.order_by(column_name)
 
         # Pagination
         paginator = Paginator(assets, length)
         page_number = start // length + 1
-        page_obj = paginator.get_page(page_number)
+        try:
+            page_obj = paginator.get_page(page_number)
+            print(f"Page {page_number} of {paginator.num_pages}")
+        except Exception as e:
+            print(f"Pagination error: {str(e)}")
+            return JsonResponse({
+                'draw': draw,
+                'recordsTotal': total,
+                'recordsFiltered': total,
+                'data': [],
+                'error': 'Pagination error'
+            }, status=400)
 
-
-        # print('my assets', asset.regions.region, asset.designations.description, )
+        
         asset_list = []
         for asset in page_obj:
-            # print('my assets', asset.regions.region)
-            # print("asset.product_type.product_type",asset.product_type.product_type)
-            #print("Asset model:", asset.model)
-
-            new_asset = {
-
+            asset_data = {
                 "id": asset.id,
-                "asset_state": asset.asset_state,
                 "product_type": asset.product_type.product_type if asset.product_type else None,
+                "asset_state": asset.asset_state,
+                "asset_number": asset.asset_number,
                 "serial_number": asset.serial_number,
-                "department": asset.sections.section if asset.sections else None,
-                 "user": f"{asset.user.first_name} {asset.user.last_name}" if asset.user else None,
+                "department": asset.department.section if asset.department else None,
+                "user": f"{asset.user.first_name} {asset.user.last_name}" if asset.user else None,
                 "regions": asset.regions.region if asset.regions else None,
-                "purchase_cost": asset.purchase_cost,
-                "designations": asset.designations.description if asset.designations else None,
-                "date_purchased": asset.date_purchased,
+                "purchase_cost": str(asset.purchase_cost),
+                "designations": asset.designation.description if asset.designation else None,
+                "date_purchased": asset.date_purchased.strftime('%Y-%m-%d') if asset.date_purchased else None,
                 "warrant": asset.warrant,
-                "model": asset.model if asset.model else None,
-                "created_by": asset.created_by,
-                "created_at": asset.created_at,
+                "cost_center": asset.cost_center.name if asset.cost_center else None,
+                "model": asset.model,
+                "supplier": asset.supplier,
+                "updated_at": asset.updated_at.strftime('%Y-%m-%d') if asset.updated_at else None,
+                "created_at": asset.created_at.strftime('%Y-%m-%d') if asset.created_at else None,
+                "created_by": f"{asset.created_by.first_name} {asset.created_by.last_name}" if asset.created_by else None,
             }
-            asset_list.append(new_asset)
-         
+            asset_list.append(asset_data)
+
         return JsonResponse({
             'draw': draw,
             'recordsTotal': total,
             'recordsFiltered': total,
             'data': asset_list
         })
+
     except Exception as ex:
-        print(ex)
+        print("Unexpected error:", str(ex))
+        traceback.print_exc()
         return JsonResponse({
             'draw': 1,
             'recordsTotal': 0,
             'recordsFiltered': 0,
-            'data': []
-        })
+            'data': [],
+            'error': str(ex)
+    }, status=500)
 
-def update_asset(request, id):
-    zetdcAssets = ZetdcAssets.objects.filter(id=id).first()
-    
+def update_asset(request, asset_id):
+    asset = get_object_or_404(ZetdcAssets, id=asset_id)  
+
     if request.method == 'POST':
-        user_id = request.POST['user']
-        user = UserProfile.objects.filter(id=user_id).first()
+        form = ZetdcAssetForm(request.POST, instance=asset) 
 
-        region_id = request.POST['regions']
-        regions = Regions.objects.filter(id=region_id).first()
+        if form.is_valid():
+            try:
+                with transaction.atomic():
+                    form.save()
+                    messages.success(request, "Asset updated successfully!")
+                    return redirect('/table_asset/') 
+            except Exception as e:
+                messages.error(request, f"Error updating asset: {str(e)}")
+        else:
+            messages.error(request, "Please correct the errors below.")
+    else:
+        form = ZetdcAssetForm(instance=asset) 
 
-        designation_id = request.POST['designations']
-        designations = Designations.objects.filter(id=designation_id).first()
-        
-        section_id = request.POST['department']
-        sections = Sections.objects.filter(id=section_id).first()
-
-        # Parse and reformat the date
-        try:
-            date_purchased = datetime.strptime(request.POST['date_purchased'], "%b. %d, %Y")  # Format like "Jan. 20, 2025"
-            date_purchased = date_purchased.strftime("%Y-%m-%d")  # Convert to "2025-01-20"
-        except ValueError:
-            
-            date_purchased = None
-
-        zetdcAssets.product_id = request.POST['product_type']
-        zetdcAssets.asset_state = request.POST['asset_state']
-        zetdcAssets.serial_number = request.POST['serial_number']
-        zetdcAssets.department = request.POST['department']
-        zetdcAssets.user = user
-        zetdcAssets.regions = regions
-        zetdcAssets.purchase_cost = request.POST['purchase_cost']
-        zetdcAssets.designations = designations
-        zetdcAssets.sections = sections
-        zetdcAssets.date_purchased = date_purchased
-        zetdcAssets.warrant = request.POST['warrant']
-        zetdcAssets.model = request.POST['model']
-        zetdcAssets.save()
-
-        return redirect('/table_asset')
-    
-    return render(request, 'asset_register/update_asset.html', {
-        'zetdcAssets': zetdcAssets,
-        'id': zetdcAssets.id,
-        'product_id': zetdcAssets.product_type,
-        'asset_state': zetdcAssets.asset_state,
-        'serial_number': zetdcAssets.serial_number,
-        'asset_number': zetdcAssets.id,  
-        'department': zetdcAssets.department,
-        'user': zetdcAssets.user, 
-        'regions': zetdcAssets.regions,
-        'purchase_cost': zetdcAssets.purchase_cost,
-        'designations': zetdcAssets.designations,
-        'date_purchased': zetdcAssets.date_purchased,
-        'warrant': zetdcAssets.warrant,
-        'model': zetdcAssets.model,
-
-
-        'product_types': ProductType.objects.all(),
-        'sections': Sections.objects.all(),
-        'users': UserProfile.objects.all(),
-        'regions': Regions.objects.all(),
-        'designations': Designations.objects.all(),
-    })
+    return render(request, 'asset_register/update_asset.html', {'form': form, 'asset': asset})
 
 def create_product(request):
     if request.method == 'POST':
@@ -477,7 +400,7 @@ def show_report_datatable(request):
                 "id": asset.id,
                 "asset_state": asset.asset_state,
                 "product_type": asset.product_type.product_type if asset.product_type else None,
-                "department": asset.sections.section if asset.sections else None,
+                "department": asset.department.section if asset.department else None,
                 "regions": asset.regions.region if asset.regions else None,
                 "date_purchased": asset.date_purchased,
             }
@@ -556,79 +479,137 @@ def export_csv(request):
             ])
     return response
 
-from datetime import datetime
-from dateutil import parser
-
 def upload_asset(request):
     if request.method == 'POST':
-        print("POST Data:", request.POST)
         csvfile = request.FILES.get('uploaded_csv')
         
         if not csvfile:
             return render(request, 'asset_register/upload_asset.html', {'error': 'No file uploaded'})
         
         try:
-            decoded_file = csvfile.read().decode('cp1252').splitlines()
+            decoded_file = csvfile.read().decode('utf-8').splitlines()
             reader = csv.DictReader(decoded_file)
-            reader.fieldnames = [header.strip() for header in reader.fieldnames]
-            print("CSV Headers:", reader.fieldnames)
+            
+            success_count = 0
+            error_messages = []
+            created_users = set()
+            duplicate_users = set()  
 
-            for row in reader:
-                date_string = row.get('date purchased') 
-                parsed_date = None
-                
-                if date_string:
-                    # Try parsing with the first format: '%A, %B %d, %Y'
-                    try:
-                        parsed_date = datetime.strptime(date_string, "%A, %B %d, %Y").date()
-                    except ValueError:
-                        print(f"Failed to parse with first format: {date_string}")
-                    
-                    if not parsed_date:
+            for row_num, row in enumerate(reader, start=1):
+                try:
+                    with transaction.atomic():
+                        # Parse date
+                        date_string = row.get('date purchased', '').strip()
+                        parsed_date = None
+                        
+                        if date_string:
+                            try:
+                                parsed_date = datetime.strptime(date_string, "%A, %B %d, %Y").date()
+                            except ValueError:
+                                try:
+                                    parsed_date = datetime.strptime(date_string, "%d-%b-%y").date()
+                                except ValueError:
+                                    raise ValueError("Invalid date format")
+
+                        product_type, _ = ProductType.objects.get_or_create(
+                            product_type=row.get('product type', '').strip())
+                        
+                        section_name = row.get('section', '').strip()
+                        if not section_name:
+                            raise ValueError("Section is required")
+                        section, _ = Sections.objects.get_or_create(section=section_name)
+
+                        region_name = row.get('region', '').strip()
+                        if not region_name:
+                            raise ValueError("Region is required")
+                        region, _ = Regions.objects.get_or_create(region=region_name)
+
+                        username = row.get('user', '').strip()
+                        if not username:
+                            raise ValueError("User is required")
+                        
+                        name_parts = username.split()
+                        first_name = name_parts[0] if len(name_parts) > 0 else username
+                        last_name = ' '.join(name_parts[1:]) if len(name_parts) > 1 else ''
+                        
                         try:
-                            parsed_date = datetime.strptime(date_string, "%d-%b-%y").date()
-                        except ValueError:
-                            print(f"Failed to parse with second format: {date_string}")
-                    if not parsed_date:
-                        print(f"Invalid date format for: {date_string}")
+                            user_profile, created = UserProfile.objects.get_or_create(
+                                username=username[:150],  
+                                defaults={
+                                    'first_name': first_name[:30],
+                                    'last_name': last_name[:30],
+                                    'email': f"{username.lower().replace(' ', '.')[:50]}@example.com",
+                                }
+                            )
+                            
+                            if created:
+                                created_users.add(username)
+                                
+                        except IntegrityError:
+                            duplicate_users.add(username)
+                            raise ValueError(f"Username '{username}' already exists (truncated)")
 
-                # Check and print the parsed date for debugging
-                print(f"Parsed Date: {parsed_date}")
-                
-                print("Processing row:", row)
-                product_type, _ = ProductType.objects.get_or_create(product_type=row.get('product type'))  
-                section, _ = Sections.objects.get_or_create(section=row.get('department'))
-                region, _ = Regions.objects.get_or_create(region=row.get("region"))
-                print("region",region)
+                       # Replace the asset_state handling section with this:
+                        asset_state = row.get('asset state', '').strip()
+                        valid_states = dict(ZetdcAssets._meta.get_field('asset_state').choices)
 
-                created_at = datetime.now().date()
-                updated_at = datetime.now().date()
+                        # Convert empty string to None
+                        asset_state = asset_state if asset_state else None
 
-                user = row.get('user').strip()
-                print("region", region)
+                        # Validate only if a value was provided
+                        if asset_state is not None:
+                            if asset_state not in valid_states:
+                                raise ValueError(f"Invalid asset state: {asset_state}. Valid options are: {', '.join(valid_states.keys())}")
 
-                new_zetdcassets = ZetdcAssets(
-                    product_type=product_type,
-                    asset_state=row.get('asset state', '').strip(),
-                    serial_number=row.get('serial number'),
-                    user_name=user,
-                    date_purchased=parsed_date, 
-                    sections=section,
-                    regions=region,
-                    created_at=created_at,
-                    updated_at=updated_at,
-                    model=row.get('model'),
-                    created_by="IT",
-                )
-                new_zetdcassets.save()
+                        asset = ZetdcAssets(
+                            product_type=product_type,
+                            asset_state=asset_state,
+                            serial_number=row.get('serial number', '').strip(),
+                            user=user_profile,
+                            date_purchased=parsed_date or date.today(),
+                            department=section,
+                            regions=region,
+                            model=row.get('model', '').strip(),
+                            #created_by=request.user.userprofile,
+                            purchase_cost=row.get('purchase_cost', 0),
+                            warrant=row.get('warrant', '') or None,
+                            supplier=row.get('supplier', '') or None,
+                        )
+                        
+                        asset.full_clean() 
+                        asset.save()
+                        success_count += 1
 
-            return redirect('/table_asset/')
+                except Exception as e:
+                    error_msg = f"Row {row_num}: {str(e)}"
+                    if "duplicate" in str(e).lower():
+                        duplicate_users.add(username)
+                        error_msg = f"Row {row_num}: User '{username}' already exists"
+                    error_messages.append(error_msg)
+                    continue
+
+            if success_count > 0:
+                messages.success(request, f"Successfully imported {success_count} assets")
+                if created_users:
+                    messages.info(request, f"Created {len(created_users)} new user profiles")
+                if duplicate_users:
+                    messages.warning(request, f"Skipped {len(duplicate_users)} duplicate users")
+                return redirect('/table_asset/')
+            
+            return render(request, 'asset_register/upload_asset.html', {
+                'error': "No assets were imported",
+                'error_count': len(error_messages),
+                'detailed_errors': error_messages[:20],
+                'created_users': sorted(created_users),
+                'duplicate_users': sorted(duplicate_users),
+            })
+            
         except Exception as e:
-            print("Error:", e)
-            return render(request, 'asset_register/upload_asset.html', {'error': str(e)})
+            return render(request, 'asset_register/upload_asset.html', {
+                'error': f"File processing error: {str(e)}"
+            })
 
     return render(request, 'asset_register/upload_asset.html', {})
-
 
 
 

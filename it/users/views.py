@@ -510,7 +510,7 @@ def datatable_data(request):
         return JsonResponse({"status": "error", "message": "An error occurred while fetching the users"})
 
 @login_required
-@allowed_roles(['Administrator'], ['users'])
+#@allowed_roles(['Administrator'], ['users'])
 def update_user(request):
     if request.method == "GET":
         user_profile = UserProfile.objects.get(id=request.GET['i'])

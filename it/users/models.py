@@ -94,7 +94,7 @@ class Designations(models.Model):
     region = models.ForeignKey(Regions, on_delete=models.DO_NOTHING, blank=True, null=True)
 
     def __str__(self):
-        return self.identifier
+        return self.description
 
 
 class CostCenter(models.Model):

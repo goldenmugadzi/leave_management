@@ -117,6 +117,7 @@ INSTALLED_APPS = [
     'finance.Direct_purchases',
     'ACE2',
     'esearch',
+    'Transport',
     'Hardware_Faults',
     'Asset_Register',
     'reports',

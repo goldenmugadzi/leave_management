@@ -122,11 +122,19 @@ APPLICATIONS = [
         "iconUrl": "assets/images/register.png",
         "url": "/table_asset/"
     },
+<<<<<<< HEAD
     {
         "name": "comm_files",
         "title": "Commercial Files",
         "iconUrl": "assets/images/customer.png",
         "url": "/commercial/customers"
+=======
+      {
+        "name": "transport_register",
+        "title": "Transport Vehicle Register",
+        "iconUrl": "assets/images/transport.png",
+        "url": "/table_vehicle/"
+>>>>>>> origin/notification
     },
 ]
 
