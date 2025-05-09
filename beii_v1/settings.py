@@ -18,7 +18,7 @@ SECRET_KEY = 'django-insecure-7per#nouy422m0!hn0!ecb7ltnq#!^#g!2r5&%^5c%v(!ivv&a
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=False, cast=bool)
 
-ALLOWED_HOSTS = [config('HOST'), "127.0.0.1", "172.16.8.99", "172.16.28.32"]
+ALLOWED_HOSTS = [config('HOST'), "127.0.0.1", "172.16.29.32", "172.16.28.32", "172.16.8.99"]
 
 CORS_ALLOWED_ORIGINS = [
     config('BASE_URL') + ":" + config('PORT'),
@@ -117,6 +117,7 @@ INSTALLED_APPS = [
     'finance.Direct_purchases',
     'ACE2',
     'esearch',
+    'Transport',
     'Hardware_Faults',
     'Asset_Register',
     'reports',
@@ -160,7 +161,8 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-                'it.beii_auth.context_processors.environment_vars'
+                'it.beii_auth.context_processors.environment_vars',
+                'it.beii_auth.context_processors.captcha_context',
             ],
         },
     },
@@ -292,3 +294,8 @@ STATICFILES_DIRS = [BASE_DIR / "static", BASE_DIR / "uploads", BASE_DIR / "media
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LOGIN_REDIRECT_URL = '/dashboards/overview'
+
+# Add RECAPTCHA settings
+RECAPTCHA_PUBLIC_KEY = config('RECAPTCHA_SITE_KEY', default='your_site_key_here')
+RECAPTCHA_PRIVATE_KEY = config('RECAPTCHA_SECRET_KEY', default='your_secret_key_here')
+RECAPTCHA_ENABLED = False  # Set to False to disable reCAPTCHA temporarily
