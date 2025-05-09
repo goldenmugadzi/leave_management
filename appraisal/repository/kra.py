@@ -1,10 +1,13 @@
 from typing import List
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models.query import QuerySet
+from django.core.files.uploadedfile import UploadedFile
+from django.core.files.storage import default_storage
 
-from ..models import KeyResultArea, YearQuarter, Activity, TargetScore, Appraisal, AppraisalKra, AppraisalKraReviewerStatus, PerformanceDimension
+from ..models import KeyResultArea, YearQuarter, Activity, TargetScore, Appraisal, AppraisalKra, AppraisalKraReviewerStatus, PerformanceDimension, ScoreDocument
 from ..helpers.types.kra import KRAType, TargetScoreType, KraRolesCreateType, ActivityType, PerformanceDimensionType
 from it.users.models import UserProfile, Application, Roles
+from loguru import logger
 
 class KRARepository:
     def create(self, appraisal: Appraisal, data: KRAType)->KeyResultArea:
@@ -304,12 +307,12 @@ class TargetScoreRepository:
         except Exception as e:
             raise Exception(f"score create repo failed with error: {e}")
 
-    def get_by_id(self, score_id: int)->TargetScore:
+    def get_by_id(self, score_id: int)->TargetScore|None:
         try:
             qr = TargetScore.objects.select_related('performance_dimension').filter(id=score_id)
 
             if not qr.exists():
-                raise TargetScore.DoesNotExist
+                return None
 
             return qr.first()
         except Exception as e:
@@ -541,3 +544,62 @@ class PerformanceDimensionRepository:
             return performance_dimension_obj
         except Exception as e:
             raise Exception(f"PerformanceDimensionRepository update Repo failed with error: {e}")
+
+
+
+class ScoreDocumentRepository:
+    def create(self, score_obj: TargetScore, name: str, file: UploadedFile) -> ScoreDocument:
+        try:
+            return ScoreDocument.objects.create(name=name, target_score=score_obj, documents=file)
+        except Exception as e:
+            raise Exception(f"[ScoreDocumentRepository] create repo failed with error: {e}")
+    
+    def fetch_by_score_id(self, score_id: int)->QuerySet[ScoreDocument]:
+        try:
+            return ScoreDocument.objects.filter(target_score__id=score_id)
+        except Exception as e:
+            raise ValueError(f"[ScoreDocumentRepository]  fetch_by_score_id failed with error: {e}")
+    
+    
+    def get_by_id(self, score_doc_id: int)->ScoreDocument|None:
+        """Retrieve single obj by its id, 
+
+        Args:
+            score_doc_id (int): primary key
+
+        Raises:
+            ValueError: Unexpected error
+
+        Returns:
+            ScoreDocument|None: None if obj not found else obj is returned.
+        """
+        try:
+            qr = ScoreDocument.objects.filter(id=score_doc_id)
+            
+            if not qr.exists():
+                return None
+            return qr.first()
+        except Exception as e:
+            raise ValueError(f"[ScoreDocumentRepository]  get_by_score_id failed with error: {e}")
+
+    def delete_obj(self, score_doc_obj: ScoreDocument)->None:
+        try:
+            document_path = score_doc_obj.documents.path
+            
+            if not default_storage.exists(document_path):
+                raise Exception("ScoreDocument  does not exist")
+            
+            score_doc_obj.delete()
+            default_storage.delete(document_path)   
+        except Exception as e:
+            raise ValueError(f"[ScoreDocumentRepository]  delete_obj with ID {score_doc_obj.id} failed with error: {e}")
+
+    def update(self, score_doc_obj: ScoreDocument, name: str, file: UploadedFile)->ScoreDocument:
+        try:
+            if score_doc_obj.name != name:
+                score_doc_obj.name = name
+            score_doc_obj.documents = file
+            score_doc_obj.save()
+            return score_doc_obj
+        except Exception as e:
+            raise Exception(f"ScoreDocumentRepository update repo with score doc obj pk: {score_doc_obj.id},  failed with error: {e}")

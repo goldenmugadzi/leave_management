@@ -1,14 +1,16 @@
 from typing import Dict
 from django.urls import reverse
-from django.views.generic import TemplateView
-from django.views.generic.edit import CreateView, UpdateView
+from django.views.generic.edit import UpdateView, CreateView
 from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib import messages
 from django.http import Http404, HttpResponseServerError
-from ...models import TargetScore
-from ...forms import TargetScoreForm
-from ...repository.kra import KraActivityRepository, TargetScoreRepository
-from ...services.kra import ActivityService, TargetScoreService
+from django.http.response import HttpResponseRedirect
+
+from ...models import TargetScore, ScoreDocument
+from ...forms import TargetScoreForm, ScoreDocumentForm
+
+from ...repository.kra import TargetScoreRepository, ScoreDocumentRepository
+from ...services.kra import TargetScoreService
 from ...helpers.setters import set_approval_process
 
 from .helper import build_payload_score
@@ -24,28 +26,34 @@ class TargetScoreUpdateView(SuccessMessageMixin, UpdateView):
     success_message = 'Scoring was set successfully'
     context_object_name = "score_form"
 
-    @property
     def get_target_score_object(self):
         repo = TargetScoreRepository()
+        performance_dimension_id = self.kwargs.get("performance_dimension_id")
         try:
-            return repo.get_by_activity_id(activity_id=self.kwargs.get("activity_id"))
+            return repo.get_by_performance_dimension_id(performance_dimension_id=performance_dimension_id)
         except TargetScore.DoesNotExist:
             raise Http404("Score object not found")
         except Exception as e:
-            logger.error(f"Update view for TargetScore with activity pk-{self.kwargs.get('activity_id')}, failed with error: {e}")
+            logger.error(f"Update view for TargetScore with performance_dimension pk-{performance_dimension_id}, failed with error: {e}")
             return HttpResponseServerError("Something went wrong, please try again.")
 
     def get_object(self, queryset=None):
         """
-        Override the default get_object method to retrieve the activity object using a custom service.
+        Override the default get_object method to retrieve the performance_dimension object using a custom service.
         """
-        obj = self.get_target_score_object
+        obj = self.get_target_score_object()
         return obj
+    
+    def get_score_documents(self):
+        repo = ScoreDocumentRepository()
+        qr = repo.fetch_by_score_id(score_id=self.get_object().id)
+        return {"score_documents_qr": qr}
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context[self.context_object_name] = context.get("form")
-        context["target_score_object"] = self.get_target_score_object
+        context.update(self.get_score_documents())
+        context["target_score_object"] = self.get_target_score_object()
         return context
 
     def form_valid(self, form):
@@ -68,4 +76,152 @@ class TargetScoreUpdateView(SuccessMessageMixin, UpdateView):
         """
         Redirects to the index page after successful update.
         """
-        return reverse('score_view', kwargs={"activity_id": self.kwargs.get('activity_id')})
+        return reverse('score_view', kwargs={"performance_dimension_id": self.kwargs.get('performance_dimension_id')})
+
+class ScoreDocumentCreateView(SuccessMessageMixin, CreateView):
+    model = ScoreDocument
+    form_class = ScoreDocumentForm
+    template_name = 'appraisal/kra/targets/score_docs/create_update.html'
+    success_message = 'Supporting document was set successfully'
+    context_object_name = "score_document_form"
+
+    def get_target_score_object(self):
+        repo = TargetScoreRepository()
+        score_id = self.kwargs.get("target_score_id")
+        try:
+            obj = repo.get_by_id(score_id=score_id)
+            if obj is None:
+                raise Http404("Score object not found") 
+            return obj
+        except Exception as e:
+            logger.error(f"[ScoreDocumentCreateView] with score obj pk - {score_id}, failed with error: {e}")
+            return HttpResponseServerError("Something went wrong, please try again.")
+
+    def get(self, request, *args, **kwargs):
+        self.object = None
+        self.get_target_score_object()
+        context = self.get_context_data(**kwargs)
+        return self.render_to_response(context)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["is_create"] = True
+        context[self.context_object_name] = context.get("form")
+        return context
+
+    def form_valid(self, form):
+        try:
+            file_name = form.cleaned_data.get('name')
+            file_obj = self.request.FILES.get('documents')
+            repo = ScoreDocumentRepository()
+            score_doc_obj = repo.create(score_obj=self.get_target_score_object(), name=file_name, file=file_obj)
+ 
+            form.instance = score_doc_obj
+        except ValidationError:
+            return super().form_invalid(form)
+        except Exception as e:
+            logger.error(f"[ScoreDocumentCreateView] form_valid, failed with error: {e}")
+            messages.error(self.request, f"something went wrong, please try again")
+            return super().form_invalid(form)
+        return super().form_valid(form)
+
+    def get_success_url(self) -> str:
+        """
+        Redirects to the index page after successful update.
+        """
+        return reverse('score_view', kwargs={"performance_dimension_id": self.kwargs.get('performance_dimension_id')})
+
+class ScoreDocumentUpdateView(SuccessMessageMixin, UpdateView):
+    model = ScoreDocument
+    form_class = ScoreDocumentForm
+    template_name = 'appraisal/kra/targets/score_docs/create_update.html'
+    success_message = 'Supporting document was set successfully'
+    context_object_name = "score_document_form"
+
+    def get_target_score_object(self):
+        repo = TargetScoreRepository()
+        score_id = self.kwargs.get("target_score_id")
+        try:
+            obj = repo.get_by_id(score_id=score_id)
+            if obj is None:
+                raise Http404("Score object not found") 
+            return obj
+        except Exception as e:
+            logger.error(f"[ScoreDocumentUpdateView] with score obj pk - {score_id}, failed with error: {e}")
+            return HttpResponseServerError("Something went wrong, please try again.")
+
+    def get_score_doc_object(self):
+        repo = ScoreDocumentRepository()
+        score_doc_id = self.kwargs.get("score_doc_id")
+        try:
+            obj = repo.get_by_id(score_doc_id=score_doc_id)
+            if obj is None:
+                raise Http404("Score supporting document object not found") 
+            return obj
+        except Exception as e:
+            logger.error(f"[ScoreDocumentUpdateView] with score doc obj pk - {score_doc_id}, failed with error: {e}")
+            return HttpResponseServerError("Something went wrong, please try again.")
+    
+    def get_object(self, queryset = ...):
+        return self.get_score_doc_object()
+    
+    def get(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        self.get_target_score_object()
+        context = self.get_context_data(**kwargs)
+        return self.render_to_response(context)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["is_create"] = False
+        context[self.context_object_name] = context.get("form")
+        return context
+
+    def form_valid(self, form):
+        try:
+            file_name = form.cleaned_data.get('name')
+            file_obj = self.request.FILES.get('documents')
+            repo = ScoreDocumentRepository()
+            score_doc_obj = repo.update(score_doc_obj=self.get_object(), name=file_name, file=file_obj)
+ 
+            form.instance = score_doc_obj
+        except ValidationError:
+            return super().form_invalid(form)
+        except Exception as e:
+            logger.error(f"[ScoreDocumentUpdateView] form_valid, failed with error: {e}")
+            messages.error(self.request, f"something went wrong, please try again")
+            return super().form_invalid(form)
+        return super().form_valid(form)
+    
+    def post(self, request, *args, **kwargs):
+        """
+        Handle POST requests: instantiate a form instance with the passed
+        POST variables and then check if it's valid.
+        """
+        if "delete_request" in self.request.POST:
+            repo = ScoreDocumentRepository()
+            try:
+                repo.delete_obj(score_doc_obj=self.get_object())
+                messages.success(self.request, "Supporting document deleted successfully")
+            except Exception as e:
+                logger.error(f"[ScoreDocumentUpdateView] deletion request failed with error: {e}")
+                messages.error(self.request, "Supporting document deletion failed, please try again")
+            
+                
+            return HttpResponseRedirect(self.get_success_url())
+        
+        form = self.get_form()
+        if form.is_valid():
+            return self.form_valid(form)
+        else:
+            return self.form_invalid(form)
+
+    def get_success_url(self) -> str:
+        """
+        Redirects to the index page after successful update.
+        """
+        return reverse('score_view', kwargs={"performance_dimension_id": self.kwargs.get('performance_dimension_id')})
+
+
+    
+

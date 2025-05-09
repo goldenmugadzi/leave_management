@@ -2,7 +2,8 @@ from typing import Any
 from django.forms import inlineformset_factory, modelformset_factory, formset_factory
 from .appraisal import AppraisalExperienceForm, UserQualificationForm
 from .training import InterventionStrategyForm, CompetencyForm
-from ..models import AppraisalExperience, Appraisal, InterventionStrategy
+from .kra import ScoreDocumentForm
+from ..models import AppraisalExperience, Appraisal, InterventionStrategy, ScoreDocument
 from it.users.models import UserQualification
 
 AppraisalExperienceFormset = inlineformset_factory(
@@ -27,5 +28,11 @@ CompetencyFormSet = formset_factory(
 InterventionStrategyFormSet = modelformset_factory(
     model=InterventionStrategy,
     form=InterventionStrategyForm,
+    extra=1
+)
+
+ScoreDocumentFormset = modelformset_factory(
+    model=ScoreDocument,
+    form=ScoreDocumentForm,
     extra=1
 )

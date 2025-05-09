@@ -104,7 +104,8 @@ class TargetScore(TimeStamp):
     
 class ScoreDocument(TimeStamp):
     target_score = models.ForeignKey(TargetScore, on_delete=models.CASCADE, related_name='documents')
-    document = models.FileField(upload_to='uploads/appraisal/score_attachments')
+    name = models.CharField(max_length=255, blank=False, null=False)
+    documents = models.FileField(upload_to='uploads/appraisal/score_attachments')
 
     def __str__(self):
         return f"Document for {self.target_score}"

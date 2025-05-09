@@ -31,7 +31,9 @@ from .view import (AppraisalCreateView,
                    AppraisalKraReviewerStatusUpdateView,
                    PerformanceDimensionTemplateView,
                    PerformanceDimensionTemplateCreateView,
-                   PerformanceDimensionTemplateUpdateView
+                   PerformanceDimensionTemplateUpdateView,
+                   ScoreDocumentCreateView,
+                   ScoreDocumentUpdateView
                    )
 
 urlpatterns = [
@@ -68,7 +70,6 @@ urlpatterns = [
     path('kra/appraisal-kra/<int:appraisal_kra_id>', AppraisalKraUpdateView.as_view(), name='appraisal_kra_update'),
     path('kra/appraisal-kra/detail/<int:appraisal_kra_id>', AppraisalKraDetailView.as_view(), name='appraisal_kra_detail'),
     
-    path('kra/activity/<int:activity_id>/score', TargetScoreUpdateView.as_view(), name='score_view'),
     
     path('kra/<int:appraisal_kra_id>/activity', KraActivityIndexTemplateView.as_view(), name='kra_activity_index'),
     path('kra/<int:appraisal_kra_id>/activity/new', KraActivityCreateView.as_view(), name='kra_activity_create'),
@@ -77,6 +78,10 @@ urlpatterns = [
     path('kra/activity/<int:activity_id>/performance-dimension', PerformanceDimensionTemplateView.as_view(), name='performance_dimension_index'),
     path('kra/activity/<int:activity_id>/performance-dimension/new', PerformanceDimensionTemplateCreateView.as_view(), name='performance_dimension_create'),
     path('kra/activity/<int:activity_id>/performance-dimension/<int:performance_dimension_id>', PerformanceDimensionTemplateUpdateView.as_view(), name='performance_dimension_update'),
+    path('kra/activity/performance-dimension/<int:performance_dimension_id>/score', TargetScoreUpdateView.as_view(), name='score_view'),
+    
+    path('kra/activity/performance-dimension/<int:performance_dimension_id>/scoring/<int:target_score_id>/docs/new', ScoreDocumentCreateView.as_view(), name='score_doc_create'),
+    path('kra/performance-dimension/<int:performance_dimension_id>/scoring/<int:target_score_id>/docs/<int:score_doc_id>/view', ScoreDocumentUpdateView.as_view(), name='score_doc_update'),
 
     # ========================= Reviewer status =======================
     path('kra/reviewer-status/<int:appraisal_kra_id>', AppraisalKraReviewerStatusUpdateView.as_view(), name='appraisal_kra_reviewer_status_update'),
