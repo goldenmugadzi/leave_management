@@ -1007,12 +1007,13 @@ def notify_uncleared_pettycash_dischargers(request):
     from django.utils import timezone
     now = timezone.now()
     one_week_ago = now - timedelta(days=7)
-    # Find all petty cash items disbursed more than a week ago, not yet cleared
+    current_year = now.year
+    # Only consider petty cash for the current year
     uncleared_pettycash = Pettycash.objects.filter(
         amount_disbursed__isnull=False,
         amount_disbursed__gt=0,
-        # Not yet cleared
         amount_used__isnull=True,
+        date_created__year=current_year,
         # Optionally, you may want to also check receipt_file__isnull=True
     )
     for pc in uncleared_pettycash:
