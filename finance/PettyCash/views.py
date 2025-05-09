@@ -1008,12 +1008,19 @@ def notify_uncleared_pettycash_dischargers(request):
     now = timezone.now()
     one_week_ago = now - timedelta(days=7)
     current_year = now.year
-    # Only consider petty cash for the current year
+
+    # Get the user's region
+    user_id = request.user.id
+    user_profile = UserProfile.objects.filter(id=user_id).first()
+    region = user_profile.region if user_profile else None
+
+    # Only consider petty cash for the current year and user's region
     uncleared_pettycash = Pettycash.objects.filter(
         amount_disbursed__isnull=False,
         amount_disbursed__gt=0,
         amount_used__isnull=True,
         date_created__year=current_year,
+        region=region,  # <-- Filter by region
         # Optionally, you may want to also check receipt_file__isnull=True
     )
     for pc in uncleared_pettycash:
