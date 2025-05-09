@@ -57,7 +57,6 @@ def pettyCash_detail(request, petty_id):
         payment_mode = request.POST.get('payment_mode')
         amount_disbursed = request.POST.get('amount_disbursed')
         payee = request.POST.get('payee')
-        print(payment_mode)
         if payment_mode and payment_mode != '':
             pettycash_item.payment_mode = payment_mode
             pettycash_item.amount_disbursed = amount_disbursed
@@ -66,14 +65,18 @@ def pettyCash_detail(request, petty_id):
             user = pettycash_item.requested_by
             userp = UserProfile.objects.filter(id=user.id).first()
 
-            msg = "Your Pettycash " + pettycash_item.petty_id + " has a payment method added by Cashier"
-            url = "/pettycash/pettycash_detail/" + pettycash_item.petty_id
-            notify_user(userp, msg, "Pettycash", url, pettycash_item.petty_id, request)
+            # Check if notification already exists within last hour
+            recent_notification = Notification.objects.filter(
+                user=userp,
+                notification_id=pettycash_item.petty_id,
+                notification_type='Pettycash',
+                created_at__gte=datetime.now(timezone.utc) - timedelta(hours=1)
+            ).exists()
 
-            # --- Notify user that funds have been disbursed ---
-            msg_disbursed = f"Funds for Pettycash {pettycash_item.petty_id} have been disbursed. Please collect and acquit as soon as possible."
-            notify_user(userp, msg_disbursed, "Pettycash", url, pettycash_item.petty_id, request)
-            # --------------------------------------------------
+            if not recent_notification:
+                msg = f"Your Pettycash {pettycash_item.petty_id} has been disbursed. Amount: {amount_disbursed}"
+                url = f"/pettycash/pettycash_detail/{pettycash_item.petty_id}"
+                notify_user(userp, msg, "Pettycash", url, pettycash_item.petty_id, request)
 
     approvalForm = None
     to = None
@@ -809,22 +812,28 @@ def receipt(request):
         pettycash.receipt_file = receipt_file
         pettycash.amount_used = used_float
         pettycash.save()
-        messages.success(request, 'Receipt uploaded successfully')
 
-        # --- Notify disburser that the petty cash has been cleared ---
-        # Find the disburser from the approvals (step with role 'disburse')
+        # Check for recent notifications to disburser
         if pettycash.process and pettycash.process.approval_set.exists():
             approvals = pettycash.process.approval_set.order_by('approved_at')
             for approval in approvals:
-                # Check if this approval's step/role is 'disburse'
                 if hasattr(approval.step, 'role') and getattr(approval.step.role, 'role', None) == 'disburse':
                     disburser = approval.user
-                    msg_cleared = f"Pettycash {pettycash.petty_id} you disbursed has now been cleared by the user."
-                    url = f"/pettycash/pettycash_detail/{pettycash.petty_id}"
-                    notify_user(disburser, msg_cleared, "Pettycash", url, pettycash.petty_id, request)
+                    recent_notification = Notification.objects.filter(
+                        user=disburser,
+                        notification_id=pettycash.petty_id,
+                        notification_type='Pettycash',
+                        message__icontains='cleared',
+                        created_at__gte=datetime.now(timezone.utc) - timedelta(hours=1)
+                    ).exists()
+                    
+                    if not recent_notification:
+                        msg_cleared = f"Pettycash {pettycash.petty_id} you disbursed has now been cleared by the user."
+                        url = f"/pettycash/pettycash_detail/{pettycash.petty_id}"
+                        notify_user(disburser, msg_cleared, "Pettycash", url, pettycash.petty_id, request)
                     break
-        # ------------------------------------------------------------
 
+        messages.success(request, 'Receipt uploaded successfully')
         return redirect('pettycash:pettycash_detail', petty_id=pettycash.petty_id)
     else:
         return redirect('/pettycash/pettycashs')
@@ -1065,11 +1074,12 @@ def notify_uncleared_pettycash_dischargers(request):
                     else:
                         section_head_user = section_head
                     if section_head_user:
+                        # Prevent duplicate escalation messages
                         recent_escalation = Notification.objects.filter(
                             user=section_head_user,
                             notification_id=pc.petty_id,
                             notification_type='Pettycash',
-                            message__icontains='escalated',
+                            message__icontains='[Escalation] Petty cash',
                             created_at__gte=very_old_threshold
                         ).exists()
                         if not recent_escalation:
