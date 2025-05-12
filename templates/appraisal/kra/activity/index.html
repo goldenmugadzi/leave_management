@@ -54,7 +54,7 @@
            <tr class="hover:bg-blue-100">
              <td class="px-6 py-4 text-md text-blue-900 truncate max-w-xs">{{activity_obj.name}}</td>
              <td class="px-6 py-4 text-md text-blue-900">{{activity_obj.weight}} %</td>
-             <td class="px-6 py-4 text-md text-blue-900">0.0</td>
+             <td class="px-6 py-4 text-md text-blue-900">{{activity_obj.id|get_activity_total_score}}</td>
              <td>
               <div class="flex justify-even gap-1">
                 <a href="{% url 'kra_activity_update' activity_obj.id %}"
