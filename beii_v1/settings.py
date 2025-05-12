@@ -121,6 +121,7 @@ INSTALLED_APPS = [
     'Transport',
     'Hardware_Faults',
     'Asset_Register',
+    'widget_tweaks',
     'reports',
     'sweetify',
     'mathfilters',

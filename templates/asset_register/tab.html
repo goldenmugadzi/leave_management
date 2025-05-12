@@ -1,0 +1,193 @@
+{% extends 'admin_layout.html' %}
+
+{% block styles %}
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+  <style>
+    .dataTables_wrapper .dataTables_length select {
+      width: 4rem;
+    }
+    .tab-button {
+      padding: 0.5rem 1rem;
+      border: 2px solid transparent;
+      border-radius: 0.375rem;
+      cursor: pointer;
+      transition: background-color 0.3s, color 0.3s;
+      text-align: center;
+    }
+    .tab-button.active {
+      background-color: #1d4ed8;
+      color: white;
+      border-color: #1d4ed8;
+    }
+    .tab-button:hover {
+      background-color: #2563eb;
+      color: white;
+    }
+    .tab-content {
+      display: none;
+    }
+    .tab-content.active {
+      display: block;
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+<div class="content-wrapper">
+  <!-- Main Navigation Tabs -->
+  <div class="flex mb-4 border-b">
+    <button id="assetsTab" class="tab-button active mr-2">Assets</button>
+    <button id="faultsTab" class="tab-button">Faults</button>
+  </div>
+
+  <!-- Assets Tab Content -->
+  <div id="assetsContent" class="tab-content active">
+    <div class="bg-gulf-blue-100 shadow shadow-gulf-blue-300 text-gulf-blue-900 rounded px-2 py-2">
+      <div class="flex justify-between items-center mb-5">
+        <span class="text-lg font-bold text-black">Asset Management</span>
+        {% if is_technician %}
+        <div class="mb-4 flex space-x-4 p-2 bg-white rounded-lg shadow-md">
+          <a href="/createAsset" class="tab-button">Create Asset</a>
+          <a href="/table_product" class="tab-button">Create Product</a>
+          <a href="/upload_asset" class="tab-button">Upload File</a>
+        </div>
+        {% endif %}
+      </div>
+      <div class="overflow-x-auto">
+        <table id="assetTable" class="display" style="width: 100%">
+          <!-- Your asset table structure -->
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Faults Tab Content -->
+  <div id="faultsContent" class="tab-content">
+    <div class="bg-gulf-blue-100 shadow shadow-gulf-blue-300 text-gulf-blue-900 rounded px-2 py-2">
+      <div class="flex justify-between items-center mb-5">
+        <span class="text-lg font-bold text-black">Faults Management</span>
+        {% if is_technician %}
+        <div class="mb-4 flex space-x-4 p-2 bg-white rounded-lg shadow-md">
+          <a href="/createFault" class="tab-button">Create Fault</a>
+          <a href="/upload_fault" class="tab-button">Upload File</a>
+        </div>
+        {% endif %}
+      </div>
+      <table id="faultsTable" class="display" style="width: 100%">
+        <!-- Your faults table structure -->
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- Common Scripts -->
+<script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.2.2/js/dataTables.buttons.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.2.2/js/buttons.html5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.2.2/js/buttons.print.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.36/pdfmake.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.36/vfs_fonts.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
+
+<script>
+const is_technician = "{{ is_technician|lower }}" === "true";
+
+// Tab Switching Functionality
+document.addEventListener('DOMContentLoaded', function() {
+  const assetsTab = document.getElementById('assetsTab');
+  const faultsTab = document.getElementById('faultsTab');
+  const assetsContent = document.getElementById('assetsContent');
+  const faultsContent = document.getElementById('faultsContent');
+
+  // Initialize with Assets tab active
+  assetsTab.classList.add('active');
+  assetsContent.classList.add('active');
+
+  assetsTab.addEventListener('click', function() {
+    assetsTab.classList.add('active');
+    faultsTab.classList.remove('active');
+    assetsContent.classList.add('active');
+    faultsContent.classList.remove('active');
+    $('#assetTable').DataTable().columns.adjust().draw();
+  });
+
+  faultsTab.addEventListener('click', function() {
+    faultsTab.classList.add('active');
+    assetsTab.classList.remove('active');
+    faultsContent.classList.add('active');
+    assetsContent.classList.remove('active');
+    $('#faultsTable').DataTable().columns.adjust().draw();
+  });
+
+  // Initialize DataTables
+  initializeAssetTable();
+  initializeFaultsTable();
+});
+
+function initializeAssetTable() {
+  $("#assetTable").DataTable({
+    processing: true,
+    serverSide: true,
+    ajax: {
+      url: "/asset_datatable",
+      error: function(xhr, error, thrown) {
+        console.error("Asset DataTable error:", xhr.responseText);
+      }
+    },
+    columns: [
+      { data: "id" },
+      { data: "product_type" },
+      // ... rest of your asset columns
+      {
+        data: "id",
+        render: function(data, type, row) {
+          if (is_technician) {
+            return `<a href="/update_asset/${data}" class="btn btn-info"> 
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+              </svg></a>`;
+          }
+          return '';
+        }
+      }
+    ],
+    order: [[0, 'desc']]
+  });
+}
+
+function initializeFaultsTable() {
+  $("#faultsTable").DataTable({
+    processing: true,
+    serverSide: true,
+    ajax: {
+      url: "/faults_datatable",
+      error: function(xhr, error, thrown) {
+        console.error("Faults DataTable error:", xhr.responseText);
+      }
+    },
+    columns: [
+      { data: "id" },
+      { data: "jobcardnumber" },
+      // ... rest of your faults columns
+      {
+        data: "id",
+        render: function(data, type, row) {
+          if (is_technician) {
+            return `<a href="/update_fault/${data}" class="btn btn-info">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+              </svg>
+            </a>`;
+          }
+          return '';
+        }
+      }
+    ],
+    order: [[5, 'desc']]
+  });
+}
+</script>
+{% endblock %}
