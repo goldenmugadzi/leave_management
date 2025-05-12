@@ -209,6 +209,25 @@ class PerformanceDimensionService:
         except Exception as e:
             raise KRAErr(f"[PerformanceDimensionService] get_activities_performance_dimension_weight_progress with activity pk {activity_weight.id}, failed with error {e}")
 
+    def calculate_total_performance_dimensions_weighted_score_per_activity(self, activity_id)->float:
+        try:
+            performance_dimension_qr = self.repo.fetch_by_activity_id(activity_id=activity_id)
+        except Exception as e:
+            raise KRAErr(f"Failed to fetch performance dimension by activity pk with error: {e}")
+
+        try:
+            total_weight = Decimal(0)
+            score_service_handler = TargetScoreService(target_score_repository=TargetScoreRepository())
+
+            for performance_dimension_obj in performance_dimension_qr:
+                weighted_score = score_service_handler.calculate_performance_dimension_weighted_score(performance_dimension_id=performance_dimension_obj.id)
+                total_weight += weighted_score
+
+            return total_weight
+        except Exception as e:
+            raise KRAErr(f"Failed calculate_total_performance_dimensions_weighted_score_per_activity() with error: {e}")
+        
+    
     def performance_indicator_exists(self, activity_id, performance_indicator: str)->bool:
         qr = self.repo.fetch_by_activity_id_performance_indicator(activity_id=activity_id, performance_indicator=performance_indicator)
         
