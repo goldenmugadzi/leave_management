@@ -417,7 +417,7 @@ def pettycash_awaiting_my_action(request):
 
                 if step:
                     pettycashs_to_process.append(pettycash)
-                print('outside')
+                # print('outside')
 
     return render(request, 'finance/pettycash/view_all_pettycashs.html', {'pettycashs': pettycashs_to_process,
                                                                           'pettycash_role': pettycash_role,
