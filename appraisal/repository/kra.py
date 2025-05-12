@@ -509,6 +509,13 @@ class PerformanceDimensionRepository:
         except Exception as e:
             raise Exception(f"PerformanceDimensionRepository fetch by activity id failed with error: {e}")
     
+    def fetch_by_appraisal_kra_id(self, appraisal_kra_id: int)->QuerySet[PerformanceDimension]:
+        try:
+            return PerformanceDimension.objects.select_related('activity').filter(activity__appraisal_kra__id=appraisal_kra_id)
+  
+        except Exception as e:
+            raise Exception(f"PerformanceDimensionRepository fetch_by_appraisal_kra_id failed with error: {e}")
+    
     def fetch_by_id(self, performance_dimension_id: int)->QuerySet[PerformanceDimension]:
         try:
             return PerformanceDimension.objects.select_related('activity').filter(id=performance_dimension_id)

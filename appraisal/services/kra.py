@@ -133,18 +133,18 @@ class ActivityService:
         except Exception as e:
             raise KRAErr(f"Failed to retrieve kra activities with error: {e}")
 
-    def calculate_total_activities_weighted_scores_per_kra(self, appraisal_kra_id: int, target_score_service_object: TargetScoreService)->float:
+    def calculate_total_activities_weighted_scores_per_appraisal_kra(self, appraisal_kra_id: int, target_score_service_object: TargetScoreService, performance_dimension_repo: PerformanceDimensionRepository)->float:
         try:
-            activities_objects = self.activity_repo.fetch_by_appraisal_kra_id(appraisal_kra_id=appraisal_kra_id)
+            performance_dimension_qr = performance_dimension_repo.fetch_by_appraisal_kra_id(appraisal_kra_id=appraisal_kra_id)
         except Exception as e:
-            raise KRAErr(f"Failed to fetch activities by appraisal kra pk with error: {e}")
+            raise KRAErr(f"Failed to calculate_total_activities_weighted_scores_per_appraisal_kra with error: {e}")
 
         try:
             total_weight = Decimal(0)
 
-            for activity_obj in activities_objects:
-                activity_weighted_score = target_score_service_object.calculate_activity_weighted_score(activity_id=activity_obj.id)
-                total_weight += activity_weighted_score
+            for performance_dimension_obj in performance_dimension_qr:
+                weighted_score = target_score_service_object.calculate_performance_dimension_weighted_score(performance_dimension_id=performance_dimension_obj.id)
+                total_weight += weighted_score
 
             return total_weight
         except Exception as e:
@@ -209,7 +209,7 @@ class PerformanceDimensionService:
         except Exception as e:
             raise KRAErr(f"[PerformanceDimensionService] get_activities_performance_dimension_weight_progress with activity pk {activity_weight.id}, failed with error {e}")
 
-    def calculate_total_performance_dimensions_weighted_score_per_activity(self, activity_id)->float:
+    def calculate_total_performance_dimensions_weighted_score_per_activity(self, activity_id, target_score_object: TargetScoreService)->float:
         try:
             performance_dimension_qr = self.repo.fetch_by_activity_id(activity_id=activity_id)
         except Exception as e:
@@ -217,10 +217,9 @@ class PerformanceDimensionService:
 
         try:
             total_weight = Decimal(0)
-            score_service_handler = TargetScoreService(target_score_repository=TargetScoreRepository())
 
             for performance_dimension_obj in performance_dimension_qr:
-                weighted_score = score_service_handler.calculate_performance_dimension_weighted_score(performance_dimension_id=performance_dimension_obj.id)
+                weighted_score = target_score_object.calculate_performance_dimension_weighted_score(performance_dimension_id=performance_dimension_obj.id)
                 total_weight += weighted_score
 
             return total_weight
