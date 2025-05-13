@@ -41,35 +41,58 @@
             <div style="max-height: 280px; overflow-y: auto;">
                 <table 
                     class="w-full border border-blue-800 rounded-lg shadow-lg">
-                    <thead class="bg-blue-800 text-white">
+                    <thead>
+    
                         <tr>
-                            <th class="px-6 py-3 text-left text-md font-semibold">Name</th>
-                            <th class="px-6 py-3 text-left text-md font-semibold">Weight</th>
-                            <th class="px-6 py-3 text-left text-md font-semibold">Agreed Target</th>
-                            <th class="px-6 py-3 text-left text-md font-semibold">Allowable Variance</th>
-                            <th class="px-6 py-3 text-left text-md font-semibold">Actual Performance</th>
-                            <th class="px-6 py-3 text-left text-md font-semibold">Actual Variance</th>
-                            <th class="px-6 py-3 text-left text-md font-semibold">Rating</th>
-                            <th class="px-6 py-3 text-left text-md font-semibold">Weighted Score</th>
+                            <th class="px-6 py-3 text-left text-md"></th>
+                            <th class="px-6 py-3 text-left text-md"></th>
+                            <th class="px-6 py-3 text-left text-md"></th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-blue-300 bg-blue-50">
-                        {% for score_obj in score_objects %}
-                            <tr class="hover:bg-blue-100">
-                                <td class="px-6 py-4 text-md text-blue-900 truncate max-w-xs">{{score_obj.activity.name}}</td>
-                                <td class="px-6 py-4 text-md text-blue-900">{{score_obj.activity.weight}} %</td>
-                                <td class="px-6 py-4 text-md text-blue-900">{{score_obj.activity.agreed_target}} %</td>
-                                <td class="px-6 py-4 text-md text-blue-900">(+-) {{score_obj.activity.allowable_variance}} %</td>
-                                <td class="px-6 py-4 text-md text-blue-900">{{score_obj.score}} %</td>
-                                <td class="px-6 py-4 text-md text-blue-900">(+-) {{score_obj.activity.id|get_activity_actual_variance}} %</td>
-                                <td class="px-6 py-4 text-md text-blue-900">{{score_obj.activity.id|get_activity_rating}}</td>
-                                <td class="px-6 py-4 text-md text-blue-900">{{score_obj.activity.id|get_activity_weighted_score}}</td>
-                            </tr>
+                        {% for activity in activities_data %}
+                        <tr class="hover:bg-blue-100">
+                            <td class="px-6 py-4 text-md text-blue-900 truncate max-w-xs font-bold">{{activity.activity_name}}</td>
+                            <td></td>
+                            <td class="px-6 py-4 text-md text-blue-900 truncate max-w-xs">{{activity.activity_weight}}</td>
+
+                            <td>
+                                <thead class="bg-blue-800 text-white">
+                                    <th class="px-6 py-3 text-left text-md font-semibold">Performance Indicator</th>
+                                    <th class="px-6 py-3 text-left text-md font-semibold">Description</th>
+                                    <th class="px-6 py-3 text-left text-md font-semibold">Weight %</th>
+                                    <th class="px-6 py-3 text-left text-md font-semibold">Agreed Target %</th>
+                                    <th class="px-6 py-3 text-left text-md font-semibold">Allowable Variance %</th>
+                                    <th class="px-6 py-3 text-left text-md font-semibold">Actual Performance %</th>
+                                    <th class="px-6 py-3 text-left text-md font-semibold">Actual Variance %</th>
+                                    <th class="px-6 py-3 text-left text-md font-semibold">Rating</th>
+                                    <th class="px-6 py-3 text-left text-md font-semibold">Weighted Score</th>
+                                    
+                                </thead>
+                                <tbody class="divide-y divide-blue-300 bg-blue-50">
+                                    {% for performance_dimension_obj in activity.activity_performance_dimension_qr %}
+                                        <tr>
+                                            <td class="px-6 py-4 text-md text-blue-900 truncate max-w-xs">{{performance_dimension_obj.performance_indicator}}</td>
+                                            <td class="px-6 py-4 text-md text-blue-900">{{performance_dimension_obj.description}}</td>
+                                            <td class="px-6 py-4 text-md text-blue-900">{{performance_dimension_obj.weight}}</td>
+                                            <td class="px-6 py-4 text-md text-blue-900">{{performance_dimension_obj.agreed_target}}</td>
+                                            <td class="px-6 py-4 text-md text-blue-900">(+-) {{performance_dimension_obj.allowable_variance}}</td>
+                                            <td class="px-6 py-4 text-md text-blue-900">{{performance_dimension_obj.id|get_target_score_by_performance_dimension_id}}</td>
+                                            <td class="px-6 py-4 text-md text-blue-900">(+-) {{performance_dimension_obj.id|get_performance_dimension_actual_variance}}</td>
+                                            <td class="px-6 py-4 text-md text-blue-900">{{performance_dimension_obj.id|get_performance_dimension_rating}}</td>
+                                            <td class="px-6 py-4 text-md text-blue-900">{{performance_dimension_obj.id|get_performance_dimension_weighted_score}}</td>
+                                        </tr>
+                                        {% endfor %}
+                                </tbody>
+                            </td>
+                            
+                        </tr>
                         {% endfor %}
                     </tbody>
                     <tfoot>
                         <tr>
                             <td class="font-bold">Total Score</td>
+                            <td></td>
                             <td></td>
                             <td></td>
                             <td></td>

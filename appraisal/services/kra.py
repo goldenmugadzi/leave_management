@@ -1,8 +1,9 @@
-from typing import List
+from typing import List, Dict, Annotated
 from dataclasses import dataclass
 from decimal import Decimal
 
 from django.db.models import Sum
+from django.db.models.query import QuerySet
 
 from ..repository.kra import KRARepository, KraActivityRepository, TargetScoreRepository, AppraisalKraRepository, PerformanceDimensionRepository
 from it.users.models import UserProfile
@@ -165,6 +166,24 @@ class ActivityService:
             return WeightProgressType(covered_weight=0, remaining_weight=appraisal_kra_object.get_weight)
         except Exception as e:
             raise KRAErr(f"Failed to get kra activities weight progress with error: {e}")
+
+    def get_activities_related_data_by_appraisal_kra_id(self, appraisal_kra_id: int, performance_dimension_repo: PerformanceDimensionRepository)->List[Dict[str, Annotated[str, int, QuerySet[PerformanceDimension]]]]:
+        try:
+            result = []
+            activity_qr = self.activity_repo.fetch_by_appraisal_kra_id(appraisal_kra_id=appraisal_kra_id)
+            
+            for activity_obj in activity_qr:
+                performance_dimension_qr = performance_dimension_repo.fetch_by_activity_id(activity_id=activity_obj.id)
+                data = {
+                    "activity_name": activity_obj.name,
+                    "activity_weight": activity_obj.weight,
+                    "activity_performance_dimension_qr": performance_dimension_qr
+                }
+                result.append(data)
+            
+            return result
+        except Exception as e:
+            raise KRAErr(f"[ActivityService] Failed get_activities_related_data_by_appraisal_kra_id with error: {e}")
 
 @dataclass
 class AppraisalKraService:
