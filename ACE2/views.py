@@ -1139,7 +1139,7 @@ def upload_aces_csv(request):
     else:
         return render(request, 'finance/ace2/upload_ace.html')
 
-
+@login_required
 def create_virament(request):
     # Creates new virament
     # 1. Initializes workflow process
@@ -1327,7 +1327,7 @@ def virament_detail(request, virament_id):
                                                                  'balance_before_from': balance_before_from,
                                                                  'balance_after_from': balance_after_from})
 
-
+@login_required
 def view_all_viraments(request):
     user_profile = UserProfile.objects.filter(id=request.user.id).first()
     if not user_profile.roles.filter(application="virement").exists():
@@ -1544,7 +1544,7 @@ def ace_report_detail_excel(request, report_id2):
     else:
         messages.error(request, "error")
 
-
+# @login_required
 def find_ace_section_head(request, section):
     all_users = UserProfile.objects.filter(section=section).all()
     # section_heads = UserProfile.objects.filter(section=section, role='section_head')
@@ -1572,7 +1572,7 @@ def find_ace_section_head(request, section):
     # Return None if no section head is found
     return None
 
-
+# @login_required
 def find_general_manager(request, region):
     all_users = UserProfile.objects.filter(region=region).all()
     # section_heads = UserProfile.objects.filter(section=section, role='section_head')
@@ -1602,8 +1602,8 @@ def find_general_manager(request, region):
         else:
             print("no users found")
 
-
-# transanctions on a budget
+# transactions on a budget
+@login_required
 def transactions_view(request, budget):
     transactions = Transactions.objects.filter(budget_id=budget)
     #return an view with an html table of transactions
