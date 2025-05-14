@@ -227,8 +227,6 @@ def show_asset_datatable(request):
                 "7": "regions__region",
                 "8": "purchase_cost",
                 "9": "designation__description",
-                #"10": "date_purchased",
-                #"11": "warrant",
                 "12": "cost_center__name",
                 "13": "model",
                 "14": "supplier",
