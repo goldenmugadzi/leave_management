@@ -22,9 +22,9 @@ def create_target_score_post_save_handler(sender, instance, created, **kwargs):
             payload = TargetScoreType(score=default_values)
             service_handler.create_use_case(performance_dimension_obj=instance, data=payload, attachments=[])
             
-            logger.success(f"[TargetScore]: created score target instance for performance dimension ({instance.performance_dimension})")
+            logger.success(f"[TargetScore]: created score target instance for performance dimension ({instance.performance_indicator})")
         except Exception as e:
-            logger.error(f"[TargetScore]: creating target for performance dimension ({instance.performance_dimension}), failed with error: {e} ")
+            logger.error(f"[TargetScore]: creating target for performance dimension ({instance.performance_indicator}), failed with error: {e} ")
    
 
 

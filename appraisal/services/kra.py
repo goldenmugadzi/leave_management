@@ -177,7 +177,8 @@ class ActivityService:
                 data = {
                     "activity_name": activity_obj.name,
                     "activity_weight": activity_obj.weight,
-                    "activity_performance_dimension_qr": performance_dimension_qr
+                    "activity_performance_dimension_qr": performance_dimension_qr,
+                    "performance_dimension_length": len(performance_dimension_qr)
                 }
                 result.append(data)
             

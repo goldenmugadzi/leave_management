@@ -156,7 +156,7 @@ class KraActivityCreateView(SuccessMessageMixin, CreateView):
             appraisal_kra_object = self.get_appraisal_kra_object
             
             appraisal_kra_progress = get_activity_weight_against_kra_weight(appraisal_kra_object=self.get_appraisal_kra_object)
-            if appraisal_kra_progress.remaining_kra_weight < payload.weight:
+            if appraisal_kra_progress.remaining_weight < payload.weight:
                 messages.error(self.request, "The activity weight cannot be greater than its KRA weight. Please adjust the activity weight to ensure it does not exceed the KRA weight.")
                 return self.form_invalid(form)
             
@@ -169,7 +169,8 @@ class KraActivityCreateView(SuccessMessageMixin, CreateView):
                 data=payload
                 )
             form.instance = activity_object
-        except Exception:
+        except Exception as e:
+            logger.error(f"[KraActivityCreateView] for appraisal kra id: {self.kwargs.get('appraisal_kra_id')}, failed with error: {e}")
             messages.error(self.request, f"An unexpected error occurred, please try again")
             return self.form_invalid(form)
 

@@ -238,7 +238,6 @@ class AppraisalKraDetailView(TemplateView):
         try:
             service_handler = ActivityService(activity_repo=KraActivityRepository())
             data = service_handler.get_activities_related_data_by_appraisal_kra_id(appraisal_kra_id=self.kwargs.get("appraisal_kra_id"), performance_dimension_repo=PerformanceDimensionRepository())
-            print("============>>>>>> ", data)
             return data
         except Exception as e:
             logger.error(f"[AppraisalKraDetailView] get_activities_related_data for Appraisal - {self.get_object().appraisal} failed with error: {e}")

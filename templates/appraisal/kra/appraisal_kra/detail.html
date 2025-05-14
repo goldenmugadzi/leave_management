@@ -38,74 +38,59 @@
                     </div>
                 {% endif %}
             {% endif %}
-            <div style="max-height: 280px; overflow-y: auto;">
-                <table 
-                    class="w-full border border-blue-800 rounded-lg shadow-lg">
-                    <thead>
-    
+            <div style="max-height: 600px; overflow-y: auto;">
+                <table class="w-full">
+                    <thead class="bg-blue-800 text-white rounded-2xl">
                         <tr>
-                            <th class="px-6 py-3 text-left text-md"></th>
-                            <th class="px-6 py-3 text-left text-md"></th>
-                            <th class="px-6 py-3 text-left text-md"></th>
+                            <th class="p-8 text-left text-md font-semibold border-2">Activity</th>
+                            <th class="p-8 text-left text-md font-semibold border-2">Indicator</th>
+                            <th class="p-8 text-left text-md font-semibold border-2">Description</th>
+                            <th class="p-8 text-left text-md font-semibold border-2">Weight</th>
+                            <th class="p-8 text-left text-md font-semibold border-2">Agreed Target</th>
+                            <th class="p-8 text-left text-md font-semibold border-2">Allowable Variance</th>
+                            <th class="p-8 text-left text-md font-semibold border-2">Actual Performance</th>
+                            <th class="p-8 text-left text-md font-semibold border-2">Actual Variance</th>
+                            <th class="p-8 text-left text-md font-semibold border-2">Rating</th>
+                            <th class="p-8 text-left text-md font-semibold border-2">Weight</th>
+                            <th class="p-8 text-left text-md font-semibold border-2">Supporting Document</th>
+                            <th class="p-8 text-left text-md font-semibold border-2">Total</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-blue-300 bg-blue-50">
-                        {% for activity in activities_data %}
-                        <tr class="hover:bg-blue-100">
-                            <td class="px-6 py-4 text-md text-blue-900 truncate max-w-xs font-bold">{{activity.activity_name}}</td>
-                            <td></td>
-                            <td class="px-6 py-4 text-md text-blue-900 truncate max-w-xs">{{activity.activity_weight}}</td>
-
-                            <td>
-                                <thead class="bg-blue-800 text-white">
-                                    <th class="px-6 py-3 text-left text-md font-semibold">Performance Indicator</th>
-                                    <th class="px-6 py-3 text-left text-md font-semibold">Description</th>
-                                    <th class="px-6 py-3 text-left text-md font-semibold">Weight %</th>
-                                    <th class="px-6 py-3 text-left text-md font-semibold">Agreed Target %</th>
-                                    <th class="px-6 py-3 text-left text-md font-semibold">Allowable Variance %</th>
-                                    <th class="px-6 py-3 text-left text-md font-semibold">Actual Performance %</th>
-                                    <th class="px-6 py-3 text-left text-md font-semibold">Actual Variance %</th>
-                                    <th class="px-6 py-3 text-left text-md font-semibold">Rating</th>
-                                    <th class="px-6 py-3 text-left text-md font-semibold">Weighted Score</th>
-                                    
-                                </thead>
-                                <tbody class="divide-y divide-blue-300 bg-blue-50">
-                                    {% for performance_dimension_obj in activity.activity_performance_dimension_qr %}
-                                        <tr>
-                                            <td class="px-6 py-4 text-md text-blue-900 truncate max-w-xs">{{performance_dimension_obj.performance_indicator}}</td>
-                                            <td class="px-6 py-4 text-md text-blue-900">{{performance_dimension_obj.description}}</td>
-                                            <td class="px-6 py-4 text-md text-blue-900">{{performance_dimension_obj.weight}}</td>
-                                            <td class="px-6 py-4 text-md text-blue-900">{{performance_dimension_obj.agreed_target}}</td>
-                                            <td class="px-6 py-4 text-md text-blue-900">(+-) {{performance_dimension_obj.allowable_variance}}</td>
-                                            <td class="px-6 py-4 text-md text-blue-900">{{performance_dimension_obj.id|get_target_score_by_performance_dimension_id}}</td>
-                                            <td class="px-6 py-4 text-md text-blue-900">(+-) {{performance_dimension_obj.id|get_performance_dimension_actual_variance}}</td>
-                                            <td class="px-6 py-4 text-md text-blue-900">{{performance_dimension_obj.id|get_performance_dimension_rating}}</td>
-                                            <td class="px-6 py-4 text-md text-blue-900">{{performance_dimension_obj.id|get_performance_dimension_weighted_score}}</td>
-                                        </tr>
-                                        {% endfor %}
-                                </tbody>
-                            </td>
-                            
-                        </tr>
+                    <tbody>
+                        <!-- Activity: Reduce Latency -->
+                        {% for activity_obj in activities_data %}
+                            <tr>
+                                <td rowspan="{{ activity_obj.performance_dimension_length }}" style="padding: 8px; border: 1px solid #ccc; background-color: #eee;">{{ activity_obj.activity_name }}</td>
+                                
+                                {% for performance_dimension_obj in activity_obj.activity_performance_dimension_qr %}
+                                    <td style="padding: 8px; border: 1px solid #ccc;">{{ performance_dimension_obj.performance_indicator }}</td>
+                                    <td class="px-6 py-4 text-md text-blue-900 truncate max-w-xs border-2">{{ performance_dimension_obj.description }}</td>
+                                    <td class="px-6 py-4 text-md text-blue-900 border-2">{{ performance_dimension_obj.weight }}</td>
+                                    <td class="px-6 py-4 text-md text-blue-900 border-2">{{ performance_dimension_obj.agreed_target }}</td>
+                                    <td class="px-6 py-4 text-md text-blue-900 border-2">{{ performance_dimension_obj.allowable_variance }}</td>
+                                    <td class="px-6 py-4 text-md text-blue-900 border-2">{{ performance_dimension_obj.id|get_target_score_by_performance_dimension_id }}</td>
+                                    <td class="px-6 py-4 text-md text-blue-900 border-2">{{ performance_dimension_obj.id|get_performance_dimension_actual_variance }}</td>
+                                    <td class="px-6 py-4 text-md text-blue-900">{{performance_dimensions_obj.id|get_performance_dimension_rating}}</td>
+                                    <td class="px-6 py-4 text-md text-blue-900">{{performance_dimensions_obj.id|get_performance_dimension_weighted_score}}</td>
+                                    <td class="px-6 py-4 text-md text-blue-900">Docs</td>
+                                {% endfor %}
+                                <td class="px-6 py-4 text-md text-blue-900">0.0</td>
+                            </tr>
                         {% endfor %}
-                    </tbody>
-                    <tfoot>
                         <tr>
-                            <td class="font-bold">Total Score</td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td class="px-6 py-4 text-md text-blue-900">{{appraisal_kra_object.id|get_kra_total_score}}</td>
+                            <td style="padding: 8px; border: 1px solid #ccc;">Quality</td>
+                            <td class="px-6 py-4 text-md text-blue-900 truncate max-w-xs"></td>
+                            <td class="px-6 py-4 text-md text-blue-900 border-2"></td>
+                            <td class="px-6 py-4 text-md text-blue-900 border-2"></td>
+                            <td class="px-6 py-4 text-md text-blue-900 border-2"></td>
+                            <td class="px-6 py-4 text-md text-blue-900 border-2">(+-) </td>
+                            <td class="px-6 py-4 text-md text-blue-900 border-2"></td>
+                            <td class="px-6 py-4 text-md text-blue-900 border-2">(+-) </td>
+                            <td class="px-6 py-4 text-md text-blue-900 border-2"></td>
+                            <td class="px-6 py-4 text-md text-blue-900 border-2"></td>
+                            <td class="px-6 py-4 text-md text-blue-900 border-2"></td>
+                            <td class="px-6 py-4 text-md text-blue-900 border-2"></td>
                         </tr>
-                    </tfoot>
-                </table>
-
-            </div>
-        </div>
-    </div>
-
+                        
+                    </tbody>
 {% endblock %}
