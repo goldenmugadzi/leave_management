@@ -73,16 +73,9 @@
             <th>Department</th>
             <th>User</th>
             <th>Region</th>
-            <th>Purchase Cost</th>
             <th>Designation</th>
-            <th>Date Purchased</th>
-            <th>Warrant</th>
             <th>Cost Center</th>
             <th>Model</th>
-            <th>Supplier</th>
-            <th>Updated At</th>
-            <th>Created At</th>
-            <th>Created By</th>
             <th>Action</th>
         </tr>
       </thead>
@@ -97,16 +90,9 @@
           <th>Department</th>
           <th>User</th>
           <th>Region</th>
-          <th>Purchase Cost</th>
           <th>Designation</th>
-          <th>Date Purchased</th>
-          <th>Warrant</th>
           <th>Cost Center</th>
           <th>Model</th>
-          <th>Supplier</th>
-          <th>Updated At</th>
-          <th>Created At</th>
-          <th>Created By</th>
           <th>Action</th>
         </tr>
       </tfoot>
@@ -115,6 +101,9 @@
   </div>
 </div>
 {% endblock %} {% block scripts %}
+
+<script src="https://cdn.jsdelivr.net/npm/alpinejs@2.8.2/dist/alpine.min.js" defer></script>
+
 <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 <!-- Buttons JS -->
@@ -135,9 +124,11 @@ $(document).ready(function () {
         serverSide: true,
         ajax: {
             url: "/asset_datatable",
+            //type: 'POST',
             error: function (xhr, error, thrown) {
                 console.error("DataTable error:", xhr.responseText);
             }
+            
         },
         columns: [
             { data: "id" },
@@ -148,16 +139,16 @@ $(document).ready(function () {
             { data: "department" },
             { data: "user" },
             { data: "regions" },
-            { data: "purchase_cost" },
+            //{ data: "purchase_cost" },
             { data: "designations" },
-            { data: "date_purchased" },
-            { data: "warrant" },
+            //{ data: "date_purchased" },
+            //{ data: "warrant" },
             { data: "cost_center" },
             { data: "model" },
-            { data: "supplier" },
-            { data: "updated_at" },
-            { data: "created_at" },
-            { data: "created_by" },
+            //{ data: "supplier" },
+            //{ data: "updated_at" },
+            //{ data: "created_at" },
+            //{ data: "created_by" },
             {
                 data: "id",
                 render: function(data, type, row) {

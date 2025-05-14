@@ -36,6 +36,19 @@ def createAsset(request):
 
     return render(request, "asset_register/createAsset.html", {"form": form})
 
+def create_hr(request):
+    if request.method == 'POST':
+        form = HumanResourceForm(request.POST, request.FILES)
+        if form.is_valid():
+            form.save()
+            return redirect('table_hr')
+        else:
+            print(form.errors)
+    else:
+        form = HumanResourceForm()
+
+    return render(request, 'asset_register/create_hr.html', {'form': form}) 
+
 def show_asset(request):
     try:
         user_roles = request.user.get_user_role_for_application("IT Asset Register")
@@ -51,8 +64,98 @@ def show_asset(request):
 def table_asset (request):
   return render(request,'asset_register/table_asset.html')
 
+def table_hr (request):
+  return render(request,'asset_register/table_hr.html')
+
+
+def show_table (request):
+  return render(request,'asset_register/table_hr.html')
+
 def show_product (request):
   return render(request,'asset_register/table_product.html')
+
+def show_hr_datatable(request):
+    try:
+        draw = int(request.GET.get('draw', default=1))
+        start = int(request.GET.get('start', default=0))
+        length = int(request.GET.get('length', default=10))
+        search_value = request.GET.get('search[value]', default='')
+
+        humanresource = HumanResource.objects.all()
+
+        if search_value:
+            humanresource = humanresource.filter(
+                Q(descriptionofitem__icontains=search_value) |
+                Q(assetnumber__icontains=search_value) |
+                Q(assetstate__icontains=search_value) |
+                Q(user__icontains=search_value) |
+                Q(officenumber__icontains=search_value) |
+                Q(lastchecked_at__icontains=search_value) |
+                Q(department__icontains=search_value)
+            )
+
+        total = humanresource.count()
+
+        order_column = request.GET.get('order[0][column]')
+        order_dir = request.GET.get('order[0][dir]')
+
+        if order_column is not None and order_dir is not None:
+            column_map = {
+                "0": "descriptionofitem",
+                "1": "assetnumber",
+                "2": "assetstate",
+                "3": "user",
+                "4": "officenumber",
+                "5": "department",
+                "6": "regions",
+                "7": "designation",
+                "8": "lastchecked_at",
+                "9": "cost_center",
+            }
+
+            column_name = column_map.get(order_column)
+            if column_name:
+                if order_dir == 'desc':
+                    column_name = f'-{column_name}'
+                humanresource = humanresource.order_by(column_name)
+
+        paginator = Paginator(humanresource, length)
+        page_number = start // length + 1
+        page_obj = paginator.get_page(page_number)
+
+        data = []
+        for hr in page_obj:
+            o = {
+                "id": hr.id,
+                "descriptionofitem": hr.descriptionofitem,
+                "assetnumber": hr.assetnumber,
+                "assetstate": hr.assetstate,
+                "user": f"{hr.user.first_name} {hr.user.last_name}" if hr.user else None,
+                "officenumber": hr.officenumber,
+                "department": hr.department.section if hr.department else None,
+                "regions": hr.regions.region if hr.regions else None,
+                "designation": hr.designation.description if hr.designation else None,
+                "lastchecked_at": hr.lastchecked_at,
+                "cost_center": hr.cost_center.name if hr.cost_center else None,
+            }
+            data.append(o)
+
+        return JsonResponse({
+            'draw': draw,
+            'recordsTotal': total,
+            'recordsFiltered': total,
+            'data': data
+        })
+    except Exception as ex:
+        print(ex)
+        return JsonResponse({
+            'draw': 1,
+            'recordsTotal': 0,
+            'recordsFiltered': 0,
+            'data': []
+        })
+
+
 
 #@login_required
 def show_asset_datatable(request):
@@ -96,7 +199,7 @@ def show_asset_datatable(request):
                 Q(purchase_cost__icontains=search_value) |
                 Q(designation__description__icontains=search_value) |
                 Q(model__icontains=search_value) |
-                Q(warrant__icontains=search_value) |
+                #Q(warrant__icontains=search_value) |
                 Q(cost_center__name__icontains=search_value) |
                 Q(supplier__icontains=search_value) |
                 Q(created_by__first_name__icontains=search_value) |
@@ -124,13 +227,11 @@ def show_asset_datatable(request):
                 "7": "regions__region",
                 "8": "purchase_cost",
                 "9": "designation__description",
-                "10": "date_purchased",
-                "11": "warrant",
                 "12": "cost_center__name",
                 "13": "model",
                 "14": "supplier",
                 "15": "updated_at",
-                "16": "created_at",
+                #"16": "created_at",
                 "17": "created_by__first_name",
             }
             
@@ -171,12 +272,12 @@ def show_asset_datatable(request):
                 "regions": asset.regions.region if asset.regions else None,
                 "purchase_cost": str(asset.purchase_cost),
                 "designations": asset.designation.description if asset.designation else None,
-                "date_purchased": asset.date_purchased.strftime('%Y-%m-%d') if asset.date_purchased else None,
-                "warrant": asset.warrant,
+                #"date_purchased": asset.date_purchased.strftime('%Y-%m-%d') if asset.date_purchased else None,
+                #"warrant": asset.warrant,
                 "cost_center": asset.cost_center.name if asset.cost_center else None,
                 "model": asset.model,
                 "supplier": asset.supplier,
-                "updated_at": asset.updated_at.strftime('%Y-%m-%d') if asset.updated_at else None,
+                #"updated_at": asset.updated_at.strftime('%Y-%m-%d') if asset.updated_at else None,
                 "created_at": asset.created_at.strftime('%Y-%m-%d') if asset.created_at else None,
                 "created_by": f"{asset.created_by.first_name} {asset.created_by.last_name}" if asset.created_by else None,
             }
