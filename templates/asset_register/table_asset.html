@@ -75,12 +75,9 @@
             <th>Region</th>
             <th>Purchase Cost</th>
             <th>Designation</th>
-            <th>Date Purchased</th>
-            <th>Warrant</th>
             <th>Cost Center</th>
             <th>Model</th>
             <th>Supplier</th>
-            <th>Updated At</th>
             <th>Created At</th>
             <th>Created By</th>
             <th>Action</th>
@@ -99,12 +96,9 @@
           <th>Region</th>
           <th>Purchase Cost</th>
           <th>Designation</th>
-          <th>Date Purchased</th>
-          <th>Warrant</th>
           <th>Cost Center</th>
           <th>Model</th>
           <th>Supplier</th>
-          <th>Updated At</th>
           <th>Created At</th>
           <th>Created By</th>
           <th>Action</th>
@@ -138,9 +132,11 @@ $(document).ready(function () {
         serverSide: true,
         ajax: {
             url: "/asset_datatable",
+            //type: 'POST',
             error: function (xhr, error, thrown) {
                 console.error("DataTable error:", xhr.responseText);
             }
+            
         },
         columns: [
             { data: "id" },
@@ -153,12 +149,12 @@ $(document).ready(function () {
             { data: "regions" },
             { data: "purchase_cost" },
             { data: "designations" },
-            { data: "date_purchased" },
-            { data: "warrant" },
+            //{ data: "date_purchased" },
+            //{ data: "warrant" },
             { data: "cost_center" },
             { data: "model" },
             { data: "supplier" },
-            { data: "updated_at" },
+            //{ data: "updated_at" },
             { data: "created_at" },
             { data: "created_by" },
             {

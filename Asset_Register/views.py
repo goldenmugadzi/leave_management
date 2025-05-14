@@ -199,7 +199,7 @@ def show_asset_datatable(request):
                 Q(purchase_cost__icontains=search_value) |
                 Q(designation__description__icontains=search_value) |
                 Q(model__icontains=search_value) |
-                Q(warrant__icontains=search_value) |
+                #Q(warrant__icontains=search_value) |
                 Q(cost_center__name__icontains=search_value) |
                 Q(supplier__icontains=search_value) |
                 Q(created_by__first_name__icontains=search_value) |
@@ -227,13 +227,13 @@ def show_asset_datatable(request):
                 "7": "regions__region",
                 "8": "purchase_cost",
                 "9": "designation__description",
-                "10": "date_purchased",
-                "11": "warrant",
+                #"10": "date_purchased",
+                #"11": "warrant",
                 "12": "cost_center__name",
                 "13": "model",
                 "14": "supplier",
                 "15": "updated_at",
-                "16": "created_at",
+                #"16": "created_at",
                 "17": "created_by__first_name",
             }
             
@@ -274,12 +274,12 @@ def show_asset_datatable(request):
                 "regions": asset.regions.region if asset.regions else None,
                 "purchase_cost": str(asset.purchase_cost),
                 "designations": asset.designation.description if asset.designation else None,
-                "date_purchased": asset.date_purchased.strftime('%Y-%m-%d') if asset.date_purchased else None,
-                "warrant": asset.warrant,
+                #"date_purchased": asset.date_purchased.strftime('%Y-%m-%d') if asset.date_purchased else None,
+                #"warrant": asset.warrant,
                 "cost_center": asset.cost_center.name if asset.cost_center else None,
                 "model": asset.model,
                 "supplier": asset.supplier,
-                "updated_at": asset.updated_at.strftime('%Y-%m-%d') if asset.updated_at else None,
+                #"updated_at": asset.updated_at.strftime('%Y-%m-%d') if asset.updated_at else None,
                 "created_at": asset.created_at.strftime('%Y-%m-%d') if asset.created_at else None,
                 "created_by": f"{asset.created_by.first_name} {asset.created_by.last_name}" if asset.created_by else None,
             }
