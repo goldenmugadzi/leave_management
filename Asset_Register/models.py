@@ -24,12 +24,29 @@ class ZetdcAssets(models.Model):
     purchase_cost = models.DecimalField(max_digits=10, decimal_places=2)
     designation = models.ForeignKey(Designations, on_delete=models.DO_NOTHING , blank=True, null=True)
     department = models.ForeignKey(Sections, on_delete=models.DO_NOTHING, blank=True, null=True)
-    date_purchased =models.DateField()
+    #date_purchased =models.DateField()
     model = models.CharField(max_length=100,help_text="Asset Model",  choices=[('laptop', 'laptop') , ('desktop', 'desktop'),('printer', 'pinter'), ('router', 'router'),('switch', 'switch')])
-    warrant = models.CharField(max_length=100, default='Unknown',blank=True, null=True)
+    #warrant = models.CharField(max_length=100, default='Unknown',blank=True, null=True)
     cost_center = models.ForeignKey(CostCenter, on_delete=models.CASCADE, blank=True, null=True)
     created_by = models.ForeignKey(UserProfile, on_delete=models.CASCADE, blank=True, null=True,related_name="creat")
     created_at = models.DateField(auto_now_add=True, blank=True, null=True)
-    updated_at = models.DateField(auto_now=True)
+    #updated_at = models.DateField(auto_now=True)
     supplier = models.CharField(max_length=100, default='Unknown',blank=True, null=True)
+
+class HumanResource(models.Model):
+    assetnumber = models.CharField(max_length=100,unique=True,blank=True, null=True)
+    designation = models.ForeignKey(Designations, on_delete=models.DO_NOTHING , blank=True, null=True)
+    cost_center = models.ForeignKey(CostCenter, on_delete=models.CASCADE, blank=True, null=True)
+    department = models.ForeignKey(Sections, on_delete=models.DO_NOTHING, blank=True, null=True)
+    officenumber = models.CharField(max_length=100,unique=True,blank=True, null=True)
+    assetstate = models.CharField(max_length=100,blank=True, null=True,help_text="Asset state",  choices=[('Warrant', 'Warrant') , ('Obsolute state', 'Obsolute state'),('Awaiting New Spares', 'Awaiting New Spares'), ('Awaiting New User', 'Awaiting New User'),('Functioning', 'Functioning'),('Non Functioning', 'Non Functioning')])
+    regions = models.ForeignKey(Regions, on_delete=models.DO_NOTHING, blank=True, null=True)
+    descriptionofitem = models.CharField(max_length=100,blank=True, null=True,help_text="Asset state",  choices=[('Warrant', 'Warrant') , ('Obsolute state', 'Obsolute state'),('Awaiting New Spares', 'Awaiting New Spares'), ('Awaiting New User', 'Awaiting New User'),('Functioning', 'Functioning'),('Non Functioning', 'Non Functioning')])
+    user = models.ForeignKey(UserProfile, on_delete=models.CASCADE, blank=True, null=True,related_name="use")
+    lastchecked_at = models.DateField(auto_now=True)
+
+
+
+    
+
 
