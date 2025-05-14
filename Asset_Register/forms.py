@@ -5,7 +5,7 @@ class ZetdcAssetForm(forms.ModelForm):
     class Meta:
         model = ZetdcAssets
         fields = '__all__'
-        # exclude = ['process', 'ace', 'requested_by', 'region', 'section']
+        exclude = ['purchase_cost', 'date_purchased', 'warrant', 'supplier', 'updated_at','created_at','created_by']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
