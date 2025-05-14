@@ -156,3 +156,5 @@ node_modules/
 /bet/Scripts/weasyprint.exe
 /bet/Scripts/python.exe
 .idea/
+/elasticSearchConf/logs/*
+/elasticSearchConf/elasticSearchConf/logs/*
