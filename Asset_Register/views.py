@@ -329,7 +329,7 @@ def create_product(request):
         producttype = ProductType(
             id= request.POST['id'],
             product_type= request.POST['product_type'],
-            code= request.POST['code'],
+            model= request.POST['model'],
         )
             
         print("prod data: ", producttype)
