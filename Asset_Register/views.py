@@ -329,7 +329,7 @@ def create_product(request):
         producttype = ProductType(
             id= request.POST['id'],
             product_type= request.POST['product_type'],
-            code= request.POST['code'],
+            model= request.POST['model'],
         )
             
         print("prod data: ", producttype)
@@ -337,7 +337,7 @@ def create_product(request):
         print("Data saved successfully!")
         #messages.success(request, "Fault created successfully!")
         
-        return redirect('show_fault')
+        return redirect('table_product')
     return render(request, 'asset_register/create_product.html',{})
 
 def show_product_datatable(request):
