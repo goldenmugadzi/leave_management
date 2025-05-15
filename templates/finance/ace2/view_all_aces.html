@@ -15,59 +15,80 @@
   <div class="grid grid-cols-1">
     <div class="bg-gulf-blue-100 shadow-lg rounded-lg p-6">
      
-       <h3 class="text-center font-bold  mb-4">All ACEs</h3>
+       <h3 class="text-center font-bold  mb-4">ACEs Awaiting My Action</h3>
       <div class=" grid grid-cols-4 container text-center ">
-          {% if ace_role == requester %}
-        <a href="/ace/create_ace" class="bg-green-500 hover:bg-green-900 inline-block rounded-full mx-3 text-white py-2 px-4 rounded">Create New</a>
-          {% endif %}
-      {% if ace_role == cashier %}
-          <a href="/ace/create_virament" class="bg-green-500 hover:bg-green-900 inline-block rounded-full mx-3 text-white py-2 px-4 rounded">Create Virament</a>
-          <a href="/ace/budgets" class="bg-yellow-500 hover:bg-yellow-900 inline-block rounded-full mx-3 text-white py-2 px-4 rounded">Budgets</a>
-
-      {% endif %}
-{#        {% comment %} <a href="{% url 'nonconformity:checklist' %}" class="bg-blue-500 hover:bg-blue-700 inline-block rounded-full mx-3 text-white py-2 px-4 rounded">Create from checklist</a> {% endcomment %}#}
-        <a href="/ace/aces_awaiting_my_action" class="bg-blue-500 hover:bg-blue-900 inline-block rounded-full mx-3 text-white py-2 px-4 rounded">Awaiting my action </a>
-          <a href="/ace/aces" class="bg-gray-500 hover:bg-gray-700 inline-block rounded-full mx-3 text-white py-2 px-4 rounded">View ACEs</a>
-          {% comment %} view my actioned items {% endcomment %}
-        <a href="/ace/my_actioned_items/" class="bg-red-500 hover:bg-gray-700 inline-block rounded-full mx-3 text-white py-2 px-4 rounded">My Actioned Items</a>
+        {# ... your action buttons ... #}
       </div>
-      <br> <table id="nonconformity" class="table table-striped stripe table-bordered">
+      <br>
+      <table id="nonconformity" class="table table-striped stripe table-bordered">
         <thead>
           <tr>
-            <tr>
-                <th>ACE ID</th>
-                <th>ACE Details</th>
-                <th>Amount</th>
-                
-                <th>Requested By</th>
-                <th>Created At</th>
-                <th>Section</th>
-              <th>Allocation Code of Expenditure</th>
-              <th>Status</th>
+            <th>ACE ID</th>
+            <th>ACE Details</th>
+            <th>Amount</th>
+            <th>Requested By</th>
+            <th>Created At</th>
+            <th>Section</th>
+            <th>Allocation Code of Expenditure</th>
+            <th>Status</th>
           </tr>
         </thead>
         <tbody>
-            {% for ace in aces %}
-            <tr class="h-1">
-                <td><a class="text-blue-500" href="/ace/ace_detail/{{ace.Ace_id2}}">{{ ace.Ace_id2|default_if_none:'' }}</a></td>
-                <td>{{ ace.details_of_expenditure }}</td>
-              <td>{{ ace.amount }}</td>
-
+          {% for ace in aces %}
+          <tr class="h-1">
+            <td><a class="text-blue-500" href="/ace/ace_detail/{{ace.Ace_id2}}">{{ ace.Ace_id2|default_if_none:'' }}</a></td>
+            <td>{{ ace.details_of_expenditure }}</td>
+            <td>{{ ace.amount }}</td>
             <td>{% if ace.requested_by == user %} You {% else %} {{ace.requested_by.get_full_name }} {% endif %}</td>
-              <td>{{ ace.date_created }}</td>
-              <td>{{ ace.section }}</td>
+            <td>{{ ace.date_created }}</td>
+            <td>{{ ace.section }}</td>
             <td>{{ ace.section.code }}</td>
             <td>{{ ace.process.approval_set.last|default_if_none:'' }}</td>
-              {% comment %} <td>{{ ace.process }}</td> {% endcomment %}
-            </tr>
+          </tr>
+          {% empty %}
+          <tr><td colspan="8" class="text-center">No ACEs awaiting your action.</td></tr>
           {% endfor %}
         </tbody>
       </table>
 
+      {% if created_aces %}
+      <hr class="my-8">
+      <h3 class="text-center font-bold mb-4 text-green-700">ACEs I Created</h3>
+      <table class="table table-striped stripe table-bordered">
+        <thead>
+          <tr>
+            <th>ACE ID</th>
+            <th>ACE Details</th>
+            <th>Amount</th>
+            <th>Requested By</th>
+            <th>Created At</th>
+            <th>Section</th>
+            <th>Allocation Code of Expenditure</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for ace in created_aces %}
+          <tr class="h-1 bg-green-50">
+            <td><a class="text-blue-500" href="/ace/ace_detail/{{ace.Ace_id2}}">{{ ace.Ace_id2|default_if_none:'' }}</a></td>
+            <td>{{ ace.details_of_expenditure }}</td>
+            <td>{{ ace.amount }}</td>
+            <td>You</td>
+            <td>{{ ace.date_created }}</td>
+            <td>{{ ace.section }}</td>
+            <td>{{ ace.section.code }}</td>
+            <td>{{ ace.process.approval_set.last|default_if_none:'' }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="8" class="text-center">You have not created any ACEs.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% endif %}
+
     </div>
   </div>
 </div>
-
 {% endblock %}
 
 {% block scripts %}
@@ -75,23 +96,13 @@
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 <script>
   $(document).ready(function () {
-    // Initialize the DataTable with options and Tailwind CSS classes
     $("#nonconformity").DataTable({
-      // Set the number of rows to display per page
       "pageLength": 10,
-  
-      // Enable sorting on the specified columns
       "columnDefs": [
         { "orderable": true, "targets": [0, 1, 2] }
       ],
-  
-      // Enable searching within the table
       "searching": true,
-  
-      // Display the DataTable in a responsive manner
       "responsive": true,
-  
-     
     });
   });
 </script>

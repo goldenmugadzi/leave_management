@@ -246,18 +246,27 @@ def Ace_detail(request, Ace_id2):
                    'balance_before': balance_before, 'balance_after': balance_after})
 
 
+def generate_unique_ace_id2():
+    """Generate a unique Ace_id2."""
+    max_attempts = 10
+    for _ in range(max_attempts):
+        rand = randrange(1, 1000)
+        rand2 = str(rand)
+        date_str = datetime.now().strftime("%Y%m%d")
+        ace_id2 = "ACE" + date_str + rand2
+        if not Ace2.objects.filter(Ace_id2=ace_id2).exists():
+            return ace_id2
+    raise Exception("Could not generate a unique Ace_id2 after multiple attempts.")
+
 @login_required
 def create_Ace(request):
     print('create ace')
     global ace_role
     QuotationFormSet()
-    # form = AceForm()
     user_id = request.user.id
     user_profile = UserProfile.objects.filter(id=user_id).first()
 
     form = AceForm(user=user_profile)
-
-    # print(form)
     formset = QuotationFormSet()
     if request.method == 'POST':
         form = AceForm(request.POST, request.FILES)
@@ -274,7 +283,6 @@ def create_Ace(request):
         roles_ = user_profile.roles.all()
         for _role in roles_:
             role = Roles.objects.filter(id=_role.id).first()
-
             if role.application == "ace":
                 custom_user_roles["ace"] = role.role
                 ace_role = str(custom_user_roles["ace"])
@@ -311,6 +319,20 @@ def create_Ace(request):
                     designation = user_designation
                     # print(designation)
                     region = user_region
+
+                    # Generate a unique Ace_id2
+                    try:
+                        ace.Ace_id2 = generate_unique_ace_id2()
+                    except Exception as e:
+                        sweetify.error(request, "Could not generate a unique ACE ID. Please try again.")
+                        messages.error(request, "Could not generate a unique ACE ID. Please try again.")
+                        return render(request, 'finance/ace2/create_ace.html', {'form': form, 'formset': formset})
+
+                    # Final check before saving (should never trigger, but for safety)
+                    if Ace2.objects.filter(Ace_id2=ace.Ace_id2).exists():
+                        sweetify.error(request, "Duplicate ACE ID detected. Please try again.")
+                        messages.error(request, "Duplicate ACE ID detected. Please try again.")
+                        return render(request, 'finance/ace2/create_ace.html', {'form': form, 'formset': formset})
 
                     rand = randrange(1, 1000)
                     rand2 = str(rand)
@@ -446,9 +468,7 @@ def create_Ace(request):
 @login_required
 def ace_awaiting_my_action(request):
     """
-    for each ace2.Process ,  let current_step = the last pettycash.process.approval if any else 0 and
-    let next_step =current_step+1 then check if  next_step=step.step for rfq.process.workflow.step_set filtered by
-    approver = user.roles.all.
+    Show ACEs awaiting the user's action, and ACEs created by the user (with demarcation).
     """
     aces_to_process = []
     user_roles = request.user.roles.all()
@@ -457,112 +477,57 @@ def ace_awaiting_my_action(request):
     user_profile = UserProfile.objects.filter(id=user_id).first()
     region = Regions.objects.filter(id=user_profile.region.id).first()
     section = Sections.objects.filter(section=user_profile.section).first()
-    print(section, " section")
 
-    user_groups = user_profile.groups.values_list('name', flat=True)
-
-    custom_user_roles = {
-        "ace": {},
-    }
-
+    custom_user_roles = {"ace": {}}
     roles_ = user_profile.roles.all()
     for _role in roles_:
         role = Roles.objects.filter(id=_role.id).first()
-
         if role.application == "ace":
             custom_user_roles["ace"] = role.role
     ace_role = str(custom_user_roles["ace"])
     requester = "create"
     cashier = "process"
 
-    print(ace_role)
-
+    # ACEs awaiting user's action (as before)
     if ace_role == "pass":
-        # I want objects from 2024 upwards
-        print("pass sh")
-
         for ace in Ace2.objects.filter(section=section, date_created__year__gte=2025, region=region):
             process = ace.process
-            print("normal sh")
-
-            # Skip rejected ACEs more efficiently
             if process and process.approval_set.filter(approved="Rejected").exists():
                 continue
-
             if process.approval_set.exists():
                 last_approval = process.approval_set.last()
                 current_step = last_approval.step.step
             else:
                 current_step = 0
-
             next_step = current_step + 1
-
             workflow = process.workflow
             step = workflow.step_set.filter(step=next_step, approver__in=user_roles).first()
-
             if step:
                 aces_to_process.append(ace)
-                # remove aces that have been rejected
-                if process.approval_set.filter(approved="Rejected").exists():
-                    aces_rejected = process.approval_set.filter(approved="Rejected")
-                    aces_to_process.remove(ace)
-                    #remove aces from southern region shs
-                    if ace_role == "pass" and user_profile.region.id == 4:
-                        ace = Ace2.objects.filter(date_created__year__gte=2025, region=region)
-                        aces_to_process.remove(ace)
-
-        if ace_role == "pass" and user_profile.designation.id == 65 and user_profile.region.id == 4:
-            # I want objects from 2024 upwards
-            print("northern sh")
-
-            for ace in Ace2.objects.filter(date_created__year__gte=2025, region=region):
-                process = ace.process
-
-                if process.approval_set.exists():
-                    last_approval = process.approval_set.last()
-                    current_step = last_approval.step.step
-                else:
-                    current_step = 0
-
-                next_step = current_step + 1
-
-                workflow = process.workflow
-                step = workflow.step_set.filter(step=next_step, approver__in=user_roles).first()
-
-                if step:
-                    aces_to_process.append(ace)
-                    # remove aces that have been rejected
-                    if process.approval_set.filter(approved="Rejected").exists():
-                        aces_to_process.remove(ace)
-
     else:
         for ace in Ace2.objects.filter(date_created__year__gte=2025, region=region):
             process = ace.process
-            # print("not sh")
-
             if process.approval_set.exists():
                 last_approval = process.approval_set.last()
                 current_step = last_approval.step.step
             else:
                 current_step = 0
-
             next_step = current_step + 1
-
             workflow = process.workflow
             step = workflow.step_set.filter(step=next_step, approver__in=user_roles).first()
-
             if step:
                 aces_to_process.append(ace)
-                # remove aces that have been rejected
-                if process.approval_set.filter(approved="Rejected").exists():
-                    aces_to_process.remove(ace)
 
-    # print(aces_to_process)
+    # ACEs created by the user (demarcation)
+    created_aces = Ace2.objects.filter(requested_by=request.user, date_created__year__gte=2025, region=region)
 
-    return render(request, 'finance/ace2/view_all_aces.html', {'aces': aces_to_process,
-                                                               'ace_role': ace_role,
-                                                               'requester': requester,
-                                                               'cashier': cashier})
+    return render(request, 'finance/ace2/view_all_aces.html', {
+        'aces': aces_to_process,
+        'created_aces': created_aces,
+        'ace_role': ace_role,
+        'requester': requester,
+        'cashier': cashier
+    })
 
 
 @login_required
