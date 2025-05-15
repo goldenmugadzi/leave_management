@@ -337,7 +337,7 @@ def create_product(request):
         print("Data saved successfully!")
         #messages.success(request, "Fault created successfully!")
         
-        return redirect('show_fault')
+        return redirect('table_product')
     return render(request, 'asset_register/create_product.html',{})
 
 def show_product_datatable(request):
