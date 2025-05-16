@@ -7,10 +7,13 @@ register = template.Library()
 
 @register.filter
 def get_performance_dimension_rating(performance_dimension_id)->int:
-    if not isinstance(performance_dimension_id, int):
-        logger.error(f"Invalid type for performance_dimension_id: Expected int, got {type(performance_dimension_id).__name__}")
-        return 0
     
+    try:
+        performance_dimension_id = int(performance_dimension_id)
+    except ValueError:
+        logger.error(f"[get_performance_dimension_rating pk: {performance_dimension_id}] Invalid type, Expected int, got {type(performance_dimension_id).__name__}")
+        return 0
+        
     try:
         repo = TargetScoreRepository()
         service_handler = TargetScoreService(target_score_repository=repo)
@@ -22,8 +25,11 @@ def get_performance_dimension_rating(performance_dimension_id)->int:
     
 @register.filter
 def get_performance_dimension_weighted_score(performance_dimension_id)->float:
-    if not isinstance(performance_dimension_id, int):
-        logger.error(f"[performance_dimension pk: {performance_dimension_id}] Invalid type for performance_dimension_id: Expected int, got {type(performance_dimension_id).__name__}")
+    
+    try:
+        performance_dimension_id = int(performance_dimension_id)
+    except ValueError:
+        logger.error(f"[get_performance_dimension_weighted_score pk: {performance_dimension_id}] Invalid type Expected int, got {type(performance_dimension_id).__name__}")
         return 0.0
 
     try:
@@ -37,8 +43,11 @@ def get_performance_dimension_weighted_score(performance_dimension_id)->float:
     
 @register.filter
 def get_performance_dimension_actual_variance(performance_dimension_id)->float:
-    if not isinstance(performance_dimension_id, int):
-        logger.error(f"[performance_dimension pk: {performance_dimension_id}] Invalid type for performance_dimension_id: Expected int, got {type(performance_dimension_id).__name__}")
+    
+    try:
+        performance_dimension_id = int(performance_dimension_id)
+    except ValueError:
+        logger.error(f"[get_performance_dimension_actual_variance pk: {performance_dimension_id}] Invalid type Expected int, got {type(performance_dimension_id).__name__}")
         return 0.0
 
     repo = TargetScoreRepository()
@@ -52,8 +61,11 @@ def get_performance_dimension_actual_variance(performance_dimension_id)->float:
     
 @register.filter
 def get_activity_total_score(activity_id)->float:
-    if not isinstance(activity_id, int):
-        logger.error(f"[Activity pk: {activity_id}] Invalid type for activity_id: Expected int")
+    
+    try:
+        activity_id = int(activity_id)
+    except ValueError:
+        logger.error(f"[get_activity_total_score pk: {activity_id}] Invalid type Expected int, got {type(activity_id).__name__}")
         return 0.0
 
     try:        
@@ -68,10 +80,13 @@ def get_activity_total_score(activity_id)->float:
     
 @register.filter
 def get_kra_total_score(appraisal_kra_id)->float:
-    if not isinstance(appraisal_kra_id, int):
-        logger.error(f"[KRA pk: {appraisal_kra_id}] Invalid type for appraisal_kra_id: Expected int, got {type(appraisal_kra_id).__name__}")
+    
+    try:
+        appraisal_kra_id = int(appraisal_kra_id)
+    except ValueError:
+        logger.error(f"[get_kra_total_score pk: {appraisal_kra_id}] Invalid type Expected int, got {type(appraisal_kra_id).__name__}")
         return 0.0
-
+    
     try:
         repo = KraActivityRepository()
         activity_service_handler = ActivityService(activity_repo=repo)
@@ -85,8 +100,11 @@ def get_kra_total_score(appraisal_kra_id)->float:
     
 @register.filter
 def get_target_score_by_performance_dimension_id(performance_dimension_id)->float:
-    if not isinstance(performance_dimension_id, int):
-        logger.error(f"[performance_dimension pk: {performance_dimension_id}] Invalid type for kra_id: Expected int, got {type(performance_dimension_id).__name__}")
+    
+    try:
+        performance_dimension_id = int(performance_dimension_id)
+    except ValueError:
+        logger.error(f"[get_target_score_by_performance_dimension_id pk: {performance_dimension_id}] Invalid type Expected int, got {type(performance_dimension_id).__name__}")
         return 0.0
 
     try:

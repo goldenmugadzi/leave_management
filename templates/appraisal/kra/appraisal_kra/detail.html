@@ -60,37 +60,39 @@
                         <!-- Activity: Reduce Latency -->
                         {% for activity_obj in activities_data %}
                             <tr>
-                                <td rowspan="{{ activity_obj.performance_dimension_length }}" style="padding: 8px; border: 1px solid #ccc; background-color: #eee;">{{ activity_obj.activity_name }}</td>
-                                
+                                <td rowspan="{{ activity_obj.performance_dimension_length }}" style="padding: 8px; border: 1px solid #ccc; background-color: #eee;">{{ activity_obj.activity_name }}</td>  
                                 {% for performance_dimension_obj in activity_obj.activity_performance_dimension_qr %}
-                                    <td style="padding: 8px; border: 1px solid #ccc;">{{ performance_dimension_obj.performance_indicator }}</td>
-                                    <td class="px-6 py-4 text-md text-blue-900 truncate max-w-xs border-2">{{ performance_dimension_obj.description }}</td>
-                                    <td class="px-6 py-4 text-md text-blue-900 border-2">{{ performance_dimension_obj.weight }}</td>
-                                    <td class="px-6 py-4 text-md text-blue-900 border-2">{{ performance_dimension_obj.agreed_target }}</td>
-                                    <td class="px-6 py-4 text-md text-blue-900 border-2">{{ performance_dimension_obj.allowable_variance }}</td>
-                                    <td class="px-6 py-4 text-md text-blue-900 border-2">{{ performance_dimension_obj.id|get_target_score_by_performance_dimension_id }}</td>
-                                    <td class="px-6 py-4 text-md text-blue-900 border-2">{{ performance_dimension_obj.id|get_performance_dimension_actual_variance }}</td>
-                                    <td class="px-6 py-4 text-md text-blue-900">{{performance_dimensions_obj.id|get_performance_dimension_rating}}</td>
-                                    <td class="px-6 py-4 text-md text-blue-900">{{performance_dimensions_obj.id|get_performance_dimension_weighted_score}}</td>
-                                    <td class="px-6 py-4 text-md text-blue-900">Docs</td>
+                                    <tr>
+                                        <td style="padding: 8px; border: 1px solid #ccc;">{{ performance_dimension_obj.performance_indicator }}</td>
+                                        <td class="px-6 py-4 text-md text-blue-900 truncate max-w-xs border-2">{{ performance_dimension_obj.description }}</td>
+                                        <td class="px-6 py-4 text-md text-blue-900 border-2">{{ performance_dimension_obj.weight }}</td>
+                                        <td class="px-6 py-4 text-md text-blue-900 border-2">{{ performance_dimension_obj.agreed_target }}</td>
+                                        <td class="px-6 py-4 text-md text-blue-900 border-2">{{ performance_dimension_obj.allowable_variance }}</td>
+                                        <td class="px-6 py-4 text-md text-blue-900 border-2">{{ performance_dimension_obj.id|get_target_score_by_performance_dimension_id }}</td>
+                                        <td class="px-6 py-4 text-md text-blue-900 border-2">{{ performance_dimension_obj.id|get_performance_dimension_actual_variance }}</td>
+                                        <td class="px-6 py-4 text-md text-blue-900">{{performance_dimension_obj.id|get_performance_dimension_rating}}</td>
+                                        <td class="px-6 py-4 text-md text-blue-900">{{performance_dimension_obj.id|get_performance_dimension_weighted_score}}</td>
+                                        <td class="px-6 py-4 text-md text-blue-900">Docs</td>
+                                    </tr>
                                 {% endfor %}
+                            </tr>
+                            <tr>
+                                <td style="padding: 8px; border: 1px solid #ccc;"></td>
+                                <td class="px-6 py-4 text-md text-blue-900 truncate max-w-xs border-2"></td>
+                                <td class="px-6 py-4 text-md text-blue-900 border-2"></td>
+                                <td class="px-6 py-4 text-md text-blue-900 border-2"></td>
+                                <td class="px-6 py-4 text-md text-blue-900 border-2"></td>
+                                <td class="px-6 py-4 text-md text-blue-900 border-2"></td>
+                                <td class="px-6 py-4 text-md text-blue-900 border-2"></td>
+                                <td class="px-6 py-4 text-md text-blue-900"></td>
+                                <td class="px-6 py-4 text-md text-blue-900"></td>
+                                <td class="px-6 py-4 text-md text-blue-900"></td>
+                                <td class="px-6 py-4 text-md text-blue-900"></td>
+
                                 <td class="px-6 py-4 text-md text-blue-900">0.0</td>
+
                             </tr>
                         {% endfor %}
-                        <tr>
-                            <td style="padding: 8px; border: 1px solid #ccc;">Quality</td>
-                            <td class="px-6 py-4 text-md text-blue-900 truncate max-w-xs"></td>
-                            <td class="px-6 py-4 text-md text-blue-900 border-2"></td>
-                            <td class="px-6 py-4 text-md text-blue-900 border-2"></td>
-                            <td class="px-6 py-4 text-md text-blue-900 border-2"></td>
-                            <td class="px-6 py-4 text-md text-blue-900 border-2">(+-) </td>
-                            <td class="px-6 py-4 text-md text-blue-900 border-2"></td>
-                            <td class="px-6 py-4 text-md text-blue-900 border-2">(+-) </td>
-                            <td class="px-6 py-4 text-md text-blue-900 border-2"></td>
-                            <td class="px-6 py-4 text-md text-blue-900 border-2"></td>
-                            <td class="px-6 py-4 text-md text-blue-900 border-2"></td>
-                            <td class="px-6 py-4 text-md text-blue-900 border-2"></td>
-                        </tr>
                         
                     </tbody>
 {% endblock %}
