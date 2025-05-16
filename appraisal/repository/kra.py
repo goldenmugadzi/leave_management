@@ -321,9 +321,9 @@ class TargetScoreRepository:
     def get_by_performance_dimension_id(self, performance_dimension_id: int)->TargetScore:
         try:
             qr = TargetScore.objects.select_related('performance_dimension').filter(performance_dimension__id=performance_dimension_id)
-
+            
             if not qr.exists():
-                raise TargetScore.DoesNotExist
+                return None
 
             return qr.first()
         except Exception as e:

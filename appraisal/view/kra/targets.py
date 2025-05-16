@@ -1,5 +1,6 @@
 from typing import Dict
 from django.urls import reverse
+from django.shortcuts import redirect
 from django.views.generic.edit import UpdateView, CreateView
 from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib import messages
@@ -29,13 +30,7 @@ class TargetScoreUpdateView(SuccessMessageMixin, UpdateView):
     def get_target_score_object(self):
         repo = TargetScoreRepository()
         performance_dimension_id = self.kwargs.get("performance_dimension_id")
-        try:
-            return repo.get_by_performance_dimension_id(performance_dimension_id=performance_dimension_id)
-        except TargetScore.DoesNotExist:
-            raise Http404("Score object not found")
-        except Exception as e:
-            logger.error(f"Update view for TargetScore with performance_dimension pk-{performance_dimension_id}, failed with error: {e}")
-            return HttpResponseServerError("Something went wrong, please try again.")
+        return repo.get_by_performance_dimension_id(performance_dimension_id=performance_dimension_id)
 
     def get_object(self, queryset=None):
         """
@@ -48,7 +43,20 @@ class TargetScoreUpdateView(SuccessMessageMixin, UpdateView):
         repo = ScoreDocumentRepository()
         qr = repo.fetch_by_score_id(score_id=self.get_object().id)
         return {"score_documents_qr": qr}
-
+    
+    def get(self, request, *args, **kwargs):
+        try:
+            score_object = self.get_object()
+            self.object = score_object
+            if score_object is None:
+                logger.error(f"Update view for TargetScore with performance_dimension pk-{self.kwargs.get('performance_dimension_id')}, Score object not found")
+                return redirect("server_error_view")
+            context = self.get_context_data(**kwargs)
+            return self.render_to_response(context)
+        except Exception as e:
+            logger.error(f"Update view for TargetScore with performance_dimension pk-{self.kwargs.get('performance_dimension_id')}, failed with error: {e}")
+            return redirect("server_error_view")
+    
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context[self.context_object_name] = context.get("form")
