@@ -616,21 +616,38 @@ def upload_budgets(request):
             allocated = row['allocated']
             withdrawn = row['withdrawn']
             balance = row['balance']
+            period = row['period']
+            awaiting_sanctioning = row['awaiting_sanctioning']
+            region = row['region']
 
             if not allocated:
                 allocated = 0  # Provide a default value if allocated is empty
             if not balance:
                 balance = 0  # Provide a default value if balance is empty
 
+            if not withdrawn:
+                withdrawn = 0  # Provide a default value if withdrawn is empty
+            if not period:
+                period = 2025
+
+            if not awaiting_sanctioning:
+                awaiting_sanctioning = 0
+
+            if not region:
+                region='Transmission'
+
             try:
                 allocated = float(allocated)
                 balance = float(balance)
+                withdrawn = float(withdrawn)
+                period = int(period)  # Ensure period is an integer
+                awaiting_sanctioning = float(awaiting_sanctioning)
             except ValueError:
-                return HttpResponse("Error: Allocated and Balance fields must be numbers")
+                return HttpResponse("Error: Invalid number format in CSV file. Please check your data.")
 
-            awaiting_sanctioning = row['awaiting_sanctioning']
-            period = int(row['period'])
-            region = row['region']
+            awaiting_sanctioning = awaiting_sanctioning
+            period = period
+            region = region.strip()
             region = Regions.objects.filter(region=region).first()
             print(region)
             created_date = date.today()
