@@ -1,0 +1,35 @@
+{
+  "info": {
+    "name": "Token API View",
+    "_postman_id": "b2e7e6d8-5678-4e6a-9c1a-abcdef654321",
+    "description": "Collection for viewing a token via the API.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "View Token",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://127.0.0.1:8000/tokens/api/view-token/TKN174772820516280/",
+          "protocol": "http",
+          "host": [
+            "127",
+            "0",
+            "0",
+            "1"
+          ],
+          "port": "8000",
+          "path": [
+            "tokens",
+            "api",
+            "view-token",
+            "TKN174772820516280"
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}
