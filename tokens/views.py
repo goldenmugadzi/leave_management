@@ -21,6 +21,11 @@ from django.db.models import Count, Q
 from django.db.models.functions import TruncMonth
 import os, json, re
 import mysql.connector
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.response import Response
+from rest_framework import status
+from .serializers import TokenSerializer
+from .models import Token
 
 
 # check update
@@ -1250,4 +1255,100 @@ def tokens_reports(request):
         return render(request, "tokens/tokens_reports.html", context)
 
     return render(request, "tokens/tokens_reports.html", {"tokenFilterForm": form})
+
+
+@api_view(['POST'])
+def create_token_api(request):
+    from it.users.models import UserProfile
+    from .models import Attachment
+    from approve.views import intiate  # Make sure this is imported
+
+    serializer = TokenSerializer(data=request.data)
+    if serializer.is_valid():
+        try:
+            created_by = UserProfile.objects.get(id=65)
+        except UserProfile.DoesNotExist:
+            return Response({'error': 'Default user not found.'}, status=status.HTTP_400_BAD_REQUEST)
+        # Determine token type for process
+        token_type = request.data.get('type')
+        if token_type == "TEMPER":
+            process = intiate(request, "temper")
+        elif token_type == "REIMBURSEMENT":
+            process = intiate(request, "reimbursement")
+        elif token_type == "CLEAR CREDIT":
+            process = intiate(request, "clear credit")
+        else:
+            process = None
+
+        token = serializer.save(created_by=created_by, process=process)
+
+        # Handle multiple file uploads for additional_attachments
+        files = request.FILES.getlist('additional_attachments')
+        for file in files:
+            attachment = Attachment.objects.create(file=file)
+            token.additional_attachments.add(attachment)
+
+        # ... handle other related file fields as before ...
+
+        return Response(TokenSerializer(token).data, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['GET'])
+def view_token_api(request, token_id):
+    """
+    Retrieve a token by its ID or token string.
+    """
+    try:
+        # Try to get by primary key first, then by token string (id field)
+        try:
+            token = Token.objects.get(pk=token_id)
+        except (Token.DoesNotExist, ValueError):
+            token = Token.objects.get(id=token_id)
+    except Token.DoesNotExist:
+        return Response({'error': 'Token not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+    serializer = TokenSerializer(token)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+def my_tokens_api(request):
+    """
+    Return all tokens created by the current user.
+    """
+    # If using API without auth, set user_id=65 or get from request.user if using auth
+    user_id = 65  # Replace with request.user.id if using authentication
+    tokens = Token.objects.filter(created_by__id=user_id).order_by('-created_at')
+    serializer = TokenSerializer(tokens, many=True)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+def tokens_awaiting_my_action_api(request):
+    """
+    Return tokens awaiting action by the current user (based on roles and cost centers).
+    """
+    from it.users.models import UserProfile
+    user_id = 65  # Replace with request.user.id if using authentication
+    user = UserProfile.objects.get(id=user_id)
+    application_names = ["temper", "reimbursement", "clear credit"]
+    cost_centers = user.cost_centers_for(application_names)
+    user_roles = set(user.roles.all())
+    tokens_to_process = []
+    tokens = Token.objects.filter(cost_center__in=cost_centers).prefetch_related(
+        "process__approval_set", "process__workflow__step_set"
+    )
+    for token in tokens:
+        approvals = token.process.approval_set.all()
+        next_step = (approvals.last().step.step if approvals.exists() else 0) + 1
+        if (
+            token.process.workflow.step_set.filter(
+                step=next_step, approver__in=user_roles
+            ).exists()
+            and not token.process.approval_set.filter(approved="Rejected").exists()
+        ):
+            tokens_to_process.append(token)
+    serializer = TokenSerializer(tokens_to_process, many=True)
+    return Response(serializer.data, status=status.HTTP_200_OK)
 

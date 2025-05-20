@@ -1,0 +1,55 @@
+{
+  "info": {
+    "name": "Token API",
+    "_postman_id": "b2e7e6d8-1234-4e6a-9c1a-abcdef123456",
+    "description": "Collection for creating tokens via the API, including all file fields.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Create Token",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            { "key": "meter", "value": "1", "type": "text" },
+            { "key": "customer", "value": "2", "type": "text" },
+            { "key": "type", "value": "CLEAR CREDIT", "type": "text" },
+            { "key": "reason", "value": "Test token creation", "type": "text" },
+            { "key": "cost_center", "value": "1", "type": "text" },
+            { "key": "token_photo", "type": "file" },
+            { "key": "additional_attachments", "type": "file" },
+            { "key": "receipt", "type": "file" },
+            { "key": "amount", "value": "100.00", "type": "text" },
+            { "key": "old_token", "type": "file" },
+            { "key": "faultmeter_photo", "type": "file" },
+            { "key": "units", "value": "10.5", "type": "text" },
+            { "key": "recoveredmeter_picture", "type": "file" },
+            { "key": "faultmaintanance_photo", "type": "file" },
+            { "key": "reconnection_invoice", "type": "file" },
+            { "key": "reconnection_proof_of_payment", "type": "file" }
+          ]
+        },
+        "url": {
+          "raw": "http://127.0.0.1:8000/tokens/api/create-token/",
+          "protocol": "http",
+          "host": [
+            "127",
+            "0",
+            "0",
+            "1"
+          ],
+          "port": "8000",
+          "path": [
+            "tokens",
+            "api",
+            "create-token"
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}
