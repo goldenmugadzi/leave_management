@@ -72,7 +72,11 @@
                                         <td class="px-6 py-4 text-md text-blue-900 border-2">{{ performance_dimension_obj.id|get_performance_dimension_actual_variance }}</td>
                                         <td class="px-6 py-4 text-md text-blue-900">{{performance_dimension_obj.id|get_performance_dimension_rating}}</td>
                                         <td class="px-6 py-4 text-md text-blue-900">{{performance_dimension_obj.id|get_performance_dimension_weighted_score}}</td>
-                                        <td class="px-6 py-4 text-md text-blue-900">Docs</td>
+                                        <td class="px-6 py-4 text-md text-blue-900">
+                                            <button onclick="openSupportingDocsModal('{{ performance_dimension_obj.id }}')" class="w-14 h-10 flex items-center justify-center rounded-2xl text-white font-bold bg-blue-500 mx-auto">
+                                                View
+                                            </button>
+                                        </td>
                                     </tr>
                                 {% endfor %}
                             </tr>
@@ -87,7 +91,9 @@
                                 <td class="px-6 py-4 text-md text-blue-900"></td>
                                 <td class="px-6 py-4 text-md text-blue-900"></td>
                                 <td class="px-6 py-4 text-md text-blue-900"></td>
-                                <td class="px-6 py-4 text-md text-blue-900"></td>
+                                <td class="px-6 py-4 text-md text-blue-900">
+                                    
+                                </td>
 
                                 <td class="px-6 py-4 text-md text-blue-900">0.0</td>
 
@@ -95,4 +101,10 @@
                         {% endfor %}
                         
                     </tbody>
+                </table>
+            </div>
+            {% include "appraisal/kra/targets/score_docs/modal_view.html"%}
+
+
+            
 {% endblock %}

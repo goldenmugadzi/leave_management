@@ -250,6 +250,10 @@ class AppraisalKraDetailView(TemplateView):
         score_repo = TargetScoreRepository()
         return score_repo.appraisal_kra_activities_scored(appraisal_kra_id=self.kwargs.get("appraisal_kra_id"))
 
+    def get_supporting_docs_api_url(self):
+        url = f"{{ request.scheme }}://{{ request.get_host }}"
+        return url
+    
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context.update(self.get_approval_stages())
@@ -257,7 +261,7 @@ class AppraisalKraDetailView(TemplateView):
         context["appraisal_kra_object"] = self.get_object()
         context["is_reviewer"] = self.is_reviewer()   
         context["appraisal_kra_activities_scored"] = self.appraisal_kra_activities_scored()
-        
+        context["score_doc_api_url"] = self.get_supporting_docs_api_url()
         return context
     
     def get(self, request, *args, **kwargs):

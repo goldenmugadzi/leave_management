@@ -6,6 +6,8 @@ from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib import messages
 from django.http import Http404, HttpResponseServerError
 from django.http.response import HttpResponseRedirect
+from django.http import JsonResponse
+from django.template.loader import render_to_string
 
 from ...models import TargetScore, ScoreDocument
 from ...forms import TargetScoreForm, ScoreDocumentForm
@@ -16,7 +18,6 @@ from ...helpers.setters import set_approval_process
 
 from .helper import build_payload_score
 from pydantic import ValidationError
-from it.users.models import GRADE_CHOICES
 from loguru import logger
 
 
@@ -232,4 +233,33 @@ class ScoreDocumentUpdateView(SuccessMessageMixin, UpdateView):
 
 
     
+def target_score_supporting_docs_view(request, performance_dimension_pk: int):
+    print("================>>>>>> hit")
+    target_score_object = TargetScoreRepository().get_by_performance_dimension_id(performance_dimension_id=performance_dimension_pk)
+    
+    if target_score_object is None:
+        return HttpResponseServerError("Something went wrong")
+    
+    performance_dimension_obj = target_score_object.performance_dimension
+    score_doc_repo = ScoreDocumentRepository()
+    
+    try:
+        score_documents_qr = score_doc_repo.fetch_by_score_id(score_id=target_score_object.id)
+    except Exception as e:
+        logger.error(f"[target_score_supporting_docs_view] with performance_dimension pk: {performance_dimension_pk}, on fetching score docs failed with error: {e}")
+    
+    # Render the inner HTML
+    content_html = render_to_string(
+        "appraisal/kra/targets/score_docs/index.html",
+        {
+            "target_score_object": target_score_object,
+            "score_documents_qr": score_documents_qr,
+        },
+        request=request
+    )
 
+    return JsonResponse({
+        "heading": performance_dimension_obj.performance_indicator,
+        "description": performance_dimension_obj.description,
+        "content": content_html
+    })

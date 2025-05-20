@@ -33,7 +33,8 @@ from .view import (AppraisalCreateView,
                    PerformanceDimensionTemplateCreateView,
                    PerformanceDimensionTemplateUpdateView,
                    ScoreDocumentCreateView,
-                   ScoreDocumentUpdateView
+                   ScoreDocumentUpdateView,
+                   target_score_supporting_docs_view
                    )
 
 urlpatterns = [
@@ -90,4 +91,6 @@ urlpatterns = [
     # ----- api ------
     path('api/experience-list/', experience_list_api, name='experience_list_api'),
     path('api/kra-list/<int:appraisal_id>', kra_list_api, name='kra_list_api'),
+    path('api/score/supporting-documents/<int:performance_dimension_pk>', target_score_supporting_docs_view, name='score_supporting_docs_view'),
+    
     ]

@@ -1,29 +1,54 @@
 
-<!-- Modal (Hidden by Default) -->
-<div id="myModal-{{modal_id}}" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 hidden z-50">
-    <div class="bg-white p-6 rounded-lg shadow-lg w-1/3">
-        <h2 class="text-xl font-bold mb-4">{{modal_heading}}</h2>
-        <p class="text-gray-600 mb-4">{{modal_description}}</p>
+<!-- Modal -->
+<div id="supportingDocsModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 hidden z-50">
+    <div class="bg-white p-6 rounded-lg shadow-lg w-1/3 max-h-[90vh] overflow-y-auto">
+        <h2 id="modal-heading" class="text-xl font-bold mb-4"></h2>
+        <p id="modal-description" class="text-gray-600 mb-4"></p>
         
-        <div class="max-w-lg mx-auto p-6 bg-white shadow-md rounded-lg">
-            <h2 class="text-xl font-bold mb-4">Quarterly Progress</h2>
-            <div>
-                {% include "appraisal/kra/targets/score_docs/index.html"%}
-            </div>
+        <div id="modal-content" class="max-w-lg mx-auto p-2 bg-white shadow-md rounded-lg">
+            <!-- Partial content will be inserted here -->
         </div>
 
         <div class="flex justify-end mt-2 mr-8">
-            <button onclick="closeModal('{{modal_id}}')" class="px-4 py-2 text-white bg-red-500 rounded-lg">Close</button>
+            <button onclick="closeSupportingDocsModal()" class="px-4 py-2 text-white bg-red-500 rounded-lg">Close</button>
         </div>
     </div>
 </div>
 
+
 <script>
-    function openModal(modal_id) {
-        document.getElementById(`myModal-${modal_id}`).classList.remove("hidden");
+    function openSupportingDocsModal(performanceDimensionId) {
+        const modal = document.getElementById("supportingDocsModal");
+        const heading = document.getElementById("modal-heading");
+        const description = document.getElementById("modal-description");
+        const content = document.getElementById("modal-content");
+        
+        // Reset modal content
+        heading.textContent = "";
+        description.textContent = "";
+        content.innerHTML = "<p class='text-gray-500'>Loading...</p>";
+
+        api_url = `api/score/supporting-documents/${performanceDimensionId}`
+        
+        console.log("============>>>>>>> ", api_url)
+        
+        // Fetch modal content dynamically
+        fetch(api_url)
+            .then(response => response.json())
+            .then(data => {
+                heading.textContent = data.heading;
+                description.textContent = data.description;
+                content.innerHTML = data.content;
+                modal.classList.remove("hidden");
+            })
+            .catch(err => {
+                modal.classList.remove("hidden");
+                content.innerHTML = "<p class='text-red-500'>Failed to load data.</p>";
+                console.error(err);
+            });
     }
 
-    function closeModal(modal_id) {
-        document.getElementById(`myModal-${modal_id}`).classList.add("hidden");
+    function closeSupportingDocsModal() {
+        document.getElementById("supportingDocsModal").classList.add("hidden");
     }
 </script>
