@@ -19,3 +19,8 @@ urlpatterns = [
     path('api/create-token/', create_token_api, name='create_token_api'),
     path('api/view-token/<str:token_id>/', view_token_api, name='view_token_api'),
 ]
+
+urlpatterns += [
+    path('api/my-tokens/', my_tokens_api, name='my_tokens_api'),
+    path('api/tokens-awaiting-my-action/', tokens_awaiting_my_action_api, name='tokens_awaiting_my_action_api'),
+]
