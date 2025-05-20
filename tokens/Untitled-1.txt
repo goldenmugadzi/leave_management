@@ -1,0 +1,83 @@
+{
+  "info": {
+    "name": "Token API View Endpoints",
+    "_postman_id": "b2e7e6d8-9999-4e6a-9c1a-abcdef999999",
+    "description": "Collection for viewing tokens via the API.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "View Single Token",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://127.0.0.1:8000/tokens/api/view-token/TKN174772820516280/",
+          "protocol": "http",
+          "host": [
+            "127",
+            "0",
+            "0",
+            "1"
+          ],
+          "port": "8000",
+          "path": [
+            "tokens",
+            "api",
+            "view-token",
+            "TKN174772820516280"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "View All My Tokens",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://127.0.0.1:8000/tokens/api/my-tokens/",
+          "protocol": "http",
+          "host": [
+            "127",
+            "0",
+            "0",
+            "1"
+          ],
+          "port": "8000",
+          "path": [
+            "tokens",
+            "api",
+            "my-tokens"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Tokens Awaiting My Action",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://127.0.0.1:8000/tokens/api/tokens-awaiting-my-action/",
+          "protocol": "http",
+          "host": [
+            "127",
+            "0",
+            "0",
+            "1"
+          ],
+          "port": "8000",
+          "path": [
+            "tokens",
+            "api",
+            "tokens-awaiting-my-action"
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}
