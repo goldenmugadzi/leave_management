@@ -964,9 +964,10 @@ def my_actioned_items(request):
     user_profile = UserProfile.objects.filter(id=user_id).first()
     region = Regions.objects.filter(id=user_profile.region.id).first()
     
-    # Get all PettyCash items where the current user has an approval in the process
+    # Use a set to avoid duplicates
+    actioned_pettycashs_set = set()
     actioned_pettycashs = []
-    
+
     # Get user roles for PettyCash app
     user_roles = user_profile.roles.all()
     custom_user_roles = {"pettycash": {}}
@@ -977,27 +978,27 @@ def my_actioned_items(request):
             custom_user_roles["pettycash"] = role.role
     
     pettycash_role = str(custom_user_roles["pettycash"])
+
+    # Add items the user has created
     created_pettycashs = Pettycash.objects.filter(region=region, requested_by=request.user)
     for pettycash in created_pettycashs:
-        if pettycash not in actioned_pettycashs:
+        if pettycash.pk not in actioned_pettycashs_set:
             actioned_pettycashs.append(pettycash)
+            actioned_pettycashs_set.add(pettycash.pk)
     
-    # Find all PettyCash where this user has an approval record
+    # Add items the user has actioned (approved/rejected)
     all_pettycashs = Pettycash.objects.filter(region=region)
-    
-    # Check each PettyCash for this user's approvals
     for pettycash in all_pettycashs:
         process = pettycash.process
         if process and process.approval_set.exists():
             approvals = process.approval_set.all()
             for approval in approvals:
                 if approval.user == request.user:
-                    actioned_pettycashs.append(pettycash)
+                    if pettycash.pk not in actioned_pettycashs_set:
+                        actioned_pettycashs.append(pettycash)
+                        actioned_pettycashs_set.add(pettycash.pk)
                     break  # Found an approval by this user for this pettycash
 
-    # Add items the user has created (if not already in the list)
-    
-    
     requester = "create"  # Used in template for role checks
     
     return render(request, 'finance/pettycash/my_actioned_items.html', {
