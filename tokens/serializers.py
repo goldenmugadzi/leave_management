@@ -25,15 +25,14 @@ class TokenSerializer(serializers.ModelSerializer):
         return str(obj.created_by) if obj.created_by else None
 
     def get_process_status(self, obj):
-        # Show the latest approval step and status if process exists
         if obj.process and hasattr(obj.process, 'approval_set'):
             last_approval = obj.process.approval_set.order_by('-id').first()
             if last_approval:
                 return {
                     "step": str(last_approval.step),
                     "status": last_approval.approved,
-                    "remarks": last_approval.remarks,
-                    "updated_at": last_approval.updated_at if hasattr(last_approval, 'updated_at') else None
+                    "remarks": getattr(last_approval, "remarks", getattr(last_approval, "comment", None)),
+                    "updated_at": getattr(last_approval, "updated_at", None)
                 }
             return "No approvals yet"
         return "No process"

@@ -1,120 +1,86 @@
 {% extends "admin_layout.html" %}{% load static %}
 
 {% block content %}
-    <head>
-{#        <script src="{% static 'assets/classification.js' %}"></script>#}
-        <title>Ace reports</title>
-    </head>
-{#    <script src="{% static 'assets/disbursemodal.js' %}"></script>#}
-    <script src="{% static 'assets/precalc.js' %}"></script>
+<head>
+    <title>Ace reports</title>
+</head>
+<script src="{% static 'assets/precalc.js' %}"></script>
 
-
-<div class=" m-auto mt-5  ">
-  <form class="row rounded py-4 border  bg-gulf-blue-100 p-3 m-auto  container" method="POST" action="" enctype="multipart/form-data">
+<div class="m-auto mt-5">
+  <form class="row rounded py-4 border bg-gulf-blue-100 p-3 m-auto container" method="POST" action="" enctype="multipart/form-data">
     {% csrf_token %}
-   <div class=" m-auto container justify-content-stretch align-content-stretch ">
-    <div class="mx-10 my-3 d-flex col-span-4 ">
-      {% for field in ace_report_form %}
-        <div class="rounded row py-2 my-3 ">
-          {% if field.is_hidden %}
-            {{ field }}
-          {% else %}
-            <div class="gap-4  m-auto grid grid-cols-3  "> 
-              {{ field.label_tag }}
+    <div class="m-auto container justify-content-stretch align-content-stretch">
+      <div class="mx-10 my-3 d-flex col-span-4">
+        {% for field in ace_report_form %}
+          <div class="rounded row py-2 my-3">
+            {% if field.is_hidden %}
               {{ field }}
-              <div class="text-red-500">
-                {{ field.errors }}
+            {% else %}
+              <div class="gap-4 m-auto grid grid-cols-3">
+                {{ field.label_tag }}
+                {# Special handling for budget_id to add "All Budgets" option #}
+                {% if field.name == "budget_id" %}
+                  <select name="{{ field.name }}" id="id_{{ field.name }}" class="form-control">
+                    <option value="">All Budgets</option>
+                    {% for opt in field.field.queryset %}
+                      <option value="{{ opt.pk }}" {% if field.value|stringformat:"s" == opt.pk|stringformat:"s" %}selected{% endif %}>
+                        {{ opt }}
+                      </option>
+                    {% endfor %}
+                  </select>
+                {% else %}
+                  {{ field }}
+                {% endif %}
+                <div class="text-red-500">
+                  {{ field.errors }}
+                </div>
               </div>
-          {% endif %}
-        </div>
-      {% endfor %}
-      </div>  
-    </div> 
-     <div class="m-10 justify-content-stretch align-content-stretch">
-            {{ formset.management_form }}
-            
-            {% for form in formset  %}
-            {% for field in form %}
-            <div class="rounded row py-2 my-3 ">
-              {% if field.is_hidden %}
-                {{ field }}
-
+            {% endif %}
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+    <div class="m-10 justify-content-stretch align-content-stretch">
+      {{ formset.management_form }}
+      {% for form in formset %}
+        {% for field in form %}
+          <div class="rounded row py-2 my-3">
+            {% if field.is_hidden %}
+              {{ field }}
+            {% else %}
+              {% if field.name == "quotation_file" %}
+                <div class="rounded row py-2 my-3">
+                  <div class="gap-4 m-auto grid grid-cols-3">
+                    <label for="id_section">Attachments:</label>
+                    <div class="text-red-500">
+                      <input name="attachments" type="file" multiple class="block w-full rounded-md border-0 py-1.5 mb-3 flex justify-center items-align-center text-gray-900 shadow-sm ring-1 ring-inset form-control-file">
+                    </div>
+                  </div>
+                </div>
               {% else %}
-                      {% if field.name == "quotation_file" %}
-                          <div class="rounded row py-2 my-3 ">
-
-                              <div class="gap-4  m-auto grid grid-cols-3  ">
-                                  <label for="id_section">Attachments:</label>
-                                  <div class="text-red-500">
-                                      <input required
-                                             name="attachments"
-                                             type="file"
-                                             multiple
-                                             class="block w-full rounded-md border-0 py-1.5 mb-3 flex justify-center items-align-center text-gray-900 shadow-sm ring-1 ring-inset form-control-file">
-
-
-                                  </div>
-
-                              </div>
-
-                          </div>
-
-
-                      {% else %}
-
-                        <div class="gap-4  m-auto grid grid-cols-3  ">
-                          {{ field.label_tag }}
-                          {{ field }}
-                          <div class="text-red-500">
-                            {{ field.errors }}
-                          </div>
-                      {% endif %}
+                <div class="gap-4 m-auto grid grid-cols-3">
+                  {{ field.label_tag }}
+                  {{ field }}
+                  <div class="text-red-500">
+                    {{ field.errors }}
+                  </div>
+                </div>
               {% endif %}
-
-            </div>
-          {% endfor %}
-            {% endfor %}
-              
-        </div>
-{#         <div class="modal fade" id="resultModal" tabindex="-1" role="dialog" aria-labelledby="resultModalLabel" aria-hidden="true">#}
-{#             <div class="modal-dialog">#}
-{#                 <div class="modal-content">#}
-{#                     <div class="modal-header">#}
-{#                         <h5 class="modal-title" id="resultModalLabel">Transaction Aftermath</h5>#}
-{#                         <button type="button" class="close" data-dismiss="modal" aria-label="Close">#}
-{#                             <span aria-hidden="true"></span>#}
-{#                         </button>#}
-{#                     </div>#}
-{#                     <div class="modal-body" id="modal-body-content">#}
-{#                     </div>#}
-{#                     <div class="modal-footer">#}
-                         {#                    <button type="button" class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded" data-dismiss="modal">Close</button>#}
-{#                     </div>#}
-{#                 </div>#}
-{#             </div>#}
-{#         </div>#}
-     </div>
-   </div>
-
-     <br>
-     <div class="m-auto justify-content-stretch text-center align-content-stretch">
+            {% endif %}
+          </div>
+        {% endfor %}
+      {% endfor %}
+    </div>
+    <br>
+    <div class="m-auto justify-content-stretch text-center align-content-stretch">
       <a class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded" href="/dashboard">Back</a>
       <input class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded" type="submit" value="Submit">
-  </div>
-
+    </div>
   </form>
 </div>
-
-    <div class="rounded row py-2 my-3 ">
-    <div class="gap-4  m-auto grid grid-cols-3  ">
-{#    <button type="button" class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded" id="calculate_button">Calculate</button>#}
-
-
-
-
-
 {% endblock %}
-{% block scripts%}
+
+{% block scripts %}
 {#    <script src="{% static 'assets/classification.js' %}"></script>#}
 {#    <script src="{% static 'assets/precalc.js' %}"></script>#}
 {% endblock %}

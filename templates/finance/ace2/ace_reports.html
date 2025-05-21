@@ -27,13 +27,13 @@
             <tr>
                 <th>ACE ID</th>
                 <th>ACE Details</th>
-                <th>Amount</th>
-                
                 <th>Requested By</th>
-                <th>Created At</th>
                 <th>Section</th>
-              <th>Allocation Code of Expenditure</th>
-              <th>Status</th>
+                <th>Created At</th>
+                <th>Budget Name</th>
+                <th>Amount</th>
+                <th>Approved</th>
+                <th>Approved By</th>
           </tr>
         </thead>
         <tbody>
@@ -41,13 +41,21 @@
             <tr class="h-1">
                 <td><a class="text-blue-500" href="/ace/ace_detail/{{ace.Ace_id2}}">{{ ace.Ace_id2|default_if_none:'' }}</a></td>
                 <td>{{ ace.details_of_expenditure }}</td>
-              <td>{{ ace.amount }}</td>
-
-            <td>{% if ace.requested_by == user %} You {% else %} {{ace.requested_by.get_full_name }} {% endif %}</td>
-              <td>{{ ace.date_created }}</td>
-              <td>{{ ace.section }}</td>
-            <td>{{ ace.section.code }}</td>
-            <td>{{ ace.process.approval_set.last|default_if_none:'' }}</td>
+                <td>{% if ace.requested_by == user %} You {% else %} {{ace.requested_by.get_full_name }} {% endif %}</td>
+                <td>{{ ace.section.section }}</td>
+                <td>{{ ace.date_created|date:"Y-m-d" }}</td>
+                <td>{{ ace.budget_id.budget_name }}</td>
+                <td>{{ ace.amount }}</td>
+                <td>
+                    {% with latest_approval=ace.process.approval_set.last %}
+                        {{ latest_approval.approved if latest_approval }}
+                    {% endwith %}
+                </td>
+                <td>
+                    {% with latest_approval=ace.process.approval_set.last %}
+                        {{ latest_approval.user.get_full_name if latest_approval and latest_approval.user }}
+                    {% endwith %}
+                </td>
               {% comment %} <td>{{ ace.process }}</td> {% endcomment %}
             </tr>
           {% endfor %}
