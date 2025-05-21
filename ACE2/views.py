@@ -14,6 +14,7 @@ from django.template import loader
 from openpyxl import Workbook
 from weasyprint import HTML
 from django.db import transaction
+from django.utils.dateparse import parse_date
 
 from ACE2.forms import *
 from ACE2.utils import find_pettycash_section_head
@@ -1446,31 +1447,48 @@ def ace_reports(request):
 
 
 @login_required
-def ace_report_detail_pdf(request, report_id2):
-    report = AceReport.objects.filter(report_id2=report_id2).first()
-    if not report:
-        return HttpResponse("Report not found.", status=404)
-    # Only filter by budget if a specific budget is selected
-    if report.budget_id:
-        aces = Ace2.objects.filter(
-            date_created__range=[report.start_date, report.end_date],
-            region=report.region,
-            budget_id=report.budget_id
-        )
+def ace_report_detail_pdf(request, report_id2=None):
+    if report_id2:
+        report = get_object_or_404(AceReport, report_id2=report_id2)
+        # Only filter by budget if a specific budget is selected
+        if report.budget_id:
+            aces = Ace2.objects.filter(
+                date_created__range=[report.start_date, report.end_date],
+                region=report.region,
+                budget_id=report.budget_id
+            )
+        else:
+            aces = Ace2.objects.filter(
+                date_created__range=[report.start_date, report.end_date],
+                region=report.region
+            )
+        template = loader.get_template('finance/ace2/ace_reports.html')
+        context = {
+            'aces': aces,
+            'report': report,
+            'request': request
+        }
+        html = template.render(context, request)
+        pdf = HTML(string=html).write_pdf()
+        return HttpResponse(pdf, content_type='application/pdf')
     else:
+        # Get parameters from GET
+        start_date = parse_date(request.GET.get('start_date'))
+        end_date = parse_date(request.GET.get('end_date'))
+        region_id = request.GET.get('region')
+        region = get_object_or_404(Regions, id=region_id)
         aces = Ace2.objects.filter(
-            date_created__range=[report.start_date, report.end_date],
-            region=report.region
+            date_created__range=[start_date, end_date],
+            region=region
         )
-    template = loader.get_template('finance/ace2/ace_reports.html')
-    context = {
-        'aces': aces,
-        'report': report,
-        'request': request
-    }
-    html = template.render(context, request)
-    pdf = HTML(string=html).write_pdf()
-    return HttpResponse(pdf, content_type='application/pdf')
+        template = loader.get_template('finance/ace2/ace_reports.html')
+        context = {
+            'aces': aces,
+            'request': request
+        }
+        html = template.render(context, request)
+        pdf = HTML(string=html).write_pdf()
+        return HttpResponse(pdf, content_type='application/pdf')
 
 
 @login_required

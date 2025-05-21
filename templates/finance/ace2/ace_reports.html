@@ -18,8 +18,13 @@
        <h3 class="text-center font-bold  mb-4">All ACEs</h3>
       <div class=" grid grid-cols-4 container text-center ">
 {#        {% comment %} <a href="{% url 'nonconformity:checklist' %}" class="bg-blue-500 hover:bg-blue-700 inline-block rounded-full mx-3 text-white py-2 px-4 rounded">Create from checklist</a> {% endcomment %}#}
-          <a href="/ace/print_report_csv/{{ report }}" class="bg-green-500 hover:bg-green-900 inline-block rounded-full mx-3 text-white py-2 px-4 rounded">CSV report</a>
-          <a href="/ace/print_report_pdf/{{ report }}" class="bg-yellow-500 hover:bg-red-900 inline-block rounded-full mx-3 text-white py-2 px-4 rounded">PDF report</a>
+        {% if report %}
+            <a href="/ace/print_report_csv/{{ report.report_id2 }}" class="bg-green-500 hover:bg-green-900 inline-block rounded-full mx-3 text-white py-2 px-4 rounded">CSV report</a>
+            <a href="/ace/print_report_pdf/{{ report.report_id2 }}" class="bg-yellow-500 hover:bg-red-900 inline-block rounded-full mx-3 text-white py-2 px-4 rounded">PDF report</a>
+        {% else %}
+            <a href="/ace/print_report_csv/?start_date={{ start_date }}&end_date={{ end_date }}&region={{ region.id }}&all_budgets=1" class="bg-green-500 hover:bg-green-900 inline-block rounded-full mx-3 text-white py-2 px-4 rounded">CSV report</a>
+            <a href="/ace/print_report_pdf/?start_date={{ start_date }}&end_date={{ end_date }}&region={{ region.id }}&all_budgets=1" class="bg-yellow-500 hover:bg-red-900 inline-block rounded-full mx-3 text-white py-2 px-4 rounded">PDF report</a>
+        {% endif %}
       </div>
       <br> <table id="nonconformity" class="table table-striped stripe table-bordered">
         <thead>
@@ -48,12 +53,16 @@
                 <td>{{ ace.amount }}</td>
                 <td>
                     {% with latest_approval=ace.process.approval_set.last %}
-                        {{ latest_approval.approved if latest_approval }}
+                        {% if latest_approval %}
+                            {{ latest_approval.approved }}
+                        {% endif %}
                     {% endwith %}
                 </td>
                 <td>
                     {% with latest_approval=ace.process.approval_set.last %}
-                        {{ latest_approval.user.get_full_name if latest_approval and latest_approval.user }}
+                        {% if latest_approval and latest_approval.user %}
+                            {{ latest_approval.user.get_full_name }}
+                        {% endif %}
                     {% endwith %}
                 </td>
               {% comment %} <td>{{ ace.process }}</td> {% endcomment %}
