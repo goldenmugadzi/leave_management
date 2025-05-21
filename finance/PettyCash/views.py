@@ -5,6 +5,9 @@ from mimetypes import guess_type
 from random import randrange
 import csv
 
+from django.utils import timezone
+from django.db.models import Prefetch
+
 import sweetify
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -378,8 +381,8 @@ def pettycash_awaiting_my_action(request):
                 pettycashs_to_process.append(pettycash)
 
     else:
-        print(user_profile.region.id, 'region')
-        print(user_profile.designation.id, 'designation')
+        # print(user_profile.region.id, 'region')
+        # print(user_profile.designation.id, 'designation')
         if user_profile.region.id == 4 and user_profile.designation.id == 300:
             sections_to_filter = [416, 415, 414, 413, 412, 411, 410, 407]
             for pettycash in Pettycash.objects.filter(section__id__in=sections_to_filter).order_by(
@@ -447,9 +450,9 @@ def view_all_pettycashs(request):
 
         if role.application == "pettycash":
             custom_user_roles["pettycash"] = role.role
-            print("tr ", role.role)
+            # print("tr ", role.role)
     pettycash_role = str(custom_user_roles["pettycash"])
-    print("gh ", pettycash_role)
+    # print("gh ", pettycash_role)
     requester = "create"
     current_year = datetime.now(timezone.utc).year
 
@@ -955,7 +958,7 @@ def receipt_manual(request):
 @login_required
 def my_actioned_items(request):
     """
-    Show PettyCash items the current user has actioned (approved/rejected).
+    Show PettyCash items the current user has actioned (approved/rejected) or created.
     """
     user_id = request.user.id
     user_profile = UserProfile.objects.filter(id=user_id).first()
@@ -974,6 +977,10 @@ def my_actioned_items(request):
             custom_user_roles["pettycash"] = role.role
     
     pettycash_role = str(custom_user_roles["pettycash"])
+    created_pettycashs = Pettycash.objects.filter(region=region, requested_by=request.user)
+    for pettycash in created_pettycashs:
+        if pettycash not in actioned_pettycashs:
+            actioned_pettycashs.append(pettycash)
     
     # Find all PettyCash where this user has an approval record
     all_pettycashs = Pettycash.objects.filter(region=region)
@@ -987,6 +994,9 @@ def my_actioned_items(request):
                 if approval.user == request.user:
                     actioned_pettycashs.append(pettycash)
                     break  # Found an approval by this user for this pettycash
+
+    # Add items the user has created (if not already in the list)
+    
     
     requester = "create"  # Used in template for role checks
     
@@ -1004,49 +1014,45 @@ def notify_uncleared_pettycash_dischargers(request):
     Notify disbursers if a petty cash item has not been cleared (no receipt/amount_used) for over a week after disbursement.
     This runs on every access to a main petty cash view.
     """
-    from django.utils import timezone
     now = timezone.now()
     one_week_ago = now - timedelta(days=7)
     current_year = now.year
 
-    # Get the user's region
     user_id = request.user.id
     user_profile = UserProfile.objects.filter(id=user_id).first()
     region = user_profile.region if user_profile else None
 
-    # Only consider petty cash for the current year and user's region
     uncleared_pettycash = Pettycash.objects.filter(
         amount_disbursed__isnull=False,
         amount_disbursed__gt=0,
         amount_used__isnull=True,
         date_created__year=current_year,
-        region=region,  # <-- Filter by region
-        # Optionally, you may want to also check receipt_file__isnull=True
+        region=region,
+    ).prefetch_related(
+        Prefetch('process__approval_set', queryset=Approval.objects.order_by('approved_at'))
     )
+
     for pc in uncleared_pettycash:
         try:
-            # Get all approvals for this petty cash process, ordered by approval date
-            approvals = list(pc.process.approval_set.order_by('approved_at'))
+            approvals = list(pc.process.approval_set.all()) if pc.process else []
             if len(approvals) >= 2:
-                disburse_approval = approvals[-2]  # Second from last approval
-                # Check that this approval's step/role is 'disburse'
-                if hasattr(disburse_approval.step, 'role') and getattr(disburse_approval.step.role, 'role', None) == 'disburse':
-                    if disburse_approval.approved_at and disburse_approval.approved_at < one_week_ago:
-                        disburser = disburse_approval.user
-                        # Notify the disburser
-                        recent_notification = Notification.objects.filter(
-                            user=disburser,
-                            notification_id=pc.petty_id,
-                            notification_type='Pettycash',
-                            message__icontains='not cleared',
-                            created_at__gte=one_week_ago
-                        ).exists()
-                        if not recent_notification:
-                            msg = f"Petty cash {pc.petty_id} you disbursed has not been cleared for over a week. Please follow up."
-                            url = f"/pettycash/pettycash_detail/{pc.petty_id}"
-                            notify_user(disburser, msg, "Pettycash", url, pc.petty_id, request)
-                            print(f"Notified disburser {disburser} for petty cash {pc.petty_id} not cleared.")
-            # Also notify the user who has not yet cleared (the requested_by user)
+                disburse_approval = approvals[-2]
+                step_role = getattr(getattr(disburse_approval.step, 'role', None), 'role', None)
+                if step_role == 'disburse' and disburse_approval.approved_at and disburse_approval.approved_at < one_week_ago:
+                    disburser = disburse_approval.user
+                    recent_notification = Notification.objects.filter(
+                        user=disburser,
+                        notification_id=pc.petty_id,
+                        notification_type='Pettycash',
+                        message__icontains='not cleared',
+                        created_at__gte=one_week_ago
+                    ).exists()
+                    if not recent_notification:
+                        msg = f"Petty cash {pc.petty_id} you disbursed has not been cleared for over a week. Please follow up."
+                        url = f"/pettycash/pettycash_detail/{pc.petty_id}"
+                        notify_user(disburser, msg, "Pettycash", url, pc.petty_id, request)
+
+            # Notify the user who has not yet cleared
             user_to_notify = pc.requested_by
             if user_to_notify:
                 recent_user_notification = Notification.objects.filter(
@@ -1060,29 +1066,19 @@ def notify_uncleared_pettycash_dischargers(request):
                     msg = f"You have not yet cleared petty cash {pc.petty_id}. Please upload your receipts and acquittal."
                     url = f"/pettycash/pettycash_detail/{pc.petty_id}"
                     notify_user(user_to_notify, msg, "Pettycash", url, pc.petty_id, request)
-                    print(f"Notified user {user_to_notify} to clear petty cash {pc.petty_id}.")
 
-            # Escalation: If uncleared for more than 30 days, notify section head (or escalate further)
+            # Escalation: If uncleared for more than 30 days, notify section head
             THIRTY_DAYS = 30
             very_old_threshold = now - timedelta(days=THIRTY_DAYS)
             if (
                 len(approvals) >= 2 and
-                hasattr(disburse_approval, 'approved_at') and
-                disburse_approval.approved_at and
+                getattr(disburse_approval, 'approved_at', None) and
                 disburse_approval.approved_at < very_old_threshold
             ):
-                # Escalate to section head
-                section_head = None
-                if hasattr(pc, 'section') and pc.section:
-                    section_head = find_pettycash_section_head(pc.section)
+                section_head = find_pettycash_section_head(pc.section) if getattr(pc, 'section', None) else None
                 if section_head:
-                    # section_head may be a username or UserProfile
-                    if isinstance(section_head, str):
-                        section_head_user = UserProfile.objects.filter(username=section_head).first()
-                    else:
-                        section_head_user = section_head
+                    section_head_user = UserProfile.objects.filter(username=section_head).first() if isinstance(section_head, str) else section_head
                     if section_head_user:
-                        # Prevent duplicate escalation messages
                         recent_escalation = Notification.objects.filter(
                             user=section_head_user,
                             notification_id=pc.petty_id,
@@ -1096,4 +1092,4 @@ def notify_uncleared_pettycash_dischargers(request):
                             notify_user(section_head_user, msg, "Pettycash", url, pc.petty_id, request)
                             print(f"Escalation: Notified section head {section_head_user} for petty cash {pc.petty_id} uncleared >30 days.")
         except Exception as e:
-            print(f"[Exemption] Error processing petty cash {getattr(pc, 'petty_id', None)}: {e}")
+            print(f"[Exception] Error processing petty cash {getattr(pc, 'petty_id', None)}: {e}")
