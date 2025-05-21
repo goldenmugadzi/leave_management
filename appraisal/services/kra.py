@@ -186,7 +186,7 @@ class ActivityService:
             return result
         except Exception as e:
             raise KRAErr(f"[ActivityService] Failed get_activities_related_data_by_appraisal_kra_id with error: {e}")
-
+style="padding: 8px; border: 1px solid #ccc; background-color: #eee;"
 @dataclass
 class AppraisalKraService:
     repo: AppraisalKraRepository
