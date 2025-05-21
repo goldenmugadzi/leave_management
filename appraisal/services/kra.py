@@ -175,6 +175,7 @@ class ActivityService:
             for activity_obj in activity_qr:
                 performance_dimension_qr = performance_dimension_repo.fetch_by_activity_id(activity_id=activity_obj.id)
                 data = {
+                    "activity_id": activity_obj.id,
                     "activity_name": activity_obj.name,
                     "activity_weight": activity_obj.weight,
                     "activity_performance_dimension_qr": performance_dimension_qr,

@@ -234,7 +234,6 @@ class ScoreDocumentUpdateView(SuccessMessageMixin, UpdateView):
 
     
 def target_score_supporting_docs_view(request, performance_dimension_pk: int):
-    print("================>>>>>> hit")
     target_score_object = TargetScoreRepository().get_by_performance_dimension_id(performance_dimension_id=performance_dimension_pk)
     
     if target_score_object is None:
