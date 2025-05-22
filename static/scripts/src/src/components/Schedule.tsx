@@ -60,6 +60,7 @@ export default function Schedule({
 }) {
   // State
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [loadingOperation, setLoadingOperation] = useState<string>("");
   const [csId, setCsId] = useState<string>("");
   const [creator, setCreator] = useState<string>("");
   const [createdAt, setCreatedAt] = useState<string>("");
@@ -98,6 +99,7 @@ export default function Schedule({
   // Fetch CS data
   const fetchCS = useCallback(async (cs_id: string) => {
     setIsLoading(true);
+    setLoadingOperation("Loading comparative schedule data");
     
     try {
       const requestOptions = {
@@ -119,12 +121,14 @@ export default function Schedule({
       onOpenResponse("Error", "Failed to load CS data", false);
     } finally {
       setIsLoading(false);
+      setLoadingOperation("");
     }
   }, [base_url]);
   
   // Fetch PR data
   const onFetchPR = useCallback(async (pr_id: string) => {
     setIsLoading(true);
+    setLoadingOperation("Loading purchase request data");
     
     try {
       await api.fetchPR(pr_id);
@@ -140,11 +144,13 @@ export default function Schedule({
       onOpenResponse("Error", "Failed to load PR data", false);
     } finally {
       setIsLoading(false);
+      setLoadingOperation("");
     }
   }, [api, base_url, fetchCS]);
   
   // Create a new CS
   const getCreateData = useCallback(async (pr_id: string) => {
+    setLoadingOperation("Creating new comparative schedule");
     try {
       const requestOptions = {
         method: "POST",
@@ -163,11 +169,14 @@ export default function Schedule({
       console.error("Error creating CS:", error);
       onOpenResponse("Error", "Failed to create new CS", false);
       return null;
+    } finally {
+      setLoadingOperation("");
     }
   }, [base_url]);
   
   // Fetch users
   const fetchUsers = useCallback(async () => {
+    setLoadingOperation("Loading users");
     try {
       const requestOptions = {
         method: "GET",
@@ -184,11 +193,14 @@ export default function Schedule({
       }
     } catch (error) {
       console.error("Error fetching users:", error);
+    } finally {
+      setLoadingOperation("");
     }
   }, [base_url]);
   
   // Fetch suppliers
   const fetchSuppliers = useCallback(async () => {
+    setLoadingOperation("Loading suppliers");
     try {
       const requestOptions = {
         method: "GET",
@@ -205,6 +217,8 @@ export default function Schedule({
       }
     } catch (error) {
       console.error("Error fetching suppliers:", error);
+    } finally {
+      setLoadingOperation("");
     }
   }, [base_url]);
   
@@ -215,6 +229,8 @@ export default function Schedule({
   
   // Handle saving a bid
   const handleSaveBid = useCallback(async (bid: IBid) => {
+    setIsLoading(true);
+    setLoadingOperation("Saving bid");
     try {
       const formData = new FormData();
       
@@ -245,11 +261,16 @@ export default function Schedule({
     } catch (error) {
       console.error("Error saving bid:", error);
       onOpenResponse("Error", "Failed to save bid", false);
+    } finally {
+      setIsLoading(false);
+      setLoadingOperation("");
     }
   }, [csId, base_url, fetchCS]);
   
   // Handle deleting a bid
   const handleDeleteBid = useCallback(async (bid_count: number, supplier_name: string) => {
+    setIsLoading(true);
+    setLoadingOperation(`Deleting bid from ${supplier_name}`);
     try {
       const requestOptions = {
         method: "DELETE",
@@ -267,11 +288,16 @@ export default function Schedule({
     } catch (error) {
       console.error("Error deleting bid:", error);
       onOpenResponse("Error", "Failed to delete bid", false);
+    } finally {
+      setIsLoading(false);
+      setLoadingOperation("");
     }
   }, [csId, base_url, fetchCS]);
   
   // Handle saving committee
   const handleSaveCommittee = useCallback(async (committee: ICommittee[]) => {
+    setIsLoading(true);
+    setLoadingOperation("Saving committee members");
     try {
       const requestOptions = {
         method: "POST",
@@ -290,11 +316,16 @@ export default function Schedule({
     } catch (error) {
       console.error("Error saving committee:", error);
       onOpenResponse("Error", "Failed to save committee", false);
+    } finally {
+      setIsLoading(false);
+      setLoadingOperation("");
     }
   }, [csId, base_url, fetchCS]);
   
   // Handle saving compliance
   const handleSaveCompliance = useCallback(async (compliance: ICompliance[], remarks: IComplianceRemark[]) => {
+    setIsLoading(true);
+    setLoadingOperation("Saving compliance data");
     try {
       const requestOptions = {
         method: "POST",
@@ -316,6 +347,9 @@ export default function Schedule({
     } catch (error) {
       console.error("Error saving compliance:", error);
       onOpenResponse("Error", "Failed to save compliance", false);
+    } finally {
+      setIsLoading(false);
+      setLoadingOperation("");
     }
   }, [csId, base_url, fetchCS]);
   
@@ -326,6 +360,8 @@ export default function Schedule({
     approval: string,
     justification: string
   ) => {
+    setIsLoading(true);
+    setLoadingOperation(`Processing ${approval.toLowerCase()} action`);
     try {
       const requestOptions = {
         method: "POST",
@@ -349,6 +385,9 @@ export default function Schedule({
     } catch (error) {
       console.error("Error during approval:", error);
       onOpenResponse("Error", "Failed to process approval", false);
+    } finally {
+      setIsLoading(false);
+      setLoadingOperation("");
     }
   }, [csId, base_url, fetchCS]);
   
@@ -378,7 +417,7 @@ export default function Schedule({
       <div className="fixed inset-0 flex items-center justify-center z-50 bg-gray-800 bg-opacity-50">
         <div className="bg-white p-4 rounded-lg shadow-lg flex flex-col items-center">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600 mb-3"></div>
-          <p className="text-blue-800 font-medium">Loading...</p>
+          <p className="text-blue-800 font-medium">{loadingOperation || "Loading..."}</p>
         </div>
       </div>
     );

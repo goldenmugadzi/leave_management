@@ -11,7 +11,7 @@ from rest_framework.decorators import api_view, permission_classes, parser_class
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.parsers import FormParser, MultiPartParser, FileUploadParser
 
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 
 # Create your views here.
 # CONTROLLER INSTRUCTIONS
@@ -63,7 +63,7 @@ def get_controller_instructions(request):
         for instruction in controller_instructions:
             
             try:
-                user = User.objects.get(username=instruction.instruction_by)
+                user = get_user_model().objects.get(username=instruction.instruction_by)
                 
                 if user:
                     data = {
@@ -92,8 +92,8 @@ def get_controller_instruction(request):
         try:
             cif_id = request.data['id']
             controller_instruction = ControllerInstruction.objects.get(cif_id=cif_id)
-            instruction_by = User.objects.get(username=controller_instruction.instruction_by) if controller_instruction.instruction_by else None
-            instruction_to = User.objects.get(username=controller_instruction.instruction_to) if controller_instruction.instruction_to else None
+            instruction_by = get_user_model().objects.get(username=controller_instruction.instruction_by) if controller_instruction.instruction_by else None
+            instruction_to = get_user_model().objects.get(username=controller_instruction.instruction_to) if controller_instruction.instruction_to else None
             
             inst_list = []
             instructions = Instruction.objects.filter(cif_id=controller_instruction.cif_id).all()
@@ -243,7 +243,7 @@ def get_all_permit_to_work(request):
         # Create a custom permit-to-works list object
         custom_permit_to_works = []
         for ptw in permit_to_works:
-            user = User.objects.get(username=ptw.created_by)
+            user = get_user_model().objects.get(username=ptw.created_by)
             
             if user:
                 custom_ptw = {
@@ -276,7 +276,7 @@ def get_ptw_details(id):
         print("id: ", id)
         ptw = PermitToWork.objects.get(ptw_id=id)
         
-        user = User.objects.get(username=ptw.created_by)
+        user = get_user_model().objects.get(username=ptw.created_by)
         ptw_workers = WorkerDeclaration.objects.filter(ptw_id=ptw.ptw_id)
         # get workers
         custom_workers = []
@@ -304,7 +304,7 @@ def get_ptw_details(id):
         if user:
             
             cif = ControllerInstruction.objects.get(cif_id=ptw.cif_id)
-            controller_user = User.objects.get(username=cif.instruction_by)
+            controller_user = get_user_model().objects.get(username=cif.instruction_by)
             controller_consent_data = {}
             if controller_user:
                 controller_consent_data = {
@@ -314,7 +314,7 @@ def get_ptw_details(id):
                     "date": ptw.created_at,
                 }
             
-            senior_user = User.objects.get(username=ptw.created_by)
+            senior_user = get_user_model().objects.get(username=ptw.created_by)
             senior_authorization_data = {}
             if senior_user:
                 senior_authorization_data = {
@@ -324,7 +324,7 @@ def get_ptw_details(id):
                     "date": ptw.created_at,
                 }
             
-            responsible_user = User.objects.filter(username=ptw.responsible_official).first()
+            responsible_user = get_user_model().objects.filter(username=ptw.responsible_official).first()
             responsible_official_data = {}
             if responsible_user:
                 responsible_official_data = {
@@ -337,7 +337,7 @@ def get_ptw_details(id):
                     "date": ptw.official_date,
                 }
             
-            competent_user = User.objects.filter(username=ptw.recipt_person).first()
+            competent_user = get_user_model().objects.filter(username=ptw.recipt_person).first()
             receipt_person_data = {}
             if competent_user:
                 receipt_person_data = {
@@ -379,7 +379,7 @@ def get_ptw_details(id):
                     "date": ptw.official_cancellation_date,
                 }
             
-            indirect_issue_user = User.objects.filter(username=ptw.indirect_issue).first()
+            indirect_issue_user = get_user_model().objects.filter(username=ptw.indirect_issue).first()
             indirect_issue_data = {}
             if indirect_issue_user: 
                 indirect_issue_data = {
@@ -392,7 +392,7 @@ def get_ptw_details(id):
                     "date": ptw.indirect_date,
                 }
 
-            indirect_clearance_user = User.objects.filter(username=ptw.indirect_clearance).first()
+            indirect_clearance_user = get_user_model().objects.filter(username=ptw.indirect_clearance).first()
             indirect_clearance_data = {}
             if indirect_clearance_user:             
                 indirect_clearance_data = {
@@ -832,8 +832,8 @@ def controller_consent(request, ptw_id):
 def get_ops_users(request):
     
     if request.method == 'GET':
-        
-        users = User.objects.filter(groups__name='ops_safety').all()
+        User = get_user_model()
+        users = User.objects.all()
         user_list = [{
             "first_name": user.first_name,
             "last_name": user.last_name,
