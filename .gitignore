@@ -178,3 +178,4 @@ node_modules/
 elasticSearchConf/config/fscrawler/_status.json
 /elasticSearchConf/elasticSearchConf/logs/*elasticSearchConf/config/fscrawler/_status.json
 /elasticSearchConf/elasticSearchConf/logs/*
+elasticSearchConf/logs/
