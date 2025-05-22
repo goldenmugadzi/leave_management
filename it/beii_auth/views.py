@@ -141,7 +141,7 @@ REPORTS = [
         "name": "ace reports",
         "title": "ACE Reports",
         "iconUrl": "assets/images/reports.png",
-        "url": "/ace/create_ace_report"
+        "url": "/ace/reports"
     },
     {
         "name": "petty_cash_reports",

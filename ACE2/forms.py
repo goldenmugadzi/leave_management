@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 from .models import *
 from django.forms import formset_factory
 from it.users.models import UserProfile, Regions, Sections, Designations
+from .models import AssetBudget
 
 
 class QuotationForm(forms.ModelForm):
@@ -231,6 +232,11 @@ class ViramentForm(forms.ModelForm):
 class AceReportForm(forms.ModelForm):
     start_date = forms.DateField(required=True, widget=forms.DateInput(attrs={'type': 'date'}))
     end_date = forms.DateField(required=True, widget=forms.DateInput(attrs={'type': 'date'}))
+    budget_id = forms.ModelChoiceField(
+        queryset=AssetBudget.objects.all(),
+        required=False,
+        empty_label="All Budgets"
+    )
 
     # period = forms.DateField(required=True, widget=forms.DateInput(attrs={'type': 'date'}))
     class Meta:
