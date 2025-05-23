@@ -495,10 +495,11 @@ def ace_awaiting_my_action(request):
     requester = "create"
     cashier = "process"
 
-    # ACEs awaiting user's action (as before)
+    # ACEs awaiting user's action (skip rejected)
     if ace_role == "pass":
         for ace in Ace2.objects.filter(section=section, date_created__year__gte=2025, region=region):
             process = ace.process
+            # Skip if any approval is "Rejected"
             if process and process.approval_set.filter(approved="Rejected").exists():
                 continue
             if process.approval_set.exists():
@@ -514,6 +515,9 @@ def ace_awaiting_my_action(request):
     else:
         for ace in Ace2.objects.filter(date_created__year__gte=2025, region=region):
             process = ace.process
+            # Skip if any approval is "Rejected"
+            if process and process.approval_set.filter(approved="Rejected").exists():
+                continue
             if process.approval_set.exists():
                 last_approval = process.approval_set.last()
                 current_step = last_approval.step.step
