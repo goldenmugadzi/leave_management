@@ -52,6 +52,12 @@ def Ace_detail(request, Ace_id2):
     # print(ace_role)
 
     ace_item = Ace2.objects.get(Ace_id2=Ace_id2)
+    #clear notification
+    notification_obj = Notification.objects.filter(notification_id=ace_item.Ace_id2).first()
+    if notification_obj:
+        notification_obj.is_read = True
+        notification_obj.save()
+        print(notification_obj, ' now set to read')
 
     budget = ace_item.budget_id.budget_id
     budget = AssetBudget.objects.get(budget_id=budget)
