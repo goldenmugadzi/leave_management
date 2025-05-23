@@ -180,3 +180,7 @@ elasticSearchConf/config/fscrawler/_status.json
 /elasticSearchConf/elasticSearchConf/logs/*
 elasticSearchConf/logs/
 elasticsearchConf/
+/staticfiles/
+/staticfiles/*
+elasticSearchConf/config/fscrawler/_status.json
+/elasticSearchConf/config/fscrawler/_status.json
