@@ -1800,3 +1800,18 @@ def notify_pending_gm_approvals(request):
         sweetify.info(request, "No pending ACE items requiring general manager approval found")
     
     return redirect('/ace/aces')
+
+@login_required
+def asset_budget_report(request, budget_id):
+    budget = get_object_or_404(AssetBudget, pk=budget_id)
+    # All ACEs that used this budget
+    aces = Ace2.objects.filter(budget_id=budget)
+    # Total amount used by ACEs
+    total_used = aces.aggregate(total=models.Sum('amount'))['total'] or 0
+    # Other features
+    context = {
+        'budget': budget,
+        'aces': aces,
+        'total_used': total_used,
+    }
+    return render(request, 'finance/ace2/asset_budget_report.html', context)
