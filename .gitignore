@@ -181,6 +181,13 @@ elasticSearchConf/config/fscrawler/_status.json
 elasticSearchConf/logs/
 elasticsearchConf/
 /staticfiles/
-/staticfiles/*
+staticfiles/*
 elasticSearchConf/config/fscrawler/_status.json
 /elasticSearchConf/config/fscrawler/_status.json
+/media
+media/*
+static/*/
+!static/admin/
+!static/scripts/
+!static/tika/
+!static/assets/
