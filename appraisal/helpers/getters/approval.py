@@ -107,10 +107,10 @@ class ScoringStageStrategy:
         return repo.fetch_by_appraisal_kra_id(appraisal_kra_id=appraisal_kra_id)
     
     def __get_unscored_per_quarter(self, target_score_objects: QuerySet[TargetScore], quarter_obj_id: int):
-        return target_score_objects.filter(activity__appraisal_kra__quarter__id=quarter_obj_id, is_scored=False)
+        return target_score_objects.filter(performance_dimension__activity__appraisal_kra__quarter__id=quarter_obj_id, is_scored=False)
     
     def __get_scored_per_quarter(self, target_score_objects: QuerySet[TargetScore], quarter_obj_id: int):
-        return target_score_objects.filter(activity__appraisal_kra__quarter__id=quarter_obj_id, is_scored=True)
+        return target_score_objects.filter(performance_dimension__activity__appraisal_kra__quarter__id=quarter_obj_id, is_scored=True)
     
     def get_approved_quarters(self, appraisal_kra_id: int)->List[ApprovedQuartersType]:
         appraisal_kra_year_quarter_handler = AppraisalKraAndYearQuarterHandler()
@@ -126,9 +126,9 @@ class ScoringStageStrategy:
             
             approved_quarter_type_obj = None
             if unscored_qr.exists() or not scored_qr.exists():
-                approved_quarter_type_obj = ApprovedQuartersType(quarter_name=year_quarter_name, is_approved=False)
+                approved_quarter_type_obj = ApprovedQuartersType(appraisal_kra_id=appraisal_kra_id, quarter_name=year_quarter_name, is_approved=False)
             else:
-                approved_quarter_type_obj = ApprovedQuartersType(quarter_name=year_quarter_name, is_approved=True)
+                approved_quarter_type_obj = ApprovedQuartersType(appraisal_kra_id=appraisal_kra_id, quarter_name=year_quarter_name, is_approved=True)
             result.append(approved_quarter_type_obj)
         return result
     
@@ -165,9 +165,9 @@ class PerformanceReviewStageStrategy:
             
             approved_quarter_type_obj = None
             if is_not_approved:
-                approved_quarter_type_obj = ApprovedQuartersType(quarter_name=year_quarter_name, is_approved=False)
+                approved_quarter_type_obj = ApprovedQuartersType(appraisal_kra_id=appraisal_kra_id, quarter_name=year_quarter_name, is_approved=False)
             else:
-                approved_quarter_type_obj = ApprovedQuartersType(quarter_name=year_quarter_name, is_approved=True)
+                approved_quarter_type_obj = ApprovedQuartersType(appraisal_kra_id=appraisal_kra_id, quarter_name=year_quarter_name, is_approved=True)
             result.append(approved_quarter_type_obj)
         return result
             
@@ -204,9 +204,9 @@ class TrainingAndDevelopmentStageStrategy:
 
             approved_quarter_type_obj = None
             if is_not_approved:
-                approved_quarter_type_obj = ApprovedQuartersType(quarter_name=year_quarter_name, is_approved=False)
+                approved_quarter_type_obj = ApprovedQuartersType(appraisal_kra_id=appraisal_kra_id, quarter_name=year_quarter_name, is_approved=False)
             else:
-                approved_quarter_type_obj = ApprovedQuartersType(quarter_name=year_quarter_name, is_approved=True)
+                approved_quarter_type_obj = ApprovedQuartersType(appraisal_kra_id=appraisal_kra_id, quarter_name=year_quarter_name, is_approved=True)
             result.append(approved_quarter_type_obj)
         return result
 
@@ -238,9 +238,9 @@ class ReviewStageStrategy:
 
             approved_quarter_type_obj = None
             if is_approved:
-                approved_quarter_type_obj = ApprovedQuartersType(quarter_name=year_quarter_name, is_approved=True)
+                approved_quarter_type_obj = ApprovedQuartersType(appraisal_kra_id=appraisal_kra_id, quarter_name=year_quarter_name, is_approved=True)
             else:
-                approved_quarter_type_obj = ApprovedQuartersType(quarter_name=year_quarter_name, is_approved=False)
+                approved_quarter_type_obj = ApprovedQuartersType(appraisal_kra_id=appraisal_kra_id, quarter_name=year_quarter_name, is_approved=False)
             result.append(approved_quarter_type_obj)
         return result
 
@@ -252,5 +252,5 @@ class ApprovalWorkflowQuarterStagesStrategyContext:
         try:
             return self.strategy.get_approved_quarters(appraisal_kra_id=appraisal_kra_id)
         except Exception as e:
-            logger.error(f"[ApprovalWorkflowQuarterStagesStrategyInterface] for {self.strategy}, failed with error: {e}")
+            logger.error(f"[ApprovalWorkflowQuarterStagesStrategyInterface] for {self.strategy.__class__()}, failed with error: {e}")
             return None

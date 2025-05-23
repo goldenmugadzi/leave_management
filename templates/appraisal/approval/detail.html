@@ -1,3 +1,5 @@
+{% load approval_stages %}
+
 <h1 class="text-center mb-4 font-bold text-xl">Approval Workflow</h1>
 <div class="flex items-center justify-center bg-gray-100 p-4">
 
@@ -57,7 +59,7 @@
                 {% endif %}
 
                 <!-- Modal template -->
-                {% include "./modal.html" with modal_heading=stage.stage_name modal_id=stage.stage_num %}
+                {% include "./modal.html" with modal_heading=stage.stage_name modal_id=stage.stage_num appraisal_kra_id=stage.appraisal.id %}
                 
 
             {% endfor %}

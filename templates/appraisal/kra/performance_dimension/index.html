@@ -3,6 +3,7 @@
 {% load static %}
 {% load crispy_forms_tags %}
 {% load kra_calculations %}
+{% load approval_stages %}
 
 {% block content %}
   {% include "appraisal/approval/detail.html" with stages=stages last_stage_num=last_stage_num %}

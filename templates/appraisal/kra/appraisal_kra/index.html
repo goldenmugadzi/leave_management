@@ -4,6 +4,7 @@
 {% load crispy_forms_tags %}
 {% load kra_calculations %}
 {% load kra_permissions %}
+{% load approval_stages %}
 
 {% block content %}
   {% include "appraisal/approval/detail.html" with stages=stages last_stage_num=last_stage_number %}
