@@ -18,16 +18,23 @@ SECRET_KEY = 'django-insecure-7per#nouy422m0!hn0!ecb7ltnq#!^#g!2r5&%^5c%v(!ivv&a
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=False, cast=bool)
 
-ALLOWED_HOSTS = [config('HOST'), "127.0.0.1", "172.16.29.32", "172.16.28.32", "172.16.8.99","4c53-41-79-188-114.ngrok"
-                                                                                            "-free.app"]
+ALLOWED_HOSTS = [config('HOST'), "127.0.0.1", "172.16.29.32", "172.16.28.32", "172.16.8.99", "businessexcellence.zetdc.co.zw"]
 
 CORS_ALLOWED_ORIGINS = [
     config('BASE_URL') + ":" + config('PORT'),
+    config('BASE_URL'),
+    "https://businessexcellence.zetdc.co.zw",
+    "http://172.16.28.32:9300",
     config('BASE_URL') + ":3000",
 ]
 
 # CORS_ALLOW_ALL_ORIGINS = True
-CSRF_TRUSTED_ORIGINS = [config('BASE_URL'), config('BASE_URL') + ":" + config('PORT')]
+CSRF_TRUSTED_ORIGINS = [
+    config('BASE_URL'), 
+    config('BASE_URL') + ":" + config('PORT'), 
+    "https://businessexcellence.zetdc.co.zw",
+    "http://172.16.28.32:9300"
+]
 
 CORS_ALLOW_HEADERS = ('content-disposition', 'accept-encoding',
                       'content-type', 'accept', 'origin', 'authorization')
@@ -69,7 +76,7 @@ SIMPLE_JWT = {
     "SLIDING_TOKEN_LIFETIME": timedelta(minutes=10),
     "SLIDING_TOKEN_REFRESH_LIFETIME": timedelta(days=1),
 
-    "TOKEN_OBTAIN_SERIALIZER": "users.serializers.MyTokenObtainPairSerializer",
+    "TOKEN_OBTAIN_SERIALIZER": "it.users.serializers.MyTokenObtainPairSerializer",
     "TOKEN_REFRESH_SERIALIZER": "rest_framework_simplejwt.serializers.TokenRefreshSerializer",
     "TOKEN_VERIFY_SERIALIZER": "rest_framework_simplejwt.serializers.TokenVerifySerializer",
     "TOKEN_BLACKLIST_SERIALIZER": "rest_framework_simplejwt.serializers.TokenBlacklistSerializer",
@@ -130,6 +137,7 @@ INSTALLED_APPS = [
     'competence_building.apps.CompetenceBuildingConfig',
     'comm_files',
     'django_prometheus',
+    'api.ops_maintenance.safety_operations',
 ]
 
 AUTH_USER_MODEL = 'users.UserProfile'
