@@ -96,7 +96,7 @@ class PerformanceDimension(TimeStamp):
 class TargetScore(TimeStamp):
     performance_dimension = models.OneToOneField(PerformanceDimension, on_delete=models.CASCADE, null=True, blank=True)
     score = models.DecimalField(max_digits=5, decimal_places=2, default=0.0)
-    comments = models.TextField(blank=True)
+    comments = models.TextField(blank=True, null=True)
     is_scored = models.BooleanField(default=False)
 
     def __str__(self):

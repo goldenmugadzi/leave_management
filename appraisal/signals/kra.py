@@ -14,7 +14,7 @@ from ..helpers.kra_roles import KraModulesRolesStrategyContext, KraModuleStrateg
 def create_target_score_post_save_handler(sender, instance, created, **kwargs):
     if created:
         try:
-            logger.info(f"[TargetScore]: creating target({instance.name}) score target instance")
+            logger.info(f"[TargetScore]: creating target({instance.description}) with pk{instance.id} score target instance")
             
             repo = TargetScoreRepository()
             service_handler = TargetScoreService(target_score_repository=repo)
@@ -25,7 +25,7 @@ def create_target_score_post_save_handler(sender, instance, created, **kwargs):
             logger.success(f"[TargetScore]: created score target instance for performance dimension ({instance.performance_indicator})")
         except Exception as e:
             logger.error(f"[TargetScore]: creating target for performance dimension ({instance.performance_indicator}), failed with error: {e} ")
-   
+    
 
 
 def create_kra_roles_handler(sender, **kwargs):

@@ -302,7 +302,7 @@ class KraActivityRepository:
 class TargetScoreRepository:
     def create(self, performance_dimension: PerformanceDimension, data: TargetScoreType)->TargetScore:
         try:
-            obj = TargetScore.objects.create(performance_dimension=performance_dimension, score=data.score, comment=data.comment)
+            obj = TargetScore.objects.create(performance_dimension=performance_dimension, score=data.score, comments=data.comment)
             return obj
         except Exception as e:
             raise Exception(f"score create repo failed with error: {e}")
