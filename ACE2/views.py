@@ -15,6 +15,9 @@ from openpyxl import Workbook
 from weasyprint import HTML
 from django.db import transaction
 from django.utils.dateparse import parse_date
+from django.db.models.functions import TruncMonth
+from django.db.models import Sum, Count
+from django.utils import timezone
 
 from ACE2.forms import *
 from ACE2.utils import find_pettycash_section_head
@@ -25,7 +28,10 @@ from it.users.models import UserProfile, Roles, Designations, Districts, Depots,
 from finance.PettyCash.views import approve_step
 from finance.comparative_schedules.views import notification_update, notify_user
 from .models import AceReport as Report
-
+from finance.PettyCash.models import Pettycash
+from tokens.models import Token  # Adjust if your model is named differently
+from finance.comparative_schedules.models import ComparativeSchedules  # Correct import
+from finance.direct_purchase.models import DirectPurchase
 
 # Create your views here.
 @login_required
@@ -1829,3 +1835,65 @@ def download_ace_quotation(request, quotation_id):
     response = FileResponse(quotation.quotation_file, content_type='application/octet-stream')
     response['Content-Disposition'] = f'attachment; filename="{quotation.quotation_file.name}"'
     return response
+
+@login_required
+def monthly_usage_dashboard(request):
+    from django.db.models.functions import TruncMonth
+    from django.db.models import Sum, Count
+
+    current_year = timezone.now().year
+
+    ace_monthly = (
+        Ace2.objects
+        .filter(date_created__year=current_year)
+        .annotate(month=TruncMonth('date_created'))
+        .values('month')
+        .annotate(total_amount=Sum('amount'), count=Count('Ace_id2'))
+        .order_by('month')
+    )
+
+    pettycash_monthly = (
+        Pettycash.objects
+        .filter(date_created__year=current_year)
+        .annotate(month=TruncMonth('date_created'))
+        .values('month')
+        .annotate(total_amount=Sum('amount_disbursed'), count=Count('petty_id'))
+        .order_by('month')
+    )
+
+    token_monthly = (
+        Token.objects
+        .filter(created_at__year=current_year)
+        .annotate(month=TruncMonth('created_at'))
+        .values('month')
+        .annotate(total_tokens=Count('id'))
+        .order_by('month')
+    )
+
+    comparative_monthly = (
+        ComparativeSchedules.objects
+        .filter(created_at__year=current_year)
+        .annotate(month=TruncMonth('created_at'))
+        .values('month')
+        .annotate(total_schedules=Count('id'))
+        .order_by('month')
+    )
+
+    direct_purchase_monthly = (
+        DirectPurchase.objects
+        .filter(created_at__year=current_year)
+        .annotate(month=TruncMonth('created_at'))
+        .values('month')
+        .annotate(count=Count('id'))  # Removed total_amount aggregation
+        .order_by('month')
+    )
+
+    context = {
+        'ace_monthly': ace_monthly,
+        'pettycash_monthly': pettycash_monthly,
+        'token_monthly': token_monthly,
+        'comparative_monthly': comparative_monthly,
+        'direct_purchase_monthly': direct_purchase_monthly,
+        'current_year': current_year,
+    }
+    return render(request, 'finance/ace2/monthly_usage_dashboard.html', context)
