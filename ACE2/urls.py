@@ -26,6 +26,7 @@ urlpatterns = [
     path('reports/<str:report_id2>/excel/', views.ace_report_detail_excel, name='ace_report_detail_excel'),
     path('my_actioned_items/', views.my_actioned_items, name='my_actioned_items'),
     path('asset_budget_report/<int:budget_id>/', views.asset_budget_report, name='asset_budget_report'),
+    path('download_quotation/<int:quotation_id>/', views.download_ace_quotation, name='download_ace_quotation'),
     
     # API endpoints
     path('api/', include('ACE2.api_urls')),

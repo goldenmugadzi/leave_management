@@ -718,6 +718,7 @@ def get_budget_balance(request, budget_id):
 def download_attachment(request, attachment_id):
     try:
         attachment = Quotation.objects.get(pk=attachment_id)
+        print(attachment.quotation_file, 'attachment file')
     except Quotation.DoesNotExist:
         return HttpResponseNotFound('Attachment not found')
 
@@ -1815,3 +1816,16 @@ def asset_budget_report(request, budget_id):
         'total_used': total_used,
     }
     return render(request, 'finance/ace2/asset_budget_report.html', context)
+
+from django.http import FileResponse, HttpResponseNotFound
+
+@login_required
+def download_ace_quotation(request, quotation_id):
+    try:
+        quotation = Quotation.objects.get(pk=quotation_id)
+    except Quotation.DoesNotExist:
+        return HttpResponseNotFound('Attachment not found')
+
+    response = FileResponse(quotation.quotation_file, content_type='application/octet-stream')
+    response['Content-Disposition'] = f'attachment; filename="{quotation.quotation_file.name}"'
+    return response
