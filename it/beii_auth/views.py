@@ -200,7 +200,6 @@ def login_user(request):
         recaptcha_enabled = getattr(settings, 'RECAPTCHA_ENABLED', True)
             
         # Check if user is locked out
-<<<<<<< HEAD
         # if LoginAttempt.is_user_locked_out(username):
         #     locked_until = LoginAttempt.get_recent_attempts(username).first().timestamp + timezone.timedelta(minutes=30)
         #     logger.warning(f"Blocked login attempt for locked user: {username} from IP: {client_ip}")
