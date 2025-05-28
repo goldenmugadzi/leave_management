@@ -211,17 +211,13 @@ class AppraisalKraRepository:
 
 
 class KraActivityRepository:
-    def create(self, appraisal_kra_object: AppraisalKra, assigned_user_object: UserProfile|None, data: ActivityType)->Activity:
+    def create(self, appraisal_kra_object: AppraisalKra, data: ActivityType)->Activity:
         try:
             return Activity.objects.create(
                 appraisal_kra=appraisal_kra_object,
                 name=data.name,
                 description=data.description,
-                performance_indicator=data.performance_indicator,
                 weight=data.weight,
-                agreed_target=data.agreed_target,
-                allowable_variance=data.allowable_variance,
-                assigned_user=assigned_user_object,
                 )
         except Exception as e:
             raise Exception(f"KRA Activity Create Repo failed with error: {e}")
@@ -233,12 +229,9 @@ class KraActivityRepository:
         except Exception as e:
             raise Exception(f"KRA Activity Fetch Repo failed with error: {e}")
 
-    def update(self, activity_obj: Activity, assigned_user: UserProfile, data: ActivityType)->Activity:
+    def update(self, activity_obj: Activity, data: ActivityType)->Activity:
         try:
             updated = False
-            if assigned_user != activity_obj.assigned_user:
-                activity_obj.assigned_user = assigned_user
-                updated = True
 
             if data.name != activity_obj.name:
                 activity_obj.name = data.name
@@ -250,22 +243,6 @@ class KraActivityRepository:
 
             if data.weight != activity_obj.weight:
                 activity_obj.weight = data.weight
-                updated = True
-
-            if data.performance_indicator != activity_obj.performance_indicator:
-                activity_obj.performance_indicator = data.performance_indicator
-                updated = True
-
-            if data.agreed_target != activity_obj.agreed_target:
-                activity_obj.agreed_target = data.agreed_target
-                updated = True
-
-            if data.allowable_variance != activity_obj.allowable_variance:
-                activity_obj.allowable_variance = data.allowable_variance
-                updated = True
-
-            if data.unit != activity_obj.unit:
-                activity_obj.unit = data.unit
                 updated = True
 
             if updated:

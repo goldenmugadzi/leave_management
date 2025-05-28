@@ -70,11 +70,7 @@ class Activity(TimeStamp):
     appraisal_kra = models.ForeignKey(AppraisalKra, on_delete=models.CASCADE)
     name = models.CharField(max_length=255, blank=False, null=False)
     description = models.TextField()
-    performance_indicator = models.CharField(max_length=30, choices=PERFORMANCE_INDICATOR, null=True, blank=True)
     weight = models.DecimalField(max_digits=5, decimal_places=2)
-    agreed_target = models.DecimalField(max_digits=5, decimal_places=2, default=0.0)
-    allowable_variance = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
-    assigned_user = models.ForeignKey(User, on_delete=models.RESTRICT, null=True)
 
     def __str__(self):
         return f"{self.name}"

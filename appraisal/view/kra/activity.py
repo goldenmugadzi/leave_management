@@ -160,12 +160,10 @@ class KraActivityCreateView(SuccessMessageMixin, CreateView):
                 messages.error(self.request, "The activity weight cannot be greater than its KRA weight. Please adjust the activity weight to ensure it does not exceed the KRA weight.")
                 return self.form_invalid(form)
             
-            assigned_user = form.cleaned_data.get("assigned_user")
             repo = KraActivityRepository()
             service_handler = ActivityService(activity_repo=repo)
             activity_object = service_handler.create_use_case(
                 appraisal_kra_object=appraisal_kra_object,
-                assigned_user_object=assigned_user,
                 data=payload
                 )
             form.instance = activity_object
@@ -245,19 +243,22 @@ class KraActivityUpdateView(SuccessMessageMixin, UpdateView):
             
             
             appraisal_kra_progress = get_activity_weight_against_kra_weight(appraisal_kra_object=self.get_activity_object.appraisal_kra)
-            if appraisal_kra_progress.remaining_kra_weight < payload.weight:
+            current_weight = float(self.get_object().weight)
+            update_weight = float(payload.weight)
+            update_remain_weight = appraisal_kra_progress.remaining_weight + current_weight
+                
+            if update_remain_weight < update_weight:
                 messages.error(self.request, "The activity weight cannot be greater than its KRA weight. Please adjust the activity weight to ensure it does not exceed the KRA weight.")
                 return self.form_invalid(form)
-           
-            assigned_user_object = form.cleaned_data.get('assigned_user')
-
+            
             repo = KraActivityRepository()
             service_handler = ActivityService(activity_repo=repo)
-            activity_object = service_handler.update_use_case(activity_object=activity_object, assigned_user=assigned_user_object, data=payload)
+            activity_object = service_handler.update_use_case(activity_object=activity_object, data=payload)
             form.instance = activity_object
         except ValidationError:
             return self.form_invalid(form)
         except Exception as e:
+            logger.error(f"[ KraActivityUpdateView ] for Activity object with pk: {self.kwargs.get('activity_id')}, failed with error: {e}")
             messages.error(self.request, f"An unexpected error occurred: {e}")
             return self.form_invalid(form)
         return super().form_valid(form)
