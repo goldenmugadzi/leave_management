@@ -20,7 +20,7 @@ def create_target_score_post_save_handler(sender, instance, created, **kwargs):
             service_handler = TargetScoreService(target_score_repository=repo)
             default_values = 0.0
             payload = TargetScoreType(score=default_values)
-            service_handler.create_use_case(performance_dimension_obj=instance, data=payload, attachments=[])
+            service_handler.create_use_case(performance_dimension_obj=instance, data=payload)
             
             logger.success(f"[TargetScore]: created score target instance for performance dimension ({instance.performance_indicator})")
         except Exception as e:

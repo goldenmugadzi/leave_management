@@ -53,7 +53,7 @@ class KRAService:
 class TargetScoreService:
     target_score_repository: TargetScoreRepository
 
-    def create_use_case(self, performance_dimension_obj: PerformanceDimension, data: TargetScoreType, attachments: list)->TargetScore:
+    def create_use_case(self, performance_dimension_obj: PerformanceDimension, data: TargetScoreType)->TargetScore:
         try:
             return self.target_score_repository.create(performance_dimension=performance_dimension_obj, data=data)
         except Exception as e:
