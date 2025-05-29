@@ -24,15 +24,15 @@ from django.shortcuts import get_object_or_404, render, redirect  # Add get_obje
 #User = get_user_model()
 def createAsset(request):
     if request.method == 'POST':
-        form = ZetdcAssetForm(request.POST, request.FILES)
+        form = CombinedAssetForm(request.POST, request.FILES)
         if form.is_valid():
             form.save()  
-            return redirect('table_asset') 
+            return redirect('tab') 
         else:
         
             print(form.errors)  
     else:
-        form = ZetdcAssetForm()
+        form = CombinedAssetForm()
 
     return render(request, "asset_register/createAsset.html", {"form": form})
 
@@ -67,6 +67,8 @@ def table_asset (request):
 def table_hr (request):
   return render(request,'asset_register/table_hr.html')
 
+def tab (request):
+  return render(request,'asset_register/tab.html')
 
 def show_table (request):
   return render(request,'asset_register/table_hr.html')
@@ -148,6 +150,7 @@ def show_hr_datatable(request):
         })
     except Exception as ex:
         print(ex)
+    if not request.user.department == 'Human Resource':
         return JsonResponse({
             'draw': 1,
             'recordsTotal': 0,
@@ -156,8 +159,6 @@ def show_hr_datatable(request):
         })
 
 
-
-#@login_required
 def show_asset_datatable(request):
     try:
         print("\n===== NEW REQUEST =====")
@@ -301,26 +302,86 @@ def show_asset_datatable(request):
             'error': str(ex)
     }, status=500)
 
-def update_asset(request, asset_id):
-    asset = get_object_or_404(ZetdcAssets, id=asset_id)  
+def update_asset(request, asset_type, asset_id):
+    if asset_type == 'asset':
+        instance = get_object_or_404(ZetdcAssets, id=asset_id)
+        initial = {
+            'asset_type': 'asset',
+            'product_type': instance.product_type,
+            'serial_number': instance.serial_number,
+            'assetnumber': instance.asset_number,
+            'asset_state': instance.asset_state,
+            'user': instance.user,
+            'regions': instance.regions,
+            'purchase_cost': instance.purchase_cost,
+            'designation': instance.designation,
+            'department': instance.department,
+            'date_purchased': instance.date_purchased,
+            'model': instance.model,
+            'warrant': instance.warrant,
+            'cost_center': instance.cost_center,
+            'created_by': instance.created_by,
+            'supplier': instance.supplier,
+        }
+    elif asset_type == 'hr':
+        instance = get_object_or_404(HumanResource, id=asset_id)
+        initial = {
+            'asset_type': 'hr',
+            'assetnumber': instance.assetnumber,
+            'designation': instance.designation,
+            'cost_center': instance.cost_center,
+            'department': instance.department,
+            'officenumber': instance.officenumber,
+            'asset_state': instance.assetstate,
+            'regions': instance.regions,
+            'descriptionofitem': instance.descriptionofitem,
+            'user': instance.user,
+            'lastchecked_at': instance.lastchecked_at,
+        }
+    else:
+        return render(request, '404.html', status=404)
 
     if request.method == 'POST':
-        form = ZetdcAssetForm(request.POST, instance=asset) 
-
+        form = CombinedAssetForm(request.POST)
         if form.is_valid():
-            try:
-                with transaction.atomic():
-                    form.save()
-                    messages.success(request, "Asset updated successfully!")
-                    return redirect('/table_asset/') 
-            except Exception as e:
-                messages.error(request, f"Error updating asset: {str(e)}")
+            cleaned = form.cleaned_data
+            if asset_type == 'asset':
+                instance.product_type = cleaned['product_type']
+                instance.serial_number = cleaned['serial_number']
+                instance.asset_number = cleaned['assetnumber']
+                instance.asset_state = cleaned['asset_state']
+                instance.user = cleaned['user']
+                instance.regions = cleaned['regions']
+                instance.purchase_cost = cleaned['purchase_cost'] or 0
+                instance.designation = cleaned['designation']
+                instance.department = cleaned['department']
+                instance.date_purchased = cleaned['date_purchased']
+                instance.model = cleaned['model']
+                instance.warrant = cleaned['warrant']
+                instance.cost_center = cleaned['cost_center']
+                instance.created_by = cleaned['created_by']
+                instance.supplier = cleaned['supplier']
+            else:
+                instance.assetnumber = cleaned['assetnumber']
+                instance.designation = cleaned['designation']
+                instance.cost_center = cleaned['cost_center']
+                instance.department = cleaned['department']
+                instance.officenumber = cleaned['officenumber']
+                instance.assetstate = cleaned['asset_state']
+                instance.regions = cleaned['regions']
+                instance.descriptionofitem = cleaned['descriptionofitem']
+                instance.user = cleaned['user']
+                instance.lastchecked_at = cleaned['lastchecked_at'] or None
+            instance.save()
+            messages.success(request, "Asset updated successfully!")
+            return redirect('/tab/')
         else:
             messages.error(request, "Please correct the errors below.")
     else:
-        form = ZetdcAssetForm(instance=asset) 
+        form = CombinedAssetForm(initial=initial)
 
-    return render(request, 'asset_register/update_asset.html', {'form': form, 'asset': asset})
+    template = 'asset_register/update_asset.html' if asset_type == 'asset' else 'asset_register/update_hr_asset.html'
+    return render(request, template, {'form': form, 'asset': instance})
 
 def create_product(request):
     if request.method == 'POST':
@@ -712,5 +773,113 @@ def upload_asset(request):
 
     return render(request, 'asset_register/upload_asset.html', {})
 
+def combined_assets_datatable(request):
+    try:
+        draw = int(request.GET.get('draw', 1))
+        start = int(request.GET.get('start', 0))
+        length = int(request.GET.get('length', 10))
+        search_value = request.GET.get('search[value]', '')
+        department_filter = request.GET.get('department', '')
 
+        assets_qs = ZetdcAssets.objects.all()
+        hr_qs = HumanResource.objects.all()
+
+        # Filtering by search
+        if search_value:
+            assets_qs = assets_qs.filter(
+                Q(product_type__product_type__icontains=search_value) |
+                Q(asset_state__icontains=search_value) |
+                Q(asset_number__icontains=search_value) |
+                Q(serial_number__icontains=search_value) |
+                Q(user__first_name__icontains=search_value) |
+                Q(user__last_name__icontains=search_value) |
+                Q(department__section__icontains=search_value) |
+                Q(regions__region__icontains=search_value)
+            )
+            hr_qs = hr_qs.filter(
+                Q(descriptionofitem__icontains=search_value) |
+                Q(assetnumber__icontains=search_value) |
+                Q(assetstate__icontains=search_value) |
+                Q(user__first_name__icontains=search_value) |
+                Q(user__last_name__icontains=search_value) |
+                Q(department__section__icontains=search_value) |
+                Q(regions__region__icontains=search_value)
+            )
+
+        # Filtering by department (optional)
+        if department_filter:
+            assets_qs = assets_qs.filter(department__section__icontains=department_filter)
+            hr_qs = hr_qs.filter(department__section__icontains=department_filter)
+
+        # Build asset list
+        assets_list = [{
+            "id": a.id,
+            "product_type": a.product_type.product_type if a.product_type else "",
+            "descriptionofitem": "", 
+            "asset_state": a.asset_state,
+            "asset_number": a.asset_number,
+            "serial_number": a.serial_number if hasattr(a, "serial_number") else "",
+            "user": f"{a.user.first_name} {a.user.last_name}" if a.user else "",
+            "officenumber": "",  
+            "department": a.department.section if a.department else "",
+            "regions": a.regions.region if a.regions else "",
+            "designation": a.designation.description if a.designation else "",
+            "lastchecked_at": "",  
+            "cost_center": a.cost_center.name if a.cost_center else "",
+            "model": a.model if hasattr(a, "model") else "",
+        } for a in assets_qs]
+
+        # Build HR list
+        hr_list = [{
+            "id": h.id,
+            "product_type": "", 
+            "descriptionofitem": h.descriptionofitem if h.descriptionofitem else "",
+            "asset_state": h.assetstate,
+            "asset_number": h.assetnumber,
+            "serial_number": "", 
+            "user": f"{h.user.first_name} {h.user.last_name}" if h.user else "",
+            "officenumber": h.officenumber if h.officenumber else "",
+            "department": h.department.section if h.department else "",
+            "regions": h.regions.region if h.regions else "",
+            "designation": h.designation.description if h.designation else "",
+            "lastchecked_at": h.lastchecked_at.strftime('%Y-%m-%d') if h.lastchecked_at else "",
+            "cost_center": h.cost_center.name if h.cost_center else "",
+            "model": "", 
+        } for h in hr_qs]
+
+        combined = assets_list + hr_list
+        combined_sorted = sorted(combined, key=lambda x: x['id'], reverse=True)
+        total = len(combined_sorted)
+        paginated = combined_sorted[start:start+length]
+
+        return JsonResponse({
+            "draw": draw,
+            "recordsTotal": total,
+            "recordsFiltered": total,
+            "data": paginated
+        })
+    except Exception as ex:
+        print("Combined datatable error:", ex)
+        return JsonResponse({
+            "draw": 1,
+            "recordsTotal": 0,
+            "recordsFiltered": 0,
+            "data": [],
+            "error": str(ex)
+        }, status=500)
+        
+        
+def show_combined_assets(request):
+    try:
+        user_roles = request.user.get_user_role_for_application("IT Asset Register")
+        is_technician = user_roles.name == 'technician'
+    except AttributeError as e:
+        print(f"Role error: {e}")
+        is_technician = False
+        
+    return render(request, 'asset_reqister/table_assets.html', {
+        'is_technician': is_technician,
+    })
+
+    
 
