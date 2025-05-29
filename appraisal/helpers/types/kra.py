@@ -2,7 +2,7 @@ from pydantic import BaseModel, Field, field_validator
 from decimal import Decimal
 from typing import Literal, Annotated, Optional
 from enum import Enum
-from ...models.kra import PERFORMANCE_INDICATOR
+from ...models.kra import PERFORMANCE_INDICATOR, APPRAISAL_KRA_REVIEWER_STATUS_CHOICES
 class KRAType(BaseModel):
     name: str = Field(..., description="The name of the KRA.")
     description: str = Field(..., description="The description of KRA.")
@@ -10,13 +10,22 @@ class KRAType(BaseModel):
         ..., description="The weight of the KRA."
     )
 
+APPRAISER_CONFIRMATION_STATUS = {status[1] for status in APPRAISAL_KRA_REVIEWER_STATUS_CHOICES}
 
 class TargetScoreType(BaseModel):
     score: Annotated[Decimal, Field(max_digits=10, decimal_places=2)] = Field(
         ..., description="The score of the target."
     )
     comment: Optional[str] = Field(None, description="The comment of the target.")
+    appraiser_confirmation: str = Field(..., description="The appraiser confirmation value.")
 
+    @field_validator("appraiser_confirmation")
+    @classmethod
+    def validate_performance_indicator(cls, value: str):
+        if value not in APPRAISER_CONFIRMATION_STATUS:
+            raise ValueError(f"Invalid appraiser confirmation: {value}")
+        return value   
+    
 class KraRolesType(Enum):
     appraisee = "appraisee"
     appraiser = "appraiser"
