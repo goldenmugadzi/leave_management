@@ -70,7 +70,7 @@ def show_fault_datatable(request):
         print(f"Error getting user roles: {str(e)}")
         user_roles=[]
 
-    print(" user_roles.name", user_roles.name)
+    #print(" user_roles.name", user_roles.name)
     is_technician = user_roles.name == 'technician'
     print("is_technician",is_technician)
 
