@@ -10,7 +10,7 @@ from django.http import JsonResponse
 from django.template.loader import render_to_string
 
 from ...models import TargetScore, ScoreDocument
-from ...forms import TargetScoreForm, ScoreDocumentForm
+from ...forms import TargetScoreAppraiseeForm, ScoreDocumentForm
 
 from ...repository.kra import TargetScoreRepository, ScoreDocumentRepository
 from ...services.kra import TargetScoreService
@@ -23,7 +23,7 @@ from loguru import logger
 
 class TargetScoreUpdateView(SuccessMessageMixin, UpdateView):
     model = TargetScore
-    form_class = TargetScoreForm
+    form_class = TargetScoreAppraiseeForm
     template_name = 'appraisal/kra/targets/score_form.html'
     success_message = 'Scoring was set successfully'
     context_object_name = "score_form"
