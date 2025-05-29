@@ -1,0 +1,56 @@
+<!-- filepath: d:\b\templates\finance\ace2\asset_budget_report.html -->
+{% extends "admin_layout.html" %}
+{% block content %}
+<div class="content-wrapper">
+  <h2 class="font-bold text-xl mb-4">Asset Budget Report</h2>
+  <div class="bg-white rounded shadow p-4 mb-6">
+    <h3 class="font-semibold text-lg mb-2">{{ budget.budget_name }}</h3>
+    <ul>
+      <li><strong>Allocated:</strong> {{ budget.allocated|floatformat:2 }}</li>
+      <li><strong>Withdrawn:</strong> {{ budget.withdrawn|floatformat:2 }}</li>
+      <li><strong>Balance:</strong> {{ budget.balance|floatformat:2 }}</li>
+      <li><strong>Awaiting Sanctioning:</strong> {{ budget.awaiting_sanctioning|floatformat:2 }}</li>
+      <li><strong>Period:</strong> {{ budget.period }}</li>
+      <li><strong>Region:</strong> {{ budget.region }}</li>
+      <li><strong>Created Date:</strong> {{ budget.created_date }}</li>
+      <li><strong>Other Features:</strong> ...</li>
+    </ul>
+    <div class="mt-4">
+      <strong>Total Used by ACEs:</strong> <span class="text-blue-700">{{ total_used|floatformat:2 }}</span>
+    </div>
+  </div>
+  <h4 class="font-semibold text-lg mb-2">ACEs Created Using This Budget</h4>
+  <table class="table table-bordered">
+    <thead>
+      <tr>
+        <th>ACE ID</th>
+        <th>Details</th>
+        <th>Amount</th>
+        <th>Requested By</th>
+        <th>Date Created</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for ace in aces %}
+      <tr>
+        <td><a href="{% url 'Ace:ace_detail' ace.Ace_id2 %}">{{ ace.Ace_id2 }}</a></td>
+        <td>{{ ace.details_of_expenditure }}</td>
+        <td>{{ ace.amount|floatformat:2 }}</td>
+        <td>{{ ace.requested_by.get_full_name }}</td>
+        <td>{{ ace.date_created|date:"Y-m-d" }}</td>
+        <td>
+          {% if ace.process and ace.process.approval_set.last %}
+            {{ ace.process.approval_set.last.approved }}
+          {% else %}
+            -
+          {% endif %}
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="6" class="text-center">No ACEs found for this budget.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

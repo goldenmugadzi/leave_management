@@ -105,10 +105,10 @@
                             <p class="font-bold mb-2">Budget:{{ ace.budget_id }}</p>
                         <p class="font-bold mb-2">
                             {% for attachment in ace.quotation_set.all %}
-                                <a href="/ace/attachment/ {{attachment}}"><button class=" hover:text-green-600 text-green-300 font-bold py-2 px-4 rounded"
-                                        href="/ace/attachment/ {{attachment}}">
-                                    {{ attachment.quotation_file.name|basename }}
-                                </button>
+                                <a href="/ace/download_quotation/{{ attachment.id }}/">
+                                    <button class="hover:text-green-600 text-green-300 font-bold py-2 px-4 rounded">
+                                        {{ attachment.quotation_file.name|basename }}
+                                    </button>
                                 </a>
                             {% endfor %}
                         </p>

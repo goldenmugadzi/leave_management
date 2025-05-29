@@ -15,6 +15,9 @@ from openpyxl import Workbook
 from weasyprint import HTML
 from django.db import transaction
 from django.utils.dateparse import parse_date
+from django.db.models.functions import TruncMonth
+from django.db.models import Sum, Count
+from django.utils import timezone
 
 from ACE2.forms import *
 from ACE2.utils import find_pettycash_section_head
@@ -25,7 +28,10 @@ from it.users.models import UserProfile, Roles, Designations, Districts, Depots,
 from finance.PettyCash.views import approve_step
 from finance.comparative_schedules.views import notification_update, notify_user
 from .models import AceReport as Report
-
+from finance.PettyCash.models import Pettycash
+from tokens.models import Token  # Adjust if your model is named differently
+from finance.comparative_schedules.models import ComparativeSchedules  # Correct import
+from finance.direct_purchase.models import DirectPurchase
 
 # Create your views here.
 @login_required
@@ -52,6 +58,12 @@ def Ace_detail(request, Ace_id2):
     # print(ace_role)
 
     ace_item = Ace2.objects.get(Ace_id2=Ace_id2)
+    #clear notification
+    notification_obj = Notification.objects.filter(notification_id=ace_item.Ace_id2).first()
+    if notification_obj:
+        notification_obj.is_read = True
+        notification_obj.save()
+        print(notification_obj, ' now set to read')
 
     budget = ace_item.budget_id.budget_id
     budget = AssetBudget.objects.get(budget_id=budget)
@@ -489,10 +501,11 @@ def ace_awaiting_my_action(request):
     requester = "create"
     cashier = "process"
 
-    # ACEs awaiting user's action (as before)
+    # ACEs awaiting user's action (skip rejected)
     if ace_role == "pass":
         for ace in Ace2.objects.filter(section=section, date_created__year__gte=2025, region=region):
             process = ace.process
+            # Skip if any approval is "Rejected"
             if process and process.approval_set.filter(approved="Rejected").exists():
                 continue
             if process.approval_set.exists():
@@ -508,6 +521,9 @@ def ace_awaiting_my_action(request):
     else:
         for ace in Ace2.objects.filter(date_created__year__gte=2025, region=region):
             process = ace.process
+            # Skip if any approval is "Rejected"
+            if process and process.approval_set.filter(approved="Rejected").exists():
+                continue
             if process.approval_set.exists():
                 last_approval = process.approval_set.last()
                 current_step = last_approval.step.step
@@ -708,6 +724,7 @@ def get_budget_balance(request, budget_id):
 def download_attachment(request, attachment_id):
     try:
         attachment = Quotation.objects.get(pk=attachment_id)
+        print(attachment.quotation_file, 'attachment file')
     except Quotation.DoesNotExist:
         return HttpResponseNotFound('Attachment not found')
 
@@ -1790,3 +1807,93 @@ def notify_pending_gm_approvals(request):
         sweetify.info(request, "No pending ACE items requiring general manager approval found")
     
     return redirect('/ace/aces')
+
+@login_required
+def asset_budget_report(request, budget_id):
+    budget = get_object_or_404(AssetBudget, pk=budget_id)
+    # All ACEs that used this budget
+    aces = Ace2.objects.filter(budget_id=budget)
+    # Total amount used by ACEs
+    total_used = aces.aggregate(total=models.Sum('amount'))['total'] or 0
+    # Other features
+    context = {
+        'budget': budget,
+        'aces': aces,
+        'total_used': total_used,
+    }
+    return render(request, 'finance/ace2/asset_budget_report.html', context)
+
+from django.http import FileResponse, HttpResponseNotFound
+
+@login_required
+def download_ace_quotation(request, quotation_id):
+    try:
+        quotation = Quotation.objects.get(pk=quotation_id)
+    except Quotation.DoesNotExist:
+        return HttpResponseNotFound('Attachment not found')
+
+    response = FileResponse(quotation.quotation_file, content_type='application/octet-stream')
+    response['Content-Disposition'] = f'attachment; filename="{quotation.quotation_file.name}"'
+    return response
+
+@login_required
+def monthly_usage_dashboard(request):
+    from django.db.models.functions import TruncMonth
+    from django.db.models import Sum, Count
+
+    current_year = timezone.now().year
+
+    ace_monthly = (
+        Ace2.objects
+        .filter(date_created__year=current_year)
+        .annotate(month=TruncMonth('date_created'))
+        .values('month')
+        .annotate(total_amount=Sum('amount'), count=Count('Ace_id2'))
+        .order_by('month')
+    )
+
+    pettycash_monthly = (
+        Pettycash.objects
+        .filter(date_created__year=current_year)
+        .annotate(month=TruncMonth('date_created'))
+        .values('month')
+        .annotate(total_amount=Sum('amount_disbursed'), count=Count('petty_id'))
+        .order_by('month')
+    )
+
+    token_monthly = (
+        Token.objects
+        .filter(created_at__year=current_year)
+        .annotate(month=TruncMonth('created_at'))
+        .values('month')
+        .annotate(total_tokens=Count('id'))
+        .order_by('month')
+    )
+
+    comparative_monthly = (
+        ComparativeSchedules.objects
+        .filter(created_at__year=current_year)
+        .annotate(month=TruncMonth('created_at'))
+        .values('month')
+        .annotate(total_schedules=Count('id'))
+        .order_by('month')
+    )
+
+    direct_purchase_monthly = (
+        DirectPurchase.objects
+        .filter(created_at__year=current_year)
+        .annotate(month=TruncMonth('created_at'))
+        .values('month')
+        .annotate(count=Count('id'))  # Removed total_amount aggregation
+        .order_by('month')
+    )
+
+    context = {
+        'ace_monthly': ace_monthly,
+        'pettycash_monthly': pettycash_monthly,
+        'token_monthly': token_monthly,
+        'comparative_monthly': comparative_monthly,
+        'direct_purchase_monthly': direct_purchase_monthly,
+        'current_year': current_year,
+    }
+    return render(request, 'finance/ace2/monthly_usage_dashboard.html', context)
