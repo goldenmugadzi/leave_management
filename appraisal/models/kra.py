@@ -88,13 +88,20 @@ class PerformanceDimension(TimeStamp):
     
     def __str__(self):
         return f"{self.performance_indicator}"
+    
+APPRAISAL_KRA_REVIEWER_STATUS_CHOICES = [
+    ("PENDING", "PENDING"),
+    ("ACCEPT", "ACCEPT"),
+    ("REJECT", "REJECT"),
+]
 
 class TargetScore(TimeStamp):
     performance_dimension = models.OneToOneField(PerformanceDimension, on_delete=models.CASCADE, null=True, blank=True)
     score = models.DecimalField(max_digits=5, decimal_places=2, default=0.0)
     comments = models.TextField(blank=True, null=True)
     is_scored = models.BooleanField(default=False)
-
+    appraiser_confirmation = models.CharField(choices=APPRAISAL_KRA_REVIEWER_STATUS_CHOICES, default=APPRAISAL_KRA_REVIEWER_STATUS_CHOICES[0][0], max_length=10) 
+    
     def __str__(self):
         return f"{self.performance_dimension}"
     
@@ -126,11 +133,6 @@ class AppraisalWorkflow(TimeStamp):
         ]
 
 
-APPRAISAL_KRA_REVIEWER_STATUS_CHOICES = [
-    ("PENDING", "PENDING"),
-    ("ACCEPT", "ACCEPT"),
-    ("REJECT", "REJECT"),
-]
 
 class AppraisalKraReviewerStatus(TimeStamp):
     appraisal_kra = models.OneToOneField(AppraisalKra, on_delete=models.RESTRICT)
