@@ -1,0 +1,447 @@
+<!--Monthly Comparative Schedules Report-->
+{% extends 'admin_layout.html' %} 
+{% block styles %}
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" />
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  .dataTables_wrapper .dataTables_length select {
+    width: 4rem;
+  }
+  .report-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 10px;
+    padding: 20px;
+    color: white;
+    text-align: center;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s;
+  }
+  .report-card:hover {
+    transform: translateY(-2px);
+  }
+  .status-pending { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+  .status-approved { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+  .status-rejected { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
+  .status-complete { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
+  .status-cancelled { background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%); }
+  
+  .chart-container {
+    position: relative;
+    height: 400px;
+    width: 100%;
+  }
+</style>
+{% endblock styles %} 
+
+{% block content %}
+<div class="content-wrapper">
+  <!-- Header Section -->
+  <div class="mb-6">
+    <div class="bg-gulf-blue-100 shadow-gulf-blue-300 text-gulf-blue-900 p-6 shadow-md rounded">
+      <div class="flex justify-between items-center mb-5">
+        <div>
+          <h1 class="text-2xl font-bold">Monthly Comparative Schedules Report</h1>
+          <p class="text-sm text-gray-600 mt-1">Comprehensive monthly analysis of RFQ comparative schedules</p>
+        </div>
+        <div class="flex justify-end items-center space-x-2">
+          {% if procurement_role %}
+          <a href="/comperative_schedule/create_comperative_schedule/" 
+             class="border-gulf-blue-600 hover:bg-gulf-blue-400 hover:text-gulf-blue-50 font-bold py-2 px-4 rounded">
+            Create Schedule
+          </a>
+          {% endif %}
+          <a href="/comperative_schedule/reports" 
+             class="bg-gray-600 hover:bg-gray-800 text-white font-bold py-2 px-4 rounded">
+            All Reports
+          </a>
+        </div>
+      </div>
+
+      <!-- Filters Section -->
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div class="flex flex-col">
+          <label for="report_year" class="text-stone-600 text-sm font-medium">Year</label>
+          <select id="report_year" class="mt-2 block w-full rounded-md border border-gray-200 px-2 py-2 shadow-sm outline-none focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+            <option value="">Select Year</option>
+          </select>
+        </div>
+
+        <div class="flex flex-col">
+          <label for="report_month" class="text-stone-600 text-sm font-medium">Month</label>
+          <select id="report_month" class="mt-2 block w-full rounded-md border border-gray-200 px-2 py-2 shadow-sm outline-none focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+            <option value="">Select Month</option>
+            <option value="1">January</option>
+            <option value="2">February</option>
+            <option value="3">March</option>
+            <option value="4">April</option>
+            <option value="5">May</option>
+            <option value="6">June</option>
+            <option value="7">July</option>
+            <option value="8">August</option>
+            <option value="9">September</option>
+            <option value="10">October</option>
+            <option value="11">November</option>
+            <option value="12">December</option>
+          </select>
+        </div>
+
+        <div class="flex flex-col">
+          <label for="report_region" class="text-stone-600 text-sm font-medium">Region</label>
+          <select id="report_region" class="mt-2 block w-full rounded-md border border-gray-200 px-2 py-2 shadow-sm outline-none focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+            <option value="">All Regions</option>
+          </select>
+        </div>
+
+        <div class="flex flex-col justify-end">
+          <div class="flex space-x-2">
+            <button id="generate_report" class="bg-blue-600 hover:bg-blue-800 text-white font-bold py-2 px-4 rounded">
+              Generate Report
+            </button>
+            <button id="export_report" class="bg-green-600 hover:bg-green-800 text-white font-bold py-2 px-4 rounded">
+              Export CSV
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Summary Cards -->
+  <div id="summary_cards" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6" style="display: none;">
+    <div class="report-card">
+      <h3 class="text-lg font-semibold">Total Created</h3>
+      <p id="total_created" class="text-3xl font-bold mt-2">0</p>
+    </div>
+    <div class="report-card status-pending">
+      <h3 class="text-lg font-semibold">Pending Committee</h3>
+      <p id="pending_committee" class="text-3xl font-bold mt-2">0</p>
+    </div>
+    <div class="report-card status-pending">
+      <h3 class="text-lg font-semibold">Pending Finance</h3>
+      <p id="pending_finance" class="text-3xl font-bold mt-2">0</p>
+    </div>
+    <div class="report-card status-pending">
+      <h3 class="text-lg font-semibold">Pending GM</h3>
+      <p id="pending_gm" class="text-3xl font-bold mt-2">0</p>
+    </div>
+    <div class="report-card status-complete">
+      <h3 class="text-lg font-semibold">Complete</h3>
+      <p id="complete_approval" class="text-3xl font-bold mt-2">0</p>
+    </div>
+    <div class="report-card status-rejected">
+      <h3 class="text-lg font-semibold">Rejected</h3>
+      <p id="rejected" class="text-3xl font-bold mt-2">0</p>
+    </div>
+    <div class="report-card status-cancelled">
+      <h3 class="text-lg font-semibold">Cancelled</h3>
+      <p id="cancelled" class="text-3xl font-bold mt-2">0</p>
+    </div>
+  </div>
+
+  <!-- Charts Section -->
+  <div id="charts_section" class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6" style="display: none;">
+    <div class="bg-white p-6 rounded-lg shadow-md">
+      <h3 class="text-lg font-semibold mb-4">Status Distribution</h3>
+      <div class="chart-container">
+        <canvas id="statusChart"></canvas>
+      </div>
+    </div>
+    <div class="bg-white p-6 rounded-lg shadow-md">
+      <h3 class="text-lg font-semibold mb-4">Approval Progress</h3>
+      <div class="chart-container">
+        <canvas id="progressChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Detailed Breakdown -->
+  <div id="breakdown_section" class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6" style="display: none;">
+    <div class="bg-white p-6 rounded-lg shadow-md">
+      <h3 class="text-lg font-semibold mb-4">Breakdown by Section</h3>
+      <div class="overflow-x-auto">
+        <table class="min-w-full table-auto">
+          <thead>
+            <tr class="bg-gray-50">
+              <th class="px-4 py-2 text-left">Section</th>
+              <th class="px-4 py-2 text-center">Total</th>
+              <th class="px-4 py-2 text-center">Pending</th>
+              <th class="px-4 py-2 text-center">Approved</th>
+            </tr>
+          </thead>
+          <tbody id="section_breakdown_table">
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="bg-white p-6 rounded-lg shadow-md">
+      <h3 class="text-lg font-semibold mb-4">Breakdown by Cost Center</h3>
+      <div class="overflow-x-auto">
+        <table class="min-w-full table-auto">
+          <thead>
+            <tr class="bg-gray-50">
+              <th class="px-4 py-2 text-left">Cost Center</th>
+              <th class="px-4 py-2 text-center">Total</th>
+              <th class="px-4 py-2 text-center">Pending</th>
+              <th class="px-4 py-2 text-center">Approved</th>
+            </tr>
+          </thead>
+          <tbody id="cost_center_breakdown_table">
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Report Info -->
+  <div id="report_info" class="bg-white p-4 rounded-lg shadow-md text-center text-gray-600" style="display: none;">
+    <p id="report_details">Select month, year, and region to generate report</p>
+  </div>
+</div>
+{% endblock %} 
+
+{% block scripts %}
+<script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+<script>
+$(document).ready(function() {
+    // Initialize current year and month
+    const currentDate = new Date();
+    const currentYear = currentDate.getFullYear();
+    const currentMonth = currentDate.getMonth() + 1;
+    
+    // Populate year dropdown
+    const yearSelect = $('#report_year');
+    for (let year = currentYear; year >= currentYear - 5; year--) {
+        yearSelect.append(`<option value="${year}">${year}</option>`);
+    }
+    
+    // Set current year and month as default
+    yearSelect.val(currentYear);
+    $('#report_month').val(currentMonth);
+    
+    // Load regions
+    loadRegions();
+    
+    let statusChart = null;
+    let progressChart = null;
+    
+    function loadRegions() {
+        // This would typically load from your regions API
+        // For now, we'll add a placeholder
+        $('#report_region').append('<option value="1">Eastern Region</option>');
+        $('#report_region').append('<option value="2">Western Region</option>');
+        $('#report_region').append('<option value="3">Northern Region</option>');
+        $('#report_region').append('<option value="4">Southern Region</option>');
+    }
+    
+    $('#generate_report').click(function() {
+        const month = $('#report_month').val();
+        const year = $('#report_year').val();
+        const region = $('#report_region').val();
+        
+        if (!month || !year) {
+            alert('Please select both month and year');
+            return;
+        }
+        
+        generateReport(month, year, region);
+    });
+    
+    $('#export_report').click(function() {
+        const month = $('#report_month').val();
+        const year = $('#report_year').val();
+        const region = $('#report_region').val();
+        
+        if (!month || !year) {
+            alert('Please select both month and year');
+            return;
+        }
+        
+        const exportUrl = `/comperative_schedule/export_monthly_report?month=${month}&year=${year}&region=${region}`;
+        window.open(exportUrl, '_blank');
+    });
+    
+    function generateReport(month, year, region) {
+        $.ajax({
+            url: '/comperative_schedule/monthly_report_data',
+            method: 'GET',
+            data: {
+                month: month,
+                year: year,
+                region: region
+            },
+            success: function(response) {
+                if (response.success) {
+                    displayReportData(response.data);
+                } else {
+                    alert('Error generating report: ' + response.message);
+                }
+            },
+            error: function(xhr, status, error) {
+                alert('Error generating report: ' + error);
+            }
+        });
+    }
+    
+    function displayReportData(data) {
+        // Update summary cards
+        $('#total_created').text(data.summary.total_created);
+        $('#pending_committee').text(data.summary.pending_committee);
+        $('#pending_finance').text(data.summary.pending_finance);
+        $('#pending_gm').text(data.summary.pending_gm);
+        $('#complete_approval').text(data.summary.complete_approval);
+        $('#rejected').text(data.summary.rejected);
+        $('#cancelled').text(data.summary.cancelled);
+        
+        // Show summary cards
+        $('#summary_cards').show();
+        
+        // Update charts
+        updateStatusChart(data.summary);
+        updateProgressChart(data.summary);
+        $('#charts_section').show();
+        
+        // Update breakdown tables
+        updateSectionBreakdown(data.detailed_breakdown.section_breakdown);
+        updateCostCenterBreakdown(data.detailed_breakdown.cost_center_breakdown);
+        $('#breakdown_section').show();
+        
+        // Update report info
+        const monthNames = ["", "January", "February", "March", "April", "May", "June",
+                          "July", "August", "September", "October", "November", "December"];
+        $('#report_details').text(`Report for ${monthNames[parseInt(data.month)]} ${data.year} - ${data.region}`);
+        $('#report_info').show();
+    }
+    
+    function updateStatusChart(summary) {
+        const ctx = document.getElementById('statusChart').getContext('2d');
+        
+        if (statusChart) {
+            statusChart.destroy();
+        }
+        
+        statusChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Pending Committee', 'Pending Finance', 'Pending GM', 'Complete', 'Rejected', 'Cancelled'],
+                datasets: [{
+                    data: [
+                        summary.pending_committee,
+                        summary.pending_finance,
+                        summary.pending_gm,
+                        summary.complete_approval,
+                        summary.rejected,
+                        summary.cancelled
+                    ],
+                    backgroundColor: [
+                        '#f093fb',
+                        '#4facfe',
+                        '#fa709a',
+                        '#43e97b',
+                        '#ff9a9e',
+                        '#fecfef'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+    }
+    
+    function updateProgressChart(summary) {
+        const ctx = document.getElementById('progressChart').getContext('2d');
+        
+        if (progressChart) {
+            progressChart.destroy();
+        }
+        
+        const total = summary.total_created;
+        const pendingTotal = summary.pending_committee + summary.pending_finance + summary.pending_gm;
+        
+        progressChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['Total Created', 'Pending', 'Complete', 'Rejected', 'Cancelled'],
+                datasets: [{
+                    label: 'Count',
+                    data: [
+                        summary.total_created,
+                        pendingTotal,
+                        summary.complete_approval,
+                        summary.rejected,
+                        summary.cancelled
+                    ],
+                    backgroundColor: [
+                        '#667eea',
+                        '#f093fb',
+                        '#43e97b',
+                        '#ff9a9e',
+                        '#fecfef'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                }
+            }
+        });
+    }
+    
+    function updateSectionBreakdown(sections) {
+        const tbody = $('#section_breakdown_table');
+        tbody.empty();
+        
+        sections.forEach(section => {
+            tbody.append(`
+                <tr class="border-b">
+                    <td class="px-4 py-2">${section.name}</td>
+                    <td class="px-4 py-2 text-center">${section.count}</td>
+                    <td class="px-4 py-2 text-center">${section.pending}</td>
+                    <td class="px-4 py-2 text-center">${section.approved}</td>
+                </tr>
+            `);
+        });
+        
+        if (sections.length === 0) {
+            tbody.append('<tr><td colspan="4" class="px-4 py-2 text-center text-gray-500">No data available</td></tr>');
+        }
+    }
+    
+    function updateCostCenterBreakdown(costCenters) {
+        const tbody = $('#cost_center_breakdown_table');
+        tbody.empty();
+        
+        costCenters.forEach(cc => {
+            tbody.append(`
+                <tr class="border-b">
+                    <td class="px-4 py-2">${cc.name}</td>
+                    <td class="px-4 py-2 text-center">${cc.count}</td>
+                    <td class="px-4 py-2 text-center">${cc.pending}</td>
+                    <td class="px-4 py-2 text-center">${cc.approved}</td>
+                </tr>
+            `);
+        });
+        
+        if (costCenters.length === 0) {
+            tbody.append('<tr><td colspan="4" class="px-4 py-2 text-center text-gray-500">No data available</td></tr>');
+        }
+    }
+});
+</script>
+{% endblock scripts %} 

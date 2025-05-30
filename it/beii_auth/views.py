@@ -128,12 +128,6 @@ APPLICATIONS = [
         "iconUrl": "assets/images/customer.png",
         "url": "/commercial/customers"
     },
-    {
-        "name": "transport_register",
-        "title": "Transport Vehicle Register",
-        "iconUrl": "assets/images/transport.png",
-        "url": "/table_vehicle/"
-    },
 ]
 
 REPORTS = [

@@ -505,8 +505,11 @@ def ace_awaiting_my_action(request):
     if ace_role == "pass":
         for ace in Ace2.objects.filter(section=section, date_created__year__gte=2025, region=region):
             process = ace.process
+            # Skip if process is None
+            if not process:
+                continue
             # Skip if any approval is "Rejected"
-            if process and process.approval_set.filter(approved="Rejected").exists():
+            if process.approval_set.filter(approved="Rejected").exists():
                 continue
             if process.approval_set.exists():
                 last_approval = process.approval_set.last()
@@ -521,9 +524,13 @@ def ace_awaiting_my_action(request):
     else:
         for ace in Ace2.objects.filter(date_created__year__gte=2025, region=region):
             process = ace.process
-            # Skip if any approval is "Rejected"
-            if process and process.approval_set.filter(approved="Rejected").exists():
+            # Skip if process is None
+            if not process:
                 continue
+            # Skip if any approval is "Rejected"
+            if process.approval_set.filter(approved="Rejected").exists():
+                continue
+            
             if process.approval_set.exists():
                 last_approval = process.approval_set.last()
                 current_step = last_approval.step.step
@@ -1384,6 +1391,10 @@ def viraments_awaiting_my_action(request):
 
     for virement in viraments_qs:
         process = virement.process
+        
+        # Skip if process is None
+        if not process:
+            continue
 
         # Only show if the user is the correct approver for the next step
         if process.approval_set.exists():
