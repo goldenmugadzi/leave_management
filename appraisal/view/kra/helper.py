@@ -143,7 +143,7 @@ def build_payload_activity(request, form: BaseModelForm) -> ActivityType:
         raise
 
     
-def build_payload_score(request, form: BaseModelForm, is_appraisee: bool, target_score_obj: TargetScore) -> TargetScoreType:
+def build_payload_score(request, form: BaseModelForm, is_appraisee: bool) -> TargetScoreType:
     """
         Constructs and returns a TargetType payload from the cleaned data of the given form.
 
@@ -162,13 +162,13 @@ def build_payload_score(request, form: BaseModelForm, is_appraisee: bool, target
             data = {
                 "appraiser_confirmation": form.cleaned_data.get("appraiser_confirmation"),
                 "comment": form.cleaned_data.get("comments"),
-                "score": target_score_obj.score
+                "score": form.cleaned_data.get("score")
             }
         else:
             data = {
                 "score": form.cleaned_data.get("score"),
-                "appraiser_confirmation": target_score_obj.appraiser_confirmation,
-                "comment": target_score_obj.comments,
+                "appraiser_confirmation": form.cleaned_data.get("appraiser_confirmation"),
+                "comment": form.cleaned_data.get("comments"),
             }
         return TargetScoreType(**data)
     except ValidationError as e:

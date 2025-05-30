@@ -30,15 +30,10 @@ class ScoreDocumentForm(forms.ModelForm):
         model = ScoreDocument
         exclude = ["id", "target_score"]
 
-class TargetScoreAppraiseeForm(forms.ModelForm):
+class TargetScoreForm(forms.ModelForm):
     class Meta:
         model = TargetScore
-        fields = ["score"]
-
-class TargetScoreAppraiserForm(forms.ModelForm):
-    class Meta:
-        model = TargetScore
-        fields = ["comments", "appraiser_confirmation"]
+        exclude = ["id", "created_date", "updated", "performance_dimension"]
 
 
 class AppraisalRoleFilterForm(forms.Form):

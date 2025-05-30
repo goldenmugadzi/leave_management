@@ -11,7 +11,7 @@ from django.http import JsonResponse
 from django.template.loader import render_to_string
 
 from ...models import TargetScore, ScoreDocument
-from ...forms import TargetScoreAppraiseeForm, ScoreDocumentForm, TargetScoreAppraiserForm
+from ...forms import ScoreDocumentForm, TargetScoreForm
 
 from ...repository.kra import TargetScoreRepository, ScoreDocumentRepository
 from ...services.kra import TargetScoreService
@@ -24,10 +24,10 @@ from loguru import logger
 
 class TargetScoreUpdateView(SuccessMessageMixin, UpdateView):
     model = TargetScore
-    form_class = TargetScoreAppraiseeForm
+    form_class = TargetScoreForm
     template_name = 'appraisal/kra/targets/score_form.html'
     success_message = 'Scoring was set successfully'
-    context_object_name = "score_form"
+    context_object_name = "target_score_form"
 
     def get_target_score_object(self):
         repo = TargetScoreRepository()
@@ -70,19 +70,9 @@ class TargetScoreUpdateView(SuccessMessageMixin, UpdateView):
         }
         return data
     
-    def get_form_class(self):
-        user_roles = self.approval_user_roles()
-        
-        if user_roles["is_appraiser"]:
-            form_class = TargetScoreAppraiserForm
-        else:
-            form_class = TargetScoreAppraiseeForm
-        return form_class
-
-    
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context[self.context_object_name] = context.get("form")
+        context[self.context_object_name] = self.get_form()
         context.update(self.get_score_documents())
         context.update(self.approval_user_roles())
         context["target_score_object"] = self.get_target_score_object()
@@ -90,11 +80,10 @@ class TargetScoreUpdateView(SuccessMessageMixin, UpdateView):
 
     def form_valid(self, form):
         try:
-            target_score_obj = self.get_object()
             if "appraisee_request" in self.request.POST:
-                payload = build_payload_score(request=self.request, form=form, is_appraisee=True, target_score_obj=target_score_obj)
+                payload = build_payload_score(request=self.request, form=form, is_appraisee=True)
             elif "appraiser_request" in self.request.POST:
-                payload = build_payload_score(request=self.request, form=form, is_appraisee=False, target_score_obj=target_score_obj)
+                payload = build_payload_score(request=self.request, form=form, is_appraisee=False)
             else:
                 raise Exception("Request not allowed, only 'appraisee_request' and 'appraiser_request' allowed")
             
