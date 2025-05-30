@@ -26,20 +26,15 @@
                     {{ score_form.score|as_crispy_field }}
             </div>
 
-            <div class="my-2 shadow-xl rounded-lg border-2">
-                <div class="p-4">
-                    {{ score_form.comments|as_crispy_field }}
-                </div>
-            </div>
-
             <div>
                 {% include "appraisal/kra/targets/score_docs/index.html"%}
             </div>
 
-            
-            <div class="flex justify-center my-2">
-                <button type="submit" class="w-96 bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4">Save</button>
-            </div>
+            {% if is_appraisee == True %}
+                <div class="flex justify-center my-2">
+                    <button type="submit" class="w-96 bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4" name="appraisee_request">Save</button>
+                </div>
+            {% endif %}
         </form>
          
 </div>

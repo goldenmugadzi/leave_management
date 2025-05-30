@@ -1,6 +1,7 @@
 from typing import Dict
 from django.urls import reverse
 from django.shortcuts import redirect
+from django.forms.models import model_to_dict
 from django.views.generic.edit import UpdateView, CreateView
 from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib import messages
@@ -10,7 +11,7 @@ from django.http import JsonResponse
 from django.template.loader import render_to_string
 
 from ...models import TargetScore, ScoreDocument
-from ...forms import TargetScoreAppraiseeForm, ScoreDocumentForm
+from ...forms import TargetScoreAppraiseeForm, ScoreDocumentForm, TargetScoreAppraiserForm
 
 from ...repository.kra import TargetScoreRepository, ScoreDocumentRepository
 from ...services.kra import TargetScoreService
@@ -57,27 +58,56 @@ class TargetScoreUpdateView(SuccessMessageMixin, UpdateView):
         except Exception as e:
             logger.error(f"Update view for TargetScore with performance_dimension pk-{self.kwargs.get('performance_dimension_id')}, failed with error: {e}")
             return redirect("server_error_view")
+        
+    def approval_user_roles(self)->Dict[str, bool]:
+        appraisal_object = self.get_object().performance_dimension.activity.appraisal_kra.appraisal
+        is_appraiser = self.request.user == appraisal_object.appraiser
+        is_appraisee = self.request.user == appraisal_object.user
+        
+        data = {
+            "is_appraiser": is_appraiser,
+            "is_appraisee": is_appraisee
+        }
+        return data
+    
+    def get_form_class(self):
+        user_roles = self.approval_user_roles()
+        
+        if user_roles["is_appraiser"]:
+            form_class = TargetScoreAppraiserForm
+        else:
+            form_class = TargetScoreAppraiseeForm
+        return form_class
+
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context[self.context_object_name] = context.get("form")
         context.update(self.get_score_documents())
+        context.update(self.approval_user_roles())
         context["target_score_object"] = self.get_target_score_object()
         return context
 
     def form_valid(self, form):
         try:
-            payload = build_payload_score(request=self.request, form=form)
-
+            target_score_obj = self.get_object()
+            if "appraisee_request" in self.request.POST:
+                payload = build_payload_score(request=self.request, form=form, is_appraisee=True, target_score_obj=target_score_obj)
+            elif "appraiser_request" in self.request.POST:
+                payload = build_payload_score(request=self.request, form=form, is_appraisee=False, target_score_obj=target_score_obj)
+            else:
+                raise Exception("Request not allowed, only 'appraisee_request' and 'appraiser_request' allowed")
+            
             repo = TargetScoreRepository()
             service_handler = TargetScoreService(target_score_repository=repo)
             target_score_object = service_handler.update_use_case(target_score_obj=self.get_object(), data=payload)
- 
+
             form.instance = target_score_object
         except ValidationError:
             return super().form_invalid(form)
         except Exception as e:
-            messages.error(self.request, f"An unexpected error occurred: {e}")
+            logger.error(f"[ TargetScoreUpdateView ] for target score pk: {self.get_object().id}, failed with error: {e}")
+            messages.error(self.request, "An unexpected error occurred, please try again")
             return super().form_invalid(form)
         return super().form_valid(form)
 
