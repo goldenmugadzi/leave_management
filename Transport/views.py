@@ -21,6 +21,7 @@ from.models import*
 from it.users.models import Regions, Sections, UserProfile,Designations,CostCenter
 from.forms import TransportAssetsForm
 
+@login_required
 def register_vehicle(request):
    if request.method == 'POST':
         form = TransportAssetsForm(request.POST, request.FILES)
@@ -35,10 +36,11 @@ def register_vehicle(request):
 
    return render(request, "transport/register_vehicle.html", {"form": form})
 
-
+@login_required
 def table_vehicle (request):
   return render(request,'transport/table_vehicle.html')
 
+@login_required
 def vehicle_datatable(request):
 
     try:
@@ -131,6 +133,7 @@ def vehicle_datatable(request):
             'data': []
         })
 
+@login_required
 def update_vehicle(request, id):
     transportAssets = TransportAssets.objects.filter(id=id).first()
     
@@ -179,6 +182,7 @@ def update_vehicle(request, id):
         'designations': Designations.objects.all(),
     })
 
+@login_required
 def upload_vehicle(request):
     if request.method == 'POST':
         csvfile = request.FILES.get('uploaded_csv')

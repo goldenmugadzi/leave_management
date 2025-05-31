@@ -267,6 +267,7 @@ def download_file(request):
     
     return redirect('/ims/ims_files')
 
+@login_required
 def view_root_folders(request, app_name):
     if app_name == "knowledge_centre":
         id = 1
@@ -296,7 +297,8 @@ def view_root_folders(request, app_name):
         "folders": root_folders_list,
         "page_title": "KNOWLEDGE CENTRE", 
         "results": []})
-    
+
+@login_required
 def view_sub_folders(request, folder_name, folder_id):
     
     current_folder = KnowledgeCentreFolder.objects.filter(id=folder_id).first()
@@ -326,6 +328,7 @@ def view_sub_folders(request, folder_name, folder_id):
     
     return render(request, 'knowledge-center/sub_folders.html', {"url_path": url_path, "url": url, "subfolders": subfolders_list, 'title': title, "files": files})
 
+@login_required
 def view_files_in_folder(request, folder_name, folder_id):
     current_folder = KnowledgeCentreFolder.objects.filter(id=folder_id).first()
     current_folder = KnowledgeCentreFolder.objects.filter(folder=current_folder).first()
@@ -334,7 +337,8 @@ def view_files_in_folder(request, folder_name, folder_id):
     title = current_folder.name.upper()
     
     return render(request, 'knowledge-center/view_file_tiles.html', {"files": files, "url_path": url_path, "title": title})
-    
+
+@login_required
 def create_root_folder(request):
     url_path = request.path.split("/")
     if request.method == 'POST':
@@ -351,6 +355,7 @@ def create_root_folder(request):
     applications = FolderApplication.objects.all()
     return render(request, 'knowledge-center/create_root_folder.html', {"url_path": url_path, "applications": applications})
 
+@login_required
 def create_subfolder(request, folder_id):
     url_path = request.path.split("/")
     if request.method == 'POST':
@@ -368,11 +373,13 @@ def create_subfolder(request, folder_id):
     current_folder = KnowledgeCentreFolder.objects.filter(id=folder_id).first()
     return render(request, 'knowledge-center/create_sub_folder.html', {"url_path": url_path, "current_folder": current_folder})
 
+@login_required
 def get_subfolders(request, folder_id):
     subfolders = KnowledgeCentreFolder.objects.filter(parent_id=folder_id)
     subfolders_data = [{'id': folder.id, 'name': folder.name} for folder in subfolders]
     return JsonResponse(subfolders_data, safe=False)
 
+@login_required
 def manage_folders(request):
     folders = KnowledgeCentreFolder.objects.all()
     folders_list = []
@@ -390,6 +397,7 @@ def manage_folders(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/view_folder_list.html', {"url_path": url_path, "folders": folders_json, "page_title": "Manage Folders"})
 
+@login_required 
 def edit_folder(request, folder_id):
     url_path = request.path.split("/")
     if request.method == 'GET':
@@ -410,13 +418,15 @@ def edit_folder(request, folder_id):
         folder.save()
         messages.success(request, "Folder updated successfully")
         return redirect('/ims/manage_folders')
-    
+
+@login_required
 def delete_folder(request, folder_id):
     folder = KnowledgeCentreFolder.objects.filter(id=folder_id).first()
     folder.delete()
     messages.success(request, "Folder deleted successfully")
     return redirect('/ims/manage_folders')
 
+@login_required
 def edit_subfolder(request, folder_id):
     url_path = request.path.split("/")
     if request.method == 'GET':
@@ -438,6 +448,7 @@ def edit_subfolder(request, folder_id):
         messages.success(request, "Folder updated successfully")
         return redirect('/ims/manage_folders')
 
+@login_required
 def view_folders(request, folder_id):
     folder = KnowledgeCentreFolder.objects.filter(id=folder_id).first()
     subfolders = folder.subfolders.all()
@@ -445,6 +456,7 @@ def view_folders(request, folder_id):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/view_folders.html', {"url_path": url_path, "folder": folder, "subfolders": subfolders, "files": files})
 
+@login_required
 def create_file(request):
     url_path = request.path.split("/")
     if request.method == 'POST':
@@ -474,6 +486,7 @@ def create_file(request):
     regions = Regions.objects.all()
     return render(request, 'knowledge-center/create_file.html', {"url_path": url_path, "folder_applications": folder_applications, "sections": sections, "regions": regions})
 
+@login_required
 def create_bulk_files(request):
     url_path = request.path.split("/")
     if request.method == 'POST':
@@ -504,6 +517,7 @@ def create_bulk_files(request):
     regions = Regions.objects.all()
     return render(request, 'knowledge-center/create_bulk_files.html', {"url_path": url_path, "folder_applications": folder_applications, "sections": sections, "regions": regions})
 
+@login_required
 def get_root_folders(request, folder_application_id):
     
     print("folder_application_id: ", folder_application_id)
@@ -520,12 +534,14 @@ def get_root_folders(request, folder_application_id):
     print("root_folders_list: ", root_folders_list)
     return JsonResponse(root_folders_list, safe=False)
 
+@login_required
 def get_subfolders(request, folder_id):
     folder = KnowledgeCentreFolder.objects.filter(id=folder_id).first()
     subfolders = KnowledgeCentreFolder.objects.filter(parent=folder)
     subfolders_data = [{'id': folder.id, 'name': folder.name} for folder in subfolders]
     return JsonResponse(subfolders_data, safe=False)
 
+@login_required
 def ims_files(request):
         
     files = KnowldgeCentreFile.objects.filter(archived=False).all()
@@ -544,6 +560,7 @@ def ims_files(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/view_kc_files.html', {"url_path": url_path, "files": files_json, "page": "kc_all"})
 
+@login_required
 def view_knowledge_center_archives(request):
         
     files = KnowldgeCentreFile.objects.filter(archived=True).all()
@@ -2215,6 +2232,7 @@ def file_search(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/view_firstview.html', {"page_title": "KNOWLEDGE CENTRE", "results": results})
 
+@login_required
 def save_file(f,file_path):
     if f:
         with open(file_path, 'wb+') as destination:
