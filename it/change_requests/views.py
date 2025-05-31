@@ -979,6 +979,19 @@ def approve_profile_request(request):
                             profile_modification = change_request.profile_modification
                             profile_modification.roles_actions = roles_actions if roles_actions else profile_modification.roles_actions
                             profile_modification.save()
+                    if not roles_actions:
+                        messages.error(request, "Please enter the roles implemented")
+                        return redirect("/change_requests/change_request_index")
+                    if change_request.change_type == "new_profile":
+                        new_profile = change_request.new_profile
+                        print("new_profile: ", new_profile)
+                        new_profile.roles_actions = roles_actions
+                        new_profile.save()
+                    elif change_request.change_type == "profile_modification":
+                        profile_modification = change_request.profile_modification
+                        print("profile modification: ", profile_modification)
+                        profile_modification.roles_actions = roles_actions
+                        profile_modification.save()
                         
                     cr_approval = CRApproval(
                         cr_id=change_request,

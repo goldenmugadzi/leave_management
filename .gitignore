@@ -2,6 +2,7 @@
 env.local
 uploads/
 uploads/*
+media/temp/*
 
 debug.log
 
@@ -158,3 +159,35 @@ node_modules/
 .idea/
 /elasticSearchConf/logs/*
 /elasticSearchConf/elasticSearchConf/logs/*
+/tika/*
+/tika/tika-app*
+/tika/tika-server*
+
+/static/ace/*
+/static/comparative/*
+/static/job_descriptions/*
+/static/network_development/*
+/static/pettycash/*
+/static/plan_and_reports/*
+/static/process_maps/*
+/static/rfq/*
+/static/signatures/*
+/staticfiles/*
+
+/elasticSearchConf/elasticSearchConf/logs/*
+elasticSearchConf/config/fscrawler/_status.json
+/elasticSearchConf/elasticSearchConf/logs/*elasticSearchConf/config/fscrawler/_status.json
+/elasticSearchConf/elasticSearchConf/logs/*
+elasticSearchConf/logs/
+elasticsearchConf/
+/staticfiles/
+staticfiles/*
+elasticSearchConf/config/fscrawler/_status.json
+/elasticSearchConf/config/fscrawler/_status.json
+/media
+media/*
+static/*/
+!static/admin/
+!static/scripts/
+!static/tika/
+!static/assets/

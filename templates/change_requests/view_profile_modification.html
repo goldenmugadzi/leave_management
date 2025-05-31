@@ -187,7 +187,7 @@
                         class="block text-sm font-medium leading-6 text-gray-900"
                         >Roles Implemented</label>
                       <div class="mt-2">
-                        <textarea {% if requestor_role == "it_section_head" and it_section_head_awaiting_action and section_head_awaiting_action == False and it_section_head_allowed == True %} required {% else %} disabled {% endif %} type="text" name="roles_actions" id="roles_actions" autocomplete="roles_actions" class="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
+                        <textarea {% if requestor_role == "it_section_head" and it_section_head_awaiting_action and section_head_awaiting_action == False%} required {% else %} disabled {% endif %} type="text" name="roles_actions" id="roles_actions" autocomplete="roles_actions" class="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
                         {% if cr.user.roles_actions %}
                         {{cr.user.roles_actions}}
                         {% endif %}

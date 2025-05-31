@@ -21,6 +21,10 @@ DEBUG = config('DEBUG', default=False, cast=bool)
 ALLOWED_HOSTS = [config('HOST'), "127.0.0.1", "172.16.29.32", "172.16.28.32", "172.16.8.99", "businessexcellence.zetdc.co.zw"]
 
 CORS_ALLOWED_ORIGINS = [
+    config('BASE_URL'),
+    "https://businessexcellence.zetdc.co.zw",
+    "https://businessexcellence.zetdc.co.zw:3000", 
+    "http://172.16.28.32:9300",
     config('BASE_URL') + ":" + config('PORT'),
     config('BASE_URL'),
     "https://businessexcellence.zetdc.co.zw",
@@ -28,13 +32,8 @@ CORS_ALLOWED_ORIGINS = [
     config('BASE_URL') + ":3000",
 ]
 
-# CORS_ALLOW_ALL_ORIGINS = True
-CSRF_TRUSTED_ORIGINS = [
-    config('BASE_URL'), 
-    config('BASE_URL') + ":" + config('PORT'), 
-    "https://businessexcellence.zetdc.co.zw",
-    "http://172.16.28.32:9300"
-]
+CSRF_TRUSTED_ORIGINS = [config('BASE_URL'), config('BASE_URL') + ":" + config('PORT'), "http://172.16.28.32:9300", "https://businessexcellence.zetdc.co.zw", "https://businessexcellence.zetdc.co.zw:3000",]
+
 
 CORS_ALLOW_HEADERS = ('content-disposition', 'accept-encoding',
                       'content-type', 'accept', 'origin', 'authorization')
@@ -287,7 +286,10 @@ DEFAULT_FROM_EMAIL = config("MS_EMAIL")
 EMAIL_HOST_PASSWORD = config("MS_PASS")
 PASSWORD_RESET_TIMEOUT = 3600  # 1 hour
 
-DATA_UPLOAD_MAX_MEMORY_SIZE = 1024 * 1024 * 1024  # 1GB
+DATA_UPLOAD_MAX_MEMORY_SIZE = 1024 * 1024 * 500
+
+# Add timeout settings for requests
+REQUEST_TIMEOUT = 300  # 5 minutes
 
 LANGUAGE_CODE = 'en-us'
 

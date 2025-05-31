@@ -16,7 +16,7 @@
         <path
           stroke-linecap="round"
           stroke-linejoin="round"
-          d="M3.375 19.5h17.25m-17.25 0a1.125 1.125 0 0 1-1.125-1.125M3.375 19.5h7.5c.621 0 1.125-.504 1.125-1.125m-9.75 0V5.625m0 12.75v-1.5c0-.621.504-1.125 1.125-1.125m18.375 2.625V5.625m0 12.75c0 .621-.504 1.125-1.125 1.125m1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125m0 3.75h-7.5A1.125 1.125 0 0 1 12 18.375m9.75-12.75c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125m19.5 0v1.5c0 .621-.504 1.125-1.125 1.125M2.25 5.625v1.5c0 .621.504 1.125 1.125 1.125m0 0h17.25m-17.25 0h7.5c.621 0 1.125.504 1.125 1.125M3.375 8.25c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125m17.25-3.75h-7.5c-.621 0-1.125.504-1.125 1.125m8.625-1.125c.621 0 1.125.504 1.125 1.125v1.5c0 .621-.504 1.125-1.125 1.125m-17.25 0h7.5m-7.5 0c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125M12 10.875v-1.5m0 1.5c0 .621-.504 1.125-1.125 1.125M12 10.875c0 .621.504 1.125 1.125 1.125m-2.25 0c.621 0 1.125.504 1.125 1.125M13.125 12h7.5m-7.5 0c-.621 0-1.125.504-1.125 1.125M20.625 12c.621 0 1.125.504 1.125 1.125v1.5c0 .621-.504 1.125-1.125 1.125m-17.25 0h7.5M12 14.625v-1.5m0 1.5c0 .621-.504 1.125-1.125 1.125M12 14.625c0 .621.504 1.125 1.125 1.125m-2.25 0c.621 0 1.125.504 1.125 1.125m0 1.5v-1.5m0 0c0-.621.504-1.125 1.125-1.125m0 0h7.5"
+          d="M3.375 19.5h17.25m-17.25 0a1.125 1.125 0 0 1-1.125-1.125M3.375 19.5h7.5c.621 0 1.125-.504 1.125-1.125m-9.75 0V5.625m0 12.75v-1.5c0-.621.504-1.125 1.125-1.125m18.375 2.625V5.625m0 12.75c0 .621-.504 1.125-1.125 1.125m1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125m0 3.75h-7.5A1.125 1.125 0 0 1 12 18.375m9.75-12.75c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125m19.5 0v1.5c0 .621-.504 1.125-1.125 1.125M2.25 5.625v1.5c0 .621.504 1.125 1.125 1.125m0 0h17.25m-17.25 0h7.5c.621 0 1.125.504 1.125 1.125M3.375 8.25c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125m17.25-3.75h-7.5c-.621 0-1.125.504-1.125 1.125m8.625-1.125c.621 0 1.125.504 1.125 1.125v1.5c0 .621-.504 1.125-1.125 1.125m-17.25 0h7.5m-7.5 0c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125M12 10.875v-1.5m0 1.5c0 .621-.504 1.125-1.125 1.125M12 10.875c0 .621.504 1.125 1.125 1.125m-2.25 0c.621 0 1.125.504 1.125 1.125M13.125 12h7.5m-7.5 0c-.621 0-1.125.504-1.125 1.125M20.625 12c.621 0 1.125.504 1.125 1.125v1.5c0 .621-.504 1.125-1.125 1.125m-17.25 0h7.5M12 14.625v-1.5m0 1.5c0 .621-.504 1.125-1.125 1.125M12 14.625c0 .621.504 1.125 1.125 1.125m-2.25 0c.621 0 1.125.504 1.125 1.125m0 1.5v-1.5m0 0c0-.621.504-1.125-1.125-1.125m0 0h7.5"
         />
       </svg>
       <span class="px-2 font-semibold flex-1 text-gulf-blue-700">VIEW All</span>
@@ -80,55 +80,40 @@
   </div>
 </div>
 <div class="mt-5"></div>
-<div class="content-wrapper flex flex-wrap p-2">
-  <div class="grid grid-cols-3 gap-4">
-    {% for folder in folders %}
-        <div
-        class="w-auto bg-gray-200 shadow shadow-nepal-300 text-gray-700 rounded px-2 py-2"
-        >
-        <div class="sm:flex lg:items-center lg:justify-between">
-            <div class="min-w-0 flex-1">
-            <div class="">
-                <div class="mx-auto">
-                <div class="group relative">
-                    <div
-                    style="background-color: #a16207"
-                    class="aspect-h-1 aspect-w-1 w-full overflow-hidden rounded-md bg-gray-200 lg:aspect-none group-hover:opacity-75 lg:h-40"
-                    >
-                    <a href="{{folder.url}}">
-                        <img
-                        src={{folder.cover}}
-                        alt=""
-                        class=""
-                        />
-                    </a>
-                    </div>
-                    <div class="mt-4 flex justify-center">
-                    <div class="w-full">
-                        <div
-                        class="dropdown-group inline-block w-full text-blue-50"
-                        >
-                        <a href="{{folder.url}}">
-                            <button
-                            class="w-full bg-gulf-blue-600 hover:bg-blue-800 outline-none focus:outline-none border px-3 py-1 rounded flex items-center"
-                            >
-                            <span class="pr-1 font-semibold flex-1 text-blue-50"
-                                >{{folder.name}}</span
-                            >
-                            <span class="text-blue-50"> </span>
-                            </button>
-                        </a>
-                        </div>
-                    </div>
-                    </div>
-                </div>
-                </div>
+
+<div class="grid grid-cols-3 gap-4">
+  {% for folder in folders %}
+  <div class="sm:flex lg:items-center lg:justify-between">
+    <div class="min-w-0 flex-1">
+      <div class="">
+        <div class="mx-auto">
+          <a href="{{folder.url}}" class="group relative block">
+            <div
+              class="aspect-h-1 aspect-w-1 w-full overflow-hidden rounded-md bg-gray-200 lg:aspect-none group-hover:opacity-75 lg:h-40"
+            >
+              <img
+                src={{folder.cover}}
+                alt="{{folder.name}}"
+                class="h-full w-full object-cover object-center lg:h-full lg:w-full"
+              />
             </div>
+            <div class="mt-4 flex justify-center">
+              <div class="w-full">
+                <div class="dropdown-group inline-block w-full text-blue-50">
+                  <div class="w-full bg-gulf-blue-900 hover:bg-blue-800 outline-none focus:outline-none border px-3 py-1 rounded flex items-center">
+                    <span class="pr-1 font-semibold flex-1 text-blue-50">
+                      {{folder.name}}
+                    </span>
+                  </div>
+                </div>
+              </div>
             </div>
+          </a>
         </div>
-        </div>
-    {% endfor %}
+      </div>
+    </div>
   </div>
+  {% endfor %}
 </div>
 
 {% endblock %}
