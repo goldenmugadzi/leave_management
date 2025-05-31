@@ -70,9 +70,13 @@ class TargetScoreUpdateView(SuccessMessageMixin, UpdateView):
         }
         return data
     
+    def get_initial_form(self):
+        return TargetScoreForm(instance=self.get_object())
+    
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context[self.context_object_name] = self.get_form()
+        context[self.context_object_name] = self.get_initial_form()
+        
         context.update(self.get_score_documents())
         context.update(self.approval_user_roles())
         context["target_score_object"] = self.get_target_score_object()
