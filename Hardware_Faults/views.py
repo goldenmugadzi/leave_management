@@ -68,11 +68,10 @@ def show_fault_datatable(request):
         print(f"User roles: {user_roles}")
     except AttributeError as e:
         print(f"Error getting user roles: {str(e)}")
-        user_roles=[]
+        user_roles = None
 
-    #print(" user_roles.name", user_roles.name)
-    is_technician = user_roles.name == 'technician'
-    print("is_technician",is_technician)
+    is_technician = getattr(user_roles, "name", None) == 'technician'
+    print("is_technician", is_technician)
 
 
     try:

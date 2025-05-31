@@ -122,6 +122,8 @@ INSTALLED_APPS = [
     'Hardware_Faults',
     'Asset_Register',
     'widget_tweaks',
+    'safety',
+    'meetings',
     'reports',
     'sweetify',
     'mathfilters',
