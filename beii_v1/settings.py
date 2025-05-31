@@ -19,7 +19,6 @@ SECRET_KEY = 'django-insecure-7per#nouy422m0!hn0!ecb7ltnq#!^#g!2r5&%^5c%v(!ivv&a
 DEBUG = config('DEBUG', default=False, cast=bool)
 
 ALLOWED_HOSTS = [config('HOST'), "127.0.0.1", "172.16.29.32", "172.16.28.32", "172.16.8.99", "businessexcellence.zetdc.co.zw"]
-
 CORS_ALLOWED_ORIGINS = [
     config('BASE_URL') + ":" + config('PORT'),
     config('BASE_URL'),
@@ -288,6 +287,11 @@ EMAIL_HOST_PASSWORD = config("MS_PASS")
 PASSWORD_RESET_TIMEOUT = 3600  # 1 hour
 
 DATA_UPLOAD_MAX_MEMORY_SIZE = 1024 * 1024 * 1024  # 1GB
+DATA_UPLOAD_MAX_MEMORY_SIZE = 1024 * 1024 * 100  # Reduce to 100MB for better handling
+FILE_UPLOAD_MAX_MEMORY_SIZE = 1024 * 1024 * 100  # Add this setting (100MB)
+
+# Add timeout settings for requests
+REQUEST_TIMEOUT = 300  # 5 minutes
 
 LANGUAGE_CODE = 'en-us'
 

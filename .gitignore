@@ -2,6 +2,7 @@
 env.local
 uploads/
 uploads/*
+media/temp/*
 
 debug.log
 
@@ -175,3 +176,5 @@ node_modules/
 
 /elasticSearchConf/elasticSearchConf/logs/*
 elasticSearchConf/config/fscrawler/_status.json
+/elasticSearchConf/elasticSearchConf/logs/*elasticSearchConf/config/fscrawler/_status.json
+/elasticSearchConf/elasticSearchConf/logs/*
