@@ -75,7 +75,8 @@ def Ace_detail(request, Ace_id2):
         last_approval = ace_item.process.approval_set.last()
         if last_approval and last_approval.approved == "Rejected":
             # Get the transaction to check if it's already been processed
-            transaction = Transactions.objects.filter(Ace_id2=str(ace_item.Ace_id2)).first()
+            transaction = Transactions.objects.filter(Ace_id2=ace_item).first()
+            # print("Transaction found:", transaction)
             if transaction and transaction.approval_status != "Rejected":
                 # Reverse the budget allocation by returning the amount
                 budget.to_be_withdrawn = budget.to_be_withdrawn - ace_item.amount
