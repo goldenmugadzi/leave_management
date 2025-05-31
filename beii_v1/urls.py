@@ -68,6 +68,7 @@ urlpatterns = [
     # Add the comm_files app URLs
     path('commercial/', include('comm_files.urls')),
     path('', include('Transport.urls')),
+    path('', include('safety.urls')),
  
       
 
