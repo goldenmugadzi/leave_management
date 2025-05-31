@@ -173,3 +173,5 @@ node_modules/
 /static/signatures/*
 /staticfiles/*
 
+/elasticSearchConf/elasticSearchConf/logs/*
+elasticSearchConf/config/fscrawler/_status.json
