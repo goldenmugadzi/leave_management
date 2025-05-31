@@ -827,6 +827,7 @@ def list_budgets(request):
 @login_required
 def add_asset_number(request):
     if request.method == 'POST':
+        print('adding asset numbers')
         print(request.POST)
         ace_id = request.POST['ace_id']
         ace_quantity = request.POST['quantity']
