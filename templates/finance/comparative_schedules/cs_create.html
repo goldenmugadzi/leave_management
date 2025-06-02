@@ -2,46 +2,14 @@
 
 {% extends 'admin_layout.html' %} {% load static %}
 {% block styles %}
-<!-- Load the error handling wrapper first -->
-<script src="{% static 'scripts/main-wrapper.js' %}"></script>
-<!-- Defer the module loading to ensure DOM is ready -->
-<script>
-  document.addEventListener('DOMContentLoaded', function() {
-    // Add a small delay to ensure everything is properly initialized
-    setTimeout(function() {
-      // Check if the target element exists before loading the module
-      const targetElement = document.getElementById('create_comparative_schedule');
-      if (targetElement) {
-        // Dynamically import the module after DOM is ready
-        import('{% static "scripts/dist/main.js" %}').catch(error => {
-          console.error('Error loading main.js:', error);
-          // Show a user-friendly error message
-          targetElement.innerHTML = `
-            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-              <strong>Error:</strong> Failed to load the application. Please refresh the page.
-              <br><small>Technical details: ${error.message}</small>
-            </div>
-          `;
-        });
-      } else {
-        console.error('Target element #create_comparative_schedule not found');
-      }
-    }, 100); // 100ms delay
-  });
-</script>
+<script type="module" src="{% static 'scripts/dist/main.js' %}"></script>
 {% endblock styles %}
 {% block content %}
 <div class="content-wrapper">
   <div
     class="text-gulf-blue-700 rounded-md p-1 shadow-md bg-white"
   > 
-    <div id="create_comparative_schedule" data-username="{{username}}" data-prid="{{pr_id}}" data-csid="{{cs_id}}" data-baseurl="{{BASE_URL}}">
-      <!-- Loading placeholder -->
-      <div class="flex items-center justify-center p-8">
-        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-gulf-blue-500"></div>
-        <span class="ml-2 text-gulf-blue-600">Loading...</span>
-      </div>
-    </div>
+    <div id="create_comparative_schedule" data-username="{{username}}" data-prid="{{pr_id}}" data-csid="{{cs_id}}" data-baseurl="{{BASE_URL}}"></div>
   </div>
 </div>
 {% endblock %} {% block scripts %}
