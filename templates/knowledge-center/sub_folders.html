@@ -144,10 +144,10 @@
                       alt=""
                       class="h-1/5 w-1/5 object-cover object-center"
                     />
-                    <div class="flex-1 text-left px-2">
-                      <div class="filename-display-{{f.id}} filename-editable" onclick="startEdit({{f.id}}, '{{f.filename|escapejs}}')"
+                    <div class="flex-1 text-left px-2 overflow-hidden min-w-0">
+                      <div class="filename-display-{{f.id}} filename-editable w-full overflow-hidden whitespace-nowrap pr-1" onclick="startEdit({{f.id}}, '{{f.filename|escapejs}}')"
                            title="Click to edit filename">
-                        <span class="pr-1 font-semibold text-gray-800 overflow-hidden whitespace-nowrap overflow-ellipsis">
+                        <span class="inline-block font-semibold text-gray-800 overflow-hidden whitespace-nowrap text-ellipsis" title="{{f.filename|escapejs}}">
                           {{f.filename}}
                         </span>
                         {% if user.is_staff %}
@@ -195,10 +195,10 @@
                     alt=""
                     class="h-1/5 w-1/5 object-cover object-center"
                   />
-                  <div class="flex-1 text-left px-2">
-                    <div class="filename-display-{{f.id}} filename-editable" onclick="startEdit({{f.id}}, '{{f.filename|escapejs}}')"
+                  <div class="flex-1 text-left px-2 overflow-hidden min-w-0">
+                    <div class="filename-display-{{f.id}} filename-editable w-full overflow-hidden whitespace-nowrap pr-1" onclick="startEdit({{f.id}}, '{{f.filename|escapejs}}')"
                          title="Click to edit filename">
-                      <span class="text-ellipsis pr-1 font-semibold text-gray-800">
+                      <span class="inline-block font-semibold text-gray-800 overflow-hidden whitespace-nowrap text-ellipsis" title="{{f.filename|escapejs}}">
                         {{f.filename}}
                       </span>
                       {% if user.is_staff %}
