@@ -160,6 +160,8 @@ urlpatterns = [
 
     path('search', views.file_search, name='file_search'),
     path('interactive_processes', views.view_interactive_processes, name='interactive_processes'),
+    path('update_filename/', views.update_filename, name='update_filename'),
+    path('delete_file/', views.delete_file_admin, name='delete_file_admin'),
 
      
 ]

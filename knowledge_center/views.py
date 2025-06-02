@@ -2277,3 +2277,107 @@ def view_interactive_processes(request):
     context['url_path'] = url_path
     
     return render(request, 'knowledge-center/interactive_processes.html', context)
+
+@login_required
+def update_filename(request):
+    """
+    Update filename for a knowledge center file (Admin only)
+    """
+    if not request.user.is_staff:
+        return JsonResponse({'success': False, 'error': 'Permission denied'})
+    
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Method not allowed'})
+    
+    try:
+        import json
+        data = json.loads(request.body)
+        file_id = data.get('file_id')
+        new_filename = data.get('new_filename', '').strip()
+        
+        if not file_id or not new_filename:
+            return JsonResponse({'success': False, 'error': 'Missing file ID or filename'})
+        
+        # Get the file record
+        file_record = KnowldgeCentreFile.objects.filter(id=file_id).first()
+        if not file_record:
+            return JsonResponse({'success': False, 'error': 'File not found'})
+        
+        # Validate filename
+        if len(new_filename) > 255:
+            return JsonResponse({'success': False, 'error': 'Filename too long'})
+        
+        # Check for invalid characters
+        invalid_chars = ['/', '\\', ':', '*', '?', '"', '<', '>', '|']
+        if any(char in new_filename for char in invalid_chars):
+            return JsonResponse({'success': False, 'error': 'Filename contains invalid characters'})
+        
+        # Update the filename
+        old_filename = file_record.filename
+        file_record.filename = new_filename
+        file_record.name = new_filename  # Update name field too if it exists
+        file_record.updated_on = datetime.now()
+        file_record.save()
+        
+        # Log the change
+        print(f"Admin {request.user.username} changed filename from '{old_filename}' to '{new_filename}' for file ID {file_id}")
+        
+        return JsonResponse({
+            'success': True, 
+            'message': 'Filename updated successfully',
+            'old_filename': old_filename,
+            'new_filename': new_filename
+        })
+        
+    except json.JSONDecodeError:
+        return JsonResponse({'success': False, 'error': 'Invalid JSON data'})
+    except Exception as e:
+        print(f"Error updating filename: {str(e)}")
+        return JsonResponse({'success': False, 'error': 'Server error occurred'})
+
+@login_required
+def delete_file_admin(request):
+    """
+    Delete a knowledge center file (Admin only)
+    """
+    if not request.user.is_staff:
+        return JsonResponse({'success': False, 'error': 'Permission denied'})
+    
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Method not allowed'})
+    
+    try:
+        import json
+        data = json.loads(request.body)
+        file_id = data.get('file_id')
+        
+        if not file_id:
+            return JsonResponse({'success': False, 'error': 'Missing file ID'})
+        
+        # Get the file record
+        file_record = KnowldgeCentreFile.objects.filter(id=file_id).first()
+        if not file_record:
+            return JsonResponse({'success': False, 'error': 'File not found'})
+        
+        # Store filename for logging
+        filename = file_record.filename
+        
+        # Delete the file record (consider soft delete by setting archived=True instead)
+        file_record.archived = True
+        file_record.updated_on = datetime.now()
+        file_record.save()
+        
+        # Log the deletion
+        print(f"Admin {request.user.username} deleted file '{filename}' (ID: {file_id})")
+        
+        return JsonResponse({
+            'success': True, 
+            'message': 'File deleted successfully',
+            'filename': filename
+        })
+        
+    except json.JSONDecodeError:
+        return JsonResponse({'success': False, 'error': 'Invalid JSON data'})
+    except Exception as e:
+        print(f"Error deleting file: {str(e)}")
+        return JsonResponse({'success': False, 'error': 'Server error occurred'})
