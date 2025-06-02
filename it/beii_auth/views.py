@@ -1002,7 +1002,6 @@ def reset_email(request):
     else:
         return render(request, "registration/change_password_email.html", {})
 
-
 # @login_required(login_url='/accounts/login')
 def reset_password(request):
     if request.method == "POST":
@@ -1040,7 +1039,6 @@ def reset_password(request):
             return redirect('/auth/reset-password')
     else:
         return render(request, "registration/reset_password.html", {})
-
 
 def get_dashboard_reports(section_code):
     report = {}

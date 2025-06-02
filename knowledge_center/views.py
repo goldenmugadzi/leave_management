@@ -2241,3 +2241,39 @@ def save_file(f,file_path):
                 return True
             else:
                 return False
+
+@login_required
+def view_interactive_processes(request):
+    """
+    View for displaying interactive processes with process map-like functionality
+    """
+    # Get specific folders by their exact IDs as provided
+    commercial_folder = KnowledgeCentreFolder.objects.filter(id=151).first()
+    engineering_folder = KnowledgeCentreFolder.objects.filter(id=152).first()
+    finance_folder = KnowledgeCentreFolder.objects.filter(id=153).first()
+    hr_folder = KnowledgeCentreFolder.objects.filter(id=154).first()
+    ict_folder = KnowledgeCentreFolder.objects.filter(id=155).first()
+    procurement_folder = KnowledgeCentreFolder.objects.filter(id=156).first()
+    risk_folder = KnowledgeCentreFolder.objects.filter(id=157).first()
+    management_folder = KnowledgeCentreFolder.objects.filter(id=167).first()
+    stakeholder_folder = KnowledgeCentreFolder.objects.filter(id=168).first()
+    legal_folder = KnowledgeCentreFolder.objects.filter(id=169).first()
+    
+    context = {
+        'title': 'Interactive Processes',
+        'commercial_folder_id': commercial_folder.id if commercial_folder else '',
+        'engineering_folder_id': engineering_folder.id if engineering_folder else '',
+        'ict_folder_id': ict_folder.id if ict_folder else '',
+        'finance_folder_id': finance_folder.id if finance_folder else '',
+        'hr_folder_id': hr_folder.id if hr_folder else '',
+        'risk_folder_id': risk_folder.id if risk_folder else '',
+        'procurement_folder_id': procurement_folder.id if procurement_folder else '',
+        'stakeholder_folder_id': stakeholder_folder.id if stakeholder_folder else '',
+        'legal_folder_id': legal_folder.id if legal_folder else '',
+        'management_folder_id': management_folder.id if management_folder else '',
+    }
+    
+    url_path = request.path.split("/")
+    context['url_path'] = url_path
+    
+    return render(request, 'knowledge-center/interactive_processes.html', context)

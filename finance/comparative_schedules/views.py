@@ -1740,6 +1740,12 @@ def create_comperative_schedule(request):
 @login_required
 def get_comperative_schedule_data(request, cs_id):
     
+    print("=== GET_COMPERATIVE_SCHEDULE_DATA CALLED ===")
+    print(f"Request method: {request.method}")
+    print(f"Request path: {request.path}")
+    print(f"CS ID: {cs_id}")
+    print(f"User: {request.user.username}")
+    
     try:
         request_user = request.user
         request_user_profile = UserProfile.objects.select_related('region').filter(id=request_user.id).first()
@@ -3339,3 +3345,46 @@ def cs_compliance_table(request, cs_id):
         return redirect('tender_compliance', tender_id=document_id)
 
     return render(request, 'finance/comparative_schedules/cs_compliance_table.html', {"bids_items": bids_dict})
+
+
+@login_required 
+def api_get_users(request):
+    """API endpoint to get users for React app"""
+    try:
+        users = UserProfile.objects.all()
+        users_data = []
+        for user in users:
+            users_data.append({
+                'id': user.id,
+                'username': user.username,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'name': f"{user.first_name} {user.last_name}".strip(),
+            })
+        return JsonResponse(users_data, safe=False)
+    except Exception as ex:
+        print("Error fetching users:", ex)
+        return JsonResponse({'error': str(ex)}, status=500)
+
+@login_required 
+def api_get_suppliers(request):
+    """API endpoint to get suppliers for React app"""
+    print("=== API_GET_SUPPLIERS CALLED ===")
+    print(f"Request method: {request.method}")
+    print(f"Request path: {request.path}")
+    print(f"User: {request.user.username}")
+    try:
+        suppliers = Supplier.objects.all()
+        print(f"Found {suppliers.count()} suppliers")
+        suppliers_data = []
+        for supplier in suppliers:
+            suppliers_data.append({
+                'id': supplier.id,
+                'name': supplier.name,
+                'supplier_name': supplier.name,  # For compatibility
+            })
+        print(f"Returning {len(suppliers_data)} suppliers data")
+        return JsonResponse(suppliers_data, safe=False)
+    except Exception as ex:
+        print("Error fetching suppliers:", ex)
+        return JsonResponse({'error': str(ex)}, status=500)

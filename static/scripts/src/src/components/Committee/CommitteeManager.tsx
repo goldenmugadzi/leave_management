@@ -39,7 +39,7 @@ const CommitteeManager: React.FC<CommitteeManagerProps> = ({
   }, []);
   
   // Handle committee member selection
-  const onCommitteeSelect = useCallback((name_: string, selectedOption: IUserOption | null) => {
+  const onCommitteeSelect = useCallback((selectedOption: IUserOption | null) => {
     if (!selectedOption) return;
     
     const username = selectedOption.value;
@@ -310,7 +310,7 @@ const CommitteeManager: React.FC<CommitteeManagerProps> = ({
                           name="memberUserName"
                           className="block w-full rounded-md border-0 py-2 text-gray-900 sm:max-w-xs sm:text-sm sm:leading-6"
                           options={userOptions}
-                          onChange={(option) => onCommitteeSelect('memberUserName', option)}
+                          onChange={(option) => onCommitteeSelect(option)}
                         />
                       </div>
                     </div>

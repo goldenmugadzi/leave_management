@@ -159,6 +159,7 @@ urlpatterns = [
     
 
     path('search', views.file_search, name='file_search'),
+    path('interactive_processes', views.view_interactive_processes, name='interactive_processes'),
 
      
 ]
