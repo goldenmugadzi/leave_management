@@ -2438,39 +2438,3 @@ def cancel_schedule(request, cs_id):
     
     messages.success(request, "Comparative Schedule cancelled successfully")
     return redirect('/direct_purchase/comperative_schedules')
-
-@login_required 
-def api_get_users(request):
-    """API endpoint to get users for React app"""
-    try:
-        users = UserProfile.objects.all()
-        users_data = []
-        for user in users:
-            users_data.append({
-                'id': user.id,
-                'username': user.username,
-                'first_name': user.first_name,
-                'last_name': user.last_name,
-                'name': f"{user.first_name} {user.last_name}".strip(),
-            })
-        return JsonResponse(users_data, safe=False)
-    except Exception as ex:
-        print("Error fetching users:", ex)
-        return JsonResponse({'error': str(ex)}, status=500)
-
-@login_required 
-def api_get_suppliers(request):
-    """API endpoint to get suppliers for React app"""
-    try:
-        suppliers = Supplier.objects.all()
-        suppliers_data = []
-        for supplier in suppliers:
-            suppliers_data.append({
-                'id': supplier.id,
-                'name': supplier.name,
-                'supplier_name': supplier.name,  # For compatibility
-            })
-        return JsonResponse(suppliers_data, safe=False)
-    except Exception as ex:
-        print("Error fetching suppliers:", ex)
-        return JsonResponse({'error': str(ex)}, status=500)
