@@ -50,17 +50,13 @@ class AppraisalKraForm(forms.ModelForm):
         exclude = ["id", "created_date", "updated"]
         
     def __init__(self, *args, **kwargs):
-        appraisee_id = kwargs.pop("appraisee_id", None)
+        designation_id = kwargs.pop("designation_id", None)
         super().__init__(*args, **kwargs)
         current_year = datetime.now().year
         self.fields['quarter'].queryset = YearQuarter.objects.filter(year=current_year) 
-        # self.fields["new_kra"].disabled = True
-        
-        if appraisee_id is None:
-            self.fields["assigned_kra"].queryset =  Activity.objects.none()
-        else:
-            self.fields["assigned_kra"].queryset =  Activity.objects.filter(assigned_user__id=appraisee_id)
 
+        # self.fields["assigned_kra"].queryset =  Activity.objects.none()
+        
 class AppraisalKraReviewerStatusForm(forms.ModelForm):
     class Meta:
         model = AppraisalKraReviewerStatus

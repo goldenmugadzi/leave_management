@@ -109,7 +109,7 @@ class AppraisalKraCreateView(SuccessMessageMixin, CreateView):
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs["appraisee_id"] = self.get_appraisal_object().user.id
+        kwargs["designation_id"] = self.get_appraisal_object().user.designation.id
         return kwargs
     
     def get_context_data(self, **kwargs):
@@ -141,15 +141,11 @@ class AppraisalKraCreateView(SuccessMessageMixin, CreateView):
         return self.render_to_response(self.get_context_data(form=form))
     
     def form_valid(self, form):
-        kra_obj = form.cleaned_data.get("new_kra")
-        assigned_kra_obj = form.cleaned_data.get("assigned_kra")
-        
-        if (kra_obj is None and assigned_kra_obj is None) or (kra_obj is not None and assigned_kra_obj is not None):
-            return self.form_invalid(form)
+        kra_obj = form.cleaned_data.get("key_result_area")
         
         quarter_year_obj = form.cleaned_data.get("quarter")
         try:
-            appraisal_kra_object = AppraisalKraRepository().create(appraisal_object=self.get_appraisal_object(), quarter_obj=quarter_year_obj, kra_obj=kra_obj, activity_object=assigned_kra_obj)
+            appraisal_kra_object = AppraisalKraRepository().create(appraisal_object=self.get_appraisal_object(), quarter_obj=quarter_year_obj, kra_obj=kra_obj)
             form.instance = appraisal_kra_object
         except Exception as e:
             logger.error(f"Failed to create appraisal kra: {e}")
@@ -190,15 +186,11 @@ class AppraisalKraUpdateView(SuccessMessageMixin, UpdateView):
         """
             Processes the form when valid, builds a payload, and performs additional actions.
         """
-        kra_obj = form.cleaned_data.get("new_kra")
-        assigned_kra_obj = form.cleaned_data.get("assigned_kra")
-        
-        if (kra_obj is None and assigned_kra_obj is None) or (kra_obj is not None and assigned_kra_obj is not None):
-            return self.form_invalid(form)
+        kra_obj = form.cleaned_data.get("key_result_area")
         
         quarter_year_obj = form.cleaned_data.get("quarter")
         try:
-            appraisal_kra_object = AppraisalKraRepository().update(appraisal_kra_obj=self.get_object(), quarter_obj=quarter_year_obj, kra_obj=kra_obj, activity_object=assigned_kra_obj)
+            appraisal_kra_object = AppraisalKraRepository().update(appraisal_kra_obj=self.get_object(), quarter_obj=quarter_year_obj, kra_obj=kra_obj)
             form.instance = appraisal_kra_object
         except Exception as e:
             logger.error(f"Failed to create appraisal kra: {e}")

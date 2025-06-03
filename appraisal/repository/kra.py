@@ -10,12 +10,11 @@ from it.users.models import UserProfile, Application, Roles
 from loguru import logger
 
 class KRARepository:
-    def create(self, appraisal: Appraisal, data: KRAType)->KeyResultArea:
+    def create(self, data: KRAType)->KeyResultArea:
         """
             Creates a new KeyResultArea (KRA) record in the database.
 
             Args:
-                appraisal: Appraisal Object
                 data (KRAType): The data object containing the name, description, and weight of the KRA.
 
             Returns:
@@ -26,7 +25,7 @@ class KRARepository:
         """
 
         try:
-            return KeyResultArea.objects.create(appraisal=appraisal, name=data.name, description=data.description, weight=data.weight)
+            return KeyResultArea.objects.create(name=data.name, description=data.description, weight=data.weight)
         except Exception as e:
             raise Exception(f"KRA Create Repo failed with error: {e}")
 
@@ -141,9 +140,9 @@ class KRARepository:
 
 
 class AppraisalKraRepository:
-    def create(self, appraisal_object: Appraisal, quarter_obj: YearQuarter, kra_obj: KeyResultArea=None, activity_object: Activity=None)->AppraisalKra:
+    def create(self, appraisal_object: Appraisal, quarter_obj: YearQuarter, kra_obj: KeyResultArea=None)->AppraisalKra:
         try:
-            return AppraisalKra.objects.create(appraisal=appraisal_object, quarter=quarter_obj, new_kra=kra_obj, assigned_kra=activity_object)
+            return AppraisalKra.objects.create(appraisal=appraisal_object, quarter=quarter_obj, key_result_area=kra_obj)
         except Exception as e:
             raise Exception(f"AppraisalKra Create Repo failed with error: {e}")
 
@@ -190,18 +189,16 @@ class AppraisalKraRepository:
         except Exception as e:
             raise Exception(f"Appraisal Kra retrieval by PK failed with error: {e}")
 
-    def update(self, appraisal_kra_obj: AppraisalKra, quarter_obj: YearQuarter, kra_obj: KeyResultArea, activity_object: Activity)->AppraisalKra:
+    def update(self, appraisal_kra_obj: AppraisalKra, quarter_obj: YearQuarter, kra_obj: KeyResultArea)->AppraisalKra:
         try:
             updated = False
             if quarter_obj != appraisal_kra_obj.quarter:
                 appraisal_kra_obj.quarter = quarter_obj
                 updated = True
-            if kra_obj != appraisal_kra_obj.new_kra:
-                appraisal_kra_obj.new_kra = kra_obj
+            if kra_obj != appraisal_kra_obj.key_result_area:
+                appraisal_kra_obj.key_result_area = kra_obj
                 updated = True
-            if activity_object != appraisal_kra_obj.assigned_kra:
-                appraisal_kra_obj.assigned_kra = activity_object
-                updated = True
+            
 
             if updated:
                 appraisal_kra_obj.save()

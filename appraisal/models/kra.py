@@ -7,7 +7,6 @@ from .appraisal import Appraisal
 User = get_user_model()
 
 class KeyResultArea(TimeStamp):
-    appraisal = models.ForeignKey(Appraisal, on_delete=models.RESTRICT, related_name="user_kra_appraisal", null=True, blank=True)
     name = models.CharField(max_length=255)
     description = models.TextField()
     weight = models.DecimalField(max_digits=5, decimal_places=2, default=0.0)
@@ -19,44 +18,18 @@ class KeyResultArea(TimeStamp):
 class AppraisalKra(TimeStamp):
     appraisal = models.ForeignKey(Appraisal, on_delete=models.RESTRICT, related_name="appraisal_kra_user_appraisal", null=True, blank=True)
     quarter = models.ForeignKey(YearQuarter, on_delete=models.RESTRICT)
-    new_kra = models.ForeignKey(KeyResultArea, on_delete=models.RESTRICT, related_name="new_kra", null=True, blank=True)
-    assigned_kra = models.ForeignKey("Activity", on_delete=models.RESTRICT, related_name="activity", null=True, blank=True)
+    key_result_area = models.ForeignKey(KeyResultArea, on_delete=models.RESTRICT, related_name="key_result_area", null=True, blank=True)
 
     def __str__(self):
         return f"{self.appraisal}"
 
-    def is_assigned_kra(self):
-        assigned_kra = self.assigned_kra != None
-        return assigned_kra
-
-    def is_new_kra(self):
-        new_kra = self.new_kra != None
-        return new_kra
-
     @property
     def get_name(self):
-        if self.is_assigned_kra():
-            return self.assigned_kra.name
-        if self.is_new_kra():
-            return self.new_kra.name
+        return self.key_result_area.name
 
     @property
     def get_weight(self):
-        if self.is_assigned_kra():
-            return self.assigned_kra.weight
-        if self.is_new_kra():
-            return self.new_kra.weight
-
-    class Meta:
-        constraints = [
-            models.CheckConstraint(
-                check=(
-                    models.Q(new_kra__isnull=False, assigned_kra__isnull=True) |
-                    models.Q(new_kra__isnull=True, assigned_kra__isnull=False)
-                ),
-                name="only_one_reference_allowed"
-            )
-        ]
+        return self.key_result_area.weight
 
 
 PERFORMANCE_INDICATOR = [
