@@ -32,6 +32,9 @@ from finance.PettyCash.models import Pettycash
 from tokens.models import Token  # Adjust if your model is named differently
 from finance.comparative_schedules.models import ComparativeSchedules  # Correct import
 from finance.direct_purchase.models import DirectPurchase
+from django.http import FileResponse, HttpResponseNotFound
+from django.db.models.functions import TruncMonth
+from django.db.models import Sum, Count
 
 # Create your views here.
 @login_required
@@ -1836,7 +1839,7 @@ def asset_budget_report(request, budget_id):
     }
     return render(request, 'finance/ace2/asset_budget_report.html', context)
 
-from django.http import FileResponse, HttpResponseNotFound
+
 
 @login_required
 def download_ace_quotation(request, quotation_id):
@@ -1851,9 +1854,7 @@ def download_ace_quotation(request, quotation_id):
 
 @login_required
 def monthly_usage_dashboard(request):
-    from django.db.models.functions import TruncMonth
-    from django.db.models import Sum, Count
-
+    
     current_year = timezone.now().year
 
     ace_monthly = (
