@@ -295,7 +295,7 @@ def view_root_folders(request, app_name):
     return render(request, 'knowledge-center/root_folders.html', {
         "url_path": url_path,
         "folders": root_folders_list,
-        "page_title": "KNOWLEDGE CENTRE", 
+        "page_title": "KNOWLEDGE CENTRE" if app_name == "knowledge_centre" else "PROCESSES AND PROCEDURES", 
         "results": []})
 
 @login_required
