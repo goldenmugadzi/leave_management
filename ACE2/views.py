@@ -584,12 +584,12 @@ def view_all_aces(request):
     requester = "create"
 
     if ace_role == "create":
-        aces = Ace2.objects.filter(requested_by=request.user)
+        aces = Ace2.objects.filter(region=region).order_by('-date_created')
     elif ace_role == "pass":
-        aces = Ace2.objects.filter(section=section, region=region)
+        aces = Ace2.objects.filter(region=region).order_by('-date_created')
     else:
         print('kings')
-        aces = Ace2.objects.filter(region=region)
+        aces = Ace2.objects.filter(region=region).order_by('-date_created')
         print(aces)
 
     return render(request, 'finance/ace2/view_all_aces.html', {'aces': aces,
