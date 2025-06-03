@@ -63,7 +63,6 @@ const BidManager: React.FC<BidManagerProps> = ({
 
   // Handle changes to current bid
   const onCurrentBidChange = useCallback((
-    name_: string,
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
     const { name, value } = event.target;
@@ -75,7 +74,6 @@ const BidManager: React.FC<BidManagerProps> = ({
 
   // Handle supplier selection
   const onCurrentBidSupplierChange = useCallback((
-    name_: string,
     event: React.ChangeEvent<HTMLSelectElement>
   ) => {
     const { name, value } = event.target;
@@ -104,11 +102,10 @@ const BidManager: React.FC<BidManagerProps> = ({
   // Handle changes to bid items
   const onCurrentBidItemChange = useCallback((
     description: string,
-    name_: string,
     event: { target: { name: string; value: string } },
     bid_no: string
   ) => {
-    console.log('bid_no', bid_no, 'description', description, 'name', name_, 'event', event);
+    console.log('bid_no', bid_no, 'description', description, 'event', event);
     const { name, value } = event.target;
     
     setCurrentBid(prev => {
@@ -349,7 +346,7 @@ const BidManager: React.FC<BidManagerProps> = ({
                             id="supplier"
                             name="supplier"
                             value={currentBid.supplier}
-                            onChange={(e) => onCurrentBidSupplierChange('supplier', e)}
+                            onChange={(e) => onCurrentBidSupplierChange(e)}
                             className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md"
                           >
                             <option value="">Select a supplier</option>
@@ -372,7 +369,7 @@ const BidManager: React.FC<BidManagerProps> = ({
                             name="bid_date"
                             id="bid_date"
                             value={currentBid.bid_date}
-                            onChange={(e) => onCurrentBidChange('bid_date', e)}
+                            onChange={(e) => onCurrentBidChange(e)}
                             className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md"
                           />
                         </div>
@@ -441,7 +438,7 @@ const BidManager: React.FC<BidManagerProps> = ({
                                   name="unit_of_measurement"
                                   className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md"
                                   placeholder="e.g., Each"
-                                  onChange={(e) => onCurrentBidItemChange('Example Item', 'uom', e, currentBid.bid_count?.toString() || '0')}
+                                  onChange={(e) => onCurrentBidItemChange('Example Item', e, currentBid.bid_count?.toString() || '0')}
                                 />
                               </td>
                               <td className="px-3 py-2 whitespace-nowrap text-sm">
@@ -450,7 +447,7 @@ const BidManager: React.FC<BidManagerProps> = ({
                                   name="quantity"
                                   className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md"
                                   placeholder="Qty"
-                                  onChange={(e) => onCurrentBidItemChange('Example Item', 'quantity', e, currentBid.bid_count?.toString() || '0')}
+                                  onChange={(e) => onCurrentBidItemChange('Example Item', e, currentBid.bid_count?.toString() || '0')}
                                 />
                               </td>
                               <td className="px-3 py-2 whitespace-nowrap text-sm">
@@ -459,7 +456,7 @@ const BidManager: React.FC<BidManagerProps> = ({
                                   name="unit_price"
                                   className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md"
                                   placeholder="Unit price"
-                                  onChange={(e) => onCurrentBidItemChange('Example Item', 'unit_price', e, currentBid.bid_count?.toString() || '0')}
+                                  onChange={(e) => onCurrentBidItemChange('Example Item', e, currentBid.bid_count?.toString() || '0')}
                                 />
                               </td>
                               <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-500">

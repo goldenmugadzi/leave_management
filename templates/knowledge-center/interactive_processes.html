@@ -1,0 +1,352 @@
+{% extends 'admin_layout.html' %} 
+{% load static %} 
+{% block content %}
+
+<style>
+.process-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2rem;
+    padding: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+    background-color: #f8f9fa;
+    position: relative;
+}
+
+.top-section {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    position: relative;
+}
+
+.customer-satisfaction {
+    background: #f8f9fa;
+    border: 2px solid #333;
+    padding: 1rem;
+    text-align: center;
+    font-weight: bold;
+    font-size: 1rem;
+    margin-bottom: 2rem;
+    width: 300px;
+    position: relative;
+}
+
+/* Arrow styles */
+.arrow-top-left {
+    position: absolute;
+    top: 50%;
+    left: -50px;
+    transform: translateY(-50%);
+    color: #dc3545;
+    font-size: 2rem;
+    font-weight: bold;
+}
+
+.arrow-top-right {
+    position: absolute;
+    top: 50%;
+    right: -50px;
+    transform: translateY(-50%);
+    color: #dc3545;
+    font-size: 2rem;
+    font-weight: bold;
+}
+
+.side-box {
+    background: #f8f9fa;
+    border: 2px solid #333;
+    padding: 1.5rem;
+    text-align: center;
+    font-weight: bold;
+    font-size: 0.9rem;
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    height: 300px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 80px;
+    position: relative;
+}
+
+.left-side {
+    position: absolute;
+    left: 0;
+}
+
+.right-side {
+    position: absolute;
+    right: 0;
+}
+
+/* Arrow from left side to main flow */
+.arrow-from-left {
+    position: absolute;
+    top: 50%;
+    right: -30px;
+    transform: translateY(-50%);
+    color: #dc3545;
+    font-size: 1.5rem;
+    font-weight: bold;
+}
+
+/* Arrow to right side from main flow */
+.arrow-to-right {
+    position: absolute;
+    top: 50%;
+    left: -30px;
+    transform: translateY(-50%);
+    color: #dc3545;
+    font-size: 1.5rem;
+    font-weight: bold;
+}
+
+.main-flow {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    margin: 0 120px;
+    position: relative;
+}
+
+.process-box {
+    background: #e8f4f8;
+    border: 2px solid #0066cc;
+    border-radius: 8px;
+    padding: 2rem 1.5rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 150px;
+    font-weight: bold;
+    position: relative;
+}
+
+.process-box.commercial {
+    background: #d4f1d4;
+    border-color: #28a745;
+}
+
+.process-box.engineering {
+    background: #fff3cd;
+    border-color: #ffc107;
+}
+
+.process-box:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.arrow {
+    font-size: 2rem;
+    color: #dc3545;
+    font-weight: bold;
+}
+
+.management-section {
+    background: #ffcccc;
+    border: 2px solid #dc3545;
+    padding: 1rem;
+    text-align: center;
+    font-weight: bold;
+    width: 80%;
+    margin: 2rem 0;
+}
+
+.support-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    margin-top: 2rem;
+}
+
+.support-container {
+    display: flex;
+    align-items: stretch;
+    width: 80%;
+    border: 2px solid #0066cc;
+    background: #f0f8ff;
+    position: relative;
+}
+
+.support-label {
+    background: #28a745;
+    color: white;
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    padding: 1rem;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 120px;
+}
+
+.support-processes {
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 0;
+    padding: 1rem;
+}
+
+.support-process {
+    background: white;
+    border: 1px solid #ddd;
+    padding: 1rem 0.5rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.85rem;
+    font-weight: bold;
+    min-height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.support-process:hover {
+    background: #e3f2fd;
+    border-color: #0066cc;
+}
+
+/* Main flow wrapper for better arrow positioning */
+.main-flow-wrapper {
+    position: relative;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Curved arrows around the boxes */
+.curved-arrow-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+}
+
+.back-button {
+    margin-top: 2rem;
+    text-align: center;
+}
+
+.btn {
+    background: #007bff;
+    color: white;
+    border: none;
+    padding: 0.5rem 2rem;
+    border-radius: 4px;
+    text-decoration: none;
+    display: inline-block;
+    font-weight: bold;
+}
+
+.btn:hover {
+    background: #0056b3;
+    color: white;
+    text-decoration: none;
+}
+</style>
+
+<div class="process-container">
+    <!-- Customer Satisfaction at the top with arrows -->
+    <div class="customer-satisfaction">
+        <div class="arrow-top-left">←</div>
+        CUSTOMER SATISFACTION
+        <div class="arrow-top-right">←</div>
+    </div>
+
+    <!-- Main process flow with side boxes and arrows -->
+    <div class="top-section">
+        <!-- Left side - Customer Requirements -->
+        <div class="side-box left-side" onclick="location.href='/ims/root_folders/processes_and_procedures'">
+            {% comment %} <div class="arrow-from-left">→</div> {% endcomment %}
+            CUSTOMER REQUIREMENTS
+        </div>
+
+        <!-- Center flow with curved arrows -->
+        <div class="main-flow-wrapper">
+            <div class="curved-arrow-wrapper">
+
+                <div class="arrow">→</div>
+
+                <!-- Commercial Process -->
+                <div class="process-box commercial" onclick="location.href='/ims/folder/Commercial/{{ commercial_folder_id }}'">
+                    COMMERCIAL
+                </div>
+
+                <div class="arrow">→</div>
+
+                <!-- Engineering Process -->
+                <div class="process-box engineering" onclick="location.href='/ims/folder/Engineering/{{ engineering_folder_id }}'">
+                    ENGINEERING
+                </div>
+
+                <div class="arrow">→</div>
+            </div>
+        </div>
+
+        <!-- Right side - Provisions of Goods and Services -->
+        <div class="side-box right-side">
+            {% comment %} <div class="arrow-to-right">→</div> {% endcomment %}
+            PROVISIONS OF GOODS AND SERVICES
+        </div>
+    </div>
+
+    <!-- Management Processes -->
+    <div class="process-box management-section" onclick="location.href='/ims/folder/Management/{{ management_folder_id }}'">
+        MANAGEMENT PROCESSES
+    </div>
+
+    <!-- Support Processes Section -->
+    <div class="support-section">
+        <div class="support-container">
+            <div class="support-label">
+                SUPPORT PROCESSES
+            </div>
+            <div class="support-processes">
+                <div class="support-process" onclick="location.href='/ims/folder/Information Communication Technology/{{ ict_folder_id }}'">
+                    INFORMATION COMMUNICATION TECHNOLOGY
+                </div>
+                
+                <div class="support-process" onclick="location.href='/ims/folder/Finance/{{ finance_folder_id }}'">
+                    FINANCE
+                </div>
+                
+                <div class="support-process" onclick="location.href='/ims/folder/Human Resources/{{ hr_folder_id }}'">
+                    HUMAN RESOURCES
+                </div>
+                
+                <div class="support-process" onclick="location.href='/ims/folder/Risk Management/{{ risk_folder_id }}'">
+                    RISK MANAGEMENT
+                </div>
+                
+                <div class="support-process" onclick="location.href='/ims/folder/Procurement/{{ procurement_folder_id }}'">
+                    PROCUREMENT
+                </div>
+                
+                <div class="support-process" onclick="location.href='/ims/folder/Stakeholder Relations/{{ stakeholder_folder_id }}'">
+                    STAKEHOLDER RELATIONS
+                </div>
+                
+                <div class="support-process" onclick="location.href='/ims/folder/Legal Services/{{ legal_folder_id }}'">
+                    LEGAL SERVICES
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Back Button -->
+    <div class="back-button">
+        <a href="/ims/root_folders/processes_and_procedures" class="btn">← Back to Processes and Procedures</a>
+    </div>
+</div>
+
+{% endblock %} 

@@ -62,10 +62,12 @@ def plans_reports_index(request):
     
     return render(request, 'plans_reports/plans_reports.html', {})
 
+@login_required
 def reports_index(request):
     
     return render(request, 'plans_reports/reports_index.html', {})
 
+@login_required
 def plans_index(request):
     
     return render(request, 'plans_reports/plans_index.html', {})

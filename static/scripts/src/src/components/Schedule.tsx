@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { ScheduleProvider } from "../context/ScheduleContext";
 import BidManager from "./Bids/BidManager";
 import CommitteeManager from "./Committee/CommitteeManager";

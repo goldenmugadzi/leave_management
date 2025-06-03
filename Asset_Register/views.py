@@ -1,4 +1,5 @@
 from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
 from datetime import datetime
 from django.core.paginator import Paginator
 from django.http import JsonResponse
@@ -22,6 +23,8 @@ from decimal import Decimal
 from django.shortcuts import get_object_or_404, render, redirect  # Add get_object_or_404 here
 
 #User = get_user_model()
+
+@login_required
 def createAsset(request):
     if request.method == 'POST':
         form = CombinedAssetForm(request.POST, request.FILES)
@@ -36,6 +39,7 @@ def createAsset(request):
 
     return render(request, "asset_register/createAsset.html", {"form": form})
 
+@login_required
 def create_hr(request):
     if request.method == 'POST':
         form = HumanResourceForm(request.POST, request.FILES)
@@ -49,6 +53,7 @@ def create_hr(request):
 
     return render(request, 'asset_register/create_hr.html', {'form': form}) 
 
+@login_required
 def show_asset(request):
     try:
         user_roles = request.user.get_user_role_for_application("IT Asset Register")
@@ -61,21 +66,27 @@ def show_asset(request):
         'is_technician': is_technician
     })
 
+@login_required
 def table_asset (request):
   return render(request,'asset_register/table_asset.html')
 
+@login_required
 def table_hr (request):
   return render(request,'asset_register/table_hr.html')
 
+@login_required
 def tab (request):
   return render(request,'asset_register/tab.html')
 
+@login_required
 def show_table (request):
   return render(request,'asset_register/table_hr.html')
 
+@login_required
 def show_product (request):
   return render(request,'asset_register/table_product.html')
 
+@login_required
 def show_hr_datatable(request):
     try:
         draw = int(request.GET.get('draw', default=1))
@@ -158,7 +169,7 @@ def show_hr_datatable(request):
             'data': []
         })
 
-
+@login_required
 def show_asset_datatable(request):
     try:
         print("\n===== NEW REQUEST =====")
@@ -302,6 +313,7 @@ def show_asset_datatable(request):
             'error': str(ex)
     }, status=500)
 
+@login_required
 def update_asset(request, asset_type, asset_id):
     if asset_type == 'asset':
         instance = get_object_or_404(ZetdcAssets, id=asset_id)
@@ -383,6 +395,7 @@ def update_asset(request, asset_type, asset_id):
     template = 'asset_register/update_asset.html' if asset_type == 'asset' else 'asset_register/update_hr_asset.html'
     return render(request, template, {'form': form, 'asset': instance})
 
+@login_required
 def create_product(request):
     if request.method == 'POST':
         print("request",request.POST )
@@ -401,6 +414,7 @@ def create_product(request):
         return redirect('table_product')
     return render(request, 'asset_register/create_product.html',{})
 
+@login_required
 def show_product_datatable(request):
     try:
         draw = int(request.GET.get('draw', default=1))
@@ -469,6 +483,7 @@ def show_product_datatable(request):
             'data': []
         })
 
+@login_required
 def update_product(request, id):
     producttype= ProductType.objects.filter(id=id).first()
     if request.method == 'POST':
@@ -484,10 +499,12 @@ def update_product(request, id):
         
     return render(request,'asset_register/updateproduct.html',{'producttype':producttype}) 
 
+@login_required
 def show_report(request):
     
     return render(request, 'asset_register/asset_report.html')
 
+@login_required
 def show_report_datatable(request):
     try:
         draw = int(request.GET.get('draw', default=1))
@@ -583,6 +600,7 @@ def show_report_datatable(request):
             'data': []
         })
 
+@login_required
 def export_csv(request):
     # Get filter parameters from the request
     asset_state = request.GET.get('status', None)
@@ -641,6 +659,7 @@ def export_csv(request):
             ])
     return response
 
+@login_required
 def upload_asset(request):
     if request.method == 'POST':
         csvfile = request.FILES.get('uploaded_csv')
@@ -773,6 +792,7 @@ def upload_asset(request):
 
     return render(request, 'asset_register/upload_asset.html', {})
 
+@login_required
 def combined_assets_datatable(request):
     try:
         draw = int(request.GET.get('draw', 1))
@@ -868,7 +888,7 @@ def combined_assets_datatable(request):
             "error": str(ex)
         }, status=500)
         
-        
+@login_required
 def show_combined_assets(request):
     try:
         user_roles = request.user.get_user_role_for_application("IT Asset Register")

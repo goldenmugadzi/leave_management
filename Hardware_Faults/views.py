@@ -25,7 +25,7 @@ from django.db import transaction
 from datetime import datetime
 from dateutil import parser
 
-
+@login_required
 def createFault(request):
     if request.method == 'POST':
         form = EmployeeForm(request.POST, request.FILES)
@@ -40,6 +40,7 @@ def createFault(request):
 
     return render(request, "hardware_faults/createFault.html", {"form": form})
 
+@login_required
 def show_fault(request):
     try:
         user_roles = request.user.get_user_role_for_application("IT Hardware Management")
@@ -52,6 +53,7 @@ def show_fault(request):
         'is_technician': is_technician
     })
 
+@login_required
 def show_fault_datatable(request):
 
     print(f"User: {request.user.first_name} {request.user.last_name} ({request.user.username})")
@@ -174,6 +176,7 @@ def show_fault_datatable(request):
             'data': []
         })
 
+@login_required
 def update_fault(request, employee_id):
     employee = get_object_or_404(Employee, id=employee_id)
 
@@ -198,7 +201,7 @@ def update_fault(request, employee_id):
 
     return render(request, 'hardware_faults/update_fault.html', {'form': form, 'employee': employee})
 
-
+@login_required
 def notify_fault_update(request, employee):
     print("employee",employee)
     try:
@@ -237,12 +240,14 @@ def notify_fault_update(request, employee):
         
         raise
 
+@login_required
 def delete(request, id):
     form = Employee.objects.filter(eserialnumber=id)
     form.delete()
     print ('golden')
     return redirect('/show')
     
+@login_required
 def Tables (request):
   return render(request,'hardware_faults/table_fault.html')
    
@@ -298,6 +303,7 @@ def ms_exhange_send(subject, body, to_recipients, cc_recipients):
     message.send()
     return JsonResponse({"status": "success", "message": "Email sent successfully"})
 
+@login_required
 def upload_fault(request):
     if request.method == 'POST':
         print("POST Data:", request.POST)

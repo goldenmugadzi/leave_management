@@ -28,7 +28,7 @@
       class="hover:bg-blue-200 outline-none focus:outline-none px-3 py-1 rounded flex items-center"
     >
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 text-gulf-blue-700">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 7.5h-.75A2.25 2.25 0 0 0 4.5 9.75v7.5a2.25 2.25 0 0 0 2.25 2.25h7.5a2.25 2.25 0 0 0 2.25-2.25v-7.5a2.25 2.25 0 0 0-2.25-2.25h-.75m0-3-3-3m0 0-3 3m3-3v11.25m6-2.25h.75a2.25 2.25 0 0 1 2.25 2.25v7.5a2.25 2.25 0 0 1-2.25 2.25h-7.5a2.25 2.25 0 0 1-2.25-2.25v-.75" />
+        <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 7.5h-.75A2.25 2.25 0 0 0 4.5 9.75v7.5a2.25 2.25 0 0 0 2.25 2.25h7.5a2.25 2.25 0 0 0 2.25-2.25v-7.5a2.25 2.25 0 0 0-2.25-2.25h-.75m0-3-3-3m0 0-3 3m3-3V15.25m6-2.25h.75a2.25 2.25 0 0 1 2.25 2.25v7.5a2.25 2.25 0 0 1-2.25 2.25h-7.5a2.25 2.25 0 0 1-2.25-2.25v-.75" />
       </svg>      
       <span class="px-2 font-semibold flex-1 text-gulf-blue-700">UPLOAD BULK FILES</span>
     </a>
@@ -82,28 +82,37 @@
 <div class="mt-5"></div>
 
 <div class="grid grid-cols-3 gap-4">
+
+  <!-- Display PROCESS MAPS first if it exists (check multiple variations) -->
   {% for folder in folders %}
+    {% if "PROCESS" in folder.name|upper and "MAP" in folder.name|upper %}
+      <!-- Interactive Processes Card (Special) -->
   <div class="sm:flex lg:items-center lg:justify-between">
     <div class="min-w-0 flex-1">
       <div class="">
         <div class="mx-auto">
-          <a href="{{folder.url}}" class="group relative block">
+          <a href="/ims/interactive_processes" class="group relative block">
             <div
-              class="aspect-h-1 aspect-w-1 w-full overflow-hidden rounded-md bg-gray-200 lg:aspect-none group-hover:opacity-75 lg:h-40"
+              class="aspect-h-1 aspect-w-1 w-full overflow-hidden rounded-md bg-gradient-to-br from-purple-500 to-pink-500 lg:aspect-none group-hover:opacity-75 lg:h-40 flex items-center justify-center"
             >
-              <img
-                src={{folder.cover}}
-                alt="{{folder.name}}"
-                class="h-full w-full object-cover object-center lg:h-full lg:w-full"
-              />
+              <div class="text-white text-center p-4">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-12 h-12 mx-auto mb-2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
+                </svg>
+                <div class="text-sm font-bold">PROCESSES</div>
+                <div class="text-sm font-bold">INTERACTIONS</div>
+              </div>
             </div>
             <div class="mt-4 flex justify-center">
               <div class="w-full">
                 <div class="dropdown-group inline-block w-full text-blue-50">
-                  <div class="w-full bg-gulf-blue-900 hover:bg-blue-800 outline-none focus:outline-none border px-3 py-1 rounded flex items-center">
+                  <div class="w-full bg-gulf-blue-900 hover:bg-blue-800 outline-none focus:outline-none border px-3 py-1 rounded flex items-center transition-all duration-300">
                     <span class="pr-1 font-semibold flex-1 text-blue-50">
-                      {{folder.name}}
+                      PROCESSES INTERACTIONS
                     </span>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 text-blue-50">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                    </svg>
                   </div>
                 </div>
               </div>
@@ -113,6 +122,73 @@
       </div>
     </div>
   </div>
+      <div class="sm:flex lg:items-center lg:justify-between">
+        <div class="min-w-0 flex-1">
+          <div class="">
+            <div class="mx-auto">
+              <a href="{{folder.url}}" class="group relative block">
+                <div
+                  class="aspect-h-1 aspect-w-1 w-full overflow-hidden rounded-md bg-gray-200 lg:aspect-none group-hover:opacity-75 lg:h-40"
+                >
+                  <img
+                    src={{folder.cover}}
+                    alt="{{folder.name}}"
+                    class="h-full w-full object-cover object-center lg:h-full lg:w-full"
+                  />
+                </div>
+                <div class="mt-4 flex justify-center">
+                  <div class="w-full">
+                    <div class="dropdown-group inline-block w-full text-blue-50">
+                      <div class="w-full bg-gulf-blue-900 hover:bg-blue-800 outline-none focus:outline-none border px-3 py-1 rounded flex items-center">
+                        <span class="pr-1 font-semibold flex-1 text-blue-50">
+                          {{folder.name}}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    {% endif %}
+  {% endfor %}
+  
+  <!-- Display all other folders except PROCESS MAPS -->
+  {% for folder in folders %}
+    {% if not "PROCESS" in folder.name|upper or not "MAP" in folder.name|upper %}
+      <div class="sm:flex lg:items-center lg:justify-between">
+        <div class="min-w-0 flex-1">
+          <div class="">
+            <div class="mx-auto">
+              <a href="{{folder.url}}" class="group relative block">
+                <div
+                  class="aspect-h-1 aspect-w-1 w-full overflow-hidden rounded-md bg-gray-200 lg:aspect-none group-hover:opacity-75 lg:h-40"
+                >
+                  <img
+                    src={{folder.cover}}
+                    alt="{{folder.name}}"
+                    class="h-full w-full object-cover object-center lg:h-full lg:w-full"
+                  />
+                </div>
+                <div class="mt-4 flex justify-center">
+                  <div class="w-full">
+                    <div class="dropdown-group inline-block w-full text-blue-50">
+                      <div class="w-full bg-gulf-blue-900 hover:bg-blue-800 outline-none focus:outline-none border px-3 py-1 rounded flex items-center">
+                        <span class="pr-1 font-semibold flex-1 text-blue-50">
+                          {{folder.name}}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    {% endif %}
   {% endfor %}
 </div>
 
