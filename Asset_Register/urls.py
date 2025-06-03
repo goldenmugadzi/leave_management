@@ -24,7 +24,7 @@ urlpatterns = [
    
     #urls for furniture
     path('table_hr', views.show_table, name='table_hr'),
-    path('create_hr', views.create_hr, name='create_hr'),
+    # path('create_hr', views.create_hr, name='create_hr'),
     path('hr_datatable/', views.show_hr_datatable),
     path('combined_assets_datatable', views.combined_assets_datatable, name='combined_assets_datatable'),
 

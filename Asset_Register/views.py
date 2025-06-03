@@ -36,18 +36,6 @@ def create_asset(request):
 
     return render(request, "asset_register/create_asset.html", {"form": form})
 
-def create_hr(request):
-    if request.method == 'POST':
-        form = HumanResourceForm(request.POST, request.FILES)
-        if form.is_valid():
-            form.save()
-            return redirect('table_hr')
-        else:
-            print(form.errors)
-    else:
-        form = HumanResourceForm()
-
-    return render(request, 'asset_register/create_hr.html', {'form': form}) 
 
 def show_asset(request):
     try:
