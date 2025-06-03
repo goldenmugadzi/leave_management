@@ -1,12 +1,13 @@
 from django import forms
 from .models import SafetyMonthlyReport
-from it.users.models import UserProfile, Sections
+from it.users.models import UserProfile, Sections,Regions
 
 class SafetyMonthlyReportForm(forms.Form):
     
     # User and department
     user = forms.ModelChoiceField(queryset=UserProfile.objects.all(), required=False)
     department = forms.ModelChoiceField(queryset=Sections.objects.all(), required=False)
+    regions = forms.ModelChoiceField(queryset=Regions.objects.all(), required=False)
 
     # Date fields
     date = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}))
@@ -21,6 +22,15 @@ class SafetyMonthlyReportForm(forms.Form):
     accident_free_days = forms.IntegerField(min_value=0, required=True)
     motor_vehicle_accidents = forms.IntegerField(min_value=0, required=True)
     property_damaged = forms.IntegerField(min_value=0, required=True)
+    she_meetings_conducted = forms.IntegerField(min_value=0, required=True)
+    she_related_trainings = forms.IntegerField(min_value=0, required=True)
+    wellness_programmes = forms.IntegerField(min_value=0, required=True)
+    clear_up_campaigns = forms.IntegerField(min_value=0, required=True)
+    she_inspections_conducted = forms.IntegerField(min_value=0, required=True)
+    mock_drills_conducted = forms.IntegerField(min_value=0, required=True)
+    
+    
+    
 
     # Exposure
     number_of_workers = forms.IntegerField(min_value=0, required=True)

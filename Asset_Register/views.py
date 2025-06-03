@@ -22,7 +22,7 @@ from decimal import Decimal
 from django.shortcuts import get_object_or_404, render, redirect  # Add get_object_or_404 here
 
 #User = get_user_model()
-def createAsset(request):
+def create_asset(request):
     if request.method == 'POST':
         form = CombinedAssetForm(request.POST, request.FILES)
         if form.is_valid():
@@ -34,7 +34,7 @@ def createAsset(request):
     else:
         form = CombinedAssetForm()
 
-    return render(request, "asset_register/createAsset.html", {"form": form})
+    return render(request, "asset_register/create_asset.html", {"form": form})
 
 def create_hr(request):
     if request.method == 'POST':
@@ -881,5 +881,46 @@ def show_combined_assets(request):
         'is_technician': is_technician,
     })
 
-    
+def asset_state_chart_data(request):
+    # Group by region and department, count asset states
+    from django.db.models import Count
+
+    data = (
+        ZetdcAssets.objects
+        .values('regions__region', 'department__section', 'asset_state')
+        .annotate(count=Count('id'))
+        .order_by('regions__region', 'department__section', 'asset_state')
+    )
+
+    # Organize data for Chart.js
+    chart = {}
+    for row in data:
+        region = row['regions__region'] or "Unknown"
+        department = row['department__section'] or "Unknown"
+        asset_state = row['asset_state'] or "Unknown"
+        key = f"{region} - {department}"
+        if key not in chart:
+            chart[key] = {}
+        chart[key][asset_state] = row['count']
+
+    # Prepare labels and datasets
+    labels = list(chart.keys())
+    all_states = set()
+    for states in chart.values():
+        all_states.update(states.keys())
+    all_states = sorted(all_states)
+
+    datasets = []
+    for state in all_states:
+        datasets.append({
+            "label": state,
+            "data": [chart[label].get(state, 0) for label in labels],
+        })
+
+    return JsonResponse({
+        "labels": labels,
+        "datasets": datasets,
+    })
+
+
 

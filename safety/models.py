@@ -5,6 +5,7 @@ from django.conf import settings
 class SafetyMonthlyReport(models.Model):
     user = models.ForeignKey(UserProfile, on_delete=models.CASCADE, blank=True, null=True)
     department = models.ForeignKey(Sections, on_delete=models.DO_NOTHING, blank=True, null=True)
+    regions = models.ForeignKey(Regions, on_delete=models.DO_NOTHING, blank=True, null=True)
     # Date fields
     date = models.DateField(help_text="Any day in the month being reported")
     month = models.PositiveSmallIntegerField()
@@ -18,6 +19,12 @@ class SafetyMonthlyReport(models.Model):
     accident_free_days = models.PositiveIntegerField(default=0)
     motor_vehicle_accidents = models.PositiveIntegerField(default=0)
     property_damaged = models.PositiveIntegerField(default=0)
+    she_meetings_conducted = models.PositiveIntegerField(default=0)
+    she_related_trainings = models.PositiveIntegerField(default=0)
+    wellness_programmes = models.PositiveIntegerField(default=0)
+    clear_up_campaigns = models.PositiveIntegerField(default=0)
+    she_inspections_conducted = models.PositiveIntegerField(default=0)
+    mock_drills_conducted = models.PositiveIntegerField(default=0)
 
     # Exposure
     number_of_workers = models.PositiveIntegerField(default=0)
@@ -39,8 +46,8 @@ class SafetyMonthlyReport(models.Model):
         # Calculate rates before saving
         exposure_time = self.number_of_days * 7.5 * self.number_of_workers
         if exposure_time > 0:
-            self.accident_frequency_rate = (self.work_related_accidents / exposure_time) * 1_000_000
-            self.injury_severity_rate = (self.man_hours_lost / exposure_time) * 1_000_000
+            self.accident_frequency_rate = (self.work_related_accidents* 1_000_000 / exposure_time)
+            self.injury_severity_rate = (self.man_hours_lost* 1_000_000 / exposure_time)
         else:
             self.accident_frequency_rate = 0
             self.injury_severity_rate = 0
