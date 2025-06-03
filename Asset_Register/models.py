@@ -28,7 +28,7 @@ class ZetdcAssets(models.Model):
     model = models.CharField(max_length=100,help_text="Asset Model",  choices=[('laptop', 'laptop') , ('desktop', 'desktop'),('printer', 'pinter'), ('router', 'router'),('switch', 'switch')])
     warrant = models.CharField(max_length=100, default='Unknown',blank=True, null=True)
     cost_center = models.ForeignKey(CostCenter, on_delete=models.CASCADE, blank=True, null=True)
-    created_by = models.ForeignKey(UserProfile, on_delete=models.CASCADE, blank=True, null=True,related_name="creat")
+    #created_by = models.ForeignKey(UserProfile, on_delete=models.SET_NULL, blank=True, null=True,related_name="creat")
     created_at = models.DateField(auto_now_add=True, blank=True, null=True)
     updated_at = models.DateField(auto_now=True)
     supplier = models.CharField(max_length=100, default='Unknown',blank=True, null=True)
