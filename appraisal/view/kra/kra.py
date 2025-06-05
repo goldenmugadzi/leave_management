@@ -51,7 +51,8 @@ class KRACreateView(CreateView):
             # Call the service to create KRA
             repo = KRARepository()
             service_handler = KRAService(kra_repo=repo)
-            kra_object = service_handler.create_use_case(appraisal=self.get_appraisal_object(), data=payload)
+            appraisee_designation_obj = self.get_appraisal_object().user.designation
+            kra_object = service_handler.create_use_case(appraisee_designation=appraisee_designation_obj, data=payload)
             form.instance = kra_object
         except ValidationError:
             # Errors are already handled in build_payload
@@ -61,9 +62,11 @@ class KRACreateView(CreateView):
             messages.error(self.request, f"An unexpected error occurred, please try again")
             return self.form_invalid(form)
         
-        # JSON response that inject JavaScript to close the popup and refresh the parent
-        js_injector = "<script>opener.refreshKraDropdown(); window.close();</script>"
-        return HttpResponse(js_injector)
+        if self.request.POST.get("kra_popup"):
+            # JSON response that inject JavaScript to close the popup and refresh the parent
+            js_injector = "<script>opener.refreshKraDropdown(); window.close();</script>"
+            return HttpResponse(js_injector)
+        return self.form_valid(form)
 
 
 class KRATemplateView(TemplateView):
@@ -227,5 +230,7 @@ def kra_list_api(request, appraisal_id):
         JsonResponse
     
     """
-    kra = KeyResultArea.objects.filter(appraisal_id__id=appraisal_id).values("id", "name", "created_date").order_by("-created_date")
+    appraisal_service_handler = KRAService(kra_repo=KRARepository())
+    appraisal_object = appraisal_service_handler.get_kra_by_pk_use_case(kra_id=appraisal_id)
+    kra = KeyResultArea.objects.filter(designation__id=appraisal_object.user.designation.id).values("id", "name", "created_date").order_by("-created_date")
     return JsonResponse(list(kra), safe=False)

@@ -3,10 +3,12 @@ from django.contrib.auth import get_user_model
 from helpers.models.timestamp import TimeStamp
 from .helpers import YearQuarter
 from .appraisal import Appraisal
+from it.users.models import Designations
 
 User = get_user_model()
 
 class KeyResultArea(TimeStamp):
+    designation = models.ForeignKey(Designations, on_delete=models.RESTRICT, related_name="designation", null=True, blank=True)
     name = models.CharField(max_length=255)
     description = models.TextField()
     weight = models.DecimalField(max_digits=5, decimal_places=2, default=0.0)

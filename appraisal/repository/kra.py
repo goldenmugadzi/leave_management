@@ -6,15 +6,16 @@ from django.core.files.storage import default_storage
 
 from ..models import KeyResultArea, YearQuarter, Activity, TargetScore, Appraisal, AppraisalKra, AppraisalKraReviewerStatus, PerformanceDimension, ScoreDocument
 from ..helpers.types.kra import KRAType, TargetScoreType, KraRolesCreateType, ActivityType, PerformanceDimensionType
-from it.users.models import UserProfile, Application, Roles
+from it.users.models import UserProfile, Application, Roles, Designations
 from loguru import logger
 
 class KRARepository:
-    def create(self, data: KRAType)->KeyResultArea:
+    def create(self, data: KRAType, designation: Designations)->KeyResultArea:
         """
             Creates a new KeyResultArea (KRA) record in the database.
 
             Args:
+                designation: Designation object
                 data (KRAType): The data object containing the name, description, and weight of the KRA.
 
             Returns:
@@ -25,7 +26,7 @@ class KRARepository:
         """
 
         try:
-            return KeyResultArea.objects.create(name=data.name, description=data.description, weight=data.weight)
+            return KeyResultArea.objects.create(designation=designation, name=data.name, description=data.description, weight=data.weight)
         except Exception as e:
             raise Exception(f"KRA Create Repo failed with error: {e}")
 
@@ -94,13 +95,13 @@ class KRARepository:
         except Exception as e:
             raise Exception(f"KRA retrieval by PK failed with error: {e}")
 
-    def update(self, kra_object: KeyResultArea, quarter_obj: YearQuarter, data: KRAType) -> KeyResultArea:
+    def update(self, kra_object: KeyResultArea, designation_obj: Designations, data: KRAType) -> KeyResultArea:
         """
             Updates the fields of a KeyResultArea object and saves the changes to the database.
 
             Args:
                 kra_object (KeyResultArea): The KRA object to be updated.
-                quarter_obj (YearQuarter): The quarter to associate with the KRA.
+                designation_obj (Designations): The Designation object.
                 data (KRAType): The new data to update the KRA with.
 
             Returns:
@@ -113,8 +114,8 @@ class KRARepository:
             # Update fields only if they have changed
             updated = False
 
-            if kra_object.quarter != quarter_obj:
-                kra_object.quarter = quarter_obj
+            if kra_object.quarter != designation_obj:
+                kra_object.quarter = designation_obj
                 updated = True
 
             if kra_object.name != data.name:

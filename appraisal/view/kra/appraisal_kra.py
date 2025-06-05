@@ -69,7 +69,7 @@ class AppraisalKraTemplateView(TemplateView):
 
     def get_approval_stages(self):
         try:
-            handler = ApprovalStagesHandler(appraisal_id=self.get_appraisal_object().id)
+            handler = ApprovalStagesHandler(appraisal_id=self.kwargs.get("appraisal_id"))
             return handler.get_stages_info()
         except Exception as e:
             logger.error(f"[PerformancePlanAndAssessmentTemplateView] for Appraisal - {self.get_appraisal_object()} failed with error: {e}")
@@ -93,6 +93,7 @@ class AppraisalKraTemplateView(TemplateView):
     
     def get(self, request, *args, **kwargs):
         approval_data = self.get_approval_stages()
+        print("===============>>>>>>>>>> ", approval_data)
         if approval_data is None:
             return redirect("server_error_view")
         context = self.get_context_data(**kwargs)
@@ -123,21 +124,10 @@ class AppraisalKraCreateView(SuccessMessageMixin, CreateView):
         if qr.exists():
             return qr.first()
         return Http404("Appraisal not found")
-    
-    def post(self, request, *args, **kwargs):
-        """
-        Handle POST requests: instantiate a form instance with the passed
-        POST variables and then check if it's valid.
-        """
-        form = self.get_form()
-        if form.is_valid():
-            return self.form_valid(form)
-        else:
-            return self.form_invalid(form)
-        
+
     def form_invalid(self, form):
         self.object = None  
-        messages.error(self.request, "A Key Result Area (KRA) or a Supervisor Activity is required. Please provide at least one to proceed.")
+        messages.error(self.request, "A Key Result Area (KRA) is required.")
         return self.render_to_response(self.get_context_data(form=form))
     
     def form_valid(self, form):
@@ -153,6 +143,7 @@ class AppraisalKraCreateView(SuccessMessageMixin, CreateView):
         
         return super().form_valid(form)
     
+    
     def get_success_url(self):
         return reverse('appraisal_kra_index', kwargs={"appraisal_id": self.kwargs.get("appraisal_id")})
     
@@ -164,7 +155,7 @@ class AppraisalKraUpdateView(SuccessMessageMixin, UpdateView):
     success_message = 'Key Result Area created successfully'
     context_object_name = "appraisal_kra_form"
     
-    def get_object(self, queryset = ...):
+    def get_object(self, queryset):
         repo = AppraisalKraRepository()
         obj = repo.retrieve_by_pk(pk=self.kwargs.get("appraisal_kra_id"))
         return obj

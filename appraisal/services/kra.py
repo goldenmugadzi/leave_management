@@ -6,7 +6,7 @@ from django.db.models import Sum
 from django.db.models.query import QuerySet
 
 from ..repository.kra import KRARepository, KraActivityRepository, TargetScoreRepository, AppraisalKraRepository, PerformanceDimensionRepository
-from it.users.models import UserProfile
+from it.users.models import Designations
 from ..models import YearQuarter, KeyResultArea, Activity, TargetScore, Appraisal, AppraisalKra, PerformanceDimension
 from ..helpers.types.kra import KRAType, TargetScoreType, ActivityType, WeightProgressType, PerformanceDimensionType
 from ..helpers.getters import RatingCalculation
@@ -18,9 +18,9 @@ class KRAErr(Exception):
 class KRAService:
     kra_repo: KRARepository
 
-    def create_use_case(self, appraisal: Appraisal, data: KRAType)->KeyResultArea:
+    def create_use_case(self, data: KRAType, appraisee_designation: Designations)->KeyResultArea:
         try:
-            obj = self.kra_repo.create(appraisal=appraisal, data=data)
+            obj = self.kra_repo.create(data=data, designation=appraisee_designation)
             return obj
         except Exception as e:
             raise KRAErr(f"Failed to create kra with error: {e}")
@@ -37,9 +37,9 @@ class KRAService:
         except Exception as e:
             raise KRAErr(f"Retrieve all kra failed with error: {e}")
 
-    def update_use_case(self, kra_object: KeyResultArea, quarter_obj: YearQuarter, data: KRAType)->KeyResultArea:
+    def update_use_case(self, kra_object: KeyResultArea, appraisee_designation: Designations, data: KRAType)->KeyResultArea:
         try:
-            return self.kra_repo.update(kra_object=kra_object, quarter_obj=quarter_obj, data=data)
+            return self.kra_repo.update(kra_object=kra_object, designation=appraisee_designation, data=data)
         except Exception as e:
             raise KRAErr(f"Failed to update kra with error: {e}")
 

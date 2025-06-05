@@ -15,6 +15,7 @@
                                 >
                                     {{ appraisal_kra_form.key_result_area|as_crispy_field }}
                             </div>
+                        
                             <div class="mt-7">
                                 <a 
                                     href="{% url 'kra_create' appraisal_id %}"
@@ -26,7 +27,7 @@
                                     Add KRA
                                 </a>
                             </div>
-    
+                            
                         </div>
                     </div>
 
@@ -45,31 +46,34 @@
     function refreshKraDropdown() {
         // get all kra dropdowns in formsets
         const kraDropdowns = document.querySelectorAll("select[id^='id_key_result_area']");
-    // Fetch updated list of kra
-    fetch("{% url 'kra_list_api' appraisal_id  %}")
-        .then(response => response.json())
-        .then(data => {
-            // Iterate through each dropdown and update its options
-            kraDropdowns.forEach(kraDropdown => {
-                kraDropdown.innerHTML = ""; // Clear current options
-                
-                // Populate with new options
-                data.forEach((kra, index) => {
-                    const option = document.createElement("option");
-                    option.value = kra.id;
-                    option.textContent = kra.name;
-
-                    // Set the first item as the default and disable the dropdown
-                    if (index === 0) {
-                        option.selected = true;
-                        kraDropdown.disabled = true;
-                    }
-
-                    kraDropdown.appendChild(option);
+        console.log("==========>>>>>> ", kraDropdowns)
+        // Fetch updated list of kra
+        fetch("{% url 'kra_list_api' appraisal_id  %}")
+            .then(response => response.json())
+            .then(data => {
+                // Iterate through each dropdown and update its options
+                kraDropdowns.forEach(kraDropdown => {
+                    kraDropdown.innerHTML = ""; // Clear current options
+                    
+                    // Populate with new options
+                    data.forEach((kra, index) => {
+                        console.log("==========>>>>>> index:", index)
+                        const option = document.createElement("option");
+                        option.value = kra.id;
+                        option.textContent = kra.name;
+                        
+                        console.log("==========>>>>>> option:", option)
+                        // Set the first item as the default
+                        if (index === 0) {
+                            option.selected = true;
+                        }
+                        
+                        console.log("==========>>>>>> is option selected:", option.selected)
+                        kraDropdown.appendChild(option);
+                    });
                 });
-            });
-        })
-        .catch(error => console.error('Error refreshing experience dropdown:', error));
+            })
+            .catch(error => console.error('Error refreshing experience dropdown:', error));
     }
 
 </script>

@@ -13,7 +13,7 @@ class YearQuarterForm(forms.ModelForm):
 class KraCreateForm(forms.ModelForm):
     class Meta:
         model = KeyResultArea
-        exclude = ["id", "created_date", "updated"]
+        exclude = ["id", "created_date", "updated", "designation"]
           
 class ActivityCreateForm(forms.ModelForm):
     assigned_user = forms.ModelChoiceField(
@@ -55,7 +55,7 @@ class AppraisalKraForm(forms.ModelForm):
         current_year = datetime.now().year
         self.fields['quarter'].queryset = YearQuarter.objects.filter(year=current_year) 
 
-        # self.fields["assigned_kra"].queryset =  Activity.objects.none()
+        self.fields["key_result_area"].queryset =  KeyResultArea.objects.filter(designation__id=designation_id)
         
 class AppraisalKraReviewerStatusForm(forms.ModelForm):
     class Meta:
