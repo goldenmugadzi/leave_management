@@ -49,8 +49,6 @@
             <td>{{ ace.section.code }}</td>
             <td>{{ ace.process.approval_set.last|default_if_none:'' }}</td>
           </tr>
-          {% empty %}
-          <tr><td colspan="8" class="text-center">No ACEs awaiting your action.</td></tr>
           {% endfor %}
         </tbody>
       </table>
@@ -77,14 +75,13 @@
             <td><a class="text-blue-500" href="/ace/ace_detail/{{ace.Ace_id2}}">{{ ace.Ace_id2|default_if_none:'' }}</a></td>
             <td>{{ ace.details_of_expenditure }}</td>
             <td>{{ ace.amount }}</td>
-            <td>You</td>
+            <td>{% if ace.requested_by == user %} You {% else %} {{ace.requested_by.get_full_name }} {% endif %}</td>
+            
             <td>{{ ace.date_created }}</td>
             <td>{{ ace.section }}</td>
             <td>{{ ace.section.code }}</td>
             <td>{{ ace.process.approval_set.last|default_if_none:'' }}</td>
           </tr>
-          {% empty %}
-          <tr><td colspan="8" class="text-center">You have not created any ACEs.</td></tr>
           {% endfor %}
         </tbody>
       </table>
