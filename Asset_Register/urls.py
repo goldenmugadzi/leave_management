@@ -4,7 +4,7 @@ from . import views
 
 urlpatterns = [
     #urls for assets
-    path('createAsset', views.createAsset, name='createAsset'),
+    path('create_asset', views.create_asset, name='create_asset'),
     path('show_asset/', views.show_asset, name="show_asset"),
     path('asset_report/', views.show_report, name="show[_report"),
     path('update_asset/<str:asset_type>/<int:asset_id>/', views.update_asset, name='update_asset'),
@@ -28,7 +28,8 @@ urlpatterns = [
     path('hr_datatable/', views.show_hr_datatable),
     path('combined_assets_datatable', views.combined_assets_datatable, name='combined_assets_datatable'),
 
+    #url for asset state chart data
+    path('asset_state_chart_data/', views.asset_state_chart_data, name='asset_state_chart_data'),
 
 ]
 
-  

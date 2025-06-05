@@ -52,6 +52,7 @@ def safety_report_data(request):
             "id": report.id,
             "user": str(report.user) if report.user else "",
             "department": str(report.department) if report.department else "",
+            "regions": str(report.regions) if report.regions else "",
             "date": report.date.strftime('%Y-%m-%d') if report.date else "",
             "month": report.month,
             "year": report.year,
