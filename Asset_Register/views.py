@@ -37,19 +37,6 @@ def create_asset(request):
 
     return render(request, "asset_register/create_asset.html", {"form": form})
 
-@login_required
-def create_hr(request):
-    if request.method == 'POST':
-        form = HumanResourceForm(request.POST, request.FILES)
-        if form.is_valid():
-            form.save()
-            return redirect('table_hr')
-        else:
-            print(form.errors)
-    else:
-        form = HumanResourceForm()
-
-    return render(request, 'asset_register/create_hr.html', {'form': form}) 
 
 @login_required
 def show_asset(request):
@@ -330,7 +317,7 @@ def update_asset(request, asset_type, asset_id):
             'model': instance.model,
             'warrant': instance.warrant,
             'cost_center': instance.cost_center,
-            'created_by': instance.created_by,
+            #'created_by': instance.created_by,
             'supplier': instance.supplier,
         }
     elif asset_type == 'hr':
@@ -369,7 +356,7 @@ def update_asset(request, asset_type, asset_id):
                 instance.model = cleaned['model']
                 instance.warrant = cleaned['warrant']
                 instance.cost_center = cleaned['cost_center']
-                instance.created_by = cleaned['created_by']
+                #instance.created_by = cleaned['created_by']
                 instance.supplier = cleaned['supplier']
             else:
                 instance.assetnumber = cleaned['assetnumber']
@@ -675,6 +662,7 @@ def upload_asset(request):
             duplicate_users = set()  
 
             for row_num, row in enumerate(reader, start=1):
+                print(f"Processing row {row_num}: {row}")
                 try:
                     with transaction.atomic():
                         # Parse date
@@ -728,31 +716,29 @@ def upload_asset(request):
                             duplicate_users.add(username)
                             raise ValueError(f"Username '{username}' already exists (truncated)")
 
-                       # Replace the asset_state handling section with this:
+                       
                         asset_state = row.get('asset state', '').strip()
                         valid_states = dict(ZetdcAssets._meta.get_field('asset_state').choices)
 
-                        # Convert empty string to None
-                        asset_state = asset_state if asset_state else None
-
-                        # Validate only if a value was provided
-                        if asset_state is not None:
-                            if asset_state not in valid_states:
-                                raise ValueError(f"Invalid asset state: {asset_state}. Valid options are: {', '.join(valid_states.keys())}")
+                        if not asset_state:
+                            asset_state = 'Awaiting New User'
+                        if asset_state not in valid_states:
+                            raise ValueError(f"Invalid asset state: {asset_state}. Valid options are: {', '.join(valid_states.keys())}")
 
                         asset = ZetdcAssets(
                             product_type=product_type,
                             asset_state=asset_state,
                             serial_number=row.get('serial number', '').strip(),
+                            asset_number=row.get('asset number', '').strip(),
                             user=user_profile,
                             date_purchased=parsed_date or date.today(),
                             department=section,
                             regions=region,
                             model=row.get('model', '').strip(),
-                            #created_by=request.user.userprofile,
                             purchase_cost=row.get('purchase_cost', 0),
                             warrant=row.get('warrant', '') or None,
                             supplier=row.get('supplier', '') or None,
+                            #created_by=created_by,  # <-- add this line
                         )
                         
                         asset.full_clean() 
@@ -761,6 +747,7 @@ def upload_asset(request):
 
                 except Exception as e:
                     error_msg = f"Row {row_num}: {str(e)}"
+                    print(error_msg)  # <--- Add this line
                     if "duplicate" in str(e).lower():
                         duplicate_users.add(username)
                         error_msg = f"Row {row_num}: User '{username}' already exists"
@@ -784,6 +771,7 @@ def upload_asset(request):
             })
             
         except Exception as e:
+            print("Outer exception:", str(e))
             return render(request, 'asset_register/upload_asset.html', {
                 'error': f"File processing error: {str(e)}"
             })
