@@ -252,5 +252,5 @@ class ApprovalWorkflowQuarterStagesStrategyContext:
         try:
             return self.strategy.get_approved_quarters(appraisal_kra_id=appraisal_kra_id)
         except Exception as e:
-            logger.error(f"[ApprovalWorkflowQuarterStagesStrategyInterface] for {self.strategy.__class__()}, failed with error: {e}")
+            logger.warning(f"[ApprovalWorkflowQuarterStagesStrategyInterface] for {self.strategy.__class__()}, failed with error: {e}")
             return None

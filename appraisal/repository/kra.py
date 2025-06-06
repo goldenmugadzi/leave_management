@@ -184,7 +184,7 @@ class AppraisalKraRepository:
             qr = AppraisalKra.objects.filter(id=pk)
 
             if not qr.exists():
-                raise Exception("Appraisal object not found")
+                raise Exception("AppraisalKra object not found")
 
             return qr.first()
         except Exception as e:

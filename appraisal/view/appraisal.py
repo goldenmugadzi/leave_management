@@ -156,7 +156,7 @@ class AppraisalUpdateView(SuccessMessageMixin, UpdateView):
             handler = ApprovalStagesHandler(appraisal_id=self.get_object().id)
             return handler.get_stages_info()
         except Exception as e:
-            logger.error(f"[PerformancePlanAndAssessmentTemplateView] for Appraisal - {self.get_appraisal_object()} failed with error: {e}")
+            logger.error(f"[PerformancePlanAndAssessmentTemplateView] for Appraisal pk - {self.get_object().id} failed with error: {e}")
             return None
     
     def get_context_data(self, **kwargs):

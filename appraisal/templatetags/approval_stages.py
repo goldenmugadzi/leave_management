@@ -36,7 +36,6 @@ def get_stage_data(stage_name: str, appraisal_kra_id: int):
     if not isinstance(stage_name, str) or not isinstance(appraisal_kra_id, int):
         logger.error(f"[get_stage_data()] templatetags, Invalid type for stage_name: {stage_name}, Expected str, got {type(stage_name).__name__} || or appraisal_kra_id: {appraisal_kra_id}, Expects int, got: {type(appraisal_kra_id).__name__}")
         return data
-    print("=============>>>>>>>> apkra pk", appraisal_kra_id)
     match stage_name:
         
         case ApprovalStageData.scoring.value:
