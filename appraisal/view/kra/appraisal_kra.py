@@ -7,7 +7,7 @@ from django.contrib import messages
 from django.shortcuts import get_object_or_404, redirect
 from django.http import Http404
 from ...models import KeyResultArea, AppraisalKra, Appraisal, TargetScore
-from ...forms import YearQuarterForm, AppraisalKraForm
+from ...forms import YearQuarterForm, AppraisalKraForm, KraCreateForm
 from ...repository.kra import AppraisalKraRepository
 from ...repository.appraisal import AppraisalRepository
 from ...services.kra import AppraisalKraService, ActivityService
@@ -93,7 +93,6 @@ class AppraisalKraTemplateView(TemplateView):
     
     def get(self, request, *args, **kwargs):
         approval_data = self.get_approval_stages()
-        print("===============>>>>>>>>>> ", approval_data)
         if approval_data is None:
             return redirect("server_error_view")
         context = self.get_context_data(**kwargs)
@@ -107,15 +106,19 @@ class AppraisalKraCreateView(SuccessMessageMixin, CreateView):
     template_name = 'appraisal/kra/appraisal_kra/create_update.html'
     success_message = 'Key Result Area created successfully'
     context_object_name = "appraisal_kra_form"
+    
+    def get_appraisee_designation(self):
+        return self.get_appraisal_object().user.designation
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs["designation_id"] = self.get_appraisal_object().user.designation.id
+        kwargs["designation_id"] = self.get_appraisee_designation().id
         return kwargs
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context[self.context_object_name] = context.get("form")
+        context["kra_form"] = self.get_kra_form()
         context["appraisal_id"] = self.kwargs.get("appraisal_id")
         return context
     
@@ -124,6 +127,9 @@ class AppraisalKraCreateView(SuccessMessageMixin, CreateView):
         if qr.exists():
             return qr.first()
         return Http404("Appraisal not found")
+    
+    def get_kra_form(self):
+        return KraCreateForm()
 
     def form_invalid(self, form):
         self.object = None  

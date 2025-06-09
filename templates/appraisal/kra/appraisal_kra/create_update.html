@@ -17,15 +17,13 @@
                             </div>
                         
                             <div class="mt-7">
-                                <a 
-                                    href="{% url 'kra_create' appraisal_id %}"
-                                    onclick="window.open(this.href, 'kra_popup', 'width=600,height=400'); return false;"
-                                    data-pop="yes"
-                                    title="Add another kra"
+                                <button 
+                                    onclick="openAddNewKra()"
+                                    type="button"
                                     class="bg-blue-500 hover:bg-blue-700 inline-block rounded-xl text-white p-2"
                                 >
                                     Add KRA
-                                </a>
+                                </button>
                             </div>
                             
                         </div>
@@ -37,7 +35,8 @@
                 <button type="submit" class="w-96 bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4">Save</button>
             </div>
         </form>
-         
+        <!-- Modal for creating new kra -->
+        {% include 'appraisal/kra/appraisal_kra/kra_modal.html' %}
 </div>
 {% endblock %}
 {% block scripts %}
@@ -46,7 +45,7 @@
     function refreshKraDropdown() {
         // get all kra dropdowns in formsets
         const kraDropdowns = document.querySelectorAll("select[id^='id_key_result_area']");
-        console.log("==========>>>>>> ", kraDropdowns)
+
         // Fetch updated list of kra
         fetch("{% url 'kra_list_api' appraisal_id  %}")
             .then(response => response.json())
@@ -57,18 +56,15 @@
                     
                     // Populate with new options
                     data.forEach((kra, index) => {
-                        console.log("==========>>>>>> index:", index)
                         const option = document.createElement("option");
                         option.value = kra.id;
                         option.textContent = kra.name;
                         
-                        console.log("==========>>>>>> option:", option)
                         // Set the first item as the default
                         if (index === 0) {
                             option.selected = true;
                         }
                         
-                        console.log("==========>>>>>> is option selected:", option.selected)
                         kraDropdown.appendChild(option);
                     });
                 });
