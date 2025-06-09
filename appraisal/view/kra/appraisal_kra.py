@@ -5,15 +5,16 @@ from django.views.generic.edit import CreateView, UpdateView
 from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib import messages
 from django.shortcuts import get_object_or_404, redirect
-from django.http import Http404
+from django.http import Http404, HttpResponse
 from ...models import KeyResultArea, AppraisalKra, Appraisal, TargetScore
 from ...forms import YearQuarterForm, AppraisalKraForm, KraCreateForm
-from ...repository.kra import AppraisalKraRepository
+from ...repository.kra import AppraisalKraRepository, KraActivityRepository, KRARepository
 from ...repository.appraisal import AppraisalRepository
-from ...services.kra import AppraisalKraService, ActivityService
+from ...services.kra import AppraisalKraService, ActivityService, KRAService
 from ...repository.kra import KraActivityRepository, PerformanceDimensionRepository
 from ...repository import AppraisalRepository, TargetScoreRepository
 from datetime import datetime
+from .helper import build_payload
 from ...helpers.types.kra import KraRolesType
 from ...helpers.getters.approval import ApprovalStagesHandler
 from loguru import logger
@@ -136,18 +137,40 @@ class AppraisalKraCreateView(SuccessMessageMixin, CreateView):
         messages.error(self.request, "A Key Result Area (KRA) is required.")
         return self.render_to_response(self.get_context_data(form=form))
     
-    def form_valid(self, form):
-        kra_obj = form.cleaned_data.get("key_result_area")
-        
-        quarter_year_obj = form.cleaned_data.get("quarter")
+    def validate_kra_form(self, form)->HttpResponse:
         try:
-            appraisal_kra_object = AppraisalKraRepository().create(appraisal_object=self.get_appraisal_object(), quarter_obj=quarter_year_obj, kra_obj=kra_obj)
-            form.instance = appraisal_kra_object
+            # Build payload
+            payload = build_payload(request=self.request, form=form)
+            
+            # Call the service to create KRA
+            repo = KRARepository()
+            service_handler = KRAService(kra_repo=repo)
+            appraisee_designation_obj = self.get_appraisal_object().user.designation
+            kra_object = service_handler.create_use_case(appraisee_designation=appraisee_designation_obj, data=payload)
+            form.instance = kra_object            
+        except ValidationError:
+            # Errors are already handled in build_payload
+            return self.form_invalid(form)
         except Exception as e:
-            logger.error(f"Failed to create appraisal kra: {e}")
-            messages.error(self.request, "Something went wrong, please try again")
-        
-        return super().form_valid(form)
+            logger.error(f"Failed to create new kra with error: {e}")
+            messages.error(self.request, f"An unexpected error occurred, please try again")
+            return self.form_invalid(form)
+    
+    def form_valid(self, form):
+        if "create_new_kra_request" in self.request.POST:
+            return self.validate_kra_form(form=form)
+        else:
+            kra_obj = form.cleaned_data.get("key_result_area")
+            
+            quarter_year_obj = form.cleaned_data.get("quarter")
+            try:
+                appraisal_kra_object = AppraisalKraRepository().create(appraisal_object=self.get_appraisal_object(), quarter_obj=quarter_year_obj, kra_obj=kra_obj)
+                form.instance = appraisal_kra_object
+            except Exception as e:
+                logger.error(f"Failed to create appraisal kra: {e}")
+                messages.error(self.request, "Something went wrong, please try again")
+            
+            return super().form_valid(form)
     
     
     def get_success_url(self):
