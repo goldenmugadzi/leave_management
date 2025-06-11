@@ -1,10 +1,11 @@
 from django.shortcuts import render, redirect
 from .models import SafetyMonthlyReport
-from .forms import SafetyMonthlyReportForm  # You need to create this form
+from .forms import SafetyMonthlyReportForm 
 from django.contrib import messages
 from django.http import JsonResponse
 from django.db.models import Q
-
+from django.shortcuts import get_object_or_404, render, redirect 
+from django.db import transaction,IntegrityError
 def safety_table(request):
     reports = SafetyMonthlyReport.objects.all().order_by('-year', '-month')
     return render(request, 'safety/safety_table.html', {'reports': reports})
@@ -81,3 +82,29 @@ def safety_report_data(request):
         "recordsFiltered": total,
         "data": data
     })
+
+def safety_ytd(request):
+    report = SafetyMonthlyReport.objects.latest('year', 'month')
+    return render(request, 'safety/ytd.html', {'report': report})
+
+def safety_update(request, id):
+   safetymonthlyreport = get_object_or_404(SafetyMonthlyReport, id=id)
+
+   if request.method == 'POST':
+        form = SafetyMonthlyReportForm (request.POST, instance=safetymonthlyreport)
+
+        if form.is_valid():
+            try:
+                with transaction.atomic():
+                    form.save()
+                    
+                    messages.success(request, "report updated successfully!")
+                    return redirect('/safety_table/')
+            except Exception as e:
+                messages.error(request, f"Error updating fault: {str(e)}")
+        else:
+            messages.error(request, "Please correct the errors below.")
+   else:
+        form = SafetyMonthlyReportForm (instance=safetymonthlyreport)
+
+   return render(request, 'safety/safety_update.html', {'form': form, 'safetymonthlyreport': safetymonthlyreport})
