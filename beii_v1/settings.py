@@ -186,7 +186,7 @@ CSRF_COOKIE_SECURE = config('CSRF_COOKIE_SECURE', default=False, cast=bool)
 SESSION_COOKIE_SECURE = config('SESSION_COOKIE_SECURE', default=False, cast=bool)
 
 # Set session timeout to 10 minutes (600 seconds)
-SESSION_COOKIE_AGE = 600
+SESSION_COOKIE_AGE = 1800
 SESSION_SAVE_EVERY_REQUEST = True
 SESSION_LIMIT = 2
 # Database
