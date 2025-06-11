@@ -797,35 +797,24 @@ def list_budgets(request):
     user_designation = Designations.objects.filter(
         id=user_profile.designation.id).first() if user_profile.designation else None
 
-    # new_user = {
-    #     "id": user_profile.pk,
-    #     "username": user_profile.username,
-    #     "firstname": user_profile.first_name,
-    #     "lastname": user_profile.last_name,
-    #     "email": user_profile.email,
-    #     "section": section_used,
-    #     "depot": depot,
-    #     "district": district,
-    #     "region": region,
-    #     "roles": custom_user_roles,
-    #     "designation": user_designation,
-    # }
     user_title = request.user.get_full_name()
-    print(section_used)
-    section_budget = AssetBudget.objects.filter(region=region)
-    # print(section_budget)
-    user_title = request.user.get_full_name()
-    l = request.user.groups.values_list('name', flat=True)
 
-    # QuerySet Object
+    # Limit budgets to current year and balance > 1
+    current_year = timezone.now().year
+    section_budget = AssetBudget.objects.filter(
+        region=region,
+        period=current_year,
+        balance__gt=1
+    )
 
     user_page = 'ace/budgets_index.html'
-    print(section_budget)
 
-    return render(request, user_page, {"title": "All Records",
-                                       "context": section_budget,
-                                       "user_title": user_title,
-                                       "user_groups": user_groups})
+    return render(request, user_page, {
+        "title": "All Records",
+        "context": section_budget,
+        "user_title": user_title,
+        "user_groups": user_groups
+    })
 
 
 @login_required
