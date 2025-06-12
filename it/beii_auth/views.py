@@ -327,7 +327,7 @@ def verify_recaptcha(recaptcha_response):
     
     return result.get('success', False)
 
-@login_required(login_url='/accounts/login')
+# @login_required(login_url='/accounts/login')
 def index(request):
     if request.user.is_authenticated:
         user_title = request.user.get_full_name()
@@ -344,7 +344,7 @@ def index(request):
     return redirect('/accounts/login')
 
 
-@login_required(login_url='/accounts/login')
+# @login_required(login_url='/accounts/login')
 def dashboard(request):
     user_page = 'dashboard.html'
     user_title = request.user.get_full_name()
@@ -424,7 +424,7 @@ def dashboard(request):
         })
 
 
-@login_required(login_url='/accounts/login')
+# @login_required(login_url='/accounts/login')
 def home(request):
     user_page = 'home/dashboard.html'
     user_title = request.user.get_full_name()
@@ -512,7 +512,7 @@ def home(request):
         })
 
 
-@login_required(login_url='/accounts/login')
+# @login_required(login_url='/accounts/login')
 def business_applications(request):
     user_page = 'business_applications.html'
     user_title = request.user.get_full_name()
@@ -556,7 +556,7 @@ def business_applications(request):
         })
 
 
-@login_required(login_url='/accounts/login')
+# @login_required(login_url='/accounts/login')
 def application_reports(request):
     user_page = 'applications_reports.html'
     user_title = request.user.get_full_name()
@@ -605,7 +605,7 @@ def app_logout(request):
     return redirect('/accounts/login')
 
 
-@login_required(login_url='/accounts/login')
+# @login_required(login_url='/accounts/login')
 def change_password(request):
     if request.method == "POST":
         print("request.POST: ", request.POST)
