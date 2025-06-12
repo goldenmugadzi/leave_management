@@ -39,38 +39,3 @@
         {% include 'appraisal/kra/appraisal_kra/kra_modal.html' %}
 </div>
 {% endblock %}
-{% block scripts %}
-<script>
-    // Refreshes all kra dropdowns in formsets with updated kra options from the server.
-    function refreshKraDropdown() {
-        // get all kra dropdowns in formsets
-        const kraDropdowns = document.querySelectorAll("select[id^='id_key_result_area']");
-
-        // Fetch updated list of kra
-        fetch("{% url 'kra_list_api' appraisal_id  %}")
-            .then(response => response.json())
-            .then(data => {
-                // Iterate through each dropdown and update its options
-                kraDropdowns.forEach(kraDropdown => {
-                    kraDropdown.innerHTML = ""; // Clear current options
-                    
-                    // Populate with new options
-                    data.forEach((kra, index) => {
-                        const option = document.createElement("option");
-                        option.value = kra.id;
-                        option.textContent = kra.name;
-                        
-                        // Set the first item as the default
-                        if (index === 0) {
-                            option.selected = true;
-                        }
-                        
-                        kraDropdown.appendChild(option);
-                    });
-                });
-            })
-            .catch(error => console.error('Error refreshing experience dropdown:', error));
-    }
-
-</script>
-{% endblock scripts %}

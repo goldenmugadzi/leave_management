@@ -54,7 +54,6 @@ class AppraisalKraForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         current_year = datetime.now().year
         self.fields['quarter'].queryset = YearQuarter.objects.filter(year=current_year) 
-
         self.fields["key_result_area"].queryset =  KeyResultArea.objects.filter(designation__id=designation_id)
         
 class AppraisalKraReviewerStatusForm(forms.ModelForm):

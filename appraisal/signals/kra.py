@@ -19,7 +19,7 @@ def create_target_score_post_save_handler(sender, instance, created, **kwargs):
             repo = TargetScoreRepository()
             service_handler = TargetScoreService(target_score_repository=repo)
             default_values = 0.0
-            payload = TargetScoreType(score=default_values)
+            payload = TargetScoreType(score=default_values, appraiser_confirmation=APPRAISAL_KRA_REVIEWER_STATUS_CHOICES[0][0])
             service_handler.create_use_case(performance_dimension_obj=instance, data=payload)
             
             logger.success(f"[TargetScore]: created score target instance for performance dimension ({instance.performance_indicator})")

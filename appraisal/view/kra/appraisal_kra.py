@@ -5,7 +5,7 @@ from django.views.generic.edit import CreateView, UpdateView
 from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib import messages
 from django.shortcuts import get_object_or_404, redirect
-from django.http import Http404, HttpResponse
+from django.http import Http404, HttpResponse, HttpResponseRedirect
 from ...models import KeyResultArea, AppraisalKra, Appraisal, TargetScore
 from ...forms import YearQuarterForm, AppraisalKraForm, KraCreateForm
 from ...repository.kra import AppraisalKraRepository, KraActivityRepository, KRARepository
@@ -17,6 +17,7 @@ from datetime import datetime
 from .helper import build_payload
 from ...helpers.types.kra import KraRolesType
 from ...helpers.getters.approval import ApprovalStagesHandler
+from pydantic import ValidationError
 from loguru import logger
 
 
@@ -107,7 +108,7 @@ class AppraisalKraCreateView(SuccessMessageMixin, CreateView):
     template_name = 'appraisal/kra/appraisal_kra/create_update.html'
     success_message = 'Key Result Area created successfully'
     context_object_name = "appraisal_kra_form"
-    
+
     def get_appraisee_designation(self):
         return self.get_appraisal_object().user.designation
 
@@ -115,67 +116,78 @@ class AppraisalKraCreateView(SuccessMessageMixin, CreateView):
         kwargs = super().get_form_kwargs()
         kwargs["designation_id"] = self.get_appraisee_designation().id
         return kwargs
-    
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context[self.context_object_name] = context.get("form")
         context["kra_form"] = self.get_kra_form()
         context["appraisal_id"] = self.kwargs.get("appraisal_id")
         return context
-    
+
     def get_appraisal_object(self):
         qr = AppraisalRepository().get_appraisal_by_pk(appraisal_id=self.kwargs.get("appraisal_id"))
         if qr.exists():
             return qr.first()
-        return Http404("Appraisal not found")
-    
+        raise Http404("Appraisal not found")
+
     def get_kra_form(self):
+        if self.request.method == 'POST':
+            return KraCreateForm(self.request.POST)
         return KraCreateForm()
 
-    def form_invalid(self, form):
-        self.object = None  
-        messages.error(self.request, "A Key Result Area (KRA) is required.")
-        return self.render_to_response(self.get_context_data(form=form))
-    
-    def validate_kra_form(self, form)->HttpResponse:
+    def post(self, request, *args, **kwargs):
+        if "create_new_kra_request" in request.POST:
+            # validate the KRA form
+            form = self.get_kra_form()
+            if form.is_valid():
+                return self.validate_kra_form(form)
+            else:
+                return self.render_to_response(self.get_context_data(form=self.get_form(), kra_form=form))
+        else:
+            # Proceed with the AppraisalKraForm normally
+            return super().post(request, *args, **kwargs)
+
+    def validate_kra_form(self, form):
+        """Validation of Kra form """
         try:
-            # Build payload
             payload = build_payload(request=self.request, form=form)
-            
-            # Call the service to create KRA
             repo = KRARepository()
             service_handler = KRAService(kra_repo=repo)
             appraisee_designation_obj = self.get_appraisal_object().user.designation
             kra_object = service_handler.create_use_case(appraisee_designation=appraisee_designation_obj, data=payload)
-            form.instance = kra_object            
+            form.instance = kra_object
+            messages.success(self.request, "New Key Result Area created.")
+            return HttpResponseRedirect(self.request.path)  # Redirect to refresh the page
         except ValidationError:
-            # Errors are already handled in build_payload
-            return self.form_invalid(form)
+            return self.render_to_response(self.get_context_data(form=self.get_form(), kra_form=form))
         except Exception as e:
             logger.error(f"Failed to create new kra with error: {e}")
-            messages.error(self.request, f"An unexpected error occurred, please try again")
-            return self.form_invalid(form)
-    
+            messages.error(self.request, "An unexpected error occurred. Please try again.")
+            return self.render_to_response(self.get_context_data(form=self.get_form(), kra_form=form))
+
     def form_valid(self, form):
-        if "create_new_kra_request" in self.request.POST:
-            return self.validate_kra_form(form=form)
-        else:
-            kra_obj = form.cleaned_data.get("key_result_area")
-            
-            quarter_year_obj = form.cleaned_data.get("quarter")
-            try:
-                appraisal_kra_object = AppraisalKraRepository().create(appraisal_object=self.get_appraisal_object(), quarter_obj=quarter_year_obj, kra_obj=kra_obj)
-                form.instance = appraisal_kra_object
-            except Exception as e:
-                logger.error(f"Failed to create appraisal kra: {e}")
-                messages.error(self.request, "Something went wrong, please try again")
-            
-            return super().form_valid(form)
-    
-    
+        kra_obj = form.cleaned_data.get("key_result_area")
+        quarter_year_obj = form.cleaned_data.get("quarter")
+        try:
+            appraisal_kra_object = AppraisalKraRepository().create(
+                appraisal_object=self.get_appraisal_object(),
+                quarter_obj=quarter_year_obj,
+                kra_obj=kra_obj
+            )
+            form.instance = appraisal_kra_object
+        except Exception as e:
+            logger.error(f"Failed to create appraisal kra: {e}")
+            messages.error(self.request, "Something went wrong, please try again")
+        return super().form_valid(form)
+
+    def form_invalid(self, form):
+        self.object = None
+        messages.error(self.request, "A Key Result Area (KRA) is required.")
+        return self.render_to_response(self.get_context_data(form=form))
+
     def get_success_url(self):
         return reverse('appraisal_kra_index', kwargs={"appraisal_id": self.kwargs.get("appraisal_id")})
-    
+
 
 class AppraisalKraUpdateView(SuccessMessageMixin, UpdateView):
     model = AppraisalKra
