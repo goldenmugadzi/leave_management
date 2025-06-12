@@ -696,27 +696,32 @@
     <script></script>
     {% load sweetify %} {% sweetify %}
     <script>
-        // Time in milliseconds (30 minutes)
-        const INACTIVITY_TIMEOUT = 0 * 60 * 1000;
+        // Time in milliseconds (30 minutes) - matches SESSION_COOKIE_AGE
+        const INACTIVITY_TIMEOUT = 30 * 60 * 1000; // 30 minutes
         
         let inactivityTimer;
         
         // Function to reset the inactivity timer
         function resetInactivityTimer() {
-            clearTimeout(inactivityTimer);
-            inactivityTimer = setTimeout(() => {
-            const currentUrl = window.location.href;
-            console.log("current url: ", currentUrl)
-            window.location.href = `/accounts/login?next=${encodeURIComponent(currentUrl)}`; // Redirect to login page
-            }, INACTIVITY_TIMEOUT);
+            // Only set timeout if INACTIVITY_TIMEOUT is greater than 0
+            if (INACTIVITY_TIMEOUT > 0) {
+                clearTimeout(inactivityTimer);
+                inactivityTimer = setTimeout(() => {
+                    const currentUrl = window.location.href;
+                    console.log("Session timeout due to inactivity, redirecting to login");
+                    window.location.href = `/accounts/login?next=${encodeURIComponent(currentUrl)}&timeout=true`;
+                }, INACTIVITY_TIMEOUT);
+            }
         }
         
-        // Event listeners to track user activity
-        window.onload = resetInactivityTimer;
-        document.onmousemove = resetInactivityTimer;
-        document.onkeypress = resetInactivityTimer;
-        document.onclick = resetInactivityTimer;
-        document.onscroll = resetInactivityTimer;
+        // Event listeners to track user activity (only if timeout is enabled)
+        if (INACTIVITY_TIMEOUT > 0) {
+            window.onload = resetInactivityTimer;
+            document.onmousemove = resetInactivityTimer;
+            document.onkeypress = resetInactivityTimer;
+            document.onclick = resetInactivityTimer;
+            document.onscroll = resetInactivityTimer;
+        }
     </script>
     <script>
       $(document).ready(function () {

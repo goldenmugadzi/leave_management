@@ -185,10 +185,16 @@ SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', config('SECURE_PROXY_SSL_HE
 CSRF_COOKIE_SECURE = config('CSRF_COOKIE_SECURE', default=False, cast=bool)
 SESSION_COOKIE_SECURE = config('SESSION_COOKIE_SECURE', default=False, cast=bool)
 
-# Set session timeout to 10 minutes (600 seconds)
+# Set session timeout to 30 minutes (1800 seconds)
 SESSION_COOKIE_AGE = 1800
 SESSION_SAVE_EVERY_REQUEST = True
 SESSION_LIMIT = 2
+
+# Additional session security settings
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = 'Lax'
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
 
