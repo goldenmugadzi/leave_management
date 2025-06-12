@@ -47,9 +47,9 @@ class CombinedAssetForm(forms.Form):
                 department=cleaned['department'],
                 date_purchased=cleaned['date_purchased'],
                 model=cleaned['model'],
-                warrant=cleaned['warrant'],
+                #warrant=cleaned['warrant'],
                 cost_center=cleaned['cost_center'],
-                created_by=cleaned['created_by'],
+                #created_by=cleaned['created_by'],
                 supplier=cleaned['supplier'],
             )
             asset.save()
