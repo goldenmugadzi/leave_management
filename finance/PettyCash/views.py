@@ -349,6 +349,9 @@ def pettycash_awaiting_my_action(request):
             if process.approval_set.exists():
                 last_approval = process.approval_set.last()
                 current_step = last_approval.step.step
+                # Skip if last approval is rejected
+                if last_approval.approved == "Rejected":
+                    continue
             else:
                 current_step = 0
 
@@ -365,10 +368,14 @@ def pettycash_awaiting_my_action(request):
                                                                                               'date_created').order_by(
             'old_version', '-date_created', 'petty_id')[:800]:
             process = pettycash.process
+            
 
             if process.approval_set.exists():
                 last_approval = process.approval_set.last()
                 current_step = last_approval.step.step
+                # Skip if last approval is rejected
+                if last_approval.approved == "Rejected":
+                    continue
             else:
                 current_step = 0
 
@@ -381,17 +388,17 @@ def pettycash_awaiting_my_action(request):
                 pettycashs_to_process.append(pettycash)
 
     else:
-        # print(user_profile.region.id, 'region')
-        # print(user_profile.designation.id, 'designation')
-        if user_profile.region.id == 4 and user_profile.designation.id == 300:
-            sections_to_filter = [416, 415, 414, 413, 412, 411, 410, 407]
-            for pettycash in Pettycash.objects.filter(section__id__in=sections_to_filter).order_by(
-                    '-date_created', 'petty_id')[:1600]:
+        for pettycash in Pettycash.objects.order_by('-date_created', 'petty_id').filter(region=region):
                 process = pettycash.process
 
                 if process.approval_set.exists():
                     last_approval = process.approval_set.last()
                     current_step = last_approval.step.step
+                    print("authoriser condition")
+                    # Skip if last approval is rejected
+
+                    if last_approval.approved == "Rejected":
+                        continue
                 else:
                     current_step = 0
 
@@ -403,24 +410,6 @@ def pettycash_awaiting_my_action(request):
                 if step:
                     pettycashs_to_process.append(pettycash)
                 print('phakathi')
-        else:
-            for pettycash in Pettycash.objects.filter(region=region).order_by('-date_created', 'petty_id')[:1600]:
-                process = pettycash.process
-
-                if process.approval_set.exists():
-                    last_approval = process.approval_set.last()
-                    current_step = last_approval.step.step
-                else:
-                    current_step = 0
-
-                next_step = current_step + 1
-
-                workflow = process.workflow
-                step = workflow.step_set.filter(step=next_step, approver__in=user_roles).first()
-
-                if step:
-                    pettycashs_to_process.append(pettycash)
-                # print('outside')
 
     return render(request, 'finance/pettycash/view_all_pettycashs.html', {'pettycashs': pettycashs_to_process,
                                                                           'pettycash_role': pettycash_role,
