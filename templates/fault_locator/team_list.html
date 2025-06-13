@@ -1,0 +1,18 @@
+{% extends "admin_layout.html" %}
+{% block content %}
+<div class="content-wrapper">
+  <div class="bg-gulf-blue-100 shadow-lg rounded-lg p-6 max-w-2xl mx-auto">
+    <h3 class="font-bold text-lg mb-4">Teams</h3>
+    <ul>
+      {% for team in teams %}
+        <li class="mb-2">
+          <strong>{{ team.name }}</strong>:
+          {{ team.members.all|join:", " }}
+        </li>
+      {% empty %}
+        <li>No teams found.</li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
+{% endblock %}
