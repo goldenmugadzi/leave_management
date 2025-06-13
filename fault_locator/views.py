@@ -1,29 +1,17 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
-from .models import FaultLocatorDevice, DeviceAssignment, Depot
+
+from it.users.helpers import DEPOTS
+from .models import *
 from django.db.models import F, ExpressionWrapper, DurationField, Sum
+from .forms import FaultForm, FaultLocatorDeviceForm
 
 def device_list(request):
     devices = FaultLocatorDevice.objects.all()
-    assignments = DeviceAssignment.objects.filter(returned_at__isnull=True)
-    assigned_device_ids = assignments.values_list('device_id', flat=True)
-    device_status = []
-    for device in devices:
-        assignment = DeviceAssignment.objects.filter(device=device, returned_at__isnull=True).first()
-        if assignment:
-            status = f"Assigned to {assignment.depot.name} since {assignment.assigned_at.strftime('%Y-%m-%d %H:%M')}"
-        else:
-            status = "Available"
-        device_status.append({
-            "device": device,
-            "status": status,
-            "assigned": bool(assignment),
-            "assignment": assignment,
-        })
-    depots = Depot.objects.all()
+    # assignments = DeviceAssignment.objects.filter(returned_at__isnull=True)
     return render(request, "fault_locator/device_list.html", {
-        "device_status": device_status,
-        "depots": depots,
+        "devices": devices,
+        # "assignments": assignments
     })
 
 def assign_device(request):
@@ -31,10 +19,10 @@ def assign_device(request):
         device_id = request.POST.get("device_id")
         depot_id = request.POST.get("depot_id")
         device = get_object_or_404(FaultLocatorDevice, id=device_id)
-        depot = get_object_or_404(Depot, id=depot_id)
+        depot = get_object_or_404(DEPOTS, id=depot_id)
         # Only assign if not already assigned
-        if not DeviceAssignment.objects.filter(device=device, returned_at__isnull=True).exists():
-            DeviceAssignment.objects.create(device=device, depot=depot)
+        # if not DeviceAssignment.objects.filter(device=device, returned_at__isnull=True).exists():
+        #     DeviceAssignment.objects.create(device=device, depot=depot)
     return redirect('device_list')
 
 def return_device(request, assignment_id):
@@ -54,3 +42,23 @@ def usage_report(request):
         total_time=Sum('duration')
     )
     return render(request, "fault_locator/usage_report.html", {"assignments": assignments})
+
+def create_fault(request):
+    if request.method == "POST":
+        form = FaultForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('device_list')  # Or another view as needed
+    else:
+        form = FaultForm()
+    return render(request, "fault_locator/create_fault.html", {"form": form})
+
+def create_device(request):
+    if request.method == "POST":
+        form = FaultLocatorDeviceForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('device_list')
+    else:
+        form = FaultLocatorDeviceForm()
+    return render(request, "fault_locator/create_device.html", {"form": form})

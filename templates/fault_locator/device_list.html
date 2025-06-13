@@ -1,0 +1,35 @@
+{% extends "admin_layout.html" %}
+{% load static %}
+
+{% block content %}
+<div class="content-wrapper">
+  <div class="bg-gulf-blue-100 shadow-lg rounded-lg p-6 max-w-4xl mx-auto">
+    <div class="flex justify-between items-center mb-4">
+      <h3 class="font-bold text-lg">Fault Locator Devices</h3>
+      <a href="{% url 'create_device' %}" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+        + Add Device
+      </a>
+    </div>
+    <table class="min-w-full bg-white rounded shadow">
+      <thead>
+        <tr>
+          <th class="py-2 px-4 border-b">Serial Number</th>
+          <th class="py-2 px-4 border-b">Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for device in devices %}
+        <tr class="hover:bg-gray-100">
+          <td class="py-2 px-4 border-b">{{ device.serial_number }}</td>
+          <td class="py-2 px-4 border-b">{{ device.description }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="2" class="py-4 text-center text-gray-500">No devices found.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

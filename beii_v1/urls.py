@@ -46,6 +46,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     # path('accounts/', include('django.contrib.auth.urls')),
     path('ace/', include('ACE2.urls')),
+    path('fault_locator/', include('fault_locator.urls')),
    
 
     # path('ace/', include('finance.Ace.urls')),
