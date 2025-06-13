@@ -1,0 +1,26 @@
+{% extends "admin_layout.html" %}
+{% load static %}
+
+{% block content %}
+<div class="content-wrapper">
+  <div class="bg-gulf-blue-100 shadow-lg rounded-lg p-6 max-w-2xl mx-auto">
+    <h3 class="text-center font-bold mb-4">Create Device</h3>
+    <form method="post">
+      {% csrf_token %}
+      <div class="mb-4">
+        <label for="id_serial_number" class="block text-sm font-medium text-gray-700">Serial Number</label>
+        {{ form.serial_number }}
+      </div>
+      <div class="mb-4">
+        <label for="id_description" class="block text-sm font-medium text-gray-700">Description</label>
+        {{ form.description }}
+      </div>
+      <div class="flex justify-center">
+        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+          Create Device
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
