@@ -9,4 +9,6 @@ urlpatterns = [
     path('return/<int:assignment_id>/', views.return_device, name='return_device'),
     path('usage_report/', views.usage_report, name='usage_report'),
     path('faults/create/', views.create_fault, name='create_fault'),
+    path('teams/create/', views.create_team, name='create_team'),
+    path('teams/<int:team_id>/add_member/', views.add_team_member, name='add_team_member'),
 ]

@@ -140,6 +140,7 @@ INSTALLED_APPS = [
     'django_prometheus',
     'api.ops_maintenance.safety_operations',
     'fault_locator',
+    'django_select2',
 ]
 
 AUTH_USER_MODEL = 'users.UserProfile'

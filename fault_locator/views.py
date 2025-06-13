@@ -4,7 +4,7 @@ from django.utils import timezone
 from it.users.helpers import DEPOTS
 from .models import *
 from django.db.models import F, ExpressionWrapper, DurationField, Sum
-from .forms import FaultForm, FaultLocatorDeviceForm
+from .forms import FaultForm, FaultLocatorDeviceForm, FaultLocatorTeamForm, FaultLocatorTeamNameForm, AddTeamMemberForm
 
 def device_list(request):
     devices = FaultLocatorDevice.objects.all()
@@ -63,6 +63,16 @@ def create_device(request):
         form = FaultLocatorDeviceForm()
     return render(request, "fault_locator/create_device.html", {"form": form})
 
+def create_team(request):
+    if request.method == "POST":
+        form = FaultLocatorTeamNameForm(request.POST)
+        if form.is_valid():
+            team = form.save()
+            return redirect('add_team_member', team_id=team.id)
+    else:
+        form = FaultLocatorTeamNameForm()
+    return render(request, "fault_locator/create_team.html", {"form": form})
+
 def device_detail(request, device_id):
     device = get_object_or_404(FaultLocatorDevice, id=device_id)
     # Get current assignment (not yet located/closed)
@@ -71,3 +81,21 @@ def device_detail(request, device_id):
         "device": device,
         "assignment": assignment,
     })
+
+def team_list(request):
+    teams = FaultLocatorTeam.objects.all()
+    return render(request, "fault_locator/team_list.html", {"teams": teams})
+
+def add_team_member(request, team_id):
+    team = FaultLocatorTeam.objects.get(id=team_id)
+    if request.method == "POST":
+        form = AddTeamMemberForm(request.POST)
+        if form.is_valid():
+            member = form.cleaned_data['member']
+            team.members.add(member)
+            # Optionally, redirect to the same page to add more, or to a team detail page
+            return redirect('add_team_member', team_id=team.id)
+    else:
+        form = AddTeamMemberForm()
+    members = team.members.all()
+    return render(request, "fault_locator/add_team_member.html", {"form": form, "team": team, "members": members})
