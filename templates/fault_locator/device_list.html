@@ -20,7 +20,11 @@
       <tbody>
         {% for device in devices %}
         <tr class="hover:bg-gray-100">
-          <td class="py-2 px-4 border-b">{{ device.serial_number }}</td>
+          <td class="py-2 px-4 border-b">
+            <a href="{% url 'device_detail' device.id %}" class="text-blue-700 underline">
+              {{ device.serial_number }}
+            </a>
+          </td>
           <td class="py-2 px-4 border-b">{{ device.description }}</td>
         </tr>
         {% empty %}

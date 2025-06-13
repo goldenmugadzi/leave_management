@@ -62,3 +62,12 @@ def create_device(request):
     else:
         form = FaultLocatorDeviceForm()
     return render(request, "fault_locator/create_device.html", {"form": form})
+
+def device_detail(request, device_id):
+    device = get_object_or_404(FaultLocatorDevice, id=device_id)
+    # Get current assignment (not yet located/closed)
+    assignment = FaultAssignment.objects.filter(device=device, located_at__isnull=True).first()
+    return render(request, "fault_locator/device_detail.html", {
+        "device": device,
+        "assignment": assignment,
+    })
