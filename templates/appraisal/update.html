@@ -16,15 +16,17 @@
         <h3>User Information</h3>
         <div class="px-4 justify-between shadow-xl rounded-lg border-2 border-indigo-400 grid grid-rows-2 grid-flow-col gap-2 py-2">
             
-                <span>Cost Center: {{user.cost_center}}</span>
+                <span>Full Name: {{appraisee_object}}</span>
+                
+                <span>Cost Center: {{appraisee_object.cost_center}}</span>
             
-                <span>EC Number: {{user.username}}</span>
+                <span>EC Number: {{appraisee_object.username}}</span>
 
-                <span>Grade: {{user.grade}}</span>
+                <span>Grade: {{appraisee_object.grade}}</span>
 
-                <span>Current Position: {{user.designation}}</span>
+                <span>Current Position: {{appraisee_object.designation}}</span>
 
-                <span>Section: {{user.section}}</span>
+                <span>Section: {{appraisee_object.section}}</span>
 
         </div>   
     </div>

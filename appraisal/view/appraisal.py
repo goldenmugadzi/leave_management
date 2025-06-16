@@ -158,6 +158,9 @@ class AppraisalUpdateView(SuccessMessageMixin, UpdateView):
         except Exception as e:
             logger.error(f"[PerformancePlanAndAssessmentTemplateView] for Appraisal pk - {self.get_object().id} failed with error: {e}")
             return None
+        
+    def get_appraisee_user_object(self):
+        return self.get_object().user
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -167,6 +170,7 @@ class AppraisalUpdateView(SuccessMessageMixin, UpdateView):
         context["experience_objects"] = experience_service_handler.get_by_appraisal_id_use_case(appraisal_id=self.get_object().id)
         context["qualification_objects"] = qualifications
         context["appraisal_object"] = self.get_object()
+        context["appraisee_object"] = self.get_appraisee_user_object()
         
         context.update(self.get_approval_stages())
         context.update(self.approval_user_roles())
