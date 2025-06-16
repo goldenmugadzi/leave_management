@@ -45,6 +45,7 @@ class AppraisalConfig(AppConfig):
         from .signals.performance_review import set_performance_progress_review_stage_completed, set_training_development_stage_completed
         from .tasks import run_back_ground_tasks
         from .signals.reviewer_status import appraisal_reviewer_workflow_handler
+        from .signals.activities import create_performance_dimension_post_save_handler
         
         # Run tasks
         run_back_ground_tasks()
