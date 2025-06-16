@@ -23,7 +23,7 @@ class CombinedAssetForm(forms.Form):
     purchase_cost = forms.DecimalField(required=False)
     date_purchased = forms.DateField(required=False, widget=forms.DateInput(attrs={'type': 'date'}))
     model = forms.CharField(required=False)
-    warrant = forms.CharField(required=False)
+    #warrant = forms.CharField(required=False)
     #created_by = forms.ModelChoiceField(queryset=UserProfile.objects.all(), required=False)
     supplier = forms.CharField(required=False)
 
@@ -47,9 +47,9 @@ class CombinedAssetForm(forms.Form):
                 department=cleaned['department'],
                 date_purchased=cleaned['date_purchased'],
                 model=cleaned['model'],
-                warrant=cleaned['warrant'],
+                #warrant=cleaned['warrant'],
                 cost_center=cleaned['cost_center'],
-                created_by=cleaned['created_by'],
+                #created_by=cleaned['created_by'],
                 supplier=cleaned['supplier'],
             )
             asset.save()

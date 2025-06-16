@@ -39,8 +39,15 @@ class SafetyMonthlyReport(models.Model):
     ytd_disabling_accidents = models.PositiveIntegerField(default=0)
     ytd_fatal_accidents = models.PositiveIntegerField(default=0)
     ytd_man_hours_lost = models.PositiveIntegerField(default=0)
+    ytd_accident_free_days = models.PositiveIntegerField(default=0)
     ytd_motor_vehicle_accidents = models.PositiveIntegerField(default=0)
     ytd_property_damaged = models.PositiveIntegerField(default=0)
+    ytd_she_meetings_conducted = models.PositiveIntegerField(default=0)
+    ytd_she_related_trainings = models.PositiveIntegerField(default=0)
+    ytd_wellness_programmes = models.PositiveIntegerField(default=0)
+    ytd_clear_up_campaigns = models.PositiveIntegerField(default=0)
+    ytd_she_inspections_conducted = models.PositiveIntegerField(default=0)
+    ytd_mock_drills_conducted = models.PositiveIntegerField(default=0)
 
     def save(self, *args, **kwargs):
         # Calculate rates before saving
