@@ -56,6 +56,7 @@ class PerformanceDimensionDeserializationStrategy:
                 "agreed_target": form_object.cleaned_data.get("agreed_target"),
                 "allowable_variance": form_object.cleaned_data.get("allowable_variance")
         }
+        print("===================>>>> data ", PerformanceDimensionType(**data))
         return PerformanceDimensionType(**data)
 
 class PayloadDeserializationStrategyContext:
@@ -78,8 +79,12 @@ class PayloadDeserializationStrategyContext:
         try:
             return self.strategy.deserialize(form_object=form_object)
         except ValidationError as e:
-            error_message = e.errors()[0]["msg"]
-            messages.error(request_object, error_message)
+            # print("========>>>>>>>>>err ", f"{e.errors()[0]}(s): ")
+            error_messages = ""
+            for error_message in e.errors():
+                msg = f"{error_message['msg']}: '{error_message['loc'][0]}'"
+                error_messages.join(msg)
+            messages.error(request_object, error_messages)
             return None
         except Exception as e:
             logger.error(f"[PayloadDeserializationStrategyContext] of {str(self.strategy)}, failed with error: {e}")

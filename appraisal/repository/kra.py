@@ -447,6 +447,7 @@ class PerformanceDimensionRepository:
                 weight=data.weight,
                 agreed_target=data.agreed_target,
                 allowable_variance=data.allowable_variance,
+                is_applicable=data.is_applicable
                 )
         except Exception as e:
             raise Exception(f"PerformanceDimensionRepository Create Repo failed with error: {e}")
@@ -523,9 +524,13 @@ class PerformanceDimensionRepository:
             if data.allowable_variance != performance_dimension_obj.allowable_variance:
                 performance_dimension_obj.allowable_variance = data.allowable_variance
                 updated = True
+            
+            if data.is_applicable != performance_dimension_obj.is_applicable:
+                performance_dimension_obj.is_applicable = data.is_applicable
+                updated = True
 
             if updated:
-             performance_dimension_obj.save()
+                performance_dimension_obj.save()
             return performance_dimension_obj
         except Exception as e:
             raise Exception(f"PerformanceDimensionRepository update Repo failed with error: {e}")

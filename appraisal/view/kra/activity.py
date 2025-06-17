@@ -480,16 +480,16 @@ class PerformanceDimensionTemplateUpdateView(SuccessMessageMixin, UpdateView):
 
     def form_valid(self, form):
         try:
-            payload = self.get_deserialized_payload(form)
             activity_object = self.get_perf_dimension_object().activity
-            
             service_handler = PerformanceDimensionService(repo=PerformanceDimensionRepository())            
             weight_progress = get_activities_performance_dimension_weight_progress(activity_object=activity_object)
-            
             current_weight = float(self.get_object().weight)
+            
+            payload = self.get_deserialized_payload(form)
+            print("===============>>>>>>> py", payload)
             update_weight = float(payload.weight)
+            print("===============>>>>>>> upw", update_weight)
             update_remain_weight = weight_progress.remaining_weight + current_weight
-                
             if update_remain_weight < update_weight:
                 messages.error(self.request, "The performance dimension weight cannot be greater than the activity weight. Please adjust it to ensure it does not exceed the activity weight.")
                 return self.form_invalid(form)

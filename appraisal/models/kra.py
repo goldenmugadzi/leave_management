@@ -60,9 +60,10 @@ class PerformanceDimension(TimeStamp):
     weight = models.DecimalField(max_digits=5, decimal_places=2)
     agreed_target = models.DecimalField(max_digits=5, decimal_places=2, default=0.0)
     allowable_variance = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
+    is_applicable = models.BooleanField(default=False)
     
     def __str__(self):
-        return f"{self.performance_indicator}"
+        return f"{self.activity} - {self.performance_indicator}"
     
 APPRAISAL_KRA_REVIEWER_STATUS_CHOICES = [
     ("PENDING", "PENDING"),

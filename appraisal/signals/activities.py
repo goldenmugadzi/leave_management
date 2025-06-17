@@ -28,7 +28,8 @@ def create_performance_dimension_post_save_handler(sender, instance, created, **
                     performance_indicator=perf_dimension[1],
                     allowable_variance=0.0,
                     agreed_target=0.0,
-                    weight=0
+                    weight=0,
+                    is_applicable=False
                 )
                 
                 service_handler = PerformanceDimensionService(repo=PerformanceDimensionRepository())

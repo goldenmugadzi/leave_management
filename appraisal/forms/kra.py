@@ -64,4 +64,4 @@ class AppraisalKraReviewerStatusForm(forms.ModelForm):
 class PerformanceDimensionForm(forms.ModelForm):
     class Meta:
         model = PerformanceDimension
-        exclude = ["id", "created_date", "updated", "activity"]
+        exclude = ["id", "created_date", "updated", "activity", "is_applicable"]
