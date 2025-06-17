@@ -15,7 +15,7 @@ def safety_report_create(request):
         form = SafetyMonthlyReportForm(request.POST)
         if form.is_valid():
             report = form.save(commit=False)
-            report.user = request.user  # Set the user to the currently logged-in user
+            report.user = request.user  
             report.save()
             messages.success(request, "Safety report submitted successfully.")
             return redirect('safety_table')
@@ -117,18 +117,19 @@ def safety_update(request, id):
 
 def safety_ytd(request):
     report = SafetyMonthlyReport.objects.latest('year', 'month')
-    # Find previous month (handle January)
+    # Calculate previous month and year
     prev_month = report.month - 1
     prev_year = report.year
     if prev_month == 0:
         prev_month = 12
         prev_year -= 1
+
+    # Get previous report for the same department and region
     prev_report = SafetyMonthlyReport.objects.filter(
         year=prev_year,
-        month=prev_month,
-        department=report.department,
-        regions=report.regions
+        month=prev_month
     ).first()
+
     return render(request, 'safety/ytd.html', {
         'report': report,
         'prev_report': prev_report

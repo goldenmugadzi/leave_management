@@ -50,15 +50,45 @@ class SafetyMonthlyReport(models.Model):
     ytd_mock_drills_conducted = models.PositiveIntegerField(default=0)
 
     def save(self, *args, **kwargs):
-        # Calculate rates before saving
+        
         exposure_time = self.number_of_days * 7.5 * self.number_of_workers
         if exposure_time > 0:
-            self.accident_frequency_rate = (self.work_related_accidents* 1_000_000 / exposure_time)
-            self.injury_severity_rate = (self.man_hours_lost* 1_000_000 / exposure_time)
+            self.accident_frequency_rate = (self.work_related_accidents * 1_000_000 / exposure_time)
+            self.injury_severity_rate = (self.man_hours_lost * 1_000_000 / exposure_time)
         else:
             self.accident_frequency_rate = 0
             self.injury_severity_rate = 0
+
+        
+        filters = {
+            'year': self.year,
+            'department': self.department,
+            'regions': self.regions,
+        }
+
+        previous_reports = SafetyMonthlyReport.objects.filter(**filters).exclude(pk=self.pk).filter(month__lt=self.month)
+
+        self.ytd_work_related_accidents = (
+            sum(r.work_related_accidents for r in previous_reports) + self.work_related_accidents
+        )
+        self.ytd_disabling_accidents = (
+            sum(r.disabling_accidents for r in previous_reports) + self.disabling_accidents
+        )
+        self.ytd_fatal_accidents = (
+            sum(r.fatal_accidents for r in previous_reports) + self.fatal_accidents
+        )
+        self.ytd_man_hours_lost = (
+            sum(r.man_hours_lost for r in previous_reports) + self.man_hours_lost
+        )
+        self.ytd_motor_vehicle_accidents = (
+            sum(r.motor_vehicle_accidents for r in previous_reports) + self.motor_vehicle_accidents
+        )
+        self.ytd_property_damaged = (
+            sum(r.property_damaged for r in previous_reports) + self.property_damaged
+        )
+
         super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.year}-{self.month:02d} Safety Report"
+    
