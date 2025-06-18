@@ -3,6 +3,7 @@
 from datetime import timedelta
 import json
 import csv
+import traceback
 from django.contrib.auth import login
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
@@ -33,9 +34,188 @@ from django.forms import inlineformset_factory
 from .forms import ResponsibilitiesForm
 from django.template.loader import get_template
 import logging
+import traceback
+from django.db.models import Count
+from django.http import HttpResponse
+from rest_framework.response import Response
 
 BASE_URL = "http://" + config('HOST') + ":" + config('PORT')
 APP_NAME = "users"
+
+@login_required(login_url='/accounts/login')
+def user_reports(request):
+    """View function for user reports page"""
+    user_title = request.user.get_full_name()
+    user_groups = list(request.user.groups.values_list('name', flat=True))
+    
+    # Get all regions, sections, and roles for filters
+    regions = Regions.objects.all()
+    sections = Sections.objects.all()
+    roles = Roles.objects.filter(application='users')
+    
+    return render(
+        request,
+        'users/user_reports.html',
+        {
+            "user_title": user_title,
+            "user_groups": user_groups,
+            "regions": regions,
+            "sections": sections,
+            "roles": roles,
+        }
+    )
+
+@login_required(login_url='/accounts/login')
+@api_view(['GET'])
+def user_reports_api(request):
+    
+    try:
+        """API endpoint for user reports data"""
+        # Get filter parameters
+        region_id = request.GET.get('region', '')
+        district_id = request.GET.get('district', '')
+        depot_id = request.GET.get('depot', '')
+        section_id = request.GET.get('section', '')
+        role_id = request.GET.get('role', '')
+    
+        # Base query
+        users_query = UserProfile.objects.filter(is_superuser=False)
+    
+        # Apply filters
+        if region_id:
+            users_query = users_query.filter(region=region_id)
+        if section_id:
+            users_query = users_query.filter(section=section_id)
+        if role_id:
+            users_query = users_query.filter(userprofile__roles__id=role_id)
+    
+        # Get user data with related information
+        users_data = []
+        for user in users_query:
+            profile = UserProfile.objects.filter(username=user.username).first()
+            if profile:
+                region = Regions.objects.filter(id=profile.region.id).first() if profile.region else None
+                district = Districts.objects.filter(code=profile.district.id).first() if profile.district else None
+                depot = Depots.objects.filter(id=profile.depot.id).first() if profile.depot else None
+                section = Sections.objects.filter(id=profile.section.id).first() if profile.section else None
+            
+                users_data.append({
+                    'id': user.id,
+                    'username': user.username,
+                    'first_name': user.first_name,
+                    'last_name': user.last_name,
+                    'email': user.email,
+                    'is_active': user.is_active,
+                    'region': region.region if region else None,
+                    'district': district.district if district else None,
+                    'depot': depot.depot if depot else None,
+                    'section': section.section if section else None,
+                })
+    
+        # Generate chart data
+        chart_data = {
+            'regions': get_region_chart_data(),
+            'roles': get_role_chart_data(),
+        }
+    
+        return Response({
+            'users': users_data,
+            'charts': chart_data,
+        })
+    except Exception as ex:
+        traceback.print_exc()
+        print("error : " + str(ex))
+        return Response({'error': str(ex)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+def get_region_chart_data():
+    """Generate data for region chart"""
+    regions_data = UserProfile.objects.values('region').annotate(count=Count('region'))
+    labels = []
+    data = []
+    
+    for item in regions_data:
+        region_id = item['region']
+        if region_id:
+            region = Regions.objects.filter(id=region_id).first()
+            if region:
+                labels.append(region.region)
+                data.append(item['count'])
+    
+    return {
+        'labels': labels,
+        'data': data,
+    }
+
+def get_role_chart_data():
+    """Generate data for role chart"""
+    roles = Roles.objects.filter(application='users')
+    labels = []
+    data = []
+    
+    for role in roles:
+        count = UserProfile.objects.filter(roles=role).count()
+        labels.append(role.role)
+        data.append(count)
+    
+    return {
+        'labels': labels,
+        'data': data,
+    }
+
+@login_required(login_url='/accounts/login')
+def export_users_csv(request):
+    """Export users data as CSV"""
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="user_report.csv"'
+    
+    # Create CSV writer
+    writer = csv.writer(response)
+    writer.writerow(['Username', 'First Name', 'Last Name', 'Email', 'Region', 'District', 'Depot', 'Section', 'Status'])
+    
+    # Get filter parameters
+    region_id = request.GET.get('region', '')
+    district_id = request.GET.get('district', '')
+    depot_id = request.GET.get('depot', '')
+    section_id = request.GET.get('section', '')
+    role_id = request.GET.get('role', '')
+    
+    # Base query
+    users_query = User.objects.filter(is_superuser=False)
+    
+    # Apply filters
+    if region_id:
+        users_query = users_query.filter(userprofile__region=region_id)
+    if district_id:
+        users_query = users_query.filter(userprofile__district=district_id)
+    if depot_id:
+        users_query = users_query.filter(userprofile__depot=depot_id)
+    if section_id:
+        users_query = users_query.filter(userprofile__section=section_id)
+    if role_id:
+        users_query = users_query.filter(userprofile__roles__id=role_id)
+    
+    # Write data rows
+    for user in users_query:
+        profile = UserProfile.objects.filter(user=user).first()
+        if profile:
+            region = Regions.objects.filter(id=profile.region).first() if profile.region else None
+            district = Districts.objects.filter(code=profile.district).first() if profile.district else None
+            depot = Depots.objects.filter(code=profile.depot).first() if profile.depot else None
+            section = Sections.objects.filter(code=profile.section).first() if profile.section else None
+            
+            writer.writerow([
+                user.username,
+                user.first_name,
+                user.last_name,
+                user.email,
+                region.region if region else '',
+                district.district if district else '',
+                depot.depot if depot else '',
+                section.section if section else '',
+                'Active' if user.is_active else 'Inactive',
+            ])
+    
+    return response
 
 def getUserFMGMRoles(user):
     print("user: ", user.username, user.id)
@@ -258,7 +438,7 @@ def add_centers(request):
         _district.save()
 
     for depot in DEPOTS:
-        district_id = Districts.objects.filter(code=depot['district_code']).first()
+        district_id = District.objects.filter(code=depot['district_code']).first()
         region_id = Regions.objects.filter(code=depot['parent_code']).first()
         _depot = Depots(
             depot=depot['name'],

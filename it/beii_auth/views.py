@@ -574,6 +574,15 @@ def application_reports(request):
         # print("creating standard list ..")
         applications = [app for app in applications if app['name'] != 'users']
 
+    # Add users report module
+    if 'users' not in [app['name'] for app in applications]:
+        applications.insert(0, {
+            "name": "users",
+            "title": "User Reports",
+            "iconUrl": "assets/images/management.png",
+            "url": "/users/user-reports"
+        })
+
     user = request.user
     if config('HOST') == "172.16.8.20":
         applications = applications
