@@ -947,7 +947,7 @@ def receipt_manual(request):
 @login_required
 def my_actioned_items(request):
     """
-    Show PettyCash items the current user has actioned (approved/rejected) or created.
+    Show PettyCash items the current user has actioned (approved/rejected) or created, sorted by action date.
     """
     user_id = request.user.id
     user_profile = UserProfile.objects.filter(id=user_id).first()
@@ -955,7 +955,7 @@ def my_actioned_items(request):
     
     # Use a set to avoid duplicates
     actioned_pettycashs_set = set()
-    actioned_pettycashs = []
+    actioned_approvals = []
 
     # Get user roles for PettyCash app
     user_roles = user_profile.roles.all()
@@ -971,22 +971,26 @@ def my_actioned_items(request):
     # Add items the user has created
     created_pettycashs = Pettycash.objects.filter(region=region, requested_by=request.user)
     for pettycash in created_pettycashs:
-        if pettycash.pk not in actioned_pettycashs_set:
-            actioned_pettycashs.append(pettycash)
-            actioned_pettycashs_set.add(pettycash.pk)
+        # Use date_created for created items
+        actioned_approvals.append((pettycash.date_created, pettycash))
+        actioned_pettycashs_set.add(pettycash.pk)
     
     # Add items the user has actioned (approved/rejected)
     all_pettycashs = Pettycash.objects.filter(region=region)
     for pettycash in all_pettycashs:
         process = pettycash.process
         if process and process.approval_set.exists():
-            approvals = process.approval_set.all()
+            approvals = process.approval_set.filter(user=request.user)
             for approval in approvals:
-                if approval.user == request.user:
-                    if pettycash.pk not in actioned_pettycashs_set:
-                        actioned_pettycashs.append(pettycash)
-                        actioned_pettycashs_set.add(pettycash.pk)
-                    break  # Found an approval by this user for this pettycash
+                if pettycash.pk not in actioned_pettycashs_set:
+                    # Use approval.approved_at for actioned items
+                    actioned_approvals.append((approval.approved_at, pettycash))
+                    actioned_pettycashs_set.add(pettycash.pk)
+                break  # Found an approval by this user for this pettycash
+
+    # Sort by date (most recent first)
+    actioned_approvals.sort(key=lambda x: x[0] or datetime.min, reverse=True)
+    actioned_pettycashs = [pc for dt, pc in actioned_approvals]
 
     requester = "create"  # Used in template for role checks
     
