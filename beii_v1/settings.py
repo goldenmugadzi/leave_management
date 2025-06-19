@@ -260,7 +260,7 @@ LOGGING = {
 # https://docs.djangoproject.com/en/4.1/topics/i18n/
 
 TIME_ZONE = 'Africa/Harare'
-USE_TZ = False
+USE_TZ = True
 
 # settings.py
 EXCHANGE_SETTINGS = {
