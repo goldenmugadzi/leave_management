@@ -41,7 +41,7 @@ class AppraisalConfig(AppConfig):
                                                  assign_appraisee_role_post_save_handler,
                                                  set_appraisal_acceptance_stage_completed
                                                  )
-        from .signals.target import set_appraisal_scoring_stage_completed, set_performance_dimension_applicable
+        from .signals.target import set_appraisal_scoring_stage_completed
         from .signals.performance_review import set_performance_progress_review_stage_completed, set_training_development_stage_completed
         from .tasks import run_back_ground_tasks
         from .signals.reviewer_status import appraisal_reviewer_workflow_handler

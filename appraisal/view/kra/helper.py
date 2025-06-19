@@ -56,7 +56,6 @@ class PerformanceDimensionDeserializationStrategy:
                 "agreed_target": form_object.cleaned_data.get("agreed_target"),
                 "allowable_variance": form_object.cleaned_data.get("allowable_variance")
         }
-        print("===================>>>> data ", PerformanceDimensionType(**data))
         return PerformanceDimensionType(**data)
 
 class PayloadDeserializationStrategyContext:

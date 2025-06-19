@@ -447,7 +447,6 @@ class PerformanceDimensionRepository:
                 weight=data.weight,
                 agreed_target=data.agreed_target,
                 allowable_variance=data.allowable_variance,
-                is_applicable=data.is_applicable
                 )
         except Exception as e:
             raise Exception(f"PerformanceDimensionRepository Create Repo failed with error: {e}")
@@ -502,7 +501,7 @@ class PerformanceDimensionRepository:
         except Exception as e:
             raise Exception(f"PerformanceDimensionRepository fetch by id failed with error: {e}")
     
-    def update(self, performance_dimension_obj: PerformanceDimension, data: PerformanceDimensionType)->PerformanceDimension:
+    def update(self, performance_dimension_obj: PerformanceDimension, data: PerformanceDimensionType, is_applicable: bool)->PerformanceDimension:
         try:
             updated = False
             if data.description != performance_dimension_obj.description:
@@ -525,8 +524,8 @@ class PerformanceDimensionRepository:
                 performance_dimension_obj.allowable_variance = data.allowable_variance
                 updated = True
             
-            if data.is_applicable != performance_dimension_obj.is_applicable:
-                performance_dimension_obj.is_applicable = data.is_applicable
+            if is_applicable != performance_dimension_obj.is_applicable:
+                performance_dimension_obj.is_applicable = is_applicable
                 updated = True
 
             if updated:

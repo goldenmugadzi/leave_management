@@ -86,7 +86,6 @@ class PerformanceDimensionType(BaseModel):
     agreed_target: Annotated[Decimal, Field(max_digits=10, decimal_places=2)] = Field(
         ..., description="The agreed value of the Target."
     )
-    is_applicable: bool = Field(..., description="Indicates whether the activity is Performance Dimension.")
 
 
     @field_validator("performance_indicator")

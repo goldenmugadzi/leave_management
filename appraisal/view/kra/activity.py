@@ -480,21 +480,25 @@ class PerformanceDimensionTemplateUpdateView(SuccessMessageMixin, UpdateView):
 
     def form_valid(self, form):
         try:
+            perf_dimension_obj = self.get_object()
             activity_object = self.get_perf_dimension_object().activity
-            service_handler = PerformanceDimensionService(repo=PerformanceDimensionRepository())            
+            service_handler = PerformanceDimensionService(repo=PerformanceDimensionRepository())           
             weight_progress = get_activities_performance_dimension_weight_progress(activity_object=activity_object)
-            current_weight = float(self.get_object().weight)
+            current_weight = float(perf_dimension_obj.weight)
             
             payload = self.get_deserialized_payload(form)
-            print("===============>>>>>>> py", payload)
             update_weight = float(payload.weight)
-            print("===============>>>>>>> upw", update_weight)
             update_remain_weight = weight_progress.remaining_weight + current_weight
             if update_remain_weight < update_weight:
                 messages.error(self.request, "The performance dimension weight cannot be greater than the activity weight. Please adjust it to ensure it does not exceed the activity weight.")
                 return self.form_invalid(form)
-                            
-            perf_dimension_object = service_handler.update_use_case(performance_dimension_object=self.get_object(), data=payload)
+            
+            # If saved object is_applicable=False and when weight is (>0), then we assume that is_applicable should be set to True
+            if not perf_dimension_obj.is_applicable and payload.weight != 0:
+                perf_dimension_object = service_handler.update_use_case(performance_dimension_object=perf_dimension_obj, data=payload, is_applicable=True)
+            else:
+                perf_dimension_object = service_handler.update_use_case(performance_dimension_object=perf_dimension_obj, data=payload, is_applicable=False)
+                
             form.instance = perf_dimension_object
         except Exception as e:
             logger.error(f"[PerformanceDimensionTemplateUpdateView] object with pk: {self.kwargs.get('performance_dimension_id')}, failed with error: {e}")

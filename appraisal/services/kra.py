@@ -258,5 +258,5 @@ class PerformanceDimensionService:
     def get_by_pk_use_case(self, performance_dimension_id: int)->PerformanceDimension:
         return self.repo.get_by_pk(performance_dimension_id=performance_dimension_id)
     
-    def update_use_case(self, performance_dimension_object: PerformanceDimension, data: PerformanceDimensionType)->PerformanceDimension:
-        return self.repo.update(performance_dimension_obj=performance_dimension_object, data=data)
+    def update_use_case(self, performance_dimension_object: PerformanceDimension, data: PerformanceDimensionType, is_applicable: bool)->PerformanceDimension:
+        return self.repo.update(performance_dimension_obj=performance_dimension_object, data=data, is_applicable=is_applicable)

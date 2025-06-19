@@ -56,27 +56,50 @@
          <tbody class="divide-y divide-blue-300 bg-blue-50">
            {% for performance_dimensions_obj in performance_dimensions_qr %}
            <tr class="hover:bg-blue-100">
-             <td class="px-6 py-4 text-md text-blue-900 truncate max-w-xs">{{performance_dimensions_obj.performance_indicator}}</td>
-             <td class="px-6 py-4 text-md text-blue-900">{{performance_dimensions_obj.weight}} %</td>
-             <td class="px-6 py-4 text-md text-blue-900">{{performance_dimensions_obj.agreed_target}} %</td>
-             <td class="px-6 py-4 text-md text-blue-900">(+-) {{performance_dimensions_obj.allowable_variance}} %</td>
-             <td class="px-6 py-4 text-md text-blue-900">{{performance_dimensions_obj.id|get_target_score_by_performance_dimension_id}} %</td>
-             <td class="px-6 py-4 text-md text-blue-900">(+-) {{performance_dimensions_obj.id|get_performance_dimension_actual_variance}} %</td>
-             <td class="px-6 py-4 text-md text-blue-900">{{performance_dimensions_obj.id|get_performance_dimension_rating}}</td>
-             <td class="px-6 py-4 text-md text-blue-900">{{performance_dimensions_obj.id|get_performance_dimension_weighted_score}}</td>
-             <td>
-              <div class="flex justify-even gap-1">
-                  <a href="{% url 'score_view' performance_dimensions_obj.id %}"
-                    class="bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4"
-                      >Score</a>
-                  <a href="{% url 'performance_dimension_update' performance_dimensions_obj.activity.id performance_dimensions_obj.id %}"
-                    class="bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4"
-                      >View</a>
-              </div>
-               
-             </td>
+              {% if performance_dimensions_obj.is_applicable == True %}
+                  <td class="px-6 py-4 text-md text-blue-900 truncate max-w-xs">{{performance_dimensions_obj.performance_indicator}}</td>
+                  <td class="px-6 py-4 text-md text-blue-900">{{performance_dimensions_obj.weight}} %</td>
+                  <td class="px-6 py-4 text-md text-blue-900">{{performance_dimensions_obj.agreed_target}} %</td>
+                  <td class="px-6 py-4 text-md text-blue-900">(+-) {{performance_dimensions_obj.allowable_variance}} %</td>
+                  <td class="px-6 py-4 text-md text-blue-900">{{performance_dimensions_obj.id|get_target_score_by_performance_dimension_id}} %</td>
+                  <td class="px-6 py-4 text-md text-blue-900">(+-) {{performance_dimensions_obj.id|get_performance_dimension_actual_variance}} %</td>
+                  <td class="px-6 py-4 text-md text-blue-900">{{performance_dimensions_obj.id|get_performance_dimension_rating}}</td>
+                  <td class="px-6 py-4 text-md text-blue-900">{{performance_dimensions_obj.id|get_performance_dimension_weighted_score}}</td>
+                  <td>
+                    <div class="flex justify-even gap-1">
+                        <a href="{% url 'score_view' performance_dimensions_obj.id %}"
+                          class="bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4"
+                            >Score</a>
+                        <a href="{% url 'performance_dimension_update' performance_dimensions_obj.activity.id performance_dimensions_obj.id %}"
+                          class="bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4"
+                            >View</a>
+                    </div>
+                    
+                  </td>
+              {% else %}
+                  <td class="px-6 py-4 text-md text-blue-900 truncate max-w-xs">{{performance_dimensions_obj.performance_indicator}}</td>
+                  <td class="px-6 py-4 text-md text-blue-900">
+                    <span class="px-3 py-1 text-sm font-medium text-white bg-yellow-600 rounded-full">
+                      Not Set
+                    </span>
+                  </td>
+                  <td class="px-6 py-4 text-md text-blue-900"> - </td>
+                  <td class="px-6 py-4 text-md text-blue-900"> - </td>
+                  <td class="px-6 py-4 text-md text-blue-900"> - </td>
+                  <td class="px-6 py-4 text-md text-blue-900"> - </td>
+                  <td class="px-6 py-4 text-md text-blue-900"> - </td>
+                  <td class="px-6 py-4 text-md text-blue-900"> - </td>
+                  <td>
+                    <div class="flex justify-end">
+                        <a href="{% url 'performance_dimension_update' performance_dimensions_obj.activity.id performance_dimensions_obj.id %}"
+                          class="bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4"
+                            >View</a>
+                    </div>
+                    
+                  </td>
+
+              {% endif %}
              
-   
            </tr>
           {% endfor %}
          </tbody>

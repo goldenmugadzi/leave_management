@@ -6,7 +6,8 @@ class ActivityScoreHandler:
     def __get_scores_objects_current_quarter(self, appraisal_id: int, quarter: int, year: int):        
         activity_score_repo = TargetScoreRepository()
         activity_score_qr = activity_score_repo.fetch_by_appraisal_id(appraisal_id=appraisal_id)
-        return activity_score_qr.filter(activity__appraisal_kra__quarter__year=year, activity__appraisal_kra__quarter__quarter=quarter)
+        return activity_score_qr.filter(performance_dimension__activity__appraisal_kra__quarter__year=year, 
+                                        performance_dimension__activity__appraisal_kra__quarter__quarter=quarter)
 
     
     def get_activity_scores_quarter_scored(self, appraisal_id: int, quarter: int, year: int)->Dict[str, bool]:

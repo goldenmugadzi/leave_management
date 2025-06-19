@@ -52,24 +52,3 @@ def set_appraisal_scoring_stage_completed(sender, instance, created, **kwargs):
             return None
 
 
-@receiver(post_save, sender=PerformanceDimension, dispatch_uid="is_applicable_perf_dimension_uid")
-def set_performance_dimension_applicable(sender, created, instance, **kwargs):
-    """
-        Handler for Performance Applicable is applicable, when weight is changed from 0.0.
-    """
-    try:
-        if not instance.is_applicable and instance.weight > Decimal("0.0"):
-            logger.info(
-                f"[PerformanceDimension] Setting is_applicable=True for PerformanceDimension pk={instance.id}"
-            )
-            
-            # Avoid recursion: update without re-triggering signal logic
-            sender.objects.filter(pk=instance.pk).update(is_applicable=True)
-
-            logger.success(
-                f"[PerformanceDimension] Setting is_applicable=True for PerformanceDimension pk={instance.id} completed"
-            )
-    except Exception as e:
-        logger.error(
-            f"[PerformanceDimension] Error while updating is_applicable for pk={instance.id}: {str(e)}"
-        )
