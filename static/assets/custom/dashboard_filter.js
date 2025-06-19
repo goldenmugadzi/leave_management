@@ -626,7 +626,7 @@ class DashboardFilter extends React.Component {
       className: "min-w-0 flex-1"
     }, /*#__PURE__*/React.createElement("div", {
       className: "text-center text-lg font-bold text-gulf-blue-950 sm:truncate sm:tracking-tight"
-    }, "REVENUE ASSURANCE"), /*#__PURE__*/React.createElement("div", {
+    }, "ENERGY SOLD"), /*#__PURE__*/React.createElement("div", {
       className: "mt-2"
     }, /*#__PURE__*/React.createElement("a", {
       href: "#"
@@ -646,18 +646,18 @@ class DashboardFilter extends React.Component {
       className: "numbers"
     }, /*#__PURE__*/React.createElement("p", {
       className: "text-xs mb-0 text-capitalize font-weight-bold"
-    }, "Points Visited"), /*#__PURE__*/React.createElement("h6", {
+    }, "Energy Sold (GWh)"), /*#__PURE__*/React.createElement("h6", {
       className: "font-weight-bolder mb-0"
-    }, "600")), /*#__PURE__*/React.createElement("div", {
+    }, "1000 GWh")), /*#__PURE__*/React.createElement("div", {
       className: "overflow-hidden bg-blue-50 h-1.5 rounded-full w-full"
     }, /*#__PURE__*/React.createElement("span", {
       className: "h-full bg-gulf-blue-900 w-full block rounded-full",
       style: {
-        width: "60%"
+        width: "10%"
       }
     })), /*#__PURE__*/React.createElement("p", {
       className: "text-xs text-muted mt-2 mb-0"
-    }, "Monthly Target:1000")))))))))))), /*#__PURE__*/React.createElement("div", {
+    }, "Monthly Target:100000 GWh")))))))))))), /*#__PURE__*/React.createElement("div", {
       className: "w-auto bg-gradient-to-r from-jade-100 to-jade-300 drop-shadow-md shadow shadow-jade-300 text-jade-900 rounded px-2 py-2"
     }, /*#__PURE__*/React.createElement("div", {
       className: "sm:flex lg:items-center lg:justify-between"
@@ -685,9 +685,9 @@ class DashboardFilter extends React.Component {
       className: "numbers"
     }, /*#__PURE__*/React.createElement("p", {
       className: "text-xs mb-0 text-capitalize font-weight-bold"
-    }, "Connected Terminated"), /*#__PURE__*/React.createElement("h6", {
+    }, "Client Connected"), /*#__PURE__*/React.createElement("h6", {
       className: "font-weight-bolder mb-0"
-    }, "900")), /*#__PURE__*/React.createElement("div", {
+    }, "9000")), /*#__PURE__*/React.createElement("div", {
       className: "overflow-hidden bg-jade-50 h-1.5 rounded-full w-full"
     }, /*#__PURE__*/React.createElement("span", {
       className: "h-full bg-jade-900 w-full block rounded-full",
@@ -696,7 +696,7 @@ class DashboardFilter extends React.Component {
       }
     })), /*#__PURE__*/React.createElement("p", {
       className: "text-xs text-muted mt-2 mb-0"
-    }, "YTD Target:1000")))))))))))), /*#__PURE__*/React.createElement("div", {
+    }, "YTD Target:10000 Clients")))))))))))), /*#__PURE__*/React.createElement("div", {
       className: "w-auto bg-gradient-to-r from-royal-heath-100 to-royal-heath-300 drop-shadow-md shadow shadow-royal-heath-300 text-royal-heath-900 rounded px-2 py-2"
     }, /*#__PURE__*/React.createElement("div", {
       className: "sm:flex lg:items-center lg:justify-between"
@@ -704,7 +704,7 @@ class DashboardFilter extends React.Component {
       className: "min-w-0 flex-1"
     }, /*#__PURE__*/React.createElement("div", {
       className: "text-center text-lg font-bold text-royal-heath-950 sm:truncate sm:tracking-tight"
-    }, "INSPECTIONS"), /*#__PURE__*/React.createElement("div", {
+    }, "REVENUE COLLECTION"), /*#__PURE__*/React.createElement("div", {
       className: "mt-2"
     }, /*#__PURE__*/React.createElement("a", {
       href: "#"
@@ -724,18 +724,22 @@ class DashboardFilter extends React.Component {
       className: "numbers"
     }, /*#__PURE__*/React.createElement("p", {
       className: "text-xs mb-0 text-capitalize font-weight-bold"
-    }, "Inspected"), /*#__PURE__*/React.createElement("h6", {
+    }, "Revenue Collected"), /*#__PURE__*/React.createElement("h6", {
       className: "font-weight-bolder mb-0"
-    }, "100")), /*#__PURE__*/React.createElement("div", {
+    }, "USD 17000000"), /*#__PURE__*/React.createElement("h6", {
+      className: "font-weight-bolder mb-0"
+    }, "ZWL 6000000000")), /*#__PURE__*/React.createElement("div", {
       className: "overflow-hidden bg-royal-heath-50 h-1.5 rounded-full w-full"
     }, /*#__PURE__*/React.createElement("span", {
       className: "h-full bg-royal-heath-900 w-full block rounded-full",
       style: {
-        width: "10%"
+        width: "17%"
       }
     })), /*#__PURE__*/React.createElement("p", {
       className: "text-xs text-muted mt-2 mb-0"
-    }, "YTD Target:1000")))))))))))), /*#__PURE__*/React.createElement("div", {
+    }, "YTD Target:USD 10000000"), /*#__PURE__*/React.createElement("p", {
+      className: "text-xs text-muted mt-2 mb-0"
+    }, "YTD Target:ZWL 6000000000")))))))))))), /*#__PURE__*/React.createElement("div", {
       className: "w-auto bg-gradient-to-r from-gulf-blue-100 to-gulf-blue-300 drop-shadow-md shadow shadow-gulf-blue-300 text-gulf-blue-900 rounded px-2 py-2"
     }, /*#__PURE__*/React.createElement("div", {
       className: "sm:flex lg:items-center lg:justify-between"
@@ -763,9 +767,9 @@ class DashboardFilter extends React.Component {
       className: "numbers"
     }, /*#__PURE__*/React.createElement("p", {
       className: "text-xs mb-0 text-capitalize font-weight-bold"
-    }, "Unresolved"), /*#__PURE__*/React.createElement("h6", {
+    }, "Compliants Received"), /*#__PURE__*/React.createElement("h6", {
       className: "font-weight-bolder mb-0"
-    }, "700")), /*#__PURE__*/React.createElement("div", {
+    }, "8000")), /*#__PURE__*/React.createElement("div", {
       className: "overflow-hidden bg-gulf-blue-50 h-1.5 rounded-full w-full"
     }, /*#__PURE__*/React.createElement("span", {
       className: "h-full bg-gulf-blue-900 w-full block rounded-full",
@@ -774,7 +778,7 @@ class DashboardFilter extends React.Component {
       }
     })), /*#__PURE__*/React.createElement("p", {
       className: "text-xs text-muted mt-2 mb-0"
-    }, "YTD Target:1000")))))))))))), /*#__PURE__*/React.createElement("div", {
+    }, "YTD Target:10000")))))))))))), /*#__PURE__*/React.createElement("div", {
       className: "w-auto bg-gradient-to-r from-jade-100 to-jade-300 drop-shadow-md shadow shadow-jade-300 text-jade-900 rounded px-2 py-2"
     }, /*#__PURE__*/React.createElement("div", {
       className: "sm:flex lg:items-center lg:justify-between"
