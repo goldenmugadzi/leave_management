@@ -698,7 +698,7 @@ class DashboardFilter extends React.Component {
             <div className="sm:flex lg:items-center lg:justify-between">
               <div className="min-w-0 flex-1">
                 <div className="text-center text-lg font-bold text-gulf-blue-950 sm:truncate sm:tracking-tight">
-                  REVENUE ASSURANCE
+                  ENERGY SOLD
                 </div>
                 <div className="mt-2">
                   <a href="#">
@@ -710,19 +710,19 @@ class DashboardFilter extends React.Component {
                               <div className="col-8">
                                 <div className="numbers">
                                   <p className="text-xs mb-0 text-capitalize font-weight-bold">
-                                    Points Visited
+                                    Energy Sold (GWh)
                                   </p>
-                                  <h6 className="font-weight-bolder mb-0">600</h6>
+                                  <h6 className="font-weight-bolder mb-0">1000 GWh</h6>
                                 </div>
 
                                 <div className="overflow-hidden bg-blue-50 h-1.5 rounded-full w-full">
                                   <span
                                     className="h-full bg-gulf-blue-900 w-full block rounded-full"
-                                    style={{width: "60%"}}
+                                    style={{width: "10%"}}
                                   ></span>
                                 </div>
                                 <p className="text-xs text-muted mt-2 mb-0">
-                                  Monthly Target:1000
+                                  Monthly Target:100000 GWh
                                 </p>
                               </div>
                             </div>
@@ -751,9 +751,9 @@ class DashboardFilter extends React.Component {
                               <div className="col-8">
                                 <div className="numbers">
                                   <p className="text-xs mb-0 text-capitalize font-weight-bold">
-                                    Connected Terminated
+                                    Client Connected
                                   </p>
-                                  <h6 className="font-weight-bolder mb-0">900</h6>
+                                  <h6 className="font-weight-bolder mb-0">9000</h6>
                                 </div>
 
                                 <div className="overflow-hidden bg-jade-50 h-1.5 rounded-full w-full">
@@ -763,7 +763,7 @@ class DashboardFilter extends React.Component {
                                   ></span>
                                 </div>
                                 <p className="text-xs text-muted mt-2 mb-0">
-                                  YTD Target:1000
+                                  YTD Target:10000 Clients
                                 </p>
                               </div>
                             </div>
@@ -780,7 +780,7 @@ class DashboardFilter extends React.Component {
             <div className="sm:flex lg:items-center lg:justify-between">
               <div className="min-w-0 flex-1">
                 <div className="text-center text-lg font-bold text-royal-heath-950 sm:truncate sm:tracking-tight">
-                  INSPECTIONS
+                  REVENUE COLLECTION
                 </div>
                 <div className="mt-2">
                   <a href="#">
@@ -792,19 +792,23 @@ class DashboardFilter extends React.Component {
                               <div className="col-8">
                                 <div className="numbers">
                                   <p className="text-xs mb-0 text-capitalize font-weight-bold">
-                                    Inspected
+                                    Revenue Collected
                                   </p>
-                                  <h6 className="font-weight-bolder mb-0">100</h6>
+                                  <h6 className="font-weight-bolder mb-0">USD 17000000</h6>
+                                  <h6 className="font-weight-bolder mb-0">ZWL 6000000000</h6>
                                 </div>
 
                                 <div className="overflow-hidden bg-royal-heath-50 h-1.5 rounded-full w-full">
                                   <span
                                     className="h-full bg-royal-heath-900 w-full block rounded-full"
-                                    style={{width: "10%"}}
+                                    style={{width: "17%"}}
                                   ></span>
                                 </div>
                                 <p className="text-xs text-muted mt-2 mb-0">
-                                  YTD Target:1000
+                                  YTD Target:USD 10000000
+                                </p>
+                                <p className="text-xs text-muted mt-2 mb-0">
+                                  YTD Target:ZWL 6000000000
                                 </p>
                               </div>
                             </div>
@@ -833,9 +837,9 @@ class DashboardFilter extends React.Component {
                               <div className="col-8">
                                 <div className="numbers">
                                   <p className="text-xs mb-0 text-capitalize font-weight-bold">
-                                    Unresolved
+                                    Compliants Received
                                   </p>
-                                  <h6 className="font-weight-bolder mb-0">700</h6>
+                                  <h6 className="font-weight-bolder mb-0">8000</h6>
                                 </div>
 
                                 <div className="overflow-hidden bg-gulf-blue-50 h-1.5 rounded-full w-full">
@@ -845,7 +849,7 @@ class DashboardFilter extends React.Component {
                                   ></span>
                                 </div>
                                 <p className="text-xs text-muted mt-2 mb-0">
-                                  YTD Target:1000
+                                  YTD Target:10000
                                 </p>
                               </div>
                             </div>
