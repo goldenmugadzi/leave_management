@@ -2,13 +2,15 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
+    path('', views.fault_locator_home, name='fault_locator_home'),
     path('devices/', views.device_list, name='device_list'),
     path('devices/create/', views.create_device, name='create_device'),
     path('devices/<int:device_id>/', views.device_detail, name='device_detail'),  # Add this line
-    path('assign/', views.assign_device, name='assign_device'),
+    path('assign/', views.assign_fault, name='assign_fault'),
     path('return/<int:assignment_id>/', views.return_device, name='return_device'),
     path('usage_report/', views.usage_report, name='usage_report'),
     path('faults/create/', views.create_fault, name='create_fault'),
     path('teams/create/', views.create_team, name='create_team'),
     path('teams/<int:team_id>/add_member/', views.add_team_member, name='add_team_member'),
+    path('teams/', views.team_list, name='team_list'),
 ]

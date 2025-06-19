@@ -99,3 +99,10 @@ def add_team_member(request, team_id):
         form = AddTeamMemberForm()
     members = team.members.all()
     return render(request, "fault_locator/add_team_member.html", {"form": form, "team": team, "members": members})
+
+def fault_locator_home(request):
+    return render(request, "fault_locator/landing.html")
+
+def assign_fault(request):
+    # Your assignment logic here
+    return render(request, "fault_locator/assign_fault.html")
