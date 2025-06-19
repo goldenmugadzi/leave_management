@@ -1,11 +1,11 @@
-from datetime import timedelta
+from datetime import timedelta, timezone
 
-from datetime import datetime, timezone
+from datetime import datetime
 from mimetypes import guess_type
 from random import randrange
 import csv
 
-from django.utils import timezone
+# from django.utils import timezone
 from django.db.models import Prefetch
 
 import sweetify
