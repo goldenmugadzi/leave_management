@@ -1703,7 +1703,7 @@ def download_csv(request):
 @login_required
 def my_actioned_items(request):
     """
-    Show ACE items the current user has actioned (approved/rejected).
+    Show ACE items the current user has actioned (approved/rejected), sorted by action date (most recent first).
     """
     username = request.user.username
     user_id = request.user.id
@@ -1718,24 +1718,22 @@ def my_actioned_items(request):
         if role.application == "ace":
             custom_user_roles["ace"] = role.role
             ace_role = str(custom_user_roles["ace"])
-            print("ace role",ace_role)
+            print("ace role", ace_role)
             break
     
     # Get all ACEs where the current user has an approval in the process
-    actioned_aces = []
-    
-    # Find all ACEs
+    actioned_approvals = []
     all_aces = Ace2.objects.filter(region=region)
-    
-    # Check each ACE for this user's approvals
     for ace in all_aces:
         process = ace.process
         if process and process.approval_set.exists():
-            approvals = process.approval_set.all()
+            approvals = process.approval_set.filter(user=request.user)
             for approval in approvals:
-                if approval.user == request.user:
-                    actioned_aces.append(ace)
-                    break
+                actioned_approvals.append((approval, ace))
+    
+    # Sort by approval date (replace 'date' with your actual field, e.g., 'timestamp', 'date_approved')
+    actioned_approvals.sort(key=lambda x: x[0].approved_at, reverse=True)
+    actioned_aces = [ace for approval, ace in actioned_approvals]
 
     requester = "create"  # Used in template for role checks
     

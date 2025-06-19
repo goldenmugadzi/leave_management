@@ -1,6 +1,6 @@
 from datetime import timedelta
-
 from datetime import datetime, timezone
+current_year = datetime.now(timezone.utc).year
 from mimetypes import guess_type
 from random import randrange
 import csv
