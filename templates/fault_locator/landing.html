@@ -1,0 +1,32 @@
+{% extends "admin_layout.html" %}
+{% load static %}
+
+{% block content %}
+<div class="content-wrapper">
+  <div class="max-w-4xl mx-auto py-10">
+    <h2 class="text-2xl font-bold mb-8 text-center">Fault Locator</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <a href="{% url 'device_list' %}" class="block bg-white rounded-lg shadow hover:shadow-lg p-6 text-center hover:bg-gulf-blue-100 transition">
+        <div class="text-xl font-semibold mb-2">Devices</div>
+        <div class="text-gray-500">View and manage locator devices</div>
+      </a>
+      <a href="{% url 'create_device' %}" class="block bg-white rounded-lg shadow hover:shadow-lg p-6 text-center hover:bg-gulf-blue-100 transition">
+        <div class="text-xl font-semibold mb-2">Add Device</div>
+        <div class="text-gray-500">Register a new locator device</div>
+      </a>
+      <a href="{% url 'create_fault' %}" class="block bg-white rounded-lg shadow hover:shadow-lg p-6 text-center hover:bg-gulf-blue-100 transition">
+        <div class="text-xl font-semibold mb-2">Report Fault</div>
+        <div class="text-gray-500">Log a new fault for tracking</div>
+      </a>
+      <a href="{% url 'assign_fault' %}" class="block bg-white rounded-lg shadow hover:shadow-lg p-6 text-center hover:bg-gulf-blue-100 transition">
+        <div class="text-xl font-semibold mb-2">Assign Fault</div>
+        <div class="text-gray-500">Assign a team and device to a fault</div>
+      </a>
+      <a href="{% url 'team_list' %}" class="block bg-white rounded-lg shadow hover:shadow-lg p-6 text-center hover:bg-gulf-blue-100 transition">
+        <div class="text-xl font-semibold mb-2">Teams</div>
+        <div class="text-gray-500">View and manage locator teams</div>
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}
