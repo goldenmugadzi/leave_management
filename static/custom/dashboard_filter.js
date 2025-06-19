@@ -751,7 +751,7 @@ class DashboardFilter extends React.Component {
                               <div className="col-8">
                                 <div className="numbers">
                                   <p className="text-xs mb-0 text-capitalize font-weight-bold">
-                                    Connected
+                                    Connected Terminated
                                   </p>
                                   <h6 className="font-weight-bolder mb-0">900</h6>
                                 </div>
