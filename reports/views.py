@@ -177,10 +177,10 @@ def download_file(request):
         base_directory_path = os.path.join(settings.BASE_DIR, file_path)
         import mimetypes
         content_type, _ = mimetypes.guess_type(base_directory_path)
-        # if content_type is None:
-        #     content_type = 'application/octet-stream'  # Default to binary file type if MIME type cannot be guessed
-        # print(content_type)
-        print(base_directory_path)
+        if content_type is None:
+            content_type = 'application/octet-stream'  # Default to binary file type if MIME type cannot be guessed
+        print("content_type: ", content_type)
+        print("base_directory_path: ", base_directory_path)
         return FileResponse(open(base_directory_path, 'rb'), content_type=content_type)
     except Exception as ex:
         print(ex)
@@ -287,9 +287,9 @@ def save_file(f,file_path):
         with open(file_path, 'wb+') as destination:
             for chunk in f.chunks():
                 destination.write(chunk)
-                return True
-            else:
-                return False
+            return True
+    else:
+        return False
             
             
             
