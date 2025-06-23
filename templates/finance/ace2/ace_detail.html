@@ -77,6 +77,14 @@
           text-decoration: none;
           cursor: pointer;
       }
+
+      .long-asset-number {
+    max-width: 100%;
+    word-break: break-all;
+    overflow-wrap: break-word;
+    white-space: pre-line;
+    display: inline-block;
+}
   </style>
     <script src="{% static 'assets/disbursemodal.js' %}"></script>
 </head>
@@ -115,7 +123,9 @@
                             <p class="font-bold   mb-2"> Requested By: {{ ace.requested_by }}</p>
                             <p class="font-bold   mb-2"> Date Created: {{ ace.date_created }}</p>
                         {% if ace.asset_number != None %}
-                            <p class="font-bold   mb-2"> Asset Number or (s): {{ ace.asset_number }}</p>
+                            <p class="font-bold   mb-2">
+                                Asset Number or (s): <span class="long-asset-number">{{ ace.asset_number }}</span>
+                            </p>
                         {% elif accounting_officer_role %}
                             <button id="asset_number_btn" class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded">Add Asset Numbers</button>
                             <div id="asset_number_modal" class="modal">
