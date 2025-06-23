@@ -10,12 +10,18 @@
 
 {% include "appraisal/approval/detail.html" with stages=stages last_stage_num=last_stage_number %}
 
+<div class="mt-2">
+    <div>
+        <div class="border-xl bg-yellow-200 p-4 rounded-l">
+            <h2 class="text-center font-bold text-xl">Section 1: Personal Details</h2>
+        </div>
+    </div>
+</div>
 
-<div class="flex gap-2">
+<div class="flex gap-2 mt-2">
     <div class="flex-1">
         <h3>User Information</h3>
         <div class="px-4 justify-between shadow-xl rounded-lg border-2 border-indigo-400 grid py-2">
-            
                 <span><strong>Full Name:</strong> {{appraisee_object}}</span>
                 <span><strong>EC Number:</strong> {{appraisee_object.username}}</span>
                 <span><strong>National ID:</strong> {{appraisee_object.national_id}}</span>
