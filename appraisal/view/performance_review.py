@@ -65,11 +65,11 @@ class PerformancePlanAndAssessmentTemplateView(TemplateView):
         appraisal_experience_objects = appraisal_experience_service.get_by_appraisal_id_use_case(appraisal_id=appraisal_id)
         
         
-        data = {}
-        data["user_object"] = appraisal_object.user
-        data["user_qualification_objects"] = user_qualification_objects
-        data["user_experience_objects"] = appraisal_experience_objects
-        
+        data = {
+            "user_object": appraisal_object.user,
+            "user_qualification_objects": user_qualification_objects,
+            "user_experience_objects": appraisal_experience_objects
+        }
         return data
         
     def get_performance_plan_info(self, appraisal_id)->Dict[str, Union[List[PerformanceProgressReview], List[TrainingAndDevelopment]]]:
@@ -78,11 +78,7 @@ class PerformancePlanAndAssessmentTemplateView(TemplateView):
         performance_review_repository = PerformanceReviewRepository()
         performance_review_service_handler = PerformanceReviewService(performance_repo=performance_review_repository)
         performance_review_objects = performance_review_service_handler.get_performances_by_appraisal_id_use_case(appraisal_id=appraisal_id)
-        data["performance_review_objects"] = performance_review_objects
-        
-        training_repo = TrainingAndDevelopmentRepository()
-        training_service_handler = TrainingAndDevelopmentService(training_dev_repo=training_repo)
-        data["training_objects"] = training_service_handler.get_by_appraisal_id_use_case(appraisal_id=appraisal_id)
+        data = {"performance_review_objects": performance_review_objects}
         return data
     
     def get_approval_stages(self):
