@@ -64,7 +64,8 @@ urlpatterns = [
     path('', include('Asset_Register.urls')),
     path('', include('Transport.urls')),
     path('', include('safety.urls')),
- 
+    path('', include('meetings.urls')),
+    path('', include('leave_management.urls')),
       
 
 

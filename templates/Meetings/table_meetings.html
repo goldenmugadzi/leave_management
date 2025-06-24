@@ -1,0 +1,192 @@
+{% extends 'admin_layout.html' %}
+
+{% block styles %}
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css"/>
+  <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.2.2/css/buttons.dataTables.min.css"/>
+  <style>
+    .dataTables_wrapper .dataTables_length select {
+      width: 4rem;
+    }
+    .heading-section {
+      display: flex;
+      flex-direction: column;
+      align-items: left;
+      margin-bottom: 2rem;
+    }
+    .main-heading {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: #17191e;
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+    .button-grid {
+      display: flex;
+      gap: 1.5rem;
+      justify-content: left;
+      margin-bottom: 1.5rem;
+    }
+    .tab-button {
+      padding: 0.75rem 2.5rem;
+      border: none;
+      border-radius: 9999px;
+      cursor: pointer;
+      background: #e0e7ef;
+      color: #1e293b;
+      font-weight: 500;
+      font-size: 1.15rem;
+      transition: background 0.3s, color 0.3s, box-shadow 0.3s;
+      box-shadow: 0 2px 8px rgba(30, 41, 59, 0.04);
+    }
+    .tab-button.active {
+      background-color: #1d4ed8;
+      color: white;
+    }
+    .tab-button:hover {
+      background-color: #2563eb;
+      color: #fff;
+      box-shadow: 0 4px 16px rgba(30, 41, 59, 0.10);
+    }
+    /* Responsive table wrapper */
+    .table-responsive {
+      width: 100%;
+      overflow-x: auto;
+    }
+    /* Optional: minimum width for the table so columns don't get too squished */
+    #meetings_index {
+      min-width: 1200px;
+    }
+  </style>
+{% endblock styles %}
+
+{% block content %}
+<div class="content-wrapper">
+  <div class="bg-gulf-blue-100 shadow shadow-gulf-blue-300 text-gulf-blue-900 rounded px-2 py-2">
+    <div class="heading-section">
+      <div class="main-heading">Meetings Management</div>
+      <div class="button-grid">
+        <a href="/meetings" class="tab-button active">Register Meeting</a>
+        <a href="/upload_meeting" class="tab-button">Upload File</a>
+      </div>
+    </div>
+    <div class="table-responsive">
+      <table id="meetings_index" class="display" style="width: 100%">
+        <thead>
+          <tr>
+             <th>ID</th>
+            <th>Employees Invited</th>
+            <th>Department</th>
+            <th>Region</th>
+            <th>Type of Meeting</th>
+            <th>Date</th>
+            <th>Start Time</th>
+            <th>End Time</th>
+            <th>Venue</th>
+            <th>Previous Minutes</th>
+            <th>Invited Attendees</th>
+            <th>Agenda Items</th>
+            <th>Cost Center</th>
+            <th>Confirm Status</th>
+            <th>Comments</th>
+            <th>Depot</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+        <tfoot>
+          <tr>
+            <th>ID</th>
+            <th>Employees Invited</th>
+            <th>Department</th>
+            <th>Region</th>
+            <th>Type of Meeting</th>
+            <th>Date</th>
+            <th>Start Time</th>
+            <th>End Time</th>
+            <th>Venue</th>
+            <th>Previous Minutes</th>
+            <th>Invited Attendees</th>
+            <th>Agenda Items</th>
+            <th>Cost Center</th>
+            <th>Confirm Status</th>
+            <th>Comments</th>
+            <th>Depot</th>
+            <th>Action</th>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.2.2/js/dataTables.buttons.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.2.2/js/buttons.html5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.2.2/js/buttons.print.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.36/pdfmake.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.36/vfs_fonts.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
+<script>
+const is_technician = "{{ is_technician|lower }}" === "true";
+$(document).ready(function () {
+    $("#meetings_index").DataTable({
+      processing: true,
+      serverSide: true,
+      //dom: 'Bfrtip',
+      //buttons: [
+       // 'copy', 'csv', 'excel', 'pdf', 'print'
+      //],
+      ajax: {
+        url: "{% url 'meetings_datatable' %}",
+        type: "GET"
+      },
+      columns: [
+        { data: "id" },
+        { data: "employees_invited" },
+        { data: "department" },
+        { data: "regions" },
+        { data: "type_of_meeting" },
+        { data: "date_of_meeting" },
+        { data: "start_time" },
+        { data: "end_time" },
+        { data: "venue" },
+        { 
+          data: "attach_previous_minutes",
+          render: function(data) {
+            return data ? `<a href="${data}" target="_blank">Download</a>` : "";
+          }
+        },
+        { data: "list_of_invited_attendees" },
+        { data: "list_of_agenda_items" },
+        { data: "cost_center" },
+        { data: "confirm_status" },
+        { data: "comments" },
+        { data: "depot" },
+        {
+          data: "id",
+          orderable: false,
+          searchable: false,
+          render: function(data, type, row) {
+            return `
+              <span style="display: inline-flex; gap: 0.5rem;">
+
+                <a href="/safety_update/${data}/" class="btn btn-info" title="Edit">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                  </svg>
+                </a>
+                <a href="{% url 'safety_ytd' %}" class="btn btn-info" title="info" style="font-size: 2rem; font-weight: bold; line-height: 1;">
+                  <i class="fa-solid fa-circle-info"></i>
+                </a>
+              </span>
+            `;
+          }
+        }
+      ]
+    });
+});
+</script>
+{% endblock %}

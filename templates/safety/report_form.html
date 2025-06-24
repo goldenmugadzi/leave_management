@@ -25,7 +25,7 @@
         <!-- Form Header -->
         <div class="border-b border-gray-200 pb-5 mb-6">
           <h1 class="text-2xl font-bold leading-7 text-gray-900">
-            Safety Monthly Report
+            SHE Report
           </h1>
           <p class="mt-2 text-sm text-gray-600">
             Please fill in all required fields to submit a safety report.
@@ -63,11 +63,12 @@
               <label class="block text-sm font-medium text-gray-700">{{ form.year.label }}</label>
               {{ form.year }}
             </div>
+           
           </div>
 
           <!-- Exposure -->
           <div class="space-y-4">
-            <h2 class="text-lg font-medium text-gray-900">Exposure</h2>
+            <h2 class="text-lg font-medium text-gray-900">Exposure Time</h2>
             <div class="form-group">
               <label class="block text-sm font-medium text-gray-700">{{ form.number_of_workers.label }}</label>
               {{ form.number_of_workers }}
@@ -80,7 +81,7 @@
 
           <!-- Accident Statistics -->
           <div class="space-y-4 lg:col-span-3">
-            <h2 class="text-lg font-medium text-gray-900">Accident Statistics</h2>
+            <h2 class="text-lg font-medium text-gray-900">SHE Performance</h2>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div class="form-group">
                 <label class="block text-sm font-medium text-gray-700">{{ form.work_related_accidents.label }}</label>

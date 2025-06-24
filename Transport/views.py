@@ -1,6 +1,5 @@
 from django.shortcuts import render,redirect
 from django.http import HttpResponseRedirect
-#from .model import TransportAssets
 from django.contrib.auth import authenticate, login ,logout
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -13,10 +12,8 @@ from django.core.paginator import Paginator
 from django.http import JsonResponse
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db.models import Q
-#from exchangelib import Credentials, Account, Configuration, Message, Mailbox
 from django.urls import reverse
 from django.template.loader import render_to_string
-#from exchangelib import HTMLBody
 from.models import*
 from it.users.models import Regions, Sections, UserProfile,Designations,CostCenter
 from.forms import TransportAssetsForm
@@ -38,98 +35,6 @@ def register_vehicle(request):
 
 def table_vehicle (request):
   return render(request,'transport/table_vehicle.html')
-
-def vehicle_datatable(request):
-
-    try:
-        draw = int(request.GET.get('draw', default=1))
-        start = int(request.GET.get('start', default=0))
-        length = int(request.GET.get('length', default=10))
-        search_value = request.GET.get('search[value]', default='')
-
-        transportAssets = TransportAssets.objects.all()
-
-        if search_value:
-            transportAssets = transportAssets.filter(
-                Q(jobcardnumber__icontains=search_value) |
-                Q(fleet_number__icontains=search_value) |
-                Q(reg_number__icontains=search_value) |
-                Q(user__username__icontains=search_value) |
-                Q(sections__section_name__icontains=search_value) | 
-                Q(fuel_type__icontains=search_value) |
-                Q(designations__designation__icontains=search_value) |
-                Q(regions__region__icontains=search_value)
-            )
-
-        total = transportAssets.count()
-
-        order_column = request.GET.get('order[0][column]')
-        order_dir = request.GET.get('order[0][dir]')
-
-        if order_column is not None and order_dir is not None:
-            column_map = {
-                "0": "jobcardnumber",
-                "1": "fleet_number",
-                "2": "reg_number",
-                "3": "department",
-                "4": "regions",
-                "5": "user",
-                "6": "designations",
-                "7": "model",
-                "8": "fuel_type",
-                "9": "year",
-                "11": "chass_number",
-                "12": "status",
-            }
-
-            column_name = column_map.get(order_column)
-            if column_name:
-                if order_dir == 'desc':
-                    column_name = f'-{column_name}'
-                transportAssets = transportAssets.order_by(column_name)
-
-        paginator = Paginator(transportAssets, length)
-        page_number = start // length + 1
-        page_obj = paginator.get_page(page_number)
-
-        data = []
-        for transportAsset in page_obj:
-            o = {
-                "id": transportAsset.id,
-                "jobcardnumber": transportAsset.jobcardnumber,
-                "fleet_number": transportAsset.fleet_number,
-                "reg_number": transportAsset.reg_number,
-                "user": f"{transportAsset.user.first_name} {transportAsset.user.last_name}" if transportAsset.user else None,
-                "make": transportAsset.make,
-                "model": transportAsset.model,
-                "engine_number": transportAsset.engine_number,
-                "chass_number": transportAsset.chass_number,
-                "year": transportAsset.year,
-                "updated_by": transportAsset.updated_by,
-                "created_by": f"{transportAsset.created_by.first_name} {transportAsset.created_by.last_name}" if transportAsset.created_by else None,
-                "department": transportAsset.department.section if transportAsset.department else None,
-                "regions": transportAsset.regions.region if transportAsset.regions else None,
-                "fuel_type": transportAsset.fuel_type,
-                "designation": transportAsset.designation.description if transportAsset.designation else None,
-                "status": transportAsset.status,
-                "cost_center": transportAsset.cost_center.name if transportAsset.cost_center else None,
-            }
-            data.append(o)
-
-        return JsonResponse({
-            'draw': draw,
-            'recordsTotal': total,
-            'recordsFiltered': total,
-            'data': data
-        })
-    except Exception as ex:
-        print(ex)
-        return JsonResponse({
-            'draw': 1,
-            'recordsTotal': 0,
-            'recordsFiltered': 0,
-            'data': []
-        })
 
 def update_vehicle(request, id):
     transportAssets = TransportAssets.objects.filter(id=id).first()
@@ -248,3 +153,58 @@ def upload_vehicle(request):
             })
 
     return render(request, 'transport/upload_vehicle.html', {})
+
+def vehicle_datatable(request):
+    draw = int(request.GET.get('draw', 1))
+    start = int(request.GET.get('start', 0))
+    length = int(request.GET.get('length', 10))
+    search_value = request.GET.get('search[value]', '')
+
+    qs = TransportAssets.objects.all()
+
+    if search_value:
+        qs = qs.filter(
+            Q(stf__icontains=search_value) |
+            Q(fleet_number__icontains=search_value) |
+            Q(reg_number__icontains=search_value) |
+            Q(make__icontains=search_value) |
+            Q(details_of_journey__icontains=search_value) |
+            Q(defects_and_repairs_carried_out__icontains=search_value)
+        )
+
+    total = qs.count()
+    qs = qs.order_by('-id')[start:start+length]
+
+    data = []
+    for asset in qs:
+        data.append({
+            "id": asset.id,
+            "date": asset.date,
+            "depot": str(asset.depot) if asset.depot else "",
+            "stf": asset.stf,
+            "fleet_number": asset.fleet_number,
+            "reg_number": asset.reg_number,
+            "opening_speedo_reading": asset.opening_speedo_reading,
+            "driver": str(asset.driver) if asset.driver else "",
+            "closing_speedo_reading": asset.closing_speedo_reading,
+            "make": asset.make,
+            "region": str(asset.region) if asset.region else "",
+            "trip_distance": asset.trip_distance,
+            "designation": str(asset.designation) if asset.designation else "",
+            "fuel_drawn": asset.fuel_drawn,
+            "department": str(asset.department) if asset.department else "",
+            "fuel_type": asset.fuel_type,
+            "details_of_journey": asset.details_of_journey,
+            "cost_center": str(asset.cost_center) if asset.cost_center else "",
+            "model": asset.model,
+            "oil_drawn": asset.oil_drawn,
+            "place_drawn": asset.place_drawn,
+            "defects_and_repairs_carried_out": asset.defects_and_repairs_carried_out,
+        })
+
+    return JsonResponse({
+        "draw": draw,
+        "recordsTotal": total,
+        "recordsFiltered": total,
+        "data": data
+    })
