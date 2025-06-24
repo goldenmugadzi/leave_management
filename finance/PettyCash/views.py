@@ -990,7 +990,22 @@ def my_actioned_items(request):
                 break  # Found an approval by this user for this pettycash
 
     # Sort by date (most recent first)
-    actioned_approvals.sort(key=lambda x: x[0] or datetime.min, reverse=True)
+    from datetime import datetime, time
+
+    def to_datetime(dt):
+        if dt is None:
+            return timezone.make_aware(datetime.min, timezone.get_current_timezone())
+        if isinstance(dt, datetime):
+            if timezone.is_naive(dt):
+                return timezone.make_aware(dt, timezone.get_current_timezone())
+            return dt
+        elif hasattr(dt, 'year') and hasattr(dt, 'month') and hasattr(dt, 'day'):
+            # It's a date, convert to datetime and make aware
+            aware_dt = datetime.combine(dt, datetime.min.time())
+            return timezone.make_aware(aware_dt, timezone.get_current_timezone())
+        return timezone.make_aware(datetime.min, timezone.get_current_timezone())
+
+    actioned_approvals.sort(key=lambda x: to_datetime(x[0]), reverse=True)
     actioned_pettycashs = [pc for dt, pc in actioned_approvals]
 
     requester = "create"  # Used in template for role checks
