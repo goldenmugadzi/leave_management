@@ -1026,7 +1026,7 @@ def notify_uncleared_pettycash_dischargers(request):
         region=region,
     ).prefetch_related(
         Prefetch('process__approval_set', queryset=Approval.objects.order_by('approved_at'))
-    )
+    ).order_by('-date_created', 'petty_id')[:800]
 
     for pc in uncleared_pettycash:
         try:
