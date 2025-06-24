@@ -1,4 +1,5 @@
-from datetime import timedelta, timezone
+from datetime import timedelta
+from django.utils import timezone
 
 from datetime import datetime
 from mimetypes import guess_type
@@ -1009,6 +1010,7 @@ def notify_uncleared_pettycash_dischargers(request):
     This runs on every access to a main petty cash view.
     """
     now = timezone.now()
+    from datetime import timedelta
     one_week_ago = now - timedelta(days=7)
     current_year = now.year
 
