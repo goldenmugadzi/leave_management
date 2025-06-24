@@ -1,5 +1,9 @@
 from django import forms
+<<<<<<< HEAD
 from .models import SafetyMonthlyReport, AccidentReport
+=======
+from .models import SafetyMonthlyReport
+>>>>>>> 1b24c077b0267638fdc753da98de11aedc9afed6
 from it.users.models import UserProfile, Sections, Regions
 
 class SafetyMonthlyReportForm(forms.ModelForm):
@@ -13,10 +17,13 @@ class SafetyMonthlyReportForm(forms.ModelForm):
             'wellness_programmes', 'clear_up_campaigns', 'she_inspections_conducted',
             'mock_drills_conducted', 'number_of_workers', 'number_of_days'
         ]
+<<<<<<< HEAD
         
         widgets = {
             'date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
         }
+=======
+>>>>>>> 1b24c077b0267638fdc753da98de11aedc9afed6
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

@@ -6,7 +6,6 @@ class SafetyMonthlyReport(models.Model):
     user = models.ForeignKey(UserProfile, on_delete=models.CASCADE, blank=True, null=True)
     department = models.ForeignKey(Sections, on_delete=models.DO_NOTHING, blank=True, null=True)
     regions = models.ForeignKey(Regions, on_delete=models.DO_NOTHING, blank=True, null=True)
-    # Date fields
     date = models.DateField(help_text="Any day in the month being reported")
     month = models.PositiveSmallIntegerField()
     year = models.PositiveSmallIntegerField()
@@ -30,10 +29,11 @@ class SafetyMonthlyReport(models.Model):
     number_of_workers = models.PositiveIntegerField(default=0)
     number_of_days = models.PositiveIntegerField(default=0)
 
-    # Calculated rates (optional, can also be calculated on the fly)
+    
     accident_frequency_rate = models.FloatField(default=0.0)
     injury_severity_rate = models.FloatField(default=0.0)
 
+<<<<<<< HEAD
     # Year-to-date cumulative fields (optional, can be calculated in queries)
     ytd_work_related_accidents = models.PositiveIntegerField(default=0)
     ytd_disabling_accidents = models.PositiveIntegerField(default=0)
@@ -55,6 +55,23 @@ class SafetyMonthlyReport(models.Model):
     non_lost_time_injuries = models.PositiveIntegerField(default=0)
     lost_time_injuries = models.PositiveIntegerField(default=0)
     fatalities = models.PositiveIntegerField(default=0)
+=======
+    
+    ytd_work_related_accidents = models.PositiveIntegerField(default=0, editable=False)
+    ytd_disabling_accidents = models.PositiveIntegerField(default=0, editable=False)
+    ytd_fatal_accidents = models.PositiveIntegerField(default=0, editable=False)
+    ytd_man_hours_lost = models.PositiveIntegerField(default=0, editable=False)
+    ytd_motor_vehicle_accidents = models.PositiveIntegerField(default=0, editable=False)
+    ytd_property_damaged = models.PositiveIntegerField(default=0, editable=False)
+    ytd_she_meetings_conducted = models.PositiveIntegerField(default=0, editable=False)
+    ytd_she_related_trainings = models.PositiveIntegerField(default=0, editable=False)
+    ytd_wellness_programmes = models.PositiveIntegerField(default=0, editable=False)
+    ytd_clear_up_campaigns = models.PositiveIntegerField(default=0, editable=False)
+    ytd_she_inspections_conducted = models.PositiveIntegerField(default=0, editable=False)
+    ytd_mock_drills_conducted = models.PositiveIntegerField(default=0, editable=False)
+    
+    
+>>>>>>> 1b24c077b0267638fdc753da98de11aedc9afed6
 
     def save(self, *args, **kwargs):
         
