@@ -25,8 +25,110 @@ class DashboardFilter extends React.Component {
       selectedDistrict: "",
       selectedSection: "",
       pbncs: [],
+      weekly_sales: [{
+        week: "Week 1",
+        zwl: "500,000,000",
+        usd: "2,500"
+      }, {
+        week: "Week 2",
+        zwl: "750,000,000",
+        usd: "3,750"
+      }, {
+        week: "Week 3",
+        zwl: "620,000,000",
+        usd: "3,100"
+      }, {
+        week: "Week 4",
+        zwl: "890,000,000",
+        usd: "4,450"
+      }, {
+        week: "Week 5",
+        zwl: "1,200,000,000",
+        usd: "6,000"
+      }],
       upos: [],
-      tds: [],
+      weekly_outages: [{
+        week: "Week 1",
+        outages: 5,
+        resolved: 3,
+        pending: 2
+      }, {
+        week: "Week 2",
+        outages: 8,
+        resolved: 6,
+        pending: 2
+      }, {
+        week: "Week 3",
+        outages: 12,
+        resolved: 9,
+        pending: 3
+      }, {
+        week: "Week 4",
+        outages: 7,
+        resolved: 5,
+        pending: 2
+      }, {
+        week: "Week 5",
+        outages: 15,
+        resolved: 11,
+        pending: 4
+      }],
+      tds: [{
+        name: "ABC Manufacturing Ltd",
+        amount: "$45,000"
+      }, {
+        name: "XYZ Construction Co",
+        amount: "$38,500"
+      }, {
+        name: "Premier Mining Corp",
+        amount: "$32,800"
+      }, {
+        name: "Delta Industries",
+        amount: "$28,200"
+      }, {
+        name: "Metro Holdings",
+        amount: "$25,600"
+      }, {
+        name: "Eastern Logistics",
+        amount: "$22,400"
+      }, {
+        name: "Central Textiles",
+        amount: "$19,800"
+      }, {
+        name: "Southern Farms Ltd",
+        amount: "$17,300"
+      }],
+      weekly_faults_maintenance: [{
+        week: "Week 1",
+        faults: 8,
+        maintenance: 12,
+        completed: 15,
+        pending: 5
+      }, {
+        week: "Week 2",
+        faults: 6,
+        maintenance: 15,
+        completed: 18,
+        pending: 3
+      }, {
+        week: "Week 3",
+        faults: 10,
+        maintenance: 9,
+        completed: 14,
+        pending: 5
+      }, {
+        week: "Week 4",
+        faults: 4,
+        maintenance: 18,
+        completed: 20,
+        pending: 2
+      }, {
+        week: "Week 5",
+        faults: 12,
+        maintenance: 8,
+        completed: 16,
+        pending: 4
+      }],
       current_month: "",
       maintenance: [],
       inspections: [],
@@ -151,8 +253,11 @@ class DashboardFilter extends React.Component {
           maintenance_count: maintenance_count_,
           mnt: mtn_,
           pbncs: data.pbncs,
+          weekly_sales: data.weekly_sales || this.state.weekly_sales,
           upos: data.upos,
-          tds: data.tds
+          weekly_outages: data.weekly_outages || this.state.weekly_outages,
+          tds: data.tds && data.tds.length > 0 ? data.tds : this.state.tds,
+          weekly_faults_maintenance: data.weekly_faults_maintenance || this.state.weekly_faults_maintenance
         });
         this.initComponents();
       }
@@ -512,8 +617,11 @@ class DashboardFilter extends React.Component {
         sections: data.sections,
         depots: data.depots,
         pbncs: data.pbncs,
+        weekly_sales: data.weekly_sales || this.state.weekly_sales,
         upos: data.upos,
-        tds: data.tds
+        weekly_outages: data.weekly_outages || this.state.weekly_outages,
+        tds: data.tds && data.tds.length > 0 ? data.tds : this.state.tds,
+        weekly_faults_maintenance: data.weekly_faults_maintenance || this.state.weekly_faults_maintenance
       });
     });
   };
@@ -532,8 +640,11 @@ class DashboardFilter extends React.Component {
         maintenance_count: maintenance_count_,
         mnt: mtn_,
         pbncs: data.pbncs,
+        weekly_sales: data.weekly_sales || this.state.weekly_sales,
         upos: data.upos,
-        tds: data.tds
+        weekly_outages: data.weekly_outages || this.state.weekly_outages,
+        tds: data.tds && data.tds.length > 0 ? data.tds : this.state.tds,
+        weekly_faults_maintenance: data.weekly_faults_maintenance || this.state.weekly_faults_maintenance
       });
       this.initComponents();
     });
@@ -818,16 +929,16 @@ class DashboardFilter extends React.Component {
     })), /*#__PURE__*/React.createElement("p", {
       className: "text-xs text-muted mt-2 mb-0"
     }, "YTD Target:1000"))))))))))))), /*#__PURE__*/React.createElement("div", {
-      className: "grid grid-cols-5 gap-4 mt-10"
+      className: "grid grid-cols-4 gap-4 mt-10"
     }, /*#__PURE__*/React.createElement("div", {
-      className: "w-auto bg-gulf-blue-200 drop-shadow-md shadow shadow-gulf-blue-300 text-gray-900 rounded px-2 py-2"
+      className: "w-auto bg-gradient-to-b from-gulf-blue-100 to-gulf-blue-200 drop-shadow-lg shadow-lg shadow-gulf-blue-400 text-gray-900 rounded-lg px-3 py-3 border border-gulf-blue-300"
     }, /*#__PURE__*/React.createElement("div", {
       className: "sm:flex lg:items-center lg:justify-between"
     }, /*#__PURE__*/React.createElement("div", {
       className: "min-w-0 flex-1"
     }, /*#__PURE__*/React.createElement("div", {
-      className: "text-center text-lg font-bold sm:truncate sm:tracking-tight"
-    }, "Top PBNC Customers"), /*#__PURE__*/React.createElement("div", {
+      className: "text-center text-xl font-bold text-gulf-blue-900 sm:truncate sm:tracking-tight mb-2 bg-white rounded-lg py-2 px-3 shadow-sm border border-gulf-blue-300"
+    }, "\uD83D\uDCCA Weekly Sales"), /*#__PURE__*/React.createElement("div", {
       style: {
         height: "14rem"
       },
@@ -835,16 +946,37 @@ class DashboardFilter extends React.Component {
     }, /*#__PURE__*/React.createElement("a", {
       href: "#"
     }, /*#__PURE__*/React.createElement("table", {
-      className: "table-auto"
-    }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", null), /*#__PURE__*/React.createElement("th", null), /*#__PURE__*/React.createElement("th", null))), /*#__PURE__*/React.createElement("tbody", null, this.state.pbncs ? this.state.pbncs.map((pbnc, index) => /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, index + 1), /*#__PURE__*/React.createElement("td", null, pbnc.name), /*#__PURE__*/React.createElement("td", null, pbnc.amount))) : null))))))), /*#__PURE__*/React.createElement("div", {
-      className: "w-auto bg-royal-heath-200 drop-shadow-md shadow shadow-royal-heath-300 text-gray-900 rounded px-2 py-2"
+      className: "table-auto w-full text-sm border-collapse"
+    }, /*#__PURE__*/React.createElement("thead", {
+      className: "bg-gulf-blue-600 text-white"
+    }, /*#__PURE__*/React.createElement("tr", {
+      className: "bg-gulf-blue-600 transition-colors"
+    }, /*#__PURE__*/React.createElement("th", {
+      className: "text-left p-2 font-bold border border-gulf-blue-600"
+    }, "Week"), /*#__PURE__*/React.createElement("th", {
+      className: "text-left p-2 font-bold border border-gulf-blue-600"
+    }, "ZWL"), /*#__PURE__*/React.createElement("th", {
+      className: "text-left p-2 font-bold border border-gulf-blue-600"
+    }, "USD"))), /*#__PURE__*/React.createElement("tbody", {
+      className: "bg-white"
+    }, this.state.weekly_sales ? this.state.weekly_sales.map((sale, index) => /*#__PURE__*/React.createElement("tr", {
+      key: index,
+      className: "hover:bg-gulf-blue-100 transition-colors"
+    }, /*#__PURE__*/React.createElement("td", {
+      className: "p-2 font-semibold text-gulf-blue-900 border border-gray-300"
+    }, sale.week), /*#__PURE__*/React.createElement("td", {
+      className: "p-2 text-gray-800 border border-gray-300 font-medium"
+    }, sale.zwl), /*#__PURE__*/React.createElement("td", {
+      className: "p-2 text-gray-800 border border-gray-300 font-medium"
+    }, sale.usd))) : null))))))), /*#__PURE__*/React.createElement("div", {
+      className: "w-auto bg-gradient-to-b from-red-100 to-red-200 drop-shadow-lg shadow-lg shadow-red-400 text-gray-900 rounded-lg px-3 py-3 border border-red-300"
     }, /*#__PURE__*/React.createElement("div", {
       className: "sm:flex lg:items-center lg:justify-between"
     }, /*#__PURE__*/React.createElement("div", {
       className: "min-w-0 flex-1"
     }, /*#__PURE__*/React.createElement("div", {
-      className: "text-center text-lg font-bold sm:truncate sm:tracking-tight"
-    }, "Unresolved Power Outages"), /*#__PURE__*/React.createElement("div", {
+      className: "text-center text-xl font-bold text-red-900 sm:truncate sm:tracking-tight mb-2 bg-white rounded-lg py-2 px-3 shadow-sm border border-red-300"
+    }, "\u26A1 Weekly Power Outages"), /*#__PURE__*/React.createElement("div", {
       style: {
         height: "14rem"
       },
@@ -852,34 +984,39 @@ class DashboardFilter extends React.Component {
     }, /*#__PURE__*/React.createElement("a", {
       href: "#"
     }, /*#__PURE__*/React.createElement("table", {
-      className: "table-auto"
-    }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", null), /*#__PURE__*/React.createElement("th", null))), /*#__PURE__*/React.createElement("tbody", null, this.state.upos ? this.state.upos.map((upo, index) => /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, index + 1), /*#__PURE__*/React.createElement("td", null, upo.description))) : null))))))), /*#__PURE__*/React.createElement("div", {
-      className: "w-auto bg-citron-200 drop-shadow-md shadow shadow-citron-300 text-gray-900 rounded px-2 py-2"
+      className: "table-auto w-full text-sm border-collapse"
+    }, /*#__PURE__*/React.createElement("thead", {
+      className: "bg-red-600 text-white"
+    }, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", {
+      className: "text-left p-2 font-bold border border-red-600"
+    }, "Week"), /*#__PURE__*/React.createElement("th", {
+      className: "text-left p-2 font-bold border border-red-600"
+    }, "Total"), /*#__PURE__*/React.createElement("th", {
+      className: "text-left p-2 font-bold border border-red-600"
+    }, "Resolved"), /*#__PURE__*/React.createElement("th", {
+      className: "text-left p-2 font-bold border border-red-600"
+    }, "Pending"))), /*#__PURE__*/React.createElement("tbody", {
+      className: "bg-white"
+    }, this.state.weekly_outages ? this.state.weekly_outages.map((outage, index) => /*#__PURE__*/React.createElement("tr", {
+      key: index,
+      className: "hover:bg-red-50 transition-colors"
+    }, /*#__PURE__*/React.createElement("td", {
+      className: "p-2 font-semibold text-red-900 border border-gray-300"
+    }, outage.week), /*#__PURE__*/React.createElement("td", {
+      className: "p-2 text-gray-800 border border-gray-300 font-medium"
+    }, outage.outages), /*#__PURE__*/React.createElement("td", {
+      className: "p-2 text-green-700 border border-gray-300 font-medium"
+    }, outage.resolved), /*#__PURE__*/React.createElement("td", {
+      className: "p-2 text-red-700 border border-gray-300 font-medium"
+    }, outage.pending))) : null))))))), /*#__PURE__*/React.createElement("div", {
+      className: "w-auto bg-gradient-to-b from-orange-100 to-orange-200 drop-shadow-lg shadow-lg shadow-orange-400 text-gray-900 rounded-lg px-3 py-3 border border-orange-300"
     }, /*#__PURE__*/React.createElement("div", {
       className: "sm:flex lg:items-center lg:justify-between"
     }, /*#__PURE__*/React.createElement("div", {
       className: "min-w-0 flex-1"
     }, /*#__PURE__*/React.createElement("div", {
-      className: "text-center text-lg font-bold text-gulf-blue-950 sm:truncate sm:tracking-tight"
-    }, "Inspection breakdown"), /*#__PURE__*/React.createElement("div", {
-      style: {
-        height: "14rem"
-      },
-      className: "mt-2 h-20 overflow-auto"
-    }, /*#__PURE__*/React.createElement("a", {
-      href: "#"
-    }, /*#__PURE__*/React.createElement("canvas", {
-      id: "Inspection",
-      ref: this.inspectionPieChartRef
-    })))))), /*#__PURE__*/React.createElement("div", {
-      className: "w-auto bg-gulf-blue-200 drop-shadow-md shadow shadow-gulf-blue-300 text-gulf-blue-900 rounded px-2 py-2"
-    }, /*#__PURE__*/React.createElement("div", {
-      className: "sm:flex lg:items-center lg:justify-between"
-    }, /*#__PURE__*/React.createElement("div", {
-      className: "min-w-0 flex-1"
-    }, /*#__PURE__*/React.createElement("div", {
-      className: "text-center text-lg font-bold text-gulf-blue-950 sm:truncate sm:tracking-tight"
-    }, "Top Debtors"), /*#__PURE__*/React.createElement("div", {
+      className: "text-center text-xl font-bold text-orange-900 sm:truncate sm:tracking-tight mb-2 bg-white rounded-lg py-2 px-3 shadow-sm border border-orange-300"
+    }, "\uD83D\uDD27 Weekly Faults and Maintenance"), /*#__PURE__*/React.createElement("div", {
       style: {
         height: "14rem"
       },
@@ -887,26 +1024,74 @@ class DashboardFilter extends React.Component {
     }, /*#__PURE__*/React.createElement("a", {
       href: "#"
     }, /*#__PURE__*/React.createElement("table", {
-      className: "table-auto"
-    }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", null), /*#__PURE__*/React.createElement("th", null), /*#__PURE__*/React.createElement("th", null))), /*#__PURE__*/React.createElement("tbody", null, this.state.tds ? this.state.tds.map((td, index) => /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, index + 1), /*#__PURE__*/React.createElement("td", null, td.name), /*#__PURE__*/React.createElement("td", null, td.amount))) : null))))))), /*#__PURE__*/React.createElement("div", {
-      className: "w-auto bg-citron-200 drop-shadow-md shadow shadow-citron-300 text-gray-900 rounded px-2 py-2"
+      className: "table-auto w-full text-sm border-collapse"
+    }, /*#__PURE__*/React.createElement("thead", {
+      className: "bg-gulf-blue-600 text-white"
+    }, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", {
+      className: "text-left p-2 font-bold border border-gulf-blue-600"
+    }, "Week"), /*#__PURE__*/React.createElement("th", {
+      className: "text-left p-2 font-bold border border-gulf-blue-600"
+    }, "Faults"), /*#__PURE__*/React.createElement("th", {
+      className: "text-left p-2 font-bold border border-orange-600"
+    }, "Maintenance"), /*#__PURE__*/React.createElement("th", {
+      className: "text-left p-2 font-bold border border-orange-600"
+    }, "Completed"), /*#__PURE__*/React.createElement("th", {
+      className: "text-left p-2 font-bold border border-orange-600"
+    }, "Pending"))), /*#__PURE__*/React.createElement("tbody", {
+      className: "bg-white"
+    }, this.state.weekly_faults_maintenance ? this.state.weekly_faults_maintenance.map((item, index) => /*#__PURE__*/React.createElement("tr", {
+      key: index,
+      className: "hover:bg-orange-50 transition-colors"
+    }, /*#__PURE__*/React.createElement("td", {
+      className: "p-2 font-semibold text-orange-900 border border-gray-300"
+    }, item.week), /*#__PURE__*/React.createElement("td", {
+      className: "p-2 text-red-700 border border-gray-300 font-medium"
+    }, item.faults), /*#__PURE__*/React.createElement("td", {
+      className: "p-2 text-blue-700 border border-gray-300 font-medium"
+    }, item.maintenance), /*#__PURE__*/React.createElement("td", {
+      className: "p-2 text-green-700 border border-gray-300 font-medium"
+    }, item.completed), /*#__PURE__*/React.createElement("td", {
+      className: "p-2 text-red-700 border border-gray-300 font-medium"
+    }, item.pending))) : null))))))), /*#__PURE__*/React.createElement("div", {
+      className: "w-auto bg-gradient-to-b from-purple-100 to-purple-200 drop-shadow-lg shadow-lg shadow-purple-400 text-gray-900 rounded-lg px-3 py-3 border border-purple-300"
     }, /*#__PURE__*/React.createElement("div", {
       className: "sm:flex lg:items-center lg:justify-between"
     }, /*#__PURE__*/React.createElement("div", {
       className: "min-w-0 flex-1"
     }, /*#__PURE__*/React.createElement("div", {
-      className: "text-center text-lg font-bold text-gulf-blue-950 sm:truncate sm:tracking-tight"
-    }, "Maintenance breakdown"), /*#__PURE__*/React.createElement("div", {
+      className: "text-center text-xl font-bold text-purple-900 sm:truncate sm:tracking-tight mb-2 bg-white rounded-lg py-2 px-3 shadow-sm border border-purple-300"
+    }, "\uD83D\uDCB0 Top Debtors"), /*#__PURE__*/React.createElement("div", {
       style: {
         height: "14rem"
       },
       className: "mt-2 h-20 overflow-auto"
     }, /*#__PURE__*/React.createElement("a", {
       href: "#"
-    }, /*#__PURE__*/React.createElement("canvas", {
-      id: "Maintenance",
-      ref: this.mmtPieChartRef
-    }))))))), /*#__PURE__*/React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("table", {
+      className: "table-auto w-full text-sm border-collapse"
+    }, /*#__PURE__*/React.createElement("thead", {
+      className: "bg-purple-600 text-white"
+    }, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", {
+      className: "text-left p-2 font-bold border border-purple-600"
+    }, "#"), /*#__PURE__*/React.createElement("th", {
+      className: "text-left p-2 font-bold border border-purple-600"
+    }, "Customer"), /*#__PURE__*/React.createElement("th", {
+      className: "text-left p-2 font-bold border border-purple-600"
+    }, "Amount"))), /*#__PURE__*/React.createElement("tbody", {
+      className: "bg-white"
+    }, this.state.tds && this.state.tds.length > 0 ? this.state.tds.map((td, index) => /*#__PURE__*/React.createElement("tr", {
+      key: index,
+      className: "hover:bg-purple-50 transition-colors"
+    }, /*#__PURE__*/React.createElement("td", {
+      className: "p-2 font-semibold text-purple-900 border border-gray-300"
+    }, index + 1), /*#__PURE__*/React.createElement("td", {
+      className: "p-2 text-gray-800 border border-gray-300 font-medium"
+    }, td.name), /*#__PURE__*/React.createElement("td", {
+      className: "p-2 text-red-700 border border-gray-300 font-medium"
+    }, td.amount))) : /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", {
+      colSpan: "3",
+      className: "p-2 text-center text-gray-500 border border-gray-300"
+    }, "No debt data available")))))))))), /*#__PURE__*/React.createElement("div", {
       className: "grid grid-cols-2 mt-4 gap-4"
     }, /*#__PURE__*/React.createElement("div", {
       className: "w-auto bg-gulf-blue-200 shadow shadow-gulf-blue-300 text-gulf-blue-700 rounded px-2 py-2"
