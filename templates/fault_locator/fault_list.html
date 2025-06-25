@@ -1,0 +1,49 @@
+<!-- filepath: d:\b\templates\fault_locator\fault_list.html -->
+{% extends "admin_layout.html" %}
+{% block content %}
+<div class="content-wrapper">
+  <div class="bg-gulf-blue-100 shadow-lg rounded-lg p-6 max-w-4xl mx-auto">
+    <h3 class="font-bold text-lg mb-4">Faults</h3>
+    <table class="min-w-full bg-white rounded shadow">
+      <thead>
+        <tr>
+          <th class="py-2 px-4 border-b">Description</th>
+          <th class="py-2 px-4 border-b">Depot</th>
+          <th class="py-2 px-4 border-b">Team Assigned</th>
+          <th class="py-2 px-4 border-b">Device</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for fault in faults %}
+        <tr class="hover:bg-gray-100">
+          <td class="py-2 px-4 border-b">{{ fault.description }}</td>
+          <td class="py-2 px-4 border-b">{{ fault.depot }}</td>
+          <td class="py-2 px-4 border-b">
+            {% with assignment=fault.faultassignment_set.first %}
+              {% if assignment %}
+                {{ assignment.team.name }}
+              {% else %}
+                <span class="text-gray-400">Unassigned</span>
+              {% endif %}
+            {% endwith %}
+          </td>
+          <td class="py-2 px-4 border-b">
+            {% with assignment=fault.faultassignment_set.first %}
+              {% if assignment %}
+                {{ assignment.device.serial_number }}
+              {% else %}
+                <span class="text-gray-400">Unassigned</span>
+              {% endif %}
+            {% endwith %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="4" class="py-4 text-center text-gray-500">No faults found.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
