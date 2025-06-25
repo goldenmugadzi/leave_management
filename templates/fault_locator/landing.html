@@ -6,13 +6,29 @@
   <div class="max-w-4xl mx-auto py-10">
     <h2 class="text-2xl font-bold mb-8 text-center">Fault Locator</h2>
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <a href="{% url 'fault_locator_home' %}" class="block bg-white rounded-lg shadow hover:shadow-lg p-6 text-center hover:bg-gulf-blue-100 transition">
+        <div class="text-xl font-semibold mb-2">Home</div>
+        <div class="text-gray-500">Fault Locator Dashboard</div>
+      </a>
       <a href="{% url 'device_list' %}" class="block bg-white rounded-lg shadow hover:shadow-lg p-6 text-center hover:bg-gulf-blue-100 transition">
-        <div class="text-xl font-semibold mb-2">Devices</div>
+        <div class="text-xl font-semibold mb-2">Device List</div>
         <div class="text-gray-500">View and manage locator devices</div>
       </a>
       <a href="{% url 'create_device' %}" class="block bg-white rounded-lg shadow hover:shadow-lg p-6 text-center hover:bg-gulf-blue-100 transition">
         <div class="text-xl font-semibold mb-2">Add Device</div>
         <div class="text-gray-500">Register a new locator device</div>
+      </a>
+      <a href="{% url 'usage_report' %}" class="block bg-white rounded-lg shadow hover:shadow-lg p-6 text-center hover:bg-gulf-blue-100 transition">
+        <div class="text-xl font-semibold mb-2">Device Usage Report</div>
+        <div class="text-gray-500">View device usage analytics</div>
+      </a>
+      <a href="{% url 'team_list' %}" class="block bg-white rounded-lg shadow hover:shadow-lg p-6 text-center hover:bg-gulf-blue-100 transition">
+        <div class="text-xl font-semibold mb-2">Team List</div>
+        <div class="text-gray-500">View and manage locator teams</div>
+      </a>
+      <a href="{% url 'create_team' %}" class="block bg-white rounded-lg shadow hover:shadow-lg p-6 text-center hover:bg-gulf-blue-100 transition">
+        <div class="text-xl font-semibold mb-2">Add Team</div>
+        <div class="text-gray-500">Create a new locator team</div>
       </a>
       <a href="{% url 'create_fault' %}" class="block bg-white rounded-lg shadow hover:shadow-lg p-6 text-center hover:bg-gulf-blue-100 transition">
         <div class="text-xl font-semibold mb-2">Report Fault</div>
@@ -22,9 +38,13 @@
         <div class="text-xl font-semibold mb-2">Assign Fault</div>
         <div class="text-gray-500">Assign a team and device to a fault</div>
       </a>
-      <a href="{% url 'team_list' %}" class="block bg-white rounded-lg shadow hover:shadow-lg p-6 text-center hover:bg-gulf-blue-100 transition">
-        <div class="text-xl font-semibold mb-2">Teams</div>
-        <div class="text-gray-500">View and manage locator teams</div>
+      <a href="{% url 'assign_device_to_team' %}" class="block bg-white rounded-lg shadow hover:shadow-lg p-6 text-center hover:bg-gulf-blue-100 transition">
+        <div class="text-xl font-semibold mb-2">Assign Device to Team</div>
+        <div class="text-gray-500">Allocate a locator device to a team (one device per team)</div>
+      </a>
+      <a href="{% url 'fault_list' %}" class="block bg-white rounded-lg shadow hover:shadow-lg p-6 text-center hover:bg-gulf-blue-100 transition">
+        <div class="text-xl font-semibold mb-2">Fault List</div>
+        <div class="text-gray-500">View all faults and their assigned teams/devices</div>
       </a>
     </div>
   </div>

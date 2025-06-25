@@ -38,3 +38,11 @@ class FaultAssignment(models.Model):
 
     def __str__(self):
         return f"{self.fault} assigned to {self.team} with {self.device}"
+
+class FaultLocatorDeviceAssignment(models.Model):
+    device = models.ForeignKey(FaultLocatorDevice, on_delete=models.CASCADE)
+    team = models.ForeignKey(FaultLocatorTeam, on_delete=models.CASCADE)
+    assigned_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.device} → {self.team} ({self.assigned_at:%Y-%m-%d})"

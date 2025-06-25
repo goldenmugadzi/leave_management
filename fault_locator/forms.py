@@ -1,5 +1,5 @@
 from django import forms
-from .models import Fault, FaultLocatorDevice, FaultLocatorTeam
+from .models import Fault, FaultLocatorDevice, FaultLocatorTeam,FaultLocatorDeviceAssignment, FaultAssignment
 from it.users.models import UserProfile, Depots
 from django_select2.forms import Select2MultipleWidget
 
@@ -42,3 +42,25 @@ class AddTeamMemberForm(forms.Form):
                      "focus:ring-indigo-600 sm:text-sm sm:leading-6"
         })
         self.fields['member'].label_attrs = {'class': 'block text-sm font-medium leading-6 text-gray-900'}
+
+class AssignDeviceToTeamForm(forms.ModelForm):
+    class Meta:
+        model = FaultLocatorDeviceAssignment
+        fields = ['device', 'team']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Only show devices not already assigned
+        assigned_devices = FaultLocatorDeviceAssignment.objects.values_list('device_id', flat=True)
+        self.fields['device'].queryset = FaultLocatorDevice.objects.exclude(id__in=assigned_devices)
+
+    def clean_device(self):
+        device = self.cleaned_data['device']
+        if FaultLocatorDeviceAssignment.objects.filter(device=device).exists():
+            raise forms.ValidationError("This device is already assigned to a team.")
+        return device
+
+class AssignFaultForm(forms.ModelForm):
+    class Meta:
+        model = FaultAssignment
+        fields = ['fault', 'team']  # Remove 'device' from the form
