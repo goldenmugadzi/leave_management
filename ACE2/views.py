@@ -574,10 +574,15 @@ def add_project_details(request, Ace_id2):
         form = ProjectDetailForm(request.POST, request.FILES)
         if form.is_valid():
             project_details = form.save(commit=False)
-            # add items from form to already existing ace object and convert to float before saving
-            total_connection_fee = (float(project_details.present_tariff) + float(project_details.present_fmc) +
-                                    float(project_details.capital_contribution) + float(project_details.materials) +
-                                    float(project_details.labour) + float(project_details.transport))
+            # Calculate total connection fee
+            total_connection_fee = (
+                float(project_details.present_tariff)
+                + float(project_details.present_fmc)
+                + float(project_details.capital_contribution)
+                + float(project_details.materials)
+                + float(project_details.labour)
+                + float(project_details.transport)
+            )
 
             ace = Ace2.objects.filter(Ace_id2=Ace_id2).first()
             ace.present_tariff = project_details.present_tariff
@@ -587,7 +592,31 @@ def add_project_details(request, Ace_id2):
             ace.labour = project_details.labour
             ace.transport = project_details.transport
             ace.total_connection_fee = total_connection_fee
-            ace.save()
+            ace.amount = total_connection_fee + ace.amount  # Update ACE amount
+
+            # Update related transaction amount
+            transaction = Transactions.objects.filter(Ace_id2=ace).first()
+            if transaction:
+                transaction.amount = transaction.amount + total_connection_fee
+
+            # Update floating cost (to_be_withdrawn) in budget
+            if ace.budget_id:
+                budget = ace.budget_id
+                # Optionally, recalculate to_be_withdrawn as sum of all ACEs for this budget
+                budget.to_be_withdrawn = budget.to_be_withdrawn + transaction.amount
+                budget.withdrawal_date = date.today()  # Update withdrawal date
+
+                if budget.to_be_withdrawn > budget.balance:
+                    messages.error(request, "Insufficient budget balance for this ACE.")
+                    sweetify.error(request, "Insufficient budget balance for this ACE.")
+                    return redirect('Ace:ace_detail', Ace_id2=ace.Ace_id2)
+                else:
+                    budget.save()
+                    ace.save()
+                    transaction.save()
+                    messages.success(request, "Project details updated successfully.")
+                    sweetify.success(request, "Project details updated successfully.")
+
             url = reverse('Ace:ace_detail', args=[ace.Ace_id2])
             return redirect(url)
     else:
