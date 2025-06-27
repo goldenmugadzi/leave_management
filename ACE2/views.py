@@ -345,33 +345,6 @@ def create_Ace(request):
                         messages.error(request, "Could not generate a unique ACE ID. Please try again.")
                         return render(request, 'finance/ace2/create_ace.html', {'form': form, 'formset': formset})
 
-                    # Final check before saving (should never trigger, but for safety)
-                    if Ace2.objects.filter(Ace_id2=ace.Ace_id2).exists():
-                        sweetify.error(request, "Duplicate ACE ID detected. Please try again.")
-                        messages.error(request, "Duplicate ACE ID detected. Please try again.")
-                        return render(request, 'finance/ace2/create_ace.html', {'form': form, 'formset': formset})
-
-                    rand = randrange(1, 1000)
-                    rand2 = str(rand)
-                    date = datetime.now()
-                    date = date.strftime("%Y%m%d")
-
-                    ace_id2 = "ACE" + date + rand2
-                    ace.Ace_id2 = ace_id2
-
-                    # check if ace_id2 exists
-                    ace_id2_exists = Ace2.objects.filter(Ace_id2=ace_id2).exists()
-                    # i want ths to loop till ace_id2 is unique
-                    while ace_id2_exists:
-                        rand = randrange(1, 1000)
-                        rand2 = str(rand)
-                        date = datetime.now()
-                        date = date.strftime("%Y%m%d")
-                        ace_id2 = "ACE" + date + rand2
-                        ace.Ace_id2 = ace_id2
-                        print("now trying ", ace_id2)
-                        ace_id2_exists = Ace2.objects.filter(Ace_id2=ace_id2).exists()
-
                     if designation:
                         ace.designation = designation
                     else:
@@ -455,7 +428,7 @@ def create_Ace(request):
 
                     if str(ace.classification) == "Project":
                         # the idea is that if its ace of type project there need to be added other project details
-                        url = reverse('Ace:ace_detail_project', args=[ace.Ace_id2])
+                        url = reverse('Ace:add_project_details', args=[ace.Ace_id2])
                         return redirect(url)
                     else:
                         url = reverse('Ace:ace_detail', args=[ace.Ace_id2])
@@ -1611,12 +1584,12 @@ def find_ace_section_head(request, section):
 
                 if role.application == "ace":
                     custom_user_roles["ace"] = role.role
-            ace_role = str(custom_user_roles["ace"])
-            if ace_role == "pass":
-                userp = 'sh'
-                sh = user_profile.username
-                if sh:
-                    return sh
+    ace_role = str(custom_user_roles["ace"])
+    if ace_role == "pass":
+        userp = 'sh'
+        sh = user_profile.username
+        if sh:
+            return sh
 
     # Return None if no section head is found
     return None
@@ -1640,12 +1613,12 @@ def find_general_manager(request, region):
 
                 if role.application == "ace":
                     custom_user_roles["ace"] = role.role
-            ace_role = str(custom_user_roles["ace"])
-            if ace_role == "approve":
-                userp = 'gm'
-                gm = user_profile.username
-                if gm:
-                    return gm
+    ace_role = str(custom_user_roles["ace"])
+    if ace_role == "approve":
+        userp = 'gm'
+        gm = user_profile.username
+        if gm:
+            return gm
 
 
         else:
