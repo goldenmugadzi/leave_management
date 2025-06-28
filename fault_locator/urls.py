@@ -18,4 +18,13 @@ urlpatterns = [
     path('teams/', views.team_list, name='team_list'),
     path('assign-device-to-team/', views.assign_device_to_team, name='assign_device_to_team'),
     path('devices/<int:device_id>/unassign/', views.unassign_device, name='unassign_device'),
+
+    # Senior Foreperson functions
+    path('deploy-team/', views.deploy_team_to_depot, name='deploy_team_to_depot'),
+    path('recall-team/<int:deployment_id>/', views.recall_team_from_depot, name='recall_team_from_depot'),
+    path('senior-assign-device/', views.senior_device_assignment, name='senior_device_assignment'),
+    path('team-deployments/', views.team_deployments, name='team_deployments'),
+
+    # Depot Foreperson functions  
+    path('depot/<int:depot_id>/fault-priority/', views.depot_fault_priority, name='depot_fault_priority'),
 ]

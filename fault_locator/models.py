@@ -11,6 +11,10 @@ class FaultLocatorDevice(models.Model):
 class FaultLocatorTeam(models.Model):
     name = models.CharField(max_length=100, unique=True)
     members = models.ManyToManyField(UserProfile, related_name='fault_locator_teams')
+    current_depot = models.ForeignKey(Depots, on_delete=models.SET_NULL, null=True, blank=True)
+    assigned_at = models.DateTimeField(null=True, blank=True)
+    assigned_by = models.ForeignKey(UserProfile, on_delete=models.SET_NULL, null=True, blank=True, 
+                                   related_name='team_assignments_made')
 
     def __str__(self):
         return self.name
@@ -25,6 +29,15 @@ class Fault(models.Model):
         ('located', 'Located'),
         ('closed', 'Closed'),
     ], default='requested')
+    priority = models.IntegerField(default=1, choices=[
+        (1, 'Low'),
+        (2, 'Medium'), 
+        (3, 'High'),
+        (4, 'Critical')
+    ])
+    prioritized_by = models.ForeignKey(UserProfile, on_delete=models.SET_NULL, 
+                                     null=True, blank=True, related_name='fault_priorities_set')
+    prioritized_at = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
         return f"Fault at {self.depot.depot}: {self.description[:30]}"
@@ -46,3 +59,17 @@ class FaultLocatorDeviceAssignment(models.Model):
 
     def __str__(self):
         return f"{self.device} → {self.team} ({self.assigned_at:%Y-%m-%d})"
+
+class TeamDeployment(models.Model):
+    team = models.ForeignKey(FaultLocatorTeam, on_delete=models.CASCADE)
+    depot = models.ForeignKey(Depots, on_delete=models.CASCADE)
+    deployed_by = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='deployments_made')
+    deployed_at = models.DateTimeField(auto_now_add=True)
+    recalled_at = models.DateTimeField(null=True, blank=True)
+    notes = models.TextField(blank=True)
+    
+    class Meta:
+        unique_together = ['team', 'depot', 'deployed_at']
+    
+    def __str__(self):
+        return f"{self.team.name} deployed to {self.depot.depot}"
