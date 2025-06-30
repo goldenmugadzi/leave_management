@@ -484,3 +484,227 @@ def has_fault_locator_permissions(user_profile):
     return (is_senior_foreperson(user_profile) or 
             is_foreperson(user_profile) or 
             can_create_device(user_profile))
+
+def device_detail(request, device_id):
+    """Detailed view of a specific device"""
+    user_profile = UserProfile.objects.filter(id=request.user.id).first()
+    device = get_object_or_404(FaultLocatorDevice, id=device_id)
+    
+    # Check permissions - users can only view devices they have access to
+    can_view = False
+    if is_senior_foreperson(user_profile):
+        # Senior forepersons can view all devices
+        can_view = True
+    elif user_profile and hasattr(user_profile, 'depot') and user_profile.depot:
+        # Regular users can view devices at their depot
+        depot = get_user_depot(user_profile)
+        if depot:
+            # Check if device is assigned to a team at this depot
+            device_assignment = FaultLocatorDeviceAssignment.objects.filter(
+                device=device, 
+                team__current_depot=depot
+            ).first()
+            can_view = device_assignment is not None
+    
+    if not can_view and not is_senior_foreperson(user_profile):
+        # Allow IT personnel and administrators to view devices
+        if not can_create_device(user_profile):
+            messages.error(request, "You don't have permission to view this device.")
+            return redirect('device_list')
+    
+    # Get current assignment (device to team)
+    current_assignment = FaultLocatorDeviceAssignment.objects.filter(device=device).first()
+    
+    # Get current fault assignment (if device is currently working on a fault)
+    current_fault_assignment = None
+    if current_assignment:
+        current_fault_assignment = FaultAssignment.objects.filter(
+            device=device, 
+            located_at__isnull=True
+        ).select_related('fault', 'team').first()
+    
+    # Get assignment history
+    assignment_history = FaultAssignment.objects.filter(
+        device=device
+    ).select_related('fault', 'team').order_by('-assigned_at')[:10]
+    
+    # Device statistics
+    total_assignments = FaultAssignment.objects.filter(device=device).count()
+    completed_assignments = FaultAssignment.objects.filter(
+        device=device, 
+        located_at__isnull=False
+    ).count()
+    
+    context = {
+        'device': device,
+        'user_profile': user_profile,
+        'current_assignment': current_assignment,
+        'current_fault_assignment': current_fault_assignment,
+        'assignment_history': assignment_history,
+        'is_senior_foreperson': is_senior_foreperson(user_profile),
+        'can_assign': is_senior_foreperson(user_profile),
+        'device_stats': {
+            'total_assignments': total_assignments,
+            'completed_assignments': completed_assignments,
+            'success_rate': (completed_assignments / total_assignments * 100) if total_assignments > 0 else 0
+        }
+    }
+    
+    return render(request, "fault_locator/device_detail.html", context)
+
+# Add these additional views that might be missing:
+
+def team_list(request):
+    """List all fault locator teams"""
+    user_profile = UserProfile.objects.filter(id=request.user.id).first()
+    
+    teams = FaultLocatorTeam.objects.prefetch_related('members', 'faultlocatordeviceassignment_set__device')
+    
+    # Role-based filtering
+    if not is_senior_foreperson(user_profile):
+        # Regular users might only see teams at their depot
+        if user_profile and hasattr(user_profile, 'depot') and user_profile.depot:
+            depot = get_user_depot(user_profile)
+            if depot:
+                teams = teams.filter(current_depot=depot)
+    
+    context = {
+        'teams': teams,
+        'user_profile': user_profile,
+        'is_senior_foreperson': is_senior_foreperson(user_profile),
+        'can_create_team': is_senior_foreperson(user_profile) or can_create_device(user_profile)
+    }
+    
+    return render(request, "fault_locator/team_list.html", context)
+
+def create_team(request):
+    """Create a new fault locator team"""
+    user_profile = UserProfile.objects.filter(id=request.user.id).first()
+    
+    # Check permissions
+    if not (is_senior_foreperson(user_profile) or can_create_device(user_profile)):
+        messages.error(request, "Access denied. You don't have permission to create teams.")
+        return redirect('fault_locator_home')
+    
+    if request.method == "POST":
+        form = FaultLocatorTeamNameForm(request.POST)
+        if form.is_valid():
+            team = form.save()
+            messages.success(request, f"Team {team.name} created successfully")
+            return redirect('add_team_member', team_id=team.id)
+    else:
+        form = FaultLocatorTeamNameForm()
+    
+    return render(request, "fault_locator/create_team.html", {
+        "form": form,
+        "user_profile": user_profile
+    })
+
+def add_team_member(request, team_id):
+    """Add a member to a team"""
+    user_profile = UserProfile.objects.filter(id=request.user.id).first()
+    team = get_object_or_404(FaultLocatorTeam, id=team_id)
+    
+    # Check permissions
+    if not (is_senior_foreperson(user_profile) or can_create_device(user_profile)):
+        messages.error(request, "Access denied. You don't have permission to manage team members.")
+        return redirect('team_list')
+    
+    if request.method == "POST":
+        member_id = request.POST.get('member')
+        if member_id:
+            member = get_object_or_404(UserProfile, id=member_id)
+            team.members.add(member)
+            messages.success(request, f"{member.get_full_name()} added to team {team.name}")
+    
+    return redirect('edit_team', team_id=team.id)
+
+def edit_team(request, team_id):
+    """Edit team details and members"""
+    user_profile = UserProfile.objects.filter(id=request.user.id).first()
+    team = get_object_or_404(FaultLocatorTeam, id=team_id)
+    
+    # Check permissions
+    if not (is_senior_foreperson(user_profile) or can_create_device(user_profile)):
+        messages.error(request, "Access denied. You don't have permission to edit teams.")
+        return redirect('team_list')
+    
+    # Get users not in this team
+    users = UserProfile.objects.exclude(id__in=team.members.values_list('id', flat=True))
+    
+    if request.method == "POST":
+        form = FaultLocatorTeamForm(request.POST, instance=team)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f"Team {team.name} updated successfully")
+            return redirect('team_list')
+    else:
+        form = FaultLocatorTeamForm(instance=team)
+    
+    return render(request, "fault_locator/edit_team.html", {
+        "form": form, 
+        "team": team, 
+        "users": users,
+        "user_profile": user_profile
+    })
+
+def remove_team_member(request, team_id, member_id):
+    """Remove a member from a team"""
+    user_profile = UserProfile.objects.filter(id=request.user.id).first()
+    
+    # Check permissions
+    if not (is_senior_foreperson(user_profile) or can_create_device(user_profile)):
+        messages.error(request, "Access denied. You don't have permission to manage team members.")
+        return redirect('team_list')
+    
+    team = get_object_or_404(FaultLocatorTeam, id=team_id)
+    member = get_object_or_404(UserProfile, id=member_id)
+    team.members.remove(member)
+    
+    messages.success(request, f"{member.get_full_name()} removed from team {team.name}")
+    return redirect('edit_team', team_id=team.id)
+
+def assign_device_to_team(request):
+    """Assign a device to a team"""
+    user_profile = UserProfile.objects.filter(id=request.user.id).first()
+    
+    # Check permissions
+    if not (is_senior_foreperson(user_profile) or can_create_device(user_profile)):
+        messages.error(request, "Access denied. You don't have permission to assign devices.")
+        return redirect('device_list')
+    
+    team_id = request.GET.get('team_id')
+    initial = {'team': team_id} if team_id else {}
+    
+    if request.method == "POST":
+        form = AssignDeviceToTeamForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Device assigned to team successfully")
+            return redirect('team_list')
+    else:
+        form = AssignDeviceToTeamForm(initial=initial)
+    
+    return render(request, "fault_locator/assign_device_to_team.html", {
+        "form": form,
+        "user_profile": user_profile
+    })
+
+def unassign_device(request, device_id):
+    """Unassign a device from its current team"""
+    user_profile = UserProfile.objects.filter(id=request.user.id).first()
+    
+    # Check permissions
+    if not (is_senior_foreperson(user_profile) or can_create_device(user_profile)):
+        messages.error(request, "Access denied. You don't have permission to unassign devices.")
+        return redirect('device_list')
+    
+    assignment = FaultLocatorDeviceAssignment.objects.filter(device_id=device_id).first()
+    if assignment:
+        team_name = assignment.team.name
+        assignment.delete()
+        messages.success(request, f"Device unassigned from team {team_name}")
+    else:
+        messages.warning(request, "Device is not currently assigned to any team")
+    
+    return redirect('device_list')
