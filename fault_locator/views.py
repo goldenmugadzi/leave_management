@@ -708,3 +708,143 @@ def unassign_device(request, device_id):
         messages.warning(request, "Device is not currently assigned to any team")
     
     return redirect('device_list')
+
+def deploy_team_to_depot(request):
+    """Deploy a team to a specific depot (Senior Foreperson only)"""
+    user_profile = UserProfile.objects.filter(id=request.user.id).first()
+    
+    # Check permissions - only senior forepersons can deploy teams
+    if not is_senior_foreperson(user_profile):
+        messages.error(request, "Access denied. Only senior forepersons can deploy teams.")
+        return redirect('fault_locator_home')
+    
+    if request.method == "POST":
+        form = TeamDeploymentForm(request.POST)
+        if form.is_valid():
+            deployment = form.save(commit=False)
+            deployment.deployed_by = user_profile
+            deployment.save()
+            
+            # Update the team's current depot
+            team = deployment.team
+            team.current_depot = deployment.depot
+            team.assigned_at = timezone.now()
+            team.assigned_by = user_profile
+            team.save()
+            
+            messages.success(request, f"Team {team.name} deployed to {deployment.depot.depot} successfully")
+            return redirect('team_deployments')
+    else:
+        form = TeamDeploymentForm()
+    
+    return render(request, "fault_locator/deploy_team.html", {
+        "form": form,
+        "user_profile": user_profile
+    })
+
+def recall_team_from_depot(request, deployment_id):
+    """Recall a team from their current deployment (Senior Foreperson only)"""
+    user_profile = UserProfile.objects.filter(id=request.user.id).first()
+    
+    # Check permissions - only senior forepersons can recall teams
+    if not is_senior_foreperson(user_profile):
+        messages.error(request, "Access denied. Only senior forepersons can recall teams.")
+        return redirect('fault_locator_home')
+    
+    deployment = get_object_or_404(TeamDeployment, id=deployment_id, recalled_at__isnull=True)
+    
+    if request.method == "POST":
+        # Recall the team
+        deployment.recalled_at = timezone.now()
+        deployment.save()
+        
+        # Update team's current depot to None
+        team = deployment.team
+        team.current_depot = None
+        team.assigned_at = None
+        team.assigned_by = None
+        team.save()
+        
+        messages.success(request, f"Team {team.name} recalled from {deployment.depot.depot} successfully")
+        return redirect('team_deployments')
+    
+    return render(request, "fault_locator/recall_team.html", {
+        "deployment": deployment,
+        "user_profile": user_profile
+    })
+
+def team_deployments(request):
+    """View all team deployments (Senior Foreperson only)"""
+    user_profile = UserProfile.objects.filter(id=request.user.id).first()
+    
+    # Check permissions - only senior forepersons can view all deployments
+    if not is_senior_foreperson(user_profile):
+        messages.error(request, "Access denied. Only senior forepersons can view team deployments.")
+        return redirect('fault_locator_home')
+    
+    # Get current deployments
+    current_deployments = TeamDeployment.objects.filter(
+        recalled_at__isnull=True
+    ).select_related('team', 'depot', 'deployed_by').order_by('-deployed_at')
+    
+    # Get deployment history
+    deployment_history = TeamDeployment.objects.filter(
+        recalled_at__isnull=False
+    ).select_related('team', 'depot', 'deployed_by').order_by('-recalled_at')[:20]
+    
+    # Get teams available for deployment (teams with devices but not currently deployed)
+    teams_with_devices = FaultLocatorDeviceAssignment.objects.values_list('team_id', flat=True)
+    available_teams = FaultLocatorTeam.objects.filter(
+        id__in=teams_with_devices,
+        current_depot__isnull=True
+    )
+    
+    context = {
+        'current_deployments': current_deployments,
+        'deployment_history': deployment_history,
+        'available_teams': available_teams,
+        'user_profile': user_profile,
+        'is_senior_foreperson': is_senior_foreperson(user_profile)
+    }
+    
+    return render(request, "fault_locator/team_deployments.html", context)
+
+def depot_fault_priority(request, depot_id):
+    """Set fault priorities for a specific depot (Depot Foreperson only)"""
+    user_profile = UserProfile.objects.filter(id=request.user.id).first()
+    depot = get_object_or_404(Depots, id=depot_id)
+    
+    # Check permissions - depot forepersons can only prioritize faults at their depot
+    if not is_depot_foreperson(user_profile, depot):
+        messages.error(request, "Access denied. You can only prioritize faults at your assigned depot.")
+        return redirect('fault_locator_home')
+    
+    # Get faults at this depot that are requested or assigned
+    faults = Fault.objects.filter(
+        depot=depot,
+        status__in=['requested', 'assigned']
+    ).order_by('-reported_at')
+    
+    if request.method == "POST":
+        # Process priority updates
+        for fault in faults:
+            priority_key = f"priority_{fault.id}"
+            if priority_key in request.POST:
+                new_priority = request.POST[priority_key]
+                if new_priority and fault.priority != int(new_priority):
+                    fault.priority = int(new_priority)
+                    fault.prioritized_by = user_profile
+                    fault.prioritized_at = timezone.now()
+                    fault.save()
+        
+        messages.success(request, "Fault priorities updated successfully")
+        return redirect('depot_fault_priority', depot_id=depot_id)
+    
+    context = {
+        'depot': depot,
+        'faults': faults,
+        'user_profile': user_profile,
+        'priority_choices': Fault._meta.get_field('priority').choices
+    }
+    
+    return render(request, "fault_locator/depot_fault_priority.html", context)
