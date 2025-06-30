@@ -14,9 +14,14 @@
                 </a>
             </div>
         </div>
-        <a href="{% url 'comm_files:create_customer' %}" class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md">
-            Add New Customer
-        </a>
+        <div class="flex space-x-3">
+            <a href="{% url 'comm_files:import_customers_excel' %}" class="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-md">
+                <i class="fas fa-upload mr-2"></i>Import from Excel
+            </a>
+            <a href="{% url 'comm_files:create_customer' %}" class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md">
+                Add New Customer
+            </a>
+        </div>
     </div>
 
     <!-- Search and Filter Form -->
