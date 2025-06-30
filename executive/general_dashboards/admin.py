@@ -1,5 +1,8 @@
 from django.contrib import admin
-from .models import DashboardPreference, ActionItemMetrics, DashboardWidget, UserWidgetPreference
+from .models import (
+    DashboardPreference, ActionItemMetrics, DashboardWidget, UserWidgetPreference,
+    DashboardMetric, WeeklySales, WeeklyOutage, WeeklyFaultMaintenance, TopDebtor
+)
 
 
 @admin.register(DashboardPreference)
@@ -34,3 +37,60 @@ class UserWidgetPreferenceAdmin(admin.ModelAdmin):
     list_filter = ['widget', 'is_visible']
     search_fields = ['user__username', 'widget__name']
     ordering = ['user', 'position']
+
+
+@admin.register(DashboardMetric)
+class DashboardMetricAdmin(admin.ModelAdmin):
+    list_display = ['metric_type', 'value', 'unit', 'target', 'progress', 'region', 'district', 'depot', 'updated_at']
+    list_filter = ['metric_type', 'region', 'district', 'depot']
+    search_fields = ['metric_type', 'value', 'target']
+    readonly_fields = ['created_at', 'updated_at']
+    fieldsets = (
+        ('Metric Information', {
+            'fields': ('metric_type', 'value', 'unit', 'target', 'target_unit', 'progress')
+        }),
+        ('Location', {
+            'fields': ('region', 'district', 'depot'),
+            'classes': ('collapse',)
+        }),
+        ('Tracking', {
+            'fields': ('updated_by', 'created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+
+
+@admin.register(WeeklySales)
+class WeeklySalesAdmin(admin.ModelAdmin):
+    list_display = ['week', 'zwl', 'usd', 'week_number', 'year', 'region', 'district', 'depot']
+    list_filter = ['year', 'region', 'district', 'depot']
+    search_fields = ['week', 'zwl', 'usd']
+    readonly_fields = ['created_at', 'updated_at']
+    ordering = ['year', 'week_number']
+
+
+@admin.register(WeeklyOutage)
+class WeeklyOutageAdmin(admin.ModelAdmin):
+    list_display = ['week', 'outages', 'resolved', 'pending', 'week_number', 'year', 'region', 'district', 'depot']
+    list_filter = ['year', 'region', 'district', 'depot']
+    search_fields = ['week']
+    readonly_fields = ['created_at', 'updated_at']
+    ordering = ['year', 'week_number']
+
+
+@admin.register(WeeklyFaultMaintenance)
+class WeeklyFaultMaintenanceAdmin(admin.ModelAdmin):
+    list_display = ['week', 'faults', 'maintenance', 'completed', 'pending', 'week_number', 'year', 'region', 'district', 'depot']
+    list_filter = ['year', 'region', 'district', 'depot']
+    search_fields = ['week']
+    readonly_fields = ['created_at', 'updated_at']
+    ordering = ['year', 'week_number']
+
+
+@admin.register(TopDebtor)
+class TopDebtorAdmin(admin.ModelAdmin):
+    list_display = ['rank', 'name', 'amount', 'region', 'district', 'depot', 'updated_at']
+    list_filter = ['region', 'district', 'depot']
+    search_fields = ['name', 'amount']
+    readonly_fields = ['created_at', 'updated_at']
+    ordering = ['region', 'district', 'depot', 'rank']

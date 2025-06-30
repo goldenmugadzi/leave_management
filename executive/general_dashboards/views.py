@@ -6,6 +6,9 @@ from django.urls import reverse
 from django.db.models import Q, Count, Avg, Max
 from datetime import datetime, timedelta
 import json
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
+from django.views.decorators.http import require_http_methods
 
 # Import models from various apps
 from it.users.models import UserProfile, Roles, Application
@@ -19,7 +22,10 @@ from safety.models import SafetyMonthlyReport
 from Asset_Register.models import ZetdcAssets
 from Hardware_Faults.models import Employee as HardwareFault
 from Transport.models import TransportAssets
-from .models import DashboardPreference, ActionItemMetrics, DashboardWidget
+from .models import (
+    DashboardPreference, ActionItemMetrics, DashboardWidget,
+    DashboardMetric, WeeklySales, WeeklyOutage, WeeklyFaultMaintenance, TopDebtor
+)
 
 
 @login_required
@@ -697,3 +703,231 @@ def update_preferences(request):
         return JsonResponse({'status': 'success'})
     
     return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+
+# =================== NEW DASHBOARD DATA API VIEWS ===================
+
+@csrf_exempt
+@require_http_methods(["GET"])
+def get_regions(request):
+    """Get all regions, districts, sections, and depots for filters"""
+    from it.users.models import Regions, Districts, Sections, Depots
+    
+    regions = list(Regions.objects.values('id', 'region'))
+    districts = list(Districts.objects.values('id', 'district', 'region_id'))
+    sections = list(Sections.objects.values('id', 'section', 'district_id', 'region_id'))
+    depots = list(Depots.objects.values('id', 'depot', 'district_id', 'region_id'))
+    
+    # Get sample data for compatibility
+    pbncs = []  # Add your PBNC data logic here
+    upos = []   # Add your UPO data logic here
+    weekly_sales = list(WeeklySales.objects.filter(
+        region__isnull=True, district__isnull=True, depot__isnull=True
+    ).values('week', 'zwl', 'usd'))
+    
+    weekly_outages = list(WeeklyOutage.objects.filter(
+        region__isnull=True, district__isnull=True, depot__isnull=True
+    ).values('week', 'outages', 'resolved', 'pending'))
+    
+    tds = list(TopDebtor.objects.filter(
+        region__isnull=True, district__isnull=True, depot__isnull=True
+    ).values('name', 'amount'))
+    
+    weekly_faults_maintenance = list(WeeklyFaultMaintenance.objects.filter(
+        region__isnull=True, district__isnull=True, depot__isnull=True
+    ).values('week', 'faults', 'maintenance', 'completed', 'pending'))
+    
+    return JsonResponse({
+        'regions': regions,
+        'districts': districts,
+        'sections': sections,
+        'depots': depots,
+        'pbncs': pbncs,
+        'weekly_sales': weekly_sales,
+        'upos': upos,
+        'weekly_outages': weekly_outages,
+        'tds': tds,
+        'weekly_faults_maintenance': weekly_faults_maintenance,
+    })
+
+
+@csrf_exempt
+@require_http_methods(["GET"])
+def get_dashboard_data(request):
+    """Get initial dashboard data"""
+    # Get metrics
+    metrics = {}
+    for metric in DashboardMetric.objects.filter(region__isnull=True, district__isnull=True, depot__isnull=True):
+        metrics[metric.metric_type] = {
+            'value': metric.value,
+            'unit': metric.unit,
+            'target': metric.target,
+            'target_unit': metric.target_unit,
+            'progress': metric.progress
+        }
+    
+    # Get chart data (mock for now)
+    inspection_locations = json.dumps(['Location A', 'Location B', 'Location C'])
+    inspections_count = json.dumps([10, 15, 8])
+    maintenance_locations = json.dumps(['Site 1', 'Site 2', 'Site 3'])
+    maintenance_count = json.dumps([5, 12, 7])
+    mtn = {'Site 1': [1, 2, 3, 4], 'Site 2': [2, 3, 1, 5]}
+    
+    # Get table data
+    weekly_sales = list(WeeklySales.objects.filter(
+        region__isnull=True, district__isnull=True, depot__isnull=True
+    ).values('week', 'zwl', 'usd'))
+    
+    weekly_outages = list(WeeklyOutage.objects.filter(
+        region__isnull=True, district__isnull=True, depot__isnull=True
+    ).values('week', 'outages', 'resolved', 'pending'))
+    
+    weekly_faults_maintenance = list(WeeklyFaultMaintenance.objects.filter(
+        region__isnull=True, district__isnull=True, depot__isnull=True
+    ).values('week', 'faults', 'maintenance', 'completed', 'pending'))
+    
+    tds = list(TopDebtor.objects.filter(
+        region__isnull=True, district__isnull=True, depot__isnull=True
+    ).values('name', 'amount'))
+    
+    return JsonResponse({
+        'metrics': metrics,
+        'inspection_locations': inspection_locations,
+        'inspections_count': inspections_count,
+        'maintenance_locations': maintenance_locations,
+        'maintenance_count': maintenance_count,
+        'mtn': mtn,
+        'pbncs': [],
+        'weekly_sales': weekly_sales,
+        'upos': [],
+        'weekly_outages': weekly_outages,
+        'tds': tds,
+        'weekly_faults_maintenance': weekly_faults_maintenance,
+    })
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def dashboard_filter(request):
+    """Filter dashboard data by location"""
+    data = json.loads(request.body)
+    region_id = data.get('region')
+    district_id = data.get('district')
+    depot_id = data.get('depot')
+    
+    # Build filter conditions
+    filter_kwargs = {}
+    if depot_id:
+        filter_kwargs['depot_id'] = depot_id
+    elif district_id:
+        filter_kwargs['district_id'] = district_id
+    elif region_id:
+        filter_kwargs['region_id'] = region_id
+    
+    # Get filtered data
+    weekly_sales = list(WeeklySales.objects.filter(**filter_kwargs).values('week', 'zwl', 'usd'))
+    weekly_outages = list(WeeklyOutage.objects.filter(**filter_kwargs).values('week', 'outages', 'resolved', 'pending'))
+    weekly_faults_maintenance = list(WeeklyFaultMaintenance.objects.filter(**filter_kwargs).values('week', 'faults', 'maintenance', 'completed', 'pending'))
+    tds = list(TopDebtor.objects.filter(**filter_kwargs).values('name', 'amount'))
+    
+    # Mock chart data for now
+    inspection_locations = json.dumps(['Filtered Location A', 'Filtered Location B'])
+    inspections_count = json.dumps([5, 8])
+    maintenance_locations = json.dumps(['Filtered Site 1', 'Filtered Site 2'])
+    maintenance_count = json.dumps([3, 9])
+    mtn = {'Filtered Site 1': [1, 2, 1, 3], 'Filtered Site 2': [2, 1, 2, 4]}
+    
+    return JsonResponse({
+        'inspection_locations': inspection_locations,
+        'inspections_count': inspections_count,
+        'maintenance_locations': maintenance_locations,
+        'maintenance_count': maintenance_count,
+        'mtn': mtn,
+        'pbncs': [],
+        'weekly_sales': weekly_sales,
+        'upos': [],
+        'weekly_outages': weekly_outages,
+        'tds': tds,
+        'weekly_faults_maintenance': weekly_faults_maintenance,
+    })
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def save_dashboard_data(request):
+    """Save edited dashboard data"""
+    if not request.user.is_authenticated:
+        return JsonResponse({'success': False, 'error': 'Authentication required'})
+    
+    try:
+        data = json.loads(request.body)
+        table = data.get('table')
+        row = data.get('row')
+        field = data.get('field')
+        value = data.get('value')
+        
+        if table == 'metrics':
+            # Handle metric updates
+            metric_key = row  # row contains the metric key
+            property_name = field  # field contains the property name
+            
+            metric, created = DashboardMetric.objects.get_or_create(
+                metric_type=metric_key,
+                region__isnull=True,
+                district__isnull=True,
+                depot__isnull=True,
+                defaults={'value': '0', 'unit': '', 'target': '0', 'target_unit': '', 'progress': 0}
+            )
+            
+            setattr(metric, property_name, value)
+            metric.updated_by = request.user
+            metric.save()
+            
+        elif table == 'weekly_sales':
+            # Handle weekly sales updates
+            sales_items = list(WeeklySales.objects.filter(
+                region__isnull=True, district__isnull=True, depot__isnull=True
+            ).order_by('week_number'))
+            
+            if row < len(sales_items):
+                sales_item = sales_items[row]
+                setattr(sales_item, field, value)
+                sales_item.save()
+                
+        elif table == 'weekly_outages':
+            # Handle weekly outages updates
+            outage_items = list(WeeklyOutage.objects.filter(
+                region__isnull=True, district__isnull=True, depot__isnull=True
+            ).order_by('week_number'))
+            
+            if row < len(outage_items):
+                outage_item = outage_items[row]
+                setattr(outage_item, field, int(value) if field in ['outages', 'resolved', 'pending'] else value)
+                outage_item.save()
+                
+        elif table == 'weekly_faults_maintenance':
+            # Handle weekly faults/maintenance updates
+            fault_items = list(WeeklyFaultMaintenance.objects.filter(
+                region__isnull=True, district__isnull=True, depot__isnull=True
+            ).order_by('week_number'))
+            
+            if row < len(fault_items):
+                fault_item = fault_items[row]
+                setattr(fault_item, field, int(value) if field in ['faults', 'maintenance', 'completed', 'pending'] else value)
+                fault_item.save()
+                
+        elif table == 'tds':
+            # Handle top debtors updates
+            debtor_items = list(TopDebtor.objects.filter(
+                region__isnull=True, district__isnull=True, depot__isnull=True
+            ).order_by('rank'))
+            
+            if row < len(debtor_items):
+                debtor_item = debtor_items[row]
+                setattr(debtor_item, field, value)
+                debtor_item.save()
+        
+        return JsonResponse({'success': True})
+        
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})

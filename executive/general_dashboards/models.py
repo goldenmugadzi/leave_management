@@ -81,3 +81,141 @@ class UserWidgetPreference(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.widget.name}"
+
+
+class DashboardMetric(models.Model):
+    """Store dashboard metric card data"""
+    METRIC_TYPES = [
+        ('energy_sold', 'Energy Sold'),
+        ('growth', 'Growth'),
+        ('revenue_usd', 'Revenue USD'),
+        ('revenue_zwl', 'Revenue ZWL'),
+        ('faults', 'Faults'),
+        ('maintenance', 'Maintenance'),
+    ]
+    
+    metric_type = models.CharField(max_length=20, choices=METRIC_TYPES, unique=True)
+    value = models.CharField(max_length=50, help_text="Current value")
+    unit = models.CharField(max_length=20, help_text="Unit of measurement")
+    target = models.CharField(max_length=50, help_text="Target value")
+    target_unit = models.CharField(max_length=20, help_text="Target unit")
+    progress = models.FloatField(default=0, help_text="Progress percentage")
+    
+    # Location-based filtering
+    region = models.ForeignKey('users.Regions', on_delete=models.CASCADE, null=True, blank=True)
+    district = models.ForeignKey('users.Districts', on_delete=models.CASCADE, null=True, blank=True)
+    depot = models.ForeignKey('users.Depots', on_delete=models.CASCADE, null=True, blank=True)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    updated_by = models.ForeignKey(UserProfile, on_delete=models.SET_NULL, null=True)
+
+    class Meta:
+        unique_together = ['metric_type', 'region', 'district', 'depot']
+
+    def __str__(self):
+        location = f" - {self.region or self.district or self.depot or 'Global'}"
+        return f"{self.get_metric_type_display()}{location}"
+
+
+class WeeklySales(models.Model):
+    """Store weekly sales data"""
+    week = models.CharField(max_length=20)
+    zwl = models.CharField(max_length=50)
+    usd = models.CharField(max_length=50)
+    
+    # Location-based filtering
+    region = models.ForeignKey('users.Regions', on_delete=models.CASCADE, null=True, blank=True)
+    district = models.ForeignKey('users.Districts', on_delete=models.CASCADE, null=True, blank=True)
+    depot = models.ForeignKey('users.Depots', on_delete=models.CASCADE, null=True, blank=True)
+    
+    # Time tracking
+    year = models.IntegerField(default=2024)
+    week_number = models.IntegerField()
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ['week_number', 'year', 'region', 'district', 'depot']
+        ordering = ['week_number']
+
+    def __str__(self):
+        return f"{self.week} - {self.region or self.district or self.depot or 'Global'}"
+
+
+class WeeklyOutage(models.Model):
+    """Store weekly power outage data"""
+    week = models.CharField(max_length=20)
+    outages = models.IntegerField(default=0)
+    resolved = models.IntegerField(default=0)
+    pending = models.IntegerField(default=0)
+    
+    # Location-based filtering
+    region = models.ForeignKey('users.Regions', on_delete=models.CASCADE, null=True, blank=True)
+    district = models.ForeignKey('users.Districts', on_delete=models.CASCADE, null=True, blank=True)
+    depot = models.ForeignKey('users.Depots', on_delete=models.CASCADE, null=True, blank=True)
+    
+    year = models.IntegerField(default=2024)
+    week_number = models.IntegerField()
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ['week_number', 'year', 'region', 'district', 'depot']
+        ordering = ['week_number']
+
+    def __str__(self):
+        return f"{self.week} - {self.region or self.district or self.depot or 'Global'}"
+
+
+class WeeklyFaultMaintenance(models.Model):
+    """Store weekly faults and maintenance data"""
+    week = models.CharField(max_length=20)
+    faults = models.IntegerField(default=0)
+    maintenance = models.IntegerField(default=0)
+    completed = models.IntegerField(default=0)
+    pending = models.IntegerField(default=0)
+    
+    # Location-based filtering
+    region = models.ForeignKey('users.Regions', on_delete=models.CASCADE, null=True, blank=True)
+    district = models.ForeignKey('users.Districts', on_delete=models.CASCADE, null=True, blank=True)
+    depot = models.ForeignKey('users.Depots', on_delete=models.CASCADE, null=True, blank=True)
+    
+    year = models.IntegerField(default=2024)
+    week_number = models.IntegerField()
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ['week_number', 'year', 'region', 'district', 'depot']
+        ordering = ['week_number']
+
+    def __str__(self):
+        return f"{self.week} - {self.region or self.district or self.depot or 'Global'}"
+
+
+class TopDebtor(models.Model):
+    """Store top debtors data"""
+    name = models.CharField(max_length=200)
+    amount = models.CharField(max_length=50)
+    
+    # Location-based filtering
+    region = models.ForeignKey('users.Regions', on_delete=models.CASCADE, null=True, blank=True)
+    district = models.ForeignKey('users.Districts', on_delete=models.CASCADE, null=True, blank=True)
+    depot = models.ForeignKey('users.Depots', on_delete=models.CASCADE, null=True, blank=True)
+    
+    # Ranking
+    rank = models.IntegerField(default=1)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ['rank', 'region', 'district', 'depot']
+        ordering = ['rank']
+
+    def __str__(self):
+        return f"{self.rank}. {self.name} - {self.amount}"
