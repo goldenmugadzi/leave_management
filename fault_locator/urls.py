@@ -9,8 +9,13 @@ urlpatterns = [
     path('assign-fault/', views.assign_fault, name='assign_fault'),
     path('return/<int:assignment_id>/', views.return_device, name='return_device'),
     path('usage_report/', views.usage_report, name='usage_report'),
-    path('faults/create/', views.create_fault, name='create_fault'),
+
+    # Enhanced fault management
     path('faults/', views.fault_list, name='fault_list'),
+    path('faults/<int:fault_id>/', views.fault_detail, name='fault_detail'),
+    path('faults/<int:fault_id>/update-status/', views.update_fault_status, name='update_fault_status'),
+    path('faults/create/', views.create_fault, name='create_fault'),
+
     path('teams/create/', views.create_team, name='create_team'),
     path('teams/<int:team_id>/add_member/', views.add_team_member, name='add_team_member'),
     path('teams/<int:team_id>/edit/', views.edit_team, name='edit_team'),

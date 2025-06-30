@@ -10,12 +10,41 @@ from .forms import FaultForm, FaultLocatorDeviceForm, FaultLocatorTeamForm, Faul
 from it.users.models import UserProfile
 
 def device_list(request):
-    devices = FaultLocatorDevice.objects.all()
-    # assignments = DeviceAssignment.objects.filter(returned_at__isnull=True)
-    return render(request, "fault_locator/device_list.html", {
+    """Enhanced device list with role-based actions"""
+    user_profile = UserProfile.objects.filter(id=request.user.id).first()
+    
+    devices = FaultLocatorDevice.objects.select_related().prefetch_related('faultlocatordeviceassignment_set__team')
+    
+    # Role-based filtering if needed
+    if not is_senior_foreperson(user_profile):
+        # Regular users might only see devices at their depot
+        if user_profile and hasattr(user_profile, 'depot') and user_profile.depot:
+            # Filter devices based on assignments to teams at their depot
+            depot = Depots.objects.filter(code=user_profile.depot).first()
+            if depot:
+                # Show devices assigned to teams currently at this depot
+                devices = devices.filter(
+                    faultlocatordeviceassignment_set__team__current_depot=depot
+                ).distinct()
+    
+    # Get device statistics
+    total_devices = FaultLocatorDevice.objects.count()
+    assigned_devices = FaultLocatorDeviceAssignment.objects.count()
+    available_devices = total_devices - assigned_devices
+    
+    context = {
         "devices": devices,
-        # "assignments": assignments
-    })
+        "user_profile": user_profile,
+        "can_create_device": can_create_device(user_profile),
+        "is_senior_foreperson": is_senior_foreperson(user_profile),
+        "device_stats": {
+            "total": total_devices,
+            "assigned": assigned_devices,
+            "available": available_devices
+        }
+    }
+    
+    return render(request, "fault_locator/device_list.html", context)
 
 def assign_device(request):
     if request.method == "POST":
@@ -46,174 +75,197 @@ def usage_report(request):
     )
     return render(request, "fault_locator/usage_report.html", {"assignments": assignments})
 
+@login_required
+def fault_list(request):
+    """Enhanced fault list view with role-based filtering and search"""
+    user_profile = UserProfile.objects.filter(id=request.user.id).first()
+    
+    # Base queryset
+    faults = Fault.objects.select_related('depot', 'prioritized_by').prefetch_related('faultassignment_set__team', 'faultassignment_set__device')
+    
+    # Role-based filtering
+    if is_depot_foreperson(user_profile, user_profile.depot if user_profile and hasattr(user_profile, 'depot') and user_profile.depot else None):
+        # Depot forepersons only see faults at their depot
+        depot = Depots.objects.filter(code=user_profile.depot).first()
+        if depot:
+            faults = faults.filter(depot=depot)
+    elif not is_senior_foreperson(user_profile):
+        # Regular users only see faults they can access based on their depot/region
+        if user_profile and hasattr(user_profile, 'depot') and user_profile.depot:
+            depot = Depots.objects.filter(code=user_profile.depot).first()
+            if depot:
+                faults = faults.filter(depot=depot)
+    
+    # Filter parameters from GET request
+    depot_filter = request.GET.get('depot')
+    status_filter = request.GET.get('status')
+    priority_filter = request.GET.get('priority')
+    search_query = request.GET.get('search')
+    
+    # Apply filters
+    if depot_filter:
+        faults = faults.filter(depot_id=depot_filter)
+    
+    if status_filter:
+        faults = faults.filter(status=status_filter)
+    
+    if priority_filter:
+        faults = faults.filter(priority=priority_filter)
+    
+    if search_query:
+        faults = faults.filter(description__icontains=search_query)
+    
+    # Order by priority (high to low) and then by reported date
+    faults = faults.order_by('-priority', '-reported_at')
+    
+    # Get filter options for the template
+    available_depots = Depots.objects.all()
+    if is_depot_foreperson(user_profile, user_profile.depot if user_profile and hasattr(user_profile, 'depot') and user_profile.depot else None):
+        # Depot forepersons only see their depot in filter
+        depot = Depots.objects.filter(code=user_profile.depot).first()
+        if depot:
+            available_depots = [depot]
+    
+    status_choices = Fault._meta.get_field('status').choices
+    priority_choices = Fault._meta.get_field('priority').choices
+    
+    context = {
+        'faults': faults,
+        'user_profile': user_profile,
+        'is_senior_foreperson': is_senior_foreperson(user_profile),
+        'is_depot_foreperson': is_depot_foreperson(user_profile, user_profile.depot if user_profile and hasattr(user_profile, 'depot') and user_profile.depot else None),
+        'available_depots': available_depots,
+        'status_choices': status_choices,
+        'priority_choices': priority_choices,
+        'current_filters': {
+            'depot': depot_filter,
+            'status': status_filter,
+            'priority': priority_filter,
+            'search': search_query,
+        }
+    }
+    
+    return render(request, "fault_locator/fault_list.html", context)
+
+@login_required
+def fault_detail(request, fault_id):
+    """Detailed view of a specific fault"""
+    user_profile = UserProfile.objects.filter(id=request.user.id).first()
+    fault = get_object_or_404(Fault, id=fault_id)
+    
+    # Check permissions
+    can_view = False
+    if is_senior_foreperson(user_profile):
+        can_view = True
+    elif is_depot_foreperson(user_profile, user_profile.depot if user_profile and hasattr(user_profile, 'depot') and user_profile.depot else None):
+        depot = Depots.objects.filter(code=user_profile.depot).first()
+        can_view = depot and fault.depot == depot
+    elif user_profile and hasattr(user_profile, 'depot') and user_profile.depot:
+        depot = Depots.objects.filter(code=user_profile.depot).first()
+        can_view = depot and fault.depot == depot
+    
+    if not can_view:
+        messages.error(request, "You don't have permission to view this fault.")
+        return redirect('fault_list')
+    
+    # Get fault assignments
+    assignments = FaultAssignment.objects.filter(fault=fault).select_related('team', 'device')
+    current_assignment = assignments.filter(located_at__isnull=True).first()
+    
+    # Get available teams for assignment (only for authorized users)
+    available_teams = []
+    if is_senior_foreperson(user_profile) or is_depot_foreperson(user_profile, fault.depot):
+        # Get teams with devices that are either unassigned or at this depot
+        teams_with_devices = FaultLocatorDeviceAssignment.objects.select_related('team').values_list('team', flat=True)
+        available_teams = FaultLocatorTeam.objects.filter(
+            id__in=teams_with_devices
+        ).exclude(
+            id__in=assignments.filter(located_at__isnull=True).values_list('team', flat=True)
+        )
+    
+    context = {
+        'fault': fault,
+        'user_profile': user_profile,
+        'current_assignment': current_assignment,
+        'assignments': assignments,
+        'available_teams': available_teams,
+        'can_assign': is_senior_foreperson(user_profile) or is_depot_foreperson(user_profile, fault.depot),
+        'can_prioritize': is_depot_foreperson(user_profile, fault.depot),
+        'priority_choices': Fault._meta.get_field('priority').choices,
+    }
+    
+    return render(request, "fault_locator/fault_detail.html", context)
+
+@login_required
+def update_fault_status(request, fault_id):
+    """Update fault status (for team members in the field)"""
+    user_profile = UserProfile.objects.filter(id=request.user.id).first()
+    fault = get_object_or_404(Fault, id=fault_id)
+    
+    # Check if user is part of a team assigned to this fault
+    user_teams = user_profile.fault_locator_teams.all() if user_profile else []
+    assigned_teams = FaultAssignment.objects.filter(fault=fault, located_at__isnull=True).values_list('team', flat=True)
+    
+    can_update = any(team.id in assigned_teams for team in user_teams)
+    
+    if not can_update and not is_senior_foreperson(user_profile):
+        messages.error(request, "You don't have permission to update this fault.")
+        return redirect('fault_detail', fault_id=fault_id)
+    
+    if request.method == "POST":
+        new_status = request.POST.get('status')
+        notes = request.POST.get('notes', '')
+        
+        if new_status in ['located', 'closed']:
+            fault.status = new_status
+            fault.save()
+            
+            # Update assignment if fault is located
+            if new_status == 'located':
+                assignment = FaultAssignment.objects.filter(fault=fault, located_at__isnull=True).first()
+                if assignment:
+                    assignment.located_at = timezone.now()
+                    assignment.save()
+            
+            messages.success(request, f"Fault status updated to {fault.get_status_display()}")
+        
+        return redirect('fault_detail', fault_id=fault_id)
+    
+    return redirect('fault_detail', fault_id=fault_id)
+
+# Enhanced create_fault to use UserProfile
+@login_required
 def create_fault(request):
+    """Create a new fault report"""
+    user_profile = UserProfile.objects.filter(id=request.user.id).first()
+    
     if request.method == "POST":
         form = FaultForm(request.POST)
         if form.is_valid():
-            form.save()
-            return redirect('fault_list')  # Redirect to fault list after creation
+            fault = form.save(commit=False)
+            
+            # Set default depot based on user's depot if not specified
+            if not fault.depot and user_profile and hasattr(user_profile, 'depot') and user_profile.depot:
+                depot = Depots.objects.filter(code=user_profile.depot).first()
+                if depot:
+                    fault.depot = depot
+            
+            fault.save()
+            messages.success(request, "Fault reported successfully")
+            return redirect('fault_detail', fault_id=fault.id)
     else:
         form = FaultForm()
-    return render(request, "fault_locator/create_fault.html", {"form": form})
-
-def create_device(request):
-    if request.method == "POST":
-        form = FaultLocatorDeviceForm(request.POST)
-        if form.is_valid():
-            form.save()
-            return redirect('device_list')
-    else:
-        form = FaultLocatorDeviceForm()
-    return render(request, "fault_locator/create_device.html", {"form": form})
-
-def create_team(request):
-    if request.method == "POST":
-        form = FaultLocatorTeamNameForm(request.POST)
-        if form.is_valid():
-            team = form.save()
-            return redirect('add_team_member', team_id=team.id)
-    else:
-        form = FaultLocatorTeamNameForm()
-    return render(request, "fault_locator/create_team.html", {"form": form})
-
-def device_detail(request, device_id):
-    device = get_object_or_404(FaultLocatorDevice, id=device_id)
-    # Get current assignment (not yet located/closed)
-    assignment = FaultAssignment.objects.filter(device=device, located_at__isnull=True).first()
-    return render(request, "fault_locator/device_detail.html", {
-        "device": device,
-        "assignment": assignment,
-    })
-
-def team_list(request):
-    teams = FaultLocatorTeam.objects.all()
-    return render(request, "fault_locator/team_list.html", {"teams": teams})
-
-def add_team_member(request, team_id):
-    team = get_object_or_404(FaultLocatorTeam, id=team_id)
-    if request.method == "POST":
-        member_id = request.POST.get('member')
-        if member_id:
-            from it.users.models import UserProfile
-            member = get_object_or_404(UserProfile, id=member_id)
-            team.members.add(member)
-    return redirect('edit_team', team_id=team.id)
-
-@login_required
-def deploy_team_to_depot(request):
-    """Senior Foreperson deploys teams to depots"""
-    user_profile = UserProfile.objects.filter(id=request.user.id).first()
-    if not user_profile or not is_senior_foreperson(user_profile):
-        messages.error(request, "Access denied. Senior Foreperson role required.")
-        return redirect('fault_locator_home')
         
-    if request.method == "POST":
-        form = TeamDeploymentForm(request.POST)
-        if form.is_valid():
-            deployment = form.save(commit=False)
-            deployment.deployed_by = user_profile
-            deployment.save()
-            
-            # Update team's current depot
-            team = deployment.team
-            team.current_depot = deployment.depot
-            team.assigned_at = timezone.now()
-            team.assigned_by = user_profile
-            team.save()
-            
-            messages.success(request, f"Team {team.name} deployed to {deployment.depot.depot}")
-            return redirect('team_deployments')
-    else:
-        form = TeamDeploymentForm()
+        # Pre-select user's depot if available
+        if user_profile and hasattr(user_profile, 'depot') and user_profile.depot:
+            depot = Depots.objects.filter(code=user_profile.depot).first()
+            if depot:
+                form.initial['depot'] = depot
     
-    return render(request, "fault_locator/deploy_team.html", {"form": form})
-
-@login_required 
-def recall_team_from_depot(request, deployment_id):
-    """Senior Foreperson recalls teams from depots"""
-    user_profile = UserProfile.objects.filter(id=request.user.id).first()
-    if not user_profile or not is_senior_foreperson(user_profile):
-        messages.error(request, "Access denied. Senior Foreperson role required.")
-        return redirect('fault_locator_home')
-        
-    deployment = get_object_or_404(TeamDeployment, id=deployment_id, recalled_at__isnull=True)
-    deployment.recalled_at = timezone.now()
-    deployment.save()
-    
-    # Clear team's current depot assignment
-    team = deployment.team
-    team.current_depot = None
-    team.assigned_at = None
-    team.assigned_by = None
-    team.save()
-    
-    messages.success(request, f"Team {team.name} recalled from {deployment.depot.depot}")
-    return redirect('team_deployments')
-
-@login_required
-def depot_fault_priority(request, depot_id):
-    """Depot Foreperson sets fault priorities"""
-    depot = get_object_or_404(Depots, id=depot_id)
-    user_profile = UserProfile.objects.filter(id=request.user.id).first()
-    
-    if not user_profile or not is_depot_foreperson(user_profile, depot):
-        messages.error(request, "Access denied. Depot Foreperson role required.")
-        return redirect('fault_locator_home')
-    
-    faults = Fault.objects.filter(depot=depot, status__in=['requested', 'assigned']).order_by('-priority', 'reported_at')
-    
-    if request.method == "POST":
-        fault_id = request.POST.get('fault_id')
-        priority = request.POST.get('priority')
-        
-        fault = get_object_or_404(Fault, id=fault_id, depot=depot)
-        fault.priority = priority
-        fault.prioritized_by = user_profile
-        fault.prioritized_at = timezone.now()
-        fault.save()
-        
-        messages.success(request, f"Fault priority updated to {fault.get_priority_display()}")
-        return redirect('depot_fault_priority', depot_id=depot_id)
-    
-    return render(request, "fault_locator/depot_fault_priority.html", {
-        "depot": depot,
-        "faults": faults
-    })
-
-@login_required
-def team_deployments(request):
-    """View all team deployments"""
-    user_profile = UserProfile.objects.filter(id=request.user.id).first()
-    
-    # Filter deployments based on user role
-    if is_senior_foreperson(user_profile):
-        # Senior forepersons can see all deployments
-        active_deployments = TeamDeployment.objects.filter(recalled_at__isnull=True).select_related('team', 'depot', 'deployed_by')
-        recent_deployments = TeamDeployment.objects.filter(recalled_at__isnull=False).order_by('-recalled_at')[:10]
-    else:
-        # Other users can only see deployments they made or at their depot
-        active_deployments = TeamDeployment.objects.filter(
-            recalled_at__isnull=True,
-            deployed_by=user_profile
-        ).select_related('team', 'depot', 'deployed_by')
-        recent_deployments = TeamDeployment.objects.filter(
-            recalled_at__isnull=False,
-            deployed_by=user_profile
-        ).order_by('-recalled_at')[:10]
-    
-    return render(request, "fault_locator/team_deployments.html", {
-        "active_deployments": active_deployments,
-        "recent_deployments": recent_deployments,
+    return render(request, "fault_locator/create_fault.html", {
+        "form": form,
         "user_profile": user_profile
     })
-
-def is_senior_foreperson(user_profile):
-    """Check if user profile belongs to a senior foreperson"""
-    if not user_profile or not hasattr(user_profile, 'designation') or not user_profile.designation:
-        return False
-    
-    designation_desc = user_profile.designation.description.lower()
-    return 'senior' in designation_desc and 'foreperson' in designation_desc
 
 def is_depot_foreperson(user_profile, depot):
     """Check if user profile is foreperson for specific depot"""
@@ -323,3 +375,112 @@ def assign_fault(request):
         "form": form,
         "user_profile": user_profile
     })
+
+@login_required
+def create_device(request):
+    """Create a new fault locator device with role-based access control"""
+    user_profile = UserProfile.objects.filter(id=request.user.id).first()
+    
+    # Check if user has permission to create devices
+    if not can_create_device(user_profile):
+        messages.error(request, "Access denied. You don't have permission to create devices.")
+        return redirect('fault_locator_home')
+    
+    if request.method == "POST":
+        form = FaultLocatorDeviceForm(request.POST)
+        if form.is_valid():
+            device = form.save(commit=False)
+            
+            # Check for duplicate serial numbers
+            if FaultLocatorDevice.objects.filter(serial_number=device.serial_number).exists():
+                form.add_error('serial_number', 'A device with this serial number already exists.')
+                return render(request, "fault_locator/create_device.html", {
+                    "form": form,
+                    "user_profile": user_profile
+                })
+            
+            device.save()
+            messages.success(request, f"Device {device.serial_number} created successfully")
+            
+            # Redirect based on user role
+            if is_senior_foreperson(user_profile):
+                # Senior forepersons might want to assign the device immediately
+                messages.info(request, "You can now assign this device to a team.")
+                return redirect('senior_device_assignment')
+            else:
+                return redirect('device_list')
+                
+    else:
+        form = FaultLocatorDeviceForm()
+    
+    # Get statistics for the template
+    total_devices = FaultLocatorDevice.objects.count()
+    assigned_devices = FaultLocatorDeviceAssignment.objects.count()
+    available_devices = total_devices - assigned_devices
+    
+    context = {
+        "form": form,
+        "user_profile": user_profile,
+        "is_senior_foreperson": is_senior_foreperson(user_profile),
+        "device_stats": {
+            "total": total_devices,
+            "assigned": assigned_devices,
+            "available": available_devices
+        }
+    }
+    
+    return render(request, "fault_locator/create_device.html", context)
+
+def can_create_device(user_profile):
+    """Check if user has permission to create devices"""
+    if not user_profile:
+        return False
+    
+    # Senior forepersons can create devices
+    if is_senior_foreperson(user_profile):
+        return True
+    
+    # IT personnel can create devices
+    if hasattr(user_profile, 'section') and user_profile.section:
+        if 'it' in user_profile.section.lower() or 'information technology' in user_profile.section.lower():
+            return True
+    
+    # Administrators can create devices
+    if hasattr(user_profile, 'designation') and user_profile.designation:
+        designation_desc = user_profile.designation.description.lower()
+        if 'administrator' in designation_desc or 'manager' in designation_desc:
+            return True
+    
+    return False
+
+def is_senior_foreperson(user_profile):
+    """Check if user profile belongs to a senior foreperson"""
+    if not user_profile or not hasattr(user_profile, 'designation') or not user_profile.designation:
+        return False
+    
+    designation_desc = user_profile.designation.description.lower()
+    return 'senior' in designation_desc and 'foreperson' in designation_desc
+
+def is_foreperson(user_profile):
+    """Check if user profile belongs to any foreperson (senior or depot)"""
+    if not user_profile or not hasattr(user_profile, 'designation') or not user_profile.designation:
+        return False
+    
+    designation_desc = user_profile.designation.description.lower()
+    return 'foreperson' in designation_desc
+
+def get_user_depot(user_profile):
+    """Get the depot object for a user profile"""
+    if not user_profile or not hasattr(user_profile, 'depot') or not user_profile.depot:
+        return None
+    
+    return Depots.objects.filter(code=user_profile.depot).first()
+
+def has_fault_locator_permissions(user_profile):
+    """Check if user has any fault locator system permissions"""
+    if not user_profile:
+        return False
+    
+    return (is_senior_foreperson(user_profile) or 
+            is_foreperson(user_profile) or 
+            can_create_device(user_profile))

@@ -1,49 +1,167 @@
 <!-- filepath: d:\b\templates\fault_locator\fault_list.html -->
 {% extends "admin_layout.html" %}
+{% load static %}
+
 {% block content %}
 <div class="content-wrapper">
-  <div class="bg-gulf-blue-100 shadow-lg rounded-lg p-6 max-w-4xl mx-auto">
-    <h3 class="font-bold text-lg mb-4">Faults</h3>
-    <table class="min-w-full bg-white rounded shadow">
-      <thead>
-        <tr>
-          <th class="py-2 px-4 border-b">Description</th>
-          <th class="py-2 px-4 border-b">Depot</th>
-          <th class="py-2 px-4 border-b">Team Assigned</th>
-          <th class="py-2 px-4 border-b">Device</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for fault in faults %}
-        <tr class="hover:bg-gray-100">
-          <td class="py-2 px-4 border-b">{{ fault.description }}</td>
-          <td class="py-2 px-4 border-b">{{ fault.depot }}</td>
-          <td class="py-2 px-4 border-b">
-            {% with assignment=fault.faultassignment_set.first %}
-              {% if assignment %}
-                {{ assignment.team.name }}
-              {% else %}
-                <span class="text-gray-400">Unassigned</span>
-              {% endif %}
-            {% endwith %}
-          </td>
-          <td class="py-2 px-4 border-b">
-            {% with assignment=fault.faultassignment_set.first %}
-              {% if assignment %}
-                {{ assignment.device.serial_number }}
-              {% else %}
-                <span class="text-gray-400">Unassigned</span>
-              {% endif %}
-            {% endwith %}
-          </td>
-        </tr>
-        {% empty %}
-        <tr>
-          <td colspan="4" class="py-4 text-center text-gray-500">No faults found.</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+  <div class="max-w-7xl mx-auto py-6">
+    <div class="flex justify-between items-center mb-6">
+      <h2 class="text-2xl font-bold text-gray-900">Fault List</h2>
+      <a href="{% url 'create_fault' %}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">
+        Report New Fault
+      </a>
+    </div>
+
+    <!-- Filters -->
+    <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+      <form method="GET" class="grid grid-cols-1 md:grid-cols-5 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Search</label>
+          <input type="text" name="search" value="{{ current_filters.search }}" 
+                 class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                 placeholder="Search faults...">
+        </div>
+        
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Depot</label>
+          <select name="depot" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+            <option value="">All Depots</option>
+            {% for depot in available_depots %}
+              <option value="{{ depot.id }}" {% if current_filters.depot == depot.id|stringformat:"s" %}selected{% endif %}>
+                {{ depot.depot }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+        
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+          <select name="status" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+            <option value="">All Statuses</option>
+            {% for status_key, status_label in status_choices %}
+              <option value="{{ status_key }}" {% if current_filters.status == status_key %}selected{% endif %}>
+                {{ status_label }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+        
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Priority</label>
+          <select name="priority" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+            <option value="">All Priorities</option>
+            {% for priority_key, priority_label in priority_choices %}
+              <option value="{{ priority_key }}" {% if current_filters.priority == priority_key|stringformat:"s" %}selected{% endif %}>
+                {{ priority_label }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+        
+        <div class="flex items-end">
+          <button type="submit" class="w-full bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md">
+            Filter
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Fault List -->
+    <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Fault Details
+            </th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Depot
+            </th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Priority
+            </th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Status
+            </th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Assigned Team
+            </th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Reported
+            </th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Actions
+            </th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+          {% for fault in faults %}
+            <tr class="hover:bg-gray-50">
+              <td class="px-6 py-4">
+                <div class="text-sm font-medium text-gray-900">
+                  {{ fault.description|truncatechars:50 }}
+                </div>
+                {% if fault.prioritized_by %}
+                  <div class="text-xs text-gray-500">
+                    Prioritized by {{ fault.prioritized_by.get_full_name }}
+                  </div>
+                {% endif %}
+              </td>
+              <td class="px-6 py-4 text-sm text-gray-900">
+                {{ fault.depot.depot }}
+              </td>
+              <td class="px-6 py-4">
+                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full
+                  {% if fault.priority == 4 %}bg-red-100 text-red-800
+                  {% elif fault.priority == 3 %}bg-orange-100 text-orange-800
+                  {% elif fault.priority == 2 %}bg-yellow-100 text-yellow-800
+                  {% else %}bg-gray-100 text-gray-800{% endif %}">
+                  {{ fault.get_priority_display }}
+                </span>
+              </td>
+              <td class="px-6 py-4">
+                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full
+                  {% if fault.status == 'closed' %}bg-green-100 text-green-800
+                  {% elif fault.status == 'located' %}bg-blue-100 text-blue-800
+                  {% elif fault.status == 'assigned' %}bg-yellow-100 text-yellow-800
+                  {% else %}bg-gray-100 text-gray-800{% endif %}">
+                  {{ fault.get_status_display }}
+                </span>
+              </td>
+              <td class="px-6 py-4 text-sm text-gray-900">
+                {% with fault.faultassignment_set.all|first as assignment %}
+                  {% if assignment %}
+                    {{ assignment.team.name }}
+                    <div class="text-xs text-gray-500">{{ assignment.device.serial_number }}</div>
+                  {% else %}
+                    <span class="text-gray-400">Not assigned</span>
+                  {% endif %}
+                {% endwith %}
+              </td>
+              <td class="px-6 py-4 text-sm text-gray-900">
+                {{ fault.reported_at|date:"M d, Y H:i" }}
+              </td>
+              <td class="px-6 py-4 text-sm font-medium">
+                <a href="{% url 'fault_detail' fault.id %}" class="text-blue-600 hover:text-blue-900">
+                  View
+                </a>
+                {% if is_depot_foreperson and fault.depot.code == user_profile.depot %}
+                  <a href="{% url 'depot_fault_priority' fault.depot.id %}" class="ml-2 text-green-600 hover:text-green-900">
+                    Prioritize
+                  </a>
+                {% endif %}
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="7" class="px-6 py-4 text-center text-gray-500">
+                No faults found matching your criteria.
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
   </div>
 </div>
 {% endblock %}
