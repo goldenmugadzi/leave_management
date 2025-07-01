@@ -119,7 +119,7 @@ class ProjectDetailForm(forms.ModelForm):
         fields = '__all__'
         exclude = ['process', 'allocation_code_of_expenditure', 'requested_by', 'date_created', 'Ace_id', 'asset_number'
             , 'designation', 'region', 'amount', 'budget_id', 'currency', 'classification', 'Ace_id2',
-                   'details_of_expenditure', 'quantity', 'total_connection_fee'
+                   'details_of_expenditure', 'quantity', 'total_connection_fee','section'
                    # include the project items
                    ]
 
