@@ -1,9 +1,5 @@
 from django import forms
-<<<<<<< HEAD
 from .models import SafetyMonthlyReport, AccidentReport
-=======
-from .models import SafetyMonthlyReport
->>>>>>> 1b24c077b0267638fdc753da98de11aedc9afed6
 from it.users.models import UserProfile, Sections, Regions
 
 class SafetyMonthlyReportForm(forms.ModelForm):
@@ -17,13 +13,10 @@ class SafetyMonthlyReportForm(forms.ModelForm):
             'wellness_programmes', 'clear_up_campaigns', 'she_inspections_conducted',
             'mock_drills_conducted', 'number_of_workers', 'number_of_days'
         ]
-<<<<<<< HEAD
         
         widgets = {
             'date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
         }
-=======
->>>>>>> 1b24c077b0267638fdc753da98de11aedc9afed6
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -38,8 +31,8 @@ class  AccidentReportForm(forms.ModelForm):
         
         
         widgets = {
-            'date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
-            'time': forms.TimeInput(attrs={'type': 'time', 'class': 'form-control'}),
+            'date_of_accident': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'time_of_accident': forms.TimeInput(attrs={'type': 'time', 'class': 'form-control'}),
         }
         
     def __init__(self, *args, **kwargs):
@@ -52,7 +45,7 @@ class  AccidentReportForm(forms.ModelForm):
                             "sm:text-sm sm:leading-6",
             })
 
-            if (field_name == 'employee_involved') or ( field_name == 'cost_center') or ( field_name == 'department') or ( field_name == 'type_of_accident') or  (field_name == 'nature_of_injury') or (field_name == 'regions') or (field_name == 'nature_of_accident'):
+            if (field_name == 'employee_involved') or (field_name == 'sex') or ( field_name == 'cost_center') or ( field_name == 'department') or ( field_name == 'type_of_accident') or  (field_name == 'nature_of_injury') or (field_name == 'region') or (field_name == 'nature_of_accident') or (field_name == 'risk_assessment_carried_out') or (field_name == 'safety_preparation_carried_out'):
                 field.widget.attrs.update({'class': "select2 block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6",})
             if isinstance(field.widget, forms.Textarea):
                 field.widget.attrs.update({'rows': '3'})

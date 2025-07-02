@@ -33,7 +33,6 @@ class SafetyMonthlyReport(models.Model):
     accident_frequency_rate = models.FloatField(default=0.0)
     injury_severity_rate = models.FloatField(default=0.0)
 
-<<<<<<< HEAD
     # Year-to-date cumulative fields (optional, can be calculated in queries)
     ytd_work_related_accidents = models.PositiveIntegerField(default=0)
     ytd_disabling_accidents = models.PositiveIntegerField(default=0)
@@ -55,23 +54,6 @@ class SafetyMonthlyReport(models.Model):
     non_lost_time_injuries = models.PositiveIntegerField(default=0)
     lost_time_injuries = models.PositiveIntegerField(default=0)
     fatalities = models.PositiveIntegerField(default=0)
-=======
-    
-    ytd_work_related_accidents = models.PositiveIntegerField(default=0, editable=False)
-    ytd_disabling_accidents = models.PositiveIntegerField(default=0, editable=False)
-    ytd_fatal_accidents = models.PositiveIntegerField(default=0, editable=False)
-    ytd_man_hours_lost = models.PositiveIntegerField(default=0, editable=False)
-    ytd_motor_vehicle_accidents = models.PositiveIntegerField(default=0, editable=False)
-    ytd_property_damaged = models.PositiveIntegerField(default=0, editable=False)
-    ytd_she_meetings_conducted = models.PositiveIntegerField(default=0, editable=False)
-    ytd_she_related_trainings = models.PositiveIntegerField(default=0, editable=False)
-    ytd_wellness_programmes = models.PositiveIntegerField(default=0, editable=False)
-    ytd_clear_up_campaigns = models.PositiveIntegerField(default=0, editable=False)
-    ytd_she_inspections_conducted = models.PositiveIntegerField(default=0, editable=False)
-    ytd_mock_drills_conducted = models.PositiveIntegerField(default=0, editable=False)
-    
-    
->>>>>>> 1b24c077b0267638fdc753da98de11aedc9afed6
 
     def save(self, *args, **kwargs):
         
@@ -118,27 +100,42 @@ class SafetyMonthlyReport(models.Model):
 
 class AccidentReport(models.Model):
     TYPE_Of_Accidents = [
-        ('first aid case', 'first aid case'),
-        ('medical treatment', 'medical treatment'),
-        ('non lost time injury', 'non lost time injury'),
-        ('lost time injury', 'lost time injury'),
-        ('fatality', 'fatality'),
+        ('First aid case', 'First aid case'),
+        ('Medical treatment', 'Medical treatment'),
+        ('Non lost time injury', 'Non lost time injury'),
+        ('Lost time injury', 'Lost time injury'),
+        ('Fatal', 'Fatal'),
+        ('Non fatal', 'Non fatal'),
     ]
     Nature_of_Accidents = [
-        ('electrical', 'electrical'),
-        ('non_electrical', 'non_electrical'),
-        ('road traffic', 'road traffic'),
+        ('Electrical', 'Electrical'),
+        ('Non_electrical', 'Non_electrical'),
+        ('Road traffic', 'Road traffic'),
     ]
     Nature_of_injury = [
-        ('major', 'major'),
-        ('minor','minor'),
+        ('Major', 'Major'),
+        ('Minor','Minor'),
     ]
-
+    Risk_Assessment = [
+        ('Yes','Yes'),
+        ('No' ,'No'),
+    ]
+    Safety_Preparation = [
+         ('Yes','Yes'),
+         ('No' ,'No'),
+    ]
+    Sex = [
+         ('Male','Male'),
+         ('Female' ,'Female'),
+    ]
+    
     employee_involved = models.ForeignKey(UserProfile, on_delete=models.CASCADE, blank=True, null=True,related_name="accident_reports")
     department = models.ForeignKey(Sections, on_delete=models.DO_NOTHING, blank=True, null=True)
-    regions = models.ForeignKey(Regions, on_delete=models.DO_NOTHING, blank=True, null=True)
-    date = models.DateField()
-    time = models.TimeField()
+    sex = models.CharField(max_length=300 ,choices=Sex)
+    region = models.ForeignKey(Regions, on_delete=models.DO_NOTHING, blank=True, null=True)
+    age = models.PositiveIntegerField(default=0)
+    date_of_accident = models.DateField()
+    time_of_accident  = models.TimeField()
     cost_center = models.ForeignKey(CostCenter, on_delete=models.CASCADE, blank=True, null=True)
     ec_number = models.CharField(max_length=500)
     type_of_accident = models.CharField(max_length=500, choices=TYPE_Of_Accidents)
@@ -146,10 +143,14 @@ class AccidentReport(models.Model):
     nature_of_injury = models.CharField(max_length=400, choices=Nature_of_injury)
     circumstance_leading_to_accident = models.TextField(max_length=700)
     location_of_accident_giving_line_and_section_number = models.TextField(max_length=800)
-    attach_pretask_risk_assessment = models.FileField(upload_to='risk_assessments/', blank=True, null=True)
+    risk_assessment_carried_out = models.CharField(max_length=800 ,choices=Risk_Assessment)
     operation_of_protective_devices = models.TextField(max_length=600)
     attach_photographs = models.ImageField(upload_to='accident_photos/', blank=True, null=True)
     steps_taken_on_the_short_term = models.CharField(max_length=700)
+    safety_preparation_carried_out = models.CharField(max_length=900,choices=Safety_Preparation)
+    attach_written_statements = models.ImageField(upload_to='accident_photos/', blank=True, null=True)
+    other_information_considered_neccesary = models.TextField(max_length=600)
+    
 
 
 

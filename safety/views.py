@@ -1,18 +1,10 @@
 from django.shortcuts import render, redirect
-<<<<<<< HEAD
 from .models import SafetyMonthlyReport,AccidentReport
 from .forms import SafetyMonthlyReportForm,AccidentReportForm
 from django.contrib import messages
 from django.http import JsonResponse
 from django.db.models import Q
 from .models import AccidentReport
-=======
-from .models import SafetyMonthlyReport
-from .forms import SafetyMonthlyReportForm 
-from django.contrib import messages
-from django.http import JsonResponse
-from django.db.models import Q
->>>>>>> 1b24c077b0267638fdc753da98de11aedc9afed6
 from django.shortcuts import get_object_or_404, render, redirect 
 from django.db import transaction,IntegrityError
 def safety_table(request):
@@ -102,13 +94,6 @@ def safety_report_data(request):
         "data": data
     })
 
-<<<<<<< HEAD
-=======
-def safety_ytd(request):
-    report = SafetyMonthlyReport.objects.latest('year', 'month')
-    return render(request, 'safety/ytd.html', {'report': report})
-
->>>>>>> 1b24c077b0267638fdc753da98de11aedc9afed6
 def safety_update(request, id):
    safetymonthlyreport = get_object_or_404(SafetyMonthlyReport, id=id)
 
@@ -130,7 +115,6 @@ def safety_update(request, id):
         form = SafetyMonthlyReportForm (instance=safetymonthlyreport)
 
    return render(request, 'safety/safety_update.html', {'form': form, 'safetymonthlyreport': safetymonthlyreport})
-<<<<<<< HEAD
 
 def safety_ytd(request):
     report = SafetyMonthlyReport.objects.latest('year', 'month')
@@ -216,5 +200,3 @@ def accident_reports_datatable(request):
 
 def table_accident(request):
     return render(request, 'safety/table_accident.html')
-=======
->>>>>>> 1b24c077b0267638fdc753da98de11aedc9afed6

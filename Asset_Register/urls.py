@@ -29,6 +29,7 @@ urlpatterns = [
 
     #url for asset state chart data
     path('asset_state_chart_data/', views.asset_state_chart_data, name='asset_state_chart_data'),
+    path('download_asset_template/', views.download_asset_template, name='download_asset_template'),
 
 ]
 

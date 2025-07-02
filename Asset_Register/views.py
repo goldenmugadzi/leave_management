@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect
-from datetime import datetime
+from datetime import datetime, date
 from django.core.paginator import Paginator
 from django.http import JsonResponse
 import json, os
@@ -521,6 +521,7 @@ def upload_asset(request):
                         product_type, _ = ProductType.objects.get_or_create(
                             product_type=row.get('product type', '').strip())
                         
+                        row = {k.lower(): v for k, v in row.items()}
                         section_name = row.get('section', '').strip()
                         if not section_name:
                             raise ValueError("Section is required")
@@ -578,7 +579,7 @@ def upload_asset(request):
                             purchase_cost=row.get('purchase_cost', 0),
                             warrant=row.get('warrant', '') or None,
                             supplier=row.get('supplier', '') or None,
-                            #created_by=created_by,  # <-- add this line
+                            
                         )
                         
                         asset.full_clean() 
@@ -600,7 +601,7 @@ def upload_asset(request):
                     messages.info(request, f"Created {len(created_users)} new user profiles")
                 if duplicate_users:
                     messages.warning(request, f"Skipped {len(duplicate_users)} duplicate users")
-                return redirect('/table_asset/')
+                return redirect('/tab/')
             
             return render(request, 'asset_register/upload_asset.html', {
                 'error': "No assets were imported",
@@ -792,6 +793,14 @@ def asset_state_chart_data(request):
         "labels": labels,
         "datasets": datasets,
     })
+
+def download_asset_template(request):
+    content = (
+        "ID,Product Type,Asset State,Asset Number,Serial Number,User,Section,Region,Designation,Cost Center,Model\n"
+    )
+    response = HttpResponse(content, content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="asset_template.csv"'
+    return response
 
 
 
