@@ -196,12 +196,10 @@ class AppraisalKraUpdateView(SuccessMessageMixin, UpdateView):
     success_message = 'Key Result Area created successfully'
     context_object_name = "appraisal_kra_form"
     
-    def get_object(self, queryset):
+    def get_object(self, queryset=None):
         repo = AppraisalKraRepository()
         obj = repo.retrieve_by_pk(pk=self.kwargs.get("appraisal_kra_id"))
         return obj
-    
-    
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -213,7 +211,6 @@ class AppraisalKraUpdateView(SuccessMessageMixin, UpdateView):
         messages.error(self.request, "A Key Result Area (KRA) or a Supervisor Activity is required. Please provide at least one to proceed.")
         return self.render_to_response(self.get_context_data(form=form))
     
-
     def form_valid(self, form):
         """
             Processes the form when valid, builds a payload, and performs additional actions.
@@ -229,7 +226,6 @@ class AppraisalKraUpdateView(SuccessMessageMixin, UpdateView):
             messages.error(self.request, "Something went wrong, please try again")
         
         return super().form_valid(form)
-
 
     def get_success_url(self) -> str:
         """
