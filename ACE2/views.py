@@ -20,9 +20,9 @@ from django.db.models import Sum, Count
 from django.utils import timezone
 
 from ACE2.forms import *
-from ACE2.utils import find_pettycash_section_head
+from ACE2.utils import find_pettycash_section_head, determine_ace_type
 from approve.forms import ApprovalForm
-from approve.models import Step
+from approve.models import Step, Workflow
 from approve.views import intiate
 from it.users.models import UserProfile, Roles, Designations, Districts, Depots, Notification
 from finance.PettyCash.views import approve_step
@@ -35,6 +35,8 @@ from finance.direct_purchase.models import DirectPurchase
 from django.http import FileResponse, HttpResponseNotFound
 from django.db.models.functions import TruncMonth
 from django.db.models import Sum, Count
+
+from .utils import notify_head_office_approvers, get_regional_budget_impact_summary
 
 # Create your views here.
 @login_required
@@ -263,17 +265,26 @@ def Ace_detail(request, Ace_id2):
                    'balance_before': balance_before, 'balance_after': balance_after})
 
 
-def generate_unique_ace_id2():
-    """Generate a unique Ace_id2."""
-    max_attempts = 10
-    for _ in range(max_attempts):
-        rand = randrange(1, 1000)
-        rand2 = str(rand)
-        date_str = datetime.now().strftime("%Y%m%d")
-        ace_id2 = "ACE" + date_str + rand2
-        if not Ace2.objects.filter(Ace_id2=ace_id2).exists():
-            return ace_id2
-    raise Exception("Could not generate a unique Ace_id2 after multiple attempts.")
+def generate_unique_ace_id2(prefix='ACE'):
+    """Generate a unique Ace_id2 with optional prefix for high-value ACEs."""
+    from datetime import datetime
+    import random
+    
+    current_date = datetime.now()
+    year = current_date.strftime("%y")
+    month = current_date.strftime("%m")
+    day = current_date.strftime("%d")
+    
+    # Try up to 100 times to generate a unique ID
+    for attempt in range(100):
+        random_number = random.randint(1000, 9999)
+        ace_id = f"{prefix}{year}{month}{day}{random_number}"
+        
+        if not Ace2.objects.filter(Ace_id2=ace_id).exists():
+            return ace_id
+    
+    # If we couldn't generate a unique ID after 100 attempts, raise an exception
+    raise ValueError("Could not generate a unique ACE ID after 100 attempts")
 
 @login_required
 def create_Ace(request):
@@ -286,7 +297,7 @@ def create_Ace(request):
     form = AceForm(user=user_profile)
     formset = QuotationFormSet()
     if request.method == 'POST':
-        form = AceForm(request.POST, request.FILES)
+        form = AceForm(request.POST, request.FILES, user=user_profile)
         formset = QuotationFormSet(request.POST, request.FILES)
         user_id = request.user.id
         user_profile = UserProfile.objects.filter(id=user_id).first()
@@ -308,9 +319,24 @@ def create_Ace(request):
         if ace_role == "create":
             if form.is_valid():
                 ace = form.save(commit=False)
-                # print(ace.budget_id)
+                
+                # Determine ACE type and USD equivalent
+                ace_type, zwl_amount = determine_ace_type(ace.amount, ace.currency)
+                ace.ace_type = ace_type
+
+                # Set workflow based on ACE type
+                if ace_type == 'high_value':
+                    try:
+                        ace.process = intiate(request, 'big_ace')  # Use the workflow name created by the management command
+                        messages.info(request, f"High-value ACE detected ({zwl_amount:,.2f} ZWL). Extended approval workflow will be used.")
+                    except Exception as e:
+                        messages.warning(request, "High-value workflow not available. Using standard workflow.")
+                        ace.process = intiate(request, 'ace')
+                else:
+                    ace.process = intiate(request, 'ace')
+                
+                # Continue with existing budget validation logic...
                 budget = AssetBudget.objects.filter(budget_name=ace.budget_id, period=2025).first()
-                # print(budget)
                 print(budget, 'budget')
                 print(ace.amount, 'amount', budget.balance, 'balance', budget.to_be_withdrawn, 'to be withdrawn')
                 balance_after_ace = budget.balance - ace.amount
@@ -325,9 +351,8 @@ def create_Ace(request):
                 print(budget_to_be_withdrawn, 'budget to be withdrawn')
                 print(m_in_tray, 'money in tray')
                 if ace.amount <= budget.balance and budget_to_be_withdrawn <= budget.balance and balance_after_ace > 0 and m_in_tray <= budget.balance:
-                    ace.process = intiate(request, 'ace')
                     ace.requested_by = request.user
-
+                    
                     user_id = request.user.id
                     user_profile = UserProfile.objects.filter(id=user_id).first()
 
@@ -337,14 +362,17 @@ def create_Ace(request):
                     # print(designation)
                     region = user_region
 
-                    # Generate a unique Ace_id2
+                    # Generate a unique Ace_id2 with type indicator
                     try:
-                        ace.Ace_id2 = generate_unique_ace_id2()
+                        if ace_type == 'high_value':
+                            ace.Ace_id2 = generate_unique_ace_id2(prefix='HV')  # High Value prefix
+                        else:
+                            ace.Ace_id2 = generate_unique_ace_id2()
                     except Exception as e:
                         sweetify.error(request, "Could not generate a unique ACE ID. Please try again.")
                         messages.error(request, "Could not generate a unique ACE ID. Please try again.")
                         return render(request, 'finance/ace2/create_ace.html', {'form': form, 'formset': formset})
-
+                    
                     if designation:
                         ace.designation = designation
                     else:
@@ -458,77 +486,145 @@ def create_Ace(request):
 @login_required
 def ace_awaiting_my_action(request):
     """
-    Show ACEs awaiting the user's action, and ACEs created by the user (with demarcation).
+    Show ACEs awaiting the user's action, including head office approvers
     """
-    aces_to_process = []
-    user_roles = request.user.roles.all()
-
     user_id = request.user.id
     user_profile = UserProfile.objects.filter(id=user_id).first()
-    region = Regions.objects.filter(id=user_profile.region.id).first()
-    section = Sections.objects.filter(section=user_profile.section).first()
-
+    
+    # Determine user role
     custom_user_roles = {"ace": {}}
     roles_ = user_profile.roles.all()
     for _role in roles_:
         role = Roles.objects.filter(id=_role.id).first()
         if role.application == "ace":
             custom_user_roles["ace"] = role.role
-    ace_role = str(custom_user_roles["ace"])
-    requester = "create"
-    cashier = "process"
-
-    # ACEs awaiting user's action (skip rejected)
-    if ace_role == "pass":
-        for ace in Ace2.objects.filter(section=section, date_created__year__gte=2025, region=region):
+            ace_role = str(custom_user_roles["ace"])
+            print("ace role", ace_role)
+            break
+    
+    if ace_role in ['fd', 'md']:  # Head office roles
+        # Head office users see high-value ACEs from ALL regions
+        aces_to_process = []
+        
+        for ace in Ace2.objects.filter(ace_type='high_value').order_by('-date_created'):
             process = ace.process
-            # Skip if process is None
-            if not process:
-                continue
-            # Skip if any approval is "Rejected"
-            if process.approval_set.filter(approved="Rejected").exists():
-                continue
-            if process.approval_set.exists():
-                last_approval = process.approval_set.last()
-                current_step = last_approval.step.step
-            else:
-                current_step = 0
-            next_step = current_step + 1
-            workflow = process.workflow
-            step = workflow.step_set.filter(step=next_step, approver__in=user_roles).first()
-            if step:
-                aces_to_process.append(ace)
-    else:
-        for ace in Ace2.objects.filter(date_created__year__gte=2025, region=region):
-            process = ace.process
-            # Skip if process is None
-            if not process:
-                continue
-            # Skip if any approval is "Rejected"
-            if process.approval_set.filter(approved="Rejected").exists():
-                continue
             
-            if process.approval_set.exists():
+            if process and process.approval_set.exists():
                 last_approval = process.approval_set.last()
                 current_step = last_approval.step.step
+                
+                # Skip if rejected
+                if last_approval.approved == "Rejected":
+                    continue
             else:
                 current_step = 0
+            
             next_step = current_step + 1
             workflow = process.workflow
-            step = workflow.step_set.filter(step=next_step, approver__in=user_roles).first()
-            if step:
-                aces_to_process.append(ace)
+            
+            # Check if user should approve this step
+            try:
+                step = workflow.step_set.get(step=next_step)
+                if step.approver.role == ace_role:
+                    aces_to_process.append(ace)
+            except Step.DoesNotExist:
+                continue
+        
+        # Add summary information for head office view
+        context = {
+            'aces': aces_to_process,
+            'ace_role': ace_role,
+            'is_head_office': True,
+            'total_pending': len(aces_to_process),
+        }
+        
+        # Add regional breakdown
+        from collections import defaultdict
+        regional_breakdown = defaultdict(list)
+        total_value = 0  # Changed from total_usd_value to total_value
+        
+        for ace in aces_to_process:
+            regional_breakdown[ace.region.region].append(ace)
+            total_value += ace.amount or 0  # Changed from usd_equivalent to amount
+        
+        context.update({
+            'regional_breakdown': dict(regional_breakdown),
+            'total_value': total_value,  # Changed from total_usd_value
+        })
+        
+        return render(request, 'finance/ace2/head_office_awaiting_action.html', context)
+    
+    else:
+        # Regional logic for other roles
+        aces_to_process = []
+        user_roles = request.user.roles.all()
 
-    # ACEs created by the user (demarcation)
-    created_aces = Ace2.objects.filter(requested_by=request.user, date_created__year__gte=2025, region=region)
+        user_id = request.user.id
+        user_profile = UserProfile.objects.filter(id=user_id).first()
+        region = Regions.objects.filter(id=user_profile.region.id).first()
+        section = Sections.objects.filter(section=user_profile.section).first()
 
-    return render(request, 'finance/ace2/view_all_aces.html', {
-        'aces': aces_to_process,
-        'created_aces': created_aces,
-        'ace_role': ace_role,
-        'requester': requester,
-        'cashier': cashier
-    })
+        custom_user_roles = {"ace": {}}
+        roles_ = user_profile.roles.all()
+        for _role in roles_:
+            role = Roles.objects.filter(id=_role.id).first()
+            if role.application == "ace":
+                custom_user_roles["ace"] = role.role
+        ace_role = str(custom_user_roles["ace"])
+        requester = "create"
+        cashier = "process"
+
+        # ACEs awaiting user's action (skip rejected)
+        if ace_role == "pass":
+            for ace in Ace2.objects.filter(section=section, date_created__year__gte=2025, region=region):
+                process = ace.process
+                # Skip if process is None
+                if not process:
+                    continue
+                # Skip if any approval is "Rejected"
+                if process.approval_set.filter(approved="Rejected").exists():
+                    continue
+                if process.approval_set.exists():
+                    last_approval = process.approval_set.last()
+                    current_step = last_approval.step.step
+                else:
+                    current_step = 0
+                next_step = current_step + 1
+                workflow = process.workflow
+                step = workflow.step_set.filter(step=next_step, approver__in=user_roles).first()
+                if step:
+                    aces_to_process.append(ace)
+        else:
+            for ace in Ace2.objects.filter(date_created__year__gte=2025, region=region):
+                process = ace.process
+                # Skip if process is None
+                if not process:
+                    continue
+                # Skip if any approval is "Rejected"
+                if process.approval_set.filter(approved="Rejected").exists():
+                    continue
+                
+                if process.approval_set.exists():
+                    last_approval = process.approval_set.last()
+                    current_step = last_approval.step.step
+                else:
+                    current_step = 0
+                next_step = current_step + 1
+                workflow = process.workflow
+                step = workflow.step_set.filter(step=next_step, approver__in=user_roles).first()
+                if step:
+                    aces_to_process.append(ace)
+
+        # ACEs created by the user (demarcation)
+        created_aces = Ace2.objects.filter(requested_by=request.user, date_created__year__gte=2025, region=region)
+
+        return render(request, 'finance/ace2/view_all_aces.html', {
+            'aces': aces_to_process,
+            'created_aces': created_aces,
+            'ace_role': ace_role,
+            'requester': requester,
+            'cashier': cashier
+        })
 
 
 @login_required
@@ -934,7 +1030,7 @@ def upload_aces_csv(request):
             if item_division:
                 # fetch from remote budgets model
                 budget_obj = RemoteBudget.objects.using('remote').filter(budget_id=item_division).first()
-                # create assetbudget object using this information if asset budget doesn't exist
+                # create assetbudget object using this information if budget doesn't exist
                 print('budget', budget_obj)
                 if budget_obj:
                     assetbudget = AssetBudget.objects.filter(budget_name=budget_obj.budget,
@@ -1837,9 +1933,13 @@ def download_ace_quotation(request, quotation_id):
     except Quotation.DoesNotExist:
         return HttpResponseNotFound('Attachment not found')
 
+
+
     response = FileResponse(quotation.quotation_file, content_type='application/octet-stream')
     response['Content-Disposition'] = f'attachment; filename="{quotation.quotation_file.name}"'
     return response
+
+
 
 @login_required
 def monthly_usage_dashboard(request):

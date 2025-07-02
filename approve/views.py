@@ -110,6 +110,17 @@ def intiate(request, app):
     return process
 
 
+def intiate_high_value(request, app):
+    """
+    Create a process for high-value workflows
+    This is identical to intiate() but kept separate for clarity
+    """
+    app = Workflow.objects.get(name__iexact=app)
+    process = Process.objects.create(workflow=app)
+    process.save()
+    return process
+
+
 def approve_step(request, process_id):
     """
     This view function is used to approve a step in a process.
@@ -165,7 +176,7 @@ def approve_step(request, process_id):
                         "pettycash:pettycash_detail",
                         process.pettycash_set.last().petty_id,
                     )
-                elif process.workflow.name == "ace":
+                elif process.workflow.name == "ace" or process.workflow.name == "big_ace":
                     print(process.ace2_set.last().Ace_id2, "Please")
                     messages.success(request, "ace actioned successfully")
                     return redirect("Ace:ace_detail", process.ace2_set.last().Ace_id2)

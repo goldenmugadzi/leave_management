@@ -116,9 +116,21 @@ class Ace2(models.Model):
 
     CURRENCY_CHOICES = [
         ('ZIG', 'ZIG'),
+        ('USD', 'USD'),  # Add USD currency
+    ]
+    
+    # Add ACE type choices for different workflows
+    ACE_TYPE_CHOICES = [
+        ('standard', 'Standard ACE'),
+        ('high_value', 'High Value ACE (100k+ USD)'),
     ]
 
     # ace_type = models.CharField(max_length=15, blank=True, null=True)
+    
+    # Add new fields
+    ace_type = models.CharField(max_length=20, choices=ACE_TYPE_CHOICES, default='standard')
+    currency = models.CharField(max_length=15, blank=True, null=True, choices=CURRENCY_CHOICES, default='ZIG')
+    usd_equivalent = models.FloatField(blank=True, null=True, help_text="Amount in USD for comparison")
 
     region = models.ForeignKey(Regions, on_delete=models.DO_NOTHING, blank=True, null=True)
     allocation_code_of_expenditure = models.CharField(max_length=100, blank=True, null=True)
@@ -148,7 +160,6 @@ class Ace2(models.Model):
     total_connection_fee = models.FloatField(blank=True, null=True)
 
     designation = models.ForeignKey(Designations, on_delete=models.DO_NOTHING, blank=True, null=True)
-    currency = models.CharField(null=True, max_length=15, blank=True, choices=CURRENCY_CHOICES)
     # approval_code = models.IntegerField(null=True, max_length=5)
 
     quantity = models.IntegerField(null=True)
