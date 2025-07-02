@@ -3,19 +3,23 @@ from django.contrib.auth import get_user_model
 from helpers.models.timestamp import TimeStamp
 from .helpers import YearQuarter
 from .appraisal import Appraisal
-from it.users.models import Designations
 
 User = get_user_model()
 
 class KeyResultArea(TimeStamp):
-    designation = models.ForeignKey(Designations, on_delete=models.RESTRICT, related_name="designation", null=True, blank=True)
-    name = models.CharField(max_length=255)
-    description = models.TextField()
-    weight = models.DecimalField(max_digits=5, decimal_places=2, default=0.0)
-
+    key_result_area_description = models.CharField(max_length=500)
+    goal_description = models.CharField(max_length=500)
+    
     def __str__(self):
-        return f"{self.name}"
-
+        return f"{self.key_result_area_description}"
+    
+class KeyResultAreaOutCome(TimeStamp):
+    key_result_area = models.ForeignKey(KeyResultArea, on_delete=models.RESTRICT, related_name="key_result_area_ref", null=True, blank=True)
+    outcome_description = models.CharField(max_length=500)
+    
+    def __str__(self):
+        return f"{self.key_result_area.key_result_area_description}"
+    
 
 class AppraisalKra(TimeStamp):
     appraisal = models.ForeignKey(Appraisal, on_delete=models.RESTRICT, related_name="appraisal_kra_user_appraisal", null=True, blank=True)
@@ -29,9 +33,9 @@ class AppraisalKra(TimeStamp):
     def get_name(self):
         return self.key_result_area.name
 
-    @property
-    def get_weight(self):
-        return self.key_result_area.weight
+    # @property
+    # def get_weight(self):
+    #     return self.key_result_area.weight
 
 
 PERFORMANCE_INDICATOR = [
