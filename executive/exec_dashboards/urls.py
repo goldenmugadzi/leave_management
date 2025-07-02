@@ -24,5 +24,6 @@ urlpatterns = [
     path('districts', get_districts, name='get_districts'),
     path('dashboard_data', dashboard_data, name='dashboard_data'),
     path('dashboard_filter', dashboard_filters, name='dashboard_filter'),
+    path('save_dashboard_data', save_dashboard_data, name='save_dashboard_data'),
     path('setup_data', setup_random_data, name='setup_data'),
 ]

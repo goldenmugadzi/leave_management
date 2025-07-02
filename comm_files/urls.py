@@ -7,6 +7,8 @@ urlpatterns = [
     # Customer URLs
     path('customers/', views.customer_list, name='customer_list'),
     path('customers/create/', views.create_customer, name='create_customer'),
+    path('customers/import/', views.import_customers_excel, name='import_customers_excel'),
+    path('customers/import/sample/', views.download_sample_excel, name='download_sample_excel'),
     path('customers/<str:customer_id>/', views.customer_detail, name='customer_detail'),
     path('customers/<str:customer_id>/edit/', views.edit_customer, name='edit_customer'),
     

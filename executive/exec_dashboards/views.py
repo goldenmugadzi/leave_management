@@ -18,6 +18,7 @@ from django.db.models import Q  # Import Q object for complex filtering
 from django.contrib.auth.decorators import login_required
 
 from it.users.models import Sections, UserProfile, Depots, Districts, Regions
+from executive.general_dashboards.models import DashboardMetric, WeeklySales, WeeklyOutage, WeeklyFaultMaintenance, TopDebtor
 
 MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
 
@@ -349,25 +350,137 @@ def dashboard_data(request):
     
     keys_list, values_list = get_inspections_bargraph(user_profile, month_id)
 
-    inspection_locations = keys_list
-    inspections_count = values_list
+    inspection_locations = json.dumps(keys_list)
+    inspections_count = json.dumps(values_list)
     
     # loop through maintences and foreach get record count from Files.
     maintenance_keys_list, maintenance_values_list = get_maintenance_linegraph(user_profile, month_id)
     print("mmt: ", maintenance_keys_list, maintenance_values_list)
 
+    # Get metrics from our new models
+    metrics = {}
+    for metric in DashboardMetric.objects.filter(region__isnull=True, district__isnull=True, depot__isnull=True):
+        metrics[metric.metric_type] = {
+            'value': metric.value,
+            'unit': metric.unit,
+            'target': metric.target,
+            'target_unit': metric.target_unit,
+            'progress': metric.progress
+        }
+
+    # Get table data
+    weekly_sales = list(WeeklySales.objects.filter(
+        region__isnull=True, district__isnull=True, depot__isnull=True
+    ).values('week', 'zwl', 'usd'))
+    
+    weekly_outages = list(WeeklyOutage.objects.filter(
+        region__isnull=True, district__isnull=True, depot__isnull=True
+    ).values('week', 'outages', 'resolved', 'pending'))
+    
+    weekly_faults_maintenance = list(WeeklyFaultMaintenance.objects.filter(
+        region__isnull=True, district__isnull=True, depot__isnull=True
+    ).values('week', 'faults', 'maintenance', 'completed', 'pending'))
+    
+    # Get new top debtors data
+    top_debtors = list(TopDebtor.objects.filter(
+        region__isnull=True, district__isnull=True, depot__isnull=True
+    ).values('name', 'amount'))
+
     data = {
             "pbncs": list(pbncs.values('id', 'name', 'amount', 'depot', 'district', 'region', 'created_at')),
-            "tds": list(tds.values('id', 'name', 'amount', 'depot', 'district', 'region', 'created_at')),
+            "tds": top_debtors,  # Use new TopDebtor data instead of old TD data
             "upos": list(upos.values('id', 'description', 'depot', 'district', 'region', 'created_at')),
             "inspection_locations": inspection_locations, 
             "inspections_count": inspections_count,
             "mtn": mtn, 
             "maintenance_count": maintenance_values_list, 
-            "maintenance_locations": maintenance_keys_list
+            "maintenance_locations": maintenance_keys_list,
+            "metrics": metrics,
+            "weekly_sales": weekly_sales,
+            "weekly_outages": weekly_outages,
+            "weekly_faults_maintenance": weekly_faults_maintenance,
         }
 
     return JsonResponse(data, safe=False)
+
+@csrf_exempt
+def save_dashboard_data(request):
+    """Save edited dashboard data"""
+    if not request.user.is_authenticated:
+        return JsonResponse({'success': False, 'error': 'Authentication required'})
+    
+    try:
+        data = json.loads(request.body)
+        table = data.get('table')
+        row = data.get('row')
+        field = data.get('field')
+        value = data.get('value')
+        
+        if table == 'metrics':
+            # Handle metric updates
+            metric_key = row  # row contains the metric key
+            property_name = field  # field contains the property name
+            
+            metric, created = DashboardMetric.objects.get_or_create(
+                metric_type=metric_key,
+                region__isnull=True,
+                district__isnull=True,
+                depot__isnull=True,
+                defaults={'value': '0', 'unit': '', 'target': '0', 'target_unit': '', 'progress': 0}
+            )
+            
+            setattr(metric, property_name, value)
+            metric.updated_by = request.user
+            metric.save()
+            
+        elif table == 'weekly_sales':
+            # Handle weekly sales updates
+            sales_items = list(WeeklySales.objects.filter(
+                region__isnull=True, district__isnull=True, depot__isnull=True
+            ).order_by('week_number'))
+            
+            if row < len(sales_items):
+                sales_item = sales_items[row]
+                setattr(sales_item, field, value)
+                sales_item.save()
+                
+        elif table == 'weekly_outages':
+            # Handle weekly outages updates
+            outage_items = list(WeeklyOutage.objects.filter(
+                region__isnull=True, district__isnull=True, depot__isnull=True
+            ).order_by('week_number'))
+            
+            if row < len(outage_items):
+                outage_item = outage_items[row]
+                setattr(outage_item, field, int(value) if field in ['outages', 'resolved', 'pending'] else value)
+                outage_item.save()
+                
+        elif table == 'weekly_faults_maintenance':
+            # Handle weekly faults/maintenance updates
+            fault_items = list(WeeklyFaultMaintenance.objects.filter(
+                region__isnull=True, district__isnull=True, depot__isnull=True
+            ).order_by('week_number'))
+            
+            if row < len(fault_items):
+                fault_item = fault_items[row]
+                setattr(fault_item, field, int(value) if field in ['faults', 'maintenance', 'completed', 'pending'] else value)
+                fault_item.save()
+                
+        elif table == 'tds':
+            # Handle top debtors updates
+            debtor_items = list(TopDebtor.objects.filter(
+                region__isnull=True, district__isnull=True, depot__isnull=True
+            ).order_by('rank'))
+            
+            if row < len(debtor_items):
+                debtor_item = debtor_items[row]
+                setattr(debtor_item, field, value)
+                debtor_item.save()
+        
+        return JsonResponse({'success': True})
+        
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
 
 @login_required
 def dashboard_filters(request):
@@ -398,9 +511,24 @@ def dashboard_filters(request):
     maintenance_keys_list, maintenance_values_list = get_maintenance_linegraph_filter(selected_region, selected_district, selected_depot, month_id, user_profile)
     # print("mmt: ", maintenance_keys_list, maintenance_values_list)
 
+    # Build filter conditions for TopDebtor
+    filter_kwargs = {}
+    if selected_depot:
+        filter_kwargs['depot_id'] = selected_depot
+    elif selected_district:
+        filter_kwargs['district_id'] = selected_district
+    elif selected_region:
+        filter_kwargs['region_id'] = selected_region
+    else:
+        # Default to global data when no location is selected
+        filter_kwargs = {'region__isnull': True, 'district__isnull': True, 'depot__isnull': True}
+    
+    # Get filtered top debtors data
+    filtered_top_debtors = list(TopDebtor.objects.filter(**filter_kwargs).values('name', 'amount'))
+
     data = {
             "pbncs": list(pbncs.values('id', 'name', 'amount', 'depot', 'district', 'region', 'created_at')),
-            "tds": list(tds.values('id', 'name', 'amount', 'depot', 'district', 'region', 'created_at')),
+            "tds": filtered_top_debtors,  # Use filtered TopDebtor data
             "upos": list(upos.values('id', 'description', 'depot', 'district', 'region', 'created_at')),
             "inspection_locations": inspection_locations, 
             "inspections_count": inspections_count,

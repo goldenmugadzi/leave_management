@@ -12,6 +12,13 @@ class Customer(models.Model):
         ('GOVERNMENT', 'Government'),
     ]
     
+    STATUS_CHOICES = [
+        ('ACTIVE', 'Active'),
+        ('INACTIVE', 'Inactive'),
+        ('PENDING', 'Pending'),
+        ('SUSPENDED', 'Suspended'),
+    ]
+    
     customer_id = models.CharField(max_length=20, unique=True, help_text="Unique identifier for customer")
     name = models.CharField(max_length=100)
     address = models.CharField(max_length=200)
@@ -21,6 +28,15 @@ class Customer(models.Model):
     customer_type = models.CharField(max_length=20, choices=CUSTOMER_TYPES, default='RESIDENTIAL')
     account_number = models.CharField(max_length=20, blank=True, null=True)
     meter_number = models.CharField(max_length=20, blank=True, null=True)
+    # New fields for Excel import
+    region = models.CharField(max_length=100, blank=True, null=True)
+    district = models.CharField(max_length=100, blank=True, null=True)
+    depot = models.CharField(max_length=100, blank=True, null=True)
+    suburb = models.CharField(max_length=100, blank=True, null=True)
+    tariff_description = models.CharField(max_length=200, blank=True, null=True)
+    supply_point_number = models.CharField(max_length=50, blank=True, null=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='ACTIVE')
+    pjob = models.CharField(max_length=100, blank=True, null=True, help_text="Project job reference")
     date_created = models.DateTimeField(auto_now_add=True)
     date_updated = models.DateTimeField(auto_now=True)
     is_active = models.BooleanField(default=True)

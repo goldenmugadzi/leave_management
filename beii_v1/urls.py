@@ -38,7 +38,8 @@ urlpatterns = [
     path('users/', include('it.users.urls')),
     path('change_requests/', include('it.change_requests.urls')),
     path('dashboards/', include('executive.exec_dashboards.urls')),
-    path('ims/', include('knowledge_center.urls')),
+    path('action-dashboard/', include('executive.general_dashboards.urls')),
+    path('knowledge-center/', include('knowledge_center.urls')),
     path('processes/', include('processes.urls'), name='processes'),
     path('process_risks/', include('process_risks.urls'), name='process_risks'),
     # path('process_maps/',include('process_maps.urls'), name='process_maps'),
@@ -69,9 +70,11 @@ urlpatterns = [
     path('commercial/', include('comm_files.urls')),
     path('', include('Transport.urls')),
     path('', include('safety.urls')),
- 
-      
-
-
+    path('meetings/', include('meetings.urls')),
+    path('search/', include('esearch.urls')),
+    path('temp_tokens/', include('commecial.tempertockens.urls')),
+    path('competence_building/', include('competence_building.urls')),
+    path('comm_files/', include('comm_files.urls')),
+    # path('api/', include('api.urls')),  # Commented out until api.urls exists
 ] 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

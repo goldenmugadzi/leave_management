@@ -125,6 +125,86 @@
                     {% endif %}
                 </div>
                 
+                <!-- Region -->
+                <div>
+                    <label for="{{ form.region.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                        Region
+                    </label>
+                    {{ form.region }}
+                    {% if form.region.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.region.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                <!-- District -->
+                <div>
+                    <label for="{{ form.district.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                        District
+                    </label>
+                    {{ form.district }}
+                    {% if form.district.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.district.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                <!-- Depot -->
+                <div>
+                    <label for="{{ form.depot.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                        Depot
+                    </label>
+                    {{ form.depot }}
+                    {% if form.depot.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.depot.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                <!-- Suburb -->
+                <div>
+                    <label for="{{ form.suburb.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                        Suburb
+                    </label>
+                    {{ form.suburb }}
+                    {% if form.suburb.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.suburb.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                <!-- Tariff Description -->
+                <div>
+                    <label for="{{ form.tariff_description.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                        Tariff Description
+                    </label>
+                    {{ form.tariff_description }}
+                    {% if form.tariff_description.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.tariff_description.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                <!-- Supply Point Number -->
+                <div>
+                    <label for="{{ form.supply_point_number.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                        Supply Point Number
+                    </label>
+                    {{ form.supply_point_number }}
+                    {% if form.supply_point_number.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.supply_point_number.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                <!-- Status -->
+                <div>
+                    <label for="{{ form.status.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                        Status
+                    </label>
+                    {{ form.status }}
+                    {% if form.status.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.status.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                <!-- PJob -->
+                <div>
+                    <label for="{{ form.pjob.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                        Project Job Reference
+                    </label>
+                    {{ form.pjob }}
+                    {% if form.pjob.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.pjob.errors.0 }}</p>
+                    {% endif %}
+                </div>
                 <!-- Is Active -->
                 <div class="col-span-1 md:col-span-2">
                     <div class="flex items-center">

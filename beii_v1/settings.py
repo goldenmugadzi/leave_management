@@ -110,6 +110,7 @@ INSTALLED_APPS = [
     'it.users',
     'it.change_requests',
     'executive.exec_dashboards',
+    'executive.general_dashboards',
     'knowledge_center',
     'Docs',
     'approve',

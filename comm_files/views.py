@@ -4,8 +4,13 @@ from django.contrib import messages
 from django.http import HttpResponse, JsonResponse
 from django.core.paginator import Paginator
 from django.db.models import Q
+from django.db import transaction
 from .models import Customer, DocumentType, CustomerDocument, OnboardingProcess, ActivityLog
 from .forms import CustomerForm, DocumentTypeForm
+import pandas as pd
+import io
+from django.utils import timezone
+import uuid
 
 # Create your views here.
 @login_required
@@ -306,6 +311,219 @@ def edit_customer(request, customer_id):
     }
     
     return render(request, 'comm_files/edit_customer.html', context)
+
+# Excel Import Views
+@login_required
+def import_customers_excel(request):
+    """Import customers from Excel file"""
+    if request.method == 'POST':
+        if 'excel_file' not in request.FILES:
+            messages.error(request, "No file was uploaded. Please select an Excel file.")
+            return render(request, 'comm_files/import_customers.html')
+            
+        excel_file = request.FILES['excel_file']
+        
+        # Validate file type
+        if not excel_file.name.endswith(('.xlsx', '.xls')):
+            messages.error(request, "Please upload a valid Excel file (.xlsx or .xls)")
+            return render(request, 'comm_files/import_customers.html')
+        
+        try:
+            # Read Excel file
+            df = pd.read_excel(excel_file)
+            
+            # Clean column names (remove extra spaces, convert to lowercase)
+            df.columns = df.columns.str.strip().str.lower().str.replace(' ', '_')
+            
+            # Define column mapping from Excel to model fields
+            column_mapping = {
+                'account_number': 'account_number',
+                'region': 'region', 
+                'district': 'district',
+                'depot': 'depot',
+                'customer_name': 'name',
+                'address': 'address',
+                'suburb': 'suburb',
+                'tariff_description': 'tariff_description',
+                'supply_point_number': 'supply_point_number',
+                'status': 'status',
+                'meter_number': 'meter_number',
+                'customer_id': 'customer_id',
+                'contact': 'contact_number',
+                'email_address': 'email',
+                'pjob': 'pjob'
+            }
+            
+            # Process import statistics
+            total_rows = len(df)
+            successful_imports = 0
+            failed_imports = 0
+            updated_records = 0
+            errors = []
+            
+            with transaction.atomic():
+                for index, row in df.iterrows():
+                    try:
+                        # Extract customer data from row
+                        customer_data = {}
+                        
+                        # Map Excel columns to model fields
+                        for excel_col, model_field in column_mapping.items():
+                            if excel_col in df.columns:
+                                value = row[excel_col]
+                                # Convert NaN to None
+                                if pd.isna(value):
+                                    value = None
+                                elif isinstance(value, str):
+                                    value = value.strip()
+                                    if value == '':
+                                        value = None
+                                customer_data[model_field] = value
+                        
+                        # Generate a unique customer_id if missing
+                        if not customer_data.get('customer_id'):
+                            # Generate a unique code: CUST-<8char_random>
+                            unique_code = f"CUST-{uuid.uuid4().hex[:8].upper()}"
+                            customer_data['customer_id'] = unique_code
+                        
+                        if not customer_data.get('name'):
+                            errors.append(f"Row {index + 2}: Missing customer name") 
+                            failed_imports += 1
+                            continue
+                        
+                        # Handle status mapping
+                        status_value = customer_data.get('status', '').upper() if customer_data.get('status') else 'ACTIVE'
+                        if status_value not in [choice[0] for choice in Customer.STATUS_CHOICES]:
+                            customer_data['status'] = 'ACTIVE'  # Default to active if invalid
+                        else:
+                            customer_data['status'] = status_value
+                        
+                        # Set is_active based on status
+                        customer_data['is_active'] = customer_data['status'] == 'ACTIVE'
+                        
+                        # Check if customer already exists (only if customer_id was provided in the file)
+                        existing_customer = None
+                        if 'customer_id' in row and row['customer_id'] and not pd.isna(row['customer_id']):
+                            existing_customer = Customer.objects.filter(
+                                customer_id=row['customer_id']
+                            ).first()
+                        
+                        if existing_customer:
+                            # Update existing customer
+                            for field, value in customer_data.items():
+                                if value is not None:  # Only update non-null values
+                                    setattr(existing_customer, field, value)
+                            existing_customer.save()
+                            
+                            # Log activity
+                            ActivityLog.objects.create(
+                                customer=existing_customer,
+                                user=request.user,
+                                action="Updated customer via Excel import",
+                                details=f"Customer {existing_customer.name} updated from Excel import."
+                            )
+                            
+                            updated_records += 1
+                        else:
+                            # Create new customer
+                            new_customer = Customer.objects.create(**customer_data)
+                            
+                            # Log activity
+                            ActivityLog.objects.create(
+                                customer=new_customer,
+                                user=request.user,
+                                action="Created customer via Excel import",
+                                details=f"New customer {new_customer.name} created from Excel import."
+                            )
+                            
+                            successful_imports += 1
+                            
+                    except Exception as e:
+                        errors.append(f"Row {index + 2}: {str(e)}")
+                        failed_imports += 1
+                        continue
+            
+            # Prepare success message
+            messages.success(request, 
+                f"Import completed! Created: {successful_imports}, Updated: {updated_records}, Failed: {failed_imports} out of {total_rows} total rows.")
+            
+            # Show errors if any
+            if errors:
+                error_message = "Errors encountered:\n" + "\n".join(errors[:10])  # Show first 10 errors
+                if len(errors) > 10:
+                    error_message += f"\n... and {len(errors) - 10} more errors."
+                messages.warning(request, error_message)
+            
+            return redirect('comm_files:customer_list')
+            
+        except Exception as e:
+            messages.error(request, f"Error processing Excel file: {str(e)}")
+            return render(request, 'comm_files/import_customers.html')
+    
+    # Show expected columns for reference
+    expected_columns = [
+        'ACCOUNT NUMBER', 'REGION', 'DISTRICT', 'DEPOT', 'CUSTOMER NAME',
+        'ADDRESS', 'SUBURB', 'TARIFF DESCRIPTION', 'SUPPLY POINT NUMBER',
+        'STATUS', 'METER NUMBER', 'CUSTOMER ID', 'CONTACT', 'EMAIL ADDRESS', 'PJOB'
+    ]
+    
+    context = {
+        'expected_columns': expected_columns
+    }
+    
+    return render(request, 'comm_files/import_customers.html', context)
+
+@login_required
+def download_sample_excel(request):
+    """Download a sample Excel template for customer import"""
+    # Create sample data
+    sample_data = {
+        'ACCOUNT NUMBER': ['1268810', '1130373'],
+        'REGION': ['HARARE', 'HARARE'],
+        'DISTRICT': ['SOUTH', 'SOUTH'],
+        'DEPOT': ['GLENVIEW DEPOT', 'GLENVIEW DEPOT'],
+        'CUSTOMER NAME': ['Client Name', 'Client Two'],
+        'ADDRESS': ['99999 B54 UNKNOWN', '99999 B1576 UNKNOWN'],
+        'SUBURB': ['UNKNOWN', 'UNKNOWN'],
+        'TARIFF DESCRIPTION': ['AGRICULTURAL', 'AGRICULTURAL'],
+        'SUPPLY POINT NUMBER': ['1269077', '1130389'],
+        'STATUS': ['ACTIVE', 'ACTIVE'],
+        'METER NUMBER': ['101316', '303230'],
+        'CUSTOMER ID': ['CUST001', 'CUST002'],
+        'CONTACT': ['263123456789', '263987654321'],
+        'EMAIL ADDRESS': ['client@email.com', 'client2@email.com'],
+        'PJOB': ['PROJECT001', 'PROJECT002']
+    }
+    
+    # Create DataFrame
+    df = pd.DataFrame(sample_data)
+    
+    # Create Excel file in memory
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = 'attachment; filename="customer_import_template.xlsx"'
+    
+    # Write to Excel
+    with pd.ExcelWriter(response, engine='openpyxl') as writer:
+        df.to_excel(writer, sheet_name='Customer Data', index=False)
+        
+        # Get the workbook and worksheet
+        workbook = writer.book
+        worksheet = writer.sheets['Customer Data']
+        
+        # Auto-adjust column widths
+        for column in worksheet.columns:
+            max_length = 0
+            column_letter = column[0].column_letter
+            for cell in column:
+                try:
+                    if len(str(cell.value)) > max_length:
+                        max_length = len(str(cell.value))
+                except:
+                    pass
+            adjusted_width = (max_length + 2)
+            worksheet.column_dimensions[column_letter].width = adjusted_width
+    
+    return response
 
 # Document Type Management Views
 @login_required
