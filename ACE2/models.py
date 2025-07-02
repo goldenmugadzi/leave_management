@@ -116,7 +116,7 @@ class Ace2(models.Model):
 
     CURRENCY_CHOICES = [
         ('ZIG', 'ZIG'),
-        ('USD', 'USD'),  # Add USD currency
+        # ('USD', 'USD'),  # Add USD currency
     ]
     
     # Add ACE type choices for different workflows

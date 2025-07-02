@@ -219,3 +219,18 @@ def get_regional_budget_impact_summary(ace_item):
             'pending_percentage': (total_pending / total_allocated * 100) if total_allocated > 0 else 0
         }
     }
+
+# Note: The following code should be added to approve/views.py approve_step function:
+# if process.workflow.name == "big_ace2":
+#     # Get current step info
+#     latest_approval = process.approval_set.last()
+#     current_step = latest_approval.step.step if latest_approval else 0
+#     next_step = current_step + 1
+#     
+#     # Check if this is a head office step
+#     step = Step.objects.get(workflow=process.workflow, step=next_step)
+#     if step.to in ['Finance Director approval (Head Office)', 
+#                    'Managing Director final approval (Head Office)']:
+#         # Get the ACE item and trigger head office notifications
+#         ace_item = process.ace2_set.last()
+#         notify_head_office_approvers(ace_item, step.to, request)
