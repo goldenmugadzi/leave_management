@@ -17,7 +17,7 @@ class Command(BaseCommand):
         
         # Create high-value ACE workflow with additional steps
         high_value_workflow, created = Workflow.objects.get_or_create(
-            name='ace_high_value',
+            name='big_ace',
             defaults={'application': ace_app}
         )
         
@@ -28,8 +28,8 @@ class Command(BaseCommand):
             try:
                 roles = {
                     'pass': Roles.objects.get(role='pass', application='ace'),        # Section Head
-                    'process': Roles.objects.get(role='process', application='ace'),  # Accounting Officer  
-                    'check': Roles.objects.get(role='check', application='ace'),      # Finance Manager
+                    'process': Roles.objects.get(role='process', application='ace'),  # Accounting Officer
+                    'sanction': Roles.objects.get(role='sanction', application='ace'),  # Finance Manager
                     'approve': Roles.objects.get(role='approve', application='ace'),  # General Manager
                 }
             except Roles.DoesNotExist as e:

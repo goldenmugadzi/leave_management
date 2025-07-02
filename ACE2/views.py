@@ -327,7 +327,7 @@ def create_Ace(request):
                 # Set workflow based on ACE type
                 if ace_type == 'high_value':
                     try:
-                        ace.process = intiate(request, 'big_ace')  # Use the workflow name created by the management command
+                        ace.process = intiate(request, 'big_ace2')  # Use the workflow name created by the management command
                         messages.info(request, f"High-value ACE detected ({zwl_amount:,.2f} ZWL). Extended approval workflow will be used.")
                     except Exception as e:
                         messages.warning(request, "High-value workflow not available. Using standard workflow.")
@@ -453,6 +453,7 @@ def create_Ace(request):
 
                         ace_sh = UserProfile.objects.filter(username=ace_sh).first()
                         notify_user(ace_sh, msg, "ACE", url, ace.Ace_id2, request)
+
 
                     if str(ace.classification) == "Project":
                         # the idea is that if its ace of type project there need to be added other project details
