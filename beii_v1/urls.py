@@ -70,11 +70,16 @@ urlpatterns = [
     path('commercial/', include('comm_files.urls')),
     path('', include('Transport.urls')),
     path('', include('safety.urls')),
-    path('meetings/', include('meetings.urls')),
+    # path('meetings/', include('meetings.urls')),
     path('search/', include('esearch.urls')),
     path('temp_tokens/', include('commecial.tempertockens.urls')),
     path('competence_building/', include('competence_building.urls')),
     path('comm_files/', include('comm_files.urls')),
     # path('api/', include('api.urls')),  # Commented out until api.urls exists
+    path('', include('meetings.urls')),
+    path('', include('leave_management.urls')),
+      
+
+
 ] 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

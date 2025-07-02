@@ -8,6 +8,7 @@
       <thead>
         <tr class="bg-blue-200">
           <th>Accident/Statistic</th>
+          <th>Previous Month</th>
           <th>Current Month</th>
           <th>Year To Date (YTD)</th>
         </tr>
@@ -15,67 +16,77 @@
       <tbody>
         <tr>
           <td>Work Related Accidents</td>
+          <td>{{ prev_report.work_related_accidents|default:"-" }}</td>
           <td>{{ report.work_related_accidents }}</td>
           <td>{{ report.ytd_work_related_accidents }}</td>
         </tr>
         <tr>
           <td>Disabling Accidents</td>
+          <td>{{ prev_report.disabling_accidents|default:"-" }}</td>
           <td>{{ report.disabling_accidents }}</td>
           <td>{{ report.ytd_disabling_accidents }}</td>
         </tr>
         <tr>
           <td>Fatal Accidents</td>
+           <td>{{ prev_report.fatal_accidents|default:"-" }}</td>
           <td>{{ report.fatal_accidents }}</td>
           <td>{{ report.ytd_fatal_accidents }}</td>
         </tr>
         <tr>
           <td>Man Hours Lost</td>
+          <td>{{ prev_report.man_hours_lost|default:"-" }}</td>
           <td>{{ report.man_hours_lost }}</td>
           <td>{{ report.ytd_man_hours_lost }}</td>
         </tr>
         <tr>
           <td>Motor Vehicle Accidents</td>
+          <td>{{ prev_report.motor_vehicle_accidents|default:"-" }}</td>
           <td>{{ report.motor_vehicle_accidents }}</td>
           <td>{{ report.ytd_motor_vehicle_accidents }}</td>
         </tr>
         <tr>
           <td>Property Damaged</td>
+          <td>{{ prev_report.property_damaged|default:"-" }}</td>
           <td>{{ report.property_damaged }}</td>
           <td>{{ report.ytd_property_damaged }}</td>
         </tr>
         <tr>
           <td>SHE Meetings Conducted</td>
+          <td>{{ prev_report.she_meetings_conducted|default:"-" }}</td>
           <td>{{ report.she_meetings_conducted }}</td>
           <td>{{ report.ytd_she_meetings_conducted }}</td>
         </tr>
         <tr>
           <td>SHE Related Trainings</td>
+          <td>{{ prev_report.she_related_trainings|default:"-" }}</td>
           <td>{{ report.she_related_trainings }}</td>
           <td>{{ report.ytd_she_related_trainings }}</td>
         </tr>
         <tr>
           <td>Wellness Programmes</td>
+          <td>{{ prev_report.wellness_programmes|default:"-" }}</td>
           <td>{{ report.wellness_programmes }}</td>
           <td>{{ report.ytd_wellness_programmes }}</td>
         </tr>
         <tr>
           <td>Clear Up Campaigns</td>
+          <td>{{ prev_report.clear_up_campaigns|default:"-" }}</td>
           <td>{{ report.clear_up_campaigns }}</td>
           <td>{{ report.ytd_clear_up_campaigns }}</td>
         </tr>
         <tr>
           <td>SHE Inspections Conducted</td>
+          <td>{{ prev_report.she_inspections_conducted|default:"-" }}</td>
           <td>{{ report.she_inspections_conducted }}</td>
           <td>{{ report.ytd_she_inspections_conducted }}</td>
         </tr>
         <tr>
           <td>Mock Drills Conducted</td>
+           <td>{{ prev_report.mock_drills_conducted|default:"" }}</td>
           <td>{{ report.mock_drills_conducted }}</td>
           <td>{{ report.ytd_mock_drills_conducted }}</td>
         </tr>
-        <tr>
-          <td>Costsk</td>
-        </tr>
+        
       </tbody>
     </table>
     <div class="mt-4 text-sm text-gray-600">

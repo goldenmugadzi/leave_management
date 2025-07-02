@@ -11,22 +11,14 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 </script>
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
-<link href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css" rel="stylesheet">
-
 <script>
   $(document).ready(function() {
-    $('#id_year').datepicker({
-      changeYear: true,        // Enables year selection
-      showButtonPanel: true,   // Shows the "Done" button
-      dateFormat: "yy",        // Shows only the year
-      minDate: new Date(1900, 1 - 1, 1), // Optional: set minimum date (start from year 1900)
-      // No maxDate specified
+    $("#datepurchased").datepicker({ 
+      dateFormat: "yy-mm-dd",  
+      minDate: 0  
     });
   });
 </script>
-
 
 
  <div class="content-wrapper">
@@ -35,7 +27,7 @@
     <form method="post">
       {% csrf_token %}
       <h1 class="text-base font-semibold leading-7 text-gulf-blue-900">
-        VEHICLE LOG BOOK (A35)
+        Meeting Registration Form
       </h1>
       <p class="mt-1 text-sm leading-6 text-gulf-blue-900">
         Fill all required fields.
