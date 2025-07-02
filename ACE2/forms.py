@@ -4,6 +4,7 @@ from .models import *
 from django.forms import formset_factory
 from it.users.models import UserProfile, Regions, Sections, Designations
 from .models import AssetBudget
+from .utils import determine_ace_type  # Removed convert_to_usd import
 
 
 class QuotationForm(forms.ModelForm):
@@ -20,7 +21,7 @@ class AceForm(forms.ModelForm):
         model = Ace2
         fields = '__all__'
         exclude = ['process', 'allocation_code_of_expenditure', 'requested_by', 'date_created'
-            , 'Ace_id2', 'Ace_id', 'asset_number', 'designation', 'region'
+            , 'Ace_id2', 'Ace_id', 'asset_number', 'designation', 'region', 'ace_type', 'usd_equivalent'  # Keep excluding usd_equivalent since we don't use it anymore
                    # exclude the project items
             , 'capital_estimated', 'capital_sanctioned', 'capital_contribution', 'materials', 'labour',
                    'connection_fee', 'transport', 'present_tariff', 'present_fmc', 'total_connection_fee'
@@ -46,17 +47,31 @@ class AceForm(forms.ModelForm):
                          "ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 "
                          "sm:text-sm sm:leading-6",
             })
-            # self.fields['budget_id'].queryset = AssetBudget.objects.filter(period=2024)
 
             if (field_name == 'id_from_budget') or (field_name == 'section') or (field_name == 'id_to_budget') or (
-                    field_name == 'budget_id') or (field_name == 'budget'):
+                    field_name == 'budget_id') or (field_name == 'designation') or (field_name == 'classification'):
                 field.widget.attrs.update({
-                    'class': "select2 block w-full rounded-md border-0 py-1.5 text-gray-900 "
-                             "shadow-sm ring-1 ring-inset ring-gray-300 "
-                             "placeholder:text-gray-400 focus:ring-2 focus:ring-inset "
-                             "focus:ring-indigo-600 sm:text-sm sm:leading-6", })
-            if isinstance(field.widget, forms.Textarea):
-                field.widget.attrs.update({'rows': '3'})
+                    'class': "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset "
+                             "ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm "
+                             "sm:leading-6",
+                })
+
+    def clean(self):
+        cleaned_data = super().clean()
+        amount = cleaned_data.get('amount')
+        currency = cleaned_data.get('currency', 'ZWL')
+
+        if amount:
+            # Determine ACE type based on ZWL amount
+            ace_type, zwl_amount = determine_ace_type(amount, currency)
+            cleaned_data['ace_type'] = ace_type
+            # No longer setting usd_equivalent
+
+            # Show warning for high-value ACEs
+            if ace_type == 'high_value':
+                self.add_error(None, f"⚠️ HIGH VALUE ACE: This ACE is worth {zwl_amount:,.2f} ZWL and will require extended approval workflow.")
+
+        return cleaned_data
 
     # quotation_form.fields['quotation_file'].label = self.get_quotation_label(i + 1)
 

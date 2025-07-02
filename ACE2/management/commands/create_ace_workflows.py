@@ -11,7 +11,7 @@ class Command(BaseCommand):
         
         # Create standard ACE workflow (existing)
         standard_workflow, created = Workflow.objects.get_or_create(
-            name='ace',
+            name='ace2',
             defaults={'application': ace_app}
         )
         
@@ -36,7 +36,7 @@ class Command(BaseCommand):
                 self.stdout.write(self.style.ERROR(f"Required role not found: {e}"))
                 return
             
-            # Add FD and MD roles for high-value workflow
+            # Add FD and MD roles for high-value workflow (HEAD OFFICE LEVEL)
             # Create these roles if they don't exist
             try:
                 fd_role = Roles.objects.get(role='fd', application='ace')
@@ -44,9 +44,12 @@ class Command(BaseCommand):
                 fd_role, _ = Roles.objects.get_or_create(
                     role='fd', 
                     application='ace',
-                    defaults={'description': 'Finance Director'}
+                    defaults={
+                        'description': 'Finance Director (Head Office)',
+                        'name': 'Finance Director'
+                    }
                 )
-                self.stdout.write(f"Created FD role for ACE application")
+                self.stdout.write(f"Created FD role for ACE application (Head Office level)")
             
             try:
                 md_role = Roles.objects.get(role='md', application='ace')
@@ -54,20 +57,23 @@ class Command(BaseCommand):
                 md_role, _ = Roles.objects.get_or_create(
                     role='md', 
                     application='ace',
-                    defaults={'description': 'Managing Director'}
+                    defaults={
+                        'description': 'Managing Director (Head Office)',
+                        'name': 'Managing Director'
+                    }
                 )
-                self.stdout.write(f"Created MD role for ACE application")
+                self.stdout.write(f"Created MD role for ACE application (Head Office level)")
             
             # Create steps for high-value workflow (6 steps vs 4 for standard)
             # Standard workflow: Section Head -> Accounting Officer -> Finance Manager -> General Manager
-            # Extended workflow: Section Head -> Accounting Officer -> Finance Manager -> General Manager -> Finance Director -> Managing Director
+            # Extended workflow: Section Head -> Accounting Officer -> Finance Manager -> General Manager -> Finance Director (HO) -> Managing Director (HO)
             steps_data = [
-                (1, roles['pass'], "Section Head approval"),
-                (2, roles['process'], "Accounting Officer review"),
-                (3, roles['check'], "Finance Manager approval"),
-                (4, roles['approve'], "General Manager approval"),
-                (5, fd_role, "Finance Director approval"),
-                (6, md_role, "Managing Director final approval"),
+                (1, roles['pass'], "Section Head approval (Regional)"),
+                (2, roles['process'], "Accounting Officer review (Regional)"),
+                (3, roles['sanction'], "Finance Manager approval (Regional)"),
+                (4, roles['approve'], "General Manager approval (Regional)"),
+                (5, fd_role, "Finance Director approval (Head Office)"),
+                (6, md_role, "Managing Director final approval (Head Office)"),
             ]
             
             # Clear existing steps for this workflow if any
@@ -87,6 +93,8 @@ class Command(BaseCommand):
             self.stdout.write(self.style.SUCCESS("High-value ACE workflow structure:"))
             for step_num, role, description in steps_data:
                 self.stdout.write(f"  Step {step_num}: {description} ({role.role})")
+                
+            self.stdout.write(self.style.WARNING("Note: FD and MD are Head Office roles and will receive ACEs from ALL regions"))
         else:
             self.stdout.write("High-value ACE workflow already exists")
         

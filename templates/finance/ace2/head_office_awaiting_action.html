@@ -1,5 +1,6 @@
-{% extends "base.html" %}
+{% extends "admin_layout.html" %}
 {% load static %}
+{% load humanize %}
 
 {% block content %}
 <div class="container mx-auto px-4 py-8">
@@ -11,7 +12,7 @@
             <div class="text-right">
                 <div class="text-sm text-gray-600">Total Pending</div>
                 <div class="text-2xl font-bold text-blue-600">{{ total_pending }}</div>
-                <div class="text-sm text-gray-600">${{ total_usd_value|floatformat:0|add_commas }} USD</div>
+                <div class="text-sm text-gray-600">{{ total_value|floatformat:0|intcomma }} ZWL</div>
             </div>
         </div>
 
@@ -24,7 +25,7 @@
                     <h4 class="font-medium text-gray-800">{{ region }}</h4>
                     <div class="text-sm text-gray-600">{{ aces|length }} ACE(s)</div>
                     <div class="text-sm font-medium text-blue-600">
-                        ${% for ace in aces %}{{ ace.usd_equivalent|add:0 }}{% if not forloop.last %}+{% endif %}{% endfor %} USD
+                        {% for ace in aces %}{{ ace.amount|add:0 }}{% if not forloop.last %}+{% endif %}{% endfor %} ZWL
                     </div>
                 </div>
                 {% endfor %}
@@ -39,8 +40,7 @@
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ACE ID</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Region</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Details</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount (ZIG)</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">USD Equivalent</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Requested By</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
@@ -59,11 +59,8 @@
                         <td class="px-6 py-4 text-sm text-gray-900">
                             <div class="max-w-xs truncate">{{ ace.details_of_expenditure }}</div>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {{ ace.amount|floatformat:2|add_commas }} {{ ace.currency }}
-                        </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-600">
-                            ${{ ace.usd_equivalent|floatformat:0|add_commas }}
+                            {{ ace.amount|floatformat:0|intcomma }} {{ ace.currency|default:"ZWL" }}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                             {{ ace.requested_by.get_full_name|default:"N/A" }}
