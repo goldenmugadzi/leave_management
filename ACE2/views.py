@@ -327,7 +327,8 @@ def create_Ace(request):
                 # Set workflow based on ACE type
                 if ace_type == 'high_value':
                     try:
-                        ace.process = intiate(request, 'big_ace2')  # Use the workflow name created by the management command
+                        ace.process = intiate(request, 'ace_em')  # Use the workflow name created by the management
+                        # command
                         messages.info(request, f"High-value ACE detected ({zwl_amount:,.2f} ZWL). Extended approval workflow will be used.")
                     except Exception as e:
                         messages.warning(request, "High-value workflow not available. Using standard workflow.")
