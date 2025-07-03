@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
-from datetime import datetime
+from datetime import datetime, date
 from django.core.paginator import Paginator
 from django.http import JsonResponse
 import json, os
@@ -27,11 +27,10 @@ def create_asset(request):
     if request.method == 'POST':
         form = CombinedAssetForm(request.POST, request.FILES)
         if form.is_valid():
-            form.save()  
-            return redirect('tab') 
+            form.save()
+            return redirect('tab')  
         else:
-        
-            print(form.errors)  
+            print(form.errors)
     else:
         form = CombinedAssetForm()
 
@@ -154,151 +153,6 @@ def show_hr_datatable(request):
             'data': []
         })
 
-@login_required
-def show_asset_datatable(request):
-    try:
-        print("\n===== NEW REQUEST =====")
-        print(f"User: {request.user.first_name} {request.user.last_name} ({request.user.username})")
-
-        
-        assets = ZetdcAssets.objects.all()
-        print(f"assets count: {assets.count()}")
-
-    
-        cost_centers = request.user.cost_centers_for(["IT Asset Register"])
-        if cost_centers:
-            print(f"Filtering by cost centers: {cost_centers}")
-            assets = assets.filter(cost_center__in=cost_centers)
-            print(f"After cost center filtering: {assets.count()}")
-        else:
-            descendents = request.user.cost_center_and_decendace()
-            print(f"Filtering by cost center descendents: {descendents}")
-            assets = assets.filter(cost_center__in=descendents)
-            print(f"After descendents filtering: {assets.count()}")
-
-        
-        draw = int(request.GET.get('draw', 1))
-        start = int(request.GET.get('start', 0))
-        length = int(request.GET.get('length', 10))
-        search_value = request.GET.get('search[value]', '')
-
-        
-        if search_value:
-            print(f"Applying search filter: {search_value}")
-            assets = assets.filter(
-                Q(asset_state__icontains=search_value) |
-                Q(product_type__product_type__icontains=search_value) |
-                Q(serial_number__icontains=search_value) |
-                Q(department__section__icontains=search_value) |
-                Q(user__first_name__icontains=search_value) |
-                Q(user__last_name__icontains=search_value) |
-                Q(regions__region__icontains=search_value) |
-                Q(purchase_cost__icontains=search_value) |
-                Q(designation__description__icontains=search_value) |
-                Q(model__icontains=search_value) |
-                #Q(warrant__icontains=search_value) |
-                Q(cost_center__name__icontains=search_value) |
-                Q(supplier__icontains=search_value) |
-                Q(created_by__first_name__icontains=search_value) |
-                Q(created_by__last_name__icontains=search_value)
-            )
-            print(f"After search filtering: {assets.count()}")
-
-        
-        total = assets.count()
-        print(f"Total records: {total}")
-
-        
-        order_column = request.GET.get('order[0][column]')
-        order_dir = request.GET.get('order[0][dir]')
-        
-        if order_column and order_dir:
-            column_map = {
-                "0": "id",
-                "1": "product_type__product_type",
-                "2": "asset_state",
-                "3": "asset_number",
-                "4": "serial_number",
-                "5": "department__section",
-                "6": "user__first_name",
-                "7": "regions__region",
-                "8": "purchase_cost",
-                "9": "designation__description",
-                "12": "cost_center__name",
-                "13": "model",
-                "14": "supplier",
-                "15": "updated_at",
-                #"16": "created_at",
-                "17": "created_by__first_name",
-            }
-            
-            column_name = column_map.get(order_column)
-            if column_name:
-                if order_dir == 'desc':
-                    column_name = f'-{column_name}'
-                print(f"Ordering by: {column_name}")
-                assets = assets.order_by(column_name)
-
-        # Pagination
-        paginator = Paginator(assets, length)
-        page_number = start // length + 1
-        try:
-            page_obj = paginator.get_page(page_number)
-            print(f"Page {page_number} of {paginator.num_pages}")
-        except Exception as e:
-            print(f"Pagination error: {str(e)}")
-            return JsonResponse({
-                'draw': draw,
-                'recordsTotal': total,
-                'recordsFiltered': total,
-                'data': [],
-                'error': 'Pagination error'
-            }, status=400)
-
-        
-        asset_list = []
-        for asset in page_obj:
-            asset_data = {
-                "id": asset.id,
-                "product_type": asset.product_type.product_type if asset.product_type else None,
-                "asset_state": asset.asset_state,
-                "asset_number": asset.asset_number,
-                "serial_number": asset.serial_number,
-                "department": asset.department.section if asset.department else None,
-                "user": f"{asset.user.first_name} {asset.user.last_name}" if asset.user else None,
-                "regions": asset.regions.region if asset.regions else None,
-                "purchase_cost": str(asset.purchase_cost),
-                "designations": asset.designation.description if asset.designation else None,
-                #"date_purchased": asset.date_purchased.strftime('%Y-%m-%d') if asset.date_purchased else None,
-                #"warrant": asset.warrant,
-                "cost_center": asset.cost_center.name if asset.cost_center else None,
-                "model": asset.model,
-                "supplier": asset.supplier,
-                #"updated_at": asset.updated_at.strftime('%Y-%m-%d') if asset.updated_at else None,
-                "created_at": asset.created_at.strftime('%Y-%m-%d') if asset.created_at else None,
-                "created_by": f"{asset.created_by.first_name} {asset.created_by.last_name}" if asset.created_by else None,
-            }
-            asset_list.append(asset_data)
-
-        return JsonResponse({
-            'draw': draw,
-            'recordsTotal': total,
-            'recordsFiltered': total,
-            'data': asset_list
-        })
-
-    except Exception as ex:
-        print("Unexpected error:", str(ex))
-        traceback.print_exc()
-        return JsonResponse({
-            'draw': 1,
-            'recordsTotal': 0,
-            'recordsFiltered': 0,
-            'data': [],
-            'error': str(ex)
-    }, status=500)
-
-@login_required
 def update_asset(request, asset_type, asset_id):
     if asset_type == 'asset':
         instance = get_object_or_404(ZetdcAssets, id=asset_id)
@@ -681,6 +535,7 @@ def upload_asset(request):
                         product_type, _ = ProductType.objects.get_or_create(
                             product_type=row.get('product type', '').strip())
                         
+                        row = {k.lower(): v for k, v in row.items()}
                         section_name = row.get('section', '').strip()
                         if not section_name:
                             raise ValueError("Section is required")
@@ -738,7 +593,7 @@ def upload_asset(request):
                             purchase_cost=row.get('purchase_cost', 0),
                             warrant=row.get('warrant', '') or None,
                             supplier=row.get('supplier', '') or None,
-                            #created_by=created_by,  # <-- add this line
+                            
                         )
                         
                         asset.full_clean() 
@@ -760,7 +615,7 @@ def upload_asset(request):
                     messages.info(request, f"Created {len(created_users)} new user profiles")
                 if duplicate_users:
                     messages.warning(request, f"Skipped {len(duplicate_users)} duplicate users")
-                return redirect('/table_asset/')
+                return redirect('/tab/')
             
             return render(request, 'asset_register/upload_asset.html', {
                 'error': "No assets were imported",
@@ -780,19 +635,43 @@ def upload_asset(request):
 
 @login_required
 def combined_assets_datatable(request):
+    
     try:
+        print("\n===== NEW REQUEST =====")
+        print(f"User: {request.user.first_name} {request.user.last_name} ({request.user.username})")
+
+        assets_qs = []
+        assets = ZetdcAssets.objects.all()
+        print(f"assets count: {assets.count()}")
+        
+        hr = HumanResource.objects.all()
+
+    
+        cost_centers = request.user.cost_centers_for(["IT Asset Register"])
+        if cost_centers:
+            print(f"Filtering by cost centers: {cost_centers}")
+            assets = assets.filter(cost_center__in=cost_centers)
+            print(f"After cost center filtering: {assets.count()}")
+        else:
+            descendents = request.user.cost_center_and_decendace()
+            print(f"Filtering by cost center descendents: {descendents}")
+            assets = assets.filter(cost_center__in=descendents)
+            print(f"After descendents filtering: {assets.count()}")
+    
+    
         draw = int(request.GET.get('draw', 1))
         start = int(request.GET.get('start', 0))
         length = int(request.GET.get('length', 10))
         search_value = request.GET.get('search[value]', '')
         department_filter = request.GET.get('department', '')
 
-        assets_qs = ZetdcAssets.objects.all()
-        hr_qs = HumanResource.objects.all()
+        # assets_qs = ZetdcAssets.objects.all()
+        # hr_qs = HumanResource.objects.all()
+        
 
         # Filtering by search
         if search_value:
-            assets_qs = assets_qs.filter(
+            assets_qs = assets.filter(
                 Q(product_type__product_type__icontains=search_value) |
                 Q(asset_state__icontains=search_value) |
                 Q(asset_number__icontains=search_value) |
@@ -802,7 +681,7 @@ def combined_assets_datatable(request):
                 Q(department__section__icontains=search_value) |
                 Q(regions__region__icontains=search_value)
             )
-            hr_qs = hr_qs.filter(
+            hr_qs = hr.filter(
                 Q(descriptionofitem__icontains=search_value) |
                 Q(assetnumber__icontains=search_value) |
                 Q(assetstate__icontains=search_value) |
@@ -814,10 +693,11 @@ def combined_assets_datatable(request):
 
         # Filtering by department (optional)
         if department_filter:
-            assets_qs = assets_qs.filter(department__section__icontains=department_filter)
-            hr_qs = hr_qs.filter(department__section__icontains=department_filter)
+            assets_qs = assets.filter(department__section__icontains=department_filter)
+            hr_qs = hr.filter(department__section__icontains=department_filter)
 
         # Build asset list
+        print("total",assets)
         assets_list = [{
             "id": a.id,
             "product_type": a.product_type.product_type if a.product_type else "",
@@ -833,9 +713,10 @@ def combined_assets_datatable(request):
             "lastchecked_at": "",  
             "cost_center": a.cost_center.name if a.cost_center else "",
             "model": a.model if hasattr(a, "model") else "",
-        } for a in assets_qs]
+        } for a in assets]
+        
 
-        # Build HR list
+        #Build HR list
         hr_list = [{
             "id": h.id,
             "product_type": "", 
@@ -851,9 +732,9 @@ def combined_assets_datatable(request):
             "lastchecked_at": h.lastchecked_at.strftime('%Y-%m-%d') if h.lastchecked_at else "",
             "cost_center": h.cost_center.name if h.cost_center else "",
             "model": "", 
-        } for h in hr_qs]
+        } for h in hr]
 
-        combined = assets_list + hr_list
+        combined = assets_list
         combined_sorted = sorted(combined, key=lambda x: x['id'], reverse=True)
         total = len(combined_sorted)
         paginated = combined_sorted[start:start+length]
@@ -927,6 +808,14 @@ def asset_state_chart_data(request):
         "labels": labels,
         "datasets": datasets,
     })
+
+def download_asset_template(request):
+    content = (
+        "ID,Product Type,Asset State,Asset Number,Serial Number,User,Section,Region,Designation,Cost Center,Model\n"
+    )
+    response = HttpResponse(content, content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="asset_template.csv"'
+    return response
 
 
 

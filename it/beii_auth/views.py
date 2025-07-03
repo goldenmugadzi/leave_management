@@ -120,8 +120,14 @@ APPLICATIONS = [
         "name": "asset_register",
         "title": "IT Asset Register",
         "iconUrl": "assets/images/register.png",
-        "url": "/table_asset/"
+        "url": "/tab/"
     },
+    #   {
+    #     "name": "safety",
+    #     "title": "Safety.Health.Wellbeing",
+    #     "iconUrl": "assets/images/health.png",
+    #     "url": "/safety_table/"
+    # },
     {
         "name": "comm_files",
         "title": "Commercial Files",

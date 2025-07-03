@@ -1,3 +1,4 @@
+
 {% extends 'admin_layout.html' %}
 
 {% block styles %}
@@ -28,9 +29,10 @@
 <div class="content-wrapper">
   <div class="bg-gulf-blue-100 shadow shadow-gulf-blue-300 text-gulf-blue-900 rounded px-2 py-2">
     <div class="flex justify-between items-center mb-5">
-      <span class="text-lg font-bold text-black">Safety Monthly Reports</span>
+      <span class="text-lg font-bold text-black">Safety Performance</span>
       <div class="mb-4 flex space-x-4 p-2 bg-white rounded-lg shadow-md">
         <a href="{% url 'safety_report_create' %}" class="tab-button active">Create Report</a>
+       <a href="/accident" class="tab-button">Create Accident Report</a>
       </div>
     </div>
     <div class="overflow-x-auto">
@@ -128,7 +130,11 @@ $(document).ready(function () {
                 </svg>
               </a>
               <a href="{% url 'safety_ytd' %}" class="btn btn-info" title="info" style="font-size: 2rem; font-weight: bold; line-height: 1;">
+<<<<<<< HEAD
+                <i class="fa-solid fa-circle-info"></i>
+=======
                 !
+>>>>>>> 1b24c077b0267638fdc753da98de11aedc9afed6
               </a>
             </span>
           `;
