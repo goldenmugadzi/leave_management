@@ -17,6 +17,7 @@ from .view import (AppraisalCreateView,
                    KRATemplateView,
                    KRACreateView,
                    KRAUpdateView,
+                   KRAOutComeTemplateView,
                    KRADetailView,
                    KraActivityIndexTemplateView,
                    KraActivityCreateView,
@@ -64,8 +65,9 @@ urlpatterns = [
     
     
     # ================== KRA urls =================================
+    path('kra/list', KRATemplateView.as_view(), name='kra_index'),
+    path('kra/outcomes/<int:kra_id>', KRAOutComeTemplateView.as_view(), name='kra_outcomes_index'),
     path('kra/<int:appraisal_id>/new', KRACreateView.as_view(), name='kra_create'),
-    path('kra/<int:appraisal_id>/list', KRATemplateView.as_view(), name='kra_index'),
     path('kra/detail/<int:appraisal_kra_id>', KRADetailView.as_view(), name='kra_detail'),
     
     path('kra/<int:appraisal_id>/appraisal-kra', AppraisalKraTemplateView.as_view(), name='appraisal_kra_index'),

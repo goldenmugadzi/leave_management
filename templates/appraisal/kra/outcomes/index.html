@@ -12,8 +12,9 @@
       <div class="bg-gulf-blue-100 shadow-lg rounded-lg p-6">
         <div class="flex justify-between">
             <div>
-              <h1 class="font-bold">Key Result Area</h1>
-              <p class="text-sm text-muted">Key Result Area main page</p>
+                <h1 class="font-bold">Key Result Area Outcomes</h1>
+                <p class="text-sm text-muted">Key Result Area Description: <strong>{{ kra_object.key_result_area_description }}</strong></p>
+                <p class="text-sm text-muted">Goal Description: <strong>{{ kra_object.goal_description }}</strong></p>
             </div>
             
         </div>
@@ -33,26 +34,18 @@
         class="w-full border border-blue-800 rounded-lg shadow-lg">
          <thead class="bg-blue-800 text-white">
            <tr>
-             <th class="px-6 py-3 text-left text-md font-semibold">Kra Description</th>
-             <th class="px-6 py-3 text-left text-md font-semibold">Created by</th>
+             <th class="px-6 py-3 text-left text-md font-semibold">Outcome Description</th>
              <th class="px-6 py-3 text-left text-md font-semibold">Created date</th>
              <th></th>
            </tr>
          </thead>
          <tbody class="divide-y divide-blue-300 bg-blue-50">
-           {% for kra_obj in kra_objects %}
+           {% for kra_outcomes_object in kra_outcomes_objects %}
            <tr class="hover:bg-blue-100">
-             <td class="px-6 py-4 text-md text-blue-900 truncate max-w-xs">{{kra_obj.key_result_area_description}}</td>
-             <td class="px-6 py-4 text-md text-blue-900">{{kra_obj.created_by}}</td>
-             <td class="px-6 py-4 text-md text-blue-900">{{kra_obj.created_date}}</td>
+             <td class="px-6 py-4 text-md text-blue-900 truncate max-w-xs">{{kra_outcomes_object.outcome_description}}</td>
+             <td class="px-6 py-4 text-md text-blue-900">{{kra_outcomes_object.created_date}}</td>
              <td>
                 <div class="flex gap-2 justify-center">
-                  <a 
-                    href="#" 
-                    class="rounded-2xl bg-blue-500 block px-4 py-2 text-sm text-white hover:bg-blue-700" 
-                  >
-                    OutComes
-                  </a>
                   <a 
                     href="#" 
                     class="rounded-2xl bg-blue-500 block px-4 py-2 text-sm text-white hover:bg-blue-700" 

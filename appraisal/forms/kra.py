@@ -13,7 +13,11 @@ class YearQuarterForm(forms.ModelForm):
 class KraCreateForm(forms.ModelForm):
     class Meta:
         model = KeyResultArea
-        exclude = ["id", "created_date", "updated", "designation"]
+        exclude = ["id", "created_date", "updated", "created_by"]
+class KraOutComeCreateForm(forms.ModelForm):
+    class Meta:
+        model = KeyResultArea
+        exclude = ["id", "created_date", "updated", "key_result_area"]
           
 class ActivityCreateForm(forms.ModelForm):
     assigned_user = forms.ModelChoiceField(

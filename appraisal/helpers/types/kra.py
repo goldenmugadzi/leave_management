@@ -4,11 +4,9 @@ from typing import Literal, Annotated, Optional
 from enum import Enum
 from ...models.kra import PERFORMANCE_INDICATOR, APPRAISAL_KRA_REVIEWER_STATUS_CHOICES
 class KRAType(BaseModel):
-    name: str = Field(..., description="The name of the KRA.")
-    description: str = Field(..., description="The description of KRA.")
-    weight: Annotated[Decimal, Field(max_digits=5, decimal_places=2)] = Field(
-        ..., description="The weight of the KRA."
-    )
+    key_result_area_description: str = Field(..., description="The KRA description.")
+    goal_description: str = Field(..., description="The goal description.")
+
 
 APPRAISER_CONFIRMATION_STATUS = {status[1] for status in APPRAISAL_KRA_REVIEWER_STATUS_CHOICES}
 

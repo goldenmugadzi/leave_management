@@ -4,18 +4,18 @@ from django.db.models.query import QuerySet
 from django.core.files.uploadedfile import UploadedFile
 from django.core.files.storage import default_storage
 
-from ..models import KeyResultArea, YearQuarter, Activity, TargetScore, Appraisal, AppraisalKra, AppraisalKraReviewerStatus, PerformanceDimension, ScoreDocument
+from ..models import KeyResultArea, YearQuarter, Activity, TargetScore, Appraisal, AppraisalKra, AppraisalKraReviewerStatus, PerformanceDimension, ScoreDocument, KeyResultAreaOutCome
 from ..helpers.types.kra import KRAType, TargetScoreType, KraRolesCreateType, ActivityType, PerformanceDimensionType
 from it.users.models import UserProfile, Application, Roles, Designations
 from loguru import logger
 
 class KRARepository:
-    def create(self, data: KRAType, designation: Designations)->KeyResultArea:
+    def create(self, data: KRAType, creator: UserProfile)->KeyResultArea:
         """
             Creates a new KeyResultArea (KRA) record in the database.
 
             Args:
-                designation: Designation object
+                creator: UserProfile object
                 data (KRAType): The data object containing the name, description, and weight of the KRA.
 
             Returns:
@@ -26,83 +26,33 @@ class KRARepository:
         """
 
         try:
-            return KeyResultArea.objects.create(designation=designation, name=data.name, description=data.description, weight=data.weight)
+            return KeyResultArea.objects.create(key_result_area_description=data.key_result_area_description, goal_description=data.goal_description, created_by=creator)
         except Exception as e:
             raise Exception(f"KRA Create Repo failed with error: {e}")
 
-    def retrieve(self, quarter_number: int, year_number: int)->QuerySet[KeyResultArea]:
-        """
-            Retrieves a QuerySet of KRAs for a specified quarter and year.
-
-            Args:
-                quarter_number (int): The quarter number (e.g., 1 for Q1, 2 for Q2).
-                year_number (int): The year number (e.g., 2024).
-
-            Returns:
-                QuerySet[KeyResultArea]: A QuerySet of KeyResultArea objects matching the specified quarter and year.
-
-            Raises:
-                Exception: If the retrieval operation fails.
-        """
-
+    def fetch_all(self):
+        return KeyResultArea.objects.all()
+    
+    def retrieve_by_id(self, kra_id: int):
         try:
-            queryset = KeyResultArea.objects.filter(quarter__year=year_number, quarter__quarter=quarter_number)
-            return queryset
+            qr = KeyResultArea.objects.fetch(id=kra_id)
+            if not qr.exists():
+                return None
+            
+            return qr.first()
         except Exception as e:
-            raise Exception(f"KRA retrieve by quarter and year failed with error: {e}")
+            raise Exception(f"KRA retrieve_by_id Repo with pk: {kra_id}, failed with error: {e}")
 
-    def retrieve_quarter_appraisal_id(self, quarter_number: int, year_number: int, appraisal_id: int)->QuerySet[KeyResultArea]:
-        """
-            Retrieves a QuerySet of KRAs for a specified quarter and year and appraisal pk.
-
-            Args:
-                quarter_number (int): The quarter number (e.g., 1 for Q1, 2 for Q2).
-                year_number (int): The year number (e.g., 2024).
-
-            Returns:
-                QuerySet[KeyResultArea]: A QuerySet of KeyResultArea objects matching the specified quarter and year.
-
-            Raises:
-                Exception: If the retrieval operation fails.
-        """
-
-        try:
-            queryset = KeyResultArea.objects.filter(quarter__year=year_number, quarter__quarter=quarter_number, appraisal__id=appraisal_id)
-            return queryset
-        except Exception as e:
-            raise Exception(f"KRA retrieve by quarter and year failed with error: {e}")
-
-    def retrieve_by_pk(self, kra_id: int)->KeyResultArea:
-        """
-            Retrieves a QuerySet of KRA by primary key.
-
-            Args:
-                kra_id (int): The primary key of KRA.
-
-            Returns:
-                KeyResultArea: KeyResultArea object matching the specified primary key.
-
-            Raises:
-                Exception: If the retrieval operation fails.
-        """
-        try:
-            kra_object = KeyResultArea.objects.select_related('quarter').filter(id=kra_id).first()
-
-            if kra_object is None:
-                raise Exception("KRA object not found")
-
-            return kra_object
-        except Exception as e:
-            raise Exception(f"KRA retrieval by PK failed with error: {e}")
-
-    def update(self, kra_object: KeyResultArea, designation_obj: Designations, data: KRAType) -> KeyResultArea:
+  
+    
+    def update(self, kra_object: KeyResultArea, data: KRAType) -> KeyResultArea:
         """
             Updates the fields of a KeyResultArea object and saves the changes to the database.
 
             Args:
                 kra_object (KeyResultArea): The KRA object to be updated.
-                designation_obj (Designations): The Designation object.
-                data (KRAType): The new data to update the KRA with.
+                creator: UserProfile object
+                data (KRAType): The data object containing the name, description, and weight of the KRA.
 
             Returns:
                 KeyResultArea: The updated KRA object.
@@ -114,20 +64,12 @@ class KRARepository:
             # Update fields only if they have changed
             updated = False
 
-            if kra_object.quarter != designation_obj:
-                kra_object.quarter = designation_obj
+            if kra_object.key_result_area_description != data.key_result_area_description:
+                kra_object.key_result_area_description = data.key_result_area_description
                 updated = True
 
-            if kra_object.name != data.name:
-                kra_object.name = data.name
-                updated = True
-
-            if kra_object.description != data.description:
-                kra_object.description = data.description
-                updated = True
-
-            if kra_object.weight != data.weight:
-                kra_object.weight = data.weight
+            if kra_object.goal_description != data.goal_description:
+                kra_object.goal_description = data.goal_description
                 updated = True
 
             # Save only if changes were made
@@ -138,6 +80,68 @@ class KRARepository:
 
         except Exception as e:
             raise Exception(f"KRA update Repo failed with error: {e}")
+
+class KRAOutComeRepository:
+    def create(self, outcome_description: str, kra_obj: KeyResultArea)->KeyResultAreaOutCome:
+        """
+            Creates a new KeyResultAreaOutCome (KRA) record in the database.
+
+            Args:
+                outcome_description: Outcome description name
+                kra_obj: KeyResultArea object.
+
+            Returns:
+                KeyResultAreaOutCome: The newly created KeyResultAreaOutCome object.
+
+            Raises:
+                Exception: If the creation operation fails.
+        """
+
+        try:
+            return KeyResultAreaOutCome.objects.create(key_result_area=kra_obj, outcome_description=outcome_description)
+        except Exception as e:
+            raise Exception(f"KRAOutComeRepository Create Repo failed with error: {e}")
+
+    def fetch_all(self):
+        return KeyResultAreaOutCome.objects.all()
+    
+    def fetch_by_kra_id(self, kra_id: int):
+        try:
+            return KeyResultAreaOutCome.objects.fetch(key_result_area__id=kra_id)
+        except Exception as e:
+            raise Exception(f"KRAOutComeRepository fetch_by_kra_id with pk: {kra_id}, failed with error: {e}")
+
+    def update(self, kra_outcome_object: KeyResultAreaOutCome, outcome_description: str) -> KeyResultArea:
+        """
+            Updates the fields of a KeyResultArea object and saves the changes to the database.
+
+            Args:
+                kra_outcome_object (KeyResultArea): The KRA object to be updated.
+                creator: UserProfile object
+                data (KRAType): The data object containing the name, description, and weight of the KRA.
+
+            Returns:
+                KeyResultArea: The updated KRA object.
+
+            Raises:
+                KRAUpdateError: If the update operation fails.
+        """
+        try:
+            # Update fields only if they have changed
+            updated = False
+
+            if kra_outcome_object.outcome_description != outcome_description:
+                kra_outcome_object.outcome_description = outcome_description
+                updated = True
+
+            # Save only if changes were made
+            if updated:
+                kra_outcome_object.save()
+
+            return kra_outcome_object
+
+        except Exception as e:
+            raise Exception(f"KRAOutComeRepository with object pk: {kra_outcome_object.id} update Repo failed with error: {e}")
 
 
 class AppraisalKraRepository:

@@ -9,7 +9,7 @@ from django.http import Http404
 from django.http import JsonResponse, HttpResponse
 from ...models import KeyResultArea, Activity, Appraisal, AppraisalKra
 from ...forms import YearQuarterForm, KraCreateForm
-from ...repository.kra import KRARepository, TargetScoreRepository
+from ...repository.kra import KRARepository, TargetScoreRepository, KRAOutComeRepository
 from ...repository.appraisal import AppraisalRepository
 from ...services.kra import KRAService
 from .helper import build_payload
@@ -72,82 +72,16 @@ class KRACreateView(CreateView):
 class KRATemplateView(TemplateView):
     template_name = 'appraisal/kra/index.html'
     
-    def get_year_quarter_form(self)->Dict[str, YearQuarterForm]:
-        form = YearQuarterForm(self.request.POST or None)
-        data = {"year_quarter_form": form}
-        return data
-    
-    def get_all_kra(self, year, quarter)->Dict[str, List[KeyResultArea]]:
+    def get_all_kra(self)->Dict[str, List[KeyResultArea]]:
         repo = KRARepository()
-        service_handler = KRAService(kra_repo=repo)
-        kra_queryset = service_handler.fetch_by_quarter_year_appraisal_pk_use_case(year_number=year, quarter_number=quarter, appraisal_id=self.kwargs.get("appraisal_id"))
+        kra_queryset = repo.fetch_all()
         data = {"kra_objects": kra_queryset}
         return data
-    
-    def get_appraisal_object(self):
-        year_qrt = self.get_year_quarter()
-        kra_queryset = self.get_all_kra(year=year_qrt["year"], quarter=year_qrt["quarter"])["kra_objects"]
-        if kra_queryset.exists():
-            return kra_queryset.first().appraisal
-        raise Http404("No appraisal object found for the given year and quarter.")
-    
 
-    def get_year_quarter(self):
-        data = {}
-        query_param_year = self.request.GET.get('year')
-        query_param_quarter = self.request.GET.get('quarter')
-        
-        if query_param_year is not None or query_param_quarter is not None:
-            data["year"] = query_param_year
-            data["quarter"] = query_param_quarter
-        else:
-            current_year = datetime.now().year
-            data["year"] = current_year
-            data["quarter"] = 1 
-        
-        return data
-    
-    
-    def approval_user_roles(self)->Dict[str, bool]:
-        is_appraiser = self.request.user == self.get_appraisal_object().appraiser
-        data = {
-            "is_appraiser": is_appraiser
-        }
-        return data
-
-    def get_approval_stages(self):
-        try:
-            handler = ApprovalStagesHandler(appraisal_id=self.get_appraisal_object().id)
-            return handler.get_stages_info()
-        except Exception as e:
-            logger.error(f"[PerformancePlanAndAssessmentTemplateView] for Appraisal - {self.get_appraisal_object()} failed with error: {e}")
-            return None
-        
-    
     def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
         context =  super().get_context_data(**kwargs)
-        context.update(self.get_year_quarter_form())
-        
-        year_qrt = self.get_year_quarter()
-        
-        context.update(self.get_all_kra(year=year_qrt["year"], quarter=year_qrt["quarter"]))
-        context.update(year_qrt)
-        context.update(self.approval_user_roles())
-        context.update(self.get_approval_stages())
-        
-        context["roles"] = KraRolesType
-        context["appraisal_id"] = self.kwargs.get("appraisal_id")
-        context["appraisal_object"] = self.get_appraisal_object()
-            
+        context.update(self.get_all_kra())        
         return context
-    
-    
-    def get(self, request, *args, **kwargs):
-        approval_data = self.get_approval_stages()
-        if approval_data is None:
-            return redirect("server_error_view")
-        context = self.get_context_data(**kwargs)
-        return self.render_to_response(context)
 
 class KRAUpdateView(SuccessMessageMixin, UpdateView):
     model = KeyResultArea
@@ -221,7 +155,41 @@ class KRADetailView(TemplateView):
             return redirect("server_error_view")
         context = self.get_context_data(**kwargs)
         return self.render_to_response(context)
+   
+
+class KRAOutComeTemplateView(TemplateView):
+    template_name = 'appraisal/kra/outcomes/index.html'
     
+    def get_all_kra_outcomes(self)->Dict[str, List[KeyResultArea]]:
+        repo = KRAOutComeRepository()
+        kra_outcomes_queryset = repo.fetch_by_kra_id(kra_id=self.kwargs.get("kra_id"))
+        data = {"kra_outcomes_objects": kra_outcomes_queryset}
+        return data
+    
+    def get_kra_obj(self):
+        repo = KRARepository()
+        return repo.retrieve_by_id(kra_id=self.kwargs.get("kra_id"))
+        
+        
+    
+    def get(self, request, *args, **kwargs):
+        try:
+            self.object = self.get_kra_obj()
+            if self.object is None:
+                logger.error(f"KRAOutComeTemplateView view failed with no kra object fount, pk-{self.kwargs.get('kra_id')}")
+                return redirect("server_error_view")
+            context = self.get_context_data(**kwargs)
+            return self.render_to_response(context)
+        except Exception as e:
+            logger.error(f"KRAOutComeTemplateView view with kra pk-{self.kwargs.get('kra_id')}, failed with error: {e}")
+            return redirect("server_error_view")
+
+    def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
+        context =  super().get_context_data(**kwargs)
+        context.update(self.get_all_kra_outcomes())        
+        return context
+
+ 
 def kra_list_api(request, appraisal_id):
     """
     API endpoint to retrieve a list of all KRA by their pk.
