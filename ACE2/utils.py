@@ -119,8 +119,8 @@ def determine_ace_type(amount, currency='ZWL'):
     else:
         # For now, assume all amounts are in ZWL or treat as ZWL
         zwl_amount = float(amount)
-    
-    if zwl_amount >= 2600000:  # 2,600,000 ZWL threshold
+
+    if zwl_amount >= 1300000:  # 1,300,000 ZWL threshold
         return 'high_value', zwl_amount
     else:
         return 'standard', zwl_amount
