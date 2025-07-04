@@ -13,4 +13,6 @@ urlpatterns = [
     path('dashboard_data/', views.get_dashboard_data, name='get_dashboard_data'),
     path('dashboard_filter/', views.dashboard_filter, name='dashboard_filter'),
     path('save_dashboard_data/', views.save_dashboard_data, name='save_dashboard_data'),
+    path('user_permissions/', views.user_permissions, name='user_permissions'),
+    path('debug_user_roles/', views.debug_user_roles, name='debug_user_roles'),
 ] 

@@ -25,5 +25,7 @@ urlpatterns = [
     path('dashboard_data', dashboard_data, name='dashboard_data'),
     path('dashboard_filter', dashboard_filters, name='dashboard_filter'),
     path('save_dashboard_data', save_dashboard_data, name='save_dashboard_data'),
+    path('user_permissions', user_permissions, name='user_permissions'),
+    path('debug_user_roles', debug_user_roles, name='debug_user_roles'),
     path('setup_data', setup_random_data, name='setup_data'),
 ]

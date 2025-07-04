@@ -791,12 +791,12 @@ def get_dashboard_data(request):
     ).values('name', 'amount'))
     
     return JsonResponse({
-        'metrics': metrics,
         'inspection_locations': inspection_locations,
         'inspections_count': inspections_count,
         'maintenance_locations': maintenance_locations,
         'maintenance_count': maintenance_count,
         'mtn': mtn,
+        'metrics': metrics,
         'pbncs': [],
         'weekly_sales': weekly_sales,
         'upos': [],
@@ -804,6 +804,76 @@ def get_dashboard_data(request):
         'tds': tds,
         'weekly_faults_maintenance': weekly_faults_maintenance,
     })
+
+
+@csrf_exempt
+@require_http_methods(["GET"])
+def user_permissions(request):
+    """Get user permissions for dashboard editing"""
+    try:
+        user = request.user
+        user_profile = get_object_or_404(UserProfile, id=user.id)
+        
+        print(f"DEBUG: Checking permissions for user: {user.username} (ID: {user.id})")
+        
+        # Check if user has the 'maintain' role for 'general_dashboards' application
+        can_edit = False
+        user_roles = []
+        
+        try:
+            # Debug: Check if application exists
+            from it.users.models import Application
+            app = Application.objects.filter(name="general_dashboards").first()
+            print(f"DEBUG: Application 'general_dashboards' exists: {app}")
+            if app:
+                print(f"DEBUG: Application ID: {app.id}, Name: {app.name}, Fullname: {app.fullname}")
+            
+            # Debug: Check user's roles
+            all_user_roles = user_profile.roles.all()
+            print(f"DEBUG: User's all roles: {list(all_user_roles.values('id', 'role', 'name', 'application', 'app_id'))}")
+            
+            # Get the user's role for the general_dashboards application
+            user_role = user.get_user_role_for_application("general_dashboards")
+            print(f"DEBUG: User role for general_dashboards: {user_role}")
+            
+            if user_role:
+                print(f"DEBUG: Role details - role: {user_role.role}, name: {user_role.name}")
+                if user_role.role == 'maintain':
+                    can_edit = True
+                user_roles = [user_role.name]
+            else:
+                print("DEBUG: No role found for general_dashboards application")
+                
+        except AttributeError as e:
+            print(f"DEBUG: AttributeError in role checking: {e}")
+            # Fallback: check if user is superuser or staff
+            can_edit = user.is_superuser or user.is_staff
+            user_roles = ['superuser'] if user.is_superuser else (['staff'] if user.is_staff else [])
+            print(f"DEBUG: Using fallback - can_edit: {can_edit}, user_roles: {user_roles}")
+        
+        print(f"DEBUG: Final result - can_edit: {can_edit}, user_roles: {user_roles}")
+        
+        return JsonResponse({
+            'canEdit': can_edit,
+            'userRoles': user_roles,
+            'user': {
+                'username': user.username,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'is_staff': user.is_staff,
+                'is_superuser': user.is_superuser
+            }
+        })
+    except Exception as e:
+        print(f"Error in user_permissions: {e}")
+        import traceback
+        traceback.print_exc()
+        return JsonResponse({
+            'canEdit': False,
+            'userRoles': [],
+            'user': {},
+            'error': str(e)
+        })
 
 
 @csrf_exempt
@@ -858,6 +928,17 @@ def save_dashboard_data(request):
     """Save edited dashboard data"""
     if not request.user.is_authenticated:
         return JsonResponse({'success': False, 'error': 'Authentication required'})
+    
+    # Check if user has permission to edit dashboard data
+    try:
+        user_role = request.user.get_user_role_for_application("general_dashboards")
+        can_edit = user_role and user_role.role == 'maintain'
+    except AttributeError:
+        # Fallback: check if user is superuser or staff
+        can_edit = request.user.is_superuser or request.user.is_staff
+    
+    if not can_edit:
+        return JsonResponse({'success': False, 'error': 'Insufficient permissions to edit dashboard data'})
     
     try:
         data = json.loads(request.body)
@@ -931,3 +1012,64 @@ def save_dashboard_data(request):
         
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)})
+
+
+@csrf_exempt
+@require_http_methods(["GET"])
+def debug_user_roles(request):
+    """Debug endpoint to check user roles and applications"""
+    try:
+        user = request.user
+        user_profile = get_object_or_404(UserProfile, id=user.id)
+        
+        # Get all applications
+        from it.users.models import Application
+        all_apps = list(Application.objects.all().values('id', 'name', 'fullname'))
+        
+        # Get all user roles
+        all_user_roles = list(user_profile.roles.all().values('id', 'role', 'name', 'description', 'application', 'app_id'))
+        
+        # Check for general_dashboards specifically
+        general_dashboards_app = Application.objects.filter(name="general_dashboards").first()
+        
+        debug_info = {
+            'user_info': {
+                'username': user.username,
+                'id': user.id,
+                'is_staff': user.is_staff,
+                'is_superuser': user.is_superuser
+            },
+            'all_applications': all_apps,
+            'user_roles': all_user_roles,
+            'general_dashboards_app': {
+                'exists': bool(general_dashboards_app),
+                'id': general_dashboards_app.id if general_dashboards_app else None,
+                'name': general_dashboards_app.name if general_dashboards_app else None,
+                'fullname': general_dashboards_app.fullname if general_dashboards_app else None
+            } if general_dashboards_app else {'exists': False},
+            'role_check_result': None
+        }
+        
+        # Test the role checking method
+        try:
+            user_role = user.get_user_role_for_application("general_dashboards")
+            debug_info['role_check_result'] = {
+                'found_role': bool(user_role),
+                'role_details': {
+                    'role': user_role.role,
+                    'name': user_role.name,
+                    'app_id': user_role.app_id.id if user_role.app_id else None
+                } if user_role else None
+            }
+        except Exception as e:
+            debug_info['role_check_result'] = {
+                'error': str(e)
+            }
+        
+        return JsonResponse(debug_info, indent=2)
+        
+    except Exception as e:
+        return JsonResponse({
+            'error': str(e),
+            'traceback': str(e.__traceback__)
+        })

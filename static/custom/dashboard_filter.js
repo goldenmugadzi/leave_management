@@ -95,6 +95,10 @@ class DashboardFilter extends React.Component {
         }
       },
 
+      // User permissions
+      canEdit: false,
+      userRoles: [],
+
       // Editing state
       editingCell: null, // {table: 'weekly_sales', row: 0, field: 'zwl'} or {type: 'metric', field: 'energy_sold_value'}
       editingValue: "",
@@ -121,7 +125,36 @@ class DashboardFilter extends React.Component {
     });
     this.getRegions();
     this.getDashboardData();
+    this.getUserPermissions();
   }
+
+  getUserPermissions = () => {
+    fetch(`${BASE_URL}/dashboards/user_permissions`)
+      .then((response) => response.json())
+      .then((data) => {
+        console.log("User permissions data: ", data);
+        console.log("canEdit value:", data.canEdit);
+        console.log("userRoles:", data.userRoles);
+        this.setState({
+          canEdit: data.canEdit || false,
+          userRoles: data.userRoles || [],
+          authUser: data.user || {}
+        });
+        console.log("State after setting permissions:", {
+          canEdit: data.canEdit || false,
+          userRoles: data.userRoles || [],
+          authUser: data.user || {}
+        });
+      })
+      .catch((error) => {
+        console.error("Error loading user permissions:", error);
+        this.setState({
+          canEdit: false,
+          userRoles: [],
+          authUser: {}
+        });
+      });
+  };
 
   onFilterSelectCenters(name_, event) {
     let { name, value } = event.target
@@ -839,13 +872,13 @@ class DashboardFilter extends React.Component {
   };
 
   renderEditableCell = (table, rowIndex, field, value, className = "") => {
-    const { editingCell, editingValue } = this.state;
+    const { editingCell, editingValue, canEdit } = this.state;
     const isEditing = editingCell && 
                      editingCell.table === table && 
                      editingCell.row === rowIndex && 
                      editingCell.field === field;
 
-    if (isEditing) {
+    if (isEditing && canEdit) {
       return (
         <td className={`p-1 border border-gray-300 ${className}`}>
           <div className="flex items-center gap-1">
@@ -881,9 +914,9 @@ class DashboardFilter extends React.Component {
 
     return (
       <td 
-        className={`p-2 border border-gray-300 cursor-pointer hover:bg-gray-50 ${className}`}
-        onClick={() => this.startEdit(table, rowIndex, field, value)}
-        title="Click to edit"
+        className={`p-2 border border-gray-300 ${canEdit ? 'cursor-pointer hover:bg-gray-50' : ''} ${className}`}
+        onClick={canEdit ? () => this.startEdit(table, rowIndex, field, value) : undefined}
+        title={canEdit ? "Click to edit" : ""}
       >
         {value}
       </td>
@@ -891,13 +924,13 @@ class DashboardFilter extends React.Component {
   };
 
   renderEditableMetric = (metricKey, property, value, className = "") => {
-    const { editingCell, editingValue } = this.state;
+    const { editingCell, editingValue, canEdit } = this.state;
     const fieldId = `${metricKey}_${property}`;
     const isEditing = editingCell && 
                      editingCell.type === 'metric' && 
                      editingCell.field === fieldId;
 
-    if (isEditing) {
+    if (isEditing && canEdit) {
       return (
         <div className={`inline-flex items-center gap-1 ${className}`}>
           <input
@@ -931,13 +964,13 @@ class DashboardFilter extends React.Component {
 
     return (
       <span 
-        className={`cursor-pointer hover:bg-gray-100 px-1 py-0.5 rounded ${className}`}
-        onClick={() => this.setState({
+        className={`${canEdit ? 'cursor-pointer hover:bg-gray-100' : ''} px-1 py-0.5 rounded ${className}`}
+        onClick={canEdit ? () => this.setState({
           editingCell: { type: 'metric', field: fieldId },
           editingValue: value.toString(),
           originalValue: value.toString()
-        })}
-        title="Click to edit"
+        }) : undefined}
+        title={canEdit ? "Click to edit" : ""}
       >
         {value}
       </span>
@@ -950,11 +983,21 @@ class DashboardFilter extends React.Component {
     return (
       <div>
         <div className="grid grid-cols-1 gap-4 mb-3">
-          <div className="w-auto bg-gradient-to-r from-blue-50 to-blue-100 border-l-4 border-blue-400 p-3 rounded">
+          <div className={`w-auto bg-gradient-to-r ${this.state.canEdit ? 'from-green-50 to-green-100 border-l-4 border-green-400' : 'from-blue-50 to-blue-100 border-l-4 border-blue-400'} p-3 rounded`}>
             <div className="flex items-center">
-              <div className="text-blue-800 mr-2">ℹ️</div>
-              <div className="text-sm text-blue-800">
-                <strong>Editable Dashboard:</strong> Click on any metric values, progress bars, targets in the cards above or data cells in the tables below to edit. Press Enter to save or Escape to cancel.
+              <div className={`${this.state.canEdit ? 'text-green-800' : 'text-blue-800'} mr-2`}>
+                {this.state.canEdit ? '✏️' : 'ℹ️'}
+              </div>
+              <div className={`text-sm ${this.state.canEdit ? 'text-green-800' : 'text-blue-800'}`}>
+                {this.state.canEdit ? (
+                  <>
+                    <strong>Edit Mode Enabled:</strong> You have permissions to edit dashboard data. Click on any metric values, progress bars, targets in the cards above or data cells in the tables below to edit. Press Enter to save or Escape to cancel.
+                  </>
+                ) : (
+                  <>
+                    <strong>View Only Mode:</strong> You have read-only access to this dashboard. Contact your administrator if you need editing permissions.
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -1049,14 +1092,14 @@ class DashboardFilter extends React.Component {
 
                                 <div className="overflow-hidden bg-blue-50 h-1.5 rounded-full w-full">
                                   <span
-                                    className={`h-full w-full block rounded-full cursor-pointer transition-all duration-300 ${this.getProgressColor(this.calculateProgress(this.state.metrics.energy_sold.value, this.state.metrics.energy_sold.target))}`}
+                                    className={`h-full w-full block rounded-full transition-all duration-300 ${this.state.canEdit ? 'cursor-pointer' : ''} ${this.getProgressColor(this.calculateProgress(this.state.metrics.energy_sold.value, this.state.metrics.energy_sold.target))}`}
                                     style={{width: `${this.calculateProgress(this.state.metrics.energy_sold.value, this.state.metrics.energy_sold.target)}%`}}
-                                    title={`Progress: ${this.calculateProgress(this.state.metrics.energy_sold.value, this.state.metrics.energy_sold.target)}% (${this.state.metrics.energy_sold.value}/${this.state.metrics.energy_sold.target})`}
-                                    onClick={() => this.setState({
+                                    title={`Progress: ${this.calculateProgress(this.state.metrics.energy_sold.value, this.state.metrics.energy_sold.target)}% (${this.state.metrics.energy_sold.value}/${this.state.metrics.energy_sold.target})${this.state.canEdit ? ' - Click to edit' : ''}`}
+                                    onClick={this.state.canEdit ? () => this.setState({
                                       editingCell: { type: 'metric', field: 'energy_sold_progress' },
                                       editingValue: this.calculateProgress(this.state.metrics.energy_sold.value, this.state.metrics.energy_sold.target).toString(),
                                       originalValue: this.calculateProgress(this.state.metrics.energy_sold.value, this.state.metrics.energy_sold.target).toString()
-                                    })}
+                                    }) : undefined}
                                   ></span>
                                 </div>
                                 <p className="text-xs text-muted mt-2 mb-0">
@@ -1098,14 +1141,14 @@ class DashboardFilter extends React.Component {
 
                                 <div className="overflow-hidden bg-jade-50 h-1.5 rounded-full w-full">
                                   <span
-                                    className={`h-full w-full block rounded-full cursor-pointer transition-all duration-300 ${this.getProgressColor(this.calculateProgress(this.state.metrics.growth.value, this.state.metrics.growth.target))}`}
+                                    className={`h-full w-full block rounded-full transition-all duration-300 ${this.state.canEdit ? 'cursor-pointer' : ''} ${this.getProgressColor(this.calculateProgress(this.state.metrics.growth.value, this.state.metrics.growth.target))}`}
                                     style={{width: `${this.calculateProgress(this.state.metrics.growth.value, this.state.metrics.growth.target)}%`}}
-                                    title={`Progress: ${this.calculateProgress(this.state.metrics.growth.value, this.state.metrics.growth.target)}% (${this.state.metrics.growth.value}/${this.state.metrics.growth.target})`}
-                                    onClick={() => this.setState({
+                                    title={`Progress: ${this.calculateProgress(this.state.metrics.growth.value, this.state.metrics.growth.target)}% (${this.state.metrics.growth.value}/${this.state.metrics.growth.target})${this.state.canEdit ? ' - Click to edit' : ''}`}
+                                    onClick={this.state.canEdit ? () => this.setState({
                                       editingCell: { type: 'metric', field: 'growth_progress' },
                                       editingValue: this.calculateProgress(this.state.metrics.growth.value, this.state.metrics.growth.target).toString(),
                                       originalValue: this.calculateProgress(this.state.metrics.growth.value, this.state.metrics.growth.target).toString()
-                                    })}
+                                    }) : undefined}
                                   ></span>
                                 </div>
                                 <p className="text-xs text-muted mt-2 mb-0">
@@ -1150,14 +1193,14 @@ class DashboardFilter extends React.Component {
 
                                 <div className="overflow-hidden bg-royal-heath-50 h-1.5 rounded-full w-full">
                                   <span
-                                    className={`h-full w-full block rounded-full cursor-pointer transition-all duration-300 ${this.getProgressColor(Math.round((this.calculateProgress(this.state.metrics.revenue_usd.value, this.state.metrics.revenue_usd.target) + this.calculateProgress(this.state.metrics.revenue_zwl.value, this.state.metrics.revenue_zwl.target)) / 2))}`}
+                                    className={`h-full w-full block rounded-full transition-all duration-300 ${this.state.canEdit ? 'cursor-pointer' : ''} ${this.getProgressColor(Math.round((this.calculateProgress(this.state.metrics.revenue_usd.value, this.state.metrics.revenue_usd.target) + this.calculateProgress(this.state.metrics.revenue_zwl.value, this.state.metrics.revenue_zwl.target)) / 2))}`}
                                     style={{width: `${Math.round((this.calculateProgress(this.state.metrics.revenue_usd.value, this.state.metrics.revenue_usd.target) + this.calculateProgress(this.state.metrics.revenue_zwl.value, this.state.metrics.revenue_zwl.target)) / 2)}%`}}
-                                    title={`Combined Progress: ${Math.round((this.calculateProgress(this.state.metrics.revenue_usd.value, this.state.metrics.revenue_usd.target) + this.calculateProgress(this.state.metrics.revenue_zwl.value, this.state.metrics.revenue_zwl.target)) / 2)}% | USD: ${this.calculateProgress(this.state.metrics.revenue_usd.value, this.state.metrics.revenue_usd.target)}% | ZWL: ${this.calculateProgress(this.state.metrics.revenue_zwl.value, this.state.metrics.revenue_zwl.target)}%`}
-                                    onClick={() => this.setState({
+                                    title={`Combined Progress: ${Math.round((this.calculateProgress(this.state.metrics.revenue_usd.value, this.state.metrics.revenue_usd.target) + this.calculateProgress(this.state.metrics.revenue_zwl.value, this.state.metrics.revenue_zwl.target)) / 2)}% | USD: ${this.calculateProgress(this.state.metrics.revenue_usd.value, this.state.metrics.revenue_usd.target)}% | ZWL: ${this.calculateProgress(this.state.metrics.revenue_zwl.value, this.state.metrics.revenue_zwl.target)}%${this.state.canEdit ? ' - Click to edit' : ''}`}
+                                    onClick={this.state.canEdit ? () => this.setState({
                                       editingCell: { type: 'metric', field: 'revenue_combined_progress' },
                                       editingValue: Math.round((this.calculateProgress(this.state.metrics.revenue_usd.value, this.state.metrics.revenue_usd.target) + this.calculateProgress(this.state.metrics.revenue_zwl.value, this.state.metrics.revenue_zwl.target)) / 2).toString(),
                                       originalValue: Math.round((this.calculateProgress(this.state.metrics.revenue_usd.value, this.state.metrics.revenue_usd.target) + this.calculateProgress(this.state.metrics.revenue_zwl.value, this.state.metrics.revenue_zwl.target)) / 2).toString()
-                                    })}
+                                    }) : undefined}
                                   ></span>
                                 </div>
                                 <p className="text-xs text-muted mt-2 mb-0">
@@ -1202,14 +1245,14 @@ class DashboardFilter extends React.Component {
 
                                 <div className="overflow-hidden bg-gulf-blue-50 h-1.5 rounded-full w-full">
                                   <span
-                                    className={`h-full w-full block rounded-full cursor-pointer transition-all duration-300 ${this.getProgressColor(this.calculateProgress(this.state.metrics.faults.value, this.state.metrics.faults.target))}`}
+                                    className={`h-full w-full block rounded-full transition-all duration-300 ${this.state.canEdit ? 'cursor-pointer' : ''} ${this.getProgressColor(this.calculateProgress(this.state.metrics.faults.value, this.state.metrics.faults.target))}`}
                                     style={{width: `${this.calculateProgress(this.state.metrics.faults.value, this.state.metrics.faults.target)}%`}}
-                                    title={`Progress: ${this.calculateProgress(this.state.metrics.faults.value, this.state.metrics.faults.target)}% (${this.state.metrics.faults.value}/${this.state.metrics.faults.target})`}
-                                    onClick={() => this.setState({
+                                    title={`Progress: ${this.calculateProgress(this.state.metrics.faults.value, this.state.metrics.faults.target)}% (${this.state.metrics.faults.value}/${this.state.metrics.faults.target})${this.state.canEdit ? ' - Click to edit' : ''}`}
+                                    onClick={this.state.canEdit ? () => this.setState({
                                       editingCell: { type: 'metric', field: 'faults_progress' },
                                       editingValue: this.calculateProgress(this.state.metrics.faults.value, this.state.metrics.faults.target).toString(),
                                       originalValue: this.calculateProgress(this.state.metrics.faults.value, this.state.metrics.faults.target).toString()
-                                    })}
+                                    }) : undefined}
                                   ></span>
                                 </div>
                                 <p className="text-xs text-muted mt-2 mb-0">
@@ -1251,14 +1294,14 @@ class DashboardFilter extends React.Component {
 
                                 <div className="overflow-hidden bg-jade-50 h-1.5 rounded-full w-full">
                                   <span
-                                    className={`h-full w-full block rounded-full cursor-pointer transition-all duration-300 ${this.getProgressColor(this.calculateProgress(this.state.metrics.maintenance.value, this.state.metrics.maintenance.target))}`}
+                                    className={`h-full w-full block rounded-full transition-all duration-300 ${this.state.canEdit ? 'cursor-pointer' : ''} ${this.getProgressColor(this.calculateProgress(this.state.metrics.maintenance.value, this.state.metrics.maintenance.target))}`}
                                     style={{width: `${this.calculateProgress(this.state.metrics.maintenance.value, this.state.metrics.maintenance.target)}%`}}
-                                    title={`Progress: ${this.calculateProgress(this.state.metrics.maintenance.value, this.state.metrics.maintenance.target)}% (${this.state.metrics.maintenance.value}/${this.state.metrics.maintenance.target})`}
-                                    onClick={() => this.setState({
+                                    title={`Progress: ${this.calculateProgress(this.state.metrics.maintenance.value, this.state.metrics.maintenance.target)}% (${this.state.metrics.maintenance.value}/${this.state.metrics.maintenance.target})${this.state.canEdit ? ' - Click to edit' : ''}`}
+                                    onClick={this.state.canEdit ? () => this.setState({
                                       editingCell: { type: 'metric', field: 'maintenance_progress' },
                                       editingValue: this.calculateProgress(this.state.metrics.maintenance.value, this.state.metrics.maintenance.target).toString(),
                                       originalValue: this.calculateProgress(this.state.metrics.maintenance.value, this.state.metrics.maintenance.target).toString()
-                                    })}
+                                    }) : undefined}
                                   ></span>
                                 </div>
                                 <p className="text-xs text-muted mt-2 mb-0">
