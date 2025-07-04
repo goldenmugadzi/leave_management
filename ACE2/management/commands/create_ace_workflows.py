@@ -35,7 +35,7 @@ class Command(BaseCommand):
             except Roles.DoesNotExist as e:
                 self.stdout.write(self.style.ERROR(f"Required role not found: {e}"))
                 return
-            
+
             # Add FD and MD roles for high-value workflow (HEAD OFFICE LEVEL)
             # Create these roles if they don't exist
             try:
@@ -50,7 +50,7 @@ class Command(BaseCommand):
                     }
                 )
                 self.stdout.write(f"Created FD role for ACE application (Head Office level)")
-            
+
             try:
                 md_role = Roles.objects.get(role='md', application='ace')
             except Roles.DoesNotExist:
@@ -63,17 +63,32 @@ class Command(BaseCommand):
                     }
                 )
                 self.stdout.write(f"Created MD role for ACE application (Head Office level)")
-            
-            # Create steps for high-value workflow (6 steps vs 4 for standard)
+
+            # Add EM role for high-value workflow (REGIONAL LEVEL)
+            try:
+                em_role = Roles.objects.get(role='em', application='ace')
+            except Roles.DoesNotExist:
+                em_role, _ = Roles.objects.get_or_create(
+                    role='em', 
+                    application='ace',
+                    defaults={
+                        'description': 'Engineering Manager (Regional)',
+                        'name': 'Engineering Manager'
+                    }
+                )
+                self.stdout.write(f"Created EM role for ACE application (Regional level)")
+
+            # Create steps for high-value workflow (7 steps vs 4 for standard)
             # Standard workflow: Section Head -> Accounting Officer -> Finance Manager -> General Manager
-            # Extended workflow: Section Head -> Accounting Officer -> Finance Manager -> General Manager -> Finance Director (HO) -> Managing Director (HO)
+            # Extended workflow: Section Head -> Accounting Officer -> Finance Manager -> General Manager -> Engineering Manager (Regional) -> Finance Director (HO) -> Managing Director (HO)
             steps_data = [
                 (1, roles['pass'], "Section Head approval (Regional)"),
                 (2, roles['process'], "Accounting Officer review (Regional)"),
                 (3, roles['sanction'], "Finance Manager approval (Regional)"),
                 (4, roles['approve'], "General Manager approval (Regional)"),
-                (5, fd_role, "Finance Director approval (Head Office)"),
-                (6, md_role, "Managing Director final approval (Head Office)"),
+                (5, em_role, "Engineering Manager approval (Regional)"),
+                (6, fd_role, "Finance Director approval (Head Office)"),
+                (7, md_role, "Managing Director final approval (Head Office)"),
             ]
             
             # Clear existing steps for this workflow if any
