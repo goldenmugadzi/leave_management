@@ -543,19 +543,60 @@ def ace_awaiting_my_action(request):
         # Add regional breakdown
         from collections import defaultdict
         regional_breakdown = defaultdict(list)
-        total_value = 0  # Changed from total_usd_value to total_value
+        total_value = 0
         
         for ace in aces_to_process:
             regional_breakdown[ace.region.region].append(ace)
-            total_value += ace.amount or 0  # Changed from usd_equivalent to amount
+            total_value += ace.amount or 0
         
         context.update({
             'regional_breakdown': dict(regional_breakdown),
-            'total_value': total_value,  # Changed from total_usd_value
+            'total_value': total_value,
         })
         
         return render(request, 'finance/ace2/head_office_awaiting_action.html', context)
-    
+
+    elif ace_role in ['em']:  # Engineering Manager - Regional position
+        # Engineering Manager sees high-value ACEs from THEIR region only
+        aces_to_process = []
+        user_region = Regions.objects.filter(id=user_profile.region.id).first()
+        
+        for ace in Ace2.objects.filter(ace_type='high_value', region=user_region).order_by('-date_created'):
+            process = ace.process
+            
+            if process and process.approval_set.exists():
+                last_approval = process.approval_set.last()
+                current_step = last_approval.step.step
+                
+                # Skip if rejected
+                if last_approval.approved == "Rejected":
+                    continue
+            else:
+                current_step = 0
+            
+            next_step = current_step + 1
+            workflow = process.workflow
+            
+            # Check if user should approve this step
+            try:
+                step = workflow.step_set.get(step=next_step)
+                if step.approver.role == ace_role:
+                    aces_to_process.append(ace)
+            except Step.DoesNotExist:
+                continue
+        
+        # Add summary information for engineering manager regional view
+        context = {
+            'aces': aces_to_process,
+            'ace_role': ace_role,
+            'is_regional': True,
+            'user_region': user_region.region if user_region else 'Unknown',
+            'total_pending': len(aces_to_process),
+            'total_value': sum(ace.amount or 0 for ace in aces_to_process),
+        }
+        
+        return render(request, 'finance/ace2/head_office_awaiting_action.html', context)
+
     else:
         # Regional logic for other roles
         aces_to_process = []
