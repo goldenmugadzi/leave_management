@@ -1,91 +1,35 @@
-{% extends "admin_layout.html" %}
-{% load quarter %}
+
 {% load static %}
-{% load crispy_forms_tags %}
-{% load kra_calculations %}
-{% load kra_permissions %}
 
-{% block content %}
-
-  <div class="content-wrapper">
-    <div class="grid grid-cols-1">
-      <div class="bg-gulf-blue-100 shadow-lg rounded-lg p-6">
-        <div class="flex justify-between">
-            <div>
-                <h1 class="font-bold">Key Result Area Outcomes</h1>
-                <p class="text-sm text-muted">Key Result Area Description: <strong>{{ kra_object.key_result_area_description }}</strong></p>
-                <p class="text-sm text-muted">Goal Description: <strong>{{ kra_object.goal_description }}</strong></p>
-            </div>
+    <div class="content-wrapper my-4">
+      <div class="grid grid-cols-1">
+        <div class="bg-gulf-blue-96 shadow-2xl rounded-lg p-3">
+          <div class="flex justify-between my-2">  
+            <h1 class="font-bold">Key Result Area Outcomes</h1>
+            <a href="#"
+                class="bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4">Add New OutCome</a>
             
-        </div>
-                
-        </div>
-      </div>
-    </div>
-
-    <div class="bg-gulf-blue-100 shadow-lg rounded-lg p-6 my-6">
-            <div class="flex justify-end">
-              <a href="#"
-                  class="my-2 bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4">Create New</a>
-
+          </div>
+          
+            <div style="max-height: 100px; overflow-y: auto; border: 1px solid #ccc;">
+                <table class="min-w-full border-collapse border border-gray-200 shadow-md rounded-lg">
+                    <thead>
+                    <tr class="bg-blue-500 text-white">
+                        <th class="px-6 py-2 text-left text-sm font-semibold">Name</th>
+                        <th class="px-6 py-2 text-left text-sm font-semibold"></th>
+                        
+                    </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                      <tr class="hover:bg-gray-100 py-2">
+                          <td class="px-6 py-4 whitespace-nowrap"></td>
+                          <td></td>
+                      </tr>
+                    </tbody>
+                </table>
             </div>
-      <div style="max-height: 280px; overflow-y: auto;">
-        <table 
-        class="w-full border border-blue-800 rounded-lg shadow-lg">
-         <thead class="bg-blue-800 text-white">
-           <tr>
-             <th class="px-6 py-3 text-left text-md font-semibold">Outcome Description</th>
-             <th class="px-6 py-3 text-left text-md font-semibold">Created date</th>
-             <th></th>
-           </tr>
-         </thead>
-         <tbody class="divide-y divide-blue-300 bg-blue-50">
-           {% for kra_outcomes_object in kra_outcomes_objects %}
-           <tr class="hover:bg-blue-100">
-             <td class="px-6 py-4 text-md text-blue-900 truncate max-w-xs">{{kra_outcomes_object.outcome_description}}</td>
-             <td class="px-6 py-4 text-md text-blue-900">{{kra_outcomes_object.created_date}}</td>
-             <td>
-                <div class="flex gap-2 justify-center">
-                  <a 
-                    href="#" 
-                    class="rounded-2xl bg-blue-500 block px-4 py-2 text-sm text-white hover:bg-blue-700" 
-                  >
-                    View
-                  </a>
-        
-                </div>
-             </td>
-             
-   
-           </tr>
-          {% endfor %}
-         </tbody>
-       </table>
 
+          </div>
+        </div>
       </div>
-    </div>
-  </div>
-{% endblock %}
 
-{% block scripts %}
-<script>
-  // Function to toggle the dropdown visibility
-  function toggleDropdown(kraId) {
-    const dropdownMenu = document.getElementById(`dropdownMenu-${kraId}`);
-     if (dropdownMenu) {  
-    dropdownMenu.classList.toggle('hidden');
-  }
-  }
-
-  // Close the dropdown when clicking outside
-  window.addEventListener('click', function(event) {
-    const dropdowns = document.querySelectorAll("[id^='dropdownMenu-']");
-    dropdowns.forEach(dropdown => {
-      if (!dropdown.contains(event.target) && !event.target.matches('button')) {
-        dropdown.classList.add('hidden');
-      }
-    });
-  });
-</script>
-
-{% endblock %}

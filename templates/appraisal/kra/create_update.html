@@ -1,34 +1,34 @@
-{% extends "appraisal/kra/layout.html" %}
+{% extends "admin_layout.html" %}
 
 {% load crispy_forms_tags %}
 
-{% block main %}
-<div class="container p-6">
+{% block content %}
+<div class="content-wrapper">
+    <div class="grid grid-cols-1">
+        <div class="bg-gulf-blue-100 shadow-lg rounded-lg p-6">
+            <div class="flex justify-between">
+                <div>
+                <h1 class="font-bold">Key Result Area</h1>
+                <p class="text-sm text-muted">Create or Update Key Result Area</p>
+                </div>
+                
+            </div>
+                
+        </div>
+    </div>
+
+    <div class="container p-6">
         <form method="post">
             {%csrf_token%}
-            <div class="flex flex-col gap-6">
-                <div class="flex gap-2">
-                    <div 
-                        class="flex-1 px-2 w-80 shadow-xl rounded-lg border-2"
-                        >
-                            {{ kra_form.name|as_crispy_field }}
-                    </div>
-                    <div 
-                        class="flex-1 px-2 w-80 shadow-xl rounded-lg border-2"
-                        >
-                            {{ kra_form.weight|as_crispy_field }}
-                    </div>
-
-                </div>
-                <div 
-                    class="flex-1 px-2 shadow-xl rounded-lg border-2 border"
-                    >
-                        {{ kra_form.description|as_crispy_field }}
-                </div>
-            </div>
+            {{kra_form|crispy}}
             <div class="flex justify-center my-2">
                 <button type="submit" class="w-96 bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4" name="create_new_kra_request">Save</button>
             </div>
         </form>
+    </div>
+    
+    <div>
+        {% include "appraisal/kra/outcomes/index.html"%}
+    </div>
 </div>
-{% endblock main %}
+{% endblock content %}
