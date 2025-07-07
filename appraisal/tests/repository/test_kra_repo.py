@@ -5,7 +5,7 @@ from it.users.models import UserProfile
 from ...repository.kra import KRARepository
 from ...helpers.types.kra import KRAType
 
-class TestKRARepository(TestCase):
+class TestKRARepositoryCreateRepo(TestCase):
     def setUp(self):
         self.kra_repo = KRARepository()
         self.create_data = KRAType(
